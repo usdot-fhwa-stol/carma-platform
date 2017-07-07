@@ -1,0 +1,21 @@
+logs
+.project
+.classpath
+.settings
+gradle.properties
+.gradle
+*~
+myClock.bin
+/*.tar.gz
+
+# ignore build directories
+build
+target
+
+# ignore Intellij project files and dirs
+*.ipr
+*.iws
+*.iml
+.idea
+/src/ruby/*
+!/src/ruby/*.rb
