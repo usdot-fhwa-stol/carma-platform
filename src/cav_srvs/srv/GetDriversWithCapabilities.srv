@@ -1,0 +1,28 @@
+# GetDriversWithCapabilities.srv
+#
+# Returns a list of drivers that match the specified category AND provide ALL of the requested capabilities.
+# If a driver provides capabilities that are not requested, they will be ignored (no penalty for a driver
+# that is "over-qualified").
+#
+
+##### Request #####
+
+# category is and enum indicating the general type of driver being requested
+int32				category
+# constant enum values to be used for category:
+int32				CONTROLLER = 1
+int32				COMMS = 2
+int32				POSITION = 3
+int32				SENSOR = 4
+int32				CAN = 5
+
+# capabilities is a list of descriptive strings
+
+# TODO: tell reader where to find the authoritative list of all capabilities from which to choose
+string[]			capabilities
+---
+
+##### Response #####
+
+# a list of drivers that meet the given criteria
+string[]			driver_names
