@@ -1,0 +1,23 @@
+#
+# StartRoute.srv
+# 
+# Service provided by RouteManager node. Starts a route with the 
+# specified id 
+#
+# @author Michael McConnell
+# @version 0.1
+#
+
+# Request
+# The id of the route to start
+uint32 routeID
+---
+# Response
+# An enumeration representing a service execution error as defined in the route design document.
+uint32 errorStatus
+
+# enumeration values for errorStatus:
+uint32				NO_ERROR=0
+uint32				NO_ROUTE=1
+uint32				UNSAFE=1
+#					<other values reserved for future expansion>

@@ -1,0 +1,29 @@
+#
+# CreateNewRoute.srv
+# 
+# Provided by the route manager node. Generates a new route using the provided strategy and returns the route ID.
+#
+# @author Michael McConnell
+# @version 0.1
+#
+
+# Request
+# A string detailing the route creation strategy to be used
+string strategy
+# A list of arguments which correspond to the provided route strategy
+string[] arguments
+---
+# Response
+# The created route id
+uint32 routeID
+
+# An enumeration representing a service execution error as defined in the route design document.
+uint32 errorStatus
+
+# enumeration values for errorStatus:
+uint32				NO_ERROR=0
+uint32				INVALID_STRATEGY=1
+uint32				INVALID_PARAMETERS=2
+uint32				CREATION_FAILURE=3
+#					<other values reserved for future expansion>
+

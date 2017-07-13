@@ -1,0 +1,31 @@
+#
+# MergeRouteNearLocation.srv
+# 
+# Service provided by RouteManager node. Combines two routes with the 
+# specified index and merge location
+#
+# @author Michael McConnell
+# @version 0.1
+#
+
+# Request
+# The id of the starting route to merge
+uint32 startingRouteID
+# The id of the ending route to merge
+uint32 endingRouteID
+# The location of the vehicle
+sensor_msgs/NavSatFix location
+
+---
+# Response
+# The new route id
+uint32 routeID
+# An enumeration representing a service execution error as defined in the route design document.
+uint32 errorStatus
+
+# enumeration values for errorStatus:
+uint32				NO_ERROR=0
+uint32				INVALID_ROUTE_ID=1
+uint32				INVALID_LOCATION=2
+uint32				MERGE_FAILURE=3
+#					<other values reserved for future expansion>
