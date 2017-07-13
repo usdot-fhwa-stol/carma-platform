@@ -7,14 +7,14 @@
 
 ##### Request #####
 
-# category is and enum indicating the general type of driver being requested
-int32				category
+# category is an enum indicating the general type of driver being requested
+uint32				category
 # constant enum values to be used for category:
-int32				CONTROLLER = 1
-int32				COMMS = 2
-int32				POSITION = 3
-int32				SENSOR = 4
-int32				CAN = 5
+uint32				CONTROLLER = 1
+uint32				COMMS = 2
+uint32				POSITION = 3
+uint32				SENSOR = 4
+uint32				CAN = 5
 
 # capabilities is a list of descriptive strings
 
