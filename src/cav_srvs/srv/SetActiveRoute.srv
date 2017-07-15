@@ -1,23 +1,22 @@
 #
-# StartRoute.srv
+# SetActiveRoute.srv
 # 
-# Service provided by RouteManager node. Starts a route with the 
-# specified id 
+# Service provided by RouteManager node. Sets a route with the 
+# specified id as the active route.
 #
 # @author Michael McConnell
 # @version 0.1
 #
 
 # Request
-# The id of the route to start
-uint32 routeID
+# The id of the route to select
+string routeID
 ---
 # Response
 # An enumeration representing a service execution error as defined in the route design document.
-uint32 errorStatus
+uint8 errorStatus
 
 # enumeration values for errorStatus:
-uint32				NO_ERROR=0
-uint32				NO_ROUTE=1
-uint32				UNSAFE=1
+uint8				NO_ERROR=0
+uint8				NO_ROUTE=1
 #					<other values reserved for future expansion>

@@ -9,5 +9,8 @@
 
 std_msgs/Header header
 
+# The route id
+string routeID
+
 # A list of segments which comprise the route
 cav_msgs/RouteSegment[] segments

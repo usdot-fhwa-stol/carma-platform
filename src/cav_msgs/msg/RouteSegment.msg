@@ -1,16 +1,17 @@
 #
-# Current Segment Message
+# RouteSegment.msg
 # 
-# The active segment of the current route
+# A route segment. If on the route/current_segment topic it is the active segment. 
 #
 # @author Michael McConnell
 # @version 0.1
 #
 
-std_msgs/Header header
+# The downtrack waypoint of this segment [upcoming]
+cav_msgs/RouteWaypoint waypoint
 
-# The lead waypoint of this segment
-cav_msgs/route_waypoint waypoint
+# The uptrack waypoint of this segment [previous]
+cav_msgs/RouteWaypoint prevWaypoint
 
-# The previous waypoint of this segment
-cav_msgs/route_waypoint prevWaypoint
+# The length of this segment
+float64 length
