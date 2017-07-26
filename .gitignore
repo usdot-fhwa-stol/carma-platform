@@ -11,6 +11,7 @@ myClock.bin
 # ignore build directories
 build
 target
+devel
 
 # ignore Intellij project files and dirs
 *.ipr
