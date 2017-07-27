@@ -14,6 +14,8 @@ uint32  status
 # enumeration values for status:
 uint32  OFF=0
 uint32  OPERATIONAL=1
+uint32  DEGRADED=2
+uint32  FAULT=3
 #					<other values reserved for future expansion>
 
 # These are the possible categories - at least one must be true
