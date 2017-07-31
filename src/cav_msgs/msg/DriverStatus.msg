@@ -6,19 +6,21 @@
 #
 
 # driver_name is the ROS name of the driver node
-string				driver_name
+string  name
 
 # status indicates the operational state of the underlying hardware device,
 # and is an enumerated value.
-uint32				status
+uint8  status
 # enumeration values for status:
-uint32				OFF=0
-uint32				OPERATIONAL=1
+uint8  OFF=0
+uint8  OPERATIONAL=1
+uint8  DEGRADED=2
+uint8  FAULT=3
 #					<other values reserved for future expansion>
 
 # These are the possible categories - at least one must be true
-bool				can_bus
-bool				sensor
-bool				position
-bool				comms
-bool				controller
+bool    can_bus
+bool    sensor
+bool    position
+bool    comms
+bool    controller

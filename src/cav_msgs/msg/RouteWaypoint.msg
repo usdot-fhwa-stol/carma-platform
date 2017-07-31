@@ -20,7 +20,7 @@ float64 longitude
 float64 altitude
 
 # A bit flag desribing which of the following fields are set. 1 = set, 0 = not set
-uint16 setFields
+uint16 set_fields
 
 # A list of guidance algorithms which are disabled on the segment which ends in this waypoint
 string[] disabled_guidance_algorithms
@@ -35,7 +35,7 @@ uint8 lane_count
 float32 nearest_mile_marker
 
 # A list of needed manuevers
-cav_msgs/Manuever[] needed_manuevers
+# cav_msgs/Manuever[] needed_manuevers
 
 # The index of the lane that the vehicle must enter to continue on its route
 uint8 required_lane_index
@@ -44,4 +44,4 @@ uint8 required_lane_index
 cav_msgs/RoadType road_type
 
 # The speed limit
-uint8 speed limit
+uint8 speed_limit

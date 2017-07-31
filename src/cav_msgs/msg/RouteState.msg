@@ -10,7 +10,7 @@
 # @version 0.1
 #
 
-std_msgs/Header header
+Header header
 
 # The route id for which this message applies
 string routeID

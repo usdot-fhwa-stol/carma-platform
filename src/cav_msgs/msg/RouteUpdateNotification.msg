@@ -10,10 +10,10 @@
 std_msgs/Header header
 
 # The route id for which this message applies
-string routeID
+string route_ID
 
 # The distance downtrack to the first modified segment
-double distance_to_event
+float64 distance_to_event
 
 # The index of the first modified route segment in the active route
 uint32 first_modification_index
