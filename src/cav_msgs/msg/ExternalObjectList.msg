@@ -1,0 +1,1 @@
+cav_msgs/ExternalObject[] objects

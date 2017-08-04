@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cav_msgs)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   message_runtime
   std_msgs
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -57,6 +58,9 @@ add_message_files(
   Route.msg
   RouteState.msg
   RouteUpdateNotification.msg
+  ExternalObject.msg
+  ExternalObjectList.msg
+  BSMCoreData.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -77,7 +81,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
-  cav_msgs
+  geometry_msgs
 )
 
 ################################################
@@ -110,9 +114,9 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+ # INCLUDE_DIRS include
 #  LIBRARIES cav_msgs
-#  CATKIN_DEPENDS message_generation message_runtime std_msgs
+ CATKIN_DEPENDS message_generation std_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -179,11 +183,11 @@ include_directories(
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

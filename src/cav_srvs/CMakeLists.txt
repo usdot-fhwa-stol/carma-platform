@@ -8,10 +8,10 @@ project(cav_srvs)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cav_msgs
   message_generation
-  message_runtime
   std_msgs
+  cav_msgs
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -109,7 +109,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES cav_srvs
-#  CATKIN_DEPENDS cav_msgs message_generation message_runtime std_msgs
+CATKIN_DEPENDS cav_msgs message_generation message_runtime std_msgs
 #  DEPENDS system_lib
 )
 

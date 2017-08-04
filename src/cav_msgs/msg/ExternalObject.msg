@@ -1,0 +1,7 @@
+Header header
+
+uint16 id
+geometry_msgs/PoseWithCovariance pose
+geometry_msgs/TwistWithCovariance velocity
+geometry_msgs/TwistWithCovariance velocity_inst
+geometry_msgs/Vector3 size
