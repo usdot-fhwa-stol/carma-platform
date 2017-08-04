@@ -17,6 +17,6 @@ string routeID
 uint8 errorStatus
 
 # enumeration values for errorStatus:
-uint8				NO_ERROR=0
-uint8				NO_ROUTE=1
+uint8 NO_ERROR=0
+uint8 NO_ROUTE=1
 #					<other values reserved for future expansion>

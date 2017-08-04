@@ -11,7 +11,7 @@
 cav_msgs/RouteWaypoint waypoint
 
 # The uptrack waypoint of this segment [previous]
-cav_msgs/RouteWaypoint prevWaypoint
+cav_msgs/RouteWaypoint prev_waypoint
 
 # The length of this segment
 float64 length

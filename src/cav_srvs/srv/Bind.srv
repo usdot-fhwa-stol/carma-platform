@@ -1,0 +1,12 @@
+# Bind.srv
+#
+# This is a service provided by each device driver to allow consumers
+# to inform the driver they request to bind with the given ID
+#
+
+# Request
+string id
+
+---
+
+# Response
