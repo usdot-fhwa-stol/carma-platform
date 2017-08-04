@@ -44,6 +44,8 @@ add_library(driver_application
     include/driver_application/driver_application.h
 )
 
+add_dependencies(driver_application ${catkin_EXPORTED_TARGETS})
+
 # Specify libraries to link a library or executable target against
  target_link_libraries(driver_application
    ${catkin_LIBRARIES}
