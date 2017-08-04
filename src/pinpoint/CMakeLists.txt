@@ -153,7 +153,7 @@ target_link_libraries(pinpoint_node ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(pinpoint_node ${PROJECT_NAME}_gencfg)
+add_dependencies(pinpoint_node ${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
