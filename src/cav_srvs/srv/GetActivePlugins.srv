@@ -1,0 +1,17 @@
+#
+# GetActivePlugins.srv
+# 
+# Provided by the Guidance node. Returns a list of discovered, instantiated
+# and registered IPlugin instances which are available to generate Trajectories
+#
+# @author Kyle Rush
+# @version 0.1
+#
+
+# Request - No arguments
+
+---
+# Response
+
+# A list of available plugins
+Plugin[] plugins
