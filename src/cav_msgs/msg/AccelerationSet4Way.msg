@@ -24,8 +24,8 @@
 #   -- the value 2000 shall be used for values greater than 2000     
 #   -- the value -2000 shall be used for values less than -2000  
 #   -- a value of 2001 shall be used for Unavailable
-float32 long
-float32 lat
+float32 longitude
+float32 latitude
 
 #VerticalAcceleration ::= INTEGER (-127..127) 
 #   -- LSB units of 0.02 G steps over -2.52 to +2.54 G

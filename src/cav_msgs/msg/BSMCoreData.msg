@@ -22,12 +22,12 @@ uint16 sec_mark
 #Latitude ::= INTEGER (-900000000..900000001)  
 #  -- LSB = 1/10 micro degree
 #  -- Providing a range of plus-minus 90 degrees
-float64 lat           
+float64 latitude           
 
 #Longitude ::= INTEGER (-1799999999..1800000001)  
 #   -- LSB = 1/10 micro degree
 #   -- Providing a range of plus-minus 180 degrees
-float64 long             
+float64 longitude             
 
 # Elevation ::= INTEGER (-4096..61439) 
 #  -- In units of 10 cm steps above or below the reference ellipsoid
