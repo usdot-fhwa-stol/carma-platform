@@ -34,6 +34,8 @@
 
 #include <sensor_fusion/sensor_fusion.h>
 
+#include <cav_msgs/ConnectedVehicleList.h>
+
 int SensorFusionApplication::run() {
     nh_.reset(new ros::NodeHandle());
 
@@ -43,14 +45,14 @@ int SensorFusionApplication::run() {
     ros::service::waitForService("get_drivers_with_capabilities");
 
     ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSMCoreData>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
-    ros::Timer timer = nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent& ev){get_services();});
+    ros::Timer timer = nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent& ev){ update_subscribed_services();});
 
     odom_pub_ = pnh.advertise<nav_msgs::Odometry>("odometry",1);
     navsatfix_pub_ = pnh.advertise<sensor_msgs::NavSatFix>("nav_sat_fix",1);
     velocity_pub_ = pnh.advertise<geometry_msgs::TwistStamped>("velocity",1);
     heading_pub_ = pnh.advertise<cav_msgs::HeadingStamped>("heading",1);
     objects_pub_ = pnh.advertise<cav_msgs::ExternalObjectList>("tracked_objects",1);
-    vehicles_pub_= pnh.advertise<cav_msgs::BSMCoreData>("bsm",1);
+    vehicles_pub_= pnh.advertise<cav_msgs::ConnectedVehicleList>("tracked_vehicles",1);
 
 
     ros::Rate r(50);
@@ -67,6 +69,8 @@ int SensorFusionApplication::run() {
 std::vector<std::string>
 SensorFusionApplication::get_api(const cav_srvs::GetDriversWithCapabilitiesRequest::_category_type type,
                                  const std::string &name) {
+
+    //Setup service call
     ros::ServiceClient client = nh_->serviceClient<cav_srvs::GetDriversWithCapabilities>("get_drivers_with_capabilities");
     cav_srvs::GetDriversWithCapabilities srv;
     srv.request.category = type;
@@ -75,24 +79,30 @@ SensorFusionApplication::get_api(const cav_srvs::GetDriversWithCapabilitiesReque
     std::vector<std::string> ret;
     if(client.call(srv))
     {
-        for(std::string it : srv.response.driver_names)
+
+        //The service returns a list of drivers that have the api we provided
+        for(std::string driverName : srv.response.driver_names)
         {
-            if(bond_map_.find(it) == bond_map_.end())
+
+            //Bond with the node if we haven't already
+            if(bond_map_.find(driverName) == bond_map_.end())
             {
-                ros::ServiceClient bond_client = nh_->serviceClient<cav_srvs::Bind>(it+"/bind");
+                ROS_DEBUG_STREAM("Bonding to node: " << driverName);
+                ros::ServiceClient bond_client = nh_->serviceClient<cav_srvs::Bind>(driverName+"/bind");
                 cav_srvs::Bind req;
                 req.request.id = boost::lexical_cast<std::string>(uuid_);
 
                 if(bond_client.call(req))
                 {
-                    bond_map_[it]= std::unique_ptr<bond::Bond>(new bond::Bond(it+"/bond",
+                    bond_map_[driverName]= std::unique_ptr<bond::Bond>(new bond::Bond(driverName+"/bond",
                                                                               boost::lexical_cast<std::string>(uuid_),
                                                                               boost::bind(&SensorFusionApplication::on_broken_cb,
                                                                                           this,
-                                                                                          it),boost::bind(&SensorFusionApplication::on_conneced_cb,this,it)));
+                                                                                          driverName),boost::bind(
+                                    &SensorFusionApplication::on_connected_cb,this,driverName)));
 
-                    bond_map_[it]->start();
-                    if(bond_map_[it]->waitUntilFormed(ros::Duration(1.0)))
+                    bond_map_[driverName]->start();
+                    if(bond_map_[driverName]->waitUntilFormed(ros::Duration(1.0)))
                     {
                         ROS_ERROR_STREAM("Failed to form bond");
                         continue;
@@ -100,7 +110,10 @@ SensorFusionApplication::get_api(const cav_srvs::GetDriversWithCapabilitiesReque
 
                 }
             }
-            std::string topic_name = it + "/" + name;
+
+            //If we haven't subscribed to the topic formed by the name of the node and the service
+            //add this topic to the return list
+            std::string topic_name = driverName + "/" + name;
             if(sub_map_.find(topic_name) == sub_map_.end())
                 ret.push_back(topic_name);
         }
@@ -110,12 +123,12 @@ SensorFusionApplication::get_api(const cav_srvs::GetDriversWithCapabilitiesReque
     return ret;
 }
 
-void SensorFusionApplication::get_services() {
+void SensorFusionApplication::update_subscribed_services() {
     //odometry
     std::vector<std::string> ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::POSITION, "position/odometry");
     for(const std::string& it : ret)
     {
-        sub_map_[it] = nh_->subscribe<nav_msgs::Odometry>(it,1,[this,it](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg);});
+        sub_map_[it] = nh_->subscribe<nav_msgs::Odometry>(it,1,[this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg);});
     }
 
     //nav_sat_fix
@@ -143,7 +156,7 @@ void SensorFusionApplication::get_services() {
     ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::SENSOR, "sensor/tracked_objects");
     for(const std::string& it : ret)
     {
-        sub_map_[it] = nh_->subscribe<cav_msgs::ExternalObjectList>(it,1,[this, it](const ros::MessageEvent<cav_msgs::ExternalObjectList>& msg){ trackedobjects_cb(msg);});
+        sub_map_[it] = nh_->subscribe<cav_msgs::ExternalObjectList>(it,1,[this](const ros::MessageEvent<cav_msgs::ExternalObjectList>& msg){ trackedobjects_cb(msg);});
     }
 
 }
@@ -165,9 +178,41 @@ void SensorFusionApplication::publish_updates() {
     if(!objects_map_.empty())
         objects_pub_.publish(objects_map_.begin()->second);
 
+    cav_msgs::ConnectedVehicleList msg;
+    static unsigned int seq = 1;
+    std_msgs::Header header;
+    header.frame_id = "base_link";
+    header.stamp = ros::Time::now();
+    header.seq = seq++;
     while(!bsm_q_.empty())
     {
-        vehicles_pub_.publish(bsm_q_.front());
+        cav_msgs::ExternalObject externalObject;
+        cav_msgs::BSMCoreDataConstPtr& bsm = bsm_q_.front();
+        externalObject.header = header;
+
+        //todo: add real pose calculation
+        geometry_msgs::Pose pose;
+        pose.position.x = 10;
+        externalObject.pose.pose = pose;
+
+        geometry_msgs::Twist twist;
+        twist.linear.x = bsm->speed;
+
+        externalObject.velocity.twist = twist;
+        externalObject.velocity_inst.twist = twist;
+
+        geometry_msgs::Vector3 size;
+        size.x = bsm->size.vehicle_length;
+        size.y = bsm->size.vehicle_width;
+        size.z = bsm->size.vehicle_width;
+        externalObject.size = size;
+
+        //todo: process a bsm message, update this to the BSM message type
+        msg.objects.push_back(externalObject);
+        msg.bsm_temp_ids.push_back(uint16_t(bsm->id));
+
         bsm_q_.pop();
     }
+
+    vehicles_pub_.publish(msg);
 }

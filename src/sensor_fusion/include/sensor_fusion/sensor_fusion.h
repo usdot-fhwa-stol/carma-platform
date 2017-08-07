@@ -44,7 +44,7 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <cav_msgs/HeadingStamped.h>
 #include <cav_msgs/ExternalObjectList.h>
-#include <cav_msgs/BSMCoreData.h>
+#include <cav_msgs/BSM.h>
 
 
 #include <boost/bind.hpp>
@@ -117,7 +117,7 @@ private:
      * Right now this is only used for debugging
      */
 
-    void on_conneced_cb(const std::string& node_name)
+    void on_connected_cb(const std::string &node_name)
     {
         ROS_DEBUG_STREAM("Bonded to " << node_name);
     }
@@ -126,8 +126,13 @@ private:
 
     /**
      * @brief Handles the call to the interface manager to receive api of the given node
+     *
+     * This function queries the interface manager for a give api specified by name.
+     * After receiving a reply from the interface manager it builds a list of FQN of topics
+     * that have not been subscribed to.
+     *
      * @param type The driver_type we are querying
-     * @param name THe name of the service to query
+     * @param name The name of the service to query
      * @return A vector containing the FQN of the services queried
      */
     std::vector<std::string> get_api(const cav_srvs::GetDriversWithCapabilitiesRequest::_category_type type, const std::string& name);
@@ -138,7 +143,7 @@ private:
      *
      * This should be called periodically to maintain updates
      */
-    void get_services();
+    void update_subscribed_services();
 
     ros::Publisher odom_pub_, navsatfix_pub_, heading_pub_, velocity_pub_, objects_pub_, vehicles_pub_;
 
@@ -151,6 +156,15 @@ private:
      * Later this will publish processed data
      */
     void publish_updates();
+
+
+    /**
+     * The following callbacks are attached to ROS topics with their provided type
+     *
+     * todo: make the callbacks to real work
+     * These callbacks currently for the skeleton only store the message in a map
+     * to be used later
+     */
 
     std::unordered_map<std::string, nav_msgs::OdometryConstPtr> odom_map_;
     void odom_cb(const ros::MessageEvent<nav_msgs::Odometry const>& event)
@@ -191,6 +205,5 @@ private:
     void bsm_cb(const cav_msgs::BSMCoreDataConstPtr& msg)
     {
         bsm_q_.push(msg);
-
     }
 };
