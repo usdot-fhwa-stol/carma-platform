@@ -10,13 +10,13 @@
 # A vehicle with no communications
 uint8 UNCONNECTED=0
 
-# A vehicle can send messages but not recieve them
+# A vehicle can send messages but not receive them
 uint8 ONEWAY_SEND=1
 
-# A vehicle can recieve messages but not send them
+# A vehicle can receive messages but not send them
 uint8 ONEWAY_RECEIVE=2
 
-# A vehicle can both send and recieve messages
+# A vehicle can both send and receive messages
 uint8 TWOWAY=3
 
 
