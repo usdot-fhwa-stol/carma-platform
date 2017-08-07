@@ -11,7 +11,7 @@
 cav_msgs/VehicleObstacle[] otherVehicles
 
 # A list of lane geometries sorted by lane id
-cav_msgs/Lane.msg[] lanes
+cav_msgs/Lane[] lanes
 
 # A description of the host vehicle geometry
 cav_msgs/VehicleObstacle hostVehicle
