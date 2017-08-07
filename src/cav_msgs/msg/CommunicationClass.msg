@@ -14,7 +14,7 @@ uint8 UNCONNECTED=0
 uint8 ONEWAY_SEND=1
 
 # A vehicle can recieve messages but not send them
-uint8 ONEWAY_RECIEVE=2
+uint8 ONEWAY_RECEIVE=2
 
 # A vehicle can both send and recieve messages
 uint8 TWOWAY=3
