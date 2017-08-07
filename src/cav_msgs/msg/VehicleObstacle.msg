@@ -8,7 +8,7 @@
 #
 
 # The geometry of the vehicle
-cav_msgs/ExternalObject.msg
+cav_msgs/ExternalObject object
 
 # Enum describing the type of communication this vehicle is capable of
 cav_msgs/CommunicationClass communication_class

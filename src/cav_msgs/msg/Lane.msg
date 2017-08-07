@@ -11,4 +11,4 @@
 uint8 laneIndex
 
 # The segments of the lane
-cav_msgs/LaneSegment.msg[] laneSegments
+cav_msgs/LaneSegment[] laneSegments

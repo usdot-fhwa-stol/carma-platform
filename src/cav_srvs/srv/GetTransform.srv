@@ -13,7 +13,7 @@ string sourceFrame
 # The target frame of the transform
 string targetFrame
 ---
-geometry_msgs/TransformStamped.msg transform
+geometry_msgs/TransformStamped transform
 # An enumeration representing the validity of the returned transform
 uint8 errorStatus
 

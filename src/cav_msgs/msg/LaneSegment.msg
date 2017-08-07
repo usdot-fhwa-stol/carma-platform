@@ -8,16 +8,16 @@
 #
 
 # The uptrack point of the lane segment
-geometry_msgs/Point32.msg uptrackPoint
+geometry_msgs/Point32 uptrackPoint
 
 # The downtrack point of the lane segment
-geometry_msgs/Point32.msg downtrackPoint
+geometry_msgs/Point32 downtrackPoint
 
 # the width of the lane
 float32 width
 
 # The LaneEdgeType of the right lane edge
-cav_msgs/LaneEdgeType.msg rightSideType
+cav_msgs/LaneEdgeType rightSideType
 
 # The LaneEdgeType of the left lane edge
-cav_msgs/LaneEdgeType.msg leftSideType
+cav_msgs/LaneEdgeType leftSideType

@@ -13,5 +13,5 @@
 # Response
 
 # A list of available routes
-Route[] availableRoutes
+cav_msgs/Route[] availableRoutes
 

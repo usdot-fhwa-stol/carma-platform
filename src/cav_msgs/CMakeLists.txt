@@ -47,20 +47,17 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
+file(GLOB msg_files msg/*.msg)
+set(msgs )
+foreach(filePath ${msg_files})
+  get_filename_component(name ${filePath} NAME)
+  set(msgs ${msgs} ${name})
+endforeach(filePath)
+
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  DriverStatus.msg
-  HeadingStamped.msg
-  RouteWaypoint.msg
-  RouteSegment.msg
-  RoadType.msg
-  Route.msg
-  RouteState.msg
-  RouteUpdateNotification.msg
-  ExternalObject.msg
-  ExternalObjectList.msg
-  BSMCoreData.msg
+  ${msgs}
 )
 
 ## Generate services in the 'srv' folder

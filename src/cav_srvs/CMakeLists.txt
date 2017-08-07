@@ -54,13 +54,18 @@ find_package(catkin REQUIRED COMPONENTS
 #   Message2.msg
 # )
 
+
+file(GLOB srv_files srv/*.srv)
+set(srvs )
+foreach(filePath ${srv_files})
+  get_filename_component(name ${filePath} NAME)
+  set(srvs ${srvs} ${name})
+endforeach(filePath)
+
 # Generate services in the 'srv' folder
 add_service_files(
   FILES
-  Bind.srv
-  GetAPISpecification.srv
-  GetDriversWithCapabilities.srv
-  SetActiveRoute.srv
+  ${srvs}
 )
 
 ## Generate actions in the 'action' folder

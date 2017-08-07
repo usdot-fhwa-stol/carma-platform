@@ -14,4 +14,4 @@
 # Response
 
 # A list of registered plugins
-Plugin[] plugins
+cav_msgs/Plugin[] plugins
