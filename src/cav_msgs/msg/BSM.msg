@@ -12,66 +12,9 @@
 
 std_msgs/Header header
 
-cav_msgs/BSMCoreData bsm_core_data
+cav_msgs/BSMCoreData core_data
 
-#MsgCount ::= INTEGER (0..127)
-uint8 msg_count 
-
-#TemporaryID ::= OCTET STRING (SIZE(4))
-byte id 
-
-#DSecond ::= INTEGER (0..65535) -- units of milliseconds
-uint16 sec_mark 
-
-#Latitude ::= INTEGER (-900000000..900000001)  
-#  -- LSB = 1/10 micro degree
-#  -- Providing a range of plus-minus 90 degrees
-# TBD: RouteWayPoint uses float64??
-float32 lat           
-
-#Longitude ::= INTEGER (-1799999999..1800000001)  
-#   -- LSB = 1/10 micro degree
-#   -- Providing a range of plus-minus 180 degrees
-float32 long             
-
-# Elevation ::= INTEGER (-4096..61439) 
-#  -- In units of 10 cm steps above or below the reference ellipsoid
-#  -- Providing a range of -409.5 to + 6143.9 meters
-#  -- The value -4096 shall be used when Unknown is to be sent
-float32 elev            
-
-# Used to model the accuracy of the positional determination with respect to each given axis.
-cav_msgs/PositionalAccuracy accuracy 
-
-# Provide the current state of the vehicle transmission.
-cav_msgs/TransmissionState transmission  
-
-#Speed ::= INTEGER (0..8191) -- Units of 0.02 m/s
-#          -- The value 8191 indicates that 
-#          -- speed is unavailable
-float32 speed         
-
-#Heading ::= INTEGER (0..28800) 
-#   -- LSB of 0.0125 degrees
-#   -- A range of 0 to 359.9875 degrees
-float32 heading        
-
-# SteeringWheelAngle ::= INTEGER (-126..127) 
-#    -- LSB units of 1.5 degrees, a range of -189 to +189 degrees
-#    -- +001 = +1.5 deg
-#    -- -126 = -189 deg and beyond  
-#    -- +126 = +189 deg and beyond
-#    -- +127 to be used for unavailable
-float32 angle        
-
-# Set of acceleration values in 3 orthogonal directions of the vehicle and with yaw rotation rates expressed as a structure. 
-cav_msgs/AccelerationSet4Way accelSet      
-
-# Conveys a variety of information about the current brake and system control activity of the vehicle.
-cav_msgs/BrakeSystemStatus brakes       
-
-# The vehicle length and width 
-cav_msgs/VehicleSize size     
+# -- Part II Content is for future use. 
 
 
 
