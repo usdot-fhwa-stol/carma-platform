@@ -1,0 +1,30 @@
+# HostVehicleParams.yaml
+# Defines the ros parameters which define the host vehicle's characteristics
+
+# String: Host vehicle color
+vehicle_color: 'green'
+
+# Double: Host vehicle height
+# Units: Meters
+vehicle_height: 2.2
+
+# String: Host vehicle’s Unique ID that will be used in mobility messages.
+vehicle_id: 'saxton_cav_1'
+
+# Double: Host vehicle length
+# Units: Meters
+vehicle_length: 3.1
+
+# String: Host vehicle make
+vehicle_make: 'Cadillac'
+
+# String: Host vehicle model
+vehicle_model: 'SRX'
+
+# Double: Host vehicle width
+# Units: Meters
+vehicle_width: 1.5
+
+# Integer: Host vehicle year
+# Units: Year
+vehicle_year: 2011

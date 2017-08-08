@@ -1,0 +1,8 @@
+# PinPointParams.yaml
+# Defines the ros parameters which are required by the PinPoint Driver
+
+# String: PinPoint device ipv4 address
+address: '192.168.1.1'
+
+# Integer: localization server port
+port: 8085
