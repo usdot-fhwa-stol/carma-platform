@@ -3,7 +3,7 @@ project(cav_driver_utils)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-  bond
+  bondcpp
   cav_msgs
   cav_srvs
   roscpp
@@ -23,7 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES driver_application
-  CATKIN_DEPENDS bond cav_msgs cav_srvs roscpp std_msgs
+  CATKIN_DEPENDS bondcpp cav_msgs cav_srvs roscpp std_msgs
 #  DEPENDS system_lib
 )
 

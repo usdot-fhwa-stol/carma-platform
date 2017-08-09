@@ -9,13 +9,13 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>bond</build_depend>
+  <build_depend>bondcpp</build_depend>
   <build_depend>cav_msgs</build_depend>
   <build_depend>cav_srvs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
 
-  <run_depend>bond</run_depend>
+  <run_depend>bondcpp</run_depend>
   <run_depend>cav_msgs</run_depend>
   <run_depend>cav_srvs</run_depend>
   <run_depend>roscpp</run_depend>

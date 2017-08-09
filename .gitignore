@@ -21,3 +21,5 @@ devel
 /src/ruby/*
 !/src/ruby/*.rb
 
+# Ignore root level CMakeLists.txt
+/CMakeLists.txt
