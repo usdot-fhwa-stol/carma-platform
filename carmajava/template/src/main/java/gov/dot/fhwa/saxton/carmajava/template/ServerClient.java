@@ -14,7 +14,6 @@
  * the License.
  */
 
-
 package gov.dot.fhwa.saxton.carmajava.template;
 
 import org.ros.concurrent.CancellableLoop;
@@ -42,71 +41,71 @@ import org.ros.exception.ServiceNotFoundException;
 
 public class ServerClient extends AbstractNodeMain {
 
-    //TODO: Replace "server_client" with Column D node name
-    @Override
-    public GraphName getDefaultNodeName() {
-        return GraphName.of("server_client");
-    }
+  //TODO: Replace "server_client" with Column D node name
+  @Override
+  public GraphName getDefaultNodeName() {
+    return GraphName.of("server_client");
+  }
 
-    @Override
-    public void onStart(final ConnectedNode connectedNode) {
+  @Override
+  public void onStart(final ConnectedNode connectedNode) {
 
-        // Services (SetBool Example)
+    // Services (SetBool Example)
 
-        // Setup Server
-        // TODO: Replace set_bool with Column G name
-        ServiceServer<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> setBoolServer =
-                connectedNode.newServiceServer("set_bool", std_srvs.SetBool._TYPE,
-                        new ServiceResponseBuilder<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse>() {
+    // Setup Server
+    // TODO: Replace set_bool with Column G name
+    ServiceServer<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> setBoolServer = connectedNode
+      .newServiceServer("set_bool", std_srvs.SetBool._TYPE,
+        new ServiceResponseBuilder<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse>() {
 
-                            @Override
-                            public void build(std_srvs.SetBoolRequest request, std_srvs.SetBoolResponse response) {
-                                response.setSuccess(request.getData());
+          @Override
+          public void build(std_srvs.SetBoolRequest request, std_srvs.SetBoolResponse response) {
 
-                                //TODO: replace with Column G name
-                                response.setMessage("Successfully called set_bool");
-                            }
-                        });
-
-        // Setup Client
-        final ServiceClient<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> serviceClient;
-        try {
-            serviceClient = connectedNode.newServiceClient("set_bool", std_srvs.SetBool._TYPE);
-        } catch (ServiceNotFoundException e) {
-            throw new RosRuntimeException(e);
-        }
-
-        // This CancellableLoop will be canceled automatically when the node shuts down.
-        connectedNode.executeCancellableLoop(new CancellableLoop() {
-            private int sequenceNumber;
-
-            @Override
-            protected void setup() {
-                sequenceNumber = 0;
-            }
-
-            @Override
-            protected void loop() throws InterruptedException {
-
-                //Setup Request
-                final std_srvs.SetBoolRequest request = serviceClient.newMessage();
-                request.setData(true);
-
-                //Make Service call.
-                serviceClient.call(request, new ServiceResponseListener<std_srvs.SetBoolResponse>() {
-                    @Override
-                    public void onSuccess(std_srvs.SetBoolResponse response) {
-                        connectedNode.getLog().info(response.getMessage());
-                    }
-
-                    @Override
-                    public void onFailure(RemoteException e) {
-                        throw new RosRuntimeException(e);
-                    }
-                });
-
-                Thread.sleep(1000);
-            }
+            //TODO: set this call based on your service functionality
+            response.setSuccess(request.getData());
+            response.setMessage("Successfully called set_bool.");
+          }
         });
+
+    // Setup Client
+    final ServiceClient<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> serviceClient;
+    try {
+      serviceClient = connectedNode.newServiceClient("set_bool", std_srvs.SetBool._TYPE);
+    } catch (ServiceNotFoundException e) {
+      throw new RosRuntimeException(e);
     }
+
+    // This CancellableLoop will be canceled automatically when the node shuts down.
+    connectedNode.executeCancellableLoop(new CancellableLoop() {
+      private int sequenceNumber;
+
+      @Override
+      protected void setup() {
+        sequenceNumber = 0;
+      }
+
+      @Override
+      protected void loop() throws InterruptedException {
+
+        //Setup Request
+        final std_srvs.SetBoolRequest request = serviceClient.newMessage();
+        request.setData(true);
+
+        //Make Service call.
+        serviceClient.call(request, new ServiceResponseListener<std_srvs.SetBoolResponse>() {
+          @Override
+          public void onSuccess(std_srvs.SetBoolResponse response) {
+            connectedNode.getLog().info(response.getMessage());
+          }
+
+          @Override
+          public void onFailure(RemoteException e) {
+            throw new RosRuntimeException(e);
+          }
+        });
+
+        Thread.sleep(1000);
+      }
+    });
+  }
 }
