@@ -12,8 +12,11 @@
 -->
 <launch>
   <!-- Constants -->
+  <!-- Directory of Parameter Files -->
   <arg name="PARAM_DIR" value="$(find carmajava)/launch/params"/>
+  <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
   <arg name="URDF_FILE" value="$(find carmajava)/launch/urdf/saxton_cav_green_srx.urdf"/>
+  <!-- ROS Namespaces -->
   <arg name="TOP_NS" value="saxton_cav"/>
   <arg name="GUIDE_NS" value="guidance"/>
   <arg name="VE_NS" value="vehicle_environment"/>
