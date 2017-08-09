@@ -1,7 +1,7 @@
 <!-- 
 	saxton_cav.launch
 
-	A the ros launch file for the STOL CAV  Prototype ROS Network.
+  A the ros launch file for the STOL CAV  Prototype ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
   Also sets up all static transforms used by tf2 within the system.
 
@@ -61,7 +61,7 @@
         <!-- Trajectory and Arbitrator -->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
 
-        <!-- Manuevers Thread-->
+        <!-- Maneuvers Thread-->
         <remap from="roadway_environment" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/roadway_environment"/>
         <remap from="route" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route"/>
 

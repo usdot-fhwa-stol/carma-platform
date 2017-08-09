@@ -4,6 +4,6 @@
 # String: Host vehicle may have different instructions to show to the Driver before engaging the guidance system.
 ui/guidance_instructions: 'Wait for next instructions'
 
-# Integer: Interval in mili-seconds to refresh the web page, usually to update a display page.
-# Units: Mili-seconds
+# Integer: Interval in milliseconds to refresh the web page, usually to update a display page.
+# Units: Milliseconds
 ui/page_refresh_interval: 100

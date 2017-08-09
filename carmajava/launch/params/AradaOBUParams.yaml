@@ -1,5 +1,5 @@
 # AradaOBUParams.yaml
-# Defines the ros parameters which are required by the PinPoint Driver
+# Defines the ros parameters which are required by the Arada OBU Driver
 
 # String: The IPv4/6 address of the Arada OBU
 arada_address: '192.168.1.2'

@@ -28,27 +28,23 @@ import org.ros.node.topic.Publisher;
  */
 public class Talker extends AbstractNodeMain {
 
-  @Override
-  public GraphName getDefaultNodeName() {
+  @Override public GraphName getDefaultNodeName() {
     return GraphName.of("rosjava/talker");
   }
 
-  @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  @Override public void onStart(final ConnectedNode connectedNode) {
     final Publisher<std_msgs.String> publisher =
-        connectedNode.newPublisher("chatter", std_msgs.String._TYPE);
+      connectedNode.newPublisher("chatter", std_msgs.String._TYPE);
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       private int sequenceNumber;
 
-      @Override
-      protected void setup() {
+      @Override protected void setup() {
         sequenceNumber = 0;
       }
 
-      @Override
-      protected void loop() throws InterruptedException {
+      @Override protected void loop() throws InterruptedException {
         std_msgs.String str = publisher.newMessage();
         str.setData("Hello world! " + sequenceNumber);
         publisher.publish(str);

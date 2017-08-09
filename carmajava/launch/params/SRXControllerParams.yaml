@@ -1,5 +1,5 @@
 # SRXControllerParams.yaml
-# Defines the ros parameters which are required by the PinPoint Driver
+# Defines the ros parameters which are required by the Controller Driver
 
 # Integer: the virtual can port corresponding the CAN interface
 device_port: 8086

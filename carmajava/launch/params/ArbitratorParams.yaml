@@ -23,7 +23,7 @@ arbitrator/linear_increase_size: 1.0
 # Units: Meters
 arbitrator/max_window_size: 60.0
 
-# Double: Minimun length of a planning window.
+# Double: Minimum length of a planning window.
 # Units: Meters
 arbitrator/min_window_size: 20.0
 
