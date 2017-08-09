@@ -39,7 +39,7 @@
 
 
 #include <dynamic_reconfigure/server.h>
-#include <pinpoint/PinPointConfig.h>
+#include <pinpoint/pinpointConfig.h>
 
 #include <geometry_msgs/TwistStamped.h>
 #include <diagnostic_updater/diagnostic_updater.h>
@@ -114,9 +114,9 @@ private:
     std::string base_link_frame, odom_frame, sensor_frame, world_frame;
     bool publish_tf;
 
-    pinpoint::PinPointConfig config_;
-    dynamic_reconfigure::Server<pinpoint::PinPointConfig> server;
-    void dynReconfigCB(pinpoint::PinPointConfig& cfg, uint32_t level);
+    pinpoint::pinpointConfig config_;
+    dynamic_reconfigure::Server<pinpoint::pinpointConfig> server;
+    void dynReconfigCB(pinpoint::pinpointConfig& cfg, uint32_t level);
     bool connecting_ = false;
     std::shared_ptr<std::thread> connect_thread_;
     ros::Time last_heartbeat_time_;
