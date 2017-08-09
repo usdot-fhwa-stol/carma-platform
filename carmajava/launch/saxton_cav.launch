@@ -44,7 +44,7 @@
 
         <remap from="system_alert" to="/$(arg TOP_NS)/system_alert"/>
         <remap from="get_drivers_with_capabilities" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-        <remap from="new_plan" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>
+        <remap from="new_plan_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>
         <remap from="plan_status" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/plan_status"/>
 
         <!-- Arbitrator Thread-->
@@ -80,11 +80,11 @@
         <!-- Message Consumer Node -->
         <node pkg="carmajava" type="message" name="message_consumer" args="com.github.rosjava.carmajava.message.Listener">
           <remap from="host_bsm" to="/$(arg TOP_NS)/$(arg GUIDE_NS)/tracking/bsm"/>
-          <remap from="mobility_ack" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_ack"/>
-          <remap from="mobility_greeting" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_greeting"/>
-          <remap from="mobility_intro" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_intro"/>
-          <remap from="mobility_nack" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_nack"/>
-          <remap from="mobility_plan" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_plan"/>
+          <remap from="mobility_ack_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_ack"/>
+          <remap from="mobility_greeting_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_greeting"/>
+          <remap from="mobility_intro_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_intro"/>
+          <remap from="mobility_nack_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_nack"/>
+          <remap from="mobility_plan_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_plan"/>
         </node>
       </group>
 
@@ -94,11 +94,11 @@
         <!-- Negotiator Node -->
         <node pkg="carmajava" type="negotiator" name="negotiator_mgr" args="com.github.rosjava.carmajava.negotiator.Talker">
           <remap from="host_bsm" to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
-          <remap from="mobility_ack" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_ack"/>
-          <remap from="mobility_greeting" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_greeting"/>
-          <remap from="mobility_intro" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_intro"/>
-          <remap from="mobility_nack" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_nack"/>
-          <remap from="mobility_plan" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_plan"/>
+          <remap from="mobility_ack_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_ack"/>
+          <remap from="mobility_greeting_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_greeting"/>
+          <remap from="mobility_intro_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_intro"/>
+          <remap from="mobility_nack_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_nack"/>
+          <remap from="mobility_plan_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_plan"/>
         </node>
       </group>
 
