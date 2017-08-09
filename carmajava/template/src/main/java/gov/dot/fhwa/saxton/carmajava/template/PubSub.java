@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 MaeFromm.
+ * TODO: Copyright (C) 2017 LEIDOS.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,9 @@
  * the License.
  */
 
-package com.github.rosjava.carmajava.message;
+//TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
+//Originally "com.github.rosjava.carmajava.template;"
+package gov.dot.fhwa.saxton.carmajava.template;
 
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
@@ -30,13 +32,14 @@ import org.ros.node.topic.Publisher;
 /**
  * A simple {@link Publisher} {@link NodeMain}.
  *
- * Replace MessageConsumer and message_consumer with another node/topic name.
+ * Replace PubSub with the node name on Column D but using CamelCase.
  */
-public class MessageConsumer extends AbstractNodeMain {
+public class PubSub extends AbstractNodeMain {
 
+    //TODO: Replace with Column D node name
     @Override
     public GraphName getDefaultNodeName() {
-        return GraphName.of("saxton_cav/vehicle_environment/message");
+        return GraphName.of("pub_sub");
     }
 
     @Override
@@ -44,21 +47,22 @@ public class MessageConsumer extends AbstractNodeMain {
 
         final Log log = connectedNode.getLog();
 
-        //TODO: Currently setup to listen to it's own message. Change to listen to someone other topic.
-        Subscriber<std_msgs.String> subscriber = connectedNode.newSubscriber("outbound", std_msgs.String._TYPE);
+        //TODO: Column G topic name
+        // Currently setup to listen to it's own message. Change to listen to someone other topic.
+        Subscriber<std_msgs.String> subscriber = connectedNode.newSubscriber("template", std_msgs.String._TYPE);
 
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
-
                                           @Override
                                           public void onNewMessage(std_msgs.String message) {
-                                              log.info("MessageConsumer heard: \"" + message.getData() + "\"");
+                                              //TODO: Replace with Column D node name
+                                              log.info("pub_sub heard: \"" + message.getData() + "\"");
                                           }//onNewMessage
                                       }//MessageListener
         );//addMessageListener
 
-
+        //TODO: Column G topic name
         final Publisher<std_msgs.String> publisher =
-                connectedNode.newPublisher("outbound", std_msgs.String._TYPE);
+                connectedNode.newPublisher("template", std_msgs.String._TYPE);
 
 
         // This CancellableLoop will be canceled automatically when the node shuts
@@ -74,7 +78,8 @@ public class MessageConsumer extends AbstractNodeMain {
                                                  @Override
                                                  protected void loop() throws InterruptedException {
                                                      std_msgs.String str = publisher.newMessage();
-                                                     str.setData("Hello World! " + "I am MessageConsumer's Publisher. " + sequenceNumber);
+                                                     //TODO: Replace with Column D node name
+                                                     str.setData("Hello World! " + "I am pub_sub. " + sequenceNumber);
                                                      publisher.publish(str);
                                                      sequenceNumber++;
                                                      Thread.sleep(1000);
