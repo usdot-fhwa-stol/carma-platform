@@ -3,7 +3,7 @@ To setup the CAV Prototype Platform build environment you must do the following:
 
 1. Create a Catkin workspace in a location of your choosing and then enter that directory
 
-`mkdir <workspace_name>`&& cd <workspace_name>
+`mkdir <workspace_name> && cd <workspace_name>`
 
 2. Clone the CarmaPlatform repository into the `src` folder 
 
