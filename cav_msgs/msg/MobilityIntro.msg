@@ -7,14 +7,10 @@
 #
 
 # the standard header for all mobility messages
-MobilityHeader header
+cav_msgs/MobilityHeader header
 
 # the host's entity type
-MobilityEntityType my_entity_type
-
-# enumeration values for my_entity_type:
-uint8       VEHICLE = 1
-uint8       INFRASTRUCTURE = 100
+cav_msgs/MobilityEntityType my_entity_type
 
 # unique ID of the roadway link that host vehicle is currently on
 string      my_roadway_link
@@ -28,7 +24,7 @@ uint8       my_lane_id
 
 # type of the proposal being suggested to neighbors - refers to activity the host would
 # like to perform
-PlanType    plan_type
+cav_msgs/PlanType    plan_type
 
 # a generic variable whose use is dependent upon the plan_type
 uint16      proposal_param

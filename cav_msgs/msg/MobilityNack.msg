@@ -8,4 +8,4 @@
 
 # this is the standard header for all mobility messages, but in this case the
 # checksum field is ignored
-MobilityHeader header
+cav_msgs/MobilityHeader header

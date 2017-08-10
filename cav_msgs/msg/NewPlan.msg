@@ -7,7 +7,7 @@
 #
 
 # the standard header for all mobility messages
-MobilityHeader header
+cav_msgs/MobilityHeader header
 
 # enumeration of the originator's objective for creating this plan
 uint8       objective
@@ -25,7 +25,7 @@ uint8       UNDEFINED = 255
 string[]    participant_ids
 
 # list of one or more maneuvers that are to be executed in chronological order
-Maneuver[]  maneuvers
+cav_msgs/Maneuver[]  maneuvers
 
 # absolute time that this plan will expire and become meaningless
 time        expiration

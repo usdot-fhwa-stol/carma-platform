@@ -4,10 +4,10 @@
 #
 
 # the standard header for all mobility messages
-MobilityHeader header
+cav_msgs/MobilityHeader header
 
 # indicates the type of acknowledgement
-MobilityAgreementType agreement
+cav_msgs/MobilityAgreementType agreement
 
 # regurgitated verification string received in a previous MobilityGreeting message
 # this field is used only if agreement = ACK_SESSION_VERIFICATION

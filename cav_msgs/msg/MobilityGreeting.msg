@@ -5,10 +5,10 @@
 #
 
 # the standard header for all mobility messages
-MobilityHeader header
+cav_msgs/MobilityHeader header
 
 # the host's entity type
-MobilityEntityType my_entity_type
+cav_msgs/MobilityEntityType my_entity_type
 
 # unique ID of the roadway link that host vehicle is currently on
 string      my_roadway_link
@@ -21,7 +21,7 @@ float32     my_roadway_link_position
 uint8       my_lane_id
 
 # indicator of my degree of agreement with the tentative plan
-MobilityAgreementType agreement
+cav_msgs/MobilityAgreementType agreement
 
 ### note: if agreement = DISAGREE_TERMINATE then the remaining values should be ignored
 
