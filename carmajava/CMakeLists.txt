@@ -11,6 +11,7 @@ project(carmajava)
 
 find_package(catkin REQUIRED
 	rosjava_build_tools
+    rosjava_messages
 	genjava
 	cav_msgs
 	cav_srvs
