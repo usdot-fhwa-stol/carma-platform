@@ -10,7 +10,12 @@ project(carmajava)
 ##############################################################################
 
 find_package(catkin REQUIRED rosjava_build_tools)
-
+find_package(catkin REQUIRED genjava)
+generate_rosjava_messages(
+  PACKAGES
+    cav_msgs
+    cav_srvs
+)
 # Set the gradle targets you want catkin's make to run by default, e.g.
 #   catkin_rosjava_setup(installApp)
 # Note that the catkin_create_rosjava_xxx scripts will usually automatically
