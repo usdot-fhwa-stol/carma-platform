@@ -9,8 +9,12 @@ project(carmajava)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED rosjava_build_tools)
-find_package(catkin REQUIRED genjava)
+find_package(catkin REQUIRED
+	rosjava_build_tools
+	genjava
+	cav_msgs
+	cav_srvs
+)
 generate_rosjava_messages(
   PACKAGES
     cav_msgs
