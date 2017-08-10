@@ -15,7 +15,7 @@ string      my_roadway_link
 
 # Host's current location on the link, according to the linear reference model (typically
 # centerline distance from one end of the link)
-float16     my_roadway_link_position
+float32     my_roadway_link_position
 
 # ID of the lane that host currently occupies
 uint8       my_lane_id

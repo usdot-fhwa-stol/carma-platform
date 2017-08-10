@@ -30,7 +30,7 @@ string      start_roadway_link
 # centerline distance from one end of the link) at which the maneuver will begin, meters.
 # This refers to the position of the plan originator (other participants will 
 # obviously be at a different position at that time).
-float16     start_roadway_originator_position
+float32     start_roadway_originator_position
 
 # lane that the originator will be in (on the indicated start_roadway_link) when this
 # maneuver is to begin.
@@ -38,4 +38,4 @@ uint8       start_roadway_lane_id
 
 # anticipated length of the maneuver - how much distance will be covered from 
 # beginning to end, meters
-float16     length
+float32     length
