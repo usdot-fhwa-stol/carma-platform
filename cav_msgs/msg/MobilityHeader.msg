@@ -11,7 +11,7 @@ string      sender_id
 string      recipient_id
 
 # a random value that identifies this particular plan for future reference
-unit16      plan_id
+uint16      plan_id
 
 # a simple 2s complement checksum of all fields in the message except the checksum itself
 uint16      checksum
