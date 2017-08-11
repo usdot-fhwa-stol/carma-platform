@@ -16,7 +16,7 @@
 
 //TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
 //Originally "com.github.rosjava.carmajava.template;"
-package gov.dot.fhwa.saxton.carmajava.template;
+package gov.dot.fhwa.saxton.carmajava.negotiator;
 
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
@@ -34,18 +34,17 @@ import org.ros.namespace.NameResolver;
 import org.ros.message.MessageFactory;
 
 /**
- * A simple {@link Publisher} {@link NodeMain}.
- * <p>
- * Replace PubSub with the node name on Column D but using CamelCase.
+ * The Negotiator package responsibility is to manage the details of negotiating tactical and strategic
+ * agreements between the host vehicle and any other transportation system entities.
+  * <p>
  *
- * Command line test: rosrun carmajava template gov.dot.fhwa.saxton.carmajava.template.NodeName
+ * Command line test: rosrun carmajava negotiator gov.dot.fhwa.saxton.carmajava.negotiator.NegotiatorMgr
  */
-public class NodeName extends AbstractNodeMain {
+public class NegotiatorMgr extends AbstractNodeMain {
 
-  //TODO: Replace with Column D node name
   @Override
   public GraphName getDefaultNodeName() {
-    return GraphName.of("node_name");
+    return GraphName.of("negotiator_mgr");
   }
 
   @Override
@@ -53,7 +52,6 @@ public class NodeName extends AbstractNodeMain {
 
     final Log log = connectedNode.getLog();
 
-    //TODO: Column G topic name
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
     Subscriber<cav_msgs.SystemAlert> subscriber = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
 
@@ -83,14 +81,12 @@ public class NodeName extends AbstractNodeMain {
                                           messageTypeFullDescription = "I am NOT Ready! ";
                                       }
 
-                                      //TODO: Replace with Column D node name
-                                      log.info("node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+                                      log.info("negotiator_mgr heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
 
                                     }//onNewMessage
                                   }//MessageListener
     );//addMessageListener
 
-    //TODO: Column G topic name
     final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
       connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
 
@@ -113,9 +109,8 @@ public class NodeName extends AbstractNodeMain {
                                            @Override
                                            protected void loop() throws InterruptedException {
 
-                                             //TODO: Replace with column D node name
                                              cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-                                             systemAlertMsg.setDescription("Hello World! " + "I am node_name. " + sequenceNumber + " run_id = " + rosRunID + ".");
+                                             systemAlertMsg.setDescription("Hello World! " + "I am negotiator_mgr. " + sequenceNumber + " run_id = " + rosRunID + ".");
                                              systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
                                              systemAlertPublisher.publish(systemAlertMsg);
