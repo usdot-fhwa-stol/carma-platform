@@ -41,6 +41,9 @@ import org.ros.message.MessageFactory;
 /**
  * ROS Node which maintains a description of the roadway geometry and obstacles while the STOL CARMA platform is in operation
  * <p>
+ *
+ * Command line test: rosrun carmajava roadway gov.dot.fhwa.saxton.carmajava.roadway.EnvironmentManager
+ */
  */
 public class EnvironmentManager extends AbstractNodeMain {
 

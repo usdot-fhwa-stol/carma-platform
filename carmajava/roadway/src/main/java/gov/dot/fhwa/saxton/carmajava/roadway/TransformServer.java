@@ -40,6 +40,8 @@ import org.ros.exception.ServiceNotFoundException;
  * ROS Node which maintains a tf2 transform tree which can be accessed by other nodes which do not maintain internal trees.
  * The get_transform service can be used to optain coordinate transformations between two frames
  * <p>
+ *
+ *   Command line test: rosrun carmajava roadway gov.dot.fhwa.saxton.carmajava.roadway.TransformServer
  */
 public class TransformServer extends AbstractNodeMain {
 
