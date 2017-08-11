@@ -16,7 +16,7 @@
 
 //TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
 //Originally "com.github.rosjava.carmajava.template;"
-package gov.dot.fhwa.saxton.carmajava.template;
+package gov.dot.fhwa.saxton.carmajava.message;
 
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
@@ -34,18 +34,16 @@ import org.ros.namespace.NameResolver;
 import org.ros.message.MessageFactory;
 
 /**
- * A simple {@link Publisher} {@link NodeMain}.
+ * The Message package is part of the Vehicle Environment package. It processes all V2V and V2I messages coming from Drivers.Comms ROS node.
  * <p>
- * Replace PubSub with the node name on Column D but using CamelCase.
  *
- * Command line test: rosrun carmajava template gov.dot.fhwa.saxton.carmajava.template.NodeName
+ *  Command line test: rosrun carmajava message gov.dot.fhwa.saxton.carmajava.message.MessageConsumer
  */
-public class NodeName extends AbstractNodeMain {
+public class MessageConsumer extends AbstractNodeMain {
 
-  //TODO: Replace with Column D node name
   @Override
   public GraphName getDefaultNodeName() {
-    return GraphName.of("node_name");
+    return GraphName.of("message_consumer");
   }
 
   @Override
@@ -53,7 +51,6 @@ public class NodeName extends AbstractNodeMain {
 
     final Log log = connectedNode.getLog();
 
-    //TODO: Column G topic name
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
     Subscriber<cav_msgs.SystemAlert> subscriber = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
 
@@ -83,14 +80,12 @@ public class NodeName extends AbstractNodeMain {
                                           messageTypeFullDescription = "I am NOT Ready! ";
                                       }
 
-                                      //TODO: Replace with Column D node name
-                                      log.info("node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+                                      log.info("message_consumer heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
 
                                     }//onNewMessage
                                   }//MessageListener
     );//addMessageListener
 
-    //TODO: Column G topic name
     final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
       connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
 
@@ -113,9 +108,8 @@ public class NodeName extends AbstractNodeMain {
                                            @Override
                                            protected void loop() throws InterruptedException {
 
-                                             //TODO: Replace with column D node name
                                              cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-                                             systemAlertMsg.setDescription("Hello World! " + "I am node_name. " + sequenceNumber + " run_id = " + rosRunID + ".");
+                                             systemAlertMsg.setDescription("Hello World! " + "I am message_consumer. " + sequenceNumber + " run_id = " + rosRunID + ".");
                                              systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
                                              systemAlertPublisher.publish(systemAlertMsg);

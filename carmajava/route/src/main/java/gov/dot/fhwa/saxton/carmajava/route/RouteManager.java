@@ -40,6 +40,7 @@ import org.ros.exception.ServiceNotFoundException;
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
  * <p>
  *
+ * Command line test: rosrun carmajava route gov.dot.fhwa.saxton.carmajava.route.RouteManager
  */
 public class RouteManager extends AbstractNodeMain {
 
