@@ -35,6 +35,7 @@
     <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
 
     <!-- ROS Bridge -->
+    <!-- TODO: Determine proper remapping for rosbridge params -->
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
       <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
     </include>
@@ -43,7 +44,7 @@
     <group ns="$(arg GUIDE_NS)">
       <!-- Guidance Main Node -->
       <node pkg="carmajava" type="guidance" name="guidance_main"
-            args="gov.dot.fhwa.saxton.carmajava.guidance.Talker">
+            args="gov.dot.fhwa.saxton.carmajava.guidance.GuidanceMain">
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
@@ -94,7 +95,7 @@
 
         <!-- Message Consumer Node -->
         <node pkg="carmajava" type="message" name="message_consumer"
-              args="gov.dot.fhwa.saxton.carmajava.message.Listener">
+              args="gov.dot.fhwa.saxton.carmajava.message.MessageConsumer">
           <remap from="host_bsm"
                  to="/$(arg TOP_NS)/$(arg GUIDE_NS)/tracking/bsm"/>
           <remap from="mobility_ack_outbound"
@@ -115,7 +116,10 @@
 
         <!-- Negotiator Node -->
         <node pkg="carmajava" type="negotiator" name="negotiator_mgr"
-              args="gov.dot.fhwa.saxton.carmajava.negotiator.Talker">
+              args="gov.dot.fhwa.saxton.carmajava.negotiator.NegotiatorMgr">
+
+          <remap from="system_alert"
+                 to="/$(arg TOP_NS)/system_alert"/>
           <remap from="host_bsm"
                  to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
           <remap from="mobility_ack_inbound"
@@ -136,7 +140,10 @@
 
         <!-- Sensor Fusion Node -->
         <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
-          <remap from="bsm" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
+          <remap from="system_alert"
+                 to="/$(arg TOP_NS)/system_alert"/>
+          <remap from="bsm"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
         </node>
       </group>
 
@@ -145,7 +152,9 @@
 
         <!-- Environment Manager Node -->
         <node pkg="carmajava" type="roadway" name="environment_manager"
-              args="gov.dot.fhwa.saxton.carmajava.roadway.Talker">
+              args="gov.dot.fhwa.saxton.carmajava.roadway.EnvironmentManager">
+          <remap from="system_alert"
+                 to="/$(arg TOP_NS)/system_alert"/>
           <remap from="map"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/map"/>
           <remap from="route_current_segment"
@@ -168,7 +177,10 @@
 
         <!-- Transform Server Node -->
         <node pkg="carmajava" type="roadway" name="transform_server"
-              args="gov.dot.fhwa.saxton.carmajava.roadway.Talker"/>
+              args="gov.dot.fhwa.saxton.carmajava.roadway.TransformServer">
+          <remap from="system_alert"
+                 to="/$(arg TOP_NS)/system_alert"/>
+        </node>
       </group>
 
       <!-- Route Package -->
@@ -176,9 +188,11 @@
 
         <!-- Route Manager Node -->
         <node pkg="carmajava" type="route" name="route_manager"
-              args="gov.dot.fhwa.saxton.carmajava.route.Talker">
+              args="gov.dot.fhwa.saxton.carmajava.route.RouteManager">
           <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
 
+          <remap from="system_alert"
+                 to="/$(arg TOP_NS)/system_alert"/>
           <remap from="tim"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/tim"/>
           <remap from="nav_sat_fix"
@@ -192,7 +206,10 @@
 
       <!-- Interface Manager Node -->
       <node pkg="carmajava" type="interfacemgr" name="interface_mgr"
-            args="gov.dot.fhwa.saxton.carmajava.interfacemgr.Talker">
+            args="gov.dot.fhwa.saxton.carmajava.interfacemgr.InterfaceMgr">
+
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
         <remap from="tim"
                to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
       </node>
@@ -201,9 +218,11 @@
     <!-- Drivers Package -->
     <group ns="$(arg DRIVER_NS)">
 
+      <remap from="system_alert"
+             to="/$(arg TOP_NS)/system_alert"/>
       <!-- Arada OBU Driver Node -->
-      <node pkg="carmajava" type="route" name="arada_application"
-            args="gov.dot.fhwa.saxton.carmajava.route.Talker">
+      <node pkg="carmajava" type="template" name="arada_application"
+            args="gov.dot.fhwa.saxton.carmajava.template.NodeName">
         <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
       </node>
 
@@ -213,20 +232,20 @@
       </node>
 
       <!-- SRX CAN Driver Node -->
-      <node pkg="carmajava" type="route" name="srx_can_application"
-            args="gov.dot.fhwa.saxton.carmajava.route.Talker">
+      <node pkg="carmajava" type="template" name="srx_can_application"
+            args="gov.dot.fhwa.saxton.carmajava.template.NodeName">
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       </node>
 
       <!--SRX Controller Driver Node-->
-      <node pkg="carmajava" type="route" name="srx_application"
-            args="gov.dot.fhwa.saxton.carmajava.route.Talker">
+      <node pkg="carmajava" type="template" name="srx_application"
+            args="gov.dot.fhwa.saxton.carmajava.template.NodeName">
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
       </node>
 
       <!-- SRX Radar Driver Node -->
-      <node pkg="carmajava" type="route" name="srx_object_application"
-            args="gov.dot.fhwa.saxton.carmajava.route.Talker">
+      <node pkg="carmajava" type="template" name="srx_object_application"
+            args="gov.dot.fhwa.saxton.carmajava.template.NodeName">
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
       </node>
     </group>
