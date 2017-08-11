@@ -28,7 +28,7 @@ import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 
 /**
- * ROS Node which handles route loading,selection, and tracking for the STOL CARMA platform.
+ * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
  * <p>
  *
  */
@@ -44,26 +44,50 @@ public class RouteManager extends AbstractNodeMain {
 
     /// Topics
     // Publishers
-    final Publisher<cav_msgs.SystemAlert> system_alert_pub =
+    final Publisher<cav_msgs.SystemAlert> systemAlertPub =
       connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
-    final Publisher<cav_msgs.RouteSegment> segment_pub =
+    final Publisher<cav_msgs.RouteSegment> segmentPub =
       connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
-    final Publisher<cav_msgs.Route> route_pub =
+    final Publisher<cav_msgs.Route> routePub =
       connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
-    final Publisher<cav_msgs.RouteState> route_state_pub =
+    final Publisher<cav_msgs.RouteState> routeStatePub =
       connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
 
     // Subscribers
-    Subscriber<cav_msgs.Tim> tim_sub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE);
-    Subscriber<sensor_msgs.NavSatFix> gps_sub =
+    //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
+    Subscriber<sensor_msgs.NavSatFix> gpsSub =
       connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
-    Subscriber<cav_msgs.SystemAlert> alert_sub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
-    subscriber.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
+    Subscriber<cav_msgs.SystemAlert> alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+    alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
       @Override
-      public void onNewMessage(cav_msgs.SystemAlert alertMsg) {
-        log.info("RouteManager heard system alert: \"" + alertMsg.getData() + "\"");
-      }
-    });
+      public void onNewMessage(cav_msgs.SystemAlert message) {
+
+        String messageTypeFullDescription = "NA";
+
+        switch (message.getType()) {
+          case cav_msgs.SystemAlert.CAUTION:
+            messageTypeFullDescription = "Take caution! ";
+            break;
+          case cav_msgs.SystemAlert.WARNING:
+            messageTypeFullDescription = "I have a warning! ";
+            break;
+          case cav_msgs.SystemAlert.FATAL:
+            messageTypeFullDescription = "I am FATAL! ";
+            break;
+          case cav_msgs.SystemAlert.NOT_READY:
+            messageTypeFullDescription = "I am NOT Ready! ";
+            break;
+          case cav_msgs.SystemAlert.SYSTEM_READY:
+            messageTypeFullDescription = "I am Ready! ";
+            break;
+          default:
+            messageTypeFullDescription = "I am NOT Ready! ";
+        }
+
+        log.info("route_manager heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+
+      }//onNewMessage
+    });//addMessageListener
 
     // Services
     // Server
@@ -85,8 +109,9 @@ public class RouteManager extends AbstractNodeMain {
         });
 
     // Parameters
-    ParameterTree params = connectedNode.newParameterTree();
-
+    ParameterTree params = connectedNode.getParameterTree();
+    //Getting the ros param called run_id.
+    final String rosRunID = params.getString("/run_id");
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
@@ -96,11 +121,13 @@ public class RouteManager extends AbstractNodeMain {
       }//setup
 
       @Override protected void loop() throws InterruptedException {
-        cav_msgs.SystemAlert alertMsg = system_alert_pub.newMessage();
-        alertMsg.setData("RouteManager providing system alert");
-        system_alert_pub.publish(alertMsg);
+        cav_msgs.SystemAlert systemAlertMsg = systemAlertPub.newMessage();
+        systemAlertMsg.setDescription("Hello World! " + "I am route_manager. " + sequenceNumber + " run_id = " + rosRunID + ".");
+        systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
-        log.info("RouteManager DatabasePath Param" + params.getString("~/default_database_path"))
+        systemAlertPublisher.publish(systemAlertMsg);
+
+        //log.info("RouteManager DatabasePath Param" + params.getString("~/default_database_path"))
         Thread.sleep(1000);
       }
     }//CancellableLoop
