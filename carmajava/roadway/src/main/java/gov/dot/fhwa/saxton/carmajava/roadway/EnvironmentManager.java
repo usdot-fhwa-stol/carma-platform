@@ -106,11 +106,11 @@ public class EnvironmentManager extends AbstractNodeMain {
 
     // Used Services
     ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient;
-    try {
-      getTransformClient = connectedNode.newServiceClient("get_transform", cav_srvs.GetTransform._TYPE);
-    } catch (ServiceNotFoundException e) {
-      throw new RosRuntimeException(e);
-    }
+//    try {
+//      getTransformClient = connectedNode.newServiceClient("get_transform", cav_srvs.GetTransform._TYPE);
+//    } catch (ServiceNotFoundException e) {
+//      throw new RosRuntimeException(e);
+//    }
 
     //Getting the ros param called run_id. TODO: Remove after rosnetwork validation
     ParameterTree param = connectedNode.getParameterTree();
