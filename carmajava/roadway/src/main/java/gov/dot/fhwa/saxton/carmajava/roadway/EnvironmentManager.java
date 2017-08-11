@@ -43,8 +43,7 @@ import org.ros.message.MessageFactory;
  * <p>
  *
  * Command line test: rosrun carmajava roadway gov.dot.fhwa.saxton.carmajava.roadway.EnvironmentManager
- */
- */
+ **/
 public class EnvironmentManager extends AbstractNodeMain {
 
   @Override
