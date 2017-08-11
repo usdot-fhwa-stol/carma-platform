@@ -39,7 +39,7 @@ your build environment should be complete.
 
 ## Installation
 To install the CAV Prototype Platform to your local ROS environment follow the
-instructions in the [Build Environment Config](#catkin-workspace-config) section
+instructions in the [Catkin Workspace Config](#catkin-workspace-config) section
 then run the following command in the root of your Catkin workspace:
 
 `catkin_make install`

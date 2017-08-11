@@ -34,5 +34,5 @@ To setup the CAV Prototype Platform build environment you must do the following:
 The Catkin build procedure may take some time but after the completion of 6, 
 your build environment should be complete.
 
-For more instructions on building and installing, please read [[BUILD_WORKFLOW.md](docs/BUILD_WORKFLOW.md)
+For more instructions on building and installing, please read [BUILD_WORKFLOW.md](docs/BUILD_WORKFLOW.md)
 
