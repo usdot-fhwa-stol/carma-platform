@@ -7,12 +7,22 @@ CircleCI: [![CircleCI](https://circleci.com/gh/fhwa-saxton/CarmaPlatform.svg?sty
 The CAV Prototype Platform is intended to be built in an Ubuntu 16.04 Xenial Xerus environment installed with ROS Kinetic Kame desktop version. Prebuilt images 
 containing a base-line configuration of this system are available upon request. 
 
+### Dependencies
+The following are known dependencies of the CAV Prototype Platform and must becomeinstall before building is possible:
+
+ros-kinetic-desktop-full
+ros-kinetic-rosjava
+
 ## Catkin Workspace Config
 To setup the CAV Prototype Platform build environment you must do the following:
 
 1. Ensure that you have configured your ROS environment by sourcing the appropriate scripts for your shell. 
 
-`source /opt/ros/kinetic/setup.<SHELL_NAME>`
+`source /opt/ros/kinetic/setup.<shell_name>`
+
+If you installed rosjava from source, be sure to also source the appropriate script for your shell
+
+`source <path_to_rosjava>/devel/setup.<shell_name>`
 
 2. Create a Catkin workspace in a location of your choosing and then enter that directory
 
@@ -32,7 +42,7 @@ To setup the CAV Prototype Platform build environment you must do the following:
 
 6. Exec the newly generated Catkin build environment script for your shell
 
-`source devel/setup.<SHELL_NAME>`
+`source devel/setup.<shell_name>`
 
 The Catkin build procedure may take some time but after the completion of 6, 
 your build environment should be complete.
