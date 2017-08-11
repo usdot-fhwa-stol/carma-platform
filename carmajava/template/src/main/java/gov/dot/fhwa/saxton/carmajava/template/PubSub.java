@@ -60,6 +60,9 @@ public class PubSub extends AbstractNodeMain {
                                       }//MessageListener
         );//addMessageListener
 
+	// Example cav_msgs
+	Subscriber<cav_msgs.BSM> bsm_sub = connectedNode.newSubscriber("bsm", cav_msgs.BSM._TYPE);
+
         //TODO: Column G topic name
         final Publisher<std_msgs.String> publisher =
                 connectedNode.newPublisher("template", std_msgs.String._TYPE);

@@ -75,6 +75,9 @@ public class ServerClient extends AbstractNodeMain {
       throw new RosRuntimeException(e);
     }
 
+    // Example cav_srvs
+    final ServiceClient<cav_srvs.GetActivePluginsRequest, cav_srvs.GetActivePluginsResponse> pluginsClient;
+
     // This CancellableLoop will be canceled automatically when the node shuts down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       private int sequenceNumber;

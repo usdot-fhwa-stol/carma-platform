@@ -47,12 +47,6 @@
   <build_depend>cav_msgs</build_depend>
   <build_depend>cav_srvs</build_depend>
   <build_depend>rosjava_messages</build_depend>
-  <!--
-  <run_depend>message_generation</run_depend>
-  <run_depend>message_runtime</run_depend>
-  <run_depend>cav_msgs</run_depend>
-  <run_depend>cav_srvs</run_depend>
--->
 
 
 
