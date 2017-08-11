@@ -19,13 +19,22 @@ package gov.dot.fhwa.saxton.carmajava.route;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
-
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
+import org.ros.node.parameter.ParameterTree;
+import org.ros.namespace.NameResolver;
+import org.ros.message.MessageFactory;
+import org.ros.node.service.ServiceClient;
+import org.ros.node.service.ServiceServer;
+import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.service.ServiceResponseListener;
+import org.ros.exception.RemoteException;
+import org.ros.exception.RosRuntimeException;
+import org.ros.exception.ServiceNotFoundException;
 
 /**
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
@@ -114,6 +123,8 @@ public class RouteManager extends AbstractNodeMain {
     final String rosRunID = params.getString("/run_id");
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
+
+    
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       private int sequenceNumber;
       @Override protected void setup() {
@@ -125,7 +136,7 @@ public class RouteManager extends AbstractNodeMain {
         systemAlertMsg.setDescription("Hello World! " + "I am route_manager. " + sequenceNumber + " run_id = " + rosRunID + ".");
         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
-        systemAlertPublisher.publish(systemAlertMsg);
+        systemAlertPub.publish(systemAlertMsg);
 
         //log.info("RouteManager DatabasePath Param" + params.getString("~/default_database_path"))
         Thread.sleep(1000);
