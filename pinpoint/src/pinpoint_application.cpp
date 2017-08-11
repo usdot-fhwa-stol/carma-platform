@@ -84,7 +84,7 @@ void PinPointApplication::initialize() {
     pinpoint_.onConnect.connect([this]() { onConnectHandler(); });
     pinpoint_.onDisconnect.connect([this]() { onDisconnectHandler(); });
 
-    server.setCallback([this](pinpoint::PinPointConfig& cfg, uint32_t level){ dynReconfigCB(cfg,level);});
+    server.setCallback([this](pinpoint::pinpointConfig& cfg, uint32_t level){ dynReconfigCB(cfg,level);});
 
     //Setup the API publishers
     std::string node_name = ros::this_node::getName();
@@ -438,7 +438,7 @@ void PinPointApplication::post_spin() {
     //We don't have anything to do
 }
 
-void PinPointApplication::dynReconfigCB(pinpoint::PinPointConfig& cfg, uint32_t level)
+void PinPointApplication::dynReconfigCB(pinpoint::pinpointConfig& cfg, uint32_t level)
 {
     if(config_.address != cfg.address || config_.loc_port != cfg.loc_port)
     {

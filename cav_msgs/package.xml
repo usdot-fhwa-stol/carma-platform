@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>cav_msgs</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>The cav_msgs package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
@@ -43,8 +43,9 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>std_msgs</build_depend>
-  <run_depend>message_runtime</run_depend>
+  
   <run_depend>message_generation</run_depend>
+  <run_depend>message_runtime</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
 
