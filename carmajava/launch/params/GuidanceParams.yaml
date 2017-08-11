@@ -1,0 +1,19 @@
+# Guidance.yaml
+# Defines the ros parameters which are required by the Guidance Package
+
+# Integer: Host vehicle’s the automation level
+automation_level: 2
+
+# Integer: Host vehicle’s communication class level
+communication_class_level: 1
+
+# Integer: Host vehicle’s cooperation level
+cooperation_level: 1
+
+# Double: Host vehicle maximum acceleration capability
+# Units: m/s^2
+max_acceleration_capability: 2.0
+
+# Double: Host vehicle maximum deceleration capability
+# Units: m/s^2
+max_deceleration_capability: 1.0
