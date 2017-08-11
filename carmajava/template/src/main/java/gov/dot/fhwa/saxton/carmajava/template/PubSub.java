@@ -29,76 +29,69 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 
-import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-
 /**
  * A simple {@link Publisher} {@link NodeMain}.
- * <p>
+ *
  * Replace PubSub with the node name on Column D but using CamelCase.
  */
 public class PubSub extends AbstractNodeMain {
 
-  //TODO: Replace with Column D node name
-  @Override
-  public GraphName getDefaultNodeName() {
-    return GraphName.of("pub_sub");
-  }
+    //TODO: Replace with Column D node name
+    @Override
+    public GraphName getDefaultNodeName() {
+        return GraphName.of("pub_sub");
+    }
 
-  @Override
-  public void onStart(final ConnectedNode connectedNode) {
+    @Override
+    public void onStart(final ConnectedNode connectedNode) {
 
-    final Log log = connectedNode.getLog();
+        final Log log = connectedNode.getLog();
 
-    //TODO: Column G topic name
-    // Currently setup to listen to it's own message. Change to listen to someone other topic.
-    Subscriber<std_msgs.String> subscriber = connectedNode.newSubscriber("template", std_msgs.String._TYPE);
+        //TODO: Column G topic name
+        // Currently setup to listen to it's own message. Change to listen to someone other topic.
+        Subscriber<std_msgs.String> subscriber = connectedNode.newSubscriber("template", std_msgs.String._TYPE);
 
-    subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
-                                    @Override
-                                    public void onNewMessage(std_msgs.String message) {
-                                      //TODO: Replace with Column D node name
-                                      log.info("pub_sub heard: \"" + message.getData() + "\"");
-                                    }//onNewMessage
-                                  }//MessageListener
-    );//addMessageListener
+        subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
+                                          @Override
+                                          public void onNewMessage(std_msgs.String message) {
+                                              //TODO: Replace with Column D node name
+                                              log.info("pub_sub heard: \"" + message.getData() + "\"");
+                                          }//onNewMessage
+                                      }//MessageListener
+        );//addMessageListener
 
-    //TODO: Column G topic name
-    final Publisher<std_msgs.String> publisher =
-      connectedNode.newPublisher("template", std_msgs.String._TYPE);
+	// Example cav_msgs
+	Subscriber<cav_msgs.BSM> bsm_sub = connectedNode.newSubscriber("bsm", cav_msgs.BSM._TYPE);
 
-
-    //Getting the ros param called run_id.
-    ParameterTree param = connectedNode.getParameterTree();
-    final String rosRunID = param.getString("/run_id");
-    //params.setString("~/param_name", “test_string”);
-
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
-    connectedNode.executeCancellableLoop(new CancellableLoop() {
-                                           private int sequenceNumber;
-
-                                           @Override
-                                           protected void setup() {
-                                             sequenceNumber = 0;
-                                           }//setup
-
-                                           @Override
-                                           protected void loop() throws InterruptedException {
-                                             std_msgs.String str = publisher.newMessage();
-                                             //TODO: Replace with Column D node name
+        //TODO: Column G topic name
+        final Publisher<std_msgs.String> publisher =
+                connectedNode.newPublisher("template", std_msgs.String._TYPE);
 
 
-                                             str.setData("Hello World! " + "I am pub_sub. " + sequenceNumber + " run_id = " + rosRunID);
-                                             publisher.publish(str);
-                                             sequenceNumber++;
-                                             Thread.sleep(1000);
-                                           }//loop
+        // This CancellableLoop will be canceled automatically when the node shuts
+        // down.
+        connectedNode.executeCancellableLoop(new CancellableLoop() {
+                                                 private int sequenceNumber;
 
-                                         }//CancellableLoop
-    );//executeCancellableLoop
+                                                 @Override
+                                                 protected void setup() {
+                                                     sequenceNumber = 0;
+                                                 }//setup
+
+                                                 @Override
+                                                 protected void loop() throws InterruptedException {
+                                                     std_msgs.String str = publisher.newMessage();
+                                                     //TODO: Replace with Column D node name
+                                                     str.setData("Hello World! " + "I am pub_sub. " + sequenceNumber);
+                                                     publisher.publish(str);
+                                                     sequenceNumber++;
+                                                     Thread.sleep(1000);
+                                                 }//loop
+
+                                             }//CancellableLoop
+        );//executeCancellableLoop
 
 
-  }//onStart
+    }//onStart
 }//AbstractNodeMain
 

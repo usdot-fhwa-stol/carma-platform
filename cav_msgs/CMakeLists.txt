@@ -9,7 +9,6 @@ add_compile_options(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   message_generation
-  message_runtime
   std_msgs
   geometry_msgs
 )
@@ -113,7 +112,7 @@ generate_messages(
 catkin_package(
  # INCLUDE_DIRS include
 #  LIBRARIES cav_msgs
- CATKIN_DEPENDS message_generation std_msgs geometry_msgs
+ CATKIN_DEPENDS message_runtime std_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 
