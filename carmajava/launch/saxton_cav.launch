@@ -17,57 +17,67 @@
   <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
   <arg name="URDF_FILE" value="$(find carmajava)/launch/urdf/saxton_cav_green_srx.urdf"/>
   <!-- ROS Namespaces -->
-  <arg name="TOP_NS" value="saxton_cav"/>
-  <arg name="GUIDE_NS" value="guidance"/>
-  <arg name="VE_NS" value="vehicle_environment"/>
-  <arg name="NEGTR_NS" value="negotiator"/>
-  <arg name="MSG_NS" value="message"/>
-  <arg name="SF_NS" value="sensor_fusion"/>
-  <arg name="RD_NS" value="roadway"/>
-  <arg name="RT_NS" value="route"/>
+  <arg name="TOP_NS"    value="saxton_cav"/>
+  <arg name="GUIDE_NS"  value="guidance"/>
+  <arg name="VE_NS"     value="vehicle_environment"/>
+  <arg name="NEGTR_NS"  value="negotiator"/>
+  <arg name="MSG_NS"    value="message"/>
+  <arg name="SF_NS"     value="sensor_fusion"/>
+  <arg name="RD_NS"     value="roadway"/>
+  <arg name="RT_NS"     value="route"/>
   <arg name="DRIVER_NS" value="drivers"/>
-  <arg name="INTR_NS" value="interface_manager"/>
+  <arg name="INTR_NS"   value="interface_manager"/>
 
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
 
-  	<!-- Load Vehicle Characteristics -->
-  	<rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml" />
+    <!-- Load Vehicle Characteristics -->
+    <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
 
     <!-- Guidance Package -->
     <group ns="$(arg GUIDE_NS)">
       <!-- Guidance Main Node -->
-      <node pkg="carmajava" type="guidance" name="guidance_main" args="com.github.rosjava.carmajava.guidance.Talker">
+      <node pkg="carmajava" type="guidance" name="guidance_main"
+            args="com.github.rosjava.carmajava.guidance.Talker">
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
 
-        <remap from="system_alert" to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="get_drivers_with_capabilities" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-        <remap from="new_plan_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>
-        <remap from="plan_status" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/plan_status"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="get_drivers_with_capabilities"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        <remap from="new_plan_inbound"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>
+        <remap from="plan_status"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/plan_status"/>
 
         <!-- Arbitrator Thread-->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Tracking Thread-->
-        <remap from="heading" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
-        <remap from="nav_sat_fix" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+        <remap from="heading"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
+        <remap from="nav_sat_fix"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
         <remap from="velocity" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
 
         <!-- Trajectory Thread-->
-        <remap from="get_drivers_with_capabilities" to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        <remap from="get_drivers_with_capabilities"
+               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
 
         <!-- Trajectory and Arbitrator -->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Maneuvers Thread-->
-        <remap from="roadway_environment" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/roadway_environment"/>
-        <remap from="route" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route"/>
+        <remap from="roadway_environment"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/roadway_environment"/>
+        <remap from="route"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route"/>
 
         <!-- Plugin Cruising Thread-->
-        <remap from="get_available_routes" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>
-
+        <remap from="get_available_routes"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>
       </node>
     </group>
 
@@ -78,13 +88,20 @@
       <group ns="$(arg MSG_NS)">
 
         <!-- Message Consumer Node -->
-        <node pkg="carmajava" type="message" name="message_consumer" args="com.github.rosjava.carmajava.message.Listener">
-          <remap from="host_bsm" to="/$(arg TOP_NS)/$(arg GUIDE_NS)/tracking/bsm"/>
-          <remap from="mobility_ack_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_ack"/>
-          <remap from="mobility_greeting_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_greeting"/>
-          <remap from="mobility_intro_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_intro"/>
-          <remap from="mobility_nack_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_nack"/>
-          <remap from="mobility_plan_outbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_plan"/>
+        <node pkg="carmajava" type="message" name="message_consumer"
+              args="com.github.rosjava.carmajava.message.Listener">
+          <remap from="host_bsm"
+                 to="/$(arg TOP_NS)/$(arg GUIDE_NS)/tracking/bsm"/>
+          <remap from="mobility_ack_outbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_ack"/>
+          <remap from="mobility_greeting_outbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_greeting"/>
+          <remap from="mobility_intro_outbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_intro"/>
+          <remap from="mobility_nack_outbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_nack"/>
+          <remap from="mobility_plan_outbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_plan"/>
         </node>
       </group>
 
@@ -92,13 +109,20 @@
       <group ns="$(arg NEGTR_NS)">
 
         <!-- Negotiator Node -->
-        <node pkg="carmajava" type="negotiator" name="negotiator_mgr" args="com.github.rosjava.carmajava.negotiator.Talker">
-          <remap from="host_bsm" to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
-          <remap from="mobility_ack_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_ack"/>
-          <remap from="mobility_greeting_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_greeting"/>
-          <remap from="mobility_intro_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_intro"/>
-          <remap from="mobility_nack_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_nack"/>
-          <remap from="mobility_plan_inbound" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_plan"/>
+        <node pkg="carmajava" type="negotiator" name="negotiator_mgr"
+              args="com.github.rosjava.carmajava.negotiator.Talker">
+          <remap from="host_bsm"
+                 to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
+          <remap from="mobility_ack_inbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_ack"/>
+          <remap from="mobility_greeting_inbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_greeting"/>
+          <remap from="mobility_intro_inbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_intro"/>
+          <remap from="mobility_nack_inbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_nack"/>
+          <remap from="mobility_plan_inbound"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_plan"/>
         </node>
       </group>
 
@@ -115,31 +139,45 @@
       <group ns="$(arg RD_NS)">
 
         <!-- Environment Manager Node -->
-        <node pkg="carmajava" type="roadway" name="environment_manager" args="com.github.rosjava.carmajava.roadway.Talker">
-          <remap from="map" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/map"/>
-          <remap from="route_current_segment" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/current_segment"/>
-          <remap from="heading" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
-          <remap from="nav_sat_fix" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-          <remap from="odometry" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/odometry"/>
-          <remap from="tracked_objects" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_objects"/>
-          <remap from="tracked_vehicles" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
-          <remap from="velocity" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
-          <remap from="getTransform" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/transform_server/getTransform"/>
+        <node pkg="carmajava" type="roadway" name="environment_manager"
+              args="com.github.rosjava.carmajava.roadway.Talker">
+          <remap from="map"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/map"/>
+          <remap from="route_current_segment"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/current_segment"/>
+          <remap from="heading"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
+          <remap from="nav_sat_fix"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+          <remap from="odometry"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/odometry"/>
+          <remap from="tracked_objects"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_objects"/>
+          <remap from="tracked_vehicles"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
+          <remap from="velocity"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
+          <remap from="getTransform"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/transform_server/getTransform"/>
         </node>
 
         <!-- Transform Server Node -->
-        <node pkg="carmajava" type="roadway" name="transform_server" args="com.github.rosjava.carmajava.roadway.Talker"/>
+        <node pkg="carmajava" type="roadway" name="transform_server"
+              args="com.github.rosjava.carmajava.roadway.Talker"/>
       </group>
 
       <!-- Route Package -->
       <group ns="$(arg RT_NS)">
 
         <!-- Route Manager Node -->
-        <node pkg="carmajava" type="route" name="route_manager" args="com.github.rosjava.carmajava.route.Talker">
-          <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml" />
+        <node pkg="carmajava" type="route" name="route_manager"
+              args="com.github.rosjava.carmajava.route.Talker">
+          <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
 
-          <remap from="tim" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/tim"/>
-          <remap from="nav_sat_fix" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/nav_sat_fix"/>
+          <remap from="tim"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/tim"/>
+          <remap from="nav_sat_fix"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/nav_sat_fix"/>
         </node>
       </group>
     </group>
@@ -147,38 +185,44 @@
     <!-- Interface Manager Package -->
     <group ns="$(arg INTR_NS)">
 
-        <!-- Interface Manager Node -->
-        <node pkg="carmajava" type="interfacemgr" name="interface_mgr" args="com.github.rosjava.carmajava.interfacemgr.Talker">
-          <remap from="tim" to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
-        </node>
+      <!-- Interface Manager Node -->
+      <node pkg="carmajava" type="interfacemgr" name="interface_mgr"
+            args="com.github.rosjava.carmajava.interfacemgr.Talker">
+        <remap from="tim"
+               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+      </node>
     </group>
 
     <!-- Drivers Package -->
     <group ns="$(arg DRIVER_NS)">
-      
+
       <!-- Arada OBU Driver Node -->
-      <node pkg="carmajava" type="route" name="arada_application" args="com.github.rosjava.carmajava.route.Talker">
-        <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml" />
+      <node pkg="carmajava" type="route" name="arada_application"
+            args="com.github.rosjava.carmajava.route.Talker">
+        <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
       </node>
 
       <!-- PinPoint Driver Node -->
       <node pkg="pinpoint" type="pinpoint_node" name="pin_point_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml" />
+        <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
       </node>
 
       <!-- SRX CAN Driver Node -->
-      <node pkg="carmajava" type="route" name="srx_can_application" args="com.github.rosjava.carmajava.route.Talker">
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml" />
+      <node pkg="carmajava" type="route" name="srx_can_application"
+            args="com.github.rosjava.carmajava.route.Talker">
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       </node>
 
       <!--SRX Controller Driver Node-->
-      <node pkg="carmajava" type="route" name="srx_application" args="com.github.rosjava.carmajava.route.Talker">
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml" />
+      <node pkg="carmajava" type="route" name="srx_application"
+            args="com.github.rosjava.carmajava.route.Talker">
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
       </node>
 
       <!-- SRX Radar Driver Node -->
-      <node pkg="carmajava" type="route" name="srx_object_application" args="com.github.rosjava.carmajava.route.Talker">
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml" />
+      <node pkg="carmajava" type="route" name="srx_object_application"
+            args="com.github.rosjava.carmajava.route.Talker">
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
       </node>
     </group>
 
@@ -187,11 +231,12 @@
     <!-- Earth -> Map Transform -->
     <!-- Identity Transform -->
     <!-- Arguments (x y z yaw pitch roll frame_id child_frame_id) -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="earth_map_transform_pub" args="0 0 0 0 0 0 earth map" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="earth_map_transform_pub"
+          args="0 0 0 0 0 0 earth map"/>
 
     <!-- Vehicle Transforms -->
-    <param name="robot_description" textfile="$(arg URDF_FILE)" />
+    <param name="robot_description" textfile="$(arg URDF_FILE)"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
-    
+
   </group>
 </launch>
