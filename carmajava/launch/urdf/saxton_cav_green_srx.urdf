@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <!-- Green Cadillac Robot Description File
     This file defines the static transformations of the CAV platform operating on the green cadillac.
+    These are only example values at this time.
 -->
 <robot name="saxton_cav_srx">
   <!-- Frames -->

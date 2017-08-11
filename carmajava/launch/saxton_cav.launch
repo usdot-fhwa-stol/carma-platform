@@ -38,7 +38,7 @@
     <group ns="$(arg GUIDE_NS)">
       <!-- Guidance Main Node -->
       <node pkg="carmajava" type="guidance" name="guidance_main"
-            args="com.github.rosjava.carmajava.guidance.Talker">
+            args="gov.dot.fhwa.saxton.carmajava.guidance.Talker">
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
@@ -89,7 +89,7 @@
 
         <!-- Message Consumer Node -->
         <node pkg="carmajava" type="message" name="message_consumer"
-              args="com.github.rosjava.carmajava.message.Listener">
+              args="gov.dot.fhwa.saxton.carmajava.message.Listener">
           <remap from="host_bsm"
                  to="/$(arg TOP_NS)/$(arg GUIDE_NS)/tracking/bsm"/>
           <remap from="mobility_ack_outbound"
@@ -110,7 +110,7 @@
 
         <!-- Negotiator Node -->
         <node pkg="carmajava" type="negotiator" name="negotiator_mgr"
-              args="com.github.rosjava.carmajava.negotiator.Talker">
+              args="gov.dot.fhwa.saxton.carmajava.negotiator.Talker">
           <remap from="host_bsm"
                  to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
           <remap from="mobility_ack_inbound"
@@ -140,7 +140,7 @@
 
         <!-- Environment Manager Node -->
         <node pkg="carmajava" type="roadway" name="environment_manager"
-              args="com.github.rosjava.carmajava.roadway.Talker">
+              args="gov.dot.fhwa.saxton.carmajava.roadway.Talker">
           <remap from="map"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/map"/>
           <remap from="route_current_segment"
@@ -163,7 +163,7 @@
 
         <!-- Transform Server Node -->
         <node pkg="carmajava" type="roadway" name="transform_server"
-              args="com.github.rosjava.carmajava.roadway.Talker"/>
+              args="gov.dot.fhwa.saxton.carmajava.roadway.Talker"/>
       </group>
 
       <!-- Route Package -->
@@ -171,7 +171,7 @@
 
         <!-- Route Manager Node -->
         <node pkg="carmajava" type="route" name="route_manager"
-              args="com.github.rosjava.carmajava.route.Talker">
+              args="gov.dot.fhwa.saxton.carmajava.route.Talker">
           <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
 
           <remap from="tim"
@@ -187,7 +187,7 @@
 
       <!-- Interface Manager Node -->
       <node pkg="carmajava" type="interfacemgr" name="interface_mgr"
-            args="com.github.rosjava.carmajava.interfacemgr.Talker">
+            args="gov.dot.fhwa.saxton.carmajava.interfacemgr.Talker">
         <remap from="tim"
                to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
       </node>
@@ -198,7 +198,7 @@
 
       <!-- Arada OBU Driver Node -->
       <node pkg="carmajava" type="route" name="arada_application"
-            args="com.github.rosjava.carmajava.route.Talker">
+            args="gov.dot.fhwa.saxton.carmajava.route.Talker">
         <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
       </node>
 
@@ -209,19 +209,19 @@
 
       <!-- SRX CAN Driver Node -->
       <node pkg="carmajava" type="route" name="srx_can_application"
-            args="com.github.rosjava.carmajava.route.Talker">
+            args="gov.dot.fhwa.saxton.carmajava.route.Talker">
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       </node>
 
       <!--SRX Controller Driver Node-->
       <node pkg="carmajava" type="route" name="srx_application"
-            args="com.github.rosjava.carmajava.route.Talker">
+            args="gov.dot.fhwa.saxton.carmajava.route.Talker">
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
       </node>
 
       <!-- SRX Radar Driver Node -->
       <node pkg="carmajava" type="route" name="srx_object_application"
-            args="com.github.rosjava.carmajava.route.Talker">
+            args="gov.dot.fhwa.saxton.carmajava.route.Talker">
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
       </node>
     </group>
