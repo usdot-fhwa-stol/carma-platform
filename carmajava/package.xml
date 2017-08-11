@@ -41,6 +41,13 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rosjava_build_tools</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>genjava</build_depend>
+  <build_depend>rosjava_messages</build_depend>
+  <build_depend>cav_msgs</build_depend>
+  <build_depend>cav_srvs</build_depend>
+  <build_depend>rosjava_messages</build_depend>
+
 
 
   <!-- The export tag contains other, unspecified, tags -->

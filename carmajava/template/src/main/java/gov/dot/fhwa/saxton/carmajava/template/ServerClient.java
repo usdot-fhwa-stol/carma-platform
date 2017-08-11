@@ -35,8 +35,9 @@ import org.ros.exception.ServiceNotFoundException;
  *
  * @author authorname@google.com (Damon Kohler)
  *
- * Replace PubSub with the node name on Column D but using CamelCase.
+ * Replace ServerClient with the node name on Column D but using CamelCase.
  *
+ * Command line test: rosrun carmajava template gov.dot.fhwa.saxton.carmajava.template.ServerClient
 */
 
 public class ServerClient extends AbstractNodeMain {
@@ -74,6 +75,9 @@ public class ServerClient extends AbstractNodeMain {
     } catch (ServiceNotFoundException e) {
       throw new RosRuntimeException(e);
     }
+
+    // Example cav_srvs
+    final ServiceClient<cav_srvs.GetActivePluginsRequest, cav_srvs.GetActivePluginsResponse> pluginsClient;
 
     // This CancellableLoop will be canceled automatically when the node shuts down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
