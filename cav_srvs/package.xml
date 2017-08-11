@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>cav_srvs</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>The cav_srvs package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
