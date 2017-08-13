@@ -151,33 +151,33 @@ public class MockDriver extends AbstractNodeMain {
         // Published
         final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub = connectedNode
           .newPublisher("~/control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
-        final Publisher<cav_msgs.RobotEnabled> enabledPub =
-          connectedNode.newPublisher("~/control/robot_enabled", cav_msgs.RobotEnabled._TYPE);
+//        final Publisher<cav_msgs.RobotEnabled> enabledPub =
+//          connectedNode.newPublisher("~/control/robot_enabled", cav_msgs.RobotEnabled._TYPE);
 
         // Subscribed
-        Subscriber<std_msgs.Float32> subscriber =
+        Subscriber<std_msgs.Float32> longEffortSub =
           connectedNode.newSubscriber("~/control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
-        Subscriber<cav_msgs.SpeedAccel> subscriber =
-          connectedNode.newSubscriber("~/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
+//        Subscriber<cav_msgs.SpeedAccel> subscriber =
+//          connectedNode.newSubscriber("~/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
 
         // Services
         // Server
-        ServiceServer<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse> getLightsService =
-          connectedNode.newServiceServer("~/control/get_lights", cav_srvs.GetLights._TYPE,
-            new ServiceResponseBuilder<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse>() {
-              @Override public void build(cav_srvs.GetLightsRequest request,
-                cav_srvs.GetLightsResponse response) {
-                return response;
-              }
-            });
-        ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService =
-          connectedNode.newServiceServer("~/control/set_lights", cav_srvs.SetLights._TYPE,
-            new ServiceResponseBuilder<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse>() {
-              @Override public void build(cav_srvs.SetLightsRequest request,
-                cav_srvs.SetLightsResponse response) {
-                return response;
-              }
-            });
+//        ServiceServer<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse> getLightsService =
+//          connectedNode.newServiceServer("~/control/get_lights", cav_srvs.GetLights._TYPE,
+//            new ServiceResponseBuilder<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse>() {
+//              @Override public void build(cav_srvs.GetLightsRequest request,
+//                cav_srvs.GetLightsResponse response) {
+//                return response;
+//              }
+//            });
+//        ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService =
+//          connectedNode.newServiceServer("~/control/set_lights", cav_srvs.SetLights._TYPE,
+//            new ServiceResponseBuilder<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse>() {
+//              @Override public void build(cav_srvs.SetLightsRequest request,
+//                cav_srvs.SetLightsResponse response) {
+//                return response;
+//              }
+//            });
         //        Published	Parameter	~/device_port
         //        Published	Parameter	~/k_d
         //        Published	Parameter	~/k_i
@@ -203,7 +203,7 @@ public class MockDriver extends AbstractNodeMain {
           connectedNode.newPublisher("~/comms/recv", cav_msgs.ByteArray._TYPE);
 
         // Subscribed
-        Subscriber<cav_msgs.ByteArray> subscriber =
+        Subscriber<cav_msgs.ByteArray> outboundPub =
           connectedNode.newSubscriber("~/comms/outbound", cav_msgs.ByteArray._TYPE);
 
         //        Published	Parameter	~/arada_address
@@ -225,7 +225,7 @@ public class MockDriver extends AbstractNodeMain {
 
       @Override protected void loop() throws InterruptedException {
         cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-        systemAlertMsg.setDescription("Hello World! " + "I am "
+        systemAlertMsg.setDescription("Hello World! " + "I am " +
           params.getString("~/driver_type") + ". " + sequenceNumber + " run_id = " + rosRunID + ".");
         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
