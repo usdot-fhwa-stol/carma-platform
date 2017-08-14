@@ -1,0 +1,8 @@
+# SRXCANParams.yaml
+# Defines the ros parameters which are required by the CAN Driver
+
+# Integer: Timeout for period of silence on the CAN bus in which communications with the CAN bus should be considered lost. In mili-seconds
+timeout: 1000
+
+# Integer: The virtual can port corresponding the CAN interface
+device_port: 8087

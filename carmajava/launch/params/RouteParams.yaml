@@ -1,0 +1,5 @@
+# RouteParams.yaml
+# Defines the ros parameters which are required by the Route package
+
+# String: The path to the database containing any route files for use in testing and demonstration.
+default_database_path: '../../RouteFile.xml'
