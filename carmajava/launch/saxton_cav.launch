@@ -7,15 +7,15 @@
 
   Use:
   First delete the generated build/scripts folder in all java packages.
-  roslaunch carmajava saxton_cav.launch
+  roslaunch carma saxton_cav.launch
   After using source devel/setup.bash from workspace root.
 -->
 <launch>
   <!-- Constants -->
   <!-- Directory of Parameter Files -->
-  <arg name="PARAM_DIR" value="$(find carmajava)/launch/params"/>
+  <arg name="PARAM_DIR" value="$(find carma)/launch/params"/>
   <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
-  <arg name="URDF_FILE" value="$(find carmajava)/launch/urdf/saxton_cav_green_srx.urdf"/>
+  <arg name="URDF_FILE" value="$(find carma)/launch/urdf/saxton_cav_green_srx.urdf"/>
   <!-- ROS Namespaces -->
   <arg name="TOP_NS"    value="saxton_cav"/>
   <arg name="GUIDE_NS"  value="guidance"/>
@@ -43,8 +43,8 @@
     <!-- Guidance Package -->
     <group ns="$(arg GUIDE_NS)">
       <!-- Guidance Main Node -->
-      <node pkg="carmajava" type="guidance" name="guidance_main"
-            args="gov.dot.fhwa.saxton.carmajava.guidance.GuidanceMain">
+      <node pkg="carma" type="guidance" name="guidance_main"
+            args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
@@ -94,8 +94,8 @@
       <group ns="$(arg MSG_NS)">
 
         <!-- Message Consumer Node -->
-        <node pkg="carmajava" type="message" name="message_consumer"
-              args="gov.dot.fhwa.saxton.carmajava.message.MessageConsumer">
+        <node pkg="carma" type="message" name="message_consumer"
+              args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="host_bsm"
@@ -117,8 +117,8 @@
       <group ns="$(arg NEGTR_NS)">
 
         <!-- Negotiator Node -->
-        <node pkg="carmajava" type="negotiator" name="negotiator_mgr"
-              args="gov.dot.fhwa.saxton.carmajava.negotiator.NegotiatorMgr">
+        <node pkg="carma" type="negotiator" name="negotiator_mgr"
+              args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr">
 
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
@@ -155,8 +155,8 @@
       <group ns="$(arg RD_NS)">
 
         <!-- Environment Manager Node -->
-        <node pkg="carmajava" type="roadway" name="environment_manager"
-              args="gov.dot.fhwa.saxton.carmajava.roadway.EnvironmentManager">
+        <node pkg="carma" type="roadway" name="environment_manager"
+              args="gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager">
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="map"
@@ -180,8 +180,8 @@
         </node>
 
         <!-- Transform Server Node -->
-        <node pkg="carmajava" type="roadway" name="transform_server"
-              args="gov.dot.fhwa.saxton.carmajava.roadway.TransformServer">
+        <node pkg="carma" type="roadway" name="transform_server"
+              args="gov.dot.fhwa.saxton.carma.roadway.TransformServer">
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
         </node>
@@ -191,8 +191,8 @@
       <group ns="$(arg RT_NS)">
 
         <!-- Route Manager Node -->
-        <node pkg="carmajava" type="route" name="route_manager"
-              args="gov.dot.fhwa.saxton.carmajava.route.RouteManager">
+        <node pkg="carma" type="route" name="route_manager"
+              args="gov.dot.fhwa.saxton.carma.route.RouteManager">
           <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
 
           <remap from="system_alert"
@@ -209,8 +209,8 @@
     <group ns="$(arg INTR_NS)">
 
       <!-- Interface Manager Node -->
-      <node pkg="carmajava" type="interfacemgr" name="interface_mgr"
-            args="gov.dot.fhwa.saxton.carmajava.interfacemgr.InterfaceMgr">
+      <node pkg="carma" type="interfacemgr" name="interface_mgr"
+            args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr">
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
@@ -225,8 +225,8 @@
       <remap from="system_alert"
              to="/$(arg TOP_NS)/system_alert"/>
       <!-- Arada OBU Driver Node -->
-      <node pkg="carmajava" type="mock_drivers" name="arada_application"
-            args="gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver">
+      <node pkg="carma" type="mock_drivers" name="arada_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
         <!-- Remove driver_type param when using real drivers -->
         <param name="driver_type" type="string" value="arada_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
@@ -238,24 +238,24 @@
       </node>
 
       <!-- SRX CAN Driver Node -->
-      <node pkg="carmajava" type="mock_drivers" name="srx_can_application"
-            args="gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver">
+      <node pkg="carma" type="mock_drivers" name="srx_can_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
         <!-- Remove driver_type param when using real drivers -->
         <param name="driver_type" type="string" value="srx_can_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       </node>
 
       <!--SRX Controller Driver Node-->
-      <node pkg="carmajava" type="mock_drivers" name="srx_application"
-            args="gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver">
+      <node pkg="carma" type="mock_drivers" name="srx_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
         <!-- Remove driver_type param when using real drivers -->
         <param name="driver_type" type="string" value="srx_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
       </node>
 
       <!-- SRX Radar Driver Node -->
-      <node pkg="carmajava" type="mock_drivers" name="srx_object_application"
-            args="gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver">
+      <node pkg="carma" type="mock_drivers" name="srx_object_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
         <!-- Remove driver_type param when using real drivers -->
         <param name="driver_type" type="string" value="srx_object_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
