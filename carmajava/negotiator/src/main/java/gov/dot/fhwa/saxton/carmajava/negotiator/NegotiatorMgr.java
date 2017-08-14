@@ -36,60 +36,87 @@ import org.ros.message.MessageFactory;
 /**
  * The Negotiator package responsibility is to manage the details of negotiating tactical and strategic
  * agreements between the host vehicle and any other transportation system entities.
-  * <p>
- *
+ * <p>
+ * <p>
  * Command line test: rosrun carmajava negotiator gov.dot.fhwa.saxton.carmajava.negotiator.NegotiatorMgr
  */
 public class NegotiatorMgr extends AbstractNodeMain {
 
-  @Override
-  public GraphName getDefaultNodeName() {
+  @Override public GraphName getDefaultNodeName() {
     return GraphName.of("negotiator_mgr");
   }
 
-  @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  @Override public void onStart(final ConnectedNode connectedNode) {
 
     final Log log = connectedNode.getLog();
 
-    // Currently setup to listen to it's own message. Change to listen to someone other topic.
-    Subscriber<cav_msgs.SystemAlert> subscriber = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
-
-    subscriber.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-                                    @Override
-                                    public void onNewMessage(cav_msgs.SystemAlert message) {
-
-                                      String messageTypeFullDescription = "NA";
-
-                                      switch (message.getType()) {
-                                        case cav_msgs.SystemAlert.CAUTION:
-                                          messageTypeFullDescription = "Take caution! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.WARNING:
-                                          messageTypeFullDescription = "I have a warning! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.FATAL:
-                                          messageTypeFullDescription = "I am FATAL! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.NOT_READY:
-                                          messageTypeFullDescription = "I am NOT Ready! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.SYSTEM_READY:
-                                          messageTypeFullDescription = "I am Ready! ";
-                                          break;
-                                        default:
-                                          messageTypeFullDescription = "I am NOT Ready! ";
-                                      }
-
-                                      log.info("negotiator_mgr heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
-
-                                    }//onNewMessage
-                                  }//MessageListener
-    );//addMessageListener
-
-    final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
+    // Topics
+    // Publishers
+    final Publisher<cav_msgs.MobilityAck> mobAckOutPub =
+      connectedNode.newPublisher("mobility_ack_outbound", cav_msgs.MobilityAck._TYPE);
+    final Publisher<cav_msgs.MobilityGreeting> mobGreetOutPub =
+      connectedNode.newPublisher("mobility_greeting_outbound", cav_msgs.MobilityGreeting._TYPE);
+    final Publisher<cav_msgs.MobilityIntro> mobIntroOutPub =
+      connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
+    final Publisher<cav_msgs.MobilityNack> mobNackOutPub =
+      connectedNode.newPublisher("mobility_nack_outbound", cav_msgs.MobilityNack._TYPE);
+    final Publisher<cav_msgs.MobilityPlan> mobPlanOutPub =
+      connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
+    final Publisher<cav_msgs.NewPlan> newPlanInPub =
+      connectedNode.newPublisher("new_plan_inbound", cav_msgs.NewPlan._TYPE);
+    final Publisher<cav_msgs.PlanStatus> planStatusPub =
+      connectedNode.newPublisher("plan_status", cav_msgs.PlanStatus._TYPE);
+    final Publisher<cav_msgs.SystemAlert> systemAlertPub =
       connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
 
+    // Subscribers
+    Subscriber<cav_msgs.NewPlan> newPlanOutSub =
+      connectedNode.newSubscriber("new_plan_outbound", cav_msgs.NewPlan._TYPE);
+    Subscriber<cav_msgs.MobilityAck> mobAckInSub =
+      connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
+    Subscriber<cav_msgs.MobilityGreeting> mobGreetInSub =
+      connectedNode.newSubscriber("mobility_greeting_inbound", cav_msgs.MobilityGreeting._TYPE);
+    Subscriber<cav_msgs.MobilityIntro> mobIntroInSub =
+      connectedNode.newSubscriber("mobility_intro_inbound", cav_msgs.MobilityIntro._TYPE);
+    Subscriber<cav_msgs.MobilityNack> mobNackInSub =
+      connectedNode.newSubscriber("mobility_nack_inbound", cav_msgs.MobilityNack._TYPE);
+    Subscriber<cav_msgs.MobilityPlan> mobPlanInSub =
+      connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
+    Subscriber<cav_msgs.SystemAlert> alertSub =
+      connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+
+    alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
+      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
+
+        String messageTypeFullDescription = "NA";
+
+        switch (message.getType()) {
+          case cav_msgs.SystemAlert.CAUTION:
+            messageTypeFullDescription = "Take caution! ";
+            break;
+          case cav_msgs.SystemAlert.WARNING:
+            messageTypeFullDescription = "I have a warning! ";
+            break;
+          case cav_msgs.SystemAlert.FATAL:
+            messageTypeFullDescription = "I am FATAL! ";
+            break;
+          case cav_msgs.SystemAlert.NOT_READY:
+            messageTypeFullDescription = "I am NOT Ready! ";
+            break;
+          case cav_msgs.SystemAlert.SYSTEM_READY:
+            messageTypeFullDescription = "I am Ready! ";
+            break;
+          default:
+            messageTypeFullDescription = "I am NOT Ready! ";
+        }
+
+        log.info(
+          "negotiator_mgr heard: \"" + message.getDescription() + ";" + messageTypeFullDescription
+            + "\"");
+
+      }//onNewMessage
+    }//MessageListener
+    );//addMessageListener
 
     //Getting the ros param called run_id.
     ParameterTree param = connectedNode.getParameterTree();
@@ -99,28 +126,27 @@ public class NegotiatorMgr extends AbstractNodeMain {
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
-                                           private int sequenceNumber;
+      private int sequenceNumber;
 
-                                           @Override
-                                           protected void setup() {
-                                             sequenceNumber = 0;
-                                           }//setup
+      @Override protected void setup() {
+        sequenceNumber = 0;
+      }//setup
 
-                                           @Override
-                                           protected void loop() throws InterruptedException {
+      @Override protected void loop() throws InterruptedException {
 
-                                             cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-                                             systemAlertMsg.setDescription("Hello World! " + "I am negotiator_mgr. " + sequenceNumber + " run_id = " + rosRunID + ".");
-                                             systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+        cav_msgs.SystemAlert systemAlertMsg = systemAlertPub.newMessage();
+        systemAlertMsg.setDescription(
+          "Hello World! " + "I am negotiator_mgr. " + sequenceNumber + " run_id = " + rosRunID
+            + ".");
+        systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
-                                             systemAlertPublisher.publish(systemAlertMsg);
+        systemAlertPub.publish(systemAlertMsg);
 
-                                             sequenceNumber++;
-                                             Thread.sleep(1000);
-                                           }//loop
+        sequenceNumber++;
+        Thread.sleep(1000);
+      }//loop
 
-                                         }//CancellableLoop
-    );//executeCancellableLoop
+    });//executeCancellableLoop
   }//onStart
 }//AbstractNodeMain
 
