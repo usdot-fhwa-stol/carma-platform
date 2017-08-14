@@ -140,6 +140,7 @@ public class RouteManager extends AbstractNodeMain {
         systemAlertPub.publish(systemAlertMsg);
 
         //log.info("RouteManager DatabasePath Param" + params.getString("~/default_database_path"))
+        sequenceNumber++;
         Thread.sleep(1000);
       }
     }//CancellableLoop

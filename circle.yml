@@ -13,7 +13,7 @@ machine:
 
     # Check build status and run tests
     # Other options include: check_cache, code_style_check, check_deb_make, codecov_tool
-    used_modules: check_cache,check_build,software_tests
+    used_modules: check_build,software_tests
 
     # URL for shadow-robot build tool CI script
     remote_shell_script: 'https://raw.githubusercontent.com/shadow-robot/sr-build-tools/$toolset_branch/bin/sr-run-ci-build.sh'

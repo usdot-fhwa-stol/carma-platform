@@ -96,6 +96,8 @@
         <!-- Message Consumer Node -->
         <node pkg="carmajava" type="message" name="message_consumer"
               args="gov.dot.fhwa.saxton.carmajava.message.MessageConsumer">
+          <remap from="system_alert"
+                 to="/$(arg TOP_NS)/system_alert"/>
           <remap from="host_bsm"
                  to="/$(arg TOP_NS)/$(arg GUIDE_NS)/tracking/bsm"/>
           <remap from="mobility_ack_outbound"
@@ -196,7 +198,7 @@
           <remap from="tim"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/tim"/>
           <remap from="nav_sat_fix"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/nav_sat_fix"/>
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
         </node>
       </group>
     </group>
@@ -221,8 +223,10 @@
       <remap from="system_alert"
              to="/$(arg TOP_NS)/system_alert"/>
       <!-- Arada OBU Driver Node -->
-      <node pkg="carmajava" type="template" name="arada_application"
-            args="gov.dot.fhwa.saxton.carmajava.template.NodeName">
+      <node pkg="carmajava" type="mock_drivers" name="arada_application"
+            args="gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver">
+        <!-- Remove driver_type param when using real drivers -->
+        <param name="driver_type" type="string" value="arada_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
       </node>
 
@@ -232,20 +236,26 @@
       </node>
 
       <!-- SRX CAN Driver Node -->
-      <node pkg="carmajava" type="template" name="srx_can_application"
-            args="gov.dot.fhwa.saxton.carmajava.template.NodeName">
+      <node pkg="carmajava" type="mock_drivers" name="srx_can_application"
+            args="gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver">
+        <!-- Remove driver_type param when using real drivers -->
+        <param name="driver_type" type="string" value="srx_can_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       </node>
 
       <!--SRX Controller Driver Node-->
-      <node pkg="carmajava" type="template" name="srx_application"
-            args="gov.dot.fhwa.saxton.carmajava.template.NodeName">
+      <node pkg="carmajava" type="mock_drivers" name="srx_application"
+            args="gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver">
+        <!-- Remove driver_type param when using real drivers -->
+        <param name="driver_type" type="string" value="srx_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
       </node>
 
       <!-- SRX Radar Driver Node -->
-      <node pkg="carmajava" type="template" name="srx_object_application"
-            args="gov.dot.fhwa.saxton.carmajava.template.NodeName">
+      <node pkg="carmajava" type="mock_drivers" name="srx_object_application"
+            args="gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver">
+        <!-- Remove driver_type param when using real drivers -->
+        <param name="driver_type" type="string" value="srx_object_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
       </node>
     </group>

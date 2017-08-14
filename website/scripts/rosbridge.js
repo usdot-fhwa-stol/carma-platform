@@ -37,15 +37,41 @@
 	  // and message type. Note that we can call publish or subscribe on the same topic object.
 	  var listener = new ROSLIB.Topic({
 	    ros : ros,
-	    name : '/template',
-	    messageType : 'std_msgs/String'
+	    name : '/system_alert',
+	    messageType : 'cav_msgs/SystemAlert'
 	  });
 
 	  // Then we add a callback to be called every time a message is published on this topic.
 	  listener.subscribe(function(message) {
-	    console.log('Received message on ' + listener.name + ': ' + message.data);
-	    document.getElementById('divLog').innerHTML += '<br/> Received message on ' + listener.name + ': ' + message.data;
 
-	    // If desired, we can unsubscribe from the topic as well.
-	    //listener.unsubscribe();
+              var messageTypeFullDescription = 'NA';
+
+              switch (message.type) {
+                case 1:
+                  messageTypeFullDescription = 'Take caution! ';
+                  break;
+                case 2:
+                  messageTypeFullDescription = 'I have a warning! ';
+                  break;
+                case 3:
+                  messageTypeFullDescription = 'I am FATAL! ';
+                  break;
+                case 4:
+                  messageTypeFullDescription = 'I am NOT Ready! ';
+                  break;
+                case 5:
+                  messageTypeFullDescription = 'I am Ready! ';
+                  break;
+                default:
+                  messageTypeFullDescription = 'I am NOT Ready! ';
+              }
+
+	    document.getElementById('divLog').innerHTML += '<br/> ' + message.description + '; ' + messageTypeFullDescription;
+
+	    //Make sure message list is scrolled to the bottom
+	    var container =  document.getElementById('divLog');
+	    var containerHeight = container.clientHeight;
+	    var contentHeight = container.scrollHeight;
+	    container.scrollTop = contentHeight - containerHeight;
+
 	  });
