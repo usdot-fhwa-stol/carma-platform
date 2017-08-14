@@ -38,9 +38,13 @@ import org.ros.exception.RosRuntimeException;
 import org.ros.exception.ServiceNotFoundException;
 
 /**
- * A simple {@link Publisher} {@link NodeMain}.
+ * A class which can be used to mimick different drivers for the CarmaPlatform.
+ * The user specifies the node to be mimicked using the driver_type input parameter.
  * <p>
- * Replace PubSub with the node name on Column D but using CamelCase.
+ * Command line test:
+ * ROS Java does not support rosrun parameter setting so a rosrun is a two step process
+ * rosparam set /mock_driver/driver_type 'srx_application'
+ * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carmajava.mock_drivers.MockDriver
  */
 public class MockDriver extends AbstractNodeMain {
 
