@@ -38,8 +38,8 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Guidance package PubSubManager component
  *
- * Guidance plugin responsible for ensuring the vehicle is capable of operating
- * safely in an ACC-styled fashion in an unconnected roadway environment.
+ * Responsible for allowing communications between Guidance package sub-components
+ * and the external ROS network. Presently only a stub to show class communication.
  */
 public class PubSubManager {
     public PubSubManager(BlockingQueue<String> messageQueue) {

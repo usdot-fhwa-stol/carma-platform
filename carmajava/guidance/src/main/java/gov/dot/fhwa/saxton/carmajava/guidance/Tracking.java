@@ -47,9 +47,9 @@ public class Tracking implements Runnable {
     @Override
     public void run() {
         for (;;) {
-            pubSubManager.publish("Hello World! I am"
+            pubSubManager.publish("Hello World! I am "
                                   + componentName
-                                  +  "."
+                                  +  ". "
                                   + sequenceNumber++);
 
             try {
