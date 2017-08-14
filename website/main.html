@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" /><!--This is important for character encoding -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script src="scripts/roslib.js"></script>
+ <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+<body>
+
+<!-- <p>Click on the buttons inside the tabbed menu:</p> -->
+
+<div class="tab">
+  <button class="tablinks" onclick="openTab(event, 'CapabilitiesSelection')" >CAPABILITIES</button>
+  <button class="tablinks" onclick="openTab(event, 'MapCavs')">MAP &amp CAVs</button>
+  <button class="tablinks" onclick="openTab(event, 'MoreInfo')" id="defaultOpen">MORE INFO</button>
+</div>
+
+<div id="CapabilitiesSelection" class="tabcontent">
+  <h3>Capabilities Selection</h3>
+  <p>Not yet implemented.</p>
+</div>
+
+<div id="MapCavs" class="tabcontent">
+  <h3>Map & CAVs</h3>
+  <p>Not yet implemented.</p>
+</div>
+
+<div id="MoreInfo" class="tabcontent">
+  <h3>More Info</h3>
+	  <div id="statusIndicator">
+	    <p id="connecting">
+	      Connecting to ROSbridge...
+	    </p>
+	    <p id="connected" style="color:#00D600; display:none">
+	      Connected to ROSBridge.
+	    </p>
+	    <p id="error" style="color:#FF0000; display:none">
+	      Error in the backend. ROSBridge unable to connect.
+	    </p>
+	    <p id="closed" style="display:none">
+	      ROSBridge connection closed.
+	    </p>
+	  </div>
+  <h4>System Status Logs</h4>
+  <div id="divLog" class="logStatus">
+  </div>
+  <script src="scripts/tabs.js"></script>
+  <script src="scripts/rosbridge.js"></script>
+</body>
+</html>
+
