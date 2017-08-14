@@ -37,7 +37,6 @@ import org.ros.message.MessageFactory;
  * The Negotiator package responsibility is to manage the details of negotiating tactical and strategic
  * agreements between the host vehicle and any other transportation system entities.
  * <p>
- * <p>
  * Command line test: rosrun carmajava negotiator gov.dot.fhwa.saxton.carmajava.negotiator.NegotiatorMgr
  */
 public class NegotiatorMgr extends AbstractNodeMain {
