@@ -14,24 +14,20 @@
  * the License.
  */
 
-//TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
-//Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carmajava.negotiator;
 
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
+import org.ros.message.MessageFactory;
 import org.ros.node.topic.Subscriber;
-
-import org.ros.concurrent.CancellableLoop;
-import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
-
 import org.ros.node.parameter.ParameterTree;
+import org.ros.concurrent.CancellableLoop;
+import org.ros.namespace.GraphName;
 import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
 
 /**
  * The Negotiator package responsibility is to manage the details of negotiating tactical and strategic
@@ -123,10 +119,8 @@ public class NegotiatorMgr extends AbstractNodeMain {
     //Getting the ros param called run_id.
     ParameterTree param = connectedNode.getParameterTree();
     final String rosRunID = param.getString("/run_id");
-    //params.setString("~/param_name", param_value);
 
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
+    // This CancellableLoop will be canceled automatically when the node shuts down
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       private int sequenceNumber;
 
