@@ -125,6 +125,7 @@ public class TransformServer extends AbstractNodeMain {
         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
         systemAlertPub.publish(systemAlertMsg);
+        sequenceNumber++;
         Thread.sleep(1000);
       }
     });
