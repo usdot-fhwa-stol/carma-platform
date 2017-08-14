@@ -21,48 +21,42 @@ package gov.dot.fhwa.saxton.carmajava.guidance;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
-
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
-
 import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.NameResolver;
 import org.ros.message.MessageFactory;
 
 /**
  * Guidance package TrajectoryExecutor component
- *
+ * <p>
  * Guidance component responsible for performing the timely execution of planned
  * maneuvers in a Trajectory planned by the Arbitrator and the Guidance package's
  * currently configured plugins.
  */
 public class TrajectoryExecutor implements Runnable {
-    public TrajectoryExecutor(PubSubManager pubSubManager) {
-        this.pubSubManager = pubSubManager;
+  public TrajectoryExecutor(PubSubManager pubSubManager) {
+    this.pubSubManager = pubSubManager;
+  }
+
+  @Override public void run() {
+    for (; ; ) {
+      pubSubManager.publish("Hello World! I am " + componentName + ". " + sequenceNumber++);
+
+      try {
+        Thread.sleep(sleepDurationMillis);
+      } catch (InterruptedException e) {
+      }
     }
+  }
 
-    @Override
-    public void run() {
-        for (;;) {
-            pubSubManager.publish("Hello World! I am "
-                                  + componentName
-                                  +  ". "
-                                  + sequenceNumber++);
-
-            try {
-            Thread.sleep(sleepDurationMillis);
-            } catch (InterruptedException e) {
-            }
-        }
-    }
-
-    // Member variables
-    protected final String componentName = "TrajectoryExecutor";
-    protected PubSubManager pubSubManager;
-    protected int sequenceNumber = 0;
-    protected final long sleepDurationMillis = 1000;
+  // Member variables
+  protected final String componentName = "TrajectoryExecutor";
+  protected PubSubManager pubSubManager;
+  protected int sequenceNumber = 0;
+  protected final long sleepDurationMillis = 1000;
 }

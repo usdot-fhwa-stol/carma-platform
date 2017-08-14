@@ -14,55 +14,47 @@
  * the License.
  */
 
-//TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
-//Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carmajava.guidance;
 
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
-
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
-
 import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.NameResolver;
 import org.ros.message.MessageFactory;
 
 /**
  * Guidance package PluginManager component
- *
+ * <p>
  * Responsible for instantiating, running, owning, and runtime management of
  * all plugins installed in the software's operating environment.
  */
 public class PluginManager implements Runnable {
-    public PluginManager(PubSubManager pubSubManager) {
-        this.pubSubManager = pubSubManager;
+  public PluginManager(PubSubManager pubSubManager) {
+    this.pubSubManager = pubSubManager;
+  }
+
+  @Override public void run() {
+    for (; ; ) {
+      pubSubManager.publish("Hello World! I am " + componentName + ". " + sequenceNumber++);
+
+      try {
+        Thread.sleep(sleepDurationMillis);
+      } catch (InterruptedException e) {
+        // Ignore
+      }
     }
+  }
 
-    @Override
-    public void run() {
-        for (;;) {
-            pubSubManager.publish("Hello World! I am "
-                                  + componentName
-                                  +  ". "
-                                  + sequenceNumber++);
-
-            try {
-                Thread.sleep(sleepDurationMillis);
-            } catch (InterruptedException e) {
-                // Ignore
-            }
-        }
-    }
-
-    // Member variables
-    protected PubSubManager pubSubManager;
-    protected int sequenceNumber = 0;
-    protected final String componentName = "PluginManager";
-    protected final long sleepDurationMillis = 1000;
+  // Member variables
+  protected PubSubManager pubSubManager;
+  protected int sequenceNumber = 0;
+  protected final String componentName = "PluginManager";
+  protected final long sleepDurationMillis = 1000;
 }
