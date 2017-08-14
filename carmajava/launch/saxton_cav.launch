@@ -142,6 +142,8 @@
 
         <!-- Sensor Fusion Node -->
         <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
+          <remap from="~filtered"
+                 to="filtered"/>
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="bsm"
