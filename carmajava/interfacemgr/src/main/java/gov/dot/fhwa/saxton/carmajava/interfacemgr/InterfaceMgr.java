@@ -51,78 +51,76 @@ public class InterfaceMgr extends AbstractNodeMain {
 
   @Override
   public void onStart(final ConnectedNode connectedNode) {
+      final Log log = connectedNode.getLog();
 
-    final Log log = connectedNode.getLog();
+      // Currently setup to listen to it's own message. Change to listen to someone other topic.
+      Subscriber<cav_msgs.SystemAlert> subscriber = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
 
-    // Currently setup to listen to it's own message. Change to listen to someone other topic.
-    Subscriber<cav_msgs.SystemAlert> subscriber = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+      subscriber.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
 
-    subscriber.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-                                    @Override
-                                    public void onNewMessage(cav_msgs.SystemAlert message) {
+          @Override
+          public void onNewMessage(cav_msgs.SystemAlert message) {
 
-                                      String messageTypeFullDescription = "NA";
+              String messageTypeFullDescription = "NA";
 
-                                      switch (message.getType()) {
-                                        case cav_msgs.SystemAlert.CAUTION:
-                                          messageTypeFullDescription = "Take caution! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.WARNING:
-                                          messageTypeFullDescription = "I have a warning! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.FATAL:
-                                          messageTypeFullDescription = "I am FATAL! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.NOT_READY:
-                                          messageTypeFullDescription = "I am NOT Ready! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.SYSTEM_READY:
-                                          messageTypeFullDescription = "I am Ready! ";
-                                          break;
-                                        default:
-                                          messageTypeFullDescription = "I am NOT Ready! ";
-                                      }
+              switch (message.getType()) {
+                  case cav_msgs.SystemAlert.CAUTION:
+                      messageTypeFullDescription = "Received CAUTION: " + message.getDescription();
+                      break;
+                  case cav_msgs.SystemAlert.WARNING:
+                      messageTypeFullDescription = "I have a warning! ";
+                      break;
+                  case cav_msgs.SystemAlert.FATAL:
+                      messageTypeFullDescription = "I am FATAL! ";
+                      break;
+                  case cav_msgs.SystemAlert.NOT_READY:
+                      messageTypeFullDescription = "I am NOT Ready! ";
+                      break;
+                  case cav_msgs.SystemAlert.SYSTEM_READY:
+                      messageTypeFullDescription = "I am Ready! ";
+                      break;
+                  default:
+                      messageTypeFullDescription = "I am NOT Ready! ";
+              }
 
-                                      log.info("interface_mgr heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+              log.info("interface_mgr heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
 
-                                    }//onNewMessage
-                                  }//MessageListener
-    );//addMessageListener
+          }//onNewMessage
+      });//addMessageListener
 
-    final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
-      connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
+      final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
+              connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
 
 
-    //Getting the ros param called run_id.
-    ParameterTree param = connectedNode.getParameterTree();
-    final String rosRunID = param.getString("/run_id");
-    //params.setString("~/param_name", param_value);
+      //Getting the ros param called run_id.
+      ParameterTree param = connectedNode.getParameterTree();
+      final String rosRunID = param.getString("/run_id");
+      //params.setString("~/param_name", param_value);
 
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
-    connectedNode.executeCancellableLoop(new CancellableLoop() {
-                                           private int sequenceNumber;
+      // This CancellableLoop will be canceled automatically when the node shuts down
+      connectedNode.executeCancellableLoop(new CancellableLoop() {
+          private int sequenceNumber;
 
-                                           @Override
-                                           protected void setup() {
-                                             sequenceNumber = 0;
-                                           }//setup
+          @Override
+          protected void setup() {
+              sequenceNumber = 0;
+          }//setup
 
-                                           @Override
-                                           protected void loop() throws InterruptedException {
+          @Override
+          protected void loop() throws InterruptedException {
 
-                                             cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-                                             systemAlertMsg.setDescription("Hello World! " + "I am interface_mgr. " + sequenceNumber + " run_id = " + rosRunID + ".");
-                                             systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+              cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
+              systemAlertMsg.setDescription("Hello World! " + "I am interface_mgr. " + sequenceNumber + " run_id = " + rosRunID + ".");
+              systemAlertMsg.setType(cav_msgs.SystemAlert.CAUTION);
 
-                                             systemAlertPublisher.publish(systemAlertMsg);
+              systemAlertPublisher.publish(systemAlertMsg);
 
-                                             sequenceNumber++;
-                                             Thread.sleep(1000);
-                                           }//loop
+              sequenceNumber++;
+              Thread.sleep(5000);
+          }//loop
 
-                                         }//CancellableLoop
-    );//executeCancellableLoop
+      });//executeCancellableLoop
+
   }//onStart
 }//AbstractNodeMain
 
