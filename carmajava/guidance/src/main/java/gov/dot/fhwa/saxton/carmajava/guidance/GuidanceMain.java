@@ -14,77 +14,102 @@
  * the License.
  */
 
-//TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
-//Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carmajava.guidance;
 
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
-
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
-
 import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.NameResolver;
 import org.ros.message.MessageFactory;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
  * the Guidance package. It forms the Guidance ROS node.
  * <p>
- *
  * Command line test: rosrun carmajava guidance gov.dot.fhwa.saxton.carmajava.guidance.GuidanceMain
  */
 public class GuidanceMain extends AbstractNodeMain {
 
-  @Override
-  public GraphName getDefaultNodeName() {
+  @Override public GraphName getDefaultNodeName() {
     return GraphName.of("guidance_main");
   }
 
-  @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  /**
+   * Initialize the runnable thread members of the Guidance package.
+   */
+  private void initExecutor() {
+    executor = Executors.newFixedThreadPool(numThreads);
+    Arbitrator arbitrator = new Arbitrator(pubSubManager);
+    PluginManager pluginManager = new PluginManager(pubSubManager);
+    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubManager);
+    Tracking tracking = new Tracking(pubSubManager);
+
+    executor.execute(arbitrator);
+    executor.execute(pluginManager);
+    executor.execute(trajectoryExecutor);
+    executor.execute(tracking);
+  }
+
+  /**
+   * Initialize the PubSubManager and setup it's message queue.
+   */
+  private void initPubSubManager() {
+    messageQueue = new ArrayBlockingQueue<String>(64);
+    pubSubManager = new PubSubManager(messageQueue);
+  }
+
+  @Override public void onStart(final ConnectedNode connectedNode) {
 
     final Log log = connectedNode.getLog();
 
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
-    Subscriber<cav_msgs.SystemAlert> subscriber = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+    initPubSubManager();
+    initExecutor();
+    Subscriber<cav_msgs.SystemAlert> subscriber =
+      connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
 
     subscriber.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-                                    @Override
-                                    public void onNewMessage(cav_msgs.SystemAlert message) {
+      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
 
-                                      String messageTypeFullDescription = "NA";
+        String messageTypeFullDescription = "NA";
 
-                                      switch (message.getType()) {
-                                        case cav_msgs.SystemAlert.CAUTION:
-                                          messageTypeFullDescription = "Take caution! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.WARNING:
-                                          messageTypeFullDescription = "I have a warning! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.FATAL:
-                                          messageTypeFullDescription = "I am FATAL! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.NOT_READY:
-                                          messageTypeFullDescription = "I am NOT Ready! ";
-                                          break;
-                                        case cav_msgs.SystemAlert.SYSTEM_READY:
-                                          messageTypeFullDescription = "I am Ready! ";
-                                          break;
-                                        default:
-                                          messageTypeFullDescription = "I am NOT Ready! ";
-                                      }
+        switch (message.getType()) {
+          case cav_msgs.SystemAlert.CAUTION:
+            messageTypeFullDescription = "Take caution! ";
+            break;
+          case cav_msgs.SystemAlert.WARNING:
+            messageTypeFullDescription = "I have a warning! ";
+            break;
+          case cav_msgs.SystemAlert.FATAL:
+            messageTypeFullDescription = "I am FATAL! ";
+            break;
+          case cav_msgs.SystemAlert.NOT_READY:
+            messageTypeFullDescription = "I am NOT Ready! ";
+            break;
+          case cav_msgs.SystemAlert.SYSTEM_READY:
+            messageTypeFullDescription = "I am Ready! ";
+            break;
+          default:
+            messageTypeFullDescription = "I am NOT Ready! ";
+        }
 
-                                      log.info("guidance_main heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+        log.info(
+          "guidance_main heard: \"" + message.getDescription() + ";" + messageTypeFullDescription
+            + "\"");
 
-                                    }//onNewMessage
-                                  }//MessageListener
+      }//onNewMessage
+    }//MessageListener
     );//addMessageListener
 
     final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
@@ -98,28 +123,40 @@ public class GuidanceMain extends AbstractNodeMain {
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
-                                           private int sequenceNumber;
+     private int sequenceNumber;
 
-                                           @Override
-                                           protected void setup() {
-                                             sequenceNumber = 0;
-                                           }//setup
+     @Override protected void setup() {
+       sequenceNumber = 0;
+     }//setup
 
-                                           @Override
-                                           protected void loop() throws InterruptedException {
+     @Override protected void loop() throws InterruptedException {
 
-                                             cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-                                             systemAlertMsg.setDescription("Hello World! " + "I am guidance_main. " + sequenceNumber + " run_id = " + rosRunID + ".");
-                                             systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+       cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
+       systemAlertMsg.setDescription(
+         "Hello World! " + "I am guidance_main. " + sequenceNumber + " run_id = " + rosRunID
+           + ".");
+       systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+       systemAlertPublisher.publish(systemAlertMsg);
+       sequenceNumber++;
 
-                                             systemAlertPublisher.publish(systemAlertMsg);
+       for (String msg : messageQueue) {
+         cav_msgs.SystemAlert systemAlertMsg2 = systemAlertPublisher.newMessage();
+         systemAlertMsg.setDescription(msg);
+         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
-                                             sequenceNumber++;
-                                             Thread.sleep(1000);
-                                           }//loop
+         systemAlertPublisher.publish(systemAlertMsg);
+       }
 
-                                         }//CancellableLoop
+       Thread.sleep(1000);
+     }//loop
+
+    }//CancellableLoop
     );//executeCancellableLoop
   }//onStart
-}//AbstractNodeMain
 
+  // Member Variables
+  protected ExecutorService executor;
+  protected int numThreads = 4;
+  protected PubSubManager pubSubManager;
+  protected BlockingQueue<String> messageQueue;
+}//AbstractNodeMain
