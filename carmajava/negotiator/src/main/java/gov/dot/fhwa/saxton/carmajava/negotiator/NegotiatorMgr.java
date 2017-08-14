@@ -60,12 +60,14 @@ public class NegotiatorMgr extends AbstractNodeMain {
       connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
     final Publisher<cav_msgs.MobilityNack> mobNackOutPub =
       connectedNode.newPublisher("mobility_nack_outbound", cav_msgs.MobilityNack._TYPE);
-    final Publisher<cav_msgs.MobilityPlan> mobPlanOutPub =
-      connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
+//    TODO: Uncomment when the MobilityPlan message is implemented
+//    final Publisher<cav_msgs.MobilityPlan> mobPlanOutPub =
+//      connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
     final Publisher<cav_msgs.NewPlan> newPlanInPub =
       connectedNode.newPublisher("new_plan_inbound", cav_msgs.NewPlan._TYPE);
-    final Publisher<cav_msgs.PlanStatus> planStatusPub =
-      connectedNode.newPublisher("plan_status", cav_msgs.PlanStatus._TYPE);
+//    TODO: Uncomment when the PlanStatus message is implemented.
+//    final Publisher<cav_msgs.PlanStatus> planStatusPub =
+//      connectedNode.newPublisher("plan_status", cav_msgs.PlanStatus._TYPE);
     final Publisher<cav_msgs.SystemAlert> systemAlertPub =
       connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
 
@@ -80,8 +82,9 @@ public class NegotiatorMgr extends AbstractNodeMain {
       connectedNode.newSubscriber("mobility_intro_inbound", cav_msgs.MobilityIntro._TYPE);
     Subscriber<cav_msgs.MobilityNack> mobNackInSub =
       connectedNode.newSubscriber("mobility_nack_inbound", cav_msgs.MobilityNack._TYPE);
-    Subscriber<cav_msgs.MobilityPlan> mobPlanInSub =
-      connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
+//    TODO: Uncomment when the MobilityPlan message is implemented
+//    Subscriber<cav_msgs.MobilityPlan> mobPlanInSub =
+//      connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
     Subscriber<cav_msgs.SystemAlert> alertSub =
       connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
 
