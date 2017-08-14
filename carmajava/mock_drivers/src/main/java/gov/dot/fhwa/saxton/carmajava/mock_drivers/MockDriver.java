@@ -18,17 +18,24 @@
 package gov.dot.fhwa.saxton.carmajava.mock_drivers;
 
 import org.apache.commons.logging.Log;
-import org.ros.message.MessageListener;
-import org.ros.node.topic.Subscriber;
-
 import org.ros.concurrent.CancellableLoop;
-import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
+import org.ros.node.topic.Subscriber;
 import org.ros.node.parameter.ParameterTree;
+import org.ros.node.service.ServiceServer;
+import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.service.ServiceResponseListener;
+import org.ros.node.service.ServiceClient;
 import org.ros.namespace.NameResolver;
+import org.ros.namespace.GraphName;
+import org.ros.message.MessageFactory;
+import org.ros.message.MessageListener;
+import org.ros.exception.RemoteException;
+import org.ros.exception.RosRuntimeException;
+import org.ros.exception.ServiceNotFoundException;
 
 /**
  * A simple {@link Publisher} {@link NodeMain}.
@@ -44,7 +51,7 @@ public class MockDriver extends AbstractNodeMain {
 
   @Override public void onStart(final ConnectedNode connectedNode) {
     final Log log = connectedNode.getLog();
-    ParameterTree params = connectedNode.getParameterTree();
+    final ParameterTree params = connectedNode.getParameterTree();
 
     // ROS Messages used by all drivers
 
@@ -86,34 +93,36 @@ public class MockDriver extends AbstractNodeMain {
         }
 
         //TODO: Replace with Column D node name
-        log.info(params.getString("~/driver_type") + " heard: \"" + message.getDescription() + ";" + messageTypeFullDescription
-          + "\"");
+        log.info(params.getString("~/driver_type") + " heard: \"" + message.getDescription() + ";"
+          + messageTypeFullDescription + "\"");
 
       }//onNewMessage
     });//addMessageListener
 
     // Service
     // Server
-    ServiceServer<cav_srvs.BindWithIDRequest, cav_srvs.BindWithIDResponse> bindService =
-      connectedNode.newServiceServer("~/bind", cav_srvs.BindWithID._TYPE,
-        new ServiceResponseBuilder<cav_srvs.BindWithIDRequest, cav_srvs.BindWithIDResponse>() {
-          @Override public void build(cav_srvs.BindWithIDRequest request,
-            cav_srvs.BindWithIDResponse response) {
-            return response;
+    ServiceServer<cav_srvs.BindRequest, cav_srvs.BindResponse> bindService =
+      connectedNode.newServiceServer("~/bind", cav_srvs.Bind._TYPE,
+        new ServiceResponseBuilder<cav_srvs.BindRequest, cav_srvs.BindResponse>() {
+          @Override public void build(cav_srvs.BindRequest request,
+            cav_srvs.BindResponse response) {
           }
         });
-    ServiceServer<cav_srvs.GetDriverApiRequest, cav_srvs.GetDriverApiResponse> bindService =
-      connectedNode.newServiceServer("~/get_driver_api", cav_srvs.GetDriverApi._TYPE,
-        new ServiceResponseBuilder<cav_srvs.GetDriverApiRequest, cav_srvs.GetDriverApiResponse>() {
-          @Override public void build(cav_srvs.GetDriverApiRequest request,
-            cav_srvs.GetDriverApiResponse response) {
-            return response;
+    ServiceServer<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>
+      getApiService = connectedNode
+      .newServiceServer("~/get_driver_api", cav_srvs.GetAPISpecification._TYPE,
+        new ServiceResponseBuilder<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>() {
+          @Override public void build(cav_srvs.GetAPISpecificationRequest request,
+            cav_srvs.GetAPISpecificationResponse response) {
           }
         });
+
+    // Parameters
+    final String rosRunID = params.getString("/run_id");
 
     // ROS Messages unique to each driver
 
-    switch (param.getString("~/driver_type")) {
+    switch (params.getString("~/driver_type")) {
       case "srx_can_application":
         // Topics
         // Published
@@ -139,8 +148,8 @@ public class MockDriver extends AbstractNodeMain {
           connectedNode.newPublisher("~/can/steering_wheel_angle", std_msgs.Float64._TYPE);
         final Publisher<std_msgs.Float64> throttlePub =
           connectedNode.newPublisher("~/can/throttle_position", std_msgs.Float64._TYPE);
-        final Publisher<cav_msgs.TurnSignal> turn_sigPub =
-          connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
+//        final Publisher<cav_msgs.TurnSignal> turn_sigPub =
+//          connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
 
         // Published Parameter ~/device_port
         // Published Parameter ~/timeout
@@ -151,33 +160,34 @@ public class MockDriver extends AbstractNodeMain {
         // Published
         final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub = connectedNode
           .newPublisher("~/control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
-//        final Publisher<cav_msgs.RobotEnabled> enabledPub =
-//          connectedNode.newPublisher("~/control/robot_enabled", cav_msgs.RobotEnabled._TYPE);
+        //        final Publisher<cav_msgs.RobotEnabled> enabledPub =
+        //          connectedNode.newPublisher("~/control/robot_enabled", cav_msgs.RobotEnabled._TYPE);
 
         // Subscribed
         Subscriber<std_msgs.Float32> longEffortSub =
           connectedNode.newSubscriber("~/control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
-//        Subscriber<cav_msgs.SpeedAccel> subscriber =
-//          connectedNode.newSubscriber("~/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
+        //        Subscriber<cav_msgs.SpeedAccel> subscriber =
+        //          connectedNode.newSubscriber("~/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
 
         // Services
         // Server
-//        ServiceServer<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse> getLightsService =
-//          connectedNode.newServiceServer("~/control/get_lights", cav_srvs.GetLights._TYPE,
-//            new ServiceResponseBuilder<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse>() {
-//              @Override public void build(cav_srvs.GetLightsRequest request,
-//                cav_srvs.GetLightsResponse response) {
-//                return response;
-//              }
-//            });
-//        ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService =
-//          connectedNode.newServiceServer("~/control/set_lights", cav_srvs.SetLights._TYPE,
-//            new ServiceResponseBuilder<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse>() {
-//              @Override public void build(cav_srvs.SetLightsRequest request,
-//                cav_srvs.SetLightsResponse response) {
-//                return response;
-//              }
-//            });
+        //        ServiceServer<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse> getLightsService =
+        //          connectedNode.newServiceServer("~/control/get_lights", cav_srvs.GetLights._TYPE,
+        //            new ServiceResponseBuilder<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse>() {
+        //              @Override public void build(cav_srvs.GetLightsRequest request,
+        //                cav_srvs.GetLightsResponse response) {
+        //                return response;
+        //                return response;
+        //              }
+        //            });
+        //        ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService =
+        //          connectedNode.newServiceServer("~/control/set_lights", cav_srvs.SetLights._TYPE,
+        //            new ServiceResponseBuilder<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse>() {
+        //              @Override public void build(cav_srvs.SetLightsRequest request,
+        //                cav_srvs.SetLightsResponse response) {
+        //                return response;
+        //              }
+        //            });
         //        Published	Parameter	~/device_port
         //        Published	Parameter	~/k_d
         //        Published	Parameter	~/k_i
@@ -225,8 +235,9 @@ public class MockDriver extends AbstractNodeMain {
 
       @Override protected void loop() throws InterruptedException {
         cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-        systemAlertMsg.setDescription("Hello World! " + "I am " +
-          params.getString("~/driver_type") + ". " + sequenceNumber + " run_id = " + rosRunID + ".");
+        systemAlertMsg.setDescription(
+          "Hello World! " + "I am " + params.getString("~/driver_type") + ". " + sequenceNumber
+            + " run_id = " + rosRunID + ".");
         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
         systemAlertPublisher.publish(systemAlertMsg);
