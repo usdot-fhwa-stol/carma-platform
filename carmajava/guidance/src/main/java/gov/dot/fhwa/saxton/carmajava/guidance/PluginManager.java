@@ -52,7 +52,11 @@ public class PluginManager implements Runnable {
                                   +  "."
                                   + sequenceNumber++);
 
-            Thread.sleep(sleepDurationMillis);
+            try {
+                Thread.sleep(sleepDurationMillis);
+            } catch (InterruptedException e) {
+                // Ignore
+            }
         }
     }
 

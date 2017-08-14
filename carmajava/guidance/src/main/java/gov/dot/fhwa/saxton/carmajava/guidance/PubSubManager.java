@@ -33,6 +33,8 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.NameResolver;
 import org.ros.message.MessageFactory;
 
+import java.util.concurrent.BlockingQueue;
+
 /**
  * Guidance package PubSubManager component
  *
@@ -45,7 +47,11 @@ public class PubSubManager {
     }
 
     public void publish(String msg) {
-        messageQueue.put(msg);
+        try {
+            messageQueue.put(msg);
+        } catch (InterruptedException e) {
+            // Ignore
+        }
     }
 
     // Member Variables

@@ -35,6 +35,8 @@ import org.ros.message.MessageFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
@@ -141,7 +143,7 @@ public class GuidanceMain extends AbstractNodeMain {
                     sequenceNumber++;
 
                     for (String msg : messageQueue) {
-                        cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
+                        cav_msgs.SystemAlert systemAlertMsg2 = systemAlertPublisher.newMessage();
                         systemAlertMsg.setDescription(msg);
                         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
@@ -156,7 +158,7 @@ public class GuidanceMain extends AbstractNodeMain {
     }//onStart
 
     // Member Variables
-    protected ExecutorSerivice executor;
+    protected ExecutorService executor;
     protected int numThreads = 4;
     protected PubSubManager pubSubManager;
     protected BlockingQueue<String> messageQueue;
