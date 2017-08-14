@@ -44,7 +44,6 @@ import org.ros.exception.ServiceNotFoundException;
  */
 public class MockDriver extends AbstractNodeMain {
 
-  //TODO: Replace with Column D node name
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("mock_driver");
   }
@@ -57,7 +56,7 @@ public class MockDriver extends AbstractNodeMain {
 
     // Topics
     // Published
-    final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
+    final Publisher<cav_msgs.SystemAlert> systemAlertPub =
       connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
     final Publisher<bond.Status> bondPub = connectedNode.newPublisher("~/bond", bond.Status._TYPE);
     final Publisher<cav_msgs.DriverStatus> discoveryPub =
@@ -92,7 +91,6 @@ public class MockDriver extends AbstractNodeMain {
             messageTypeFullDescription = "I am NOT Ready! ";
         }
 
-        //TODO: Replace with Column D node name
         log.info(params.getString("~/driver_type") + " heard: \"" + message.getDescription() + ";"
           + messageTypeFullDescription + "\"");
 
@@ -101,11 +99,11 @@ public class MockDriver extends AbstractNodeMain {
 
     // Service
     // Server
-    ServiceServer<cav_srvs.BindRequest, cav_srvs.BindResponse> bindService =
-      connectedNode.newServiceServer("~/bind", cav_srvs.Bind._TYPE,
+    ServiceServer<cav_srvs.BindRequest, cav_srvs.BindResponse> bindService = connectedNode
+      .newServiceServer("~/bind", cav_srvs.Bind._TYPE,
         new ServiceResponseBuilder<cav_srvs.BindRequest, cav_srvs.BindResponse>() {
-          @Override public void build(cav_srvs.BindRequest request,
-            cav_srvs.BindResponse response) {
+          @Override
+          public void build(cav_srvs.BindRequest request, cav_srvs.BindResponse response) {
           }
         });
     ServiceServer<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>
@@ -148,11 +146,14 @@ public class MockDriver extends AbstractNodeMain {
           connectedNode.newPublisher("~/can/steering_wheel_angle", std_msgs.Float64._TYPE);
         final Publisher<std_msgs.Float64> throttlePub =
           connectedNode.newPublisher("~/can/throttle_position", std_msgs.Float64._TYPE);
-//        final Publisher<cav_msgs.TurnSignal> turn_sigPub =
-//          connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
+        // TODO: Uncomment once TurnSignal.msg has been implemented
+        //final Publisher<cav_msgs.TurnSignal> turn_sigPub =
+        //  connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
 
+        // Parameters
         // Published Parameter ~/device_port
         // Published Parameter ~/timeout
+        break;
 
       case "srx_application":
 
@@ -166,32 +167,35 @@ public class MockDriver extends AbstractNodeMain {
         // Subscribed
         Subscriber<std_msgs.Float32> longEffortSub =
           connectedNode.newSubscriber("~/control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
-        //        Subscriber<cav_msgs.SpeedAccel> subscriber =
-        //          connectedNode.newSubscriber("~/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
+        // TODO: Uncomment once SpeedAccel.msg is implemented
+        // Subscriber<cav_msgs.SpeedAccel> subscriber =
+        //   connectedNode.newSubscriber("~/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
 
         // Services
         // Server
-        //        ServiceServer<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse> getLightsService =
-        //          connectedNode.newServiceServer("~/control/get_lights", cav_srvs.GetLights._TYPE,
-        //            new ServiceResponseBuilder<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse>() {
-        //              @Override public void build(cav_srvs.GetLightsRequest request,
-        //                cav_srvs.GetLightsResponse response) {
-        //                return response;
-        //                return response;
-        //              }
-        //            });
-        //        ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService =
-        //          connectedNode.newServiceServer("~/control/set_lights", cav_srvs.SetLights._TYPE,
-        //            new ServiceResponseBuilder<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse>() {
-        //              @Override public void build(cav_srvs.SetLightsRequest request,
-        //                cav_srvs.SetLightsResponse response) {
-        //                return response;
-        //              }
-        //            });
-        //        Published	Parameter	~/device_port
-        //        Published	Parameter	~/k_d
-        //        Published	Parameter	~/k_i
-        //        Published	Parameter	~/k_p
+        // TODO: Uncomment once GetLights and SetLights services are specified.
+        //  ServiceServer<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse> getLightsService =
+        //    connectedNode.newServiceServer("~/control/get_lights", cav_srvs.GetLights._TYPE,
+        //      new ServiceResponseBuilder<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse>() {
+        //        @Override public void build(cav_srvs.GetLightsRequest request,
+        //          cav_srvs.GetLightsResponse response) {
+        //          return response;
+        //          return response;
+        //        }
+        //      });
+        //  ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService =
+        //    connectedNode.newServiceServer("~/control/set_lights", cav_srvs.SetLights._TYPE,
+        //      new ServiceResponseBuilder<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse>() {
+        //        @Override public void build(cav_srvs.SetLightsRequest request,
+        //          cav_srvs.SetLightsResponse response) {
+        //          return response;
+        //        }
+        //      });
+        //  Published	Parameter	~/device_port
+        //  Published	Parameter	~/k_d
+        //  Published	Parameter	~/k_i
+        //  Published	Parameter	~/k_p
+        break;
 
       case "srx_object_application":
 
@@ -200,10 +204,11 @@ public class MockDriver extends AbstractNodeMain {
         final Publisher<cav_msgs.ExternalObjectList> objectPub =
           connectedNode.newPublisher("~/sensor/tracked_objects", cav_msgs.ExternalObjectList._TYPE);
 
-        //        Published	Parameter	~/aoi_angle
-        //        Published	Parameter	~/device_port
-        //        Published	Parameter	~/min_width
-        //        Published	Parameter	~/timeout
+        // Published	Parameter	~/aoi_angle
+        // Published	Parameter	~/device_port
+        // Published	Parameter	~/min_width
+        // Published	Parameter	~/timeout
+        break;
 
       case "arada_application":
 
@@ -216,10 +221,12 @@ public class MockDriver extends AbstractNodeMain {
         Subscriber<cav_msgs.ByteArray> outboundPub =
           connectedNode.newSubscriber("~/comms/outbound", cav_msgs.ByteArray._TYPE);
 
-        //        Published	Parameter	~/arada_address
-        //        Published	Parameter	~/arada_listening_port
-        //        Published	Parameter	~/listening_port
-        //        Published	Parameter	~/output_queue_size
+        // Published	Parameter	~/arada_address
+        // Published	Parameter	~/arada_listening_port
+        // Published	Parameter	~/listening_port
+        // Published	Parameter	~/output_queue_size
+
+        break;
 
       default:
     }
@@ -234,13 +241,13 @@ public class MockDriver extends AbstractNodeMain {
       }//setup
 
       @Override protected void loop() throws InterruptedException {
-        cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
+        cav_msgs.SystemAlert systemAlertMsg = systemAlertPub.newMessage();
         systemAlertMsg.setDescription(
           "Hello World! " + "I am " + params.getString("~/driver_type") + ". " + sequenceNumber
             + " run_id = " + rosRunID + ".");
         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
 
-        systemAlertPublisher.publish(systemAlertMsg);
+        systemAlertPub.publish(systemAlertMsg);
 
         sequenceNumber++;
         Thread.sleep(1000);
