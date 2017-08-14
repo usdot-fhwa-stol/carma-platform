@@ -46,3 +46,9 @@ dependencies {
   /* compile project(':sibling_gradle_project') */
 }
 
+installApp {
+    doLast {
+        delete 'build/scripts'
+    }
+}
+

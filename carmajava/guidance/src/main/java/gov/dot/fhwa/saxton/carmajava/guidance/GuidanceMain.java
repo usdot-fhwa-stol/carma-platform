@@ -146,6 +146,7 @@ public class GuidanceMain extends AbstractNodeMain {
 
          systemAlertPublisher.publish(systemAlertMsg);
        }
+       messageQueue.clear();
 
        Thread.sleep(1000);
      }//loop
