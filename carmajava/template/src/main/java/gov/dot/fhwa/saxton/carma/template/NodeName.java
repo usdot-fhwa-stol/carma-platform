@@ -121,7 +121,7 @@ public class NodeName extends AbstractNodeMain {
                                              systemAlertPublisher.publish(systemAlertMsg);
 
                                              sequenceNumber++;
-                                             Thread.sleep(1000);
+                                             Thread.sleep(30000);
                                            }//loop
 
                                          }//CancellableLoop

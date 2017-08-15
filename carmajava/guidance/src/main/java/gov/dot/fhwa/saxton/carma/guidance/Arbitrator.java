@@ -56,5 +56,5 @@ public class Arbitrator implements Runnable {
   protected PubSubManager pubSubManager;
   protected final String componentName = "Arbitrator";
   protected int sequenceNumber = 0;
-  protected final long sleepDurationMillis = 1000;
+  protected final long sleepDurationMillis = 30000;
 }

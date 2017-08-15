@@ -115,7 +115,7 @@ public class InterfaceMgr extends AbstractNodeMain {
               systemAlertPublisher.publish(systemAlertMsg);
 
               sequenceNumber++;
-              Thread.sleep(5000);
+              Thread.sleep(30000);
           }//loop
 
       });//executeCancellableLoop

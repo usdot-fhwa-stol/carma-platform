@@ -87,7 +87,7 @@ public class PubSub extends AbstractNodeMain {
                                                      str.setData("Hello World! " + "I am pub_sub. " + sequenceNumber);
                                                      publisher.publish(str);
                                                      sequenceNumber++;
-                                                     Thread.sleep(1000);
+                                                     Thread.sleep(30000);
                                                  }//loop
 
                                              }//CancellableLoop
