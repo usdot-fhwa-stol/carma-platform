@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>pinpoint_driver</name>
+  <version>1.0.1</version>
+  <description>The pinpoint_driver package</description>
+  <maintainer email="support@torcrobotics.com">Torc Robotics</maintainer>
+  <license>BSD</license>
+  <author email="watters@torcrobotics.com">Thomas Watters</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

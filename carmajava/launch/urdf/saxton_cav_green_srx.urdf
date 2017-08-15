@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!-- Green Cadillac Robot Description File
+    This file defines the static transformations of the CAV platform operating on the green cadillac.
+    These are only example values at this time.
+-->
+<robot name="saxton_cav_srx">
+  <!-- Frames -->
+  <link name="base_link" />
+  <link name="host_vehicle"/>
+  <link name="vehicle_front" />
+  <link name="pinpoint" />
+  <link name="radar" />
+
+   <!-- base_link -> host_vehicle Transform -->
+  <joint name="base_link_to_host_vehicle" type="fixed">
+    <parent link="base_link" />
+    <child link="host_vehicle" />
+    <!-- Arguments (x y z roll pitch yaw) -->
+    <!-- Units: Meters and Rad-->
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <!-- host_vehicle -> vehicle_front Transform -->
+  <joint name="host_vehicle_to_vehicle_front" type="fixed">
+    <parent link="host_vehicle" />
+    <child link="vehicle_front" />
+    <origin xyz="1 0 -.5" rpy="3.145159 0 0" />
+  </joint>
+
+  <!-- host_vehicle -> pinpoint Transform -->
+  <joint name="host_vehicle_to_pinpoint" type="fixed">
+    <parent link="host_vehicle" />
+    <child link="pinpoint" />
+    <origin xyz="-.5 0 -1" rpy="3.145159 0 0" />
+  </joint>
+
+  <!-- host_vehicle -> radar Transform -->
+  <joint name="host_vehicle_to_radar" type="fixed">
+    <parent link="host_vehicle" />
+    <child link="radar" />
+    <origin xyz="1 .1 -.5" rpy="3.145159 0 0" />
+  </joint>
+</robot>

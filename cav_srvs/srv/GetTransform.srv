@@ -1,0 +1,24 @@
+#
+# GetTransform.srv
+# 
+# Returns the transform between the two provided frame ids. If the transform is not defined returns an error status flag
+#
+# @author Michael McConnell
+# @version 0.1
+#
+
+# The source frame of the transform.
+# When the returned transform is applied to a point in the source frame it will be converted into the target frame
+string sourceFrame
+# The target frame of the transform
+string targetFrame
+---
+geometry_msgs/TransformStamped transform
+# An enumeration representing the validity of the returned transform
+uint8 errorStatus
+
+# The enumeration of an error status.
+# No error occured
+uint8 NO_ERROR=0
+# The requested transform could not be computed (likely one of the frames is not in the tf tree)
+uint8 NO_TRANSFORM_EXISTS=1

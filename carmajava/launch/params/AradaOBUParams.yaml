@@ -1,0 +1,14 @@
+# AradaOBUParams.yaml
+# Defines the ros parameters which are required by the Arada OBU Driver
+
+# String: The IPv4/6 address of the Arada OBU
+arada_address: '192.168.1.2'
+
+# Integer: The port the Arada OBU is listening on for outgoing messages
+arada_listening_port: 8089
+
+# Integer: The port to listen for UDP packets from the Arada OBU
+listening_port: 8090
+
+# Integer: The size of the outgoing message queue for messages published to the outbound topic
+output_queue_size: 20

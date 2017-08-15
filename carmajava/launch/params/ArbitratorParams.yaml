@@ -1,0 +1,31 @@
+# ArbitratorParams.yaml
+# Defines the ros parameters which are required by the Arbitrator
+
+# Integer: number of consecutive Trajectory planning attempts that must fail before the Arbitrator returns control to the driver.
+arbitrator/deadlock_threshold: 5
+
+# Double: Factor by which to decrease the planning window on execution failure
+arbitrator/geometric_decrease_factor: 0.1
+
+# Integer: The initial priority as an integer in range [0, 100] for plugin with name <plugin_name>
+# Example: ~/arbitrator/initial_priority/<plugin_name>
+arbitrator/initial_priority/cruising: 1
+
+# Double: Initial length of the planning window.
+# Units: Meters
+arbitrator/initial_window_size: 50.0
+
+# Double: The linear increase in planning window on execution success.
+# Units: Meters
+arbitrator/linear_increase_size: 1.0
+
+# Double: Maximum length of a planning window.
+# Units: Meters
+arbitrator/max_window_size: 60.0
+
+# Double: Minimum length of a planning window.
+# Units: Meters
+arbitrator/min_window_size: 20.0
+
+# Double: The percentage of active trajectory completion that triggers automatic planning of the following trajectory.
+arbitrator/replan_completion_percent: 30.0
