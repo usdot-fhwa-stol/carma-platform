@@ -56,5 +56,5 @@ public class PluginManager implements Runnable {
   protected PubSubManager pubSubManager;
   protected int sequenceNumber = 0;
   protected final String componentName = "PluginManager";
-  protected final long sleepDurationMillis = 1000;
+  protected final long sleepDurationMillis = 30000;
 }

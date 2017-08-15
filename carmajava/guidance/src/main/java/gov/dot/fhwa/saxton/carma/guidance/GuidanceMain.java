@@ -148,7 +148,7 @@ public class GuidanceMain extends AbstractNodeMain {
        }
        messageQueue.clear();
 
-       Thread.sleep(1000);
+       Thread.sleep(30000);
      }//loop
 
     }//CancellableLoop

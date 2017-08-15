@@ -136,7 +136,7 @@ public class EnvironmentManager extends AbstractNodeMain {
 
         systemAlertPub.publish(systemAlertMsg);
         sequenceNumber++;
-        Thread.sleep(1000);
+        Thread.sleep(30000);
       }
     });
   }
