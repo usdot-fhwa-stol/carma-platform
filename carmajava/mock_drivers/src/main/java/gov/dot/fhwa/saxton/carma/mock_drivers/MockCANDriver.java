@@ -19,7 +19,6 @@ package gov.dot.fhwa.saxton.carma.mock_drivers;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.namespace.GraphName;
-import org.ros.node.topic.Subscriber;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,9 +47,7 @@ public class MockCANDriver extends AbstractMockDriver {
   final Publisher<std_msgs.Float64> throttlePub;
   final Publisher<cav_msgs.TurnSignal> turnSignalPub;
 
-  final Subscriber<std_msgs.Float64> throttleSub;
-
-  final int expectedDataRowCount = 12;
+  final int EXPECTED_DATA_ROW_COUNT = 12;
 
   public MockCANDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -69,9 +66,6 @@ public class MockCANDriver extends AbstractMockDriver {
     throttlePub = connectedNode.newPublisher("~/can/throttle_position", std_msgs.Float64._TYPE);
     turnSignalPub = connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
 
-
-    throttleSub = connectedNode.newSubscriber("~/can/throttle_position", std_msgs.Float64._TYPE);
-
     // Parameters
     // Published Parameter ~/device_port
     // Published Parameter ~/timeout
@@ -82,10 +76,10 @@ public class MockCANDriver extends AbstractMockDriver {
   }
 
   @Override protected void publishData(String[] data) throws IllegalArgumentException {
-    if (data.length != expectedDataRowCount) {
+    if (data.length != EXPECTED_DATA_ROW_COUNT) {
       throw new IllegalArgumentException(
         "Publish data called for MockCanDriver with incorrect number of data elements. "
-          + "The required number of data elements is " + expectedDataRowCount);
+          + "The required number of data elements is " + EXPECTED_DATA_ROW_COUNT);
     }
     // Make messages
     std_msgs.Bool acc = accPub.newMessage();
@@ -131,10 +125,21 @@ public class MockCANDriver extends AbstractMockDriver {
   }
 
   @Override protected int getExpectedRowCount() {
-    return expectedDataRowCount;
+    return EXPECTED_DATA_ROW_COUNT;
   }
 
   @Override protected List<String> getDriverTypesList(){
     return new ArrayList<>(Arrays.asList("can"));
+  }
+
+  @Override public List<String> getDriverAPI() {
+    return new ArrayList<>(Arrays.asList(connectedNode.getName() + "/can/acc_engaged",
+      connectedNode.getName() + "/can/acceleration", connectedNode.getName() + "/can/brake_lights",
+      connectedNode.getName() + "/can/brake_position",
+      connectedNode.getName() + "/can/engine_speed", connectedNode.getName() + "/can/fuel_flow",
+      connectedNode.getName() + "/can/odometer", connectedNode.getName() + "/can/parking_brake",
+      connectedNode.getName() + "/can/speed", connectedNode.getName() + "/can/steering_wheel_angle",
+      connectedNode.getName() + "/can/throttle_position",
+      connectedNode.getName() + "/can/turn_signal_state"));
   }
 }

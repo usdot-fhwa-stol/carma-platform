@@ -20,6 +20,8 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 
+import java.util.List;
+
 /**
  * Interface for Driver strategies which will be used by MockDriverNode nodes.
  * Instances of objects which implement this interface are meant to be defined in a ROS node.
@@ -53,4 +55,9 @@ public interface IMockDriver {
    * Publishes the status of this driver
    */
   void publishDriverStatus();
+
+  /**
+   * Gets a list of topics names representing the api of this driver
+   */
+  List<String> getDriverAPI();
 }

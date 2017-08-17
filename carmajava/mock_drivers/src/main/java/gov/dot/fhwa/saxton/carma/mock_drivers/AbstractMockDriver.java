@@ -84,6 +84,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
     bindService = connectedNode.newServiceServer("~/bind", cav_srvs.Bind._TYPE,
       new ServiceResponseBuilder<BindRequest, BindResponse>() {
         @Override public void build(cav_srvs.BindRequest request, cav_srvs.BindResponse response) {
+          log.info("Request for bind received");
         }
       });
     getApiService = connectedNode
@@ -91,6 +92,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
         new ServiceResponseBuilder<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>() {
           @Override public void build(cav_srvs.GetAPISpecificationRequest request,
             cav_srvs.GetAPISpecificationResponse response) {
+            response.setApiList(getDriverAPI());
           }
         });
   }
@@ -212,6 +214,8 @@ public abstract class AbstractMockDriver implements IMockDriver {
    * @return The list of driver types which this driver satisfies
    */
   protected abstract List<String> getDriverTypesList();
+
+  public abstract List<String> getDriverAPI();
 }
 
 

@@ -40,7 +40,7 @@ import java.util.List;
  * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
-public class MockRadarDriver extends AbstractMockDriver {
+public class MockPinPointDriver extends AbstractMockDriver {
 
   NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
@@ -48,54 +48,68 @@ public class MockRadarDriver extends AbstractMockDriver {
 
   // Topics
   // Published
-  final Publisher<cav_msgs.ExternalObjectList> objectPub;
+  final Publisher<cav_msgs.HeadingStamped> positionPub;
+  final Publisher<sensor_msgs.NavSatFix> navSatFixPub;
+  final Publisher<nav_msgs.Odometry> odometryPub;
+  final Publisher<geometry_msgs.TwistStamped> velocityPub;
 
-  // Published	Parameter	~/aoi_angle
-  // Published	Parameter	~/device_port
-  // Published	Parameter	~/min_width
-  // Published	Parameter	~/timeout
+  // Parameters
+  // Parameter	~/address	~/address	string
+  // Parameter	~/port	~/port	uint16
 
-  final int expectedDataRowCount = 2;
+  final int EXPECTED_DATA_ROW_COUNT = 2;
 
-  public MockRadarDriver(ConnectedNode connectedNode) {
+  public MockPinPointDriver(ConnectedNode connectedNode) {
     super(connectedNode);
     // Topics
     // Published
-    objectPub = connectedNode.newPublisher("~/sensor/tracked_objects", cav_msgs.ExternalObjectList._TYPE);
+    positionPub = connectedNode.newPublisher("~/position/heading", cav_msgs.HeadingStamped._TYPE);
+    navSatFixPub = connectedNode.newPublisher("~/position/nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
+    odometryPub = connectedNode.newPublisher("~/position/odometry", nav_msgs.Odometry._TYPE);
+    velocityPub = connectedNode.newPublisher("~/position/velocity", geometry_msgs.TwistStamped._TYPE);
   }
 
   @Override public GraphName getDefaultDriverName() {
-    return GraphName.of("mock_radar_driver");
+    return GraphName.of("mock_pinpoint_driver");
   }
 
   @Override protected void publishData(String[] data) throws IllegalArgumentException {
-    if (data.length != expectedDataRowCount) {
+    if (data.length != EXPECTED_DATA_ROW_COUNT) {
       sequenceNumber++;
       throw new IllegalArgumentException(
         "Publish data called for MockAradaDriver with incorrect number of data elements. "
-          + "The required number of data elements is " + expectedDataRowCount);
+          + "The required number of data elements is " + EXPECTED_DATA_ROW_COUNT);
     }
 
+    // TODO: Due to the undefined number of objects detected I will need to overload the readAndPublishData function at a minimum and maybe onStart
     // Make messages
-    cav_msgs.ExternalObjectList objectListMsg = objectPub.newMessage();
-    cav_msgs.ExternalObject externalObject = messageFactory.newFromType(cav_msgs.ExternalObject._TYPE);;
+    cav_msgs.HeadingStamped headingMsg = positionPub.newMessage();
+    sensor_msgs.NavSatFix navMsg = navSatFixPub.newMessage();
+    nav_msgs.Odometry odometryMsg = odometryPub.newMessage();
+    geometry_msgs.TwistStamped velocityMsg = velocityPub.newMessage();
 
+    // Set Headers
     std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
-    hdr.setFrameId("0");
     hdr.setSeq(sequenceNumber);
     hdr.setStamp(connectedNode.getCurrentTime());
 
-    //TODO: Due to the undefined number of objects detected I will need to overload the readAndPublishData function at a minimum and maybe onStart
+    hdr.setFrameId("pinpoint");
+    headingMsg.setHeader(hdr);
 
-    externalObject.setHeader(hdr);
-    objectListMsg.setObjects();
+    hdr.setFrameId("earth");
+    navMsg.setHeader(hdr);
 
-    recvMsg.setHeader(hdr);
-    recvMsg.setMessageType(data[0]);
+    hdr.setFrameId("odom");
+    odometryMsg.setHeader(hdr);
 
-    byte[] rawBytes = (data[1].getBytes());
-    // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
-    recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
+    // TODO: Ask if this should be odom not base_link
+    hdr.setFrameId("base_link");
+    velocityMsg.setHeader(hdr);
+
+
+    // Set Data
+    headingMsg.setHeading(Float.parseFloat(data[0]));
+    navMsg.
 
     // Publish Data
     recvPub.publish(recvMsg);
@@ -103,16 +117,17 @@ public class MockRadarDriver extends AbstractMockDriver {
   }
 
   @Override protected int getExpectedRowCount() {
-    return expectedDataRowCount;
+    return EXPECTED_DATA_ROW_COUNT;
   }
 
   @Override protected List<String> getDriverTypesList() {
     return new ArrayList<>(Arrays.asList("comms"));
   }
 
-  @Override public List<String> getDriverAPI(){
-    return new ArrayList<>(Arrays.asList(
-      connectedNode.getName() + "~/sensor/tracked_objects"
-    ));
+  @Override public List<String> getDriverAPI() {
+    return new ArrayList<>(Arrays.asList(connectedNode.getName() + "/position/heading",
+      connectedNode.getName() + "/position/nav_sat_fix",
+      connectedNode.getName() + "/position/odometry",
+      connectedNode.getName() + "/position/velocity"));
   }
 }

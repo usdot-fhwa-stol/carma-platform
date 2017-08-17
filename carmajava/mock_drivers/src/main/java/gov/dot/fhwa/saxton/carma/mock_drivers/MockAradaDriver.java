@@ -57,7 +57,7 @@ public class MockAradaDriver extends AbstractMockDriver {
   // Published	Parameter	~/listening_port
   // Published	Parameter	~/output_queue_size
 
-  final int expectedDataRowCount = 2;
+  final int EXPECTED_DATA_ROW_COUNT = 2;
 
   public MockAradaDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -80,11 +80,11 @@ public class MockAradaDriver extends AbstractMockDriver {
   }
 
   @Override protected void publishData(String[] data) throws IllegalArgumentException {
-    if (data.length != expectedDataRowCount) {
+    if (data.length != EXPECTED_DATA_ROW_COUNT) {
       sequenceNumber++;
       throw new IllegalArgumentException(
         "Publish data called for MockAradaDriver with incorrect number of data elements. "
-          + "The required number of data elements is " + expectedDataRowCount);
+          + "The required number of data elements is " + EXPECTED_DATA_ROW_COUNT);
     }
 
     // Make messages
@@ -109,10 +109,15 @@ public class MockAradaDriver extends AbstractMockDriver {
   }
 
   @Override protected int getExpectedRowCount() {
-    return expectedDataRowCount;
+    return EXPECTED_DATA_ROW_COUNT;
   }
 
   @Override protected List<String> getDriverTypesList() {
     return new ArrayList<>(Arrays.asList("comms"));
+  }
+
+  @Override public List<String> getDriverAPI() {
+    return new ArrayList<>(Arrays.asList(connectedNode.getName() + "/comms/recv",
+      connectedNode.getName() + "/comms/outbound"));
   }
 }
