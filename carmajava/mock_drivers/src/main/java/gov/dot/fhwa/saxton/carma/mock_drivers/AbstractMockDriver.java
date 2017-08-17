@@ -14,10 +14,9 @@
  * the License.
  */
 
-package CarmaPlatform.carmajava.mock_drivers.src.main.java.gov.dot.fhwa.saxton.carma.mock_drivers;
+package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import cav_msgs.DriverStatus;
-import cav_msgs.SystemAlert;
+import org.apache.commons.logging.Log;
 import cav_srvs.BindRequest;
 import cav_srvs.BindResponse;
 import cav_srvs.GetAPISpecificationRequest;
@@ -29,9 +28,6 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
-import org.ros.node.topic.Subscriber;
-
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -60,10 +56,9 @@ public abstract class AbstractMockDriver implements IMockDriver {
   protected final ServiceServer<GetAPISpecificationRequest, GetAPISpecificationResponse>
     getApiService;
 
-  protected final String dataLine = "";
   protected final String delimiter = ","; // Comma for csv file
   protected RandomAccessFile reader = null;
-  protected final int driverStatus = cav_msgs.DriverStatus.OFF;
+  protected byte driverStatus = cav_msgs.DriverStatus.OFF;
 
   /**
    * Constructor establishes the publishers and subscribers for the ROS network.
@@ -100,17 +95,17 @@ public abstract class AbstractMockDriver implements IMockDriver {
         });
   }
 
-  @Override public abstract GraphName getDefaultNodeName();
+  @Override public abstract GraphName getDefaultDriverName();
 
   @Override public void onStart(ConnectedNode connectedNode) {
     // Open a data file and set the default driver status
     try {
-      reader = new RandomAccessFile(new File(dataFilePath));
+      reader = new RandomAccessFile(dataFilePath, "r");
       driverStatus = cav_msgs.DriverStatus.OPERATIONAL;
     } catch (FileNotFoundException e) {
       e.printStackTrace();
       log
-        .warn(getDefaultNodeName() + " could not find file " + dataFilePath + ".No data published");
+        .warn(getDefaultDriverName() + " could not find file " + dataFilePath + ".No data published");
       driverStatus = cav_msgs.DriverStatus.DEGRADED;
     }
   }
@@ -123,6 +118,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
   @Override public void readAndPublishData() {
     // Read each line from a data file and publish that data.
     // On failure to read a line of data all publishing
+    String dataLine;
     if (reader != null) {
       try {
         dataLine = reader.readLine();
@@ -134,7 +130,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
           } catch (IllegalArgumentException e) {
             e.printStackTrace();
             // Log warning if a line data incorrect
-            log.warn(getDefaultNodeName()
+            log.warn(getDefaultDriverName()
               + " read data file with incorrect number of columns. Desired column count is: "
               + getExpectedRowCount() + " No data published.");
             driverStatus = cav_msgs.DriverStatus.DEGRADED;
@@ -147,42 +143,42 @@ public abstract class AbstractMockDriver implements IMockDriver {
         closeDataFile();
         reader = null;
         // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
-        log.warn(getDefaultNodeName() + " failed to read data file. No data will be published");
+        log.warn(getDefaultDriverName() + " failed to read data file. No data will be published");
         driverStatus = cav_msgs.DriverStatus.FAULT;
       }
     }
   }
 
   @Override public void publishDriverStatus() {
-    cav_msgs.DriverStatus driverStatus = discoveryPub.newMessage();
-    driverStatus.name = getDefaultNodeName();
-    driverStatus.status = driverStatus;
-    driverStatus.can_bus = false;
-    driverStatus.sensor = false;
-    driverStatus.position = false;
-    driverStatus.comms = false;
-    driverStatus.controller = false;
+    cav_msgs.DriverStatus driverStatusMsg = discoveryPub.newMessage();
+    driverStatusMsg.setName(getDefaultDriverName().toString());
+    driverStatusMsg.setStatus(driverStatus);
+    driverStatusMsg.setCanBus(false);
+    driverStatusMsg.setSensor(false);
+    driverStatusMsg.setPosition(false);
+    driverStatusMsg.setComms(false);
+    driverStatusMsg.setController(false);
 
-    for (driverType:
-         getDriverTypesList()) {
+    for (String driverType: getDriverTypesList()) {
       switch (driverType) {
         case "can_bus":
-          driverStatus.can_bus = true;
+          driverStatusMsg.setCanBus(true);
           break;
         case "sensor":
-          driverStatus.sensor = true;
+          driverStatusMsg.setSensor(true);
           break;
         case "position":
-          driverStatus.position = true;
+          driverStatusMsg.setPosition(true);
           break;
         case "comms":
-          driverStatus.comms = true;
+          driverStatusMsg.setComms(true);
           break;
         case "controller":
-          driverStatus.controller = true;
+          driverStatusMsg.setController(true);
           break;
       }
     }
+    discoveryPub.publish(driverStatusMsg);
   }
 
   /**

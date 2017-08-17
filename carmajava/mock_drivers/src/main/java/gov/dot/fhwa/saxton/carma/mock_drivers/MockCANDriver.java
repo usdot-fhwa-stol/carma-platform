@@ -14,14 +14,13 @@
  * the License.
  */
 
-// This class provides a node which mimicks a driver's ros messaging behavior but has no logical functionality.
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import CarmaPlatform.carmajava.mock_drivers.src.main.java.gov.dot.fhwa.saxton.carma.mock_drivers.AbstractMockDriver;
-import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.namespace.GraphName;
+import org.ros.node.topic.Subscriber;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,7 +28,10 @@ import java.util.List;
  * A class which can be used to simulate a CAN driver for the CarmaPlatform.
  * <p>
  * Command line test:
- * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockCANDriver
+ * ROSJava does not support rosrun parameter setting so a rosrun is a multi step process
+ * rosparam set /mock_driver/simulated_driver 'can'
+ * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
+ * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
 public class MockCANDriver extends AbstractMockDriver {
 
@@ -45,6 +47,8 @@ public class MockCANDriver extends AbstractMockDriver {
   final Publisher<std_msgs.Float64> steeringPub;
   final Publisher<std_msgs.Float64> throttlePub;
   final Publisher<cav_msgs.TurnSignal> turnSignalPub;
+
+  final Subscriber<std_msgs.Float64> throttleSub;
 
   final int expectedDataRowCount = 12;
 
@@ -65,12 +69,15 @@ public class MockCANDriver extends AbstractMockDriver {
     throttlePub = connectedNode.newPublisher("~/can/throttle_position", std_msgs.Float64._TYPE);
     turnSignalPub = connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
 
+
+    throttleSub = connectedNode.newSubscriber("~/can/throttle_position", std_msgs.Float64._TYPE);
+
     // Parameters
     // Published Parameter ~/device_port
     // Published Parameter ~/timeout
   }
 
-  @Override public GraphName getDefaultNodeName() {
+  @Override public GraphName getDefaultDriverName() {
     return GraphName.of("mock_can_driver");
   }
 
@@ -95,18 +102,18 @@ public class MockCANDriver extends AbstractMockDriver {
     cav_msgs.TurnSignal turnSignalState = turnSignalPub.newMessage();
 
     // Set Data
-    acc.data = Boolean.parseBoolean(canData[0]);
-    accel.data = Float.parseFloat(canData[1]);
-    breakLights.data = Boolean.parseBoolean(canData[2]);
-    breakPos.data = Float.parseFloat(canData[3]);
-    engineSpeed.data = Float.parseFloat(canData[4]);
-    fuelFlow.data = Float.parseFloat(canData[5]);
-    odometry.data = Float.parseFloat(canData[6]);
-    parkingBrake.data = Boolean.parseBoolean(canData[7]);
-    speed.data = Float.parseFloat(canData[8]);
-    steering.data = Float.parseFloat(canData[9]);
-    throttle.data = Float.parseFloat(canData[10]);
-    turnSignalState.state = Integer.parseInt(canData[11]);
+    acc.setData(Boolean.parseBoolean(data[0]));
+    accel.setData(Float.parseFloat(data[1]));
+    breakLights.setData(Boolean.parseBoolean(data[2]));
+    breakPos.setData(Float.parseFloat(data[3]));
+    engineSpeed.setData(Float.parseFloat(data[4]));
+    fuelFlow.setData(Float.parseFloat(data[5]));
+    odometry.setData(Float.parseFloat(data[6]));
+    parkingBrake.setData(Boolean.parseBoolean(data[7]));
+    speed.setData(Float.parseFloat(data[8]));
+    steering.setData(Float.parseFloat(data[9]));
+    throttle.setData(Float.parseFloat(data[10]));
+    turnSignalState.setState(Byte.parseByte(data[11]));
 
     // Publish Data
     accPub.publish(acc);
@@ -120,7 +127,7 @@ public class MockCANDriver extends AbstractMockDriver {
     speedPub.publish(speed);
     steeringPub.publish(steering);
     throttlePub.publish(throttle);
-    turnSigPub.publish(turnSignalState);
+    turnSignalPub.publish(turnSignalState);
   }
 
   @Override protected int getExpectedRowCount() {
@@ -128,6 +135,6 @@ public class MockCANDriver extends AbstractMockDriver {
   }
 
   @Override protected List<String> getDriverTypesList(){
-    return Arrays.asList("can");
+    return new ArrayList<>(Arrays.asList("can"));
   }
 }

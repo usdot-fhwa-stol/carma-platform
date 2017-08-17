@@ -14,10 +14,8 @@
  * the License.
  */
 
-// This class provides a node which mimicks a driver's ros messaging behavior but has no logical functionality.
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import CarmaPlatform.carmajava.mock_drivers.src.main.java.gov.dot.fhwa.saxton.carma.mock_drivers.IMockDriver;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.AbstractNodeMain;
@@ -32,6 +30,7 @@ import org.ros.namespace.GraphName;
  * Command line test:
  * ROSJava does not support rosrun parameter setting so a rosrun is a two step process
  * rosparam set /mock_driver/simulated_driver 'can'
+ * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
 public class MockDriverNode extends AbstractNodeMain {
@@ -42,6 +41,7 @@ public class MockDriverNode extends AbstractNodeMain {
   }
 
   @Override public void onStart(final ConnectedNode connectedNode) {
+
     final Log log = connectedNode.getLog();
     final ParameterTree params = connectedNode.getParameterTree();
     final IMockDriver simulatedDriver;
@@ -52,18 +52,18 @@ public class MockDriverNode extends AbstractNodeMain {
       case "arada":
         simulatedDriver = new MockAradaDriver(connectedNode);
         break;
-      case "srx_controller":
-        simulatedDriver = new MockSRXControllerDriver(connectedNode);
-        break;
-      case "radar":
-        simulatedDriver = new MockRadarDriver(connectedNode);
-        break;
-      case "4g":
-        simulatedDriver = new MockCellularDriver(connectedNode);
-        break;
-      case "pinpoint":
-        simulatedDriver = new MockPinPointDriver(connectedNode);
-        break;
+//      case "srx_controller":
+//        simulatedDriver = new MockSRXControllerDriver(connectedNode);
+//        break;
+//      case "radar":
+//        simulatedDriver = new MockRadarDriver(connectedNode);
+//        break;
+//      case "4g":
+//        simulatedDriver = new MockCellularDriver(connectedNode);
+//        break;
+//      case "pinpoint":
+//        simulatedDriver = new MockPinPointDriver(connectedNode);
+//        break;
       default:
         log.warn(
           "No valid driver name specified on the simulated_driver parameter. Defaulting to CAN driver");
@@ -71,6 +71,7 @@ public class MockDriverNode extends AbstractNodeMain {
         break;
     }
 
+    simulatedDriver.onStart(connectedNode);
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {

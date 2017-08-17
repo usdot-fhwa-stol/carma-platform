@@ -14,7 +14,7 @@
  * the License.
  */
 
-package CarmaPlatform.carmajava.mock_drivers.src.main.java.gov.dot.fhwa.saxton.carma.mock_drivers;
+package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -42,7 +42,7 @@ public interface IMockDriver {
    * Returns the default name of this driver
    * @return the default node name
    */
-  GraphName getDefaultNodeName();
+  GraphName getDefaultDriverName();
 
   /**
    * Reads simulated data from a file and publishes it
