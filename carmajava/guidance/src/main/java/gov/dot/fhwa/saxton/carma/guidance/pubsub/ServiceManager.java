@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.carmajava.guidance.pubsub;
+package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 public class ServiceManager<T> {
 }

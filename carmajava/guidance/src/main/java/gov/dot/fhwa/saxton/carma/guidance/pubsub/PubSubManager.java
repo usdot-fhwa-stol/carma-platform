@@ -16,7 +16,7 @@
 
 //TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
 //Originally "com.github.rosjava.carmajava.template;"
-package gov.dot.fhwa.saxton.carmajava.guidance.pubsub;
+package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import java.util.concurrent.BlockingQueue;
 

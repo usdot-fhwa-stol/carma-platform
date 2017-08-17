@@ -14,9 +14,9 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carmajava.guidance;
+package gov.dot.fhwa.saxton.carma.guidance;
 
-import gov.dot.fhwa.saxton.carmajava.guidance.pubsub.PubSubManager;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
 
 /**
  * Guidance package PluginManager component
