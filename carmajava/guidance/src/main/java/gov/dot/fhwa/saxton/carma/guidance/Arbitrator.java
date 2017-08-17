@@ -14,20 +14,9 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance;
+package gov.dot.fhwa.saxton.carmajava.guidance;
 
-import org.apache.commons.logging.Log;
-import org.ros.message.MessageListener;
-import org.ros.node.topic.Subscriber;
-import org.ros.concurrent.CancellableLoop;
-import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
-import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
-import org.ros.node.topic.Publisher;
-import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
+import gov.dot.fhwa.saxton.carmajava.guidance.pubsub.PubSubManager;
 
 /**
  * Guidance package Arbitrator component
@@ -56,5 +45,5 @@ public class Arbitrator implements Runnable {
   protected PubSubManager pubSubManager;
   protected final String componentName = "Arbitrator";
   protected int sequenceNumber = 0;
-  protected final long sleepDurationMillis = 30000;
+  protected final long sleepDurationMillis = 1000;
 }
