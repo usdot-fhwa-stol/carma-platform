@@ -17,112 +17,83 @@
 // This class provides a node which mimicks a driver's ros messaging behavior but has no logical functionality.
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
+import CarmaPlatform.carmajava.mock_drivers.src.main.java.gov.dot.fhwa.saxton.carma.mock_drivers.IMockDriver;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
-import org.ros.node.topic.Publisher;
-import org.ros.node.topic.Subscriber;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.node.service.ServiceServer;
-import org.ros.node.service.ServiceResponseBuilder;
-import org.ros.node.service.ServiceResponseListener;
-import org.ros.node.service.ServiceClient;
-import org.ros.namespace.NameResolver;
 import org.ros.namespace.GraphName;
-import org.ros.message.MessageFactory;
-import org.ros.message.MessageListener;
-import org.ros.exception.RemoteException;
-import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
 
 /**
  * A class which can be used to mimick different drivers for the CarmaPlatform.
- * The user specifies the node to be mimicked using the driver_type input parameter.
+ * For specific types of drivers this class should be extended.
  * <p>
  * Command line test:
- * ROS Java does not support rosrun parameter setting so a rosrun is a two step process
- * rosparam set /mock_driver/driver_type 'srx_application'
- * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver
+ * ROSJava does not support rosrun parameter setting so a rosrun is a two step process
+ * rosparam set /mock_driver/simulated_driver 'can'
+ * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
-public class MockDriver extends AbstractNodeMain {
+public class MockDriverNode extends AbstractNodeMain {
+  private String defaultName =  "mock_driver";
 
   @Override public GraphName getDefaultNodeName() {
-    return GraphName.of("mock_driver");
+    return GraphName.of(defaultName);
   }
 
   @Override public void onStart(final ConnectedNode connectedNode) {
     final Log log = connectedNode.getLog();
     final ParameterTree params = connectedNode.getParameterTree();
+    final IMockDriver simulatedDriver;
+    switch (params.getString("~/simulated_driver")) {
+      case "can":
+        simulatedDriver = new MockCANDriver(connectedNode);
+        break;
+      case "arada":
+        simulatedDriver = new MockAradaDriver(connectedNode);
+        break;
+      case "srx_controller":
+        simulatedDriver = new MockSRXControllerDriver(connectedNode);
+        break;
+      case "radar":
+        simulatedDriver = new MockRadarDriver(connectedNode);
+        break;
+      case "4g":
+        simulatedDriver = new MockCellularDriver(connectedNode);
+        break;
+      case "pinpoint":
+        simulatedDriver = new MockPinPointDriver(connectedNode);
+        break;
+      default:
+        log.warn(
+          "No valid driver name specified on the simulated_driver parameter. Defaulting to CAN driver");
+        simulatedDriver = new MockCANDriver(connectedNode);
+        break;
+    }
 
-    // ROS Messages used by all drivers
+    // This CancellableLoop will be canceled automatically when the node shuts
+    // down.
+    connectedNode.executeCancellableLoop(new CancellableLoop() {
+      private int sequenceNumber;
 
-    // Topics
-    // Published
-    final Publisher<cav_msgs.SystemAlert> systemAlertPub =
-      connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
-    final Publisher<bond.Status> bondPub = connectedNode.newPublisher("~/bond", bond.Status._TYPE);
-    final Publisher<cav_msgs.DriverStatus> discoveryPub =
-      connectedNode.newPublisher("driver_discovery", cav_msgs.DriverStatus._TYPE);
+      @Override protected void setup() {
+        sequenceNumber = 0;
+      }//setup
 
-    // Subscribed
-    Subscriber<cav_msgs.SystemAlert> alertSub =
-      connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+      @Override protected void loop() throws InterruptedException {
+        simulatedDriver.publishDriverStatus();
+        simulatedDriver.readAndPublishData();
 
-    alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
+        sequenceNumber++;
+        Thread.sleep(1000);
+      }//loop
+    });//executeCancellableLoop
 
-        String messageTypeFullDescription = "NA";
+  }//onStart
+}//AbstractNodeMain
 
-        switch (message.getType()) {
-          case cav_msgs.SystemAlert.CAUTION:
-            messageTypeFullDescription = "Take caution! ";
-            break;
-          case cav_msgs.SystemAlert.WARNING:
-            messageTypeFullDescription = "I have a warning! ";
-            break;
-          case cav_msgs.SystemAlert.FATAL:
-            messageTypeFullDescription = "I am FATAL! ";
-            break;
-          case cav_msgs.SystemAlert.NOT_READY:
-            messageTypeFullDescription = "I am NOT Ready! ";
-            break;
-          case cav_msgs.SystemAlert.SYSTEM_READY:
-            messageTypeFullDescription = "I am Ready! ";
-            break;
-          default:
-            messageTypeFullDescription = "I am NOT Ready! ";
-        }
-
-        log.info(params.getString("~/driver_type") + " heard: \"" + message.getDescription() + ";"
-          + messageTypeFullDescription + "\"");
-
-      }//onNewMessage
-    });//addMessageListener
-
-    // Service
-    // Server
-    ServiceServer<cav_srvs.BindRequest, cav_srvs.BindResponse> bindService = connectedNode
-      .newServiceServer("~/bind", cav_srvs.Bind._TYPE,
-        new ServiceResponseBuilder<cav_srvs.BindRequest, cav_srvs.BindResponse>() {
-          @Override
-          public void build(cav_srvs.BindRequest request, cav_srvs.BindResponse response) {
-          }
-        });
-    ServiceServer<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>
-      getApiService = connectedNode
-      .newServiceServer("~/get_driver_api", cav_srvs.GetAPISpecification._TYPE,
-        new ServiceResponseBuilder<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>() {
-          @Override public void build(cav_srvs.GetAPISpecificationRequest request,
-            cav_srvs.GetAPISpecificationResponse response) {
-          }
-        });
-
-    // Parameters
-    final String rosRunID = params.getString("/run_id");
-
-    // ROS Messages unique to each driver
+/*
+ // ROS Messages unique to each driver
 
     switch (params.getString("~/driver_type")) {
       case "srx_can_application":
@@ -234,30 +205,4 @@ public class MockDriver extends AbstractNodeMain {
 
       default:
     }
-
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
-    connectedNode.executeCancellableLoop(new CancellableLoop() {
-      private int sequenceNumber;
-
-      @Override protected void setup() {
-        sequenceNumber = 0;
-      }//setup
-
-      @Override protected void loop() throws InterruptedException {
-        cav_msgs.SystemAlert systemAlertMsg = systemAlertPub.newMessage();
-        systemAlertMsg.setDescription(
-          "Hello World! " + "I am " + params.getString("~/driver_type") + ". " + sequenceNumber
-            + " run_id = " + rosRunID + ".");
-        systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
-
-        systemAlertPub.publish(systemAlertMsg);
-
-        sequenceNumber++;
-        Thread.sleep(30000);
-      }//loop
-    });//executeCancellableLoop
-
-  }//onStart
-}//AbstractNodeMain
-
+ */

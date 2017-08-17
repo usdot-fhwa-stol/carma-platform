@@ -226,7 +226,7 @@
              to="/$(arg TOP_NS)/system_alert"/>
       <!-- Arada OBU Driver Node -->
       <node pkg="carma" type="mock_drivers" name="arada_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
         <!-- Remove driver_type param when using real drivers -->
         <param name="driver_type" type="string" value="arada_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
@@ -239,7 +239,7 @@
 
       <!-- SRX CAN Driver Node -->
       <node pkg="carma" type="mock_drivers" name="srx_can_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
         <!-- Remove driver_type param when using real drivers -->
         <param name="driver_type" type="string" value="srx_can_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
@@ -247,7 +247,7 @@
 
       <!--SRX Controller Driver Node-->
       <node pkg="carma" type="mock_drivers" name="srx_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
         <!-- Remove driver_type param when using real drivers -->
         <param name="driver_type" type="string" value="srx_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
@@ -255,7 +255,7 @@
 
       <!-- SRX Radar Driver Node -->
       <node pkg="carma" type="mock_drivers" name="srx_object_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
         <!-- Remove driver_type param when using real drivers -->
         <param name="driver_type" type="string" value="srx_object_application" />
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
