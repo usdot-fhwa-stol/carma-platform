@@ -1,0 +1,9 @@
+# GetDriverStatus.srv
+
+#request - empty
+
+---
+
+#response
+
+cav_msgs/DriverStatus status
