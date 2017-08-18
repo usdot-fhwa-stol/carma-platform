@@ -71,9 +71,9 @@ public class MockRadarDriver extends AbstractMockDriver {
   private final short LIN_INST_ANG_Y_IDX = 22;
   private final short LIN_INST_ANG_Z_IDX = 23;
   private final short MIN_POSE_COVAR_IDX = 24;
-  private final short MIN_VEL_COVAR_IDX = MIN_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT + 1;
-  private final short MIN_VEL_INST_COVAR_IDX = MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT + 1;
-  private final short EXPECTED_DATA_ROW_COUNT = MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT + 1;
+  private final short MIN_VEL_COVAR_IDX = MIN_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
+  private final short MIN_VEL_INST_COVAR_IDX = MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
+  private final short EXPECTED_DATA_COL_COUNT = MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT - 1;
 
   /**
    *  Constructor sets up ROS publishers and subscribers
@@ -133,8 +133,8 @@ public class MockRadarDriver extends AbstractMockDriver {
       poseWithCovar.setPose(pose);
 
       double[] poseCovariance = new double[COVARINCE_ELEMENT_COUNT];
-      for (int i = MIN_POSE_COVAR_IDX; i < MIN_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++){
-        poseCovariance[i] = Double.parseDouble(elements[i]);
+      for (int i = 0; i < COVARINCE_ELEMENT_COUNT; i++){
+        poseCovariance[i] = Double.parseDouble(elements[MIN_POSE_COVAR_IDX + i]);
       }
 
       poseWithCovar.setCovariance(poseCovariance);
@@ -158,8 +158,8 @@ public class MockRadarDriver extends AbstractMockDriver {
       twistWithCovar.setTwist(twist);
 
       double[] velocityCovariance = new double[COVARINCE_ELEMENT_COUNT];
-      for (int i = MIN_VEL_COVAR_IDX; i < MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++){
-        velocityCovariance[i] = Double.parseDouble(elements[i]);
+      for (int i = 0; i < COVARINCE_ELEMENT_COUNT; i++){
+        velocityCovariance[i] = Double.parseDouble(elements[MIN_VEL_COVAR_IDX + i]);
       }
 
       twistWithCovar.setCovariance(velocityCovariance);
@@ -182,8 +182,8 @@ public class MockRadarDriver extends AbstractMockDriver {
       twistInstWithCovar.setTwist(twistInst);
 
       double[] velocityInstCovariance = new double[COVARINCE_ELEMENT_COUNT];
-      for (int i = MIN_VEL_INST_COVAR_IDX; i < MIN_VEL_INST_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++){
-        velocityInstCovariance[i] = Double.parseDouble(elements[i]);
+      for (int i = 0; i < COVARINCE_ELEMENT_COUNT; i++){
+        velocityInstCovariance[i] = Double.parseDouble(elements[MIN_VEL_INST_COVAR_IDX + i]);
       }
 
       twistInstWithCovar.setCovariance(velocityInstCovariance);
@@ -202,7 +202,7 @@ public class MockRadarDriver extends AbstractMockDriver {
   }
 
   @Override protected short getExpectedColCount() {
-    return EXPECTED_DATA_ROW_COUNT;
+    return EXPECTED_DATA_COL_COUNT;
   }
 
   @Override protected short getSampleIdIdx() {

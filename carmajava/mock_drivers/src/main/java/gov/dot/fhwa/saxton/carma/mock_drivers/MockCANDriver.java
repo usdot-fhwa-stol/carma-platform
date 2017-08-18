@@ -47,7 +47,7 @@ public class MockCANDriver extends AbstractMockDriver {
   final Publisher<std_msgs.Float64> throttlePub;
   final Publisher<cav_msgs.TurnSignal> turnSignalPub;
 
-  final short EXPECTED_DATA_ROW_COUNT = 12;
+  final short EXPECTED_DATA_COL_COUNT = 13;
 
   private final short SAMPLE_ID_IDX = 0;
   private final short ACC_IDX = 1;
@@ -137,7 +137,7 @@ public class MockCANDriver extends AbstractMockDriver {
   }
 
   @Override protected short getExpectedColCount() {
-    return EXPECTED_DATA_ROW_COUNT;
+    return EXPECTED_DATA_COL_COUNT;
   }
 
   @Override protected short getSampleIdIdx(){

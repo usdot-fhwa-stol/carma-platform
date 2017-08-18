@@ -158,7 +158,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
         }
         data.add(elements);
       }
-      if (exitBeforeEOF) {
+      if (!exitBeforeEOF) {
         reader.seek(0);
       }
       publishData(data);

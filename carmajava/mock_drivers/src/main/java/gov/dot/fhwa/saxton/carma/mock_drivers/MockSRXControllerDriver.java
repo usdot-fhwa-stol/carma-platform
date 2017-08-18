@@ -71,16 +71,16 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   //    Published	Parameter	~/k_i
   //    Published	Parameter	~/k_p
 
-  private final int EXPECTED_DATA_ROW_COUNT = 8;
+  private final int EXPECTED_DATA_COL_COUNT = 9;
   private final short SAMPLE_ID_IDX = 0;
   private final short BRAKE_DECEL_IDX = 1;
   private final short ROBOT_ENABLED_IDX = 2;
-  private final short TORQUE_IDX = 1;
-  private final short HARDWARE_ID_IDX = 2;
-  private final short DIAG_LEVEL_IDX = 1;
-  private final short DIAG_MSG_IDX = 2;
-  private final short DIAG_KEY_MSG = 1;
-  private final short DIAG_VALUE_IDX = 2;
+  private final short TORQUE_IDX = 3;
+  private final short HARDWARE_ID_IDX = 4;
+  private final short DIAG_LEVEL_IDX = 5;
+  private final short DIAG_MSG_IDX = 6;
+  private final short DIAG_KEY_MSG = 7;
+  private final short DIAG_VALUE_IDX = 8;
 
   // Light bar states
   protected boolean lightBarFlash = false;
@@ -181,7 +181,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   }
 
   @Override protected short getExpectedColCount() {
-    return EXPECTED_DATA_ROW_COUNT;
+    return EXPECTED_DATA_COL_COUNT;
   }
 
   @Override protected short getSampleIdIdx(){

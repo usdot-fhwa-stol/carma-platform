@@ -53,7 +53,7 @@ public class MockCellularDriver extends AbstractMockDriver {
   // Published	Parameter	~/listening_port
   // Published	Parameter	~/output_queue_size
 
-  private final int EXPECTED_DATA_ROW_COUNT = 2;
+  private final int EXPECTED_DATA_COL_COUNT = 3;
 
   private final short SAMPLE_ID_IDX = 0;
   private final short MSG_TYPE_IDX = 1;
@@ -103,7 +103,7 @@ public class MockCellularDriver extends AbstractMockDriver {
   }
 
   @Override protected short getExpectedColCount() {
-    return EXPECTED_DATA_ROW_COUNT;
+    return EXPECTED_DATA_COL_COUNT;
   }
 
   @Override protected short getSampleIdIdx(){

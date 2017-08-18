@@ -19,6 +19,8 @@ package gov.dot.fhwa.saxton.carma.mock_drivers;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
+import rosgraph_msgs.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +48,6 @@ public class MockPinPointDriver extends AbstractMockDriver {
   // Parameter	~/port	~/port	uint16
 
   // CONSTANTS
-  final short EXPECTED_DATA_ROW_COUNT = 2;
   final short SAMPLE_ID_IDX = 0;
   final short HEADING_IDX = 1;
   final short NAV_SRV_IDX = 2;
@@ -75,9 +76,11 @@ public class MockPinPointDriver extends AbstractMockDriver {
   final short VEL_LIN_Y_IDX = 25;
   final short VEL_LIN_Z_IDX = 26;
   final short COVARINCE_ELEMENT_COUNT = 36;
+  final short POS_COVARINCE_ELEMENT_COUNT = 9;
   final short MIN_POSE_COVAR_IDX = 27;
-  final short MIN_ODOM_TWIST_COVAR_IDX = MIN_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT + 1;
-  final short MIN_ODOM_POSE_COVAR_IDX = MIN_ODOM_TWIST_COVAR_IDX + COVARINCE_ELEMENT_COUNT + 1;
+  final short MIN_ODOM_TWIST_COVAR_IDX = MIN_POSE_COVAR_IDX + POS_COVARINCE_ELEMENT_COUNT;
+  final short MIN_ODOM_POSE_COVAR_IDX = MIN_ODOM_TWIST_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
+  private final short EXPECTED_DATA_COL_COUNT = MIN_ODOM_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT - 1;
 
   public MockPinPointDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -133,12 +136,11 @@ public class MockPinPointDriver extends AbstractMockDriver {
       navMsg.setAltitude(Double.parseDouble(elements[NAV_ALT_IDX]));
       navMsg.setPositionCovarianceType(Byte.parseByte(elements[NAV_POS_COVR_TYPE_IDX]));
 
-      double[] poseCovariance = new double[COVARINCE_ELEMENT_COUNT];
-      for (int i = MIN_POSE_COVAR_IDX; i < MIN_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++) {
-        poseCovariance[i] = Double.parseDouble(elements[i]);
+      double[] posCovariance = new double[POS_COVARINCE_ELEMENT_COUNT];
+      for (int i = 0; i < POS_COVARINCE_ELEMENT_COUNT; i++) {
+        posCovariance[i] = Double.parseDouble(elements[MIN_POSE_COVAR_IDX + i]);
       }
-
-      navMsg.setPositionCovariance(poseCovariance);
+      navMsg.setPositionCovariance(posCovariance);
 
       // Build Odometry Message
       hdr.setFrameId("odom");
@@ -162,9 +164,8 @@ public class MockPinPointDriver extends AbstractMockDriver {
       odomTwistWithCovar.setTwist(odomTwist);
 
       double[] odomTwistCovariance = new double[COVARINCE_ELEMENT_COUNT];
-      for (int i = MIN_ODOM_TWIST_COVAR_IDX;
-           i < MIN_ODOM_TWIST_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++) {
-        odomTwistCovariance[i] = Double.parseDouble(elements[i]);
+      for (int i = 0; i < COVARINCE_ELEMENT_COUNT; i++) {
+        odomTwistCovariance[i] = Double.parseDouble(elements[MIN_ODOM_TWIST_COVAR_IDX + i]);
       }
 
       odomTwistWithCovar.setCovariance(odomTwistCovariance);
@@ -188,9 +189,8 @@ public class MockPinPointDriver extends AbstractMockDriver {
       poseWithCovar.setPose(pose);
 
       double[] odomPoseCovariance = new double[COVARINCE_ELEMENT_COUNT];
-      for (int i = MIN_ODOM_POSE_COVAR_IDX;
-           i < MIN_ODOM_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++) {
-        odomPoseCovariance[i] = Double.parseDouble(elements[i]);
+      for (int i = 0; i < COVARINCE_ELEMENT_COUNT; i++) {
+        odomPoseCovariance[i] = Double.parseDouble(elements[MIN_ODOM_POSE_COVAR_IDX + i]);
       }
 
       poseWithCovar.setCovariance(odomPoseCovariance);
@@ -225,7 +225,7 @@ public class MockPinPointDriver extends AbstractMockDriver {
   }
 
   @Override protected short getExpectedColCount() {
-    return EXPECTED_DATA_ROW_COUNT;
+    return EXPECTED_DATA_COL_COUNT;
   }
 
   @Override protected short getSampleIdIdx(){
