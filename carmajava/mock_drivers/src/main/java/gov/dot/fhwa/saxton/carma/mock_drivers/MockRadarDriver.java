@@ -16,35 +16,24 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import cav_msgs.ByteArray;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.ros.message.MessageFactory;
-import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeConfiguration;
 import org.ros.node.topic.Publisher;
-import org.ros.node.topic.Subscriber;
-
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
- * A class which can be used to simulate an Arada comms driver for the CarmaPlatform.
+ * A class which can be used to simulate an Radar sensor driver for the CarmaPlatform.
  * <p>
  * Command line test:
  * ROSJava does not support rosrun parameter setting so a rosrun is a multi step process
- * rosparam set /mock_driver/simulated_driver 'arada'
+ * rosparam set /mock_driver/simulated_driver 'radar'
  * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
 public class MockRadarDriver extends AbstractMockDriver {
-
-  NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
-  MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
-  int sequenceNumber = 0;
 
   // Topics
   // Published
@@ -55,8 +44,42 @@ public class MockRadarDriver extends AbstractMockDriver {
   // Published	Parameter	~/min_width
   // Published	Parameter	~/timeout
 
-  final int expectedDataRowCount = 2;
+  // CONSTANTS
+  private final short COVARINCE_ELEMENT_COUNT = 36;
+  private final short SAMPLE_ID_IDX = 0;
+  private final short ID_IDX = 1;
+  private final short SIZE_X_IDX = 2;
+  private final short SIZE_Y_IDX = 3;
+  private final short SIZE_Z_IDX = 4;
+  private final short POINT_X_IDX = 5;
+  private final short POINT_Y_IDX = 6;
+  private final short POINT_Z_IDX = 7;
+  private final short QUAT_W_IDX = 8;
+  private final short QUAT_X_IDX = 9;
+  private final short QUAT_Y_IDX = 10;
+  private final short QUAT_Z_IDX = 11;
+  private final short VEL_ANG_X_IDX = 12;
+  private final short VEL_ANG_Y_IDX = 13;
+  private final short VEL_ANG_Z_IDX = 14;
+  private final short VEL_LIN_X_IDX = 15;
+  private final short VEL_LIN_Y_IDX = 16;
+  private final short VEL_LIN_Z_IDX = 17;
+  private final short VEL_INST_ANG_X_IDX = 18;
+  private final short VEL_INST_ANG_Y_IDX = 19;
+  private final short VEL_INST_ANG_Z_IDX = 20;
+  private final short LIN_INST_ANG_X_IDX = 21;
+  private final short LIN_INST_ANG_Y_IDX = 22;
+  private final short LIN_INST_ANG_Z_IDX = 23;
+  private final short MIN_POSE_COVAR_IDX = 24;
+  private final short MIN_VEL_COVAR_IDX = MIN_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT + 1;
+  private final short MIN_VEL_INST_COVAR_IDX = MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT + 1;
+  private final short EXPECTED_DATA_ROW_COUNT = MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT + 1;
 
+  /**
+   *  Constructor sets up ROS publishers and subscribers
+   *
+   * @param connectedNode The ROS node which will be used to simulate a Radar Driver
+   */
   public MockRadarDriver(ConnectedNode connectedNode) {
     super(connectedNode);
     // Topics
@@ -68,42 +91,122 @@ public class MockRadarDriver extends AbstractMockDriver {
     return GraphName.of("mock_radar_driver");
   }
 
-  @Override protected void publishData(String[] data) throws IllegalArgumentException {
-    if (data.length != expectedDataRowCount) {
-      sequenceNumber++;
-      throw new IllegalArgumentException(
-        "Publish data called for MockAradaDriver with incorrect number of data elements. "
-          + "The required number of data elements is " + expectedDataRowCount);
+  @Override protected void publishData(List<String[]> data) {
+
+    List<cav_msgs.ExternalObject> objects = new LinkedList<>();
+
+    for (String[] elements :  data){
+      cav_msgs.ExternalObject externalObject = messageFactory.newFromType(cav_msgs.ExternalObject._TYPE);
+
+      // Build Header
+      std_msgs.Header hdr = externalObject.getHeader();
+      hdr.setFrameId("radar");
+      hdr.setSeq(Integer.parseInt(elements[SAMPLE_ID_IDX]));
+      hdr.setStamp(connectedNode.getCurrentTime());
+
+      externalObject.setHeader(hdr);
+      externalObject.setId(Short.parseShort(elements[ID_IDX]));
+
+      // Build Size Vector
+      geometry_msgs.Vector3 size = externalObject.getSize();
+      size.setX(SIZE_X_IDX);
+      size.setY(SIZE_Y_IDX);
+      size.setZ(SIZE_Z_IDX);
+      externalObject.setSize(size);
+
+      // Build Pose with Covariance
+      geometry_msgs.PoseWithCovariance poseWithCovar = externalObject.getPose();
+      geometry_msgs.Pose pose = poseWithCovar.getPose();
+      geometry_msgs.Quaternion quat = pose.getOrientation();
+      geometry_msgs.Point point = pose.getPosition();
+      point.setX(POINT_X_IDX);
+      point.setY(POINT_Y_IDX);
+      point.setZ(POINT_Z_IDX);
+      pose.setPosition(point);
+
+      quat.setW(QUAT_W_IDX);
+      quat.setX(QUAT_X_IDX);
+      quat.setY(QUAT_Y_IDX);
+      quat.setZ(QUAT_Z_IDX);
+      pose.setOrientation(quat);
+
+      poseWithCovar.setPose(pose);
+
+      double[] poseCovariance = new double[COVARINCE_ELEMENT_COUNT];
+      for (int i = MIN_POSE_COVAR_IDX; i < MIN_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++){
+        poseCovariance[i] = Double.parseDouble(elements[i]);
+      }
+
+      poseWithCovar.setCovariance(poseCovariance);
+      externalObject.setPose(poseWithCovar);
+
+      // Build Velocity (TwistWithCovariance)
+      geometry_msgs.TwistWithCovariance twistWithCovar = externalObject.getVelocity();
+      geometry_msgs.Twist twist = twistWithCovar.getTwist();
+      geometry_msgs.Vector3 angularVel = twist.getAngular();
+      geometry_msgs.Vector3 linearVel = twist.getLinear();
+      angularVel.setX(VEL_ANG_X_IDX);
+      angularVel.setY(VEL_ANG_Y_IDX);
+      angularVel.setZ(VEL_ANG_Z_IDX);
+
+      linearVel.setX(VEL_LIN_X_IDX);
+      linearVel.setY(VEL_LIN_Y_IDX);
+      linearVel.setZ(VEL_LIN_Z_IDX);
+
+      twist.setAngular(angularVel);
+      twist.setLinear(linearVel);
+      twistWithCovar.setTwist(twist);
+
+      double[] velocityCovariance = new double[COVARINCE_ELEMENT_COUNT];
+      for (int i = MIN_VEL_COVAR_IDX; i < MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++){
+        velocityCovariance[i] = Double.parseDouble(elements[i]);
+      }
+
+      twistWithCovar.setCovariance(velocityCovariance);
+
+      // Build Velocity Instantaneous (TwistWithCovariance)
+      geometry_msgs.TwistWithCovariance twistInstWithCovar = externalObject.getVelocity();
+      geometry_msgs.Twist twistInst = twistInstWithCovar.getTwist();
+      geometry_msgs.Vector3 angularVelInst = twistInst.getAngular();
+      geometry_msgs.Vector3 linearVelInst = twistInst.getLinear();
+      angularVelInst.setX(VEL_INST_ANG_X_IDX);
+      angularVelInst.setY(VEL_INST_ANG_Y_IDX);
+      angularVelInst.setZ(VEL_INST_ANG_Z_IDX);
+
+      linearVelInst.setX(LIN_INST_ANG_X_IDX);
+      linearVelInst.setY(LIN_INST_ANG_Y_IDX);
+      linearVelInst.setZ(LIN_INST_ANG_Z_IDX);
+
+      twistInst.setAngular(angularVelInst);
+      twistInst.setLinear(linearVelInst);
+      twistInstWithCovar.setTwist(twistInst);
+
+      double[] velocityInstCovariance = new double[COVARINCE_ELEMENT_COUNT];
+      for (int i = MIN_VEL_INST_COVAR_IDX; i < MIN_VEL_INST_COVAR_IDX + COVARINCE_ELEMENT_COUNT; i++){
+        velocityInstCovariance[i] = Double.parseDouble(elements[i]);
+      }
+
+      twistInstWithCovar.setCovariance(velocityInstCovariance);
+      externalObject.setVelocityInst(twistInstWithCovar);
+
+      // Add external object to list of detected objects
+      objects.add(externalObject);
     }
 
-    // Make messages
+    // Make message
     cav_msgs.ExternalObjectList objectListMsg = objectPub.newMessage();
-    cav_msgs.ExternalObject externalObject = messageFactory.newFromType(cav_msgs.ExternalObject._TYPE);;
+    objectListMsg.setObjects(objects);
 
-    std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
-    hdr.setFrameId("0");
-    hdr.setSeq(sequenceNumber);
-    hdr.setStamp(connectedNode.getCurrentTime());
-
-    //TODO: Due to the undefined number of objects detected I will need to overload the readAndPublishData function at a minimum and maybe onStart
-
-    externalObject.setHeader(hdr);
-    objectListMsg.setObjects();
-
-    recvMsg.setHeader(hdr);
-    recvMsg.setMessageType(data[0]);
-
-    byte[] rawBytes = (data[1].getBytes());
-    // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
-    recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
-
-    // Publish Data
-    recvPub.publish(recvMsg);
-    sequenceNumber++;
+    // Publish data
+    objectPub.publish(objectListMsg);
   }
 
-  @Override protected int getExpectedRowCount() {
-    return expectedDataRowCount;
+  @Override protected short getExpectedColCount() {
+    return EXPECTED_DATA_ROW_COUNT;
+  }
+
+  @Override protected short getSampleIdIdx() {
+    return SAMPLE_ID_IDX;
   }
 
   @Override protected List<String> getDriverTypesList() {

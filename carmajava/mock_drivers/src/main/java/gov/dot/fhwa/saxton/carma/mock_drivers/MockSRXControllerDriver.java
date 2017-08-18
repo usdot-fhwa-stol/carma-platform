@@ -42,40 +42,45 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A class which can be used to simulate an Arada comms driver for the CarmaPlatform.
+ * A class which can be used to simulate an SRX controller driver for the CarmaPlatform.
  * <p>
  * Command line test:
  * ROSJava does not support rosrun parameter setting so a rosrun is a multi step process
- * rosparam set /mock_driver/simulated_driver 'arada'
+ * rosparam set /mock_driver/simulated_driver 'srx_controller'
  * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
 public class MockSRXControllerDriver extends AbstractMockDriver {
 
-  NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
-  MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
-  int sequenceNumber = 0;
-
   // Topics
   // Published
-  final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub;
-  final Publisher<cav_msgs.RobotEnabled> enabledPub;
+  protected final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub;
+  protected final Publisher<cav_msgs.RobotEnabled> enabledPub;
 
   // Subscribed
-  final Subscriber<std_msgs.Float32> longEffortSub;
-  final Subscriber<cav_msgs.SpeedAccel> subscriber;
+  protected final Subscriber<std_msgs.Float32> longEffortSub;
+  protected final Subscriber<cav_msgs.SpeedAccel> subscriber;
 
   // Services
   // Server
-  final ServiceServer<GetLightsRequest, GetLightsResponse> getLightsService;
-  final ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService;
+  protected final ServiceServer<GetLightsRequest, GetLightsResponse> getLightsService;
+  protected final ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService;
 
   //    Published	Parameter	~/device_port
   //    Published	Parameter	~/k_d
   //    Published	Parameter	~/k_i
   //    Published	Parameter	~/k_p
 
-  final int EXPECTED_DATA_ROW_COUNT = 8;
+  private final int EXPECTED_DATA_ROW_COUNT = 8;
+  private final short SAMPLE_ID_IDX = 0;
+  private final short BRAKE_DECEL_IDX = 1;
+  private final short ROBOT_ENABLED_IDX = 2;
+  private final short TORQUE_IDX = 1;
+  private final short HARDWARE_ID_IDX = 2;
+  private final short DIAG_LEVEL_IDX = 1;
+  private final short DIAG_MSG_IDX = 2;
+  private final short DIAG_KEY_MSG = 1;
+  private final short DIAG_VALUE_IDX = 2;
 
   // Light bar states
   protected boolean lightBarFlash = false;
@@ -136,52 +141,51 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     return GraphName.of("mock_srx_controller_driver");
   }
 
-  @Override protected void publishData(String[] data) throws IllegalArgumentException {
-    if (data.length != EXPECTED_DATA_ROW_COUNT) {
-      sequenceNumber++;
-      throw new IllegalArgumentException(
-        "Publish data called for MockAradaDriver with incorrect number of data elements. "
-          + "The required number of data elements is " + EXPECTED_DATA_ROW_COUNT);
+  @Override protected void publishData(List<String[]> data) throws IllegalArgumentException {
+
+    for(String[] elements : data) {
+      // Make messages
+      cav_msgs.RobotEnabled enabledMsg = enabledPub.newMessage();
+      diagnostic_msgs.DiagnosticArray diagMsg = diagnosticsPub.newMessage();
+
+      // Build RobotEnabled Message
+      enabledMsg.setBrakeDecel(Double.parseDouble(elements[BRAKE_DECEL_IDX]));
+      enabledMsg.setRobotEnabled(Boolean.parseBoolean(elements[ROBOT_ENABLED_IDX]));
+      enabledMsg.setTorque(Double.parseDouble(elements[TORQUE_IDX]));
+
+      // Build Diagnostics Message: Assumes that only diagnostic is in a data file line
+      std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
+      hdr.setFrameId("0");
+      hdr.setSeq(Integer.parseInt(elements[SAMPLE_ID_IDX]));
+      hdr.setStamp(connectedNode.getCurrentTime());
+
+      diagMsg.setHeader(hdr);
+
+      diagnostic_msgs.DiagnosticStatus diagnosticStatus = messageFactory.newFromType(diagnostic_msgs.DiagnosticStatus._TYPE);
+      diagnosticStatus.setHardwareId(elements[HARDWARE_ID_IDX]);
+      diagnosticStatus.setLevel(Byte.valueOf(elements[DIAG_LEVEL_IDX]));
+      diagnosticStatus.setName(getDefaultDriverName().toString());
+      diagnosticStatus.setMessage(elements[DIAG_MSG_IDX]);
+
+      diagnostic_msgs.KeyValue keyValue = messageFactory.newFromType(diagnostic_msgs.KeyValue._TYPE);
+      keyValue.setKey(elements[DIAG_KEY_MSG]);
+      keyValue.setValue(elements[DIAG_VALUE_IDX]);
+
+      diagnosticStatus.setValues(new ArrayList<>(Arrays.asList(keyValue)));
+      diagMsg.setStatus(new ArrayList<>(Arrays.asList(diagnosticStatus)));
+
+      // Publish Data
+      enabledPub.publish(enabledMsg);
+      diagnosticsPub.publish(diagMsg);
     }
-
-    // Make messages
-    cav_msgs.RobotEnabled enabledMsg = enabledPub.newMessage();
-    diagnostic_msgs.DiagnosticArray diagMsg = diagnosticsPub.newMessage();
-
-    // Build RobotEnabled Message
-    enabledMsg.setBrakeDecel(Double.parseDouble(data[0]));
-    enabledMsg.setRobotEnabled(Boolean.parseBoolean(data[1]));
-    enabledMsg.setTorque(Double.parseDouble(data[2]));
-
-    // Build Diagnostics Message: Assumes that only diagnostic is in a data file line
-    std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
-    hdr.setFrameId("0");
-    hdr.setSeq(sequenceNumber);
-    hdr.setStamp(connectedNode.getCurrentTime());
-
-    diagMsg.setHeader(hdr);
-
-    diagnostic_msgs.DiagnosticStatus diagnosticStatus = messageFactory.newFromType(diagnostic_msgs.DiagnosticStatus._TYPE);
-    diagnosticStatus.setHardwareId(data[3]);
-    diagnosticStatus.setLevel(Byte.valueOf(data[4]));
-    diagnosticStatus.setName("SRXController");
-    diagnosticStatus.setMessage(data[5]);
-
-    diagnostic_msgs.KeyValue keyValue = messageFactory.newFromType(diagnostic_msgs.KeyValue._TYPE);
-    keyValue.setKey(data[6]);
-    keyValue.setValue(data[7]);
-
-    diagnosticStatus.setValues(new ArrayList<>(Arrays.asList(keyValue)));
-    diagMsg.setStatus(new ArrayList<>(Arrays.asList(diagnosticStatus)));
-
-    // Publish Data
-    enabledPub.publish(enabledMsg);
-    diagnosticsPub.publish(diagMsg);
-    sequenceNumber++;
   }
 
-  @Override protected int getExpectedRowCount() {
+  @Override protected short getExpectedColCount() {
     return EXPECTED_DATA_ROW_COUNT;
+  }
+
+  @Override protected short getSampleIdIdx(){
+    return SAMPLE_ID_IDX;
   }
 
   @Override protected List<String> getDriverTypesList() {

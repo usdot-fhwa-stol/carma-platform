@@ -20,6 +20,7 @@ import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
+import org.ros.node.Node;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.GraphName;
 
@@ -52,18 +53,21 @@ public class MockDriverNode extends AbstractNodeMain {
       case "arada":
         simulatedDriver = new MockAradaDriver(connectedNode);
         break;
-//      case "srx_controller":
-//        simulatedDriver = new MockSRXControllerDriver(connectedNode);
-//        break;
-//      case "radar":
-//        simulatedDriver = new MockRadarDriver(connectedNode);
-//        break;
-//      case "4g":
-//        simulatedDriver = new MockCellularDriver(connectedNode);
-//        break;
-//      case "pinpoint":
-//        simulatedDriver = new MockPinPointDriver(connectedNode);
-//        break;
+      case "srx_controller":
+        simulatedDriver = new MockSRXControllerDriver(connectedNode);
+        break;
+      case "radar":
+        simulatedDriver = new MockRadarDriver(connectedNode);
+        break;
+      case "cellular":
+        simulatedDriver = new MockCellularDriver(connectedNode);
+        break;
+      case "pinpoint":
+        simulatedDriver = new MockPinPointDriver(connectedNode);
+        break;
+      case "truck_controller":
+        simulatedDriver = new MockTruckControllerDriver(connectedNode);
+        break;
       default:
         log.warn(
           "No valid driver name specified on the simulated_driver parameter. Defaulting to CAN driver");
@@ -88,6 +92,11 @@ public class MockDriverNode extends AbstractNodeMain {
         sequenceNumber++;
         Thread.sleep(1000);
       }//loop
+
+      @Override protected void handleInterruptedException(InterruptedException e) {
+        simulatedDriver.onInterruption();
+        super.handleInterruptedException(e);
+      }
     });//executeCancellableLoop
 
   }//onStart

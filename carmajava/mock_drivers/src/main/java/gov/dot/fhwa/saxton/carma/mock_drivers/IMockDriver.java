@@ -18,7 +18,6 @@ package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.Node;
 
 import java.util.List;
 
@@ -35,10 +34,9 @@ public interface IMockDriver {
   void onStart(ConnectedNode connectedNode);
 
   /**
-   * Function which should be called in the onShutdown function of a containing ROS Node
-   * @param node The node which is being shutdown
+   * Function which should be called in the handleInterruptedException of a CancellableLoop
    */
-  void onShutdown(Node node);
+  void onInterruption();
 
   /**
    * Returns the default name of this driver

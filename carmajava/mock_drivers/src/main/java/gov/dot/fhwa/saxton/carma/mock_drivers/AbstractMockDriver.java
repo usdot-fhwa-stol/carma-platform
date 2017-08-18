@@ -21,9 +21,10 @@ import cav_srvs.BindRequest;
 import cav_srvs.BindResponse;
 import cav_srvs.GetAPISpecificationRequest;
 import cav_srvs.GetAPISpecificationResponse;
+import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.Node;
+import org.ros.node.NodeConfiguration;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
@@ -31,6 +32,7 @@ import org.ros.node.topic.Publisher;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -38,6 +40,8 @@ import java.util.List;
  */
 public abstract class AbstractMockDriver implements IMockDriver {
   protected final ConnectedNode connectedNode;
+  protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+  protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
   protected final Log log;
   protected final ParameterTree params;
@@ -53,8 +57,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
 
   // Server
   protected final ServiceServer<cav_srvs.BindRequest, cav_srvs.BindResponse> bindService;
-  protected final ServiceServer<GetAPISpecificationRequest, GetAPISpecificationResponse>
-    getApiService;
+  protected final ServiceServer<GetAPISpecificationRequest, GetAPISpecificationResponse> getApiService;
 
   protected final String delimiter = ","; // Comma for csv file
   protected RandomAccessFile reader = null;
@@ -97,10 +100,12 @@ public abstract class AbstractMockDriver implements IMockDriver {
         });
   }
 
-  @Override public abstract GraphName getDefaultDriverName();
-
+  /**
+   * Function which should be called in the onStart function of a containing ROS Node
+   * This implementation opens a data file to use for simulation
+   * @param connectedNode The node which is being started
+   */
   @Override public void onStart(ConnectedNode connectedNode) {
-    // Open a data file and set the default driver status
     try {
       reader = new RandomAccessFile(dataFilePath, "r");
       driverStatus = cav_msgs.DriverStatus.OPERATIONAL;
@@ -112,42 +117,59 @@ public abstract class AbstractMockDriver implements IMockDriver {
     }
   }
 
-  @Override public void onShutdown(Node node) {
+  @Override public void onInterruption() {
     // Close an opened data file
     closeDataFile();
   }
 
+  @Override public void finalize(){
+    closeDataFile();
+  }
+
   @Override public void readAndPublishData() {
-    // Read each line from a data file and publish that data.
-    // On failure to read a line of data all publishing
-    String dataLine;
-    if (reader != null) {
-      try {
-        dataLine = reader.readLine();
-        if (dataLine != null) {
-          // separate on delimiter
-          String[] data = dataLine.split(delimiter);
-          try {
-            publishData(data);
-          } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            // Log warning if a line data incorrect
-            log.warn(getDefaultDriverName()
-              + " read data file with incorrect number of columns. Desired column count is: "
-              + getExpectedRowCount() + " No data published.");
-            driverStatus = cav_msgs.DriverStatus.DEGRADED;
-          }
-        } else {
-          reader.seek(0); // Loop over file while the node is running.
+    try {
+      List<String[]> data = new LinkedList<>();
+      String dataLine;
+      String[] elements;
+      boolean exitBeforeEOF = false;
+      int prevSampleIndex = -1;
+      int currentSampleIndex;
+
+      while((dataLine = reader.readLine()) != null) {
+        // separate on delimiter
+        elements = dataLine.split(delimiter);
+        // Update sample index
+        if (elements.length != getExpectedColCount()) {
+          log.warn(
+            "Publish data requested for MockRadarDriver with incorrect number of data elements. "
+              + "The required number of data elements is " + getExpectedColCount());
+          continue; // Skip this invalid line
         }
-      } catch (IOException e) {
-        e.printStackTrace();
-        closeDataFile();
-        reader = null;
-        // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
-        log.warn(getDefaultDriverName() + " failed to read data file. No data will be published");
-        driverStatus = cav_msgs.DriverStatus.FAULT;
+
+        currentSampleIndex = Integer.parseInt(elements[getSampleIdIdx()]);
+        //If this is the first sample
+        if (prevSampleIndex == -1) {
+          prevSampleIndex = currentSampleIndex;
+        }
+        // If the end of this sample set then exit the loop
+        if (currentSampleIndex != prevSampleIndex) {
+          exitBeforeEOF = true;
+          break;
+        }
+        data.add(elements);
       }
+      if (exitBeforeEOF) {
+        reader.seek(0);
+      }
+      publishData(data);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+      closeDataFile();
+      reader = null;
+      // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
+      log.warn(getDefaultDriverName() + " failed to read data file. No data will be published");
+      driverStatus = cav_msgs.DriverStatus.FAULT;
     }
   }
 
@@ -196,18 +218,25 @@ public abstract class AbstractMockDriver implements IMockDriver {
     }
   }
 
+  @Override public abstract GraphName getDefaultDriverName();
+
   /**
    * Publishes the provided data array
    * @param data The data to be published usually provided as a direct line from a data file
-   * @throws IllegalArgumentException Exception thrown when the number of data elements does not match getExpectedRowCount()
    */
-  protected abstract void publishData(String[] data) throws IllegalArgumentException;
+  protected abstract void publishData(List<String[]> data);
 
   /**
    * Gets the expected number of row elements in a data line
    * @return The number of expected elements
    */
-  protected abstract int getExpectedRowCount();
+  protected abstract short getExpectedColCount();
+
+  /**
+   * Gets the column number for the sample id
+   * @return The column number in the data file
+   */
+  protected abstract short getSampleIdIdx();
 
   /**
    * Gets a list of driver information which this driver can provide (can, comms, sensor, position, controller)
@@ -215,8 +244,44 @@ public abstract class AbstractMockDriver implements IMockDriver {
    */
   protected abstract List<String> getDriverTypesList();
 
-  public abstract List<String> getDriverAPI();
+  @Override public abstract List<String> getDriverAPI();
 }
 
+/*
 
+  @Override public void readAndPublishData() {
+    // Read each line from a data file and publish that data.
+    // On failure to read a line of data all publishing
+    String dataLine;
+    if (reader != null) {
+      try {
+        dataLine = reader.readLine();
+        if (dataLine != null) {
+          // separate on delimiter
+          String[] data = dataLine.split(delimiter);
+          try {
+
+            publishData(Arrays.asList(data));
+          } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            // Log warning if a line data incorrect
+            log.warn(getDefaultDriverName()
+              + " read data file with incorrect number of columns. Desired column count is: "
+              + getExpectedColCount() + " No data published.");
+            driverStatus = cav_msgs.DriverStatus.DEGRADED;
+          }
+        } else {
+          reader.seek(0); // Loop over file while the node is running.
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+        closeDataFile();
+        reader = null;
+        // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
+        log.warn(getDefaultDriverName() + " failed to read data file. No data will be published");
+        driverStatus = cav_msgs.DriverStatus.FAULT;
+      }
+    }
+  }
+ */
 

@@ -47,7 +47,21 @@ public class MockCANDriver extends AbstractMockDriver {
   final Publisher<std_msgs.Float64> throttlePub;
   final Publisher<cav_msgs.TurnSignal> turnSignalPub;
 
-  final int EXPECTED_DATA_ROW_COUNT = 12;
+  final short EXPECTED_DATA_ROW_COUNT = 12;
+
+  private final short SAMPLE_ID_IDX = 0;
+  private final short ACC_IDX = 1;
+  private final short ACCEL_IDX = 2;
+  private final short BREAK_LIGHTS_IDX = 3;
+  private final short BREAK_POS_IDX = 4;
+  private final short ENGINE_SPEED_IDX = 5;
+  private final short FUEL_FLOW_IDX = 6;
+  private final short ODOMETRY_IDX = 7;
+  private final short PARKING_BRAKE_IDX = 8;
+  private final short SPEED_IDX = 9;
+  private final short STEERING_IDX = 10;
+  private final short THROTTLE_IDX = 11;
+  private final short TURN_SIGNAL_STATE_IDX = 12;
 
   public MockCANDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -75,57 +89,59 @@ public class MockCANDriver extends AbstractMockDriver {
     return GraphName.of("mock_can_driver");
   }
 
-  @Override protected void publishData(String[] data) throws IllegalArgumentException {
-    if (data.length != EXPECTED_DATA_ROW_COUNT) {
-      throw new IllegalArgumentException(
-        "Publish data called for MockCanDriver with incorrect number of data elements. "
-          + "The required number of data elements is " + EXPECTED_DATA_ROW_COUNT);
+  @Override protected void publishData(List<String[]> data) {
+
+    for (String[] elements : data) {
+      // Make messages
+      std_msgs.Bool acc = accPub.newMessage();
+      std_msgs.Float64 accel = accelPub.newMessage();
+      std_msgs.Bool breakLights = breakLightsPub.newMessage();
+      std_msgs.Float64 breakPos = breakPositionPub.newMessage();
+      std_msgs.Float64 engineSpeed = engineSpeedPub.newMessage();
+      std_msgs.Float64 fuelFlow = fuelFlowPub.newMessage();
+      std_msgs.Float64 odometry = odometryPub.newMessage();
+      std_msgs.Bool parkingBrake = parkingBrakePub.newMessage();
+      std_msgs.Float64 speed = speedPub.newMessage();
+      std_msgs.Float64 steering = steeringPub.newMessage();
+      std_msgs.Float64 throttle = throttlePub.newMessage();
+      cav_msgs.TurnSignal turnSignalState = turnSignalPub.newMessage();
+
+      // Set Data
+      acc.setData(Boolean.parseBoolean(elements[ACC_IDX]));
+      accel.setData(Float.parseFloat(elements[ACCEL_IDX]));
+      breakLights.setData(Boolean.parseBoolean(elements[BREAK_LIGHTS_IDX]));
+      breakPos.setData(Float.parseFloat(elements[BREAK_POS_IDX]));
+      engineSpeed.setData(Float.parseFloat(elements[ENGINE_SPEED_IDX]));
+      fuelFlow.setData(Float.parseFloat(elements[FUEL_FLOW_IDX]));
+      odometry.setData(Float.parseFloat(elements[ODOMETRY_IDX]));
+      parkingBrake.setData(Boolean.parseBoolean(elements[PARKING_BRAKE_IDX]));
+      speed.setData(Float.parseFloat(elements[SPEED_IDX]));
+      steering.setData(Float.parseFloat(elements[STEERING_IDX]));
+      throttle.setData(Float.parseFloat(elements[THROTTLE_IDX]));
+      turnSignalState.setState(Byte.parseByte(elements[TURN_SIGNAL_STATE_IDX]));
+
+      // Publish Data
+      accPub.publish(acc);
+      accelPub.publish(accel);
+      breakLightsPub.publish(breakLights);
+      breakPositionPub.publish(breakPos);
+      engineSpeedPub.publish(engineSpeed);
+      fuelFlowPub.publish(fuelFlow);
+      odometryPub.publish(odometry);
+      parkingBrakePub.publish(parkingBrake);
+      speedPub.publish(speed);
+      steeringPub.publish(steering);
+      throttlePub.publish(throttle);
+      turnSignalPub.publish(turnSignalState);
     }
-    // Make messages
-    std_msgs.Bool acc = accPub.newMessage();
-    std_msgs.Float64 accel = accelPub.newMessage();
-    std_msgs.Bool breakLights = breakLightsPub.newMessage();
-    std_msgs.Float64 breakPos = breakPositionPub.newMessage();
-    std_msgs.Float64 engineSpeed = engineSpeedPub.newMessage();
-    std_msgs.Float64 fuelFlow = fuelFlowPub.newMessage();
-    std_msgs.Float64 odometry = odometryPub.newMessage();
-    std_msgs.Bool parkingBrake = parkingBrakePub.newMessage();
-    std_msgs.Float64 speed = speedPub.newMessage();
-    std_msgs.Float64 steering = steeringPub.newMessage();
-    std_msgs.Float64 throttle = throttlePub.newMessage();
-    cav_msgs.TurnSignal turnSignalState = turnSignalPub.newMessage();
-
-    // Set Data
-    acc.setData(Boolean.parseBoolean(data[0]));
-    accel.setData(Float.parseFloat(data[1]));
-    breakLights.setData(Boolean.parseBoolean(data[2]));
-    breakPos.setData(Float.parseFloat(data[3]));
-    engineSpeed.setData(Float.parseFloat(data[4]));
-    fuelFlow.setData(Float.parseFloat(data[5]));
-    odometry.setData(Float.parseFloat(data[6]));
-    parkingBrake.setData(Boolean.parseBoolean(data[7]));
-    speed.setData(Float.parseFloat(data[8]));
-    steering.setData(Float.parseFloat(data[9]));
-    throttle.setData(Float.parseFloat(data[10]));
-    turnSignalState.setState(Byte.parseByte(data[11]));
-
-    // Publish Data
-    accPub.publish(acc);
-    accelPub.publish(accel);
-    breakLightsPub.publish(breakLights);
-    breakPositionPub.publish(breakPos);
-    engineSpeedPub.publish(engineSpeed);
-    fuelFlowPub.publish(fuelFlow);
-    odometryPub.publish(odometry);
-    parkingBrakePub.publish(parkingBrake);
-    speedPub.publish(speed);
-    steeringPub.publish(steering);
-    throttlePub.publish(throttle);
-    turnSignalPub.publish(turnSignalState);
   }
 
-  @Override protected int getExpectedRowCount() {
+  @Override protected short getExpectedColCount() {
     return EXPECTED_DATA_ROW_COUNT;
+  }
+
+  @Override protected short getSampleIdIdx(){
+    return SAMPLE_ID_IDX;
   }
 
   @Override protected List<String> getDriverTypesList(){

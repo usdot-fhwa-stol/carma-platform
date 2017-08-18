@@ -18,11 +18,9 @@ package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import cav_msgs.ByteArray;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.ros.message.MessageFactory;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeConfiguration;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 import java.nio.ByteOrder;
@@ -41,10 +39,6 @@ import java.util.List;
  */
 public class MockAradaDriver extends AbstractMockDriver {
 
-  NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
-  MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
-  int sequenceNumber = 0;
-
   // Topics
   // Published
   final Publisher<cav_msgs.ByteArray> recvPub;
@@ -57,7 +51,11 @@ public class MockAradaDriver extends AbstractMockDriver {
   // Published	Parameter	~/listening_port
   // Published	Parameter	~/output_queue_size
 
-  final int EXPECTED_DATA_ROW_COUNT = 2;
+  private final int EXPECTED_DATA_ROW_COUNT = 2;
+
+  private final short SAMPLE_ID_IDX = 0;
+  private final short MSG_TYPE_IDX = 1;
+  private final short RAW_BYTES_IDX = 2;
 
   public MockAradaDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -79,37 +77,35 @@ public class MockAradaDriver extends AbstractMockDriver {
     return GraphName.of("mock_arada_driver");
   }
 
-  @Override protected void publishData(String[] data) throws IllegalArgumentException {
-    if (data.length != EXPECTED_DATA_ROW_COUNT) {
-      sequenceNumber++;
-      throw new IllegalArgumentException(
-        "Publish data called for MockAradaDriver with incorrect number of data elements. "
-          + "The required number of data elements is " + EXPECTED_DATA_ROW_COUNT);
+  @Override protected void publishData(List<String[]> data) {
+    for (String[] elements : data) {
+      // Make messages
+      cav_msgs.ByteArray recvMsg = recvPub.newMessage();
+
+      // Set Data
+      std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
+      hdr.setFrameId("0");
+      hdr.setSeq(Integer.parseInt(elements[SAMPLE_ID_IDX]));
+      hdr.setStamp(connectedNode.getCurrentTime());
+
+      recvMsg.setHeader(hdr);
+      recvMsg.setMessageType(elements[MSG_TYPE_IDX]);
+
+      byte[] rawBytes = (elements[RAW_BYTES_IDX].getBytes());
+      // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
+      recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
+
+      // Publish Data
+      recvPub.publish(recvMsg);
     }
-
-    // Make messages
-    cav_msgs.ByteArray recvMsg = recvPub.newMessage();
-
-    // Set Data
-    std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
-    hdr.setFrameId("0");
-    hdr.setSeq(sequenceNumber);
-    hdr.setStamp(connectedNode.getCurrentTime());
-
-    recvMsg.setHeader(hdr);
-    recvMsg.setMessageType(data[0]);
-
-    byte[] rawBytes = (data[1].getBytes());
-    // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
-    recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
-
-    // Publish Data
-    recvPub.publish(recvMsg);
-    sequenceNumber++;
   }
 
-  @Override protected int getExpectedRowCount() {
+  @Override protected short getExpectedColCount() {
     return EXPECTED_DATA_ROW_COUNT;
+  }
+
+  @Override protected short getSampleIdIdx(){
+    return SAMPLE_ID_IDX;
   }
 
   @Override protected List<String> getDriverTypesList() {
