@@ -23,7 +23,6 @@ import org.ros.node.NodeConfiguration;
 import org.ros.rosjava_geometry.FrameTransform;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.message.MessageFactory;
-import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.namespace.NameResolver;
 import org.ros.node.AbstractNodeMain;
@@ -43,8 +42,7 @@ import tf2_msgs.TFMessage;
 
 /**
  * ROS Node which maintains a tf2 transform tree which can be accessed by other nodes which do not maintain internal trees.
- * The get_transform service can be used to optain coordinate transformations between two frames
- * <p>
+ * The get_transform service can be used to obtain coordinate transformations between two frames
  * <p>
  * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.TransformServer
  */
@@ -68,30 +66,11 @@ public class TransformServer extends AbstractNodeMain {
     tf_sub.addMessageListener(new MessageListener<TFMessage>() {
       @Override public void onNewMessage(TFMessage tfMessage) {
         for (TransformStamped transform : tfMessage.getTransforms()) {
+          // Add new transform to internal tree
           tfTree.update(transform);
         }
       }
     });
-
-    Subscriber<cav_msgs.SystemAlert> systemAlertSub =
-      connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
-    systemAlertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
-        switch (message.getType()) {
-          case cav_msgs.SystemAlert.CAUTION:
-            break; // No need for action
-          case cav_msgs.SystemAlert.WARNING:
-            break; // No need for action
-          case cav_msgs.SystemAlert.FATAL:
-            break; // No need for action
-          case cav_msgs.SystemAlert.NOT_READY:
-            break; // No need for action
-          case cav_msgs.SystemAlert.SYSTEM_READY:
-            break; // No need for action
-          default:
-        }
-      }//onNewMessage
-    });//MessageListener
 
     // Services
     // Server
@@ -100,6 +79,7 @@ public class TransformServer extends AbstractNodeMain {
         new ServiceResponseBuilder<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse>() {
           @Override public void build(cav_srvs.GetTransformRequest request,
             cav_srvs.GetTransformResponse response) {
+            // Calculate transform between provided frames and return result
             FrameTransform transform =
               tfTree.transform(request.getSourceFrame(), request.getTargetFrame());
             geometry_msgs.TransformStamped transformMsg =
@@ -113,21 +93,5 @@ public class TransformServer extends AbstractNodeMain {
             response.setTransform(transformMsg);
           }
         });
-
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
-    connectedNode.executeCancellableLoop(new CancellableLoop() {
-      private int sequenceNumber;
-
-      @Override protected void setup() {
-        sequenceNumber = 0;
-      }
-
-      @Override protected void loop() throws InterruptedException {
-
-        sequenceNumber++;
-        Thread.sleep(1000);
-      }
-    });
   }
 }
