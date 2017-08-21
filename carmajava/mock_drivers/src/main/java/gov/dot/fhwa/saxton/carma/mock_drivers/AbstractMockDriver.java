@@ -127,49 +127,51 @@ public abstract class AbstractMockDriver implements IMockDriver {
   }
 
   @Override public void readAndPublishData() {
-    try {
-      List<String[]> data = new LinkedList<>();
-      String dataLine;
-      String[] elements;
-      boolean exitBeforeEOF = false;
-      int prevSampleIndex = -1;
-      int currentSampleIndex;
+    if (reader != null) {
+      try {
+        List<String[]> data = new LinkedList<>();
+        String dataLine;
+        String[] elements;
+        boolean exitBeforeEOF = false;
+        int prevSampleIndex = -1;
+        int currentSampleIndex;
 
-      while((dataLine = reader.readLine()) != null) {
-        // separate on delimiter
-        elements = dataLine.split(delimiter);
-        // Update sample index
-        if (elements.length != getExpectedColCount()) {
-          log.warn(
-            "Publish data requested for MockRadarDriver with incorrect number of data elements. "
-              + "The required number of data elements is " + getExpectedColCount());
-          continue; // Skip this invalid line
-        }
+        while((dataLine = reader.readLine()) != null) {
+          // separate on delimiter
+          elements = dataLine.split(delimiter);
+          // Update sample index
+          if (elements.length != getExpectedColCount()) {
+            log.warn(
+              "Publish data requested for MockRadarDriver with incorrect number of data elements. "
+                + "The required number of data elements is " + getExpectedColCount());
+            continue; // Skip this invalid line
+          }
 
-        currentSampleIndex = Integer.parseInt(elements[getSampleIdIdx()]);
-        //If this is the first sample
-        if (prevSampleIndex == -1) {
-          prevSampleIndex = currentSampleIndex;
+          currentSampleIndex = Integer.parseInt(elements[getSampleIdIdx()]);
+          //If this is the first sample
+          if (prevSampleIndex == -1) {
+            prevSampleIndex = currentSampleIndex;
+          }
+          // If the end of this sample set then exit the loop
+          if (currentSampleIndex != prevSampleIndex) {
+            exitBeforeEOF = true;
+            break;
+          }
+          data.add(elements);
         }
-        // If the end of this sample set then exit the loop
-        if (currentSampleIndex != prevSampleIndex) {
-          exitBeforeEOF = true;
-          break;
+        if (!exitBeforeEOF) {
+          reader.seek(0);
         }
-        data.add(elements);
+        publishData(data);
+
+      } catch (IOException e) {
+        e.printStackTrace();
+        closeDataFile();
+        reader = null;
+        // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
+        log.warn(getDefaultDriverName() + " failed to read data file. No data will be published");
+        driverStatus = cav_msgs.DriverStatus.FAULT;
       }
-      if (!exitBeforeEOF) {
-        reader.seek(0);
-      }
-      publishData(data);
-
-    } catch (IOException e) {
-      e.printStackTrace();
-      closeDataFile();
-      reader = null;
-      // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
-      log.warn(getDefaultDriverName() + " failed to read data file. No data will be published");
-      driverStatus = cav_msgs.DriverStatus.FAULT;
     }
   }
 
