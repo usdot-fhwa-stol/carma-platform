@@ -18,6 +18,11 @@
 //Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+import org.ros.node.ConnectedNode;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -27,10 +32,19 @@ import java.util.concurrent.BlockingQueue;
  * and the external ROS network. Presently only a stub to show class communication.
  */
 public class PubSubManager {
-    public PubSubManager(BlockingQueue<String> messageQueue) {
-        this.messageQueue = messageQueue;
+    public PubSubManager(ConnectedNode node) {
+        this(new ArrayBlockingQueue<String>(64));
+        this.node = node;
     }
 
+    public PubSubManager(BlockingQueue<String> messageQueue) {
+        this.messageQueue = messageQueue;
+        pubChannelManagers = new HashMap<>();
+        subChannelManagers = new HashMap<>();
+        srvManagers = new HashMap<>();
+    }
+
+    @Deprecated
     public void publish(String msg) {
         try {
             messageQueue.put(msg);
@@ -39,14 +53,43 @@ public class PubSubManager {
         }
     }
 
-    public <T> SubscriptionChannelManager<T> getSubscriptionChannelForTopic(String topicUrl) {
-        return new SubscriptionChannelManager<>();
+    @SuppressWarnings("unchecked")
+    public <T, S> IService<T, S> getService(String topicUrl, String type) {
+        if (srvManagers.containsKey(topicUrl)) {
+            return srvManagers.get(topicUrl).getNewChannel();
+        } else {
+            ServiceManager<T, S> mgr = new ServiceManager<>(node, topicUrl, type);
+            srvManagers.put(topicUrl, mgr);
+            return mgr.getNewChannel();
+        }
     }
 
-    public <T> PublicationChannelManager<T> getPublicationChannelForTopic(String topicUrl) {
-        return new PublicationChannelManager<>();
+    @SuppressWarnings("unchecked")
+    public <T> ISubscriptionChannel<T> getSubscriptionChannelForTopic(String topicUrl, String type) {
+        if (subChannelManagers.containsKey(topicUrl)) {
+            return  subChannelManagers.get(topicUrl).getNewChannel();
+        } else {
+            SubscriptionChannelManager<T> mgr = new SubscriptionChannelManager<>(node, topicUrl, type);
+            subChannelManagers.put(topicUrl, mgr);
+            return mgr.getNewChannel();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> IPublicationChannel<T> getPublicationChannelForTopic(String topicUrl, String type) {
+        if (pubChannelManagers.containsKey(topicUrl)) {
+            return  pubChannelManagers.get(topicUrl).getNewChannel();
+        } else {
+            PublicationChannelManager<T> mgr = new PublicationChannelManager<>(node, topicUrl, type);
+            pubChannelManagers.put(topicUrl, mgr);
+            return mgr.getNewChannel();
+        }
     }
 
     // Member Variables
     protected BlockingQueue<String> messageQueue;
+    protected ConnectedNode node;
+    protected Map<String, PublicationChannelManager> pubChannelManagers;
+    protected Map<String, SubscriptionChannelManager> subChannelManagers;
+    protected Map<String, ServiceManager> srvManagers;
 }

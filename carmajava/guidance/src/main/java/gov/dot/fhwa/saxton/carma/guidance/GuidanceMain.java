@@ -16,22 +16,28 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
+import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import cav_msgs.BSM;
+import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublicationChannel;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriptionChannel;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import org.apache.commons.logging.Log;
-import org.ros.message.MessageListener;
-import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
+import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.topic.Publisher;
 import org.ros.node.parameter.ParameterTree;
+import org.ros.node.topic.Publisher;
+import org.ros.node.topic.Subscriber;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.ArrayList;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
@@ -64,9 +70,8 @@ public class GuidanceMain extends AbstractNodeMain {
   /**
    * Initialize the PubSubManager and setup it's message queue.
    */
-  private void initPubSubManager() {
-    messageQueue = new ArrayBlockingQueue<String>(64);
-    pubSubManager = new PubSubManager(messageQueue);
+  private void initPubSubManager(ConnectedNode node) {
+    pubSubManager = new PubSubManager(node);
   }
 
   @Override public void onStart(final ConnectedNode connectedNode) {
@@ -74,13 +79,13 @@ public class GuidanceMain extends AbstractNodeMain {
     final Log log = connectedNode.getLog();
 
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
-    initPubSubManager();
+    initPubSubManager(connectedNode);
     initExecutor(log);
-    Subscriber<cav_msgs.SystemAlert> subscriber =
-      connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+    ISubscriptionChannel<SystemAlert> subscriber =
+      pubSubManager.getSubscriptionChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-    subscriber.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
+    subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
+      @Override public void onMessage(cav_msgs.SystemAlert message) {
         String messageTypeFullDescription = "NA";
 
         switch (message.getType()) {
@@ -111,8 +116,8 @@ public class GuidanceMain extends AbstractNodeMain {
     }//MessageListener
     );//addMessageListener
 
-    final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
-      connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
+    final IPublicationChannel<SystemAlert> systemAlertPublisher =
+      pubSubManager.getPublicationChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
     //Getting the ros param called run_id.
     ParameterTree param = connectedNode.getParameterTree();
@@ -138,17 +143,6 @@ public class GuidanceMain extends AbstractNodeMain {
        systemAlertPublisher.publish(systemAlertMsg);
        sequenceNumber++;
 
-       ArrayList<String> tmpQueue = new ArrayList<>();
-       messageQueue.drainTo(tmpQueue);
-       for (String msg : tmpQueue) {
-         cav_msgs.SystemAlert systemAlertMsg2 = systemAlertPublisher.newMessage();
-         systemAlertMsg.setDescription(msg);
-         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
-
-         systemAlertPublisher.publish(systemAlertMsg);
-       }
-       messageQueue.clear();
-
        Thread.sleep(1000);
      }//loop
 
@@ -160,5 +154,4 @@ public class GuidanceMain extends AbstractNodeMain {
   protected ExecutorService executor;
   protected int numThreads = 4;
   protected PubSubManager pubSubManager;
-  protected BlockingQueue<String> messageQueue;
 }//AbstractNodeMain

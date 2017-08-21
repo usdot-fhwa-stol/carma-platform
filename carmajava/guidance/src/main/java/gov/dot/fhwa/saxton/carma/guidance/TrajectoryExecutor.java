@@ -18,6 +18,8 @@
 //Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublicationChannel;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
 
 /**
@@ -33,8 +35,13 @@ public class TrajectoryExecutor implements Runnable {
   }
 
   @Override public void run() {
+    IPublicationChannel<SystemAlert> pub =
+            pubSubManager.getPublicationChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
     for (; ; ) {
-      pubSubManager.publish("Hello World! I am " + componentName + ". " + sequenceNumber++);
+      cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
+      systemAlertMsg.setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
+      systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+      pub.publish(systemAlertMsg);
 
       try {
         Thread.sleep(sleepDurationMillis);
