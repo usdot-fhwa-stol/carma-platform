@@ -102,7 +102,7 @@ SensorFusionApplication::get_api(const cav_srvs::GetDriversWithCapabilitiesReque
                                     &SensorFusionApplication::on_connected_cb,this,driverName)));
 
                     bond_map_[driverName]->start();
-                    if(bond_map_[driverName]->waitUntilFormed(ros::Duration(1.0)))
+                    if(!bond_map_[driverName]->waitUntilFormed(ros::Duration(1.0)))
                     {
                         ROS_ERROR_STREAM("Failed to form bond");
                         continue;
