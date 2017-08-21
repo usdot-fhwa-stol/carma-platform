@@ -43,7 +43,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
  * the Guidance package. It forms the Guidance ROS node.
  * <p>
- * Command line test: rosrun carmajava guidance gov.dot.fhwa.saxton.carmajava.guidance.GuidanceMain
+ * Command line test: rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
  */
 public class GuidanceMain extends AbstractNodeMain {
 
