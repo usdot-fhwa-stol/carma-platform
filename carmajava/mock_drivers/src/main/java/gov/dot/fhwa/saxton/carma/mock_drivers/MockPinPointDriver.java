@@ -80,7 +80,7 @@ public class MockPinPointDriver extends AbstractMockDriver {
   final short MIN_POSE_COVAR_IDX = 27;
   final short MIN_ODOM_TWIST_COVAR_IDX = MIN_POSE_COVAR_IDX + POS_COVARINCE_ELEMENT_COUNT;
   final short MIN_ODOM_POSE_COVAR_IDX = MIN_ODOM_TWIST_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
-  private final short EXPECTED_DATA_COL_COUNT = MIN_ODOM_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT - 1;
+  private final short EXPECTED_DATA_COL_COUNT = MIN_ODOM_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
 
   public MockPinPointDriver(ConnectedNode connectedNode) {
     super(connectedNode);

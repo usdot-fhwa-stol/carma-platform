@@ -183,7 +183,7 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
   }
 
   @Override protected List<String> getDriverTypesList() {
-    return new ArrayList<>(Arrays.asList("comms"));
+    return new ArrayList<>(Arrays.asList("controller"));
   }
 
   @Override public List<String> getDriverAPI(){

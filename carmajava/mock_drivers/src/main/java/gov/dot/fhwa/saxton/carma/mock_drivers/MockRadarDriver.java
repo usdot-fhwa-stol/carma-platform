@@ -73,7 +73,7 @@ public class MockRadarDriver extends AbstractMockDriver {
   private final short MIN_POSE_COVAR_IDX = 24;
   private final short MIN_VEL_COVAR_IDX = MIN_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
   private final short MIN_VEL_INST_COVAR_IDX = MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
-  private final short EXPECTED_DATA_COL_COUNT = MIN_VEL_COVAR_IDX + COVARINCE_ELEMENT_COUNT - 1;
+  private final short EXPECTED_DATA_COL_COUNT = MIN_VEL_INST_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
 
   /**
    *  Constructor sets up ROS publishers and subscribers
@@ -210,7 +210,7 @@ public class MockRadarDriver extends AbstractMockDriver {
   }
 
   @Override protected List<String> getDriverTypesList() {
-    return new ArrayList<>(Arrays.asList("comms"));
+    return new ArrayList<>(Arrays.asList("sensor"));
   }
 
   @Override public List<String> getDriverAPI(){
