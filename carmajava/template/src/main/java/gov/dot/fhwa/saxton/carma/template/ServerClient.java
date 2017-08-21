@@ -40,7 +40,7 @@ import org.ros.exception.ServiceNotFoundException;
  * Command line test: rosrun carma template gov.dot.fhwa.saxton.carma.template.ServerClient
 */
 
-public class ServerClient extends AbstractNodeMain {
+public class ServerClient extends SaxtonBaseNode {
 
   //TODO: Replace "server_client" with Column D node name
   @Override
