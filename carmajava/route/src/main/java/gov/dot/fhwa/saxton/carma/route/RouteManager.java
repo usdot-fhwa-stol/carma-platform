@@ -110,7 +110,7 @@ public class RouteManager extends AbstractNodeMain {
     });//addMessageListener
 
     final cav_msgs.Route routeMsg = routePub.newMessage();
-    routeMsg.setRouteName("FirstRoute");
+    routeMsg.setRouteName("First Route");
     routeMsg.setRouteID("1");
     cav_msgs.RouteSegment routeSegMsg = messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
     routeSegMsg.setLength(20);
