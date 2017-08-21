@@ -26,6 +26,7 @@ import org.ros.message.MessageFactory;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.service.ServiceServer;
 import std_msgs.Header;
 
 import java.util.ArrayList;
@@ -50,6 +51,11 @@ public class PluginManager implements Runnable {
     protected String getActivePluginsServiceUrl = "getActivePlugins";
     protected String activatePluginServiceUrl = "activatePlugin";
 
+    protected ServiceServer<PluginListRequest, PluginListResponse> registeredPluginService;
+    protected ServiceServer<PluginListRequest, PluginListResponse> availablePluginService;
+    protected ServiceServer<PluginListRequest, PluginListResponse> activePluginService;
+    protected ServiceServer<PluginActivationRequest, PluginActivationResponse> activatePluginService;
+
     public PluginManager(PubSubManager pubSubManager, ConnectedNode node) {
         this.pubSubManager = pubSubManager;
         this.node = node;
@@ -59,7 +65,7 @@ public class PluginManager implements Runnable {
      * Configure all the services to respond with dummy data
      */
     private void setupServices() {
-        node.newServiceServer(serviceRouteUrl + "/" + getRegisteredPluginsServiceUrl,
+        registeredPluginService = node.newServiceServer(serviceRouteUrl + "/" + getRegisteredPluginsServiceUrl,
             PluginList._TYPE, new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
                 @Override public void build(PluginListRequest pluginListRequest,
                     PluginListResponse pluginListResponse) throws ServiceException {
@@ -109,7 +115,7 @@ public class PluginManager implements Runnable {
                 }
             });
 
-        node.newServiceServer(serviceRouteUrl + "/" + getActivePluginsServiceUrl, PluginList._TYPE,
+        activePluginService = node.newServiceServer(serviceRouteUrl + "/" + getActivePluginsServiceUrl, PluginList._TYPE,
             new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
                 @Override public void build(PluginListRequest pluginListRequest,
                     PluginListResponse pluginListResponse) throws ServiceException {
@@ -143,7 +149,7 @@ public class PluginManager implements Runnable {
                 }
             });
 
-        node.newServiceServer(serviceRouteUrl + "/" + getAvailablePluginsServiceUrl,
+        availablePluginService = node.newServiceServer(serviceRouteUrl + "/" + getAvailablePluginsServiceUrl,
             PluginList._TYPE, new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
                 @Override public void build(PluginListRequest pluginListRequest,
                     PluginListResponse pluginListResponse) throws ServiceException {
@@ -177,7 +183,7 @@ public class PluginManager implements Runnable {
                 }
             });
 
-        node.newServiceServer(serviceRouteUrl + "/" + activatePluginServiceUrl,
+        activatePluginService = node.newServiceServer(serviceRouteUrl + "/" + activatePluginServiceUrl,
             PluginActivation._TYPE,
             new ServiceResponseBuilder<PluginActivationRequest, PluginActivationResponse>() {
                 @Override public void build(PluginActivationRequest pluginActivationRequest,
