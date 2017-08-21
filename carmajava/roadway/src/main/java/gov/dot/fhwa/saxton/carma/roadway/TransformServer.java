@@ -16,8 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
+import geometry_msgs.TransformStamped;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
+import org.ros.node.NodeConfiguration;
+import org.ros.rosjava_geometry.FrameTransform;
+import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.message.MessageFactory;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
@@ -35,62 +39,57 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.exception.ServiceNotFoundException;
+import tf2_msgs.TFMessage;
 
 /**
  * ROS Node which maintains a tf2 transform tree which can be accessed by other nodes which do not maintain internal trees.
  * The get_transform service can be used to optain coordinate transformations between two frames
  * <p>
- *
- *   Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.TransformServer
+ * <p>
+ * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.TransformServer
  */
 public class TransformServer extends AbstractNodeMain {
+  protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+  protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
-  @Override
-  public GraphName getDefaultNodeName() {
+  @Override public GraphName getDefaultNodeName() {
     return GraphName.of("transform_server");
   }
 
-  @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  @Override public void onStart(final ConnectedNode connectedNode) {
 
     final Log log = connectedNode.getLog();
+    final FrameTransformTree tfTree = new FrameTransformTree();
 
-    // Topics
-    // Publishers
-    final Publisher<cav_msgs.SystemAlert> systemAlertPub =
-      connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
-
+    //Topics
     // Subscribers
-    Subscriber<tf2_msgs.TFMessage> tf_sub = connectedNode.newSubscriber("/tf", tf2_msgs.TFMessage._TYPE);
-    Subscriber<cav_msgs.SystemAlert> systemAlertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+    Subscriber<tf2_msgs.TFMessage> tf_sub =
+      connectedNode.newSubscriber("/tf", tf2_msgs.TFMessage._TYPE);
+    tf_sub.addMessageListener(new MessageListener<TFMessage>() {
+      @Override public void onNewMessage(TFMessage tfMessage) {
+        for (TransformStamped transform : tfMessage.getTransforms()) {
+          tfTree.update(transform);
+        }
+      }
+    });
+
+    Subscriber<cav_msgs.SystemAlert> systemAlertSub =
+      connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     systemAlertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-      @Override
-      public void onNewMessage(cav_msgs.SystemAlert message) {
-
-        String messageTypeFullDescription = "NA";
-
+      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
         switch (message.getType()) {
           case cav_msgs.SystemAlert.CAUTION:
-            messageTypeFullDescription = "Take caution! ";
-            break;
+            break; // No need for action
           case cav_msgs.SystemAlert.WARNING:
-            messageTypeFullDescription = "I have a warning! ";
-            break;
+            break; // No need for action
           case cav_msgs.SystemAlert.FATAL:
-            messageTypeFullDescription = "I am FATAL! ";
-            break;
+            break; // No need for action
           case cav_msgs.SystemAlert.NOT_READY:
-            messageTypeFullDescription = "I am NOT Ready! ";
-            break;
+            break; // No need for action
           case cav_msgs.SystemAlert.SYSTEM_READY:
-            messageTypeFullDescription = "I am Ready! ";
-            break;
+            break; // No need for action
           default:
-            messageTypeFullDescription = "I am NOT Ready! ";
         }
-
-        log.info("transform_server heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
-
       }//onNewMessage
     });//MessageListener
 
@@ -99,34 +98,35 @@ public class TransformServer extends AbstractNodeMain {
     ServiceServer<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> transformServer =
       connectedNode.newServiceServer("get_transform", cav_srvs.GetTransform._TYPE,
         new ServiceResponseBuilder<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse>() {
-          @Override
-          public void build(cav_srvs.GetTransformRequest request, cav_srvs.GetTransformResponse response) {
+          @Override public void build(cav_srvs.GetTransformRequest request,
+            cav_srvs.GetTransformResponse response) {
+            FrameTransform transform =
+              tfTree.transform(request.getSourceFrame(), request.getTargetFrame());
+            geometry_msgs.TransformStamped transformMsg =
+              messageFactory.newFromType(TransformStamped._TYPE);
+            if (transform != null) {
+              transformMsg = transform.toTransformStampedMessage(transformMsg);
+              response.setErrorStatus(response.NO_ERROR);
+            } else {
+              response.setErrorStatus(response.NO_TRANSFORM_EXISTS);
+            }
+            response.setTransform(transformMsg);
           }
         });
-
-    //Getting the ros param called run_id. TODO: Remove after rosnetwork validation
-    ParameterTree param = connectedNode.getParameterTree();
-    final String rosRunID = param.getString("/run_id");
 
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       private int sequenceNumber;
 
-      @Override
-      protected void setup() {
+      @Override protected void setup() {
         sequenceNumber = 0;
       }
 
-      @Override
-      protected void loop() throws InterruptedException {
-        cav_msgs.SystemAlert systemAlertMsg = systemAlertPub.newMessage();
-        systemAlertMsg.setDescription("Hello World! " + "I am transform_server. " + sequenceNumber + " run_id = " + rosRunID + ".");
-        systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+      @Override protected void loop() throws InterruptedException {
 
-        systemAlertPub.publish(systemAlertMsg);
         sequenceNumber++;
-        Thread.sleep(30000);
+        Thread.sleep(1000);
       }
     });
   }
