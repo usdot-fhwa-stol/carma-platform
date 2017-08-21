@@ -3,8 +3,6 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 
-import java.util.Optional;
-
 public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
     RosSubscriptionChannel(Subscriber<T> subscriber, SubscriptionChannelManager<T> parent) {
         this.subscriber = subscriber;
