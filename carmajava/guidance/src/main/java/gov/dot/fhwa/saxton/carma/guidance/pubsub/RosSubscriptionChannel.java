@@ -9,12 +9,14 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
     RosSubscriptionChannel(Subscriber<T> subscriber, SubscriptionChannelManager<T> parent) {
         this.subscriber = subscriber;
         this.parent = parent;
-        subscriber.addMessageListener((msg) -> {
-            lastMessage = Optional.of(msg);
+        subscriber.addMessageListener(new MessageListener<T>() {
+            @Override public void onNewMessage(T t) {
+                lastMessage = t;
+            }
         });
     }
 
-    @Override public Optional<T> getLastMessage() {
+    @Override public T getLastMessage() {
         return lastMessage;
     }
 
@@ -32,5 +34,5 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
 
     protected Subscriber<T> subscriber;
     protected SubscriptionChannelManager<T> parent;
-    protected Optional<T> lastMessage = Optional.empty();
+    protected T lastMessage = null;
 }

@@ -4,11 +4,11 @@ import java.util.Optional;
 
 public interface ISubscriptionChannel<T> {
     /**
-     * Get the last message received on this channel if one has been received. Optional will be empty o.w.
+     * Get the last message received on this channel if one has been received.
      *
-     * @return An optional possibly containing the last message
+     * @return Either the last received message or null if none has been received yet
      */
-    Optional<T> getLastMessage();
+    T getLastMessage();
 
     /**
      * Add a callback to be executed whenever a new message is received for this ISubscriptionChannel
