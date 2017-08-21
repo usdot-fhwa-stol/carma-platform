@@ -7,6 +7,9 @@
 # @version 0.1
 #
 
+# Variable which can be used to store a specific communication class value.
+uint8 type
+
 # A vehicle with no communications
 uint8 UNCONNECTED=0
 
