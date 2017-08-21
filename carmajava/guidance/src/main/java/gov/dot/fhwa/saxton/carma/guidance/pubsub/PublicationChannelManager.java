@@ -29,7 +29,15 @@ public class PublicationChannelManager<T> {
 
         if (numOpenChannels <= 0) {
             publisher.shutdown();
+            open = false;
         }
+    }
+
+    /**
+     * Return whether or not the underlying resource for this PublicationChannelManager has been shut down
+     */
+    public boolean isOpen() {
+        return open;
     }
 
     /**
@@ -41,4 +49,5 @@ public class PublicationChannelManager<T> {
 
     protected int numOpenChannels = 0;
     protected Publisher<T> publisher;
+    protected boolean open = true;
 }

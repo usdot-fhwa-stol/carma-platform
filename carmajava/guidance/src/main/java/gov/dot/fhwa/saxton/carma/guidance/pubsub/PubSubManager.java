@@ -55,7 +55,8 @@ public class PubSubManager {
      */
     @SuppressWarnings("unchecked")
     public <T, S> IService<T, S> getService(String topicUrl, String type) throws ServiceNotFoundException {
-        if (srvManagers.containsKey(topicUrl)) {
+        if (srvManagers.containsKey(topicUrl)
+                && srvManagers.get(topicUrl).isOpen()) {
             return srvManagers.get(topicUrl).getNewChannel();
         } else {
             ServiceManager<T, S> mgr = new ServiceManager<>(node, topicUrl, type);
@@ -74,7 +75,8 @@ public class PubSubManager {
      */
     @SuppressWarnings("unchecked")
     public <T> ISubscriptionChannel<T> getSubscriptionChannelForTopic(String topicUrl, String type) {
-        if (subChannelManagers.containsKey(topicUrl)) {
+        if (subChannelManagers.containsKey(topicUrl)
+                && subChannelManagers.get(topicUrl).isOpen()) {
             return  subChannelManagers.get(topicUrl).getNewChannel();
         } else {
             SubscriptionChannelManager<T> mgr = new SubscriptionChannelManager<>(node, topicUrl, type);
@@ -92,7 +94,8 @@ public class PubSubManager {
      */
     @SuppressWarnings("unchecked")
     public <T> IPublicationChannel<T> getPublicationChannelForTopic(String topicUrl, String type) {
-        if (pubChannelManagers.containsKey(topicUrl)) {
+        if (pubChannelManagers.containsKey(topicUrl)
+                && pubChannelManagers.get(topicUrl).isOpen()) {
             return  pubChannelManagers.get(topicUrl).getNewChannel();
         } else {
             PublicationChannelManager<T> mgr = new PublicationChannelManager<>(node, topicUrl, type);

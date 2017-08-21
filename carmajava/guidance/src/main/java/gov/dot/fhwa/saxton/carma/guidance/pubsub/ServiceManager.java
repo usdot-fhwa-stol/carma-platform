@@ -32,8 +32,16 @@ public class ServiceManager<T, S> {
         numOpenChannels--;
 
         if (numOpenChannels <= 0) {
+            open = false;
             serviceClient.shutdown();
         }
+    }
+
+    /**
+     * Return whether or not the underlying resource for this PublicationChannelManager has been shut down
+     */
+    public boolean isOpen() {
+        return open;
     }
 
     /**
@@ -48,4 +56,5 @@ public class ServiceManager<T, S> {
     protected ServiceClient<T, S> serviceClient;
     protected ConnectedNode node;
     protected int numOpenChannels = 0;
+    protected boolean open = true;
 }

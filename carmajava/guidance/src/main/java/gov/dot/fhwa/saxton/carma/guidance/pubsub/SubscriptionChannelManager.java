@@ -41,6 +41,14 @@ public class SubscriptionChannelManager<T> {
         return numOpenChannels;
     }
 
+    /**
+     * Return whether or not the underlying resource for this PublicationChannelManager has been shut down
+     */
+    public boolean isOpen() {
+        return open;
+    }
+
     protected int numOpenChannels = 0;
     protected Subscriber<T> subscriber;
+    protected boolean open = true;
 }
