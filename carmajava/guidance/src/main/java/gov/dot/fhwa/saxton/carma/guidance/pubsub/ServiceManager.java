@@ -8,20 +8,37 @@ public class ServiceManager<T, S> {
     ServiceManager(ConnectedNode node, String topicUrl, String typeName) {
     }
 
-    public void openServiceClient() throws ServiceNotFoundException {
+    /**
+     * Invoke the functionality to find a service based on topic and type
+     * @throws ServiceNotFoundException If the (topic, type) pair does not locate a valid service
+     */
+    void openServiceClient() throws ServiceNotFoundException {
         serviceClient = node.newServiceClient(topicUrl, typeName);
     }
 
-    public IService<T, S> getNewChannel() {
+    /**
+     * Get a new IService instance for this topic
+     */
+    IService<T, S> getNewChannel() {
         numOpenChannels++;
 
         return new RosService<>(serviceClient, this);
     }
 
-    public void registerServiceClose() {
+    /**
+     * Notice an IService instance being closed. If there are no remaining instances shut down the resource.
+     */
+    void registerServiceClose() {
         numOpenChannels--;
+
+        if (numOpenChannels <= 0) {
+            serviceClient.shutdown();
+        }
     }
 
+    /**
+     * Get the number of extant IService instances that haven't been closed
+     */
     public int getNumOpenChannel() {
         return numOpenChannels;
     }

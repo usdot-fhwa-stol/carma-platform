@@ -4,20 +4,37 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 
 
+/**
+ * Manages the underlying resources associated with a given ROS topic publication
+ * @param <T>
+ */
 public class PublicationChannelManager<T> {
     PublicationChannelManager(ConnectedNode node, String topicUrl, String type) {
         this.publisher = node.newPublisher(topicUrl, type);
     }
 
-    public IPublicationChannel<T> getNewChannel() {
+    /**
+     * Get a new IPublicationChannel instance for the topic
+     */
+    IPublicationChannel<T> getNewChannel() {
         numOpenChannels++;
         return new RosPublicationChannel<>(publisher, this);
     }
 
-    public void registerChannelDestroy() {
+    /**
+     * Notice that an instance has been closed. If there are no more instances shut down the resource
+     */
+    void registerChannelDestroy() {
         numOpenChannels--;
+
+        if (numOpenChannels <= 0) {
+            publisher.shutdown();
+        }
     }
 
+    /**
+     * Get the nubmer of extant IPublicationChannel instances that haven't been closed
+     */
     public int getNumOpenChannels() {
         return numOpenChannels;
     }
