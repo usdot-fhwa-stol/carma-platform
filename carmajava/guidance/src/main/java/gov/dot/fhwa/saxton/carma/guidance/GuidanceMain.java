@@ -139,11 +139,11 @@ public class GuidanceMain extends AbstractNodeMain {
        systemAlertMsg.setDescription(
          "Hello World! " + "I am guidance_main. " + sequenceNumber + " run_id = " + rosRunID
            + ".");
-       systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+       systemAlertMsg.setType(SystemAlert.CAUTION);
        systemAlertPublisher.publish(systemAlertMsg);
        sequenceNumber++;
 
-       Thread.sleep(1000);
+       Thread.sleep(30000);
      }//loop
 
     }//CancellableLoop

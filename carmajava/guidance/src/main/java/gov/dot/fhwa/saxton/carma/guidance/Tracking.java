@@ -41,7 +41,7 @@ public class Tracking implements Runnable {
     for (;;) {
       cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
       systemAlertMsg.setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
-      systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+      systemAlertMsg.setType(SystemAlert.CAUTION);
       pub.publish(systemAlertMsg);
 
       try {
@@ -55,6 +55,6 @@ public class Tracking implements Runnable {
   protected PubSubManager pubSubManager;
   protected final String componentName = "Tracking";
   protected int sequenceNumber = 0;
-  protected final long sleepDurationMillis = 1000;
+  protected final long sleepDurationMillis = 30000;
   protected Log log;
 }
