@@ -6,7 +6,8 @@ public interface IService<T, S> {
     /**
      * Perform an asynchronous call for the service, executing the callback after the response is received or upon
      * call failure.
-     * @param request The message for the request
+     *
+     * @param request  The message for the request
      * @param callback A callback to be executed upon success or failure of the call
      */
     void call(T request, ServiceResponseListener<S> callback);

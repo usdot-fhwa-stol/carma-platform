@@ -10,6 +10,7 @@ public class ServiceManager<T, S> {
 
     /**
      * Invoke the functionality to find a service based on topic and type
+     *
      * @throws ServiceNotFoundException If the (topic, type) pair does not locate a valid service
      */
     void openServiceClient() throws ServiceNotFoundException {

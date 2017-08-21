@@ -1,6 +1,5 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import org.ros.exception.RemoteException;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
 
@@ -10,15 +9,13 @@ public class RosService<T, S> implements IService<T, S> {
         this.parent = parent;
     }
 
-    @Override
-    public void call(T request, ServiceResponseListener<S> responseListener) {
+    @Override public void call(T request, ServiceResponseListener<S> responseListener) {
         if (open) {
             serviceClient.call(request, responseListener);
         }
     }
 
-    @Override
-    public void close() {
+    @Override public void close() {
         parent.registerServiceClose();
     }
 

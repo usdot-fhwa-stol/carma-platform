@@ -3,9 +3,9 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 
-
 /**
  * Manages the underlying resources associated with a given ROS topic publication
+ *
  * @param <T>
  */
 public class PublicationChannelManager<T> {

@@ -23,12 +23,10 @@ import org.ros.node.ConnectedNode;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 /**
  * Guidance package PubSubManager component
- *
+ * <p>
  * Responsible for allowing communications between Guidance package sub-components
  * and the external ROS network. Presently only a stub to show class communication.
  *
@@ -47,16 +45,16 @@ public class PubSubManager {
 
     /**
      * Get access to an IService instance
+     *
      * @param topicUrl A URL identifying the ROS topic for the desired service
-     * @param type The string identifier of the message type
-     * @param <T> Type parameter for the request message
-     * @param <S> Type parameter for the response message
+     * @param type     The string identifier of the message type
+     * @param <T>      Type parameter for the request message
+     * @param <S>      Type parameter for the response message
      * @return An IService instance that can call the service
      */
-    @SuppressWarnings("unchecked")
-    public <T, S> IService<T, S> getService(String topicUrl, String type) throws ServiceNotFoundException {
-        if (srvManagers.containsKey(topicUrl)
-                && srvManagers.get(topicUrl).isOpen()) {
+    @SuppressWarnings("unchecked") public <T, S> IService<T, S> getService(String topicUrl,
+        String type) throws ServiceNotFoundException {
+        if (srvManagers.containsKey(topicUrl) && srvManagers.get(topicUrl).isOpen()) {
             return srvManagers.get(topicUrl).getNewChannel();
         } else {
             ServiceManager<T, S> mgr = new ServiceManager<>(node, topicUrl, type);
@@ -68,18 +66,20 @@ public class PubSubManager {
 
     /**
      * Get access to an ISubscriptionChannel instance
+     *
      * @param topicUrl A URL identifying the ROS topic for the subscription
-     * @param type The string identifier of the message type
-     * @param <T> Type parameter of the topic message
+     * @param type     The string identifier of the message type
+     * @param <T>      Type parameter of the topic message
      * @return An ISubscriptionChannel instance that has subscription access to the topic
      */
     @SuppressWarnings("unchecked")
-    public <T> ISubscriptionChannel<T> getSubscriptionChannelForTopic(String topicUrl, String type) {
-        if (subChannelManagers.containsKey(topicUrl)
-                && subChannelManagers.get(topicUrl).isOpen()) {
-            return  subChannelManagers.get(topicUrl).getNewChannel();
+    public <T> ISubscriptionChannel<T> getSubscriptionChannelForTopic(String topicUrl,
+        String type) {
+        if (subChannelManagers.containsKey(topicUrl) && subChannelManagers.get(topicUrl).isOpen()) {
+            return subChannelManagers.get(topicUrl).getNewChannel();
         } else {
-            SubscriptionChannelManager<T> mgr = new SubscriptionChannelManager<>(node, topicUrl, type);
+            SubscriptionChannelManager<T> mgr =
+                new SubscriptionChannelManager<>(node, topicUrl, type);
             subChannelManagers.put(topicUrl, mgr);
             return mgr.getNewChannel();
         }
@@ -87,18 +87,19 @@ public class PubSubManager {
 
     /**
      * Get access to an IPublicationChannel instance
+     *
      * @param topicUrl A URL identifying the ROS topic for the publication
-     * @param type The string identifier of the message type
-     * @param <T> Type parameter of the topic message
+     * @param type     The string identifier of the message type
+     * @param <T>      Type parameter of the topic message
      * @return An IPublicationChannel instance that has publish access to the topic
      */
-    @SuppressWarnings("unchecked")
-    public <T> IPublicationChannel<T> getPublicationChannelForTopic(String topicUrl, String type) {
-        if (pubChannelManagers.containsKey(topicUrl)
-                && pubChannelManagers.get(topicUrl).isOpen()) {
-            return  pubChannelManagers.get(topicUrl).getNewChannel();
+    @SuppressWarnings("unchecked") public <T> IPublicationChannel<T> getPublicationChannelForTopic(
+        String topicUrl, String type) {
+        if (pubChannelManagers.containsKey(topicUrl) && pubChannelManagers.get(topicUrl).isOpen()) {
+            return pubChannelManagers.get(topicUrl).getNewChannel();
         } else {
-            PublicationChannelManager<T> mgr = new PublicationChannelManager<>(node, topicUrl, type);
+            PublicationChannelManager<T> mgr =
+                new PublicationChannelManager<>(node, topicUrl, type);
             pubChannelManagers.put(topicUrl, mgr);
             return mgr.getNewChannel();
         }

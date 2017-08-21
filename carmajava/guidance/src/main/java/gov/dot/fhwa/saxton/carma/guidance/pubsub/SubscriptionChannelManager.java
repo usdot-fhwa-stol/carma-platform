@@ -5,9 +5,10 @@ import org.ros.node.topic.Subscriber;
 
 /**
  * Package private class for use in the PubSubManager
- *
+ * <p>
  * Responsible for keeping track of the subscription channel resources associated with any number of ISubscriptionChannels
  * for a given topic.
+ *
  * @param <T> Type parameter for the message of the topic
  */
 public class SubscriptionChannelManager<T> {
@@ -35,7 +36,7 @@ public class SubscriptionChannelManager<T> {
     }
 
     /**
-     *  Get the number of extant channel instances that haven't been closed yet
+     * Get the number of extant channel instances that haven't been closed yet
      */
     public int getNumOpenChannels() {
         return numOpenChannels;

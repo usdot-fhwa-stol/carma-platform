@@ -3,12 +3,14 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 public interface IPublicationChannel<T> {
     /**
      * Generate a new (empty) message instance to have it's fields populated before transmission.
+     *
      * @return An empty message of type T
      */
     T newMessage();
 
     /**
      * Publish a message on this channel
+     *
      * @param msg The message to publish
      */
     void publish(T msg);
