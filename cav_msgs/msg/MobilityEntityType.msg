@@ -4,6 +4,9 @@
 # conversation about cooperative activities.
 #
 
+# Variable which can be used to store a specific entity type value.
+uint8 type
+
 # enumeration values for my_entity_type:
 uint8       VEHICLE = 1
 uint8       INFRASTRUCTURE = 100

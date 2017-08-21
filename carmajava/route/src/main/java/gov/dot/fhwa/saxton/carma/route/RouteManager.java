@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.RoadType;
+import cav_msgs.RouteSegment;
 import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageListener;
@@ -108,10 +109,54 @@ public class RouteManager extends AbstractNodeMain {
       }//onNewMessage
     });//addMessageListener
 
+    final cav_msgs.Route routeMsg = routePub.newMessage();
+    routeMsg.setRouteName("FirstRoute");
+    routeMsg.setRouteID("1");
+    cav_msgs.RouteSegment routeSegMsg = messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
+    routeSegMsg.setLength(20);
+    cav_msgs.RouteWaypoint prevWaypoint = routeSegMsg.getPrevWaypoint();
+    byte[] laneClosures = {1};
+    prevWaypoint.setLaneClosures(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, laneClosures));
+    prevWaypoint.setDisabledGuidanceAlgorithms(new ArrayList<>(Arrays.asList("platooning")));
+    prevWaypoint.setLaneCount((byte)2);
+    prevWaypoint.setLatitude(45.5);
+    prevWaypoint.setLongitude(45.5);
+    prevWaypoint.setAltitude(0);
+    prevWaypoint.setNearestMileMarker(30);
+    prevWaypoint.setRequiredLaneIndex((byte)0);
+    cav_msgs.RoadType roadType = prevWaypoint.getRoadType();
+    roadType.setType(RoadType.FREEWAY);
+    prevWaypoint.setRoadType(roadType);
+    prevWaypoint.setSetFields(Short.parseShort("FF00", 16));
+    prevWaypoint.setSpeedLimit((byte) 55);
+    prevWaypoint.setWaypointId(1);
+    routeSegMsg.setPrevWaypoint(prevWaypoint);
+
+    cav_msgs.RouteWaypoint waypoint = routeSegMsg.getWaypoint();
+    byte[] laneClosures1 = {1};
+    waypoint.setLaneClosures(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, laneClosures1));
+    waypoint.setDisabledGuidanceAlgorithms(new ArrayList<>(Arrays.asList("platooning")));
+    waypoint.setLaneCount((byte)2);
+    waypoint.setLatitude(45.5);
+    waypoint.setLongitude(45.5);
+    waypoint.setAltitude(0);
+    waypoint.setNearestMileMarker(30);
+    waypoint.setRequiredLaneIndex((byte)0);
+    cav_msgs.RoadType roadType1 = waypoint.getRoadType();
+    roadType1.setType(RoadType.FREEWAY);
+    waypoint.setRoadType(roadType1);
+    waypoint.setSetFields(Short.parseShort("FF00", 16));
+    waypoint.setSpeedLimit((byte) 55);
+    waypoint.setWaypointId(1);
+    routeSegMsg.setPrevWaypoint(waypoint);
+
+    routeMsg.setSegments(new ArrayList<>(Arrays.asList(routeSegMsg)));
+
+
     // Services
     // Server
     ServiceServer<cav_srvs.GetAvailableRoutesRequest, cav_srvs.GetAvailableRoutesResponse>
-      getActiveRouteService = connectedNode
+      getAvailableRouteService = connectedNode
       .newServiceServer("get_available_routes", cav_srvs.GetAvailableRoutes._TYPE,
         new ServiceResponseBuilder<cav_srvs.GetAvailableRoutesRequest, cav_srvs.GetAvailableRoutesResponse>() {
           @Override public void build(cav_srvs.GetAvailableRoutesRequest request,
@@ -122,22 +167,8 @@ public class RouteManager extends AbstractNodeMain {
             hdr.setStamp(connectedNode.getCurrentTime());
             hdr.setSeq(1);
 
-            routeMsg.setRouteID("1");
-            cav_msgs.RouteSegment routeSegMsg = messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
-            routeSegMsg.setLength(20);
-            cav_msgs.RouteWaypoint prevWaypoint = routeSegMsg.getPrevWaypoint();
-            byte[] laneClosures = {1};
-            prevWaypoint.setLaneClosures(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, laneClosures));
-            prevWaypoint.setDisabledGuidanceAlgorithms(new ArrayList<>(Arrays.asList("platooning")));
-            prevWaypoint.setLaneCount(2);
-            prevWaypoint.setLatitude(45.5);
-            prevWaypoint.setLongitude(45.5);
-            prevWaypoint.setAltitude(0);
-            prevWaypoint.setNearestMileMarker(30);
-            prevWaypoint.setRequiredLaneIndex((byte)0);
-            cav_msgs.RoadType roadType = prevWaypoint.getRoadType();
-            roadType.setType(RoadType.FREEWAY);
-            prevWaypoint.setRoadType(cav_msgs.RoadType);
+            response.setAvailableRoutes(new ArrayList<>(Arrays.asList(routeMsg)));
+
           }
         });
     ServiceServer<cav_srvs.SetActiveRouteRequest, cav_srvs.SetActiveRouteResponse>
@@ -146,6 +177,12 @@ public class RouteManager extends AbstractNodeMain {
         new ServiceResponseBuilder<cav_srvs.SetActiveRouteRequest, cav_srvs.SetActiveRouteResponse>() {
           @Override public void build(cav_srvs.SetActiveRouteRequest request,
             cav_srvs.SetActiveRouteResponse response) {
+            if (request.getRouteID() == "1"){
+              response.setErrorStatus(response.NO_ERROR);
+            }
+            else {
+              response.setErrorStatus(response.NO_ROUTE);
+            }
           }
         });
 

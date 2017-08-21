@@ -7,6 +7,9 @@
 # @version 0.1
 #
 
+# Variable which can be used to store a specific road type enum value.
+uint8 type
+
 # A highway or freeway
 uint8 FREEWAY=0
 
