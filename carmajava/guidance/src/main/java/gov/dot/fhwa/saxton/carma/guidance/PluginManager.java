@@ -40,7 +40,6 @@ import java.util.List;
 public class PluginManager implements Runnable {
     protected final String componentName = "PluginManager";
     protected final long sleepDurationMillis = 30000;
-    // Member variables
     protected PubSubManager pubSubManager;
     protected int sequenceNumber = 0;
     protected ConnectedNode node;
@@ -60,8 +59,8 @@ public class PluginManager implements Runnable {
      * Configure all the services to respond with dummy data
      */
     private void setupServices() {
-        node.newServiceServer(serviceRouteUrl + "/" + getRegisteredPluginsServiceUrl, PluginList._TYPE,
-            new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
+        node.newServiceServer(serviceRouteUrl + "/" + getRegisteredPluginsServiceUrl,
+            PluginList._TYPE, new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
                 @Override public void build(PluginListRequest pluginListRequest,
                     PluginListResponse pluginListResponse) throws ServiceException {
                     NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
@@ -72,7 +71,7 @@ public class PluginManager implements Runnable {
                     h.setFrameId("0");
                     h.setSeq(0);
 
-                    Plugin p0= factory.newFromType(Plugin._TYPE);
+                    Plugin p0 = factory.newFromType(Plugin._TYPE);
                     p0.setHeader(h);
                     p0.setAvailable(false);
                     p0.setName("DUMMY PLUGIN A");
@@ -122,7 +121,7 @@ public class PluginManager implements Runnable {
                     h.setFrameId("0");
                     h.setSeq(0);
 
-                    Plugin p0= factory.newFromType(Plugin._TYPE);
+                    Plugin p0 = factory.newFromType(Plugin._TYPE);
                     p0.setHeader(h);
                     p0.setAvailable(false);
                     p0.setName("DUMMY PLUGIN A");
@@ -144,8 +143,8 @@ public class PluginManager implements Runnable {
                 }
             });
 
-        node.newServiceServer(serviceRouteUrl + "/" + getAvailablePluginsServiceUrl, PluginList._TYPE,
-            new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
+        node.newServiceServer(serviceRouteUrl + "/" + getAvailablePluginsServiceUrl,
+            PluginList._TYPE, new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
                 @Override public void build(PluginListRequest pluginListRequest,
                     PluginListResponse pluginListResponse) throws ServiceException {
                     NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
@@ -178,7 +177,8 @@ public class PluginManager implements Runnable {
                 }
             });
 
-        node.newServiceServer(serviceRouteUrl + "/" + activatePluginServiceUrl, PluginActivation._TYPE,
+        node.newServiceServer(serviceRouteUrl + "/" + activatePluginServiceUrl,
+            PluginActivation._TYPE,
             new ServiceResponseBuilder<PluginActivationRequest, PluginActivationResponse>() {
                 @Override public void build(PluginActivationRequest pluginActivationRequest,
                     PluginActivationResponse pluginActivationResponse) throws ServiceException {
@@ -193,7 +193,7 @@ public class PluginManager implements Runnable {
         IPublicationChannel<SystemAlert> pub =
             pubSubManager.getPublicationChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-        for (; ; ) {
+        for (;;) {
             cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
             systemAlertMsg
                 .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
