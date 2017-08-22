@@ -17,7 +17,56 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 /**
- * Created by mcconnelms on 8/22/17.
+ * The building block of a route. Each segment is comprised of two waypoints forming a directed “vector”.
+ * The first waypoint is the uptrack tail of the segment and the second waypoint is the downtrack head of the segment.
+ * The properties of the second waypoint will be considered to apply for the entirety of the segment.
  */
 public class RouteSegment {
+  final RouteWaypoint uptrackWP;
+  final RouteWaypoint downtrackWP;
+  final double length;
+
+  /**
+   * Constructor intializes this segment with the given waypoints.
+   * @param uptrackWP The uptrack waypoint for the segment to be built.
+   * @param downtrackWP The downtrack waypoint for the segment to be built.
+   */
+  public RouteSegment(RouteWaypoint uptrackWP, RouteWaypoint downtrackWP){
+    this.uptrackWP = uptrackWP;
+    this.downtrackWP = downtrackWP;
+    length = 0; // TODO: Calculate the length here
+  }
+
+//  /**
+//   * Calculates the crosstrack distance from the provided GPS location to this route segment
+//   * @param location The gps location to be compared
+//   * @return The calculated cross track distance in meters
+//   */
+//  public double crossTrackDistance(Location location) {
+//
+//  }
+
+  /**
+   * Returns the length of this segment in meters
+   * @return The length of the segment in meters
+   */
+  public double length(){
+    return this.length;
+  }
+
+  /**
+   * Gets the uptrack waypoint of this segment
+   * @return The uptrack waypoint
+   */
+  public RouteWaypoint getUptrackWaypoint(){
+    return uptrackWP;
+  }
+
+  /**
+   * Gets the downtrack waypoint of this segment
+   * @return The downtrack waypoint of this segment
+   */
+  public RouteWaypoint getDowntrackWaypoint(){
+    return downtrackWP;
+  }
 }

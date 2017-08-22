@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import java.util.List;
+
 /**
  * Waypoints are representations of sequential regions along a route.
  * Each waypoint has a latitude and longitude and contains the road specifications for that location.
@@ -23,4 +25,41 @@ package gov.dot.fhwa.saxton.carma.route;
  * Lane indices will run right to left. Such that the right most lane will be lane 0.
  */
 public class RouteWaypoint {
+  protected List<String> disabledGuidanceAlgorithms;
+  protected List<Integer> laneClosures;
+  protected int laneCount = 1;
+//  protected Location location;
+//  protected int lowerSpeedLimit = 0;
+//  protected int upperSpeedLimit = 5;
+//  protected float nearestMileMarker;
+//  protected List<Manuevers> neededManuevers;
+//  protected int requiredLaneIndex = -1;
+//  protected RoadType roadType = RoadType.FREEWAY;
+//
+//  /**
+//   * Default constructor for waypoints does nothing.
+//   */
+//  public RouteWaypoint() {
+//  }
+//
+//  /**
+//   * Constructor intializes this waypoint with the specified location and a speed limit range of [0,speedLimit]
+//   *
+//   * @param loc        The gps location of this waypoint.
+//   * @param speedLimit The upper speed limit at this waypoint specified in m/s
+//   */
+//  public RouteWaypoint(Location loc, int speedLimit) {
+//    this.location = loc;
+//    this.lowerSpeedLimit = 0;
+//    this.upperSpeedLimit = speedLimit;
+//  }
+
+  /**
+   * Constructor intializes a new waypoint using the parameters in a ros cav_msgs.RouteWaypoint object.
+   *
+   * @param waypointMsg The waypoint message object to build this waypoint from
+   */
+  public RouteWaypoint(cav_msgs.RouteWaypoint waypointMsg) {
+
+  }
 }

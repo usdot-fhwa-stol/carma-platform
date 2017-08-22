@@ -56,7 +56,7 @@ public class Route {
    * @return The route segment which is the first segment of the route
    */
   public RouteSegment getFirstSegment() {
-
+    return null;
   }
 
   /**
@@ -65,7 +65,7 @@ public class Route {
    * @return The route segment which is the first segment of the route
    */
   public RouteSegment getLastSegment() {
-
+    return null;
   }
 
   /**
@@ -99,7 +99,7 @@ public class Route {
    * @return The length of this route in meters
    */
   public double length() {
-
+    return 0;
   }
 
   /**
@@ -109,6 +109,6 @@ public class Route {
    * @return True if route loaded successfully false otherwise.
    */
   public boolean loadRoute(IRouteLoadStrategy strategy) {
-
+    return false;
   }
 }

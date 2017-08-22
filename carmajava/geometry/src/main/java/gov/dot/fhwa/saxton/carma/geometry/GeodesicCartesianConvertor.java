@@ -14,23 +14,14 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.route;
+package gov.dot.fhwa.saxton.carma.geometry;
 
 /**
- * Loads a route based on the provided file path.
+ * Class responsible for converting between the different special representations in the geometry sub-package.
+ * Initially, it will only support conversion between a WGS-84 lat/lon/alt and a Cartesian point.
+ * Cartesian points are referenced from a provided frame defined with respect to the Earth Centered Earth Fixed Coordinate Frame (ECEF).
+ * TODO: Implement as this is currently just a placeholder
  */
-public class FileStrategy implements IRouteLoadStrategy{
-  String filePath;
+public class GeodesicCartesianConvertor {
 
-  /**
-   * Constructor intializes a FileStrategy by providing the file path
-   * @param path
-   */
-  public FileStrategy(String path){
-    this.filePath = path;
-  }
-
-  @Override public Route load() {
-    return null;
-  }
 }

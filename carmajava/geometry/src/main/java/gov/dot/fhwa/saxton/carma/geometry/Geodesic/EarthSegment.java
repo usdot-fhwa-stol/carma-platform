@@ -14,23 +14,12 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.route;
+package gov.dot.fhwa.saxton.carma.geometry.Geodesic;
 
 /**
- * Loads a route based on the provided file path.
+ * Represents a line between two locations.
+ * It is not necessarily straight in the traditional sense as the distance is calculated along the surface of the earth according to a curved earth model.
+ * TODO: Implement this class. Currently just a placeholder to allow other classes to compile.
  */
-public class FileStrategy implements IRouteLoadStrategy{
-  String filePath;
-
-  /**
-   * Constructor intializes a FileStrategy by providing the file path
-   * @param path
-   */
-  public FileStrategy(String path){
-    this.filePath = path;
-  }
-
-  @Override public Route load() {
-    return null;
-  }
+public class EarthSegment {
 }

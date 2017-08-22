@@ -20,9 +20,24 @@ package gov.dot.fhwa.saxton.carma.route;
  * An enumeration defining various road types such as a freeway, ramp, arterial, secondary, or parking lot.
  */
 public enum RoadType {
+  /**
+   * Freeway (highway)
+   */
   FREEWAY,
+  /**
+   * Ramp onto or off of a freeway
+   */
   RAMP,
+  /**
+   * Arterial road (high capacity urban/sub-urban road)
+   */
   ARTERIAL,
+  /**
+   * Secondary road (standard low capacity road)
+   */
   SECONDARY,
+  /**
+   * A parking lot or unmarked paved region
+   */
   PARKING_LOT
 }
