@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.base_node;
+package gov.dot.fhwa.saxton.carma.rosutils;
 
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceClient;

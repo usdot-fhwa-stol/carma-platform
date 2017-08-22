@@ -17,7 +17,7 @@
 // This class provides a node which mimicks a driver's ros messaging behavior but has no logical functionality.
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.AbstractNodeMain;

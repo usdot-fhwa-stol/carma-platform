@@ -16,7 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.template;
 
-import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;

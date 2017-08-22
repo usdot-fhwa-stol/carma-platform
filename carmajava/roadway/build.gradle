@@ -42,7 +42,7 @@ dependencies {
   compile 'org.ros.rosjava_messages:nav_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:tf2_msgs:0.5.9'
   /* Local subproject dependency */
-  compile project(':base_node')
+  compile project(':rosutils')
 }
 
 installApp {

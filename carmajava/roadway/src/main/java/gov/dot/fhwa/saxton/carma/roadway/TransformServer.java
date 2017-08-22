@@ -16,7 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
-import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.concurrent.CancellableLoop;

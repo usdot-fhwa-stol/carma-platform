@@ -40,7 +40,7 @@ dependencies {
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
   /* Local subproject dependency */
-  compile project(':base_node')
+  compile project(':rosutils')
 }
 
 installApp {
