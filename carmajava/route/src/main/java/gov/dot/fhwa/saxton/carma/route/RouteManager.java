@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
@@ -42,7 +43,7 @@ import org.ros.exception.ServiceNotFoundException;
  *
  * Command line test: rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
  */
-public class RouteManager extends AbstractNodeMain {
+public class RouteManager extends SaxtonBaseNode {
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("route_manager");

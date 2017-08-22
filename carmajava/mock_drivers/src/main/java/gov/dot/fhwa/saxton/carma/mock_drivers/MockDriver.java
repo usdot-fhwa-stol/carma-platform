@@ -17,6 +17,7 @@
 // This class provides a node which mimicks a driver's ros messaging behavior but has no logical functionality.
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
+import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.AbstractNodeMain;
@@ -46,7 +47,7 @@ import org.ros.exception.ServiceNotFoundException;
  * rosparam set /mock_driver/driver_type 'srx_application'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver
  */
-public class MockDriver extends AbstractNodeMain {
+public class MockDriver extends SaxtonBaseNode {
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("mock_driver");

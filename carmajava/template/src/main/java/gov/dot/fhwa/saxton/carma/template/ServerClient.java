@@ -16,20 +16,16 @@
 
 package gov.dot.fhwa.saxton.carma.template;
 
-import gov.dot.fhwa.saxton.carma.base_node.SaxtonNodeBase;
+import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
-import org.ros.node.topic.Publisher;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
 
 /*
  * Enter Class Description here.
@@ -41,7 +37,7 @@ import org.ros.exception.ServiceNotFoundException;
  * Command line test: rosrun carma template gov.dot.fhwa.saxton.carma.template.ServerClient
 */
 
-public class ServerClient extends SaxtonNodeBase {
+public class ServerClient extends SaxtonBaseNode {
 
   //TODO: Replace "server_client" with Column D node name
   @Override
@@ -70,12 +66,12 @@ public class ServerClient extends SaxtonNodeBase {
         });
 
     // Setup Client
-    final ServiceClient<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> serviceClient;
-    try {
-      serviceClient = connectedNode.newServiceClient("set_bool", std_srvs.SetBool._TYPE);
-    } catch (ServiceNotFoundException e) {
-      throw new RosRuntimeException(e);
-    }
+    final ServiceClient<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> serviceClient =
+      this.waitForService("set_bool", std_srvs.SetBool._TYPE, connectedNode, 5000);
+
+     if (serviceClient == null) {
+       connectedNode.getLog().error("ServerClient Node could not find service set_bool");
+     }
 
     // Example cav_srvs
     final ServiceClient<cav_srvs.GetActivePluginsRequest, cav_srvs.GetActivePluginsResponse> pluginsClient;

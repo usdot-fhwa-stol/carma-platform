@@ -16,28 +16,15 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
-import gov.dot.fhwa.saxton.carma.base_node.SaxtonNodeBase;
+import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
-import org.ros.message.MessageFactory;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
-import org.ros.node.service.ServiceClient;
-import org.ros.node.service.ServiceServer;
-import org.ros.node.service.ServiceResponseBuilder;
-import org.ros.node.service.ServiceResponseListener;
-import org.ros.exception.RemoteException;
-import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
-
 
 /**
  * ROS Node which maintains a description of the roadway geometry and obstacles while the STOL CARMA platform is in operation
@@ -45,7 +32,7 @@ import org.ros.message.MessageFactory;
  *
  * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager
  **/
-public class EnvironmentManager extends SaxtonNodeBase {
+public class EnvironmentManager extends SaxtonBaseNode {
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -109,17 +96,13 @@ public class EnvironmentManager extends SaxtonNodeBase {
 
     // Used Services
 
-    log.info("What is going on!!!");
-    log.info("What is going on2!!!");
-    log.info("What is going on3!!!");
-
-    ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient =
-      this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 5000);
-
-    System.out.println("\n" + getTransformClient);
-    if (getTransformClient == null) {
-      log.error("EnvironmentManager Node could not find service get_transform");
-    }
+//    ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient =
+//      this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 5000);
+//
+//    System.out.println("\n" + getTransformClient);
+//    if (getTransformClient == null) {
+//      log.error("EnvironmentManager Node could not find service get_transform");
+//    }
 
 
     //Getting the ros param called run_id. TODO: Remove after rosnetwork validation

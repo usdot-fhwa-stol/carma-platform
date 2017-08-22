@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.negotiator;
 
+import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.MessageFactory;
@@ -35,7 +36,7 @@ import org.ros.namespace.NameResolver;
  * <p>
  * Command line test: rosrun carmajava negotiator gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr
  */
-public class NegotiatorMgr extends AbstractNodeMain {
+public class NegotiatorMgr extends SaxtonBaseNode {
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("negotiator_mgr");

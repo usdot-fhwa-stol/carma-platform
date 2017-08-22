@@ -17,6 +17,7 @@
 //Originally "com.github.rosjava.carma.template;"
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
+import gov.dot.fhwa.saxton.carma.base_node.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
@@ -41,7 +42,7 @@ import org.ros.message.MessageFactory;
  *
  * Command line test: rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  */
-public class InterfaceMgr extends AbstractNodeMain {
+public class InterfaceMgr extends SaxtonBaseNode {
 
   @Override
   public GraphName getDefaultNodeName() {

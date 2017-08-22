@@ -39,8 +39,8 @@ dependencies {
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
   compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
-  /* Example of a local subproject dependency */
-  /* compile project(':sibling_gradle_project') */
+  /* Local subproject dependency */
+  compile project(':base_node')
 }
 
 installApp {
