@@ -3,10 +3,11 @@ body {
 font-family:"Segoe UI",Arial,sans-serif;
 }
 
+/*** Left Navigation Style ***/
 /* Style the tab */
 div.tab {
     float: left;
-    border: 1px solid #ccc; 
+    border: 1px solid #ccc;
     background-color: #f1f1f1; 
     width: 12%;
     height: 550px;
@@ -49,7 +50,7 @@ div.tab button.active {
     height: 550px;
 }
 
-/* Style the log content */
+/*** Log Text Box content Style ****/
 .logStatus {
 height:400px;
 width:98%;
@@ -61,3 +62,86 @@ font-family:sans-serif;
 padding:10px;
 
 }
+
+
+/*** Checkbox and Radiobutton Style ****/
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+
+.container {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+input {
+    position: absolute;
+    left: -9999px;
+}
+
+label {
+    display: block;
+    position: relative;
+    margin: 20px;
+    padding: 15px 15px 15px 15px;
+    border-radius: 100px;
+    color: #fff;
+    background-color: gray;
+    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color .2s, box-shadow .2s;
+}
+
+    label::before { /*button format */
+        content: '';
+        display: block;
+        position: absolute;
+        top: 10px;
+        bottom: 10px;
+        left: 10px;
+        width: 32px;
+        border: none;
+        border-radius: 100px;
+        transition: background-color .2s;
+    }
+
+    label:first-of-type {
+        transform: translateX(0px);
+    }
+
+    label:last-of-type {
+        transform: translateX(0px);
+    }
+
+    label:hover, input:focus + label { /* Hover format */
+        box-shadow: 10px 10px 5px rgba(0, 0, 0, .6);
+    }
+
+input:checked + label { /* Checked format */
+    background-color: cornflowerblue;
+    box-shadow: 10px 10px 5px #99ccff;
+}
+
+input:disabled + label { /* Disabled format */
+    background-color: gray;
+}
+
+/*** Message Box ***/
+div.message_box {
+    display: block;
+    position: relative;
+    align: center;
+    vertical-align: middle;
+    text-align: center;
+    margin: 10px;
+    padding: 30px 30px 15px 30px;
+    height: 100px;
+    color: #fff;
+    background-color: #ffcc00;
+    }
