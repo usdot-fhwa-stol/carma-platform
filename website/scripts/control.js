@@ -29,14 +29,14 @@ document.getElementById('defaultOpen').click();
 /*
 * Adds a new radio button onto the container.
 */
-function createRadioElement(container, radioId, radioTitle, itemCount) {
+function createRadioElement(container, radioId, radioTitle, itemCount, groupName) {
 
     // Create the new text box
     var newInput = document.createElement('input');
     newInput.type = 'radio';
-    newInput.name = 'group1';
+    newInput.name = groupName;
     newInput.id = radioId.toString();
-    newInput.onclick = function(){ setRoute(radioId.toString()) };
+    newInput.onclick = function () { setRoute(radioId.toString()) };
 
     var newLabel = document.createElement('label');
     newLabel.htmlFor = radioId.toString();

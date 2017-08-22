@@ -1,6 +1,9 @@
-* {box-sizing: border-box}
+* {
+    box-sizing: border-box
+}
+
 body {
-font-family:"Segoe UI",Arial,sans-serif;
+    font-family: "Segoe UI",Arial,sans-serif;
 }
 
 /*** Left Navigation Style ***/
@@ -8,37 +11,37 @@ font-family:"Segoe UI",Arial,sans-serif;
 div.tab {
     float: left;
     border: 1px solid #ccc;
-    background-color: #f1f1f1; 
+    background-color: #f1f1f1;
     width: 12%;
     height: 550px;
 }
 
-/* Style the buttons inside the tab */
-div.tab button {
-    display: block; 
-    background-color: inherit;
-    color: black;
-    padding: 20px 10px;
-    width: 100%;
-    border: 1px solid #ccc;
-    outline: none;
-    text-align: left;
-    cursor: pointer;
-    transition: 0.3s;
-    font-size: 17px;
-    font-family:"Segoe UI";
-    overflow: auto;
-}
+    /* Style the buttons inside the tab */
+    div.tab button {
+        display: block;
+        background-color: inherit;
+        color: black;
+        padding: 20px 10px;
+        width: 100%;
+        border: 1px solid #ccc;
+        outline: none;
+        text-align: left;
+        cursor: pointer;
+        transition: 0.3s;
+        font-size: 17px;
+        font-family: "Segoe UI";
+        overflow: auto;
+    }
 
-/* Change background color of buttons on hover */
-div.tab button:hover {
-    background-color: #ddd;
-}
+        /* Change background color of buttons on hover */
+        div.tab button:hover {
+            background-color: #ddd;
+        }
 
-/* Create an active/current "tab button" class */
-div.tab button.active {
-    background-color: #00ace6;
-}
+        /* Create an active/current "tab button" class */
+        div.tab button.active {
+            background-color: #00ace6;
+        }
 
 /* Style the tab content */
 .tabcontent {
@@ -52,15 +55,14 @@ div.tab button.active {
 
 /*** Log Text Box content Style ****/
 .logStatus {
-height:400px;
-width:98%;
-overflow:auto;
-background-color:#336699;
-color:white;
-scrollbar-base-color:gold;
-font-family:sans-serif;
-padding:10px;
-
+    height: 400px;
+    width: 98%;
+    overflow: auto;
+    background-color: #336699;
+    color: white;
+    scrollbar-base-color: gold;
+    font-family: sans-serif;
+    padding: 10px;
 }
 
 
@@ -144,4 +146,4 @@ div.message_box {
     height: 100px;
     color: #fff;
     background-color: #ffcc00;
-    }
+}
