@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import cav_msgs.RoadType;
 import cav_msgs.RouteSegment;
 import cav_msgs.Route;
@@ -56,7 +57,7 @@ import java.util.List;
  *  rosservice call /get_available_routes
  *  rosservice call /set_active_route "routeID: '1'"
  */
-public class RouteManager extends AbstractNodeMain {
+public class RouteManager extends SaxtonBaseNode {
 
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();

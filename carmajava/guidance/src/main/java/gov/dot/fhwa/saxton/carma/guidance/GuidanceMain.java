@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -45,7 +46,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
  * <p>
  * Command line test: rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
  */
-public class GuidanceMain extends AbstractNodeMain {
+public class GuidanceMain extends SaxtonBaseNode {
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("guidance_main");
