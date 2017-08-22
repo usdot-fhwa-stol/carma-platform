@@ -22,9 +22,10 @@ package gov.dot.fhwa.saxton.carma.route;
  * The properties of the second waypoint will be considered to apply for the entirety of the segment.
  */
 public class RouteSegment {
-  final RouteWaypoint uptrackWP;
-  final RouteWaypoint downtrackWP;
-  final double length;
+  final protected RouteWaypoint uptrackWP;
+  final protected RouteWaypoint downtrackWP;
+  final protected EarthSegment earthSegment;
+  final protected double length;
 
   /**
    * Constructor intializes this segment with the given waypoints.
@@ -34,6 +35,7 @@ public class RouteSegment {
   public RouteSegment(RouteWaypoint uptrackWP, RouteWaypoint downtrackWP){
     this.uptrackWP = uptrackWP;
     this.downtrackWP = downtrackWP;
+    this.earthSegment = new EarthSegment(this.uptrackWP.getLocation(), this.downtrackWP.getLocation());
     length = 0; // TODO: Calculate the length here
   }
 

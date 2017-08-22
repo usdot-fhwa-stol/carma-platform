@@ -28,31 +28,30 @@ public class RouteWaypoint {
   protected List<String> disabledGuidanceAlgorithms;
   protected List<Integer> laneClosures;
   protected int laneCount = 1;
-//  protected Location location;
-//  protected int lowerSpeedLimit = 0;
-//  protected int upperSpeedLimit = 5;
-//  protected float nearestMileMarker;
-//  protected List<Manuevers> neededManuevers;
-//  protected int requiredLaneIndex = -1;
-//  protected RoadType roadType = RoadType.FREEWAY;
-//
-//  /**
-//   * Default constructor for waypoints does nothing.
-//   */
-//  public RouteWaypoint() {
-//  }
-//
-//  /**
-//   * Constructor intializes this waypoint with the specified location and a speed limit range of [0,speedLimit]
-//   *
-//   * @param loc        The gps location of this waypoint.
-//   * @param speedLimit The upper speed limit at this waypoint specified in m/s
-//   */
-//  public RouteWaypoint(Location loc, int speedLimit) {
-//    this.location = loc;
-//    this.lowerSpeedLimit = 0;
-//    this.upperSpeedLimit = speedLimit;
-//  }
+  protected Location location;
+  protected int lowerSpeedLimit = 0;
+  protected int upperSpeedLimit = 5;
+  protected float nearestMileMarker;
+  //protected List<Manuevers> neededManuevers;
+  protected int requiredLaneIndex = -1;
+  protected RoadType roadType = RoadType.FREEWAY;
+
+  /**
+   * Default constructor does nothing.
+   */
+  public RouteWaypoint() {}
+
+  /**
+   * Constructor intializes this waypoint with the specified location and a speed limit range of [0,speedLimit]
+   *
+   * @param loc        The gps location of this waypoint.
+   * @param speedLimit The upper speed limit at this waypoint specified in m/s
+   */
+  public RouteWaypoint(Location loc, int speedLimit) {
+    this.location = loc;
+    this.lowerSpeedLimit = 0;
+    this.upperSpeedLimit = speedLimit;
+  }
 
   /**
    * Constructor intializes a new waypoint using the parameters in a ros cav_msgs.RouteWaypoint object.
@@ -61,5 +60,65 @@ public class RouteWaypoint {
    */
   public RouteWaypoint(cav_msgs.RouteWaypoint waypointMsg) {
 
+  }
+
+  public Location getLocation() {
+
+  }
+
+  public List<String> getDisabledGuidanceAlgorithms() {
+    return disabledGuidanceAlgorithms;
+  }
+
+  public List<Integer> getLaneClosures() {
+    return laneClosures;
+  }
+
+  public int getLaneCount() {
+    return laneCount;
+  }
+
+  public int getLowerSpeedLimit() {
+    return lowerSpeedLimit;
+  }
+
+  public int getUpperSpeedLimit() {
+    return upperSpeedLimit;
+  }
+
+  public float getNearestMileMarker() {
+    return nearestMileMarker;
+  }
+
+  public int getRequiredLaneIndex() {
+    return requiredLaneIndex;
+  }
+
+  public RoadType getRoadType() {
+    return roadType;
+  }
+
+  public void setDisabledGuidanceAlgorithms(List<String> disabledGuidanceAlgorithms) {
+    this.disabledGuidanceAlgorithms = disabledGuidanceAlgorithms;
+  }
+
+  public void setLaneClosures(List<Integer> laneClosures) {
+    this.laneClosures = laneClosures;
+  }
+
+  public void setLaneCount(int laneCount) {
+    this.laneCount = laneCount;
+  }
+
+  public void setLowerSpeedLimit(int lowerSpeedLimit) {
+    this.lowerSpeedLimit = lowerSpeedLimit;
+  }
+
+  public void setUpperSpeedLimit(int upperSpeedLimit) {
+    this.upperSpeedLimit = upperSpeedLimit;
+  }
+
+  public void setRequiredLaneIndex(int requiredLaneIndex) {
+    this.requiredLaneIndex = requiredLaneIndex;
   }
 }
