@@ -16,18 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import org.apache.commons.logging.Log;
-import org.ros.message.MessageListener;
-import org.ros.node.topic.Subscriber;
-import org.ros.concurrent.CancellableLoop;
-import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
-import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
-import org.ros.node.topic.Publisher;
-import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
+import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublicationChannel;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
 
 /**
  * Guidance package PluginManager component
@@ -41,8 +32,13 @@ public class PluginManager implements Runnable {
   }
 
   @Override public void run() {
+    IPublicationChannel<SystemAlert> pub =
+            pubSubManager.getPublicationChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
     for (; ; ) {
-      pubSubManager.publish("Hello World! I am " + componentName + ". " + sequenceNumber++);
+      cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
+      systemAlertMsg.setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
+      systemAlertMsg.setType(SystemAlert.CAUTION);
+      pub.publish(systemAlertMsg);
 
       try {
         Thread.sleep(sleepDurationMillis);

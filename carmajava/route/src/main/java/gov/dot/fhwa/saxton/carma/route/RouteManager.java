@@ -17,8 +17,12 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import cav_msgs.RoadType;
+import cav_msgs.RouteSegment;
 import org.apache.commons.logging.Log;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageListener;
+import org.ros.node.NodeConfiguration;
 import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
@@ -37,6 +41,10 @@ import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.exception.ServiceNotFoundException;
 
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
  * <p>
@@ -44,6 +52,9 @@ import org.ros.exception.ServiceNotFoundException;
  * Command line test: rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
  */
 public class RouteManager extends SaxtonBaseNode {
+
+  protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+  protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("route_manager");
@@ -72,7 +83,6 @@ public class RouteManager extends SaxtonBaseNode {
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
       @Override
       public void onNewMessage(cav_msgs.SystemAlert message) {
-
         String messageTypeFullDescription = "NA";
 
         switch (message.getType()) {
@@ -100,14 +110,66 @@ public class RouteManager extends SaxtonBaseNode {
       }//onNewMessage
     });//addMessageListener
 
+    final cav_msgs.Route routeMsg = routePub.newMessage();
+    routeMsg.setRouteName("First Route");
+    routeMsg.setRouteID("1");
+    cav_msgs.RouteSegment routeSegMsg = messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
+    routeSegMsg.setLength(20);
+    cav_msgs.RouteWaypoint prevWaypoint = routeSegMsg.getPrevWaypoint();
+    byte[] laneClosures = {1};
+    prevWaypoint.setLaneClosures(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, laneClosures));
+    prevWaypoint.setDisabledGuidanceAlgorithms(new ArrayList<>(Arrays.asList("platooning")));
+    prevWaypoint.setLaneCount((byte)2);
+    prevWaypoint.setLatitude(45.5);
+    prevWaypoint.setLongitude(45.5);
+    prevWaypoint.setAltitude(0);
+    prevWaypoint.setNearestMileMarker(30);
+    prevWaypoint.setRequiredLaneIndex((byte)0);
+    cav_msgs.RoadType roadType = prevWaypoint.getRoadType();
+    roadType.setType(RoadType.FREEWAY);
+    prevWaypoint.setRoadType(roadType);
+    prevWaypoint.setSetFields(Short.parseShort("FF00", 16));
+    prevWaypoint.setSpeedLimit((byte) 55);
+    prevWaypoint.setWaypointId(1);
+    routeSegMsg.setPrevWaypoint(prevWaypoint);
+
+    cav_msgs.RouteWaypoint waypoint = routeSegMsg.getWaypoint();
+    byte[] laneClosures1 = {1};
+    waypoint.setLaneClosures(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, laneClosures1));
+    waypoint.setDisabledGuidanceAlgorithms(new ArrayList<>(Arrays.asList("platooning")));
+    waypoint.setLaneCount((byte)2);
+    waypoint.setLatitude(45.5);
+    waypoint.setLongitude(45.5);
+    waypoint.setAltitude(0);
+    waypoint.setNearestMileMarker(30);
+    waypoint.setRequiredLaneIndex((byte)0);
+    cav_msgs.RoadType roadType1 = waypoint.getRoadType();
+    roadType1.setType(RoadType.FREEWAY);
+    waypoint.setRoadType(roadType1);
+    waypoint.setSetFields(Short.parseShort("FF00", 16));
+    waypoint.setSpeedLimit((byte) 55);
+    waypoint.setWaypointId(1);
+    routeSegMsg.setPrevWaypoint(waypoint);
+
+    routeMsg.setSegments(new ArrayList<>(Arrays.asList(routeSegMsg)));
+
+
     // Services
     // Server
     ServiceServer<cav_srvs.GetAvailableRoutesRequest, cav_srvs.GetAvailableRoutesResponse>
-      getActiveRouteService = connectedNode
+      getAvailableRouteService = connectedNode
       .newServiceServer("get_available_routes", cav_srvs.GetAvailableRoutes._TYPE,
         new ServiceResponseBuilder<cav_srvs.GetAvailableRoutesRequest, cav_srvs.GetAvailableRoutesResponse>() {
           @Override public void build(cav_srvs.GetAvailableRoutesRequest request,
             cav_srvs.GetAvailableRoutesResponse response) {
+            cav_msgs.Route routeMsg = messageFactory.newFromType(cav_msgs.Route._TYPE);
+            std_msgs.Header hdr = routeMsg.getHeader();
+            hdr.setFrameId("0");
+            hdr.setStamp(connectedNode.getCurrentTime());
+            hdr.setSeq(1);
+
+            response.setAvailableRoutes(new ArrayList<>(Arrays.asList(routeMsg)));
+
           }
         });
     ServiceServer<cav_srvs.SetActiveRouteRequest, cav_srvs.SetActiveRouteResponse>
@@ -116,6 +178,12 @@ public class RouteManager extends SaxtonBaseNode {
         new ServiceResponseBuilder<cav_srvs.SetActiveRouteRequest, cav_srvs.SetActiveRouteResponse>() {
           @Override public void build(cav_srvs.SetActiveRouteRequest request,
             cav_srvs.SetActiveRouteResponse response) {
+            if (request.getRouteID() == "1"){
+              response.setErrorStatus(response.NO_ERROR);
+            }
+            else {
+              response.setErrorStatus(response.NO_ROUTE);
+            }
           }
         });
 
