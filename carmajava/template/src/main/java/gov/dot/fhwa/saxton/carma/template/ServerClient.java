@@ -74,7 +74,7 @@ public class ServerClient extends SaxtonBaseNode {
      }
 
     // Example cav_srvs
-    final ServiceClient<cav_srvs.GetActivePluginsRequest, cav_srvs.GetActivePluginsResponse> pluginsClient;
+    final ServiceClient<cav_srvs.PluginListRequest, cav_srvs.PluginListResponse> pluginsClient;
 
     // This CancellableLoop will be canceled automatically when the node shuts down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
