@@ -54,12 +54,12 @@ public class GuidanceMain extends AbstractNodeMain {
   /**
    * Initialize the runnable thread members of the Guidance package.
    */
-  private void initExecutor(Log log) {
+  private void initExecutor(ConnectedNode node) {
     executor = Executors.newFixedThreadPool(numThreads);
     Arbitrator arbitrator = new Arbitrator(pubSubManager);
-    PluginManager pluginManager = new PluginManager(pubSubManager);
+    PluginManager pluginManager = new PluginManager(pubSubManager, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubManager);
-    Tracking tracking = new Tracking(pubSubManager, log);
+    Tracking tracking = new Tracking(pubSubManager, node.getLog());
 
     executor.execute(arbitrator);
     executor.execute(pluginManager);
@@ -80,7 +80,7 @@ public class GuidanceMain extends AbstractNodeMain {
 
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
     initPubSubManager(connectedNode);
-    initExecutor(log);
+    initExecutor(connectedNode);
     ISubscriptionChannel<SystemAlert> subscriber =
       pubSubManager.getSubscriptionChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
