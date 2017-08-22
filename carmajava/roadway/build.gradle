@@ -41,8 +41,8 @@ dependencies {
   compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:nav_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:tf2_msgs:0.5.9'
-  /* Example of a local subproject dependency */
-  /* compile project(':sibling_gradle_project') */
+  /* Local subproject dependency */
+  compile project(':base_node')
 }
 
 installApp {

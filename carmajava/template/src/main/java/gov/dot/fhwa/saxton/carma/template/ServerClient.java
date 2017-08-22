@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.template;
 
+import gov.dot.fhwa.saxton.carma.base_node.SaxtonNodeBase;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
@@ -40,7 +41,7 @@ import org.ros.exception.ServiceNotFoundException;
  * Command line test: rosrun carma template gov.dot.fhwa.saxton.carma.template.ServerClient
 */
 
-public class ServerClient extends SaxtonBaseNode {
+public class ServerClient extends SaxtonNodeBase {
 
   //TODO: Replace "server_client" with Column D node name
   @Override

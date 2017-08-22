@@ -39,8 +39,8 @@ dependencies {
   compile 'org.ros.rosjava_messages:std_srvs:1.11.2'
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
-  compile 'gov.dot.fhwa.saxton.carma:base_node:0.1.0'
-  /* compile project(':sibling_gradle_project') */
+  /* Local subproject dependency */
+  compile project(':base_node')
 }
 
 installApp {

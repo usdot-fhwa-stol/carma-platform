@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
+import gov.dot.fhwa.saxton.carma.base_node.SaxtonNodeBase;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.MessageFactory;
@@ -42,9 +43,9 @@ import org.ros.message.MessageFactory;
  * ROS Node which maintains a description of the roadway geometry and obstacles while the STOL CARMA platform is in operation
  * <p>
  *
- * Command line test: rosrun carmajava roadway gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager
+ * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager
  **/
-public class EnvironmentManager extends AbstractNodeMain {
+public class EnvironmentManager extends SaxtonNodeBase {
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -107,12 +108,19 @@ public class EnvironmentManager extends AbstractNodeMain {
     });//MessageListener
 
     // Used Services
-    ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient;
-//    try {
-//      getTransformClient = connectedNode.newServiceClient("get_transform", cav_srvs.GetTransform._TYPE);
-//    } catch (ServiceNotFoundException e) {
-//      throw new RosRuntimeException(e);
-//    }
+
+    log.info("What is going on!!!");
+    log.info("What is going on2!!!");
+    log.info("What is going on3!!!");
+
+    ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient =
+      this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 5000);
+
+    System.out.println("\n" + getTransformClient);
+    if (getTransformClient == null) {
+      log.error("EnvironmentManager Node could not find service get_transform");
+    }
+
 
     //Getting the ros param called run_id. TODO: Remove after rosnetwork validation
     ParameterTree param = connectedNode.getParameterTree();
@@ -136,7 +144,7 @@ public class EnvironmentManager extends AbstractNodeMain {
 
         systemAlertPub.publish(systemAlertMsg);
         sequenceNumber++;
-        Thread.sleep(30000);
+        Thread.sleep(1000);
       }
     });
   }
