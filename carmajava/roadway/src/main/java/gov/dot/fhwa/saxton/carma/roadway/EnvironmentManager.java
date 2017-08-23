@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Michael McConnell.
+ * TODO Copyright (C) 2017 LEIDOS
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import cav_msgs.*;
 import geometry_msgs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
-import org.ros.exception.RosRuntimeException;
 import org.ros.message.MessageFactory;
 import org.ros.message.MessageListener;
 import org.ros.concurrent.CancellableLoop;
@@ -30,20 +29,18 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
-import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.FrameTransform;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 import org.ros.node.service.ServiceClient;
 import std_msgs.Header;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
  * ROS Node which maintains a description of the roadway geometry and obstacles while the STOL CARMA platform is in operation
- * <p>
+ * Does not publish on any topics until system ready is received on system_alert
  * <p>
  * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager
  **/
@@ -53,6 +50,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   protected ConnectedNode nodeHandle;
   protected boolean systemStarted = false;
+
   // Publishers
   Publisher<tf2_msgs.TFMessage> tfPub;
   Publisher<cav_msgs.SystemAlert> systemAlertPub;
@@ -66,6 +64,8 @@ public class EnvironmentManager extends SaxtonBaseNode {
   Subscriber<cav_msgs.ConnectedVehicleList> vehiclesSub;
   Subscriber<geometry_msgs.TwistStamped> velocitySub;
   Subscriber<cav_msgs.SystemAlert> systemAlertSub;
+  // Used Services
+  ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("environment_manager");
@@ -87,15 +87,56 @@ public class EnvironmentManager extends SaxtonBaseNode {
     //Subscriber<cav_msgs.Map> mapSub = connectedNode.newSubscriber("map", cav_msgs.Map._TYPE);//TODO: Include once Map.msg is created
     routeSegmentSub =
       connectedNode.newSubscriber("route_current_segment", cav_msgs.RouteSegment._TYPE);
+    routeSegmentSub.addMessageListener(new MessageListener<cav_msgs.RouteSegment>() {
+      @Override public void onNewMessage(cav_msgs.RouteSegment message) {
+        log.info(connectedNode.getName() + " Received message on route_current_segment topic");
+      }//onNewMessage
+    });//MessageListener
+
     headingSub = connectedNode.newSubscriber("heading", cav_msgs.HeadingStamped._TYPE);
+    headingSub.addMessageListener(new MessageListener<cav_msgs.HeadingStamped>() {
+      @Override public void onNewMessage(cav_msgs.HeadingStamped message) {
+        log.info(connectedNode.getName() + " Received message on heading topic");
+      }//onNewMessage
+    });//MessageListener
+
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
+    gpsSub.addMessageListener(new MessageListener<sensor_msgs.NavSatFix>() {
+      @Override public void onNewMessage(sensor_msgs.NavSatFix message) {
+        log.info(connectedNode.getName() + " Received message on nav_sat_fix topic");
+      }//onNewMessage
+    });//MessageListener
+
     odometrySub = connectedNode.newSubscriber("odometry", nav_msgs.Odometry._TYPE);
+    odometrySub.addMessageListener(new MessageListener<nav_msgs.Odometry>() {
+      @Override public void onNewMessage(nav_msgs.Odometry message) {
+        log.info(connectedNode.getName() + " Received message on odometry topic");
+      }//onNewMessage
+    });//MessageListener
+
     objectsSub = connectedNode.newSubscriber("tracked_objects", cav_msgs.ExternalObjectList._TYPE);
+    objectsSub.addMessageListener(new MessageListener<cav_msgs.ExternalObjectList>() {
+      @Override public void onNewMessage(cav_msgs.ExternalObjectList message) {
+        log.info(connectedNode.getName() + " Received message on tracked_objects topic");
+      }//onNewMessage
+    });//MessageListener
+
     vehiclesSub =
       connectedNode.newSubscriber("tracked_vehicles", cav_msgs.ConnectedVehicleList._TYPE);
-    velocitySub = connectedNode.newSubscriber("velocity", geometry_msgs.TwistStamped._TYPE);
-    systemAlertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+    vehiclesSub.addMessageListener(new MessageListener<cav_msgs.ConnectedVehicleList>() {
+      @Override public void onNewMessage(cav_msgs.ConnectedVehicleList message) {
+        log.info(connectedNode.getName() + " Received message on tracked_vehicles topic");
+      }//onNewMessage
+    });//MessageListener
 
+    velocitySub = connectedNode.newSubscriber("velocity", geometry_msgs.TwistStamped._TYPE);
+    velocitySub.addMessageListener(new MessageListener<geometry_msgs.TwistStamped>() {
+      @Override public void onNewMessage(geometry_msgs.TwistStamped message) {
+        log.info(connectedNode.getName() + " Received message on velocity topic");
+      }//onNewMessage
+    });//MessageListener
+
+    systemAlertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     systemAlertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
       @Override public void onNewMessage(cav_msgs.SystemAlert message) {
         switch (message.getType()) {
@@ -105,15 +146,14 @@ public class EnvironmentManager extends SaxtonBaseNode {
           default:
             break;
         }
+        log.info(connectedNode.getName() + " Received message on system_alert topic");
       }//onNewMessage
     });//MessageListener
 
     // Used Services
-    ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient =
-      this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 5000);
-
+    getTransformClient = this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 5000);
     if (getTransformClient == null) {
-      log.error(connectedNode.getName() + "Node could not find service get_transform");
+      log.error(connectedNode.getName() + " Node could not find service get_transform");
       //throw new RosRuntimeException(connectedNode.getName() + " Node could not find service get_transform");
     }
 
@@ -126,12 +166,11 @@ public class EnvironmentManager extends SaxtonBaseNode {
       }
 
       @Override protected void loop() throws InterruptedException {
-        publishTF();
-        publishRoadwayEnv();
         if (!systemStarted) {
           return;
         }
-
+        publishTF();
+        publishRoadwayEnv(sequenceNumber);
         sequenceNumber++;
         Thread.sleep(1000);
       }
@@ -160,6 +199,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
 
   /**
    * Calculates the new transform from the map frame to odom frame
+   *
    * @return The calculated transform
    */
   protected FrameTransform calcMapOdomTF() {
@@ -174,6 +214,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
 
   /**
    * Calculates the new transform from the odom frame to base_link frame
+   *
    * @return The calculated transform
    */
   protected FrameTransform calcOdomBaseLinkTF() {
@@ -189,8 +230,11 @@ public class EnvironmentManager extends SaxtonBaseNode {
   /**
    * Publishes the roadway environment as calculated by this node
    * Currently publishing fake data with the host vehicle and an external vehicle not moving
+   * Most fields are filled with 0s
+   *
+   * @param sequenceNumber The iteration count of this published data
    */
-  protected void publishRoadwayEnv() {
+  protected void publishRoadwayEnv(int sequenceNumber) {
     // TODO: Perform real calculations
     if (roadwayEnvPub == null || nodeHandle == null) {
       return;
@@ -218,7 +262,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
 
     ExternalObject hostObject = hostVehicleMsg.getObject();
 
-    hostObject.setHeader(buildHeader("odom", 0, nodeHandle.getCurrentTime()));
+    hostObject.setHeader(buildHeader("odom", sequenceNumber, nodeHandle.getCurrentTime()));
     hostObject.setId((short) 0);
 
     // Build Size Vector
@@ -259,7 +303,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
 
     ExternalObject externalObject = externalVehicleMsg.getObject();
 
-    externalObject.setHeader(buildHeader("odom", 0, nodeHandle.getCurrentTime()));
+    externalObject.setHeader(buildHeader("odom", sequenceNumber, nodeHandle.getCurrentTime()));
     externalObject.setId((short) 1);
 
     // Build Size Vector
@@ -298,6 +342,14 @@ public class EnvironmentManager extends SaxtonBaseNode {
     roadwayEnvPub.publish(roadwayEnvMsg);
   }
 
+  /**
+   * Helper function to create std_msgs.Header messages
+   *
+   * @param frameID The frame id of the header
+   * @param seq     The sequence number
+   * @param rosTime Timestamp
+   * @return Initialized header message
+   */
   private Header buildHeader(String frameID, int seq, Time rosTime) {
     Header hdr = messageFactory.newFromType(Header._TYPE);
     hdr.setFrameId(frameID);
@@ -307,6 +359,17 @@ public class EnvironmentManager extends SaxtonBaseNode {
     return hdr;
   }
 
+  /**
+   * Helper function to create geometry_msgs.Twist messages
+   *
+   * @param lvX linear x velocity
+   * @param lvY linear y velocity
+   * @param lvZ linear z velocity
+   * @param avX angular x velocity
+   * @param avY angular y velocity
+   * @param avZ angular z velocity
+   * @return Initialized twist message
+   */
   private Twist buildTwist(double lvX, double lvY, double lvZ, double avX, double avY, double avZ) {
     Twist twist = messageFactory.newFromType(Twist._TYPE);
     twist.setLinear(buildVector3(lvX, lvY, lvZ));
@@ -314,6 +377,18 @@ public class EnvironmentManager extends SaxtonBaseNode {
     return twist;
   }
 
+  /**
+   * Helper function to build geometry_msgs.Pose messages
+   *
+   * @param x     position on x-axis
+   * @param y     position on x-axis
+   * @param z     position on x-axis
+   * @param quatW quaternion w value
+   * @param quatX quaternion x value
+   * @param quatY quaternion y value
+   * @param quatZ quaternion z value
+   * @return Initialized Pose message
+   */
   private Pose buildPose(double x, double y, double z, double quatW, double quatX, double quatY,
     double quatZ) {
     Pose pose = messageFactory.newFromType(Pose._TYPE);
@@ -328,6 +403,14 @@ public class EnvironmentManager extends SaxtonBaseNode {
     return pose;
   }
 
+  /**
+   * Helper function to build geometry_msgs.Vector3 messages
+   *
+   * @param x x value
+   * @param y y value
+   * @param z z value
+   * @return Initialized Vector3 message
+   */
   private geometry_msgs.Vector3 buildVector3(double x, double y, double z) {
     geometry_msgs.Vector3 vec = messageFactory.newFromType(geometry_msgs.Vector3._TYPE);
     vec.setX(x);
@@ -336,6 +419,14 @@ public class EnvironmentManager extends SaxtonBaseNode {
     return vec;
   }
 
+  /**
+   * Helper function to build geometry_msgs.Point32 messages
+   *
+   * @param x position on x-axis
+   * @param y position on y-axis
+   * @param z position on z-axis
+   * @return Initialized Point32 message
+   */
   private geometry_msgs.Point32 buildPoint32(float x, float y, float z) {
     geometry_msgs.Point32 point = messageFactory.newFromType(geometry_msgs.Point32._TYPE);
     point.setX(x);
