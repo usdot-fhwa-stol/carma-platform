@@ -1,0 +1,75 @@
+# Test route file
+!gov.dot.fhwa.saxton.carma.route.Route
+routeName: TestRoute
+waypoints:
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 0.0
+      longitude: 0.0
+      altitude: 0.0
+    lowerSpeedLimit: 0
+    laneCount: 1
+    nearestMileMarker: 1.0
+    requiredLaneIndex: -1
+    roadType: FREEWAY
+    disabledGuidanceAlgorithms: []
+    laneClosures: []
+#    neededManuevers: []
+
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 0.0
+      longitude: 0.00001
+      altitude: 0.0
+    lowerSpeedLimit: 0
+    laneCount: 1
+    nearestMileMarker: 1.0
+    requiredLaneIndex: -1
+    roadType: FREEWAY
+    disabledGuidanceAlgorithms: []
+    laneClosures: []
+#    neededManuevers: []
+
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 0.0
+      longitude: 0.00002
+      altitude: 0.0
+    lowerSpeedLimit: 0
+    laneCount: 1
+    nearestMileMarker: 1.0
+    requiredLaneIndex: -1
+    roadType: FREEWAY
+    disabledGuidanceAlgorithms: []
+    laneClosures: []
+#    neededManuevers: []
+
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 0.0
+      longitude: 0.00003
+      altitude: 0.0
+    lowerSpeedLimit: 0
+    laneCount: 1
+    nearestMileMarker: 1.0
+    requiredLaneIndex: -1
+    roadType: FREEWAY
+    disabledGuidanceAlgorithms: []
+    laneClosures: []
+#    neededManuevers: []
+
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 0.0
+      longitude: 0.00004
+      altitude: 0.0
+    lowerSpeedLimit: 0
+    laneCount: 1
+    nearestMileMarker: 1.0
+    requiredLaneIndex: -1
+    roadType: FREEWAY
+    disabledGuidanceAlgorithms: []
+    laneClosures: []
+#    neededManuevers: []
+
+

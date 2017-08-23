@@ -46,7 +46,7 @@ public class RouteWaypoint {
   public void setRoadType(RoadType roadType) {
     this.roadType = roadType;
   }
-  
+
 
   /**
    * Constructor intializes this waypoint with the specified location and a speed limit range of [0,speedLimit]
