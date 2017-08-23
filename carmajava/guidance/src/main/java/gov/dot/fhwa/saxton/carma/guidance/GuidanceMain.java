@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -45,7 +46,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
  * <p>
  * Command line test: rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
  */
-public class GuidanceMain extends AbstractNodeMain {
+public class GuidanceMain extends SaxtonBaseNode {
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("guidance_main");
@@ -54,12 +55,12 @@ public class GuidanceMain extends AbstractNodeMain {
   /**
    * Initialize the runnable thread members of the Guidance package.
    */
-  private void initExecutor(Log log) {
+  private void initExecutor(ConnectedNode node) {
     executor = Executors.newFixedThreadPool(numThreads);
     Arbitrator arbitrator = new Arbitrator(pubSubManager);
-    PluginManager pluginManager = new PluginManager(pubSubManager);
+    PluginManager pluginManager = new PluginManager(pubSubManager, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubManager);
-    Tracking tracking = new Tracking(pubSubManager, log);
+    Tracking tracking = new Tracking(pubSubManager, node.getLog());
 
     executor.execute(arbitrator);
     executor.execute(pluginManager);
@@ -80,7 +81,7 @@ public class GuidanceMain extends AbstractNodeMain {
 
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
     initPubSubManager(connectedNode);
-    initExecutor(log);
+    initExecutor(connectedNode);
     ISubscriptionChannel<SystemAlert> subscriber =
       pubSubManager.getSubscriptionChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
