@@ -21,7 +21,7 @@ package gov.dot.fhwa.saxton.carma.template;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
-
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
@@ -36,7 +36,7 @@ import org.ros.node.topic.Publisher;
  *
  * Command line test: rosrun carma template gov.dot.fhwa.saxton.carma.template.PubSub
  */
-public class PubSub extends AbstractNodeMain {
+public class PubSub extends SaxtonBaseNode {
 
     //TODO: Replace with Column D node name
     @Override

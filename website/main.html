@@ -1,53 +1,52 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8" /><!--This is important for character encoding -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-<script src="scripts/roslib.js"></script>
- <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+    <script src="scripts/roslib.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
 </head>
 <body>
-
-<!-- <p>Click on the buttons inside the tabbed menu:</p> -->
-
-<div class="tab">
-  <button class="tablinks" onclick="openTab(event, 'CapabilitiesSelection')" >CAPABILITIES</button>
-  <button class="tablinks" onclick="openTab(event, 'MapCavs')">MAP &amp CAVs</button>
-  <button class="tablinks" onclick="openTab(event, 'MoreInfo')" id="defaultOpen">MORE INFO</button>
-</div>
-
-<div id="CapabilitiesSelection" class="tabcontent">
-  <h3>Capabilities Selection</h3>
-  <p>Not yet implemented.</p>
-</div>
-
-<div id="MapCavs" class="tabcontent">
-  <h3>Map &amp CAVs</h3>
-  <p>Not yet implemented.</p>
-</div>
-
-<div id="MoreInfo" class="tabcontent">
-  <h3>More Info</h3>
-	  <div id="statusIndicator">
-	    <p id="connecting">
-	      Connecting to ROSbridge...
-	    </p>
-	    <p id="connected" style="color:#00D600; display:none">
-	      Connected to ROSBridge.
-	    </p>
-	    <p id="error" style="color:#FF0000; display:none">
-	      Error in the backend. ROSBridge unable to connect.
-	    </p>
-	    <p id="closed" style="display:none">
-	      ROSBridge connection closed.
-	    </p>
-	  </div>
-  <h4>System Status Logs</h4>
-  <div id="divLog" class="logStatus">
-  </div>
-  <script src="scripts/tabs.js"></script>
-  <script src="scripts/rosbridge.js"></script>
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">CAPABILITIES</button>
+        <button class="tablinks" onclick="openTab(event, 'divMapCavs')">MAP &amp CAVs</button>
+        <button class="tablinks" onclick="openTab(event, 'divMoreInfo')">MORE INFO</button>
+    </div>
+    <div id="divCapabilities" class="tabcontent">
+        <div id="divCapabilitiesMessage" class="message_box">Please select a route.</div>
+        <div id="divRoutes" align="center">
+        </div>
+        <div id="divSubCapabilities" hidden="true" align="center">
+            <p>Not yet implemented.</p>
+        </div>
+    </div>
+    <div id="divMapCavs" class="tabcontent">
+        <h3>Map &amp CAVs</h3>
+        <p>Not yet implemented.</p>
+    </div>
+    <div id="divMoreInfo" class="tabcontent">
+        <h3>More Info</h3>
+        <div id="statusIndicator">
+            <p id="connecting">
+                Connecting to ROSbridge...
+            </p>
+            <p id="connected" style="color:#00D600; display:none">
+                Connected to ROSBridge.
+            </p>
+            <p id="error" style="color:#FF0000; display:none">
+                Error in the backend. ROSBridge unable to connect.
+            </p>
+            <p id="closed" style="display:none">
+                ROSBridge connection closed.
+            </p>
+        </div>
+        <h4>System Status Logs</h4>
+        <div id="divLog" class="logStatus">
+        </div>
+    </div>
+    <script src="scripts/control.js"></script>
+    <script src="scripts/rosbridge.js"></script>
 </body>
 </html>
-

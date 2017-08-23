@@ -16,22 +16,29 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import cav_msgs.BSM;
+import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublicationChannel;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriptionChannel;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import org.apache.commons.logging.Log;
-import org.ros.message.MessageListener;
-import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
+import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
-import org.ros.node.topic.Publisher;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import org.ros.node.topic.Publisher;
+import org.ros.node.topic.Subscriber;
+
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
@@ -39,7 +46,7 @@ import java.util.concurrent.Executors;
  * <p>
  * Command line test: rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
  */
-public class GuidanceMain extends AbstractNodeMain {
+public class GuidanceMain extends SaxtonBaseNode {
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("guidance_main");
@@ -48,12 +55,12 @@ public class GuidanceMain extends AbstractNodeMain {
   /**
    * Initialize the runnable thread members of the Guidance package.
    */
-  private void initExecutor() {
+  private void initExecutor(ConnectedNode node) {
     executor = Executors.newFixedThreadPool(numThreads);
     Arbitrator arbitrator = new Arbitrator(pubSubManager);
-    PluginManager pluginManager = new PluginManager(pubSubManager);
+    PluginManager pluginManager = new PluginManager(pubSubManager, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubManager);
-    Tracking tracking = new Tracking(pubSubManager);
+    Tracking tracking = new Tracking(pubSubManager, node.getLog());
 
     executor.execute(arbitrator);
     executor.execute(pluginManager);
@@ -64,9 +71,8 @@ public class GuidanceMain extends AbstractNodeMain {
   /**
    * Initialize the PubSubManager and setup it's message queue.
    */
-  private void initPubSubManager() {
-    messageQueue = new ArrayBlockingQueue<String>(64);
-    pubSubManager = new PubSubManager(messageQueue);
+  private void initPubSubManager(ConnectedNode node) {
+    pubSubManager = new PubSubManager(node);
   }
 
   @Override public void onStart(final ConnectedNode connectedNode) {
@@ -74,14 +80,13 @@ public class GuidanceMain extends AbstractNodeMain {
     final Log log = connectedNode.getLog();
 
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
-    initPubSubManager();
-    initExecutor();
-    Subscriber<cav_msgs.SystemAlert> subscriber =
-      connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+    initPubSubManager(connectedNode);
+    initExecutor(connectedNode);
+    ISubscriptionChannel<SystemAlert> subscriber =
+      pubSubManager.getSubscriptionChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-    subscriber.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
-
+    subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
+      @Override public void onMessage(cav_msgs.SystemAlert message) {
         String messageTypeFullDescription = "NA";
 
         switch (message.getType()) {
@@ -112,8 +117,8 @@ public class GuidanceMain extends AbstractNodeMain {
     }//MessageListener
     );//addMessageListener
 
-    final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
-      connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
+    final IPublicationChannel<SystemAlert> systemAlertPublisher =
+      pubSubManager.getPublicationChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
     //Getting the ros param called run_id.
     ParameterTree param = connectedNode.getParameterTree();
@@ -135,18 +140,9 @@ public class GuidanceMain extends AbstractNodeMain {
        systemAlertMsg.setDescription(
          "Hello World! " + "I am guidance_main. " + sequenceNumber + " run_id = " + rosRunID
            + ".");
-       systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+       systemAlertMsg.setType(SystemAlert.CAUTION);
        systemAlertPublisher.publish(systemAlertMsg);
        sequenceNumber++;
-
-       for (String msg : messageQueue) {
-         cav_msgs.SystemAlert systemAlertMsg2 = systemAlertPublisher.newMessage();
-         systemAlertMsg.setDescription(msg);
-         systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
-
-         systemAlertPublisher.publish(systemAlertMsg);
-       }
-       messageQueue.clear();
 
        Thread.sleep(30000);
      }//loop
@@ -159,5 +155,4 @@ public class GuidanceMain extends AbstractNodeMain {
   protected ExecutorService executor;
   protected int numThreads = 4;
   protected PubSubManager pubSubManager;
-  protected BlockingQueue<String> messageQueue;
 }//AbstractNodeMain

@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 import gov.dot.fhwa.saxton.carma.cav_msgs;
 import gov.dot.fhwa.saxton.carma.cav_srvs;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
@@ -44,11 +45,12 @@ import java.util.List;
  *
  * Command line test: rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  */
-public class InterfaceMgr extends AbstractNodeMain implements IInterfaceMgr {
+public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
+
     @Override
     public GraphName getDefaultNodeName() {
-    return GraphName.of("interface_mgr");
-  }
+        return GraphName.of("interface_mgr");
+    }
 
     @Override
     public void onStart(final ConnectedNode connectedNode) {

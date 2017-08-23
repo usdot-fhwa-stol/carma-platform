@@ -3,6 +3,9 @@
 # Enumeration values for the types of agreement or acknowledgement
 #
 
+# Variable which can be used to store a specific agreement type value.
+uint8 type
+
 uint8       ACCEPT = 1
 uint8       INTERESTED_MUST_POSTPONE = 2
 uint8       ACK_SESSION_VERIFICATION = 3

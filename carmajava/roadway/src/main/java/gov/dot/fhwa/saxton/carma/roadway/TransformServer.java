@@ -16,25 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
-import org.ros.message.MessageFactory;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.namespace.NameResolver;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
-import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
-import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.exception.RemoteException;
-import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
 
 /**
  * ROS Node which maintains a tf2 transform tree which can be accessed by other nodes which do not maintain internal trees.
@@ -43,7 +35,7 @@ import org.ros.exception.ServiceNotFoundException;
  *
  *   Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.TransformServer
  */
-public class TransformServer extends AbstractNodeMain {
+public class TransformServer extends SaxtonBaseNode {
 
   @Override
   public GraphName getDefaultNodeName() {

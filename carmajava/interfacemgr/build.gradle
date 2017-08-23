@@ -41,6 +41,8 @@ dependencies {
   /* Example of a local subproject dependency */
   /* compile project(':sibling_gradle_project') */
     compile 'org.junit:4.12'
+  /* Local subproject dependency */
+  compile project(':rosutils')
 }
 
 installApp {

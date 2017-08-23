@@ -1,7 +1,7 @@
 <!-- 
 	saxton_cav.launch
 
-  A the ros launch file for the STOL CAV  Prototype ROS Network.
+  A the ros launch file for the STOL CAV Prototype ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
   Also sets up all static transforms used by tf2 within the system.
 
@@ -9,24 +9,46 @@
   First delete the generated build/scripts folder in all java packages.
   roslaunch carma saxton_cav.launch
   After using source devel/setup.bash from workspace root.
+
+  If using simulated drivers they are activated using ros arguments as shown below.
+  roslaunch carma saxton_cav.launch mock_can:=true can_data_file:=/path/to/file.csv
 -->
 <launch>
   <!-- Constants -->
   <!-- Directory of Parameter Files -->
-  <arg name="PARAM_DIR" value="$(find carma)/launch/params"/>
+  <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
   <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
-  <arg name="URDF_FILE" value="$(find carma)/launch/urdf/saxton_cav_green_srx.urdf"/>
+  <arg name="URDF_FILE" default="$(find carma)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
+  <!-- Simulated Driver Arguments -->
+  <!-- Directory of Simulation Files -->
+  <arg name="DATA_DIR" default="$(find carma)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
+  <!-- Simulation Usage -->
+  <arg name="mock_can"            default="false" doc="True if using a simulated can driver"/>
+  <arg name="mock_arada"          default="false" doc="True if using a simulated arada driver"/>
+  <arg name="mock_srx_controller" default="false" doc="True if using a simulated srx controller driver"/>
+  <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
+  <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
+  <arg name="mock_cellular"       default="false" doc="True if using a simulated cellular driver"/>
+
+  <!-- Data Files -->
+  <arg name="can_data_file"            default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
+  <arg name="arada_data_file"          default="$(arg DATA_DIR)/arada.csv" doc="Path for arada simulation data"/>
+  <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
+  <arg name="pinpoint_data_file"       default="$(arg DATA_DIR)/pinpoint.csv" doc="Path for pinpoint simulation data"/>
+  <arg name="radar_data_file"          default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
+  <arg name="cellular_data_file"       default="$(arg DATA_DIR)/arada.csv" doc="Path cellular can simulation data"/>
+
   <!-- ROS Namespaces -->
-  <arg name="TOP_NS"    value="saxton_cav"/>
-  <arg name="GUIDE_NS"  value="guidance"/>
-  <arg name="VE_NS"     value="vehicle_environment"/>
-  <arg name="NEGTR_NS"  value="negotiator"/>
-  <arg name="MSG_NS"    value="message"/>
-  <arg name="SF_NS"     value="sensor_fusion"/>
-  <arg name="RD_NS"     value="roadway"/>
-  <arg name="RT_NS"     value="route"/>
-  <arg name="DRIVER_NS" value="drivers"/>
-  <arg name="INTR_NS"   value="interface_manager"/>
+  <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
+  <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
+  <arg name="VE_NS"     default="vehicle_environment" doc="Namespace of nodes in vehicle environment package"/>/>
+  <arg name="NEGTR_NS"  default="negotiator" doc="Namespace of nodes in negotiator package"/>/>
+  <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>/>
+  <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>/>
+  <arg name="RD_NS"     default="roadway" doc="Namespace of nodes in roadway package"/>/>
+  <arg name="RT_NS"     default="route" doc="Namespace of nodes in route package"/>/>
+  <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>/>
+  <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>/>
 
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
@@ -224,40 +246,64 @@
 
       <remap from="system_alert"
              to="/$(arg TOP_NS)/system_alert"/>
+
       <!-- Arada OBU Driver Node -->
-      <node pkg="carma" type="mock_drivers" name="arada_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
-        <!-- Remove driver_type param when using real drivers -->
-        <param name="driver_type" type="string" value="arada_application" />
+      <node unless="$(arg mock_arada)" pkg="arada" type="arada_node" name="arada_application">
+        <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
+      </node>
+      <!-- Simulated Arada Driver Node -->
+      <node if="$(arg mock_arada)" pkg="carma" type="mock_drivers" name="arada_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+        <param name="simulated_driver" type="string" value="arada"/>
+        <param name="data_file_path" type="string" value="$(arg arada_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
       </node>
 
       <!-- PinPoint Driver Node -->
-      <node pkg="pinpoint" type="pinpoint_node" name="pin_point_application">
+      <node unless="$(arg mock_pinpoint)" pkg="pinpoint" type="pinpoint_node" name="pin_point_application">
+        <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
+      </node>
+      <!-- Simulated PinPoint Driver Node -->
+      <node if="$(arg mock_pinpoint)" pkg="carma" type="mock_drivers" name="pin_point_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+        <param name="simulated_driver" type="string" value="pinpoint"/>
+        <param name="data_file_path" type="string" value="$(arg pinpoint_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
       </node>
 
       <!-- SRX CAN Driver Node -->
-      <node pkg="carma" type="mock_drivers" name="srx_can_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
-        <!-- Remove driver_type param when using real drivers -->
-        <param name="driver_type" type="string" value="srx_can_application" />
+      <node unless="$(arg mock_can)" pkg="can" type="can_node" name="can_application">
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
+      </node>
+      <!-- Simulated CAN Driver Node -->
+      <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+        <param name="simulated_driver" type="string" value="can"/>
+        <param name="data_file_path" type="string" value="$(arg can_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       </node>
 
       <!--SRX Controller Driver Node-->
-      <node pkg="carma" type="mock_drivers" name="srx_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
-        <!-- Remove driver_type param when using real drivers -->
-        <param name="driver_type" type="string" value="srx_application" />
+      <node unless="$(arg mock_srx_controller)" pkg="srx_controller" type="srx_controller_node" name="srx_application">
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
+      </node>
+      <!-- Simulated SRX Controller Driver Node -->
+      <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+        <param name="simulated_driver" type="string" value="srx_controller"/>
+        <param name="data_file_path" type="string" value="$(arg srx_controller_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
       </node>
 
       <!-- SRX Radar Driver Node -->
-      <node pkg="carma" type="mock_drivers" name="srx_object_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriver">
-        <!-- Remove driver_type param when using real drivers -->
-        <param name="driver_type" type="string" value="srx_object_application" />
+      <node unless="$(arg mock_radar)" pkg="radar" type="radar_node" name="srx_object_application">
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
+      </node>
+      <!-- Simulated Radar Driver Node -->
+      <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_object_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+        <param name="simulated_driver" type="string" value="radar"/>
+        <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
       </node>
     </group>

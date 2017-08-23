@@ -15,4 +15,5 @@ string name
 string versionId
 # Whether or not the plugin is currently available to generate a trajectory
 bool available
+bool activated
 
