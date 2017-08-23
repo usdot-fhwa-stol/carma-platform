@@ -40,7 +40,7 @@ dependencies {
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
   /* Example of a local subproject dependency */
   /* compile project(':sibling_gradle_project') */
-    compile 'org.junit:4.12'
+    testCompile 'junit:junit:4.12'
   /* Local subproject dependency */
   compile project(':rosutils')
 }

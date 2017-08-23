@@ -16,8 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
-import gov.dot.fhwa.saxton.carma.cav_msgs;
-import gov.dot.fhwa.saxton.carma.cav_srvs;
+import cav_msgs.*;
+import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
