@@ -14,10 +14,10 @@
  * the License.
  */
 
-//Originally "com.github.rosjava.carma.template;"
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
-import main.java.gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceWorker;
+import gov.dot.fhwa.saxton.carma.cav_msgs;
+import gov.dot.fhwa.saxton.carma.cav_srvs;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
@@ -44,7 +44,7 @@ import java.util.List;
  *
  * Command line test: rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  */
-public class InterfaceMgr extends AbstractNodeMain {
+public class InterfaceMgr extends AbstractNodeMain implements IInterfaceMgr {
     @Override
     public GraphName getDefaultNodeName() {
     return GraphName.of("interface_mgr");
@@ -193,11 +193,7 @@ public class InterfaceMgr extends AbstractNodeMain {
 
     ///// service requestors /////
 
-    /**
-     * Binds with the specified driver node.
-     *
-     * @param driverName - name of the driver's bind topic
-     */
+    @Override
     public void bindWithDriver(String driverName) {
 
         //call the bind service, providing callbacks for both formed bond and broken bond
@@ -205,25 +201,14 @@ public class InterfaceMgr extends AbstractNodeMain {
     }
 
 
-    /**
-     * Requests the given driver's specific list of data capabilities.
-     *
-     * @param driverName - name of the driver's api topic
-     * @return - a list of data elements available from the driver
-     */
+    @Override
     public List<String> getDriverApi(String driverName) {
 
         //call the api service for the given driver
     }
 
 
-    /**
-     * Handler for a detected broken driver bond - sends an appropriate system alert message.
-     * Note that this is not the callback to be provided to the driver's bind service.
-     *
-     * @param sev - severity of the problem
-     * @param message - description of the problem
-     */
+    @Override
     public void notifyBrokenBond(AlertSeverity sev, String message) {
 
         //convert the severity to the appropriate message type

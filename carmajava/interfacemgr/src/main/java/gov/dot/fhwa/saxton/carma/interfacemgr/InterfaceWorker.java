@@ -2,14 +2,15 @@
  * This is the worker class that contains all of the logic for the interface manager.
  **/
 
-package main.java.gov.dot.fhwa.saxton.carma.interfacemgr;
+package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 
 import java.util.List;
 
 public class InterfaceWorker {
 
-    public InterfaceWorker() {
+    public InterfaceWorker(IInterfaceMgr mgr) {
+
         //initialize counts of each driver type and driver list
         //initialize the wait timer
    }

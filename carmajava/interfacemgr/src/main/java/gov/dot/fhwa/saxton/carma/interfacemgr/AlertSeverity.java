@@ -1,4 +1,4 @@
-package main.java.gov.dot.fhwa.saxton.carma.interfacemgr;
+package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 public enum AlertSeverity {
     ready,
