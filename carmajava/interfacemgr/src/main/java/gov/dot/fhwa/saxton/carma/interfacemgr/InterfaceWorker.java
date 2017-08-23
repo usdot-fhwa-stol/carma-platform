@@ -5,6 +5,7 @@
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class InterfaceWorker {
@@ -38,17 +39,18 @@ public class InterfaceWorker {
      * that driver; it may still be alive and functioning, but at a different level of capability (it may have even
      * corrected a previous deficiency, e.g. gone from degraded to fully functional).
      *
-     * @param driverId - unique ID
+     * @param driverName - unique ID of the driver
      */
-    public void handleBrokenBond(int driverId) {
+    public void handleBrokenBond(String driverName) {
         //look up the driver and determine its new set of properties, and store them
 
-        //if the system is operational then
-            //formulate an alert message at the appropriate level depending on the type of driver that is reporting
-
         //if functionality is totally unavailable then
-            //decrement the appropriate driver type counter
-            //remove the driver from the list of available drivers
+             //decrement the appropriate driver type counter
+             //remove the driver from the list of available drivers
+
+         //if the system is operational then
+            //formulate an alert message at the appropriate level depending on the type of driver that is reporting
+            // (notifyBrokenBond)
     }
 
     /**
@@ -65,6 +67,7 @@ public class InterfaceWorker {
                 //if the driver is satisfactory then
                     //add the driver to the return list
 
+        return new ArrayList<String>();  //TODO - bogus
     }
 
     /**
@@ -85,5 +88,7 @@ public class InterfaceWorker {
         //endif
 
         //return false
+        return false;
+
     }
 }

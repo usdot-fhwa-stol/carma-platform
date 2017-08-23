@@ -34,6 +34,7 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.NameResolver;
 import org.ros.message.MessageFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,7 +56,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     @Override
     public void onStart(final ConnectedNode connectedNode) {
         final Log log = connectedNode.getLog();
-        InterfaceWorker worker = new InterfaceWorker(); //must exist before first message listener
+        InterfaceWorker worker = new InterfaceWorker(this); //must exist before first message listener
 
 
 
@@ -69,7 +70,9 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
         //create a message listener for /driver_discovery (handleNewDriverStatus)
 
-        //create a message listener for the bond messages of each of the 5 driver types (handleBrokenBond)
+        //create a message listener for the bond messages coming from drivers (handleBrokenBond)
+            //NOTE: this will be implemented in a future iteration due to dependence on
+            //      an as-yet non-existent JNI wrapper for the ros bindcpp library.
 
 
 
@@ -207,6 +210,8 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     public List<String> getDriverApi(String driverName) {
 
         //call the api service for the given driver
+
+        return new ArrayList<String>(); //TODO - bogus
     }
 
 
