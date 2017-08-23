@@ -3,6 +3,9 @@
 # Helper message for MobilityIntro.msg to define the specifics of a type of coordinated plan.
 #
 
+# Variable which can be used to store a specific plan type value.
+uint8 type
+
 # enumeration values for plan type:
 uint8       CHANGE_LANE_LEFT = 1
 uint8       CHANGE_LANE_RIGHT = 2
