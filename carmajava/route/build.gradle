@@ -33,14 +33,24 @@ mainClassName = 'org.ros.RosRun'
    version number changes.
 */
 
+repositories {
+    maven{
+        url "http://repo1.maven.org/maven2/com/esotericsoftware/yamlbeans/yamlbeans/"
+    }
+    mavenCentral()
+}
+
 dependencies {
   /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
   compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
+  compile 'com.esotericsoftware.yamlbeans:yamlbeans:1.12'
+  compile 'org.yaml:snakeyaml:1.18'
   /* Local subproject dependency */
   compile project(':rosutils')
+  compile project(':geometry')
 }
 
 installApp {

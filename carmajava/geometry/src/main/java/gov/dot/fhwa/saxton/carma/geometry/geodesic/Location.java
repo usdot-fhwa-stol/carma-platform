@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.Geodesic;
+package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
 /**
  * A point in the WGS-84 coordinate system. A location has a latitude, longitude, and altitude.
@@ -23,6 +23,30 @@ public class Location {
   double latitude;
   double longitude;
   double altitude;
+
+  public double getLatitude() {
+    return latitude;
+  }
+
+  public void setLatitude(double latitude) {
+    this.latitude = latitude;
+  }
+
+  public double getLongitude() {
+    return longitude;
+  }
+
+  public void setLongitude(double longitude) {
+    this.longitude = longitude;
+  }
+
+  public double getAltitude() {
+    return altitude;
+  }
+
+  public void setAltitude(double altitude) {
+    this.altitude = altitude;
+  }
 
   /**
    * Constructor initializes this location with the provided gps coordinates.
@@ -34,6 +58,10 @@ public class Location {
     this.latitude = lat;
     this.longitude = lon;
     this.altitude = alt;
+  }
+
+  public Location(){
+
   }
 
   /**

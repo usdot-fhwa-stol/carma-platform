@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlReader;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import cav_msgs.RoadType;
 import cav_msgs.RouteSegment;
@@ -42,7 +44,10 @@ import org.ros.node.service.ServiceResponseListener;
 import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.exception.ServiceNotFoundException;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -223,8 +228,21 @@ public class RouteManager extends SaxtonBaseNode {
     
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       private int sequenceNumber;
+
+
       @Override protected void setup() {
         sequenceNumber = 0;
+        try {
+          FileReader fr = new FileReader("/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/main/java/gov/dot/fhwa/saxton/carma/route/route_test.yaml");
+          YamlReader reader = new YamlReader(fr);
+          gov.dot.fhwa.saxton.carma.route.Route route = reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
+          System.out.println("\n" + route.routeName + "\n");
+        } catch (FileNotFoundException e) {
+          e.printStackTrace();
+        } catch (YamlException e) {
+          e.printStackTrace();
+        }
+        System.out.println("\nRoute Done\n");
       }//setup
 
       @Override protected void loop() throws InterruptedException {
@@ -236,7 +254,7 @@ public class RouteManager extends SaxtonBaseNode {
 
         //log.info("RouteManager DatabasePath Param" + params.getString("~/default_database_path"))
         sequenceNumber++;
-        Thread.sleep(30000);
+        Thread.sleep(500);
       }
     }//CancellableLoop
     );//executeCancellableLoop

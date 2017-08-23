@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.EarthSegment;
+
 /**
  * The building block of a route. Each segment is comprised of two waypoints forming a directed “vector”.
  * The first waypoint is the uptrack tail of the segment and the second waypoint is the downtrack head of the segment.

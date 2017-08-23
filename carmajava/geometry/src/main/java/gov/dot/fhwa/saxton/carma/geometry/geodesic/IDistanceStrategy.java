@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.Geodesic;
+package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
 /**
  * An interface which provides functions for calculating distances between location objects and segments.

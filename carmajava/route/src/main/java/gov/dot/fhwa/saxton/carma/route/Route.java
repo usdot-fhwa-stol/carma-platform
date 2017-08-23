@@ -17,18 +17,39 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import java.util.List;
-import org.ros.message.Time;
 
 /**
  * Class which represents the abstraction of a travel route which a vehicle will follow.
  * A routes geometry is defined by RouteWaypoints which has lat/lon coordinates.
  */
 public class Route {
-  Time expectedTimeOfArrival;
-  String routeID;
-  double routeLength;
-  List<RouteSegment> segments;
-  List<RouteWaypoint> waypoints;
+  //Time expectedTimeOfArrival;
+  //String routeID;
+  public String routeName;
+  //double routeLength;
+  //List<RouteSegment> segments;
+  public List<RouteWaypoint> waypoints;
+
+  /**
+   * Default constructor does nothing.
+   */
+  public Route() {}
+
+  public String getRouteName() {
+    return routeName;
+  }
+
+  public void setRouteName(String routeName) {
+    this.routeName = routeName;
+  }
+
+  public List<RouteWaypoint> getWaypoints() {
+    return waypoints;
+  }
+
+  public void setWaypoints(List<RouteWaypoint> waypoints) {
+    this.waypoints = waypoints;
+  }
 
   /**
    * Constructor which initializes a route object from the provided data file.

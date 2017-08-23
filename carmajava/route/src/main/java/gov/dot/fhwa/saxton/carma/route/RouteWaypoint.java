@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+
 import java.util.List;
 
 /**
@@ -31,7 +33,7 @@ public class RouteWaypoint {
   protected Location location;
   protected int lowerSpeedLimit = 0;
   protected int upperSpeedLimit = 5;
-  protected float nearestMileMarker;
+  protected double nearestMileMarker;
   //protected List<Manuevers> neededManuevers;
   protected int requiredLaneIndex = -1;
   protected RoadType roadType = RoadType.FREEWAY;
@@ -40,6 +42,11 @@ public class RouteWaypoint {
    * Default constructor does nothing.
    */
   public RouteWaypoint() {}
+
+  public void setRoadType(RoadType roadType) {
+    this.roadType = roadType;
+  }
+  
 
   /**
    * Constructor intializes this waypoint with the specified location and a speed limit range of [0,speedLimit]
@@ -63,7 +70,7 @@ public class RouteWaypoint {
   }
 
   public Location getLocation() {
-
+    return location;
   }
 
   public List<String> getDisabledGuidanceAlgorithms() {
@@ -86,7 +93,7 @@ public class RouteWaypoint {
     return upperSpeedLimit;
   }
 
-  public float getNearestMileMarker() {
+  public double getNearestMileMarker() {
     return nearestMileMarker;
   }
 
@@ -120,5 +127,13 @@ public class RouteWaypoint {
 
   public void setRequiredLaneIndex(int requiredLaneIndex) {
     this.requiredLaneIndex = requiredLaneIndex;
+  }
+
+  public void setNearestMileMarker(double nearestMileMarker) {
+    this.nearestMileMarker = nearestMileMarker;
+  }
+
+  public void setLocation(Location location){
+    this.location = location;
   }
 }

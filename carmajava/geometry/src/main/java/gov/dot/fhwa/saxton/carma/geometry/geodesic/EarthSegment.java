@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.Geodesic;
+package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
 /**
  * Represents a line between two locations.
@@ -22,4 +22,15 @@ package gov.dot.fhwa.saxton.carma.geometry.Geodesic;
  * TODO: Implement this class. Currently just a placeholder to allow other classes to compile.
  */
 public class EarthSegment {
+  Location loc1;
+  Location loc2;
+  /**
+   * Constructor initializes this earth segment with the provided locations
+   * @param loc1 First gps location
+   * @param loc2 Second gps location
+   */
+  public EarthSegment(Location loc1, Location loc2) {
+    this.loc1 = loc1;
+    this.loc2 = loc2;
+  }
 }
