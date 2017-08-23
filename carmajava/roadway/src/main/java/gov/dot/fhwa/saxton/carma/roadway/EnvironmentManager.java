@@ -16,15 +16,15 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
-import cav_msgs.SystemAlert;
-import geometry_msgs.Quaternion;
-import geometry_msgs.TransformStamped;
+import cav_msgs.*;
+import geometry_msgs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.exception.RosRuntimeException;
 import org.ros.message.MessageFactory;
 import org.ros.message.MessageListener;
 import org.ros.concurrent.CancellableLoop;
+import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
@@ -35,6 +35,7 @@ import org.ros.rosjava_geometry.FrameTransform;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 import org.ros.node.service.ServiceClient;
+import std_msgs.Header;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -108,7 +109,6 @@ public class EnvironmentManager extends SaxtonBaseNode {
     });//MessageListener
 
     // Used Services
-
     ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient =
       this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 5000);
 
@@ -117,12 +117,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
       //throw new RosRuntimeException(connectedNode.getName() + " Node could not find service get_transform");
     }
 
-    //Getting the ros param called run_id. TODO: Remove after rosnetwork validation
-    ParameterTree param = connectedNode.getParameterTree();
-    final String rosRunID = param.getString("/run_id");
-
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
+    // This CancellableLoop will be canceled automatically when the node shuts down
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       private int sequenceNumber;
 
@@ -132,6 +127,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
 
       @Override protected void loop() throws InterruptedException {
         publishTF();
+        publishRoadwayEnv();
         if (!systemStarted) {
           return;
         }
@@ -142,6 +138,9 @@ public class EnvironmentManager extends SaxtonBaseNode {
     });
   }
 
+  /**
+   * Publishes all transformations which this node is responsible for.
+   */
   protected void publishTF() {
     if (tfPub == null || nodeHandle == null) {
       return;
@@ -151,17 +150,20 @@ public class EnvironmentManager extends SaxtonBaseNode {
     geometry_msgs.TransformStamped mapOdomTF = messageFactory.newFromType(TransformStamped._TYPE);
     mapOdomTF = calcMapOdomTF().toTransformStampedMessage(mapOdomTF);
 
-    geometry_msgs.TransformStamped odomBaseLinkTF = messageFactory.newFromType(TransformStamped._TYPE);
+    geometry_msgs.TransformStamped odomBaseLinkTF =
+      messageFactory.newFromType(TransformStamped._TYPE);
     odomBaseLinkTF = calcOdomBaseLinkTF().toTransformStampedMessage(odomBaseLinkTF);
 
     tfMsg.setTransforms(new ArrayList<>(Arrays.asList(mapOdomTF, odomBaseLinkTF)));
     tfPub.publish(tfMsg);
   }
 
+  /**
+   * Calculates the new transform from the map frame to odom frame
+   * @return The calculated transform
+   */
   protected FrameTransform calcMapOdomTF() {
-    // TODO: Calculate transform instead of using identity transform
-    org.ros.rosjava_geometry.Vector3.zero();
-    org.ros.rosjava_geometry.Quaternion.identity();
+    // TODO: Calculate real transform instead of using identity transform
     Transform transform = new Transform(org.ros.rosjava_geometry.Vector3.zero(),
       org.ros.rosjava_geometry.Quaternion.identity());
     FrameTransform mapOdomTF =
@@ -170,10 +172,12 @@ public class EnvironmentManager extends SaxtonBaseNode {
     return mapOdomTF;
   }
 
+  /**
+   * Calculates the new transform from the odom frame to base_link frame
+   * @return The calculated transform
+   */
   protected FrameTransform calcOdomBaseLinkTF() {
-    // TODO: Calculate transform instead of using identity transform
-    org.ros.rosjava_geometry.Vector3.zero();
-    org.ros.rosjava_geometry.Quaternion.identity();
+    // TODO: Calculate real transform instead of using identity transform
     Transform transform = new Transform(org.ros.rosjava_geometry.Vector3.zero(),
       org.ros.rosjava_geometry.Quaternion.identity());
     FrameTransform odomBaseLinkTF =
@@ -182,26 +186,161 @@ public class EnvironmentManager extends SaxtonBaseNode {
     return odomBaseLinkTF;
   }
 
+  /**
+   * Publishes the roadway environment as calculated by this node
+   * Currently publishing fake data with the host vehicle and an external vehicle not moving
+   */
   protected void publishRoadwayEnv() {
+    // TODO: Perform real calculations
     if (roadwayEnvPub == null || nodeHandle == null) {
       return;
     }
+    RoadwayEnvironment roadwayEnvMsg = roadwayEnvPub.newMessage();
+    // Lanes
+    Lane lane = messageFactory.newFromType(Lane._TYPE);
+    lane.setLaneIndex((byte) 0);
 
+    LaneSegment laneSegment = messageFactory.newFromType(LaneSegment._TYPE);
+    laneSegment.setWidth((float) 3.0);
+
+    laneSegment.getLeftSideType().setType(LaneEdgeType.SOLID_YELLOW);
+    laneSegment.getRightSideType().setType(LaneEdgeType.SOLID_WHITE);
+
+    laneSegment.setUptrackPoint(buildPoint32(0, 0, 0));
+    laneSegment.setDowntrackPoint(buildPoint32(0, 0, 0));
+
+    lane.setLaneSegments(new ArrayList<>(Arrays.asList(laneSegment)));
+    roadwayEnvMsg.setLanes(new ArrayList<>(Arrays.asList(lane)));
+
+    // Host Vehicle
+    VehicleObstacle hostVehicleMsg = roadwayEnvMsg.getHostVehicle();
+    hostVehicleMsg.getCommunicationClass().setType(CommunicationClass.TWOWAY);
+
+    ExternalObject hostObject = hostVehicleMsg.getObject();
+
+    hostObject.setHeader(buildHeader("odom", 0, nodeHandle.getCurrentTime()));
+    hostObject.setId((short) 0);
+
+    // Build Size Vector
+    hostObject.setSize(buildVector3(1, 1, 1));
+
+    // Build Pose with Covariance
+    double[] poseCovariance = new double[36];
+    for (int i = 0; i < 36; i++) {
+      poseCovariance[i] = 0;
+    }
+
+    hostObject.getPose().setPose(buildPose(0, 0, 0, 0, 0, 0, 0));
+    hostObject.getPose().setCovariance(poseCovariance);
+
+    // Build Velocity (TwistWithCovariance)
+    double[] velocityCovariance = new double[36];
+    for (int i = 0; i < 36; i++) {
+      velocityCovariance[i] = 0;
+    }
+
+    hostObject.getVelocity().setTwist(buildTwist(0, 0, 0, 0, 0, 0));
+    hostObject.getVelocity().setCovariance(velocityCovariance);
+
+    // Build Velocity Instantaneous (TwistWithCovariance)
+    double[] velocityInstCovariance = new double[36];
+    for (int i = 0; i < 36; i++) {
+      velocityInstCovariance[i] = 0;
+    }
+
+    hostObject.getVelocityInst().setTwist(buildTwist(0, 0, 0, 0, 0, 0));
+    hostObject.getVelocityInst().setCovariance(velocityInstCovariance);
+    hostVehicleMsg.setObject(hostObject);
+
+    // TODO: Use more than 1 external object
+    // External Object
+    VehicleObstacle externalVehicleMsg = messageFactory.newFromType(VehicleObstacle._TYPE);
+    externalVehicleMsg.getCommunicationClass().setType(CommunicationClass.TWOWAY);
+
+    ExternalObject externalObject = externalVehicleMsg.getObject();
+
+    externalObject.setHeader(buildHeader("odom", 0, nodeHandle.getCurrentTime()));
+    externalObject.setId((short) 1);
+
+    // Build Size Vector
+    externalObject.setSize(buildVector3(1, 1, 1));
+
+    // Build Pose with Covariance
+    double[] poseExternalCovariance = new double[36];
+    for (int i = 0; i < 36; i++) {
+      poseExternalCovariance[i] = 0;
+    }
+
+    externalObject.getPose().setPose(buildPose(10, 0, 0, 0, 0, 0, 0));
+    externalObject.getPose().setCovariance(poseExternalCovariance);
+
+    // Build Velocity (TwistWithCovariance)
+    double[] velocityExternalCovariance = new double[36];
+    for (int i = 0; i < 36; i++) {
+      velocityExternalCovariance[i] = 0;
+    }
+
+    externalObject.getVelocity().setTwist(buildTwist(0, 0, 0, 0, 0, 0));
+    externalObject.getVelocity().setCovariance(velocityExternalCovariance);
+
+    // Build Velocity Instantaneous (TwistWithCovariance)
+    double[] velocityExternalInstCovariance = new double[36];
+    for (int i = 0; i < 36; i++) {
+      velocityExternalInstCovariance[i] = 0;
+    }
+
+    externalObject.getVelocityInst().setTwist(buildTwist(0, 0, 0, 0, 0, 0));
+    externalObject.getVelocityInst().setCovariance(velocityExternalInstCovariance);
+    externalVehicleMsg.setObject(externalObject);
+
+    roadwayEnvMsg.setOtherVehicles(new ArrayList<>(Arrays.asList(externalVehicleMsg)));
+
+    roadwayEnvPub.publish(roadwayEnvMsg);
+  }
+
+  private Header buildHeader(String frameID, int seq, Time rosTime) {
+    Header hdr = messageFactory.newFromType(Header._TYPE);
+    hdr.setFrameId(frameID);
+    hdr.setSeq(seq);
+    hdr.setStamp(rosTime);
+
+    return hdr;
+  }
+
+  private Twist buildTwist(double lvX, double lvY, double lvZ, double avX, double avY, double avZ) {
+    Twist twist = messageFactory.newFromType(Twist._TYPE);
+    twist.setLinear(buildVector3(lvX, lvY, lvZ));
+    twist.setAngular(buildVector3(avX, avY, avZ));
+    return twist;
+  }
+
+  private Pose buildPose(double x, double y, double z, double quatW, double quatX, double quatY,
+    double quatZ) {
+    Pose pose = messageFactory.newFromType(Pose._TYPE);
+    pose.getPosition().setX(x);
+    pose.getPosition().setY(x);
+    pose.getPosition().setZ(x);
+
+    pose.getOrientation().setW(quatW);
+    pose.getOrientation().setX(quatX);
+    pose.getOrientation().setY(quatY);
+    pose.getOrientation().setZ(quatZ);
+    return pose;
+  }
+
+  private geometry_msgs.Vector3 buildVector3(double x, double y, double z) {
+    geometry_msgs.Vector3 vec = messageFactory.newFromType(geometry_msgs.Vector3._TYPE);
+    vec.setX(x);
+    vec.setY(y);
+    vec.setY(z);
+    return vec;
+  }
+
+  private geometry_msgs.Point32 buildPoint32(float x, float y, float z) {
+    geometry_msgs.Point32 point = messageFactory.newFromType(geometry_msgs.Point32._TYPE);
+    point.setX(x);
+    point.setY(y);
+    point.setZ(z);
+    return point;
   }
 }
-
-/*
-# A list of other vehicle obstacles on the roadway
-    cav_msgs/VehicleObstacle[] otherVehicles
-
-# A list of lane geometries sorted by lane id
-    cav_msgs/Lane[] lanes
-
-# A description of the host vehicle geometry
-    cav_msgs/VehicleObstacle hostVehicle
- */
-
-//  cav_msgs.SystemAlert systemAlertMsg = systemAlertPub.newMessage();
-//        systemAlertMsg.setDescription(
-//          "Hello World! " + "I am environment_manager. " + sequenceNumber + " run_id = " + rosRunID
-//          + ".");
