@@ -16,6 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlReader;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+
 /**
  * Loads a route based on the provided file path.
  */
@@ -31,6 +37,15 @@ public class FileStrategy implements IRouteLoadStrategy{
   }
 
   @Override public Route load() {
+    try {
+      FileReader fr = new FileReader(filePath);
+      YamlReader reader = new YamlReader(fr);
+      return reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (YamlException e) {
+      e.printStackTrace();
+    }
     return null;
   }
 }

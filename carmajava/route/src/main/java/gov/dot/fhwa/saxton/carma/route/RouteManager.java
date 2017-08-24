@@ -62,7 +62,7 @@ import java.util.List;
  *  rosservice call /get_available_routes
  *  rosservice call /set_active_route "routeID: '1'"
  */
-public class RouteManager extends SaxtonBaseNode {
+public class RouteManager extends SaxtonBaseNode implements IRouteManager{
 
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
@@ -235,8 +235,7 @@ public class RouteManager extends SaxtonBaseNode {
         try {
           FileReader fr = new FileReader("/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/main/java/gov/dot/fhwa/saxton/carma/route/route_test.yaml");
           YamlReader reader = new YamlReader(fr);
-          gov.dot.fhwa.saxton.carma.route.Route route = reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
-          System.out.println("\n" + route.routeName + "\n");
+          gov.dot.fhwa.saxton.carma.route.Route r = reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
         } catch (FileNotFoundException e) {
           e.printStackTrace();
         } catch (YamlException e) {
@@ -259,5 +258,13 @@ public class RouteManager extends SaxtonBaseNode {
     }//CancellableLoop
     );//executeCancellableLoop
   }//onStart
+
+  @Override public List<gov.dot.fhwa.saxton.carma.route.Route> getAvailableRoutes() {
+    return null;
+  }
+
+  @Override public void setActiveRoute(String routeID) {
+
+  }
 }//AbstractNodeMain
 

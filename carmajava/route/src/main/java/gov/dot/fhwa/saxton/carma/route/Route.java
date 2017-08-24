@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import org.ros.message.Time;
+
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,33 +26,17 @@ import java.util.List;
  * A routes geometry is defined by RouteWaypoints which has lat/lon coordinates.
  */
 public class Route {
-  //Time expectedTimeOfArrival;
-  //String routeID;
-  public String routeName;
-  //double routeLength;
-  //List<RouteSegment> segments;
-  public List<RouteWaypoint> waypoints;
+  Time expectedTimeOfArrival;
+  String routeID;
+  String routeName;
+  double routeLength;
+  List<RouteSegment> segments;
+  List<RouteWaypoint> waypoints;
 
   /**
    * Default constructor does nothing.
    */
   public Route() {}
-
-  public String getRouteName() {
-    return routeName;
-  }
-
-  public void setRouteName(String routeName) {
-    this.routeName = routeName;
-  }
-
-  public List<RouteWaypoint> getWaypoints() {
-    return waypoints;
-  }
-
-  public void setWaypoints(List<RouteWaypoint> waypoints) {
-    this.waypoints = waypoints;
-  }
 
   /**
    * Constructor which initializes a route object from the provided data file.
@@ -115,15 +102,6 @@ public class Route {
   }
 
   /**
-   * Gets the length of this route in meters.
-   *
-   * @return The length of this route in meters
-   */
-  public double length() {
-    return 0;
-  }
-
-  /**
    * Loads a route into memory using the provided route loading strategy.
    *
    * @param strategy The strategy which will be used to load a route
@@ -131,5 +109,82 @@ public class Route {
    */
   public boolean loadRoute(IRouteLoadStrategy strategy) {
     return false;
+  }
+
+  public List<RouteSegment> getSegments() {
+    return Collections.unmodifiableList(segments);
+  }
+
+  /**
+   * Gets the route name
+   * @return the name of this route
+   */
+  public String getRouteName() {
+    return routeName;
+  }
+
+  /**
+   * Sets the route name
+   * @param routeName The name which will be used for this route
+   */
+  public void setRouteName(String routeName) {
+    this.routeName = routeName;
+  }
+
+  /**
+   * Gets an immutable list of waypoints.
+   * To modify waypoints the insert waypoint method should be used.
+   * @return The immutable ist of waypoints generated with Collections.unmodifiableList()
+   */
+  public List<RouteWaypoint> getWaypoints() {
+    return Collections.unmodifiableList(waypoints);
+  }
+
+  /**
+   * Sets the list of waypoints
+   * @param waypoints The list of waypoints which will be assigned
+   */
+  public void setWaypoints(List<RouteWaypoint> waypoints) {
+    this.waypoints = waypoints;
+  }
+
+  /**
+   * Gets the expected time of arrival for a vehicle on this route
+   * @return The expected time of arrival
+   */
+  public Time getExpectedTimeOfArrival() {
+    return expectedTimeOfArrival;
+  }
+
+  /**
+   * Sets the expected time of arrival.
+   * @param expectedTimeOfArrival The expected time of arrival which will be assigned
+   */
+  public void setExpectedTimeOfArrival(Time expectedTimeOfArrival) {
+    this.expectedTimeOfArrival = expectedTimeOfArrival;
+  }
+
+  /**
+   * Gets the id of this route
+   * @return the id
+   */
+  public String getRouteID() {
+    return routeID;
+  }
+
+  /**
+   * Sets the route id
+   * @param routeID the route id which will be assigned
+   */
+  public void setRouteID(String routeID) {
+    this.routeID = routeID;
+  }
+
+  /**
+   * Gets the length of this route in meters
+   * @return length of the route
+   */
+  public double getRouteLength() {
+    return routeLength;
   }
 }
