@@ -4,7 +4,7 @@ package gov.dot.fhwa.saxton.carma.interfacemgr;
 public class DriverInfo {
 
     private String          name;
-    private DriverStatus    status;
+    private DriverState     status;
     private boolean         can;
     private boolean         sensor;
     private boolean         position;
@@ -14,7 +14,7 @@ public class DriverInfo {
 
     public DriverInfo() {
         name = "";
-        status = DriverStatus.off;
+        status = DriverState.off;
         can = false;
         sensor = false;
         position = false;
@@ -32,11 +32,11 @@ public class DriverInfo {
         this.name = name;
     }
 
-    public DriverStatus getStatus() {
+    public DriverState getStatus() {
         return status;
     }
 
-    public void setStatus(DriverStatus status) {
+    public void setStatus(DriverState status) {
         this.status = status;
     }
 

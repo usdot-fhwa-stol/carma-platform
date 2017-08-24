@@ -170,28 +170,28 @@ public class InterfaceWorkerTest {
         position1.setPosition(true);
         position1.setName("position1");
         position1.setId(1);
-        position1.setStatus(DriverStatus.operational);
+        position1.setStatus(DriverState.operational);
         w_.handleNewDriverStatus(position1);
 
         DriverInfo position2 = new DriverInfo();
         position2.setPosition(true);
         position2.setName("position2");
         position2.setId(2);
-        position2.setStatus(DriverStatus.fault);
+        position2.setStatus(DriverState.fault);
         w_.handleNewDriverStatus(position2);
 
         DriverInfo position3 = new DriverInfo();
         position3.setPosition(true);
         position3.setName("position3");
         position3.setId(3);
-        position3.setStatus(DriverStatus.operational);
+        position3.setStatus(DriverState.operational);
         w_.handleNewDriverStatus(position3);
 
         DriverInfo sensor1 = new DriverInfo();
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
         sensor1.setId(4);
-        sensor1.setStatus(DriverStatus.operational);
+        sensor1.setStatus(DriverState.operational);
         w_.handleNewDriverStatus(sensor1);
 
     }
@@ -206,11 +206,11 @@ public class InterfaceWorkerTest {
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
         sensor1.setId(4);
-        sensor1.setStatus(DriverStatus.operational);
+        sensor1.setStatus(DriverState.operational);
         w_.handleNewDriverStatus(sensor1);
 
         //same driver again with a different status
-        sensor1.setStatus(DriverStatus.fault);
+        sensor1.setStatus(DriverState.fault);
         w_.handleNewDriverStatus(sensor1);
     }
 
@@ -219,14 +219,14 @@ public class InterfaceWorkerTest {
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
         sensor1.setId(4);
-        sensor1.setStatus(DriverStatus.operational);
+        sensor1.setStatus(DriverState.operational);
         w_.handleNewDriverStatus(sensor1);
 
         DriverInfo position3 = new DriverInfo();
         position3.setPosition(true);
         position3.setName("position3");
         position3.setId(3);
-        position3.setStatus(DriverStatus.operational);
+        position3.setStatus(DriverState.operational);
         w_.handleNewDriverStatus(position3);
 
         w_.handleNewDriverStatus(sensor1);

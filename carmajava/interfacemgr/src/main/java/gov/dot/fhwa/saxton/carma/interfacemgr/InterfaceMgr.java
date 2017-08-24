@@ -16,23 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
-import cav_msgs.*;
-import cav_srvs.*;
+import cav_msgs.DriverStatus;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
-
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 
 import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +42,10 @@ import java.util.List;
  */
 public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
+    private InterfaceWorker     worker_ = new InterfaceWorker(this);
+    private Log                 log_;
+
+
     @Override
     public GraphName getDefaultNodeName() {
         return GraphName.of("interface_mgr");
@@ -55,65 +53,50 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
     @Override
     public void onStart(final ConnectedNode connectedNode) {
-        final Log log = connectedNode.getLog();
         InterfaceWorker worker = new InterfaceWorker(this); //must exist before first message listener
+        log_ = connectedNode.getLog();
 
 
 
 
 
 
-
-        //jas - add new code here as described below
+        //todo - add new code here as described below
 
         ////// topic subscriptions /////
 
         //create a message listener for /driver_discovery (handleNewDriverStatus)
+        Subscriber<cav_msgs.DriverStatus> driverDiscoveryListener =
+                connectedNode.newSubscriber("driver_discovery", cav_msgs.DriverStatus._TYPE);
+        driverDiscoveryListener.addMessageListener(new MessageListener<DriverStatus>() {
+
+            @Override
+            public void onNewMessage(cav_msgs.DriverStatus msg) {
+                DriverInfo info = new DriverInfo();
+                info.setName(msg.getName());
+                switch (msg.getStatus()) {
+                    case DriverStatus.OFF:          info.setStatus(DriverState.off);            break;
+                    case DriverStatus.DEGRADED:     info.setStatus(DriverState.degraded);       break;
+                    case DriverStatus.FAULT:        info.setStatus(DriverState.fault);          break;
+                    case DriverStatus.OPERATIONAL:  info.setStatus(DriverState.operational);    break;
+                    default:
+                        info.setStatus(DriverState.fault);
+                }
+                info.setCan(msg.getCanBus());
+                info.setSensor(msg.getSensor());
+                info.setPosition(msg.getPosition());
+                info.setComms(msg.getComms());
+                info.setController(msg.getController());
+                log_.debug("InterfaceMgr.driverDiscoveryListener received new status: " + info.getName()
+                            + ", " + info.getStatus().toString());
+
+                worker_.handleNewDriverStatus(info);
+            }
+        });
 
         //create a message listener for the bond messages coming from drivers (handleBrokenBond)
             //NOTE: this will be implemented in a future iteration due to dependence on
             //      an as-yet non-existent JNI wrapper for the ros bindcpp library.
-
-
-
-
-
-
-
-        //jas - remove below!
-        // Currently setup to listen to it's own message. Change to listen to someone other topic.
-        Subscriber<cav_msgs.SystemAlert> subscriber = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
-
-        subscriber.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-
-            @Override
-            public void onNewMessage(cav_msgs.SystemAlert message) {
-
-                String messageTypeFullDescription = "NA";
-
-                switch (message.getType()) {
-                    case cav_msgs.SystemAlert.CAUTION:
-                        messageTypeFullDescription = "Received CAUTION: " + message.getDescription();
-                        break;
-                    case cav_msgs.SystemAlert.FATAL:
-                        messageTypeFullDescription = "I am FATAL! ";
-                        break;
-                    case cav_msgs.SystemAlert.NOT_READY:
-                        messageTypeFullDescription = "I am NOT Ready! ";
-                        break;
-                    case cav_msgs.SystemAlert.SYSTEM_READY:
-                        messageTypeFullDescription = "I am Ready! ";
-                        break;
-                    default:
-                        messageTypeFullDescription = "I am NOT Ready! ";
-                }
-
-                log.info("interface_mgr heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
-
-            }//onNewMessage
-        });//addMessageListener
-
-
 
 
 
