@@ -23,21 +23,31 @@ public enum RoadType {
   /**
    * Freeway (highway)
    */
-  FREEWAY,
+  FREEWAY(0),
   /**
    * Ramp onto or off of a freeway
    */
-  RAMP,
+  RAMP(1),
   /**
    * Arterial road (high capacity urban/sub-urban road)
    */
-  ARTERIAL,
+  ARTERIAL(2),
   /**
    * Secondary road (standard low capacity road)
    */
-  SECONDARY,
+  SECONDARY(3),
   /**
    * A parking lot or unmarked paved region
    */
-  PARKING_LOT
+  PARKING_LOT(4);
+
+  private final int value;
+
+  RoadType(int value){
+    this.value = value;
+  }
+
+  public int getValue(){
+    return this.value;
+  }
 }

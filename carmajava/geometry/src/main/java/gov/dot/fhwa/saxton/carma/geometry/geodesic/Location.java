@@ -48,6 +48,12 @@ public class Location {
     this.altitude = altitude;
   }
 
+  public void setLocationData(double latitude, double longitude, double altitude) {
+    this.latitude = latitude;
+    this.longitude = longitude;
+    this.altitude = altitude;
+  }
+
   /**
    * Constructor initializes this location with the provided gps coordinates.
    * @param lat Latitude in degrees
@@ -55,9 +61,7 @@ public class Location {
    * @param alt Altitude in meters
    */
   public Location(double lat, double lon, double alt) {
-    this.latitude = lat;
-    this.longitude = lon;
-    this.altitude = alt;
+    setLocationData(lat,lon,alt);
   }
 
   public Location(){

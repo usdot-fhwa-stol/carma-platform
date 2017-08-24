@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.EarthSegment;
+import org.ros.message.MessageFactory;
 
 /**
  * The building block of a route. Each segment is comprised of two waypoints forming a directed “vector”.
@@ -72,5 +73,19 @@ public class RouteSegment {
    */
   public RouteWaypoint getDowntrackWaypoint(){
     return downtrackWP;
+  }
+
+  /**
+   * Constructs a fully initialized ros message from this route segment
+   * @param factory The message factory which will be used to get a ros message object
+   * @return The ros message
+   */
+  public cav_msgs.RouteSegment toMessage(MessageFactory factory, int downtrackWPIndex){
+    cav_msgs.RouteSegment routeSegMsg = factory.newFromType(cav_msgs.RouteSegment._TYPE);
+    routeSegMsg.setLength(length);
+    routeSegMsg.setPrevWaypoint(uptrackWP.toMessage(factory, downtrackWPIndex - 1));
+    routeSegMsg.setWaypoint(downtrackWP.toMessage(factory, downtrackWPIndex));
+
+    return routeSegMsg;
   }
 }
