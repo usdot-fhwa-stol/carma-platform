@@ -25,6 +25,11 @@ public class Location {
   double altitude;
 
   /**
+   * Default Constructor
+   */
+  public Location(){}
+
+  /**
    * Constructor initializes this location with the provided gps coordinates.
    * @param lat Latitude in degrees
    * @param lon Longitude in degrees

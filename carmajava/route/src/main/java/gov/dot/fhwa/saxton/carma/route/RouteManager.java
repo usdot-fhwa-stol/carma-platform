@@ -101,7 +101,9 @@ public class RouteManager extends SaxtonBaseNode {
         new ServiceResponseBuilder<GetAvailableRoutesRequest, GetAvailableRoutesResponse>() {
           @Override public void build(GetAvailableRoutesRequest request,
             GetAvailableRoutesResponse response) {
-            response = routeWorker.getAvailableRoutes();
+            GetAvailableRoutesResponse response1 = routeWorker.getAvailableRoutes();
+            System.out.println(response1.getAvailableRoutes());
+            response.setAvailableRoutes(response1.getAvailableRoutes());
           }
         });
 

@@ -200,17 +200,23 @@ public class Route {
    * @param waypointList The list of waypoints which will be assigned
    */
   public void setWaypoints(List<RouteWaypoint> waypointList) {
+    System.out.println("\n \n Waypoint List \n \n");
+    System.out.println(waypointList);
     waypoints = waypointList;
     boolean firstWaypoint = true;
     RouteWaypoint prevWaypoint = null;
+    // Build segments from waypoints
+    if (segments == null) {
+      segments = new LinkedList<>();
+    }
 
     for(RouteWaypoint waypoint: waypointList){
 
       if (!firstWaypoint){
         segments.add(new RouteSegment(prevWaypoint, waypoint));
-        firstWaypoint = false;
       }
       prevWaypoint = waypoint;
+      firstWaypoint = false;
     }
     this.routeLength = calculateLength();
   }

@@ -43,6 +43,11 @@ public class RouteWaypoint {
   protected RoadType roadType = RoadType.FREEWAY;
 
   /**
+   * Default constructor
+   */
+  public RouteWaypoint(){}
+
+  /**
    * Constructor initializes this waypoint with the specified location and a speed limit range of [0,speedLimit]
    *
    * @param loc The gps location of this waypoint.
@@ -110,8 +115,10 @@ public class RouteWaypoint {
     }
 
     // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
-    routeWPMsg
-      .setLaneClosures(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, laneClosuresAsBytes));
+    if (laneClosuresAsBytes.length > 0) {
+      routeWPMsg
+        .setLaneClosures(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, laneClosuresAsBytes));
+    }
 
     return routeWPMsg;
   }

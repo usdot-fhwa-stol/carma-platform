@@ -216,6 +216,7 @@ public class RouteWorker implements IRouteWorker {
    */
   public void loadAdditionalRoute(IRouteLoadStrategy loadStrategy){
     Route route = loadStrategy.load();
+    route.setRouteID(route.routeName); //TODO comeup with better method of defining the route id
     availableRoutes.put(route.getRouteID(), route);
     handleStateTransition(WorkerEvent.FILES_LOADED);
   }
@@ -234,6 +235,7 @@ public class RouteWorker implements IRouteWorker {
     cav_srvs.GetAvailableRoutesResponse response = messageFactory.newFromType(
       GetAvailableRoutesResponse._TYPE);
 
+    System.out.println(availableRoutes);
     for (Route route : availableRoutes.values()){
       routeMsgs.add(route.toMessage(messageFactory));
     }
@@ -246,12 +248,13 @@ public class RouteWorker implements IRouteWorker {
 
     Route route = availableRoutes.get(request.getRouteID());
     // Check if the specified route exists.
-    if (route == null) {
+    if (route != null) {
+      activeRoute = route;
+      response.setErrorStatus(SetActiveRouteResponse.NO_ERROR);
+      handleStateTransition(WorkerEvent.ROUTE_SELECTED);
+    } else {
       response.setErrorStatus(SetActiveRouteResponse.NO_ROUTE);
     }
-    activeRoute = route;
-    response.setErrorStatus(SetActiveRouteResponse.NO_ERROR);
-    handleStateTransition(WorkerEvent.ROUTE_SELECTED);
     return response;
   }
 
@@ -316,14 +319,20 @@ public class RouteWorker implements IRouteWorker {
   }
 
   @Override public cav_msgs.RouteSegment getCurrentRouteSegmentTopicMsg() {
+    if (currentSegment == null)
+      return messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
     return currentSegment.toMessage(messageFactory, currentWaypointIndex);
   }
 
   @Override public cav_msgs.Route getActiveRouteTopicMsg() {
+    if (activeRoute == null)
+      return messageFactory.newFromType(cav_msgs.Route._TYPE);
     return activeRoute.toMessage(messageFactory);
   }
 
   @Override public RouteState getRouteStateTopicMsg(int seq, Time time) {
+    if (activeRoute == null)
+      return messageFactory.newFromType(cav_msgs.RouteState._TYPE);
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
     routeState.setCrossTrack(crossTrackDistance);
     routeState.setRouteID(activeRoute.getRouteID());
