@@ -1,8 +1,6 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import java.util.Optional;
-
-public interface ISubscriptionChannel<T> {
+public interface ISubscriber<T> {
     /**
      * Get the last message received on this channel if one has been received.
      *

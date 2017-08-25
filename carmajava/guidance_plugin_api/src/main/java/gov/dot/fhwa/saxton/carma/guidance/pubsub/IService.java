@@ -1,7 +1,5 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import org.ros.node.service.ServiceResponseListener;
-
 public interface IService<T, S> {
     /**
      * Perform an asynchronous call for the service, executing the callback after the response is received or upon
@@ -10,7 +8,7 @@ public interface IService<T, S> {
      * @param request  The message for the request
      * @param callback A callback to be executed upon success or failure of the call
      */
-    void call(T request, ServiceResponseListener<S> callback);
+    void call(T request, OnServiceResponseCallback<S> callback);
 
     /**
      * Notify this IService instance's parent of this instance's closure. This will not necessarily close the underlying

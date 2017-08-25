@@ -16,28 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import java.util.ArrayList;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import cav_msgs.BSM;
 import cav_msgs.SystemAlert;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublicationChannel;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriptionChannel;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
-import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.node.topic.Publisher;
-import org.ros.node.topic.Subscriber;
-
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
@@ -56,10 +45,10 @@ public class GuidanceMain extends AbstractNodeMain {
    */
   private void initExecutor(Log log) {
     executor = Executors.newFixedThreadPool(numThreads);
-    Arbitrator arbitrator = new Arbitrator(pubSubManager);
-    PluginManager pluginManager = new PluginManager(pubSubManager);
-    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubManager);
-    Tracking tracking = new Tracking(pubSubManager, log);
+    Arbitrator arbitrator = new Arbitrator(IPubSubService);
+    PluginManager pluginManager = new PluginManager(IPubSubService);
+    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(IPubSubService);
+    Tracking tracking = new Tracking(IPubSubService, log);
 
     executor.execute(arbitrator);
     executor.execute(pluginManager);
@@ -71,7 +60,14 @@ public class GuidanceMain extends AbstractNodeMain {
    * Initialize the PubSubManager and setup it's message queue.
    */
   private void initPubSubManager(ConnectedNode node) {
-    pubSubManager = new PubSubManager(node);
+      ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node);
+      IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
+      IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node);
+
+      IPubSubService = new PubSubManager(
+          subscriptionChannelFactory,
+          publicationChannelFactory,
+          serviceChannelFactory);
   }
 
   @Override public void onStart(final ConnectedNode connectedNode) {
@@ -81,8 +77,8 @@ public class GuidanceMain extends AbstractNodeMain {
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
     initPubSubManager(connectedNode);
     initExecutor(log);
-    ISubscriptionChannel<SystemAlert> subscriber =
-      pubSubManager.getSubscriptionChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+    ISubscriber<SystemAlert> subscriber =
+      IPubSubService.getSubscriberForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
     subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
       @Override public void onMessage(cav_msgs.SystemAlert message) {
@@ -116,8 +112,8 @@ public class GuidanceMain extends AbstractNodeMain {
     }//MessageListener
     );//addMessageListener
 
-    final IPublicationChannel<SystemAlert> systemAlertPublisher =
-      pubSubManager.getPublicationChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+    final IPublisher<SystemAlert> systemAlertPublisher =
+      IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
     //Getting the ros param called run_id.
     ParameterTree param = connectedNode.getParameterTree();
@@ -153,5 +149,5 @@ public class GuidanceMain extends AbstractNodeMain {
   // Member Variables
   protected ExecutorService executor;
   protected int numThreads = 4;
-  protected PubSubManager pubSubManager;
+  protected IPubSubService IPubSubService;
 }//AbstractNodeMain

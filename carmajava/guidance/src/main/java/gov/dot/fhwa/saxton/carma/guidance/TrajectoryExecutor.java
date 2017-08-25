@@ -19,8 +19,9 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublicationChannel;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 
 /**
  * Guidance package TrajectoryExecutor component
@@ -30,13 +31,13 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.PubSubManager;
  * currently configured plugins.
  */
 public class TrajectoryExecutor implements Runnable {
-  public TrajectoryExecutor(PubSubManager pubSubManager) {
-    this.pubSubManager = pubSubManager;
+  public TrajectoryExecutor(IPubSubService IPubSubService) {
+    this.IPubSubService = IPubSubService;
   }
 
   @Override public void run() {
-    IPublicationChannel<SystemAlert> pub =
-            pubSubManager.getPublicationChannelForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+    IPublisher<SystemAlert> pub =
+            IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
     for (; ; ) {
       cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
       systemAlertMsg.setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
@@ -52,7 +53,7 @@ public class TrajectoryExecutor implements Runnable {
 
   // Member variables
   protected final String componentName = "TrajectoryExecutor";
-  protected PubSubManager pubSubManager;
+  protected IPubSubService IPubSubService;
   protected int sequenceNumber = 0;
   protected final long sleepDurationMillis = 30000;
 }

@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-public interface IPublicationChannel<T> {
+public interface IPublisher<T> {
     /**
      * Generate a new (empty) message instance to have it's fields populated before transmission.
      *
