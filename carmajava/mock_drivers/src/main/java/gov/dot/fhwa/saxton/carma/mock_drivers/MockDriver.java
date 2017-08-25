@@ -111,12 +111,12 @@ public class MockDriver extends SaxtonBaseNode {
           public void build(cav_srvs.BindRequest request, cav_srvs.BindResponse response) {
           }
         });
-    ServiceServer<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>
+    ServiceServer<cav_srvs.GetDriverApiRequest, cav_srvs.GetDriverApiResponse>
       getApiService = connectedNode
-      .newServiceServer("~/get_driver_api", cav_srvs.GetAPISpecification._TYPE,
-        new ServiceResponseBuilder<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>() {
-          @Override public void build(cav_srvs.GetAPISpecificationRequest request,
-            cav_srvs.GetAPISpecificationResponse response) {
+      .newServiceServer("~/get_driver_api", cav_srvs.GetDriverApi._TYPE,
+        new ServiceResponseBuilder<cav_srvs.GetDriverApiRequest, cav_srvs.GetDriverApiResponse>() {
+          @Override public void build(cav_srvs.GetDriverApiRequest request,
+            cav_srvs.GetDriverApiResponse response) {
           }
         });
 

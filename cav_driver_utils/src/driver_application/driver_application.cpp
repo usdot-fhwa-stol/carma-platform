@@ -49,8 +49,8 @@ int DriverApplication::run()
 
     //Initialize DriverApplication services
     ros::ServiceServer bind_service = pnh_->advertiseService("bind", &DriverApplication::bind_service_cb,this);
-    ros::ServiceServer api_service = pnh_->advertiseService("get_api_specification",
-                                                            &DriverApplication::get_api_specification_cb, this);
+    ros::ServiceServer api_service = pnh_->advertiseService("get_driver_api",
+                                                            &DriverApplication::get_driver_api_cb, this);
     ros::ServiceServer driver_status_svs = pnh_->advertiseService("get_status", &DriverApplication::get_status_cb,this);
 
     driver_status_pub_ = nh_->advertise<cav_msgs::DriverStatus>("driver_discovery",1);
@@ -115,8 +115,8 @@ bool DriverApplication::bind_service_cb(cav_srvs::Bind::Request &req, cav_srvs::
     return true;
 }
 
-bool DriverApplication::get_api_specification_cb(cav_srvs::GetAPISpecificationRequest &req,
-                                                 cav_srvs::GetAPISpecificationResponse &res)
+bool DriverApplication::get_driver_api_cb(cav_srvs::GetDriverApiRequest &req,
+                                                 cav_srvs::GetDriverApiResponse &res)
 {
     res.api_list = get_api();
 
