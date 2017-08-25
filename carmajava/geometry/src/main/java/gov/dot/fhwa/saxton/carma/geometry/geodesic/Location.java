@@ -24,36 +24,6 @@ public class Location {
   double longitude;
   double altitude;
 
-  public double getLatitude() {
-    return latitude;
-  }
-
-  public void setLatitude(double latitude) {
-    this.latitude = latitude;
-  }
-
-  public double getLongitude() {
-    return longitude;
-  }
-
-  public void setLongitude(double longitude) {
-    this.longitude = longitude;
-  }
-
-  public double getAltitude() {
-    return altitude;
-  }
-
-  public void setAltitude(double altitude) {
-    this.altitude = altitude;
-  }
-
-  public void setLocationData(double latitude, double longitude, double altitude) {
-    this.latitude = latitude;
-    this.longitude = longitude;
-    this.altitude = altitude;
-  }
-
   /**
    * Constructor initializes this location with the provided gps coordinates.
    * @param lat Latitude in degrees
@@ -62,10 +32,6 @@ public class Location {
    */
   public Location(double lat, double lon, double alt) {
     setLocationData(lat,lon,alt);
-  }
-
-  public Location(){
-
   }
 
   /**
@@ -77,5 +43,65 @@ public class Location {
    */
   public double distanceFrom(Location loc, IDistanceStrategy strategy) {
     return 0;
+  }
+
+  /**
+   * Gets the latitude
+   * @return the latitude
+   */
+  public double getLatitude() {
+    return latitude;
+  }
+
+  /**
+   * Sets the latitude
+   * @param latitude the latitude to be set
+   */
+  public void setLatitude(double latitude) {
+    this.latitude = latitude;
+  }
+
+  /**
+   * Gets the longitude
+   * @return the longitude
+   */
+  public double getLongitude() {
+    return longitude;
+  }
+
+  /**
+   * Sets the longitude
+   * @param longitude the longitude to be set
+   */
+  public void setLongitude(double longitude) {
+    this.longitude = longitude;
+  }
+
+  /**
+   * Gets the altitude
+   * @return the altitude to be set
+   */
+  public double getAltitude() {
+    return altitude;
+  }
+
+  /**
+   * Sets the altitude
+   * @param altitude the altitude to be set
+   */
+  public void setAltitude(double altitude) {
+    this.altitude = altitude;
+  }
+
+  /**
+   * Sets the lat/lon/alt of this location in one function call
+   * @param latitude the latitude to be set
+   * @param longitude the longitude to be set
+   * @param altitude the altitude to be set
+   */
+  public void setLocationData(double latitude, double longitude, double altitude) {
+    this.latitude = latitude;
+    this.longitude = longitude;
+    this.altitude = altitude;
   }
 }

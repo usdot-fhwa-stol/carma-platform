@@ -18,7 +18,6 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
-
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,18 +36,9 @@ public class Route {
 
   /**
    * Default constructor does nothing.
+   * Needed to make the route a bean which can be easily parsed from yaml file
    */
-  public Route() {
-  }
-
-  /**
-   * Constructor which initializes a route object from the provided data file.
-   *
-   * @param filePath The path the the route file which will be loaded
-   * @param routeID  The id to assign to the route. Should be unique
-   */
-  public Route(String filePath, String routeID) {
-  }
+  public Route() {}
 
   /**
    * Constructor which initializes a route from a provided list of waypoints
@@ -58,7 +48,94 @@ public class Route {
    * @param routeName The display name of the route
    */
   public Route(List<RouteWaypoint> waypoints, String routeID, String routeName) {
+    this.routeID = routeID;
+    this.routeName = routeName;
+    this.setWaypoints(waypoints);
+  }
 
+  /**
+   * Constructs a ros message from this route
+   *
+   * @param factory The message factory which will be used to get a ros message object
+   * @return A route message with all fields set except the std_msgs.Header
+   */
+  public cav_msgs.Route toMessage(MessageFactory factory) {
+    cav_msgs.Route routeMsg = factory.newFromType(cav_msgs.Route._TYPE);
+    routeMsg.setRouteID(routeID);
+    routeMsg.setRouteName(routeName);
+
+    List<cav_msgs.RouteSegment> routeSegmentMsgs = new LinkedList<>();
+    for (int i = 0; i < segments.size(); i++) {
+      routeSegmentMsgs.add(segments.get(i).toMessage(factory, i + 1));
+    }
+
+    return routeMsg;
+  }
+
+  /**
+   * Converts a ros message into an initialized Route object
+   * @param routeMsg The ros message
+   * @return The route object
+   */
+  public static Route fromMessage(cav_msgs.Route routeMsg){
+    List<RouteWaypoint> waypoints = new LinkedList<>();
+
+    for (cav_msgs.RouteSegment segmentMsg: routeMsg.getSegments()){
+      RouteSegment segment = RouteSegment.fromMessage(segmentMsg);
+      waypoints.add(segment.getUptrackWaypoint());
+      waypoints.add(segment.getDowntrackWaypoint());
+    }
+    return new Route(waypoints, routeMsg.getRouteID(), routeMsg.getRouteName());
+  }
+
+  /**
+   * Calculates the length of a route
+   * //TODO modify to work with geometry package
+   * @return the length of the route in meters
+   */
+  protected double calculateLength(){
+    return 1;
+  }
+
+  /**
+   * Inserts the provided segment into the route at the specified index.
+   * The segment currently at that index will be right shifted (placed at index + 1)
+   *
+   * @param segment The RouteSegment to be inserted. Must be able to connect to previous and next segments.
+   * @param index   The index at which to insert the RouteSegment. Inserting at a non-existent index will result in an exception.
+   * @return Returns true if the segment was inserted successfully. False otherwise.
+   */
+  public boolean insertSegment(RouteSegment segment, int index) {
+    //TODO perform validation check on segment usability
+    try{
+      segments.add(index,segment);
+      this.routeLength = calculateLength();
+      return true;
+    }catch (IndexOutOfBoundsException e){
+      e.printStackTrace();
+    }
+    return false;
+  }
+
+  /**
+   * Inserts the provided waypoint into the route at the specified index.
+   * The waypoint currently at that index will be right shifted (placed at index + 1)
+   * Inserting a waypoint will result in an additional route segment being created.
+   *
+   * @param waypoint The RouteWaypoint to be inserted. Must be able to connect to previous and next waypoints
+   * @param index    The index at which to insert the RouteWaypoint. Inserting at a non-existent index will result in an exception.
+   * @return Returns true if the waypoint was inserted successfully. False otherwise.
+   */
+  public boolean insertWaypoint(RouteWaypoint waypoint, int index) {
+    //TODO perform validation check on waypoint usability
+    try{
+      waypoints.add(index,waypoint);
+      this.routeLength = calculateLength();
+      return true;
+    }catch (IndexOutOfBoundsException e){
+      e.printStackTrace();
+    }
+    return false;
   }
 
   /**
@@ -67,7 +144,7 @@ public class Route {
    * @return The route segment which is the first segment of the route
    */
   public RouteSegment getFirstSegment() {
-    return null;
+    return segments.get(0);
   }
 
   /**
@@ -76,34 +153,15 @@ public class Route {
    * @return The route segment which is the first segment of the route
    */
   public RouteSegment getLastSegment() {
-    return null;
+    return segments.get(segments.size()-1);
   }
 
   /**
-   * Inserts the provided segment into the route at the specified index.
-   * The segment currently at that index will be placed before the inserted segment at index-1.
+   * Gets an immutable list of segments.
+   * To modify the segments list the insert segment method should be used.
    *
-   * @param segment The RouteSegment to be inserted. Must be able to connect to previous and next segments.
-   * @param index   The index at which to insert the RouteSegment. Inserting at a non-existent index will result in an exception.
-   * @return Returns true if the segment was inserted successfully. False otherwise.
+   * @return The immutable ist of segments generated with Collections.unmodifiableList()
    */
-  public boolean insertSegment(RouteSegment segment, int index) {
-    return false;
-  }
-
-  /**
-   * Inserts the provided waypoint into the route at the specified index.
-   * The waypoint currently at that index will be placed before the inserted segment at index-1.
-   * Inserting a waypoint will result in an additional route segment being created.
-   *
-   * @param waypoint The RouteWaypoint to be inserted. Must be able to connect to previous and next waypoints
-   * @param index    The index at which to insert the RouteWaypoint. Inserting at a non-existent index will result in an exception.
-   * @return Returns true if the waypoint was inserted successfully. False otherwise.
-   */
-  public boolean insertWaypoint(RouteWaypoint waypoint, int index) {
-    return false;
-  }
-
   public List<RouteSegment> getSegments() {
     return Collections.unmodifiableList(segments);
   }
@@ -139,10 +197,22 @@ public class Route {
   /**
    * Sets the list of waypoints
    *
-   * @param waypoints The list of waypoints which will be assigned
+   * @param waypointList The list of waypoints which will be assigned
    */
-  public void setWaypoints(List<RouteWaypoint> waypoints) {
-    this.waypoints = waypoints;
+  public void setWaypoints(List<RouteWaypoint> waypointList) {
+    waypoints = waypointList;
+    boolean firstWaypoint = true;
+    RouteWaypoint prevWaypoint = null;
+
+    for(RouteWaypoint waypoint: waypointList){
+
+      if (!firstWaypoint){
+        segments.add(new RouteSegment(prevWaypoint, waypoint));
+        firstWaypoint = false;
+      }
+      prevWaypoint = waypoint;
+    }
+    this.routeLength = calculateLength();
   }
 
   /**
@@ -152,15 +222,6 @@ public class Route {
    */
   public Time getExpectedTimeOfArrival() {
     return expectedTimeOfArrival;
-  }
-
-  /**
-   * Sets the expected time of arrival.
-   *
-   * @param expectedTimeOfArrival The expected time of arrival which will be assigned
-   */
-  public void setExpectedTimeOfArrival(Time expectedTimeOfArrival) {
-    this.expectedTimeOfArrival = expectedTimeOfArrival;
   }
 
   /**
@@ -190,21 +251,4 @@ public class Route {
     return routeLength;
   }
 
-  /**
-   * Constructs a ros message from this route
-   * @param factory The message factory which will be used to get a ros message object
-   * @return A route message with all fields set except the std_msgs.Header
-   */
-  public cav_msgs.Route toMessage(MessageFactory factory){
-    cav_msgs.Route routeMsg = factory.newFromType(cav_msgs.Route._TYPE);
-    routeMsg.setRouteID(routeID);
-    routeMsg.setRouteName(routeName);
-
-    List<cav_msgs.RouteSegment> routeSegmentMsgs = new LinkedList<>();
-    for (int i = 0; i < segments.size(); i++){
-      routeSegmentMsgs.add(segments.get(i).toMessage(factory, i+1));
-    }
-
-    return routeMsg;
-  }
 }

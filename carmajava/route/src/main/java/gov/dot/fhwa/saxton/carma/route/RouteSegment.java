@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.EarthSegment;
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.ros.message.MessageFactory;
 
 /**
@@ -42,14 +43,16 @@ public class RouteSegment {
     length = 0; // TODO: Calculate the length here
   }
 
-//  /**
-//   * Calculates the crosstrack distance from the provided GPS location to this route segment
-//   * @param location The gps location to be compared
-//   * @return The calculated cross track distance in meters
-//   */
-//  public double crossTrackDistance(Location location) {
-//
-//  }
+  /**
+   * Calculates the crosstrack distance from the provided GPS location to this route segment
+   * TODO implement
+   *
+   * @param location The gps location to be compared
+   * @return The calculated cross track distance in meters
+   */
+  public double crossTrackDistance(Location location) {
+    return 0;
+  }
 
   /**
    * Returns the length of this segment in meters
@@ -87,5 +90,14 @@ public class RouteSegment {
     routeSegMsg.setWaypoint(downtrackWP.toMessage(factory, downtrackWPIndex));
 
     return routeSegMsg;
+  }
+
+  /**
+   * Converts a ros message into an initialized RouteSegment object
+   * @param segmentMsg The ros message
+   * @return The route segment object
+   */
+  public static RouteSegment fromMessage(cav_msgs.RouteSegment segmentMsg){
+    return new RouteSegment(RouteWaypoint.fromMessage(segmentMsg.getPrevWaypoint()),RouteWaypoint.fromMessage(segmentMsg.getWaypoint()));
   }
 }

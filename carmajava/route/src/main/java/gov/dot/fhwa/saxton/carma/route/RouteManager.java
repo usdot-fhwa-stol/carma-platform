@@ -18,42 +18,18 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
-import com.esotericsoftware.yamlbeans.YamlException;
-import com.esotericsoftware.yamlbeans.YamlReader;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
-import cav_msgs.RoadType;
-import cav_msgs.RouteSegment;
-import cav_msgs.Route;
 import org.apache.commons.logging.Log;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageListener;
-import org.ros.node.NodeConfiguration;
 import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
-import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
-import org.ros.node.service.ServiceResponseListener;
-import org.ros.exception.RemoteException;
-import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
-import org.yaml.snakeyaml.Yaml;
 import sensor_msgs.NavSatFix;
-
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
@@ -63,11 +39,11 @@ import java.util.List;
  * Command line test for the service:
  * rosservice call /get_available_routes
  * rosservice call /set_active_route "routeID: '1'"
+ * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
+ * rosparam set /route_manager/default_database_path /home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/main/test/resources/routefiles
  */
 public class RouteManager extends SaxtonBaseNode {
 
-  protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
-  protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   // Topics
   // Publishers
   Publisher<cav_msgs.SystemAlert> systemAlertPub;
@@ -93,8 +69,7 @@ public class RouteManager extends SaxtonBaseNode {
     final Log log = connectedNode.getLog();
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
-    log.info(params.getString("~default_database_path"));
-    routeWorker = new RouteWorker(log, params.getString("~default_database_path")); //TODO figure out the best way to inject this
+    routeWorker = new RouteWorker(log, params.getString("~default_database_path"));
 
     /// Topics
     // Publishers
@@ -144,31 +119,23 @@ public class RouteManager extends SaxtonBaseNode {
 
       @Override protected void setup() {
         sequenceNumber = 0;
-//        try {
-//          FileReader fr = new FileReader(
-//            "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/main/java/gov/dot/fhwa/saxton/carma/route/route_test.yaml");
-//          YamlReader reader = new YamlReader(fr);
-//          gov.dot.fhwa.saxton.carma.route.Route r =
-//            reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
-//        } catch (FileNotFoundException e) {
-//          e.printStackTrace();
-//        } catch (YamlException e) {
-//          e.printStackTrace();
-//        }
-//        System.out.println("\nRoute Done\n");
       }//setup
 
       @Override protected void loop() throws InterruptedException {
+        // Publish all queued route worker system alert messages
         for (SystemAlert alert : routeWorker.getSystemAlertTopicMsgs()){
           systemAlertPub.publish(alert);
         }
 
-        // Do not publish non-system alert topics unless the system has started
-        if (routeWorker.isSystemStarted()){
+        // If an active route has been selected then publish the route and current segment
+        if (routeWorker.getState() == WorkerState.READY_TO_FOLLOW || routeWorker.getState() == WorkerState.FOLLOWING_ROUTE){
           routePub.publish(routeWorker.getActiveRouteTopicMsg());
+        }
+
+        // If following a selected route then publish the route state and current segment
+        if (routeWorker.getState() == WorkerState.FOLLOWING_ROUTE){
           routeStatePub.publish(routeWorker.getRouteStateTopicMsg(sequenceNumber, connectedNode.getCurrentTime()));
           segmentPub.publish(routeWorker.getCurrentRouteSegmentTopicMsg());
-          log.info("Route manager is publishing " + routeWorker.getActiveRouteTopicMsg().getRouteName());
         }
 
         sequenceNumber++;
@@ -177,4 +144,3 @@ public class RouteManager extends SaxtonBaseNode {
     });
   }//onStart
 }//AbstractNodeMain
-

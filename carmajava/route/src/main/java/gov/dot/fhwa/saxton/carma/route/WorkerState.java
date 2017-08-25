@@ -13,12 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package gov.dot.fhwa.saxton.carma.geometry.cartesian;
+package gov.dot.fhwa.saxton.carma.route;
 
 /**
- * A point in a 3D cartesian coordinate system.
- * While this class is an extension of Point, it will only support 3D locations.
- * TODO: This class is currently just a skeleton to allow other classes to compile
+ * Created by mcconnelms on 8/24/17. awaiting
  */
-public class Point3D {
+public enum WorkerState {
+  LOADING_ROUTES,
+  ROUTE_SELECTION,
+  READY_TO_FOLLOW,
+  FOLLOWING_ROUTE
 }

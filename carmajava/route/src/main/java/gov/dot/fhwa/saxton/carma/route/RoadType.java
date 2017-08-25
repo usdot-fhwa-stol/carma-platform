@@ -23,31 +23,43 @@ public enum RoadType {
   /**
    * Freeway (highway)
    */
-  FREEWAY(0),
+  FREEWAY,
   /**
    * Ramp onto or off of a freeway
    */
-  RAMP(1),
+  RAMP,
   /**
    * Arterial road (high capacity urban/sub-urban road)
    */
-  ARTERIAL(2),
+  ARTERIAL,
   /**
    * Secondary road (standard low capacity road)
    */
-  SECONDARY(3),
+  SECONDARY,
   /**
    * A parking lot or unmarked paved region
    */
-  PARKING_LOT(4);
+  PARKING_LOT;
 
-  private final int value;
-
-  RoadType(int value){
-    this.value = value;
-  }
-
-  public int getValue(){
-    return this.value;
+  /**
+   * Gets a RoadType object from a ros message of the corresponding test
+   * @param type
+   * @return
+   */
+  public static RoadType fromMessage(cav_msgs.RoadType type){
+    switch (type.getType()){
+      case cav_msgs.RoadType.FREEWAY:
+        return RoadType.FREEWAY;
+      case cav_msgs.RoadType.RAMP:
+        return RoadType.RAMP;
+      case cav_msgs.RoadType.ARTERIAL:
+        return RoadType.ARTERIAL;
+      case cav_msgs.RoadType.SECONDARY:
+        return RoadType.SECONDARY;
+      case cav_msgs.RoadType.PARKING_LOT:
+        return RoadType.PARKING_LOT;
+      default:
+        return RoadType.FREEWAY;
+    }
   }
 }

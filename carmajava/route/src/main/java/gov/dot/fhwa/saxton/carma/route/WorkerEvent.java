@@ -13,12 +13,34 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package gov.dot.fhwa.saxton.carma.geometry.cartesian;
+package gov.dot.fhwa.saxton.carma.route;
 
 /**
- * A point in a 3D cartesian coordinate system.
- * While this class is an extension of Point, it will only support 3D locations.
- * TODO: This class is currently just a skeleton to allow other classes to compile
+ * A description of the events which can be trigger a state transitions in a RouteWorker
  */
-public class Point3D {
+public enum WorkerEvent {
+  /**
+   * New route data has been loaded
+   */
+  FILES_LOADED,
+  /**
+   * A route has been selected
+   */
+  ROUTE_SELECTED,
+  /**
+   * A route has been completed
+   */
+  ROUTE_COMPLETED,
+  /**
+   * The host vehicle is wandered too far from a route
+   */
+  LEFT_ROUTE,
+  /**
+   * A system ready message has been received
+   */
+  SYSTEM_READY,
+  /**
+   * A system failure message has been received
+   */
+  SYSTEM_FAILURE
 }
