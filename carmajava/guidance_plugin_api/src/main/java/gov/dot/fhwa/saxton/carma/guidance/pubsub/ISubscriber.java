@@ -1,5 +1,10 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+/**
+ * Generic interface for subscribing to a data stream. Designed to share an underlying resource to
+ * avoid duplication.
+ * @param <T> Type parameter for the message being subscribed to
+ */
 public interface ISubscriber<T> {
     /**
      * Get the last message received on this channel if one has been received.

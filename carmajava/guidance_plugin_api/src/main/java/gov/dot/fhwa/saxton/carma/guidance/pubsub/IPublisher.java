@@ -1,5 +1,11 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+/**
+ * Generic interface for publishing data to some kind of data stream. Designed to share a single
+ * underyling connection resource to avoid duplication.
+ *
+ * @param <T> Type parameter for the message being published
+ */
 public interface IPublisher<T> {
     /**
      * Generate a new (empty) message instance to have it's fields populated before transmission.

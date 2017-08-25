@@ -9,25 +9,34 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
  */
 public class PluginServiceLocator {
     protected ArbitratorService arbitratorService;
-    protected PluginService pluginService;
+    protected PluginManagementService pluginManagementService;
     protected IPubSubService IPubSubService;
 
-    public PluginServiceLocator(ArbitratorService arbitratorService, PluginService pluginService,
+    public PluginServiceLocator(ArbitratorService arbitratorService, PluginManagementService pluginManagementService,
         IPubSubService IPubSubService) {
         this.arbitratorService = arbitratorService;
         this.IPubSubService = IPubSubService;
-        this.pluginService = pluginService;
+        this.pluginManagementService = pluginManagementService;
     }
 
+    /**
+     * Get the ArbitratorService instance available to the plugins
+     */
     public ArbitratorService getArbitratorService() {
         return arbitratorService;
     }
 
-    public PluginService getPluginManager() {
-        return pluginService;
+    /**
+     * Get the PluginManagementService instance available to the plugins
+     */
+    public PluginManagementService getPluginManagementService() {
+        return pluginManagementService;
     }
 
-    public IPubSubService getPubSubManager() {
+    /**
+     * Get the PubSubService instance available to the plugins
+     */
+    public IPubSubService getPubSubService() {
         return IPubSubService;
     }
 }
