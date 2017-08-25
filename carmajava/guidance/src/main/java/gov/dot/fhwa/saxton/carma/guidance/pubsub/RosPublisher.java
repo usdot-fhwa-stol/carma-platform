@@ -18,6 +18,14 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.node.topic.Publisher;
 
+/**
+ * Concrete ROS implementation of the functionality outlined in {@link IPublisher}
+ *
+ * Shares a {@link Publisher} amongst it's coworkers (other RosPublisher instances for same topic)
+ * and it's parent {@link RosPublicationChannel}
+ *
+ * @param <T> Type parameter for the published message type
+ */
 public class RosPublisher<T> implements IPublisher<T> {
 
     protected Publisher<T> publisher;

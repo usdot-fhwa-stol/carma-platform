@@ -18,6 +18,12 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.node.ConnectedNode;
 
+/**
+ * Concrete ROS implementation of the logic from {@link IPublicationChannelFactory}
+ *
+ * Uses a ROS ConnectedNode instance to generate {@link org.ros.node.topic.Publisher} instances to
+ * be shared by {@link RosPublicationChannel} and {@link RosPublisher}
+ */
 public class RosPublicationChannelFactory implements IPublicationChannelFactory {
     protected ConnectedNode node;
 

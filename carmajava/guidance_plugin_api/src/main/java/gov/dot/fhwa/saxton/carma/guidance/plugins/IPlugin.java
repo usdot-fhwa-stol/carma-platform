@@ -16,6 +16,16 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
+/**
+ * Interface describing the basic functionality of a CARMA Platform Guidance Plugin
+ *
+ * The methods defined on this interface are used by other Guidance component elements to describe,
+ * instantiate, control, and communicate with the plugin instances.
+ *
+ * Plugins MUST implement this interface in their primary execution class otherwise the Guidance
+ * PluginManager will not be able to locate the plugin on the classpath and it will not show up as
+ * available for activation by the user.
+ */
 public interface IPlugin {
     // Metadata methods
 

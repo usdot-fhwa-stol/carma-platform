@@ -18,7 +18,14 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.exception.ServiceNotFoundException;
 import org.ros.node.ConnectedNode;
+import org.ros.node.service.ServiceClient;
 
+/**
+ * Concrete ROS implementation of the logic outlined in {@link IServiceChannelFactory}
+ *
+ * Uses an {@link ConnectedNode} instance to create {@link ServiceClient} instances for use by
+ * {@link RosServiceChannel} instances and their children {@link RosService} instances
+ */
 public class RosServiceChannelFactory implements IServiceChannelFactory {
     protected ConnectedNode node;
 

@@ -18,6 +18,14 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.node.service.ServiceClient;
 
+/**
+ * Concrete ROS implementation of the logic outlined in {@link IServiceChannel}
+ *
+ * Shares access to a {@link ServiceClient} created by an {@link IServiceChannelFactory} between
+ * any number of child {@link RosService} instances
+ * @param <T> Type parameter for the service request message
+ * @param <S> Type parameter for the service response message
+ */
 public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
     protected int numOpenChannels = 0;
     protected boolean open = true;

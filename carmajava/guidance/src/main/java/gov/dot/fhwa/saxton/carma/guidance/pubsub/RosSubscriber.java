@@ -19,6 +19,12 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 
+/**
+ * Concrete ROS implementation of the logic outlined in {@link ISubscriber}
+ *
+ * Uses a {@link Subscriber} to receive ROS messages from the configured topic
+ * @param <T> Type parameter for the message type of the topic
+ */
 public class RosSubscriber<T> implements ISubscriber<T> {
     protected Subscriber<T> subscriber;
     protected RosSubscriptionChannel<T> parent;

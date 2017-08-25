@@ -20,6 +20,14 @@ import org.ros.exception.RemoteException;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
 
+/**
+ * Concrete ROS implementation of the logic outlined in {@link IService}
+ *
+ * Shares a {@link ServiceClient} between its coworkers (other RosService instances for the same
+ * topic) and its parent {@link RosServiceChannel}
+ * @param <T> Type parameter for the request message type for the service
+ * @param <S> Type parameter for the response message type for the service
+ */
 public class RosService<T, S> implements IService<T, S> {
     protected ServiceClient<T, S> serviceClient;
     protected RosServiceChannel<T, S> parent;

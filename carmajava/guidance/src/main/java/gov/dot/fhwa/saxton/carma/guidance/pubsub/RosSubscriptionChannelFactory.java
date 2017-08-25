@@ -18,6 +18,12 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.node.ConnectedNode;
 
+/**
+ * Concrete ROS implementation of the logic outlined in {@link ISubscriptionChannelFactory}
+ *
+ * Uses an {@link ConnectedNode} instance to  create {@link org.ros.node.topic.Subscriber} instance
+ * for use by {@link RosSubscriptionChannel} instances and their children {@link RosSubscriber}
+ */
 public class RosSubscriptionChannelFactory implements ISubscriptionChannelFactory {
     protected ConnectedNode node;
 

@@ -16,6 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+/**
+ * Generic callback to be used when a message is received by an {@link ISubscriber}
+ * @param <T> Type parameter for the message type being received
+ */
 public interface OnMessageCallback<T> {
     /**
      * A callback intended to be invoked when an IService or ISubscriptionChannel receives a new message
