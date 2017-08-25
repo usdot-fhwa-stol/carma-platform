@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.negotiator;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.MessageFactory;
@@ -35,7 +36,7 @@ import org.ros.namespace.NameResolver;
  * <p>
  * Command line test: rosrun carmajava negotiator gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr
  */
-public class NegotiatorMgr extends AbstractNodeMain {
+public class NegotiatorMgr extends SaxtonBaseNode {
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("negotiator_mgr");
@@ -55,7 +56,6 @@ public class NegotiatorMgr extends AbstractNodeMain {
       connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
     final Publisher<cav_msgs.MobilityNack> mobNackOutPub =
       connectedNode.newPublisher("mobility_nack_outbound", cav_msgs.MobilityNack._TYPE);
-//    TODO: Uncomment when the MobilityPlan message is implemented
 //    final Publisher<cav_msgs.MobilityPlan> mobPlanOutPub =
 //      connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
     final Publisher<cav_msgs.NewPlan> newPlanInPub =

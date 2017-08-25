@@ -16,15 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 
@@ -34,7 +36,7 @@ import org.ros.node.parameter.ParameterTree;
  * <p>
  * Command line test: rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
  */
-public class GuidanceMain extends AbstractNodeMain {
+public class GuidanceMain extends SaxtonBaseNode {
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("guidance_main");
@@ -43,12 +45,13 @@ public class GuidanceMain extends AbstractNodeMain {
   /**
    * Initialize the runnable thread members of the Guidance package.
    */
-  private void initExecutor(Log log) {
+  private void initExecutor(ConnectedNode node) {
     executor = Executors.newFixedThreadPool(numThreads);
-    Arbitrator arbitrator = new Arbitrator(IPubSubService);
-    PluginManager pluginManager = new PluginManager(IPubSubService);
-    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(IPubSubService);
-    Tracking tracking = new Tracking(IPubSubService, log);
+
+    Arbitrator arbitrator = new Arbitrator(pubSubService);
+    PluginManager pluginManager = new PluginManager(pubSubService, node);
+    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubService);
+    Tracking tracking = new Tracking(pubSubService, node.getLog());
 
     executor.execute(arbitrator);
     executor.execute(pluginManager);
@@ -64,7 +67,7 @@ public class GuidanceMain extends AbstractNodeMain {
       IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
       IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node);
 
-      IPubSubService = new PubSubManager(
+      pubSubService = new PubSubManager(
           subscriptionChannelFactory,
           publicationChannelFactory,
           serviceChannelFactory);
@@ -76,9 +79,9 @@ public class GuidanceMain extends AbstractNodeMain {
 
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
     initPubSubManager(connectedNode);
-    initExecutor(log);
+    initExecutor(connectedNode);
     ISubscriber<SystemAlert> subscriber =
-      IPubSubService.getSubscriberForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+      pubSubService.getSubscriberForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
     subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
       @Override public void onMessage(cav_msgs.SystemAlert message) {
@@ -113,7 +116,7 @@ public class GuidanceMain extends AbstractNodeMain {
     );//addMessageListener
 
     final IPublisher<SystemAlert> systemAlertPublisher =
-      IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+      pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
     //Getting the ros param called run_id.
     ParameterTree param = connectedNode.getParameterTree();
@@ -149,5 +152,5 @@ public class GuidanceMain extends AbstractNodeMain {
   // Member Variables
   protected ExecutorService executor;
   protected int numThreads = 4;
-  protected IPubSubService IPubSubService;
+  protected IPubSubService pubSubService;
 }//AbstractNodeMain
