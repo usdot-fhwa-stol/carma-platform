@@ -18,9 +18,6 @@
 //Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import org.ros.exception.ServiceNotFoundException;
-import org.ros.node.ConnectedNode;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,9 +32,21 @@ import java.util.Map;
  * to Java's type system we can't really leverage Java types to ensure correctness. Vigilance will be required to only
  * request types from topics that supply them per our own documentation.
  */
-public class PubSubManager {
-    public PubSubManager(ConnectedNode node) {
-        this.node = node;
+public class PubSubManager implements IPubSubService {
+    // Member Variables
+    protected ISubscriptionChannelFactory subFactory;
+    protected IPublicationChannelFactory pubFactory;
+    protected IServiceChannelFactory srvFactory;
+    protected Map<String, IPublicationChannel> pubChannelManagers;
+    protected Map<String, ISubscriptionChannel> subChannelManagers;
+    protected Map<String, IServiceChannel> srvManagers;
+    public PubSubManager(ISubscriptionChannelFactory subFactory,
+        IPublicationChannelFactory pubFactory, IServiceChannelFactory srvFactory) {
+
+        this.subFactory = subFactory;
+        this.pubFactory = pubFactory;
+        this.srvFactory = srvFactory;
+
         pubChannelManagers = new HashMap<>();
         subChannelManagers = new HashMap<>();
         srvManagers = new HashMap<>();
@@ -52,62 +61,52 @@ public class PubSubManager {
      * @param <S>      Type parameter for the response message
      * @return An IService instance that can call the service
      */
-    @SuppressWarnings("unchecked") public <T, S> IService<T, S> getService(String topicUrl,
-        String type) throws ServiceNotFoundException {
+    @Override @SuppressWarnings("unchecked") public <T, S> IService<T, S> getServiceForTopic(
+        String topicUrl, String type) throws TopicNotFoundException {
         if (srvManagers.containsKey(topicUrl) && srvManagers.get(topicUrl).isOpen()) {
-            return srvManagers.get(topicUrl).getNewChannel();
+            return srvManagers.get(topicUrl).getService();
         } else {
-            ServiceManager<T, S> mgr = new ServiceManager<>(node, topicUrl, type);
-            mgr.openServiceClient();
+            IServiceChannel<T, S> mgr = srvFactory.newServiceChannel(topicUrl, type);
             srvManagers.put(topicUrl, mgr);
-            return mgr.getNewChannel();
+            return mgr.getService();
         }
     }
 
     /**
-     * Get access to an ISubscriptionChannel instance
+     * Get access to an ISubscriber instance
      *
      * @param topicUrl A URL identifying the ROS topic for the subscription
      * @param type     The string identifier of the message type
      * @param <T>      Type parameter of the topic message
-     * @return An ISubscriptionChannel instance that has subscription access to the topic
+     * @return An ISubscriber instance that has subscription access to the topic
      */
-    @SuppressWarnings("unchecked")
-    public <T> ISubscriptionChannel<T> getSubscriptionChannelForTopic(String topicUrl,
-        String type) {
+    @Override @SuppressWarnings("unchecked") public <T> ISubscriber<T> getSubscriberForTopic(
+        String topicUrl, String type) {
         if (subChannelManagers.containsKey(topicUrl) && subChannelManagers.get(topicUrl).isOpen()) {
-            return subChannelManagers.get(topicUrl).getNewChannel();
+            return subChannelManagers.get(topicUrl).getSubscriber();
         } else {
-            SubscriptionChannelManager<T> mgr =
-                new SubscriptionChannelManager<>(node, topicUrl, type);
+            ISubscriptionChannel<T> mgr = subFactory.newSubscriptionChannel(topicUrl, type);
             subChannelManagers.put(topicUrl, mgr);
-            return mgr.getNewChannel();
+            return mgr.getSubscriber();
         }
     }
 
     /**
-     * Get access to an IPublicationChannel instance
+     * Get access to an IPublisher instance
      *
      * @param topicUrl A URL identifying the ROS topic for the publication
      * @param type     The string identifier of the message type
      * @param <T>      Type parameter of the topic message
-     * @return An IPublicationChannel instance that has publish access to the topic
+     * @return An IPublisher instance that has publish access to the topic
      */
-    @SuppressWarnings("unchecked") public <T> IPublicationChannel<T> getPublicationChannelForTopic(
+    @Override @SuppressWarnings("unchecked") public <T> IPublisher<T> getPublisherForTopic(
         String topicUrl, String type) {
         if (pubChannelManagers.containsKey(topicUrl) && pubChannelManagers.get(topicUrl).isOpen()) {
-            return pubChannelManagers.get(topicUrl).getNewChannel();
+            return pubChannelManagers.get(topicUrl).getPublisher();
         } else {
-            PublicationChannelManager<T> mgr =
-                new PublicationChannelManager<>(node, topicUrl, type);
+            IPublicationChannel<T> mgr = pubFactory.newPublicationChannel(topicUrl, type);
             pubChannelManagers.put(topicUrl, mgr);
-            return mgr.getNewChannel();
+            return mgr.getPublisher();
         }
     }
-
-    // Member Variables
-    protected ConnectedNode node;
-    protected Map<String, PublicationChannelManager> pubChannelManagers;
-    protected Map<String, SubscriptionChannelManager> subChannelManagers;
-    protected Map<String, ServiceManager> srvManagers;
 }
