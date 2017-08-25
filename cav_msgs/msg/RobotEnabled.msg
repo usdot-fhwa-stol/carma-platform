@@ -4,7 +4,10 @@
 # the SRX controller has enabled robotic control. Also contains feedback for 
 # injected torque and braking.
 
-# True if the controller is acvtively controlling the vehicle
+# true if the controller is actively commanding the vehicle
+bool robot_active
+
+#Status of robot_enabled, if set the controller is listening to command topics
 bool robot_enabled
 
 # The value of Torque being commanded to the vehicle Nm

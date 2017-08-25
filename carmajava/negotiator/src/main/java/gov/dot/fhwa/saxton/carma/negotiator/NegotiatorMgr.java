@@ -56,7 +56,6 @@ public class NegotiatorMgr extends SaxtonBaseNode {
       connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
     final Publisher<cav_msgs.MobilityNack> mobNackOutPub =
       connectedNode.newPublisher("mobility_nack_outbound", cav_msgs.MobilityNack._TYPE);
-//    TODO: Uncomment when the MobilityPlan message is implemented
 //    final Publisher<cav_msgs.MobilityPlan> mobPlanOutPub =
 //      connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
     final Publisher<cav_msgs.NewPlan> newPlanInPub =
