@@ -10,11 +10,10 @@ public class DriverInfo {
     private boolean         position;
     private boolean         comms;
     private boolean         controller;
-    private int             id;
 
     public DriverInfo() {
         name = "";
-        status = DriverState.off;
+        status = DriverState.OFF;
         can = false;
         sensor = false;
         position = false;
@@ -78,13 +77,5 @@ public class DriverInfo {
 
     public void setController(boolean controller) {
         this.controller = controller;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 }

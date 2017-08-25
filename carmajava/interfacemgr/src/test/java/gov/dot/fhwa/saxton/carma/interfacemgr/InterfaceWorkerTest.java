@@ -40,7 +40,7 @@ public class InterfaceWorkerTest {
         capabilities.add("elevation");
 
         //since there are no drivers specified yet, the system should not be considered
-        // operational, so this should return an empty list
+        // OPERATIONAL, so this should return an empty list
         List<String> res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 0);
     }
@@ -137,19 +137,19 @@ public class InterfaceWorkerTest {
 
         //set up drivers and get their bonds set up
         addNewDrivers();
-        addDuplicateDrivers(); //this will set sensor1 to fault
+        addDuplicateDrivers(); //this will set sensor1 to FAULT
 
-        //at this point the system will not be operational because not enough time has elapsed
+        //at this point the system will not be OPERATIONAL because not enough time has elapsed
         w_.handleBrokenBond("sensor1");
 
-        //since sensor1 had a fault it should not appear in the list of available drivers
+        //since sensor1 had a FAULT it should not appear in the list of available drivers
         List<String> res = w_.getDrivers(capabilities);
-        assertEquals(res.size(), 3); //three position drivers only
+        assertEquals(res.size(), 3); //three POSITION drivers only
         for (String s : res) {
             assertNotEquals(s, "sensor1");
         }
 
-        //wait until system becomes operational
+        //wait until system becomes OPERATIONAL
         Thread.sleep(5005);
 
         w_.handleBrokenBond("sensor1"); //this should write a message to the log
@@ -170,28 +170,28 @@ public class InterfaceWorkerTest {
         position1.setPosition(true);
         position1.setName("position1");
         position1.setId(1);
-        position1.setStatus(DriverState.operational);
+        position1.setStatus(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(position1);
 
         DriverInfo position2 = new DriverInfo();
         position2.setPosition(true);
         position2.setName("position2");
         position2.setId(2);
-        position2.setStatus(DriverState.fault);
+        position2.setStatus(DriverState.FAULT);
         w_.handleNewDriverStatus(position2);
 
         DriverInfo position3 = new DriverInfo();
         position3.setPosition(true);
         position3.setName("position3");
         position3.setId(3);
-        position3.setStatus(DriverState.operational);
+        position3.setStatus(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(position3);
 
         DriverInfo sensor1 = new DriverInfo();
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
         sensor1.setId(4);
-        sensor1.setStatus(DriverState.operational);
+        sensor1.setStatus(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(sensor1);
 
     }
@@ -201,16 +201,16 @@ public class InterfaceWorkerTest {
 
     private void addDuplicateDrivers() {
 
-        //duplicate the sensor1 from above with same operational status
+        //duplicate the sensor1 from above with same OPERATIONAL status
         DriverInfo sensor1 = new DriverInfo();
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
         sensor1.setId(4);
-        sensor1.setStatus(DriverState.operational);
+        sensor1.setStatus(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(sensor1);
 
         //same driver again with a different status
-        sensor1.setStatus(DriverState.fault);
+        sensor1.setStatus(DriverState.FAULT);
         w_.handleNewDriverStatus(sensor1);
     }
 
@@ -219,14 +219,14 @@ public class InterfaceWorkerTest {
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
         sensor1.setId(4);
-        sensor1.setStatus(DriverState.operational);
+        sensor1.setStatus(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(sensor1);
 
         DriverInfo position3 = new DriverInfo();
         position3.setPosition(true);
         position3.setName("position3");
         position3.setId(3);
-        position3.setStatus(DriverState.operational);
+        position3.setStatus(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(position3);
 
         w_.handleNewDriverStatus(sensor1);
