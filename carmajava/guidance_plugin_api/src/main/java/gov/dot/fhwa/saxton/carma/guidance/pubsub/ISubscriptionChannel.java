@@ -2,6 +2,7 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 /**
  * Generic means by which to share an underyling resource for a topic
+ *
  * @param <T>
  */
 public interface ISubscriptionChannel<T> {

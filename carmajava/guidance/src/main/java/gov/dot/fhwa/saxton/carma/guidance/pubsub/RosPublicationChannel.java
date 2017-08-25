@@ -8,6 +8,10 @@ import org.ros.node.topic.Publisher;
  * @param <T>
  */
 public class RosPublicationChannel<T> implements IPublicationChannel<T> {
+    protected int numOpenChannels = 0;
+    protected boolean open = true;
+    protected Publisher<T> publisher;
+
     RosPublicationChannel(Publisher<T> publisher) {
         this.publisher = publisher;
     }
@@ -48,8 +52,4 @@ public class RosPublicationChannel<T> implements IPublicationChannel<T> {
     public int getNumOpenChannels() {
         return numOpenChannels;
     }
-
-    protected int numOpenChannels = 0;
-    protected boolean open = true;
-    protected Publisher<T> publisher;
 }

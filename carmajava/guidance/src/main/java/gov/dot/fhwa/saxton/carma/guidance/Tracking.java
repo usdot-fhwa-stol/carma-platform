@@ -20,7 +20,6 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublicationChannel;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import org.apache.commons.logging.Log;
 
@@ -31,31 +30,31 @@ import org.apache.commons.logging.Log;
  * trajectory and signalling the failure on the /system_alert topic
  */
 public class Tracking implements Runnable {
-  public Tracking(IPubSubService IPubSubService, Log log) {
-    this.IPubSubService = IPubSubService;
-    this.log = log;
-  }
-
-  @Override public void run() {
-    IPublisher<SystemAlert> pub =
-            IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
-    for (;;) {
-      cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
-      systemAlertMsg.setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
-      systemAlertMsg.setType(SystemAlert.CAUTION);
-      pub.publish(systemAlertMsg);
-
-      try {
-        Thread.sleep(sleepDurationMillis);
-      } catch (InterruptedException e) {
-      }
+    protected final String componentName = "Tracking";
+    protected final long sleepDurationMillis = 30000;
+    // Member variables
+    protected IPubSubService IPubSubService;
+    protected int sequenceNumber = 0;
+    protected Log log;
+    public Tracking(IPubSubService IPubSubService, Log log) {
+        this.IPubSubService = IPubSubService;
+        this.log = log;
     }
-  }
 
-  // Member variables
-  protected IPubSubService IPubSubService;
-  protected final String componentName = "Tracking";
-  protected int sequenceNumber = 0;
-  protected final long sleepDurationMillis = 30000;
-  protected Log log;
+    @Override public void run() {
+        IPublisher<SystemAlert> pub =
+            IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+        for (; ; ) {
+            cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
+            systemAlertMsg
+                .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
+            systemAlertMsg.setType(SystemAlert.CAUTION);
+            pub.publish(systemAlertMsg);
+
+            try {
+                Thread.sleep(sleepDurationMillis);
+            } catch (InterruptedException e) {
+            }
+        }
+    }
 }

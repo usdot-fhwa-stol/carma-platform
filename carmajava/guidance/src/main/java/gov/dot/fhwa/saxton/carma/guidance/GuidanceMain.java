@@ -17,18 +17,16 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
-import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
@@ -38,119 +36,118 @@ import org.ros.node.parameter.ParameterTree;
  */
 public class GuidanceMain extends SaxtonBaseNode {
 
-  @Override public GraphName getDefaultNodeName() {
-    return GraphName.of("guidance_main");
-  }
+    // Member Variables
+    protected ExecutorService executor;
+    protected int numThreads = 4;
+    protected IPubSubService pubSubService;
 
-  /**
-   * Initialize the runnable thread members of the Guidance package.
-   */
-  private void initExecutor(ConnectedNode node) {
-    executor = Executors.newFixedThreadPool(numThreads);
+    @Override public GraphName getDefaultNodeName() {
+        return GraphName.of("guidance_main");
+    }
 
-    Arbitrator arbitrator = new Arbitrator(pubSubService);
-    PluginManager pluginManager = new PluginManager(pubSubService, node);
-    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubService);
-    Tracking tracking = new Tracking(pubSubService, node.getLog());
+    /**
+     * Initialize the runnable thread members of the Guidance package.
+     */
+    private void initExecutor(ConnectedNode node) {
+        executor = Executors.newFixedThreadPool(numThreads);
 
-    executor.execute(arbitrator);
-    executor.execute(pluginManager);
-    executor.execute(trajectoryExecutor);
-    executor.execute(tracking);
-  }
+        Arbitrator arbitrator = new Arbitrator(pubSubService);
+        PluginManager pluginManager = new PluginManager(pubSubService, node);
+        TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubService);
+        Tracking tracking = new Tracking(pubSubService, node.getLog());
 
-  /**
-   * Initialize the PubSubManager and setup it's message queue.
-   */
-  private void initPubSubManager(ConnectedNode node) {
-      ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node);
-      IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
-      IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node);
+        executor.execute(arbitrator);
+        executor.execute(pluginManager);
+        executor.execute(trajectoryExecutor);
+        executor.execute(tracking);
+    }
 
-      pubSubService = new PubSubManager(
-          subscriptionChannelFactory,
-          publicationChannelFactory,
-          serviceChannelFactory);
-  }
+    /**
+     * Initialize the PubSubManager and setup it's message queue.
+     */
+    private void initPubSubManager(ConnectedNode node) {
+        ISubscriptionChannelFactory subscriptionChannelFactory =
+            new RosSubscriptionChannelFactory(node);
+        IPublicationChannelFactory publicationChannelFactory =
+            new RosPublicationChannelFactory(node);
+        IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node);
 
-  @Override public void onStart(final ConnectedNode connectedNode) {
+        pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory,
+            serviceChannelFactory);
+    }
 
-    final Log log = connectedNode.getLog();
+    @Override public void onStart(final ConnectedNode connectedNode) {
 
-    // Currently setup to listen to it's own message. Change to listen to someone other topic.
-    initPubSubManager(connectedNode);
-    initExecutor(connectedNode);
-    ISubscriber<SystemAlert> subscriber =
-      pubSubService.getSubscriberForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+        final Log log = connectedNode.getLog();
 
-    subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
-      @Override public void onMessage(cav_msgs.SystemAlert message) {
-        String messageTypeFullDescription = "NA";
+        // Currently setup to listen to it's own message. Change to listen to someone other topic.
+        initPubSubManager(connectedNode);
+        initExecutor(connectedNode);
+        ISubscriber<SystemAlert> subscriber =
+            pubSubService.getSubscriberForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-        switch (message.getType()) {
-          case cav_msgs.SystemAlert.CAUTION:
-            messageTypeFullDescription = "Take caution! ";
-            break;
-          case cav_msgs.SystemAlert.WARNING:
-            messageTypeFullDescription = "I have a warning! ";
-            break;
-          case cav_msgs.SystemAlert.FATAL:
-            messageTypeFullDescription = "I am FATAL! ";
-            break;
-          case cav_msgs.SystemAlert.NOT_READY:
-            messageTypeFullDescription = "I am NOT Ready! ";
-            break;
-          case cav_msgs.SystemAlert.SYSTEM_READY:
-            messageTypeFullDescription = "I am Ready! ";
-            break;
-          default:
-            messageTypeFullDescription = "I am NOT Ready! ";
-        }
+        subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
+                                                 @Override public void onMessage(cav_msgs.SystemAlert message) {
+                                                     String messageTypeFullDescription = "NA";
 
-        log.info(
-          "guidance_main heard: \"" + message.getDescription() + ";" + messageTypeFullDescription
-            + "\"");
+                                                     switch (message.getType()) {
+                                                         case cav_msgs.SystemAlert.CAUTION:
+                                                             messageTypeFullDescription = "Take caution! ";
+                                                             break;
+                                                         case cav_msgs.SystemAlert.WARNING:
+                                                             messageTypeFullDescription = "I have a warning! ";
+                                                             break;
+                                                         case cav_msgs.SystemAlert.FATAL:
+                                                             messageTypeFullDescription = "I am FATAL! ";
+                                                             break;
+                                                         case cav_msgs.SystemAlert.NOT_READY:
+                                                             messageTypeFullDescription = "I am NOT Ready! ";
+                                                             break;
+                                                         case cav_msgs.SystemAlert.SYSTEM_READY:
+                                                             messageTypeFullDescription = "I am Ready! ";
+                                                             break;
+                                                         default:
+                                                             messageTypeFullDescription = "I am NOT Ready! ";
+                                                     }
 
-      }//onNewMessage
-    }//MessageListener
-    );//addMessageListener
+                                                     log.info("guidance_main heard: \"" + message.getDescription() + ";"
+                                                         + messageTypeFullDescription + "\"");
 
-    final IPublisher<SystemAlert> systemAlertPublisher =
-      pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+                                                 }//onNewMessage
+                                             }//MessageListener
+        );//addMessageListener
 
-    //Getting the ros param called run_id.
-    ParameterTree param = connectedNode.getParameterTree();
-    final String rosRunID = param.getString("/run_id");
-    //params.setString("~/param_name", param_value);
+        final IPublisher<SystemAlert> systemAlertPublisher =
+            pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
-    connectedNode.executeCancellableLoop(new CancellableLoop() {
-     private int sequenceNumber;
+        //Getting the ros param called run_id.
+        ParameterTree param = connectedNode.getParameterTree();
+        final String rosRunID = param.getString("/run_id");
+        //params.setString("~/param_name", param_value);
 
-     @Override protected void setup() {
-       sequenceNumber = 0;
-     }//setup
+        // This CancellableLoop will be canceled automatically when the node shuts
+        // down.
+        connectedNode.executeCancellableLoop(new CancellableLoop() {
+                                                 private int sequenceNumber;
 
-     @Override protected void loop() throws InterruptedException {
+                                                 @Override protected void setup() {
+                                                     sequenceNumber = 0;
+                                                 }//setup
 
-       cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-       systemAlertMsg.setDescription(
-         "Hello World! " + "I am guidance_main. " + sequenceNumber + " run_id = " + rosRunID
-           + ".");
-       systemAlertMsg.setType(SystemAlert.CAUTION);
-       systemAlertPublisher.publish(systemAlertMsg);
-       sequenceNumber++;
+                                                 @Override protected void loop() throws InterruptedException {
 
-       Thread.sleep(30000);
-     }//loop
+                                                     cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
+                                                     systemAlertMsg.setDescription(
+                                                         "Hello World! " + "I am guidance_main. " + sequenceNumber + " run_id = "
+                                                             + rosRunID + ".");
+                                                     systemAlertMsg.setType(SystemAlert.CAUTION);
+                                                     systemAlertPublisher.publish(systemAlertMsg);
+                                                     sequenceNumber++;
 
-    }//CancellableLoop
-    );//executeCancellableLoop
-  }//onStart
+                                                     Thread.sleep(30000);
+                                                 }//loop
 
-  // Member Variables
-  protected ExecutorService executor;
-  protected int numThreads = 4;
-  protected IPubSubService pubSubService;
+                                             }//CancellableLoop
+        );//executeCancellableLoop
+    }//onStart
 }//AbstractNodeMain

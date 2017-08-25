@@ -39,19 +39,21 @@ public interface IPlugin {
     void onDestroy();
 
     /**
+     * Get the activation state of the plugin
+     *
+     * @return True if the user has commanded activation of the plugin, false o.w.
+     */
+    boolean getActivation();
+
+    /**
      * Set the plugin activation value. Generally only used via the user interface at direct command
      * from the user.
      */
     void setActivation(boolean activation);
 
     /**
-     * Get the activation state of the plugin
-     * @return True if the user has commanded activation of the plugin, false o.w.
-     */
-    boolean getActivation();
-
-    /**
      * Get the availability state of the plugin.
+     *
      * @return True if the plugin is relevant in the current driving situation, false o.w.
      */
     boolean getAvailability();

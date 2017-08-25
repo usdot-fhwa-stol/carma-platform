@@ -54,7 +54,8 @@ public class PluginManager implements Runnable {
     protected ServiceServer<PluginListRequest, PluginListResponse> registeredPluginService;
     protected ServiceServer<PluginListRequest, PluginListResponse> availablePluginService;
     protected ServiceServer<PluginListRequest, PluginListResponse> activePluginService;
-    protected ServiceServer<PluginActivationRequest, PluginActivationResponse> activatePluginService;
+    protected ServiceServer<PluginActivationRequest, PluginActivationResponse>
+        activatePluginService;
 
     public PluginManager(IPubSubService pubSubManager, ConnectedNode node) {
         this.pubSubService = pubSubManager;
@@ -65,132 +66,140 @@ public class PluginManager implements Runnable {
      * Configure all the services to respond with dummy data
      */
     private void setupServices() {
-        registeredPluginService = node.newServiceServer(serviceRouteUrl + "/" + getRegisteredPluginsServiceUrl,
-            PluginList._TYPE, new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
-                @Override public void build(PluginListRequest pluginListRequest,
-                    PluginListResponse pluginListResponse) throws ServiceException {
-                    NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
-                    MessageFactory factory = nodeConfig.getTopicMessageFactory();
+        registeredPluginService =
+            node.newServiceServer(serviceRouteUrl + "/" + getRegisteredPluginsServiceUrl,
+                PluginList._TYPE,
+                new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
+                    @Override public void build(PluginListRequest pluginListRequest,
+                        PluginListResponse pluginListResponse) throws ServiceException {
+                        NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
+                        MessageFactory factory = nodeConfig.getTopicMessageFactory();
 
-                    Header h = factory.newFromType(Header._TYPE);
-                    h.setStamp(node.getCurrentTime());
-                    h.setFrameId("0");
-                    h.setSeq(0);
+                        Header h = factory.newFromType(Header._TYPE);
+                        h.setStamp(node.getCurrentTime());
+                        h.setFrameId("0");
+                        h.setSeq(0);
 
-                    Plugin p0 = factory.newFromType(Plugin._TYPE);
-                    p0.setHeader(h);
-                    p0.setAvailable(false);
-                    p0.setName("DUMMY PLUGIN A");
-                    p0.setVersionId("v1.0.0");
-                    p0.setActivated(true);
+                        Plugin p0 = factory.newFromType(Plugin._TYPE);
+                        p0.setHeader(h);
+                        p0.setAvailable(false);
+                        p0.setName("DUMMY PLUGIN A");
+                        p0.setVersionId("v1.0.0");
+                        p0.setActivated(true);
 
-                    Plugin p1 = factory.newFromType(Plugin._TYPE);
-                    p1.setHeader(h);
-                    p1.setAvailable(true);
-                    p1.setName("DUMMY PLUGIN B");
-                    p1.setVersionId("v1.0.0");
-                    p1.setActivated(false);
+                        Plugin p1 = factory.newFromType(Plugin._TYPE);
+                        p1.setHeader(h);
+                        p1.setAvailable(true);
+                        p1.setName("DUMMY PLUGIN B");
+                        p1.setVersionId("v1.0.0");
+                        p1.setActivated(false);
 
-                    Plugin p2 = factory.newFromType(Plugin._TYPE);
-                    p2.setHeader(h);
-                    p2.setAvailable(true);
-                    p2.setName("DUMMY PLUGIN A");
-                    p2.setVersionId("v2.0.0");
-                    p2.setActivated(true);
+                        Plugin p2 = factory.newFromType(Plugin._TYPE);
+                        p2.setHeader(h);
+                        p2.setAvailable(true);
+                        p2.setName("DUMMY PLUGIN A");
+                        p2.setVersionId("v2.0.0");
+                        p2.setActivated(true);
 
-                    Plugin p3 = factory.newFromType(Plugin._TYPE);
-                    p3.setHeader(h);
-                    p3.setAvailable(false);
-                    p3.setName("DUMMY PLUGIN B");
-                    p3.setVersionId("v2.0.0");
-                    p3.setActivated(false);
+                        Plugin p3 = factory.newFromType(Plugin._TYPE);
+                        p3.setHeader(h);
+                        p3.setAvailable(false);
+                        p3.setName("DUMMY PLUGIN B");
+                        p3.setVersionId("v2.0.0");
+                        p3.setActivated(false);
 
-                    List<Plugin> pList = new ArrayList<>();
-                    pList.add(p0);
-                    pList.add(p1);
-                    pList.add(p2);
-                    pList.add(p3);
+                        List<Plugin> pList = new ArrayList<>();
+                        pList.add(p0);
+                        pList.add(p1);
+                        pList.add(p2);
+                        pList.add(p3);
 
-                    pluginListResponse.setPlugins(pList);
-                }
-            });
+                        pluginListResponse.setPlugins(pList);
+                    }
+                });
 
-        activePluginService = node.newServiceServer(serviceRouteUrl + "/" + getActivePluginsServiceUrl, PluginList._TYPE,
-            new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
-                @Override public void build(PluginListRequest pluginListRequest,
-                    PluginListResponse pluginListResponse) throws ServiceException {
-                    NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
-                    MessageFactory factory = nodeConfig.getTopicMessageFactory();
+        activePluginService =
+            node.newServiceServer(serviceRouteUrl + "/" + getActivePluginsServiceUrl,
+                PluginList._TYPE,
+                new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
+                    @Override public void build(PluginListRequest pluginListRequest,
+                        PluginListResponse pluginListResponse) throws ServiceException {
+                        NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
+                        MessageFactory factory = nodeConfig.getTopicMessageFactory();
 
-                    Header h = factory.newFromType(Header._TYPE);
-                    h.setStamp(node.getCurrentTime());
-                    h.setFrameId("0");
-                    h.setSeq(0);
+                        Header h = factory.newFromType(Header._TYPE);
+                        h.setStamp(node.getCurrentTime());
+                        h.setFrameId("0");
+                        h.setSeq(0);
 
-                    Plugin p0 = factory.newFromType(Plugin._TYPE);
-                    p0.setHeader(h);
-                    p0.setAvailable(false);
-                    p0.setName("DUMMY PLUGIN A");
-                    p0.setVersionId("v1.0.0");
-                    p0.setActivated(true);
+                        Plugin p0 = factory.newFromType(Plugin._TYPE);
+                        p0.setHeader(h);
+                        p0.setAvailable(false);
+                        p0.setName("DUMMY PLUGIN A");
+                        p0.setVersionId("v1.0.0");
+                        p0.setActivated(true);
 
-                    Plugin p2 = factory.newFromType(Plugin._TYPE);
-                    p2.setHeader(h);
-                    p2.setAvailable(true);
-                    p2.setName("DUMMY PLUGIN A");
-                    p2.setVersionId("v2.0.0");
-                    p2.setActivated(true);
+                        Plugin p2 = factory.newFromType(Plugin._TYPE);
+                        p2.setHeader(h);
+                        p2.setAvailable(true);
+                        p2.setName("DUMMY PLUGIN A");
+                        p2.setVersionId("v2.0.0");
+                        p2.setActivated(true);
 
-                    List<Plugin> pList = new ArrayList<>();
-                    pList.add(p0);
-                    pList.add(p2);
+                        List<Plugin> pList = new ArrayList<>();
+                        pList.add(p0);
+                        pList.add(p2);
 
-                    pluginListResponse.setPlugins(pList);
-                }
-            });
+                        pluginListResponse.setPlugins(pList);
+                    }
+                });
 
-        availablePluginService = node.newServiceServer(serviceRouteUrl + "/" + getAvailablePluginsServiceUrl,
-            PluginList._TYPE, new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
-                @Override public void build(PluginListRequest pluginListRequest,
-                    PluginListResponse pluginListResponse) throws ServiceException {
-                    NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
-                    MessageFactory factory = nodeConfig.getTopicMessageFactory();
+        availablePluginService =
+            node.newServiceServer(serviceRouteUrl + "/" + getAvailablePluginsServiceUrl,
+                PluginList._TYPE,
+                new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
+                    @Override public void build(PluginListRequest pluginListRequest,
+                        PluginListResponse pluginListResponse) throws ServiceException {
+                        NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
+                        MessageFactory factory = nodeConfig.getTopicMessageFactory();
 
-                    Header h = factory.newFromType(Header._TYPE);
-                    h.setStamp(node.getCurrentTime());
-                    h.setFrameId("0");
-                    h.setSeq(0);
+                        Header h = factory.newFromType(Header._TYPE);
+                        h.setStamp(node.getCurrentTime());
+                        h.setFrameId("0");
+                        h.setSeq(0);
 
-                    Plugin p1 = factory.newFromType(Plugin._TYPE);
-                    p1.setHeader(h);
-                    p1.setAvailable(true);
-                    p1.setName("DUMMY PLUGIN B");
-                    p1.setVersionId("v1.0.0");
-                    p1.setActivated(false);
+                        Plugin p1 = factory.newFromType(Plugin._TYPE);
+                        p1.setHeader(h);
+                        p1.setAvailable(true);
+                        p1.setName("DUMMY PLUGIN B");
+                        p1.setVersionId("v1.0.0");
+                        p1.setActivated(false);
 
-                    Plugin p2 = factory.newFromType(Plugin._TYPE);
-                    p2.setHeader(h);
-                    p2.setAvailable(true);
-                    p2.setName("DUMMY PLUGIN A");
-                    p2.setVersionId("v2.0.0");
-                    p2.setActivated(true);
+                        Plugin p2 = factory.newFromType(Plugin._TYPE);
+                        p2.setHeader(h);
+                        p2.setAvailable(true);
+                        p2.setName("DUMMY PLUGIN A");
+                        p2.setVersionId("v2.0.0");
+                        p2.setActivated(true);
 
-                    List<Plugin> pList = new ArrayList<>();
-                    pList.add(p1);
-                    pList.add(p2);
+                        List<Plugin> pList = new ArrayList<>();
+                        pList.add(p1);
+                        pList.add(p2);
 
-                    pluginListResponse.setPlugins(pList);
-                }
-            });
+                        pluginListResponse.setPlugins(pList);
+                    }
+                });
 
-        activatePluginService = node.newServiceServer(serviceRouteUrl + "/" + activatePluginServiceUrl,
-            PluginActivation._TYPE,
-            new ServiceResponseBuilder<PluginActivationRequest, PluginActivationResponse>() {
-                @Override public void build(PluginActivationRequest pluginActivationRequest,
-                    PluginActivationResponse pluginActivationResponse) throws ServiceException {
-                    pluginActivationResponse.setNewState(pluginActivationRequest.getActivated());
-                }
-            });
+        activatePluginService =
+            node.newServiceServer(serviceRouteUrl + "/" + activatePluginServiceUrl,
+                PluginActivation._TYPE,
+                new ServiceResponseBuilder<PluginActivationRequest, PluginActivationResponse>() {
+                    @Override public void build(PluginActivationRequest pluginActivationRequest,
+                        PluginActivationResponse pluginActivationResponse) throws ServiceException {
+                        pluginActivationResponse
+                            .setNewState(pluginActivationRequest.getActivated());
+                    }
+                });
     }
 
     @Override public void run() {
@@ -199,7 +208,7 @@ public class PluginManager implements Runnable {
         IPublisher<SystemAlert> pub =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-        for (;;) {
+        for (; ; ) {
             cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
             systemAlertMsg
                 .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);

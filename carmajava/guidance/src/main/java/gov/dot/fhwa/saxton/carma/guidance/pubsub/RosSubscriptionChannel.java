@@ -1,7 +1,5 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import org.ros.node.ConnectedNode;
-import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
 /**
@@ -13,6 +11,10 @@ import org.ros.node.topic.Subscriber;
  * @param <T> Type parameter for the message of the topic
  */
 public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
+    protected int numOpenChannels = 0;
+    protected boolean open = true;
+    protected Subscriber<T> subscriber;
+
     RosSubscriptionChannel(Subscriber<T> subscriber) {
         this.subscriber = subscriber;
     }
@@ -54,8 +56,4 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
         open = false;
         subscriber.shutdown();
     }
-
-    protected int numOpenChannels = 0;
-    protected boolean open = true;
-    protected Subscriber<T> subscriber;
 }

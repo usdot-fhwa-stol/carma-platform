@@ -33,6 +33,13 @@ import java.util.Map;
  * request types from topics that supply them per our own documentation.
  */
 public class PubSubManager implements IPubSubService {
+    // Member Variables
+    protected ISubscriptionChannelFactory subFactory;
+    protected IPublicationChannelFactory pubFactory;
+    protected IServiceChannelFactory srvFactory;
+    protected Map<String, IPublicationChannel> pubChannelManagers;
+    protected Map<String, ISubscriptionChannel> subChannelManagers;
+    protected Map<String, IServiceChannel> srvManagers;
     public PubSubManager(ISubscriptionChannelFactory subFactory,
         IPublicationChannelFactory pubFactory, IServiceChannelFactory srvFactory) {
 
@@ -73,8 +80,8 @@ public class PubSubManager implements IPubSubService {
      * @param <T>      Type parameter of the topic message
      * @return An ISubscriber instance that has subscription access to the topic
      */
-    @Override @SuppressWarnings("unchecked")
-    public <T> ISubscriber<T> getSubscriberForTopic(String topicUrl, String type) {
+    @Override @SuppressWarnings("unchecked") public <T> ISubscriber<T> getSubscriberForTopic(
+        String topicUrl, String type) {
         if (subChannelManagers.containsKey(topicUrl) && subChannelManagers.get(topicUrl).isOpen()) {
             return subChannelManagers.get(topicUrl).getSubscriber();
         } else {
@@ -102,12 +109,4 @@ public class PubSubManager implements IPubSubService {
             return mgr.getPublisher();
         }
     }
-
-    // Member Variables
-    protected ISubscriptionChannelFactory subFactory;
-    protected IPublicationChannelFactory pubFactory;
-    protected IServiceChannelFactory srvFactory;
-    protected Map<String, IPublicationChannel> pubChannelManagers;
-    protected Map<String, ISubscriptionChannel> subChannelManagers;
-    protected Map<String, IServiceChannel> srvManagers;
 }

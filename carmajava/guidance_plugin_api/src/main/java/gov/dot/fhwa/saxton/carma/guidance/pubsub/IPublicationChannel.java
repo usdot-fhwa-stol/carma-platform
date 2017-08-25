@@ -2,6 +2,7 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 /**
  * Generic interface for resource management related to data publication for a topic
+ *
  * @param <T> Type parameter for the message type being published
  */
 public interface IPublicationChannel<T> {

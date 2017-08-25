@@ -4,6 +4,9 @@ import org.ros.node.topic.Publisher;
 
 public class RosPublisher<T> implements IPublisher<T> {
 
+    protected Publisher<T> publisher;
+    protected IPublicationChannel<T> parent;
+
     public RosPublisher(Publisher<T> publisher, IPublicationChannel<T> parent) {
         this.publisher = publisher;
         this.parent = parent;
@@ -20,7 +23,4 @@ public class RosPublisher<T> implements IPublisher<T> {
     @Override public void close() {
         parent.notifyClientShutdown();
     }
-
-    protected Publisher<T> publisher;
-    protected IPublicationChannel<T> parent;
 }

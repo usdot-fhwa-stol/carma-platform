@@ -5,6 +5,10 @@ import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
 
 public class RosService<T, S> implements IService<T, S> {
+    protected ServiceClient<T, S> serviceClient;
+    protected RosServiceChannel<T, S> parent;
+    protected boolean open = true;
+
     RosService(ServiceClient<T, S> serviceClient, RosServiceChannel<T, S> parent) {
         this.serviceClient = serviceClient;
         this.parent = parent;
@@ -27,8 +31,4 @@ public class RosService<T, S> implements IService<T, S> {
     @Override public void close() {
         parent.notifyClientShutdown();
     }
-
-    protected ServiceClient<T, S> serviceClient;
-    protected RosServiceChannel<T, S> parent;
-    protected boolean open = true;
 }

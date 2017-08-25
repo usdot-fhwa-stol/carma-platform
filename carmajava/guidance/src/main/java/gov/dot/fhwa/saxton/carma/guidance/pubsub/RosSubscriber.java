@@ -4,6 +4,10 @@ import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 
 public class RosSubscriber<T> implements ISubscriber<T> {
+    protected Subscriber<T> subscriber;
+    protected RosSubscriptionChannel<T> parent;
+    protected T lastMessage = null;
+
     RosSubscriber(Subscriber<T> subscriber, RosSubscriptionChannel<T> parent) {
         this.subscriber = subscriber;
         this.parent = parent;
@@ -29,8 +33,4 @@ public class RosSubscriber<T> implements ISubscriber<T> {
     @Override public void close() {
         parent.notifyClientShutdown();
     }
-
-    protected Subscriber<T> subscriber;
-    protected RosSubscriptionChannel<T> parent;
-    protected T lastMessage = null;
 }

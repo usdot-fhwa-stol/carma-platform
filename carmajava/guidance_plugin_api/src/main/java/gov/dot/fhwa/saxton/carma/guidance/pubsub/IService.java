@@ -3,6 +3,7 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 /**
  * Generic interface for supporting calls to a remote service. Designed to share an underlying
  * resource between many clients to avoid duplication.
+ *
  * @param <T> Type parameter for service request message
  * @param <S> Type parameter for service response message
  */

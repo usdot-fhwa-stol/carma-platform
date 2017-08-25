@@ -12,8 +12,8 @@ public class PluginServiceLocator {
     protected PluginManagementService pluginManagementService;
     protected IPubSubService IPubSubService;
 
-    public PluginServiceLocator(ArbitratorService arbitratorService, PluginManagementService pluginManagementService,
-        IPubSubService IPubSubService) {
+    public PluginServiceLocator(ArbitratorService arbitratorService,
+        PluginManagementService pluginManagementService, IPubSubService IPubSubService) {
         this.arbitratorService = arbitratorService;
         this.IPubSubService = IPubSubService;
         this.pluginManagementService = pluginManagementService;

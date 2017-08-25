@@ -18,7 +18,6 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublicationChannel;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 
 /**
@@ -28,30 +27,30 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
  * to plan trajectories for the vehicle to execute.
  */
 public class Arbitrator implements Runnable {
-  public Arbitrator(IPubSubService IPubSubService) {
-    this.IPubSubService = IPubSubService;
-  }
-
-  @Override public void run() {
-    IPublisher<SystemAlert> pub =
-            IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
-    for (; ; ) {
-      cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
-      systemAlertMsg.setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
-      systemAlertMsg.setType(SystemAlert.CAUTION);
-      pub.publish(systemAlertMsg);
-
-      try {
-        Thread.sleep(sleepDurationMillis);
-      } catch (InterruptedException e) {
-        // Ignore
-      }
+    protected final String componentName = "Arbitrator";
+    protected final long sleepDurationMillis = 30000;
+    // Member variables
+    protected IPubSubService IPubSubService;
+    protected int sequenceNumber = 0;
+    public Arbitrator(IPubSubService IPubSubService) {
+        this.IPubSubService = IPubSubService;
     }
-  }
 
-  // Member variables
-  protected IPubSubService IPubSubService;
-  protected final String componentName = "Arbitrator";
-  protected int sequenceNumber = 0;
-  protected final long sleepDurationMillis = 30000;
+    @Override public void run() {
+        IPublisher<SystemAlert> pub =
+            IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+        for (; ; ) {
+            cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
+            systemAlertMsg
+                .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
+            systemAlertMsg.setType(SystemAlert.CAUTION);
+            pub.publish(systemAlertMsg);
+
+            try {
+                Thread.sleep(sleepDurationMillis);
+            } catch (InterruptedException e) {
+                // Ignore
+            }
+        }
+    }
 }

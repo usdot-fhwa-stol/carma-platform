@@ -3,6 +3,10 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 import org.ros.node.service.ServiceClient;
 
 public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
+    protected int numOpenChannels = 0;
+    protected boolean open = true;
+    protected ServiceClient<T, S> serviceClient;
+
     RosServiceChannel(ServiceClient<T, S> serviceClient) {
         this.serviceClient = serviceClient;
     }
@@ -44,8 +48,4 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
     public int getNumOpenChannel() {
         return numOpenChannels;
     }
-
-    protected int numOpenChannels = 0;
-    protected boolean open = true;
-    protected ServiceClient<T, S> serviceClient;
 }
