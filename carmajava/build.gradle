@@ -32,6 +32,16 @@ allprojects {
     */
     group 'gov.dot.fhwa.saxton.carma'
     version = project.catkin.pkg.version
+
+    repositories {
+        // Varies depending on project config
+        maven {
+            url uri("../../devel/share/maven")
+        }
+        maven {
+            url uri("../../../devel/share/maven")
+        }
+    }
 }
 
 subprojects {
