@@ -1,0 +1,5 @@
+# InterfaceMgrParams.yaml
+# Defines the ros parameters that are required by the InterfaceMgr node
+
+# Integer: the number of seconds to wait for driver discovery before declaring the system operational
+driver_wait_time: 12

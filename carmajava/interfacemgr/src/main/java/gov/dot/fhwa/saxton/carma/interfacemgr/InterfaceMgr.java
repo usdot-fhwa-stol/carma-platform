@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
-    protected InterfaceWorker   worker_ = new InterfaceWorker(this);
+    protected InterfaceWorker   worker_;
     protected Log               log_;
     protected ConnectedNode     connectedNode_;
     protected Publisher<cav_msgs.SystemAlert> systemAlertPublisher_;
@@ -64,9 +64,17 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     @Override
     public void onStart(final ConnectedNode connectedNode) {
         connectedNode_ = connectedNode;
-
-        InterfaceWorker worker = new InterfaceWorker(this); //must exist before first message listener
         log_ = connectedNode.getLog();
+        log_.info("InterfaceMgr starting up.");
+
+        worker_ = new InterfaceWorker(this, log_); //must exist before first message listener
+
+        //get wait time parameter
+        ParameterTree param = connectedNode.getParameterTree();
+        int waitTime = param.getInteger("/driver_wait_time");
+        worker_.setWaitTime(waitTime);
+        log_.debug("InterfaceMgr.onStart read startupWaitTime = " + waitTime);
+
 
 
         ////// topic subscriptions /////
@@ -122,14 +130,9 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
         //publish the system not ready message
         SystemAlert notReadyAlert = systemAlertPublisher_.newMessage();
-        notReadyAlert.setType((byte)AlertSeverity.NOT_READY);
+        notReadyAlert.setType((byte)AlertSeverity.NOT_READY.getVal());
         notReadyAlert.setDescription("System is starting up...");
         systemAlertPublisher_.publish(notReadyAlert);
-
-        //Getting the ros params
-        ParameterTree param = connectedNode.getParameterTree();
-        int startupWaitTime = param.getInteger("/startup_wait_time");
-        log_.debug("InterfaceMgr.onStart read startupWaitTime = " + startupWaitTime);
 
         // This CancellableLoop will be canceled automatically when the node shuts down
         connectedNode.executeCancellableLoop(new CancellableLoop() {
@@ -156,8 +159,6 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             }//loop
 
         });//executeCancellableLoop
-
-
 
 
         ///// service publisher /////
@@ -224,11 +225,24 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     }
 
 
+    /**
+     * Helper class to allow communication of non-constant data out of the anonymous inner class
+     * defined for the getDriverWithApi() method
+     */
+    protected class ResultHolder {
+        private List<String> result;
+
+        void setResult(List<String> res) { result = res; }
+        List<String> getResult() {return result; }
+    }
+
     @Override
     public List<String> getDriverApi(String driverName) {
+        List<String> result;
+        final ResultHolder rh = new ResultHolder();
 
         //call the api service for the given driver
-        String serviceName = "/" + driverName + "/get_driver_api";
+        final String serviceName = "/" + driverName + "/get_driver_api";
         ServiceClient<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse> serviceClient =
                 waitForService(serviceName, cav_srvs.GetAPISpecification._TYPE, connectedNode_, 5000);
         if (serviceClient == null) {
@@ -239,8 +253,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         serviceClient.call(req, new ServiceResponseListener<GetAPISpecificationResponse>() {
             @Override
             public void onSuccess(GetAPISpecificationResponse response) {
-                List<String> result;
-                result = response.getApiList();
+                rh.setResult(response.getApiList());
             }
 
             @Override
@@ -249,9 +262,8 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             }
         });
 
-        return result;
+        return rh.getResult();
     }
-
 
     @Override
     public void notifyBrokenBond(AlertSeverity sev, String message) {
