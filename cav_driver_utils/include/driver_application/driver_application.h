@@ -35,7 +35,7 @@
 
 
 #include <cav_srvs/Bind.h>
-#include <cav_srvs/GetAPISpecification.h>
+#include <cav_srvs/GetDriverApi.h>
 #include <cav_srvs/GetDriverStatus.h>
 #include <cav_msgs/DriverStatus.h>
 
@@ -129,7 +129,7 @@ private:
     bool bind_service_cb(cav_srvs::Bind::Request &req, cav_srvs::Bind::Response &res);
 
     /**
-     * @brief Callback go the get_api_specification service
+     * @brief Callback go the get_driver_api service
      *
      * This function will return a list of API specified by the inheriting class through
      * get_api
@@ -137,8 +137,8 @@ private:
      * @param res
      * @return true to signal we handled this callback
      */
-    bool get_api_specification_cb(cav_srvs::GetAPISpecificationRequest &req,
-                                  cav_srvs::GetAPISpecificationResponse &res);
+    bool get_driver_api_cb(cav_srvs::GetDriverApiRequest &req,
+                                  cav_srvs::GetDriverApiResponse &res);
 
 
     /**
