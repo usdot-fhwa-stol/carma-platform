@@ -216,7 +216,7 @@ public class RouteWorker implements IRouteWorker {
    */
   public void loadAdditionalRoute(IRouteLoadStrategy loadStrategy){
     Route route = loadStrategy.load();
-    route.setRouteID(route.routeName); //TODO comeup with better method of defining the route id
+    route.setRouteID(route.routeName); //TODO come up with better method of defining the route id
     availableRoutes.put(route.getRouteID(), route);
     handleStateTransition(WorkerEvent.FILES_LOADED);
   }
@@ -250,6 +250,11 @@ public class RouteWorker implements IRouteWorker {
     // Check if the specified route exists.
     if (route != null) {
       activeRoute = route;
+      //TODO Validation of ability to start route
+      // Insert a starting waypoint at the current vehicle location which is connected to the route
+      RouteWaypoint startingWP = new RouteWaypoint(hostVehicleLocation);
+      activeRoute.insertWaypoint(startingWP, 0);
+
       response.setErrorStatus(SetActiveRouteResponse.NO_ERROR);
       handleStateTransition(WorkerEvent.ROUTE_SELECTED);
     } else {

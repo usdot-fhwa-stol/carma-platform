@@ -35,12 +35,13 @@ import sensor_msgs.NavSatFix;
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
  * <p>
  * <p>
- * Command line test: rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
- * Command line test for the service:
- * rosservice call /get_available_routes
- * rosservice call /set_active_route "routeID: '1'"
- * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
+ * Command line test:
  * rosparam set /route_manager/default_database_path /home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/main/test/resources/routefiles
+ * rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
+ * Command line test for the service:
+ * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
+ * rosservice call /get_available_routes
+ * rosservice call /set_active_route "routeID: 'TestRoute'"
  */
 public class RouteManager extends SaxtonBaseNode {
 
@@ -129,7 +130,7 @@ public class RouteManager extends SaxtonBaseNode {
           systemAlertPub.publish(alert);
         }
 
-        // If an active route has been selected then publish the route and current segment
+        // If an active route has been selected then publish the route
         if (routeWorker.getState() == WorkerState.READY_TO_FOLLOW || routeWorker.getState() == WorkerState.FOLLOWING_ROUTE){
           routePub.publish(routeWorker.getActiveRouteTopicMsg());
         }

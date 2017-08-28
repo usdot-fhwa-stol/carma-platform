@@ -69,6 +69,7 @@ public class Route {
       routeSegmentMsgs.add(segments.get(i).toMessage(factory, i + 1));
     }
 
+    routeMsg.setSegments(routeSegmentMsgs);
     return routeMsg;
   }
 
