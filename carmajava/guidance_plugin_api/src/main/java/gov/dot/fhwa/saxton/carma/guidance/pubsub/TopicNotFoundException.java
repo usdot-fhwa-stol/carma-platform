@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 rush
+ * TODO: Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,11 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
+package gov.dot.fhwa.saxton.carma.guidance.pubsub;
+
+/**
+ * Exception to be thrown when an operation pertaining to a topic fails due to the topic not being
+ * found within the system
+ */
+public class TopicNotFoundException extends Exception {
+}
