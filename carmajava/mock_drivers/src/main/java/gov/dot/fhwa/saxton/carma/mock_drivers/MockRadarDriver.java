@@ -93,7 +93,7 @@ public class MockRadarDriver extends AbstractMockDriver {
 
   @Override protected void publishData(List<String[]> data) {
 
-    List<cav_msgs.ExternalObject> objects = new LinkedList<>();
+    List<cav_msgs.ExternalObject> objects = new LinkedList<>(); // The list of ExternalObjects (obstacles) detected by the radar
 
     for (String[] elements :  data){
       cav_msgs.ExternalObject externalObject = messageFactory.newFromType(cav_msgs.ExternalObject._TYPE);
@@ -109,9 +109,9 @@ public class MockRadarDriver extends AbstractMockDriver {
 
       // Build Size Vector
       geometry_msgs.Vector3 size = externalObject.getSize();
-      size.setX(SIZE_X_IDX);
-      size.setY(SIZE_Y_IDX);
-      size.setZ(SIZE_Z_IDX);
+      size.setX(Double.parseDouble(elements[SIZE_X_IDX]));
+      size.setY(Double.parseDouble(elements[SIZE_Y_IDX]));
+      size.setZ(Double.parseDouble(elements[SIZE_Z_IDX]));
       externalObject.setSize(size);
 
       // Build Pose with Covariance
@@ -119,15 +119,15 @@ public class MockRadarDriver extends AbstractMockDriver {
       geometry_msgs.Pose pose = poseWithCovar.getPose();
       geometry_msgs.Quaternion quat = pose.getOrientation();
       geometry_msgs.Point point = pose.getPosition();
-      point.setX(POINT_X_IDX);
-      point.setY(POINT_Y_IDX);
-      point.setZ(POINT_Z_IDX);
+      point.setX(Double.parseDouble(elements[POINT_X_IDX]));
+      point.setY(Double.parseDouble(elements[POINT_Y_IDX]));
+      point.setZ(Double.parseDouble(elements[POINT_Z_IDX]));
       pose.setPosition(point);
 
-      quat.setW(QUAT_W_IDX);
-      quat.setX(QUAT_X_IDX);
-      quat.setY(QUAT_Y_IDX);
-      quat.setZ(QUAT_Z_IDX);
+      quat.setW(Double.parseDouble(elements[QUAT_W_IDX]));
+      quat.setX(Double.parseDouble(elements[QUAT_X_IDX]));
+      quat.setY(Double.parseDouble(elements[QUAT_Y_IDX]));
+      quat.setZ(Double.parseDouble(elements[QUAT_Z_IDX]));
       pose.setOrientation(quat);
 
       poseWithCovar.setPose(pose);
@@ -145,13 +145,13 @@ public class MockRadarDriver extends AbstractMockDriver {
       geometry_msgs.Twist twist = twistWithCovar.getTwist();
       geometry_msgs.Vector3 angularVel = twist.getAngular();
       geometry_msgs.Vector3 linearVel = twist.getLinear();
-      angularVel.setX(VEL_ANG_X_IDX);
-      angularVel.setY(VEL_ANG_Y_IDX);
-      angularVel.setZ(VEL_ANG_Z_IDX);
+      angularVel.setX(Double.parseDouble(elements[VEL_ANG_X_IDX]));
+      angularVel.setY(Double.parseDouble(elements[VEL_ANG_Y_IDX]));
+      angularVel.setZ(Double.parseDouble(elements[VEL_ANG_Z_IDX]));
 
-      linearVel.setX(VEL_LIN_X_IDX);
-      linearVel.setY(VEL_LIN_Y_IDX);
-      linearVel.setZ(VEL_LIN_Z_IDX);
+      linearVel.setX(Double.parseDouble(elements[VEL_LIN_X_IDX]));
+      linearVel.setY(Double.parseDouble(elements[VEL_LIN_Y_IDX]));
+      linearVel.setZ(Double.parseDouble(elements[VEL_LIN_Z_IDX]));
 
       twist.setAngular(angularVel);
       twist.setLinear(linearVel);
@@ -169,13 +169,13 @@ public class MockRadarDriver extends AbstractMockDriver {
       geometry_msgs.Twist twistInst = twistInstWithCovar.getTwist();
       geometry_msgs.Vector3 angularVelInst = twistInst.getAngular();
       geometry_msgs.Vector3 linearVelInst = twistInst.getLinear();
-      angularVelInst.setX(VEL_INST_ANG_X_IDX);
-      angularVelInst.setY(VEL_INST_ANG_Y_IDX);
-      angularVelInst.setZ(VEL_INST_ANG_Z_IDX);
+      angularVelInst.setX(Double.parseDouble(elements[VEL_INST_ANG_X_IDX]));
+      angularVelInst.setY(Double.parseDouble(elements[VEL_INST_ANG_Y_IDX]));
+      angularVelInst.setZ(Double.parseDouble(elements[VEL_INST_ANG_Z_IDX]));
 
-      linearVelInst.setX(LIN_INST_ANG_X_IDX);
-      linearVelInst.setY(LIN_INST_ANG_Y_IDX);
-      linearVelInst.setZ(LIN_INST_ANG_Z_IDX);
+      linearVelInst.setX(Double.parseDouble(elements[LIN_INST_ANG_X_IDX]));
+      linearVelInst.setY(Double.parseDouble(elements[LIN_INST_ANG_Y_IDX]));
+      linearVelInst.setZ(Double.parseDouble(elements[LIN_INST_ANG_Z_IDX]));
 
       twistInst.setAngular(angularVelInst);
       twistInst.setLinear(linearVelInst);
@@ -214,8 +214,7 @@ public class MockRadarDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI(){
-    return new ArrayList<>(Arrays.asList(
-      connectedNode.getName() + "~/sensor/tracked_objects"
+    return new ArrayList<>(Arrays.asList("~/sensor/tracked_objects"
     ));
   }
 }

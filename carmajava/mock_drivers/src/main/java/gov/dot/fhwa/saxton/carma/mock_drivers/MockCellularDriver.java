@@ -48,11 +48,6 @@ public class MockCellularDriver extends AbstractMockDriver {
   // Subscribed
   Subscriber<ByteArray> outboundSub;
 
-  // Published	Parameter	~/arada_address
-  // Published	Parameter	~/arada_listening_port
-  // Published	Parameter	~/listening_port
-  // Published	Parameter	~/output_queue_size
-
   private final int EXPECTED_DATA_COL_COUNT = 3;
 
   private final short SAMPLE_ID_IDX = 0;
@@ -115,7 +110,6 @@ public class MockCellularDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI() {
-    return new ArrayList<>(Arrays.asList(connectedNode.getName() + "/comms/recv",
-      connectedNode.getName() + "/comms/outbound"));
+    return new ArrayList<>(Arrays.asList("/comms/recv", "/comms/outbound"));
   }
 }

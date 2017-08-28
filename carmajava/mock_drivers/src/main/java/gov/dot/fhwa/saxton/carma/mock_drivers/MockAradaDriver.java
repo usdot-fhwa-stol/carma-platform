@@ -23,6 +23,8 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
+
+import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,11 +47,6 @@ public class MockAradaDriver extends AbstractMockDriver {
 
   // Subscribed
   Subscriber<cav_msgs.ByteArray> outboundSub;
-
-  // Published	Parameter	~/arada_address
-  // Published	Parameter	~/arada_listening_port
-  // Published	Parameter	~/listening_port
-  // Published	Parameter	~/output_queue_size
 
   private final int EXPECTED_DATA_COL_COUNT = 3;
 
@@ -91,7 +88,15 @@ public class MockAradaDriver extends AbstractMockDriver {
       recvMsg.setHeader(hdr);
       recvMsg.setMessageType(elements[MSG_TYPE_IDX]);
 
-      byte[] rawBytes = (elements[RAW_BYTES_IDX].getBytes());
+      // Raw byte data has the form "0a 1f 23"
+      String rawByteString = elements[RAW_BYTES_IDX];
+      // All non hex characters are removed. This does not support use of x such as 0x00
+      rawByteString = rawByteString.replaceAll("[^A-Fa-f0-9]", "");
+      // An uneven number of characters will have a 0 appended to the end
+      if (rawByteString.length()%2 != 0)
+        rawByteString = rawByteString.concat("0");
+      // Convert the string to a byte array
+      byte[] rawBytes = DatatypeConverter.parseHexBinary(rawByteString);
       // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
       recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
 
@@ -113,7 +118,6 @@ public class MockAradaDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI() {
-    return new ArrayList<>(Arrays.asList(connectedNode.getName() + "/comms/recv",
-      connectedNode.getName() + "/comms/outbound"));
+    return new ArrayList<>(Arrays.asList("/comms/recv", "/comms/outbound"));
   }
 }

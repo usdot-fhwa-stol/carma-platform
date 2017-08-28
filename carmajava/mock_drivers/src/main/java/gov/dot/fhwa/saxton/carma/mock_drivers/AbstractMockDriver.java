@@ -135,14 +135,18 @@ public abstract class AbstractMockDriver implements IMockDriver {
         boolean exitBeforeEOF = false;
         int prevSampleIndex = -1;
         int currentSampleIndex;
+        long lastLineIndex = reader.getFilePointer();
 
         while((dataLine = reader.readLine()) != null) {
+          // Skip the header line of all data files
+          if (lastLineIndex == 0)
+            continue;
           // separate on delimiter
           elements = dataLine.split(delimiter);
           // Update sample index
           if (elements.length != getExpectedColCount()) {
             log.warn(
-              "Publish data requested for MockRadarDriver with incorrect number of data elements. "
+              "Publish data requested for " + getDefaultDriverName() + " with incorrect number of data elements. "
                 + "The required number of data elements is " + getExpectedColCount());
             continue; // Skip this invalid line
           }

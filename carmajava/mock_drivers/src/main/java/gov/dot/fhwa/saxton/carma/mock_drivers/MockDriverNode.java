@@ -80,17 +80,11 @@ public class MockDriverNode extends SaxtonBaseNode {
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
-      private int sequenceNumber;
-
-      @Override protected void setup() {
-        sequenceNumber = 0;
-      }//setup
 
       @Override protected void loop() throws InterruptedException {
         simulatedDriver.publishDriverStatus();
         simulatedDriver.readAndPublishData();
 
-        sequenceNumber++;
         Thread.sleep(1000);
       }//loop
 

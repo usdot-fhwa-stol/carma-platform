@@ -60,11 +60,6 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
   protected final ServiceServer<GetLightsRequest, GetLightsResponse> getLightsService;
   protected final ServiceServer<SetLightsRequest, SetLightsResponse> setLightsService;
 
-  //    Published	Parameter	~/device_port
-  //    Published	Parameter	~/k_d
-  //    Published	Parameter	~/k_i
-  //    Published	Parameter	~/k_p
-
   private final int EXPECTED_DATA_COL_COUNT = 9;
   private final short SAMPLE_ID_IDX = 0;
   private final short BRAKE_DECEL_IDX = 1;
@@ -106,10 +101,10 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
             GetLightsResponse response) {
 
             LightBarStatus lightStatus = response.getStatus();
-            lightStatus.setFlash((byte)(lightBarFlash?1:0));
-            lightStatus.setLeftArrow((byte)(leftArrow?1:0));
-            lightStatus.setRightArrow((byte)(rightArrow?1:0));
-            lightStatus.setTakedown((byte)(takedown?1:0));
+            lightStatus.setFlash((byte)(lightBarFlash ? 1:0));
+            lightStatus.setLeftArrow((byte)(leftArrow ? 1:0));
+            lightStatus.setRightArrow((byte)(rightArrow ? 1:0));
+            lightStatus.setTakedown((byte)(takedown ? 1:0));
             response.setStatus(lightStatus);
           }
         });
@@ -188,12 +183,12 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
 
   @Override public List<String> getDriverAPI(){
     return new ArrayList<>(Arrays.asList(
-      connectedNode.getName() + "/control/diagnostics",
-      connectedNode.getName() + "/control/robot_enabled",
-      connectedNode.getName() + "/control/cmd_longitudinal_effort",
-      connectedNode.getName() + "/control/cmd_speed",
-      connectedNode.getName() + "/control/get_lights",
-      connectedNode.getName() + "/control/set_lights"
+      "/control/diagnostics",
+      "/control/robot_enabled",
+      "/control/cmd_longitudinal_effort",
+      "/control/cmd_speed",
+      "/control/get_lights",
+      "/control/set_lights"
     ));
   }
 }

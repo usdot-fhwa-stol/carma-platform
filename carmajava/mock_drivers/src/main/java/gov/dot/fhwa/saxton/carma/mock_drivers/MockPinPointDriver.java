@@ -43,10 +43,6 @@ public class MockPinPointDriver extends AbstractMockDriver {
   final Publisher<nav_msgs.Odometry> odometryPub;
   final Publisher<geometry_msgs.TwistStamped> velocityPub;
 
-  // Parameters
-  // Parameter	~/address	~/address	string
-  // Parameter	~/port	~/port	uint16
-
   // CONSTANTS
   final short SAMPLE_ID_IDX = 0;
   final short HEADING_IDX = 1;
@@ -151,13 +147,13 @@ public class MockPinPointDriver extends AbstractMockDriver {
       geometry_msgs.Twist odomTwist = odomTwistWithCovar.getTwist();
       geometry_msgs.Vector3 odomAngularVel = odomTwist.getAngular();
       geometry_msgs.Vector3 odomLinearVel = odomTwist.getLinear();
-      odomAngularVel.setX(ODOM_TWIST_ANG_X_IDX);
-      odomAngularVel.setY(ODOM_TWIST_ANG_Y_IDX);
-      odomAngularVel.setZ(ODOM_TWIST_ANG_Z_IDX);
+      odomAngularVel.setX(Double.parseDouble(elements[ODOM_TWIST_ANG_X_IDX]));
+      odomAngularVel.setY(Double.parseDouble(elements[ODOM_TWIST_ANG_Y_IDX]));
+      odomAngularVel.setZ(Double.parseDouble(elements[ODOM_TWIST_ANG_Z_IDX]));
 
-      odomLinearVel.setX(ODOM_TWIST_LIN_X_IDX);
-      odomLinearVel.setY(ODOM_TWIST_LIN_Y_IDX);
-      odomLinearVel.setZ(ODOM_TWIST_LIN_Z_IDX);
+      odomLinearVel.setX(Double.parseDouble(elements[ODOM_TWIST_LIN_X_IDX]));
+      odomLinearVel.setY(Double.parseDouble(elements[ODOM_TWIST_LIN_Y_IDX]));
+      odomLinearVel.setZ(Double.parseDouble(elements[ODOM_TWIST_LIN_Z_IDX]));
 
       odomTwist.setAngular(odomAngularVel);
       odomTwist.setLinear(odomLinearVel);
@@ -175,15 +171,15 @@ public class MockPinPointDriver extends AbstractMockDriver {
       geometry_msgs.Pose pose = poseWithCovar.getPose();
       geometry_msgs.Quaternion quat = pose.getOrientation();
       geometry_msgs.Point point = pose.getPosition();
-      point.setX(POINT_X_IDX);
-      point.setY(POINT_Y_IDX);
-      point.setZ(POINT_Z_IDX);
+      point.setX(Double.parseDouble(elements[POINT_X_IDX]));
+      point.setY(Double.parseDouble(elements[POINT_Y_IDX]));
+      point.setZ(Double.parseDouble(elements[POINT_Z_IDX]));
       pose.setPosition(point);
 
-      quat.setW(QUAT_W_IDX);
-      quat.setX(QUAT_X_IDX);
-      quat.setY(QUAT_Y_IDX);
-      quat.setZ(QUAT_Z_IDX);
+      quat.setW(Double.parseDouble(elements[QUAT_W_IDX]));
+      quat.setX(Double.parseDouble(elements[QUAT_X_IDX]));
+      quat.setY(Double.parseDouble(elements[QUAT_Y_IDX]));
+      quat.setZ(Double.parseDouble(elements[QUAT_Z_IDX]));
       pose.setOrientation(quat);
 
       poseWithCovar.setPose(pose);
@@ -204,13 +200,13 @@ public class MockPinPointDriver extends AbstractMockDriver {
       geometry_msgs.Twist twist = velocityMsg.getTwist();
       geometry_msgs.Vector3 angularVel = odomTwist.getAngular();
       geometry_msgs.Vector3 linearVel = odomTwist.getLinear();
-      angularVel.setX(VEL_ANG_X_IDX);
-      angularVel.setY(VEL_ANG_Y_IDX);
-      angularVel.setZ(VEL_ANG_Z_IDX);
+      angularVel.setX(Double.parseDouble(elements[VEL_ANG_X_IDX]));
+      angularVel.setY(Double.parseDouble(elements[VEL_ANG_Y_IDX]));
+      angularVel.setZ(Double.parseDouble(elements[VEL_ANG_Z_IDX]));
 
-      linearVel.setX(VEL_LIN_X_IDX);
-      linearVel.setY(VEL_LIN_Y_IDX);
-      linearVel.setZ(VEL_LIN_Z_IDX);
+      linearVel.setX(Double.parseDouble(elements[VEL_LIN_X_IDX]));
+      linearVel.setY(Double.parseDouble(elements[VEL_LIN_Y_IDX]));
+      linearVel.setZ(Double.parseDouble(elements[VEL_LIN_Z_IDX]));
 
       twist.setAngular(angularVel);
       twist.setLinear(linearVel);
@@ -237,9 +233,10 @@ public class MockPinPointDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI() {
-    return new ArrayList<>(Arrays.asList(connectedNode.getName() + "/position/heading",
-      connectedNode.getName() + "/position/nav_sat_fix",
-      connectedNode.getName() + "/position/odometry",
-      connectedNode.getName() + "/position/velocity"));
+    return new ArrayList<>(Arrays.asList(
+      "/position/heading",
+      "/position/nav_sat_fix",
+      "/position/odometry",
+      "/position/velocity"));
   }
 }

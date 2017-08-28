@@ -36,8 +36,8 @@ public class MockCANDriver extends AbstractMockDriver {
 
   final Publisher<std_msgs.Bool> accPub;
   final Publisher<std_msgs.Float64> accelPub;
-  final Publisher<std_msgs.Bool> breakLightsPub;
-  final Publisher<std_msgs.Float64> breakPositionPub;
+  final Publisher<std_msgs.Bool> brakeLightsPub;
+  final Publisher<std_msgs.Float64> brakePositionPub;
   final Publisher<std_msgs.Float64> engineSpeedPub;
   final Publisher<std_msgs.Float64> fuelFlowPub;
   final Publisher<std_msgs.Float64> odometryPub;
@@ -52,8 +52,8 @@ public class MockCANDriver extends AbstractMockDriver {
   private final short SAMPLE_ID_IDX = 0;
   private final short ACC_IDX = 1;
   private final short ACCEL_IDX = 2;
-  private final short BREAK_LIGHTS_IDX = 3;
-  private final short BREAK_POS_IDX = 4;
+  private final short BRAKE_LIGHTS_IDX = 3;
+  private final short BRAKE_POS_IDX = 4;
   private final short ENGINE_SPEED_IDX = 5;
   private final short FUEL_FLOW_IDX = 6;
   private final short ODOMETRY_IDX = 7;
@@ -69,8 +69,8 @@ public class MockCANDriver extends AbstractMockDriver {
     // Published
     accPub = connectedNode.newPublisher("~/can/acc_engaged", std_msgs.Bool._TYPE);
     accelPub = connectedNode.newPublisher("~/can/acceleration", std_msgs.Float64._TYPE);
-    breakLightsPub = connectedNode.newPublisher("~/can/brake_lights", std_msgs.Bool._TYPE);
-    breakPositionPub = connectedNode.newPublisher("~/can/brake_position", std_msgs.Float64._TYPE);
+    brakeLightsPub = connectedNode.newPublisher("~/can/brake_lights", std_msgs.Bool._TYPE);
+    brakePositionPub = connectedNode.newPublisher("~/can/brake_position", std_msgs.Float64._TYPE);
     engineSpeedPub = connectedNode.newPublisher("~/can/engine_speed", std_msgs.Float64._TYPE);
     fuelFlowPub = connectedNode.newPublisher("~/can/fuel_flow", std_msgs.Float64._TYPE);
     odometryPub = connectedNode.newPublisher("~/can/odometer", std_msgs.Float64._TYPE);
@@ -79,10 +79,6 @@ public class MockCANDriver extends AbstractMockDriver {
     steeringPub = connectedNode.newPublisher("~/can/steering_wheel_angle", std_msgs.Float64._TYPE);
     throttlePub = connectedNode.newPublisher("~/can/throttle_position", std_msgs.Float64._TYPE);
     turnSignalPub = connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
-
-    // Parameters
-    // Published Parameter ~/device_port
-    // Published Parameter ~/timeout
   }
 
   @Override public GraphName getDefaultDriverName() {
@@ -95,8 +91,8 @@ public class MockCANDriver extends AbstractMockDriver {
       // Make messages
       std_msgs.Bool acc = accPub.newMessage();
       std_msgs.Float64 accel = accelPub.newMessage();
-      std_msgs.Bool breakLights = breakLightsPub.newMessage();
-      std_msgs.Float64 breakPos = breakPositionPub.newMessage();
+      std_msgs.Bool brakeLights = brakeLightsPub.newMessage();
+      std_msgs.Float64 brakePos = brakePositionPub.newMessage();
       std_msgs.Float64 engineSpeed = engineSpeedPub.newMessage();
       std_msgs.Float64 fuelFlow = fuelFlowPub.newMessage();
       std_msgs.Float64 odometry = odometryPub.newMessage();
@@ -109,8 +105,8 @@ public class MockCANDriver extends AbstractMockDriver {
       // Set Data
       acc.setData(Boolean.parseBoolean(elements[ACC_IDX]));
       accel.setData(Float.parseFloat(elements[ACCEL_IDX]));
-      breakLights.setData(Boolean.parseBoolean(elements[BREAK_LIGHTS_IDX]));
-      breakPos.setData(Float.parseFloat(elements[BREAK_POS_IDX]));
+      brakeLights.setData(Boolean.parseBoolean(elements[BRAKE_LIGHTS_IDX]));
+      brakePos.setData(Float.parseFloat(elements[BRAKE_POS_IDX]));
       engineSpeed.setData(Float.parseFloat(elements[ENGINE_SPEED_IDX]));
       fuelFlow.setData(Float.parseFloat(elements[FUEL_FLOW_IDX]));
       odometry.setData(Float.parseFloat(elements[ODOMETRY_IDX]));
@@ -123,8 +119,8 @@ public class MockCANDriver extends AbstractMockDriver {
       // Publish Data
       accPub.publish(acc);
       accelPub.publish(accel);
-      breakLightsPub.publish(breakLights);
-      breakPositionPub.publish(breakPos);
+      brakeLightsPub.publish(brakeLights);
+      brakePositionPub.publish(brakePos);
       engineSpeedPub.publish(engineSpeed);
       fuelFlowPub.publish(fuelFlow);
       odometryPub.publish(odometry);
@@ -149,13 +145,18 @@ public class MockCANDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI() {
-    return new ArrayList<>(Arrays.asList(connectedNode.getName() + "/can/acc_engaged",
-      connectedNode.getName() + "/can/acceleration", connectedNode.getName() + "/can/brake_lights",
-      connectedNode.getName() + "/can/brake_position",
-      connectedNode.getName() + "/can/engine_speed", connectedNode.getName() + "/can/fuel_flow",
-      connectedNode.getName() + "/can/odometer", connectedNode.getName() + "/can/parking_brake",
-      connectedNode.getName() + "/can/speed", connectedNode.getName() + "/can/steering_wheel_angle",
-      connectedNode.getName() + "/can/throttle_position",
-      connectedNode.getName() + "/can/turn_signal_state"));
+    return new ArrayList<>(Arrays.asList(
+      "/can/acc_engaged",
+      "/can/acceleration", 
+      "/can/brake_lights", 
+      "/can/brake_position",
+      "/can/engine_speed",
+      "/can/fuel_flow",
+      "/can/odometer",
+      "/can/parking_brake",
+      "/can/speed",
+      "/can/steering_wheel_angle",
+      "/can/throttle_position",
+      "/can/turn_signal_state"));
   }
 }
