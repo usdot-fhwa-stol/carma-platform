@@ -16,11 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
+import cav_srvs.GetDriverApiRequest;
+import cav_srvs.GetDriverApiResponse;
 import org.apache.commons.logging.Log;
 import cav_srvs.BindRequest;
 import cav_srvs.BindResponse;
-import cav_srvs.GetAPISpecificationRequest;
-import cav_srvs.GetAPISpecificationResponse;
 import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -57,7 +57,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
 
   // Server
   protected final ServiceServer<cav_srvs.BindRequest, cav_srvs.BindResponse> bindService;
-  protected final ServiceServer<GetAPISpecificationRequest, GetAPISpecificationResponse> getApiService;
+  protected final ServiceServer<GetDriverApiRequest, GetDriverApiResponse> getApiService;
 
   protected final String delimiter = ","; // Comma for csv file
   protected RandomAccessFile reader = null;
@@ -91,10 +91,10 @@ public abstract class AbstractMockDriver implements IMockDriver {
         }
       });
     getApiService = connectedNode
-      .newServiceServer("~/get_driver_api", cav_srvs.GetAPISpecification._TYPE,
-        new ServiceResponseBuilder<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse>() {
-          @Override public void build(cav_srvs.GetAPISpecificationRequest request,
-            cav_srvs.GetAPISpecificationResponse response) {
+      .newServiceServer("~/get_driver_api", cav_srvs.GetDriverApi._TYPE,
+        new ServiceResponseBuilder<cav_srvs.GetDriverApiRequest, cav_srvs.GetDriverApiResponse>() {
+          @Override public void build(cav_srvs.GetDriverApiRequest request,
+            cav_srvs.GetDriverApiResponse response) {
             response.setApiList(getDriverAPI());
           }
         });
@@ -135,12 +135,14 @@ public abstract class AbstractMockDriver implements IMockDriver {
         boolean exitBeforeEOF = false;
         int prevSampleIndex = -1;
         int currentSampleIndex;
-        long lastLineIndex = reader.getFilePointer();
+        long prevLineIndex = reader.getFilePointer();
 
         while((dataLine = reader.readLine()) != null) {
           // Skip the header line of all data files
-          if (lastLineIndex == 0)
+          if (prevLineIndex == 0) {
+            prevLineIndex = reader.getFilePointer();
             continue;
+          }
           // separate on delimiter
           elements = dataLine.split(delimiter);
           // Update sample index

@@ -47,9 +47,9 @@ public interface IMockDriver {
   /**
    * Reads simulated data from a file and publishes it.
    * A driver data file is a csv file which can fill out all the elements of the ros messages published by a driver
-   * All data files must have the first column be designated for sequence id number.
-   * Data rows with the same sequence id number will be published during the same call to readAndPublishData
-   * Other data in a data file is driver dependant.
+   * All data files must have the first column be designated for sample id number.
+   * Data rows with the same sample id number will be published during the same call to readAndPublishData
+   * Other data in a data file is driver dependant and defined by the column headers and message files
    */
   void readAndPublishData();
 
