@@ -24,7 +24,9 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
         publisher.publish(msg);
     }
 
-    protected abstract void computeAvailability();
+    private void computeAvailability() {
+        availability = Math.random() > 0.5;
+    }
 
     @Override public void loop() throws InterruptedException {
         if (getActivation()) {
@@ -36,7 +38,7 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
             publisher.publish(msg);
         }
 
-            Thread.sleep(sleepDuration);
+        Thread.sleep(sleepDuration);
     }
 
     @Override public void onSuspend() {

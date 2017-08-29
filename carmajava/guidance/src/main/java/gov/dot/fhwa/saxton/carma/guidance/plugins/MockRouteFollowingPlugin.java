@@ -8,8 +8,4 @@ public class MockRouteFollowingPlugin extends AbstractMockPlugin {
         name = "MockRouteFollowingPlugin";
         versionId = "v0.1a";
     }
-
-    @Override protected void computeAvailability() {
-        availability = Math.random() > 0.5;
-    }
 }

@@ -9,8 +9,4 @@ public class MockCruisingPlugin extends AbstractMockPlugin {
         name = "MockCruisingPlugin";
         versionId = "v0.1a";
     }
-
-    @Override protected void computeAvailability() {
-        availability = Math.random() > 0.5;
-    }
 }
