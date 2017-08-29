@@ -59,7 +59,7 @@ public interface IPlugin {
      * Will be invoked by the PluginExecutor in a tight busy-loop. If the plugin needs to run at a
      * specific frequency it is the plugin's responsibility to insert the required timing logic.
      */
-    void loop();
+    void loop() throws InterruptedException;
 
     /**
      * Called before onTerminate() and any time the plugin is about to enter a state of suspended
