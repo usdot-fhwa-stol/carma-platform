@@ -39,7 +39,7 @@ function connectToROS() {
 
     // TODO: Update IP
     // Create a connection to the rosbridge WebSocket server.
-    ros.connect('ws://192.168.32.133:9090');
+    ros.connect('ws://XXX.XXX.XX.XXX:9090');
 }
 
 /**
