@@ -45,24 +45,33 @@ public interface IPlugin {
     /**
      * Called when the plugin is first instantiated by the Guidance executor
      */
-    void onCreate();
+    void onInitialize();
 
     /**
-     * Called after onCreate() and any time the plugin resumes from a suspended state of execution.
+     * Called after onInitialize() and any time the plugin resumes from a suspended state of execution.
      */
     void onResume();
 
     /**
-     * Called before onDestroy() and any time the plugin is about to enter a state of suspended
+     * Main execution loop fro the plugin. Should be where the plugin spends the majority of its
+     * time while active.
+     *
+     * Will be invoked by the PluginExecutor in a tight busy-loop. If the plugin needs to run at a
+     * specific frequency it is the plugin's responsibility to insert the required timing logic.
+     */
+    void loop();
+
+    /**
+     * Called before onTerminate() and any time the plugin is about to enter a state of suspended
      * execution
      */
     void onSuspend();
 
     /**
-     * Called shortly before the plugin will be destroyed and execution will terminate. Ensure that
+     * Called shortly before the plugin execution will terminate. Ensure that
      * any held resources are closed or otherwise released such that they do not leak.
      */
-    void onDestroy();
+    void onTerminate();
 
     /**
      * Get the activation state of the plugin

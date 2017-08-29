@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;

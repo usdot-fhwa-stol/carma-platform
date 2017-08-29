@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance;
+package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import cav_msgs.Plugin;
 import cav_msgs.SystemAlert;
@@ -45,6 +45,8 @@ public class PluginManager implements Runnable {
     protected int sequenceNumber = 0;
     protected ConnectedNode node;
 
+    protected PluginExecutor executor;
+
     protected String serviceRouteUrl = "plugins";
     protected String getRegisteredPluginsServiceUrl = "getRegisteredPlugins";
     protected String getAvailablePluginsServiceUrl = "getAvailablePlugins";
@@ -60,6 +62,14 @@ public class PluginManager implements Runnable {
     public PluginManager(IPubSubService pubSubManager, ConnectedNode node) {
         this.pubSubService = pubSubManager;
         this.node = node;
+    }
+
+    protected void discoverPluginsOnClaspath() {
+
+    }
+
+    public List<IPlugin> getRegisteredPlugins() {
+        return null;
     }
 
     /**
