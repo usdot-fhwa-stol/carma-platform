@@ -5,7 +5,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 
 public abstract class AbstractMockPlugin extends AbstractPlugin {
-    public AbstractMockPlugin(IPubSubService pubSubService) {
+    AbstractMockPlugin(IPubSubService pubSubService) {
         this.pubSubService = pubSubService;
     }
 
@@ -20,7 +20,7 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     @Override public void onResume() {
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
-        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " initialized");
+        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " resumed");
         publisher.publish(msg);
     }
 
@@ -44,14 +44,14 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     @Override public void onSuspend() {
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
-        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " initialized");
+        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " suspended");
         publisher.publish(msg);
     }
 
     @Override public void onTerminate() {
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
-        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " initialized");
+        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " terminated");
         publisher.publish(msg);
     }
 

@@ -46,6 +46,7 @@ public class PluginManager implements Runnable {
     protected ConnectedNode node;
 
     protected PluginExecutor executor;
+    protected List<IPlugin> registeredPlugins = new ArrayList<>();
 
     protected String serviceRouteUrl = "plugins";
     protected String getRegisteredPluginsServiceUrl = "getRegisteredPlugins";
@@ -65,11 +66,12 @@ public class PluginManager implements Runnable {
     }
 
     protected void discoverPluginsOnClaspath() {
-
+        registeredPlugins.add(new MockCruisingPlugin(pubSubService));
+        registeredPlugins.add(new MockRouteFollowingPlugin(pubSubService));
     }
 
     public List<IPlugin> getRegisteredPlugins() {
-        return null;
+        return registeredPlugins;
     }
 
     /**
@@ -213,8 +215,15 @@ public class PluginManager implements Runnable {
     }
 
     @Override public void run() {
-        setupServices();
+        discoverPluginsOnClaspath();
 
+        for (IPlugin p : getRegisteredPlugins()) {
+            executor.submitPlugin(p);
+            executor.initializePlugin(p.getName(), p.getVersionId());
+            executor.resumePlugin(p.getName(), p.getVersionId());
+        }
+
+        setupServices();
         IPublisher<SystemAlert> pub =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
