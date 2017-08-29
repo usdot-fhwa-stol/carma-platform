@@ -33,6 +33,10 @@ import java.util.concurrent.Executors;
  * the Guidance package. It forms the Guidance ROS node.
  * <p>
  * Command line test: rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
+ * rosservice call /plugins/getRegisteredPlugins
+ * rosservice call /plugins/getActivePlugins
+ * rosservice call /plugins/getAvailablePlugins
+ * rosservice call /plugins/activatePlugin '{header: auto, pluginName: DUMMY PLUGIN A, pluginVersion: v2.0.0, activated: True}'
  */
 public class GuidanceMain extends SaxtonBaseNode {
 

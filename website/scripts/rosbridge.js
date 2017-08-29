@@ -39,7 +39,7 @@ function connectToROS() {
 
     // TODO: Update IP
     // Create a connection to the rosbridge WebSocket server.
-    ros.connect('ws://192.168.32.132:9090');
+    ros.connect('ws://192.168.32.133:9090');
 }
 
 /**
@@ -47,6 +47,8 @@ function connectToROS() {
 * TODO: Implement the user notification or modal popup.
 **/
 function checkSystemAlerts() {
+
+    //alert("checkSystemAlerts");
     //Subscribing to a Topic
     //----------------------
 
@@ -113,6 +115,7 @@ function showRouteOptions() {
     var request = new ROSLIB.ServiceRequest({
 
     });
+
     // Call the service and get back the results in the callback.
     // The result is a ROSLIB.ServiceResponse object.
     getAvailableRoutesClient.callService(request, function (result) {
@@ -125,7 +128,7 @@ function showRouteOptions() {
         }
 
         if (myRoutes.length == 0) {
-            divCapabilitiesMessage.innerHTML = '<p> Sorry, there are no available routes, and cannot proceed without one. </p> <p> Please contact the System Admin.</p>';
+            divCapabilitiesMessage.innerHTML = '<p> Sorry, there are no available routes, and cannot proceed without one. </p> <p> Please contact your System Admin.</p>';
         }
 
     });
@@ -169,12 +172,138 @@ function setRoute(id) {
             divSubCapabilities.style.display = 'block';
 
             divCapabilitiesMessage.innerHTML = 'Please select one or more capabilities to activate.';
+
+            showPluginOptions();
         }
+    });
+}
+
+/*
+ Show user the registered plugins.
+*/
+function showPluginOptions() {
+
+    //alert ('showPluginOptions');
+
+    divCapabilitiesMessage.innerHTML = 'Please select one or more capabilities.';
+
+    // Create a Service client with details of the service's name and service type.
+    var getRegisteredPluginsClient = new ROSLIB.Service({
+        ros: ros,
+        name: '/plugins/getRegisteredPlugins',
+        serviceType: 'cav_srvs/PluginList'
+    });
+
+    // Create a Service Request.
+    // No arguments.
+    var request = new ROSLIB.ServiceRequest({
+    });
+
+    // Call the service and get back the results in the callback.
+    // The result is a ROSLIB.ServiceResponse object.
+    getRegisteredPluginsClient.callService(request, function (result) {
+
+        //alert('getRegisteredPluginsClient: begin');
+        var pluginList = result.plugins;
+        var divSubCapabilities = document.getElementById('divSubCapabilities');
+
+        for (i = 0; i < pluginList.length; i++) {
+            //alert('getRegisteredPluginsClient: for');
+            var cbTitle = pluginList[i].name + ' ' + pluginList[i].versionId;
+            var cbId = pluginList[i].name.replace(/\s/g,'_') + '&' + pluginList[i].versionId.replace(/\./g,'_') ;
+            var isChecked = pluginList[i].activated;
+
+            //alert (cbId);
+            createCheckboxElement(divSubCapabilities, cbId, cbTitle, pluginList.length, 'groupPlugins', isChecked);
+        }
+
+        if (pluginList.length == 0) {
+            //alert('getRegisteredPluginsClient: if');
+            divCapabilitiesMessage.innerHTML = '<p> Sorry, there are no selection available, and cannot proceed without one. </p> <p> Please contact your System Admin.</p>';
+        }
+
+        //alert('getRegisteredPluginsClient: end');
+
+    });
+}
+
+/*
+ Activate the plugin based on user selection.
+ rosservice call /plugins/activatePlugin '{header: auto, pluginName: DUMMY PLUGIN A, pluginVersion: v2.0.0, activated: True}'
+*/
+function activatePlugin(id) {
+
+    var cbCapabilities = document.getElementById(id);
+    var newStatus = cbCapabilities.checked; //Already set by browser to have registered checked value.
+
+    alert ('activateplugin 1: ' + id + ', new: ' + newStatus);
+
+    // Calling setActiveRoute service
+    var activatePluginClient = new ROSLIB.Service({
+        ros: ros,
+        name: '/plugins/activatePlugin',
+        serviceType: 'cav_srvs/PluginList'
+    });
+
+    // Then we create a Service Request.
+    // No arguments.
+    //            rosjava_test_msgs.TestHeader message =
+    //                connectedNode.getTopicMessageFactory().newFromType(rosjava_test_msgs.TestHeader._TYPE);
+    //            message.getHeader().setStamp(connectedNode.getCurrentTime());
+
+    var splitValue = id.split('&');
+    var name = splitValue[0].replace(/\_/g,' ');
+    var version = splitValue[1].replace(/\_/g, '.');
+
+    //alert ('activateplugin2: ' + name + ',' + version + ',' + newStatus);
+    //alert(Date.now());
+    var request = new ROSLIB.ServiceRequest({
+        header: {
+                  seq: 0
+                  , stamp: Date.now()
+                  , frame_id:''
+        		},
+        pluginName: name,
+        pluginVersion: version,
+        activated: newStatus
+    });
+
+    //alert ('activateplugin 3: ' + !newStatus);
+   // alert('activatePluginClient.callService current status:' + cbCapabilities.checked );
+
+    //IF it did not get into the callService below, need to set it back.
+    cbCapabilities.checked = !newStatus;
+
+    // Finally, we call the service and get back the results in the callback. The result
+    // is a ROSLIB.ServiceResponse object.
+    activatePluginClient.callService(request, function (result) {
+        //alert('activatePluginClient.callService 1:' + result.newState + ', newstatus:' + newStatus);
+
+        if (result.newState != newStatus) //NO_ROUTE
+        {
+            //alert ('if failed');
+            divCapabilitiesMessage.innerHTML = '<p> Activating the capability failed, please try it again.</p>';
+        }
+        else {
+            //alert ('else success:' + result.newState);
+            var divSubCapabilities = document.getElementById('divSubCapabilities');
+            divSubCapabilities.style.display = 'block';
+
+            divCapabilitiesMessage.innerHTML = 'Please select one or more capabilities to activate.';
+        }
+
+        //Set to new state set by the PluginManager.
+        cbCapabilities.checked = result.newState;
+
     });
 }
 
 window.onload = function () {
     connectToROS();
-    showRouteOptions();
     checkSystemAlerts();
+
+    //var divRouteOptions = document.createElement('divRoutes');
+
+    showRouteOptions();
+
 }

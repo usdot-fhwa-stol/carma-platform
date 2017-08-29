@@ -7,6 +7,14 @@
     <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
     <script src="scripts/roslib.js"></script>
     <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <!--
+    Requirements:
+    1) source the bash file on all terminals
+    2) roscore
+    3) roslaunch rosbridge_server rosbridge_websocket.launch
+    4) rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
+    5) rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
+    -->
 </head>
 <body>
     <div class="tab">
@@ -19,7 +27,6 @@
         <div id="divRoutes" align="center">
         </div>
         <div id="divSubCapabilities" hidden="true" align="center">
-            <p>Not yet implemented.</p>
         </div>
     </div>
     <div id="divMapCavs" class="tabcontent">
