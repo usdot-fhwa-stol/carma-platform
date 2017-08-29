@@ -16,11 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
-import cav_msgs.SystemAlert;
+import cav_msgs.*;
+import cav_msgs.Route;
+import cav_msgs.RouteSegment;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
+import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
@@ -43,7 +46,9 @@ import sensor_msgs.NavSatFix;
  * rosservice call /get_available_routes
  * rosservice call /set_active_route "routeID: 'TestRoute'"
  */
-public class RouteManager extends SaxtonBaseNode {
+public class RouteManager extends SaxtonBaseNode implements IRouteManager{
+
+  protected ConnectedNode connectedNode;
 
   // Topics
   // Publishers
@@ -59,7 +64,7 @@ public class RouteManager extends SaxtonBaseNode {
   protected ServiceServer<SetActiveRouteRequest, SetActiveRouteResponse> setActiveRouteService;
   protected ServiceServer<GetAvailableRoutesRequest, GetAvailableRoutesResponse>
     getAvailableRouteService;
-  protected IRouteWorker routeWorker;
+  protected RouteWorker routeWorker;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("route_manager");
@@ -67,10 +72,11 @@ public class RouteManager extends SaxtonBaseNode {
 
   @Override public void onStart(final ConnectedNode connectedNode) {
 
+    this.connectedNode = connectedNode;
     final Log log = connectedNode.getLog();
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
-    routeWorker = new RouteWorker(log, params.getString("~default_database_path"));
+    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
 
     /// Topics
     // Publishers
@@ -102,9 +108,7 @@ public class RouteManager extends SaxtonBaseNode {
         new ServiceResponseBuilder<GetAvailableRoutesRequest, GetAvailableRoutesResponse>() {
           @Override public void build(GetAvailableRoutesRequest request,
             GetAvailableRoutesResponse response) {
-            GetAvailableRoutesResponse response1 = routeWorker.getAvailableRoutes();
-            System.out.println(response1.getAvailableRoutes());
-            response.setAvailableRoutes(response1.getAvailableRoutes());
+            response.setAvailableRoutes(routeWorker.getAvailableRoutes().getAvailableRoutes());
           }
         });
 
@@ -112,7 +116,7 @@ public class RouteManager extends SaxtonBaseNode {
       new ServiceResponseBuilder<SetActiveRouteRequest, SetActiveRouteResponse>() {
         @Override
         public void build(SetActiveRouteRequest request, SetActiveRouteResponse response) {
-          response = routeWorker.setActiveRoute(request);
+          response.setErrorStatus(routeWorker.setActiveRoute(request).getErrorStatus());
         }
       });
 
@@ -125,25 +129,34 @@ public class RouteManager extends SaxtonBaseNode {
       }//setup
 
       @Override protected void loop() throws InterruptedException {
-        // Publish all queued route worker system alert messages
-        for (SystemAlert alert : routeWorker.getSystemAlertTopicMsgs()){
-          systemAlertPub.publish(alert);
-        }
-
-        // If an active route has been selected then publish the route
-        if (routeWorker.getState() == WorkerState.READY_TO_FOLLOW || routeWorker.getState() == WorkerState.FOLLOWING_ROUTE){
-          routePub.publish(routeWorker.getActiveRouteTopicMsg());
-        }
-
-        // If following a selected route then publish the route state and current segment
-        if (routeWorker.getState() == WorkerState.FOLLOWING_ROUTE){
-          routeStatePub.publish(routeWorker.getRouteStateTopicMsg(sequenceNumber, connectedNode.getCurrentTime()));
-          segmentPub.publish(routeWorker.getCurrentRouteSegmentTopicMsg());
-        }
+        routeWorker.onLoop(sequenceNumber);
 
         sequenceNumber++;
         Thread.sleep(100);
       }
     });
   }//onStart
+
+  @Override public void publishSystemAlert(SystemAlert systemAlert) {
+    systemAlertPub.publish(systemAlert);
+  }
+
+  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
+    segmentPub.publish(routeSegment);
+  }
+
+  @Override public void publishActiveRoute(Route route) {
+    routePub.publish(route);
+  }
+
+  @Override public void publishRouteState(RouteState routeState) {
+    routeStatePub.publish(routeState);
+  }
+
+  @Override public Time getTime() {
+    if (connectedNode == null){
+      return new Time();
+    }
+    return connectedNode.getCurrentTime();
+  }
 }//AbstractNodeMain

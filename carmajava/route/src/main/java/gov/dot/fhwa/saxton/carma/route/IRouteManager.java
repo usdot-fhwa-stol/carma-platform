@@ -16,7 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
-import cav_msgs.SystemAlert;
+import cav_msgs.*;
+import cav_msgs.Route;
 import cav_srvs.GetAvailableRoutesResponse;
 import cav_srvs.SetActiveRouteRequest;
 import cav_srvs.SetActiveRouteResponse;
@@ -28,76 +29,39 @@ import java.util.PriorityQueue;
  * Interface defines the needed functions of a route worker
  */
 public interface IRouteManager {
-  /**
-   * Provides a response for a the GetAvailableRoutes service
-   *
-   * @return Response message to be sent back
-   */
-  GetAvailableRoutesResponse getAvailableRoutes();
 
   /**
-   * Selects a active route by id as the route to be tracked
+   * Publishes a system alert message
    *
-   * @param request The service request message containing the route id
-   * @return Response message to be sent back
+   * @param systemAlert  system alert messages
    */
-  SetActiveRouteResponse setActiveRoute(SetActiveRouteRequest request);
+  void publishSystemAlert(SystemAlert systemAlert);
 
   /**
-   * Function for used in NavSatFix topic callback. Used to update vehicle location with the provided data
+   * Publishes a ros message corresponding to the current route segment
    *
-   * @param msg The NavSatFix message containing the host vehicle location
+   * @param routeSegment The current route segment message
    */
-  void handleNavSatFixMsg(sensor_msgs.NavSatFix msg);
+  void publishCurrentRouteSegment(cav_msgs.RouteSegment routeSegment);
 
   /**
-   * Function for used in SystemAlert topic callback.
+   * Publishes the active route in the form of a ros message
    *
-   * @param msg The system alert message
+   * @param route The active route message
    */
-  void handleSystemAlertMsg(SystemAlert msg);
-
-  //  /**  TODO: Add once we have tim messages
-  //   * Function for used in Tim topic callback. Used to update waypoints on a route
-  //   * @param msg The tim message
-  //   */
-  //   void handleTimMsg(cav_msgs.Tim msg);
+  void publishActiveRoute(Route route);
 
   /**
-   * Provides a queue of system alert messages which should be published by a ros node.
-   * Alerts are organized in order of severity with FATAL alerts having highest priority
+   * Publishes the current route following state in the form of a ros message
    *
-   * @return Queue of system alert messages
+   * @param routeState  The current route state
    */
-  PriorityQueue<SystemAlert> getSystemAlertTopicMsgs();
+  void publishRouteState(RouteState routeState);
 
   /**
-   * Gets a ros message corresponding to the current route segment
+   * Gets the current time
    *
-   * @return The current route segment message
+   * @return The time
    */
-  cav_msgs.RouteSegment getCurrentRouteSegmentTopicMsg();
-
-  /**
-   * Gets the active route in the form of a ros message
-   *
-   * @return The active route message
-   */
-  cav_msgs.Route getActiveRouteTopicMsg();
-
-  /**
-   * Gets the current route following state in the form of a ros message
-   *
-   * @param seq  The current sequence count which will be used in the header of this message
-   * @param time The current time which will be used in the header of this message.
-   * @return the route state message
-   */
-  cav_msgs.RouteState getRouteStateTopicMsg(int seq, Time time);
-
-  /**
-   * Gets the current state of a route worker
-   *
-   * @return The worker state
-   */
-  WorkerState getState();
+  Time getTime();
 }

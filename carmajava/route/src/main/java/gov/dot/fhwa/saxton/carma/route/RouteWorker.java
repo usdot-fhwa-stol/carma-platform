@@ -36,8 +36,9 @@ import java.util.*;
  * The class operates as a state machine with states LOADING_ROUTES, ROUTE_SELECTION, READY_TO_FOLLOW and FOLLOWING_ROUTE
  * The state of the RouteWorker is used by a ros node to determine which topics will be available
  */
-public class RouteWorker implements IRouteWorker {
+public class RouteWorker {
 
+  protected final IRouteManager routeManager;
   protected Route activeRoute;
   protected HashMap<String, Route> availableRoutes = new HashMap<>();
   protected double crossTrackDistance;
@@ -45,11 +46,9 @@ public class RouteWorker implements IRouteWorker {
   protected Location hostVehicleLocation;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
-  protected Log log;
+  protected final Log log;
   protected int currentWaypointIndex = 0;
   protected double downtrackDistance = 0;
-  protected final int MAX_QUEUE_SIZE = 10;
-  protected PriorityQueue<SystemAlert> systemAlertQueue;
   protected boolean systemOkay = false;
   protected boolean routeComplete = false;
 
@@ -79,9 +78,9 @@ public class RouteWorker implements IRouteWorker {
    * Constructor initializes a route worker object with the provided logging tool
    * @param log The logger to be used
    */
-  public RouteWorker(Log log) {
+  public RouteWorker(IRouteManager manager, Log log) {
     this.log = log;
-    initPriorityQueue();
+    this.routeManager = manager;
   }
 
   /**
@@ -89,9 +88,9 @@ public class RouteWorker implements IRouteWorker {
    * @param log The logger to be used
    * @param database_path The path to a directory of files compatible with the FileStrategy for loading routes
    */
-  public RouteWorker(Log log, String database_path){
+  public RouteWorker(IRouteManager manager, Log log, String database_path){
     this.log = log;
-    initPriorityQueue();
+    this.routeManager = manager;
     File folder = new File(database_path);
     File[] listOfFiles = folder.listFiles();
 
@@ -102,52 +101,6 @@ public class RouteWorker implements IRouteWorker {
         handleStateTransition(WorkerEvent.FILES_LOADED);
       }
     }
-  }
-
-  /**
-   * Initializes the SystemAlert priority queue used for publishing alert messages
-   */
-  protected void initPriorityQueue() {
-    systemAlertQueue = new PriorityQueue<>(MAX_QUEUE_SIZE, new Comparator<SystemAlert>() {
-      // TODO fix this since the numbers of the enum are not in a organized order !!!
-      @Override public int compare(SystemAlert alert1, SystemAlert alert2) {
-        // Comparator sets up the queue to be a highest-least priority queue
-        int alert1Value = alert1.getType();
-        int alert2Value = alert2.getType();
-
-        if (alert1Value == SystemAlert.NOT_READY)
-          alert1Value = alert1Value - SystemAlert.NOT_READY;
-        else if (alert1Value == SystemAlert.SYSTEM_READY)
-          alert1Value = alert1Value - SystemAlert.SYSTEM_READY - 1;
-        if (alert2Value == SystemAlert.NOT_READY)
-          alert2Value = alert2Value - SystemAlert.NOT_READY;
-        else if (alert2Value == SystemAlert.SYSTEM_READY)
-          alert2Value = alert2Value - SystemAlert.SYSTEM_READY - 1;
-
-        if (alert1Value > alert2Value) {
-          return -1;
-        } else if (alert1Value < alert2Value) {
-          return 1;
-        } else {
-          return 0;
-        }
-      }
-    });
-  }
-
-  /**
-   * Queues a provided system alert message for execution while ensuring that the queue remains within its size limit.
-   * @param alertType The type of the system alert to be queued
-   * @param description The description of the alert message
-   */
-  private void queueSystemAlert(byte alertType, String description){
-    if (systemAlertQueue.size() >= MAX_QUEUE_SIZE){
-      systemAlertQueue.poll();
-    }
-    SystemAlert alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
-    alertMsg.setType(alertType);
-    alertMsg.setDescription(description);
-    systemAlertQueue.add(alertMsg);
   }
 
   /**
@@ -164,6 +117,7 @@ public class RouteWorker implements IRouteWorker {
    * @param action The action to be executed
    */
   protected void handleAction(WorkerAction action){
+    SystemAlert alertMsg;
     switch(action){
       case NONE:
         break;
@@ -172,10 +126,12 @@ public class RouteWorker implements IRouteWorker {
         break;
       case MARK_COMPLETE:
         routeComplete = true;
-        queueSystemAlert(SystemAlert.CAUTION, "The end of the active route has been reached");
+        alertMsg = buildSystemAlertMsg(SystemAlert.CAUTION, "The end of the active route has been reached");
+        routeManager.publishSystemAlert(alertMsg);
         break;
       case LEFT_ROUTE_ALERT:
-        queueSystemAlert(SystemAlert.WARNING, "Route: The host vehicle has left the route vicinity");
+        alertMsg = buildSystemAlertMsg(SystemAlert.WARNING, "Route: The host vehicle has left the route vicinity");
+        routeManager.publishSystemAlert(alertMsg);
         break;
       case MARK_SYSTEM_OK:
         systemOkay = true;
@@ -185,7 +141,8 @@ public class RouteWorker implements IRouteWorker {
         break;
       case INVALID:
         String warning = "A state transition was attempted in the RouteWorker which was invalid";
-        queueSystemAlert(SystemAlert.WARNING, warning);
+        alertMsg = buildSystemAlertMsg(SystemAlert.WARNING, warning);
+        routeManager.publishSystemAlert(alertMsg);
         log.error(warning);
         break;
       default:
@@ -230,7 +187,7 @@ public class RouteWorker implements IRouteWorker {
     return false;
   }
 
-  @Override public cav_srvs.GetAvailableRoutesResponse getAvailableRoutes() {
+  protected cav_srvs.GetAvailableRoutesResponse getAvailableRoutes() {
     List<cav_msgs.Route> routeMsgs = new LinkedList<>();
     cav_srvs.GetAvailableRoutesResponse response = messageFactory.newFromType(
       GetAvailableRoutesResponse._TYPE);
@@ -243,12 +200,32 @@ public class RouteWorker implements IRouteWorker {
     return response;
   }
 
-  @Override public SetActiveRouteResponse setActiveRoute(SetActiveRouteRequest request) {
+  /**
+   * Helper function which builds a system alert message
+   * @param type The type of the alert
+   * @param description Description of the message
+   * @return System Alert message
+   */
+  protected SystemAlert buildSystemAlertMsg(byte type, String description) {
+    SystemAlert alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
+    alertMsg.setType(type);
+    alertMsg.setDescription(description);
+    return alertMsg;
+  }
+
+  /**
+   * Function to be used in a callback for the setActiveRoute service
+   * @param request The service request
+   * @return the service response
+   */
+  protected SetActiveRouteResponse setActiveRoute(SetActiveRouteRequest request) {
     SetActiveRouteResponse response = messageFactory.newFromType(SetActiveRouteResponse._TYPE);
 
     Route route = availableRoutes.get(request.getRouteID());
     // Check if the specified route exists.
-    if (route != null) {
+    if (route == null) {
+      response.setErrorStatus(SetActiveRouteResponse.NO_ROUTE);
+    } else {
       activeRoute = route;
       //TODO Validation of ability to start route
       // Insert a starting waypoint at the current vehicle location which is connected to the route
@@ -257,13 +234,15 @@ public class RouteWorker implements IRouteWorker {
 
       response.setErrorStatus(SetActiveRouteResponse.NO_ERROR);
       handleStateTransition(WorkerEvent.ROUTE_SELECTED);
-    } else {
-      response.setErrorStatus(SetActiveRouteResponse.NO_ROUTE);
     }
     return response;
   }
 
-  @Override public void handleNavSatFixMsg(NavSatFix msg) {
+  /**
+   * Function to be used as a callback for the arrival of NavSatFix messages
+   * @param msg The received message
+   */
+  protected void handleNavSatFixMsg(NavSatFix msg) {
     switch (msg.getStatus().getStatus()){
       case NavSatStatus.STATUS_NO_FIX:
         // TODO: Handle this in a way other than not updating the location
@@ -294,7 +273,11 @@ public class RouteWorker implements IRouteWorker {
     }
   }
 
-  @Override public void handleSystemAlertMsg(SystemAlert msg) {
+  /**
+   * Function to be used as a callback for received system alert messages
+   * @param msg the system alert message
+   */
+  protected void handleSystemAlertMsg(SystemAlert msg) {
     switch (msg.getType()) {
       case cav_msgs.SystemAlert.CAUTION:
         // TODO: Handle this message type
@@ -319,23 +302,33 @@ public class RouteWorker implements IRouteWorker {
     }
   }
 
-  @Override public PriorityQueue<SystemAlert> getSystemAlertTopicMsgs() {
-    return systemAlertQueue;
-  }
-
-  @Override public cav_msgs.RouteSegment getCurrentRouteSegmentTopicMsg() {
+  /**
+   * Returns a message to be published on the current route segment topic
+   * @return route segment message
+   */
+  protected cav_msgs.RouteSegment getCurrentRouteSegmentTopicMsg() {
     if (currentSegment == null)
       return messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
     return currentSegment.toMessage(messageFactory, currentWaypointIndex);
   }
 
-  @Override public cav_msgs.Route getActiveRouteTopicMsg() {
+  /**
+   * Returns an active route message to publish
+   * @return route message
+   */
+  protected cav_msgs.Route getActiveRouteTopicMsg() {
     if (activeRoute == null)
       return messageFactory.newFromType(cav_msgs.Route._TYPE);
     return activeRoute.toMessage(messageFactory);
   }
 
-  @Override public RouteState getRouteStateTopicMsg(int seq, Time time) {
+  /**
+   * Returns a route state message to be published
+   * @param seq The header sequence
+   * @param time the time
+   * @return route state message
+   */
+  protected RouteState getRouteStateTopicMsg(int seq, Time time) {
     if (activeRoute == null)
       return messageFactory.newFromType(cav_msgs.RouteState._TYPE);
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
@@ -349,4 +342,27 @@ public class RouteWorker implements IRouteWorker {
     hdr.setStamp(time);
     return routeState;
   }
+
+  /**
+   * Function to be called in a repeating execution loop
+   * @param sequenceNumber The sequence count of the loop
+   */
+  protected void onLoop(int sequenceNumber) {
+    // If an active route has been selected then publish the route
+    if (this.getState() == WorkerState.READY_TO_FOLLOW || this.getState() == WorkerState.FOLLOWING_ROUTE) {
+      routeManager.publishActiveRoute(getActiveRouteTopicMsg());
+    }
+
+    // If following a selected route then publish the route state and current segment
+    if (this.getState() == WorkerState.FOLLOWING_ROUTE){
+      routeManager.publishRouteState(getRouteStateTopicMsg(sequenceNumber, routeManager.getTime()));
+      routeManager.publishCurrentRouteSegment(getCurrentRouteSegmentTopicMsg());
+    }
+  }
+
+  //  /**  TODO: Add once we have tim messages
+  //   * Function for used in Tim topic callback. Used to update waypoints on a route
+  //   * @param msg The tim message
+  //   */
+  //   void handleTimMsg(cav_msgs.Tim msg);
 }
