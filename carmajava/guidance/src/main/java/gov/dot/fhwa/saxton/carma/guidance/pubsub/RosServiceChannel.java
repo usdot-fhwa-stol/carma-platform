@@ -16,35 +16,36 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import org.ros.node.topic.Subscriber;
+import org.ros.node.service.ServiceClient;
 
 /**
- * Package private class for use in the PubSubManager
- * <p>
- * Responsible for keeping track of the subscription channel resources associated with any number of ISubscriptionChannels
- * for a given topic.
+ * Concrete ROS implementation of the logic outlined in {@link IServiceChannel}
  *
- * @param <T> Type parameter for the message of the topic
+ * Shares access to a {@link ServiceClient} created by an {@link IServiceChannelFactory} between
+ * any number of child {@link RosService} instances
+ * @param <T> Type parameter for the service request message
+ * @param <S> Type parameter for the service response message
  */
-public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
+public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
     protected int numOpenChannels = 0;
     protected boolean open = true;
-    protected Subscriber<T> subscriber;
+    protected ServiceClient<T, S> serviceClient;
 
-    RosSubscriptionChannel(Subscriber<T> subscriber) {
-        this.subscriber = subscriber;
+    RosServiceChannel(ServiceClient<T, S> serviceClient) {
+        this.serviceClient = serviceClient;
     }
 
     /**
-     * Acquire a new ISubscriber instance
+     * Get a new IService instance for this topic
      */
-    @Override public ISubscriber<T> getSubscriber() {
+    @Override public IService<T, S> getService() {
         numOpenChannels++;
-        return new RosSubscriber<>(subscriber, this);
+
+        return new RosService<>(serviceClient, this);
     }
 
     /**
-     * Register the destruction of a channel interface instance. If none are open then close the resource.
+     * Notice an IService instance being closed. If there are no remaining instances shut down the resource.
      */
     @Override public void notifyClientShutdown() {
         numOpenChannels--;
@@ -52,13 +53,6 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
         if (numOpenChannels <= 0) {
             close();
         }
-    }
-
-    /**
-     * Get the number of extant channel instances that haven't been closed yet
-     */
-    public int getNumOpenChannels() {
-        return numOpenChannels;
     }
 
     /**
@@ -70,6 +64,12 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
 
     @Override public void close() {
         open = false;
-        subscriber.shutdown();
+    }
+
+    /**
+     * Get the number of extant IService instances that haven't been closed
+     */
+    public int getNumOpenChannel() {
+        return numOpenChannels;
     }
 }
