@@ -49,7 +49,7 @@ public class FakeInterfaceMgr implements IInterfaceMgr {
     }
 
 
-    public void notifyBrokenBond(AlertSeverity sev, String message){
+    public void sendSystemAlert(AlertSeverity sev, String message){
         String alert;
 
         switch(sev) {
@@ -60,6 +60,6 @@ public class FakeInterfaceMgr implements IInterfaceMgr {
         }
 
 
-        log.debug("notifyBrokenBond sending simulated message to system: " + alert + message);
+        log.debug("sendSystemAlert sending simulated message to system: " + alert + message);
     }
 }

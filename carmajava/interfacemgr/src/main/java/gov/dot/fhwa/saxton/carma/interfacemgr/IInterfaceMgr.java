@@ -25,7 +25,7 @@ public interface IInterfaceMgr {
      *
      * @param driverName - name of the driver's bind topic
      */
-    public void bindWithDriver(String driverName);
+    void bindWithDriver(String driverName);
 
 
     /**
@@ -34,15 +34,16 @@ public interface IInterfaceMgr {
      * @param driverName - name of the driver's api topic
      * @return - a list of data elements available from the driver
      */
-    public List<String> getDriverApi(String driverName);
+    List<String> getDriverApi(String driverName);
 
 
     /**
-     * Handler for a detected broken driver bond - sends an appropriate system alert message.
+     * Generates a message on the system_alert topic that all nodes listen to.  Typically
+     * a handler for a detected broken driver bond.
      * Note that this is not the callback to be provided to the driver's bind service.
      *
      * @param sev - severity of the problem
      * @param message - description of the problem
      */
-    public void notifyBrokenBond(AlertSeverity sev, String message);
+    void sendSystemAlert(AlertSeverity sev, String message);
 }

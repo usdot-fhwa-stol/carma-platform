@@ -18,7 +18,7 @@ package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 import cav_msgs.DriverStatus;
 import cav_msgs.SystemAlert;
-import cav_srvs.GetAPISpecificationResponse;
+import cav_srvs.GetDriverApiResponse;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
@@ -34,9 +34,7 @@ import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
-
 import org.ros.node.parameter.ParameterTree;
-
 import java.util.List;
 
 /**
@@ -71,9 +69,9 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
         //get wait time parameter
         ParameterTree param = connectedNode.getParameterTree();
-        int waitTime = param.getInteger("/driver_wait_time");
+        int waitTime = param.getInteger("/driver_wait_time"); //seconds
         worker_.setWaitTime(waitTime);
-        log_.debug("InterfaceMgr.onStart read startupWaitTime = " + waitTime);
+        log_.debug("InterfaceMgr.onStart read waitTime = " + waitTime);
 
 
 
@@ -89,12 +87,12 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 DriverInfo info = new DriverInfo();
                 info.setName(msg.getName());
                 switch (msg.getStatus()) {
-                    case DriverStatus.OFF:          info.setStatus(DriverState.OFF);            break;
-                    case DriverStatus.DEGRADED:     info.setStatus(DriverState.DEGRADED);       break;
-                    case DriverStatus.FAULT:        info.setStatus(DriverState.FAULT);          break;
-                    case DriverStatus.OPERATIONAL:  info.setStatus(DriverState.OPERATIONAL);    break;
+                    case DriverStatus.OFF:          info.setState(DriverState.OFF);            break;
+                    case DriverStatus.DEGRADED:     info.setState(DriverState.DEGRADED);       break;
+                    case DriverStatus.FAULT:        info.setState(DriverState.FAULT);          break;
+                    case DriverStatus.OPERATIONAL:  info.setState(DriverState.OPERATIONAL);    break;
                     default:
-                        info.setStatus(DriverState.FAULT);
+                        info.setState(DriverState.FAULT);
                 }
                 info.setCan(msg.getCanBus());
                 info.setSensor(msg.getSensor());
@@ -102,14 +100,14 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 info.setComms(msg.getComms());
                 info.setController(msg.getController());
                 log_.debug("InterfaceMgr.driverDiscoveryListener received new status: " + info.getName()
-                            + ", " + info.getStatus().toString());
+                            + ", " + info.getState().toString());
 
                 //add the new driver info to our database
                 worker_.handleNewDriverStatus(info);
             }
         });
 
-        //create a message listener for the bond messages coming from drivers (handleBrokenBond)
+        //create a message listener for the bond messages coming from drivers (sendSystemAlert)
             //TODO: this will be implemented in a future iteration due to dependence on
             //      an as-yet non-existent JNI wrapper for the ros bindcpp library.
         //Subscriber<std_msgs.Bond> bondListener =
@@ -129,10 +127,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         systemAlertPublisher_.setLatchMode(true);
 
         //publish the system not ready message
-        SystemAlert notReadyAlert = systemAlertPublisher_.newMessage();
-        notReadyAlert.setType((byte)AlertSeverity.NOT_READY.getVal());
-        notReadyAlert.setDescription("System is starting up...");
-        systemAlertPublisher_.publish(notReadyAlert);
+        sendSystemAlert(AlertSeverity.NOT_READY, "System is starting up...");
 
         // This CancellableLoop will be canceled automatically when the node shuts down
         connectedNode.executeCancellableLoop(new CancellableLoop() {
@@ -150,7 +145,9 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 if (worker_.isSystemReady()) {
 
                     //log it and publish the notification
+                    sendSystemAlert(AlertSeverity.SYSTEM_READY, "SYSTEM IS NOW OPERATIONAL");
                     log_.info("///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
+
                     //stop the loop
                     throw new InterruptedException("System is OPERATIONAL. Stopping loop.");
                 }
@@ -168,38 +165,40 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 connectedNode.newServiceServer("get_drivers_with_capabilities", cav_srvs.GetDriversWithCapabilities._TYPE,
                 new ServiceResponseBuilder<cav_srvs.GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse>() {
 
-                    @Override
-                    public void build(cav_srvs.GetDriversWithCapabilitiesRequest request,
-                                      cav_srvs.GetDriversWithCapabilitiesResponse response) {
+            @Override
+            public void build(cav_srvs.GetDriversWithCapabilitiesRequest request,
+                              cav_srvs.GetDriversWithCapabilitiesResponse response) {
 
-                        DriverCategory cat;
-                        switch (request.getCategory()) {
-                            case GetDriversWithCapabilitiesRequest.CONTROLLER:
-                                cat = DriverCategory.CONTROLLER;
-                                break;
-                            case GetDriversWithCapabilitiesRequest.COMMS:
-                                cat = DriverCategory.COMMS;
-                                break;
-                            case GetDriversWithCapabilitiesRequest.POSITION:
-                                cat = DriverCategory.POSITION;
-                                break;
-                            case GetDriversWithCapabilitiesRequest.SENSOR:
-                                cat = DriverCategory.SENSOR;
-                                break;
-                            case GetDriversWithCapabilitiesRequest.CAN:
-                                cat = DriverCategory.CAN;
-                                break;
-                            default:
-                                cat = DriverCategory.UNDEFINED;
-                        }
+                DriverCategory cat;
+                switch (request.getCategory()) {
+                    case GetDriversWithCapabilitiesRequest.CONTROLLER:
+                        cat = DriverCategory.CONTROLLER;
+                        break;
+                    case GetDriversWithCapabilitiesRequest.COMMS:
+                        cat = DriverCategory.COMMS;
+                        break;
+                    case GetDriversWithCapabilitiesRequest.POSITION:
+                        cat = DriverCategory.POSITION;
+                        break;
+                    case GetDriversWithCapabilitiesRequest.SENSOR:
+                        cat = DriverCategory.SENSOR;
+                        break;
+                    case GetDriversWithCapabilitiesRequest.CAN:
+                        cat = DriverCategory.CAN;
+                        break;
+                    default:
+                        cat = DriverCategory.UNDEFINED;
+                }
+                log_.debug("InterfaceMgr.driverCapSvr: received request for category=" + cat.toString()
+                            + " with " + request.getCapabilities().size() + " capabilities listed.");
 
-                        //figure out which drivers match the request
-                        List<String> res = worker_.getDrivers(cat, request.getCapabilities());
-                        log_.debug("InterfaceMgr.driverCapSvr: received a list of " + res.size() + " matching drivers.");
+                //figure out which drivers match the request
+                List<String> res = worker_.getDrivers(cat, request.getCapabilities());
+                log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size() + " matching drivers.");
 
-                        //formulate the service response
-                        response.setDriverNames(res);
-                    }
+                //formulate the service response
+                response.setDriverNames(res);
+            }
         });
 
     }//onStart
@@ -236,23 +235,23 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         List<String> getResult() {return result; }
     }
 
+
     @Override
     public List<String> getDriverApi(String driverName) {
-        List<String> result;
         final ResultHolder rh = new ResultHolder();
 
         //call the api service for the given driver
         final String serviceName = "/" + driverName + "/get_driver_api";
-        ServiceClient<cav_srvs.GetAPISpecificationRequest, cav_srvs.GetAPISpecificationResponse> serviceClient =
-                waitForService(serviceName, cav_srvs.GetAPISpecification._TYPE, connectedNode_, 5000);
+        ServiceClient<cav_srvs.GetDriverApiRequest, cav_srvs.GetDriverApiResponse> serviceClient =
+                waitForService(serviceName, cav_srvs.GetDriverApi._TYPE, connectedNode_, 5000);
         if (serviceClient == null) {
             log_.warn("InterfaceMgr could not find service \"" + serviceName + "\"");
         }
-        cav_srvs.GetAPISpecificationRequest req = serviceClient.newMessage();
+        cav_srvs.GetDriverApiRequest req = serviceClient.newMessage();
 
-        serviceClient.call(req, new ServiceResponseListener<GetAPISpecificationResponse>() {
+        serviceClient.call(req, new ServiceResponseListener<GetDriverApiResponse>() {
             @Override
-            public void onSuccess(GetAPISpecificationResponse response) {
+            public void onSuccess(GetDriverApiResponse response) {
                 rh.setResult(response.getApiList());
             }
 
@@ -266,16 +265,21 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     }
 
     @Override
-    public void notifyBrokenBond(AlertSeverity sev, String message) {
+    public void sendSystemAlert(AlertSeverity sev, String message) {
 
-        //convert the severity to the appropriate message type
-        SystemAlert alert = systemAlertPublisher_.newMessage();
-        alert.setType((byte)sev.getVal());
+        //in case this method gets called before our onStart is complete, need to check for valid publisher
+        if (systemAlertPublisher_ != null) {
 
-        //set the alert content and send the message
-        alert.setDescription(message);
+            //convert the severity to the appropriate message type
+            SystemAlert alert = systemAlertPublisher_.newMessage();
+            alert.setType((byte)sev.getVal());
 
-        systemAlertPublisher_.publish(alert);
+            //set the alert content and send the message
+            alert.setDescription(message);
+
+            systemAlertPublisher_.publish(alert);
+            log_.info("InterfaceMgr.sendSystemAlert: " + alert.toString() + ", " + message);
+        }
     }
 }
 

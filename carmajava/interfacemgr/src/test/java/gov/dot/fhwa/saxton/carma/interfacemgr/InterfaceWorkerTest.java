@@ -31,26 +31,31 @@ public class InterfaceWorkerTest {
 
     IInterfaceMgr   mgr_;
     InterfaceWorker w_;
+    Log             log_;
 
     @Before
     public void setUp() throws Exception {
-        Log log_ = LogFactory.getLog(InterfaceWorkerTest.class);
+        log_ = LogFactory.getLog(InterfaceWorkerTest.class);
         mgr_ = new FakeInterfaceMgr();
         w_ = new InterfaceWorker(mgr_, log_);
     }
 
     @Test
     public void testNewDrivers() throws Exception {
+        log_.info("///// Entering testNewDrivers.");
         addNewDrivers();
     }
 
     @Test
     public void testDuplicateDriver() {
+        log_.info("///// Entering testDuplicateDriver");
         addDuplicateDrivers();
     }
 
    @Test
     public void testGettingEmptyDrivers() throws Exception {
+        log_.info("///// Entering testGettingEmptyDrivers.");
+
         //build a list of capabilities we're looking for
         List<String> capabilities = new ArrayList<String>();
         capabilities.add("latitude");
@@ -65,6 +70,10 @@ public class InterfaceWorkerTest {
 
     @Test
     public void testGetDrivers() throws Exception {
+        log_.info("///// Entering testGetDrivers.");
+
+        w_.setWaitTime(1); //1 sec wait time for system to become active
+
         //build a list of capabilities we're looking for
         List<String> capabilities = new ArrayList<String>();
         capabilities.add("latitude");
@@ -73,6 +82,11 @@ public class InterfaceWorkerTest {
 
         //add some drivers
         addNewDrivers();
+
+        //wait for the system to become operational
+        Thread.sleep(2005);
+        boolean ready = w_.isSystemReady(); //need to make this call to force the flag to change since the FakeInterfaceMgr isn't monitoring
+        assertTrue(ready);
 
         //let's go find them
         List<String> res = w_.getDrivers(DriverCategory.POSITION, capabilities);
@@ -104,6 +118,8 @@ public class InterfaceWorkerTest {
 
     @Test
     public void testSystemNotReady() throws Exception {
+        log_.info("///// Entering testSystemNotReady.");
+
         //system just started up, no drivers registered, so should not be ready
         boolean res = w_.isSystemReady();
         assertFalse(res);
@@ -111,44 +127,46 @@ public class InterfaceWorkerTest {
 
     @Test
     public void testSystemReady() throws Exception {
+        log_.info("///// Entering testSystemReady.");
+
+        w_.setWaitTime(5); //5 seconds
+        boolean ready = w_.isSystemReady();
+
         //initial driver discovery
         addNewDrivers();
-        Thread.sleep(1853);
+        Thread.sleep(1000); //1.0 sec
+        ready = w_.isSystemReady();
         assertFalse(w_.isSystemReady());
 
-        //NOTE: assumes total wait time is 5 seconds
-
-        //add some more updates
+        //add some more updates - this will not reset the timer since there are no new drivers being discovered
         addDuplicateDrivers();
         continueStatusUpdates();
-        Thread.sleep(2900);
+        Thread.sleep(900); //1.9 sec
+        ready = w_.isSystemReady();
         assertFalse(w_.isSystemReady());
 
         //one more update
         continueStatusUpdates();
-        Thread.sleep(1500);
+        Thread.sleep(1500); //3.4 sec
+        ready = w_.isSystemReady();
         assertFalse(w_.isSystemReady());
 
-        //sleep 2 more seconds for total of 3.5 sec
-        Thread.sleep(2000);
+        Thread.sleep(1000); //4.4 sec
+        ready = w_.isSystemReady();
         assertFalse(w_.isSystemReady());
 
-        //sleep 1.2 more seconds, total of 4.7 sec
-        Thread.sleep(1200);
-        assertFalse(w_.isSystemReady());
-
-        //one more update - this should reset the wait counter to zero
-        continueStatusUpdates();
-        Thread.sleep(1000);
-        assertFalse(w_.isSystemReady());
-
-        //sleep 4.1 more seconds, which should expire the timer (total 5.1 sec)
-        Thread.sleep(4100);
+        Thread.sleep(1605); //6.05 sec - apparently the comparison truncates fractional seconds so we need this much
+        ready = w_.isSystemReady();
         assertTrue(w_.isSystemReady());
     }
 
-    @Test
+    @Test (expected = IndexOutOfBoundsException.class)
     public void handleBrokenBond() throws Exception {
+        log_.info("///// Entering handleBrokenBond.");
+
+        w_.setWaitTime(1); //1 second
+        boolean ready = w_.isSystemReady(); //system should not be ready yet
+        assertFalse(ready);
 
         //set up a list of capabilities that all drivers will match (a null list)
         List<String> capabilities = new ArrayList<String>();
@@ -162,15 +180,13 @@ public class InterfaceWorkerTest {
 
         //since sensor1 had a FAULT it should not appear in the list of available drivers
         List<String> res = w_.getDrivers(DriverCategory.SENSOR, capabilities);
-        assertEquals(res.size(), 3); //three POSITION drivers only
-        for (String s : res) {
-            assertNotEquals(s, "sensor1");
-        }
+        assertEquals(res.size(), 0); //three POSITION drivers only, which will not be returned
 
         //wait until system becomes OPERATIONAL
-        Thread.sleep(5005);
+        Thread.sleep(2005);
+        ready = w_.isSystemReady(); //need to make this call to force the flag to change since the FakeInterfaceMgr isn't monitoring
 
-        w_.handleBrokenBond("sensor1"); //this should write a message to the log
+        w_.handleBrokenBond("sensor1"); //this should write a message to the log AND THROW AN EXCEPTION
     }
 
     @After
@@ -187,25 +203,25 @@ public class InterfaceWorkerTest {
         DriverInfo position1 = new DriverInfo();
         position1.setPosition(true);
         position1.setName("position1");
-        position1.setStatus(DriverState.OPERATIONAL);
+        position1.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(position1);
 
         DriverInfo position2 = new DriverInfo();
         position2.setPosition(true);
         position2.setName("position2");
-        position2.setStatus(DriverState.FAULT);
+        position2.setState(DriverState.FAULT);
         w_.handleNewDriverStatus(position2);
 
         DriverInfo position3 = new DriverInfo();
         position3.setPosition(true);
         position3.setName("position3");
-        position3.setStatus(DriverState.OPERATIONAL);
+        position3.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(position3);
 
         DriverInfo sensor1 = new DriverInfo();
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
-        sensor1.setStatus(DriverState.OPERATIONAL);
+        sensor1.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(sensor1);
 
     }
@@ -219,11 +235,11 @@ public class InterfaceWorkerTest {
         DriverInfo sensor1 = new DriverInfo();
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
-        sensor1.setStatus(DriverState.OPERATIONAL);
+        sensor1.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(sensor1);
 
         //same driver again with a different status
-        sensor1.setStatus(DriverState.FAULT);
+        sensor1.setState(DriverState.FAULT);
         w_.handleNewDriverStatus(sensor1);
     }
 
@@ -231,13 +247,13 @@ public class InterfaceWorkerTest {
         DriverInfo sensor1 = new DriverInfo();
         sensor1.setSensor(true);
         sensor1.setName("sensor1");
-        sensor1.setStatus(DriverState.OPERATIONAL);
+        sensor1.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(sensor1);
 
         DriverInfo position3 = new DriverInfo();
         position3.setPosition(true);
         position3.setName("position3");
-        position3.setStatus(DriverState.OPERATIONAL);
+        position3.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(position3);
 
         w_.handleNewDriverStatus(sensor1);

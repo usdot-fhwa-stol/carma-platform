@@ -31,16 +31,21 @@ public class InterfaceWorker {
     protected int                           waitTime_ = 10;  //seconds that we must wait after last driver registered
     protected IInterfaceMgr                 mgr_;
     protected Log                           log_;
-    protected long                          startedWaiting_ = System.nanoTime();
+    protected long                          startedWaiting_;
     protected boolean                       systemOperational_ = false;
 
-    public InterfaceWorker(IInterfaceMgr mgr, Log log) {
+    InterfaceWorker(IInterfaceMgr mgr, Log log) {
         mgr_ = mgr;
         log_ = log;
+        startedWaiting_ = System.nanoTime();
     }
 
     /**
      * Stores the desired wait time for drivers to be discovered before declaring the system operational.
+     *
+     * NOTE: the wait is only approximate. In fact, it is likely that the elapsed time is truncated to the next
+     * lowest whole second before this comparison is made, so the actual wait time could be up to 1 sec more
+     * than this threshold.
      *
      * @param wait - number of seconds to wait for new drivers to announce themselves
      */
@@ -58,30 +63,33 @@ public class InterfaceWorker {
      * @param newDriver - all available details about the driver publishing its status
      */
     public void handleNewDriverStatus(DriverInfo newDriver) {
+        String name = newDriver.getName();
+
         //if we already know about this driver then
-        int index = getDriverIndex(newDriver.getName());
+        int index = getDriverIndex(name);
         if (index >= 0) {
 
             //if its info has changed then
             if (!isSame(newDriver, drivers_.get(index))) {
                 //record the updates
                 drivers_.set(index, newDriver);
-                log_.debug("InterfaceWorker.handleNewDriverStatus: status changed for " + newDriver.getName());
+                log_.debug("InterfaceWorker.handleNewDriverStatus: status changed for " + name);
             }
         //else it's a newly discovered driver
         }else {
             //get its list of capabilities (getDriverApi)
-            List<String> cap = mgr_.getDriverApi(newDriver.getName());
+            List<String> cap = mgr_.getDriverApi(name);
 
             //add the info to the list of known drivers
-            DriverInfo d = drivers_.get(index);
-            d.setCapabilities(cap);
+            newDriver.setCapabilities(cap);
+            drivers_.add(newDriver);
 
             //request InterfaceMgr to bind with it
-            mgr_.bindWithDriver(d.getName());
+            mgr_.bindWithDriver(name);
 
             //reset the wait timer
             startedWaiting_ = System.nanoTime();
+            log_.info("InterfaceWorker.handleNewDriverStatus: discovered new driver " + name);
         }
     }
 
@@ -92,19 +100,27 @@ public class InterfaceWorker {
      *
      * @param driverName - unique ID of the driver
      */
-    public void handleBrokenBond(String driverName) throws Exception {
+    public void handleBrokenBond(String driverName) throws IndexOutOfBoundsException {
+
+        //wait a second to make sure that the latest status info from that driver has been published to the
+        // discovery topic and therefore updated in our internal "database"
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+
         //look up the driver and determine its new set of properties (they will have been stored via the
         // /driver_discovery topic update)
         int index = getDriverIndex(driverName);
         if (index < 0) {
-            String msg = "InterfaceWorker.handleBrokenBond can't find driver" + driverName;
+            String msg = "InterfaceWorker.handleBrokenBond can't find driver" + driverName + ". ABORTING.";
             log_.warn(msg);
-            throw new Exception(msg);
+            throw new IndexOutOfBoundsException(msg);
         }
         DriverInfo driver = drivers_.get(index);
 
         //if functionality is totally unavailable then
-        DriverState state = driver.getStatus();
+        DriverState state = driver.getState();
         if (state == DriverState.FAULT  ||  state == DriverState.OFF) {
             //remove the driver from the list of available drivers
             drivers_.remove(index);
@@ -115,7 +131,7 @@ public class InterfaceWorker {
         if (systemOperational_  &&  state != DriverState.OPERATIONAL) {
 
             //formulate an alert message at the appropriate level depending on the type of driver that is reporting
-            // (notifyBrokenBond)
+            // (sendSystemAlert)
             AlertSeverity sev = AlertSeverity.CAUTION;
             String msg = null;
 
@@ -125,39 +141,37 @@ public class InterfaceWorker {
                     msg = "Controller driver " + driverName + " is no longer available.";
                 }else if (state == DriverState.DEGRADED) {
                     sev = AlertSeverity.WARNING;
-                    msg = "Controller driver " + driverName + " is operating on degraded capability.";
+                    msg = "Controller driver " + driverName + " is operating at degraded capability.";
                 }
             }
 
+            String level = (state == DriverState.DEGRADED) ? "degraded" : "gone";
             if (driver.isPosition()) {
-                String level = (state == DriverState.DEGRADED) ? "degraded" : "gone";
                 sev = AlertSeverity.WARNING;
                 msg = "Position driver " + driverName + " is " + level;
             }
 
             if (driver.isComms()) {
-                String level = (state == DriverState.DEGRADED) ? "degraded" : "gone";
                 sev = AlertSeverity.WARNING;
                 msg = "Comms driver " + driverName + " is " + level;
             }
 
             if (driver.isSensor()  ||  driver.isCan()) {
-                String level = (state == DriverState.DEGRADED) ? "degraded" : "gone";
                 sev = AlertSeverity.CAUTION;
                 msg = "Driver " + driverName + " is " + level;
             }
 
-            mgr_.notifyBrokenBond(sev, msg);
+            mgr_.sendSystemAlert(sev, msg);
         }
     }
 
     /**
      * Returns a list of drivers that each provide all of the given capabilities once the system is OPERATIONAL.
      *
-     * @param capabilities - a list of capabilities that must be met (inclusive)
+     * @param requestedCapabilities - a list of capabilities that must be met (inclusive)
      * @return - a list of driver names that meet all the capabilities
      */
-    public List<String> getDrivers(DriverCategory cat, List<String> capabilities) {
+    public List<String> getDrivers(DriverCategory cat, List<String> requestedCapabilities) {
         List<String> result = new ArrayList<String>();
 
         //if the system is ready for operation then
@@ -173,12 +187,12 @@ public class InterfaceWorker {
                     //loop through all requested capabilities
                     boolean foundAllCapabilities = true;
                     List<String> driverCaps = driver.getCapabilities();
-                    for (int req = 0;  req < capabilities.size();  ++req) {
+                    for (int req = 0;  req < requestedCapabilities.size();  ++req) {
 
                         //if this driver cannot provide this capability then break out of loop
                         boolean foundThisCapability = false;
                         for (int driverIndex = 0;  driverIndex < driverCaps.size();  ++driverIndex) {
-                            if (capabilities.get(req).equals(driverCaps.get(driverIndex))) {
+                            if (requestedCapabilities.get(req).equals(driverCaps.get(driverIndex))) {
                                 foundThisCapability = true;
                                 break;
                             }
@@ -210,6 +224,7 @@ public class InterfaceWorker {
      * @return - true if the system is newly OPERATIONAL (one call only will return true)
      */
     public boolean isSystemReady() {
+
         //if system is not yet OPERATIONAL then
         if (!systemOperational_) {
 
@@ -221,11 +236,11 @@ public class InterfaceWorker {
                 systemOperational_ = true;
                 //log the time required to get to this point
                 log_.info("///// InterfaceWorker declaring SYSTEM OPERATIONAL.");
+                log_.info("---elapsed = " + elapsed + ", waitTime = " + waitTime_);
             }
         }
 
         return systemOperational_;
-
     }
 
     //////////
@@ -260,7 +275,7 @@ public class InterfaceWorker {
         if (!a.getName().equals(b.getName())) {
             return false;
         }
-        if (a.getStatus() != b.getStatus()) {
+        if (a.getState() != b.getState()) {
             return false;
         }
         if (a.isCan() != b.isCan()) {

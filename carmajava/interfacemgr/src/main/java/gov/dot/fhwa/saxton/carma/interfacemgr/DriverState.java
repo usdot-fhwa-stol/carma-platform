@@ -18,8 +18,14 @@ package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 public enum DriverState {
     // CAUTION:  Enum values must match those defined in cav_msgs/DriverState.msg
-    OFF,
-    OPERATIONAL,
-    DEGRADED,
-    FAULT;
+    OFF(0),
+    OPERATIONAL(1),
+    DEGRADED(2),
+    FAULT(3);
+
+    private int val_;
+
+    DriverState(int val) {
+        val_ = val;
+    }
 }

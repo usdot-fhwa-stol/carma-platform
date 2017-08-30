@@ -17,12 +17,13 @@
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DriverInfo {
 
     private String          name;
-    private DriverState     status;
+    private DriverState     state;
     private boolean         can;
     private boolean         sensor;
     private boolean         position;
@@ -32,12 +33,13 @@ public class DriverInfo {
 
     public DriverInfo() {
         name = "";
-        status = DriverState.OFF;
+        state = DriverState.OFF;
         can = false;
         sensor = false;
         position = false;
         comms = false;
         controller = false;
+        capabilities = new ArrayList<String>();
     }
 
     public String getName() {
@@ -48,12 +50,12 @@ public class DriverInfo {
         this.name = name;
     }
 
-    public DriverState getStatus() {
-        return status;
+    public DriverState getState() {
+        return state;
     }
 
-    public void setStatus(DriverState status) {
-        this.status = status;
+    public void setState(DriverState state) {
+        this.state = state;
     }
 
     public boolean isCan() {
