@@ -9,50 +9,17 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Class responsible for ensuring valid lifecycle state transitions for IPlugin instances. Manages
  * a single-worker task queue to ensure that all actions are done as asynchronously as possible.
- *
+ * <p>
  * State transitions are added to this queue as they are requested.
  */
 public class PluginLifecycleHandler {
 
-    /**
-     * Enum used to describe the values of the plugin state
-     */
-    public enum PluginState {
-        UNINITIALIZED, // Initial state of system
-        INITIALIZING,
-        INITIALIZED,
-        RESUMING,
-        RESUMED,
-        LOOPING,
-        SUSPENDING,
-        SUSPENDED,
-        DESTROYING,
-        DESTROYED
-    }
-
-    /**
-     * Generic task worker thread, synchronously pulls tasks off its queue and then executes them
-     * asynchronously
-     */
-    protected class PluginWorker implements Runnable {
-        PluginWorker(BlockingQueue<Runnable> tasks) {
-            this.tasks = tasks;
-        }
-
-        @Override public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    Runnable task = tasks.take();
-                    task.run();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt(); // Retrigger the interruption
-                    break;
-                }
-            }
-        }
-
-        protected BlockingQueue<Runnable> tasks;
-    }
+    protected final BlockingQueue<Runnable> tasks; // Task queue
+    protected final IPlugin plugin; // Executed plugin
+    protected Thread t; // Worker thread
+    protected AtomicReference<PluginState> state = new AtomicReference<>(PluginState.UNINITIALIZED);
+        // Current state, thread safe
+    protected Log log;
 
     PluginLifecycleHandler(IPlugin plugin, Log log) {
         this.tasks = new LinkedBlockingQueue<>();
@@ -78,7 +45,7 @@ public class PluginLifecycleHandler {
 
     /**
      * Initialize the plugin.
-     *
+     * <p>
      * Only valid if the plugin is in the UNITIALIZED state as set by this PluginLifeCycleHandler's
      * creation. A new plugin instance and new corresponding PluginLifeCycleHandler must be created
      * to return the plugin to this state. Throws an illegal state exception if called in any other
@@ -137,7 +104,7 @@ public class PluginLifecycleHandler {
 
     /**
      * Resume the IPlugin's activity.
-     *
+     * <p>
      * Must only be called if the plugin is in INITIALIZED, SUSPENDING, or SUSPENDED state. As set by
      * the {@link PluginLifecycleHandler#initialize()} or {@link PluginLifecycleHandler#suspend()}
      * method. Throws an IllegalStateException otherwise.
@@ -193,7 +160,7 @@ public class PluginLifecycleHandler {
 
     /**
      * Suspend the IPlugin instance.
-     *
+     * <p>
      * Must only be called if the plugin is in RESUMED or LOOPING state, set by the
      * {@link PluginLifecycleHandler#resume()} method. Otherwise, will throw an IllegalStateException
      *
@@ -287,10 +254,35 @@ public class PluginLifecycleHandler {
     public PluginState getState() {
         return state.get();
     }
+    /**
+     * Enum used to describe the values of the plugin state
+     */
+    public enum PluginState {
+        UNINITIALIZED, // Initial state of system
+        INITIALIZING, INITIALIZED, RESUMING, RESUMED, LOOPING, SUSPENDING, SUSPENDED, DESTROYING, DESTROYED
+    }
 
-    protected Thread t; // Worker thread
-    protected final BlockingQueue<Runnable> tasks; // Task queue
-    protected final IPlugin plugin; // Executed plugin
-    protected AtomicReference<PluginState> state = new AtomicReference<>(PluginState.UNINITIALIZED); // Current state, thread safe
-    protected Log log;
+    /**
+     * Generic task worker thread, synchronously pulls tasks off its queue and then executes them
+     * asynchronously
+     */
+    protected class PluginWorker implements Runnable {
+        protected BlockingQueue<Runnable> tasks;
+
+        PluginWorker(BlockingQueue<Runnable> tasks) {
+            this.tasks = tasks;
+        }
+
+        @Override public void run() {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    Runnable task = tasks.take();
+                    task.run();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // Retrigger the interruption
+                    break;
+                }
+            }
+        }
+    }
 }

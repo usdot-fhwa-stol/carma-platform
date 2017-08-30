@@ -5,6 +5,9 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
  * interrupted.
  */
 public class LoopPluginTask implements Runnable {
+    protected TaskCompletionCallback callback;
+    protected IPlugin plugin;
+
     LoopPluginTask(IPlugin plugin, TaskCompletionCallback callback) {
         this.plugin = plugin;
         this.callback = callback;
@@ -21,7 +24,4 @@ public class LoopPluginTask implements Runnable {
             }
         }
     }
-
-    protected TaskCompletionCallback callback;
-    protected IPlugin plugin;
 }

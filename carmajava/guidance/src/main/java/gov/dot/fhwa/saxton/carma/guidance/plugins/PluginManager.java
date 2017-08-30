@@ -67,8 +67,9 @@ public class PluginManager implements Runnable {
         this.node = node;
         this.executor = new PluginExecutor(node.getLog());
 
-        pluginServiceLocator = new PluginServiceLocator(new ArbitratorService(),
-            new PluginManagementService(), pubSubService, node.getLog());
+        pluginServiceLocator =
+            new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
+                pubSubService, node.getLog());
     }
 
     protected void discoverPluginsOnClaspath() {

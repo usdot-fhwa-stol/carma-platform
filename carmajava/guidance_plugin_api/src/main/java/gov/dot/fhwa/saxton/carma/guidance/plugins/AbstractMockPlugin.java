@@ -1,16 +1,18 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import cav_msgs.SystemAlert;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
-import org.apache.commons.logging.Log;
 
 /**
  * Base class for Mock plugin implementations
- *
+ * <p>
  * Handles logging and message publication for
  */
 public abstract class AbstractMockPlugin extends AbstractPlugin {
+    protected final String topicPrefix = "system_alert";
+    protected final long sleepDuration = 5000;
+    protected IPublisher<SystemAlert> publisher;
+
     public AbstractMockPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
     }
@@ -44,7 +46,8 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
 
             SystemAlert msg = publisher.newMessage();
             msg.setType(SystemAlert.CAUTION);
-            msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " looping. Avail=" + availability);
+            msg.setDescription(
+                "Plugin " + getName() + ":" + getVersionId() + " looping. Avail=" + availability);
             publisher.publish(msg);
         }
 
@@ -68,8 +71,4 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
         msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " terminated");
         publisher.publish(msg);
     }
-
-    protected IPublisher<SystemAlert> publisher;
-    protected final String topicPrefix = "system_alert";
-    protected final long sleepDuration = 5000;
 }

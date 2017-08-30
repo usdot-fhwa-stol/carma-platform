@@ -5,10 +5,17 @@ import org.apache.commons.logging.Log;
 
 /**
  * Abstract base class for plugins
- *
+ * <p>
  * Provides the basic getters and setters so that implementors don't have to deal with that
  */
 public abstract class AbstractPlugin implements IPlugin {
+    protected String name;
+    protected String versionId;
+    protected boolean activation = false;
+    protected boolean availability = false;
+    protected Log log;
+    protected IPubSubService pubSubService;
+
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
         this.pubSubService = pluginServiceLocator.getPubSubService();
         this.log = pluginServiceLocator.getLog();
@@ -41,11 +48,4 @@ public abstract class AbstractPlugin implements IPlugin {
     @Override public void onReceiveNegotiationRequest() {
         throw new UnsupportedOperationException();
     }
-
-    protected String name;
-    protected String versionId;
-    protected boolean activation = false;
-    protected boolean availability = false;
-    protected Log log;
-    protected IPubSubService pubSubService;
 }

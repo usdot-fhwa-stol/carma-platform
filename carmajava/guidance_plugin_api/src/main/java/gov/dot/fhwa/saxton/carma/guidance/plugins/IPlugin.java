@@ -18,16 +18,17 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 /**
  * Interface describing the basic functionality of a CARMA Platform Guidance Plugin
- *
+ * <p>
  * The methods defined on this interface are used by other Guidance component elements to describe,
  * instantiate, control, and communicate with the plugin instances.
- *
+ * <p>
  * Plugins MUST implement this interface in their primary execution class otherwise the Guidance
  * PluginManager will not be able to locate the plugin on the classpath and it will not show up as
  * available for activation by the user.
  */
 public interface IPlugin {
     // Metadata methods
+
     /**
      * Get the name of the plugin instance, generally the name of the algorithm or the application.
      */
@@ -54,7 +55,7 @@ public interface IPlugin {
     /**
      * Main execution loop fro the plugin. Should be where the plugin spends the majority of its
      * time while active.
-     *
+     * <p>
      * Will be invoked by the PluginExecutor in a tight busy-loop. If the plugin needs to run at a
      * specific frequency it is the plugin's responsibility to insert the required timing logic.
      */

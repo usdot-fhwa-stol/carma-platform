@@ -1,6 +1,9 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 public class SuspendPluginTask implements Runnable {
+    protected IPlugin plugin;
+    protected TaskCompletionCallback callback;
+
     SuspendPluginTask(IPlugin plugin, TaskCompletionCallback callback) {
         this.plugin = plugin;
         this.callback = callback;
@@ -10,7 +13,4 @@ public class SuspendPluginTask implements Runnable {
         plugin.onSuspend();
         callback.onComplete();
     }
-
-    protected IPlugin plugin;
-    protected TaskCompletionCallback callback;
 }
