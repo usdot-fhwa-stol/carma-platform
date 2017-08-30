@@ -3,14 +3,21 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import org.apache.commons.logging.Log;
 
+/**
+ * Base class for Mock plugin implementations
+ *
+ * Handles logging and message publication for
+ */
 public abstract class AbstractMockPlugin extends AbstractPlugin {
-    AbstractMockPlugin(IPubSubService pubSubService) {
-        this.pubSubService = pubSubService;
+    public AbstractMockPlugin(PluginServiceLocator pluginServiceLocator) {
+        super(pluginServiceLocator);
     }
 
     @Override public void onInitialize() {
-        publisher = pubSubService.getPublisherForTopic(topicPrefix + getName() + getVersionId(), SystemAlert._TYPE);
+        log.info("Plugin " + getName() + ":" + getVersionId() + "initializing...");
+        publisher = pubSubService.getPublisherForTopic(topicPrefix, SystemAlert._TYPE);
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
         msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " initialized");
@@ -18,6 +25,7 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     }
 
     @Override public void onResume() {
+        log.info("Plugin " + getName() + ":" + getVersionId() + " resuming...");
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
         msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " resumed");
@@ -29,6 +37,8 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     }
 
     @Override public void loop() throws InterruptedException {
+        log.info("Plugin " + getName() + ":" + getVersionId() + " iterating...");
+
         if (getActivation()) {
             computeAvailability();
 
@@ -42,6 +52,8 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     }
 
     @Override public void onSuspend() {
+        log.info("Plugin " + getName() + ":" + getVersionId() + " suspending...");
+
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
         msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " suspended");
@@ -49,14 +61,15 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     }
 
     @Override public void onTerminate() {
+        log.info("Plugin " + getName() + ":" + getVersionId() + " terminating...");
+
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
         msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " terminated");
         publisher.publish(msg);
     }
 
-    protected IPubSubService pubSubService;
     protected IPublisher<SystemAlert> publisher;
-    protected final String topicPrefix = "/guidance/plugins/";
-    protected final long sleepDuration = 30000;
+    protected final String topicPrefix = "system_alert";
+    protected final long sleepDuration = 5000;
 }

@@ -28,7 +28,6 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
  */
 public interface IPlugin {
     // Metadata methods
-
     /**
      * Get the name of the plugin instance, generally the name of the algorithm or the application.
      */

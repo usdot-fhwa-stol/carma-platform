@@ -1,8 +1,19 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import org.apache.commons.logging.Log;
 
+/**
+ * Abstract base class for plugins
+ *
+ * Provides the basic getters and setters so that implementors don't have to deal with that
+ */
 public abstract class AbstractPlugin implements IPlugin {
+    public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
+        this.pubSubService = pluginServiceLocator.getPubSubService();
+        this.log = pluginServiceLocator.getLog();
+    }
+
     @Override public String getName() {
         return versionId;
     }
@@ -24,15 +35,17 @@ public abstract class AbstractPlugin implements IPlugin {
     }
 
     @Override public void planTrajectory() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override public void onReceiveNegotiationRequest() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     protected String name;
     protected String versionId;
     protected boolean activation = false;
     protected boolean availability = false;
+    protected Log log;
+    protected IPubSubService pubSubService;
 }

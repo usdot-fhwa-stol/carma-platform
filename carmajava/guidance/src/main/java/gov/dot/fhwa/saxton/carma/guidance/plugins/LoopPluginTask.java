@@ -13,7 +13,12 @@ public class LoopPluginTask implements Runnable {
     @Override public void run() {
         callback.onComplete();
         while (!Thread.currentThread().isInterrupted()) {
-            plugin.loop();
+            try {
+                plugin.loop();
+            } catch (InterruptedException e) {
+                // Rethrow the interruption
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 import cav_msgs.Plugin;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
+import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import org.ros.exception.ServiceException;
@@ -46,6 +47,7 @@ public class PluginManager implements Runnable {
     protected ConnectedNode node;
 
     protected PluginExecutor executor;
+    protected PluginServiceLocator pluginServiceLocator;
     protected List<IPlugin> registeredPlugins = new ArrayList<>();
 
     protected String serviceRouteUrl = "plugins";
@@ -63,11 +65,15 @@ public class PluginManager implements Runnable {
     public PluginManager(IPubSubService pubSubManager, ConnectedNode node) {
         this.pubSubService = pubSubManager;
         this.node = node;
+        this.executor = new PluginExecutor(node.getLog());
+
+        pluginServiceLocator = new PluginServiceLocator(new ArbitratorService(),
+            new PluginManagementService(), pubSubService, node.getLog());
     }
 
     protected void discoverPluginsOnClaspath() {
-        registeredPlugins.add(new MockCruisingPlugin(pubSubService));
-        registeredPlugins.add(new MockRouteFollowingPlugin(pubSubService));
+        registeredPlugins.add(new MockCruisingPlugin(pluginServiceLocator));
+        registeredPlugins.add(new MockRouteFollowingPlugin(pluginServiceLocator));
     }
 
     public List<IPlugin> getRegisteredPlugins() {
@@ -220,6 +226,13 @@ public class PluginManager implements Runnable {
         for (IPlugin p : getRegisteredPlugins()) {
             executor.submitPlugin(p);
             executor.initializePlugin(p.getName(), p.getVersionId());
+
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             executor.resumePlugin(p.getName(), p.getVersionId());
         }
 

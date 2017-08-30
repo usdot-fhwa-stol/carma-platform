@@ -1,11 +1,14 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-
+/**
+ * Mock implementation of something that might resemble a RouteFollowingPlugin
+ *
+ * Just reports a the name and versionId and toggles its activation status whenever it is activated
+ */
 public class MockRouteFollowingPlugin extends AbstractMockPlugin {
-    public MockRouteFollowingPlugin(IPubSubService pubSubService) {
-        super(pubSubService);
+    public MockRouteFollowingPlugin(PluginServiceLocator pluginServiceLocator) {
+        super(pluginServiceLocator);
         name = "MockRouteFollowingPlugin";
-        versionId = "v0.1a";
+        versionId = "v01a";
     }
 }

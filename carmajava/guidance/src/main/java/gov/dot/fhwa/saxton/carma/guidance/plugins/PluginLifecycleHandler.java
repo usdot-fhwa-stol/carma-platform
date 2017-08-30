@@ -1,5 +1,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
+import org.apache.commons.logging.Log;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -52,21 +54,26 @@ public class PluginLifecycleHandler {
         protected BlockingQueue<Runnable> tasks;
     }
 
-    PluginLifecycleHandler(IPlugin plugin) {
+    PluginLifecycleHandler(IPlugin plugin, Log log) {
         this.tasks = new LinkedBlockingQueue<>();
         this.plugin = plugin;
+        this.log = log;
     }
 
     /**
      * Private helper method for actually performing plugin initialization
      */
     private void doInitialize() {
+        log.info("Initializing " + plugin.getName() + ":" + plugin.getVersionId());
         state.set(PluginState.INITIALIZING);
         tasks.add(new InitializePluginTask(plugin, new TaskCompletionCallback() {
             @Override public void onComplete() {
                 state.set(PluginState.INITIALIZED);
             }
         }));
+
+        t = new Thread(new PluginWorker(tasks));
+        t.start();
     }
 
     /**
@@ -112,7 +119,7 @@ public class PluginLifecycleHandler {
      * Private helper method for actually performing the suspend operation
      */
     private void doResume() {
-        state.set(PluginState.RESUMING);
+        log.info("Resuming " + plugin.getName() + ":" + plugin.getVersionId());
         tasks.add(new ResumePluginTask(plugin, new TaskCompletionCallback() {
             @Override public void onComplete() {
                 state.set(PluginState.RESUMED);
@@ -120,6 +127,7 @@ public class PluginLifecycleHandler {
         }));
 
         // After resuming we always return to looping
+        log.info("Looping " + plugin.getName() + ":" + plugin.getVersionId());
         tasks.add(new LoopPluginTask(plugin, new TaskCompletionCallback() {
             @Override public void onComplete() {
                 state.set(PluginState.LOOPING);
@@ -139,9 +147,9 @@ public class PluginLifecycleHandler {
     public void resume() {
         switch (state.get()) {
             case UNINITIALIZED:
+                throw new IllegalStateException();
                 // INTENTIONAL FALL THROUGH
             case INITIALIZING:
-                throw new IllegalStateException();
             case INITIALIZED: {
                 doResume();
                 break;
@@ -180,7 +188,7 @@ public class PluginLifecycleHandler {
             }
         }));
         t = new Thread(new PluginWorker(tasks));
-        t.run();
+        t.start();
     }
 
     /**
@@ -234,8 +242,8 @@ public class PluginLifecycleHandler {
                 state.set(PluginState.DESTROYED);
             }
         }));
-        t = new Thread(new PluginWorker(tasks));
-        t.run();
+
+        t = null;
     }
 
     /**
@@ -284,4 +292,5 @@ public class PluginLifecycleHandler {
     protected final BlockingQueue<Runnable> tasks; // Task queue
     protected final IPlugin plugin; // Executed plugin
     protected AtomicReference<PluginState> state = new AtomicReference<>(PluginState.UNINITIALIZED); // Current state, thread safe
+    protected Log log;
 }

@@ -1,12 +1,15 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-
+/**
+ * Mock implementation of something that might resemble a CrusingPlugin
+ *
+ * Just reports a the name and versionId and toggles its activation status whenever it is activated
+ */
 public class MockCruisingPlugin extends AbstractMockPlugin {
 
-    public MockCruisingPlugin(IPubSubService pubSubService) {
-        super(pubSubService);
+    public MockCruisingPlugin(PluginServiceLocator pluginServiceLocator) {
+        super(pluginServiceLocator);
         name = "MockCruisingPlugin";
-        versionId = "v0.1a";
+        versionId = "v01a";
     }
 }

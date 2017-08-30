@@ -1,5 +1,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
+import org.apache.commons.logging.Log;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +12,11 @@ import java.util.Map;
  * based on the plugin name and plugin version values.
  */
 public class PluginExecutor {
+
+    PluginExecutor(Log log) {
+        this.log = log;
+    }
+
     /**
      * Submit a plugin for management by the PluginExecutor
      *
@@ -24,7 +31,7 @@ public class PluginExecutor {
      * @param plugin The plugin instance to begin tracking.
      */
     public void submitPlugin(IPlugin plugin) {
-        PluginLifecycleHandler handler = new PluginLifecycleHandler(plugin);
+        PluginLifecycleHandler handler = new PluginLifecycleHandler(plugin, log);
         lifecycleHandlers.put(plugin.getName() + plugin.getVersionId(), handler);
     }
 
@@ -84,4 +91,6 @@ public class PluginExecutor {
     }
 
     protected Map<String, PluginLifecycleHandler> lifecycleHandlers = new HashMap<>();
+    protected Log log;
+    protected PluginServiceLocator pluginServiceLocator;
 }
