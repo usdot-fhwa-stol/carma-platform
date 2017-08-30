@@ -72,9 +72,18 @@ public class PluginManager implements Runnable {
                 pubSubService, node.getLog());
     }
 
+    /**
+     * Load available plugins from the classpath.
+     * <p>
+     * Presently stubbed to simply load the mock plugins without going through discovery
+     */
     protected void discoverPluginsOnClaspath() {
-        registeredPlugins.add(new MockCruisingPlugin(pluginServiceLocator));
-        registeredPlugins.add(new MockRouteFollowingPlugin(pluginServiceLocator));
+        IPlugin p1 = new MockCruisingPlugin(pluginServiceLocator);
+        p1.setActivation(true);
+        registeredPlugins.add(p1);
+        IPlugin p2 = new MockRouteFollowingPlugin(pluginServiceLocator);
+        p2.setActivation(true);
+        registeredPlugins.add(p2);
     }
 
     public List<IPlugin> getRegisteredPlugins() {
@@ -229,7 +238,7 @@ public class PluginManager implements Runnable {
             executor.initializePlugin(p.getName(), p.getVersionId());
 
             try {
-                Thread.sleep(5000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
