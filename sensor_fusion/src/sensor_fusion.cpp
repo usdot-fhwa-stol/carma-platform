@@ -146,7 +146,7 @@ void SensorFusionApplication::update_subscribed_services() {
     }
 
     //velocity
-    ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::POSITION, "position/heading");
+    ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::POSITION, "position/velocity");
     for(const std::string& it : ret)
     {
         sub_map_[it] = nh_->subscribe<geometry_msgs::TwistStamped>(it,1,[this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg);});
