@@ -21,15 +21,15 @@ package gov.dot.fhwa.saxton.carma.geometry.geodesic;
  * It is not necessarily straight in the traditional sense as the distance is calculated along the surface of the earth according to a curved earth model.
  * TODO: Implement this class. Currently just a placeholder to allow other classes to compile.
  */
-public class EarthSegment {
-  Location loc1;
-  Location loc2;
+public class GreatCircleSegment {
+  protected Location loc1;
+  protected Location loc2;
   /**
    * Constructor initializes this earth segment with the provided locations
    * @param loc1 First gps location
    * @param loc2 Second gps location
    */
-  public EarthSegment(Location loc1, Location loc2) {
+  public GreatCircleSegment(Location loc1, Location loc2) {
     this.loc1 = loc1;
     this.loc2 = loc2;
   }

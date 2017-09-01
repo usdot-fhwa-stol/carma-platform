@@ -201,8 +201,6 @@ public class Route {
    * @param waypointList The list of waypoints which will be assigned
    */
   public void setWaypoints(List<RouteWaypoint> waypointList) {
-    System.out.println("\n \n Waypoint List \n \n");
-    System.out.println(waypointList);
     waypoints = waypointList;
     boolean firstWaypoint = true;
     RouteWaypoint prevWaypoint = null;

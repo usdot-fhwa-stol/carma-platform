@@ -39,7 +39,7 @@ public interface IDistanceStrategy {
    * @param seg The earth segment
    * @return The distance in meters
    */
-  double distanceLoc2Seg(Location loc, EarthSegment seg);
+  double distanceLoc2Seg(Location loc, GreatCircleSegment seg);
 
   /**
    * Calculates the earth surface distance between a gps location and a earth segment. (Earth cross track distance)
@@ -48,5 +48,5 @@ public interface IDistanceStrategy {
    * @param seg The earth segment
    * @return The distance in meters
    */
-  double distanceLoc2SegExtended(Location loc, EarthSegment seg);
+  double distanceLoc2SegExtended(Location loc, GreatCircleSegment seg);
 }

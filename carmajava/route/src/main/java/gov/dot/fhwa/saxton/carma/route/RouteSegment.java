@@ -16,7 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
-import gov.dot.fhwa.saxton.carma.geometry.geodesic.EarthSegment;
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.GreatCircleSegment;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.ros.message.MessageFactory;
 
@@ -28,7 +28,7 @@ import org.ros.message.MessageFactory;
 public class RouteSegment {
   final protected RouteWaypoint uptrackWP;
   final protected RouteWaypoint downtrackWP;
-  final protected EarthSegment earthSegment;
+  final protected GreatCircleSegment earthSegment;
   final protected double length;
 
   /**
@@ -39,7 +39,7 @@ public class RouteSegment {
   public RouteSegment(RouteWaypoint uptrackWP, RouteWaypoint downtrackWP){
     this.uptrackWP = uptrackWP;
     this.downtrackWP = downtrackWP;
-    this.earthSegment = new EarthSegment(this.uptrackWP.getLocation(), this.downtrackWP.getLocation());
+    this.earthSegment = new GreatCircleSegment(this.uptrackWP.getLocation(), this.downtrackWP.getLocation());
     length = 0; // TODO: Calculate the length here
   }
 

@@ -10,7 +10,6 @@ waypoints:
     lowerSpeedLimit: 0
     laneCount: 1
     nearestMileMarker: 1.0
-    requiredLaneIndex: -1
     roadType: FREEWAY
     disabledGuidanceAlgorithms: []
     laneClosures: []
@@ -24,7 +23,6 @@ waypoints:
     lowerSpeedLimit: 0
     laneCount: 1
     nearestMileMarker: 1.0
-    requiredLaneIndex: -1
     roadType: FREEWAY
     disabledGuidanceAlgorithms: []
     laneClosures: []
@@ -38,7 +36,6 @@ waypoints:
     lowerSpeedLimit: 0
     laneCount: 1
     nearestMileMarker: 1.0
-    requiredLaneIndex: -1
     roadType: FREEWAY
     disabledGuidanceAlgorithms: []
     laneClosures: []
@@ -52,7 +49,6 @@ waypoints:
     lowerSpeedLimit: 0
     laneCount: 1
     nearestMileMarker: 1.0
-    requiredLaneIndex: -1
     roadType: FREEWAY
     disabledGuidanceAlgorithms: []
     laneClosures: []
@@ -66,7 +62,6 @@ waypoints:
     lowerSpeedLimit: 0
     laneCount: 1
     nearestMileMarker: 1.0
-    requiredLaneIndex: -1
     roadType: FREEWAY
     disabledGuidanceAlgorithms: []
     laneClosures: []
