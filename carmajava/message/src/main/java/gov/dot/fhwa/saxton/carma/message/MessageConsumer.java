@@ -32,9 +32,9 @@ import org.ros.node.topic.Publisher;
  * <p>
  *
  *  Command line test: rosrun carma message gov.dot.fhwa.saxton.carma.message.MessageConsumer
- *  rostopic pub /system_alert cav_msgs/SystemAlert type: 5, description: hello}'
+ *  rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
  *  rostopic pub /saxton_cav/drivers/arada_application/comms/recv cav_msgs/ByteArray '{messageType: "BSM"}'
- *  rostopic pub /host_bsm cav_msgs/BSM
+ *  rostopic pub /host_bsm cav_msgs/BSM '{}'
  */
 public class MessageConsumer extends SaxtonBaseNode {
 
@@ -96,7 +96,7 @@ public class MessageConsumer extends SaxtonBaseNode {
             log.info("MessageConsumer received ByteArray of type MobilityIntro. Publishing MobilityIntro message");
             mobilityIntroPub.publish(mobilityIntroPub.newMessage());
             break;
-          case "MobilityNAck":
+          case "MobilityNack":
             log.info("MessageConsumer received ByteArray of type MobilityNack. Publishing MobilityNack message");
             mobilityNAckPub.publish(mobilityNAckPub.newMessage());
             break;
@@ -207,7 +207,7 @@ public class MessageConsumer extends SaxtonBaseNode {
         if (systemReady ) {
           log.info("MessageConsumer received BSM outbound. Publishing as ByteArray message");
           ByteArray byteArray = outboundPub.newMessage();
-          byteArray.setMessageType("MobilityNAck"); // Not sure if this is correct type use but will help validate messaging
+          byteArray.setMessageType("MobilityNack"); // Not sure if this is correct type use but will help validate messaging
           outboundPub.publish(byteArray);
         }
       }
