@@ -50,7 +50,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     protected IPubSubService pubSubService;
     protected ServiceServer<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>
         guidanceEnableService;
-    protected String messagingBaseUrl = "~/guidance";
+    protected String messagingBaseUrl = "~/";
     protected boolean enabled = false;
 
     @Override public GraphName getDefaultNodeName() {
