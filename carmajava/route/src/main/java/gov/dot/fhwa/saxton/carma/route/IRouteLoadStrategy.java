@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 rush
+ * TODO: Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,17 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
+package gov.dot.fhwa.saxton.carma.route;
+
+/**
+ * A strategy pattern interface for use of route loading methods.
+ * Implementing classes will override the load method.
+ * This allows for use of multiple route loading options such route files or google maps integration.
+ */
+public interface IRouteLoadStrategy {
+  /**
+   * Loads a route into memory.
+   * @return The initialized route which was loaded.
+   */
+  Route load();
+}

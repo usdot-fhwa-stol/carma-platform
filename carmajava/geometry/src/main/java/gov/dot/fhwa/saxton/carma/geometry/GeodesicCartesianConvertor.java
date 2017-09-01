@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 rush
+ * TODO: Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,14 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
+package gov.dot.fhwa.saxton.carma.geometry;
+
+/**
+ * Class responsible for converting between the different special representations in the geometry sub-package.
+ * Initially, it will only support conversion between a WGS-84 lat/lon/alt and a cartesian point.
+ * cartesian points are referenced from a provided frame defined with respect to the Earth Centered Earth Fixed Coordinate Frame (ECEF).
+ * TODO: Implement as this is currently just a placeholder
+ */
+public class GeodesicCartesianConvertor {
+
+}

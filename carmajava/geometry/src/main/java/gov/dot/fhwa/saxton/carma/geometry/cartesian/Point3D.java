@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 rush
+ * TODO: Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,15 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
+/**
+ * A point in a 3D cartesian coordinate system.
+ * While this class is an extension of Point, it will only support 3D locations.
+ * TODO: This class is currently just a skeleton to allow other classes to compile
+ */
+public class Point3D {
+}
