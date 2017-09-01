@@ -234,6 +234,8 @@
       <node pkg="carma" type="interfacemgr" name="interface_mgr"
             args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr">
 
+        <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
+        
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="tim"
