@@ -37,7 +37,7 @@ public class InterfaceWorker {
     InterfaceWorker(IInterfaceMgr mgr, Log log) {
         mgr_ = mgr;
         log_ = log;
-        startedWaiting_ = System.nanoTime();
+        startedWaiting_ = System.currentTimeMillis();
     }
 
     /**
@@ -70,7 +70,7 @@ public class InterfaceWorker {
         if (index >= 0) {
 
             //if its info has changed then
-            if (!isSame(newDriver, drivers_.get(index))) {
+            if (!newDriver.equals(drivers_.get(index))) {
                 //record the updates
                 drivers_.set(index, newDriver);
                 log_.debug("InterfaceWorker.handleNewDriverStatus: status changed for " + name);
@@ -88,7 +88,7 @@ public class InterfaceWorker {
             mgr_.bindWithDriver(name);
 
             //reset the wait timer
-            startedWaiting_ = System.nanoTime();
+            startedWaiting_ = System.currentTimeMillis();
             log_.info("InterfaceWorker.handleNewDriverStatus: discovered new driver " + name);
         }
     }
@@ -182,7 +182,7 @@ public class InterfaceWorker {
 
                 //if it matches the requested category then
                 DriverInfo driver = drivers_.get(index);
-                if (hasCategory(driver, cat)) {
+                if (driver.hasCategory(cat)) {
 
                     //loop through all requested capabilities
                     boolean foundAllCapabilities = true;
@@ -229,8 +229,8 @@ public class InterfaceWorker {
         if (!systemOperational_) {
 
             //if wait timer has expired then
-            long elapsed = System.nanoTime() - startedWaiting_;
-            if (TimeUnit.NANOSECONDS.toSeconds(elapsed) > waitTime_) {
+            long elapsed = System.currentTimeMillis() - startedWaiting_;
+            if (elapsed > 1000*waitTime_) {
 
                 //indicate that it is now OPERATIONAL
                 systemOperational_ = true;
@@ -262,77 +262,5 @@ public class InterfaceWorker {
         }
 
         return -1;
-    }
-
-    /**
-     * Determines if two driver specifications are identical.
-     *
-     * @param a - the first driver
-     * @param b - the second driver
-     * @return - true if they are identical; false otherwise
-     */
-    protected boolean isSame(DriverInfo a, DriverInfo b) {
-        if (!a.getName().equals(b.getName())) {
-            return false;
-        }
-        if (a.getState() != b.getState()) {
-            return false;
-        }
-        if (a.isCan() != b.isCan()) {
-            return false;
-        }
-        if (a.isComms() != b.isComms()) {
-            return false;
-        }
-        if (a.isController() != b.isController()) {
-            return false;
-        }
-        if (a.isPosition() != b.isPosition()) {
-            return false;
-        }
-        if (a.isSensor() != b.isSensor()) {
-            return false;
-        }
-
-        //look through all of the individual "capabilities" (api messages)
-        List<String> aCapList = a.getCapabilities();
-        List<String> bCapList = b.getCapabilities();
-        if (aCapList.size() != bCapList.size()) {
-            return false;
-        }
-
-        for (String aCap : aCapList) {
-            boolean found = false;
-            for (String bCap : bCapList) {
-                if (aCap.equals(bCap)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Determines if the given category is provided by the driver.
-     *
-     * @param d - driver in question
-     * @param cat - category in question
-     * @return true if the driver does fall into the given category
-     */
-    protected boolean hasCategory(DriverInfo d, DriverCategory cat) {
-        if ((cat == DriverCategory.CONTROLLER   &&  d.isController())   ||
-                (cat == DriverCategory.COMMS    &&  d.isComms())        ||
-                (cat == DriverCategory.CAN      &&  d.isCan())          ||
-                (cat == DriverCategory.POSITION &&  d.isPosition())     ||
-                (cat == DriverCategory.SENSOR   &&  d.isSensor())) {
-            return true;
-        }
-
-        return false;
     }
 }

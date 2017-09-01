@@ -24,12 +24,14 @@ public class DriverInfo {
 
     private String          name;
     private DriverState     state;
+    private List<String>    capabilities;
+    //the different possible categories a driver can represent. A given driver may cover multiple
+    // categories, so we can't use an enum here.
     private boolean         can;
     private boolean         sensor;
     private boolean         position;
     private boolean         comms;
     private boolean         controller;
-    private List<String>    capabilities;
 
     public DriverInfo() {
         name = "";
@@ -101,4 +103,68 @@ public class DriverInfo {
     public List<String> getCapabilities() { return capabilities; }
 
     public void setCapabilities(List<String> capabilities) { this.capabilities = capabilities; }
+
+    public boolean equals(DriverInfo b) {
+        if (!name.equals(b.getName())) {
+            return false;
+        }
+        if (state != b.getState()) {
+            return false;
+        }
+        if (can != b.isCan()) {
+            return false;
+        }
+        if (comms != b.isComms()) {
+            return false;
+        }
+        if (controller != b.isController()) {
+            return false;
+        }
+        if (position != b.isPosition()) {
+            return false;
+        }
+        if (sensor != b.isSensor()) {
+            return false;
+        }
+
+        //look through all of the individual "capabilities" (api messages)
+        List<String> bCapList = b.getCapabilities();
+        if (capabilities.size() != bCapList.size()) {
+            return false;
+        }
+
+        for (String aCap : capabilities) {
+            boolean found = false;
+            for (String bCap : bCapList) {
+                if (aCap.equals(bCap)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Determines if the given category is provided by the driver.
+     *
+     * @param cat - category in question
+     * @return true if the driver does fall into the given category
+     */
+    protected boolean hasCategory(DriverCategory cat) {
+        if ((cat == DriverCategory.CONTROLLER   &&  controller)   ||
+                (cat == DriverCategory.COMMS    &&  comms)        ||
+                (cat == DriverCategory.CAN      &&  can)          ||
+                (cat == DriverCategory.POSITION &&  position)     ||
+                (cat == DriverCategory.SENSOR   &&  sensor)) {
+            return true;
+        }
+
+        return false;
+    }
 }

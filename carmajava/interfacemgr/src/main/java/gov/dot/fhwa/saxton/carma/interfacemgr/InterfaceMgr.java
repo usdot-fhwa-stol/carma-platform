@@ -23,18 +23,19 @@ import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
+import org.ros.concurrent.CancellableLoop;
 import org.ros.exception.RemoteException;
 import org.ros.message.MessageListener;
+import org.ros.namespace.GraphName;
+import org.ros.node.ConnectedNode;
+import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.service.ServiceServer;
-import org.ros.node.topic.Subscriber;
-import org.ros.concurrent.CancellableLoop;
-import org.ros.namespace.GraphName;
-import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
-import org.ros.node.parameter.ParameterTree;
+import org.ros.node.topic.Subscriber;
+
 import java.util.List;
 
 /**
@@ -44,7 +45,9 @@ import java.util.List;
  * level software components based on the desired capabilities.  This main class defines the ROS node
  * and provides all of the ROS communications interfaces.
  *
- * Command line test: rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
+ * Command line test:
+ * rosparam set /interface_mgr/driver_wait_time 10
+ * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  */
 public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
@@ -68,10 +71,14 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         worker_ = new InterfaceWorker(this, log_); //must exist before first message listener
 
         //get wait time parameter
-        ParameterTree param = connectedNode.getParameterTree();
-        int waitTime = param.getInteger("/driver_wait_time"); //seconds
-        worker_.setWaitTime(waitTime);
-        log_.debug("InterfaceMgr.onStart read waitTime = " + waitTime);
+        try {
+            ParameterTree param = connectedNode.getParameterTree();
+            int waitTime = param.getInteger("~/driver_wait_time"); //seconds
+            worker_.setWaitTime(waitTime);
+            log_.debug("InterfaceMgr.onStart read waitTime = " + waitTime);
+        }catch (Exception e){
+            //do nothing - the worker will use a default value
+        }
 
 
 
@@ -131,10 +138,6 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
         // This CancellableLoop will be canceled automatically when the node shuts down
         connectedNode.executeCancellableLoop(new CancellableLoop() {
-
-            @Override
-            protected void setup() {
-            }//setup
 
             //Once the wait time expires we declare the system ready for operations, and let
             // all other nodes know.
@@ -210,7 +213,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     public void bindWithDriver(String driverName) {
 
         //call the bind service, providing callbacks for both formed bond and broken bond
-        String serviceName = "/" + driverName + "/bind";
+        String serviceName = driverName + "/bind";
         ServiceClient<cav_srvs.BindRequest, cav_srvs.BindResponse> serviceClient =
                 waitForService(serviceName, cav_srvs.Bind._TYPE, connectedNode_, 5000);
 
@@ -241,25 +244,28 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         final ResultHolder rh = new ResultHolder();
 
         //call the api service for the given driver
-        final String serviceName = "/" + driverName + "/get_driver_api";
+        final String serviceName = driverName + "/get_driver_api";
         ServiceClient<cav_srvs.GetDriverApiRequest, cav_srvs.GetDriverApiResponse> serviceClient =
                 waitForService(serviceName, cav_srvs.GetDriverApi._TYPE, connectedNode_, 5000);
+
         if (serviceClient == null) {
             log_.warn("InterfaceMgr could not find service \"" + serviceName + "\"");
+        }else {
+
+            cav_srvs.GetDriverApiRequest req = serviceClient.newMessage();
+
+            serviceClient.call(req, new ServiceResponseListener<GetDriverApiResponse>() {
+                @Override
+                public void onSuccess(GetDriverApiResponse response) {
+                    rh.setResult(response.getApiList());
+                }
+
+                @Override
+                public void onFailure(RemoteException e) {
+                    log_.warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+                }
+            });
         }
-        cav_srvs.GetDriverApiRequest req = serviceClient.newMessage();
-
-        serviceClient.call(req, new ServiceResponseListener<GetDriverApiResponse>() {
-            @Override
-            public void onSuccess(GetDriverApiResponse response) {
-                rh.setResult(response.getApiList());
-            }
-
-            @Override
-            public void onFailure(RemoteException e) {
-                log_.warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
-            }
-        });
 
         return rh.getResult();
     }
