@@ -38,7 +38,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     // Member Variables
     protected ExecutorService executor;
-    protected int numThreads = 4;
+    protected int numThreads = 5;
     protected IPubSubService pubSubService;
 
     @Override public GraphName getDefaultNodeName() {
@@ -55,7 +55,9 @@ public class GuidanceMain extends SaxtonBaseNode {
         PluginManager pluginManager = new PluginManager(pubSubService, node);
         TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubService);
         Tracking tracking = new Tracking(pubSubService, node.getLog());
+        Maneuvers maneuvers = new Maneuvers(pubSubService, node);
 
+        executor.execute(maneuvers);
         executor.execute(arbitrator);
         executor.execute(pluginManager);
         executor.execute(trajectoryExecutor);
