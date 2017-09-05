@@ -30,6 +30,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
+import sensor_msgs.NavSatFix;
 
 /**
  * Guidance package Tracking component
@@ -63,6 +64,13 @@ public class Tracking implements Runnable {
         // Configure subscribers
         // TODO: Gather trajectory data internally from Guidance.Arbitrator and Guidance.Trajectory
         // TODO: Update when NavSatFix.msg is available
+        ISubscriber<NavSatFix> navSatFixSubscriber = iPubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
+        navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
+            @Override public void onMessage(NavSatFix msg) {
+                log.info("Received NavSatFix:" + msg);
+            }
+        });
+
         ISubscriber<HeadingStamped> headingStampedSubscriber = iPubSubService.getSubscriberForTopic(
             "heading", HeadingStamped._TYPE);
 
@@ -86,7 +94,8 @@ public class Tracking implements Runnable {
         for (; ; ) {
             cav_msgs.SystemAlert systemAlertMsg = statusPublisher.newMessage();
             systemAlertMsg
-                .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
+                .setDescription("Tracking has not detected a running trajectory, no means to compute"
+                    + " crosstrack error");
             systemAlertMsg.setType(SystemAlert.CAUTION);
             statusPublisher.publish(systemAlertMsg);
 
