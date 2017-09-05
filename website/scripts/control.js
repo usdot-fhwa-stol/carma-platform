@@ -31,7 +31,6 @@ document.getElementById('defaultOpen').click();
 */
 function createRadioElement(container, radioId, radioTitle, itemCount, groupName) {
 
-    // Create the new text box
     var newInput = document.createElement('input');
     newInput.type = 'radio';
     newInput.name = groupName;
@@ -46,4 +45,26 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
     container.appendChild(newInput);
     container.appendChild(newLabel);
 
+}
+
+/*
+* Adds a new checkbox onto the container.
+* TODO: See if it can be combined with the one above.
+*/
+function createCheckboxElement (container, checkboxId, checkboxTitle, itemCount, groupName, isChecked){
+
+    var newInput = document.createElement('input');
+    newInput.type = 'checkbox';
+    newInput.name = groupName;
+    newInput.id = checkboxId.toString();
+    newInput.checked = isChecked;
+    newInput.onclick = function () { activatePlugin(checkboxId.toString()) };
+
+    var newLabel = document.createElement('label');
+    newLabel.htmlFor = checkboxId.toString();
+    newLabel.innerHTML = checkboxTitle;
+
+    // Add the new elements to the container
+    container.appendChild(newInput);
+    container.appendChild(newLabel);
 }
