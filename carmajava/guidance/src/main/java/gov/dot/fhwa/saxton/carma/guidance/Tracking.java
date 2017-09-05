@@ -58,13 +58,13 @@ public class Tracking implements Runnable {
         // Configure publishers for system status and BSM data
         IPublisher<SystemAlert> statusPublisher =
             iPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
-        IPublisher<BSM> bsmPublisher = iPubSubService.getPublisherForTopic("~/tracking/bsm", BSM._TYPE);
+        IPublisher<BSM> bsmPublisher = iPubSubService.getPublisherForTopic("bsm", BSM._TYPE);
 
         // Configure subscribers
         // TODO: Gather trajectory data internally from Guidance.Arbitrator and Guidance.Trajectory
         // TODO: Update when NavSatFix.msg is available
         ISubscriber<HeadingStamped> headingStampedSubscriber = iPubSubService.getSubscriberForTopic(
-            "/sensor_fusion/filtered/heading", HeadingStamped._TYPE);
+            "heading", HeadingStamped._TYPE);
 
         headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
             @Override public void onMessage(HeadingStamped msg) {
@@ -73,7 +73,7 @@ public class Tracking implements Runnable {
         });
 
         ISubscriber<TwistStamped> twistStampedSubscriber = iPubSubService.getSubscriberForTopic(
-            "sensor_fusion/filtered/velocity", TwistStamped._TYPE);
+            "velocity", TwistStamped._TYPE);
 
         twistStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
             @Override public void onMessage(TwistStamped msg) {
