@@ -172,9 +172,9 @@ public class PluginManager implements Runnable {
         IPublisher<SystemAlert> pub =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-        IPublisher<PluginListResponse> pluginPublisher = pubSubService
+        IPublisher<cav_msgs.PluginList> pluginPublisher = pubSubService
             .getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
-                PluginListResponse._TYPE);
+                cav_msgs.PluginList._TYPE);
 
         for (; ; ) {
             // Publish system alert status
@@ -186,7 +186,7 @@ public class PluginManager implements Runnable {
 
             NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
             MessageFactory factory = nodeConfig.getTopicMessageFactory();
-            PluginListResponse availablePlugins = factory.newFromType(PluginListResponse._TYPE);
+            cav_msgs.PluginList availablePlugins = factory.newFromType(cav_msgs.PluginList._TYPE);
 
             // Publish mock available plugin status
             Header h = factory.newFromType(Header._TYPE);
