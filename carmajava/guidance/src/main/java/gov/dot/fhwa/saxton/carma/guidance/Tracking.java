@@ -20,10 +20,14 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.BSM;
 import cav_msgs.BSMCoreData;
+import cav_msgs.HeadingStamped;
 import cav_msgs.SystemAlert;
+import com.sun.org.apache.bcel.internal.generic.ISUB;
+import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 
@@ -57,8 +61,27 @@ public class Tracking implements Runnable {
         IPublisher<BSM> bsmPublisher = iPubSubService.getPublisherForTopic("~/tracking/bsm", BSM._TYPE);
 
         // Configure subscribers
-        // No message for NavSatFix
-        // TODO: Update when NavSatFix.msg is created
+        // TODO: Gather trajectory data internally from Guidance.Arbitrator and Guidance.Trajectory
+        // TODO: Update when NavSatFix.msg is available
+        ISubscriber<HeadingStamped> headingStampedSubscriber = iPubSubService.getSubscriberForTopic(
+            "/sensor_fusion/filtered/heading", HeadingStamped._TYPE);
+
+        headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
+            @Override public void onMessage(HeadingStamped msg) {
+                log.info("Received HeadingStamped:" + msg.toString());
+            }
+        });
+
+        ISubscriber<TwistStamped> twistStampedSubscriber = iPubSubService.getSubscriberForTopic(
+            "sensor_fusion/filtered/velocity", TwistStamped._TYPE);
+
+        twistStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
+            @Override public void onMessage(TwistStamped msg) {
+                log.info("Received TwistStamped:" + msg.toString());
+            }
+        });
+
+        // TODO: Integrate CAN data from Environment layer when available
 
         for (; ; ) {
             cav_msgs.SystemAlert systemAlertMsg = statusPublisher.newMessage();
@@ -96,6 +119,7 @@ public class Tracking implements Runnable {
             coreData.setSpeed(0);
             coreData.getTransmission().setTransmissionState((byte) 0 );
 
+            // Publish the BSM data
             bsmPublisher.publish(bsmFrame);
 
             try {
