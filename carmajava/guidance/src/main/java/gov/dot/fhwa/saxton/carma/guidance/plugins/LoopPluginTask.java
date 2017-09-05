@@ -14,6 +14,7 @@ public class LoopPluginTask implements Runnable {
     }
 
     @Override public void run() {
+        // Invoke the complete callback early since there is no LOOPED state only LOOPING
         callback.onComplete();
         while (!Thread.currentThread().isInterrupted()) {
             try {

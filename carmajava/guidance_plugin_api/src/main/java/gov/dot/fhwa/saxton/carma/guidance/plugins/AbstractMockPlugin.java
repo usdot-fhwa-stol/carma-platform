@@ -34,10 +34,6 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
         publisher.publish(msg);
     }
 
-    private void computeAvailability() {
-        availability = Math.random() > 0.5;
-    }
-
     @Override public void loop() throws InterruptedException {
         log.info("Plugin " + getName() + ":" + getVersionId() + " iterating...");
 
@@ -70,5 +66,9 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
         msg.setType(SystemAlert.CAUTION);
         msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " terminated");
         publisher.publish(msg);
+    }
+
+    private void computeAvailability() {
+        availability = Math.random() > 0.5;
     }
 }

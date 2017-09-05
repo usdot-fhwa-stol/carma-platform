@@ -260,8 +260,23 @@ public class PluginManager implements Runnable {
             try {
                 Thread.sleep(sleepDurationMillis);
             } catch (InterruptedException e) {
-                // Ignore
+                break; // Fall out of loop if we get interrupted
             }
+        }
+
+        // If we're shutting down, properly handle graceful plugin shutdown as well
+        for (IPlugin p : getRegisteredPlugins()) {
+            executor.suspendPlugin(p.getName(), p.getVersionId());
+        }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (IPlugin p: getRegisteredPlugins()) {
+            executor.terminatePlugin(p.getName(), p.getVersionId());
         }
     }
 }

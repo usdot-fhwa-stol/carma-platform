@@ -7,10 +7,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Class responsible for ensuring valid lifecycle state transitions for IPlugin instances. Manages
+ * Class responsible for ensuring valid lifecycle state transitions for a single IPlugin. Manages
  * a single-worker task queue to ensure that all actions are done as asynchronously as possible.
  * <p>
- * State transitions are added to this queue as they are requested.
+ * State transitions are puted to this queue as they are requested.
  */
 public class PluginLifecycleHandler {
 
@@ -33,11 +33,15 @@ public class PluginLifecycleHandler {
     private void doInitialize() {
         log.info("Initializing " + plugin.getName() + ":" + plugin.getVersionId());
         state.set(PluginState.INITIALIZING);
-        tasks.add(new InitializePluginTask(plugin, new TaskCompletionCallback() {
-            @Override public void onComplete() {
-                state.set(PluginState.INITIALIZED);
-            }
-        }));
+        try {
+            tasks.put(new InitializePluginTask(plugin, new TaskCompletionCallback() {
+                @Override public void onComplete() {
+                    state.set(PluginState.INITIALIZED);
+                }
+            }));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         t = new Thread(new PluginWorker(tasks));
         t.start();
@@ -54,52 +58,40 @@ public class PluginLifecycleHandler {
      * @throws IllegalStateException
      */
     public void initialize() {
-        switch (state.get()) {
-            case UNINITIALIZED: {
-                doInitialize();
-                break;
-            }
-            case INITIALIZING:
-                // INTENTIONAL FALL THROUGH
-            case INITIALIZED:
-                // INTENTIONAL FALL THROUGH
-            case RESUMING:
-                // INTENTIONAL FALL THROUGH
-            case RESUMED:
-                // INTENTIONAL FALL THROUGH
-            case LOOPING:
-                // INTENTIONAL FALL THROUGH
-            case SUSPENDING:
-                // INTENTIONAL FALL THROUGH
-            case SUSPENDED:
-                // INTENTIONAL FALL THROUGH
-            case DESTROYING:
-                // INTENTIONAL FALL THROUGH
-            case DESTROYED:
-                // INTENTIONAL FALL THROUGH
-            default:
-                throw new IllegalStateException();
+        if (state.get() == PluginState.UNINITIALIZED) {
+            doInitialize();
+        } else {
+            throw new IllegalStateException();
         }
     }
 
     /**
-     * Private helper method for actually performing the suspend operation
+     * Private helper method for actually performing the resume operation
      */
     private void doResume() {
         log.info("Resuming " + plugin.getName() + ":" + plugin.getVersionId());
-        tasks.add(new ResumePluginTask(plugin, new TaskCompletionCallback() {
-            @Override public void onComplete() {
-                state.set(PluginState.RESUMED);
-            }
-        }));
+        state.set(PluginState.RESUMING);
+        try {
+            tasks.put(new ResumePluginTask(plugin, new TaskCompletionCallback() {
+                @Override public void onComplete() {
+                    state.set(PluginState.RESUMED);
+                }
+            }));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         // After resuming we always return to looping
         log.info("Looping " + plugin.getName() + ":" + plugin.getVersionId());
-        tasks.add(new LoopPluginTask(plugin, new TaskCompletionCallback() {
-            @Override public void onComplete() {
-                state.set(PluginState.LOOPING);
-            }
-        }));
+        try {
+            tasks.put(new LoopPluginTask(plugin, new TaskCompletionCallback() {
+                @Override public void onComplete() {
+                    state.set(PluginState.LOOPING);
+                }
+            }));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -149,11 +141,15 @@ public class PluginLifecycleHandler {
         t.interrupt();
         tasks.clear();
         state.set(PluginState.SUSPENDING);
-        tasks.add(new SuspendPluginTask(plugin, new TaskCompletionCallback() {
-            @Override public void onComplete() {
-                state.set(PluginState.SUSPENDED);
-            }
-        }));
+        try {
+            tasks.put(new SuspendPluginTask(plugin, new TaskCompletionCallback() {
+                @Override public void onComplete() {
+                    state.set(PluginState.SUSPENDED);
+                }
+            }));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         t = new Thread(new PluginWorker(tasks));
         t.start();
     }
@@ -204,11 +200,15 @@ public class PluginLifecycleHandler {
         t.interrupt();
         tasks.clear();
         state.set(PluginState.DESTROYING);
-        tasks.add(new TerminatePluginTask(plugin, new TaskCompletionCallback() {
-            @Override public void onComplete() {
-                state.set(PluginState.DESTROYED);
-            }
-        }));
+        try {
+            tasks.put(new TerminatePluginTask(plugin, new TaskCompletionCallback() {
+                @Override public void onComplete() {
+                    state.set(PluginState.DESTROYED);
+                }
+            }));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         t = null;
     }
