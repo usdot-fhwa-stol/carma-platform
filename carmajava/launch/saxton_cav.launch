@@ -38,6 +38,9 @@
   <arg name="radar_data_file"          default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
   <arg name="cellular_data_file"       default="$(arg DATA_DIR)/arada.csv" doc="Path cellular can simulation data"/>
 
+  <!-- RouteFiles -->
+  <arg name="ROUTES_DIR" default="$(find carma)/route/src/test/resources/routefiles/" doc="Path to the directory containing example route files"/>
+
   <!-- ROS Namespaces -->
   <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
   <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
@@ -216,6 +219,7 @@
         <node pkg="carma" type="route" name="route_manager"
               args="gov.dot.fhwa.saxton.carma.route.RouteManager">
           <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
+          <param name="default_database_path" type="string" value="$(arg ROUTES_DIR)"/>
 
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
@@ -233,6 +237,8 @@
       <!-- Interface Manager Node -->
       <node pkg="carma" type="interfacemgr" name="interface_mgr"
             args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr">
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>

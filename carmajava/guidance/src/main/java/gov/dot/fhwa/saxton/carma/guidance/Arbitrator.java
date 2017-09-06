@@ -16,9 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import cav_msgs.SystemAlert;
+import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+import org.apache.commons.logging.Log;
+import org.ros.node.ConnectedNode;
 
 /**
  * Guidance package Arbitrator component
@@ -27,25 +30,27 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
  * to plan trajectories for the vehicle to execute.
  */
 public class Arbitrator implements Runnable {
-    protected final String componentName = "Arbitrator";
     protected final long sleepDurationMillis = 30000;
-    // Member variables
-    protected IPubSubService IPubSubService;
-    protected int sequenceNumber = 0;
-    public Arbitrator(IPubSubService IPubSubService) {
-        this.IPubSubService = IPubSubService;
+    protected IPubSubService iPubSubService;
+    protected ConnectedNode node;
+    protected Log log;
+
+    Arbitrator(IPubSubService iPubSubService, ConnectedNode node) {
+        this.iPubSubService = iPubSubService;
+        this.node = node;
+        this.log = node.getLog();
     }
 
     @Override public void run() {
-        IPublisher<SystemAlert> pub =
-            IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
-        for (; ; ) {
-            cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
-            systemAlertMsg
-                .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
-            systemAlertMsg.setType(SystemAlert.CAUTION);
-            pub.publish(systemAlertMsg);
+        log.info("Arbitrator running!");
+        ISubscriber<RouteState> routeStateSubscriber = iPubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
+        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+            @Override public void onMessage(RouteState msg) {
+                log.info("Received RouteState:" + msg);
+            }
+        });
 
+        for (; ; ) {
             try {
                 Thread.sleep(sleepDurationMillis);
             } catch (InterruptedException e) {
