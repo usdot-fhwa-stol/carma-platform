@@ -1,6 +1,6 @@
 # Test route file
 !gov.dot.fhwa.saxton.carma.route.Route
-routeName: TestRoute
+routeName: Test Route
 waypoints:
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
