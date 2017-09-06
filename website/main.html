@@ -3,10 +3,29 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <meta name="mobile-web-app-capable" content="yes">
     <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
     <script src="scripts/roslib.js"></script>
+
     <link rel="stylesheet" type="text/css" href="css/styles.css">
+
+    <!--
+    Setup:
+    1) Update IP on rosbridge.js
+    2) Update top_ns on rosbridge.js
+
+    Manual commands to run prior to website opening:
+    1) source devel/setup.bash on all terminal windows
+    2) roscore
+    3) roslaunch rosbridge_server rosbridge_websocket.launch
+    4) rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
+    5) rosparam set /route_manager/default_database_path /home/mfromm/catkin_ws/src/CarmaPlatform/carmajava/route/src/main/test/resources/routefiles
+    6) rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
+    7) rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
+    8) rosparam load /home/mfromm/catkin_ws/src/CarmaPlatform/carmajava/launch/params/HostVehicleParams.yaml
+    9) rosparam load /home/mfromm/catkin_ws/src/CarmaPlatform/carmajava/launch/params/CommandAPIParams.yaml
+    -->
 </head>
 <body>
     <div class="tab">
@@ -14,12 +33,14 @@
         <button class="tablinks" onclick="openTab(event, 'divMapCavs')">MAP &amp CAVs</button>
         <button class="tablinks" onclick="openTab(event, 'divMoreInfo')">MORE INFO</button>
     </div>
+    <div class="tabheader">
+        <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance"  class="button_disabled" disabled>CAV Guidance</button>
+    </div>
     <div id="divCapabilities" class="tabcontent">
-        <div id="divCapabilitiesMessage" class="message_box">Please select a route.</div>
+        <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
         <div id="divRoutes" align="center">
         </div>
         <div id="divSubCapabilities" hidden="true" align="center">
-            <p>Not yet implemented.</p>
         </div>
     </div>
     <div id="divMapCavs" class="tabcontent">
@@ -36,7 +57,7 @@
                 Connected to ROSBridge.
             </p>
             <p id="error" style="color:#FF0000; display:none">
-                Error in the backend. ROSBridge unable to connect.
+                ROSBridge unable to connect.
             </p>
             <p id="closed" style="display:none">
                 ROSBridge connection closed.
@@ -45,6 +66,24 @@
         <h4>System Status Logs</h4>
         <div id="divLog" class="logStatus">
         </div>
+    </div>
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <h2>System Alert!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Some text in the Modal Body</p>
+            </div>
+            <div class="modal-footer">
+                <button id="btnModal" onclick="closeModal();" title="CAV Guidance">OK</button>
+            </div>
+        </div>
+
     </div>
     <script src="scripts/control.js"></script>
     <script src="scripts/rosbridge.js"></script>

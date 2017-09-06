@@ -1,6 +1,6 @@
 # Route file based off the east bound waypoints used in glidepath demos
 !gov.dot.fhwa.saxton.carma.route.Route
-routeName: GlidepathDemoEastBound
+routeName: Glidepath Demo East Bound
 waypoints:
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
