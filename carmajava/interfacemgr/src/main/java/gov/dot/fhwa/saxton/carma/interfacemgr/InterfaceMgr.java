@@ -172,35 +172,15 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             public void build(cav_srvs.GetDriversWithCapabilitiesRequest request,
                               cav_srvs.GetDriversWithCapabilitiesResponse response) {
 
-                DriverCategory cat;
-                switch (request.getCategory()) {
-                    case GetDriversWithCapabilitiesRequest.CONTROLLER:
-                        cat = DriverCategory.CONTROLLER;
-                        break;
-                    case GetDriversWithCapabilitiesRequest.COMMS:
-                        cat = DriverCategory.COMMS;
-                        break;
-                    case GetDriversWithCapabilitiesRequest.POSITION:
-                        cat = DriverCategory.POSITION;
-                        break;
-                    case GetDriversWithCapabilitiesRequest.SENSOR:
-                        cat = DriverCategory.SENSOR;
-                        break;
-                    case GetDriversWithCapabilitiesRequest.CAN:
-                        cat = DriverCategory.CAN;
-                        break;
-                    default:
-                        cat = DriverCategory.UNDEFINED;
-                }
-                log_.debug("InterfaceMgr.driverCapSvr: received request for category=" + cat.toString()
-                            + " with " + request.getCapabilities().size() + " capabilities listed.");
+                log_.debug("InterfaceMgr.driverCapSvr: received request with " + request.getCapabilities().size() +
+                        " capabilities listed.");
 
                 //figure out which drivers match the request
-                List<String> res = worker_.getDrivers(cat, request.getCapabilities());
+                List<String> res = worker_.getDrivers(request.getCapabilities());
                 log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size() + " matching drivers.");
 
                 //formulate the service response
-                response.setDriverNames(res);
+                response.setDriverData(res);
             }
         });
 

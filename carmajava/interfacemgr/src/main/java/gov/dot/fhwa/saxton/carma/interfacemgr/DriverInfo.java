@@ -153,10 +153,15 @@ public class DriverInfo {
     /**
      * Determines if the given category is provided by the driver.
      *
-     * @param cat - category in question
+     * @param cat - category in question (may be UNDEFINED, in which case a driver always matches)
      * @return true if the driver does fall into the given category
      */
     protected boolean hasCategory(DriverCategory cat) {
+
+        if (cat == DriverCategory.UNDEFINED) {
+            return true;
+        }
+
         if ((cat == DriverCategory.CONTROLLER   &&  controller)   ||
                 (cat == DriverCategory.COMMS    &&  comms)        ||
                 (cat == DriverCategory.CAN      &&  can)          ||
