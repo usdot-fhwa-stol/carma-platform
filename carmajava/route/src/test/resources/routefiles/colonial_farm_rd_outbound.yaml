@@ -1,6 +1,6 @@
 # Route file which describes the colonial farm road leaving from saxton garage at TFHRC
 !gov.dot.fhwa.saxton.carma.route.Route
-routeName: ColonialFarmRdOutbound
+routeName: Colonial Farm Rd. Outbound
 waypoints:
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
