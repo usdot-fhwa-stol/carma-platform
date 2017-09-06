@@ -14,11 +14,12 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance;
+package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import cav_msgs.Plugin;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
+import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import org.ros.exception.ServiceException;
@@ -45,6 +46,10 @@ public class PluginManager implements Runnable {
     protected int sequenceNumber = 0;
     protected ConnectedNode node;
 
+    protected PluginExecutor executor;
+    protected PluginServiceLocator pluginServiceLocator;
+    protected List<IPlugin> registeredPlugins = new ArrayList<>();
+
     protected String messagingBaseUrl = "plugins";
     protected String getRegisteredPluginsServiceUrl = "get_registered_plugins";
     protected String getActivePluginsServiceUrl = "get_active_plugin";
@@ -60,6 +65,29 @@ public class PluginManager implements Runnable {
     public PluginManager(IPubSubService pubSubManager, ConnectedNode node) {
         this.pubSubService = pubSubManager;
         this.node = node;
+        this.executor = new PluginExecutor(node.getLog());
+
+        pluginServiceLocator =
+            new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
+                pubSubService, node.getLog());
+    }
+
+    /**
+     * Load available plugins from the classpath.
+     * <p>
+     * Presently stubbed to simply load the mock plugins without going through discovery
+     */
+    protected void discoverPluginsOnClaspath() {
+        IPlugin p1 = new MockCruisingPlugin(pluginServiceLocator);
+        p1.setActivation(true);
+        registeredPlugins.add(p1);
+        IPlugin p2 = new MockRouteFollowingPlugin(pluginServiceLocator);
+        p2.setActivation(true);
+        registeredPlugins.add(p2);
+    }
+
+    public List<IPlugin> getRegisteredPlugins() {
+        return registeredPlugins;
     }
 
     /**
@@ -167,8 +195,22 @@ public class PluginManager implements Runnable {
     }
 
     @Override public void run() {
-        setupServices();
+        discoverPluginsOnClaspath();
 
+        for (IPlugin p : getRegisteredPlugins()) {
+            executor.submitPlugin(p);
+            executor.initializePlugin(p.getName(), p.getVersionId());
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            executor.resumePlugin(p.getName(), p.getVersionId());
+        }
+
+        setupServices();
         IPublisher<SystemAlert> pub =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
@@ -218,8 +260,23 @@ public class PluginManager implements Runnable {
             try {
                 Thread.sleep(sleepDurationMillis);
             } catch (InterruptedException e) {
-                // Ignore
+                break; // Fall out of loop if we get interrupted
             }
+        }
+
+        // If we're shutting down, properly handle graceful plugin shutdown as well
+        for (IPlugin p : getRegisteredPlugins()) {
+            executor.suspendPlugin(p.getName(), p.getVersionId());
+        }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (IPlugin p: getRegisteredPlugins()) {
+            executor.terminatePlugin(p.getName(), p.getVersionId());
         }
     }
 }

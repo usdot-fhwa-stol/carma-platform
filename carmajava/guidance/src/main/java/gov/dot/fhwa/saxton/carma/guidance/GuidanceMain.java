@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import cav_srvs.SetGuidanceEnabled;
 import cav_srvs.SetGuidanceEnabledRequest;
 import cav_srvs.SetGuidanceEnabledResponse;
@@ -30,9 +31,6 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
-import org.ros.node.service.ServiceServerListener;
-
-import java.net.URI;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
