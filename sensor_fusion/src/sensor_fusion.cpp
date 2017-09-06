@@ -67,13 +67,11 @@ int SensorFusionApplication::run() {
 }
 
 std::vector<std::string>
-SensorFusionApplication::get_api(const cav_srvs::GetDriversWithCapabilitiesRequest::_category_type type,
-                                 const std::string &name) {
+SensorFusionApplication::get_api(const std::string &name) {
 
     //Setup service call
     ros::ServiceClient client = nh_->serviceClient<cav_srvs::GetDriversWithCapabilities>("get_drivers_with_capabilities");
     cav_srvs::GetDriversWithCapabilities srv;
-    srv.request.category = type;
     srv.request.capabilities.push_back(name);
 
     std::vector<std::string> ret;
@@ -81,7 +79,7 @@ SensorFusionApplication::get_api(const cav_srvs::GetDriversWithCapabilitiesReque
     {
 
         //The service returns a list of drivers that have the api we provided
-        for(std::string driverName : srv.response.driver_names)
+        for(std::string driverName : srv.response.driver_data)
         {
 
             //Bond with the node if we haven't already
@@ -125,35 +123,35 @@ SensorFusionApplication::get_api(const cav_srvs::GetDriversWithCapabilitiesReque
 
 void SensorFusionApplication::update_subscribed_services() {
     //odometry
-    std::vector<std::string> ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::POSITION, "position/odometry");
+    std::vector<std::string> ret = get_api("position/odometry");
     for(const std::string& it : ret)
     {
         sub_map_[it] = nh_->subscribe<nav_msgs::Odometry>(it,1,[this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg);});
     }
 
     //nav_sat_fix
-    ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::POSITION, "position/nav_sat_fix");
+    ret = get_api("position/nav_sat_fix");
     for(const std::string& it : ret)
     {
         sub_map_[it] = nh_->subscribe<sensor_msgs::NavSatFix>(it,1,[this](const ros::MessageEvent<sensor_msgs::NavSatFix const>&msg){ navsatfix_cb(msg);});
     }
 
     //heading
-    ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::POSITION, "position/heading");
+    ret = get_api("position/heading");
     for(const std::string& it : ret)
     {
         sub_map_[it] = nh_->subscribe<cav_msgs::HeadingStamped>(it,1,[this](const ros::MessageEvent<cav_msgs::HeadingStamped>&  msg){ heading_cb(msg);});
     }
 
     //velocity
-    ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::POSITION, "position/velocity");
+    ret = get_api("position/velocity");
     for(const std::string& it : ret)
     {
         sub_map_[it] = nh_->subscribe<geometry_msgs::TwistStamped>(it,1,[this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg);});
     }
 
     //tracked_objects
-    ret = get_api(cav_srvs::GetDriversWithCapabilitiesRequest::SENSOR, "sensor/tracked_objects");
+    ret = get_api("sensor/tracked_objects");
     for(const std::string& it : ret)
     {
         sub_map_[it] = nh_->subscribe<cav_msgs::ExternalObjectList>(it,1,[this](const ros::MessageEvent<cav_msgs::ExternalObjectList>& msg){ trackedobjects_cb(msg);});

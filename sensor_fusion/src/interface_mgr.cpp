@@ -49,13 +49,13 @@
 bool getDriversWithCapabilities(cav_srvs::GetDriversWithCapabilitiesRequest& req,
                                 cav_srvs::GetDriversWithCapabilitiesResponse& res)
 {
-    if(req.category != cav_srvs::GetDriversWithCapabilitiesRequest::POSITION)
-    {
-        res.driver_names.clear();
-        return true;
-    }
+    //if(req.category != cav_srvs::GetDriversWithCapabilitiesRequest::POSITION)
+    //{
+    //    res.driver_names.clear();
+    //    return true;
+    //}
 
-    res.driver_names.push_back("/pinpoint");
+    res.driver_data.push_back("/pinpoint");
 
 }
 
