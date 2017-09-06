@@ -14,6 +14,9 @@ import org.ros.node.ConnectedNode;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Guidance sub-component responsible for the execution of maneuvers and generation of maneuver plans
+ */
 public class Maneuvers implements Runnable {
     Maneuvers(IPubSubService iPubSubService, ConnectedNode node) {
         this.iPubSubService = iPubSubService;
