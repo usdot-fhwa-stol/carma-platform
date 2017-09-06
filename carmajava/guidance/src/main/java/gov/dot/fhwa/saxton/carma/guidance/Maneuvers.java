@@ -47,7 +47,6 @@ public class Maneuvers implements Runnable {
             .getPublisherForTopic("new_plan", NewPlan._TYPE);
 
         while (!Thread.currentThread().isInterrupted()) {
-
             NewPlan newPlan = newPlanPublisher.newMessage();
             newPlan.setExpiration(node.getCurrentTime());
             newPlan.getHeader().setChecksum((short) 0);
