@@ -55,7 +55,11 @@ bool getDriversWithCapabilities(cav_srvs::GetDriversWithCapabilitiesRequest& req
     //    return true;
     //}
 
-    res.driver_data.push_back("/pinpoint");
+    for(auto it : req.capabilities)
+    {        
+        res.driver_data.push_back("/pinpoint/" + it);
+    }
+
 
 }
 

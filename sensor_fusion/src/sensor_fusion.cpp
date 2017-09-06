@@ -79,8 +79,10 @@ SensorFusionApplication::get_api(const std::string &name) {
     {
 
         //The service returns a list of drivers that have the api we provided
-        for(std::string driverName : srv.response.driver_data)
+        for(std::string fqn : srv.response.driver_data)
         {
+            size_t pos = fqn.find(name);
+            std::string driverName = fqn.substr(0,pos);
 
             //Bond with the node if we haven't already
             if(bond_map_.find(driverName) == bond_map_.end())
@@ -111,9 +113,8 @@ SensorFusionApplication::get_api(const std::string &name) {
 
             //If we haven't subscribed to the topic formed by the name of the node and the service
             //add this topic to the return list
-            std::string topic_name = driverName + "/" + name;
-            if(sub_map_.find(topic_name) == sub_map_.end())
-                ret.push_back(topic_name);
+            if(sub_map_.find(fqn) == sub_map_.end())
+                ret.push_back(fqn);
         }
 
     }
