@@ -54,7 +54,7 @@ public class Maneuvers implements Runnable {
             newPlan.getHeader().setPlanId(curPlanId++);
             newPlan.getHeader().setSenderId("test-cav1");
             newPlan.getHeader().setRecipientId("test-cav2");
-            newPlan.setObjective((byte) 0);
+            newPlan.setObjective((byte) 3);
 
             List<String> participantIds = new ArrayList<>();
             participantIds.add("test-cav1");
@@ -68,7 +68,7 @@ public class Maneuvers implements Runnable {
             m.setStartRoadwayLaneId((byte) 0);
             m.setStartRoadwayLink("link1");
             m.setStartRoadwayOriginatorPosition(0);
-            m.setType((byte) 0);
+            m.setType((byte) 8);
             maneuvers.add(m);
             newPlan.setManeuvers(maneuvers);
 
