@@ -27,12 +27,27 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 
+//Services
+import org.ros.node.service.ServiceClient;
+import org.ros.node.service.ServiceServer;
+import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.service.ServiceResponseListener;
+import org.ros.exception.RemoteException;
+import org.ros.exception.RosRuntimeException;
+
+//Lists
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * The Message package is part of the Vehicle Environment package. It processes all V2V and V2I messages coming from Drivers.Comms ROS node.
  * <p>
  *
  *  Command line test: rosrun carma message gov.dot.fhwa.saxton.carma.message.MessageConsumer
  *  rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
+ *  rosparam set /interface_mgr/driver_wait_time 10
+ *  rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  *  rostopic pub /saxton_cav/drivers/arada_application/comms/recv cav_msgs/ByteArray '{messageType: "BSM"}'
  *  rostopic pub /host_bsm cav_msgs/BSM '{}'
  */
@@ -63,6 +78,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 //  TODO uncomment when messages are defined
 //  protected Subscriber<cav_msgs.MobilityPlan> mobilityPlanOutboundSub;
 
+   // Used Services
+  ServiceClient<cav_srvs.GetDriversWithCapabilitiesRequest, cav_srvs.GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
+
   @Override
   public GraphName getDefaultNodeName() {
     return GraphName.of("message_consumer");
@@ -71,6 +89,48 @@ public class MessageConsumer extends SaxtonBaseNode {
   @Override
   public void onStart(final ConnectedNode connectedNode) {
     final Log log = connectedNode.getLog();
+
+    //Start of GetDriversWithCapabilitiesResponse
+    // Request driver from Interface Manager
+    // Used Services
+    getDriversWithCapabilitiesClient = this.waitForService("/get_drivers_with_capabilities", cav_srvs.GetDriversWithCapabilities._TYPE, connectedNode, 5000);
+    if (getDriversWithCapabilitiesClient == null) {
+      log.error(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
+      //throw new RosRuntimeException(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
+    }
+
+    // Setup Request
+    final cav_srvs.GetDriversWithCapabilitiesRequest requestGetDrivers = getDriversWithCapabilitiesClient.newMessage();
+
+    // Input parameter is list of capabilities
+    List<String> lstCapabilities = new ArrayList<>();
+    lstCapabilities.add("outbound_binary_msg");
+    lstCapabilities.add("inbound_binary_msg");
+    requestGetDrivers.setCapabilities(lstCapabilities);
+
+    // Make Service call.
+    getDriversWithCapabilitiesClient.call(requestGetDrivers, new ServiceResponseListener<cav_srvs.GetDriversWithCapabilitiesResponse>() {
+      @Override
+      public void onSuccess(cav_srvs.GetDriversWithCapabilitiesResponse response) {
+
+        //Log as is.
+        connectedNode.getLog().info("MessageConsumer GetDriversWithCapabilitiesResponse: " + response.getDriverData());
+
+        List<String> responseCapabilities = new ArrayList<>();
+        responseCapabilities = response.getDriverData();
+
+        //Loop through each string array and print out the results.
+        for (String driverDataItem : response.getDriverData()) {
+          connectedNode.getLog().info("MessageConsumer GetDriversWithCapabilitiesResponse Driver Data Item: " + driverDataItem);
+        }
+      }
+
+      @Override
+      public void onFailure(RemoteException e) {
+        throw new RosRuntimeException(e);
+      }
+    });
+    // End of Service Request to GetDriversWithCapabilitiesResponse
 
     // Fake Pubs and Subs TODO: Remove!!!
     // The following are two example pub/subs for connecting to the mock arada driver using the launch file.
