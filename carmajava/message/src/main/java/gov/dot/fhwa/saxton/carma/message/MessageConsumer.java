@@ -93,7 +93,7 @@ public class MessageConsumer extends SaxtonBaseNode {
     //Start of GetDriversWithCapabilitiesResponse
     // Request driver from Interface Manager
     // Used Services
-    getDriversWithCapabilitiesClient = this.waitForService("/get_drivers_with_capabilities", cav_srvs.GetDriversWithCapabilities._TYPE, connectedNode, 5000);
+    getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities", cav_srvs.GetDriversWithCapabilities._TYPE, connectedNode, 5000);
     if (getDriversWithCapabilitiesClient == null) {
       log.error(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
       //throw new RosRuntimeException(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
