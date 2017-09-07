@@ -231,6 +231,9 @@ void SRXApplication::feedbackUpdaterTask(diagnostic_updater::DiagnosticStatusWra
 }
 
 void SRXApplication::pre_spin() {
+    //run diagnostic updater
+    diag_updater_.update();
+
     //set command mode to none so that we only send if we received a command to send this iteration
     cmd_mode_ = CommandMode_t::None;
 
@@ -350,10 +353,6 @@ void SRXApplication::post_spin() {
         ROS_DEBUG_STREAM_THROTTLE(2, "Commanding speed: " << set_speed_ << ", " << set_accel_);
         dbw_ctrl_->setSpeedAccel(set_speed_, set_accel_);
     }
-
-
-    //run diagnostic updater
-    diag_updater_.update();
 
 }
 
