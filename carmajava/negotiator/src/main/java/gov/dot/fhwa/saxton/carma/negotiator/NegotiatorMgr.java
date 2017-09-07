@@ -40,7 +40,6 @@ import org.ros.namespace.NameResolver;
  * Simple example
  * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
  * rostopic pub /new_plan_outbound cav_msgs/NewPlan '{header: {sender_id: a, plan_id: 44, checksum: 0}}'
- * rostopic pub /mobility_greeting_inbound cav_msgs/MobilityGreeting '{header: {sender_id: b, recipient_id: a, negotiation_id: 44, checksum: 0}, session_key: h, verification_code: "h"}'
  */
 public class NegotiatorMgr extends SaxtonBaseNode{
 
@@ -171,7 +170,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             MobilityIntro introMsg = mobIntroOutPub.newMessage();
             introMsg.getHeader().setSenderId("Host Vehicle 1");
             introMsg.getHeader().setPlanId((short)1);
-            introMsg.getPlanType().setType(PlanType.SPEEDUP);
+            introMsg.setPlanType(lastNewPlanMsg.getPlanType());
             introMsg.getMyEntityType().setType(MobilityEntityType.VEHICLE);
             mobIntroOutPub.publish(introMsg);
           }
