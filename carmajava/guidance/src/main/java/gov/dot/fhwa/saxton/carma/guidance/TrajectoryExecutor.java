@@ -75,7 +75,6 @@ public class TrajectoryExecutor implements Runnable {
             reqdCapabilities.add("lateral");
             reqdCapabilities.add("longitudinal");
             req.setCapabilities(reqdCapabilities);
-            req.setCategory((byte) 1);
             final GetDriversWithCapabilitiesResponse[] drivers =
                 new GetDriversWithCapabilitiesResponse[1];
             driverCapabilityService.call(req,
