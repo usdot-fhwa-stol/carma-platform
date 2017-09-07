@@ -1,9 +1,6 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import cav_msgs.Maneuver;
-import cav_msgs.NewPlan;
-import cav_msgs.RoadwayEnvironment;
-import cav_msgs.Route;
+import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
@@ -56,7 +53,7 @@ public class Maneuvers implements Runnable {
             newPlan.getHeader().setPlanId(curPlanId++);
             newPlan.getHeader().setSenderId("test-cav1");
             newPlan.getHeader().setRecipientId("test-cav2");
-            newPlan.setObjective((byte) 3);
+            newPlan.getPlanType().setType(PlanType.JOIN_PLATOON_REAR);
 
             List<String> participantIds = new ArrayList<>();
             participantIds.add("test-cav1");
