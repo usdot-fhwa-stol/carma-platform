@@ -1,0 +1,52 @@
+/*
+ * TODO: Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package gov.dot.fhwa.saxton.carma.geometry.geodesic;
+
+/**
+ * An interface which provides functions for calculating distances between location objects and segments.
+ * This interface is implemented by different algorithms for calculating distances between points using curved earth models.
+ */
+public interface IDistanceStrategy {
+  /**
+   * Calculates the earth surface distance between two gps locations
+   *
+   * @param loc1 The first location
+   * @param loc2 The second location
+   * @return The distance in meters between the two provided locations
+   */
+  double distanceLoc2Loc(Location loc1, Location loc2);
+
+  /**
+   * Calculates the earth surface distance between a gps location and a earth segment.
+   * Distances are determined by calculating crosstrack distance and distance to segment end points.
+   * The minimum of these three values is returned.
+   *
+   * @param loc The location
+   * @param seg The earth segment
+   * @return The distance in meters
+   */
+  double distanceLoc2Seg(Location loc, GreatCircleSegment seg);
+
+  /**
+   * Calculates the earth surface distance between a gps location and a earth segment. (Earth cross track distance)
+   *
+   * @param loc The location
+   * @param seg The earth segment
+   * @return The distance in meters
+   */
+  double distanceLoc2SegExtended(Location loc, GreatCircleSegment seg);
+}

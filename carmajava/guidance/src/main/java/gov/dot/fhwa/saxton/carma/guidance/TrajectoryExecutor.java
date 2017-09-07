@@ -18,18 +18,9 @@
 //Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import org.apache.commons.logging.Log;
-import org.ros.message.MessageListener;
-import org.ros.node.topic.Subscriber;
-import org.ros.concurrent.CancellableLoop;
-import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
-import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
-import org.ros.node.topic.Publisher;
-import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
+import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 
 /**
  * Guidance package TrajectoryExecutor component
@@ -39,24 +30,29 @@ import org.ros.message.MessageFactory;
  * currently configured plugins.
  */
 public class TrajectoryExecutor implements Runnable {
-  public TrajectoryExecutor(PubSubManager pubSubManager) {
-    this.pubSubManager = pubSubManager;
-  }
-
-  @Override public void run() {
-    for (; ; ) {
-      pubSubManager.publish("Hello World! I am " + componentName + ". " + sequenceNumber++);
-
-      try {
-        Thread.sleep(sleepDurationMillis);
-      } catch (InterruptedException e) {
-      }
+    // Member variables
+    protected final String componentName = "TrajectoryExecutor";
+    protected final long sleepDurationMillis = 30000;
+    protected IPubSubService IPubSubService;
+    protected int sequenceNumber = 0;
+    public TrajectoryExecutor(IPubSubService IPubSubService) {
+        this.IPubSubService = IPubSubService;
     }
-  }
 
-  // Member variables
-  protected final String componentName = "TrajectoryExecutor";
-  protected PubSubManager pubSubManager;
-  protected int sequenceNumber = 0;
-  protected final long sleepDurationMillis = 30000;
+    @Override public void run() {
+        IPublisher<SystemAlert> pub =
+            IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+        for (; ; ) {
+            cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
+            systemAlertMsg
+                .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
+            systemAlertMsg.setType(SystemAlert.CAUTION);
+            pub.publish(systemAlertMsg);
+
+            try {
+                Thread.sleep(sleepDurationMillis);
+            } catch (InterruptedException e) {
+            }
+        }
+    }
 }

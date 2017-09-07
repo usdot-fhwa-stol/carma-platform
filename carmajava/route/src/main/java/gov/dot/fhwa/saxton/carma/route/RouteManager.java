@@ -16,33 +16,55 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import cav_msgs.*;
+import cav_msgs.Route;
+import cav_msgs.RouteSegment;
+import cav_srvs.*;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
+import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
-import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
-import org.ros.node.service.ServiceResponseListener;
-import org.ros.exception.RemoteException;
-import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
+import sensor_msgs.NavSatFix;
 
 /**
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
  * <p>
- *
- * Command line test: rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
+ * <p>
+ * Command line test:
+ * rosparam set /route_manager/default_database_path /home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles
+ * rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
+ * Command line test for the service:
+ * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
+ * rosservice call /get_available_routes
+ * rosservice call /set_active_route "routeID: 'TestRoute'"
  */
-public class RouteManager extends AbstractNodeMain {
+public class RouteManager extends SaxtonBaseNode implements IRouteManager{
+
+  protected ConnectedNode connectedNode;
+
+  // Topics
+  // Publishers
+  Publisher<cav_msgs.SystemAlert> systemAlertPub;
+  Publisher<cav_msgs.RouteSegment> segmentPub;
+  Publisher<cav_msgs.Route> routePub;
+  Publisher<cav_msgs.RouteState> routeStatePub;
+  // Subscribers
+  Subscriber<sensor_msgs.NavSatFix> gpsSub;
+  Subscriber<cav_msgs.SystemAlert> alertSub;
+  // Services
+  // Provided
+  protected ServiceServer<SetActiveRouteRequest, SetActiveRouteResponse> setActiveRouteService;
+  protected ServiceServer<GetAvailableRoutesRequest, GetAvailableRoutesResponse>
+    getAvailableRouteService;
+  protected RouteWorker routeWorker;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("route_manager");
@@ -50,101 +72,91 @@ public class RouteManager extends AbstractNodeMain {
 
   @Override public void onStart(final ConnectedNode connectedNode) {
 
+    this.connectedNode = connectedNode;
     final Log log = connectedNode.getLog();
+    // Parameters
+    ParameterTree params = connectedNode.getParameterTree();
+    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
 
     /// Topics
     // Publishers
-    final Publisher<cav_msgs.SystemAlert> systemAlertPub =
-      connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
-    final Publisher<cav_msgs.RouteSegment> segmentPub =
-      connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
-    final Publisher<cav_msgs.Route> routePub =
-      connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
-    final Publisher<cav_msgs.RouteState> routeStatePub =
-      connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
+    systemAlertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
+    segmentPub = connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
+    routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
+    routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
 
     // Subscribers
     //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
-    Subscriber<sensor_msgs.NavSatFix> gpsSub =
-      connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
-    Subscriber<cav_msgs.SystemAlert> alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+    gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
+    gpsSub.addMessageListener(new MessageListener<NavSatFix>() {
+      @Override public void onNewMessage(NavSatFix navSatFix) {
+        routeWorker.handleNavSatFixMsg(navSatFix);
+      }
+    });
+
+    alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-      @Override
-      public void onNewMessage(cav_msgs.SystemAlert message) {
-
-        String messageTypeFullDescription = "NA";
-
-        switch (message.getType()) {
-          case cav_msgs.SystemAlert.CAUTION:
-            messageTypeFullDescription = "Take caution! ";
-            break;
-          case cav_msgs.SystemAlert.WARNING:
-            messageTypeFullDescription = "I have a warning! ";
-            break;
-          case cav_msgs.SystemAlert.FATAL:
-            messageTypeFullDescription = "I am FATAL! ";
-            break;
-          case cav_msgs.SystemAlert.NOT_READY:
-            messageTypeFullDescription = "I am NOT Ready! ";
-            break;
-          case cav_msgs.SystemAlert.SYSTEM_READY:
-            messageTypeFullDescription = "I am Ready! ";
-            break;
-          default:
-            messageTypeFullDescription = "I am NOT Ready! ";
-        }
-
-        log.info("route_manager heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
-
+      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
+        routeWorker.handleSystemAlertMsg(message);
       }//onNewMessage
     });//addMessageListener
 
     // Services
     // Server
-    ServiceServer<cav_srvs.GetAvailableRoutesRequest, cav_srvs.GetAvailableRoutesResponse>
-      getActiveRouteService = connectedNode
-      .newServiceServer("get_available_routes", cav_srvs.GetAvailableRoutes._TYPE,
-        new ServiceResponseBuilder<cav_srvs.GetAvailableRoutesRequest, cav_srvs.GetAvailableRoutesResponse>() {
-          @Override public void build(cav_srvs.GetAvailableRoutesRequest request,
-            cav_srvs.GetAvailableRoutesResponse response) {
-          }
-        });
-    ServiceServer<cav_srvs.SetActiveRouteRequest, cav_srvs.SetActiveRouteResponse>
-      setActiveRouteService = connectedNode
-      .newServiceServer("set_active_route", cav_srvs.SetActiveRoute._TYPE,
-        new ServiceResponseBuilder<cav_srvs.SetActiveRouteRequest, cav_srvs.SetActiveRouteResponse>() {
-          @Override public void build(cav_srvs.SetActiveRouteRequest request,
-            cav_srvs.SetActiveRouteResponse response) {
+    getAvailableRouteService = connectedNode
+      .newServiceServer("get_available_routes", GetAvailableRoutes._TYPE,
+        new ServiceResponseBuilder<GetAvailableRoutesRequest, GetAvailableRoutesResponse>() {
+          @Override public void build(GetAvailableRoutesRequest request,
+            GetAvailableRoutesResponse response) {
+            response.setAvailableRoutes(routeWorker.getAvailableRoutes().getAvailableRoutes());
           }
         });
 
-    // Parameters
-    ParameterTree params = connectedNode.getParameterTree();
-    //Getting the ros param called run_id.
-    final String rosRunID = params.getString("/run_id");
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
+    setActiveRouteService = connectedNode.newServiceServer("set_active_route", SetActiveRoute._TYPE,
+      new ServiceResponseBuilder<SetActiveRouteRequest, SetActiveRouteResponse>() {
+        @Override
+        public void build(SetActiveRouteRequest request, SetActiveRouteResponse response) {
+          response.setErrorStatus(routeWorker.setActiveRoute(request).getErrorStatus());
+        }
+      });
 
-    
+    // This CancellableLoop will be canceled automatically when the node shuts down
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       private int sequenceNumber;
+
       @Override protected void setup() {
         sequenceNumber = 0;
       }//setup
 
       @Override protected void loop() throws InterruptedException {
-        cav_msgs.SystemAlert systemAlertMsg = systemAlertPub.newMessage();
-        systemAlertMsg.setDescription("Hello World! " + "I am route_manager. " + sequenceNumber + " run_id = " + rosRunID + ".");
-        systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+        routeWorker.onLoop(sequenceNumber);
 
-        systemAlertPub.publish(systemAlertMsg);
-
-        //log.info("RouteManager DatabasePath Param" + params.getString("~/default_database_path"))
         sequenceNumber++;
-        Thread.sleep(30000);
+        Thread.sleep(100);
       }
-    }//CancellableLoop
-    );//executeCancellableLoop
+    });
   }//onStart
-}//AbstractNodeMain
 
+  @Override public void publishSystemAlert(SystemAlert systemAlert) {
+    systemAlertPub.publish(systemAlert);
+  }
+
+  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
+    segmentPub.publish(routeSegment);
+  }
+
+  @Override public void publishActiveRoute(Route route) {
+    routePub.publish(route);
+  }
+
+  @Override public void publishRouteState(RouteState routeState) {
+    routeStatePub.publish(routeState);
+  }
+
+  @Override public Time getTime() {
+    if (connectedNode == null){
+      return new Time();
+    }
+    return connectedNode.getCurrentTime();
+  }
+}//AbstractNodeMain

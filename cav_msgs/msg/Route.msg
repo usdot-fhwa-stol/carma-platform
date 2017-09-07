@@ -12,5 +12,8 @@ Header header
 # The route id
 string routeID
 
+# The route name for display to users
+string routeName
+
 # A list of segments which comprise the route
 cav_msgs/RouteSegment[] segments

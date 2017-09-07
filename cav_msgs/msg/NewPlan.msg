@@ -10,14 +10,7 @@
 cav_msgs/MobilityHeader header
 
 # enumeration of the originator's objective for creating this plan
-uint8       objective
-
-# enumeration values for objective:
-uint8       LEAVE_ENDING_LANE = 1
-uint8       FORM_NEW_PLATOON = 2
-uint8       JOIN_EXISTING_PLATOON = 3
-uint8       PREPARE_FOR_ROUTE_CONSTRAINT = 4
-uint8       UNDEFINED = 255
+cav_msgs/PlanType plan_type
 
 # an array of GUIDs for each of the other participants in this plan
 # (originator is an assumed participant, so no need to include here; recipient will be

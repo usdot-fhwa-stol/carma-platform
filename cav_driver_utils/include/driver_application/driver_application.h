@@ -33,9 +33,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cav_msgs/DriverStatus.h>
+
 #include <cav_srvs/Bind.h>
-#include <cav_srvs/GetAPISpecification.h>
+#include <cav_srvs/GetDriverApi.h>
+#include <cav_srvs/GetDriverStatus.h>
+#include <cav_msgs/DriverStatus.h>
+
 #include <bondcpp/bond.h>
 
 #include <unordered_map>
@@ -64,6 +67,9 @@ public:
     {
         ros::init(argc,argv,name);
     }
+
+
+    virtual ~DriverApplication(){};
 
     /**
      * @brief Starts the application
@@ -123,7 +129,7 @@ private:
     bool bind_service_cb(cav_srvs::Bind::Request &req, cav_srvs::Bind::Response &res);
 
     /**
-     * @brief Callback go the get_api_specification service
+     * @brief Callback go the get_driver_api service
      *
      * This function will return a list of API specified by the inheriting class through
      * get_api
@@ -131,8 +137,19 @@ private:
      * @param res
      * @return true to signal we handled this callback
      */
-    bool getApiSpecificationCallback(cav_srvs::GetAPISpecificationRequest &req,
-                                     cav_srvs::GetAPISpecificationResponse &res);
+    bool get_driver_api_cb(cav_srvs::GetDriverApiRequest &req,
+                                  cav_srvs::GetDriverApiResponse &res);
+
+
+    /**
+     * @brief Callback for the get_status service
+     *
+     * This function will return the current status of the driver_node
+     * @param req - empty
+     * @param res - contains driver status of this node
+     * @return true to signal we handled this calback
+     */
+    bool get_status_cb(cav_srvs::GetDriverStatusRequest& req,cav_srvs::GetDriverStatusResponse& res);
 
     /**
      * @brief Returns the fully scoped API for this node

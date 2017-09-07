@@ -2,4 +2,5 @@
 # Defines the ros parameters which are required by the Route package
 
 # String: The path to the database containing any route files for use in testing and demonstration.
-default_database_path: '../../RouteFile.xml'
+# Still trying to determine how to make this work with relative paths
+default_database_path: '/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/main/test/resources/routefiles'

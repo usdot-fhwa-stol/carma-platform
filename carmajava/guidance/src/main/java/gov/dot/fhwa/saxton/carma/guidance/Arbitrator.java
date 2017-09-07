@@ -16,18 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import cav_msgs.RouteState;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import org.apache.commons.logging.Log;
-import org.ros.message.MessageListener;
-import org.ros.node.topic.Subscriber;
-import org.ros.concurrent.CancellableLoop;
-import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
-import org.ros.node.topic.Publisher;
-import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
 
 /**
  * Guidance package Arbitrator component
@@ -36,25 +30,32 @@ import org.ros.message.MessageFactory;
  * to plan trajectories for the vehicle to execute.
  */
 public class Arbitrator implements Runnable {
-  public Arbitrator(PubSubManager pubSubManager) {
-    this.pubSubManager = pubSubManager;
-  }
+    protected final long sleepDurationMillis = 30000;
+    protected IPubSubService iPubSubService;
+    protected ConnectedNode node;
+    protected Log log;
 
-  @Override public void run() {
-    for (; ; ) {
-      pubSubManager.publish("Hello World! I am " + componentName + ". " + sequenceNumber++);
-
-      try {
-        Thread.sleep(sleepDurationMillis);
-      } catch (InterruptedException e) {
-        // Ignore
-      }
+    Arbitrator(IPubSubService iPubSubService, ConnectedNode node) {
+        this.iPubSubService = iPubSubService;
+        this.node = node;
+        this.log = node.getLog();
     }
-  }
 
-  // Member variables
-  protected PubSubManager pubSubManager;
-  protected final String componentName = "Arbitrator";
-  protected int sequenceNumber = 0;
-  protected final long sleepDurationMillis = 30000;
+    @Override public void run() {
+        log.info("Arbitrator running!");
+        ISubscriber<RouteState> routeStateSubscriber = iPubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
+        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+            @Override public void onMessage(RouteState msg) {
+                log.info("Received RouteState:" + msg);
+            }
+        });
+
+        for (; ; ) {
+            try {
+                Thread.sleep(sleepDurationMillis);
+            } catch (InterruptedException e) {
+                // Ignore
+            }
+        }
+    }
 }

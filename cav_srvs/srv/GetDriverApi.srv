@@ -1,0 +1,15 @@
+# GetDriverApi.srv
+#
+# This is a service provided by each device driver to describe its API
+# in terms of ROS topics and services that it provides.
+#
+
+# Request - no arguments
+
+---
+
+# Response
+
+# Each item in the api_list is the fully qualified name of a 
+# provided topic or service
+string[] api_list
