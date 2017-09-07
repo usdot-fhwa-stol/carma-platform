@@ -39,7 +39,6 @@ public class GuidanceCommands implements Runnable {
             List<String> reqdCapabilities = new ArrayList<>();
             reqdCapabilities.add("control/cmd_speed");
             req.setCapabilities(reqdCapabilities);
-            req.setCategory((byte) 1);
             final GetDriversWithCapabilitiesResponse[] drivers =
                 new GetDriversWithCapabilitiesResponse[1];
             driverCapabilityService.call(req,
