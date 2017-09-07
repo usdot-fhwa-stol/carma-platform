@@ -22,6 +22,8 @@ import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import org.apache.commons.logging.Log;
+import org.reflections.Reflections;
 import org.ros.exception.ServiceException;
 import org.ros.message.MessageFactory;
 import org.ros.node.ConnectedNode;
@@ -30,8 +32,11 @@ import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 import std_msgs.Header;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Guidance package PluginManager component
@@ -45,10 +50,13 @@ public class PluginManager implements Runnable {
     protected IPubSubService pubSubService;
     protected int sequenceNumber = 0;
     protected ConnectedNode node;
+    protected Log log;
 
     protected PluginExecutor executor;
     protected PluginServiceLocator pluginServiceLocator;
     protected List<IPlugin> registeredPlugins = new ArrayList<>();
+
+    protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma.guidance.plugins";
 
     protected String messagingBaseUrl = "plugins";
     protected String getRegisteredPluginsServiceUrl = "get_registered_plugins";
@@ -66,6 +74,7 @@ public class PluginManager implements Runnable {
         this.pubSubService = pubSubManager;
         this.node = node;
         this.executor = new PluginExecutor(node.getLog());
+        this.log = node.getLog();
 
         pluginServiceLocator =
             new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
@@ -73,17 +82,56 @@ public class PluginManager implements Runnable {
     }
 
     /**
-     * Load available plugins from the classpath.
-     * <p>
-     * Presently stubbed to simply load the mock plugins without going through discovery
+     * Detect all IPlugin instances available on classpath at or below PLUGIN_DISCOVERY_ROOT
+     * @return
      */
-    protected void discoverPluginsOnClaspath() {
-        IPlugin p1 = new MockCruisingPlugin(pluginServiceLocator);
-        p1.setActivation(true);
-        registeredPlugins.add(p1);
-        IPlugin p2 = new MockRouteFollowingPlugin(pluginServiceLocator);
-        p2.setActivation(true);
-        registeredPlugins.add(p2);
+    protected List<Class<? extends IPlugin>> discoverPluginsOnClasspath() {
+        Reflections pluginDiscoverer = new Reflections(PLUGIN_DISCOVERY_ROOT);
+        Set<Class<? extends IPlugin>> pluginClasses = pluginDiscoverer.getSubTypesOf(IPlugin.class);
+        List<IPlugin> pluginInstances = new ArrayList<>();
+
+        for (Class<? extends IPlugin> pluginClass : pluginClasses) {
+          if (log != null) {
+            log.info("Guidance.PluginManager discovered plugin: " + pluginClass.getName());
+          }
+        }
+
+        return new ArrayList<>(pluginClasses);
+    }
+
+    /**
+     * Instantiate a list of plugins classes into live objects
+     * @param classes The list of classes which implement IPlugin
+     * @param pluginServiceLocator The service locator to pass as their constructor argument
+     * @return A list containing instantiated plugin instances where the instantiation was successful
+     */
+    protected List<IPlugin> instantiatePluginsFromClasses(List<Class<? extends IPlugin>> classes, PluginServiceLocator pluginServiceLocator) {
+        List<IPlugin> pluginInstances = new ArrayList<>();
+        for (Class<? extends IPlugin> pluginClass : classes) {
+            try {
+                Constructor<? extends IPlugin> pluginCtor = pluginClass.getConstructor(PluginServiceLocator.class);
+
+                // TODO: This is brittle, depends on convention of having a constructor taking only a PSL
+                IPlugin pluginInstance = pluginCtor.newInstance(pluginServiceLocator);
+                log.info("Guidance.PluginManager instantiated new plugin instance: "
+                    + pluginInstance.getName() + ":" + pluginInstance.getVersionId());
+                pluginInstances.add(pluginInstance);
+            } catch (NoSuchMethodException e) {
+                log.error(e);
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                log.error(e);
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                log.error(e);
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                log.error(e);
+                e.printStackTrace();
+            }
+        }
+
+        return pluginInstances;
     }
 
     public List<IPlugin> getRegisteredPlugins() {
@@ -195,7 +243,8 @@ public class PluginManager implements Runnable {
     }
 
     @Override public void run() {
-        discoverPluginsOnClaspath();
+        List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
+        registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
 
         for (IPlugin p : getRegisteredPlugins()) {
             executor.submitPlugin(p);
