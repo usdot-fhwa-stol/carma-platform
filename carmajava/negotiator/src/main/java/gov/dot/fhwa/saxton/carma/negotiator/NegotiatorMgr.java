@@ -16,10 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.negotiator;
 
+import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.MessageFactory;
+import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
@@ -34,115 +36,148 @@ import org.ros.namespace.NameResolver;
  * The Negotiator package responsibility is to manage the details of negotiating tactical and strategic
  * agreements between the host vehicle and any other transportation system entities.
  * <p>
- * Command line test: rosrun carmajava negotiator gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr
+ * Command line test: rosrun carma negotiator gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr
+ * Simple example
+ * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
+ * rostopic pub /new_plan_outbound cav_msgs/NewPlan '{header: {sender_id: a, plan_id: 44, checksum: 0}}'
+ * rostopic pub /mobility_greeting_inbound cav_msgs/MobilityGreeting '{header: {sender_id: b, recipient_id: a, negotiation_id: 44, checksum: 0}, session_key: h, verification_code: "h"}'
  */
-public class NegotiatorMgr extends SaxtonBaseNode {
+public class NegotiatorMgr extends SaxtonBaseNode{
+
+  protected ConnectedNode connectedNode;
+  protected boolean systemReady = false;
+  protected NewPlan lastNewPlanMsg = null;
+  // Topics
+  // Publishers
+  protected Publisher<cav_msgs.MobilityAck> mobAckOutPub;
+  protected Publisher<cav_msgs.MobilityGreeting> mobGreetOutPub;
+  protected Publisher<cav_msgs.MobilityIntro> mobIntroOutPub;
+  protected Publisher<cav_msgs.MobilityNack> mobNackOutPub;
+  protected Publisher<cav_msgs.MobilityPlan> mobPlanOutPub;
+  protected Publisher<cav_msgs.NewPlan> newPlanInPub;
+  protected Publisher<cav_msgs.PlanStatus> planStatusPub;
+  protected Publisher<cav_msgs.SystemAlert> systemAlertPub;
+
+  // Subscribers
+  protected Subscriber<cav_msgs.NewPlan> newPlanOutSub;
+  protected Subscriber<cav_msgs.MobilityAck> mobAckInSub;
+  protected Subscriber<cav_msgs.MobilityGreeting> mobGreetInSub;
+  protected Subscriber<cav_msgs.MobilityIntro> mobIntroInSub;
+  protected Subscriber<cav_msgs.MobilityNack> mobNackInSub;
+  protected Subscriber<cav_msgs.MobilityPlan> mobPlanInSub;
+  protected Subscriber<cav_msgs.PlanStatus> planStatusSub;
+  protected Subscriber<cav_msgs.SystemAlert> alertSub;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("negotiator_mgr");
   }
 
   @Override public void onStart(final ConnectedNode connectedNode) {
-
+    this.connectedNode = connectedNode;
     final Log log = connectedNode.getLog();
 
     // Topics
     // Publishers
-    final Publisher<cav_msgs.MobilityAck> mobAckOutPub =
-      connectedNode.newPublisher("mobility_ack_outbound", cav_msgs.MobilityAck._TYPE);
-    final Publisher<cav_msgs.MobilityGreeting> mobGreetOutPub =
-      connectedNode.newPublisher("mobility_greeting_outbound", cav_msgs.MobilityGreeting._TYPE);
-    final Publisher<cav_msgs.MobilityIntro> mobIntroOutPub =
-      connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
-    final Publisher<cav_msgs.MobilityNack> mobNackOutPub =
-      connectedNode.newPublisher("mobility_nack_outbound", cav_msgs.MobilityNack._TYPE);
-//    final Publisher<cav_msgs.MobilityPlan> mobPlanOutPub =
-//      connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
-    final Publisher<cav_msgs.NewPlan> newPlanInPub =
-      connectedNode.newPublisher("new_plan_inbound", cav_msgs.NewPlan._TYPE);
-//    TODO: Uncomment when the PlanStatus message is implemented.
-//    final Publisher<cav_msgs.PlanStatus> planStatusPub =
-//      connectedNode.newPublisher("plan_status", cav_msgs.PlanStatus._TYPE);
-    final Publisher<cav_msgs.SystemAlert> systemAlertPub =
-      connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
+    mobAckOutPub = connectedNode.newPublisher("mobility_ack_outbound", cav_msgs.MobilityAck._TYPE);
+    mobGreetOutPub = connectedNode.newPublisher("mobility_greeting_outbound", cav_msgs.MobilityGreeting._TYPE);
+    mobIntroOutPub = connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
+    mobNackOutPub = connectedNode.newPublisher("mobility_nack_outbound", cav_msgs.MobilityNack._TYPE);
+    mobPlanOutPub = connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
+    newPlanInPub = connectedNode.newPublisher("new_plan_inbound", cav_msgs.NewPlan._TYPE);
+    planStatusPub = connectedNode.newPublisher("plan_status", cav_msgs.PlanStatus._TYPE);
+    systemAlertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
 
     // Subscribers
-    Subscriber<cav_msgs.NewPlan> newPlanOutSub =
-      connectedNode.newSubscriber("new_plan_outbound", cav_msgs.NewPlan._TYPE);
-    Subscriber<cav_msgs.MobilityAck> mobAckInSub =
-      connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
-    Subscriber<cav_msgs.MobilityGreeting> mobGreetInSub =
-      connectedNode.newSubscriber("mobility_greeting_inbound", cav_msgs.MobilityGreeting._TYPE);
-    Subscriber<cav_msgs.MobilityIntro> mobIntroInSub =
-      connectedNode.newSubscriber("mobility_intro_inbound", cav_msgs.MobilityIntro._TYPE);
-    Subscriber<cav_msgs.MobilityNack> mobNackInSub =
-      connectedNode.newSubscriber("mobility_nack_inbound", cav_msgs.MobilityNack._TYPE);
-//    TODO: Uncomment when the MobilityPlan message is implemented
-//    Subscriber<cav_msgs.MobilityPlan> mobPlanInSub =
-//      connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
-    Subscriber<cav_msgs.SystemAlert> alertSub =
-      connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+    newPlanOutSub = connectedNode.newSubscriber("new_plan_outbound", cav_msgs.NewPlan._TYPE);
+    newPlanOutSub.addMessageListener(new MessageListener<cav_msgs.NewPlan>() {
+      @Override public void onNewMessage(cav_msgs.NewPlan message) {
+        log.info("Negotiator received new PlanMessage");
+        lastNewPlanMsg = message;
+      }//onNewMessage
+    });//addMessageListener
 
+    mobAckInSub = connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
+    mobAckInSub.addMessageListener(new MessageListener<cav_msgs.MobilityAck>() {
+      @Override public void onNewMessage(cav_msgs.MobilityAck message) {
+        log.info("Negotiator received new MobilityAck");
+      }//onNewMessage
+    });//addMessageListener
+
+    mobGreetInSub = connectedNode.newSubscriber("mobility_greeting_inbound", cav_msgs.MobilityGreeting._TYPE);
+    mobGreetInSub.addMessageListener(new MessageListener<cav_msgs.MobilityGreeting>() {
+      @Override public void onNewMessage(cav_msgs.MobilityGreeting message) {
+        log.info("Negotiator received new MobilityGreeting");
+      }//onNewMessage
+    });//addMessageListener
+
+    mobIntroInSub = connectedNode.newSubscriber("mobility_intro_inbound", cav_msgs.MobilityIntro._TYPE);
+    mobIntroInSub.addMessageListener(new MessageListener<cav_msgs.MobilityIntro>() {
+      @Override public void onNewMessage(cav_msgs.MobilityIntro message) {
+        log.info("Negotiator received new MobilityIntro");
+      }//onNewMessage
+    });//addMessageListener
+
+    mobNackInSub = connectedNode.newSubscriber("mobility_nack_inbound", cav_msgs.MobilityNack._TYPE);
+    mobNackInSub.addMessageListener(new MessageListener<cav_msgs.MobilityNack>() {
+      @Override public void onNewMessage(cav_msgs.MobilityNack message) {
+        log.info("Negotiator received new MobilityNack");
+      }//onNewMessage
+    });//addMessageListener
+
+    mobPlanInSub = connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
+    mobPlanInSub.addMessageListener(new MessageListener<cav_msgs.MobilityPlan>() {
+      @Override public void onNewMessage(cav_msgs.MobilityPlan message) {
+        log.info("Negotiator received new MobilityPlan");
+      }//onNewMessage
+    });//addMessageListener
+
+    planStatusSub = connectedNode.newSubscriber("plan_progress", cav_msgs.PlanStatus._TYPE);
+    planStatusSub.addMessageListener(new MessageListener<cav_msgs.PlanStatus>() {
+      @Override public void onNewMessage(cav_msgs.PlanStatus message) {
+        log.info("Negotiator received new PlanProgress");
+      }//onNewMessage
+    });//addMessageListener
+
+    alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
       @Override public void onNewMessage(cav_msgs.SystemAlert message) {
-
-        String messageTypeFullDescription = "NA";
-
         switch (message.getType()) {
-          case cav_msgs.SystemAlert.CAUTION:
-            messageTypeFullDescription = "Take caution! ";
+          case SystemAlert.NOT_READY:
+            systemReady = false;
+            log.info("Negotiator received SystemAlert.NOT_READY");
             break;
-          case cav_msgs.SystemAlert.WARNING:
-            messageTypeFullDescription = "I have a warning! ";
+          case SystemAlert.SYSTEM_READY:
+            systemReady = true;
+            log.info("Negotiator received SystemAlert.SYSTEM_READY");
             break;
-          case cav_msgs.SystemAlert.FATAL:
-            messageTypeFullDescription = "I am FATAL! ";
-            break;
-          case cav_msgs.SystemAlert.NOT_READY:
-            messageTypeFullDescription = "I am NOT Ready! ";
-            break;
-          case cav_msgs.SystemAlert.SYSTEM_READY:
-            messageTypeFullDescription = "I am Ready! ";
+          case SystemAlert.FATAL:
+            systemReady = false;
+            log.info("Negotiator received SystemAlert.FATAL");
             break;
           default:
-            messageTypeFullDescription = "I am NOT Ready! ";
+            log.info("Negotiator received new SystemAlert");
+            break;
         }
-
-        log.info(
-          "negotiator_mgr heard: \"" + message.getDescription() + ";" + messageTypeFullDescription
-            + "\"");
-
       }//onNewMessage
-    }//MessageListener
-    );//addMessageListener
+    });//addMessageListener
 
-    //Getting the ros param called run_id.
-    ParameterTree param = connectedNode.getParameterTree();
-    final String rosRunID = param.getString("/run_id");
-
-    // This CancellableLoop will be canceled automatically when the node shuts down
     connectedNode.executeCancellableLoop(new CancellableLoop() {
-      private int sequenceNumber;
-
       @Override protected void setup() {
-        sequenceNumber = 0;
-      }//setup
 
+      }
       @Override protected void loop() throws InterruptedException {
-
-        cav_msgs.SystemAlert systemAlertMsg = systemAlertPub.newMessage();
-        systemAlertMsg.setDescription(
-          "Hello World! " + "I am negotiator_mgr. " + sequenceNumber + " run_id = " + rosRunID
-            + ".");
-        systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
-
-        systemAlertPub.publish(systemAlertMsg);
-
-        sequenceNumber++;
+        if (systemReady) {
+          if (lastNewPlanMsg != null) {
+            MobilityIntro introMsg = mobIntroOutPub.newMessage();
+            introMsg.getHeader().setSenderId("Host Vehicle 1");
+            introMsg.getHeader().setPlanId((short)1);
+            introMsg.getPlanType().setType(PlanType.SPEEDUP);
+            introMsg.getMyEntityType().setType(MobilityEntityType.VEHICLE);
+            mobIntroOutPub.publish(introMsg);
+          }
+        }
         Thread.sleep(30000);
-      }//loop
-
-    });//executeCancellableLoop
+      }
+    });
   }//onStart
 }//AbstractNodeMain
-
