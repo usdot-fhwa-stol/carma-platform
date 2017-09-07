@@ -79,17 +79,23 @@ public class InterfaceWorker {
         }else {
             //get its list of capabilities (getDriverApi)
             List<String> cap = mgr_.getDriverApi(name);
+            if (cap == null) {
+                log_.warn("InterfaceWorker.handleNewDriverStatus: new driver " + name +
+                        " has no capabilities! IGNORING.");
+            }else {
 
-            //add the info to the list of known drivers
-            newDriver.setCapabilities(cap);
-            drivers_.add(newDriver);
+                //add the info to the list of known drivers
+                newDriver.setCapabilities(cap);
+                drivers_.add(newDriver);
 
-            //request InterfaceMgr to bind with it
-            mgr_.bindWithDriver(name);
+                //request InterfaceMgr to bind with it
+                mgr_.bindWithDriver(name);
 
-            //reset the wait timer
-            startedWaiting_ = System.currentTimeMillis();
-            log_.info("InterfaceWorker.handleNewDriverStatus: discovered new driver " + name);
+                //reset the wait timer
+                startedWaiting_ = System.currentTimeMillis();
+                log_.info("InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
+                        " with " + cap.size() + " capabilities.");
+            }
         }
     }
 

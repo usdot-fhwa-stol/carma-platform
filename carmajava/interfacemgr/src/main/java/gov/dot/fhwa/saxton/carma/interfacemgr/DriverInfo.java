@@ -127,8 +127,11 @@ public class DriverInfo {
             return false;
         }
 
-        //look through all of the individual "capabilities" (api messages)
+        //look through all of the individual "capabilities" (api messages); a valid driver has at least one capability
         List<String> bCapList = b.getCapabilities();
+        if (capabilities == null  ||  bCapList == null) {
+            return false;
+        }
         if (capabilities.size() != bCapList.size()) {
             return false;
         }
