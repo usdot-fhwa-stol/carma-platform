@@ -139,7 +139,7 @@ public class GuidanceMain extends SaxtonBaseNode {
         final IPublisher<SystemAlert> systemAlertPublisher =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-        guidanceEnableService = connectedNode.newServiceServer(messagingBaseUrl + "/set_guidance_enable",
+        guidanceEnableService = connectedNode.newServiceServer("set_guidance_enable",
             SetGuidanceEnabled._TYPE,
             new ServiceResponseBuilder<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>() {
                 @Override public void build(SetGuidanceEnabledRequest setGuidanceEnabledRequest,
