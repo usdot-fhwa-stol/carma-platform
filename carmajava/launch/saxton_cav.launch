@@ -86,7 +86,7 @@
       <remap from="plugins/activate_plugins"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugins"/>
       <remap from="set_guidance_enable"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/set_guidance_enable"/>
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_enable"/>
 
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
