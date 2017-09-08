@@ -22,7 +22,6 @@ import cav_msgs.BSM;
 import cav_msgs.BSMCoreData;
 import cav_msgs.HeadingStamped;
 import cav_msgs.SystemAlert;
-import com.sun.org.apache.bcel.internal.generic.ISUB;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;

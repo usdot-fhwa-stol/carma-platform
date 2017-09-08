@@ -4,7 +4,6 @@
 
 body {
     font-family: "Segoe UI",Arial,sans-serif;
-
 }
 
 /*** Left Navigation Style ***/
@@ -14,7 +13,7 @@ div.tab {
     border: 1px solid #ccc;
     background-color: #f1f1f1;
     width: 12%;
-    height: 550px;
+    height: 650px;
 }
 
     /* Style the buttons inside the tab */
@@ -64,12 +63,12 @@ div.tab {
     border-right: 1px solid #ccc;
     width: 88%;
     border-left: 1px solid #ccc;
-    height: 460px;
+    height: 560px;
 }
 
 /*** Log Text Box content Style ****/
 .logStatus {
-    height: 300px;
+    height: 400px;
     width: 98%;
     overflow: auto;
     background-color: #336699;
@@ -146,7 +145,6 @@ input:checked + label { /* Checked format */
 
 input:disabled + label { /* Disabled format */
     background-color: gray;
-
 }
 
 
@@ -159,14 +157,15 @@ div.message_box {
     text-align: center;
     margin: 10px;
     padding: 30px 30px 15px 30px;
-    height: 100px;
+    height: 150px;
     color: #fff;
     background-color: #ffcc00;
+    font-size: 20px;
 }
 
 /*** Button ***/
 .button_disabled {
-    background-color: gray;  /* #4CAF50; Green; gray; */
+    background-color: gray; /* #4CAF50; Green; gray; */
     border: none;
     color: white;
     padding: 15px 32px;
@@ -180,16 +179,14 @@ div.message_box {
     height: 75px;
     border-radius: 100px;
     transition: background-color .2s;
-
     border-radius: 100px;
     box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
-
     opacity: 0.6;
     cursor: not-allowed;
 }
 
 .button_enabled {
-    background-color: cornflowerblue;  /* #4CAF50; Green; gray; */
+    background-color: cornflowerblue; /* #4CAF50; Green; gray; */
     border: none;
     color: white;
     padding: 15px 32px;
@@ -203,13 +200,12 @@ div.message_box {
     height: 75px;
     border-radius: 100px;
     transition: background-color .2s;
-
     border-radius: 100px;
     box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
 }
 
 .button_engaged {
-    background-color: #4CAF50;  /* #4CAF50; Green; gray; */
+    background-color: #4CAF50; /* #4CAF50; Green; gray; */
     border: none;
     color: white;
     padding: 15px 32px;
@@ -223,7 +219,6 @@ div.message_box {
     height: 75px;
     border-radius: 100px;
     transition: background-color .2s;
-
     border-radius: 100px;
     box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
 }
@@ -257,19 +252,32 @@ div.message_box {
     -webkit-animation-name: animatetop;
     -webkit-animation-duration: 0.4s;
     animation-name: animatetop;
-    animation-duration: 0.4s
-    font-size: 17px;
+    animation-duration: 0.4s font-size: 17px;
 }
 
 /* Add Animation */
 @-webkit-keyframes animatetop {
-    from {top:-300px; opacity:0}
-    to {top:0; opacity:1}
+    from {
+        top: -300px;
+        opacity: 0
+    }
+
+    to {
+        top: 0;
+        opacity: 1
+    }
 }
 
 @keyframes animatetop {
-    from {top:-300px; opacity:0}
-    to {top:0; opacity:1}
+    from {
+        top: -300px;
+        opacity: 0
+    }
+
+    to {
+        top: 0;
+        opacity: 1
+    }
 }
 
 /* The Close Button */
@@ -280,12 +288,12 @@ div.message_box {
     font-weight: bold;
 }
 
-.close:hover,
-.close:focus {
-    color: #000;
-    text-decoration: none;
-    cursor: pointer;
-}
+    .close:hover,
+    .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
 
 .modal-header {
     padding: 2px 16px;
@@ -293,7 +301,9 @@ div.message_box {
     color: black;
 }
 
-.modal-body {padding: 2px 20px;}
+.modal-body {
+    padding: 2px 20px;
+}
 
 .modal-footer {
     padding: 10px 16px 10px 10px;

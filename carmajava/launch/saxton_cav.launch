@@ -44,14 +44,15 @@
   <!-- ROS Namespaces -->
   <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
   <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
-  <arg name="VE_NS"     default="vehicle_environment" doc="Namespace of nodes in vehicle environment package"/>/>
-  <arg name="NEGTR_NS"  default="negotiator" doc="Namespace of nodes in negotiator package"/>/>
-  <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>/>
-  <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>/>
-  <arg name="RD_NS"     default="roadway" doc="Namespace of nodes in roadway package"/>/>
-  <arg name="RT_NS"     default="route" doc="Namespace of nodes in route package"/>/>
-  <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>/>
-  <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>/>
+  <arg name="VE_NS"     default="vehicle_environment" doc="Namespace of nodes in vehicle environment package"/>
+  <arg name="NEGTR_NS"  default="negotiator" doc="Namespace of nodes in negotiator package"/>
+  <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
+  <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
+  <arg name="RD_NS"     default="roadway" doc="Namespace of nodes in roadway package"/>
+  <arg name="RT_NS"     default="route" doc="Namespace of nodes in route package"/>
+  <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
+  <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
+  <arg name="UI_NS"   default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
 
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
@@ -59,11 +60,38 @@
     <!-- Load Vehicle Characteristics -->
     <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
 
-    <!-- ROS Bridge -->
-    <!-- TODO: Determine proper remapping for rosbridge params -->
-    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
-      <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
-    </include>
+    <!-- ROS Bridge for UI -->
+    <group ns="$(arg UI_NS)">
+
+      <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
+
+      <remap from="system_alert"
+             to="/$(arg TOP_NS)/system_alert"/>
+      <remap from="nav_sat_fix"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+      <remap from="current_segment"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/current_segment"/>
+      <remap from="get_available_routes"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>
+      <remap from="set_active_route"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/set_active_route"/>
+      <remap from="ui_instructions"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
+      <remap from="ui_platoon_vehicle_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_platoon_vehicle_info"/>
+      <remap from="plugins/available_plugins"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/available_plugins"/>
+      <remap from="plugins/get_registered_plugins"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
+      <remap from="plugins/activate_plugins"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugins"/>
+      <remap from="set_guidance_enable"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_enable"/>
+
+      <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+        <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
+      </include>
+    </group>
 
     <!-- Guidance Package -->
     <group ns="$(arg GUIDE_NS)">
@@ -71,7 +99,6 @@
       <node pkg="carma" type="guidance" name="guidance_main"
             args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
-        <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
 
         <remap from="system_alert"

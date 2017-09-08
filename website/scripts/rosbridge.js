@@ -6,12 +6,34 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.133'; // TODO: Update with proper environment IP address.
-var top_ns = ''; //TODO: Update the prefix for CAV Prototype system namespace.
+var ip = '192.168.32.133' // TODO: Update with proper environment IP address.
+
+// Topics
+var t_system_alert = 'system_alert';
+var t_available_plugins = 'plugins/available_plugins';
+var t_nav_sat_fix = 'nav_sat_fix';
+var t_current_segment = 'current_segment';
+var t_guidance_instructions = 'ui_instructions';
+var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
+
+// Services
+var s_get_available_routes = 'get_available_routes';
+var s_set_active_route = 'set_active_route';
+
+var s_get_registered_plugins = 'plugins/get_registered_plugins';
+var s_activate_plugins = 'plugins/activate_plugins';
+var s_set_guidance_enable = 'set_guidance_enable';
+
+// Params
+var p_host_instructions = '/saxton_cav/ui/host_instructions';
+var p_page_refresh_interval = '/saxton_cav/ui/page_refresh_interval';
+
 
 // Global variables
 var ros = new ROSLIB.Ros();
 
+var cnt_log_lines = 0;
+var max_log_lines = 100;
 var system_ready = false;
 var route_name = '';
 var guidance_engaged = false;
@@ -80,7 +102,7 @@ function checkSystemAlerts() {
     // Subscribing to a Topic
     var listener = new ROSLIB.Topic({
         ros: ros,
-        name: top_ns + '/system_alert',
+        name: t_system_alert,
         messageType: 'cav_msgs/SystemAlert'
     });
 
@@ -110,12 +132,19 @@ function checkSystemAlerts() {
                 messageTypeFullDescription = 'System is ready. ' + message.description;
                 break;
             default:
-                //system_ready = false;
                 messageTypeFullDescription = 'System alert type is unknown. Assuming system it not yet ready.  ' + message.description;
         }
 
-
-        //document.getElementById('divLog').innerHTML += '<br/> ' + messageTypeFullDescription;
+	if (cnt_log_lines < max_log_lines)
+	{
+        	document.getElementById('divLog').innerHTML += '<br/> ' + messageTypeFullDescription;
+		cnt_log_lines++;
+	}
+	else
+	{
+		document.getElementById('divLog').innerHTML = messageTypeFullDescription;
+		cnt_log_lines = 0;
+	}
 
         //Show the rest of the system alert messages in the log.
         //Make sure message list is scrolled to the bottom
@@ -138,7 +167,7 @@ function showRouteOptions() {
     // Create a Service client with details of the service's name and service type.
     var getAvailableRoutesClient = new ROSLIB.Service({
         ros: ros,
-        name: top_ns + '/get_available_routes', // '/vehicle_environment/route/get_available_routes',
+        name: s_get_available_routes,
         serviceType: 'cav_srvs/GetAvailableRoutes'
     });
 
@@ -175,7 +204,7 @@ function setRoute(id) {
     // Calling setActiveRoute service
     var setActiveRouteClient = new ROSLIB.Service({
         ros: ros,
-        name: top_ns +  '/set_active_route', // '/vehicle_environment/route/get_available_routes',
+        name: s_set_active_route,
         serviceType: 'cav_srvs/SetActiveRoute'
     });
 
@@ -224,7 +253,7 @@ function showPluginOptions() {
     // Create a Service client with details of the service's name and service type.
     var getRegisteredPluginsClient = new ROSLIB.Service({
         ros: ros,
-        name: top_ns +  '/plugins/get_registered_plugins',
+        name: s_get_registered_plugins,
         serviceType: 'cav_srvs/PluginList'
     });
 
@@ -287,7 +316,7 @@ function activatePlugin(id) {
     // Calling setActiveRoute service
     var activatePluginClient = new ROSLIB.Service({
         ros: ros,
-        name: top_ns +  '/plugins/activate_plugins',
+        name: s_activate_plugins,
         serviceType: 'cav_srvs/PluginList'
     });
 
@@ -382,7 +411,7 @@ function engageGuidance() {
     //Call the service to engage guidance.
     var setGuidanceClient = new ROSLIB.Service({
         ros: ros,
-        name: top_ns +  '/set_guidance_enable',
+        name: s_set_guidance_enable,
         serviceType: 'cav_srvs/SetGuidanceEnabled'
     });
 
@@ -439,7 +468,7 @@ function checkAvailability()
     //Subscribing to a Topic
     listenerPluginAvailability = new ROSLIB.Topic({
         ros: ros,
-        name: top_ns +  '/plugins/available_plugins',
+        name: t_available_plugins,
         messageType: 'cav_msgs/PluginList'
     });
 
@@ -471,7 +500,7 @@ function showModal(isShow, modalMessage)
     else
         modal.style.display = "none";
 
-    var modalBody = document.getElementsByClassName("modal-body")[0]; //document.getElementsByClassName('modal-body');
+    var modalBody = document.getElementsByClassName("modal-body")[0];
     modalBody.innerHTML = '<p>' + modalMessage + '</p>';
 }
 
@@ -513,23 +542,21 @@ function getParams()
 /*
  forEach function to print the parameter listing.
 */
-function printParam(item, index) {
-    //demoP.innerHTML = demoP.innerHTML + "index[" + index + "]: " + item + "<br>";
-    if (item.startsWith("/ros")==false)
+function printParam(itemName, index) {
+
+    if (itemName.startsWith("/ros")==false)
     {
-
-
        //Sample call to get param.
        var myParam = new ROSLIB.Param({
          ros : ros,
-         name : item
+         name : itemName
        });
 
-       myParam.get(function(value) {
-            document.getElementById('divLog').innerHTML += '<br/> Param index[' + index + ']: ' + item + ': value: ' + value + '.';
+       myParam.get(function(myValue) {
+            document.getElementById('divLog').innerHTML += '<br/> Param index[' + index + ']: ' + itemName + ': value: ' + myValue + '.';
 
-            if (item == '/ui/guidance_instructions' && value != null)
-                 host_instructions=value;
+            if (itemName == p_host_instructions && myValue != null)
+                 host_instructions=myValue;
        });
     }
 
@@ -552,7 +579,7 @@ function getFutureTopics()
 
   var listenerNavSatFix = new ROSLIB.Topic({
     ros : ros,
-    name : '/nav_sat_fix',
+    name : t_nav_sat_fix,
     messageType : 'sensor_msgs/NavSatFix'
   });
 
@@ -561,9 +588,10 @@ function getFutureTopics()
      //listenerNavSatFix.unsubscribe();
   });
 
+/*
   var listenerRouteSegment = new ROSLIB.Topic({
     ros : ros,
-    name : '/route_current_segment',
+    name : t_current_segment,
     messageType : 'cav_msgs/RouteSegment'
   });
 
@@ -572,10 +600,11 @@ function getFutureTopics()
      //listenerRouteSegment.unsubscribe();
   });
 
+*/
   //TODO: Not yet published by Guidance.
   var listenerUiInstructions = new ROSLIB.Topic({
     ros : ros,
-    name : '/ui_instructions',
+    name : t_guidance_instructions,
     messageType :'std_msgs/String'
   });
 
@@ -587,7 +616,7 @@ function getFutureTopics()
   //TODO: Not yet published by Guidance.
   var listenerUiPlatoonInfo = new ROSLIB.Topic({
       ros : ros,
-      name : '/ui_platoon_vehicle_info',
+      name : t_ui_platoon_vehicle_info,
       messageType :'std_msgs/String'
     });
 
