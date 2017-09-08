@@ -28,6 +28,7 @@ import org.ros.node.service.ServiceClient;
  */
 public class RosServiceChannelFactory implements IServiceChannelFactory {
     protected ConnectedNode node;
+    protected static final long SERVICE_LOCATE_TIMEOUT = 5000;
 
     public RosServiceChannelFactory(ConnectedNode node) {
         this.node = node;
@@ -35,10 +36,34 @@ public class RosServiceChannelFactory implements IServiceChannelFactory {
 
     @Override public <T, S> IServiceChannel<T, S> newServiceChannel(String topic, String type)
         throws TopicNotFoundException {
-        try {
-            return (IServiceChannel<T, S>) new RosServiceChannel<>(
-                node.newServiceClient(topic, type));
-        } catch (ServiceNotFoundException e) {
+        /*
+         * Duplication of SaxtonBaseNode's waitForService functionality
+         *
+         * I don't want the GuidancePlugins to have any sort of dependency on the Guidance node
+         * itself, so they can't have a reference to the SaxtonBaseNode instance. The logic is
+         * simple enough so I've just reimplemented it here.
+         */
+
+        boolean serviceFound = false;
+        IServiceChannel<T, S> out = null;
+        long curTime = System.currentTimeMillis();
+        long timeAccumulator = 0;
+        while (!serviceFound && timeAccumulator < SERVICE_LOCATE_TIMEOUT) {
+            try {
+                out = (IServiceChannel<T, S>) new RosServiceChannel<>(node.newServiceClient(topic, type));
+                serviceFound = true;
+            } catch (ServiceNotFoundException e) {
+                serviceFound = false;
+            }
+
+            long newTime = System.currentTimeMillis();
+            timeAccumulator += newTime - curTime;
+            curTime = newTime;
+        }
+
+        if (serviceFound) {
+            return out;
+        } else {
             throw new TopicNotFoundException();
         }
     }
