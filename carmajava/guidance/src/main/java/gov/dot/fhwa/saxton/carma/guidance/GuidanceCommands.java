@@ -12,6 +12,16 @@ import std_msgs.Float32;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
+ *
+ * GuidanceCommands' primary function is to ensure that controller timeouts do not occur during normal
+ * operation of the CARMA platform. It does so by buffering commands received from the TrajectoryExecutor
+ * and it's Maneuver instances and latching on those commands until a new one is received. This will output
+ * the most recently latched value at a fixed frequency.
+ *
+ * Presently this is just a mock to implement messaging functionality. during normal
+ */
 public class GuidanceCommands implements Runnable {
 
     protected IPubSubService iPubSubService;
@@ -41,6 +51,7 @@ public class GuidanceCommands implements Runnable {
             req.setCapabilities(reqdCapabilities);
             final GetDriversWithCapabilitiesResponse[] drivers =
                 new GetDriversWithCapabilitiesResponse[1];
+            drivers[0] = null;
             driverCapabilityService.call(req,
                 new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
                     @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
@@ -56,10 +67,26 @@ public class GuidanceCommands implements Runnable {
             // No message for LanePosition.msg to be published on "guidance/control/lane_position"
             // TODO: Add message type for lateral control from guidance
 
-            String driverFqn = drivers[0].getDriverData().get(0);
 
-            IPublisher<SpeedAccel> speedAccelPublisher =
-                iPubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
+            String driverFqn = null;
+            if (drivers[0] != null) {
+                List<String> driverFqns = drivers[0].getDriverData();
+                if (driverFqns.size() > 0) {
+                    driverFqn = driverFqns.get(0);
+                    log.info("Discovered driver: " + driverFqns.get(0));
+                } else {
+                    log.warn("No control/cmd_speed capable driver found!!!");
+                }
+            } else {
+                log.warn("No control/cmd_speed capable driver found!!!");
+            }
+
+            if (driverFqn != null) {
+              IPublisher<SpeedAccel> speedAccelPublisher =
+                  iPubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
+            } else {
+                // TODO: Raise fatal error once we've discussed error standards
+            }
 
             while (!Thread.currentThread().isInterrupted()) {
                 Thread.sleep(sleepDurationMillis);
