@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>srx_controller</name>
+  <version>1.0.0</version>
+  <description>The srx_controller package</description>
+  <maintainer email="support@torcrobotics.com">Torc Robotics</maintainer>
+  <license>BSD</license>
+  <author email="watters@torcrobotics.com">Thomas Watters</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cav_msgs</build_depend>
+  <build_depend>cav_srvs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>can_msgs</build_depend>
+  <run_depend>cav_msgs</run_depend>
+  <run_depend>cav_srvs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>can_msgs</run_depend>
+  <run_depend>socketcan_bridge</run_depend>
+
+</package>

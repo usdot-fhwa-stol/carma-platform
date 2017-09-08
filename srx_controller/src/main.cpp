@@ -32,44 +32,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cav_srvs/GetDriversWithCapabilities.h>
+#include <srx_controller/srx_application.h>
 
-#include <ros/ros.h>
-
-/**
- * @brief Just a test application to use with the sensor_fusion_node
- *
- * This application will respond to the sensor_fusion_node request for position data.
- * The application assumes the pinpoint node is running and is providing the position services
- * that are requested.
- *
- * This by no means shows the complete interaction with an interface manager. *
- */
-
-bool getDriversWithCapabilities(cav_srvs::GetDriversWithCapabilitiesRequest& req,
-                                cav_srvs::GetDriversWithCapabilitiesResponse& res)
+int main(int argc, char** argv)
 {
-    //if(req.category != cav_srvs::GetDriversWithCapabilitiesRequest::POSITION)
-    //{
-    //    res.driver_names.clear();
-    //    return true;
-    //}
-
-    for(auto it : req.capabilities)
-    {        
-        res.driver_data.push_back("/pinpoint/" + it);
-    }
-
-
-}
-
-int main(int argc,char** argv)
-{
-    ros::init(argc, argv, "interface_mgr");
-    ros::NodeHandle nh;
-
-    ros::ServiceServer service = nh.advertiseService("get_drivers_with_capabilities", getDriversWithCapabilities);
-
-    ros::spin();
-    return 0;
+    SRXApplication app(argc,argv);
+    return app.run();
 }

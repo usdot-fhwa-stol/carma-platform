@@ -79,17 +79,23 @@ public class InterfaceWorker {
         }else {
             //get its list of capabilities (getDriverApi)
             List<String> cap = mgr_.getDriverApi(name);
+            if (cap == null) {
+                log_.warn("InterfaceWorker.handleNewDriverStatus: new driver " + name +
+                        " has no capabilities! IGNORING.");
+            }else {
 
-            //add the info to the list of known drivers
-            newDriver.setCapabilities(cap);
-            drivers_.add(newDriver);
+                //add the info to the list of known drivers
+                newDriver.setCapabilities(cap);
+                drivers_.add(newDriver);
 
-            //request InterfaceMgr to bind with it
-            mgr_.bindWithDriver(name);
+                //request InterfaceMgr to bind with it
+                mgr_.bindWithDriver(name);
 
-            //reset the wait timer
-            startedWaiting_ = System.currentTimeMillis();
-            log_.info("InterfaceWorker.handleNewDriverStatus: discovered new driver " + name);
+                //reset the wait timer
+                startedWaiting_ = System.currentTimeMillis();
+                log_.info("InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
+                        " with " + cap.size() + " capabilities.");
+            }
         }
     }
 
@@ -167,47 +173,61 @@ public class InterfaceWorker {
 
     /**
      * Returns a list of drivers that each provide all of the given capabilities once the system is OPERATIONAL.
+     * Note that each capability in the input list may be of the form
+     *     [name]
+     * or of the form
+     *     [driver category]/[name]
+     * If the driver category is not specified then we will assume any category of driver is acceptable. If it
+     * is specified, then only drivers of that category will be considered.
      *
      * @param requestedCapabilities - a list of capabilities that must be met (inclusive)
      * @return - a list of driver names that meet all the capabilities
      */
-    public List<String> getDrivers(DriverCategory cat, List<String> requestedCapabilities) {
+    public List<String> getDrivers(List<String> requestedCapabilities) {
         List<String> result = new ArrayList<String>();
 
         //if the system is ready for operation then
         if (systemOperational_) {
 
             //loop through all known drivers
-            for (int index = 0;  index < drivers_.size();  ++index) {
+            for (int driverIndex = 0;  driverIndex < drivers_.size();  ++driverIndex) {
+                DriverInfo driver = drivers_.get(driverIndex);
+                List<String> driverCaps = driver.getCapabilities();
 
-                //if it matches the requested category then
-                DriverInfo driver = drivers_.get(index);
-                if (driver.hasCategory(cat)) {
+                //loop through all requested capabilities
+                boolean foundAllCapabilities = true;
+                for (int req = 0;  req < requestedCapabilities.size();  ++req) {
 
-                    //loop through all requested capabilities
-                    boolean foundAllCapabilities = true;
-                    List<String> driverCaps = driver.getCapabilities();
-                    for (int req = 0;  req < requestedCapabilities.size();  ++req) {
+                    //get the requested driver category, if any, and the requested capability
+                    String[] items = requestedCapabilities.get(req).split("/");
+                    DriverCategory cat = DriverCategory.UNDEFINED;
+                    if (items.length > 1) {
+                        cat = DriverCategory.getCat(items[items.length - 2]);
+                    }
+                    String reqCapability = items[items.length - 1];
 
-                        //if this driver cannot provide this capability then break out of loop
-                        boolean foundThisCapability = false;
-                        for (int driverIndex = 0;  driverIndex < driverCaps.size();  ++driverIndex) {
-                            if (requestedCapabilities.get(req).equals(driverCaps.get(driverIndex))) {
+                    //if this driver cannot provide this capability then break out of loop
+                    boolean foundThisCapability = false;
+                    if (driver.hasCategory(cat)) {
+                        for (int capIndex = 0;  capIndex < driverCaps.size();  ++capIndex) {
+                            String[] capBreakout = driverCaps.get(capIndex).split("/");
+                            String driverCap = capBreakout[capBreakout.length - 1];
+                            if (reqCapability.equals(driverCap)) {
                                 foundThisCapability = true;
                                 break;
                             }
                         }
-                        if (!foundThisCapability) {
-                            foundAllCapabilities = false;
-                            break;
-                        }
                     }
+                    if (!foundThisCapability) {
+                        foundAllCapabilities = false;
+                        break;
+                    }
+                }
 
-                    //if the driver is satisfactory then
-                    if (foundAllCapabilities) {
-                        //add the driver to the return list
-                        result.add(driver.getName());
-                    }
+                //if the driver is satisfactory then
+                if (foundAllCapabilities) {
+                    //add the driver to the return list
+                    result.add(driver.getName());
                 }
             }
         }

@@ -43,6 +43,16 @@ public class FakeInterfaceMgr implements IInterfaceMgr {
             chars.add("longitude");
             chars.add("elevation");
             chars.add("acceleration");
+        }else if (driverName.charAt(driverName.length() - 1) == '4') {
+            chars.add("pinpoint/position/latitude");
+            chars.add("pinpoint/position/longitude");
+            chars.add("pinpoint/position/elevation");
+        }else if (driverName.equals("position/position5")) {
+            chars.add("position/latitude");
+            chars.add("position/longitude");
+            chars.add("position/elevation");
+        }else if (driverName.equals("sensor/sensor5")) {
+            chars.add("elevation");
         }
 
         return chars;

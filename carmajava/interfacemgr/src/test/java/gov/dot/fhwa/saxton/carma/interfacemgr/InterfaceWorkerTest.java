@@ -64,13 +64,13 @@ public class InterfaceWorkerTest {
 
         //since there are no drivers specified yet, the system should not be considered
         // OPERATIONAL, so this should return an empty list
-        List<String> res = w_.getDrivers(DriverCategory.POSITION, capabilities);
+        List<String> res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 0);
     }
 
     @Test
-    public void testGetDrivers() throws Exception {
-        log_.info("///// Entering testGetDrivers.");
+    public void testGetDriversSimple() throws Exception {
+        log_.info("///// Entering testGetDriversSimple.");
 
         w_.setWaitTime(1); //1 sec wait time for system to become active
 
@@ -89,7 +89,7 @@ public class InterfaceWorkerTest {
         assertTrue(ready);
 
         //let's go find them
-        List<String> res = w_.getDrivers(DriverCategory.POSITION, capabilities);
+        List<String> res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 1);
         assertEquals(res.get(0), "position3");
 
@@ -100,7 +100,7 @@ public class InterfaceWorkerTest {
 
         capabilities.add("longitude");
         capabilities.add("latitude"); //purposely did these in reverse order
-        res = w_.getDrivers(DriverCategory.POSITION, capabilities);
+        res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 2);
         assertEquals(res.get(0), "position1");
         assertEquals(res.get(1), "position3");
@@ -111,9 +111,65 @@ public class InterfaceWorkerTest {
         assertEquals(res.size(), 0);
 
         capabilities.add("acceleration");
-        res = w_.getDrivers(DriverCategory.POSITION, capabilities);
+        res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 1);
         assertEquals(res.get(0), "position3");
+    }
+
+    @Test
+    public void testGetDriversCategories() throws Exception {
+        log_.info("///// Entering testGetDriversCategories.");
+
+        w_.setWaitTime(1); //1 sec wait time for system to become active
+
+        //build a list of capabilities we're looking for
+        List<String> capabilities = new ArrayList<String>();
+        List<String> res;
+
+        //create new drivers
+        DriverInfo position4 = new DriverInfo();
+        position4.setPosition(true);
+        position4.setName("~/pinpoint/position/position4"); //provides lat/lon/elev w/long name
+        position4.setState(DriverState.OPERATIONAL);
+        w_.handleNewDriverStatus(position4);
+
+        DriverInfo position5 = new DriverInfo();
+        position5.setPosition(true);
+        position5.setName("position/position5"); //provides lat/lon/elev w/position category in name
+        position5.setState(DriverState.OPERATIONAL);
+        w_.handleNewDriverStatus(position5);
+
+        DriverInfo sensor5 = new DriverInfo();
+        sensor5.setSensor(true);
+        sensor5.setName("sensor/sensor5"); //provides elev only, simple name only
+        sensor5.setState(DriverState.OPERATIONAL);
+        w_.handleNewDriverStatus(sensor5);
+
+        //wait for the system to become operational
+        Thread.sleep(2005);
+        boolean ready = w_.isSystemReady(); //need to make this call to force the flag to change since the FakeInterfaceMgr isn't monitoring
+        assertTrue(ready);
+
+        //look for lat/lon from a position driver
+        capabilities.add("position/latitude");
+        capabilities.add("position/longitude");
+        res = w_.getDrivers(capabilities);
+        assertEquals(res.size(), 2);
+
+        //look for elevation from a position driver
+        capabilities.clear();
+        capabilities.add("position/elevation");
+        res = w_.getDrivers(capabilities);
+        assertEquals(res.size(), 2);
+        assertTrue(res.get(0).equals("~/pinpoint/position/position4"));
+        assertTrue(res.get(1).equals("position/position5"));
+
+        //look for elevation from any type of driver
+        capabilities.clear();
+        capabilities.add("elevation");
+        res = w_.getDrivers(capabilities);
+        assertEquals(res.size(), 3);
+        assertTrue(res.get(2).equals("sensor/sensor5"));
     }
 
     @Test
@@ -176,10 +232,10 @@ public class InterfaceWorkerTest {
         addDuplicateDrivers(); //this will set sensor1 to FAULT
 
         //at this point the system will not be OPERATIONAL because not enough time has elapsed
-        w_.handleBrokenBond("sensor1");
+        w_.handleBrokenBond("sensor/sensor1");
 
         //since sensor1 had a FAULT it should not appear in the list of available drivers
-        List<String> res = w_.getDrivers(DriverCategory.SENSOR, capabilities);
+        List<String> res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 0); //three POSITION drivers only, which will not be returned
 
         //wait until system becomes OPERATIONAL

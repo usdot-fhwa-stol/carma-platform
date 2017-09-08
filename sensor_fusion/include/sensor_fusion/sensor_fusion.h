@@ -135,7 +135,7 @@ private:
      * @param name The name of the service to query
      * @return A vector containing the FQN of the services queried
      */
-    std::vector<std::string> get_api(const cav_srvs::GetDriversWithCapabilitiesRequest::_category_type type, const std::string& name);
+    std::vector<std::string> get_api(const std::string& name);
 
     std::unordered_map<std::string, ros::Subscriber> sub_map_;
     /**

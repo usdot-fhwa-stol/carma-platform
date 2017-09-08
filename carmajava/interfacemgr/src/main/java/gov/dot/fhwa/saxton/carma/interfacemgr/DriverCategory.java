@@ -22,5 +22,21 @@ public enum DriverCategory {
     POSITION,
     SENSOR,
     CAN,
-    UNDEFINED
+    UNDEFINED;
+
+    static DriverCategory getCat(String cat) {
+        if (cat.equalsIgnoreCase("controller")) {
+            return CONTROLLER;
+        }else if (cat.equalsIgnoreCase("comms")) {
+            return COMMS;
+        }else if (cat.equalsIgnoreCase("position")) {
+            return POSITION;
+        }else if (cat.equalsIgnoreCase("sensor")) {
+            return SENSOR;
+        }else if (cat.equalsIgnoreCase("can")) {
+            return CAN;
+        }else {
+            return UNDEFINED;
+        }
+    }
 }

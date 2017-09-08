@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import cav_srvs.SetGuidanceEnabled;
 import cav_srvs.SetGuidanceEnabledRequest;
 import cav_srvs.SetGuidanceEnabledResponse;
@@ -30,9 +31,6 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
-import org.ros.node.service.ServiceServerListener;
-
-import java.net.URI;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,6 +49,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     // Member Variables
     protected ExecutorService executor;
     protected int numThreads = 6;
+
     protected IPubSubService pubSubService;
     protected ServiceServer<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>
         guidanceEnableService;
@@ -72,7 +71,9 @@ public class GuidanceMain extends SaxtonBaseNode {
         TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubService);
         Tracking tracking = new Tracking(pubSubService, node);
         GuidanceCommands guidanceCommands = new GuidanceCommands(pubSubService, node);
+        Maneuvers maneuvers = new Maneuvers(pubSubService, node);
 
+        executor.execute(maneuvers);
         executor.execute(arbitrator);
         executor.execute(pluginManager);
         executor.execute(trajectoryExecutor);
