@@ -56,7 +56,7 @@ public class GuidanceCommands implements Runnable {
             // No message for LanePosition.msg to be published on "guidance/control/lane_position"
             // TODO: Add message type for lateral control from guidance
 
-            String driverFqn = drivers[0].getDriverNames().get(0);
+            String driverFqn = drivers[0].getDriverData().get(0);
 
             IPublisher<SpeedAccel> speedAccelPublisher =
                 iPubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
