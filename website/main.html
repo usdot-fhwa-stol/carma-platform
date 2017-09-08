@@ -3,17 +3,14 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <meta name="mobile-web-app-capable" content="yes">
     <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
     <script src="scripts/roslib.js"></script>
-
     <link rel="stylesheet" type="text/css" href="css/styles.css">
-
     <!--
     Setup:
-    1) Update IP on rosbridge.js
-    2) Update top_ns on rosbridge.js
+    1) Move files command: sudo cp -R -r /home/mfromm/catkin_ws/src/CarmaPlatform/website/* /var/www/html/
+    2) Update IP on rosbridge.js
 
     Manual commands to run prior to website opening:
     1) source devel/setup.bash on all terminal windows
@@ -34,7 +31,7 @@
         <button class="tablinks" onclick="openTab(event, 'divMoreInfo')">MORE INFO</button>
     </div>
     <div class="tabheader">
-        <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance"  class="button_disabled" disabled>CAV Guidance</button>
+        <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_disabled" disabled>CAV Guidance</button>
     </div>
     <div id="divCapabilities" class="tabcontent">
         <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
@@ -69,7 +66,6 @@
     </div>
     <!-- The Modal -->
     <div id="myModal" class="modal">
-
         <!-- Modal content -->
         <div class="modal-content">
             <div class="modal-header">
@@ -83,7 +79,6 @@
                 <button id="btnModal" onclick="closeModal();" title="CAV Guidance">OK</button>
             </div>
         </div>
-
     </div>
     <script src="scripts/control.js"></script>
     <script src="scripts/rosbridge.js"></script>
