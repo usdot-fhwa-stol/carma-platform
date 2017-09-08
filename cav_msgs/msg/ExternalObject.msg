@@ -31,6 +31,7 @@ float64 range_rate
 #azimuth rate in rad/s
 float64 azimuth_rate
 
+# lane object is detected in relative to the lane the sensor is detecting from
 uint8 relative_lane
 
 # used for relative lane
