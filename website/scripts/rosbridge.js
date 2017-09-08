@@ -25,7 +25,8 @@ var s_activate_plugins = 'plugins/activate_plugins';
 var s_set_guidance_enable = 'set_guidance_enable';
 
 // Params
-var p_host_instructions = '/ui/host_instructions' // '/ui/guidance_instructions'; //TODO update to /ui/host_instructions
+var p_host_instructions = '/saxton_cav/ui/host_instructions';
+var p_page_refresh_interval = '/saxton_cav/ui/page_refresh_interval';
 
 
 // Global variables
