@@ -48,7 +48,8 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     // Member Variables
     protected ExecutorService executor;
-    protected int numThreads = 5;
+    protected int numThreads = 6;
+
     protected IPubSubService pubSubService;
     protected ServiceServer<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>
         guidanceEnableService;
@@ -69,6 +70,7 @@ public class GuidanceMain extends SaxtonBaseNode {
         PluginManager pluginManager = new PluginManager(pubSubService, node);
         TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubService, node);
         Tracking tracking = new Tracking(pubSubService, node);
+        GuidanceCommands guidanceCommands = new GuidanceCommands(pubSubService, node);
         Maneuvers maneuvers = new Maneuvers(pubSubService, node);
 
         executor.execute(maneuvers);
@@ -76,6 +78,7 @@ public class GuidanceMain extends SaxtonBaseNode {
         executor.execute(pluginManager);
         executor.execute(trajectoryExecutor);
         executor.execute(tracking);
+        executor.execute(guidanceCommands);
     }
 
     /**
