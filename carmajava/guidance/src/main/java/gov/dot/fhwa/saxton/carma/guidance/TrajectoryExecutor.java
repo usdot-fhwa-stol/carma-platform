@@ -18,9 +18,17 @@
 //Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import cav_msgs.RouteState;
 import cav_msgs.SystemAlert;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import cav_srvs.GetDriversWithCapabilities;
+import cav_srvs.GetDriversWithCapabilitiesRequest;
+import cav_srvs.GetDriversWithCapabilitiesResponse;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import org.apache.commons.logging.Log;
+import org.ros.node.ConnectedNode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Guidance package TrajectoryExecutor component
@@ -33,22 +41,57 @@ public class TrajectoryExecutor implements Runnable {
     // Member variables
     protected final String componentName = "TrajectoryExecutor";
     protected final long sleepDurationMillis = 30000;
-    protected IPubSubService IPubSubService;
+    protected IPubSubService iPubSubService;
     protected int sequenceNumber = 0;
-    public TrajectoryExecutor(IPubSubService IPubSubService) {
-        this.IPubSubService = IPubSubService;
+    protected Log log;
+    protected ConnectedNode node;
+
+    public TrajectoryExecutor(IPubSubService iPubSubService, ConnectedNode node) {
+        this.iPubSubService = iPubSubService;
+        this.node= node;
+        this.log = node.getLog();
     }
 
     @Override public void run() {
-        IPublisher<SystemAlert> pub =
-            IPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
-        for (; ; ) {
-            cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
-            systemAlertMsg
-                .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
-            systemAlertMsg.setType(SystemAlert.CAUTION);
-            pub.publish(systemAlertMsg);
+        ISubscriber<RouteState> routeStateSubscriber = iPubSubService
+            .getSubscriberForTopic("route_status", RouteState._TYPE);
+        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+            @Override public void onMessage(RouteState msg) {
+                log.info("Received RouteState:" + msg);
+            }
+        });
 
+        try {
+            IService<cav_srvs.GetDriversWithCapabilitiesRequest,
+                cav_srvs.GetDriversWithCapabilitiesResponse> driverCapabilityService
+                = iPubSubService.getServiceForTopic("get_drivers_with_capabilities",
+                GetDriversWithCapabilities._TYPE);
+
+            GetDriversWithCapabilitiesRequest req =
+                node.getServiceRequestMessageFactory()
+                    .newFromType(GetDriversWithCapabilitiesRequest._TYPE);
+
+            List<String> reqdCapabilities = new ArrayList<>();
+            reqdCapabilities.add("lateral");
+            reqdCapabilities.add("longitudinal");
+            req.setCapabilities(reqdCapabilities);
+            final GetDriversWithCapabilitiesResponse[] drivers =
+                new GetDriversWithCapabilitiesResponse[1];
+            driverCapabilityService.call(req,
+                new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+                    @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                        drivers[0] = msg;
+                    }
+
+                    @Override public void onFailure(Exception e) {
+                        // Ignore
+                    }
+                });
+        } catch (TopicNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        for (; ; ) {
             try {
                 Thread.sleep(sleepDurationMillis);
             } catch (InterruptedException e) {
