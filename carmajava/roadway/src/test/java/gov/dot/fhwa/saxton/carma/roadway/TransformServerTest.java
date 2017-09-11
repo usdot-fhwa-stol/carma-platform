@@ -5,48 +5,43 @@ import cav_srvs.GetTransformRequest;
 import cav_srvs.GetTransformResponse;
 import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
-import org.junit.Test;
-import org.ros.concurrent.CancellableLoop;
-import org.ros.exception.DuplicateServiceException;
 import org.ros.exception.RemoteException;
-import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
+import org.ros.message.Duration;
 import org.ros.message.MessageFactory;
+import org.ros.message.Time;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.service.*;
 import org.ros.node.topic.Publisher;
+import org.ros.rosjava_geometry.*;
 import ros.RosTest;
-import rosjava_test_msgs.AddTwoIntsRequest;
-import rosjava_test_msgs.AddTwoIntsResponse;
-import std_srvs.SetBoolResponse;
 import tf2_msgs.TFMessage;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
+import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Created by mcconnelms on 9/1/17.
+ * Class for running integration and unit tests of the TransformServer node in the Roadway package
  */
 public class TransformServerTest extends RosTest {
 
-  @Test
-  public void testServiceAvailability() throws Exception {
-    final CountDownServiceServerListener<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse>
-      countDownServiceServerListener = CountDownServiceServerListener.newDefault();
-
+  /**
+   * Test of the get_transform service in the TransformServer node
+   * Checks if the TransformServer node is subscribed to /tf and provides the get_transform service
+   * The accuracy of the service is then tested
+   */
+  @Test public void testServiceAvailability() throws Exception {
     final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
-    
+
+    // Start the transform server node
     nodeMainExecutor.execute(new TransformServer(), nodeConfiguration);
-    //TODO confirm the TransformServer node was started?
+
+    // Start the anonymous node to test the server
     nodeMainExecutor.execute(new SaxtonBaseNode() {
       @Override public GraphName getDefaultNodeName() {
         return GraphName.of("transform_server_tester");
@@ -54,36 +49,62 @@ public class TransformServerTest extends RosTest {
 
       @Override public void onStart(final ConnectedNode connectedNode) {
         final String SERVICE_NAME = "get_transform";
+        final int subscriberTimeout = 1000; //ms
+
+        // Build the transforms to be tested
+        final Vector3 translation = new Vector3(1,1,1);
+        final Vector3 zAxis = new Vector3(0,0,1); // Vector for rotating around z axis
+        final Quaternion rotZAxis = Quaternion.fromAxisAngle(zAxis, Math.PI/4.0);
+        final Transform transform = new Transform(translation,rotZAxis);
+        final Transform invertedTransform = transform.invert();
+
+        // Build ros messages
+        geometry_msgs.Transform transformMsg = messageFactory.newFromType(geometry_msgs.Transform._TYPE);
+        transformMsg = transform.toTransformMessage(transformMsg);
+        geometry_msgs.Transform invertedTransformMsg = messageFactory.newFromType(geometry_msgs.Transform._TYPE);
+        invertedTransformMsg = invertedTransform.toTransformMessage(invertedTransformMsg);
 
         // Assert that the service was created
         ServiceClient<GetTransformRequest, GetTransformResponse> serviceClient = this.waitForService(SERVICE_NAME, GetTransform._TYPE, connectedNode, 1000);
         assertNotNull("Service Client Not Null assertion", serviceClient);
 
+        // Setup transform publisher
         final Publisher<tf2_msgs.TFMessage> tfPub = connectedNode.newPublisher("/tf", TFMessage._TYPE);
+        Time startTime = connectedNode.getCurrentTime();
+        Time endTime = startTime.add(Duration.fromMillis(subscriberTimeout));
+        // Ensure that there is a subscriber to the /tf topic (should be the transform server)
+        while (!tfPub.hasSubscribers()) {
+          if (startTime.compareTo(endTime) >= 1) {
+            fail("No subscribers to /tf detected after timeout: " + subscriberTimeout);
+          }
+        }
+        // Build message to publish
         TFMessage tfMsg = tfPub.newMessage();
+
+        // Make transform stamped messages from transform and inverted transform
         final TransformStamped tfStamped = messageFactory.newFromType(TransformStamped._TYPE);
         tfStamped.getHeader().setSeq(0);
         tfStamped.getHeader().setFrameId("parent_frame");
         tfStamped.getHeader().setStamp(connectedNode.getCurrentTime());
         tfStamped.setChildFrameId("child_frame");
+        tfStamped.setTransform(transformMsg);
         tfMsg.setTransforms(new ArrayList<>(Arrays.asList(tfStamped)));
 
+        final TransformStamped tfInvertedStamped = messageFactory.newFromType(TransformStamped._TYPE);
+        tfInvertedStamped.getHeader().setSeq(tfStamped.getHeader().getSeq());
+        tfInvertedStamped.getHeader().setFrameId(tfStamped.getChildFrameId());
+        tfInvertedStamped.getHeader().setStamp(tfStamped.getHeader().getStamp());
+        tfInvertedStamped.setChildFrameId(tfStamped.getHeader().getFrameId());
+        tfInvertedStamped.setTransform(invertedTransformMsg);
+
+        // Publish non-inverted transform message
         tfPub.publish(tfMsg);
 
-        // TODO is it possible to check ros master for message registration.
-        // TODO Might be able to use a subscriber listener here. See TopicIntegrationTest in rosjava src/test
-        org.ros.node.topic.CountDownSubscriberListener<tf2_msgs.TFMessage> subscriberListener = org.ros.node.topic.CountDownSubscriberListener.newDefault();
-        try {
-          // TODO research this more
-          subscriberListener.awaitMasterRegistrationSuccess(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
 
         //Request Non-Inverse transform. Assert false on failure or incorrect transform returned
         final cav_srvs.GetTransformRequest request = serviceClient.newMessage();
-        request.setSourceFrame("parent_frame");
-        request.setTargetFrame("child_frame");
+        request.setSourceFrame(tfStamped.getHeader().getFrameId());
+        request.setTargetFrame(tfStamped.getChildFrameId());
 
         serviceClient.call(request, new ServiceResponseListener<GetTransformResponse>() {
           @Override public void onSuccess(GetTransformResponse response) {
@@ -98,13 +119,13 @@ public class TransformServerTest extends RosTest {
 
         //Request Inverse transform. Assert false on failure or incorrect transform returned
         final cav_srvs.GetTransformRequest inverseRequest = serviceClient.newMessage();
-        inverseRequest.setSourceFrame("child_frame");
-        inverseRequest.setTargetFrame("parent_frame");
+        inverseRequest.setSourceFrame(tfInvertedStamped.getHeader().getFrameId());
+        inverseRequest.setTargetFrame(tfInvertedStamped.getChildFrameId());
 
         serviceClient.call(inverseRequest, new ServiceResponseListener<GetTransformResponse>() {
           @Override public void onSuccess(GetTransformResponse response) {
             // Compare the requested transform with the
-            assertTrue(isEqualTransform(tfStamped, response.getTransform()));
+            assertTrue(isEqualTransform(tfInvertedStamped, response.getTransform()));
           }
 
           @Override public void onFailure(RemoteException e) {
@@ -113,26 +134,21 @@ public class TransformServerTest extends RosTest {
         });
       }
     }, nodeConfiguration);
-
-    assertTrue(countDownServiceServerListener.awaitMasterRegistrationSuccess(1, TimeUnit.SECONDS));
   }
 
-  // Helper function compares two TransformStamped messages for equality
+  //
+
+  /**
+   * Helper function compares two TransformStamped messages for equality
+   * @param t1 the first transform
+   * @param t2 the second transform
+   * @return True is both transforms are equivalent withing 0.0000001
+   */
   private boolean isEqualTransform(TransformStamped t1, TransformStamped t2) {
     return
       t1.getHeader().getFrameId().equals(t2.getHeader().getFrameId()) &&
       t1.getChildFrameId().equals(t2.getChildFrameId()) &&
-      dEqual(t1.getTransform().getRotation().getW(), t2.getTransform().getRotation().getW(), 0.0000001) &&
-      dEqual(t1.getTransform().getRotation().getW(), t2.getTransform().getRotation().getX(), 0.0000001) &&
-      dEqual(t1.getTransform().getRotation().getW(), t2.getTransform().getRotation().getY(), 0.0000001) &&
-      dEqual(t1.getTransform().getRotation().getW(), t2.getTransform().getRotation().getZ(), 0.0000001) &&
-      dEqual(t1.getTransform().getTranslation().getX(), t2.getTransform().getTranslation().getX(), 0.0000001) &&
-      dEqual(t1.getTransform().getTranslation().getY(), t2.getTransform().getTranslation().getY(), 0.0000001) &&
-      dEqual(t1.getTransform().getTranslation().getZ(), t2.getTransform().getTranslation().getZ(), 0.0000001);
-  }
-
-  // Helper function compares two doubles for simple equality
-  private boolean dEqual(double d1, double d2, double MAX_DIFF) {
-    return Math.abs(d2-d1) < MAX_DIFF;
+      Transform.fromTransformMessage(t1.getTransform()).almostEquals(
+        Transform.fromTransformMessage(t2.getTransform()), 0.0000001);
   }
 }
