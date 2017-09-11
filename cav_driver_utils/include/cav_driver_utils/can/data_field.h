@@ -1,4 +1,37 @@
 #pragma once
+/*
+ * Software License Agreement (BSD License)
+ *
+ *  Copyright (c) 2017, Torc Robotics, LLC
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Torc Robotics, LLC nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <vector>
 #include <bitset>
@@ -35,10 +68,10 @@ enum FieldDataType
 };
 }
 
-///
-/// \brief The DataField class represents a single data field in a CAN message.
-///        It provides functions to access the data using the configured encoding.
-///
+/**
+ * @brief The DataField class represents a single data field in a CAN message.
+ *        It provides functions to access the data using the configured encoding.
+ */
 class DataField
 {
 
@@ -49,21 +82,34 @@ private: // private data members
     unsigned char data_starting_bit_;
     unsigned char data_bit_length_;
     bool little_endian_;
-    bool packed_signed;
-    float min_value_;
-    float max_value_;
 
-//    unsigned long long data_;
-    std::bitset<64> data_;
 
 public:
     typedef std::bitset<64> bitset64;
+
+
+    /**
+     * @brief Construct for data field
+     * @param type Field Type, if SIGNED then msb is considered sign bit
+     * @param start where in the dataset is the field
+     * @param length number of bits composing field
+     * @param littleEndian if littleEndian set to true
+     * @param scaleFactor scaling factor
+     * @param offset offset of from 0
+     */
     DataField(FieldDataTypes::FieldDataType type, unsigned char start, unsigned char length, bool littleEndian, float scaleFactor, float offset)
             : data_type_(type), data_starting_bit_(start), data_bit_length_(length), little_endian_(littleEndian), scale_factor_(scaleFactor), offset_(offset)
     {
 
     }
 
+
+
+    /**
+     * @brief Extract the field from the passed data
+     * @param data
+     * @return
+     */
     float getValue(const std::bitset<64>& data) const
     {
         boost::dynamic_bitset<> subset;
@@ -106,6 +152,12 @@ public:
         return (float)(unscaled_value * scale_factor_ + offset_);
     }
 
+
+    /**
+     * @brief Sets the value of the field within data
+     * @param data
+     * @param value
+     */
     void setValue(std::bitset<64>& data, const float& value) const
     {
         //std::cout << "setValue(data, " << value << ")" << std::endl;
@@ -142,6 +194,11 @@ public:
 
     }
 
+    /**
+     * @brief Extracts unsigned int from data
+     * @param data
+     * @return
+     */
     unsigned int getUnsignedIntValue(const std::bitset<64>& data) const
     {
         boost::dynamic_bitset<> subset;
@@ -154,62 +211,6 @@ public:
         }
         unsigned long temp = subset.to_ulong();
         return (unsigned int)(temp * scale_factor_ + offset_);
-    }
-
-private: // private functions
-
-    bool isValid(int start, int length)
-    {
-        if (start + length < 64)
-            return true;
-        else
-            return false;
-    }
-
-    unsigned long long fromVector(std::vector<unsigned char> data, bool littleEndian)
-    {
-        if (data.size() != 8)
-        {
-            throw std::runtime_error("fromVector(): data must be 8 bytes long");
-        }
-
-        unsigned long long ret_val;
-
-        if (littleEndian) // (lest significant byte is at index 0)
-        {
-            for (unsigned int i = 0; i < data.size(); i++)
-            {
-                ret_val = ret_val | data[i] << 8*(7-i);
-            }
-        }
-        else // big endian (most significant byte is at index 0
-        {
-            for (unsigned int i = 0; i < data.size(); i++)
-            {
-                ret_val = ret_val | data[i] << 8*i;
-            }
-        }
-    }
-
-    std::vector<unsigned char> fromULL(unsigned long long data, bool littleEndian)
-    {
-        std::vector<unsigned char> ret_val;
-        ret_val.resize(8, 0);
-
-        if (littleEndian) // (least significant byte is at index 0)
-        {
-            for (unsigned int i = 0; i < 8; i++)
-            {
-                ret_val[i] = (data >> (7-i)*8) & 0xFF;
-            }
-        }
-        else // big endian (most significant byte is at index 0
-        {
-            for (unsigned int i = 0; i < 8; i++)
-            {
-                ret_val[i] = (data >> i*8) & 0xFF;
-            }
-        }
     }
 
 };
