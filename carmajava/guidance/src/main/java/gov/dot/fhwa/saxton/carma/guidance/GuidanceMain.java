@@ -17,14 +17,20 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
+import cav_srvs.SetGuidanceEnabled;
+import cav_srvs.SetGuidanceEnabledRequest;
+import cav_srvs.SetGuidanceEnabledResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
+import org.ros.exception.ServiceException;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
-
+import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.service.ServiceServer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,13 +39,22 @@ import java.util.concurrent.Executors;
  * the Guidance package. It forms the Guidance ROS node.
  * <p>
  * Command line test: rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
+ * rosservice call /plugins/getRegisteredPlugins
+ * rosservice call /plugins/getActivePlugins
+ * rosservice call /plugins/getAvailablePlugins
+ * rosservice call /plugins/activatePlugin '{header: auto, pluginName: DUMMY PLUGIN A, pluginVersion: v2.0.0, activated: True}'
  */
 public class GuidanceMain extends SaxtonBaseNode {
 
     // Member Variables
     protected ExecutorService executor;
-    protected int numThreads = 4;
+    protected int numThreads = 6;
+
     protected IPubSubService pubSubService;
+    protected ServiceServer<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>
+        guidanceEnableService;
+    protected String messagingBaseUrl = "~/";
+    protected boolean enabled = false;
 
     @Override public GraphName getDefaultNodeName() {
         return GraphName.of("guidance_main");
@@ -51,15 +66,19 @@ public class GuidanceMain extends SaxtonBaseNode {
     private void initExecutor(ConnectedNode node) {
         executor = Executors.newFixedThreadPool(numThreads);
 
-        Arbitrator arbitrator = new Arbitrator(pubSubService);
+        Arbitrator arbitrator = new Arbitrator(pubSubService, node);
         PluginManager pluginManager = new PluginManager(pubSubService, node);
-        TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubService);
-        Tracking tracking = new Tracking(pubSubService, node.getLog());
+        TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(pubSubService, node);
+        Tracking tracking = new Tracking(pubSubService, node);
+        GuidanceCommands guidanceCommands = new GuidanceCommands(pubSubService, node);
+        Maneuvers maneuvers = new Maneuvers(pubSubService, node);
 
+        executor.execute(maneuvers);
         executor.execute(arbitrator);
         executor.execute(pluginManager);
         executor.execute(trajectoryExecutor);
         executor.execute(tracking);
+        executor.execute(guidanceCommands);
     }
 
     /**
@@ -119,6 +138,16 @@ public class GuidanceMain extends SaxtonBaseNode {
 
         final IPublisher<SystemAlert> systemAlertPublisher =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+
+        guidanceEnableService = connectedNode.newServiceServer("set_guidance_enable",
+            SetGuidanceEnabled._TYPE,
+            new ServiceResponseBuilder<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>() {
+                @Override public void build(SetGuidanceEnabledRequest setGuidanceEnabledRequest,
+                    SetGuidanceEnabledResponse setGuidanceEnabledResponse) throws ServiceException {
+                    enabled = setGuidanceEnabledRequest.getGuidanceEnabled();
+                    setGuidanceEnabledResponse.setGuidanceStatus(enabled);
+                }
+            });
 
         //Getting the ros param called run_id.
         ParameterTree param = connectedNode.getParameterTree();

@@ -1,0 +1,11 @@
+<launch>
+    <node name="srx_controller" pkg="srx_controller" type="srx_controller_node" output="screen">
+        <remap from="received_messages" to="dbw-ifc/received_messages" />
+        <remap from="sent_messages" to="dbw-ifc/sent_messages" />
+    </node>
+    <node name="dbw_socketcan_bridge" pkg="socketcan_bridge" type="socketcan_bridge_node" output="screen">
+        <param name="can_device" value="dbw-ifc" />
+        <remap from="received_messages" to="dbw-ifc/received_messages" />
+        <remap from="sent_messages" to="dbw-ifc/sent_messages" />
+    </node>
+</launch>

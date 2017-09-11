@@ -18,10 +18,10 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 /**
  * Interface describing the basic functionality of a CARMA Platform Guidance Plugin
- *
+ * <p>
  * The methods defined on this interface are used by other Guidance component elements to describe,
  * instantiate, control, and communicate with the plugin instances.
- *
+ * <p>
  * Plugins MUST implement this interface in their primary execution class otherwise the Guidance
  * PluginManager will not be able to locate the plugin on the classpath and it will not show up as
  * available for activation by the user.
@@ -45,24 +45,33 @@ public interface IPlugin {
     /**
      * Called when the plugin is first instantiated by the Guidance executor
      */
-    void onCreate();
+    void onInitialize();
 
     /**
-     * Called after onCreate() and any time the plugin resumes from a suspended state of execution.
+     * Called after onInitialize() and any time the plugin resumes from a suspended state of execution.
      */
     void onResume();
 
     /**
-     * Called before onDestroy() and any time the plugin is about to enter a state of suspended
+     * Main execution loop fro the plugin. Should be where the plugin spends the majority of its
+     * time while active.
+     * <p>
+     * Will be invoked by the PluginExecutor in a tight busy-loop. If the plugin needs to run at a
+     * specific frequency it is the plugin's responsibility to insert the required timing logic.
+     */
+    void loop() throws InterruptedException;
+
+    /**
+     * Called before onTerminate() and any time the plugin is about to enter a state of suspended
      * execution
      */
     void onSuspend();
 
     /**
-     * Called shortly before the plugin will be destroyed and execution will terminate. Ensure that
+     * Called shortly before the plugin execution will terminate. Ensure that
      * any held resources are closed or otherwise released such that they do not leak.
      */
-    void onDestroy();
+    void onTerminate();
 
     /**
      * Get the activation state of the plugin

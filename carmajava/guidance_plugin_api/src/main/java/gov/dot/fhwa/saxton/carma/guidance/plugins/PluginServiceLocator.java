@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import org.apache.commons.logging.Log;
 
 /**
  * Service collection for the Plugin interface. Provides access to the generic, ROS agnostic interfaces
@@ -27,12 +28,14 @@ public class PluginServiceLocator {
     protected ArbitratorService arbitratorService;
     protected PluginManagementService pluginManagementService;
     protected IPubSubService IPubSubService;
+    protected Log log;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
-        PluginManagementService pluginManagementService, IPubSubService IPubSubService) {
+        PluginManagementService pluginManagementService, IPubSubService IPubSubService, Log log) {
         this.arbitratorService = arbitratorService;
         this.IPubSubService = IPubSubService;
         this.pluginManagementService = pluginManagementService;
+        this.log = log;
     }
 
     /**
@@ -54,5 +57,12 @@ public class PluginServiceLocator {
      */
     public IPubSubService getPubSubService() {
         return IPubSubService;
+    }
+
+    /**
+     * Get the logger instance available to the plugins
+     */
+    public Log getLog() {
+        return log;
     }
 }

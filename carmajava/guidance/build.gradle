@@ -33,13 +33,22 @@ mainClassName = 'org.ros.RosRun'
    version number changes.
 */
 
+repositories {
+    jcenter()
+}
+
 dependencies {
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
+  compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
+  compile 'org.reflections:reflections:0.9.11'
 
   compile project(':guidance_plugin_api')
   compile project(':rosutils')
+
+  testCompile 'org.mockito:mockito-core:2.+'
+  testCompile 'junit:junit:4.12'
 }
 
 installApp {

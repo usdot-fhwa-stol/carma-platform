@@ -21,6 +21,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageFactory;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,8 +32,8 @@ import java.util.List;
  * Lane indices will run right to left. Such that the right most lane will be lane 0.
  */
 public class RouteWaypoint {
-  protected List<String> disabledGuidanceAlgorithms;
-  protected List<Integer> laneClosures;
+  protected List<String> disabledGuidanceAlgorithms = new LinkedList<>();
+  protected List<Integer> laneClosures = new ArrayList<>();
   protected int laneCount = 0;
   protected Location location;
   protected int lowerSpeedLimit = -1;
