@@ -48,6 +48,8 @@ public abstract class RosTest {
     rosCore.start();
     Assert.assertTrue(rosCore.awaitStart(1, TimeUnit.SECONDS));
     nodeMainExecutor = DefaultNodeMainExecutor.newDefault();
+    // TODO look into new Public
+    // https://github.com/rosjava/rosjava_core/blob/fe2b833e3f08bf00662e80eb6737cc7824c975ac/rosjava/src/test/java/org/ros/internal/node/DefaultNodeTest.java
     nodeConfiguration = NodeConfiguration.newPrivate(rosCore.getUri());
   }
 
