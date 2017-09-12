@@ -19,6 +19,9 @@ import ros.RosTest;
 import tf2_msgs.TFMessage;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -37,7 +40,8 @@ public class TransformServerTest extends RosTest {
   @Test public void testServiceAvailability() throws Exception {
     final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
-
+    final CountDownLatch countDownLatch = new CountDownLatch(1);
+    countDownLatch.countDown();
     // Start the transform server node
     nodeMainExecutor.execute(new TransformServer(), nodeConfiguration);
 
@@ -132,8 +136,11 @@ public class TransformServerTest extends RosTest {
             fail("Failed to call get_transform service");
           }
         });
+        // If onStart is completed without issue then complete the countdown marking the test valid
+        countDownLatch.countDown();
       }
     }, nodeConfiguration);
+    assertTrue(countDownLatch.await(30, TimeUnit.SECONDS));
   }
 
   //

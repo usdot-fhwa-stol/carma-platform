@@ -47,6 +47,13 @@ dependencies {
   compile project(':rosutils')
 }
 
+test {
+    testLogging {
+        // Show that tests are run in the command-line output
+        events 'started', 'passed'
+    }
+}
+
 installApp {
     doLast {
         delete 'build/scripts'
