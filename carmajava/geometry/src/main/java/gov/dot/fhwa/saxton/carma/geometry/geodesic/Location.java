@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
+import org.ros.rosjava_geometry.Vector3;
+
 /**
  * A point in the WGS-84 coordinate system. A location has a latitude, longitude, and altitude.
  */
@@ -108,5 +110,16 @@ public class Location {
     this.latitude = latitude;
     this.longitude = longitude;
     this.altitude = altitude;
+  }
+
+  public boolean almostEqual(Location loc2, double degDelta, double mDelta) {
+    return Math.abs(latitude - loc2.getLatitude()) <= degDelta &&
+      Math.abs(longitude - loc2.getLongitude()) <= degDelta &&
+      Math.abs(altitude - loc2.getAltitude()) <= mDelta;
+  }
+
+  @Override public String toString() {
+    return "Location{" + "latitude=" + latitude + ", longitude=" + longitude + ", altitude="
+      + altitude + '}';
   }
 }
