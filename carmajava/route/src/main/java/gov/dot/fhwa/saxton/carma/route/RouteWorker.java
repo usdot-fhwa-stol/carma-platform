@@ -38,6 +38,7 @@ import java.util.*;
  */
 public class RouteWorker {
 
+  // TODO THIS NEEDS TO BE REWORKED BIG TIME
   protected final IRouteManager routeManager;
   protected Route activeRoute;
   protected HashMap<String, Route> availableRoutes = new HashMap<>();
@@ -57,24 +58,24 @@ public class RouteWorker {
   // State variables
   protected WorkerState state = WorkerState.LOADING_ROUTES;
   protected WorkerState[][] transitionTable = //Table controlling state transitions. row = event, col = currentState
-    /*            STATES:         LOADING_ROUTES,          ROUTE_SELECTION,              READY_TO_FOLLOW               FOLLOWING_ROUTE */
+    /*            STATES:         LOADING_ROUTES,          ROUTE_SELECTION,              FOLLOWING_ROUTE */
     /*   EVENTS       */
-    /*FILES_LOADED    */{{WorkerState.ROUTE_SELECTION, WorkerState.ROUTE_SELECTION, WorkerState.READY_TO_FOLLOW, WorkerState.FOLLOWING_ROUTE},
-    /*ROUTE_SELECTED  */ {WorkerState.LOADING_ROUTES,  WorkerState.FOLLOWING_ROUTE, WorkerState.READY_TO_FOLLOW, WorkerState.FOLLOWING_ROUTE},
-    /*ROUTE_COMPLETED */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.READY_TO_FOLLOW, WorkerState.ROUTE_SELECTION},
-    /*LEFT_ROUTE      */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.READY_TO_FOLLOW, WorkerState.ROUTE_SELECTION},
-    /*SYSTEM_READY    */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.FOLLOWING_ROUTE, WorkerState.FOLLOWING_ROUTE},
-    /*SYSTEM_FAILURE  */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.READY_TO_FOLLOW, WorkerState.READY_TO_FOLLOW}};
+    /*FILES_LOADED    */{{WorkerState.ROUTE_SELECTION, WorkerState.ROUTE_SELECTION, WorkerState.FOLLOWING_ROUTE},
+    /*ROUTE_SELECTED  */ {WorkerState.LOADING_ROUTES,  WorkerState.FOLLOWING_ROUTE, WorkerState.FOLLOWING_ROUTE},
+    /*ROUTE_COMPLETED */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.ROUTE_SELECTION},
+    /*LEFT_ROUTE      */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.ROUTE_SELECTION},
+    /*SYSTEM_READY    */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.FOLLOWING_ROUTE},
+    /*SYSTEM_FAILURE  */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.ROUTE_SELECTION}};
 
   protected WorkerAction[][] actionTable = //Table controlling actions taken on state transitions. row = event, col = currentState
-    /*        STATES:       LOADING_ROUTES,      ROUTE_SELECTION,       READY_TO_FOLLOW        FOLLOWING_ROUTE */
+    /*        STATES:       LOADING_ROUTES,      ROUTE_SELECTION,       FOLLOWING_ROUTE */
     /* EVENTS         */
-    /*FILES_LOADED    */{{WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.NONE},
-    /*ROUTE_SELECTED  */ {WorkerAction.INVALID, WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.CHANGE_ROUTE},
-    /*ROUTE_COMPLETED */ {WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.MARK_COMPLETE},
-    /*LEFT_ROUTE      */ {WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.LEFT_ROUTE_ALERT},
-    /*SYSTEM_READY    */ {WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.MARK_SYSTEM_OK},
-    /*SYSTEM_FAILURE  */ {WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.MARK_SYSTEM_NOT_OK}};
+    /*FILES_LOADED    */{{WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.NONE},
+    /*ROUTE_SELECTED  */ {WorkerAction.INVALID, WorkerAction.NONE,    WorkerAction.CHANGE_ROUTE},
+    /*ROUTE_COMPLETED */ {WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.MARK_COMPLETE},
+    /*LEFT_ROUTE      */ {WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.LEFT_ROUTE_ALERT},
+    /*SYSTEM_READY    */ {WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.MARK_SYSTEM_OK},
+    /*SYSTEM_FAILURE  */ {WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.MARK_SYSTEM_NOT_OK}};
 
   /**
    * Constructor initializes a route worker object with the provided logging tool
@@ -142,6 +143,9 @@ public class RouteWorker {
         break;
       case MARK_SYSTEM_NOT_OK:
         systemOkay = false;
+        activeRoute = null;
+        currentSegmentIndex = 0;
+        currentSegment = null;
         break;
       case INVALID:
         String warning = "A state transition was attempted in the RouteWorker which was invalid";
