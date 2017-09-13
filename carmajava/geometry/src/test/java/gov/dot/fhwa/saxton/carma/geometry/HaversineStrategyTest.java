@@ -1,6 +1,8 @@
 package gov.dot.fhwa.saxton.carma.geometry;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.GreatCircleSegment;
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,119 +34,98 @@ public class HaversineStrategyTest {
 
   /**
    * Tests the distanceLoc2Loc function
+   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
    * @throws Exception
    */
   @Test
   public void testDistanceLoc2Loc() throws Exception {
 
     log.info("// Entering distanceLoc2Loc test");
-    GeodesicCartesianConvertor gcConvertor = new GeodesicCartesianConvertor();
+    HaversineStrategy haversineStrategy = new HaversineStrategy();
 
-    // Test point nearish TFHRC
-    Point3D point = new Point3D(1104488, -4841993, 3988562);
-    // The location of the ecef frame in the desired frame
-    Transform tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    Location loc = gcConvertor.cartesian2Geodesic(point, tf);
-    Location solution = new Location(38.956488, -77.150345, 0);
-    assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
+    // Test points on example garage to colonial farm rd route
+    Location loc1 = new Location(38.95647,-77.15031, 0);
+    Location loc2 = new Location(38.95631, -77.15041, 0);
+    double solution = 19.78;
+    assertTrue(Math.abs(haversineStrategy.distanceLoc2Loc(loc1, loc2) - solution) < 0.1); // Check accuracy to within .1m
 
-    // Test equator and prime meridian
-    point = new Point3D(6378137, 0, 0);
-    // The location of the ecef frame in the desired frame
-    tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    loc = gcConvertor.cartesian2Geodesic(point, tf);
-    solution = new Location(0, 0, 0);
-    assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
+    loc1 = new Location(38.95628,-77.15047, 0);
+    loc2 = new Location(38.95613, -77.15101, 0);
+    solution = 49.58;
+    assertTrue(Math.abs(haversineStrategy.distanceLoc2Loc(loc1, loc2) - solution) < 0.1); // Check accuracy to within .1m
 
-    // Test north pole
-    point = new Point3D(0, 0, 6356752);
-    // The location of the ecef frame in the desired frame
-    tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    loc = gcConvertor.cartesian2Geodesic(point, tf);
-    solution = new Location(90, 0, 0);
-    assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
-
-    // Test south pole
-    point = new Point3D(0, 0, -6356752);
-    // The location of the ecef frame in the desired frame
-    tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    loc = gcConvertor.cartesian2Geodesic(point, tf);
-    solution = new Location(-90, 0, 0);
-    assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
-
-    // Test altitude change
-    point = new Point3D(0, 0, 6356782);
-    // The location of the ecef frame in the desired frame
-    tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    loc = gcConvertor.cartesian2Geodesic(point, tf);
-    solution = new Location(90, 0, 30);
-    assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
-
-    // Test complex transform with frame located at north pole rotated 90 degrees around ecef z axis
-    // The point being transformed is located at the equator/prime meridian
-    point = new Point3D(0, -6378137, -6356752);
-    // Rotation 90 degrees around z axis of ecef frame
-    Quaternion quat = Quaternion.fromAxisAngle(new Vector3(0,0,1), Math.PI/2.0);
-    // The location of the ecef frame in the desired frame (at north pole)
-    tf = new Transform(new Vector3(0,0,6356752), quat);
-    loc = gcConvertor.cartesian2Geodesic(point, tf);
-    solution = new Location(0, 0, 0);
-    assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
+    // Test points about a km apart
+    loc1 = new Location(38.942201,-77.160108, 0);
+    loc2 = new Location(38.943804, -77.148832, 0);
+    solution = 991.4;
+    assertTrue(Math.abs(haversineStrategy.distanceLoc2Loc(loc1, loc2) - solution) < 0.1); // Check accuracy to within .1m
   }
 
   /**
-   * Tests the geodesic2Cartesian function
+   * Tests the crossTrackDistance function
+   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
    * @throws Exception
    */
   @Test
-  public void testGeodesic2Cartesian() throws Exception {
-    // ECEF frame points computed using online calculator http://www.oc.nps.edu/oc2902w/coord/llhxyz.htm
+  public void testCrossTrackDistance() throws Exception {
 
-    log.info("// Entering geodesic2Cartesian test");
-    GeodesicCartesianConvertor gcConvertor = new GeodesicCartesianConvertor();
+    log.info("// Entering crossTrackDistance test");
+    HaversineStrategy haversineStrategy = new HaversineStrategy();
 
-    // Test point near STOL garage at TFHRC
-    Location loc = new Location(38.956488, -77.150345, 0);
-    // The location of the ecef frame in the desired frame
-    Transform tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    Point3D point = gcConvertor.geodesic2Cartesian(loc, tf);
-    Point3D solution = new Point3D(1104488, -4841993, 3988562);
-    assertTrue(point.almostEquals(solution, 1)); // Check accuracy to within 1m
+    // Test on km long segment
+    Location loc1 = new Location(38.942201,-77.160108, 0);
+    Location loc2 = new Location(38.943804, -77.148832, 0);
+    GreatCircleSegment seg = new GreatCircleSegment(loc1, loc2);
+    Location sideLoc = new Location(38.942422, -77.154786, 0);
+    double solution = 58.59;
+    assertTrue(Math.abs(haversineStrategy.crossTrackDistance(sideLoc, seg) - solution) < 0.1); // Check accuracy to within .1m
 
-    // Test equator and prime meridian
-    loc = new Location(0, 0, 0);
-    // The location of the ecef frame in the desired frame
-    tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    point = gcConvertor.geodesic2Cartesian(loc, tf);
-    solution = new Point3D(6378137, 0, 0);
-    assertTrue(point.almostEquals(solution, 1)); // Check accuracy to within 1m
+    // Test point on segment start
+    loc1 = new Location(38.942201,-77.160108, 0);
+    loc2 = new Location(38.943804, -77.148832, 0);
+    seg = new GreatCircleSegment(loc1, loc2);
+    solution = 0.0;
+    assertTrue(Math.abs(haversineStrategy.crossTrackDistance(loc1, seg) - solution) < 0.1); // Check accuracy to within .1m
 
-    // Test north pole
-    loc = new Location(90, 0, 0);
-    // The location of the ecef frame in the desired frame
-    tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    point = gcConvertor.geodesic2Cartesian(loc, tf);
-    solution = new Point3D(0, 0, 6356752);
-    assertTrue(point.almostEquals(solution, 1)); // Check accuracy to within 1m
-
-    // Test altitude change
-    loc = new Location(90, 0, 30);
-    // The location of the ecef frame in the desired frame
-    tf = new Transform(new Vector3(0,0,0), Quaternion.identity());
-    point = gcConvertor.geodesic2Cartesian(loc, tf);
-    solution = new Point3D(0, 0, 6356782);
-    assertTrue(point.almostEquals(solution, 1)); // Check accuracy to within 1m
-
-    // Test complex transform with frame located at north pole rotated 90 degrees around ecef z axis
-    // The point being transformed is located at the equator/prime meridian
-    loc = new Location(0, 0, 0);
-    // Rotation -90 degrees around z axis of desired frame (at north pole)
-    Quaternion quat = Quaternion.fromAxisAngle(new Vector3(0,0,1), -Math.PI/2.0);
-    // The location of the ecef frame in the desired frame (at north pole)
-    tf = new Transform(new Vector3(0,0,-6356752), quat);
-    point = gcConvertor.geodesic2Cartesian(loc, tf);
-    solution = new Point3D(0, -6378137, -6356752);
-    assertTrue(point.almostEquals(solution, 1)); // Check accuracy to within 1m
+    // Test point on segment end
+    loc1 = new Location(38.942201,-77.160108, 0);
+    loc2 = new Location(38.943804, -77.148832, 0);
+    seg = new GreatCircleSegment(loc1, loc2);
+    solution = 0.0;
+    assertTrue(Math.abs(haversineStrategy.crossTrackDistance(loc2, seg) - solution) < 0.1); // Check accuracy to within .1m
   }
 
+  /**
+   * Tests the downtrackDistance function
+   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
+   * @throws Exception
+   */
+  @Test
+  public void testDownTrackDistance() throws Exception {
+
+    log.info("// Entering downtrackDistance test");
+    HaversineStrategy haversineStrategy = new HaversineStrategy();
+
+    // Test on km long segment
+    Location loc1 = new Location(38.942201,-77.160108, 0);
+    Location loc2 = new Location(38.943804, -77.148832, 0);
+    GreatCircleSegment seg = new GreatCircleSegment(loc1, loc2);
+    Location sideLoc = new Location(38.942422, -77.154786, 0);
+    double solution = 457.1;
+    assertTrue(Math.abs(haversineStrategy.downtrackDistance(sideLoc, seg) - solution) < 0.1); // Check accuracy to within .1m
+
+    // Test point on segment start
+    loc1 = new Location(38.942201,-77.160108, 0);
+    loc2 = new Location(38.943804, -77.148832, 0);
+    seg = new GreatCircleSegment(loc1, loc2);
+    solution = 0.0;
+    assertTrue(Math.abs(haversineStrategy.downtrackDistance(loc1, seg) - solution) < 0.1); // Check accuracy to within .1m
+
+    // Test point on segment end
+    loc1 = new Location(38.942201,-77.160108, 0);
+    loc2 = new Location(38.943804, -77.148832, 0);
+    seg = new GreatCircleSegment(loc1, loc2);
+    solution = 991.4;
+    assertTrue(Math.abs(haversineStrategy.downtrackDistance(loc2, seg) - solution) < 0.1); // Check accuracy to within .1m
+  }
 }

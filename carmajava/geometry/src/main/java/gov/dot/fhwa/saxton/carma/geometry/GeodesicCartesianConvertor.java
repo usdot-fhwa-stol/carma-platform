@@ -85,8 +85,8 @@ public class GeodesicCartesianConvertor {
   public Point3D geodesic2Cartesian(Location location, Transform frame2ecefTransform) {
     // frame2ecefTransform needs to define the position of the ecefFrame relative to the desired frame
     // Put geodesic in proper units
-    double lonRad = Math.toRadians(location.getLongitude());
-    double latRad = Math.toRadians(location.getLatitude());
+    double lonRad = location.getLonRad();
+    double latRad = location.getLatRad();
     double alt = location.getAltitude();
 
     double Ne = Rea / Math.sqrt(1.0 - e_sqr * Math.pow(Math.sin(latRad),2));// The prime vertical radius of curvature

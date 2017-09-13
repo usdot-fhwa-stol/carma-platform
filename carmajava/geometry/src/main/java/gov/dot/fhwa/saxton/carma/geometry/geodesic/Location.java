@@ -16,15 +16,16 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
-import org.ros.rosjava_geometry.Vector3;
-
 /**
  * A point in the WGS-84 coordinate system. A location has a latitude, longitude, and altitude.
  */
 public class Location {
-  double latitude;
-  double longitude;
-  double altitude;
+  protected double latitude;
+  protected double longitude;
+  protected double altitude;
+  // As radians (updated in setter functions);
+  protected double latRad;
+  protected double lonRad;
 
   /**
    * Default Constructor
@@ -66,6 +67,7 @@ public class Location {
    */
   public void setLatitude(double latitude) {
     this.latitude = latitude;
+    this.latRad = Math.toRadians(this.latitude);
   }
 
   /**
@@ -82,6 +84,7 @@ public class Location {
    */
   public void setLongitude(double longitude) {
     this.longitude = longitude;
+    this.lonRad = Math.toRadians(this.longitude);
   }
 
   /**
@@ -107,9 +110,17 @@ public class Location {
    * @param altitude the altitude to be set
    */
   public void setLocationData(double latitude, double longitude, double altitude) {
-    this.latitude = latitude;
-    this.longitude = longitude;
-    this.altitude = altitude;
+    this.setLatitude(latitude);
+    this.setLongitude(longitude);
+    this.setAltitude(altitude);
+  }
+
+  public double getLatRad() {
+    return latRad;
+  }
+
+  public double getLonRad() {
+    return lonRad;
   }
 
   public boolean almostEqual(Location loc2, double degDelta, double mDelta) {
