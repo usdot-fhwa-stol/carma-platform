@@ -40,10 +40,30 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class TrajectoryExecutor extends GuidanceComponent {
     // Member variables
+<<<<<<< 05a81d40e975ce23715891e36b8f9b95273d5f96
     private ISubscriber<RouteState> routeStateSubscriber;
 
     public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
         super(state, pubSubService, node);
+=======
+    protected final String componentName = "TrajectoryExecutor";
+    protected final long sleepDurationMillis = 30000;
+    protected IPubSubService iPubSubService;
+    protected int sequenceNumber = 0;
+    protected Log log;
+    protected ConnectedNode node;
+    protected GuidanceCommands commands;
+    protected double amplitude;
+    protected double phase;
+    protected double frequency;
+    protected double maxAccel = 10.0;
+
+    public TrajectoryExecutor(IPubSubService iPubSubService, GuidanceCommands commands,ConnectedNode node) {
+        this.iPubSubService = iPubSubService;
+        this.node= node;
+        this.log = node.getLog();
+        this.commands = commands;
+>>>>>>> Initial implementation of GuidanceCommands functionality
     }
 
     @Override public String getComponentName() {
@@ -59,6 +79,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
             }
         });
 
+<<<<<<< 05a81d40e975ce23715891e36b8f9b95273d5f96
 
     }
 
@@ -96,5 +117,16 @@ public class TrajectoryExecutor extends GuidanceComponent {
 
     @Override public void onGuidanceEnable() {
         // NO-OP
+=======
+
+        for (; ; ) {
+            try {
+                // Generate a simple sin(t) speed command
+                commands.setCommand(Math.sin((System.currentTimeMillis() + phase) * frequency) * amplitude, maxAccel);
+                Thread.sleep(sleepDurationMillis);
+            } catch (InterruptedException e) {
+            }
+        }
+>>>>>>> Initial implementation of GuidanceCommands functionality
     }
 }

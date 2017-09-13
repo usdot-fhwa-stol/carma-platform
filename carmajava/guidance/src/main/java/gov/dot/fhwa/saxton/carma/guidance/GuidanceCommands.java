@@ -4,10 +4,10 @@ import cav_msgs.SpeedAccel;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
+import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
-import std_msgs.Float32;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +26,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GuidanceCommands extends GuidanceComponent {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
+    private AtomicDouble speedCommand = new AtomicDouble(0.0);
+    private AtomicDouble maxAccel = new AtomicDouble(0.0);
+    private long sleepDurationMillis = 100;
 
     GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
         super(state, iPubSubService, node);
@@ -43,21 +46,45 @@ public class GuidanceCommands extends GuidanceComponent {
 
     }
 
+    /**
+     * Change the current output of the GuidanceCommands thread.
+     *
+     * GuidanceCommands will output the specified speed and accel commands at the configured
+     * frequency until new values are set. This function is thread safe through usage of
+     * {@link AtomicDouble} functionality
+     *
+     * @param speed The speed to output
+     * @param accel The maximum allowable acceleration in attaining and maintaining that speed
+     */
+    public void setCommand(double speed, double accel) {
+        speedCommand.set(speed);
+        maxAccel.set(accel);
+    }
+
     @Override public void onSystemReady() {
         try {
-            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
+            // Register with the interface manager's service
+            IService<GetDriversWithCapabilitiesRequest,
+                GetDriversWithCapabilitiesResponse> driverCapabilityService
+                = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
                 GetDriversWithCapabilities._TYPE);
 
+            // Build our request message
             GetDriversWithCapabilitiesRequest req =
                 node.getServiceRequestMessageFactory()
                     .newFromType(GetDriversWithCapabilitiesRequest._TYPE);
 
             List<String> reqdCapabilities = new ArrayList<>();
-            reqdCapabilities.add("control/cmd_speed");
+            reqdCapabilities.add("control/cmd_speed"); // We only need to use one type of control
             req.setCapabilities(reqdCapabilities);
+
+            // Work around to pass a final object into our anonymous inner class so we can get the
+            // response
             final GetDriversWithCapabilitiesResponse[] drivers =
                 new GetDriversWithCapabilitiesResponse[1];
             drivers[0] = null;
+
+            // Call the InterfaceManager to see if we have a driver that matches our requirements
             driverCapabilityService.call(req,
                 new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
                     @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
@@ -73,6 +100,7 @@ public class GuidanceCommands extends GuidanceComponent {
             // No message for LanePosition.msg to be published on "guidance/control/lane_position"
             // TODO: Add message type for lateral control from guidance
 
+            // Verify that the message returned drivers that we can use
             String driverFqn = null;
             if (drivers[0] != null) {
                 List<String> driverFqns = drivers[0].getDriverData();
@@ -87,11 +115,28 @@ public class GuidanceCommands extends GuidanceComponent {
             }
 
             if (driverFqn != null) {
-               speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
+                // Open the publication channel to the driver and start sending it commands
+              IPublisher<SpeedAccel> speedAccelPublisher =
+                  pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
+
+                while (!Thread.currentThread().isInterrupted()) {
+                    // Iterate ensuring smooth speed command output
+                    long iterStartTime = System.currentTimeMillis();
+                    SpeedAccel msg = speedAccelPublisher.newMessage();
+                    msg.setSpeed(speedCommand.get());
+                    msg.setMaxAccel(maxAccel.get());
+
+                    long iterEndTime = System.currentTimeMillis();
+                    Thread.sleep(sleepDurationMillis - (iterEndTime - iterStartTime));
+                }
+            } else {
+                // TODO: Raise fatal error once we've discussed error standards
             }
         } catch (TopicNotFoundException e) {
             log.error("No interface manager found to query for drivers!!!");
-            e.printStackTrace();
+        } catch (InterruptedException e) {
+            log.warn("Guidance.Commands interrupted... Shutting down.");
+            Thread.currentThread().interrupt();
         }
     }
 }
