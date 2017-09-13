@@ -19,11 +19,13 @@ package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 /**
  * Represents a line between two locations.
  * It is not necessarily straight in the traditional sense as the distance is calculated along the surface of the earth according to a curved earth model.
- * TODO: Implement this class. Currently just a placeholder to allow other classes to compile.
  */
 public class GreatCircleSegment {
   protected Location loc1;
   protected Location loc2;
+  protected double length;
+  protected IDistanceStrategy distanceStrategy;
+
   /**
    * Constructor initializes this earth segment with the provided locations
    * @param loc1 First gps location
@@ -32,5 +34,59 @@ public class GreatCircleSegment {
   public GreatCircleSegment(Location loc1, Location loc2) {
     this.loc1 = loc1;
     this.loc2 = loc2;
+    this.setDistanceStrategy(new HaversineStrategy());
+  }
+
+  /**
+   * Calculates the cross-track great circle distance between a gps location and this segment.
+   *
+   * @param loc The location
+   * @return The distance in meters
+   */
+  double crossTrackDistance(Location loc) {
+    return distanceStrategy.crossTrackDistance(loc, this);
+  }
+
+  /**
+   * Calculates the downtrack distance along this segment for a provided location
+   *
+   * @param loc The location whose downtrack distance is being calculated
+   * @return The distance in meters
+   */
+  double downtrackDistance(Location loc) {
+    return distanceStrategy.downtrackDistance(loc, this);
+  }
+
+  /**
+   * Sets the distance strategy which will be used for calculations in this segment and update the length accordingly
+   * @param distanceStrategy the new default distance strategy
+   */
+  public void setDistanceStrategy(IDistanceStrategy distanceStrategy) {
+    this.distanceStrategy = distanceStrategy;
+    this.length = loc1.distanceFrom(loc2, distanceStrategy);
+  }
+
+  /**
+   * Get the starting location of this segment
+   * @return the location
+   */
+  public Location getLoc1() {
+    return loc1;
+  }
+
+  /**
+   * Get the ending location of this segment
+   * @return the location
+   */
+  public Location getLoc2() {
+    return loc2;
+  }
+
+  /**
+   * Get the length of this segment as calculated using this segments distance strategy
+   * @return the length
+   */
+  public double getLength() {
+    return length;
   }
 }

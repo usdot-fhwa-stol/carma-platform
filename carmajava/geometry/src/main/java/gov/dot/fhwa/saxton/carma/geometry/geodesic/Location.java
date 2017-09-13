@@ -47,10 +47,9 @@ public class Location {
    * @param loc The gps location to calculate this location's distance from
    * @param strategy The geodesic distance calculation strategy.
    * @return The distance in meters
-   * TODO: Implement
    */
   public double distanceFrom(Location loc, IDistanceStrategy strategy) {
-    return 0;
+    return strategy.distanceLoc2Loc(this, loc);
   }
 
   /**
@@ -115,14 +114,29 @@ public class Location {
     this.setAltitude(altitude);
   }
 
+  /**
+   * Get the latitude in radians
+   * @return the latitude in radians
+   */
   public double getLatRad() {
     return latRad;
   }
 
+  /**
+   * Get the longitude in radians
+   * @return the longitude in radians
+   */
   public double getLonRad() {
     return lonRad;
   }
 
+  /**
+   * Check equality between another location to within some delta
+   * @param loc2 The location to checked against
+   * @param degDelta the delta for lat/lon (deg)
+   * @param mDelta the delta in meters for altitude
+   * @return True if the difference between both locations is within the deltas
+   */
   public boolean almostEqual(Location loc2, double degDelta, double mDelta) {
     return Math.abs(latitude - loc2.getLatitude()) <= degDelta &&
       Math.abs(longitude - loc2.getLongitude()) <= degDelta &&
