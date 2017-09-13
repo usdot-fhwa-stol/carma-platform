@@ -69,7 +69,6 @@ public abstract class AbstractPlugin implements IPlugin {
      * @param availability
      */
     protected final void setAvailability(boolean availability) {
-        log.debug("Inside set availability");
         if (this.availability != availability) {
             this.availability = availability;
             log.debug("Availability Listeners " + availabilityListeners.size());
