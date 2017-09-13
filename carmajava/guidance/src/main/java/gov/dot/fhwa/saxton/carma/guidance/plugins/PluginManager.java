@@ -60,8 +60,8 @@ public class PluginManager implements Runnable, AvailabilityListener {
 
     protected String messagingBaseUrl = "plugins";
     protected String getRegisteredPluginsServiceUrl = "get_registered_plugins";
-    protected String getActivePluginsServiceUrl = "get_active_plugin";
-    protected String activatePluginServiceUrl = "activate_plugins";
+    protected String getActivePluginsServiceUrl = "get_active_plugins";
+    protected String activatePluginServiceUrl = "activate_plugin";
 
     protected String availablePluginsTopicUrl = "available_plugins";
 
