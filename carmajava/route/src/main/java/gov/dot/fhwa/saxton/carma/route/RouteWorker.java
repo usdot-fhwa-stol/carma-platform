@@ -41,16 +41,18 @@ public class RouteWorker {
   protected final IRouteManager routeManager;
   protected Route activeRoute;
   protected HashMap<String, Route> availableRoutes = new HashMap<>();
-  protected double crossTrackDistance;
   protected RouteSegment currentSegment;
+  protected int currentSegmentIndex = 0;
   protected Location hostVehicleLocation;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   protected final Log log;
   protected int currentWaypointIndex = 0;
   protected double downtrackDistance = 0;
+  protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
   protected boolean routeComplete = false;
+  protected double MAX_CROSSTRACK_DISTANCE = 5.0; // TODO put in route files as may change based on road type
 
   // State variables
   protected WorkerState state = WorkerState.LOADING_ROUTES;
@@ -122,7 +124,9 @@ public class RouteWorker {
       case NONE:
         break;
       case CHANGE_ROUTE:
-        // TODO: Recalculate downtrack distance and other metrics
+        downtrackDistance = currentSegment.downTrackDistance(hostVehicleLocation);
+        crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
+        // TODO update any other needed metrics
         break;
       case MARK_COMPLETE:
         routeComplete = true;
@@ -162,29 +166,31 @@ public class RouteWorker {
    * Returns true when the end of a route has been reached
    * @return the active route completion status
    */
-  public boolean routeCompleted(){
-    // TODO: implement using hostVehicleLocation
-    return false;
+  protected boolean routeCompleted(){
+    return currentSegment == activeRoute.getLastSegment() && atNextSegment();
   }
 
   /**
    * Loads a route into memory using the provided route loading strategy
    * @param loadStrategy
    */
-  public void loadAdditionalRoute(IRouteLoadStrategy loadStrategy){
+  protected void loadAdditionalRoute(IRouteLoadStrategy loadStrategy){
     Route route = loadStrategy.load();
     route.setRouteID(route.routeName); //TODO come up with better method of defining the route id
     availableRoutes.put(route.getRouteID(), route);
     handleStateTransition(WorkerEvent.FILES_LOADED);
   }
 
-  //TODO: Implement
+  protected boolean atNextSegment() {
+    return downtrackDistance > currentSegment.length();
+  }
+
   /**
    * Returns true if crossTrackDistance is so large that the vehicle can no longer be considered on the route
    * @return vehicle on route status
    */
-  private boolean leftRouteVicinity(){
-    return false;
+  protected boolean leftRouteVicinity(){
+    return crossTrackDistance > MAX_CROSSTRACK_DISTANCE;
   }
 
   protected cav_srvs.GetAvailableRoutesResponse getAvailableRoutes() {
@@ -247,7 +253,7 @@ public class RouteWorker {
       case NavSatStatus.STATUS_NO_FIX:
         // TODO: Handle this in a way other than not updating the location
         log.warn("No gps data with fix received by route");
-        break;
+        return;
       case NavSatStatus.STATUS_FIX:
         hostVehicleLocation.setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
         break;
@@ -262,11 +268,28 @@ public class RouteWorker {
       default:
         //TODO: Handle this variant maybe throw exception?
         log.error("Unknown nav sat fix status type: " + msg.getStatus().getStatus());
+        return;
+    }
+
+    if (activeRoute == null) {
+      return;
+    }
+
+    // Update downtrack distance
+    downtrackDistance = activeRoute.lengthOfSegments(0, currentSegmentIndex - 1)
+      + currentSegment.downTrackDistance(hostVehicleLocation);
+
+    if (atNextSegment()) {
+      currentSegmentIndex++; //TODO handle if gps signal lost and multiple segments are traversed at once
+      currentSegment = activeRoute.getSegments().get(currentSegmentIndex);
     }
 
     if (routeCompleted()) {
       handleStateTransition(WorkerEvent.ROUTE_COMPLETED);
     }
+
+    // Update crosstrack distance
+    crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
     if (leftRouteVicinity()) {
       handleStateTransition(WorkerEvent.LEFT_ROUTE);

@@ -91,11 +91,36 @@ public class Route {
 
   /**
    * Calculates the length of a route
-   * //TODO modify to work with geometry package
    * @return the length of the route in meters
    */
-  protected double calculateLength(){
-    return 1;
+  protected void calculateLength(){
+    double totalLength = 0;
+
+    for(RouteSegment seg: segments) {
+      totalLength += seg.length();
+    }
+    this.routeLength = totalLength;
+  }
+
+  /**
+   * Calculates the distance downtrack to the end of the segment with the specified index.
+   * The calculation is performed from the start of the segment with the specified startIndex
+   * @param startIndex the index of the first segment to be included in the length calculation
+   * @param finalIndex the index of the final segment to be included in the length calculation
+   * @return the length of the route in meters
+   */
+  protected double lengthOfSegments(int startIndex, int finalIndex){
+    double totalLength = 0;
+
+    if (finalIndex >= segments.size()) {
+      finalIndex = segments.size() - 1;
+    }
+
+    for(int i = startIndex; i <= finalIndex; i++) {
+      totalLength += segments.get(i).length();
+    }
+
+    return totalLength;
   }
 
   /**
@@ -110,7 +135,7 @@ public class Route {
     //TODO perform validation check on segment usability
     try{
       segments.add(index,segment);
-      this.routeLength = calculateLength();
+      calculateLength();
       return true;
     }catch (IndexOutOfBoundsException e){
       e.printStackTrace();
@@ -131,7 +156,7 @@ public class Route {
     //TODO perform validation check on waypoint usability
     try{
       waypoints.add(index,waypoint);
-      this.routeLength = calculateLength();
+      calculateLength();
       return true;
     }catch (IndexOutOfBoundsException e){
       e.printStackTrace();
@@ -217,7 +242,7 @@ public class Route {
       prevWaypoint = waypoint;
       firstWaypoint = false;
     }
-    this.routeLength = calculateLength();
+    calculateLength();
   }
 
   /**

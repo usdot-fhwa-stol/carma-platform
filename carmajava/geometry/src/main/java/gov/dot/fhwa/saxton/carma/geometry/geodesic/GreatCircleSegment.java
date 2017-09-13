@@ -43,7 +43,7 @@ public class GreatCircleSegment {
    * @param loc The location
    * @return The distance in meters
    */
-  double crossTrackDistance(Location loc) {
+  public double crossTrackDistance(Location loc) {
     return distanceStrategy.crossTrackDistance(loc, this);
   }
 
@@ -53,7 +53,7 @@ public class GreatCircleSegment {
    * @param loc The location whose downtrack distance is being calculated
    * @return The distance in meters
    */
-  double downtrackDistance(Location loc) {
+  public double downtrackDistance(Location loc) {
     return distanceStrategy.downtrackDistance(loc, this);
   }
 

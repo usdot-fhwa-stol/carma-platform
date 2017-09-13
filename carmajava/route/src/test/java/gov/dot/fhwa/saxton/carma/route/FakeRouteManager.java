@@ -13,22 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package gov.dot.fhwa.saxton.carma.route;
 
+import cav_msgs.*;
+import cav_msgs.Route;
+import cav_msgs.RouteSegment;
+import org.ros.message.Time;
+
 /**
- * A description of states which a route worker can take
+ * Fake route manager for use in unit testing
  */
-public enum WorkerState {
-  /**
-   * Starting state. No routes have been loaded yet
-   */
-  LOADING_ROUTES,
-  /**
-   * Routes have been loaded and waiting for selection
-   */
-  ROUTE_SELECTION,
-  /**
-   * The vehicle is actively following a route
-   */
-  FOLLOWING_ROUTE
+public class FakeRouteManager implements IRouteManager {
+  @Override public void publishSystemAlert(SystemAlert systemAlert) {
+
+  }
+
+  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
+
+  }
+
+  @Override public void publishActiveRoute(Route route) {
+
+  }
+
+  @Override public void publishRouteState(RouteState routeState) {
+
+  }
+
+  @Override public Time getTime() {
+    return Time.fromMillis(System.currentTimeMillis());
+  }
 }

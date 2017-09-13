@@ -41,6 +41,9 @@ allprojects {
         maven {
             url uri("../../../devel/share/maven")
         }
+        maven {
+            url uri("../../../../devel/share/maven")
+        }
     }
 }
 
