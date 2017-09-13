@@ -302,7 +302,7 @@ public class PluginManager implements Runnable, AvailabilityListener {
                         Header h = factory.newFromType(Header._TYPE);
                         h.setStamp(node.getCurrentTime());
                         h.setFrameId("0");
-                        h.setSeq(0);
+                        h.setSeq(activePluginsSeqNum++);
 
                         List<Plugin> pList = new ArrayList<>();
                         // Walk the plugin list and see which ones are active
