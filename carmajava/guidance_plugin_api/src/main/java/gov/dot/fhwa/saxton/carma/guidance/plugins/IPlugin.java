@@ -105,4 +105,10 @@ public interface IPlugin {
      * Callback method to handle negotiation requests received from external or internal sources
      */
     void onReceiveNegotiationRequest();
+
+    /**
+     * Register an event listener to be called when the availability status of the IPlugin changes
+     * @param availabilityListener
+     */
+    void registerAvailabilityListener(AvailabilityListener availabilityListener);
 }

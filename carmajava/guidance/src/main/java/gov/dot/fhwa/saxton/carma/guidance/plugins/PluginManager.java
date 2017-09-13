@@ -44,7 +44,7 @@ import java.util.Set;
  * Responsible for instantiating, running, owning, and runtime management of
  * all plugins installed in the software's operating environment.
  */
-public class PluginManager implements Runnable {
+public class PluginManager implements Runnable, AvailabilityListener {
     protected final String componentName = "PluginManager";
     protected final long sleepDurationMillis = 30000;
     protected IPubSubService pubSubService;
@@ -69,6 +69,9 @@ public class PluginManager implements Runnable {
     protected ServiceServer<PluginListRequest, PluginListResponse> activePluginService;
     protected ServiceServer<PluginActivationRequest, PluginActivationResponse>
         activatePluginService;
+    protected IPublisher<cav_msgs.PluginList> pluginPublisher;
+    protected MessageFactory messageFactory;
+    protected int availablePluginsSeqNum = 0;
 
     public PluginManager(IPubSubService pubSubManager, ConnectedNode node) {
         this.pubSubService = pubSubManager;
@@ -113,19 +116,28 @@ public class PluginManager implements Runnable {
 
                 // TODO: This is brittle, depends on convention of having a constructor taking only a PSL
                 IPlugin pluginInstance = pluginCtor.newInstance(pluginServiceLocator);
+                pluginInstance.registerAvailabilityListener(this);
                 log.info("Guidance.PluginManager instantiated new plugin instance: "
                     + pluginInstance.getName() + ":" + pluginInstance.getVersionId());
                 pluginInstances.add(pluginInstance);
             } catch (NoSuchMethodException e) {
+                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
                 log.error(e);
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
+                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
                 log.error(e);
                 e.printStackTrace();
             } catch (InstantiationException e) {
+                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
                 log.error(e);
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
+                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
+                log.error(e);
+                e.printStackTrace();
+            } catch (Exception e) {
+                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
                 log.error(e);
                 e.printStackTrace();
             }
@@ -243,9 +255,9 @@ public class PluginManager implements Runnable {
     }
 
     @Override public void run() {
+        // Instantiate the plugins and register them
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
-
         for (IPlugin p : getRegisteredPlugins()) {
             executor.submitPlugin(p);
             executor.initializePlugin(p.getName(), p.getVersionId());
@@ -259,11 +271,17 @@ public class PluginManager implements Runnable {
             executor.resumePlugin(p.getName(), p.getVersionId());
         }
 
+        // Setup the services related to plugin queries
         setupServices();
+
+        // Configure the SYSTEM_ALERT TOPIC
         IPublisher<SystemAlert> pub =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-        IPublisher<cav_msgs.PluginList> pluginPublisher = pubSubService
+        // Configure the plugin availability topic and topic message factory
+        NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
+        messageFactory = nodeConfig.getTopicMessageFactory();
+        pluginPublisher = pubSubService
             .getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
                 cav_msgs.PluginList._TYPE);
 
@@ -275,36 +293,6 @@ public class PluginManager implements Runnable {
             systemAlertMsg.setType(SystemAlert.CAUTION);
             pub.publish(systemAlertMsg);
 
-            NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
-            MessageFactory factory = nodeConfig.getTopicMessageFactory();
-            cav_msgs.PluginList availablePlugins = factory.newFromType(cav_msgs.PluginList._TYPE);
-
-            // Publish mock available plugin status
-            Header h = factory.newFromType(Header._TYPE);
-            h.setStamp(node.getCurrentTime());
-            h.setFrameId("0");
-            h.setSeq(0);
-
-            Plugin p1 = factory.newFromType(Plugin._TYPE);
-            p1.setHeader(h);
-            p1.setAvailable(true);
-            p1.setName("DUMMY PLUGIN B");
-            p1.setVersionId("v1.0.0");
-            p1.setActivated(true);
-
-            Plugin p2 = factory.newFromType(Plugin._TYPE);
-            p2.setHeader(h);
-            p2.setAvailable(true);
-            p2.setName("DUMMY PLUGIN A");
-            p2.setVersionId("v2.0.0");
-            p2.setActivated(true);
-
-            List<Plugin> pList = new ArrayList<>();
-            pList.add(p1);
-            pList.add(p2);
-
-            availablePlugins.setPlugins(pList);
-            pluginPublisher.publish(availablePlugins);
 
             try {
                 Thread.sleep(sleepDurationMillis);
@@ -327,5 +315,42 @@ public class PluginManager implements Runnable {
         for (IPlugin p: getRegisteredPlugins()) {
             executor.terminatePlugin(p.getName(), p.getVersionId());
         }
+    }
+
+    @Override public void onAvailabilityChange(IPlugin plugin, boolean availability) {
+        log.debug("TEST");
+        if (pluginPublisher == null) {
+            // Bail if we can't yet publish
+           return;
+        }
+
+        cav_msgs.PluginList availablePlugins = messageFactory.newFromType(cav_msgs.PluginList._TYPE);
+
+        // Publish mock available plugin status
+        Header h = messageFactory.newFromType(Header._TYPE);
+        h.setStamp(node.getCurrentTime());
+        h.setFrameId("0");
+        h.setSeq(availablePluginsSeqNum++);
+
+        /* Rather than maintain a separate list of plugins, which we'd have to walk anyway to update
+         * just walk the main list every time one changes status. With a small number of plugins this
+         * shouldn't be a performance concern
+         */
+        List<Plugin> pList = new ArrayList<>();
+        for (IPlugin p : registeredPlugins) {
+            if (p.getAvailability()) {
+                Plugin pMsg = messageFactory.newFromType(Plugin._TYPE);
+                pMsg.setHeader(h);
+                pMsg.setAvailable(p.getAvailability());
+                pMsg.setName(p.getName());
+                pMsg.setVersionId(p.getVersionId());
+                pMsg.setActivated(p.getActivation());
+
+                pList.add(pMsg);
+            }
+        }
+
+        availablePlugins.setPlugins(pList);
+        pluginPublisher.publish(availablePlugins);
     }
 }

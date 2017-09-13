@@ -3,6 +3,10 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import org.apache.commons.logging.Log;
 
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
+
 /**
  * Abstract base class for plugins
  * <p>
@@ -11,10 +15,13 @@ import org.apache.commons.logging.Log;
 public abstract class AbstractPlugin implements IPlugin {
     protected String name;
     protected String versionId;
-    protected boolean activation = false;
-    protected boolean availability = false;
     protected Log log;
     protected IPubSubService pubSubService;
+
+    // Private fields so that extendees can't access them
+    private boolean activation = false;
+    private boolean availability = false;
+    private List<AvailabilityListener> availabilityListeners = new ArrayList<>();
 
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
         this.pubSubService = pluginServiceLocator.getPubSubService();
@@ -37,7 +44,7 @@ public abstract class AbstractPlugin implements IPlugin {
         this.activation = activation;
     }
 
-    @Override public boolean getAvailability() {
+    @Override public final boolean getAvailability() {
         return availability;
     }
 
@@ -47,5 +54,28 @@ public abstract class AbstractPlugin implements IPlugin {
 
     @Override public void onReceiveNegotiationRequest() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final void registerAvailabilityListener(AvailabilityListener availabilityListener) {
+        availabilityListeners.add(availabilityListener);
+    }
+
+    /**
+     * Use this method to change the plugin's availability status
+     *
+     * Will automatically ensure all availability listeners are notified
+     *
+     * @param availability
+     */
+    protected final void setAvailability(boolean availability) {
+        log.debug("Inside set availability");
+        if (this.availability != availability) {
+            this.availability = availability;
+            log.debug("Availability Listeners " + availabilityListeners.size());
+            for (AvailabilityListener el : availabilityListeners) {
+                el.onAvailabilityChange(this, availability);
+            }
+        }
     }
 }
