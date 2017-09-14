@@ -112,14 +112,17 @@ public abstract class GuidanceComponent implements Runnable {
         };
         loop.run();
 
-        // Wait for GUIDANCE_ENABLE
+        // Wait for Guidance to shutdown
         while (!(state.get() == GuidanceState.SHUTDOWN)) {
             try {
                 Thread.sleep(WAIT_DURATION_MS);
             } catch (InterruptedException e) {
             }
         }
+
+        log.info(getComponentName() + " shutting down.");
         onGuidanceShutdown();
+        log.info(getComponentName() + " shut down.");
     }
 
     /**
