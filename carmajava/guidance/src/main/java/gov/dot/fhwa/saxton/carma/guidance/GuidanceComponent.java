@@ -1,9 +1,5 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import cav_msgs.SystemAlert;
-import cav_srvs.SetGuidanceEnabled;
-import cav_srvs.SetGuidanceEnabledRequest;
-import cav_srvs.SetGuidanceEnabledResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
@@ -11,6 +7,12 @@ import org.ros.node.ConnectedNode;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Base class for all Guidance components.
+ * <p>
+ * Defines the execution framework within the context of both Guidance and the overall system's state
+ * due to driver initialization and user command.
+ */
 public abstract class GuidanceComponent implements Runnable {
     protected ConnectedNode node;
     protected IPubSubService pubSubService;
@@ -18,8 +20,6 @@ public abstract class GuidanceComponent implements Runnable {
 
     private final long WAIT_DURATION_MS = 200;
 
-    private ISubscriber<SystemAlert> systemAlertSubscriber;
-    private IService<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse> guidanceEnabledSubscriber;
     private AtomicReference<GuidanceState> state;
 
     public GuidanceComponent(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
@@ -29,10 +29,33 @@ public abstract class GuidanceComponent implements Runnable {
         this.log = node.getLog();
     }
 
+    /**
+     * Get the human readable String representation of this component's name
+     */
     public abstract String getComponentName();
+
+    /**
+     * An event callback called once when Guidance is first started up. Do not loop in this handler.
+     */
     public abstract void onGuidanceStartup();
+
+    /**
+     * An event callback called once when the CAV platform drivers are initialized. Do not loop in
+     * this handler.
+     */
     public abstract void onSystemReady();
+
+    /**
+     * An event callback called once when the user activates the Guidance module via the user
+     * interface. Do not loop in this handler.
+     */
     public abstract void onGuidanceEnable();
+
+    /**
+     * Primary execution loop for this Guidance component. Execution will be interrupted when a state
+     * change occurs. This method is called within a tight while loop which will not exit until
+     * interrupted. This method will be called after each event handler has ended
+     */
     public abstract void loop();
 
     public final void run() {
@@ -81,10 +104,17 @@ public abstract class GuidanceComponent implements Runnable {
         loop.run();
     }
 
+    /**
+     * Get the Guidance component's current state value
+     */
     protected GuidanceState getState() {
         return state.get();
     }
 
+    /**
+     * Cancel the loop and sleep until it actually exits. Functionally kill it and then join
+     * @param loop The loop to be canceled
+     */
     private void cancelAndWaitForLoop(CancellableLoop loop) {
         loop.cancel();
         while (loop.isRunning()) {
