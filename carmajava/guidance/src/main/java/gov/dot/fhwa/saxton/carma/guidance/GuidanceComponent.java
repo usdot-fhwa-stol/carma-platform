@@ -19,6 +19,7 @@ public abstract class GuidanceComponent implements Runnable {
     protected Log log;
 
     private final long WAIT_DURATION_MS = 200;
+    private final long DEFAULT_LOOP_SLEEP_MS = 5000;
 
     private AtomicReference<GuidanceState> state;
 
@@ -54,9 +55,17 @@ public abstract class GuidanceComponent implements Runnable {
     /**
      * Primary execution loop for this Guidance component. Execution will be interrupted when a state
      * change occurs. This method is called within a tight while loop which will not exit until
-     * interrupted. This method will be called after each event handler has ended
+     * interrupted. This method will be called after each event handler has ended. Timing of this
+     * loop is the sub-classers responsibility.
+     *
+     * Default behavior if not overridden is to sleep for 5s.
      */
-    public abstract void loop();
+    public void loop() {
+        try {
+            Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
+        } catch (InterruptedException e) {
+        }
+    }
 
     public final void run() {
         log.info(getComponentName() + " starting up.");
