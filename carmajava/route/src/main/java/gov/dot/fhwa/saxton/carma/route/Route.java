@@ -109,7 +109,7 @@ public class Route {
    * @param finalIndex the index of the final segment to be included in the length calculation
    * @return the length of the route in meters
    */
-  protected double lengthOfSegments(int startIndex, int finalIndex){
+  public double lengthOfSegments(int startIndex, int finalIndex){
     double totalLength = 0;
 
     if (finalIndex >= segments.size()) {

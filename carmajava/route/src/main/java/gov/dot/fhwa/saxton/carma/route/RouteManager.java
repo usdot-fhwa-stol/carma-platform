@@ -34,6 +34,8 @@ import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
 import sensor_msgs.NavSatFix;
 
+import java.util.HashMap;
+
 /**
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
  * <p>
@@ -64,6 +66,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
   protected ServiceServer<SetActiveRouteRequest, SetActiveRouteResponse> setActiveRouteService;
   protected ServiceServer<GetAvailableRoutesRequest, GetAvailableRoutesResponse>
     getAvailableRouteService;
+  protected ServiceServer<StartActiveRouteRequest, StartActiveRouteResponse> startActiveRouteService;
   protected RouteWorker routeWorker;
 
   @Override public GraphName getDefaultNodeName() {
@@ -83,6 +86,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
     systemAlertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
     segmentPub = connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
+    routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
 
     // Subscribers
@@ -116,25 +120,17 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
       new ServiceResponseBuilder<SetActiveRouteRequest, SetActiveRouteResponse>() {
         @Override
         public void build(SetActiveRouteRequest request, SetActiveRouteResponse response) {
-          response.setErrorStatus(routeWorker.setActiveRoute(request).getErrorStatus());
+          response.setErrorStatus(routeWorker.setActiveRoute(request.getRouteID()));
         }
       });
 
-    // This CancellableLoop will be canceled automatically when the node shuts down
-    connectedNode.executeCancellableLoop(new CancellableLoop() {
-      private int sequenceNumber;
-
-      @Override protected void setup() {
-        sequenceNumber = 0;
-      }//setup
-
-      @Override protected void loop() throws InterruptedException {
-        routeWorker.onLoop(sequenceNumber);
-
-        sequenceNumber++;
-        Thread.sleep(100);
-      }
-    });
+    startActiveRouteService = connectedNode.newServiceServer("start_active_route", SetActiveRoute._TYPE,
+      new ServiceResponseBuilder<StartActiveRouteRequest, StartActiveRouteResponse>() {
+        @Override
+        public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
+          response.setErrorStatus(routeWorker.startActiveRoute());
+        }
+      });
   }//onStart
 
   @Override public void publishSystemAlert(SystemAlert systemAlert) {

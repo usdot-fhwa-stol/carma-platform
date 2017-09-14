@@ -28,6 +28,10 @@ public enum WorkerState {
    */
   ROUTE_SELECTION,
   /**
+   * A route has been selected and is waiting to be started
+   */
+  WAITING_TO_START,
+  /**
    * The vehicle is actively following a route
    */
   FOLLOWING_ROUTE
