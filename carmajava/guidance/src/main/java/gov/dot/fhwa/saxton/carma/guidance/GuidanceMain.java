@@ -34,6 +34,7 @@ import org.ros.node.service.ServiceServer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
@@ -66,7 +67,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     /**
      * Initialize the runnable thread members of the Guidance package.
      */
-    private void initExecutor(ConnectedNode node) {
+    private void initExecutor(AtomicReference<GuidanceState> state, ConnectedNode node) {
         executor = Executors.newFixedThreadPool(numThreads);
 
         Arbitrator arbitrator = new Arbitrator(pubSubService, node);
@@ -99,12 +100,15 @@ public class GuidanceMain extends SaxtonBaseNode {
     }
 
     @Override public void onStart(final ConnectedNode connectedNode) {
+        final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
 
         // Configure the comms classes
         final Log log = connectedNode.getLog();
 
         initPubSubManager(connectedNode);
         log.info("Guidance main PubSubManager initialized");
+        initExecutor(state, connectedNode);
+        log.info("Guidance main executor initialized");
 
         // Currently setup to listen to it's own message. Change to listen to someone other topic.
         ISubscriber<SystemAlert> subscriber =
@@ -113,8 +117,8 @@ public class GuidanceMain extends SaxtonBaseNode {
         subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
                                                  @Override public void onMessage(cav_msgs.SystemAlert message) {
                                                      if (message.getType() == SystemAlert.SYSTEM_READY) {
-                                                         systemReady.set(true);
-                                                         log.info("Guidance main received SYSTEM_READY!");
+                                                         state.set(GuidanceState.DRIVERS_READY);
+                                                         log.info("Guidance main received DRIVERS_READY!");
                                                      }
                                                  }//onNewMessage
                                              }//MessageListener
@@ -128,25 +132,11 @@ public class GuidanceMain extends SaxtonBaseNode {
             new ServiceResponseBuilder<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>() {
                 @Override public void build(SetGuidanceEnabledRequest setGuidanceEnabledRequest,
                     SetGuidanceEnabledResponse setGuidanceEnabledResponse) throws ServiceException {
-                    enabled.set(setGuidanceEnabledRequest.getGuidanceEnabled());
+                    state.set(GuidanceState.ENABLED);
                     setGuidanceEnabledResponse.setGuidanceStatus(enabled.get());
                 }
             });
 
-
-        // Wait for SYSTEM_READY and set_guidance_enable
-        log.info("GuidanceMain sleeping, waiting for SYSTEM_READY and set_guidance_enabled");
-        while (!systemReady.get() || !enabled.get()) {
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        log.info("Guidance main beginning init.");
-        initExecutor(connectedNode);
-        log.info("Guidance main initialization complete");
 
         // Primary GuidanceMain loop logic
         //Getting the ros param called run_id.
