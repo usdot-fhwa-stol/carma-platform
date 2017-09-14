@@ -10,21 +10,28 @@ import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance sub-component responsible for the execution of maneuvers and generation of maneuver plans
  */
-public class Maneuvers implements Runnable {
-    Maneuvers(IPubSubService iPubSubService, ConnectedNode node) {
-        this.iPubSubService = iPubSubService;
-        this.node = node;
-        this.log = node.getLog();
+public class Maneuvers extends GuidanceComponent {
+    Maneuvers(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
+        super(state, iPubSubService, node);
     }
 
-    @Override public void run() {
+    @Override public String getComponentName() {
+        return null;
+    }
+
+    private IPublisher<NewPlan> newPlanPublisher;
+    private ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber;
+    private ISubscriber<Route> routeSubscriber;
+
+    @Override public void onGuidanceStartup() {
         // Set up subscribers
-        ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber =
-            iPubSubService.getSubscriberForTopic("roadway_environment",
+        roadwayEnvironmentSubscriber =
+            pubSubService.getSubscriberForTopic("roadway_environment",
                 RoadwayEnvironment._TYPE);
 
         roadwayEnvironmentSubscriber.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
@@ -33,7 +40,7 @@ public class Maneuvers implements Runnable {
             }
         });
 
-        ISubscriber<Route> routeSubscriber = iPubSubService.getSubscriberForTopic("route",
+        routeSubscriber = pubSubService.getSubscriberForTopic("route",
             Route._TYPE);
 
         routeSubscriber.registerOnMessageCallback(new OnMessageCallback<Route>() {
@@ -43,10 +50,23 @@ public class Maneuvers implements Runnable {
         });
 
         // Set up publishers
-        IPublisher<NewPlan> newPlanPublisher = iPubSubService
+        newPlanPublisher = pubSubService
             .getPublisherForTopic("new_plan", NewPlan._TYPE);
 
         while (!Thread.currentThread().isInterrupted()) {
+        }
+    }
+
+    @Override public void onSystemReady() {
+
+    }
+
+    @Override public void onGuidanceEnable() {
+
+    }
+
+    @Override public void loop() {
+        if (getState() == GuidanceState.ENABLED) {
             NewPlan newPlan = newPlanPublisher.newMessage();
             newPlan.setExpiration(node.getCurrentTime());
             newPlan.getHeader().setChecksum((short) 0);
@@ -61,7 +81,7 @@ public class Maneuvers implements Runnable {
             newPlan.setParticipantIds(participantIds);
 
             List<cav_msgs.Maneuver> maneuvers = new ArrayList<>();
-            Maneuver m  = node.getTopicMessageFactory().newFromType(Maneuver._TYPE);
+            Maneuver m = node.getTopicMessageFactory().newFromType(Maneuver._TYPE);
             m.setLength(10);
             m.setPerformers(2);
             m.setStartRoadwayLaneId((byte) 0);
@@ -72,19 +92,16 @@ public class Maneuvers implements Runnable {
             newPlan.setManeuvers(maneuvers);
 
             newPlanPublisher.publish(newPlan);
+        }
 
-            try {
-                Thread.sleep(sleepDurationMillis);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                Thread.currentThread().interrupt(); // Rethrow the interrupt
-            }
+        try {
+            Thread.sleep(sleepDurationMillis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt(); // Rethrow the interrupt
         }
     }
 
-    protected IPubSubService iPubSubService;
-    protected ConnectedNode node;
-    protected Log log;
     protected long sleepDurationMillis = 30000;
     protected short curPlanId = 0;
 }
