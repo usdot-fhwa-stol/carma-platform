@@ -33,6 +33,7 @@ import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of
@@ -53,8 +54,10 @@ public class GuidanceMain extends SaxtonBaseNode {
     protected IPubSubService pubSubService;
     protected ServiceServer<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>
         guidanceEnableService;
-    protected String messagingBaseUrl = "~/";
-    protected boolean enabled = false;
+
+    protected final AtomicBoolean enabled = new AtomicBoolean(false);
+    protected final AtomicBoolean systemReady = new AtomicBoolean(false);
+    protected boolean initialized = false;
 
     @Override public GraphName getDefaultNodeName() {
         return GraphName.of("guidance_main");
@@ -97,41 +100,22 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     @Override public void onStart(final ConnectedNode connectedNode) {
 
+        // Configure the comms classes
         final Log log = connectedNode.getLog();
 
-        // Currently setup to listen to it's own message. Change to listen to someone other topic.
         initPubSubManager(connectedNode);
-        initExecutor(connectedNode);
+        log.info("Guidance main PubSubManager initialized");
+
+        // Currently setup to listen to it's own message. Change to listen to someone other topic.
         ISubscriber<SystemAlert> subscriber =
             pubSubService.getSubscriberForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
         subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
                                                  @Override public void onMessage(cav_msgs.SystemAlert message) {
-                                                     String messageTypeFullDescription = "NA";
-
-                                                     switch (message.getType()) {
-                                                         case cav_msgs.SystemAlert.CAUTION:
-                                                             messageTypeFullDescription = "Take caution! ";
-                                                             break;
-                                                         case cav_msgs.SystemAlert.WARNING:
-                                                             messageTypeFullDescription = "I have a warning! ";
-                                                             break;
-                                                         case cav_msgs.SystemAlert.FATAL:
-                                                             messageTypeFullDescription = "I am FATAL! ";
-                                                             break;
-                                                         case cav_msgs.SystemAlert.NOT_READY:
-                                                             messageTypeFullDescription = "I am NOT Ready! ";
-                                                             break;
-                                                         case cav_msgs.SystemAlert.SYSTEM_READY:
-                                                             messageTypeFullDescription = "I am Ready! ";
-                                                             break;
-                                                         default:
-                                                             messageTypeFullDescription = "I am NOT Ready! ";
+                                                     if (message.getType() == SystemAlert.SYSTEM_READY) {
+                                                         systemReady.set(true);
+                                                         log.info("Guidance main received SYSTEM_READY!");
                                                      }
-
-                                                     log.info("guidance_main heard: \"" + message.getDescription() + ";"
-                                                         + messageTypeFullDescription + "\"");
-
                                                  }//onNewMessage
                                              }//MessageListener
         );//addMessageListener
@@ -139,20 +123,35 @@ public class GuidanceMain extends SaxtonBaseNode {
         final IPublisher<SystemAlert> systemAlertPublisher =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-        guidanceEnableService = connectedNode.newServiceServer("set_guidance_enable",
+        guidanceEnableService = connectedNode.newServiceServer("set_guidance_enabled",
             SetGuidanceEnabled._TYPE,
             new ServiceResponseBuilder<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>() {
                 @Override public void build(SetGuidanceEnabledRequest setGuidanceEnabledRequest,
                     SetGuidanceEnabledResponse setGuidanceEnabledResponse) throws ServiceException {
-                    enabled = setGuidanceEnabledRequest.getGuidanceEnabled();
-                    setGuidanceEnabledResponse.setGuidanceStatus(enabled);
+                    enabled.set(setGuidanceEnabledRequest.getGuidanceEnabled());
+                    setGuidanceEnabledResponse.setGuidanceStatus(enabled.get());
                 }
             });
 
+
+        // Wait for SYSTEM_READY and set_guidance_enable
+        log.info("GuidanceMain sleeping, waiting for SYSTEM_READY and set_guidance_enabled");
+        while (!systemReady.get() || !enabled.get()) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        log.info("Guidance main beginning init.");
+        initExecutor(connectedNode);
+        log.info("Guidance main initialization complete");
+
+        // Primary GuidanceMain loop logic
         //Getting the ros param called run_id.
         ParameterTree param = connectedNode.getParameterTree();
         final String rosRunID = param.getString("/run_id");
-        //params.setString("~/param_name", param_value);
 
         // This CancellableLoop will be canceled automatically when the node shuts
         // down.
