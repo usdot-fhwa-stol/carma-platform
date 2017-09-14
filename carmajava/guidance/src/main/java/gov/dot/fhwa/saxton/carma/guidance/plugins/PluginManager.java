@@ -56,6 +56,7 @@ public class PluginManager implements Runnable, AvailabilityListener {
     protected PluginExecutor executor;
     protected PluginServiceLocator pluginServiceLocator;
     protected List<IPlugin> registeredPlugins = new ArrayList<>();
+    protected List<String> ignoredPluginClassNames = new ArrayList<>();
 
     protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma.guidance.plugins";
 
@@ -94,15 +95,30 @@ public class PluginManager implements Runnable, AvailabilityListener {
     protected List<Class<? extends IPlugin>> discoverPluginsOnClasspath() {
         Reflections pluginDiscoverer = new Reflections(PLUGIN_DISCOVERY_ROOT);
         Set<Class<? extends IPlugin>> pluginClasses = pluginDiscoverer.getSubTypesOf(IPlugin.class);
-        List<IPlugin> pluginInstances = new ArrayList<>();
 
+        List<Class<? extends IPlugin>> out = new ArrayList<>();
         for (Class<? extends IPlugin> pluginClass : pluginClasses) {
-          if (log != null) {
-            log.info("Guidance.PluginManager discovered plugin: " + pluginClass.getName());
-          }
+            boolean ignored = false;
+            for (String ignoredPluginName : ignoredPluginClassNames) {
+                // Filter the names against the list of ignored plugins
+                if (pluginClass.getName().equals(ignoredPluginName)) {
+                    ignored = true;
+                }
+            }
+
+            if (!ignored) {
+                out.add(pluginClass);
+                if (log != null) {
+                    log.info("Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
+                }
+            } else {
+                if (log != null) {
+                    log.info("Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
+                }
+            }
         }
 
-        return new ArrayList<>(pluginClasses);
+        return out;
     }
 
     /**
@@ -154,6 +170,16 @@ public class PluginManager implements Runnable, AvailabilityListener {
     }
 
     @Override public void run() {
+        // Get the list of ignored plugins, defaulting to ignore non-concrete implementations
+        List<String> defaultIgnoredPlugins = new ArrayList<>();
+        defaultIgnoredPlugins.add(IPlugin.class.getName());
+        defaultIgnoredPlugins.add(AbstractPlugin.class.getName());
+        defaultIgnoredPlugins.add(AbstractMockPlugin.class.getName());
+        ignoredPluginClassNames = (List<String>) node.getParameterTree()
+            .getList("~ignored_plugins", defaultIgnoredPlugins);
+
+        log.info("Ignoring plugins: " + ignoredPluginClassNames);
+
         // Instantiate the plugins and register them
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
