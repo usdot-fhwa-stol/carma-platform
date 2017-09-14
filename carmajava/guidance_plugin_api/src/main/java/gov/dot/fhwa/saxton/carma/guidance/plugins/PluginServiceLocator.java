@@ -63,7 +63,9 @@ public class PluginServiceLocator {
         return IPubSubService;
     }
 
-
+    /**
+     * Get the {@link ParameterSource} instance available to the plugins
+     */
     public ParameterSource getParameterSource() {
         return parameterSource;
     }
