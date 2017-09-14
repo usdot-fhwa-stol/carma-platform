@@ -20,6 +20,7 @@ import cav_msgs.Plugin;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import org.apache.commons.logging.Log;
@@ -34,6 +35,7 @@ import std_msgs.Header;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +57,7 @@ public class PluginManager implements Runnable, AvailabilityListener {
     protected PluginExecutor executor;
     protected PluginServiceLocator pluginServiceLocator;
     protected List<IPlugin> registeredPlugins = new ArrayList<>();
+    protected List<String> ignoredPluginClassNames = new ArrayList<>();
 
     protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma.guidance.plugins";
 
@@ -83,7 +86,7 @@ public class PluginManager implements Runnable, AvailabilityListener {
 
         pluginServiceLocator =
             new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
-                pubSubService, node.getLog());
+                pubSubService, new RosParameterSource(node.getParameterTree()), node.getLog());
     }
 
     /**
@@ -93,15 +96,34 @@ public class PluginManager implements Runnable, AvailabilityListener {
     protected List<Class<? extends IPlugin>> discoverPluginsOnClasspath() {
         Reflections pluginDiscoverer = new Reflections(PLUGIN_DISCOVERY_ROOT);
         Set<Class<? extends IPlugin>> pluginClasses = pluginDiscoverer.getSubTypesOf(IPlugin.class);
-        List<IPlugin> pluginInstances = new ArrayList<>();
 
+        List<Class<? extends IPlugin>> out = new ArrayList<>();
         for (Class<? extends IPlugin> pluginClass : pluginClasses) {
-          if (log != null) {
-            log.info("Guidance.PluginManager discovered plugin: " + pluginClass.getName());
-          }
+            boolean ignored = false;
+            for (String ignoredPluginName : ignoredPluginClassNames) {
+                // Filter the names against the list of ignored plugins
+                if (pluginClass.getName().equals(ignoredPluginName)) {
+                    ignored = true;
+                }
+            }
+
+            // Check if we haven't ignored it and that it isn't an abstract class or an interface
+            if (!ignored
+                && !Modifier.isAbstract(pluginClass.getModifiers())
+                && !Modifier.isInterface(pluginClass.getModifiers())) {
+
+                out.add(pluginClass);
+                if (log != null) {
+                    log.info("Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
+                }
+            } else {
+                if (log != null) {
+                    log.info("Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
+                }
+            }
         }
 
-        return new ArrayList<>(pluginClasses);
+        return out;
     }
 
     /**
@@ -122,26 +144,9 @@ public class PluginManager implements Runnable, AvailabilityListener {
                 log.info("Guidance.PluginManager instantiated new plugin instance: "
                     + pluginInstance.getName() + ":" + pluginInstance.getVersionId());
                 pluginInstances.add(pluginInstance);
-            } catch (NoSuchMethodException e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
-                e.printStackTrace();
             } catch (Exception e) {
                 log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
                 log.error(e);
-                e.printStackTrace();
             }
         }
 
@@ -153,6 +158,12 @@ public class PluginManager implements Runnable, AvailabilityListener {
     }
 
     @Override public void run() {
+        // Get the list of ignored plugins, defaulting to ignore non-concrete implementations
+        ignoredPluginClassNames = (List<String>) node.getParameterTree()
+            .getList("~ignored_plugins", new ArrayList<>());
+
+        log.info("Ignoring plugins: " + ignoredPluginClassNames);
+
         // Instantiate the plugins and register them
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
