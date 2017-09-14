@@ -111,12 +111,30 @@ public abstract class GuidanceComponent implements Runnable {
             }
         };
         loop.run();
+
+        // Wait for GUIDANCE_ENABLE
+        while (!(state.get() == GuidanceState.SHUTDOWN)) {
+            try {
+                Thread.sleep(WAIT_DURATION_MS);
+            } catch (InterruptedException e) {
+            }
+        }
+        onGuidanceShutdown();
+    }
+
+    /**
+     * Optionally overridable method to hook when the Guidance node is shutting down or restarting.
+     *
+     * Default implementation does nothing.
+     */
+    public void onGuidanceShutdown() {
+        // NO-OP
     }
 
     /**
      * Get the Guidance component's current state value
      */
-    protected GuidanceState getState() {
+    protected final GuidanceState getState() {
         return state.get();
     }
 
