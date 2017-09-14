@@ -16,11 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
-import cav_msgs.RouteState;
-import cav_srvs.SetActiveRouteRequest;
+import cav_msgs.SystemAlert;
 import cav_srvs.SetActiveRouteResponse;
-import gov.dot.fhwa.saxton.carma.geometry.geodesic.GreatCircleSegment;
-import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
+import cav_srvs.StartActiveRouteResponse;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,8 +58,10 @@ public class RouteProgressTest {
    */
   @Test
   public void testRouteProgress() throws Exception {
-    RouteWorker routeWorker = new RouteWorker(new FakeRouteManager(), log,
-      "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
+    RouteWorker routeWorker = new RouteWorker(new FakeRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
+
+    routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.SYSTEM_READY, ""));
+    assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
     NavSatFix navMsg = messageFactory.newFromType(NavSatFix._TYPE);
@@ -71,20 +71,27 @@ public class RouteProgressTest {
     navMsg.setAltitude(0);
     routeWorker.handleNavSatFixMsg(navMsg);
 
-    assertTrue(routeWorker.getState() == WorkerState.ROUTE_SELECTION);
+    assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
 
-    SetActiveRouteRequest request = messageFactory.newFromType(SetActiveRouteRequest._TYPE);
-    request.setRouteID("Colonial Farm Rd. Outbound");
-    SetActiveRouteResponse response = routeWorker.setActiveRoute(request);
-    assertTrue(response.getErrorStatus() != SetActiveRouteResponse.NO_ERROR);
-    assertTrue(routeWorker.getState() == WorkerState.FOLLOWING_ROUTE);
+    byte response = routeWorker.setActiveRoute("Colonial Farm Rd. Outbound");
+    assertTrue(response == SetActiveRouteResponse.NO_ERROR);
+    assertTrue(routeWorker.getCurrentState() == WorkerState.WAITING_TO_START);
+
+    response = routeWorker.startActiveRoute();
+    assertTrue(response == StartActiveRouteResponse.NO_ERROR);
 
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
+
+    assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
+      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // No change in location
     routeWorker.handleNavSatFixMsg(navMsg);
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
-    assertTrue(routeWorker.getState() == WorkerState.FOLLOWING_ROUTE);
+    assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
+      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after route file starting point
     navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
@@ -93,8 +100,17 @@ public class RouteProgressTest {
     navMsg.setAltitude(0);
     routeWorker.handleNavSatFixMsg(navMsg);
 
+    //TODO start here the currentSegment is not changing properly. It seems the vehicle location is being assigned as a waypoint
+    log.info("\n\n" + routeWorker.currentSegmentIndex + "\n\n");
+
+    log.info("\n\n" + routeWorker.currentSegment.getUptrackWaypoint().getLocation() + "\n\n");
+    log.info("\n\n" + routeWorker.currentSegment.getDowntrackWaypoint().getLocation() + "\n\n");
+
+    log.info("\n\n" + routeWorker.currentSegment.downTrackDistance(routeWorker.hostVehicleLocation) + "\n\n");
+    log.info("\n\n" + routeWorker.currentSegment.length() + "\n\n");
+
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
-    assertTrue(routeWorker.getState() == WorkerState.FOLLOWING_ROUTE);
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after next point
     navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
@@ -104,7 +120,7 @@ public class RouteProgressTest {
     routeWorker.handleNavSatFixMsg(navMsg);
 
     assertTrue(routeWorker.currentSegmentIndex == 2); // third segment
-    assertTrue(routeWorker.getState() == WorkerState.FOLLOWING_ROUTE);
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after end of route
     navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
@@ -113,14 +129,14 @@ public class RouteProgressTest {
     navMsg.setAltitude(0);
     routeWorker.handleNavSatFixMsg(navMsg);
 
-    assertTrue(routeWorker.currentSegmentIndex == 2); // third segment
-    assertTrue(routeWorker.getState() == WorkerState.);
+    assertTrue(routeWorker.currentSegment == routeWorker.activeRoute.getLastSegment()); // third segment
+    assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
 
-    assertTrue(!routeWorker.atNextSegment()); // no change in location so vehicle should not be at the next segment
-    assertTrue(!routeWorker.leftRouteVicinity()); // no movement so still on route
-    assertTrue(!routeWorker.routeCompleted()); // no movement so route not completed
-
-    routeWorker.
+//    assertTrue(!routeWorker.atNextSegment()); // no change in location so vehicle should not be at the next segment
+//    assertTrue(!routeWorker.leftRouteVicinity()); // no movement so still on route
+//    assertTrue(!routeWorker.routeCompleted()); // no movement so route not completed
+//
+//    routeWorker.
 //    downtrackDistance = currentSegment.downTrackDistance(hostVehicleLocation);
 //    crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 //

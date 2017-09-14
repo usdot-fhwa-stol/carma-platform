@@ -124,29 +124,12 @@ public class Route {
   }
 
   /**
-   * Inserts the provided segment into the route at the specified index.
-   * The segment currently at that index will be right shifted (placed at index + 1)
-   *
-   * @param segment The RouteSegment to be inserted. Must be able to connect to previous and next segments.
-   * @param index   The index at which to insert the RouteSegment. Inserting at a non-existent index will result in an exception.
-   * @return Returns true if the segment was inserted successfully. False otherwise.
-   */
-  public boolean insertSegment(RouteSegment segment, int index) {
-    //TODO perform validation check on segment usability
-    try{
-      segments.add(index,segment);
-      calculateLength();
-      return true;
-    }catch (IndexOutOfBoundsException e){
-      e.printStackTrace();
-    }
-    return false;
-  }
-
-  /**
    * Inserts the provided waypoint into the route at the specified index.
    * The waypoint currently at that index will be right shifted (placed at index + 1)
    * Inserting a waypoint will result in an additional route segment being created.
+   * To insert at the end of the list use an index = waypoints.size()
+   * To insert at the front of the list use 0.
+   * Out of bound indexes will be truncated to 0 or waypoints.size() usable values
    *
    * @param waypoint The RouteWaypoint to be inserted. Must be able to connect to previous and next waypoints
    * @param index    The index at which to insert the RouteWaypoint. Inserting at a non-existent index will result in an exception.
@@ -155,7 +138,23 @@ public class Route {
   public boolean insertWaypoint(RouteWaypoint waypoint, int index) {
     //TODO perform validation check on waypoint usability
     try{
+      // Remove the segment at that location and replace it with two segments connected to the new waypoint
+      // If waypoint not inserted at the front or end of the list the existing segments must be modified
+      if (index != 0 && index < waypoints.size()) {
+        segments.remove(index-1);
+        segments.add(index-1, new RouteSegment(waypoints.get(index - 1), waypoint));
+        segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
+      } else if (index >= waypoints.size()) {
+        index = waypoints.size() - 1;
+        segments.add(index, new RouteSegment(waypoints.get(index), waypoint));
+      } else {
+        index = 0; //don't allow negative index
+        segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
+      }
+
+      // Insert the waypoint into the list of waypoints
       waypoints.add(index,waypoint);
+
       calculateLength();
       return true;
     }catch (IndexOutOfBoundsException e){

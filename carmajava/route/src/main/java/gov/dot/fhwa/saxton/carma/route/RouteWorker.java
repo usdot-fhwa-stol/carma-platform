@@ -67,7 +67,7 @@ public class RouteWorker {
   protected HashMap<String, Route> availableRoutes = new HashMap<>();
   protected RouteSegment currentSegment;
   protected int currentSegmentIndex = 0;
-  protected Location hostVehicleLocation;
+  protected Location hostVehicleLocation = new Location();
 
   protected int currentWaypointIndex = 0;
   protected double downtrackDistance = 0;
@@ -94,7 +94,7 @@ public class RouteWorker {
    * @param manager negotiation manager which is used to publish data
    * @param log     the logger
    */
-  public RouteWorker(RouteManager manager, Log log, String database_path) {
+  public RouteWorker(IRouteManager manager, Log log, String database_path) {
     this.routeManager = manager;
     this.log = log;
     // Load route files from database
@@ -266,7 +266,7 @@ public class RouteWorker {
    */
   public byte startActiveRoute() {
     if (activeRoute == null) {
-      return StartActiveRouteResponse.NO_ERROR;
+      return StartActiveRouteResponse.NO_ACTIVE_ROUTE;
     }
     int startingIndex = getValidStartingWPIndex();
     if (startingIndex == -1) {
@@ -290,8 +290,9 @@ public class RouteWorker {
     int count = 0;
     for (RouteWaypoint wp : activeRoute.getWaypoints()) {
       double dist = hostVehicleLocation.distanceFrom(wp.getLocation(), new HaversineStrategy());
-      if (MAX_START_DISTANCE < dist) {
+      if (MAX_START_DISTANCE > dist) {
         startingIndex = count;
+        System.out.println("\nStarting Index = " + startingIndex);
         break;
       }
       count++;
@@ -359,7 +360,7 @@ public class RouteWorker {
     }
 
     // Loop to find current segment. This allows for small breaks in gps data
-    while (atNextSegment()) { // TODO this can't handle large jumps around tight turns
+    while (atNextSegment()) { // TODO this might be problematic on tight turns
       currentSegmentIndex++;
       currentSegment = activeRoute.getSegments().get(currentSegmentIndex);
     }
