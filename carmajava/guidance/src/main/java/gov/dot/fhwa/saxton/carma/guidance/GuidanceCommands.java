@@ -11,6 +11,7 @@ import std_msgs.Float32;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
@@ -22,24 +23,29 @@ import java.util.List;
  *
  * Presently this is just a mock to implement messaging functionality. during normal
  */
-public class GuidanceCommands implements Runnable {
+public class GuidanceCommands extends GuidanceComponent {
+    private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
+    private IPublisher<SpeedAccel> speedAccelPublisher;
 
-    protected IPubSubService iPubSubService;
-    protected ConnectedNode node;
-    protected Log log;
-    protected long sleepDurationMillis = 30000;
-
-    GuidanceCommands(IPubSubService iPubSubService, ConnectedNode node) {
-        this.node = node;
-        this.iPubSubService = iPubSubService;
-        this.log = node.getLog();
+    GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
+        super(state, iPubSubService, node);
     }
 
-    @Override public void run() {
+    @Override public String getComponentName() {
+        return null;
+    }
+
+    @Override public void onGuidanceStartup() {
+
+    }
+
+    @Override public void onGuidanceEnable() {
+
+    }
+
+    @Override public void onSystemReady() {
         try {
-            IService<GetDriversWithCapabilitiesRequest,
-                GetDriversWithCapabilitiesResponse> driverCapabilityService
-                = iPubSubService.getServiceForTopic("get_drivers_with_capabilities",
+            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
                 GetDriversWithCapabilities._TYPE);
 
             GetDriversWithCapabilitiesRequest req =
@@ -67,7 +73,6 @@ public class GuidanceCommands implements Runnable {
             // No message for LanePosition.msg to be published on "guidance/control/lane_position"
             // TODO: Add message type for lateral control from guidance
 
-
             String driverFqn = null;
             if (drivers[0] != null) {
                 List<String> driverFqns = drivers[0].getDriverData();
@@ -82,22 +87,11 @@ public class GuidanceCommands implements Runnable {
             }
 
             if (driverFqn != null) {
-              IPublisher<SpeedAccel> speedAccelPublisher =
-                  iPubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
-            } else {
-                // TODO: Raise fatal error once we've discussed error standards
+               speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
             }
-
-            while (!Thread.currentThread().isInterrupted()) {
-                Thread.sleep(sleepDurationMillis);
-            }
-
         } catch (TopicNotFoundException e) {
             log.error("No interface manager found to query for drivers!!!");
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Thread.currentThread().interrupt();
         }
     }
 }
