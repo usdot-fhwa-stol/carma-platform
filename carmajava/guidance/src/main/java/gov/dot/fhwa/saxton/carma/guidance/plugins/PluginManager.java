@@ -20,6 +20,7 @@ import cav_msgs.Plugin;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import org.apache.commons.logging.Log;
@@ -83,7 +84,7 @@ public class PluginManager implements Runnable, AvailabilityListener {
 
         pluginServiceLocator =
             new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
-                pubSubService, node.getLog());
+                pubSubService, new RosParameterSource(node.getParameterTree()), node.getLog());
     }
 
     /**
