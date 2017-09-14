@@ -35,6 +35,7 @@ import std_msgs.Header;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -106,7 +107,11 @@ public class PluginManager implements Runnable, AvailabilityListener {
                 }
             }
 
-            if (!ignored) {
+            // Check if we haven't ignored it and that it isn't an abstract class or an interface
+            if (!ignored
+                && !Modifier.isAbstract(pluginClass.getModifiers())
+                && !Modifier.isInterface(pluginClass.getModifiers())) {
+
                 out.add(pluginClass);
                 if (log != null) {
                     log.info("Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
@@ -139,26 +144,9 @@ public class PluginManager implements Runnable, AvailabilityListener {
                 log.info("Guidance.PluginManager instantiated new plugin instance: "
                     + pluginInstance.getName() + ":" + pluginInstance.getVersionId());
                 pluginInstances.add(pluginInstance);
-            } catch (NoSuchMethodException e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
-                e.printStackTrace();
             } catch (Exception e) {
                 log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
                 log.error(e);
-                e.printStackTrace();
             }
         }
 
@@ -171,12 +159,8 @@ public class PluginManager implements Runnable, AvailabilityListener {
 
     @Override public void run() {
         // Get the list of ignored plugins, defaulting to ignore non-concrete implementations
-        List<String> defaultIgnoredPlugins = new ArrayList<>();
-        defaultIgnoredPlugins.add(IPlugin.class.getName());
-        defaultIgnoredPlugins.add(AbstractPlugin.class.getName());
-        defaultIgnoredPlugins.add(AbstractMockPlugin.class.getName());
         ignoredPluginClassNames = (List<String>) node.getParameterTree()
-            .getList("~ignored_plugins", defaultIgnoredPlugins);
+            .getList("~ignored_plugins", new ArrayList<>());
 
         log.info("Ignoring plugins: " + ignoredPluginClassNames);
 

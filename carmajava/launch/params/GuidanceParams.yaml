@@ -18,7 +18,4 @@ max_acceleration_capability: 2.0
 # Units: m/s^2
 max_deceleration_capability: 1.0
 
-ignored_plugins:
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractMockPlugin
+ignored_plugins: []
