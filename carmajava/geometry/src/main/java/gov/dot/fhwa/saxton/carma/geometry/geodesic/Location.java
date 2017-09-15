@@ -33,7 +33,7 @@ public class Location {
   public Location(){}
 
   /**
-   * Constructor initializes this location with the provided gps coordinates.
+   * Constructor initializes this location with the provided coordinates.
    * @param lat Latitude in degrees
    * @param lon Longitude in degrees
    * @param alt Altitude in meters
@@ -44,7 +44,7 @@ public class Location {
 
   /**
    * Calculates the distance in meters between this and another location.
-   * @param loc The gps location to calculate this location's distance from
+   * @param loc The location to calculate this location's distance from
    * @param strategy The geodesic distance calculation strategy.
    * @return The distance in meters
    */

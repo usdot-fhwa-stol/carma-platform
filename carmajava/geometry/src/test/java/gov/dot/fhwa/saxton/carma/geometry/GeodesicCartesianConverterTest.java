@@ -13,16 +13,16 @@ import org.ros.rosjava_geometry.Vector3;
 import static org.junit.Assert.*;
 
 /**
- * Runs unit tests for the GeodesicCartesianConvertor class
+ * Runs unit tests for the GeodesicCartesianConverter class
  */
-public class GeodesicCartesianConvertorTest {
+public class GeodesicCartesianConverterTest {
 
   Log log;
 
   @Before
   public void setUp() throws Exception {
-    log = LogFactory.getLog(GeodesicCartesianConvertorTest.class);
-    log.info("Setting up tests for GeodesicCartesianConvertor");
+    log = LogFactory.getLog(GeodesicCartesianConverterTest.class);
+    log.info("Setting up tests for GeodesicCartesianConverter");
   }
 
   @After
@@ -38,7 +38,7 @@ public class GeodesicCartesianConvertorTest {
     // ECEF frame points computed using online calculator http://www.oc.nps.edu/oc2902w/coord/llhxyz.htm
 
     log.info("// Entering cartesian2Geodesic test");
-    GeodesicCartesianConvertor gcConvertor = new GeodesicCartesianConvertor();
+    GeodesicCartesianConverter gcConvertor = new GeodesicCartesianConverter();
 
     // Test point nearish TFHRC
     Point3D point = new Point3D(1104488, -4841993, 3988562);
@@ -101,7 +101,7 @@ public class GeodesicCartesianConvertorTest {
     // ECEF frame points computed using online calculator http://www.oc.nps.edu/oc2902w/coord/llhxyz.htm
 
     log.info("// Entering geodesic2Cartesian test");
-    GeodesicCartesianConvertor gcConvertor = new GeodesicCartesianConvertor();
+    GeodesicCartesianConverter gcConvertor = new GeodesicCartesianConverter();
 
     // Test point near STOL garage at TFHRC
     Location loc = new Location(38.956488, -77.150345, 0);

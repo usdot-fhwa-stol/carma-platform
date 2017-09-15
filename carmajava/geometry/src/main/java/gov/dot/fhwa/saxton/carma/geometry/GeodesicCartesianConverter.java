@@ -27,15 +27,16 @@ import org.ros.rosjava_geometry.Vector3;
  * cartesian points are referenced from a provided frame defined with a transform to the Earth Centered Earth Fixed Coordinate Frame (ECEF).
  * See the Geometry design document for the calculations used
  */
-public class GeodesicCartesianConvertor {
+public class GeodesicCartesianConverter {
 
   protected final double Rea = 6378137.0; // Semi-major axis radius meters
   protected final double Rea_sqr = Rea*Rea;
-  //The flattening factor f = 1.0 / 298.257223563
-  protected final double Reb = 6356752.0; // //The semi-minor axis = Rea * (1.0 - f)
+  protected final double f = 1.0 / 298.257223563; //The flattening factor
+  protected final double Reb = Rea * (1.0 - f); // //The semi-minor axis = 6356752.0
   protected final double Reb_sqr = Reb*Reb;
-  protected final double e = 0.08181919; // The first eccentricity Math.sqrt(Rea*Rea - Reb*Reb) / Rea;
+  protected final double e = Math.sqrt(Rea*Rea - Reb*Reb) / Rea; // The first eccentricity 0.08181919
   protected final double e_sqr = e*e;
+  protected final double e_p = Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr);
 
   /**
    * Converts a given 3d cartesian point into a WSG-84 geodesic location
@@ -60,13 +61,12 @@ public class GeodesicCartesianConvertor {
     if (p < 1.0e-10) {
       double poleLat = z < 0 ? -90:90;
       double poleLon = 0;
-      double poleAlt = z < 0 ? z + Reb : z - Reb;
+      double poleAlt = z < 0 ? -z - Reb : z - Reb;
       return new Location(poleLat, poleLon, poleAlt);
     }
     double theta = Math.atan((z*Rea) / (p*Reb));
-    double e_p = Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr);
 
-    double lon = 2.0*Math.atan(y / (x + Math.sqrt((x*x) + (y*y))));
+    double lon = 2.0*Math.atan(y / (x + p));
     double lat = Math.atan((z + (e_p * e_p) * Reb * Math.pow(Math.sin(theta), 3)) / (p - e_sqr * Rea * Math.pow(Math.cos(theta), 3)));
 
     double N = Rea_sqr / Math.sqrt(Rea_sqr * Math.pow(Math.cos(lat), 2) + Reb_sqr * Math.pow(Math.sin(lat),2));
