@@ -24,7 +24,6 @@ buildscript {
 
 apply plugin: 'catkin'
 
-
 allprojects {
     /*
       A github url provides a good standard unique name for your project
@@ -57,6 +56,12 @@ subprojects {
      *   https://github.com/rosjava/rosjava_bootstrap/blob/kinetic/gradle_plugins/src/main/groovy/org/ros/gradle_plugins/RosPlugin.groovy#L31
      */
     apply plugin: "ros-java"
+    apply plugin: 'checkstyle'
+
+    checkstyle {
+        configFile = rootProject.file("config/checkstyle.xml")
+    }
+
     /*
      * Some IDE support if you use it.
      */
