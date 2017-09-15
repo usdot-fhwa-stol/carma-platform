@@ -35,6 +35,8 @@ import org.ros.node.service.ServiceResponseBuilder;
 import sensor_msgs.NavSatFix;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
@@ -112,7 +114,12 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
         new ServiceResponseBuilder<GetAvailableRoutesRequest, GetAvailableRoutesResponse>() {
           @Override public void build(GetAvailableRoutesRequest request,
             GetAvailableRoutesResponse response) {
-            response.setAvailableRoutes(routeWorker.getAvailableRoutes().getAvailableRoutes());
+            List<Route> routeMsgs = new LinkedList<>();
+
+            for (gov.dot.fhwa.saxton.carma.route.Route route : routeWorker.getAvailableRoutes()) {
+              routeMsgs.add(route.toMessage(connectedNode.getTopicMessageFactory()));
+            }
+            response.setAvailableRoutes(routeMsgs);
           }
         });
 

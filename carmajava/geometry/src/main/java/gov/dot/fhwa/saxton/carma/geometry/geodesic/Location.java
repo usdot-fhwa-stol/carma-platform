@@ -33,6 +33,13 @@ public class Location {
   public Location(){}
 
   /**
+   * Constructor makes a new location as a deep copy of the provided location.
+   * @param locToCopy the location duplicated
+   */
+  public Location(Location locToCopy) {
+    this.setLocationData(locToCopy.getLatitude(), locToCopy.getLongitude(), locToCopy.getAltitude());
+  }
+  /**
    * Constructor initializes this location with the provided gps coordinates.
    * @param lat Latitude in degrees
    * @param lon Longitude in degrees

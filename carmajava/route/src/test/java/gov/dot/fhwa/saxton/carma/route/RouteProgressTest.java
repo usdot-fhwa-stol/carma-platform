@@ -33,7 +33,7 @@ import sensor_msgs.NavSatStatus;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Runs unit tests for the GeodesicCartesianConvertor class
+ * Runs unit tests for the RouteWorker class
  */
 public class RouteProgressTest {
 
@@ -52,8 +52,7 @@ public class RouteProgressTest {
   }
 
   /**
-   * Tests the distanceLoc2Loc function
-   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
+   * Tests the movement of a host vehicle along a route
    * @throws Exception
    */
   @Test
@@ -100,15 +99,6 @@ public class RouteProgressTest {
     navMsg.setAltitude(0);
     routeWorker.handleNavSatFixMsg(navMsg);
 
-    //TODO start here the currentSegment is not changing properly. It seems the vehicle location is being assigned as a waypoint
-    log.info("\n\n" + routeWorker.currentSegmentIndex + "\n\n");
-
-    log.info("\n\n" + routeWorker.currentSegment.getUptrackWaypoint().getLocation() + "\n\n");
-    log.info("\n\n" + routeWorker.currentSegment.getDowntrackWaypoint().getLocation() + "\n\n");
-
-    log.info("\n\n" + routeWorker.currentSegment.downTrackDistance(routeWorker.hostVehicleLocation) + "\n\n");
-    log.info("\n\n" + routeWorker.currentSegment.length() + "\n\n");
-
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
@@ -130,46 +120,62 @@ public class RouteProgressTest {
     routeWorker.handleNavSatFixMsg(navMsg);
 
     assertTrue(routeWorker.currentSegment == routeWorker.activeRoute.getLastSegment()); // third segment
+    assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION); // Route was completed and no longer followed
+  }
+
+  /**
+   * Tests the detection of a vehicle leaving a route
+   * @throws Exception
+   */
+  @Test
+  public void testLeavingRouteVicinity() throws Exception {
+    RouteWorker routeWorker = new RouteWorker(new FakeRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
+
+    routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.SYSTEM_READY, ""));
+    assertTrue(routeWorker.systemOkay == true);
+
+    // Test vehicle has been placed just before start of route
+    NavSatFix navMsg = messageFactory.newFromType(NavSatFix._TYPE);
+    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
+    navMsg.setLatitude(38.95649);
+    navMsg.setLongitude(-77.15028);
+    navMsg.setAltitude(0);
+    routeWorker.handleNavSatFixMsg(navMsg);
+
     assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
 
-//    assertTrue(!routeWorker.atNextSegment()); // no change in location so vehicle should not be at the next segment
-//    assertTrue(!routeWorker.leftRouteVicinity()); // no movement so still on route
-//    assertTrue(!routeWorker.routeCompleted()); // no movement so route not completed
-//
-//    routeWorker.
-//    downtrackDistance = currentSegment.downTrackDistance(hostVehicleLocation);
-//    crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
-//
-//    if (atNextSegment()) {
-//      currentSegmentIndex++;
-//      currentSegment = activeRoute.getSegments().get(currentSegmentIndex);
-//    }
-//
-//    if (routeCompleted()) {
-//      handleStateTransition(WorkerEvent.ROUTE_COMPLETED);
-//    }
-//
-//    if (leftRouteVicinity()) {
-//      handleStateTransition(WorkerEvent.LEFT_ROUTE);
-//    }
-//    log.info("// Entering distanceLoc2Loc test");
-//    HaversineStrategy haversineStrategy = new HaversineStrategy();
-//
-//    // Test points on example garage to colonial farm rd route
-//    Location loc1 = new Location(38.95647,-77.15031, 0);
-//    Location loc2 = new Location(38.95631, -77.15041, 0);
-//    double solution = 19.78;
-//    assertTrue(Math.abs(haversineStrategy.distanceLoc2Loc(loc1, loc2) - solution) < 0.1); // Check accuracy to within .1m
-//
-//    loc1 = new Location(38.95628,-77.15047, 0);
-//    loc2 = new Location(38.95613, -77.15101, 0);
-//    solution = 49.58;
-//    assertTrue(Math.abs(haversineStrategy.distanceLoc2Loc(loc1, loc2) - solution) < 0.1); // Check accuracy to within .1m
-//
-//    // Test points about a km apart
-//    loc1 = new Location(38.942201,-77.160108, 0);
-//    loc2 = new Location(38.943804, -77.148832, 0);
-//    solution = 991.4;
-//    assertTrue(Math.abs(haversineStrategy.distanceLoc2Loc(loc1, loc2) - solution) < 0.1); // Check accuracy to within .1m
+    byte response = routeWorker.setActiveRoute("Colonial Farm Rd. Outbound");
+    assertTrue(response == SetActiveRouteResponse.NO_ERROR);
+    assertTrue(routeWorker.getCurrentState() == WorkerState.WAITING_TO_START);
+
+    response = routeWorker.startActiveRoute();
+    assertTrue(response == StartActiveRouteResponse.NO_ERROR);
+
+    assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
+
+    assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
+      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
+
+    // Test vehicle has been placed after route file starting point
+    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
+    navMsg.setLatitude(38.9564);
+    navMsg.setLongitude(-77.15035);
+    navMsg.setAltitude(0);
+    routeWorker.handleNavSatFixMsg(navMsg);
+
+    assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
+
+    // Test vehicle has been placed inside the garage (off the route)
+    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
+    navMsg.setLatitude(38.95633);
+    navMsg.setLongitude(-77.15011);
+    navMsg.setAltitude(0);
+    routeWorker.handleNavSatFixMsg(navMsg);
+
+    assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
+    assertTrue(routeWorker.leftRouteVicinity());
+    assertTrue(routeWorker.getCurrentState() == WorkerState.WAITING_TO_START);
   }
 }

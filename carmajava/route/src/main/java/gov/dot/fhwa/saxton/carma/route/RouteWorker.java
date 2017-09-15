@@ -16,7 +16,6 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.*;
-import cav_srvs.GetAvailableRoutesResponse;
 import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
@@ -27,11 +26,9 @@ import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
 import sensor_msgs.NavSatFix;
 import sensor_msgs.NavSatStatus;
-
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * The RouteWorker is responsible for implementing all non pub-sub logic of the RouteManager node
@@ -73,7 +70,7 @@ public class RouteWorker {
   protected double downtrackDistance = 0;
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
-  protected double MAX_CROSSTRACK_DISTANCE = 5.0;
+  protected double MAX_CROSSTRACK_DISTANCE = 10.0;
     // TODO put in route files as may change based on road type
   protected double MAX_START_DISTANCE = 15.0; // Can only join route if within 15m of waypoint
   protected int routeStateSeq = 0;
@@ -178,15 +175,6 @@ public class RouteWorker {
   }
 
   /**
-   * Returns true when the end of a route has been reached
-   *
-   * @return the active route completion status
-   */
-  protected boolean routeCompleted() {
-    return currentSegment == activeRoute.getLastSegment() && atNextSegment();
-  }
-
-  /**
    * Loads a route into memory using the provided route loading strategy
    *
    * @param loadStrategy
@@ -199,6 +187,10 @@ public class RouteWorker {
     handleEvent(WorkerEvent.FILES_LOADED);
   }
 
+  /**
+   * Returns true when the host vehicle has passed the end of the current route segment
+   * @return indication of vehicle in next segment
+   */
   protected boolean atNextSegment() {
     return currentSegment.downTrackDistance(hostVehicleLocation) > currentSegment.length();
   }
@@ -209,19 +201,15 @@ public class RouteWorker {
    * @return vehicle on route status
    */
   protected boolean leftRouteVicinity() {
-    return crossTrackDistance > MAX_CROSSTRACK_DISTANCE;
+    return Math.abs(crossTrackDistance) > MAX_CROSSTRACK_DISTANCE;
   }
 
-  protected cav_srvs.GetAvailableRoutesResponse getAvailableRoutes() {
-    List<cav_msgs.Route> routeMsgs = new LinkedList<>();
-    cav_srvs.GetAvailableRoutesResponse response =
-      messageFactory.newFromType(GetAvailableRoutesResponse._TYPE);
-
-    for (Route route : availableRoutes.values()) {
-      routeMsgs.add(route.toMessage(messageFactory));
-    }
-    response.setAvailableRoutes(routeMsgs);
-    return response;
+  /**
+   * Gets the collection of available routes
+   * @return a collection of routes
+   */
+  protected Collection<Route> getAvailableRoutes() {
+    return availableRoutes.values();
   }
 
   /**
@@ -309,7 +297,7 @@ public class RouteWorker {
    */
   protected void startRouteAtIndex(int index) {
     // Insert a starting waypoint at the current vehicle location which is connected to the route
-    RouteWaypoint startingWP = new RouteWaypoint(hostVehicleLocation);
+    RouteWaypoint startingWP = new RouteWaypoint(new Location(hostVehicleLocation)); // don't want the route and vehicle location to reference the same object
     activeRoute.insertWaypoint(startingWP, index);
 
     currentSegment = activeRoute.getSegments().get(index);
@@ -355,13 +343,14 @@ public class RouteWorker {
       return;
     }
 
-    if (routeCompleted()) {
-      handleEvent(WorkerEvent.ROUTE_COMPLETED);
-    }
-
     // Loop to find current segment. This allows for small breaks in gps data
     while (atNextSegment()) { // TODO this might be problematic on tight turns
       currentSegmentIndex++;
+      // Check if the route has been completed
+      if (currentSegmentIndex >= activeRoute.getSegments().size()) {
+        handleEvent(WorkerEvent.ROUTE_COMPLETED);
+        return;
+      }
       currentSegment = activeRoute.getSegments().get(currentSegmentIndex);
     }
 
