@@ -32,7 +32,7 @@ public class GuidanceCommands extends GuidanceComponent {
     }
 
     @Override public String getComponentName() {
-        return null;
+        return "Guidance.Commands";
     }
 
     @Override public void onGuidanceStartup() {
