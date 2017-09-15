@@ -25,7 +25,7 @@ import java.io.FileReader;
  * Loads a route based on the provided file path.
  */
 public class FileStrategy implements IRouteLoadStrategy{
-  String filePath;
+  protected String filePath;
 
   /**
    * Constructor initializes a FileStrategy by providing the file path
