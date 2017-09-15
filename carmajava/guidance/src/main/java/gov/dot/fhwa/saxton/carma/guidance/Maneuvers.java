@@ -21,7 +21,7 @@ public class Maneuvers extends GuidanceComponent {
     }
 
     @Override public String getComponentName() {
-        return null;
+        return "Guidance.Maneuvers";
     }
 
     private IPublisher<NewPlan> newPlanPublisher;
