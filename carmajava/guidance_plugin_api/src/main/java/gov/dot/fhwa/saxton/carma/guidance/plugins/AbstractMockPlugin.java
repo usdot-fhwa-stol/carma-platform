@@ -43,7 +43,7 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
             SystemAlert msg = publisher.newMessage();
             msg.setType(SystemAlert.CAUTION);
             msg.setDescription(
-                "Plugin " + getName() + ":" + getVersionId() + " looping. Avail=" + availability);
+                "Plugin " + getName() + ":" + getVersionId() + " looping. Avail=" + getAvailability());
             publisher.publish(msg);
         }
 
@@ -69,6 +69,7 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     }
 
     private void computeAvailability() {
-        availability = Math.random() > 0.5;
+        boolean availability = Math.random() > 0.5;
+        setAvailability(availability);
     }
 }

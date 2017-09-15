@@ -17,3 +17,5 @@ max_acceleration_capability: 2.0
 # Double: Host vehicle maximum deceleration capability
 # Units: m/s^2
 max_deceleration_capability: 1.0
+
+ignored_plugins: []

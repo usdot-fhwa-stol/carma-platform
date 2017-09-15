@@ -41,6 +41,23 @@ received_messages ( can_msgs/Frame )
 > Get the light status of the set value of the light bars. (NOTE: this may not match up with the physical lights if there is a communication disconnect)
 
 ~control/enable_robotic (cav_msgs/SetEnableRobotic)
-> This service allows another node to set/unset the robot_enabled flag
+> This service allows another node to set/unset the robot_enabled flag. If the robot_enabled flag is set to false all messages received on the cmd_speed and cmd_longitudinal_effort topicss of this node are ignored. The controller will send disable robotic commands down to the hardware. The status of this robot_enabled flag is publisshed in the robot_status topic.
+
+
+## Control Flow to command robotic
+
+This node attempts to abstract away the requirements of the underlying hardware and reduce commanding speeds/efforts to the API specified in this document. For the sake of having this 
+as a reference somewhere the following procedure is required to enter robotic mode in the 2013 SRX with the CARMA hardware.
+
+1. Turn on Electronics
+2. Turn on Ignition
+3. Launch ROS software ( this should include the srx_controller_node assuming enabled_at_start is set to false) 
+4. Prime the SRX 2013 ACC by accelerating > 25mph and entering ACC
+5. Call the ~/control/enable_robotic service with set = true
+	This will allow the srx_controller_node to forward commands received
+6. Begin commanding speed/effort at greater than 5Hz ( < 200ms delay )
+7. Driver must then manually enter robotic by double tapping the ACC set button.
+
+From this point on the vehicle will remain in robotic as long as it receives commands @ >5z, the robot_enabled flag remains set to true, and there is no manual override. If a process wishes to remain in robotic but not command effort it should send cmd_longitudinal_efforts of 0% @ >5hz
 
  
