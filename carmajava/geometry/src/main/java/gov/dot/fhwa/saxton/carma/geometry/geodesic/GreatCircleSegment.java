@@ -28,8 +28,8 @@ public class GreatCircleSegment {
 
   /**
    * Constructor initializes this earth segment with the provided locations
-   * @param loc1 First gps location
-   * @param loc2 Second gps location
+   * @param loc1 First location
+   * @param loc2 Second location
    */
   public GreatCircleSegment(Location loc1, Location loc2) {
     this.loc1 = loc1;
@@ -38,7 +38,7 @@ public class GreatCircleSegment {
   }
 
   /**
-   * Calculates the cross-track great circle distance between a gps location and this segment.
+   * Calculates the cross-track great circle distance between a location and this segment.
    *
    * @param loc The location
    * @return The distance in meters

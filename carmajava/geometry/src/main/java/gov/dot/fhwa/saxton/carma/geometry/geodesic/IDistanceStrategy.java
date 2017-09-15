@@ -22,7 +22,7 @@ package gov.dot.fhwa.saxton.carma.geometry.geodesic;
  */
 public interface IDistanceStrategy {
   /**
-   * Calculates the earth surface distance between two gps locations
+   * Calculates the earth surface distance between two locations
    *
    * @param loc1 The first location
    * @param loc2 The second location
@@ -31,7 +31,7 @@ public interface IDistanceStrategy {
   double distanceLoc2Loc(Location loc1, Location loc2);
 
   /**
-   * Calculates the cross-track great circle distance between a gps location and great circle segment.
+   * Calculates the cross-track great circle distance between a location and great circle segment.
    *
    * @param loc The location
    * @param seg The great circle segment

@@ -16,7 +16,7 @@ import org.ros.rosjava_geometry.Vector3;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Runs unit tests for the GeodesicCartesianConvertor class
+ * Runs unit tests for the GeodesicCartesianConverter class
  */
 public class HaversineStrategyTest {
 

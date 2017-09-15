@@ -21,7 +21,7 @@ package gov.dot.fhwa.saxton.carma.geometry.geodesic;
  * Based off of the public MIT licensed code at http://www.movable-type.co.uk/scripts/latlong.html
  */
 public class HaversineStrategy implements IDistanceStrategy{
-  protected final double R = 6371000; // Mean earth radius for WGS84 ellipsoid. Defined as R = (2Rea+Reb) / 3
+  protected final double R = 6371009; // Mean earth radius for WGS84 ellipsoid. Defined as R = (2Rea+Reb) / 3
 
   @Override public double distanceLoc2Loc(Location loc1, Location loc2) {
     double lat1 = loc1.getLatRad();
@@ -32,23 +32,26 @@ public class HaversineStrategy implements IDistanceStrategy{
     double j = Math.pow(Math.sin((lat2 - lat1)/2.0), 2);
     double k = Math.pow(Math.sin((lon2 - lon1)/2.0), 2);
 
-    return 2 * R * Math.asin(Math.sqrt( j + Math.cos(lat1) * Math.cos(lat2) * k));
+    double a = j + Math.cos(lat1) * Math.cos(lat2) * k;
+
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    // Can also be implemented as 2 * R * Math.asin(Math.sqrt( j + Math.cos(lat1) * Math.cos(lat2) * k));
   }
 
   @Override public double crossTrackDistance(Location loc, GreatCircleSegment seg) {
-    double angularDistance = distanceLoc2Loc(seg.loc1, loc) / R;
+    double deltaAngle = distanceLoc2Loc(seg.loc1, loc) / R;
     double brearingStartToLoc = getInitialBearing(seg.loc1, loc);
     double brearingStartToEnd = getInitialBearing(seg.loc1, seg.loc2);
     double deltaBearing = brearingStartToLoc - brearingStartToEnd;
 
-    return Math.asin(Math.sin(angularDistance) * Math.sin(deltaBearing)) * R;
+    return Math.asin(Math.sin(deltaAngle) * Math.sin(deltaBearing)) * R;
   }
 
   @Override public double downtrackDistance(Location loc, GreatCircleSegment seg) {
-    double angularDistance = distanceLoc2Loc(seg.loc1, loc) / R;
-    double angularCrossTrackDistance = crossTrackDistance(loc, seg) / R;
+    double deltaAngle = distanceLoc2Loc(seg.loc1, loc) / R;
+    double crossTrackAngle = crossTrackDistance(loc, seg) / R;
 
-    return Math.acos(Math.cos(angularDistance) / Math.cos(angularCrossTrackDistance)) * R;
+    return Math.acos(Math.cos(deltaAngle) / Math.cos(crossTrackAngle)) * R;
   }
 
   /**
