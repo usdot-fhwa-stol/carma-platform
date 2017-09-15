@@ -58,10 +58,6 @@ public class Tracking extends GuidanceComponent {
     }
 
     @Override public void onGuidanceStartup() {
-
-    }
-
-    @Override public void onSystemReady() {
         statusPublisher =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
         bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
@@ -97,11 +93,16 @@ public class Tracking extends GuidanceComponent {
         // TODO: Integrate CAN data from Environment layer when available
     }
 
+    @Override public void onSystemReady() {
+        // NO-OP
+    }
+
     @Override public void onGuidanceEnable() {
 
     }
 
     @Override public void loop() {
+            System.out.println("Status publisher " + statusPublisher);
             cav_msgs.SystemAlert systemAlertMsg = statusPublisher.newMessage();
             systemAlertMsg
                 .setDescription("Tracking has not detected a running trajectory, no means to compute"

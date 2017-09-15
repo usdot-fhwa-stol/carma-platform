@@ -17,6 +17,7 @@ public abstract class GuidanceComponent implements Runnable {
     protected ConnectedNode node;
     protected IPubSubService pubSubService;
     protected Log log;
+    protected Thread loopThread;
 
     private final long WAIT_DURATION_MS = 200;
     private final long DEFAULT_LOOP_SLEEP_MS = 5000;
@@ -75,7 +76,8 @@ public abstract class GuidanceComponent implements Runnable {
                 GuidanceComponent.this.loop();
             }
         };
-        loop.run();
+        loopThread = new Thread(loop);
+        loopThread.start();
 
         // Wait for DRIVERS_READY
         while (state.get() == GuidanceState.STARTUP) {
@@ -84,16 +86,17 @@ public abstract class GuidanceComponent implements Runnable {
             } catch (InterruptedException e) {
             }
         }
+        log.info(getComponentName() + " transitioning to DRIVERS_READY state.");
         cancelAndWaitForLoop(loop);
 
-        log.info(getComponentName() + " transitioning to DRIVERS_READY state.");
         onSystemReady();
         loop = new CancellableLoop() {
             @Override protected void loop() throws InterruptedException {
                 GuidanceComponent.this.loop();
             }
         };
-        cancelAndWaitForLoop(loop);
+        loopThread = new Thread(loop);
+        loopThread.start();
 
         // Wait for GUIDANCE_ENABLE
         while (!(state.get() == GuidanceState.ENABLED)) {
@@ -102,6 +105,7 @@ public abstract class GuidanceComponent implements Runnable {
             } catch (InterruptedException e) {
             }
         }
+        cancelAndWaitForLoop(loop);
 
         log.info(getComponentName() + " transitioning to ENABLED state.");
         onGuidanceEnable();
@@ -110,7 +114,8 @@ public abstract class GuidanceComponent implements Runnable {
                 GuidanceComponent.this.loop();
             }
         };
-        loop.run();
+        loopThread = new Thread(loop);
+        loopThread.start();
 
         // Wait for Guidance to shutdown
         while (!(state.get() == GuidanceState.SHUTDOWN)) {
@@ -119,6 +124,7 @@ public abstract class GuidanceComponent implements Runnable {
             } catch (InterruptedException e) {
             }
         }
+        cancelAndWaitForLoop(loop);
 
         log.info(getComponentName() + " shutting down.");
         onGuidanceShutdown();
