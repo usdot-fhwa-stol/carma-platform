@@ -84,11 +84,7 @@ public class MockRadarDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    objectPub = connectedNode.newPublisher("~/sensor/tracked_objects", cav_msgs.ExternalObjectList._TYPE);
-  }
-
-  @Override public GraphName getDefaultDriverName() {
-    return GraphName.of("mock_radar_driver");
+    objectPub = connectedNode.newPublisher("~/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) {
@@ -214,7 +210,7 @@ public class MockRadarDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI(){
-    return new ArrayList<>(Arrays.asList("~/sensor/tracked_objects"
+    return new ArrayList<>(Arrays.asList("sensor/objects"
     ));
   }
 }

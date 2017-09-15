@@ -45,6 +45,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
 
   protected final Log log;
   protected final ParameterTree params;
+  protected final GraphName graphName;
 
   // Parameters
   protected final String rosRunID;
@@ -72,6 +73,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
     this.connectedNode = connectedNode;
     log = connectedNode.getLog();
     params = connectedNode.getParameterTree();
+    this.graphName = connectedNode.getName();
 
     // Parameters
     rosRunID = params.getString("/run_id");
@@ -112,7 +114,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
     } catch (FileNotFoundException e) {
       e.printStackTrace();
       log
-        .warn(getDefaultDriverName() + " could not find file " + dataFilePath + ".No data published");
+        .warn(getGraphName() + " could not find file " + dataFilePath + ".No data published");
       driverStatus = cav_msgs.DriverStatus.DEGRADED;
     }
   }
@@ -148,7 +150,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
           // Update sample index
           if (elements.length != getExpectedColCount()) {
             log.warn(
-              "Publish data requested for " + getDefaultDriverName() + " with incorrect number of data elements. "
+              "Publish data requested for " + getGraphName() + " with incorrect number of data elements. "
                 + "The required number of data elements is " + getExpectedColCount());
             continue; // Skip this invalid line
           }
@@ -175,7 +177,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
         closeDataFile();
         reader = null;
         // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
-        log.warn(getDefaultDriverName() + " failed to read data file. No data will be published");
+        log.warn(getGraphName() + " failed to read data file. No data will be published");
         driverStatus = cav_msgs.DriverStatus.FAULT;
       }
     }
@@ -183,7 +185,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
 
   @Override public void publishDriverStatus() {
     cav_msgs.DriverStatus driverStatusMsg = discoveryPub.newMessage();
-    driverStatusMsg.setName(getDefaultDriverName().toString());
+    driverStatusMsg.setName(getGraphName().toString());
     driverStatusMsg.setStatus(driverStatus);
     driverStatusMsg.setCanBus(false);
     driverStatusMsg.setSensor(false);
@@ -226,7 +228,9 @@ public abstract class AbstractMockDriver implements IMockDriver {
     }
   }
 
-  @Override public abstract GraphName getDefaultDriverName();
+  public GraphName getGraphName() {
+    return graphName;
+  }
 
   /**
    * Publishes the provided data array
@@ -253,4 +257,8 @@ public abstract class AbstractMockDriver implements IMockDriver {
   protected abstract List<String> getDriverTypesList();
 
   @Override public abstract List<String> getDriverAPI();
+
+  @Override public long getPublishDelay() {
+    return 100;
+  }
 }

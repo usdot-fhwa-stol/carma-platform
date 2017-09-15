@@ -269,7 +269,7 @@
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="tim"
+        <remap from="driver_discovery"
                to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
       </node>
     </group>
