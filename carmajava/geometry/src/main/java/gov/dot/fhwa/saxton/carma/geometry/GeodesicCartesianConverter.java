@@ -34,9 +34,9 @@ public class GeodesicCartesianConverter {
   protected final double f = 1.0 / 298.257223563; //The flattening factor
   protected final double Reb = Rea * (1.0 - f); // //The semi-minor axis = 6356752.0
   protected final double Reb_sqr = Reb*Reb;
-  protected final double e = Math.sqrt(Rea*Rea - Reb*Reb) / Rea; // The first eccentricity 0.08181919
+  protected final double e = 0.08181919084262149; // The first eccentricity (hard coded as optimization) calculated as Math.sqrt(Rea*Rea - Reb*Reb) / Rea;
   protected final double e_sqr = e*e;
-  protected final double e_p = Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr);
+  protected final double e_p = 0.08209443794969568; // e prime (hard coded as optimization) calculated as Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr);
 
   /**
    * Converts a given 3d cartesian point into a WSG-84 geodesic location

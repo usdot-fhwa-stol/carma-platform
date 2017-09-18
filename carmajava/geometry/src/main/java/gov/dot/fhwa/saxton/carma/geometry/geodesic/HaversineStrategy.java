@@ -16,8 +16,13 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
+
 /**
  * Implements a distance strategy which uses great circle distances and the haversine formula.
+ * The cross track and downtrack distances are still calculated with flat earth assumptions
  * Based off of the public MIT licensed code at http://www.movable-type.co.uk/scripts/latlong.html
  */
 public class HaversineStrategy implements IDistanceStrategy{
@@ -39,33 +44,55 @@ public class HaversineStrategy implements IDistanceStrategy{
   }
 
   @Override public double crossTrackDistance(Location loc, GreatCircleSegment seg) {
-    double deltaAngle = distanceLoc2Loc(seg.loc1, loc) / R;
-    double brearingStartToLoc = getInitialBearing(seg.loc1, loc);
-    double brearingStartToEnd = getInitialBearing(seg.loc1, seg.loc2);
-    double deltaBearing = brearingStartToLoc - brearingStartToEnd;
+    // Get vectors from earth center to path and external location
+    GeodesicCartesianConverter gCC = new GeodesicCartesianConverter();
+    Vector3 vec2StartPoint = gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()).toVector3();
+    Vector3 vec2EndPoint = gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()).toVector3();
+    Vector3 vec2ExternalPoint = gCC.geodesic2Cartesian(loc, Transform.identity()).toVector3();
 
-    return Math.asin(Math.sin(deltaAngle) * Math.sin(deltaBearing)) * R;
+    // Get vector from start to external point
+    Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
+
+    // Get vector from start to end point
+    Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+
+    // Get angle between both vectors
+    double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
+
+    return startToExternalVec.getMagnitude() * Math.sin(Math.acos(interiorAngle));
   }
 
   @Override public double downtrackDistance(Location loc, GreatCircleSegment seg) {
-    double deltaAngle = distanceLoc2Loc(seg.loc1, loc) / R;
-    double crossTrackAngle = crossTrackDistance(loc, seg) / R;
+    // Get vectors from earth center to path and external location
+    GeodesicCartesianConverter gCC = new GeodesicCartesianConverter();
+    Vector3 vec2StartPoint = gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()).toVector3();
+    Vector3 vec2EndPoint = gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()).toVector3();
+    Vector3 vec2ExternalPoint = gCC.geodesic2Cartesian(loc, Transform.identity()).toVector3();
 
-    return Math.acos(Math.cos(deltaAngle) / Math.cos(crossTrackAngle)) * R;
+    // Get vector from start to external point
+    Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
+
+    // Get vector from start to end point
+    Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+
+    // Get angle between both vectors
+    double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
+
+    return startToExternalVec.getMagnitude() * Math.cos(Math.acos(interiorAngle));
   }
 
   /**
-   * Helper function gets the initial bearing of an object which will travel the great cricle segment from start to end locations
-   * @param start The start of the segment to be traveled
-   * @param end The end of the segment to be traveled
-   * @return The bearing at the start point in rad
+   * Helper function calculates the angle between two vectors.
+   * @param vec1 the first vector
+   * @param vec2 the second vector
+   * @return The angle in rad between the two vectors
    */
-  protected double getInitialBearing(Location start, Location end) {
-    double deltaLon = end.getLonRad()-start.getLonRad();
-    double y = Math.sin(deltaLon) * Math.cos(end.getLatRad());
-    double x = Math.cos(start.getLatRad())*Math.sin(end.getLatRad()) -
-      Math.sin(start.getLatRad())*Math.cos(end.getLatRad())*Math.cos(deltaLon);
-
-    return Math.atan2(y, x);
+  protected double getAngleBetweenVectors(Vector3 vec1, Vector3 vec2) {
+    double vec1Mag = vec1.getMagnitude();
+    double vec2Mag = vec2.getMagnitude();
+    if (vec1Mag == 0 || vec2Mag == 0) {
+      return 0;
+    }
+    return  vec1.dotProduct(vec2) / (vec1.getMagnitude() * vec2.getMagnitude());
   }
 }

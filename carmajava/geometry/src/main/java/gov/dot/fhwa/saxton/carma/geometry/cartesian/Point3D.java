@@ -68,6 +68,10 @@ public class Point3D {
     return v1.almostEquals(new Vector3(p2.getX(), p2.getY(), p2.getZ()), delta);
   }
 
+  public Vector3 toVector3() {
+    return new Vector3(x,y,z);
+  }
+
   @Override public String toString() {
     return super.toString() + " (x,y,z): (" + x + ", " + y + ", " + z + ")";
   }
