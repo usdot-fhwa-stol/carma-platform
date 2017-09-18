@@ -172,12 +172,12 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             public void build(cav_srvs.GetDriversWithCapabilitiesRequest request,
                               cav_srvs.GetDriversWithCapabilitiesResponse response) {
 
-                log_.error("InterfaceMgr.driverCapSvr: received request with " + request.getCapabilities().size() +
+                log_.debug("InterfaceMgr.driverCapSvr: received request with " + request.getCapabilities().size() +
                         " capabilities listed.");
 
                 //figure out which drivers match the request
                 List<String> res = worker_.getDrivers(request.getCapabilities());
-                log_.error("InterfaceMgr.driverCapSvr: returning a list of " + res.size() + " matching drivers.");
+                log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size() + " matching drivers.");
 
                 //formulate the service response
                 response.setDriverData(res);
