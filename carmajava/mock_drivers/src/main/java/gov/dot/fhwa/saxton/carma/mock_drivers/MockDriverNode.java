@@ -85,7 +85,7 @@ public class MockDriverNode extends SaxtonBaseNode {
         simulatedDriver.publishDriverStatus();
         simulatedDriver.readAndPublishData();
 
-        Thread.sleep(1000);
+        Thread.sleep(simulatedDriver.getPublishDelay());
       }//loop
 
       @Override protected void handleInterruptedException(InterruptedException e) {
