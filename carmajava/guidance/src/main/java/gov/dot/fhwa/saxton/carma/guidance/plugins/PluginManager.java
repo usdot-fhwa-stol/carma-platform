@@ -21,6 +21,8 @@ import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import org.apache.commons.logging.Log;
@@ -39,6 +41,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package PluginManager component
@@ -46,13 +49,9 @@ import java.util.Set;
  * Responsible for instantiating, running, owning, and runtime management of
  * all plugins installed in the software's operating environment.
  */
-public class PluginManager implements Runnable, AvailabilityListener {
-    protected final String componentName = "PluginManager";
+public class PluginManager extends GuidanceComponent implements AvailabilityListener {
     protected final long sleepDurationMillis = 30000;
-    protected IPubSubService pubSubService;
     protected int sequenceNumber = 0;
-    protected ConnectedNode node;
-    protected Log log;
 
     protected PluginExecutor executor;
     protected PluginServiceLocator pluginServiceLocator;
@@ -60,29 +59,27 @@ public class PluginManager implements Runnable, AvailabilityListener {
     protected List<String> ignoredPluginClassNames = new ArrayList<>();
 
     protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma.guidance.plugins";
-
-    protected String messagingBaseUrl = "plugins";
-    protected String getRegisteredPluginsServiceUrl = "get_registered_plugins";
-    protected String getActivePluginsServiceUrl = "get_active_plugins";
-    protected String activatePluginServiceUrl = "activate_plugin";
-
-    protected String availablePluginsTopicUrl = "available_plugins";
+    protected final String messagingBaseUrl = "plugins";
+    protected final String getRegisteredPluginsServiceUrl = "get_registered_plugins";
+    protected final String getActivePluginsServiceUrl = "get_active_plugins";
+    protected final String activatePluginServiceUrl = "activate_plugin";
+    protected final String availablePluginsTopicUrl = "available_plugins";
 
     protected ServiceServer<PluginListRequest, PluginListResponse> registeredPluginService;
     protected ServiceServer<PluginListRequest, PluginListResponse> activePluginService;
     protected ServiceServer<PluginActivationRequest, PluginActivationResponse>
         activatePluginService;
     protected IPublisher<cav_msgs.PluginList> pluginPublisher;
+
     protected MessageFactory messageFactory;
+
     protected int availablePluginsSeqNum = 0;
     protected int registeredPluginsSeqNum = 0;
     protected int activePluginsSeqNum = 0;
 
-    public PluginManager(IPubSubService pubSubManager, ConnectedNode node) {
-        this.pubSubService = pubSubManager;
-        this.node = node;
+    public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, ConnectedNode node) {
+        super(state, pubSubManager, node);
         this.executor = new PluginExecutor(node.getLog());
-        this.log = node.getLog();
 
         pluginServiceLocator =
             new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
@@ -157,15 +154,18 @@ public class PluginManager implements Runnable, AvailabilityListener {
         return registeredPlugins;
     }
 
-    @Override public void run() {
-        // Get the list of ignored plugins, defaulting to ignore non-concrete implementations
+    @Override public String getComponentName() {
+        return "Guidance.PluginManager";
+    }
+
+    @Override public void onGuidanceStartup() {
+        // Instantiate the plugins and register them
         ignoredPluginClassNames = (List<String>) node.getParameterTree()
             .getList("~ignored_plugins", new ArrayList<>());
 
         log.info("Ignoring plugins: " + ignoredPluginClassNames);
-
-        // Instantiate the plugins and register them
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
+
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
         for (IPlugin p : getRegisteredPlugins()) {
             executor.submitPlugin(p);
@@ -176,16 +176,10 @@ public class PluginManager implements Runnable, AvailabilityListener {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            executor.resumePlugin(p.getName(), p.getVersionId());
         }
 
         // Setup the services related to plugin queries
         setupServices();
-
-        // Configure the SYSTEM_ALERT TOPIC
-        IPublisher<SystemAlert> pub =
-            pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
         // Configure the plugin availability topic and topic message factory
         NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
@@ -193,23 +187,18 @@ public class PluginManager implements Runnable, AvailabilityListener {
         pluginPublisher = pubSubService
             .getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
                 cav_msgs.PluginList._TYPE);
+    }
 
-        for (; ; ) {
-            // Publish system alert status
-            cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
-            systemAlertMsg
-                .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
-            systemAlertMsg.setType(SystemAlert.CAUTION);
-            pub.publish(systemAlertMsg);
+    @Override public void onSystemReady() {
+    }
 
-
-            try {
-                Thread.sleep(sleepDurationMillis);
-            } catch (InterruptedException e) {
-                break; // Fall out of loop if we get interrupted
-            }
+    @Override public void onGuidanceEnable() {
+        for (IPlugin p : getRegisteredPlugins()) {
+            executor.resumePlugin(p.getName(), p.getVersionId());
         }
+    }
 
+    @Override public void onGuidanceShutdown() {
         // If we're shutting down, properly handle graceful plugin shutdown as well
         for (IPlugin p : getRegisteredPlugins()) {
             executor.suspendPlugin(p.getName(), p.getVersionId());

@@ -10,6 +10,8 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -66,6 +68,11 @@ public class PluginManagerTest {
         @Override public void onReceiveNegotiationRequest() {
 
         }
+
+        @Override
+        public void registerAvailabilityListener(AvailabilityListener listener) {
+
+        }
     }
 
     public class TestPlugin2 implements IPlugin {
@@ -117,13 +124,18 @@ public class PluginManagerTest {
         @Override public void onReceiveNegotiationRequest() {
 
         }
+
+        @Override
+        public void registerAvailabilityListener(AvailabilityListener listener) {
+
+        }
     }
 
     @Before public void setUp() throws Exception {
         psl = mock(PluginServiceLocator.class);
         ConnectedNode node = mock(ConnectedNode.class);
         when(node.getLog()).thenReturn(log);
-        pm = new PluginManager(mock(IPubSubService.class), node);
+        pm = new PluginManager(new AtomicReference<GuidanceState>(GuidanceState.DRIVERS_READY), mock(IPubSubService.class), node);
         pluginClasses = new ArrayList<>();
         plugins = new ArrayList<>();
     }

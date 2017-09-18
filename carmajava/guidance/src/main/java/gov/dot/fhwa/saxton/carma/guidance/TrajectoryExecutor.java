@@ -29,6 +29,7 @@ import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package TrajectoryExecutor component
@@ -37,23 +38,20 @@ import java.util.List;
  * maneuvers in a Trajectory planned by the Arbitrator and the Guidance package's
  * currently configured plugins.
  */
-public class TrajectoryExecutor implements Runnable {
+public class TrajectoryExecutor extends GuidanceComponent {
     // Member variables
-    protected final String componentName = "TrajectoryExecutor";
-    protected final long sleepDurationMillis = 30000;
-    protected IPubSubService iPubSubService;
-    protected int sequenceNumber = 0;
-    protected Log log;
-    protected ConnectedNode node;
+    private ISubscriber<RouteState> routeStateSubscriber;
 
-    public TrajectoryExecutor(IPubSubService iPubSubService, ConnectedNode node) {
-        this.iPubSubService = iPubSubService;
-        this.node= node;
-        this.log = node.getLog();
+    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
+        super(state, pubSubService, node);
     }
 
-    @Override public void run() {
-        ISubscriber<RouteState> routeStateSubscriber = iPubSubService
+    @Override public String getComponentName() {
+        return "Guidance.TrajectoryExecutor";
+    }
+
+    @Override public void onGuidanceStartup() {
+        routeStateSubscriber = pubSubService
             .getSubscriberForTopic("route_status", RouteState._TYPE);
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
             @Override public void onMessage(RouteState msg) {
@@ -61,10 +59,14 @@ public class TrajectoryExecutor implements Runnable {
             }
         });
 
+
+    }
+
+    @Override public void onSystemReady() {
         try {
             IService<cav_srvs.GetDriversWithCapabilitiesRequest,
                 cav_srvs.GetDriversWithCapabilitiesResponse> driverCapabilityService
-                = iPubSubService.getServiceForTopic("get_drivers_with_capabilities",
+                = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
                 GetDriversWithCapabilities._TYPE);
 
             GetDriversWithCapabilitiesRequest req =
@@ -90,12 +92,9 @@ public class TrajectoryExecutor implements Runnable {
         } catch (TopicNotFoundException e) {
             e.printStackTrace();
         }
+    }
 
-        for (; ; ) {
-            try {
-                Thread.sleep(sleepDurationMillis);
-            } catch (InterruptedException e) {
-            }
-        }
+    @Override public void onGuidanceEnable() {
+        // NO-OP
     }
 }

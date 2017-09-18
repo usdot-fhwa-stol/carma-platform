@@ -7,6 +7,8 @@ gradle.properties
 *~
 myClock.bin
 /*.tar.gz
+*.class
+**/bin
 
 # ignore build directories
 build
