@@ -16,8 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
-import cav_msgs.*;
-import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
@@ -114,9 +112,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
         new ServiceResponseBuilder<GetAvailableRoutesRequest, GetAvailableRoutesResponse>() {
           @Override public void build(GetAvailableRoutesRequest request,
             GetAvailableRoutesResponse response) {
-            List<Route> routeMsgs = new LinkedList<>();
+            List<cav_msgs.Route> routeMsgs = new LinkedList<>();
 
-            for (gov.dot.fhwa.saxton.carma.route.Route route : routeWorker.getAvailableRoutes()) {
+            for (Route route : routeWorker.getAvailableRoutes()) {
               routeMsgs.add(route.toMessage(connectedNode.getTopicMessageFactory()));
             }
             response.setAvailableRoutes(routeMsgs);
@@ -140,7 +138,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
       });
   }//onStart
 
-  @Override public void publishSystemAlert(SystemAlert systemAlert) {
+  @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {
     systemAlertPub.publish(systemAlert);
   }
 
@@ -148,11 +146,11 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
     segmentPub.publish(routeSegment);
   }
 
-  @Override public void publishActiveRoute(Route route) {
+  @Override public void publishActiveRoute(cav_msgs.Route route) {
     routePub.publish(route);
   }
 
-  @Override public void publishRouteState(RouteState routeState) {
+  @Override public void publishRouteState(cav_msgs.RouteState routeState) {
     routeStatePub.publish(routeState);
   }
 

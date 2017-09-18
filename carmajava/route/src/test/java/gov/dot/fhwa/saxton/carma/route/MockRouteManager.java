@@ -24,7 +24,7 @@ import org.ros.message.Time;
 /**
  * Fake route manager for use in unit testing
  */
-public class FakeRouteManager implements IRouteManager {
+public class MockRouteManager implements IRouteManager {
   @Override public void publishSystemAlert(SystemAlert systemAlert) {
 
   }

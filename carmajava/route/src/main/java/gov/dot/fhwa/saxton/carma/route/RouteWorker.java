@@ -70,9 +70,9 @@ public class RouteWorker {
   protected double downtrackDistance = 0;
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
-  protected double MAX_CROSSTRACK_DISTANCE = 10.0;
+  protected double MAX_CROSSTRACK_DISTANCE_M = 10.0;
     // TODO put in route files as may change based on road type
-  protected double MAX_START_DISTANCE = 15.0; // Can only join route if within 15m of waypoint
+  protected double MAX_START_DISTANCE_M = 15.0; // Can only join route if within 15m of waypoint
   protected int routeStateSeq = 0;
 
   /**
@@ -201,7 +201,7 @@ public class RouteWorker {
    * @return vehicle on route status
    */
   protected boolean leftRouteVicinity() {
-    return Math.abs(crossTrackDistance) > MAX_CROSSTRACK_DISTANCE;
+    return Math.abs(crossTrackDistance) > MAX_CROSSTRACK_DISTANCE_M;
   }
 
   /**
@@ -278,9 +278,8 @@ public class RouteWorker {
     int count = 0;
     for (RouteWaypoint wp : activeRoute.getWaypoints()) {
       double dist = hostVehicleLocation.distanceFrom(wp.getLocation(), new HaversineStrategy());
-      if (MAX_START_DISTANCE > dist) {
+      if (MAX_START_DISTANCE_M > dist) {
         startingIndex = count;
-        System.out.println("\nStarting Index = " + startingIndex);
         break;
       }
       count++;
@@ -298,7 +297,19 @@ public class RouteWorker {
   protected void startRouteAtIndex(int index) {
     // Insert a starting waypoint at the current vehicle location which is connected to the route
     RouteWaypoint startingWP = new RouteWaypoint(new Location(hostVehicleLocation)); // don't want the route and vehicle location to reference the same object
-    activeRoute.insertWaypoint(startingWP, index);
+    boolean ableToConnectToRoute = false;
+    try {
+      ableToConnectToRoute = activeRoute.insertWaypoint(startingWP, index);
+    } catch (Exception e) {
+      ableToConnectToRoute = false;
+      log.debug("Exception caught when inserting route starting waypoint Exception = " + e);
+    }
+
+    // If we can't join the route return
+    if (ableToConnectToRoute == false) {
+      log.info("Could not join the route from the current location");
+      return;
+    }
 
     currentSegment = activeRoute.getSegments().get(index);
     currentSegmentIndex = index;

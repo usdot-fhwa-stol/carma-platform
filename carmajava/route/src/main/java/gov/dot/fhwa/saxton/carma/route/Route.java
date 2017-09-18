@@ -112,10 +112,6 @@ public class Route {
   public double lengthOfSegments(int startIndex, int finalIndex){
     double totalLength = 0;
 
-    if (finalIndex >= segments.size()) {
-      finalIndex = segments.size() - 1;
-    }
-
     for(int i = startIndex; i <= finalIndex; i++) {
       totalLength += segments.get(i).length();
     }
@@ -135,32 +131,28 @@ public class Route {
    * @param index    The index at which to insert the RouteWaypoint. Inserting at a non-existent index will result in an exception.
    * @return Returns true if the waypoint was inserted successfully. False otherwise.
    */
-  public boolean insertWaypoint(RouteWaypoint waypoint, int index) {
+  public boolean insertWaypoint(RouteWaypoint waypoint, int index) throws IndexOutOfBoundsException{
     //TODO perform validation check on waypoint usability
-    try{
-      // Remove the segment at that location and replace it with two segments connected to the new waypoint
-      // If waypoint not inserted at the front or end of the list the existing segments must be modified
-      if (index != 0 && index < waypoints.size()) {
-        segments.remove(index-1);
-        segments.add(index-1, new RouteSegment(waypoints.get(index - 1), waypoint));
-        segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
-      } else if (index >= waypoints.size()) {
-        index = waypoints.size() - 1;
-        segments.add(index, new RouteSegment(waypoints.get(index), waypoint));
-      } else {
-        index = 0; //don't allow negative index
-        segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
-      }
-
-      // Insert the waypoint into the list of waypoints
-      waypoints.add(index,waypoint);
-
-      calculateLength();
-      return true;
-    }catch (IndexOutOfBoundsException e){
-      e.printStackTrace();
+    // Remove the segment at that location and replace it with two segments connected to the new waypoint
+    // If waypoint not inserted at the front or end of the list the existing segments must be modified
+    if (index != 0 && index < waypoints.size()) {
+      segments.remove(index-1);
+      segments.add(index-1, new RouteSegment(waypoints.get(index - 1), waypoint));
+      segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
+    } else if (index == waypoints.size()) {
+      segments.add(new RouteSegment(waypoints.get(index), waypoint));
+    } else if (index == 0){
+      segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
+    } else {
+      throw new IndexOutOfBoundsException("Attempted to add waypoint to invalid index " + index);
     }
-    return false;
+
+    // Insert the waypoint into the list of waypoints
+    waypoints.add(index,waypoint);
+
+    calculateLength();
+    return true;
+    //return false;
   }
 
   /**
