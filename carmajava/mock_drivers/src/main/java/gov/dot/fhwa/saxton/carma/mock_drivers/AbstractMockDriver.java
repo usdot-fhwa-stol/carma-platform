@@ -232,7 +232,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
     }
   }
 
-  public GraphName getGraphName() {
+  @Override public GraphName getGraphName() {
     return graphName;
   }
 
