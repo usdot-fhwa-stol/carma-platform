@@ -97,7 +97,11 @@ public abstract class AbstractMockDriver implements IMockDriver {
         new ServiceResponseBuilder<cav_srvs.GetDriverApiRequest, cav_srvs.GetDriverApiResponse>() {
           @Override public void build(cav_srvs.GetDriverApiRequest request,
             cav_srvs.GetDriverApiResponse response) {
-            response.setApiList(getDriverAPI());
+            List<String> FQNs = new LinkedList<>();
+            for (String apiElement: getDriverAPI()) {
+              FQNs.add(getGraphName() + "/" + apiElement);
+            }
+            response.setApiList(FQNs);
           }
         });
   }
@@ -195,7 +199,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
 
     for (String driverType: getDriverTypesList()) {
       switch (driverType) {
-        case "can_bus":
+        case "can":
           driverStatusMsg.setCanBus(true);
           break;
         case "sensor":

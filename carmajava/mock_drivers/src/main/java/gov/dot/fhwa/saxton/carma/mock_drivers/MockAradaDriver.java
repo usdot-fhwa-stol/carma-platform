@@ -48,7 +48,7 @@ public class MockAradaDriver extends AbstractMockDriver {
 
   // Subscribed
   Subscriber<cav_msgs.ByteArray> outboundSub;
-  final String outboundTopic = "comms/inbound_binary_msg";
+  final String outboundTopic = "comms/outbound_binary_msg";
 
   private final int EXPECTED_DATA_COL_COUNT = 3;
 
