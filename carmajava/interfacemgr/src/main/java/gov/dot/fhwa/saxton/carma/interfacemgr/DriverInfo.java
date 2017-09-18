@@ -106,7 +106,7 @@ public class DriverInfo {
 
     public boolean equalCategoryAndState(DriverInfo b) {
         if (!name.equals(b.getName())) {
-            return false; // unchanged category and state
+            return false;
         }
         if (state != b.getState()) {
             return false;
