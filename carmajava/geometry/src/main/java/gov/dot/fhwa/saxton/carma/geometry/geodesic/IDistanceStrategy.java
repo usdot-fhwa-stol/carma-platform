@@ -22,7 +22,7 @@ package gov.dot.fhwa.saxton.carma.geometry.geodesic;
  */
 public interface IDistanceStrategy {
   /**
-   * Calculates the earth surface distance between two gps locations
+   * Calculates the earth surface distance between two locations
    *
    * @param loc1 The first location
    * @param loc2 The second location
@@ -31,22 +31,20 @@ public interface IDistanceStrategy {
   double distanceLoc2Loc(Location loc1, Location loc2);
 
   /**
-   * Calculates the earth surface distance between a gps location and a earth segment.
-   * Distances are determined by calculating crosstrack distance and distance to segment end points.
-   * The minimum of these three values is returned.
+   * Calculates the cross-track great circle distance between a location and great circle segment.
    *
    * @param loc The location
-   * @param seg The earth segment
+   * @param seg The great circle segment
    * @return The distance in meters
    */
-  double distanceLoc2Seg(Location loc, GreatCircleSegment seg);
+  double crossTrackDistance(Location loc, GreatCircleSegment seg);
 
   /**
-   * Calculates the earth surface distance between a gps location and a earth segment. (Earth cross track distance)
+   * Calculates the downtrack distance along a segment of a provided location
    *
-   * @param loc The location
-   * @param seg The earth segment
+   * @param loc The location whose downtrack distance is being calculated
+   * @param seg The great circle segment which defines the track
    * @return The distance in meters
    */
-  double distanceLoc2SegExtended(Location loc, GreatCircleSegment seg);
+  double downtrackDistance(Location loc, GreatCircleSegment seg);
 }
