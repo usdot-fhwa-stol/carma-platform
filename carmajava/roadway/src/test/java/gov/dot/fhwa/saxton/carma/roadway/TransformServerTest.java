@@ -38,15 +38,13 @@ public class TransformServerTest extends RosTest {
    * The accuracy of the service is then tested
    */
   @Test public void testServiceAvailability() throws Exception {
+    System.out.println("\n\n" + "Test Servic Availability" + "\n\n");
     final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
     final CountDownLatch countDownLatch = new CountDownLatch(1);
-    countDownLatch.countDown();
-    // Start the transform server node
-    nodeMainExecutor.execute(new TransformServer(), nodeConfiguration);
 
-    // Start the anonymous node to test the server
-    nodeMainExecutor.execute(new SaxtonBaseNode() {
+    // Create the anonymous node to test the server
+    SaxtonBaseNode anonNode = new SaxtonBaseNode() {
       @Override public GraphName getDefaultNodeName() {
         return GraphName.of("transform_server_tester");
       }
@@ -139,8 +137,19 @@ public class TransformServerTest extends RosTest {
         // If onStart is completed without issue then complete the countdown marking the test valid
         countDownLatch.countDown();
       }
-    }, nodeConfiguration);
-    assertTrue(countDownLatch.await(30, TimeUnit.SECONDS));
+    };
+
+    // Start the transform server node
+    TransformServer tfServer = new TransformServer();
+    nodeMainExecutor.execute(tfServer, nodeConfiguration);
+
+    // Start the anonymous node to test the server
+    nodeMainExecutor.execute(anonNode, nodeConfiguration);
+    assertTrue(countDownLatch.await(10, TimeUnit.SECONDS)); // Can't register with master here
+    // Safely shutdown all ros nodes
+    nodeMainExecutor.shutdownNodeMain(anonNode);
+    nodeMainExecutor.shutdownNodeMain(tfServer);
+    nodeMainExecutor.shutdown();
   }
 
   //

@@ -44,6 +44,9 @@ allprojects {
         maven {
             url uri("../../../../devel/share/maven")
         }
+        maven {
+            url uri("/home/mcconnelms/rosjava/devel/share/maven") // Modify to match local path
+            }
     }
 }
 
