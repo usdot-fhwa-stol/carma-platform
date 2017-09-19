@@ -59,7 +59,7 @@ public class HaversineStrategy implements IDistanceStrategy{
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
 
-    return startToExternalVec.getMagnitude() * Math.sin(Math.acos(interiorAngle));
+    return startToExternalVec.getMagnitude() * Math.sin(interiorAngle);
   }
 
   @Override public double downtrackDistance(Location loc, GreatCircleSegment seg) {
@@ -78,7 +78,7 @@ public class HaversineStrategy implements IDistanceStrategy{
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
 
-    return startToExternalVec.getMagnitude() * Math.cos(Math.acos(interiorAngle));
+    return startToExternalVec.getMagnitude() * Math.cos(interiorAngle);
   }
 
   /**
@@ -93,6 +93,6 @@ public class HaversineStrategy implements IDistanceStrategy{
     if (vec1Mag == 0 || vec2Mag == 0) {
       return 0;
     }
-    return  vec1.dotProduct(vec2) / (vec1.getMagnitude() * vec2.getMagnitude());
+    return  Math.acos(vec1.dotProduct(vec2) / (vec1.getMagnitude() * vec2.getMagnitude()));
   }
 }
