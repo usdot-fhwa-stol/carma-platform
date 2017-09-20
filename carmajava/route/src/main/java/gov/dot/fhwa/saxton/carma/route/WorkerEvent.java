@@ -38,7 +38,7 @@ public enum WorkerEvent {
   /**
    * A system ready message has been received
    */
-  SYSTEM_READY,
+  DRIVERS_READY,
   /**
    * A system failure message has been received
    */

@@ -140,7 +140,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
     systemAlertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
       @Override public void onNewMessage(cav_msgs.SystemAlert message) {
         switch (message.getType()) {
-          case cav_msgs.SystemAlert.SYSTEM_READY:
+          case cav_msgs.SystemAlert.DRIVERS_READY:
             systemStarted = true;
             break;
           default:

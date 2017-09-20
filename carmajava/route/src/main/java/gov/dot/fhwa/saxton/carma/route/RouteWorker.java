@@ -61,7 +61,7 @@ public class RouteWorker {
     /*ROUTE_SELECTED  */ {WorkerState.LOADING_ROUTES,  WorkerState.FOLLOWING_ROUTE, WorkerState.READY_TO_FOLLOW, WorkerState.FOLLOWING_ROUTE},
     /*ROUTE_COMPLETED */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.READY_TO_FOLLOW, WorkerState.ROUTE_SELECTION},
     /*LEFT_ROUTE      */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.READY_TO_FOLLOW, WorkerState.ROUTE_SELECTION},
-    /*SYSTEM_READY    */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.FOLLOWING_ROUTE, WorkerState.FOLLOWING_ROUTE},
+    /*DRIVERS_READY    */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.FOLLOWING_ROUTE, WorkerState.FOLLOWING_ROUTE},
     /*SYSTEM_FAILURE  */ {WorkerState.LOADING_ROUTES,  WorkerState.ROUTE_SELECTION, WorkerState.READY_TO_FOLLOW, WorkerState.READY_TO_FOLLOW}};
 
   protected WorkerAction[][] actionTable = //Table controlling actions taken on state transitions. row = event, col = currentState
@@ -71,7 +71,7 @@ public class RouteWorker {
     /*ROUTE_SELECTED  */ {WorkerAction.INVALID, WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.CHANGE_ROUTE},
     /*ROUTE_COMPLETED */ {WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.MARK_COMPLETE},
     /*LEFT_ROUTE      */ {WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.INVALID, WorkerAction.LEFT_ROUTE_ALERT},
-    /*SYSTEM_READY    */ {WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.MARK_SYSTEM_OK},
+    /*DRIVERS_READY    */ {WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.MARK_SYSTEM_OK},
     /*SYSTEM_FAILURE  */ {WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.NONE,    WorkerAction.MARK_SYSTEM_NOT_OK}};
 
   /**
@@ -292,8 +292,8 @@ public class RouteWorker {
       case cav_msgs.SystemAlert.NOT_READY:
         // TODO: Handle this message type
         break;
-      case cav_msgs.SystemAlert.SYSTEM_READY:
-        handleStateTransition(WorkerEvent.SYSTEM_READY);
+      case cav_msgs.SystemAlert.DRIVERS_READY:
+        handleStateTransition(WorkerEvent.DRIVERS_READY);
         log.info("route_manager received system ready on system_alert and is starting to publish");
         break;
       default:
