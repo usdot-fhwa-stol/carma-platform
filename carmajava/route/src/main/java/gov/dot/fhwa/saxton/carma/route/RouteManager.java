@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.RouteSegment;
+import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
@@ -73,7 +74,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
     return GraphName.of("route_manager");
   }
 
-  @Override public void onStart(final ConnectedNode connectedNode) {
+  @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
 
     this.connectedNode = connectedNode;
     final Log log = connectedNode.getLog();
@@ -137,6 +138,13 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
         }
       });
   }//onStart
+
+  @Override protected void handleException(Exception e) {
+    connectedNode.getLog().fatal("Uncaught exception propagated to SaxtonBaseNode", e);
+    SystemAlert alertMsg = systemAlertPub.newMessage();
+    alertMsg.setType(SystemAlert.FATAL);
+    alertMsg.setDescription("Uncaught exception in " + connectedNode.getName() + " propagated to SaxtonBaseNode");
+  }
 
   @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {
     systemAlertPub.publish(systemAlert);
