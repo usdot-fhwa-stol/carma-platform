@@ -13,38 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package gov.dot.fhwa.saxton.carma.route;
 
+import cav_msgs.*;
+import cav_msgs.Route;
+import cav_msgs.RouteSegment;
+import org.ros.message.Time;
+
 /**
- * A description of actions which can be taken by a RouteWorker on state transitions
+ * Fake route manager for use in unit testing
  */
-public enum WorkerAction {
-  /**
-   * No Action is taken
-   */
-  NONE,
-  /**
-   * A change in route
-   */
-  CHANGE_ROUTE,
-  /**
-   * Indicate that the current route has been completed
-   */
-  MARK_COMPLETE,
-  /**
-   * Send an alert that the host vehicle has left the route
-   */
-  LEFT_ROUTE_ALERT,
-  /**
-   * Indicate that the host vehicle system is ok
-   */
-  MARK_SYSTEM_OK,
-  /**
-   * Indicate that the host vehicle system is not ok
-   */
-  MARK_SYSTEM_NOT_OK,
-  /**
-   * Indicate that an invalid state operation has been performed
-   */
-  INVALID
+public class MockRouteManager implements IRouteManager {
+  @Override public void publishSystemAlert(SystemAlert systemAlert) {
+
+  }
+
+  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
+
+  }
+
+  @Override public void publishActiveRoute(Route route) {
+
+  }
+
+  @Override public void publishRouteState(RouteState routeState) {
+
+  }
+
+  @Override public Time getTime() {
+    return Time.fromMillis(System.currentTimeMillis());
+  }
 }

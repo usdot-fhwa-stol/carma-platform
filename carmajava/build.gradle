@@ -40,6 +40,13 @@ allprojects {
         maven {
             url uri("../../../devel/share/maven")
         }
+        maven {
+            url uri("../../../../devel/share/maven")
+        }
+// Uncomment for use with intellij debugging (not needed for regular builds)
+//        maven {
+//            url uri("/home/mcconnelms/rosjava/devel/share/maven") // Modify to match local path
+//        }
     }
 }
 
@@ -66,7 +73,7 @@ subprojects {
      * Some IDE support if you use it.
      */
     /* apply plugin: "eclipse" */
-    /* apply plugin: "idea"    */
+    /* apply plugin: "idea" */
 }
 
 /*
