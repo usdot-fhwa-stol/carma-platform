@@ -171,8 +171,7 @@ void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity 
     msg.header.frame_id = base_link_frame;
     msg.header.seq = seq++;
     try {
-
-        msg.header.stamp.fromNSec(vel.time * 1000UL);
+        msg.header.stamp.fromNSec(vel.time * static_cast<uint64_t>(1000));
     }catch(std::runtime_error e)
     {
         ROS_WARN("onVelocityChangedHandler");
@@ -268,11 +267,10 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
     msg.header.frame_id = odom_frame;
     msg.header.seq = seq++;
     try {
-
-        msg.header.stamp.fromNSec(pose.time * 1000UL);
+        msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
     }catch(std::runtime_error e)
     {
-        ROS_WARN("onLocalPoseChangedHandler");
+        ROS_WARN_STREAM("onLocalPoseChangedHandler");
     }
     msg.child_frame_id = base_link_frame;
 
