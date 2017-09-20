@@ -61,7 +61,6 @@ PinPointApplication::PinPointApplication(int argc, char **argv) : cav::DriverApp
 
 
 void PinPointApplication::initialize() {
-    last_heartbeat_time_ = ros::Time::now();
 
     //CAV platform requires that the position api falls under the /pinpoint/position namespace
     position_api_nh_.reset(new ros::NodeHandle("~position"));
@@ -171,7 +170,14 @@ void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity 
 
     msg.header.frame_id = base_link_frame;
     msg.header.seq = seq++;
-    msg.header.stamp.fromNSec(vel.time * 1000UL);
+    try {
+
+        msg.header.stamp.fromNSec(vel.time * 1000UL);
+    }catch
+    {
+        ROS_WARN("onVelocityChangedHandler");
+    }
+
 
     geometry_msgs::TransformStamped tf;
 
@@ -222,7 +228,13 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     sensor_msgs::NavSatFix msg;
     msg.header.frame_id = world_frame;
     msg.header.seq = seq++;
-    msg.header.stamp.fromNSec(pose.time * 1000UL);
+    try {
+
+        msg.header.stamp.fromNSec(pose.time * 1000UL);
+    }catch
+    {
+        ROS_WARN("onGlobalPoseChangedHandler");
+    }
 
     msg.altitude = pose.altitude;
     msg.longitude = pose.longitude;
@@ -255,7 +267,13 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
     nav_msgs::Odometry msg;
     msg.header.frame_id = odom_frame;
     msg.header.seq = seq++;
-    msg.header.stamp.fromNSec(pose.time * 1000UL);
+    try {
+
+        msg.header.stamp.fromNSec(pose.time * 1000UL);
+    }catch
+    {
+        ROS_WARN("onLocalPoseChangedHandler");
+    }
     msg.child_frame_id = base_link_frame;
 
     try {
