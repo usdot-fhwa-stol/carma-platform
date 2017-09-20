@@ -173,7 +173,7 @@ void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity 
     try {
 
         msg.header.stamp.fromNSec(vel.time * 1000UL);
-    }catch
+    }catch(std::runtime_error e)
     {
         ROS_WARN("onVelocityChangedHandler");
     }
@@ -230,8 +230,8 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     msg.header.seq = seq++;
     try {
 
-        msg.header.stamp.fromNSec(pose.time * 1000UL);
-    }catch
+        msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
+    }catch(std::runtime_error e)
     {
         ROS_WARN("onGlobalPoseChangedHandler");
     }
@@ -270,7 +270,7 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
     try {
 
         msg.header.stamp.fromNSec(pose.time * 1000UL);
-    }catch
+    }catch(std::runtime_error e)
     {
         ROS_WARN("onLocalPoseChangedHandler");
     }
@@ -435,7 +435,16 @@ void PinPointApplication::pre_spin() {
             last = last_heartbeat_time_;
         }
 
-        ros::Duration time = ros::Time::now() - last;
+        ros::Duration time;
+        try
+        {
+            time = ros::Time::now() - last;
+
+
+        }catch(std::runtime_error e)
+        {
+            ROS_WARN("pre_spin");
+        }
         if(time.sec > 1 && time.sec % 5 == 0)
         {
             ROS_WARN_STREAM_THROTTLE(5, "No heartbeat received from pinpoint in " << time.sec << " seconds");
