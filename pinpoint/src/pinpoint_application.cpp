@@ -61,6 +61,7 @@ PinPointApplication::PinPointApplication(int argc, char **argv) : cav::DriverApp
 
 
 void PinPointApplication::initialize() {
+    last_heartbeat_time_ = ros::Time::now();
 
     //CAV platform requires that the position api falls under the /pinpoint/position namespace
     position_api_nh_.reset(new ros::NodeHandle("~position"));
@@ -128,7 +129,13 @@ void PinPointApplication::initialize() {
                 onStatusConditionChangedHandler(code);
             });
 
-    pinpoint_.onHeartbeat.connect([this](){ last_heartbeat_time_ = ros::Time::now(); });
+
+    //Initialize time
+    last_heartbeat_time_ = ros::Time::now();
+    pinpoint_.onHeartbeat.connect([this](){
+        std::lock_guard<std::mutex> lock(heartbeat_mutex_);
+        last_heartbeat_time_ = ros::Time::now();
+    });
 
     //Heading
     heading_pub_ = position_api_nh_->advertise<cav_msgs::HeadingStamped>("heading", 1);
@@ -145,7 +152,6 @@ void PinPointApplication::onConnectHandler() {
     cav_msgs::DriverStatus status = getStatus();
     status.status = cav_msgs::DriverStatus::OPERATIONAL;
     setStatus(status);
-    last_heartbeat_time_ = ros::Time::now();
 }
 
 void PinPointApplication::onDisconnectHandler() {
@@ -231,16 +237,6 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     msg.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
     msg.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
     global_pose_pub_.publish(msg);
-
-    geometry_msgs::TransformStamped tf;
-
-    try {
-        tf = tf_buffer_->lookupTransform(base_link_frame,sensor_frame,msg.header.stamp);
-    }catch(tf2::TransformException e)
-    {
-        ROS_WARN_STREAM_THROTTLE(5,"Exception looking up transform: " << e.what());
-        return;
-    }
 
     cav_msgs::HeadingStamped heading;
     heading.header = msg.header;
@@ -375,7 +371,8 @@ void PinPointApplication::onStatusConditionChangedHandler(
     if (error_set_.size() > 0) {
         status.status = cav_msgs::DriverStatus::FAULT;
         setStatus(status);
-    } else if (warning_set_.size() > 0) {
+    } else if (warning_set_.size() > 0)
+    {
         status.status = cav_msgs::DriverStatus::DEGRADED;
         setStatus(status);
     } else
@@ -413,7 +410,14 @@ void PinPointApplication::pre_spin() {
     }
     else if(pinpoint_.connected()) //If we are connected lets make sure we are getting updates
     {
-        auto time = ros::Time::now() - last_heartbeat_time_;
+        ros::Time last;
+
+        {
+            std::lock_guard<std::mutex> lock(heartbeat_mutex_);
+            last = last_heartbeat_time_;
+        }
+
+        ros::Duration time = ros::Time::now() - last;
         if(time.sec > 1 && time.sec % 5 == 0)
         {
             ROS_WARN_STREAM_THROTTLE(5, "No heartbeat received from pinpoint in " << time.sec << " seconds");
