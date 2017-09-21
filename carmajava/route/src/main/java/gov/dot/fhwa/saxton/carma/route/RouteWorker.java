@@ -401,7 +401,7 @@ public class RouteWorker {
       case cav_msgs.SystemAlert.NOT_READY:
         handleEvent(WorkerEvent.SYSTEM_NOT_READY);
         break;
-      case cav_msgs.SystemAlert.SYSTEM_READY:
+      case cav_msgs.SystemAlert.DRIVERS_READY:
         systemOkay = true;
         log.info("route_manager received system ready on system_alert and is starting to publish");
         break;

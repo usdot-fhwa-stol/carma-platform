@@ -59,7 +59,7 @@ public class RouteProgressTest {
   public void testRouteProgress() throws Exception {
     RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
 
-    routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.SYSTEM_READY, ""));
+    routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
@@ -131,7 +131,7 @@ public class RouteProgressTest {
   public void testLeavingRouteVicinity() throws Exception {
     RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
 
-    routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.SYSTEM_READY, ""));
+    routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route

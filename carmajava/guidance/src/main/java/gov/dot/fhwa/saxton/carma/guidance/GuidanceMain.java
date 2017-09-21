@@ -116,7 +116,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
         subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
                                                  @Override public void onMessage(cav_msgs.SystemAlert message) {
-                                                     if (message.getType() == SystemAlert.SYSTEM_READY) {
+                                                     if (message.getType() == SystemAlert.DRIVERS_READY) {
                                                          state.set(GuidanceState.DRIVERS_READY);
                                                          log.info("Guidance main received DRIVERS_READY!");
                                                      }
