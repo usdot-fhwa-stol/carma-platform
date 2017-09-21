@@ -2,16 +2,16 @@
 # GetTransform.srv
 # 
 # Returns the transform between the two provided frame ids. If the transform is not defined returns an error status flag
+# Returned transform defines the location of the child frame relative to the parent frame
 #
 # @author Michael McConnell
 # @version 0.1
 #
 
-# The source frame of the transform.
-# When the returned transform is applied to a point in the source frame it will be converted into the target frame
-string sourceFrame
-# The target frame of the transform
-string targetFrame
+# The parent frame which if transformed by the returned value would be located at the child frame
+string parent_frame
+# The child frame of the transform
+string child_frame
 ---
 geometry_msgs/TransformStamped transform
 # An enumeration representing the validity of the returned transform

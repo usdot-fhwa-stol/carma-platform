@@ -6,6 +6,7 @@ import cav_srvs.GetTransformResponse;
 import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.ros.exception.RemoteException;
+import org.ros.exception.RosRuntimeException;
 import org.ros.message.Duration;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -38,10 +39,10 @@ public class TransformServerTest extends RosTest {
    * The accuracy of the service is then tested
    */
   @Test public void testServiceAvailability() throws Exception {
-    System.out.println("\n\n" + "Test Servic Availability" + "\n\n");
+    System.out.println("\n" + "Test get_transform Service Availability");
     final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
-    final CountDownLatch countDownLatch = new CountDownLatch(1);
+    final CountDownLatch countDownLatch = new CountDownLatch(2);
 
     // Create the anonymous node to test the server
     SaxtonBaseNode anonNode = new SaxtonBaseNode() {
@@ -93,7 +94,7 @@ public class TransformServerTest extends RosTest {
         tfMsg.setTransforms(new ArrayList<>(Arrays.asList(tfStamped)));
 
         final TransformStamped tfInvertedStamped = messageFactory.newFromType(TransformStamped._TYPE);
-        tfInvertedStamped.getHeader().setSeq(tfStamped.getHeader().getSeq());
+        tfInvertedStamped.getHeader().setSeq(tfStamped.getHeader().getSeq() + 1);
         tfInvertedStamped.getHeader().setFrameId(tfStamped.getChildFrameId());
         tfInvertedStamped.getHeader().setStamp(tfStamped.getHeader().getStamp());
         tfInvertedStamped.setChildFrameId(tfStamped.getHeader().getFrameId());
@@ -105,13 +106,14 @@ public class TransformServerTest extends RosTest {
 
         //Request Non-Inverse transform. Assert false on failure or incorrect transform returned
         final cav_srvs.GetTransformRequest request = serviceClient.newMessage();
-        request.setSourceFrame(tfStamped.getHeader().getFrameId());
-        request.setTargetFrame(tfStamped.getChildFrameId());
+        request.setParentFrame(tfStamped.getHeader().getFrameId());
+        request.setChildFrame(tfStamped.getChildFrameId());
 
         serviceClient.call(request, new ServiceResponseListener<GetTransformResponse>() {
           @Override public void onSuccess(GetTransformResponse response) {
             // Compare the requested transform with the
             assertTrue(isEqualTransform(tfStamped, response.getTransform()));
+            countDownLatch.countDown();
           }
 
           @Override public void onFailure(RemoteException e) {
@@ -121,35 +123,35 @@ public class TransformServerTest extends RosTest {
 
         //Request Inverse transform. Assert false on failure or incorrect transform returned
         final cav_srvs.GetTransformRequest inverseRequest = serviceClient.newMessage();
-        inverseRequest.setSourceFrame(tfInvertedStamped.getHeader().getFrameId());
-        inverseRequest.setTargetFrame(tfInvertedStamped.getChildFrameId());
+        inverseRequest.setParentFrame(tfInvertedStamped.getHeader().getFrameId());
+        inverseRequest.setChildFrame(tfInvertedStamped.getChildFrameId());
 
         serviceClient.call(inverseRequest, new ServiceResponseListener<GetTransformResponse>() {
           @Override public void onSuccess(GetTransformResponse response) {
             // Compare the requested transform with the
             assertTrue(isEqualTransform(tfInvertedStamped, response.getTransform()));
+            countDownLatch.countDown();
           }
 
           @Override public void onFailure(RemoteException e) {
             fail("Failed to call get_transform service");
           }
         });
-        // If onStart is completed without issue then complete the countdown marking the test valid
-        countDownLatch.countDown();
       }
     };
 
     // Start the transform server node
     TransformServer tfServer = new TransformServer();
     nodeMainExecutor.execute(tfServer, nodeConfiguration);
-
     // Start the anonymous node to test the server
     nodeMainExecutor.execute(anonNode, nodeConfiguration);
-    assertTrue(countDownLatch.await(10, TimeUnit.SECONDS)); // Can't register with master here
-    // Safely shutdown all ros nodes
+    assertTrue(countDownLatch.await(5, TimeUnit.SECONDS)); // Check if service calls were successful
+    // Shutdown nodes
     nodeMainExecutor.shutdownNodeMain(anonNode);
+    // Shutting down the transform server from this test results in a exception on the printing the service address
     nodeMainExecutor.shutdownNodeMain(tfServer);
-    nodeMainExecutor.shutdown();
+    // Stack trace is automatically logged
+    // ROS is shutdown automatically in cleanup from ROS Test
   }
 
   //
