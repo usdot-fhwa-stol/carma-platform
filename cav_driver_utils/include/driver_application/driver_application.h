@@ -42,6 +42,7 @@
 #include <bondcpp/bond.h>
 
 #include <unordered_map>
+#include <mutex>
 
 namespace cav
 {
@@ -91,6 +92,10 @@ protected:
      */
     virtual void setStatus(cav_msgs::DriverStatus status) final;
 
+    /**
+     * @brief Get's status
+     * @return
+     */
     virtual cav_msgs::DriverStatus getStatus() final { return status_; }
 
     /**
@@ -182,7 +187,7 @@ private:
     ros::Publisher driver_status_pub_;
     cav_msgs::DriverStatus status_;
     std::unordered_map<std::string, std::shared_ptr<bond::Bond>> bond_map_;
-
+    std::mutex bond_mutex_;
 };
 
 };

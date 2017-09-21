@@ -36,11 +36,19 @@ public enum WorkerEvent {
    */
   LEFT_ROUTE,
   /**
-   * A system ready message has been received
-   */
-  DRIVERS_READY,
-  /**
    * A system failure message has been received
    */
-  SYSTEM_FAILURE
+  SYSTEM_FAILURE,
+  /**
+   * A system not ok message has been received
+   */
+  SYSTEM_NOT_READY,
+  /**
+   * A route has been started
+   */
+  ROUTE_STARTED,
+  /**
+   * A route has been aborted
+   */
+  ROUTE_ABORTED
 }
