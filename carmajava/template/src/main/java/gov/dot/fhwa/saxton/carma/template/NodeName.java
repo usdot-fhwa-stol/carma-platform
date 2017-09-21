@@ -49,7 +49,7 @@ public class NodeName extends SaxtonBaseNode {
   }
 
   @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  public void onSaxtonStart(final ConnectedNode connectedNode) {
 
     final Log log = connectedNode.getLog();
 
@@ -127,5 +127,9 @@ public class NodeName extends SaxtonBaseNode {
                                          }//CancellableLoop
     );//executeCancellableLoop
   }//onStart
+
+  @Override protected void handleException(Exception e) {
+
+  }
 }//AbstractNodeMain
 

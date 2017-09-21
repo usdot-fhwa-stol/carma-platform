@@ -23,6 +23,8 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
+import org.ros.node.Node;
+import org.ros.node.NodeListener;
 import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
@@ -75,8 +77,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
   }
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
-
     this.connectedNode = connectedNode;
+
     final Log log = connectedNode.getLog();
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
@@ -95,14 +97,22 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
     gpsSub.addMessageListener(new MessageListener<NavSatFix>() {
       @Override public void onNewMessage(NavSatFix navSatFix) {
-        routeWorker.handleNavSatFixMsg(navSatFix);
+        try {
+          routeWorker.handleNavSatFixMsg(navSatFix);
+        } catch (Exception e) {
+          handleException(e);
+        }
       }
     });
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
       @Override public void onNewMessage(cav_msgs.SystemAlert message) {
-        routeWorker.handleSystemAlertMsg(message);
+        try {
+          routeWorker.handleSystemAlertMsg(message);
+        } catch (Exception e) {
+          handleException(e);
+        }
       }//onNewMessage
     });//addMessageListener
 
@@ -113,12 +123,16 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
         new ServiceResponseBuilder<GetAvailableRoutesRequest, GetAvailableRoutesResponse>() {
           @Override public void build(GetAvailableRoutesRequest request,
             GetAvailableRoutesResponse response) {
-            List<cav_msgs.Route> routeMsgs = new LinkedList<>();
+            try {
+              List<cav_msgs.Route> routeMsgs = new LinkedList<>();
 
-            for (Route route : routeWorker.getAvailableRoutes()) {
-              routeMsgs.add(route.toMessage(connectedNode.getTopicMessageFactory()));
+              for (Route route : routeWorker.getAvailableRoutes()) {
+                routeMsgs.add(route.toMessage(connectedNode.getTopicMessageFactory()));
+              }
+              response.setAvailableRoutes(routeMsgs);
+            } catch (Exception e) {
+              handleException(e);
             }
-            response.setAvailableRoutes(routeMsgs);
           }
         });
 
@@ -126,7 +140,11 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
       new ServiceResponseBuilder<SetActiveRouteRequest, SetActiveRouteResponse>() {
         @Override
         public void build(SetActiveRouteRequest request, SetActiveRouteResponse response) {
-          response.setErrorStatus(routeWorker.setActiveRoute(request.getRouteID()));
+          try {
+            response.setErrorStatus(routeWorker.setActiveRoute(request.getRouteID()));
+          } catch (Exception e) {
+            handleException(e);
+          }
         }
       });
 
@@ -134,13 +152,17 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
       new ServiceResponseBuilder<StartActiveRouteRequest, StartActiveRouteResponse>() {
         @Override
         public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
-          response.setErrorStatus(routeWorker.startActiveRoute());
+          try {
+            response.setErrorStatus(routeWorker.startActiveRoute());
+          } catch (Exception e) {
+            handleException(e);
+          }
         }
       });
   }//onStart
 
   @Override protected void handleException(Exception e) {
-    connectedNode.getLog().fatal("Uncaught exception propagated to SaxtonBaseNode", e);
+    connectedNode.getLog().fatal("Uncaught exception propagated to top of " + connectedNode.getName() + " node message handler", e);
     SystemAlert alertMsg = systemAlertPub.newMessage();
     alertMsg.setType(SystemAlert.FATAL);
     alertMsg.setDescription("Uncaught exception in " + connectedNode.getName() + " propagated to SaxtonBaseNode");

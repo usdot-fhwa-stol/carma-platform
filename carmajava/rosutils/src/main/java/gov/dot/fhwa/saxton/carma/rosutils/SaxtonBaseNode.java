@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.rosutils;
 
 import cav_msgs.SystemAlert;
 import org.ros.node.ConnectedNode;
+import org.ros.node.Node;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.AbstractNodeMain;
 import org.ros.exception.ServiceNotFoundException;
@@ -60,7 +61,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
    */
   protected abstract void handleException(Exception e);
 
-   /**
+  /**
    * Blocks until the desired service is found and returned or timeout expires. If the timeout expires then returns null.
    * <p>
    * Note: This function should never be called before Definitions of ServiceServers. This will help avoid race conditions.
