@@ -104,7 +104,7 @@ public class DriverInfo {
 
     public void setCapabilities(List<String> capabilities) { this.capabilities = capabilities; }
 
-    public boolean equals(DriverInfo b) {
+    public boolean equalCategoryAndState(DriverInfo b) {
         if (!name.equals(b.getName())) {
             return false;
         }
@@ -127,30 +127,7 @@ public class DriverInfo {
             return false;
         }
 
-        //look through all of the individual "capabilities" (api messages); a valid driver has at least one capability
-        List<String> bCapList = b.getCapabilities();
-        if (capabilities == null  ||  bCapList == null) {
-            return false;
-        }
-        if (capabilities.size() != bCapList.size()) {
-            return false;
-        }
-
-        for (String aCap : capabilities) {
-            boolean found = false;
-            for (String bCap : bCapList) {
-                if (aCap.equals(bCap)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-
         return true;
-
     }
 
     /**

@@ -37,6 +37,9 @@
 #include <pinpoint_driver/unpack_macros.h>
 
 
+const long long two_to_thirty_one = 2147483648;
+const long long two_to_fifteenth  = 32768;
+
 torc::PinPointLocalizationClient::PinPointLocalizationClient() {
     onConnect.connect(boost::bind(&PinPointLocalizationClient::connectSignals,this));
 }
@@ -83,12 +86,12 @@ void torc::PinPointLocalizationClient::processMessage(torc::MessageType msg_type
                 {
                     static struct PinPointGlobalPose pose;
                     pose.time      = UNPACK_UINT64(&msg[0]);
-                    pose.latitude  = ( 180.0f / (1 << 31)) * (float)UNPACK_INT32(&msg[8] );
-                    pose.longitude = ( 180.0f / (1 << 31) ) * (float)UNPACK_INT32(&msg[12]);
+                    pose.latitude  = ( 180.0f / two_to_thirty_one) * (float)UNPACK_INT32(&msg[8] );
+                    pose.longitude = ( 180.0f / two_to_thirty_one) * (float)UNPACK_INT32(&msg[12]);
                     pose.altitude  = (float)UNPACK_INT32( &msg[16])/(float)1000.0;
-                    pose.roll      = ( 180.0f / (1 << 15))  * (float)UNPACK_INT16(&msg[20]);
-                    pose.pitch     = ( 180.0f / (1 << 15))  * (float)UNPACK_INT16(&msg[22]);
-                    pose.yaw       = ( 180.0f / (1 << 15) )  * (float)UNPACK_INT16(&msg[24]);
+                    pose.roll      = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[20]);
+                    pose.pitch     = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[22]);
+                    pose.yaw       = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[24]);
 
                     onGlobalPoseChanged(pose);
                     break;
@@ -100,9 +103,9 @@ void torc::PinPointLocalizationClient::processMessage(torc::MessageType msg_type
                     pose.north     = (float)UNPACK_INT32( &msg[8])/(float)1000.0;
                     pose.east      = (float)UNPACK_INT32( &msg[12])/(float)1000.0;
                     pose.down      = (float)UNPACK_INT32( &msg[16])/(float)1000.0;
-                    pose.roll      = ( 180.0f / (1 << 15))  * (float)UNPACK_INT16(&msg[20]);
-                    pose.pitch     = ( 180.0f / (1 << 15))  * (float)UNPACK_INT16(&msg[22]);
-                    pose.yaw       = ( 180.0f / (1 << 15))  * (float)UNPACK_INT16(&msg[24]);
+                    pose.roll      = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[20]);
+                    pose.pitch     = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[22]);
+                    pose.yaw       = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[24]);
 
                     onLocalPoseChanged(pose);
                     break;

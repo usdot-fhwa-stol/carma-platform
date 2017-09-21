@@ -85,7 +85,8 @@ void DriverApplication::setStatus(cav_msgs::DriverStatus status)
     //notifying connected nodes there has been a change in the status of this node
     if(!DriverStatusEquals(status,status_))
     {
-        ROS_INFO_STREAM("Status updated releasing bonds, Status: " << status.status);
+        std::unique_lock<std::mutex> lock(bond_mutex_);
+        ROS_INFO_STREAM("Status updated releasing bonds, Status: " << (int) status.status);
         bond_map_.clear();
 
         status_ = status;
@@ -100,6 +101,7 @@ void DriverApplication::status_publish_timer(const ros::TimerEvent &) const
 
 bool DriverApplication::bind_service_cb(cav_srvs::Bind::Request &req, cav_srvs::Bind::Response &res)
 {
+    std::unique_lock<std::mutex> lock(bond_mutex_);
     if(bond_map_.find(req.id) != bond_map_.end())
     {
         ROS_WARN_STREAM(ros::this_node::getName() << " already bonded to id: " << req.id);
@@ -109,8 +111,10 @@ bool DriverApplication::bind_service_cb(cav_srvs::Bind::Request &req, cav_srvs::
     ROS_DEBUG_STREAM(ros::this_node::getName() << " binding to id: " << req.id);
 
     std::shared_ptr<bond::Bond> bond(new bond::Bond(ros::this_node::getName() + "/bond", req.id));
-    bond_map_[req.id] = bond;
     bond->start();
+
+    bond_map_[req.id] = bond;
+
 
     return true;
 }

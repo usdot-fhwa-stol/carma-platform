@@ -81,10 +81,6 @@ public class MockCANDriver extends AbstractMockDriver {
     turnSignalPub = connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
   }
 
-  @Override public GraphName getDefaultDriverName() {
-    return GraphName.of("mock_can_driver");
-  }
-
   @Override protected void publishData(List<String[]> data) {
 
     for (String[] elements : data) {
@@ -146,17 +142,17 @@ public class MockCANDriver extends AbstractMockDriver {
 
   @Override public List<String> getDriverAPI() {
     return new ArrayList<>(Arrays.asList(
-      "/can/acc_engaged",
-      "/can/acceleration", 
-      "/can/brake_lights", 
-      "/can/brake_position",
-      "/can/engine_speed",
-      "/can/fuel_flow",
-      "/can/odometer",
-      "/can/parking_brake",
-      "/can/speed",
-      "/can/steering_wheel_angle",
-      "/can/throttle_position",
-      "/can/turn_signal_state"));
+      "can/acc_engaged",
+      "can/acceleration",
+      "can/brake_lights",
+      "can/brake_position",
+      "can/engine_speed",
+      "can/fuel_flow",
+      "can/odometer",
+      "can/parking_brake",
+      "can/speed",
+      "can/steering_wheel_angle",
+      "can/throttle_position",
+      "can/turn_signal_state"));
   }
 }

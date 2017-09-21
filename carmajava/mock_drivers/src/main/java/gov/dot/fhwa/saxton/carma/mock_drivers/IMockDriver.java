@@ -39,10 +39,10 @@ public interface IMockDriver {
   void onInterruption();
 
   /**
-   * Returns the default name of this driver
-   * @return the default node name
+   * Returns the name of this driver
+   * @return the node name
    */
-  GraphName getDefaultDriverName();
+  GraphName getGraphName();
 
   /**
    * Reads simulated data from a file and publishes it.
@@ -62,4 +62,9 @@ public interface IMockDriver {
    * Gets a list of topics names representing the api of this driver
    */
   List<String> getDriverAPI();
+
+  /**
+   * Gets the delay in ms between when data should be published from this driver
+   */
+  long getPublishDelay();
 }

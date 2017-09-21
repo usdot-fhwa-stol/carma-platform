@@ -126,10 +126,6 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
         });
   }
 
-  @Override public GraphName getDefaultDriverName() {
-    return GraphName.of("mock_truck_controller_driver");
-  }
-
   @Override protected void publishData(List<String[]> data) throws IllegalArgumentException {
 
     for(String[] elements : data) {
@@ -153,7 +149,7 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
       DiagnosticStatus diagnosticStatus = messageFactory.newFromType(DiagnosticStatus._TYPE);
       diagnosticStatus.setHardwareId(elements[HARDWARE_ID_IDX]);
       diagnosticStatus.setLevel(Byte.valueOf(elements[DIAG_LEVEL_IDX]));
-      diagnosticStatus.setName(getDefaultDriverName().toString());
+      diagnosticStatus.setName(getGraphName().toString());
       diagnosticStatus.setMessage(elements[DIAG_MSG_IDX]);
 
       KeyValue keyValue = messageFactory.newFromType(KeyValue._TYPE);
@@ -183,12 +179,12 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
 
   @Override public List<String> getDriverAPI(){
     return new ArrayList<>(Arrays.asList(
-      "/control/diagnostics",
-      "/control/robot_enabled",
-      "/control/cmd_longitudinal_effort",
-      "/control/cmd_speed",
-      "/control/get_lights",
-      "/control/set_lights"
+      "control/diagnostics",
+      "control/robot_enabled",
+      "control/cmd_longitudinal_effort",
+      "control/cmd_speed",
+      "control/get_lights",
+      "control/set_lights"
     ));
   }
 }

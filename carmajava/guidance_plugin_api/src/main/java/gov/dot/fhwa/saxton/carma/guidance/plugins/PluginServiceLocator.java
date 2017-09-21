@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import org.apache.commons.logging.Log;
 
@@ -25,16 +26,19 @@ import org.apache.commons.logging.Log;
  * the plugins can use to interact with platform systems and other Guidance sub-components.
  */
 public class PluginServiceLocator {
-    protected ArbitratorService arbitratorService;
-    protected PluginManagementService pluginManagementService;
-    protected IPubSubService IPubSubService;
-    protected Log log;
+    private final ArbitratorService arbitratorService;
+    private final PluginManagementService pluginManagementService;
+    private final ParameterSource parameterSource;
+    private final IPubSubService IPubSubService;
+    private final Log log;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
-        PluginManagementService pluginManagementService, IPubSubService IPubSubService, Log log) {
+        PluginManagementService pluginManagementService, IPubSubService IPubSubService,
+        ParameterSource parameterSource, Log log) {
         this.arbitratorService = arbitratorService;
         this.IPubSubService = IPubSubService;
         this.pluginManagementService = pluginManagementService;
+        this.parameterSource = parameterSource;
         this.log = log;
     }
 
@@ -57,6 +61,13 @@ public class PluginServiceLocator {
      */
     public IPubSubService getPubSubService() {
         return IPubSubService;
+    }
+
+    /**
+     * Get the {@link ParameterSource} instance available to the plugins
+     */
+    public ParameterSource getParameterSource() {
+        return parameterSource;
     }
 
     /**

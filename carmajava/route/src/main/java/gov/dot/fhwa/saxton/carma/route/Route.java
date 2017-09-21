@@ -91,52 +91,68 @@ public class Route {
 
   /**
    * Calculates the length of a route
-   * //TODO modify to work with geometry package
    * @return the length of the route in meters
    */
-  protected double calculateLength(){
-    return 1;
+  protected void calculateLength(){
+    double totalLength = 0;
+
+    for(RouteSegment seg: segments) {
+      totalLength += seg.length();
+    }
+    this.routeLength = totalLength;
   }
 
   /**
-   * Inserts the provided segment into the route at the specified index.
-   * The segment currently at that index will be right shifted (placed at index + 1)
-   *
-   * @param segment The RouteSegment to be inserted. Must be able to connect to previous and next segments.
-   * @param index   The index at which to insert the RouteSegment. Inserting at a non-existent index will result in an exception.
-   * @return Returns true if the segment was inserted successfully. False otherwise.
+   * Calculates the distance downtrack to the end of the segment with the specified index.
+   * The calculation is performed from the start of the segment with the specified startIndex
+   * @param startIndex the index of the first segment to be included in the length calculation
+   * @param finalIndex the index of the final segment to be included in the length calculation
+   * @return the length of the route in meters
    */
-  public boolean insertSegment(RouteSegment segment, int index) {
-    //TODO perform validation check on segment usability
-    try{
-      segments.add(index,segment);
-      this.routeLength = calculateLength();
-      return true;
-    }catch (IndexOutOfBoundsException e){
-      e.printStackTrace();
+  public double lengthOfSegments(int startIndex, int finalIndex){
+    double totalLength = 0;
+
+    for(int i = startIndex; i <= finalIndex; i++) {
+      totalLength += segments.get(i).length();
     }
-    return false;
+
+    return totalLength;
   }
 
   /**
    * Inserts the provided waypoint into the route at the specified index.
    * The waypoint currently at that index will be right shifted (placed at index + 1)
    * Inserting a waypoint will result in an additional route segment being created.
+   * To insert at the end of the list use an index = waypoints.size()
+   * To insert at the front of the list use 0.
+   * Out of bound indexes will be truncated to 0 or waypoints.size() usable values
    *
    * @param waypoint The RouteWaypoint to be inserted. Must be able to connect to previous and next waypoints
    * @param index    The index at which to insert the RouteWaypoint. Inserting at a non-existent index will result in an exception.
    * @return Returns true if the waypoint was inserted successfully. False otherwise.
    */
-  public boolean insertWaypoint(RouteWaypoint waypoint, int index) {
+  public boolean insertWaypoint(RouteWaypoint waypoint, int index) throws IndexOutOfBoundsException{
     //TODO perform validation check on waypoint usability
-    try{
-      waypoints.add(index,waypoint);
-      this.routeLength = calculateLength();
-      return true;
-    }catch (IndexOutOfBoundsException e){
-      e.printStackTrace();
+    // Remove the segment at that location and replace it with two segments connected to the new waypoint
+    // If waypoint not inserted at the front or end of the list the existing segments must be modified
+    if (index != 0 && index < waypoints.size()) {
+      segments.remove(index-1);
+      segments.add(index-1, new RouteSegment(waypoints.get(index - 1), waypoint));
+      segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
+    } else if (index == waypoints.size()) {
+      segments.add(new RouteSegment(waypoints.get(index), waypoint));
+    } else if (index == 0){
+      segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
+    } else {
+      throw new IndexOutOfBoundsException("Attempted to add waypoint to invalid index " + index);
     }
-    return false;
+
+    // Insert the waypoint into the list of waypoints
+    waypoints.add(index,waypoint);
+
+    calculateLength();
+    return true;
+    //return false;
   }
 
   /**
@@ -217,7 +233,7 @@ public class Route {
       prevWaypoint = waypoint;
       firstWaypoint = false;
     }
-    this.routeLength = calculateLength();
+    calculateLength();
   }
 
   /**

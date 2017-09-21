@@ -24,7 +24,6 @@ buildscript {
 
 apply plugin: 'catkin'
 
-
 allprojects {
     /*
       A github url provides a good standard unique name for your project
@@ -44,9 +43,10 @@ allprojects {
         maven {
             url uri("../../../../devel/share/maven")
         }
+// Uncomment for use with intellij debugging (not needed for regular builds)
         maven {
             url uri("/home/mcconnelms/rosjava/devel/share/maven") // Modify to match local path
-            }
+        }
     }
 }
 
@@ -63,11 +63,17 @@ subprojects {
      *   https://github.com/rosjava/rosjava_bootstrap/blob/kinetic/gradle_plugins/src/main/groovy/org/ros/gradle_plugins/RosPlugin.groovy#L31
      */
     apply plugin: "ros-java"
+    apply plugin: 'checkstyle'
+
+    checkstyle {
+        configFile = rootProject.file("config/checkstyle.xml")
+    }
+
     /*
      * Some IDE support if you use it.
      */
     /* apply plugin: "eclipse" */
-    /* apply plugin: "idea"    */
+    /* apply plugin: "idea" */
 }
 
 /*
