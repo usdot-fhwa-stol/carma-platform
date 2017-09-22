@@ -404,8 +404,7 @@ public class RouteWorker {
       case cav_msgs.SystemAlert.DRIVERS_READY:
         systemOkay = true;
         log.info("route_manager received system ready on system_alert and is starting to publish");
-        throw new IndexOutOfBoundsException();
-        //break;
+        break;
       default:
         //TODO: Handle this variant maybe throw exception?
         log.error("System alert message received with unknown type: " + msg.getType());

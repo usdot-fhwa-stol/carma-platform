@@ -19,7 +19,6 @@ package gov.dot.fhwa.saxton.carma.route;
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import org.apache.commons.logging.Log;
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 

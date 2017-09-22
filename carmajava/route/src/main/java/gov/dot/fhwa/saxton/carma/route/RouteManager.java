@@ -31,7 +31,6 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
 import sensor_msgs.NavSatFix;
-
 import java.util.LinkedList;
 import java.util.List;
 
