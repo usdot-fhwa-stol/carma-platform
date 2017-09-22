@@ -21,8 +21,8 @@ import java.util.Arrays;
 /**
  * A representation of a point in N-dimensional space.
  */
-public class Point {
-  private double[] dimensions;
+public class Point implements DimensionalObject{
+  protected double[] dimensions;
 
   public Point(double[] dimensions){
     dimensions = dimensions;
@@ -63,11 +63,35 @@ public class Point {
     return Math.sqrt(squareSum);
   }
 
+  public boolean almostEquals(Point p, double delta) {
+    int numDim = this.getNumDimensions() < p.getNumDimensions() ? this.getNumDimensions() : p.getNumDimensions();
+
+    for (int i = 0; i < numDim; i++) {
+      if (Math.abs(this.getDim(i) - p.getDim(i)) > delta) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   // We vector should have a getDim and getNumDimensions method
   public void translate(Vector vec){
     int size = (this.getNumDimensions() < vec.getNumDimensions()) ? this.getNumDimensions() : vec.getNumDimensions();
     for (int i = 0; i < size; i++){
       dimensions[i] += vec.getDim(i);
     }
+  }
+
+  @Override public String toString() {
+    String str = super.toString() + " (";
+    for (int i = 0; i < dimensions.length; i++) {
+      str.concat(" " + i + ",");
+    }
+    str.concat(" ): (");
+    for (int i = 0; i < dimensions.length; i++) {
+      str.concat(" " + dimensions[i] + ",");
+    }
+    return str.concat(" )");
   }
 }

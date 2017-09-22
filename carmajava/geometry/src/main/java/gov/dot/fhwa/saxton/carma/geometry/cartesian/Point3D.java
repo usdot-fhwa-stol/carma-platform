@@ -15,6 +15,7 @@
  */
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.temp.Point;
 import org.ros.rosjava_geometry.Vector3;
 
 /**
@@ -32,6 +33,8 @@ public class Point3D {
     this.y = 0;
     this.z = 0;
   }
+
+  public Point3D(Point3D )
 
   public Point3D(double x, double y, double z) {
     this.x = x;

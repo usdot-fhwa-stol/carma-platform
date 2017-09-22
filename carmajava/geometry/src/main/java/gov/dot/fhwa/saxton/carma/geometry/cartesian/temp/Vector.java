@@ -19,7 +19,7 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
 /**
  * A representation of a point in N-dimensional space.
  */
-public class Vector {
+public class Vector implements DimensionalObject {
   private Point headPoint_;
 
   public Vector(Point head, Point tail) throws IllegalArgumentException {
@@ -66,6 +66,22 @@ public class Vector {
     Vector newVec = new Vector(this);
     for (int i = 0; i < this.getNumDimensions(); i++){
       newVec.setDim(i, val + newVec.getDim(i));
+    }
+    return newVec;
+  }
+
+  public Vector subtract(double val) {
+    Vector newVec = new Vector(this);
+    for (int i = 0; i < this.getNumDimensions(); i++){
+      newVec.setDim(i, newVec.getDim(i) - val);
+    }
+    return newVec;
+  }
+
+  public Vector subtract(Vector v2) {
+    Vector newVec = new Vector(this);
+    for (int i = 0; i < this.getNumDimensions(); i++){
+      newVec.setDim(i, newVec.getDim(i) - v2.getDim(i));
     }
     return newVec;
   }

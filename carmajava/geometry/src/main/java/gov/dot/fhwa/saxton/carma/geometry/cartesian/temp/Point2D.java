@@ -16,17 +16,16 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
 
-import Point;
 /**
  * A representation of a point in 2-dimensional space.
  */
 public class Point2D extends Point{
 
-  private static final X_DIM = 0;
-  private static final Y_DIM = 1;
+  private final int X_DIM = 0;
+  private final int Y_DIM = 1;
 
-  public Point2D(double x, double y){
-    this.dimensions = new double[2];
+  public Point2D(double x, double y) {
+    super(2, 0); //Ensure there is room for x and y
     this.dimensions[X_DIM] = x;
     this.dimensions[Y_DIM] = y;
   }
@@ -39,11 +38,11 @@ public class Point2D extends Point{
     return this.dimensions[Y_DIM];
   }
 
-  public double setX(double value){
+  public void setX(double value){
     this.dimensions[X_DIM] = value;
   }
 
-  public double setY(double value){
+  public void setY(double value){
     this.dimensions[Y_DIM] = value;
   }
 }

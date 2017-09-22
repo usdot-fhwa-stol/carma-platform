@@ -16,18 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
 
-import Java.lang.Math;
 /**
  * A representation of a point in N-dimensional space.
  */
-public class LineSegment {
+public class LineSegment implements DimensionalObject {
   private Point p1;
   private Point p2;
   private Vector vector;
 
-  public LineSegment(Point p1, Point p2){
+  public LineSegment(Point p1, Point p2) throws IllegalArgumentException{
     if (p1.getNumDimensions() != p2.getNumDimensions()) {
-      throw "Point dimensions do not match"
+      throw new IllegalArgumentException("Point dimensions do not match");
     }
     this.p1 = p1;
     this.p2 = p2;
@@ -54,20 +53,21 @@ public class LineSegment {
     // P is the point (as a vector with the same root as a)
     // distance = (a - p) - ((a-p)*n)n
     
-    if (this.getNumDimensions() != p.getNumDimensions()) {
+    if (this.getNumDimensions() != point.getNumDimensions()) {
       throw new IllegalArgumentException("dimensions do not match");
     }
 
     Vector a = new Vector(this.p1);
     Vector p = new Vector(point);
-    Vector n = this.getUnitVector();
+    Vector n = this.vector.getUnitVector();
 
-    Vector a_p = a.add(p.scalarMultiply(-1));
+    Vector a_p = a.subtract(p);
     Vector a_p_n = n.scalarMultiply(a_p.dot(n));
 
-    return ((a_p).add(a_p_n.scalarMultiply(-1))).magnitude();
+    return ((a_p).subtract(a_p_n)).magnitude();
   }
 
+  //TODO this is wrong just like in the haversine calculation
   public double distanceToPoint(Point point){
     double extendedDistance = distanceToPointExtendedSegment(point);
     double distanceP1 = p1.distanceFrom(point);
@@ -82,9 +82,9 @@ public class LineSegment {
     // Based off of same math as in distanceToPointExtendedSegment
     Vector a = new Vector(this.p1);
     Vector p = new Vector(point);
-    Vector n = this.getUnitVector();
+    Vector n = this.vector.getUnitVector();
 
-    Vector a_p = a.add(p.scalarMultiply(-1));
+    Vector a_p = a.subtract(p);
     Vector a_p_n = n.scalarMultiply(a_p.dot(n));
 
     return (a.add(a_p_n)).toPoint();

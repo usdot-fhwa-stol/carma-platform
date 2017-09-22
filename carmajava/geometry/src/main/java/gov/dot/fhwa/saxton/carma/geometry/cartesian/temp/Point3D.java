@@ -16,21 +16,20 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
 
-import Point;
 /**
  * A representation of a point in 3-dimensional space.
  */
 public class Point3D extends Point{
 
-  private static final X_DIM = 0;
-  private static final Y_DIM = 1;
-  private static final Z_DIM = 2;
+  private final int X_DIM = 0;
+  private final int Y_DIM = 1;
+  private final int Z_DIM = 2;
 
   public Point3D(double x, double y, double z){
-    this.dimensions = new double[3];
+    super(3, 0); // Ensure there is space for x,y,z
     this.dimensions[X_DIM] = x;
     this.dimensions[Y_DIM] = y;
-    this.dimensions[Z_DIM] = y;
+    this.dimensions[Z_DIM] = z;
   }
 
   public double getX(){
@@ -45,15 +44,15 @@ public class Point3D extends Point{
     return this.dimensions[Y_DIM];
   }
 
-  public double setX(double value){
+  public void setX(double value){
     this.dimensions[X_DIM] = value;
   }
 
-  public double setY(double value){
+  public void setY(double value){
     this.dimensions[Y_DIM] = value;
   }
 
-  public double setZ(double value){
+  public void setZ(double value){
     this.dimensions[Z_DIM] = value;
   }
 }

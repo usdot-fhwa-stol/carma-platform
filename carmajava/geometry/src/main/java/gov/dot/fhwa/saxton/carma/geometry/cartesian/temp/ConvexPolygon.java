@@ -16,7 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
 
-import Java.lang.Math;
+import java.util.List;
+
 /**
  * A representation of a point in N-dimensional space.
  */
@@ -27,13 +28,13 @@ import Java.lang.Math;
 // Chan's algorithm can be used for 2/3d and works in O(nlog(h)) time where n=num points, h=num points in final hull
 
 
-public class Polyhedron {
+public class ConvexPolygon extends ConvexHull{
 
-  public Polyhedron(List<Point3D> vertices){
-    this.super(vertices);
-  }
+//  public ConvexPolygon(List<Point2D> vertices){
+//    this.super(vertices);
+//  }
 
-  public int getNumDimensions(){
-    return vertices.at(0).getNumDimensions();
-  }
+//  public int getNumDimensions(){
+//    return vertices.at(0).getNumDimensions();
+//  }
 }
