@@ -174,7 +174,8 @@ void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity 
         msg.header.stamp.fromNSec(vel.time * static_cast<uint64_t>(1000));
     }catch(std::runtime_error e)
     {
-        ROS_WARN("onVelocityChangedHandler");
+        ROS_WARN_STREAM("onVelocityChangedHandler through exception in ros::TimeBase::fromNSec(), time : " << vel.time);
+        return;
     }
 
 
@@ -228,13 +229,12 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     msg.header.frame_id = world_frame;
     msg.header.seq = seq++;
     try {
-
         msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
     }catch(std::runtime_error e)
     {
-        ROS_WARN("onGlobalPoseChangedHandler");
+        ROS_WARN_STREAM("onGlobalPoseChangedHandler threw exception in ros::TimeBase::fromNSec(), time : " << pose.time);
+        return;
     }
-
     msg.altitude = pose.altitude;
     msg.longitude = pose.longitude;
     msg.latitude = pose.latitude;
@@ -270,7 +270,8 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
         msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
     }catch(std::runtime_error e)
     {
-        ROS_WARN_STREAM("onLocalPoseChangedHandler");
+        ROS_WARN_STREAM("onLocalPoseChangedHandler threw exception in ros::TimeBase::fromNSec(), time : " << pose.time);
+        return;
     }
     msg.child_frame_id = base_link_frame;
 
@@ -433,31 +434,32 @@ void PinPointApplication::pre_spin() {
             last = last_heartbeat_time_;
         }
 
-        ros::Duration time;
         try
         {
-            time = ros::Time::now() - last;
+            ros::Duration time = ros::Time::now() - last;
 
+
+            if(time.sec > 1 && time.sec % 5 == 0)
+            {
+                ROS_WARN_STREAM_THROTTLE(5, "No heartbeat received from pinpoint in " << time.sec << " seconds");
+                cav_msgs::DriverStatus status = getStatus();
+                if(status.status != cav_msgs::DriverStatus::FAULT)
+                {
+                    status.status = cav_msgs::DriverStatus::FAULT;
+                    setStatus(status);
+                }
+            }
+
+            if(time.sec > 30)
+            {
+                ROS_WARN_STREAM("Connection to pinpoint timeout");
+                pinpoint_.Close();
+            }
 
         }catch(std::runtime_error e)
         {
-            ROS_WARN("pre_spin");
-        }
-        if(time.sec > 1 && time.sec % 5 == 0)
-        {
-            ROS_WARN_STREAM_THROTTLE(5, "No heartbeat received from pinpoint in " << time.sec << " seconds");
-            cav_msgs::DriverStatus status = getStatus();
-            if(status.status != cav_msgs::DriverStatus::FAULT)
-            {
-                status.status = cav_msgs::DriverStatus::FAULT;
-                setStatus(status);
-            }
-        }
-
-        if(time.sec > 30)
-        {
-            ROS_WARN_STREAM("Connection to pinpoint timeout");
-            pinpoint_.Close();
+            ROS_WARN_STREAM("pre_spin threw exception in ros::TimeBase::fromNSec(), ex: " << e.what());
+            return;
         }
     }
 
