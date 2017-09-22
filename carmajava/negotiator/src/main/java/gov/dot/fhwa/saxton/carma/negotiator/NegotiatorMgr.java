@@ -145,9 +145,9 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             systemReady = false;
             log.info("Negotiator received SystemAlert.NOT_READY");
             break;
-          case SystemAlert.SYSTEM_READY:
+          case SystemAlert.DRIVERS_READY:
             systemReady = true;
-            log.info("Negotiator received SystemAlert.SYSTEM_READY");
+            log.info("Negotiator received SystemAlert.DRIVERS_READY");
             break;
           case SystemAlert.FATAL:
             systemReady = false;

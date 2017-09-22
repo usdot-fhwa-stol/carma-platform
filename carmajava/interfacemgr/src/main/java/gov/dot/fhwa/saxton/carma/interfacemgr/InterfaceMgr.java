@@ -148,7 +148,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 if (worker_.isSystemReady()) {
 
                     //log it and publish the notification
-                    sendSystemAlert(AlertSeverity.SYSTEM_READY, "SYSTEM IS NOW OPERATIONAL");
+                    sendSystemAlert(AlertSeverity.DRIVERS_READY, "SYSTEM IS NOW OPERATIONAL");
                     log_.info("///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
 
                     //stop the loop

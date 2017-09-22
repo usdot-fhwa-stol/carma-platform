@@ -200,7 +200,7 @@ public class MessageConsumer extends SaxtonBaseNode {
             systemReady = false;
             messageTypeFullDescription = "system not ready alert and will not publish";
             break;
-          case cav_msgs.SystemAlert.SYSTEM_READY:
+          case cav_msgs.SystemAlert.DRIVERS_READY:
             systemReady = true;
             messageTypeFullDescription = "system ready alert and is beginning to publish";
             break;

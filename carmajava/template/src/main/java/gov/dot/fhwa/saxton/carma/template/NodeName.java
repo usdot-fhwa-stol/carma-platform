@@ -76,7 +76,7 @@ public class NodeName extends SaxtonBaseNode {
                                         case cav_msgs.SystemAlert.NOT_READY:
                                           messageTypeFullDescription = "I am NOT Ready! ";
                                           break;
-                                        case cav_msgs.SystemAlert.SYSTEM_READY:
+                                        case cav_msgs.SystemAlert.DRIVERS_READY:
                                           messageTypeFullDescription = "I am Ready! ";
                                           break;
                                         default:
@@ -116,7 +116,7 @@ public class NodeName extends SaxtonBaseNode {
                                              //TODO: Replace with column D node name
                                              cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
                                              systemAlertMsg.setDescription("Hello World! " + "I am node_name. " + sequenceNumber + " run_id = " + rosRunID + ".");
-                                             systemAlertMsg.setType(cav_msgs.SystemAlert.SYSTEM_READY);
+                                             systemAlertMsg.setType(cav_msgs.SystemAlert.DRIVERS_READY);
 
                                              systemAlertPublisher.publish(systemAlertMsg);
 
