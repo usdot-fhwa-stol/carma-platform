@@ -23,10 +23,7 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
-import org.ros.node.Node;
-import org.ros.node.NodeListener;
 import org.ros.node.topic.Subscriber;
-import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
@@ -35,7 +32,6 @@ import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
 import sensor_msgs.NavSatFix;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,7 +47,7 @@ import java.util.List;
  * rosservice call /get_available_routes
  * rosservice call /set_active_route "routeID: 'TestRoute'"
  */
-public class RouteManager extends SaxtonBaseNode implements IRouteManager{
+public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   protected ConnectedNode connectedNode;
 
@@ -69,7 +65,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
   protected ServiceServer<SetActiveRouteRequest, SetActiveRouteResponse> setActiveRouteService;
   protected ServiceServer<GetAvailableRoutesRequest, GetAvailableRoutesResponse>
     getAvailableRouteService;
-  protected ServiceServer<StartActiveRouteRequest, StartActiveRouteResponse> startActiveRouteService;
+  protected ServiceServer<StartActiveRouteRequest, StartActiveRouteResponse>
+    startActiveRouteService;
   protected RouteWorker routeWorker;
 
   @Override public GraphName getDefaultNodeName() {
@@ -148,24 +145,26 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
         }
       });
 
-    startActiveRouteService = connectedNode.newServiceServer("start_active_route", SetActiveRoute._TYPE,
-      new ServiceResponseBuilder<StartActiveRouteRequest, StartActiveRouteResponse>() {
-        @Override
-        public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
-          try {
-            response.setErrorStatus(routeWorker.startActiveRoute());
-          } catch (Exception e) {
-            handleException(e);
+    startActiveRouteService = connectedNode
+      .newServiceServer("start_active_route", SetActiveRoute._TYPE,
+        new ServiceResponseBuilder<StartActiveRouteRequest, StartActiveRouteResponse>() {
+          @Override
+          public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
+            try {
+              response.setErrorStatus(routeWorker.startActiveRoute());
+            } catch (Exception e) {
+              handleException(e);
+            }
           }
-        }
-      });
+        });
   }//onStart
 
   @Override protected void handleException(Exception e) {
-    connectedNode.getLog().fatal("Uncaught exception propagated to top of " + connectedNode.getName() + " node message handler", e);
+    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+    connectedNode.getLog().fatal(msg, e);
     SystemAlert alertMsg = systemAlertPub.newMessage();
     alertMsg.setType(SystemAlert.FATAL);
-    alertMsg.setDescription("Uncaught exception in " + connectedNode.getName() + " propagated to SaxtonBaseNode");
+    alertMsg.setDescription(msg);
   }
 
   @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {
@@ -185,7 +184,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
   }
 
   @Override public Time getTime() {
-    if (connectedNode == null){
+    if (connectedNode == null) {
       return new Time();
     }
     return connectedNode.getCurrentTime();

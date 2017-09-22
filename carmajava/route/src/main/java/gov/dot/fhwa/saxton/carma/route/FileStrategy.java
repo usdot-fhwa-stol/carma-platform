@@ -18,6 +18,8 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import org.apache.commons.logging.Log;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
@@ -26,13 +28,15 @@ import java.io.FileReader;
  */
 public class FileStrategy implements IRouteLoadStrategy{
   protected String filePath;
+  protected Log log;
 
   /**
    * Constructor initializes a FileStrategy by providing the file path
    * @param path the file path
    */
-  public FileStrategy(String path){
+  public FileStrategy(String path, Log log){
     this.filePath = path;
+    this.log = log;
   }
 
   @Override public Route load() {
@@ -41,9 +45,11 @@ public class FileStrategy implements IRouteLoadStrategy{
       YamlReader reader = new YamlReader(fr);
       return reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
+      log.warn("FileNotFoundException in FileStrategy route load", e);
     } catch (YamlException e) {
-      e.printStackTrace();
+      log.warn("YamlException in FileStrategy route load", e);
+    } catch (Exception e) {
+      log.warn("Exception in FileStrategy route load", e);
     }
     return null;
   }

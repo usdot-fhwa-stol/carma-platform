@@ -16,15 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.rosutils;
 
-import cav_msgs.SystemAlert;
 import org.ros.node.ConnectedNode;
-import org.ros.node.Node;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.AbstractNodeMain;
 import org.ros.exception.ServiceNotFoundException;
 import org.ros.message.Time;
 import org.ros.message.Duration;
-import org.ros.node.topic.Publisher;
 
 /**
  * Abstract base class for rosjava nodes used in the carma package.
