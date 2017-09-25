@@ -41,7 +41,7 @@ import java.util.List;
  * Command line test:
  * ROSJava does not support rosrun parameter setting so a rosrun is a multi step process
  * rosparam set /mock_driver/simulated_driver 'truck_controller'
- * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
+ * rosparam set /mock_driver/data_file_path '/home/username/cartesian.csv'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
 public class MockTruckControllerDriver extends AbstractMockDriver {

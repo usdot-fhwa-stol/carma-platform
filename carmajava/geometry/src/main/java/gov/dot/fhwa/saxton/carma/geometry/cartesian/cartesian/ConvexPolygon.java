@@ -14,17 +14,25 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
 
 /**
  * A representation of a point in N-dimensional space.
  */
-
+// A region does not have a point ordering so the description of point order is left up to the user
+ 
 // Can use the Quick hull algorithm to calculate the convex hull in n-dimensions
-// Quickhull has average complexity is considered to be Θ(n * log(n)), whereas in the worst case it takes O(n^2)
+// Quickhull has average complexity is considered to be Θ(n * log(n)), whereas in the worst case it takes O(n2)
 // Chan's algorithm can be used for 2/3d and works in O(nlog(h)) time where n=num points, h=num points in final hull
 
 
-public class ConvexPolyhedron extends ConvexHull {
+public class ConvexPolygon extends ConvexHull{
 
+//  public ConvexPolygon(List<Point2D> vertices){
+//    this.super(vertices);
+//  }
+
+//  public int getNumDimensions(){
+//    return vertices.at(0).getNumDimensions();
+//  }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
 
 /**
  * A representation of a point in N-dimensional space.
@@ -120,24 +120,6 @@ public class Vector implements DimensionalObject {
 
   public Point toPoint(){
     return new Point(headPoint_);
-  }
-
-  // Should this not be included given that is it specific to 3D vectors?
-  // Should there be a Vec3D instead?
-  public Vector cross(Vector v2) throws IllegalArgumentException {
-    if (this.getNumDimensions() != 3) {
-      throw new IllegalArgumentException("Cross product can only be calculated for 3d space");
-    }
-
-    if (this.getNumDimensions() != v2.getNumDimensions()) {
-      throw new IllegalArgumentException("Vector dimensions do not match");
-    }
-
-    double x = this.getDim(1) * v2.getDim(2) - this.getDim(2) * v2.getDim(1);
-    double y = this.getDim(2) * v2.getDim(0) - this.getDim(0) * v2.getDim(2);
-    double z = this.getDim(0) * v2.getDim(1) - this.getDim(1) * v2.getDim(0);
-
-    return new Vector(new Point3D(x,y,z));
   }
 
   public void setDim(int dimension, double value) throws IllegalArgumentException {

@@ -14,7 +14,9 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
+
+import org.ros.rosjava_geometry.Vector3;
 
 /**
  * A representation of a point in 3-dimensional space.
@@ -32,6 +34,10 @@ public class Point3D extends Point{
     this.dimensions[Z_DIM] = z;
   }
 
+  public Point3D(Point3D p) {
+    super(p);
+  }
+
   public double getX(){
     return this.dimensions[X_DIM];
   }
@@ -41,7 +47,7 @@ public class Point3D extends Point{
   }
 
   public double getZ(){
-    return this.dimensions[Y_DIM];
+    return this.dimensions[Z_DIM];
   }
 
   public void setX(double value){
@@ -54,5 +60,9 @@ public class Point3D extends Point{
 
   public void setZ(double value){
     this.dimensions[Z_DIM] = value;
+  }
+
+  public Vector3 toVector3() {
+    return new Vector3(getX(), getY(), getZ());
   }
 }

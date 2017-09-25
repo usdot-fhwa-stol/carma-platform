@@ -1,6 +1,5 @@
 package gov.dot.fhwa.saxton.carma.geometry;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.GreatCircleSegment;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
@@ -9,9 +8,6 @@ import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.ros.rosjava_geometry.Quaternion;
-import org.ros.rosjava_geometry.Transform;
-import org.ros.rosjava_geometry.Vector3;
 
 import static org.junit.Assert.assertTrue;
 

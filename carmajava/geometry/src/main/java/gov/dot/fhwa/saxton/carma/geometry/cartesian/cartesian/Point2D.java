@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.temp;// Change
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
 
 /**
  * A representation of a point in 2-dimensional space.
@@ -28,6 +28,10 @@ public class Point2D extends Point{
     super(2, 0); //Ensure there is room for x and y
     this.dimensions[X_DIM] = x;
     this.dimensions[Y_DIM] = y;
+  }
+
+  public Point2D(Point2D p) {
+    super(p);
   }
 
   public double getX(){
