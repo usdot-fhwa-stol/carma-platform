@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
 import org.ros.rosjava_geometry.Vector3;
 

@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
 /**
  * Created by mcconnelms on 9/22/17.

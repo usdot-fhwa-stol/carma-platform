@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 
 /**
  * A representation of a point in N-dimensional space.
@@ -27,6 +27,7 @@ public class Vector implements DimensionalObject {
       throw new IllegalArgumentException("Point dimensions do not match");
     }
 
+    headPoint_ = new Point(head.getNumDimensions(), 0);
     for(int i = 0; i < head.getNumDimensions(); i++){
       headPoint_.setDim(i, head.getDim(i) - tail.getDim(i));
     }
@@ -51,36 +52,19 @@ public class Vector implements DimensionalObject {
   }
 
 
-  public Vector add(Vector v2) throws IllegalArgumentException {
-    if (this.getNumDimensions() != v2.getNumDimensions()) {
-      throw new IllegalArgumentException("Vector dimensions do not match");
-    }
+  public Vector add(Vector v2) {
+    int size = (this.getNumDimensions() < v2.getNumDimensions()) ? this.getNumDimensions() : v2.getNumDimensions();
     Vector newVec = new Vector(this);
-    for (int i = 0; i < this.getNumDimensions(); i++){
+    for (int i = 0; i < size; i++){
       newVec.setDim(i, v2.getDim(i) + newVec.getDim(i));
     }
     return newVec;
   }
 
-  public Vector add(double val){
-    Vector newVec = new Vector(this);
-    for (int i = 0; i < this.getNumDimensions(); i++){
-      newVec.setDim(i, val + newVec.getDim(i));
-    }
-    return newVec;
-  }
-
-  public Vector subtract(double val) {
-    Vector newVec = new Vector(this);
-    for (int i = 0; i < this.getNumDimensions(); i++){
-      newVec.setDim(i, newVec.getDim(i) - val);
-    }
-    return newVec;
-  }
-
   public Vector subtract(Vector v2) {
+    int size = (this.getNumDimensions() < v2.getNumDimensions()) ? this.getNumDimensions() : v2.getNumDimensions();
     Vector newVec = new Vector(this);
-    for (int i = 0; i < this.getNumDimensions(); i++){
+    for (int i = 0; i < size; i++){
       newVec.setDim(i, newVec.getDim(i) - v2.getDim(i));
     }
     return newVec;
@@ -94,12 +78,10 @@ public class Vector implements DimensionalObject {
     return newVec;
   }
 
-  public Vector scalarMultiply(Vector v2) throws IllegalArgumentException {
-    if (this.getNumDimensions() != v2.getNumDimensions()) {
-      throw new IllegalArgumentException("Vector dimensions do not match");
-    }
+  public Vector elementWiseMultiply(Vector v2) {
+    int size = (this.getNumDimensions() < v2.getNumDimensions()) ? this.getNumDimensions() : v2.getNumDimensions();
     Vector newVec = new Vector(this);
-    for (int i = 0; i < this.getNumDimensions(); i++){
+    for (int i = 0; i < size; i++){
       newVec.setDim(i, v2.getDim(i) * newVec.getDim(i));
     }
     return newVec;
@@ -122,7 +104,7 @@ public class Vector implements DimensionalObject {
     return new Point(headPoint_);
   }
 
-  public void setDim(int dimension, double value) throws IllegalArgumentException {
+  public void setDim(int dimension, double value) {
     headPoint_.setDim(dimension, value);
   }
 

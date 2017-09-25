@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 
 import java.util.Arrays;
 
@@ -25,9 +25,9 @@ public class Point implements DimensionalObject{
   protected double[] dimensions;
 
   public Point(double[] dimensions){
-    dimensions = dimensions;
+    this.dimensions = dimensions;
   }
-  
+
   public Point(int size, double value){
     dimensions = new double[size];
     Arrays.fill(dimensions, value);
@@ -48,10 +48,7 @@ public class Point implements DimensionalObject{
     return dimensions[dimension];
   }
 
-  public void setDim(int dimension, double value) throws IllegalArgumentException {
-    if (dimension > dimensions.length - 1 || dimension < 0) {
-      throw new IllegalArgumentException("Attempted to set an invalid dimension: " + dimension);
-    }
+  public void setDim(int dimension, double value) {
     dimensions[dimension] = value;
   }
 
@@ -74,14 +71,6 @@ public class Point implements DimensionalObject{
     }
 
     return true;
-  }
-
-  // We vector should have a getDim and getNumDimensions method
-  public void translate(Vector vec){
-    int size = (this.getNumDimensions() < vec.getNumDimensions()) ? this.getNumDimensions() : vec.getNumDimensions();
-    for (int i = 0; i < size; i++){
-      dimensions[i] += vec.getDim(i);
-    }
   }
 
   @Override public String toString() {

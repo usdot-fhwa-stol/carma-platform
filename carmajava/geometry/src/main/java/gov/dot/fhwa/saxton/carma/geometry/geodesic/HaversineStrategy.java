@@ -17,8 +17,7 @@
 package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian.Vector;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian.Vector3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
 import org.ros.rosjava_geometry.Transform;
 
 /**

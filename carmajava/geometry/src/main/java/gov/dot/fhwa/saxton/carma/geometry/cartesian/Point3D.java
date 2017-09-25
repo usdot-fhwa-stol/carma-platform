@@ -14,9 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
-
-import org.ros.rosjava_geometry.Vector3;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 
 /**
  * A representation of a point in 3-dimensional space.

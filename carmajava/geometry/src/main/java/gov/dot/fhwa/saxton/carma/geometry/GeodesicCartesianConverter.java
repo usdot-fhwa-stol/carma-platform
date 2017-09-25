@@ -16,8 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.geometry;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian.Point3D;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian.Vector3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.ros.rosjava_geometry.Transform;
 

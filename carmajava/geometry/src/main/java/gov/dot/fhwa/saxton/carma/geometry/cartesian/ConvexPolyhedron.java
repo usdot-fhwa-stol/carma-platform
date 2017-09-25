@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 
 /**
  * A representation of a point in N-dimensional space.
