@@ -1,5 +1,7 @@
 package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;
 
+import org.ros.rosjava_geometry.Vector3;
+
 /**
  * Created by mcconnelms on 9/25/17.
  */
@@ -17,17 +19,32 @@ public class Vector3D extends Vector {
     super(vec);
   }
 
+  public Vector3D(Vector3 vec) {
+    super(new Vector3D(new Point3D(vec.getX(), vec.getY(), vec.getZ())));
+  }
+
   // cross product is only defined for 3D vectors
-  public Vector3D cross(Vector3D v2) throws IllegalArgumentException {
-    double x = this.getDim(1) * v2.getDim(2) - this.getDim(2) * v2.getDim(1);
-    double y = this.getDim(2) * v2.getDim(0) - this.getDim(0) * v2.getDim(2);
-    double z = this.getDim(0) * v2.getDim(1) - this.getDim(1) * v2.getDim(0);
+  public Vector3D cross(Vector3D v2) {
+    double x = this.getY() * v2.getZ() - this.getZ() * v2.getY();
+    double y = this.getZ() * v2.getX() - this.getX() * v2.getZ();
+    double z = this.getX() * v2.getY() - this.getY() * v2.getX();
 
     return new Vector3D(new Point3D(x,y,z));
   }
 
-  public Point3D toPoint3D() {
-    Point p = this.toPoint();
-    return new Point3D(p.getDim(0), p.getDim(1), p.getDim(2));
+  public double getX() {
+    return headPoint_.getDim(Point3D.getXIndex());
+  }
+
+  public double getY() {
+    return headPoint_.getDim(Point3D.getYIndex());
+  }
+
+  public double getZ() {
+    return headPoint_.getDim(Point3D.getZIndex());
+  }
+
+  public Vector3 toVector3() {
+    return new Vector3(getX(), getY(), getZ());
   }
 }

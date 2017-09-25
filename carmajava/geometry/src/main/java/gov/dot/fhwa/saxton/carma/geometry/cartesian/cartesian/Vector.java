@@ -20,7 +20,7 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian;// Change
  * A representation of a point in N-dimensional space.
  */
 public class Vector implements DimensionalObject {
-  private Point headPoint_;
+  protected Point headPoint_;
 
   public Vector(Point head, Point tail) throws IllegalArgumentException {
     if (head.getNumDimensions() != tail.getNumDimensions()) {

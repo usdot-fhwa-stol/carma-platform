@@ -23,9 +23,9 @@ import org.ros.rosjava_geometry.Vector3;
  */
 public class Point3D extends Point{
 
-  private final int X_DIM = 0;
-  private final int Y_DIM = 1;
-  private final int Z_DIM = 2;
+  private static final int X_DIM = 0;
+  private static final int Y_DIM = 1;
+  private static final int Z_DIM = 2;
 
   public Point3D(double x, double y, double z){
     super(3, 0); // Ensure there is space for x,y,z
@@ -62,7 +62,15 @@ public class Point3D extends Point{
     this.dimensions[Z_DIM] = value;
   }
 
-  public Vector3 toVector3() {
-    return new Vector3(getX(), getY(), getZ());
+  public static int getXIndex() {
+    return X_DIM;
+  }
+
+  public static int getYIndex() {
+    return Y_DIM;
+  }
+
+  public static int getZIndex() {
+    return Z_DIM;
   }
 }

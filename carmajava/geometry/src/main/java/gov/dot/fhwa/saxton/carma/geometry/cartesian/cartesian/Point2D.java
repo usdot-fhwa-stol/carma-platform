@@ -49,4 +49,12 @@ public class Point2D extends Point{
   public void setY(double value){
     this.dimensions[Y_DIM] = value;
   }
+
+  public int getXIndex() {
+    return X_DIM;
+  }
+
+  public int getYIndex() {
+    return Y_DIM;
+  }
 }

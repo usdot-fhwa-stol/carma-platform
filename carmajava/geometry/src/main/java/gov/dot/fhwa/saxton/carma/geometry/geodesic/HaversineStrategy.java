@@ -17,8 +17,9 @@
 package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian.Vector;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.cartesian.Vector3D;
 import org.ros.rosjava_geometry.Transform;
-import org.ros.rosjava_geometry.Vector3;
 
 /**
  * Implements a distance strategy which uses great circle distances and the haversine formula.
@@ -46,39 +47,39 @@ public class HaversineStrategy implements IDistanceStrategy{
   @Override public double crossTrackDistance(Location loc, GreatCircleSegment seg) {
     // Get vectors from earth center to path and external location
     GeodesicCartesianConverter gCC = new GeodesicCartesianConverter();
-    Vector3 vec2StartPoint = gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()).toVector3();
-    Vector3 vec2EndPoint = gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()).toVector3();
-    Vector3 vec2ExternalPoint = gCC.geodesic2Cartesian(loc, Transform.identity()).toVector3();
+    Vector vec2StartPoint = new Vector(gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()));
+    Vector vec2EndPoint = new Vector(gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()));
+    Vector vec2ExternalPoint = new Vector(gCC.geodesic2Cartesian(loc, Transform.identity()));
 
     // Get vector from start to external point
-    Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
+    Vector startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
 
     // Get vector from start to end point
-    Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+    Vector startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
 
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
 
-    return startToExternalVec.getMagnitude() * Math.sin(interiorAngle);
+    return startToExternalVec.magnitude() * Math.sin(interiorAngle);
   }
 
   @Override public double downtrackDistance(Location loc, GreatCircleSegment seg) {
     // Get vectors from earth center to path and external location
     GeodesicCartesianConverter gCC = new GeodesicCartesianConverter();
-    Vector3 vec2StartPoint = gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()).toVector3();
-    Vector3 vec2EndPoint = gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()).toVector3();
-    Vector3 vec2ExternalPoint = gCC.geodesic2Cartesian(loc, Transform.identity()).toVector3();
+    Vector vec2StartPoint = new Vector(gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()));
+    Vector vec2EndPoint = new Vector(gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()));
+    Vector vec2ExternalPoint = new Vector(gCC.geodesic2Cartesian(loc, Transform.identity()));
 
     // Get vector from start to external point
-    Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
+    Vector startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
 
     // Get vector from start to end point
-    Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+    Vector startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
 
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
 
-    return startToExternalVec.getMagnitude() * Math.cos(interiorAngle);
+    return startToExternalVec.magnitude() * Math.cos(interiorAngle);
   }
 
   /**
@@ -87,12 +88,12 @@ public class HaversineStrategy implements IDistanceStrategy{
    * @param vec2 the second vector
    * @return The angle in rad between the two vectors
    */
-  protected double getAngleBetweenVectors(Vector3 vec1, Vector3 vec2) {
-    double vec1Mag = vec1.getMagnitude();
-    double vec2Mag = vec2.getMagnitude();
+  protected double getAngleBetweenVectors(Vector vec1, Vector vec2) {
+    double vec1Mag = vec1.magnitude();
+    double vec2Mag = vec2.magnitude();
     if (vec1Mag == 0 || vec2Mag == 0) {
       return 0;
     }
-    return  Math.acos(vec1.dotProduct(vec2) / (vec1.getMagnitude() * vec2.getMagnitude()));
+    return  Math.acos(vec1.dot(vec2) / (vec1.magnitude() * vec2.magnitude()));
   }
 }

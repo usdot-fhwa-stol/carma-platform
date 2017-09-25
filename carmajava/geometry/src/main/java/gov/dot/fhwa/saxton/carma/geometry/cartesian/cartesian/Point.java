@@ -27,6 +27,7 @@ public class Point implements DimensionalObject{
   public Point(double[] dimensions){
     dimensions = dimensions;
   }
+  
   public Point(int size, double value){
     dimensions = new double[size];
     Arrays.fill(dimensions, value);

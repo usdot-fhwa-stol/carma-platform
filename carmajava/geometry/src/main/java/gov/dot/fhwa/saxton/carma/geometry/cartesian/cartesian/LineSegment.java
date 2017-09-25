@@ -41,10 +41,10 @@ public class LineSegment implements DimensionalObject {
     return p1.getNumDimensions();
   }
 
-  public double distanceToPointExtendedSegment(Point point) throws IllegalArgumentException {
+  public double crosstrackDistance(Point point) throws IllegalArgumentException {
     // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
     // Equation giving shortest distance to a line in n-dimensional space
-    // x = a +tn defines a line 
+    // x = a + tn defines a line
     // where a is a point on the line. (As a vector)
     // n is the unit vector of the line.
     // t is a scalar of the unit vector.
@@ -65,16 +65,6 @@ public class LineSegment implements DimensionalObject {
     Vector a_p_n = n.scalarMultiply(a_p.dot(n));
 
     return ((a_p).subtract(a_p_n)).magnitude();
-  }
-
-  //TODO this is wrong just like in the haversine calculation
-  public double distanceToPoint(Point point){
-    double extendedDistance = distanceToPointExtendedSegment(point);
-    double distanceP1 = p1.distanceFrom(point);
-    double distanceP2 = p2.distanceFrom(point);
-
-    return Math.min(extendedDistance, Math.min(distanceP1, distanceP2));
-    
   }
 
   //Was refered to as translateTo in old code
