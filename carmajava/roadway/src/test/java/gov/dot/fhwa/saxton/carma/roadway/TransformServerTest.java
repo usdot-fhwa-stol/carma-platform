@@ -40,7 +40,6 @@ public class TransformServerTest extends RosTest {
    * The accuracy of the service is then tested
    */
   @Test public void testServiceAvailability() throws Exception {
-    final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
     final CountDownLatch countDownLatch = new CountDownLatch(2);
 
