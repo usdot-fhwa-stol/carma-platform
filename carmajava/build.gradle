@@ -44,9 +44,9 @@ allprojects {
             url uri("../../../../devel/share/maven")
         }
 // Uncomment for use with intellij debugging (not needed for regular builds)
-        maven {
-            url uri("/home/mcconnelms/rosjava/devel/share/maven") // Modify to match local path
-        }
+//        maven {
+//            url uri("/home/mcconnelms/rosjava/devel/share/maven") // Modify to match local path
+//        }
     }
 }
 
