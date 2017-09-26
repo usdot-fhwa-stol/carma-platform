@@ -46,7 +46,7 @@ public class ServerClient extends SaxtonBaseNode {
   }
 
   @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  public void onSaxtonStart(final ConnectedNode connectedNode) {
 
     // Services (SetBool Example)
 
@@ -108,5 +108,9 @@ public class ServerClient extends SaxtonBaseNode {
         Thread.sleep(30000);
       }
     });
+  }
+
+  @Override protected void handleException(Exception e) {
+
   }
 }

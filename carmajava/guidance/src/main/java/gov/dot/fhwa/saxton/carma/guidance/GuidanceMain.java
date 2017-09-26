@@ -99,7 +99,7 @@ public class GuidanceMain extends SaxtonBaseNode {
             serviceChannelFactory);
     }
 
-    @Override public void onStart(final ConnectedNode connectedNode) {
+    @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
         final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
 
         // Configure the comms classes
@@ -168,4 +168,8 @@ public class GuidanceMain extends SaxtonBaseNode {
                                              }//CancellableLoop
         );//executeCancellableLoop
     }//onStart
+
+    @Override protected void handleException(Exception e) {
+
+    }
 }//AbstractNodeMain

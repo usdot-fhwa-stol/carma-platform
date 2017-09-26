@@ -71,7 +71,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
     return GraphName.of("environment_manager");
   }
 
-  @Override public void onStart(final ConnectedNode connectedNode) {
+  @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
 
     final Log log = connectedNode.getLog();
     nodeHandle = connectedNode;
@@ -175,6 +175,10 @@ public class EnvironmentManager extends SaxtonBaseNode {
         Thread.sleep(1000);
       }
     });
+  }
+
+  @Override protected void handleException(Exception e) {
+
   }
 
   /**

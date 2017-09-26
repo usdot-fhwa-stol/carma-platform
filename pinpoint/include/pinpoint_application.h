@@ -66,7 +66,9 @@ public:
      */
     PinPointApplication(int argc, char** argv);
 
-    ~PinPointApplication() { if(connect_thread_) connect_thread_->join();}
+    ~PinPointApplication() {
+        if(connect_thread_) connect_thread_->join();
+    }
 
 private:
 
@@ -119,7 +121,9 @@ private:
     void dynReconfigCB(pinpoint::pinpointConfig& cfg, uint32_t level);
     bool connecting_ = false;
     std::shared_ptr<std::thread> connect_thread_;
+
     ros::Time last_heartbeat_time_;
+    std::mutex heartbeat_mutex_;
 
 
 

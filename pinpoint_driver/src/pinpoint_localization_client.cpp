@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../include/pinpoint_driver/pinpoint_localization_client.h"
+#include <pinpoint_driver/pinpoint_localization_client.h>
 #include <iomanip>
 #include <pinpoint_driver/unpack_macros.h>
 
@@ -48,78 +48,77 @@ void torc::PinPointLocalizationClient::processMessage(torc::MessageType msg_type
                                                       std::vector<uint8_t> &msg)
 {
     switch (msg_type) {
-        case MessageType::ReturnValue:
-        {
-            switch(msg_id)
-            {
+        case MessageType::ReturnValue: {
+            switch (msg_id) {
 
                 case 2: //get status return
                 {
                     uint16_t number = UNPACK_UINT16(&msg[0]);
-                    for(uint16_t i = 0; i < number; i++)
-                    {
-                        static struct PinPointLocalizationClient::PinPointStatusCode status;
+                    for (uint16_t i = 0; i < number; i++) {
+                        struct PinPointLocalizationClient::PinPointStatusCode status;
 
-                        status.condition   = static_cast<StatusCondition>(UNPACK_UINT8(&msg[2+i*3]));
-                        status.code = static_cast<StatusCode>(UNPACK_UINT16(&msg[3+i*3]));
+                        status.condition = static_cast<StatusCondition>(UNPACK_UINT8(&msg[2 + i * 3]));
+                        status.code = static_cast<StatusCode>(UNPACK_UINT16(&msg[3 + i * 3]));
                         onStatusConditionChanged(status);
                     }
                     break;
                 }
-                default: break;
+                default:
+                    break;
             }
             break;
         }
         case MessageType::SignalEmitted:
+        {
             switch (msg_id) {
                 case 0: //status messages
                 {
-                    static struct PinPointLocalizationClient::PinPointStatusCode status;
+                    struct PinPointLocalizationClient::PinPointStatusCode status;
 
-                    status.condition   = static_cast<StatusCondition>(UNPACK_UINT8(&msg[0]));
+                    status.condition = static_cast<StatusCondition>(UNPACK_UINT8(&msg[0]));
                     status.code = static_cast<StatusCode>(UNPACK_UINT16(&msg[1]));
 
                     onStatusConditionChanged(status);
-
+                    break;
                 }
                 case 6: //global pose signal emit
                 {
-                    static struct PinPointGlobalPose pose;
-                    pose.time      = UNPACK_UINT64(&msg[0]);
-                    pose.latitude  = ( 180.0f / two_to_thirty_one) * (float)UNPACK_INT32(&msg[8] );
-                    pose.longitude = ( 180.0f / two_to_thirty_one) * (float)UNPACK_INT32(&msg[12]);
-                    pose.altitude  = (float)UNPACK_INT32( &msg[16])/(float)1000.0;
-                    pose.roll      = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[20]);
-                    pose.pitch     = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[22]);
-                    pose.yaw       = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[24]);
+                    struct PinPointGlobalPose pose;
+                    pose.time = UNPACK_UINT64(&msg[0]);
+                    pose.latitude = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[8]);
+                    pose.longitude = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[12]);
+                    pose.altitude = (float) UNPACK_INT32(&msg[16]) / (float) 1000.0;
+                    pose.roll = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[20]);
+                    pose.pitch = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[22]);
+                    pose.yaw = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[24]);
 
                     onGlobalPoseChanged(pose);
                     break;
                 }
                 case 7://local pose emit
                 {
-                    static struct PinPointLocalPose pose;
-                    pose.time      = UNPACK_UINT64(&msg[0]);
-                    pose.north     = (float)UNPACK_INT32( &msg[8])/(float)1000.0;
-                    pose.east      = (float)UNPACK_INT32( &msg[12])/(float)1000.0;
-                    pose.down      = (float)UNPACK_INT32( &msg[16])/(float)1000.0;
-                    pose.roll      = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[20]);
-                    pose.pitch     = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[22]);
-                    pose.yaw       = ( 180.0f / two_to_fifteenth)  * (float)UNPACK_INT16(&msg[24]);
+                    struct PinPointLocalPose pose;
+                    pose.time = UNPACK_UINT64(&msg[0]);
+                    pose.north = (float) UNPACK_INT32(&msg[8]) / (float) 1000.0;
+                    pose.east = (float) UNPACK_INT32(&msg[12]) / (float) 1000.0;
+                    pose.down = (float) UNPACK_INT32(&msg[16]) / (float) 1000.0;
+                    pose.roll = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[20]);
+                    pose.pitch = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[22]);
+                    pose.yaw = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[24]);
 
                     onLocalPoseChanged(pose);
                     break;
                 }
                 case 8: //velocity emit
                 {
-                    static struct PinPointVelocity velocity;
-                    velocity.time        = UNPACK_UINT64(&msg[0]);
-                    velocity.forward_vel = (float)UNPACK_INT24( &msg[8])/(float)1000.0;
-                    velocity.right_vel  = (float)UNPACK_INT24( &msg[11])/(float)1000.0;
-                    velocity.down_vel   = (float)UNPACK_INT24( &msg[14])/(float)1000.0;
-                    velocity.roll_rate  = (float)UNPACK_INT24( &msg[17])/(float)1000.0;
-                    velocity.pitch_rate = (float)UNPACK_INT24( &msg[20])/(float)1000.0;
-                    velocity.yaw_rate   = (float)UNPACK_INT24( &msg[23])/(float)1000.0;
+                    struct PinPointVelocity velocity;
+                    velocity.time = UNPACK_UINT64(&msg[0]);
+                    velocity.forward_vel = (float) UNPACK_INT24(&msg[8]) / (float) 1000.0;
+                    velocity.right_vel = (float) UNPACK_INT24(&msg[11]) / (float) 1000.0;
+                    velocity.down_vel = (float) UNPACK_INT24(&msg[14]) / (float) 1000.0;
+                    velocity.roll_rate = (float) UNPACK_INT24(&msg[17]) / (float) 1000.0;
+                    velocity.pitch_rate = (float) UNPACK_INT24(&msg[20]) / (float) 1000.0;
+                    velocity.yaw_rate = (float) UNPACK_INT24(&msg[23]) / (float) 1000.0;
 
 
                     onVelocityChanged(velocity);
@@ -127,7 +126,7 @@ void torc::PinPointLocalizationClient::processMessage(torc::MessageType msg_type
                 }
                 case 9: //quaternion_covariance emit
                 {
-                    static struct PinPointQuaternionCovariance quat;
+                    struct PinPointQuaternionCovariance quat;
                     quat.time = UNPACK_UINT64(&msg[0]);
 
                     quat.quaternion[0] = UNPACK_FLOAT(&msg[8]);
@@ -135,31 +134,30 @@ void torc::PinPointLocalizationClient::processMessage(torc::MessageType msg_type
                     quat.quaternion[2] = UNPACK_FLOAT(&msg[16]);
                     quat.quaternion[3] = UNPACK_FLOAT(&msg[20]);
 
-                    for(int i = 0; i < 3; i++)
-                    {
-                        for(int j = 0; j < 3; j++)
-                        {
-                            int idx = i*3 + j;
-                            quat.covariance[i][j] = UNPACK_FLOAT(&msg[24+idx]);
+                    for (int i = 0; i < 3; i++) {
+                        for (int j = 0; j < 3; j++) {
+                            int idx = i * 3 + j;
+                            quat.covariance[i][j] = UNPACK_FLOAT(&msg[24 + idx]);
                         }
                     }
 
                     onQuaternionCovarianceChanged(quat);
+                    break;
                 }
                 case 10: //filter accuracy emmit
                 {
-                    static struct PinPointFilterAccuracy acc;
+                    struct PinPointFilterAccuracy acc;
                     acc.time = UNPACK_UINT64(&msg[0]);
                     acc.position.north = UNPACK_FLOAT(&msg[8]);
-                    acc.position.east  = UNPACK_FLOAT(&msg[12]);
+                    acc.position.east = UNPACK_FLOAT(&msg[12]);
                     acc.position.down = UNPACK_FLOAT(&msg[16]);
 
                     acc.velocity.north = UNPACK_FLOAT(&msg[20]);
-                    acc.velocity.east  = UNPACK_FLOAT(&msg[24]);
+                    acc.velocity.east = UNPACK_FLOAT(&msg[24]);
                     acc.velocity.down = UNPACK_FLOAT(&msg[28]);
 
                     acc.rotation.north = UNPACK_FLOAT(&msg[32]);
-                    acc.rotation.east  = UNPACK_FLOAT(&msg[36]);
+                    acc.rotation.east = UNPACK_FLOAT(&msg[36]);
                     acc.rotation.down = UNPACK_FLOAT(&msg[40]);
 
                     onFilterAccuracyChanged(acc);
@@ -170,6 +168,7 @@ void torc::PinPointLocalizationClient::processMessage(torc::MessageType msg_type
                     break;
             }
             break;
+        }
         default:
             break;
     }

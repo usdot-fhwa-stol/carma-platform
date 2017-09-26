@@ -63,7 +63,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
 
     @Override
-    public void onStart(final ConnectedNode connectedNode) {
+    public void onSaxtonStart(final ConnectedNode connectedNode) {
         connectedNode_ = connectedNode;
         log_ = connectedNode.getLog();
         log_.info("InterfaceMgr starting up.");
@@ -186,6 +186,9 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
     }//onStart
 
+    @Override protected void handleException(Exception e) {
+
+    }
 
     ///// service requestors /////
 

@@ -128,7 +128,13 @@ void PinPointApplication::initialize() {
                 onStatusConditionChangedHandler(code);
             });
 
-    pinpoint_.onHeartbeat.connect([this](){ last_heartbeat_time_ = ros::Time::now(); });
+
+    //Initialize time
+    last_heartbeat_time_ = ros::Time::now();
+    pinpoint_.onHeartbeat.connect([this](){
+        std::lock_guard<std::mutex> lock(heartbeat_mutex_);
+        last_heartbeat_time_ = ros::Time::now();
+    });
 
     //Heading
     heading_pub_ = position_api_nh_->advertise<cav_msgs::HeadingStamped>("heading", 1);
@@ -145,7 +151,6 @@ void PinPointApplication::onConnectHandler() {
     cav_msgs::DriverStatus status = getStatus();
     status.status = cav_msgs::DriverStatus::OPERATIONAL;
     setStatus(status);
-    last_heartbeat_time_ = ros::Time::now();
 }
 
 void PinPointApplication::onDisconnectHandler() {
@@ -165,7 +170,14 @@ void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity 
 
     msg.header.frame_id = base_link_frame;
     msg.header.seq = seq++;
-    msg.header.stamp.fromNSec(vel.time * 1000UL);
+    try {
+        msg.header.stamp.fromNSec(vel.time * static_cast<uint64_t>(1000));
+    }catch(std::runtime_error e)
+    {
+        ROS_WARN_STREAM("onVelocityChangedHandler through exception in ros::TimeBase::fromNSec(), time : " << vel.time);
+        return;
+    }
+
 
     geometry_msgs::TransformStamped tf;
 
@@ -216,8 +228,13 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     sensor_msgs::NavSatFix msg;
     msg.header.frame_id = world_frame;
     msg.header.seq = seq++;
-    msg.header.stamp.fromNSec(pose.time * 1000UL);
-
+    try {
+        msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
+    }catch(std::runtime_error e)
+    {
+        ROS_WARN_STREAM("onGlobalPoseChangedHandler threw exception in ros::TimeBase::fromNSec(), time : " << pose.time);
+        return;
+    }
     msg.altitude = pose.altitude;
     msg.longitude = pose.longitude;
     msg.latitude = pose.latitude;
@@ -232,21 +249,13 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     msg.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
     global_pose_pub_.publish(msg);
 
-    geometry_msgs::TransformStamped tf;
-
-    try {
-        tf = tf_buffer_->lookupTransform(base_link_frame,sensor_frame,msg.header.stamp);
-    }catch(tf2::TransformException e)
-    {
-        ROS_WARN_STREAM_THROTTLE(5,"Exception looking up transform: " << e.what());
-        return;
-    }
-
     cav_msgs::HeadingStamped heading;
     heading.header = msg.header;
     heading.header.frame_id = sensor_frame;
 
-    heading.heading = pose.yaw < 180 ? 360 + pose.yaw : pose.yaw;
+
+    //Convert yaw [-180,180] to  [0,360] degrees east of north
+    heading.heading = pose.yaw < 0 ? 360 + pose.yaw : pose.yaw;
 
     heading_pub_.publish(heading);
 
@@ -259,7 +268,13 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
     nav_msgs::Odometry msg;
     msg.header.frame_id = odom_frame;
     msg.header.seq = seq++;
-    msg.header.stamp.fromNSec(pose.time * 1000UL);
+    try {
+        msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
+    }catch(std::runtime_error e)
+    {
+        ROS_WARN_STREAM("onLocalPoseChangedHandler threw exception in ros::TimeBase::fromNSec(), time : " << pose.time);
+        return;
+    }
     msg.child_frame_id = base_link_frame;
 
     try {
@@ -375,7 +390,8 @@ void PinPointApplication::onStatusConditionChangedHandler(
     if (error_set_.size() > 0) {
         status.status = cav_msgs::DriverStatus::FAULT;
         setStatus(status);
-    } else if (warning_set_.size() > 0) {
+    } else if (warning_set_.size() > 0)
+    {
         status.status = cav_msgs::DriverStatus::DEGRADED;
         setStatus(status);
     } else
@@ -413,22 +429,39 @@ void PinPointApplication::pre_spin() {
     }
     else if(pinpoint_.connected()) //If we are connected lets make sure we are getting updates
     {
-        auto time = ros::Time::now() - last_heartbeat_time_;
-        if(time.sec > 1 && time.sec % 5 == 0)
+        ros::Time last;
+
         {
-            ROS_WARN_STREAM_THROTTLE(5, "No heartbeat received from pinpoint in " << time.sec << " seconds");
-            cav_msgs::DriverStatus status = getStatus();
-            if(status.status != cav_msgs::DriverStatus::FAULT)
-            {
-                status.status = cav_msgs::DriverStatus::FAULT;
-                setStatus(status);
-            }
+            std::lock_guard<std::mutex> lock(heartbeat_mutex_);
+            last = last_heartbeat_time_;
         }
 
-        if(time.sec > 30)
+        try
         {
-            ROS_WARN_STREAM("Connection to pinpoint timeout");
-            pinpoint_.Close();
+            ros::Duration time = ros::Time::now() - last;
+
+
+            if(time.sec > 1 && time.sec % 5 == 0)
+            {
+                ROS_WARN_STREAM_THROTTLE(5, "No heartbeat received from pinpoint in " << time.sec << " seconds");
+                cav_msgs::DriverStatus status = getStatus();
+                if(status.status != cav_msgs::DriverStatus::FAULT)
+                {
+                    status.status = cav_msgs::DriverStatus::FAULT;
+                    setStatus(status);
+                }
+            }
+
+            if(time.sec > 30)
+            {
+                ROS_WARN_STREAM("Connection to pinpoint timeout");
+                pinpoint_.Close();
+            }
+
+        }catch(std::runtime_error e)
+        {
+            ROS_WARN_STREAM("pre_spin threw exception in ros::TimeBase::fromNSec(), ex: " << e.what());
+            return;
         }
     }
 

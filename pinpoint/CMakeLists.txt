@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   bondcpp
   roscpp
   tf2_ros
-        tf2_geometry_msgs
+  tf2_geometry_msgs
   tf2
   dynamic_reconfigure
 )
