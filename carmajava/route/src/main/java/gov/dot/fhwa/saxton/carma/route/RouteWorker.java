@@ -100,7 +100,7 @@ public class RouteWorker {
 
     for (int i = 0; i < listOfFiles.length; i++) {
       if (listOfFiles[i].isFile()) {
-        FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath());
+        FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath(), log);
         loadAdditionalRoute(loadStrategy);
       }
     }
