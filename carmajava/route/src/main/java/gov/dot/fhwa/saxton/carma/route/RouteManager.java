@@ -47,6 +47,8 @@ import java.util.List;
  * rosservice call /set_active_route "routeID: 'Glidepath Demo East Bound'"
  * rostopic pub /nav_sat_fix '{latitude: 38.956439, longitude: -77.150325}'
  * rosservice call /start_active_route "routeID: 'Glidepath Demo East Bound'"
+ * Run this next line to force a new route state message to publish. Change the lat lon for different distances
+ * rostopic pub /nav_sat_fix '{latitude: 38.956439, longitude: -77.150325}'
  */
 public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
@@ -100,7 +102,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
         } catch (Exception e) {
           handleException(e);
         }
-        log.info("\n\n Route State = " + routeWorker.getCurrentState());
       }
     });
 
@@ -112,7 +113,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
         } catch (Exception e) {
           handleException(e);
         }
-        log.info("\n\n Route State = " + routeWorker.getCurrentState());
       }//onNewMessage
     });//addMessageListener
 
@@ -133,7 +133,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
             } catch (Exception e) {
               handleException(e);
             }
-            log.info("\n\n Route State = " + routeWorker.getCurrentState());
           }
         });
 
@@ -146,7 +145,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
           } catch (Exception e) {
             handleException(e);
           }
-          log.info("\n\n Route State = " + routeWorker.getCurrentState());
         }
       });
 
@@ -160,7 +158,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
             } catch (Exception e) {
               handleException(e);
             }
-            log.info("\n\n Route State = " + routeWorker.getCurrentState());
           }
         });
   }//onStart
