@@ -70,9 +70,9 @@ public class RouteWorker {
   protected double downtrackDistance = 0;
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
-  protected double MAX_CROSSTRACK_DISTANCE_M = 10.0;
+  protected double MAX_CROSSTRACK_DISTANCE_M = 1000.0;
     // TODO put in route files as may change based on road type
-  protected double MAX_START_DISTANCE_M = 15.0; // Can only join route if within 15m of waypoint
+  protected double MAX_START_DISTANCE_M = 1000.0; // Can only join route if within 15m of waypoint
   protected int routeStateSeq = 0;
 
   /**
@@ -257,6 +257,7 @@ public class RouteWorker {
       return StartActiveRouteResponse.NO_ACTIVE_ROUTE;
     }
     int startingIndex = getValidStartingWPIndex();
+    log.info("Route starting index = " + startingIndex);
     if (startingIndex == -1) {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {

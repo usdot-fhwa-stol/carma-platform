@@ -145,12 +145,13 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
       });
 
     startActiveRouteService = connectedNode
-      .newServiceServer("start_active_route", SetActiveRoute._TYPE,
+      .newServiceServer("start_active_route", StartActiveRoute._TYPE,
         new ServiceResponseBuilder<StartActiveRouteRequest, StartActiveRouteResponse>() {
           @Override
           public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
             try {
               response.setErrorStatus(routeWorker.startActiveRoute());
+              log.info("Start route error status = " + response.getErrorStatus());
             } catch (Exception e) {
               handleException(e);
             }

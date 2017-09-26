@@ -15,16 +15,16 @@ var t_nav_sat_fix = 'nav_sat_fix';
 var t_current_segment = 'current_segment';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
-var t_route_state = "/saxton_cav/vehicle_environment/route/route_state"; //TODO: Update after Launch File is changed.
+var t_route_state = "route_state";
 
 // Services
 var s_get_available_routes = 'get_available_routes';
 var s_set_active_route = 'set_active_route';
-var s_start_active_route = "/saxton_cav/vehicle_environment/route/start_active_route"; //TODO: Update after Launch File is changed.
+var s_start_active_route = "start_active_route";
 
 var s_get_registered_plugins = 'plugins/get_registered_plugins';
-var s_activate_plugins = 'plugins/activate_plugins';
-var s_set_guidance_enable = 'set_guidance_enable';
+var s_activate_plugins = 'plugins/activate_plugin';
+var s_set_guidance_enable = 'set_guidance_enabled';
 
 // Params
 var p_host_instructions = '/saxton_cav/ui/host_instructions';
