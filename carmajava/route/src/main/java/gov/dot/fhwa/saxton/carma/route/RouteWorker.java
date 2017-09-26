@@ -72,7 +72,7 @@ public class RouteWorker {
   protected boolean systemOkay = false;
   protected double MAX_CROSSTRACK_DISTANCE_M = 10.0;
     // TODO put in route files as may change based on road type
-  protected double MAX_START_DISTANCE_M = 15.0; // Can only join route if within 15m of waypoint
+  protected double MAX_START_DISTANCE_M = 1000.0; // Can only join route if within this many meters of waypoint
   protected int routeStateSeq = 0;
 
   /**
@@ -100,7 +100,7 @@ public class RouteWorker {
 
     for (int i = 0; i < listOfFiles.length; i++) {
       if (listOfFiles[i].isFile()) {
-        FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath());
+        FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath(), log);
         loadAdditionalRoute(loadStrategy);
       }
     }
@@ -255,6 +255,9 @@ public class RouteWorker {
   public byte startActiveRoute() {
     if (activeRoute == null) {
       return StartActiveRouteResponse.NO_ACTIVE_ROUTE;
+    }
+    if (getCurrentState() == WorkerState.FOLLOWING_ROUTE) {
+      return StartActiveRouteResponse.ALREADY_FOLLOWING_ROUTE;
     }
     int startingIndex = getValidStartingWPIndex();
     if (startingIndex == -1) {

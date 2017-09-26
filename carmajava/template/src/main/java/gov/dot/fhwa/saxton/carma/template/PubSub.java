@@ -45,7 +45,7 @@ public class PubSub extends SaxtonBaseNode {
     }
 
     @Override
-    public void onStart(final ConnectedNode connectedNode) {
+    public void onSaxtonStart(final ConnectedNode connectedNode) {
 
         final Log log = connectedNode.getLog();
 
@@ -95,5 +95,9 @@ public class PubSub extends SaxtonBaseNode {
 
 
     }//onStart
+
+  @Override protected void handleException(Exception e) {
+
+  }
 }//AbstractNodeMain
 

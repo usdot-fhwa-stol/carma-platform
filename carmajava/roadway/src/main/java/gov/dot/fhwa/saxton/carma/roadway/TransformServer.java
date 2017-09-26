@@ -43,7 +43,7 @@ public class TransformServer extends SaxtonBaseNode {
     return GraphName.of("transform_server");
   }
 
-  @Override public void onStart(final ConnectedNode connectedNode) {
+  @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
 
     final Log log = connectedNode.getLog();
     final FrameTransformTree tfTree = new FrameTransformTree();
@@ -85,5 +85,9 @@ public class TransformServer extends SaxtonBaseNode {
             response.setTransform(transformMsg);
           }
         });
+  }
+
+  @Override protected void handleException(Exception e) {
+
   }
 }

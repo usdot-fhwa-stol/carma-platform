@@ -23,10 +23,41 @@ import org.ros.exception.ServiceNotFoundException;
 import org.ros.message.Time;
 import org.ros.message.Duration;
 
- /**
+/**
  * Abstract base class for rosjava nodes used in the carma package.
  */
 public abstract class SaxtonBaseNode extends AbstractNodeMain {
+
+  /**
+   * Entry point for node once connected to ros network. Wraps the onSaxtonStart method in a try-catch.
+   * Hopefully all exceptions thrown by extending nodes will be caught here.
+   *
+   * @param connectedNode A node instance connected to the ros network
+   */
+  @Override public final void onStart(ConnectedNode connectedNode) {
+    try {
+      onSaxtonStart(connectedNode);
+    } catch (Exception e) {
+      connectedNode.getLog().fatal("Exception reached SaxtonBaseNode onStart function. StackTrace: " + e);
+      handleException(e);
+    }
+  }
+
+  /**
+   * Entry method for all extending nodes. This function should be overridden instead of the onStart method.
+   *
+   * @param connectedNode A node instance connected to the ros network
+   */
+  protected abstract void onSaxtonStart(ConnectedNode connectedNode);
+
+  /**
+   * Method called when an exception remains uncaught until the SaxtonBaseNode onStart method.
+   * Implementing nodes should log the exception and publish the appropriate system alert message
+   *
+   * @param e The exception to handle
+   */
+  protected abstract void handleException(Exception e);
+
   /**
    * Blocks until the desired service is found and returned or timeout expires. If the timeout expires then returns null.
    * <p>
@@ -40,7 +71,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
    * @param <S>           The service response type such as srd_srvs.SetBoolResponse
    * @return An initialized ServiceClient for the desired service
    */
-  protected <T, S> ServiceClient<T, S> waitForService(String service, String typeString,
+  protected final <T, S> ServiceClient<T, S> waitForService(String service, String typeString,
     final ConnectedNode connectedNode, int timeout) {
     ServiceClient<T, S> client = null;
     boolean serviceFound = false;
