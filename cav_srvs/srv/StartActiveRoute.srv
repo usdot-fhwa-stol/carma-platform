@@ -18,4 +18,5 @@ uint8 errorStatus
 uint8 NO_ERROR=0
 uint8 NO_ACTIVE_ROUTE=1
 uint8 INVALID_STARTING_LOCATION=2
+uint8 ALREADY_FOLLOWING_ROUTE=3
 #					<other values reserved for future expansion>

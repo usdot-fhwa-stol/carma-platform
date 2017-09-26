@@ -44,7 +44,9 @@ import java.util.List;
  * Command line test for the service:
  * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
  * rosservice call /get_available_routes
- * rosservice call /set_active_route "routeID: 'TestRoute'"
+ * rosservice call /set_active_route "routeID: 'Glidepath Demo East Bound'"
+ * rostopic pub /nav_sat_fix '{latitude: 38.956439, longitude: -77.150325}'
+ * rosservice call /start_active_route "routeID: 'Glidepath Demo East Bound'"
  */
 public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
@@ -98,6 +100,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
         } catch (Exception e) {
           handleException(e);
         }
+        log.info("\n\n Route State = " + routeWorker.getCurrentState());
       }
     });
 
@@ -109,6 +112,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
         } catch (Exception e) {
           handleException(e);
         }
+        log.info("\n\n Route State = " + routeWorker.getCurrentState());
       }//onNewMessage
     });//addMessageListener
 
@@ -129,6 +133,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
             } catch (Exception e) {
               handleException(e);
             }
+            log.info("\n\n Route State = " + routeWorker.getCurrentState());
           }
         });
 
@@ -141,6 +146,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
           } catch (Exception e) {
             handleException(e);
           }
+          log.info("\n\n Route State = " + routeWorker.getCurrentState());
         }
       });
 
@@ -154,6 +160,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
             } catch (Exception e) {
               handleException(e);
             }
+            log.info("\n\n Route State = " + routeWorker.getCurrentState());
           }
         });
   }//onStart
