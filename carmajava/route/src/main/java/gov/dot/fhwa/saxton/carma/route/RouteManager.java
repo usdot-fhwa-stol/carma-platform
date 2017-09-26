@@ -44,7 +44,11 @@ import java.util.List;
  * Command line test for the service:
  * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
  * rosservice call /get_available_routes
- * rosservice call /set_active_route "routeID: 'TestRoute'"
+ * rosservice call /set_active_route "routeID: 'Glidepath Demo East Bound'"
+ * rostopic pub /nav_sat_fix '{latitude: 38.956439, longitude: -77.150325}'
+ * rosservice call /start_active_route "routeID: 'Glidepath Demo East Bound'"
+ * Run this next line to force a new route state message to publish. Change the lat lon for different distances
+ * rostopic pub /nav_sat_fix '{latitude: 38.956439, longitude: -77.150325}'
  */
 public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
@@ -145,7 +149,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
       });
 
     startActiveRouteService = connectedNode
-      .newServiceServer("start_active_route", SetActiveRoute._TYPE,
+      .newServiceServer("start_active_route", StartActiveRoute._TYPE,
         new ServiceResponseBuilder<StartActiveRouteRequest, StartActiveRouteResponse>() {
           @Override
           public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
