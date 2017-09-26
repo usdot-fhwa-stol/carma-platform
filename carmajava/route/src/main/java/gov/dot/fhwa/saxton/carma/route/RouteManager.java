@@ -151,7 +151,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
           public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
             try {
               response.setErrorStatus(routeWorker.startActiveRoute());
-              log.info("Start route error status = " + response.getErrorStatus());
             } catch (Exception e) {
               handleException(e);
             }

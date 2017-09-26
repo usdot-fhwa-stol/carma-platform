@@ -114,6 +114,7 @@ public class RouteWorker {
    */
   protected void next(WorkerEvent event) {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
+    log.info("Route State = " + currentSegmentIndex);
   }
 
   /**
@@ -257,7 +258,7 @@ public class RouteWorker {
       return StartActiveRouteResponse.NO_ACTIVE_ROUTE;
     }
     int startingIndex = getValidStartingWPIndex();
-    log.info("Route starting index = " + startingIndex);
+    log.debug("Route starting index = " + startingIndex);
     if (startingIndex == -1) {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
