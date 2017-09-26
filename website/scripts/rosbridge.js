@@ -6,7 +6,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.133' // TODO: Update with proper environment IP address.
+var ip = '192.168.32.138' // TODO: Update with proper environment IP address.
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -15,10 +15,12 @@ var t_nav_sat_fix = 'nav_sat_fix';
 var t_current_segment = 'current_segment';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
+var t_route_state = "/saxton_cav/vehicle_environment/route/route_state"; //TODO: Update after Launch File is changed.
 
 // Services
 var s_get_available_routes = 'get_available_routes';
 var s_set_active_route = 'set_active_route';
+var s_start_active_route = "/saxton_cav/vehicle_environment/route/start_active_route"; //TODO: Update after Launch File is changed.
 
 var s_get_registered_plugins = 'plugins/get_registered_plugins';
 var s_activate_plugins = 'plugins/activate_plugins';
@@ -51,6 +53,7 @@ var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 */
 function connectToROS() {
 
+    var isConnected = false;
     try {
         // If there is an error on the backend, an 'error' emit will be emitted.
         ros.on('error', function (error) {
@@ -62,6 +65,8 @@ function connectToROS() {
             document.getElementById('connected').style.display = 'none';
             document.getElementById('closed').style.display = 'none';
             document.getElementById('error').style.display = 'inline';
+
+	    isConnected = false;
         });
 
         // Find out exactly when we made a connection.
@@ -72,6 +77,8 @@ function connectToROS() {
             document.getElementById('error').style.display = 'none';
             document.getElementById('closed').style.display = 'none';
             document.getElementById('connected').style.display = 'inline';
+
+	    isConnected = true;
         });
 
         ros.on('close', function () {
@@ -80,17 +87,23 @@ function connectToROS() {
             document.getElementById('connecting').style.display = 'none';
             document.getElementById('connected').style.display = 'none';
             document.getElementById('closed').style.display = 'inline';
+
+	    isConnected = false;
         });
 
         // Create a connection to the rosbridge WebSocket server.
         ros.connect('ws://' + ip + ':9090');
+	return isConnected;
+
 
     }
     catch(err) {
          divCapabilitiesMessage.innerHTML = '<p> Unexpected Error. Sorry, unable to connect to ROS server, please refresh your page to try again or contact your System Admin.</p>';
          console.log(err);
+	 return isConnected;
     }
 }
+
 
 
 /**
@@ -230,17 +243,61 @@ function setRoute(id) {
         else { //Call succeeded
             route_name = lblRoute.innerHTML;
 
+            //After activating the route, start_active_route.
+            //TODO: Discuss if start_active_route can be automatically determined and done by Route Manager in next iteration?
+            //      Route selection is done first and set only once.
+            //      Once selected, it wouldn't be activated until at least 1 Plugin is selected (based on Route).
+            //      Only when a route is selected and at least one plugin is selected, could Guidance be Engaged.
+            if (startActiveRoute() == false) //If failed to start, return and no continue.
+            {
+                return;
+            }
+
+            //Hide the Route selection
             var divRoutes = document.getElementById('divRoutes');
             divRoutes.style.display = 'none';
 
+            //Display the list of Plugins
             var divSubCapabilities = document.getElementById('divSubCapabilities');
             divSubCapabilities.style.display = 'block';
 
             divCapabilitiesMessage.innerHTML = 'You have selected the route called " ' + route_name + '". ';
 
             showPluginOptions();
+
+            showRouteInfo();// Display Route Info
         }
     });
+}
+
+/*
+Start Active Route
+*/
+function startActiveRoute() {
+
+        // Calling setActiveRoute service
+        var startActiveRouteClient = new ROSLIB.Service({
+            ros: ros,
+            name: s_start_active_route,
+            serviceType: 'cav_srvs/StartActiveRoute'
+        });
+
+        // Then we create a Service Request.
+        var request = new ROSLIB.ServiceRequest({
+        });
+
+       // Call the service and get back the results in the callback.
+       startActiveRouteClient.callService(request, function (result) {
+
+          if (result.errorStatus != 0) //Error: NO_ACTIVE_ROUTE, INVALID_STARTING_LOCATION
+           {
+               divCapabilitiesMessage.innerHTML = '<p> Starting the active the route failed, please try it again.</p>';
+               return false;
+           }
+           else { //Call succeeded , NO_ERROR
+               return true;
+           }
+       });
 }
 
 /*
@@ -556,11 +613,11 @@ function printParam(itemName, index) {
             document.getElementById('divLog').innerHTML += '<br/> Param index[' + index + ']: ' + itemName + ': value: ' + myValue + '.';
 
             if (itemName == p_host_instructions && myValue != null)
+            {
                  host_instructions=myValue;
+            }
        });
     }
-
-
 }
 
 /*
@@ -627,9 +684,85 @@ function getFutureTopics()
 
 }
 
+/*
+    Display the Route State in the System Status tab.
+    Values are only set and can be shown when Route has been selected.
+*/
+function showRouteInfo()
+{
+  //Get Route State
+  var listenerRouteState= new ROSLIB.Topic({
+    ros : ros,
+    name : t_route_state,
+    messageType : 'cav_msgs/RouteState'
+  });
+
+
+    listenerRouteState.subscribe(function(message) {
+       document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerRouteState.name + ': ' + message.routeID;
+       //listenerNavSatFix.unsubscribe();
+       insertNewTableRow('tblSecond','Route ID',message.routeID );
+       insertNewTableRow('tblSecond','Cross Track',message.cross_track );
+       insertNewTableRow('tblSecond','Down Track',message.down_track );
+    });
+
+}
 
 /*
-  Loop function to wait for System Ready status from interface manager.
+    Display the Vehicle Info in the System Status tab.
+*/
+function getVehicleInfo()
+{
+
+  ros.getParams(function(params) {
+    params.forEach(showVehicleInfo); //Print each param into the log view.
+  });
+
+}
+
+/*
+   This called by forEach and doesn't introduce RACE condition compared to using for-in statement.
+   Shows only Vehicle related parameters in System Status table.
+*/
+function showVehicleInfo(itemName, index)
+{
+        if (itemName.startsWith("/saxton_cav/vehicle")==true)
+        {
+           //Sample call to get param.
+           var myParam = new ROSLIB.Param({
+             ros : ros,
+             name : itemName
+           });
+
+           myParam.get(function(myValue) {
+                insertNewTableRow('tblThird',toCamelCase(itemName),myValue);
+           });
+        }
+}
+
+/*
+ Changes the string into Camel Case.
+*/
+function toCamelCase(str) {
+  // Lower cases the string
+  return str.toLowerCase()
+    // Replaces any with /saxton_cav/
+    .replace('/saxton_cav/',' ')
+    // Replaces any - or _ characters with a space
+    .replace( /[-_]+/g, ' ')
+    // Removes any non alphanumeric characters
+    .replace( /[^\w\s]/g, '')
+    // Uppercases the first character in each group immediately following a space
+    // (delimited by spaces)
+    .replace( / (.)/g, function($1) { return $1.toUpperCase(); })
+    // Removes spaces
+    .trim();
+    //.replace( / /g, '' );
+}
+
+/*
+  Loop function to
+   for System Ready status from interface manager.
 */
 function waitForSystemReady () {
    setTimeout( function ()
@@ -648,6 +781,7 @@ function waitForSystemReady () {
                       enableGuidance();
                       getParams();
                       getFutureTopics();
+                      getVehicleInfo();
                   }
                   else
                   {
@@ -661,12 +795,17 @@ function waitForSystemReady () {
  Onload function that gets called on page refresh.
 */
 window.onload = function () {
-    connectToROS();
-    waitForSystemReady ();
+    var isConnected = connectToROS();
+
+    if (isConnected == false)
+	{
+        waitForSystemReady ();
+	}
 
 }
 
-// When the user clicks anywhere outside of the modal, close it
+/* When the user clicks anywhere outside of the modal, close it.
+*/
 window.onclick = function(event) {
     var modal = document.getElementById('myModal');
 

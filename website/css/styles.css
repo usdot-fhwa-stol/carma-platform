@@ -310,3 +310,29 @@ div.message_box {
     background-color: #ffcc00;
     color: black;
 }
+
+/* System Status Table */
+
+.table-style1 {
+    width: 100%;
+}
+
+.col-style1 {
+    vertical-align: top;
+    width: 30%;
+}
+
+.section1 {
+    color: #FFFFFF;
+    background-color: #999999;
+    vertical-align: top;
+}
+
+.col-style2a {
+    width: 15%;
+    font-weight: bold;
+}
+
+.col-style2b {
+    width: 15%;
+}
