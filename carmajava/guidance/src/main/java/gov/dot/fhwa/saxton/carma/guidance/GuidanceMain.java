@@ -56,6 +56,8 @@ public class GuidanceMain extends SaxtonBaseNode {
     protected ServiceServer<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>
         guidanceEnableService;
 
+    protected GuidanceExceptionHandler exceptionHandler = new GuidanceExceptionHandler();
+
     protected final AtomicBoolean enabled = new AtomicBoolean(false);
     protected final AtomicBoolean systemReady = new AtomicBoolean(false);
     protected boolean initialized = false;
@@ -170,6 +172,6 @@ public class GuidanceMain extends SaxtonBaseNode {
     }//onStart
 
     @Override protected void handleException(Exception e) {
-
+        exceptionHandler.handleException(e);
     }
 }//AbstractNodeMain

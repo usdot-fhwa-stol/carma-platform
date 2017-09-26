@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.node.topic.Subscriber;
+import gov.dot.fhwa.saxton.carma.guidance.*;
 
 /**
  * Package private class for use in the PubSubManager
@@ -30,9 +31,11 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
     protected int numOpenChannels = 0;
     protected boolean open = true;
     protected Subscriber<T> subscriber;
+    protected GuidanceExceptionHandler exceptionHandler;
 
-    RosSubscriptionChannel(Subscriber<T> subscriber) {
+    RosSubscriptionChannel(Subscriber<T> subscriber, GuidanceExceptionHandler exceptionHandler) {
         this.subscriber = subscriber;
+        this.exceptionHandler = exceptionHandler;
     }
 
     /**

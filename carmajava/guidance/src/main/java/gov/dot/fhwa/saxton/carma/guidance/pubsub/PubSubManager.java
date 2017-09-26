@@ -21,6 +21,8 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 import java.util.HashMap;
 import java.util.Map;
 
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceExceptionHandler;
+
 /**
  * Guidance package PubSubManager component
  * <p>
@@ -40,6 +42,8 @@ public class PubSubManager implements IPubSubService {
     protected Map<String, IPublicationChannel> pubChannelManagers;
     protected Map<String, ISubscriptionChannel> subChannelManagers;
     protected Map<String, IServiceChannel> srvManagers;
+    protected GuidanceExceptionHandler exceptionHandler;
+
     public PubSubManager(ISubscriptionChannelFactory subFactory,
         IPublicationChannelFactory pubFactory, IServiceChannelFactory srvFactory) {
 
