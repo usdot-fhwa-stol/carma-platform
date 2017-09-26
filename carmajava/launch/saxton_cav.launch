@@ -75,6 +75,10 @@
              to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>
       <remap from="set_active_route"
              to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/set_active_route"/>
+      <remap from="start_active_route"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/start_active_route"/>
+      <remap from="route_state"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="ui_platoon_vehicle_info"
@@ -83,10 +87,10 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/available_plugins"/>
       <remap from="plugins/get_registered_plugins"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
-      <remap from="plugins/activate_plugins"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugins"/>
-      <remap from="set_guidance_enable"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_enable"/>
+      <remap from="plugins/activate_plugin"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
+      <remap from="set_guidance_enabled"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_enabled"/>
 
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
