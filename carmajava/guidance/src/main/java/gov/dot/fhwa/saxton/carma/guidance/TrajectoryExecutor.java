@@ -40,30 +40,21 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class TrajectoryExecutor extends GuidanceComponent {
     // Member variables
-<<<<<<< 05a81d40e975ce23715891e36b8f9b95273d5f96
-    private ISubscriber<RouteState> routeStateSubscriber;
-
-    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
-        super(state, pubSubService, node);
-=======
-    protected final String componentName = "TrajectoryExecutor";
-    protected final long sleepDurationMillis = 30000;
-    protected IPubSubService iPubSubService;
-    protected int sequenceNumber = 0;
-    protected Log log;
-    protected ConnectedNode node;
+    protected ISubscriber<RouteState> routeStateSubscriber;
     protected GuidanceCommands commands;
+    protected AtomicReference<GuidanceState> state;
+    
+    protected double operatingSpeed;
     protected double amplitude;
     protected double phase;
     protected double frequency;
-    protected double maxAccel = 10.0;
+    protected double maxAccel;
+    protected final long sleepDurationMillis = 100;
 
-    public TrajectoryExecutor(IPubSubService iPubSubService, GuidanceCommands commands,ConnectedNode node) {
-        this.iPubSubService = iPubSubService;
-        this.node= node;
-        this.log = node.getLog();
+    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, GuidanceCommands commands, ConnectedNode node) {
+        super(state, iPubSubService, node);
+        this.state = state;
         this.commands = commands;
->>>>>>> Initial implementation of GuidanceCommands functionality
     }
 
     @Override public String getComponentName() {
@@ -79,54 +70,46 @@ public class TrajectoryExecutor extends GuidanceComponent {
             }
         });
 
-<<<<<<< 05a81d40e975ce23715891e36b8f9b95273d5f96
-
+        operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
+        amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
+        phase = node.getParameterTree().getDouble("~trajectory_phase");
+        frequency = node.getParameterTree().getDouble("~trajectory_frequency");
+        maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
     }
 
-    @Override public void onSystemReady() {
-        try {
-            IService<cav_srvs.GetDriversWithCapabilitiesRequest,
-                cav_srvs.GetDriversWithCapabilitiesResponse> driverCapabilityService
-                = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                GetDriversWithCapabilities._TYPE);
-
-            GetDriversWithCapabilitiesRequest req =
-                node.getServiceRequestMessageFactory()
-                    .newFromType(GetDriversWithCapabilitiesRequest._TYPE);
-
-            List<String> reqdCapabilities = new ArrayList<>();
-            reqdCapabilities.add("lateral");
-            reqdCapabilities.add("longitudinal");
-            req.setCapabilities(reqdCapabilities);
-            final GetDriversWithCapabilitiesResponse[] drivers =
-                new GetDriversWithCapabilitiesResponse[1];
-            driverCapabilityService.call(req,
-                new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-                    @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                        drivers[0] = msg;
-                    }
-
-                    @Override public void onFailure(Exception e) {
-                        // Ignore
-                    }
-                });
-        } catch (TopicNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override public void onGuidanceEnable() {
+    @Override
+    public void onSystemReady() {
         // NO-OP
-=======
+    }
 
-        for (; ; ) {
+    @Override
+    public void onGuidanceEnable() {
+        // NO-OP
+    }
+
+    /**
+     * Compute the sinusoidal part of the trajectory
+     * 
+     * @param t The current time in milliseconds
+     * @param amplitude the max/min of the sinusoidal curve in m/s
+     * @param frequency The number of seconds to complete a cycle
+     * @param phase Where in the cycle to start
+     * 
+     * @return The current value of the sinusoidal trajectory component
+     */
+    private double computeSin(double t, double amplitude, double frequency, double phase) {
+        return Math.sin(((t / 1000.0) + phase) / frequency) * amplitude;
+    }
+
+    public void loop() {
             try {
                 // Generate a simple sin(t) speed command
-                commands.setCommand(Math.sin((System.currentTimeMillis() + phase) * frequency) * amplitude, maxAccel);
+                if (state.get() == GuidanceState.ENGAGED) { 
+                    commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, frequency, phase), maxAccel);
+                }
+
                 Thread.sleep(sleepDurationMillis);
             } catch (InterruptedException e) {
             }
-        }
->>>>>>> Initial implementation of GuidanceCommands functionality
     }
 }

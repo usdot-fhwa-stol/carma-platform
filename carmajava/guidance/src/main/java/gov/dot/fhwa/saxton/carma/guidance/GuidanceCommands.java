@@ -11,7 +11,7 @@ import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.*;
 
 /**
  * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
@@ -29,6 +29,7 @@ public class GuidanceCommands extends GuidanceComponent {
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
+    private AtomicBoolean engaged = new AtomicBoolean(false);
 
     GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
         super(state, iPubSubService, node);
@@ -43,7 +44,7 @@ public class GuidanceCommands extends GuidanceComponent {
     }
 
     @Override public void onGuidanceEnable() {
-
+        engaged.set(true);
     }
 
     /**
@@ -64,9 +65,7 @@ public class GuidanceCommands extends GuidanceComponent {
     @Override public void onSystemReady() {
         try {
             // Register with the interface manager's service
-            IService<GetDriversWithCapabilitiesRequest,
-                GetDriversWithCapabilitiesResponse> driverCapabilityService
-                = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
+            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
                 GetDriversWithCapabilities._TYPE);
 
             // Build our request message
@@ -75,7 +74,7 @@ public class GuidanceCommands extends GuidanceComponent {
                     .newFromType(GetDriversWithCapabilitiesRequest._TYPE);
 
             List<String> reqdCapabilities = new ArrayList<>();
-            reqdCapabilities.add("control/cmd_speed"); // We only need to use one type of control
+            reqdCapabilities.add("cmd_speed"); // We only need to use one type of control
             req.setCapabilities(reqdCapabilities);
 
             // Work around to pass a final object into our anonymous inner class so we can get the
@@ -116,25 +115,33 @@ public class GuidanceCommands extends GuidanceComponent {
 
             if (driverFqn != null) {
                 // Open the publication channel to the driver and start sending it commands
-              IPublisher<SpeedAccel> speedAccelPublisher =
-                  pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
+                speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
 
-                while (!Thread.currentThread().isInterrupted()) {
-                    // Iterate ensuring smooth speed command output
-                    long iterStartTime = System.currentTimeMillis();
-                    SpeedAccel msg = speedAccelPublisher.newMessage();
-                    msg.setSpeed(speedCommand.get());
-                    msg.setMaxAccel(maxAccel.get());
-
-                    long iterEndTime = System.currentTimeMillis();
-                    Thread.sleep(sleepDurationMillis - (iterEndTime - iterStartTime));
-                }
             } else {
-                // TODO: Raise fatal error once we've discussed error standards
+                log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
             }
         } catch (TopicNotFoundException e) {
             log.error("No interface manager found to query for drivers!!!");
-        } catch (InterruptedException e) {
+        }
+    }
+
+    @Override
+    public void loop() {
+        // Iterate ensuring smooth speed command output
+        long iterStartTime = System.currentTimeMillis();
+
+        if (engaged.get()) {
+            SpeedAccel msg = speedAccelPublisher.newMessage();
+            msg.setSpeed(speedCommand.get());
+            msg.setMaxAccel(maxAccel.get());
+            speedAccelPublisher.publish(msg);
+        }
+
+        long iterEndTime = System.currentTimeMillis();
+
+        try {
+            Thread.sleep(sleepDurationMillis - (iterEndTime - iterStartTime));
+        } catch (InterruptedException ie) {
             log.warn("Guidance.Commands interrupted... Shutting down.");
             Thread.currentThread().interrupt();
         }
