@@ -234,6 +234,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         h.setStamp(node.getCurrentTime());
         h.setFrameId("0");
         h.setSeq(availablePluginsSeqNum++);
+        availablePlugins.setHeader(h);
 
         /* Rather than maintain a separate list of plugins, which we'd have to walk anyway to update
          * just walk the main list every time one changes status. With a small number of plugins this
@@ -243,7 +244,6 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         for (IPlugin p : registeredPlugins) {
             if (p.getAvailability()) {
                 Plugin pMsg = messageFactory.newFromType(Plugin._TYPE);
-                pMsg.setHeader(h);
                 pMsg.setAvailable(p.getAvailability());
                 pMsg.setName(p.getName());
                 pMsg.setVersionId(p.getVersionId());
@@ -275,11 +275,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                         h.setStamp(node.getCurrentTime());
                         h.setFrameId("0");
                         h.setSeq(registeredPluginsSeqNum++);
+                        pluginListResponse.setHeader(h);
 
                         List<Plugin> pList = new ArrayList<>();
                         for (IPlugin p : registeredPlugins) {
                             Plugin p0 = factory.newFromType(Plugin._TYPE);
-                            p0.setHeader(h);
                             p0.setAvailable(p.getAvailability());
                             p0.setName(p.getName());
                             p0.setVersionId(p.getVersionId());
@@ -304,13 +304,13 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                         h.setStamp(node.getCurrentTime());
                         h.setFrameId("0");
                         h.setSeq(activePluginsSeqNum++);
+                        pluginListResponse.setHeader(h);
 
                         List<Plugin> pList = new ArrayList<>();
                         // Walk the plugin list and see which ones are active
                         for (IPlugin p : registeredPlugins) {
                             if (p.getActivation()) {
                                 Plugin p0 = factory.newFromType(Plugin._TYPE);
-                                p0.setHeader(h);
                                 p0.setAvailable(p.getAvailability());
                                 p0.setName(p.getName());
                                 p0.setVersionId(p.getVersionId());
