@@ -243,29 +243,15 @@ function setRoute(id) {
         else { //Call succeeded
             route_name = lblRoute.innerHTML;
 
+            divCapabilitiesMessage.innerHTML = 'You have selected the route called " ' + route_name + '". ';
+
             //After activating the route, start_active_route.
             //TODO: Discuss if start_active_route can be automatically determined and done by Route Manager in next iteration?
             //      Route selection is done first and set only once.
             //      Once selected, it wouldn't be activated until at least 1 Plugin is selected (based on Route).
             //      Only when a route is selected and at least one plugin is selected, could Guidance be Engaged.
-            if (startActiveRoute() == false) //If failed to start, return and no continue.
-            {
-                return;
-            }
+            startActiveRoute();
 
-            //Hide the Route selection
-            var divRoutes = document.getElementById('divRoutes');
-            divRoutes.style.display = 'none';
-
-            //Display the list of Plugins
-            var divSubCapabilities = document.getElementById('divSubCapabilities');
-            divSubCapabilities.style.display = 'block';
-
-            divCapabilitiesMessage.innerHTML = 'You have selected the route called " ' + route_name + '". ';
-
-            showPluginOptions();
-
-            showRouteInfo();// Display Route Info
         }
     });
 }
@@ -291,11 +277,21 @@ function startActiveRoute() {
 
           if (result.errorStatus != 0 && result.errorStatus != 3)
            {
-               divCapabilitiesMessage.innerHTML = '<p> Starting the active the route failed, please try it again.</p>';
-               return false;
+               divCapabilitiesMessage.innerHTML += '<p> Starting the active the route failed, please try it again.</p>';
            }
            else { //Call succeeded //NO_ERROR=0 ; ALREADY_FOLLOWING_ROUTE=3;
-               return true;
+
+                   //Hide the Route selection
+                   var divRoutes = document.getElementById('divRoutes');
+                   divRoutes.style.display = 'none';
+
+                   //Display the list of Plugins
+                   var divSubCapabilities = document.getElementById('divSubCapabilities');
+                   divSubCapabilities.style.display = 'block';
+
+                   showPluginOptions();
+
+                   showRouteInfo();// Display Route Info
            }
        });
 }
