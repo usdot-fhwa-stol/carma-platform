@@ -36,6 +36,6 @@ trajectory_amplitude: 5.0
 # Units: seconds
 trajectory_phase: 0.0
 
-# Double: Frequency of the sinusoidal sample trajectory for the Trajectory executor
+# Double: Period of the sinusoidal sample trajectory for the Trajectory executor
 # Units: seconds
-trajectory_frequency: 30.0
+trajectory_period: 10.0

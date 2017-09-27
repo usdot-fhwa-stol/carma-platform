@@ -49,11 +49,11 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected double operatingSpeed;
     protected double amplitude;
     protected double phase;
-    protected double frequency;
+    protected double period;
     protected double maxAccel;
     protected final long sleepDurationMillis = 100;
 
-    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, GuidanceCommands commands, ConnectedNode node) {
+    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node, GuidanceCommands commands) {
         super(state, iPubSubService, node);
         this.state = state;
         this.commands = commands;
@@ -75,7 +75,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
         amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
         phase = node.getParameterTree().getDouble("~trajectory_phase");
-        frequency = node.getParameterTree().getDouble("~trajectory_frequency");
+        period = node.getParameterTree().getDouble("~trajectory_period");
         maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
         holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
     }
@@ -95,13 +95,16 @@ public class TrajectoryExecutor extends GuidanceComponent {
      * 
      * @param t The current time in milliseconds
      * @param amplitude the max/min of the sinusoidal curve in m/s
-     * @param frequency The number of seconds to complete a cycle
+     * @param period The number of seconds to complete a cycle
      * @param phase Where in the cycle to start
      * 
      * @return The current value of the sinusoidal trajectory component
      */
-    private double computeSin(double t, double amplitude, double frequency, double phase) {
-        return Math.sin(((t / 1000.0) + phase) / frequency) * amplitude;
+    private double computeSin(double t, double amplitude, double period, double phase) {
+        double s = t / 1000.0;
+        double pFactor = 2 * Math.PI / period;
+
+        return amplitude * Math.sin((pFactor *  s) + phase);
     }
 
     public void loop() {
@@ -111,7 +114,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
                     if (System.currentTimeMillis() - startTime < holdTimeMs) {
                         commands.setCommand(operatingSpeed, maxAccel);
                     } else {
-                        commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, frequency, phase), maxAccel);
+                        commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase), maxAccel);
                     }
                 }
 

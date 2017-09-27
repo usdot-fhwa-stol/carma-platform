@@ -64,10 +64,13 @@ public class GuidanceCommands extends GuidanceComponent {
     }
 
     @Override public void onSystemReady() {
-        try {
             // Register with the interface manager's service
-            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                GetDriversWithCapabilities._TYPE);
+            try {
+                driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
+                    GetDriversWithCapabilities._TYPE);
+            } catch (Exception tnfe) {
+                log.fatal("Interface manager not found. Shutting down Guidance.Commands");
+            }
 
             // Build our request message
             GetDriversWithCapabilitiesRequest req =
@@ -121,9 +124,6 @@ public class GuidanceCommands extends GuidanceComponent {
             } else {
                 log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
             }
-        } catch (TopicNotFoundException e) {
-            log.error("No interface manager found to query for drivers!!!");
-        }
     }
 
     @Override
