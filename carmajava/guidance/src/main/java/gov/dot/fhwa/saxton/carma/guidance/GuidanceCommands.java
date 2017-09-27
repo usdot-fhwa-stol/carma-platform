@@ -30,6 +30,7 @@ public class GuidanceCommands extends GuidanceComponent {
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
     private AtomicBoolean engaged = new AtomicBoolean(false);
+    private boolean driverConnected = false;
 
     GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
         super(state, iPubSubService, node);
@@ -40,7 +41,13 @@ public class GuidanceCommands extends GuidanceComponent {
     }
 
     @Override public void onGuidanceStartup() {
-
+        // Register with the interface manager's service
+        try {
+            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
+                GetDriversWithCapabilities._TYPE);
+        } catch (TopicNotFoundException tnfe) {
+            log.fatal("Interface manager not found. Shutting down Guidance.Commands");
+        }
     }
 
     @Override public void onGuidanceEnable() {
@@ -64,66 +71,56 @@ public class GuidanceCommands extends GuidanceComponent {
     }
 
     @Override public void onSystemReady() {
-            // Register with the interface manager's service
-            try {
-                driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                    GetDriversWithCapabilities._TYPE);
-            } catch (Exception tnfe) {
-                log.fatal("Interface manager not found. Shutting down Guidance.Commands");
-            }
+        // Build our request message
+        GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
 
-            // Build our request message
-            GetDriversWithCapabilitiesRequest req =
-                node.getServiceRequestMessageFactory()
-                    .newFromType(GetDriversWithCapabilitiesRequest._TYPE);
+        List<String> reqdCapabilities = new ArrayList<>();
+        reqdCapabilities.add("cmd_speed"); // We only need to use one type of control
+        req.setCapabilities(reqdCapabilities);
 
-            List<String> reqdCapabilities = new ArrayList<>();
-            reqdCapabilities.add("cmd_speed"); // We only need to use one type of control
-            req.setCapabilities(reqdCapabilities);
+        // Work around to pass a final object into our anonymous inner class so we can get the
+        // response
+        final GetDriversWithCapabilitiesResponse[] drivers =
+            new GetDriversWithCapabilitiesResponse[1];
+        drivers[0] = null;
 
-            // Work around to pass a final object into our anonymous inner class so we can get the
-            // response
-            final GetDriversWithCapabilitiesResponse[] drivers =
-                new GetDriversWithCapabilitiesResponse[1];
-            drivers[0] = null;
+        // Call the InterfaceManager to see if we have a driver that matches our requirements
+        driverCapabilityService.call(req,
+            new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+                @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                    log.info("Received GetDriversWithCapabilitiesResponse:" + msg);
+                    drivers[0] = msg;
+                }
 
-            // Call the InterfaceManager to see if we have a driver that matches our requirements
-            driverCapabilityService.call(req,
-                new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-                    @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                        log.info("Received GetDriversWithCapabilitiesResponse:" + msg);
-                        drivers[0] = msg;
-                    }
-
-                    @Override public void onFailure(Exception e) {
-                        log.warn("No control/cmd_speed capable driver found!!!");
-                    }
-                });
-
-            // No message for LanePosition.msg to be published on "guidance/control/lane_position"
-            // TODO: Add message type for lateral control from guidance
-
-            // Verify that the message returned drivers that we can use
-            String driverFqn = null;
-            if (drivers[0] != null) {
-                List<String> driverFqns = drivers[0].getDriverData();
-                if (driverFqns.size() > 0) {
-                    driverFqn = driverFqns.get(0);
-                    log.info("Discovered driver: " + driverFqns.get(0));
-                } else {
+                @Override public void onFailure(Exception e) {
                     log.warn("No control/cmd_speed capable driver found!!!");
                 }
+            });
+
+        // No message for LanePosition.msg to be published on "guidance/control/lane_position"
+        // TODO: Add message type for lateral control from guidance
+
+        // Verify that the message returned drivers that we can use
+        String driverFqn = null;
+        if (drivers[0] != null) {
+            List<String> driverFqns = drivers[0].getDriverData();
+            if (driverFqns.size() > 0) {
+                driverFqn = driverFqns.get(0);
+                log.info("Discovered driver: " + driverFqns.get(0));
             } else {
                 log.warn("No control/cmd_speed capable driver found!!!");
             }
+        } else {
+            log.warn("No control/cmd_speed capable driver found!!!");
+        }
 
-            if (driverFqn != null) {
-                // Open the publication channel to the driver and start sending it commands
-                speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
-
-            } else {
-                log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
-            }
+        if (driverFqn != null) {
+            // Open the publication channel to the driver and start sending it commands
+            speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
+            driverConnected = true;
+        } else {
+            log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
+        }
     }
 
     @Override
@@ -131,7 +128,7 @@ public class GuidanceCommands extends GuidanceComponent {
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
 
-        if (engaged.get()) {
+        if (engaged.get() && driverConnected) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             msg.setSpeed(speedCommand.get());
             msg.setMaxAccel(maxAccel.get());
@@ -143,7 +140,6 @@ public class GuidanceCommands extends GuidanceComponent {
         try {
             Thread.sleep(sleepDurationMillis - (iterEndTime - iterStartTime));
         } catch (InterruptedException ie) {
-            log.warn("Guidance.Commands interrupted... Shutting down.");
             Thread.currentThread().interrupt();
         }
     }
