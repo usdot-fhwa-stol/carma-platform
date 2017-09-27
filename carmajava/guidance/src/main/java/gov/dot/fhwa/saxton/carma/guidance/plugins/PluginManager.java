@@ -201,6 +201,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     @Override public void onGuidanceShutdown() {
         // If we're shutting down, properly handle graceful plugin shutdown as well
         for (IPlugin p : getRegisteredPlugins()) {
+            p.setActivation(false);
             executor.suspendPlugin(p.getName(), p.getVersionId());
         }
 
@@ -233,6 +234,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         h.setStamp(node.getCurrentTime());
         h.setFrameId("0");
         h.setSeq(availablePluginsSeqNum++);
+        availablePlugins.setHeader(h);
 
         /* Rather than maintain a separate list of plugins, which we'd have to walk anyway to update
          * just walk the main list every time one changes status. With a small number of plugins this
@@ -242,7 +244,6 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         for (IPlugin p : registeredPlugins) {
             if (p.getAvailability()) {
                 Plugin pMsg = messageFactory.newFromType(Plugin._TYPE);
-                pMsg.setHeader(h);
                 pMsg.setAvailable(p.getAvailability());
                 pMsg.setName(p.getName());
                 pMsg.setVersionId(p.getVersionId());
@@ -274,11 +275,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                         h.setStamp(node.getCurrentTime());
                         h.setFrameId("0");
                         h.setSeq(registeredPluginsSeqNum++);
+                        pluginListResponse.setHeader(h);
 
                         List<Plugin> pList = new ArrayList<>();
                         for (IPlugin p : registeredPlugins) {
                             Plugin p0 = factory.newFromType(Plugin._TYPE);
-                            p0.setHeader(h);
                             p0.setAvailable(p.getAvailability());
                             p0.setName(p.getName());
                             p0.setVersionId(p.getVersionId());
@@ -303,13 +304,13 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                         h.setStamp(node.getCurrentTime());
                         h.setFrameId("0");
                         h.setSeq(activePluginsSeqNum++);
+                        pluginListResponse.setHeader(h);
 
                         List<Plugin> pList = new ArrayList<>();
                         // Walk the plugin list and see which ones are active
                         for (IPlugin p : registeredPlugins) {
                             if (p.getActivation()) {
                                 Plugin p0 = factory.newFromType(Plugin._TYPE);
-                                p0.setHeader(h);
                                 p0.setAvailable(p.getAvailability());
                                 p0.setName(p.getName());
                                 p0.setVersionId(p.getVersionId());
@@ -329,21 +330,17 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                     @Override public void build(PluginActivationRequest pluginActivationRequest,
                         PluginActivationResponse pluginActivationResponse) throws ServiceException {
                         // Walk the plugin list and see which one matches the name and version
+                        boolean pluginFound = false;
                         for (IPlugin p : registeredPlugins) {
                             if (pluginActivationRequest.getPluginName().equals(p.getName())
                                 && pluginActivationRequest.getPluginVersion().equals(p.getVersionId())) {
                                 // Match detected
                                 p.setActivation(pluginActivationRequest.getActivated());
+                                pluginFound = true;
                             }
                         }
 
-                        /*
-                         * TODO: Refactor this message
-                         * This should also include an error code for the case where the plugin
-                         * requested doesn't exist
-                         */
-                        pluginActivationResponse
-                            .setNewState(pluginActivationRequest.getActivated());
+                        pluginActivationResponse.setNewState(pluginFound && pluginActivationRequest.getActivated());
                     }
                 });
     }
