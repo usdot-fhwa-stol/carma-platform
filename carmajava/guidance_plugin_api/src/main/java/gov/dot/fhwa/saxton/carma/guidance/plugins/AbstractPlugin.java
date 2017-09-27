@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import java.util.concurrent.atomic.*;
 
 /**
  * Abstract base class for plugins
@@ -19,8 +20,8 @@ public abstract class AbstractPlugin implements IPlugin {
     protected IPubSubService pubSubService;
 
     // Private fields so that extendees can't access them
-    private boolean activation = false;
-    private boolean availability = false;
+    private AtomicBoolean activation = new AtomicBoolean(false);
+    private AtomicBoolean availability = new AtomicBoolean(false);
     private List<AvailabilityListener> availabilityListeners = new ArrayList<>();
 
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
@@ -37,15 +38,18 @@ public abstract class AbstractPlugin implements IPlugin {
     }
 
     @Override public boolean getActivation() {
-        return activation;
+        return activation.get();
     }
 
     @Override public void setActivation(boolean activation) {
-        this.activation = activation;
+        this.activation.set(activation);
+        if (!this.activation.get()) {
+            setAvailability(false);
+        }
     }
 
     @Override public final boolean getAvailability() {
-        return availability;
+        return availability.get();
     }
 
     @Override public void planTrajectory() {
@@ -69,8 +73,8 @@ public abstract class AbstractPlugin implements IPlugin {
      * @param availability
      */
     protected final void setAvailability(boolean availability) {
-        if (this.availability != availability) {
-            this.availability = availability;
+        if (this.availability.get() != availability) {
+            this.availability.set(availability);
             log.debug("Availability Listeners " + availabilityListeners.size());
             for (AvailabilityListener el : availabilityListeners) {
                 el.onAvailabilityChange(this, availability);
