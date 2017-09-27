@@ -20,6 +20,10 @@ max_deceleration_capability: 1.0
 
 ignored_plugins: []
 
+# Double: Time the mock trajectory will initially command the operating speed for
+# Units: seconds
+trajectory_initial_hold_duration: 10.0
+
 # Double: Operating speed the trajectory will oscillate around for its sample trajectory
 # Units: m/s
 trajectory_operating_speed: 10.0

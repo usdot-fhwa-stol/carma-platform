@@ -44,6 +44,8 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected GuidanceCommands commands;
     protected AtomicReference<GuidanceState> state;
     
+    protected long startTime = 0;
+    protected long holdTimeMs = 0;
     protected double operatingSpeed;
     protected double amplitude;
     protected double phase;
@@ -75,6 +77,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         phase = node.getParameterTree().getDouble("~trajectory_phase");
         frequency = node.getParameterTree().getDouble("~trajectory_frequency");
         maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
+        holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
     }
 
     @Override
@@ -84,7 +87,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
 
     @Override
     public void onGuidanceEnable() {
-        // NO-OP
+        startTime = System.currentTimeMillis();
     }
 
     /**
@@ -105,7 +108,11 @@ public class TrajectoryExecutor extends GuidanceComponent {
             try {
                 // Generate a simple sin(t) speed command
                 if (state.get() == GuidanceState.ENGAGED) { 
-                    commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, frequency, phase), maxAccel);
+                    if (System.currentTimeMillis() - startTime < holdTimeMs) {
+                        commands.setCommand(operatingSpeed, maxAccel);
+                    } else {
+                        commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, frequency, phase), maxAccel);
+                    }
                 }
 
                 Thread.sleep(sleepDurationMillis);
