@@ -12,7 +12,6 @@ import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeConfiguration;
 import org.ros.node.service.*;
 import org.ros.node.topic.Publisher;
 import org.ros.rosjava_geometry.*;
