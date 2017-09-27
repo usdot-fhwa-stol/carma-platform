@@ -29,11 +29,11 @@ public abstract class AbstractPlugin implements IPlugin {
     }
 
     @Override public String getName() {
-        return versionId;
+        return name;
     }
 
     @Override public String getVersionId() {
-        return name;
+        return versionId;
     }
 
     @Override public boolean getActivation() {

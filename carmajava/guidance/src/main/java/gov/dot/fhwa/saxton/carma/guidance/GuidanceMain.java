@@ -132,8 +132,10 @@ public class GuidanceMain extends SaxtonBaseNode {
             new ServiceResponseBuilder<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>() {
                 @Override public void build(SetGuidanceEnabledRequest setGuidanceEnabledRequest,
                     SetGuidanceEnabledResponse setGuidanceEnabledResponse) throws ServiceException {
-                    state.set(GuidanceState.ENABLED);
-                    setGuidanceEnabledResponse.setGuidanceStatus(enabled.get());
+                        if (state.get() == GuidanceState.DRIVERS_READY) {
+                            state.set(GuidanceState.ENABLED);
+                        }
+                        setGuidanceEnabledResponse.setGuidanceStatus(state.get() == GuidanceState.ENABLED);
                 }
             });
 
