@@ -695,8 +695,8 @@ function showRouteInfo()
 
     listenerRouteState.subscribe(function(message) {
        insertNewTableRow('tblSecond','Route ID', message.routeID );
-       insertNewTableRow('tblSecond','Cross Track',message.cross_track );
-       insertNewTableRow('tblSecond','Down Track', message.down_track );
+       insertNewTableRow('tblSecond','Cross Track',message.cross_track.toFixed(2) );
+       insertNewTableRow('tblSecond','Down Track', message.down_track.toFixed(2) );
     });
 
 }
