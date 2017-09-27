@@ -60,6 +60,7 @@ public class GuidanceCommands extends GuidanceComponent {
     public void setCommand(double speed, double accel) {
         speedCommand.set(speed);
         maxAccel.set(accel);
+        log.info("Speed command set to "  + speed + "m/s and " + accel + "m/s/s");
     }
 
     @Override public void onSystemReady() {
