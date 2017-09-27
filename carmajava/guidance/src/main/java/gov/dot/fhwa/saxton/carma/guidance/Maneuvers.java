@@ -66,7 +66,7 @@ public class Maneuvers extends GuidanceComponent {
     }
 
     @Override public void loop() {
-        if (getState() == GuidanceState.ENABLED) {
+        if (getState() == GuidanceState.ENGAGED) {
             NewPlan newPlan = newPlanPublisher.newMessage();
             newPlan.setExpiration(node.getCurrentTime());
             newPlan.getHeader().setChecksum((short) 0);
