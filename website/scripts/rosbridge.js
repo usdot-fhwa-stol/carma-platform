@@ -6,7 +6,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.138' // TODO: Update with proper environment IP address.
+var ip = '192.168.32.139' // TODO: Update with proper environment IP address.
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -289,12 +289,12 @@ function startActiveRoute() {
        // Call the service and get back the results in the callback.
        startActiveRouteClient.callService(request, function (result) {
 
-          if (result.errorStatus != 0) //Error: NO_ACTIVE_ROUTE, INVALID_STARTING_LOCATION
+          if (result.errorStatus != 0 && result.errorStatus != 3)
            {
                divCapabilitiesMessage.innerHTML = '<p> Starting the active the route failed, please try it again.</p>';
                return false;
            }
-           else { //Call succeeded , NO_ERROR
+           else { //Call succeeded //NO_ERROR=0 ; ALREADY_FOLLOWING_ROUTE=3;
                return true;
            }
        });
@@ -697,13 +697,10 @@ function showRouteInfo()
     messageType : 'cav_msgs/RouteState'
   });
 
-
     listenerRouteState.subscribe(function(message) {
-       document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerRouteState.name + ': ' + message.routeID;
-       //listenerNavSatFix.unsubscribe();
-       insertNewTableRow('tblSecond','Route ID',message.routeID );
+       insertNewTableRow('tblSecond','Route ID', message.routeID );
        insertNewTableRow('tblSecond','Cross Track',message.cross_track );
-       insertNewTableRow('tblSecond','Down Track',message.down_track );
+       insertNewTableRow('tblSecond','Down Track', message.down_track );
     });
 
 }
