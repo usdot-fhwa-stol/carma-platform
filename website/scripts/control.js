@@ -117,19 +117,35 @@ function setCbSelectedBgColor(color)
        }//for
 }
 
+
 /*
 * Add new row to the table.
 */
 function insertNewTableRow(tableName, rowTitle, rowValue) {
-    var table = document.getElementById(tableName);
-    var row = table.insertRow(table.rows.count);
-    var cell1 = row.insertCell(0);
-    var cell2 = row.insertCell(1);
 
-    cell1.innerHTML = rowTitle;
-    cell2.innerHTML = rowValue;
-    //cell1.setAttribute("class","col-style2a");
-    //cell2.setAttribute("class","col-style2b");
-    cell1.className = 'col-style2a';
-    cell2.className = 'col-style2b';
+    var cellId = rowTitle.replace( / /g, '' );
+
+    var existingCell2 = document.getElementById(cellId);
+
+    if (existingCell2 != null)
+    {
+        existingCell2.innerHTML = rowValue;
+        existingCell2.className = 'col-style2b';
+    }
+    else
+    {
+        var table = document.getElementById(tableName);
+        var row = table.insertRow(table.rows.count);
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+
+        cell1.innerHTML = rowTitle;
+        cell2.innerHTML = rowValue;
+        //cell1.setAttribute("class","col-style2a");
+        //cell2.setAttribute("class","col-style2b");
+        cell1.className = 'col-style2a';
+        cell2.className = 'col-style2b';
+        cell2.id = cellId;
+    }
+
 }

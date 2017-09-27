@@ -6,7 +6,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.138' // TODO: Update with proper environment IP address.
+var ip = '192.168.32.139' // TODO: Update with proper environment IP address.
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -243,29 +243,15 @@ function setRoute(id) {
         else { //Call succeeded
             route_name = lblRoute.innerHTML;
 
+            divCapabilitiesMessage.innerHTML = 'You have selected the route called " ' + route_name + '". ';
+
             //After activating the route, start_active_route.
             //TODO: Discuss if start_active_route can be automatically determined and done by Route Manager in next iteration?
             //      Route selection is done first and set only once.
             //      Once selected, it wouldn't be activated until at least 1 Plugin is selected (based on Route).
             //      Only when a route is selected and at least one plugin is selected, could Guidance be Engaged.
-            if (startActiveRoute() == false) //If failed to start, return and no continue.
-            {
-                return;
-            }
+            startActiveRoute();
 
-            //Hide the Route selection
-            var divRoutes = document.getElementById('divRoutes');
-            divRoutes.style.display = 'none';
-
-            //Display the list of Plugins
-            var divSubCapabilities = document.getElementById('divSubCapabilities');
-            divSubCapabilities.style.display = 'block';
-
-            divCapabilitiesMessage.innerHTML = 'You have selected the route called " ' + route_name + '". ';
-
-            showPluginOptions();
-
-            showRouteInfo();// Display Route Info
         }
     });
 }
@@ -289,13 +275,23 @@ function startActiveRoute() {
        // Call the service and get back the results in the callback.
        startActiveRouteClient.callService(request, function (result) {
 
-          if (result.errorStatus != 0) //Error: NO_ACTIVE_ROUTE, INVALID_STARTING_LOCATION
+          if (result.errorStatus != 0 && result.errorStatus != 3)
            {
-               divCapabilitiesMessage.innerHTML = '<p> Starting the active the route failed, please try it again.</p>';
-               return false;
+               divCapabilitiesMessage.innerHTML += '<p> Starting the active the route failed, please try it again.</p>';
            }
-           else { //Call succeeded , NO_ERROR
-               return true;
+           else { //Call succeeded //NO_ERROR=0 ; ALREADY_FOLLOWING_ROUTE=3;
+
+                   //Hide the Route selection
+                   var divRoutes = document.getElementById('divRoutes');
+                   divRoutes.style.display = 'none';
+
+                   //Display the list of Plugins
+                   var divSubCapabilities = document.getElementById('divSubCapabilities');
+                   divSubCapabilities.style.display = 'block';
+
+                   showPluginOptions();
+
+                   showRouteInfo();// Display Route Info
            }
        });
 }
@@ -697,13 +693,10 @@ function showRouteInfo()
     messageType : 'cav_msgs/RouteState'
   });
 
-
     listenerRouteState.subscribe(function(message) {
-       document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerRouteState.name + ': ' + message.routeID;
-       //listenerNavSatFix.unsubscribe();
-       insertNewTableRow('tblSecond','Route ID',message.routeID );
+       insertNewTableRow('tblSecond','Route ID', message.routeID );
        insertNewTableRow('tblSecond','Cross Track',message.cross_track );
-       insertNewTableRow('tblSecond','Down Track',message.down_track );
+       insertNewTableRow('tblSecond','Down Track', message.down_track );
     });
 
 }
