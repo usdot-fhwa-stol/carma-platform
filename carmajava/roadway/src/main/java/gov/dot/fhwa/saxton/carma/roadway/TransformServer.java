@@ -18,8 +18,10 @@ package gov.dot.fhwa.saxton.carma.roadway;
 
 import geometry_msgs.TransformStamped;
 import org.apache.commons.logging.Log;
+import org.ros.RosCore;
 import org.ros.message.MessageListener;
 import org.ros.node.NodeConfiguration;
+import org.ros.node.NodeMainExecutor;
 import org.ros.rosjava_geometry.FrameTransform;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.message.MessageFactory;
@@ -49,7 +51,7 @@ public class TransformServer extends SaxtonBaseNode {
 
     final Log log = connectedNode.getLog();
     final FrameTransformTree tfTree = new FrameTransformTree();
-
+    
     //Topics
     // Subscribers
     Subscriber<tf2_msgs.TFMessage> tf_sub =

@@ -231,8 +231,8 @@
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
           <remap from="velocity"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
-          <remap from="getTransform"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/transform_server/getTransform"/>
+          <remap from="get_transform"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/get_transform"/>
         </node>
 
         <!-- Transform Server Node -->
@@ -362,5 +362,9 @@
     <param name="robot_description" textfile="$(arg URDF_FILE)"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
 
+    <test test-name="transform_server_test" pkg="carma" type="transformServerTest.py" time-limit="30.0">
+      <remap from="get_transform"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/get_transform"/>
+    </test>
   </group>
 </launch>

@@ -15,6 +15,12 @@ find_package(catkin REQUIRED
 	cav_msgs
 	cav_srvs
 )
+# Enable integration tests using python
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest(/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/launch/saxton_cav.launch)
+endif()
+
 generate_rosjava_messages(
   PACKAGES
     cav_msgs
