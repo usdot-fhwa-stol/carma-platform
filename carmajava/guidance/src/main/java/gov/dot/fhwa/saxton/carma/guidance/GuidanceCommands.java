@@ -20,8 +20,6 @@ import java.util.concurrent.atomic.*;
  * operation of the CARMA platform. It does so by buffering commands received from the TrajectoryExecutor
  * and it's Maneuver instances and latching on those commands until a new one is received. This will output
  * the most recently latched value at a fixed frequency.
- *
- * Presently this is just a mock to implement messaging functionality. during normal
  */
 public class GuidanceCommands extends GuidanceComponent {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
