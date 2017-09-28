@@ -25,8 +25,20 @@
 dependencies {
   /* Example of an external maven artifact dependency */
     compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
+    compile 'junit:junit:4.12'
   /* compile 'org.ros.rosjava_core:rosjava:[0.2,)' */
   /* Example of a local subproject dependency */ 
   /* compile project(':sibling_gradle_project') */
 }
 
+/ * Build artifact of RosTest for use in other sub-project integration tests */
+configurations {
+    rosUtilsTestArtifacts.extendsFrom testRuntime
+}
+task rosUtilsTestJar(type: Jar) {
+    classifier "test"
+    from sourceSets.test.output
+}
+artifacts {
+    rosUtilsTestArtifacts rosUtilsTestJar
+}

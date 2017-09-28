@@ -38,8 +38,6 @@ import tf2_msgs.TFMessage;
  * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.TransformServer
  */
 public class TransformServer extends SaxtonBaseNode {
-  protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
-  protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("transform_server");
@@ -49,6 +47,8 @@ public class TransformServer extends SaxtonBaseNode {
 
     final Log log = connectedNode.getLog();
     final FrameTransformTree tfTree = new FrameTransformTree();
+    final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+    final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
     //Topics
     // Subscribers
@@ -71,8 +71,9 @@ public class TransformServer extends SaxtonBaseNode {
           @Override public void build(cav_srvs.GetTransformRequest request,
             cav_srvs.GetTransformResponse response) {
             // Calculate transform between provided frames and return result
+            // Rosjava frame transform tree has an reversed concept of source and target
             FrameTransform transform =
-              tfTree.transform(request.getSourceFrame(), request.getTargetFrame());
+              tfTree.transform(request.getChildFrame(), request.getParentFrame());
             geometry_msgs.TransformStamped transformMsg =
               messageFactory.newFromType(TransformStamped._TYPE);
             if (transform != null) {
