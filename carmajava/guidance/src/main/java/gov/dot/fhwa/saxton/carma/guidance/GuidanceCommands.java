@@ -4,6 +4,10 @@ import cav_msgs.SpeedAccel;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
+import cav_srvs.SetEnableRobotic;
+import cav_srvs.SetEnableRoboticRequest;
+import cav_srvs.SetEnableRoboticResponse;
+
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import org.apache.commons.logging.Log;
@@ -24,6 +28,7 @@ import java.util.concurrent.atomic.*;
 public class GuidanceCommands extends GuidanceComponent {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
+    private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
@@ -49,6 +54,22 @@ public class GuidanceCommands extends GuidanceComponent {
     }
 
     @Override public void onGuidanceEnable() {
+        SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
+        enableReq.setSet((byte) 1);
+
+        // TODO: Implement no-response call method
+        enableRoboticService.call(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+            @Override
+            public void onSuccess(SetEnableRoboticResponse resp) {
+                // NO-OP
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                // NO-OP
+            }
+        });
+
         engaged.set(true);
     }
 
@@ -73,7 +94,8 @@ public class GuidanceCommands extends GuidanceComponent {
         GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
 
         List<String> reqdCapabilities = new ArrayList<>();
-        reqdCapabilities.add("cmd_speed"); // We only need to use one type of control
+        reqdCapabilities.add("control/cmd_speed"); // We only need to use one type of control
+        reqdCapabilities.add("control/robotic_enable"); // We only need to use one type of control
         req.setCapabilities(reqdCapabilities);
 
         // Work around to pass a final object into our anonymous inner class so we can get the
@@ -95,29 +117,42 @@ public class GuidanceCommands extends GuidanceComponent {
                 }
             });
 
+        // TODO: Replace this hack with proper synchronization
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // NO-OP
+        }
+
         // No message for LanePosition.msg to be published on "guidance/control/lane_position"
         // TODO: Add message type for lateral control from guidance
 
         // Verify that the message returned drivers that we can use
         String driverFqn = null;
+        String enableService = null;
         if (drivers[0] != null) {
             List<String> driverFqns = drivers[0].getDriverData();
-            if (driverFqns.size() > 0) {
-                driverFqn = driverFqns.get(0);
-                log.info("Discovered driver: " + driverFqns.get(0));
-            } else {
-                log.warn("No control/cmd_speed capable driver found!!!");
+            for (String capability : driverFqns) {
+                if (capability.endsWith("control/robotic_enable")) {
+                    enableService = capability;
+                }
+                if (capability.endsWith("control/cmd_speed")) {
+                    driverFqn = capability;
+                }
             }
-        } else {
-            log.warn("No control/cmd_speed capable driver found!!!");
         }
 
-        if (driverFqn != null) {
-            // Open the publication channel to the driver and start sending it commands
-            speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
-            driverConnected = true;
-        } else {
-            log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
+        try {
+            if (driverFqn != null && enableService != null) {
+                // Open the publication channel to the driver and start sending it commands
+                speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
+                enableRoboticService = pubSubService.getServiceForTopic(enableService, SetEnableRobotic._TYPE);
+                driverConnected = true;
+            } else {
+                log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
+            }
+        } catch (TopicNotFoundException tnfe) {
+            log.fatal("!!! Unable to find enable robotic service!");
         }
     }
 
