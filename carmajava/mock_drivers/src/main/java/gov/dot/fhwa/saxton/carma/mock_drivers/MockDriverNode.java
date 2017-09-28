@@ -33,7 +33,7 @@ import org.ros.namespace.GraphName;
  * ROSJava does not support rosrun parameter setting so a rosrun is a two step process
  * rosparam set /mock_driver/simulated_driver 'can'
  * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
- * rosrun rosutils mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
+ * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
 public class MockDriverNode extends SaxtonBaseNode {
   private String defaultName =  "mock_driver";

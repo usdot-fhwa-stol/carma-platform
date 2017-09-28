@@ -57,7 +57,7 @@ public class RouteProgressTest {
    */
   @Test
   public void testRouteProgress() throws Exception {
-    RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/rosutils/route/src/test/resources/routefiles/");
+    RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
 
     routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
@@ -129,7 +129,7 @@ public class RouteProgressTest {
    */
   @Test
   public void testLeavingRouteVicinity() throws Exception {
-    RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/rosutils/route/src/test/resources/routefiles/");
+    RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
 
     routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
