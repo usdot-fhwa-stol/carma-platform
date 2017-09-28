@@ -34,6 +34,8 @@ public class GuidanceCommands extends GuidanceComponent {
     private long sleepDurationMillis = 100;
     private AtomicBoolean engaged = new AtomicBoolean(false);
     private boolean driverConnected = false;
+    private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
+    private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
 
     GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
         super(state, iPubSubService, node);
@@ -94,8 +96,8 @@ public class GuidanceCommands extends GuidanceComponent {
         GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
 
         List<String> reqdCapabilities = new ArrayList<>();
-        reqdCapabilities.add("control/cmd_speed"); // We only need to use one type of control
-        reqdCapabilities.add("control/robotic_enable"); // We only need to use one type of control
+        reqdCapabilities.add(SPEED_CMD_CAPABILITY); 
+        reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY); 
         req.setCapabilities(reqdCapabilities);
 
         // Work around to pass a final object into our anonymous inner class so we can get the
@@ -108,7 +110,11 @@ public class GuidanceCommands extends GuidanceComponent {
         driverCapabilityService.call(req,
             new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
                 @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                    log.info("Received GetDriversWithCapabilitiesResponse:" + msg);
+                    log.info("Received GetDriversWithCapabilitiesResponse");
+                    for (String driverName : msg.getDriverData()) {
+                        log.info("GuidanceCommands discovered driver: " + driverName);
+                    }
+
                     drivers[0] = msg;
                 }
 
@@ -119,7 +125,7 @@ public class GuidanceCommands extends GuidanceComponent {
 
         // TODO: Replace this hack with proper synchronization
         try {
-            Thread.sleep(1000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             // NO-OP
         }
@@ -129,24 +135,20 @@ public class GuidanceCommands extends GuidanceComponent {
 
         // Verify that the message returned drivers that we can use
         String driverFqn = null;
-        String enableService = null;
         if (drivers[0] != null) {
             List<String> driverFqns = drivers[0].getDriverData();
-            for (String capability : driverFqns) {
-                if (capability.endsWith("control/robotic_enable")) {
-                    enableService = capability;
-                }
-                if (capability.endsWith("control/cmd_speed")) {
-                    driverFqn = capability;
-                }
+            if (driverFqns.size() > 0) {
+                driverFqn = driverFqns.get(0);
             }
         }
 
         try {
-            if (driverFqn != null && enableService != null) {
+            if (driverFqn != null) {
                 // Open the publication channel to the driver and start sending it commands
-                speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
-                enableRoboticService = pubSubService.getServiceForTopic(enableService, SetEnableRobotic._TYPE);
+                log.info("GuidanceCommands connecting to " + driverFqn);
+
+                speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn + "/" + SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
+                enableRoboticService = pubSubService.getServiceForTopic(driverFqn + "/" + ENABLE_ROBOTIC_CAPABILITY, SetEnableRobotic._TYPE);
                 driverConnected = true;
             } else {
                 log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
