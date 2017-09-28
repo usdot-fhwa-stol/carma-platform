@@ -5,7 +5,7 @@
         <remap from="sent_messages" to="$(arg srx_controller_can_device)/sent_messages" />
     </node>
     <node name="dbw_socketcan_bridge" pkg="socketcan_bridge" type="socketcan_bridge_node" output="screen">
-        <param name="can_device" value="$(arg device_name)" />
+        <param name="can_device" value="$(arg srx_controller_can_device)" />
         <remap from="received_messages" to="$(arg srx_controller_can_device)/received_messages" />
         <remap from="sent_messages" to="$(arg srx_controller_can_device)/sent_messages" />
     </node>
