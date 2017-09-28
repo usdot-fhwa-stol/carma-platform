@@ -6,4 +6,4 @@ uint8 state
 
 uint8 LEFT = 0
 uint8 RIGHT = 1
-uint8 NEUTRAL = 3
+uint8 NEUTRAL = 2
