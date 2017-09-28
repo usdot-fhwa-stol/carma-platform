@@ -305,9 +305,9 @@
       </node>
 
       <!-- SRX CAN Driver Node -->
-      <node unless="$(arg mock_can)" pkg="can" type="can_node" name="can_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
-      </node>
+      <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
+        <arg name="srx_can_can_device" value="can0" />
+      </include>
       <!-- Simulated CAN Driver Node -->
       <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
@@ -319,7 +319,7 @@
       <!--SRX Controller Driver Node-->
 
       <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
-        <arg name="device_name" value="can0"/>
+        <arg name="srx_controller_can_device" value="can1"/>
       </include>
       <!-- Simulated SRX Controller Driver Node -->
       <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_application"
@@ -330,9 +330,9 @@
       </node>
 
       <!-- SRX Radar Driver Node -->
-      <node unless="$(arg mock_radar)" pkg="radar" type="radar_node" name="srx_object_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
-      </node>
+      <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
+        <arg name="srx_objects_can_device" value="ics0can0"/>
+      </include>
       <!-- Simulated Radar Driver Node -->
       <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_object_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
