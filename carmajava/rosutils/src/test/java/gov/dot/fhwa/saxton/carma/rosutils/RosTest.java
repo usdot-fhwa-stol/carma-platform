@@ -32,7 +32,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * This is a base class for tests that sets up and tears down a {@link RosCore}
  * and a {@link NodeMainExecutor}.
- *
+ * Command Line: Running a RosTest from a subproject directory
+ * ../gradlew test --rerun-tasks
  * @author damonkohler@google.com (Damon Kohler)
  */
 @Ignore
