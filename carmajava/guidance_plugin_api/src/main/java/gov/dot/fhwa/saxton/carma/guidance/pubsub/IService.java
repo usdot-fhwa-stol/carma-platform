@@ -33,6 +33,13 @@ public interface IService<T, S> {
      */
     void call(T request, OnServiceResponseCallback<S> callback);
 
+        /**
+     * Generate a new (empty) request-type message instance to have it's fields populated before transmission.
+     *
+     * @return An empty message of type T
+     */
+    T newMessage();
+
     /**
      * Notify this IService instance's parent of this instance's closure. This will not necessarily close the underlying
      * resources associated with this IService.

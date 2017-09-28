@@ -8,7 +8,7 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 public class MockRouteFollowingPlugin extends AbstractMockPlugin {
     public MockRouteFollowingPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
-        name = "MockRouteFollowingPlugin";
-        versionId = "v01a";
+        name = "Mock Route-Following Plugin";
+        versionId = "v00.00.01";
     }
 }

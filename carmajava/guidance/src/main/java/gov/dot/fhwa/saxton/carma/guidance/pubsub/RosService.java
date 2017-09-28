@@ -52,6 +52,11 @@ public class RosService<T, S> implements IService<T, S> {
         }
     }
 
+    @Override
+    public T newMessage() {
+        return serviceClient.newMessage();
+    }
+
     @Override public void close() {
         parent.notifyClientShutdown();
     }

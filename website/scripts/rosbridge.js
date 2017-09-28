@@ -1,7 +1,6 @@
 /***
  This file shall contain ROS relate function calls.
  TODO: Store user selections across postbacks especially when page is refreshed by user.
- TODO: Cut down the # of logs shown.
  TODO: Set timeout on Modal.
 ****/
 
@@ -15,16 +14,16 @@ var t_nav_sat_fix = 'nav_sat_fix';
 var t_current_segment = 'current_segment';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
-var t_route_state = "/saxton_cav/vehicle_environment/route/route_state"; //TODO: Update after Launch File is changed.
+var t_route_state = "route_state";
 
 // Services
 var s_get_available_routes = 'get_available_routes';
 var s_set_active_route = 'set_active_route';
-var s_start_active_route = "/saxton_cav/vehicle_environment/route/start_active_route"; //TODO: Update after Launch File is changed.
+var s_start_active_route = "start_active_route";
 
 var s_get_registered_plugins = 'plugins/get_registered_plugins';
-var s_activate_plugins = 'plugins/activate_plugins';
-var s_set_guidance_enable = 'set_guidance_enable';
+var s_activate_plugins = 'plugins/activate_plugin';
+var s_set_guidance_engaged = 'set_guidance_engaged';
 
 // Params
 var p_host_instructions = '/saxton_cav/ui/host_instructions';
@@ -54,6 +53,7 @@ var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 function connectToROS() {
 
     var isConnected = false;
+
     try {
         // If there is an error on the backend, an 'error' emit will be emitted.
         ros.on('error', function (error) {
@@ -66,7 +66,6 @@ function connectToROS() {
             document.getElementById('closed').style.display = 'none';
             document.getElementById('error').style.display = 'inline';
 
-	    isConnected = false;
         });
 
         // Find out exactly when we made a connection.
@@ -78,29 +77,25 @@ function connectToROS() {
             document.getElementById('closed').style.display = 'none';
             document.getElementById('connected').style.display = 'inline';
 
-	    isConnected = true;
+	        waitForSystemReady ();
         });
 
         ros.on('close', function () {
-            document.getElementById('divLog').innerHTML += '<br/> ROS Connection Closed.';
 
+            document.getElementById('divLog').innerHTML += '<br/> ROS Connection Closed.';
             document.getElementById('connecting').style.display = 'none';
             document.getElementById('connected').style.display = 'none';
             document.getElementById('closed').style.display = 'inline';
 
-	    isConnected = false;
         });
 
         // Create a connection to the rosbridge WebSocket server.
         ros.connect('ws://' + ip + ':9090');
-	return isConnected;
-
 
     }
     catch(err) {
          divCapabilitiesMessage.innerHTML = '<p> Unexpected Error. Sorry, unable to connect to ROS server, please refresh your page to try again or contact your System Admin.</p>';
          console.log(err);
-	 return isConnected;
     }
 }
 
@@ -370,7 +365,7 @@ function activatePlugin(id) {
     var activatePluginClient = new ROSLIB.Service({
         ros: ros,
         name: s_activate_plugins,
-        serviceType: 'cav_srvs/PluginList'
+        serviceType: 'cav_srvs/PluginActivation'
     });
 
     // Get name and version.
@@ -464,13 +459,13 @@ function engageGuidance() {
     //Call the service to engage guidance.
     var setGuidanceClient = new ROSLIB.Service({
         ros: ros,
-        name: s_set_guidance_enable,
-        serviceType: 'cav_srvs/SetGuidanceEnabled'
+        name: s_set_guidance_engaged,
+        serviceType: 'cav_srvs/SetGuidanceEngaged'
     });
 
     //Setup the request.
     var request = new ROSLIB.ServiceRequest({
-        guidance_enabled: newStatus
+        guidance_engage: newStatus
     });
 
     // Call the service and get back the results in the callback.
@@ -514,7 +509,7 @@ function engageGuidance() {
 
 
 /*
- Check for availability when Guidance is enabled
+ Check for availability when Guidance is engaged
 */
 function checkAvailability()
 {
@@ -526,13 +521,39 @@ function checkAvailability()
     });
 
     // Then we add a callback to be called every time a message is published on this topic.
-    listenerPluginAvailability.subscribe(function (plugins) {
+    listenerPluginAvailability.subscribe(function (pluginList) {
 
-        //TODO: Discuss if the available_plugins topic logic need to be updated to only return the availbility status of active plugins.
-        //TODO: Update to get the plugins and enable based on that list. For now, all activated plugin are marked available.
-        setCbSelectedBgColor('#4CAF50');
+        //If nothing on the list, set all selected checkboxes back to blue (or active).
+        if (pluginList == null || pluginList.plugins.length == 0)
+        {
+            setCbSelectedBgColor('cornflowerblue');
+            return;
+        }
+
+        pluginList.plugins.forEach(showAvailablePlugin );
 
     });//listener
+}
+
+/*
+    Loop through each available plugin
+*/
+function showAvailablePlugin(plugin) {
+
+    var cbTitle = plugin.name + ' ' + plugin.versionId;
+    var cbId = plugin.name.replace(/\s/g,'_') + '&' + plugin.versionId.replace(/\./g,'_') ;
+    var isActivated = plugin.activated;
+    var isAvailable = plugin.available;
+
+    //If available, set to green.
+    if (isAvailable == true) {
+       setCbBgColor(cbId, '#4CAF50');
+    }
+    else //if not available, go back to blue.
+    {
+       alert (cbid + 'to blue');
+       setCbBgColor(cbId, 'cornflowerblue');
+    }
 }
 
 /*
@@ -695,8 +716,8 @@ function showRouteInfo()
 
     listenerRouteState.subscribe(function(message) {
        insertNewTableRow('tblSecond','Route ID', message.routeID );
-       insertNewTableRow('tblSecond','Cross Track',message.cross_track );
-       insertNewTableRow('tblSecond','Down Track', message.down_track );
+       insertNewTableRow('tblSecond','Cross Track',message.cross_track.toFixed(2) );
+       insertNewTableRow('tblSecond','Down Track', message.down_track.toFixed(2) );
     });
 
 }
@@ -788,13 +809,7 @@ function waitForSystemReady () {
  Onload function that gets called on page refresh.
 */
 window.onload = function () {
-    var isConnected = connectToROS();
-
-    if (isConnected == false)
-	{
-        waitForSystemReady ();
-	}
-
+    connectToROS();
 }
 
 /* When the user clicks anywhere outside of the modal, close it.

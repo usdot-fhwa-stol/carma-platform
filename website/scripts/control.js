@@ -99,7 +99,7 @@ function getCheckboxesSelected()
 }
 
 /*
-* Sets the background color of the checkbox.
+* Sets the background color of all selected checkboxes.
 */
 function setCbSelectedBgColor(color)
 {
@@ -115,6 +115,20 @@ function setCbSelectedBgColor(color)
                     }//if
                 }//if
        }//for
+}
+
+/*
+* Sets the background color of a specific checkbox.
+*/
+function setCbBgColor(id, color)
+{
+    //find the label for the checkbox and update it's color, this is only way to update the checkbox color.
+    var lblName = 'lbl' + id;
+    var labelForCb = document.getElementById(lblName);
+
+    if (labelForCb!= null)
+        labelForCb.style.backgroundColor  =  color;
+
 }
 
 

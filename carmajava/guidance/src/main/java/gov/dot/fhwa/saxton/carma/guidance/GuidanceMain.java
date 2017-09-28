@@ -18,9 +18,9 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
-import cav_srvs.SetGuidanceEnabled;
-import cav_srvs.SetGuidanceEnabledRequest;
-import cav_srvs.SetGuidanceEnabledResponse;
+import cav_srvs.SetGuidanceEngaged;
+import cav_srvs.SetGuidanceEngagedRequest;
+import cav_srvs.SetGuidanceEngagedResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
@@ -53,8 +53,8 @@ public class GuidanceMain extends SaxtonBaseNode {
     protected int numThreads = 6;
 
     protected IPubSubService pubSubService;
-    protected ServiceServer<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>
-        guidanceEnableService;
+    protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>
+        guidanceEngageService;
 
     protected final AtomicBoolean enabled = new AtomicBoolean(false);
     protected final AtomicBoolean systemReady = new AtomicBoolean(false);
@@ -72,9 +72,9 @@ public class GuidanceMain extends SaxtonBaseNode {
 
         Arbitrator arbitrator = new Arbitrator(state, pubSubService, node);
         PluginManager pluginManager = new PluginManager(state, pubSubService, node);
-        TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node);
         Tracking tracking = new Tracking(state, pubSubService, node);
         GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
+        TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands);
         Maneuvers maneuvers = new Maneuvers(state, pubSubService, node);
 
         executor.execute(maneuvers);
@@ -127,13 +127,21 @@ public class GuidanceMain extends SaxtonBaseNode {
         final IPublisher<SystemAlert> systemAlertPublisher =
             pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 
-        guidanceEnableService = connectedNode.newServiceServer("set_guidance_enabled",
-            SetGuidanceEnabled._TYPE,
-            new ServiceResponseBuilder<SetGuidanceEnabledRequest, SetGuidanceEnabledResponse>() {
-                @Override public void build(SetGuidanceEnabledRequest setGuidanceEnabledRequest,
-                    SetGuidanceEnabledResponse setGuidanceEnabledResponse) throws ServiceException {
-                    state.set(GuidanceState.ENABLED);
-                    setGuidanceEnabledResponse.setGuidanceStatus(enabled.get());
+        guidanceEngageService = connectedNode.newServiceServer("set_guidance_engaged",
+            SetGuidanceEngaged._TYPE,
+            new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
+                @Override public void build(SetGuidanceEngagedRequest setGuidanceEngagedRequest,
+                    SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
+                        if (state.get() == GuidanceState.DRIVERS_READY && setGuidanceEngagedRequest.getGuidanceEngage()) {
+                            state.set(GuidanceState.ENGAGED);
+                        }
+                        
+                        // Detect a shutdown from UI
+                        if (!setGuidanceEngagedRequest.getGuidanceEngage()) {
+                            state.set(GuidanceState.SHUTDOWN);
+                        }
+
+                        setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
                 }
             });
 

@@ -7,8 +7,6 @@
 # @version 0.1
 #
 
-std_msgs/Header header
-
 # The string name identifier for the plugin
 string name
 # The strin version identifier for the plugin
