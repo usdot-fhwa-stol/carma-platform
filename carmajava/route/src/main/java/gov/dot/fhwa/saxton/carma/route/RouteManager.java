@@ -39,7 +39,7 @@ import java.util.List;
  * <p>
  * <p>
  * Command line test:
- * rosparam set /route_manager/default_database_path /home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles
+ * rosparam set /route_manager/default_database_path /home/mcconnelms/to13_ws/src/CarmaPlatform/rosutils/route/src/test/resources/routefiles
  * rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
  * Command line test for the service:
  * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'

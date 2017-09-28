@@ -31,3 +31,14 @@ dependencies {
   /* compile project(':sibling_gradle_project') */
 }
 
+/ * Build artifact of RosTest for use in other sub-project integration tests */
+configurations {
+    rosUtilsTestArtifacts.extendsFrom testRuntime
+}
+task rosUtilsTestJar(type: Jar) {
+    classifier "test"
+    from sourceSets.test.output
+}
+artifacts {
+    rosUtilsTestArtifacts rosUtilsTestJar
+}

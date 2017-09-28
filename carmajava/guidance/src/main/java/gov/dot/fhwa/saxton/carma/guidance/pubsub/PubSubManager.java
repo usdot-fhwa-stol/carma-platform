@@ -14,8 +14,8 @@
  * the License.
  */
 
-//TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
-//Originally "com.github.rosjava.carmajava.template;"
+//TODO: Naming convention of "package gov.dot.fhwa.saxton.rosutils.<template>;"
+//Originally "com.github.rosjava.rosutils.template;"
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import java.util.HashMap;

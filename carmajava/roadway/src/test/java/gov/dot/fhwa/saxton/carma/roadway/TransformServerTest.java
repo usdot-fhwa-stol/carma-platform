@@ -151,7 +151,7 @@ public class TransformServerTest extends RosTest {
     nodeMainExecutor.execute(tfServer, nodeConfiguration);
     // Start the anonymous node to test the server
     nodeMainExecutor.execute(anonNode, nodeConfiguration);
-    assertTrue(countDownLatch.await(5, TimeUnit.SECONDS)); // Check if service calls were successful
+    assertTrue(countDownLatch.await(10, TimeUnit.SECONDS)); // Check if service calls were successful
     // Shutdown nodes
     nodeMainExecutor.shutdownNodeMain(anonNode);
     // Shutting down the transform server from this test results in a exception on printing the service address
