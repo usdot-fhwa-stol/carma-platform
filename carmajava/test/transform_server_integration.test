@@ -1,0 +1,27 @@
+<!--
+	saxton_cav.launch
+
+  A the ros launch file for the STOL CAV Prototype ROS Network.
+  Launches all the needed ros nodes and sets up the parameter server.
+  Also sets up all static transforms used by tf2 within the system.
+
+  Use:
+  First delete the generated build/scripts folder in all java packages.
+  rostest carma transform_server_integration.test
+  After using source devel/setup.bash from workspace root.
+
+  To run test with simulated drivers
+  rostest carma transform_server_integration.test mock_arada:=true mock_pin
+  point:=true mock_radar:=true mock_srx_controller:=true mock_can:=true
+-->
+<launch>
+  <!-- Include Main Launch File -->
+  <include pass_all_args="true" file="$(find carma)/launch/saxton_cav.launch"/>
+  <!-- Launch Test Node -->
+  <group ns="/saxton_cav/test">
+    <test test-name="transform_server_test" pkg="carma" type="transformServerTest.py" time-limit="35.0">
+      <remap from="get_transform"
+             to="/saxton_cav/vehicle_environment/roadway/get_transform"/>
+    </test>
+  </group>
+</launch>
