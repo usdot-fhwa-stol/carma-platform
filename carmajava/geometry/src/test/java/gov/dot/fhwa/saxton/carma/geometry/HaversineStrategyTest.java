@@ -128,4 +128,41 @@ public class HaversineStrategyTest {
     solution = 991.4;
     assertTrue(Math.abs(haversineStrategy.downtrackDistance(loc2, seg) - solution) < solution * 0.005); // Check accuracy to within .5% of haversine result
   }
+
+  /**
+   * Tests the getInteriorAngle function
+   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
+   * @throws Exception
+   */
+  @Test
+  public void testGetInteriorAngle() throws Exception {
+
+    log.info("// Entering get interior angle test");
+    HaversineStrategy haversineStrategy = new HaversineStrategy();
+    Vector3 v1 = new Vector3(1,1,1);
+    Vector3 v2 = new Vector3(1,2,4);
+    double angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
+    assertTrue(Math.abs(angle - 0.4908826) < 0.00001);
+
+    v1 = new Vector3(8,-2,13);
+    v2 = new Vector3(-2,14,-2);
+    angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
+    assertTrue(Math.abs(angle - 1.89478) < 0.00001);
+
+    v1 = new Vector3(1,0,0);
+    v2 = new Vector3(0,1,0);
+    angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
+    assertTrue(Math.abs(angle - Math.PI/2.0) < 0.00001);
+
+    v1 = new Vector3(1,0,0);
+    v2 = new Vector3(0,0,1);
+    angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
+    assertTrue(Math.abs(angle - Math.PI/2.0) < 0.00001);
+
+    v1 = new Vector3(0,0,0);
+    v2 = new Vector3(0,0,0);
+    angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
+    assertTrue(Math.abs(angle - 0.0) < 0.00001);
+
+  }
 }
