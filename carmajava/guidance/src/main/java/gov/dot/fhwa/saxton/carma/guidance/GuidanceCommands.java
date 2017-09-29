@@ -142,19 +142,20 @@ public class GuidanceCommands extends GuidanceComponent {
             }
         }
 
-        try {
-            if (driverFqn != null) {
-                // Open the publication channel to the driver and start sending it commands
-                log.info("GuidanceCommands connecting to " + driverFqn);
+        if (driverFqn != null) {
+            // Open the publication channel to the driver and start sending it commands
+            log.info("GuidanceCommands connecting to " + driverFqn);
 
-                speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn + "/" + SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
+            speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn + "/" + SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
+
+            try {
                 enableRoboticService = pubSubService.getServiceForTopic(driverFqn + "/" + ENABLE_ROBOTIC_CAPABILITY, SetEnableRobotic._TYPE);
                 driverConnected = true;
-            } else {
-                log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
+            } catch (TopicNotFoundException tnfe) {
+                log.fatal("GuidanceCommands unable to locate control/enable_robotic service for " + driverFqn);
             }
-        } catch (TopicNotFoundException tnfe) {
-            log.fatal("!!! Unable to find enable robotic service!");
+        } else {
+            log.fatal("GuidanceCommands unable to find suitable controller driver.");
         }
     }
 
