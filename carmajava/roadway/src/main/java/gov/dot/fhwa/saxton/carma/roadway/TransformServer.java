@@ -65,6 +65,17 @@ public class TransformServer extends SaxtonBaseNode {
       }
     });
 
+    Subscriber<tf2_msgs.TFMessage> tf_static_sub =
+      connectedNode.newSubscriber("/tf_static", tf2_msgs.TFMessage._TYPE);
+    tf_static_sub.addMessageListener(new MessageListener<TFMessage>() {
+      @Override public void onNewMessage(TFMessage tfMessage) {
+        for (TransformStamped transform : tfMessage.getTransforms()) {
+          // Add new transform to internal tree
+          tfTree.update(transform);
+        }
+      }
+    });
+
     // Services
     // Server
     ServiceServer<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> transformServer =

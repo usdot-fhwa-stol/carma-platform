@@ -97,51 +97,51 @@
       </include>
     </group>
 
-    <!-- Guidance Package -->
-    <group ns="$(arg GUIDE_NS)">
-      <!-- Guidance Main Node -->
-      <node pkg="carma" type="guidance" name="guidance_main"
-            args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
-        <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
-        <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
+    <!--&lt;!&ndash; Guidance Package &ndash;&gt;-->
+    <!--<group ns="$(arg GUIDE_NS)">-->
+      <!--&lt;!&ndash; Guidance Main Node &ndash;&gt;-->
+      <!--<node pkg="carma" type="guidance" name="guidance_main"-->
+            <!--args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">-->
+        <!--<rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>-->
+        <!--<rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>-->
 
-        <remap from="system_alert"
-               to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="get_drivers_with_capabilities"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-        <remap from="new_plan_inbound"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>
-        <remap from="plan_status"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/plan_status"/>
+        <!--<remap from="system_alert"-->
+               <!--to="/$(arg TOP_NS)/system_alert"/>-->
+        <!--<remap from="get_drivers_with_capabilities"-->
+               <!--to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>-->
+        <!--<remap from="new_plan_inbound"-->
+               <!--to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>-->
+        <!--<remap from="plan_status"-->
+               <!--to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/plan_status"/>-->
 
-        <!-- Arbitrator Thread-->
-        <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
+        <!--&lt;!&ndash; Arbitrator Thread&ndash;&gt;-->
+        <!--<remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>-->
 
-        <!-- Tracking Thread-->
-        <remap from="heading"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
-        <remap from="nav_sat_fix"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-        <remap from="velocity" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
+        <!--&lt;!&ndash; Tracking Thread&ndash;&gt;-->
+        <!--<remap from="heading"-->
+               <!--to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>-->
+        <!--<remap from="nav_sat_fix"-->
+               <!--to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>-->
+        <!--<remap from="velocity" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>-->
 
-        <!-- Trajectory Thread-->
-        <remap from="get_drivers_with_capabilities"
-               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        <!--&lt;!&ndash; Trajectory Thread&ndash;&gt;-->
+        <!--<remap from="get_drivers_with_capabilities"-->
+               <!--to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>-->
 
-        <!-- Trajectory and Arbitrator -->
-        <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
+        <!--&lt;!&ndash; Trajectory and Arbitrator &ndash;&gt;-->
+        <!--<remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>-->
 
-        <!-- Maneuvers Thread-->
-        <remap from="roadway_environment"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/roadway_environment"/>
-        <remap from="route"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route"/>
+        <!--&lt;!&ndash; Maneuvers Thread&ndash;&gt;-->
+        <!--<remap from="roadway_environment"-->
+               <!--to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/roadway_environment"/>-->
+        <!--<remap from="route"-->
+               <!--to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route"/>-->
 
-        <!-- Plugin Cruising Thread-->
-        <remap from="get_available_routes"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>
-      </node>
-    </group>
+        <!--&lt;!&ndash; Plugin Cruising Thread&ndash;&gt;-->
+        <!--<remap from="get_available_routes"-->
+               <!--to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>-->
+      <!--</node>-->
+    <!--</group>-->
 
     <!-- Vehicle Environment Package -->
     <group ns="$(arg VE_NS)">
@@ -362,7 +362,7 @@
     <param name="robot_description" textfile="$(arg URDF_FILE)"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
 
-    <test test-name="transform_server_test" pkg="carma" type="transformServerTest.py" time-limit="30.0">
+    <test test-name="transform_server_test" pkg="carma" type="transformServerTest.py" time-limit="100000" launch-prefix="xterm -e python -m pdb">
       <remap from="get_transform"
              to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/get_transform"/>
     </test>
