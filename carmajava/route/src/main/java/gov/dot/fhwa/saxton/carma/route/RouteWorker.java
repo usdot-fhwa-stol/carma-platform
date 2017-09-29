@@ -318,7 +318,7 @@ public class RouteWorker {
 
     currentSegment = activeRoute.getSegments().get(index);
     currentSegmentIndex = index;
-    currentWaypointIndex = index;
+    currentWaypointIndex = index + 1; // The current waypoint should be the downtrack one
     downtrackDistance = activeRoute.lengthOfSegments(0, index - 1);
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
@@ -378,6 +378,10 @@ public class RouteWorker {
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
+    log.debug("CrossTrackDistance = " + crossTrackDistance);
+    log.debug("DownTrackDistance = " + downtrackDistance);
+    log.debug("CurrentSegmentIndex = " + currentSegmentIndex);
+    log.debug("CurrentWaypointIndex = " + currentWaypointIndex);
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);
     }
