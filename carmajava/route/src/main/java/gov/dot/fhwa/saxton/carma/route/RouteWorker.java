@@ -362,6 +362,7 @@ public class RouteWorker {
     // Loop to find current segment. This allows for small breaks in gps data
     while (atNextSegment()) { // TODO this might be problematic on tight turns
       currentSegmentIndex++;
+      currentWaypointIndex++;
       // Check if the route has been completed
       if (currentSegmentIndex >= activeRoute.getSegments().size()) {
         handleEvent(WorkerEvent.ROUTE_COMPLETED);
