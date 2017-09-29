@@ -4,6 +4,10 @@ import cav_msgs.SpeedAccel;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
+import cav_srvs.SetEnableRobotic;
+import cav_srvs.SetEnableRoboticRequest;
+import cav_srvs.SetEnableRoboticResponse;
+
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import org.apache.commons.logging.Log;
@@ -24,11 +28,14 @@ import java.util.concurrent.atomic.*;
 public class GuidanceCommands extends GuidanceComponent {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
+    private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
     private AtomicBoolean engaged = new AtomicBoolean(false);
     private boolean driverConnected = false;
+    private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
+    private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
 
     GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
         super(state, iPubSubService, node);
@@ -49,6 +56,22 @@ public class GuidanceCommands extends GuidanceComponent {
     }
 
     @Override public void onGuidanceEnable() {
+        SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
+        enableReq.setSet((byte) 1);
+
+        // TODO: Implement no-response call method
+        enableRoboticService.call(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+            @Override
+            public void onSuccess(SetEnableRoboticResponse resp) {
+                // NO-OP
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                // NO-OP
+            }
+        });
+
         engaged.set(true);
     }
 
@@ -73,7 +96,8 @@ public class GuidanceCommands extends GuidanceComponent {
         GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
 
         List<String> reqdCapabilities = new ArrayList<>();
-        reqdCapabilities.add("cmd_speed"); // We only need to use one type of control
+        reqdCapabilities.add(SPEED_CMD_CAPABILITY); 
+        reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY); 
         req.setCapabilities(reqdCapabilities);
 
         // Work around to pass a final object into our anonymous inner class so we can get the
@@ -86,7 +110,11 @@ public class GuidanceCommands extends GuidanceComponent {
         driverCapabilityService.call(req,
             new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
                 @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                    log.info("Received GetDriversWithCapabilitiesResponse:" + msg);
+                    log.info("Received GetDriversWithCapabilitiesResponse");
+                    for (String driverName : msg.getDriverData()) {
+                        log.info("GuidanceCommands discovered driver: " + driverName);
+                    }
+
                     drivers[0] = msg;
                 }
 
@@ -94,6 +122,13 @@ public class GuidanceCommands extends GuidanceComponent {
                     log.warn("No control/cmd_speed capable driver found!!!");
                 }
             });
+
+        // TODO: Replace this hack with proper synchronization
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            // NO-OP
+        }
 
         // No message for LanePosition.msg to be published on "guidance/control/lane_position"
         // TODO: Add message type for lateral control from guidance
@@ -104,20 +139,23 @@ public class GuidanceCommands extends GuidanceComponent {
             List<String> driverFqns = drivers[0].getDriverData();
             if (driverFqns.size() > 0) {
                 driverFqn = driverFqns.get(0);
-                log.info("Discovered driver: " + driverFqns.get(0));
-            } else {
-                log.warn("No control/cmd_speed capable driver found!!!");
             }
-        } else {
-            log.warn("No control/cmd_speed capable driver found!!!");
         }
 
         if (driverFqn != null) {
             // Open the publication channel to the driver and start sending it commands
-            speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn, SpeedAccel._TYPE);
-            driverConnected = true;
+            log.info("GuidanceCommands connecting to " + driverFqn);
+
+            speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn + "/" + SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
+
+            try {
+                enableRoboticService = pubSubService.getServiceForTopic(driverFqn + "/" + ENABLE_ROBOTIC_CAPABILITY, SetEnableRobotic._TYPE);
+                driverConnected = true;
+            } catch (TopicNotFoundException tnfe) {
+                log.fatal("GuidanceCommands unable to locate control/enable_robotic service for " + driverFqn);
+            }
         } else {
-            log.fatal("GuidanceCommands UNABLE TO FIND CONTROLLER DRIVER!");
+            log.fatal("GuidanceCommands unable to find suitable controller driver.");
         }
     }
 
