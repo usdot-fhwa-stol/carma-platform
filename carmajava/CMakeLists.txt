@@ -15,6 +15,12 @@ find_package(catkin REQUIRED
 	cav_msgs
 	cav_srvs
 )
+# Enable integration tests using python
+#if(CATKIN_ENABLE_TESTING)
+#  find_package(rostest REQUIRED)
+#  add_rostest(test/transform_server_integration.test)
+#endif()
+
 generate_rosjava_messages(
   PACKAGES
     cav_msgs

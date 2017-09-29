@@ -18,8 +18,10 @@ package gov.dot.fhwa.saxton.carma.roadway;
 
 import geometry_msgs.TransformStamped;
 import org.apache.commons.logging.Log;
+import org.ros.RosCore;
 import org.ros.message.MessageListener;
 import org.ros.node.NodeConfiguration;
+import org.ros.node.NodeMainExecutor;
 import org.ros.rosjava_geometry.FrameTransform;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.message.MessageFactory;
@@ -55,6 +57,17 @@ public class TransformServer extends SaxtonBaseNode {
     Subscriber<tf2_msgs.TFMessage> tf_sub =
       connectedNode.newSubscriber("/tf", tf2_msgs.TFMessage._TYPE);
     tf_sub.addMessageListener(new MessageListener<TFMessage>() {
+      @Override public void onNewMessage(TFMessage tfMessage) {
+        for (TransformStamped transform : tfMessage.getTransforms()) {
+          // Add new transform to internal tree
+          tfTree.update(transform);
+        }
+      }
+    });
+
+    Subscriber<tf2_msgs.TFMessage> tf_static_sub =
+      connectedNode.newSubscriber("/tf_static", tf2_msgs.TFMessage._TYPE);
+    tf_static_sub.addMessageListener(new MessageListener<TFMessage>() {
       @Override public void onNewMessage(TFMessage tfMessage) {
         for (TransformStamped transform : tfMessage.getTransforms()) {
           // Add new transform to internal tree
