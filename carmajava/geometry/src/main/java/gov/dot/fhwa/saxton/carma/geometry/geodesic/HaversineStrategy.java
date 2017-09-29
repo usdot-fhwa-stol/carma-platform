@@ -51,10 +51,11 @@ public class HaversineStrategy implements IDistanceStrategy{
     Vector3 vec2ExternalPoint = gCC.geodesic2Cartesian(loc, Transform.identity()).toVector3();
 
     // Get vector from start to external point
-    Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
-
+    //Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
+    Vector3 startToExternalVec = vec2StartPoint.subtract(vec2ExternalPoint);
     // Get vector from start to end point
-    Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+    //Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+    Vector3 startToEndVec = vec2StartPoint.subtract(vec2EndPoint);
 
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
@@ -70,10 +71,11 @@ public class HaversineStrategy implements IDistanceStrategy{
     Vector3 vec2ExternalPoint = gCC.geodesic2Cartesian(loc, Transform.identity()).toVector3();
 
     // Get vector from start to external point
-    Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
-
+    //Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
+    Vector3 startToExternalVec = vec2StartPoint.subtract(vec2ExternalPoint);
     // Get vector from start to end point
-    Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+    //Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+    Vector3 startToEndVec = vec2StartPoint.subtract(vec2EndPoint);
 
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
