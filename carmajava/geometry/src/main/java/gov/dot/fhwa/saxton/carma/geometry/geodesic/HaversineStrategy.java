@@ -60,6 +60,11 @@ public class HaversineStrategy implements IDistanceStrategy{
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
 
+    if (interiorAngle >= Math.PI / 2) { // Angle greater than 90
+      startToEndVec.scale(-1.0); // Invert one of the vectors to bring the angle into range [-90,90]
+      interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
+    }
+
     return startToExternalVec.getMagnitude() * Math.sin(interiorAngle);
   }
 
