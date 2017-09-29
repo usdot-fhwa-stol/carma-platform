@@ -238,6 +238,7 @@ div.message_box {
     overflow: auto; /* Enable scroll if needed */
     background-color: rgb(0,0,0); /* Fallback color */
     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    text-align: center;
 }
 
 /* Modal Content */
@@ -299,10 +300,13 @@ div.message_box {
     padding: 2px 16px;
     background-color: #ffcc00;
     color: black;
+    align: center;
+    text-align: middle;
 }
 
 .modal-body {
     padding: 2px 20px;
+    width: 100%;
 }
 
 .modal-footer {
@@ -312,7 +316,6 @@ div.message_box {
 }
 
 /* System Status Table */
-
 .table-style1 {
     width: 100%;
 }
