@@ -177,7 +177,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
                 //figure out which drivers match the request
                 List<String> res = worker_.getDrivers(request.getCapabilities());
-                log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size() + " matching drivers.");
+                log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size() + " matching capabilities.");
 
                 //formulate the service response
                 response.setDriverData(res);
