@@ -51,19 +51,12 @@ public class HaversineStrategy implements IDistanceStrategy{
     Vector3 vec2ExternalPoint = gCC.geodesic2Cartesian(loc, Transform.identity()).toVector3();
 
     // Get vector from start to external point
-    //Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
-    Vector3 startToExternalVec = vec2StartPoint.subtract(vec2ExternalPoint);
+    Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
     // Get vector from start to end point
-    //Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
-    Vector3 startToEndVec = vec2StartPoint.subtract(vec2EndPoint);
+    Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
 
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
-
-    if (interiorAngle >= Math.PI / 2) { // Angle greater than 90
-      startToEndVec.scale(-1.0); // Invert one of the vectors to bring the angle into range [-90,90]
-      interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
-    }
 
     return startToExternalVec.getMagnitude() * Math.sin(interiorAngle);
   }
@@ -74,25 +67,13 @@ public class HaversineStrategy implements IDistanceStrategy{
     Vector3 vec2StartPoint = gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()).toVector3();
     Vector3 vec2EndPoint = gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()).toVector3();
     Vector3 vec2ExternalPoint = gCC.geodesic2Cartesian(loc, Transform.identity()).toVector3();
-
-    System.out.println("\n\nLOC = " + seg.getLoc1() + "\n\n");
-    System.out.println("\n\nS = " + vec2StartPoint + "\n\n");
-    System.out.println("\n\nE = " + vec2EndPoint + "\n\n");
-    System.out.println("\n\nP = " + vec2ExternalPoint + "\n\n");
     // Get vector from start to external point
     Vector3 startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
     // Get vector from start to end point
     Vector3 startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
 
-    System.out.println("\n\nS2P = " + startToExternalVec + "\n\n");
-    System.out.println("\n\nS2E = " + startToEndVec + "\n\n");
-
     // Get angle between both vectors
     double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
-    if (interiorAngle >= Math.PI / 2) { // Angle greater than 90
-      startToEndVec.scale(-1.0); // Invert one of the vectors to bring the angle into range [-90,90]
-      interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
-    }
 
     return startToExternalVec.getMagnitude() * Math.cos(interiorAngle);
   }

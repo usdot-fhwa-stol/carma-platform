@@ -337,17 +337,17 @@ public class RouteWorker {
         return;
       case NavSatStatus.STATUS_FIX:
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       case NavSatStatus.STATUS_SBAS_FIX:
         //TODO: Handle this variant
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       case NavSatStatus.STATUS_GBAS_FIX:
         //TODO: Handle this variant
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
