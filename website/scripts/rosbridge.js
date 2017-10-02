@@ -733,13 +733,13 @@ function showRouteInfo() {
 */
 function showSpeedAccelInfo() {
     //Get Route State
-    var listenerRouteState = new ROSLIB.Topic({
+    var listenerSpeedAccel = new ROSLIB.Topic({
         ros: ros,
         name: t_cmd_speed,
         messageType: 'cav_msgs/SpeedAccel'
     });
 
-    listenerRouteState.subscribe(function (message) {
+    listenerSpeedAccel.subscribe(function (message) {
         insertNewTableRow('tblFirst', 'Speed', message.speed.toFixed(2));
         insertNewTableRow('tblFirst', 'Max Acceleration', message.max_accel.toFixed(2));
     });
@@ -802,6 +802,7 @@ function showStatusandLogs()
     getParams();
     getFutureTopics();
     getVehicleInfo();
+    showSpeedAccelInfo();
 }
 /*
   Loop function to
