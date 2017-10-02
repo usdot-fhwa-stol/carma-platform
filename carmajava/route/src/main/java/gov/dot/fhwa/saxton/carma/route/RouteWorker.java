@@ -318,7 +318,7 @@ public class RouteWorker {
 
     currentSegment = activeRoute.getSegments().get(index);
     currentSegmentIndex = index;
-    currentWaypointIndex = index;
+    currentWaypointIndex = index + 1; // The current waypoint should be the downtrack one
     downtrackDistance = activeRoute.lengthOfSegments(0, index - 1);
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
@@ -337,17 +337,17 @@ public class RouteWorker {
         return;
       case NavSatStatus.STATUS_FIX:
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       case NavSatStatus.STATUS_SBAS_FIX:
         //TODO: Handle this variant
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       case NavSatStatus.STATUS_GBAS_FIX:
         //TODO: Handle this variant
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
@@ -362,6 +362,7 @@ public class RouteWorker {
     // Loop to find current segment. This allows for small breaks in gps data
     while (atNextSegment()) { // TODO this might be problematic on tight turns
       currentSegmentIndex++;
+      currentWaypointIndex++;
       // Check if the route has been completed
       if (currentSegmentIndex >= activeRoute.getSegments().size()) {
         handleEvent(WorkerEvent.ROUTE_COMPLETED);
@@ -377,6 +378,10 @@ public class RouteWorker {
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
+    log.debug("CrossTrackDistance = " + crossTrackDistance);
+    log.debug("DownTrackDistance = " + downtrackDistance);
+    log.debug("CurrentSegmentIndex = " + currentSegmentIndex);
+    log.debug("CurrentWaypointIndex = " + currentWaypointIndex);
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);
     }
