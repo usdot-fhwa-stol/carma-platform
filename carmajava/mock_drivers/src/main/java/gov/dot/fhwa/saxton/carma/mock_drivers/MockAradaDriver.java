@@ -44,9 +44,11 @@ public class MockAradaDriver extends AbstractMockDriver {
   // Topics
   // Published
   final Publisher<cav_msgs.ByteArray> recvPub;
+  final String recvTopic = "comms/inbound_binary_msg";
 
   // Subscribed
   Subscriber<cav_msgs.ByteArray> outboundSub;
+  final String outboundTopic = "comms/outbound_binary_msg";
 
   private final int EXPECTED_DATA_COL_COUNT = 3;
 
@@ -58,20 +60,16 @@ public class MockAradaDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    recvPub = connectedNode.newPublisher("~/comms/recv", cav_msgs.ByteArray._TYPE);
+    recvPub = connectedNode.newPublisher("~/" + recvTopic, cav_msgs.ByteArray._TYPE);
 
     // Subscribed
-    outboundSub = connectedNode.newSubscriber("~/comms/outbound", cav_msgs.ByteArray._TYPE);
+    outboundSub = connectedNode.newSubscriber("~/" + outboundTopic, cav_msgs.ByteArray._TYPE);
     outboundSub.addMessageListener(new MessageListener<ByteArray>() {
       @Override public void onNewMessage(ByteArray byteArray) {
         log.info("Outbound " + byteArray.getMessageType() + " message received by "
-          + getDefaultDriverName());
+          + getGraphName());
       }
     });
-  }
-
-  @Override public GraphName getDefaultDriverName() {
-    return GraphName.of("mock_arada_driver");
   }
 
   @Override protected void publishData(List<String[]> data) {
@@ -118,6 +116,6 @@ public class MockAradaDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI() {
-    return new ArrayList<>(Arrays.asList("/comms/recv", "/comms/outbound"));
+    return new ArrayList<>(Arrays.asList(recvTopic, outboundTopic));
   }
 }

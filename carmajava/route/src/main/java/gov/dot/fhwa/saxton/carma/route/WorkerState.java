@@ -16,11 +16,23 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 /**
- * Created by mcconnelms on 8/24/17. awaiting
+ * A description of states which a route worker can take
  */
 public enum WorkerState {
+  /**
+   * Starting state. No routes have been loaded yet
+   */
   LOADING_ROUTES,
+  /**
+   * Routes have been loaded and waiting for selection
+   */
   ROUTE_SELECTION,
-  READY_TO_FOLLOW,
+  /**
+   * A route has been selected and is waiting to be started
+   */
+  WAITING_TO_START,
+  /**
+   * The vehicle is actively following a route
+   */
   FOLLOWING_ROUTE
 }

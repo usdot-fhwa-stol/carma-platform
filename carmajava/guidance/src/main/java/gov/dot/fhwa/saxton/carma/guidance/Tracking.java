@@ -31,46 +31,48 @@ import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 import sensor_msgs.NavSatFix;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Guidance package Tracking component
  * <p>
  * Reponsible for detecting when the vehicle strays from it's intended route or
  * trajectory and signalling the failure on the /system_alert topic
  */
-public class Tracking implements Runnable {
+public class Tracking extends GuidanceComponent {
     // Member variables
-    protected final String componentName = "Tracking";
     protected final long sleepDurationMillis = 30000;
-    protected ConnectedNode node;
-    protected IPubSubService iPubSubService;
-    protected int sequenceNumber = 0;
-    protected Log log;
     protected int msgCount = 0;
+    private IPublisher<SystemAlert> statusPublisher;
+    private ISubscriber<NavSatFix> navSatFixSubscriber;
+    private ISubscriber<HeadingStamped> headingStampedSubscriber;
+    private ISubscriber<TwistStamped> twistStampedSubscriber;
+    private IPublisher<BSM> bsmPublisher;
 
-
-    public Tracking(IPubSubService iPubSubService, ConnectedNode node) {
-        this.iPubSubService = iPubSubService;
-        this.node = node;
-        this.log = node.getLog();
+    public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
+        super(state, pubSubService, node);
     }
 
-    @Override public void run() {
-        // Configure publishers for system status and BSM data
-        IPublisher<SystemAlert> statusPublisher =
-            iPubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
-        IPublisher<BSM> bsmPublisher = iPubSubService.getPublisherForTopic("bsm", BSM._TYPE);
+    @Override public String getComponentName() {
+        return "Guidance.Tracking";
+    }
+
+    @Override public void onGuidanceStartup() {
+        statusPublisher =
+            pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+        bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
 
         // Configure subscribers
         // TODO: Gather trajectory data internally from Guidance.Arbitrator and Guidance.Trajectory
         // TODO: Update when NavSatFix.msg is available
-        ISubscriber<NavSatFix> navSatFixSubscriber = iPubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
+        navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
         navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
             @Override public void onMessage(NavSatFix msg) {
                 log.info("Received NavSatFix:" + msg);
             }
         });
 
-        ISubscriber<HeadingStamped> headingStampedSubscriber = iPubSubService.getSubscriberForTopic(
+        headingStampedSubscriber = pubSubService.getSubscriberForTopic(
             "heading", HeadingStamped._TYPE);
 
         headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
@@ -79,7 +81,7 @@ public class Tracking implements Runnable {
             }
         });
 
-        ISubscriber<TwistStamped> twistStampedSubscriber = iPubSubService.getSubscriberForTopic(
+        twistStampedSubscriber = pubSubService.getSubscriberForTopic(
             "velocity", TwistStamped._TYPE);
 
         twistStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
@@ -89,8 +91,17 @@ public class Tracking implements Runnable {
         });
 
         // TODO: Integrate CAN data from Environment layer when available
+    }
 
-        for (; ; ) {
+    @Override public void onSystemReady() {
+        // NO-OP
+    }
+
+    @Override public void onGuidanceEnable() {
+
+    }
+
+    @Override public void loop() {
             cav_msgs.SystemAlert systemAlertMsg = statusPublisher.newMessage();
             systemAlertMsg
                 .setDescription("Tracking has not detected a running trajectory, no means to compute"
@@ -134,6 +145,5 @@ public class Tracking implements Runnable {
                 Thread.sleep(sleepDurationMillis);
             } catch (InterruptedException e) {
             }
-        }
     }
 }

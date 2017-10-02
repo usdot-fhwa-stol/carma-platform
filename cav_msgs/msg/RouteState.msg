@@ -15,6 +15,12 @@ Header header
 # The route id for which this message applies
 string routeID
 
+# Enum denoting the state of the route following
+uint8 state
+
+uint8 WAITING_TO_START=0
+uint8 FOLLOWING_ROUTE=1
+
 # Cross-track distance of vehicle along route
 float64 cross_track
 

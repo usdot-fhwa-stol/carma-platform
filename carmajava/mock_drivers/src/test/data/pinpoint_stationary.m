@@ -98,13 +98,13 @@ heading_sigma = 0.01;
 
 % GPS locations between garage and CHub
 lat_mu = 38.95650423811848;
-lat_sigma = 0.0001; % about 1 m
+lat_sigma = 0.000005; % about 0.5 m
 
 lon_mu = -77.15029808852705;
-lon_sigma = 0.0001; % about 1 m
+lon_sigma = 0.000005; % about 0.5 m
 
 alt_mu = 70.216;
-alt_sigma = 1;
+alt_sigma = 0.5; % 0.5 m
 
 odom_angular_vel_x_mu = 0;
 odom_angular_vel_y_mu = 0;

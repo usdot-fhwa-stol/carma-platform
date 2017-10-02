@@ -23,39 +23,40 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Guidance package Arbitrator component
  * <p>
  * Runs inside the GuidanceMain class's executor and prompts the Guidance.Plugins
  * to plan trajectories for the vehicle to execute.
  */
-public class Arbitrator implements Runnable {
-    protected final long sleepDurationMillis = 30000;
-    protected IPubSubService iPubSubService;
-    protected ConnectedNode node;
-    protected Log log;
+public class Arbitrator extends GuidanceComponent {
+    protected ISubscriber<RouteState> routeStateSubscriber;
 
-    Arbitrator(IPubSubService iPubSubService, ConnectedNode node) {
-        this.iPubSubService = iPubSubService;
-        this.node = node;
-        this.log = node.getLog();
+    Arbitrator(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
+        super(state, iPubSubService, node);
     }
 
-    @Override public void run() {
+    @Override public void onGuidanceStartup() {
         log.info("Arbitrator running!");
-        ISubscriber<RouteState> routeStateSubscriber = iPubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
             @Override public void onMessage(RouteState msg) {
                 log.info("Received RouteState:" + msg);
             }
         });
+    }
 
-        for (; ; ) {
-            try {
-                Thread.sleep(sleepDurationMillis);
-            } catch (InterruptedException e) {
-                // Ignore
-            }
-        }
+    @Override public String getComponentName() {
+        return "Guidance.Arbitrator";
+    }
+
+    @Override public void onSystemReady() {
+        // NO-OP
+    }
+
+    @Override public void onGuidanceEnable() {
+        // NO-OP
     }
 }

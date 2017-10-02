@@ -70,8 +70,9 @@ public class InterfaceWorker {
         if (index >= 0) {
 
             //if its info has changed then
-            if (!newDriver.equals(drivers_.get(index))) {
-                //record the updates
+            if (!newDriver.equalCategoryAndState(drivers_.get(index))) {
+                //record the updates. Will need to fetch new driver api as well
+                newDriver.setCapabilities(mgr_.getDriverApi(name));
                 drivers_.set(index, newDriver);
                 log_.debug("InterfaceWorker.handleNewDriverStatus: status changed for " + name);
             }

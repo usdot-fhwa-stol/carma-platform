@@ -63,7 +63,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
 
     @Override
-    public void onStart(final ConnectedNode connectedNode) {
+    public void onSaxtonStart(final ConnectedNode connectedNode) {
         connectedNode_ = connectedNode;
         log_ = connectedNode.getLog();
         log_.info("InterfaceMgr starting up.");
@@ -148,7 +148,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 if (worker_.isSystemReady()) {
 
                     //log it and publish the notification
-                    sendSystemAlert(AlertSeverity.SYSTEM_READY, "SYSTEM IS NOW OPERATIONAL");
+                    sendSystemAlert(AlertSeverity.DRIVERS_READY, "SYSTEM IS NOW OPERATIONAL");
                     log_.info("///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
 
                     //stop the loop
@@ -186,6 +186,9 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
     }//onStart
 
+    @Override protected void handleException(Exception e) {
+
+    }
 
     ///// service requestors /////
 
@@ -245,6 +248,13 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                     log_.warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
                 }
             });
+        }
+
+        // TODO: Improve this quick-and-dirty hack with proper synchronization around the GetDriverApi call
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // NO-OP
         }
 
         return rh.getResult();

@@ -33,6 +33,8 @@ mainClassName = 'org.ros.RosRun'
    version number changes.
 */
 
+
+
 dependencies {
   /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
@@ -42,8 +44,17 @@ dependencies {
   compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:nav_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:tf2_msgs:0.5.9'
+  testCompile 'junit:junit:4.12'
   /* Local subproject dependency */
   compile project(':rosutils')
+  testCompile project (path: ':rosutils', configuration: 'rosUtilsTestArtifacts')
+}
+
+test {
+    testLogging {
+        // Show that tests are run in the command-line output
+        events 'started', 'passed'
+    }
 }
 
 installApp {

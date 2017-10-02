@@ -106,7 +106,7 @@ public:
      * The underlying io service is setup
      */
     PinPoint();
-    ~PinPoint();
+    virtual ~PinPoint();
 
 
     /**

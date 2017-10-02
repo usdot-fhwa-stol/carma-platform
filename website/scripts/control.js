@@ -51,7 +51,7 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
 /*
 * Adds a new checkbox onto the container.
 */
-function createCheckboxElement (container, checkboxId, checkboxTitle, itemCount, groupName, isChecked){
+function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, groupName, isChecked) {
 
     var newInput = document.createElement('input');
     newInput.type = 'checkbox';
@@ -81,38 +81,78 @@ function createCheckboxElement (container, checkboxId, checkboxTitle, itemCount,
 /*
 * Get list of plugins selected by user and return count.
 */
-function getCheckboxesSelected()
-{
-   var  cbResults = 'Selected Items: ';
-   var count = 0;
-   var allInputs = document.getElementsByTagName('input');
-   for (var i = 0, max = allInputs.length; i < max; i++){
-       if (allInputs[i].type === 'checkbox'){
+function getCheckboxesSelected() {
+    var cbResults = 'Selected Items: ';
+    var count = 0;
+    var allInputs = document.getElementsByTagName('input');
+    for (var i = 0, max = allInputs.length; i < max; i++) {
+        if (allInputs[i].type === 'checkbox') {
             if (allInputs[i].checked == true) {
-                      cbResults += allInputs[i].id + '; ';
-                       count++;
-               }
+                cbResults += allInputs[i].id + '; ';
+                count++;
             }
-       }
+        }
+    }
 
-  return count;
+    return count;
 }
 
 /*
-* Sets the background color of the checkbox.
+* Sets the background color of all selected checkboxes.
 */
-function setCbSelectedBgColor(color)
-{
-       var allInputs = document.getElementsByTagName('input');
+function setCbSelectedBgColor(color) {
+    var allInputs = document.getElementsByTagName('input');
 
-       for (var i = 0, max = allInputs.length; i < max; i++){
+    for (var i = 0, max = allInputs.length; i < max; i++) {
 
-           if (allInputs[i].type === 'checkbox'){
-                if (allInputs[i].checked == true) {
-                          //find the label for the checkbox and update it's color
-                          var labelForCb = document.getElementById(allInputs[i].id.replace('cb', 'lbl'));
-                          labelForCb.style.backgroundColor  =  color;
-                    }//if
-                }//if
-       }//for
+        if (allInputs[i].type === 'checkbox') {
+            if (allInputs[i].checked == true) {
+                //find the label for the checkbox and update it's color
+                var labelForCb = document.getElementById(allInputs[i].id.replace('cb', 'lbl'));
+                labelForCb.style.backgroundColor = color;
+            }//if
+        }//if
+    }//for
+}
+
+/*
+* Sets the background color of a specific checkbox.
+*/
+function setCbBgColor(id, color) {
+    //find the label for the checkbox and update it's color, this is only way to update the checkbox color.
+    var lblName = 'lbl' + id;
+    var labelForCb = document.getElementById(lblName);
+
+    if (labelForCb != null)
+        labelForCb.style.backgroundColor = color;
+
+}
+
+/*
+* Add new row to the table.
+*/
+function insertNewTableRow(tableName, rowTitle, rowValue) {
+
+    var cellId = rowTitle.replace(/ /g, '');
+
+    var existingCell2 = document.getElementById(cellId);
+
+    if (existingCell2 != null) {
+        existingCell2.innerHTML = rowValue;
+        existingCell2.className = 'col-style2b';
+    }
+    else {
+        var table = document.getElementById(tableName);
+        var row = table.insertRow(table.rows.count);
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+
+        cell1.innerHTML = rowTitle;
+        cell2.innerHTML = rowValue;
+        //cell1.setAttribute("class","col-style2a");
+        //cell2.setAttribute("class","col-style2b");
+        cell1.className = 'col-style2a';
+        cell2.className = 'col-style2b';
+        cell2.id = cellId;
+    }
 }

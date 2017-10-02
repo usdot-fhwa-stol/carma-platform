@@ -65,13 +65,9 @@ public class MockCellularDriver extends AbstractMockDriver {
     outboundSub.addMessageListener(new MessageListener<ByteArray>() {
       @Override public void onNewMessage(ByteArray byteArray) {
         log.info("Outbound " + byteArray.getMessageType() + " message received by "
-          + getDefaultDriverName());
+          + getGraphName());
       }
     });
-  }
-
-  @Override public GraphName getDefaultDriverName() {
-    return GraphName.of("mock_cellular_driver");
   }
 
   @Override protected void publishData(List<String[]> data) {
@@ -110,6 +106,6 @@ public class MockCellularDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI() {
-    return new ArrayList<>(Arrays.asList("/comms/recv", "/comms/outbound"));
+    return new ArrayList<>(Arrays.asList("comms/recv", "comms/outbound"));
   }
 }

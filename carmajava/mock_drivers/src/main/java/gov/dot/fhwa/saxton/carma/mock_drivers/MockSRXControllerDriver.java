@@ -16,27 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import cav_msgs.ByteArray;
-import cav_msgs.LightBarStatus;
 import cav_srvs.GetLightsRequest;
 import cav_srvs.GetLightsResponse;
 import cav_srvs.SetLightsRequest;
 import cav_srvs.SetLightsResponse;
-import diagnostic_msgs.DiagnosticStatus;
-import diagnostic_msgs.KeyValue;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.ros.message.MessageFactory;
-import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeConfiguration;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
-import std_msgs.Bool;
 
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -132,10 +122,6 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
         });
   }
 
-  @Override public GraphName getDefaultDriverName() {
-    return GraphName.of("mock_srx_controller_driver");
-  }
-
   @Override protected void publishData(List<String[]> data) throws IllegalArgumentException {
 
     for(String[] elements : data) {
@@ -159,7 +145,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
       diagnostic_msgs.DiagnosticStatus diagnosticStatus = messageFactory.newFromType(diagnostic_msgs.DiagnosticStatus._TYPE);
       diagnosticStatus.setHardwareId(elements[HARDWARE_ID_IDX]);
       diagnosticStatus.setLevel(Byte.valueOf(elements[DIAG_LEVEL_IDX]));
-      diagnosticStatus.setName(getDefaultDriverName().toString());
+      diagnosticStatus.setName(getGraphName().toString());
       diagnosticStatus.setMessage(elements[DIAG_MSG_IDX]);
 
       diagnostic_msgs.KeyValue keyValue = messageFactory.newFromType(diagnostic_msgs.KeyValue._TYPE);
@@ -189,12 +175,12 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
 
   @Override public List<String> getDriverAPI(){
     return new ArrayList<>(Arrays.asList(
-      "/control/diagnostics",
-      "/control/robot_enabled",
-      "/control/cmd_longitudinal_effort",
-      "/control/cmd_speed",
-      "/control/get_lights",
-      "/control/set_lights"
+      "control/diagnostics",
+      "control/robot_enabled",
+      "control/cmd_longitudinal_effort",
+      "control/cmd_speed",
+      "control/get_lights",
+      "control/set_lights"
     ));
   }
 }

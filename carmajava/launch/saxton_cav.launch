@@ -34,7 +34,7 @@
   <arg name="can_data_file"            default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
   <arg name="arada_data_file"          default="$(arg DATA_DIR)/arada.csv" doc="Path for arada simulation data"/>
   <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
-  <arg name="pinpoint_data_file"       default="$(arg DATA_DIR)/pinpoint.csv" doc="Path for pinpoint simulation data"/>
+  <arg name="pinpoint_data_file"       default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
   <arg name="radar_data_file"          default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
   <arg name="cellular_data_file"       default="$(arg DATA_DIR)/arada.csv" doc="Path cellular can simulation data"/>
 
@@ -75,6 +75,10 @@
              to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>
       <remap from="set_active_route"
              to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/set_active_route"/>
+      <remap from="start_active_route"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/start_active_route"/>
+      <remap from="route_state"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="ui_platoon_vehicle_info"
@@ -83,10 +87,10 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/available_plugins"/>
       <remap from="plugins/get_registered_plugins"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
-      <remap from="plugins/activate_plugins"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugins"/>
-      <remap from="set_guidance_enable"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_enable"/>
+      <remap from="plugins/activate_plugin"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
+      <remap from="set_guidance_engaged"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_engaged"/>
 
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
@@ -227,8 +231,8 @@
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
           <remap from="velocity"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
-          <remap from="getTransform"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/transform_server/getTransform"/>
+          <remap from="get_transform"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/get_transform"/>
         </node>
 
         <!-- Transform Server Node -->
@@ -252,8 +256,12 @@
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="tim"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/tim"/>
+          <!-- TODO Use this topic remapping instead once sensor fusion does pass through right
           <remap from="nav_sat_fix"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+                 -->
+          <remap from="nav_sat_fix"
+                 to="/saxton_cav/drivers/pin_point_application/position/nav_sat_fix"/>
         </node>
       </group>
     </group>
@@ -269,7 +277,7 @@
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="tim"
+        <remap from="driver_discovery"
                to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
       </node>
     </group>
@@ -305,9 +313,9 @@
       </node>
 
       <!-- SRX CAN Driver Node -->
-      <node unless="$(arg mock_can)" pkg="can" type="can_node" name="can_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
-      </node>
+      <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
+        <arg name="srx_can_can_device" value="can0" />
+      </include>
       <!-- Simulated CAN Driver Node -->
       <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
@@ -317,9 +325,9 @@
       </node>
 
       <!--SRX Controller Driver Node-->
-      <node unless="$(arg mock_srx_controller)" pkg="srx_controller" type="srx_controller_node" name="srx_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
-      </node>
+      <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
+        <arg name="srx_controller_can_device" value="can1"/>
+      </include>
       <!-- Simulated SRX Controller Driver Node -->
       <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
@@ -329,9 +337,9 @@
       </node>
 
       <!-- SRX Radar Driver Node -->
-      <node unless="$(arg mock_radar)" pkg="radar" type="radar_node" name="srx_object_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
-      </node>
+      <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
+        <arg name="srx_objects_can_device" value="ics0can0"/>
+      </include>
       <!-- Simulated Radar Driver Node -->
       <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_object_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
@@ -352,6 +360,5 @@
     <!-- Vehicle Transforms -->
     <param name="robot_description" textfile="$(arg URDF_FILE)"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
-
   </group>
 </launch>

@@ -40,18 +40,27 @@ public class RouteSegment {
     this.uptrackWP = uptrackWP;
     this.downtrackWP = downtrackWP;
     this.earthSegment = new GreatCircleSegment(this.uptrackWP.getLocation(), this.downtrackWP.getLocation());
-    length = 0; // TODO: Calculate the length here
+    this.length = this.earthSegment.getLength();
   }
 
   /**
    * Calculates the crosstrack distance from the provided GPS location to this route segment
-   * TODO implement
    *
    * @param location The gps location to be compared
    * @return The calculated cross track distance in meters
    */
   public double crossTrackDistance(Location location) {
-    return 0;
+    return this.earthSegment.crossTrackDistance(location);
+  }
+
+  /**
+   * Calculates the downtrack distance from the provided GPS location to this route segment start
+   *
+   * @param location The gps location to be compared
+   * @return The calculated down track distance in meters
+   */
+  public double downTrackDistance(Location location) {
+    return this.earthSegment.downtrackDistance(location);
   }
 
   /**

@@ -20,6 +20,9 @@ import cav_msgs.Plugin;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import org.apache.commons.logging.Log;
@@ -34,9 +37,11 @@ import std_msgs.Header;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package PluginManager component
@@ -44,41 +49,41 @@ import java.util.Set;
  * Responsible for instantiating, running, owning, and runtime management of
  * all plugins installed in the software's operating environment.
  */
-public class PluginManager implements Runnable {
-    protected final String componentName = "PluginManager";
+public class PluginManager extends GuidanceComponent implements AvailabilityListener {
     protected final long sleepDurationMillis = 30000;
-    protected IPubSubService pubSubService;
     protected int sequenceNumber = 0;
-    protected ConnectedNode node;
-    protected Log log;
 
     protected PluginExecutor executor;
     protected PluginServiceLocator pluginServiceLocator;
     protected List<IPlugin> registeredPlugins = new ArrayList<>();
+    protected List<String> ignoredPluginClassNames = new ArrayList<>();
 
     protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma.guidance.plugins";
-
-    protected String messagingBaseUrl = "plugins";
-    protected String getRegisteredPluginsServiceUrl = "get_registered_plugins";
-    protected String getActivePluginsServiceUrl = "get_active_plugin";
-    protected String activatePluginServiceUrl = "activate_plugins";
-
-    protected String availablePluginsTopicUrl = "available_plugins";
+    protected final String messagingBaseUrl = "plugins";
+    protected final String getRegisteredPluginsServiceUrl = "get_registered_plugins";
+    protected final String getActivePluginsServiceUrl = "get_active_plugins";
+    protected final String activatePluginServiceUrl = "activate_plugin";
+    protected final String availablePluginsTopicUrl = "available_plugins";
 
     protected ServiceServer<PluginListRequest, PluginListResponse> registeredPluginService;
     protected ServiceServer<PluginListRequest, PluginListResponse> activePluginService;
     protected ServiceServer<PluginActivationRequest, PluginActivationResponse>
         activatePluginService;
+    protected IPublisher<cav_msgs.PluginList> pluginPublisher;
 
-    public PluginManager(IPubSubService pubSubManager, ConnectedNode node) {
-        this.pubSubService = pubSubManager;
-        this.node = node;
+    protected MessageFactory messageFactory;
+
+    protected int availablePluginsSeqNum = 0;
+    protected int registeredPluginsSeqNum = 0;
+    protected int activePluginsSeqNum = 0;
+
+    public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, ConnectedNode node) {
+        super(state, pubSubManager, node);
         this.executor = new PluginExecutor(node.getLog());
-        this.log = node.getLog();
 
         pluginServiceLocator =
             new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
-                pubSubService, node.getLog());
+                pubSubService, new RosParameterSource(node.getParameterTree()), node.getLog());
     }
 
     /**
@@ -88,15 +93,34 @@ public class PluginManager implements Runnable {
     protected List<Class<? extends IPlugin>> discoverPluginsOnClasspath() {
         Reflections pluginDiscoverer = new Reflections(PLUGIN_DISCOVERY_ROOT);
         Set<Class<? extends IPlugin>> pluginClasses = pluginDiscoverer.getSubTypesOf(IPlugin.class);
-        List<IPlugin> pluginInstances = new ArrayList<>();
 
+        List<Class<? extends IPlugin>> out = new ArrayList<>();
         for (Class<? extends IPlugin> pluginClass : pluginClasses) {
-          if (log != null) {
-            log.info("Guidance.PluginManager discovered plugin: " + pluginClass.getName());
-          }
+            boolean ignored = false;
+            for (String ignoredPluginName : ignoredPluginClassNames) {
+                // Filter the names against the list of ignored plugins
+                if (pluginClass.getName().equals(ignoredPluginName)) {
+                    ignored = true;
+                }
+            }
+
+            // Check if we haven't ignored it and that it isn't an abstract class or an interface
+            if (!ignored
+                && !Modifier.isAbstract(pluginClass.getModifiers())
+                && !Modifier.isInterface(pluginClass.getModifiers())) {
+
+                out.add(pluginClass);
+                if (log != null) {
+                    log.info("Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
+                }
+            } else {
+                if (log != null) {
+                    log.info("Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
+                }
+            }
         }
 
-        return new ArrayList<>(pluginClasses);
+        return out;
     }
 
     /**
@@ -113,21 +137,13 @@ public class PluginManager implements Runnable {
 
                 // TODO: This is brittle, depends on convention of having a constructor taking only a PSL
                 IPlugin pluginInstance = pluginCtor.newInstance(pluginServiceLocator);
+                pluginInstance.registerAvailabilityListener(this);
                 log.info("Guidance.PluginManager instantiated new plugin instance: "
                     + pluginInstance.getName() + ":" + pluginInstance.getVersionId());
                 pluginInstances.add(pluginInstance);
-            } catch (NoSuchMethodException e) {
+            } catch (Exception e) {
+                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
                 log.error(e);
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                log.error(e);
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                log.error(e);
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                log.error(e);
-                e.printStackTrace();
             }
         }
 
@@ -136,6 +152,109 @@ public class PluginManager implements Runnable {
 
     public List<IPlugin> getRegisteredPlugins() {
         return registeredPlugins;
+    }
+
+    @Override public String getComponentName() {
+        return "Guidance.PluginManager";
+    }
+
+    @Override public void onGuidanceStartup() {
+        // Instantiate the plugins and register them
+        ignoredPluginClassNames = (List<String>) node.getParameterTree()
+            .getList("~ignored_plugins", new ArrayList<>());
+
+        log.info("Ignoring plugins: " + ignoredPluginClassNames);
+        List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
+
+        registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
+        for (IPlugin p : getRegisteredPlugins()) {
+            executor.submitPlugin(p);
+            executor.initializePlugin(p.getName(), p.getVersionId());
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Setup the services related to plugin queries
+        setupServices();
+
+        // Configure the plugin availability topic and topic message factory
+        NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
+        messageFactory = nodeConfig.getTopicMessageFactory();
+        pluginPublisher = pubSubService
+            .getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
+                cav_msgs.PluginList._TYPE);
+    }
+
+    @Override public void onSystemReady() {
+    }
+
+    @Override public void onGuidanceEnable() {
+        for (IPlugin p : getRegisteredPlugins()) {
+            executor.resumePlugin(p.getName(), p.getVersionId());
+        }
+    }
+
+    @Override public void onGuidanceShutdown() {
+        // If we're shutting down, properly handle graceful plugin shutdown as well
+        for (IPlugin p : getRegisteredPlugins()) {
+            p.setActivation(false);
+            executor.suspendPlugin(p.getName(), p.getVersionId());
+        }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (IPlugin p: getRegisteredPlugins()) {
+            executor.terminatePlugin(p.getName(), p.getVersionId());
+        }
+    }
+
+    /**
+     * Listen for availability change from the plugin instances
+     * @param plugin The plugin who's availability has changed
+     * @param availability The new state of that plugin's availability
+     */
+    @Override public void onAvailabilityChange(IPlugin plugin, boolean availability) {
+        if (pluginPublisher == null) {
+            // Bail if we can't yet publish
+           return;
+        }
+
+        cav_msgs.PluginList availablePlugins = messageFactory.newFromType(cav_msgs.PluginList._TYPE);
+
+        // Publish mock available plugin status
+        Header h = messageFactory.newFromType(Header._TYPE);
+        h.setStamp(node.getCurrentTime());
+        h.setFrameId("0");
+        h.setSeq(availablePluginsSeqNum++);
+        availablePlugins.setHeader(h);
+
+        /* Rather than maintain a separate list of plugins, which we'd have to walk anyway to update
+         * just walk the main list every time one changes status. With a small number of plugins this
+         * shouldn't be a performance concern
+         */
+        List<Plugin> pList = new ArrayList<>();
+        for (IPlugin p : registeredPlugins) {
+            if (p.getAvailability()) {
+                Plugin pMsg = messageFactory.newFromType(Plugin._TYPE);
+                pMsg.setAvailable(p.getAvailability());
+                pMsg.setName(p.getName());
+                pMsg.setVersionId(p.getVersionId());
+                pMsg.setActivated(p.getActivation());
+
+                pList.add(pMsg);
+            }
+        }
+
+        availablePlugins.setPlugins(pList);
+        pluginPublisher.publish(availablePlugins);
     }
 
     /**
@@ -151,44 +270,22 @@ public class PluginManager implements Runnable {
                         NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
                         MessageFactory factory = nodeConfig.getTopicMessageFactory();
 
+                        // TODO: Refactor this out to the PluginList message, not the Plugin msg
                         Header h = factory.newFromType(Header._TYPE);
                         h.setStamp(node.getCurrentTime());
                         h.setFrameId("0");
-                        h.setSeq(0);
-
-                        Plugin p0 = factory.newFromType(Plugin._TYPE);
-                        p0.setHeader(h);
-                        p0.setAvailable(false);
-                        p0.setName("DUMMY PLUGIN A");
-                        p0.setVersionId("v1.0.0");
-                        p0.setActivated(true);
-
-                        Plugin p1 = factory.newFromType(Plugin._TYPE);
-                        p1.setHeader(h);
-                        p1.setAvailable(true);
-                        p1.setName("DUMMY PLUGIN B");
-                        p1.setVersionId("v1.0.0");
-                        p1.setActivated(false);
-
-                        Plugin p2 = factory.newFromType(Plugin._TYPE);
-                        p2.setHeader(h);
-                        p2.setAvailable(true);
-                        p2.setName("DUMMY PLUGIN A");
-                        p2.setVersionId("v2.0.0");
-                        p2.setActivated(true);
-
-                        Plugin p3 = factory.newFromType(Plugin._TYPE);
-                        p3.setHeader(h);
-                        p3.setAvailable(false);
-                        p3.setName("DUMMY PLUGIN B");
-                        p3.setVersionId("v2.0.0");
-                        p3.setActivated(false);
+                        h.setSeq(registeredPluginsSeqNum++);
+                        pluginListResponse.setHeader(h);
 
                         List<Plugin> pList = new ArrayList<>();
-                        pList.add(p0);
-                        pList.add(p1);
-                        pList.add(p2);
-                        pList.add(p3);
+                        for (IPlugin p : registeredPlugins) {
+                            Plugin p0 = factory.newFromType(Plugin._TYPE);
+                            p0.setAvailable(p.getAvailability());
+                            p0.setName(p.getName());
+                            p0.setVersionId(p.getVersionId());
+                            p0.setActivated(p.getActivation());
+                            pList.add(p0);
+                        }
 
                         pluginListResponse.setPlugins(pList);
                     }
@@ -206,25 +303,21 @@ public class PluginManager implements Runnable {
                         Header h = factory.newFromType(Header._TYPE);
                         h.setStamp(node.getCurrentTime());
                         h.setFrameId("0");
-                        h.setSeq(0);
-
-                        Plugin p0 = factory.newFromType(Plugin._TYPE);
-                        p0.setHeader(h);
-                        p0.setAvailable(false);
-                        p0.setName("DUMMY PLUGIN A");
-                        p0.setVersionId("v1.0.0");
-                        p0.setActivated(true);
-
-                        Plugin p2 = factory.newFromType(Plugin._TYPE);
-                        p2.setHeader(h);
-                        p2.setAvailable(true);
-                        p2.setName("DUMMY PLUGIN A");
-                        p2.setVersionId("v2.0.0");
-                        p2.setActivated(true);
+                        h.setSeq(activePluginsSeqNum++);
+                        pluginListResponse.setHeader(h);
 
                         List<Plugin> pList = new ArrayList<>();
-                        pList.add(p0);
-                        pList.add(p2);
+                        // Walk the plugin list and see which ones are active
+                        for (IPlugin p : registeredPlugins) {
+                            if (p.getActivation()) {
+                                Plugin p0 = factory.newFromType(Plugin._TYPE);
+                                p0.setAvailable(p.getAvailability());
+                                p0.setName(p.getName());
+                                p0.setVersionId(p.getVersionId());
+                                p0.setActivated(p.getActivation());
+                                pList.add(p0);
+                            }
+                        }
 
                         pluginListResponse.setPlugins(pList);
                     }
@@ -236,96 +329,19 @@ public class PluginManager implements Runnable {
                 new ServiceResponseBuilder<PluginActivationRequest, PluginActivationResponse>() {
                     @Override public void build(PluginActivationRequest pluginActivationRequest,
                         PluginActivationResponse pluginActivationResponse) throws ServiceException {
-                        pluginActivationResponse
-                            .setNewState(pluginActivationRequest.getActivated());
+                        // Walk the plugin list and see which one matches the name and version
+                        boolean pluginFound = false;
+                        for (IPlugin p : registeredPlugins) {
+                            if (pluginActivationRequest.getPluginName().equals(p.getName())
+                                && pluginActivationRequest.getPluginVersion().equals(p.getVersionId())) {
+                                // Match detected
+                                p.setActivation(pluginActivationRequest.getActivated());
+                                pluginFound = true;
+                            }
+                        }
+
+                        pluginActivationResponse.setNewState(pluginFound && pluginActivationRequest.getActivated());
                     }
                 });
-    }
-
-    @Override public void run() {
-        List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
-        registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
-
-        for (IPlugin p : getRegisteredPlugins()) {
-            executor.submitPlugin(p);
-            executor.initializePlugin(p.getName(), p.getVersionId());
-
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            executor.resumePlugin(p.getName(), p.getVersionId());
-        }
-
-        setupServices();
-        IPublisher<SystemAlert> pub =
-            pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
-
-        IPublisher<cav_msgs.PluginList> pluginPublisher = pubSubService
-            .getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
-                cav_msgs.PluginList._TYPE);
-
-        for (; ; ) {
-            // Publish system alert status
-            cav_msgs.SystemAlert systemAlertMsg = pub.newMessage();
-            systemAlertMsg
-                .setDescription("Hello World! I am " + componentName + ". " + sequenceNumber++);
-            systemAlertMsg.setType(SystemAlert.CAUTION);
-            pub.publish(systemAlertMsg);
-
-            NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
-            MessageFactory factory = nodeConfig.getTopicMessageFactory();
-            cav_msgs.PluginList availablePlugins = factory.newFromType(cav_msgs.PluginList._TYPE);
-
-            // Publish mock available plugin status
-            Header h = factory.newFromType(Header._TYPE);
-            h.setStamp(node.getCurrentTime());
-            h.setFrameId("0");
-            h.setSeq(0);
-
-            Plugin p1 = factory.newFromType(Plugin._TYPE);
-            p1.setHeader(h);
-            p1.setAvailable(true);
-            p1.setName("DUMMY PLUGIN B");
-            p1.setVersionId("v1.0.0");
-            p1.setActivated(true);
-
-            Plugin p2 = factory.newFromType(Plugin._TYPE);
-            p2.setHeader(h);
-            p2.setAvailable(true);
-            p2.setName("DUMMY PLUGIN A");
-            p2.setVersionId("v2.0.0");
-            p2.setActivated(true);
-
-            List<Plugin> pList = new ArrayList<>();
-            pList.add(p1);
-            pList.add(p2);
-
-            availablePlugins.setPlugins(pList);
-            pluginPublisher.publish(availablePlugins);
-
-            try {
-                Thread.sleep(sleepDurationMillis);
-            } catch (InterruptedException e) {
-                break; // Fall out of loop if we get interrupted
-            }
-        }
-
-        // If we're shutting down, properly handle graceful plugin shutdown as well
-        for (IPlugin p : getRegisteredPlugins()) {
-            executor.suspendPlugin(p.getName(), p.getVersionId());
-        }
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        for (IPlugin p: getRegisteredPlugins()) {
-            executor.terminatePlugin(p.getName(), p.getVersionId());
-        }
     }
 }

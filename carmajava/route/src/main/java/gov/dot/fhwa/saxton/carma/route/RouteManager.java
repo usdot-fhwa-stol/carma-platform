@@ -16,16 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
-import cav_msgs.*;
-import cav_msgs.Route;
 import cav_msgs.RouteSegment;
+import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
-import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
@@ -33,6 +31,8 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
 import sensor_msgs.NavSatFix;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * ROS Node which handles route loading, selection, and tracking for the STOL CARMA platform.
@@ -44,9 +44,13 @@ import sensor_msgs.NavSatFix;
  * Command line test for the service:
  * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
  * rosservice call /get_available_routes
- * rosservice call /set_active_route "routeID: 'TestRoute'"
+ * rosservice call /set_active_route "routeID: 'Glidepath Demo East Bound'"
+ * rostopic pub /nav_sat_fix '{latitude: 38.956439, longitude: -77.150325}'
+ * rosservice call /start_active_route "routeID: 'Glidepath Demo East Bound'"
+ * Run this next line to force a new route state message to publish. Change the lat lon for different distances
+ * rostopic pub /nav_sat_fix '{latitude: 38.956439, longitude: -77.150325}'
  */
-public class RouteManager extends SaxtonBaseNode implements IRouteManager{
+public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   protected ConnectedNode connectedNode;
 
@@ -64,15 +68,17 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
   protected ServiceServer<SetActiveRouteRequest, SetActiveRouteResponse> setActiveRouteService;
   protected ServiceServer<GetAvailableRoutesRequest, GetAvailableRoutesResponse>
     getAvailableRouteService;
+  protected ServiceServer<StartActiveRouteRequest, StartActiveRouteResponse>
+    startActiveRouteService;
   protected RouteWorker routeWorker;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("route_manager");
   }
 
-  @Override public void onStart(final ConnectedNode connectedNode) {
-
+  @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
     this.connectedNode = connectedNode;
+
     final Log log = connectedNode.getLog();
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
@@ -83,6 +89,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
     systemAlertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
     segmentPub = connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
+    routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
 
     // Subscribers
@@ -90,14 +97,22 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
     gpsSub.addMessageListener(new MessageListener<NavSatFix>() {
       @Override public void onNewMessage(NavSatFix navSatFix) {
-        routeWorker.handleNavSatFixMsg(navSatFix);
+        try {
+          routeWorker.handleNavSatFixMsg(navSatFix);
+        } catch (Exception e) {
+          handleException(e);
+        }
       }
     });
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
       @Override public void onNewMessage(cav_msgs.SystemAlert message) {
-        routeWorker.handleSystemAlertMsg(message);
+        try {
+          routeWorker.handleSystemAlertMsg(message);
+        } catch (Exception e) {
+          handleException(e);
+        }
       }//onNewMessage
     });//addMessageListener
 
@@ -108,7 +123,16 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
         new ServiceResponseBuilder<GetAvailableRoutesRequest, GetAvailableRoutesResponse>() {
           @Override public void build(GetAvailableRoutesRequest request,
             GetAvailableRoutesResponse response) {
-            response.setAvailableRoutes(routeWorker.getAvailableRoutes().getAvailableRoutes());
+            try {
+              List<cav_msgs.Route> routeMsgs = new LinkedList<>();
+
+              for (Route route : routeWorker.getAvailableRoutes()) {
+                routeMsgs.add(route.toMessage(connectedNode.getTopicMessageFactory()));
+              }
+              response.setAvailableRoutes(routeMsgs);
+            } catch (Exception e) {
+              handleException(e);
+            }
           }
         });
 
@@ -116,28 +140,37 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
       new ServiceResponseBuilder<SetActiveRouteRequest, SetActiveRouteResponse>() {
         @Override
         public void build(SetActiveRouteRequest request, SetActiveRouteResponse response) {
-          response.setErrorStatus(routeWorker.setActiveRoute(request).getErrorStatus());
+          try {
+            response.setErrorStatus(routeWorker.setActiveRoute(request.getRouteID()));
+          } catch (Exception e) {
+            handleException(e);
+          }
         }
       });
 
-    // This CancellableLoop will be canceled automatically when the node shuts down
-    connectedNode.executeCancellableLoop(new CancellableLoop() {
-      private int sequenceNumber;
-
-      @Override protected void setup() {
-        sequenceNumber = 0;
-      }//setup
-
-      @Override protected void loop() throws InterruptedException {
-        routeWorker.onLoop(sequenceNumber);
-
-        sequenceNumber++;
-        Thread.sleep(100);
-      }
-    });
+    startActiveRouteService = connectedNode
+      .newServiceServer("start_active_route", StartActiveRoute._TYPE,
+        new ServiceResponseBuilder<StartActiveRouteRequest, StartActiveRouteResponse>() {
+          @Override
+          public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
+            try {
+              response.setErrorStatus(routeWorker.startActiveRoute());
+            } catch (Exception e) {
+              handleException(e);
+            }
+          }
+        });
   }//onStart
 
-  @Override public void publishSystemAlert(SystemAlert systemAlert) {
+  @Override protected void handleException(Exception e) {
+    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+    connectedNode.getLog().fatal(msg, e);
+    SystemAlert alertMsg = systemAlertPub.newMessage();
+    alertMsg.setType(SystemAlert.FATAL);
+    alertMsg.setDescription(msg);
+  }
+
+  @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {
     systemAlertPub.publish(systemAlert);
   }
 
@@ -145,16 +178,16 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager{
     segmentPub.publish(routeSegment);
   }
 
-  @Override public void publishActiveRoute(Route route) {
+  @Override public void publishActiveRoute(cav_msgs.Route route) {
     routePub.publish(route);
   }
 
-  @Override public void publishRouteState(RouteState routeState) {
+  @Override public void publishRouteState(cav_msgs.RouteState routeState) {
     routeStatePub.publish(routeState);
   }
 
   @Override public Time getTime() {
-    if (connectedNode == null){
+    if (connectedNode == null) {
       return new Time();
     }
     return connectedNode.getCurrentTime();

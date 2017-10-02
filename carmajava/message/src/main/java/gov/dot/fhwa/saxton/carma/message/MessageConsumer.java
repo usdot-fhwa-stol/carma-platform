@@ -87,7 +87,7 @@ public class MessageConsumer extends SaxtonBaseNode {
   }
 
   @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  public void onSaxtonStart(final ConnectedNode connectedNode) {
     final Log log = connectedNode.getLog();
 
     //Start of GetDriversWithCapabilitiesResponse
@@ -200,7 +200,7 @@ public class MessageConsumer extends SaxtonBaseNode {
             systemReady = false;
             messageTypeFullDescription = "system not ready alert and will not publish";
             break;
-          case cav_msgs.SystemAlert.SYSTEM_READY:
+          case cav_msgs.SystemAlert.DRIVERS_READY:
             systemReady = true;
             messageTypeFullDescription = "system ready alert and is beginning to publish";
             break;
@@ -303,5 +303,9 @@ public class MessageConsumer extends SaxtonBaseNode {
    }//CancellableLoop
     );//executeCancellableLoop
   }//onStart
+
+  @Override protected void handleException(Exception e) {
+
+  }
 }//AbstractNodeMain
 

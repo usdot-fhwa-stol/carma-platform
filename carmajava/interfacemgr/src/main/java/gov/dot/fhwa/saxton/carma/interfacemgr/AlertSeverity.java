@@ -22,7 +22,7 @@ public enum AlertSeverity {
     WARNING(2),
     FATAL(3),
     NOT_READY(4),
-    SYSTEM_READY(5);
+    DRIVERS_READY(5);
 
     private int val_;
 

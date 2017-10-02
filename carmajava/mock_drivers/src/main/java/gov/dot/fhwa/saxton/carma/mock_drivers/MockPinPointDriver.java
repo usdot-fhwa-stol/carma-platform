@@ -92,10 +92,6 @@ public class MockPinPointDriver extends AbstractMockDriver {
       connectedNode.newPublisher("~/position/velocity", geometry_msgs.TwistStamped._TYPE);
   }
 
-  @Override public GraphName getDefaultDriverName() {
-    return GraphName.of("mock_pinpoint_driver");
-  }
-
   @Override protected void publishData(List<String[]> data) throws IllegalArgumentException {
 
     for (String[] elements : data) {
@@ -234,9 +230,9 @@ public class MockPinPointDriver extends AbstractMockDriver {
 
   @Override public List<String> getDriverAPI() {
     return new ArrayList<>(Arrays.asList(
-      "/position/heading",
-      "/position/nav_sat_fix",
-      "/position/odometry",
-      "/position/velocity"));
+      "position/heading",
+      "position/nav_sat_fix",
+      "position/odometry",
+      "position/velocity"));
   }
 }

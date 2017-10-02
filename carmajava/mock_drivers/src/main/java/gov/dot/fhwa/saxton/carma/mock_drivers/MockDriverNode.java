@@ -42,7 +42,7 @@ public class MockDriverNode extends SaxtonBaseNode {
     return GraphName.of(defaultName);
   }
 
-  @Override public void onStart(final ConnectedNode connectedNode) {
+  @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
 
     final Log log = connectedNode.getLog();
     final ParameterTree params = connectedNode.getParameterTree();
@@ -85,7 +85,7 @@ public class MockDriverNode extends SaxtonBaseNode {
         simulatedDriver.publishDriverStatus();
         simulatedDriver.readAndPublishData();
 
-        Thread.sleep(1000);
+        Thread.sleep(simulatedDriver.getPublishDelay());
       }//loop
 
       @Override protected void handleInterruptedException(InterruptedException e) {
@@ -95,4 +95,8 @@ public class MockDriverNode extends SaxtonBaseNode {
     });//executeCancellableLoop
 
   }//onStart
+
+  @Override protected void handleException(Exception e) {
+
+  }
 }//SaxtonBaseNode
