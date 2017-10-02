@@ -13,6 +13,7 @@ var t_current_segment = 'current_segment';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = "route_state";
+var t_cmd_speed = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -720,10 +721,28 @@ function showRouteInfo() {
 
     listenerRouteState.subscribe(function (message) {
         insertNewTableRow('tblSecond', 'Route ID', message.routeID);
+        insertNewTableRow('tblSecond', 'Route State', message.state);
         insertNewTableRow('tblSecond', 'Cross Track', message.cross_track.toFixed(2));
         insertNewTableRow('tblSecond', 'Down Track', message.down_track.toFixed(2));
     });
 
+}
+
+/*
+    Display the close loop control of speed
+*/
+function showSpeedAccelInfo() {
+    //Get Route State
+    var listenerSpeedAccel = new ROSLIB.Topic({
+        ros: ros,
+        name: t_cmd_speed,
+        messageType: 'cav_msgs/SpeedAccel'
+    });
+
+    listenerSpeedAccel.subscribe(function (message) {
+        insertNewTableRow('tblFirst', 'Speed', message.speed.toFixed(2));
+        insertNewTableRow('tblFirst', 'Max Acceleration', message.max_accel.toFixed(2));
+    });
 }
 
 /*
@@ -741,7 +760,7 @@ function getVehicleInfo() {
    Shows only Vehicle related parameters in System Status table.
 */
 function showVehicleInfo(itemName, index) {
-    if (itemName.startsWith("/saxton_cav/vehicle") == true) {
+    if (itemName.startsWith("/saxton_cav/vehicle") == true && itemName.indexOf('database_path') < 0) {
         //Sample call to get param.
         var myParam = new ROSLIB.Param({
             ros: ros,
@@ -774,6 +793,17 @@ function toCamelCase(str) {
     //.replace( / /g, '' );
 }
 
+function showStatusandLogs()
+{
+    //Displays under System Status
+    showRouteOptions();
+
+    //Displays under System Logs
+    getParams();
+    getFutureTopics();
+    getVehicleInfo();
+    showSpeedAccelInfo();
+}
 /*
   Loop function to
    for System Ready status from interface manager.
@@ -792,13 +822,8 @@ function waitForSystemReady() {
 
         //If over max tries
         if (system_ready == true) {
-            showRouteOptions();
+            showStatusandLogs();
             enableGuidance();
-
-            getParams();
-            getFutureTopics();
-
-            getVehicleInfo();
         }
         else {
             if (ready_counter >= ready_max_trial)
@@ -810,7 +835,6 @@ function waitForSystemReady() {
 /* Evaluate next step AFTER connecting
 
 Scenario1 : Initial Load
-
 Scenario 2: Refresh on particular STEP
 
 */
@@ -825,6 +849,7 @@ function evaluateNextStep() {
 
     if (route_name != '') {
         showSubCapabilitiesView2();
+        showStatusandLogs();
 
         //Enable the CAV Guidance button regardless plugins are selected
         enableGuidance();

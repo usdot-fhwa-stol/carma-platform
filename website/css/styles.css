@@ -323,6 +323,8 @@ div.message_box {
 .col-style1 {
     vertical-align: top;
     width: 30%;
+    max-width: 200px;
+    overflow-wrap: normal;
 }
 
 .section1 {
