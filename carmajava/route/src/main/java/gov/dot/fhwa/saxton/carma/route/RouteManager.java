@@ -82,7 +82,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     final Log log = connectedNode.getLog();
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
-    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
 
     /// Topics
     // Publishers
@@ -160,6 +159,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
             }
           }
         });
+
+    // Worker must be initialized at end of on start
+    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
   }//onStart
 
   @Override protected void handleException(Exception e) {
@@ -171,18 +173,26 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   }
 
   @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {
+    if (systemAlertPub == null)
+      return;
     systemAlertPub.publish(systemAlert);
   }
 
   @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
+    if (segmentPub == null)
+      return;
     segmentPub.publish(routeSegment);
   }
 
   @Override public void publishActiveRoute(cav_msgs.Route route) {
+    if (routePub == null)
+      return;
     routePub.publish(route);
   }
 
   @Override public void publishRouteState(cav_msgs.RouteState routeState) {
+    if (routeStatePub == null)
+      return;
     routeStatePub.publish(routeState);
   }
 
@@ -191,5 +201,10 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
       return new Time();
     }
     return connectedNode.getCurrentTime();
+  }
+
+  @Override public void shutdown() {
+    connectedNode.getLog().info("Route: Route Manager shutdown method called");
+    this.connectedNode.shutdown();
   }
 }//AbstractNodeMain

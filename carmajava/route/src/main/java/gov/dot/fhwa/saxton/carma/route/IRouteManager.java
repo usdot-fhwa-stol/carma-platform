@@ -64,4 +64,9 @@ public interface IRouteManager {
    * @return The time
    */
   Time getTime();
+
+  /**
+   * Safely shutdown the node
+   */
+  void shutdown();
 }
