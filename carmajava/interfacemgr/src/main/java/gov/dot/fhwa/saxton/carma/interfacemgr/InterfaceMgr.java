@@ -35,6 +35,7 @@ import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
+import std_msgs.Bool;
 
 import java.util.List;
 
@@ -54,6 +55,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected InterfaceWorker   worker_;
     protected Log               log_;
     protected ConnectedNode     connectedNode_;
+    protected CancellableLoop   mainLoop_;
     protected Publisher<cav_msgs.SystemAlert> systemAlertPublisher_;
 
     @Override
@@ -114,6 +116,25 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             }
         });
 
+        //listener for ACC engaged (from the CAN driver), which will tell us if the brake pedal has been pushed
+        Subscriber<std_msgs.Bool> accListener = connectedNode.newSubscriber("acc_engaged", std_msgs.Bool._TYPE);
+        accListener.addMessageListener(new MessageListener<Bool>() {
+            @Override
+            public void onNewMessage(std_msgs.Bool msg) {
+                if (!msg.getData()) {
+                    log_.warn("InterfaceMgr.accListener sensed ACC has been disengaged at the hardware level.");
+
+                    //alert all other ROS nodes
+                    sendSystemAlert(AlertSeverity.FATAL, "Hardware ACC has been disengaged.");
+
+                    //shut down this node
+                    if (mainLoop_ != null) {
+                        mainLoop_.cancel();
+                    }
+                }
+            }
+        });
+
         //create a message listener for the bond messages coming from drivers (sendSystemAlert)
             //TODO: this will be implemented in a future iteration due to dependence on
             //      an as-yet non-existent JNI wrapper for the ros bindcpp library.
@@ -137,7 +158,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         sendSystemAlert(AlertSeverity.NOT_READY, "System is starting up...");
 
         // This CancellableLoop will be canceled automatically when the node shuts down
-        connectedNode.executeCancellableLoop(new CancellableLoop() {
+        mainLoop_ = new CancellableLoop() {
 
             //Once the wait time expires we declare the system ready for operations, and let
             // all other nodes know.
@@ -158,7 +179,8 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 Thread.sleep(1000);
             }//loop
 
-        });//executeCancellableLoop
+        };
+        connectedNode.executeCancellableLoop(mainLoop_);
 
 
         ///// service publisher /////
