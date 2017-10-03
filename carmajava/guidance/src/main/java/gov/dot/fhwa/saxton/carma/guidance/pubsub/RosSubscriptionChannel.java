@@ -41,15 +41,17 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
     /**
      * Acquire a new ISubscriber instance
      */
-    @Override public ISubscriber<T> getSubscriber() {
+    @Override
+    public ISubscriber<T> getSubscriber() {
         numOpenChannels++;
-        return new RosSubscriber<>(subscriber, this);
+        return new RosSubscriber<>(subscriber, this, exceptionHandler);
     }
 
     /**
      * Register the destruction of a channel interface instance. If none are open then close the resource.
      */
-    @Override public void notifyClientShutdown() {
+    @Override
+    public void notifyClientShutdown() {
         numOpenChannels--;
 
         if (numOpenChannels <= 0) {
@@ -67,11 +69,13 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
     /**
      * Return whether or not the underlying resource for this RosPublicationChannel has been shut down
      */
-    @Override public boolean isOpen() {
+    @Override
+    public boolean isOpen() {
         return open;
     }
 
-    @Override public void close() {
+    @Override
+    public void close() {
         open = false;
         subscriber.shutdown();
     }
