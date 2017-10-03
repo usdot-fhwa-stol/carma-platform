@@ -44,4 +44,8 @@ public class MockRouteManager implements IRouteManager {
   @Override public Time getTime() {
     return Time.fromMillis(System.currentTimeMillis());
   }
+
+  @Override public void shutdown() {
+
+  }
 }
