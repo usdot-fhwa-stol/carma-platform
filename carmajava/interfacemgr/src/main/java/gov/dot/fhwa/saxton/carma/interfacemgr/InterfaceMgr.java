@@ -128,9 +128,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                     sendSystemAlert(AlertSeverity.FATAL, "Hardware ACC has been disengaged.");
 
                     //shut down this node
-                    if (mainLoop_ != null) {
-                        mainLoop_.cancel();
-                    }
+                    connectedNode.shutdown();
                 }
             }
         });
