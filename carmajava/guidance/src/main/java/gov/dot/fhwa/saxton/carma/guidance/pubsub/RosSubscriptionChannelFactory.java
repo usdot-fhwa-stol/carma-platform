@@ -36,6 +36,6 @@ public class RosSubscriptionChannelFactory implements ISubscriptionChannelFactor
 
     @Override public <T> ISubscriptionChannel<T> newSubscriptionChannel(String topic, String type) {
         return (ISubscriptionChannel<T>) new RosSubscriptionChannel<>(
-            node.newSubscriber(topic, type));
+            node.newSubscriber(topic, type), exceptionHandler);
     }
 }
