@@ -52,7 +52,6 @@ public class GuidanceCommands extends GuidanceComponent {
 
     @Override
     public void onGuidanceEnable() {
-        log.fatal("IN ON GUIDANCE ENABLE");
         SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
         enableReq.setSet((byte) 1);
 
