@@ -468,7 +468,7 @@ public class RouteWorker {
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
     // ROUTE_COMPLETE is not an internal state so we set it here
     if (routeComplete) {
-      routeState.setState(RouteState.SHUTDOWN);
+      routeState.setState(RouteState.ROUTE_COMPLETE);
     } else {
       switch (getCurrentState()) {
         case LOADING_ROUTES:
