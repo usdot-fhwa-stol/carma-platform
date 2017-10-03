@@ -38,7 +38,13 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
     try {
       onSaxtonStart(connectedNode);
     } catch (Exception e) {
-      connectedNode.getLog().fatal("Exception reached SaxtonBaseNode onStart function. StackTrace: " + e);
+      String strace = "\n";
+      for (StackTraceElement ste : e.getStackTrace()) {
+          strace += "\t" + ste.toString();
+          strace += "\n";
+      }
+
+      connectedNode.getLog().fatal("Exception reached SaxtonBaseNode onStart function for node " + getDefaultNodeName() + ". StackTrace: " + strace);
       handleException(e);
     }
   }

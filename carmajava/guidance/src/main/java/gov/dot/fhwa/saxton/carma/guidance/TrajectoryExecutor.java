@@ -40,10 +40,23 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class TrajectoryExecutor extends GuidanceComponent {
     // Member variables
-    private ISubscriber<RouteState> routeStateSubscriber;
+    protected ISubscriber<RouteState> routeStateSubscriber;
+    protected GuidanceCommands commands;
+    protected AtomicReference<GuidanceState> state;
+    
+    protected long startTime = 0;
+    protected long holdTimeMs = 0;
+    protected double operatingSpeed;
+    protected double amplitude;
+    protected double phase;
+    protected double period;
+    protected double maxAccel;
+    protected final long sleepDurationMillis = 100;
 
-    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
-        super(state, pubSubService, node);
+    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node, GuidanceCommands commands) {
+        super(state, iPubSubService, node);
+        this.state = state;
+        this.commands = commands;
     }
 
     @Override public String getComponentName() {
@@ -59,42 +72,54 @@ public class TrajectoryExecutor extends GuidanceComponent {
             }
         });
 
-
+        operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
+        amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
+        phase = node.getParameterTree().getDouble("~trajectory_phase");
+        period = node.getParameterTree().getDouble("~trajectory_period");
+        maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
+        holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
     }
 
-    @Override public void onSystemReady() {
-        try {
-            IService<cav_srvs.GetDriversWithCapabilitiesRequest,
-                cav_srvs.GetDriversWithCapabilitiesResponse> driverCapabilityService
-                = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                GetDriversWithCapabilities._TYPE);
-
-            GetDriversWithCapabilitiesRequest req =
-                node.getServiceRequestMessageFactory()
-                    .newFromType(GetDriversWithCapabilitiesRequest._TYPE);
-
-            List<String> reqdCapabilities = new ArrayList<>();
-            reqdCapabilities.add("lateral");
-            reqdCapabilities.add("longitudinal");
-            req.setCapabilities(reqdCapabilities);
-            final GetDriversWithCapabilitiesResponse[] drivers =
-                new GetDriversWithCapabilitiesResponse[1];
-            driverCapabilityService.call(req,
-                new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-                    @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                        drivers[0] = msg;
-                    }
-
-                    @Override public void onFailure(Exception e) {
-                        // Ignore
-                    }
-                });
-        } catch (TopicNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override public void onGuidanceEnable() {
+    @Override
+    public void onSystemReady() {
         // NO-OP
+    }
+
+    @Override
+    public void onGuidanceEnable() {
+        startTime = System.currentTimeMillis();
+    }
+
+    /**
+     * Compute the sinusoidal part of the trajectory
+     * 
+     * @param t The current time in milliseconds
+     * @param amplitude the max/min of the sinusoidal curve in m/s
+     * @param period The number of seconds to complete a cycle
+     * @param phase Where in the cycle to start
+     * 
+     * @return The current value of the sinusoidal trajectory component
+     */
+    private double computeSin(double t, double amplitude, double period, double phase) {
+        double s = t / 1000.0;
+        double pFactor = 2 * Math.PI / period;
+
+        return amplitude * Math.sin((pFactor *  s) + phase);
+    }
+
+    public void loop() {
+            try {
+                // Generate a simple sin(t) speed command
+                if (state.get() == GuidanceState.ENGAGED) { 
+                    if (System.currentTimeMillis() - startTime < holdTimeMs) {
+                        commands.setCommand(operatingSpeed, maxAccel);
+                    } else {
+                        commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase), maxAccel);
+                    }
+                }
+
+                Thread.sleep(sleepDurationMillis);
+            } catch (InterruptedException e) {
+            }
     }
 }

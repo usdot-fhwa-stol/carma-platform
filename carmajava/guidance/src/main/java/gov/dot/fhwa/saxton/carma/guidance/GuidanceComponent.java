@@ -105,8 +105,8 @@ public abstract class GuidanceComponent implements Runnable {
         loopThread.setName(getComponentName() + "Looper");
         loopThread.start();
 
-        // Wait for GUIDANCE_ENABLE
-        while (!(state.get() == GuidanceState.ENABLED)) {
+        // Wait for GUIDANCE_ENGAGED
+        while (!(state.get() == GuidanceState.ENGAGED)) {
             try {
                 Thread.sleep(WAIT_DURATION_MS);
             } catch (InterruptedException e) {
@@ -114,7 +114,7 @@ public abstract class GuidanceComponent implements Runnable {
         }
         cancelAndWaitForLoop(loop);
 
-        log.info(getComponentName() + " transitioning to ENABLED state.");
+        log.info(getComponentName() + " transitioning to ENGAGED state.");
         onGuidanceEnable();
         loop = new CancellableLoop() {
             @Override

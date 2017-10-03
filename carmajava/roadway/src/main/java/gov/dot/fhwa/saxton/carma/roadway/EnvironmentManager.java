@@ -166,10 +166,10 @@ public class EnvironmentManager extends SaxtonBaseNode {
       }
 
       @Override protected void loop() throws InterruptedException {
+        publishTF(); // Transforms may be needed before system start. Just identity prior to drivers ready
         if (!systemStarted) {
           return;
         }
-        publishTF();
         publishRoadwayEnv(sequenceNumber);
         sequenceNumber++;
         Thread.sleep(1000);

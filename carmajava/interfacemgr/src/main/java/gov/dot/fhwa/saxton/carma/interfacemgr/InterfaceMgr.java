@@ -250,6 +250,13 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             });
         }
 
+        // TODO: Improve this quick-and-dirty hack with proper synchronization around the GetDriverApi call
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // NO-OP
+        }
+
         return rh.getResult();
     }
 

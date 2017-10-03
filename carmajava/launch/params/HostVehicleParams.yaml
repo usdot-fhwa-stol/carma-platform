@@ -2,7 +2,7 @@
 # Defines the ros parameters which define the host vehicle's characteristics
 
 # String: Host vehicle color
-vehicle_color: 'green'
+vehicle_color: 'Green'
 
 # Double: Host vehicle height
 # Units: Meters
