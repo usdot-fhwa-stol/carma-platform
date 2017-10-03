@@ -41,21 +41,18 @@ public class GuidanceCommands extends GuidanceComponent {
         super(state, iPubSubService, node);
     }
 
-    @Override public String getComponentName() {
+    @Override
+    public String getComponentName() {
         return "Guidance.Commands";
     }
 
-    @Override public void onGuidanceStartup() {
-        // Register with the interface manager's service
-        try {
-            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                GetDriversWithCapabilities._TYPE);
-        } catch (TopicNotFoundException tnfe) {
-            log.fatal("Interface manager not found. Shutting down Guidance.Commands");
-        }
+    @Override
+    public void onGuidanceStartup() {
     }
 
-    @Override public void onGuidanceEnable() {
+    @Override
+    public void onGuidanceEnable() {
+        log.fatal("IN ON GUIDANCE ENABLE");
         SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
         enableReq.setSet((byte) 1);
 
@@ -88,40 +85,49 @@ public class GuidanceCommands extends GuidanceComponent {
     public void setCommand(double speed, double accel) {
         speedCommand.set(speed);
         maxAccel.set(accel);
-        log.info("Speed command set to "  + speed + "m/s and " + accel + "m/s/s");
+        log.info("Speed command set to " + speed + "m/s and " + accel + "m/s/s");
     }
 
-    @Override public void onSystemReady() {
+    @Override
+    public void onSystemReady() {
+        // Register with the interface manager's service
+        try {
+            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
+                    GetDriversWithCapabilities._TYPE);
+        } catch (TopicNotFoundException tnfe) {
+            log.fatal("Interface manager not found. Shutting down Guidance.Commands");
+        }
+
         // Build our request message
         GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
 
         List<String> reqdCapabilities = new ArrayList<>();
-        reqdCapabilities.add(SPEED_CMD_CAPABILITY); 
-        reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY); 
+        reqdCapabilities.add(SPEED_CMD_CAPABILITY);
+        reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY);
         req.setCapabilities(reqdCapabilities);
 
         // Work around to pass a final object into our anonymous inner class so we can get the
         // response
-        final GetDriversWithCapabilitiesResponse[] drivers =
-            new GetDriversWithCapabilitiesResponse[1];
+        final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
         drivers[0] = null;
 
         // Call the InterfaceManager to see if we have a driver that matches our requirements
-        driverCapabilityService.call(req,
-            new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-                @Override public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                    log.info("Received GetDriversWithCapabilitiesResponse");
-                    for (String driverName : msg.getDriverData()) {
-                        log.info("GuidanceCommands discovered driver: " + driverName);
-                    }
-
-                    drivers[0] = msg;
+        driverCapabilityService.call(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+            @Override
+            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                log.info("Received GetDriversWithCapabilitiesResponse");
+                for (String driverName : msg.getDriverData()) {
+                    log.info("GuidanceCommands discovered driver: " + driverName);
                 }
 
-                @Override public void onFailure(Exception e) {
-                    log.warn("No control/cmd_speed capable driver found!!!");
-                }
-            });
+                drivers[0] = msg;
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                log.warn("No control/cmd_speed capable driver found!!!");
+            }
+        });
 
         // TODO: Replace this hack with proper synchronization
         try {
@@ -146,10 +152,12 @@ public class GuidanceCommands extends GuidanceComponent {
             // Open the publication channel to the driver and start sending it commands
             log.info("GuidanceCommands connecting to " + driverFqn);
 
-            speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn + "/" + SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
+            speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn + "/" + SPEED_CMD_CAPABILITY,
+                    SpeedAccel._TYPE);
 
             try {
-                enableRoboticService = pubSubService.getServiceForTopic(driverFqn + "/" + ENABLE_ROBOTIC_CAPABILITY, SetEnableRobotic._TYPE);
+                enableRoboticService = pubSubService.getServiceForTopic(driverFqn + "/" + ENABLE_ROBOTIC_CAPABILITY,
+                        SetEnableRobotic._TYPE);
                 driverConnected = true;
             } catch (TopicNotFoundException tnfe) {
                 log.fatal("GuidanceCommands unable to locate control/enable_robotic service for " + driverFqn);
