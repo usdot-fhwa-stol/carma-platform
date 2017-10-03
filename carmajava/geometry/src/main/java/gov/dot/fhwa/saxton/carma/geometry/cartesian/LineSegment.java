@@ -66,8 +66,7 @@ public class LineSegment implements DimensionalObject {
 
     return ((a_p).subtract(a_p_n)).magnitude();
   }
-
-  //Was refered to as translateTo in old code
+  
   public Point pointProjectedOnLine(Point point){
     // Based off of same math as in distanceToPointExtendedSegment
     Vector a = new Vector(this.p1);
