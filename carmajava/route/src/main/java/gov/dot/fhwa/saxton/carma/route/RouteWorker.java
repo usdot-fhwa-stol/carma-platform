@@ -134,7 +134,7 @@ public class RouteWorker {
         log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.ROUTE_COMPLETE,
+        alertMsg = buildSystemAlertMsg(SystemAlert.SHUTDOWN,
           "Route: The end of the active route has been reached");
         // Notify system of route completion
         routeManager.publishSystemAlert(alertMsg);
@@ -421,8 +421,9 @@ public class RouteWorker {
         systemOkay = true;
         log.info("route_manager received system ready on system_alert and is starting to publish");
         break;
-      case cav_msgs.SystemAlert.ROUTE_COMPLETE:
-        log.info("Route manager received a route complete message");
+      case cav_msgs.SystemAlert.SHUTDOWN:
+        log.info("Route manager received a shutdown message");
+        routeManager.shutdown();
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
@@ -467,7 +468,7 @@ public class RouteWorker {
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
     // ROUTE_COMPLETE is not an internal state so we set it here
     if (routeComplete) {
-      routeState.setState(RouteState.ROUTE_COMPLETE);
+      routeState.setState(RouteState.SHUTDOWN);
     } else {
       switch (getCurrentState()) {
         case LOADING_ROUTES:
