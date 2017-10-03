@@ -140,6 +140,7 @@ public class RouteWorker {
         routeManager.publishSystemAlert(alertMsg);
         routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), true));
         log.info("Route has been completed");
+        routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
         alertMsg = buildSystemAlertMsg(SystemAlert.WARNING,
