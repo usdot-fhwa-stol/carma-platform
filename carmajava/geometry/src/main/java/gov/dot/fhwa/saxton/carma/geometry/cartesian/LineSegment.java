@@ -30,7 +30,13 @@ public class LineSegment implements DimensionalObject {
     }
     this.p1 = p1;
     this.p2 = p2;
-    this.vector = new Vector(p1,p2);
+    this.vector = new Vector(p2,p1);
+  }
+
+  public LineSegment(LineSegment seg) {
+    this.p1 = new Point(seg.getP1());
+    this.p2 = new Point(seg.getP2());
+    this.vector = new Vector(this.p1, this.p2);
   }
 
   public double length() {
@@ -41,7 +47,7 @@ public class LineSegment implements DimensionalObject {
     return p1.getNumDimensions();
   }
 
-  public double crosstrackDistance(Point point) throws IllegalArgumentException {
+  public double perpendicularDistance(Point point) throws IllegalArgumentException {
     // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
     // Equation giving shortest distance to a line in n-dimensional space
     // x = a + tn defines a line
@@ -67,7 +73,10 @@ public class LineSegment implements DimensionalObject {
     return ((a_p).subtract(a_p_n)).magnitude();
   }
   
-  public Point pointProjectedOnLine(Point point){
+  public Point pointProjectedOnLine(Point point) throws IllegalArgumentException{
+    if (this.getNumDimensions() != point.getNumDimensions()) {
+      throw new IllegalArgumentException("dimensions do not match");
+    }
     // Based off of same math as in distanceToPointExtendedSegment
     Vector a = new Vector(this.p1);
     Vector p = new Vector(point);
@@ -76,6 +85,18 @@ public class LineSegment implements DimensionalObject {
     Vector a_p = a.subtract(p);
     Vector a_p_n = n.scalarMultiply(a_p.dot(n));
 
-    return (a.add(a_p_n)).toPoint();
+    return (a.add(a_p_n.scalarMultiply(-1.0))).toPoint();
+  }
+
+  public Point getP1() {
+    return p1;
+  }
+
+  public Point getP2() {
+    return p2;
+  }
+
+  public Vector getVector() {
+    return vector;
   }
 }

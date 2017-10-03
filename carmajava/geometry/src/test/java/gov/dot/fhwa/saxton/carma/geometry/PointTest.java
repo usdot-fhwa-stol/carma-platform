@@ -18,8 +18,8 @@ public class PointTest {
 
   @Before
   public void setUp() throws Exception {
-    log = LogFactory.getLog(HaversineStrategyTest.class);
-    log.info("Setting up tests for HaversineStrategy");
+    log = LogFactory.getLog(PointTest.class);
+    log.info("Setting up tests for Point");
   }
 
   @After

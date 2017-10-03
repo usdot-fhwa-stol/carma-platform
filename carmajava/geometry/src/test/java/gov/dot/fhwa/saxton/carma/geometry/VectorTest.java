@@ -21,8 +21,8 @@ public class VectorTest {
 
   @Before
   public void setUp() throws Exception {
-    log = LogFactory.getLog(HaversineStrategyTest.class);
-    log.info("Setting up tests for HaversineStrategy");
+    log = LogFactory.getLog(VectorTest.class);
+    log.info("Setting up tests for Vector");
   }
 
   @After
