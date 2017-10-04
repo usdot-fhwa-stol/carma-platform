@@ -28,7 +28,6 @@ import org.ros.concurrent.CancellableLoop;
 import org.ros.exception.ServiceException;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 import java.util.concurrent.ExecutorService;
@@ -50,15 +49,15 @@ public class GuidanceMain extends SaxtonBaseNode {
 
   // Member Variables
   protected ExecutorService executor;
-  protected int numThreads = 6;
+  protected final int numThreads = 6;
 
   protected GuidanceExceptionHandler guidanceExceptionHandler;
   protected IPubSubService pubSubService;
-  protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse> guidanceEnableService;
+  protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse> guidanceEngageService;
 
   protected GuidanceExceptionHandler exceptionHandler;
 
-  protected final AtomicBoolean enabled = new AtomicBoolean(false);
+  protected final AtomicBoolean engaged = new AtomicBoolean(false);
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
 
@@ -105,6 +104,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     final Log log = connectedNode.getLog();
     final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state, log);
+    this.exceptionHandler = guidanceExceptionHandler;
     log.info("Guidance exception handler partially initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
@@ -142,50 +142,29 @@ public class GuidanceMain extends SaxtonBaseNode {
           state.set(GuidanceState.SHUTDOWN);
         }
       }//onNewMessage
-    }//MessageListener
+    } //MessageListener
     );//addMessageListener
 
     final IPublisher<SystemAlert> systemAlertPublisher = pubSubService.getPublisherForTopic("system_alert",
         cav_msgs.SystemAlert._TYPE);
 
-    guidanceEnableService = connectedNode.newServiceServer("set_guidance_enabled", SetGuidanceEngaged._TYPE,
+    guidanceEngageService = connectedNode.newServiceServer("set_guidance_engaged", SetGuidanceEngaged._TYPE,
         new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
           @Override
-          public void build(SetGuidanceEngagedRequest setGuidanceEnabledRequest,
-              SetGuidanceEngagedResponse setGuidanceEnabledResponse) throws ServiceException {
+          public void build(SetGuidanceEngagedRequest setGuidanceEngagedRequest,
+              SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
             state.set(GuidanceState.ENGAGED);
-            setGuidanceEnabledResponse.setGuidanceStatus(enabled.get());
+            setGuidanceEngagedResponse.setGuidanceStatus(engaged.get());
           }
         });
-
-    // Primary GuidanceMain loop logic
-    //Getting the ros param called run_id.
-    ParameterTree param = connectedNode.getParameterTree();
-    final String rosRunID = param.getString("/run_id");
 
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
-      private int sequenceNumber;
-
-      @Override
-      protected void setup() {
-        sequenceNumber = 0;
-      }//setup
-
       @Override
       protected void loop() throws InterruptedException {
-
-        cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-        systemAlertMsg
-            .setDescription("Hello World! " + "I am guidance_main. " + sequenceNumber + " run_id = " + rosRunID + ".");
-        systemAlertMsg.setType(SystemAlert.CAUTION);
-        systemAlertPublisher.publish(systemAlertMsg);
-        sequenceNumber++;
-
-        Thread.sleep(30000);
+        Thread.sleep(5000);
       }//loop
-
     }//CancellableLoop
     );//executeCancellableLoop
   }//onStart
