@@ -58,6 +58,7 @@ public class RosServiceSynchronizer {
    * @param client the {@link org.ros.node.service.ServiceClient} instance to use for communication
    * @param request The request message to send
    * @param listener The callbacks to execute upon success or failure of the ROS service call
+   * @throws InterruptedException if the thread is interrupted while waiting for the call to complete
    */
   public static final <R, T> void callSync(ServiceClient<R, T> client, R request, ServiceResponseListener<T> listener)
       throws InterruptedException {
