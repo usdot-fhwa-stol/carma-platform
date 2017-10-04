@@ -18,7 +18,8 @@ public class ConvexHull implements DimensionalObject {
     this.numDimensions = points.get(0).getNumDimensions();
     this.calculateBounds(points);
     this.calculateCentroidOfBounds();
-    
+    //TODO calculate convex hull
+    //TODO calculate centroid of convex hull
   }
 
   protected void validateInput(List<Point> points) throws IllegalArgumentException {
