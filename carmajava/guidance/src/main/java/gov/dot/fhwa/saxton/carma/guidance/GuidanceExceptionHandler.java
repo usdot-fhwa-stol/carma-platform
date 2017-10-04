@@ -20,6 +20,7 @@ public class GuidanceExceptionHandler {
     protected IPublisher<SystemAlert> systemAlertPub;
 
     GuidanceExceptionHandler(AtomicReference<GuidanceState> state, Log log) {
+        this.state = state;
         this.log = log;
     }
 
