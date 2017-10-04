@@ -24,19 +24,19 @@ import java.util.Arrays;
 public class Point implements CartesianElement {
   protected double[] dimensions;
 
-  public Point(double[] dimensions){
+  public Point(double... dimensions){
     this.dimensions = dimensions;
   }
 
   public Point(int size, double value){
-    dimensions = new double[size];
-    Arrays.fill(dimensions, value);
+    this.dimensions = new double[size];
+    Arrays.fill(this.dimensions, value);
   }
   //Create this point as a deep copy of the previous point
   public Point(Point p1){
-    dimensions = new double[p1.getNumDimensions()];
+    this.dimensions = new double[p1.getNumDimensions()];
     for (int i = 0; i < p1.getNumDimensions(); i++){
-      dimensions[i] = p1.getDim(i);
+      this.dimensions[i] = p1.getDim(i);
     }
   }
 

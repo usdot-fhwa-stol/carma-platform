@@ -7,6 +7,9 @@ import org.ros.rosjava_geometry.Vector3;
  */
 public class Vector3D extends Vector {
 
+  public Vector3D(double x, double y, double z) {
+    super(new Point3D(x,y,z));
+  }
   public Vector3D(Point3D head, Point3D tail) {
     super(head, tail);
   }
@@ -20,7 +23,7 @@ public class Vector3D extends Vector {
   }
 
   public Vector3D(Vector3 vec) {
-    super(new Vector3D(new Point3D(vec.getX(), vec.getY(), vec.getZ())));
+    super(new Vector3D(vec.getX(), vec.getY(), vec.getZ()));
   }
 
   // cross product is only defined for 3D vectors

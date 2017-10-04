@@ -11,11 +11,11 @@ public class CartesianObject implements CartesianElement {
   protected final int MAX_BOUND_IDX = 1;
   protected double[][] bounds; // 2 rows as every dim has a min and max value
   protected Point centroidOfBounds;
-  protected Point centroidOfHull;
+  protected Point centroidOfCloud;
   protected int numDimensions;
-  protected List<Point> pointCloud;
+  protected List<? extends Point> pointCloud;
 
-  public CartesianObject(List<Point> pointCloud) throws IllegalArgumentException {
+  public CartesianObject(List<? extends Point> pointCloud) throws IllegalArgumentException {
     this.validateInput(pointCloud);
     this.numDimensions = pointCloud.get(0).getNumDimensions();
     this.calculateBounds(pointCloud);
@@ -24,7 +24,7 @@ public class CartesianObject implements CartesianElement {
     this.calculateCentroidOfCloud();
   }
 
-  protected void validateInput(List<Point> points) throws IllegalArgumentException {
+  protected void validateInput(List<? extends Point> points) throws IllegalArgumentException {
     if (points.size() <= 0) {
       throw new IllegalArgumentException("Empty list of points provided to ConvexHull constructor");
     }
@@ -43,9 +43,11 @@ public class CartesianObject implements CartesianElement {
   protected void calculateCentroidOfCloud() {
     Vector centroidValues = new Vector(new Point(getNumDimensions(), 0));
     for (int i = 0; i < pointCloud.size(); i++) {
-      centroidValues.setDim(i, centroidValues.getDim(i) + pointCloud.get(i).getDim(i));
+      for (int j = 0; j < getNumDimensions(); j++) {
+        centroidValues.setDim(j, centroidValues.getDim(j) + pointCloud.get(i).getDim(j));
+      }
     }
-    centroidOfHull = centroidValues.scalarMultiply(1.0 / pointCloud.size()).toPoint();
+    centroidOfCloud = centroidValues.scalarMultiply(1.0 / pointCloud.size()).toPoint();
   }
 
   protected void calculateCentroidOfBounds() {
@@ -56,7 +58,7 @@ public class CartesianObject implements CartesianElement {
     centroidOfBounds = new Point(centroidValues);
   }
 
-  protected void calculateBounds(List<Point> points) {
+  protected void calculateBounds(List<? extends Point> points) {
     int dims = this.getNumDimensions();
     bounds = new double[dims][2];
 
@@ -80,7 +82,7 @@ public class CartesianObject implements CartesianElement {
     return numDimensions;
   }
 
-  public List<Point> getPointCloud() {
+  public List<? extends Point> getPointCloud() {
     return pointCloud;
   }
 
@@ -100,7 +102,7 @@ public class CartesianObject implements CartesianElement {
     return centroidOfBounds;
   }
 
-  public Point getCentroidOfHull() {
-    return centroidOfHull;
+  public Point getCentroidOfCloud() {
+    return centroidOfCloud;
   }
 }

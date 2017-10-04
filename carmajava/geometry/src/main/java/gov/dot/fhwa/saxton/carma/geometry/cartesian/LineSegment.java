@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 
+import java.util.Arrays;
+
 /**
  * A representation of a point in N-dimensional space.
  */

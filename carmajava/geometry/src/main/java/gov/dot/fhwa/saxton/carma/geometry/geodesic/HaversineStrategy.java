@@ -57,7 +57,7 @@ public class HaversineStrategy implements IDistanceStrategy{
     Vector startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
 
     // Get angle between both vectors
-    double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
+    double interiorAngle = startToExternalVec.getAngleBetweenVectors(startToEndVec);
 
     return startToExternalVec.magnitude() * Math.sin(interiorAngle);
   }
@@ -76,23 +76,8 @@ public class HaversineStrategy implements IDistanceStrategy{
     Vector startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
 
     // Get angle between both vectors
-    double interiorAngle = getAngleBetweenVectors(startToExternalVec, startToEndVec);
+    double interiorAngle = startToExternalVec.getAngleBetweenVectors(startToEndVec);
 
     return startToExternalVec.magnitude() * Math.cos(interiorAngle);
-  }
-
-  /**
-   * Helper function calculates the angle between two vectors.
-   * @param vec1 the first vector
-   * @param vec2 the second vector
-   * @return The angle in rad between the two vectors
-   */
-  protected double getAngleBetweenVectors(Vector vec1, Vector vec2) {
-    double vec1Mag = vec1.magnitude();
-    double vec2Mag = vec2.magnitude();
-    if (vec1Mag == 0 || vec2Mag == 0) {
-      return 0;
-    }
-    return  Math.acos(vec1.dot(vec2) / (vec1.magnitude() * vec2.magnitude()));
   }
 }

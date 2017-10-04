@@ -1,9 +1,6 @@
 package gov.dot.fhwa.saxton.carma.geometry;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point2D;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
@@ -209,5 +206,40 @@ public class VectorTest {
     assertTrue(Math.abs(unitV.getDim(0) - (1.0 / Math.sqrt(3.0))) < 0.0000001);
     assertTrue(Math.abs(unitV.getDim(1) - (1.0 / Math.sqrt(3.0))) < 0.0000001);
     assertTrue(Math.abs(unitV.getDim(2) - (1.0 / Math.sqrt(3.0))) < 0.0000001);
+  }
+
+  /**
+   * Tests the getInteriorAngle function
+   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
+   * @throws Exception
+   */
+  @Test
+  public void testGetAngleBetweenVectors() throws Exception {
+
+    log.info("// Entering get interior angle test");
+    Vector3D v1 = new Vector3D(1,1,1);
+    Vector3D v2 = new Vector3D(1,2,4);
+    double angle = v1.getAngleBetweenVectors(v2);
+    assertTrue(Math.abs(angle - 0.4908826) < 0.00001);
+
+    v1 = new Vector3D(8,-2,13);
+    v2 = new Vector3D(-2,14,-2);
+    angle = v1.getAngleBetweenVectors(v2);
+    assertTrue(Math.abs(angle - 1.89478) < 0.00001);
+
+    v1 = new Vector3D(1,0,0);
+    v2 = new Vector3D(0,1,0);
+    angle = v1.getAngleBetweenVectors(v2);
+    assertTrue(Math.abs(angle - Math.PI/2.0) < 0.00001);
+
+    v1 = new Vector3D(1,0,0);
+    v2 = new Vector3D(0,0,1);
+    angle = v1.getAngleBetweenVectors(v2);
+    assertTrue(Math.abs(angle - Math.PI/2.0) < 0.00001);
+
+    v1 = new Vector3D(0,0,0);
+    v2 = new Vector3D(0,0,0);
+    angle = v1.getAngleBetweenVectors(v2);
+    assertTrue(Math.abs(angle - 0.0) < 0.00001);
   }
 }

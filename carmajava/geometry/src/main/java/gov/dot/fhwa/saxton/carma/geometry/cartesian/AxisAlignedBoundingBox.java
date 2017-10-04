@@ -20,28 +20,22 @@ public class AxisAlignedBoundingBox implements IIntersectionChecker {
     return true;
   }
 
-  @Override public boolean intersects(CartesianObject obj, LineSegment seg) throws IllegalArgumentException {
-    return false;
-  }
-
-  @Override public boolean intersects(CartesianObject obj, Vector vec) throws IllegalArgumentException {
-    return intersects(obj, new LineSegment(new Point(vec.getNumDimensions(), 0.0), vec.toPoint()));
-  }
-
   @Override public boolean intersects(CartesianObject obj, CartesianObject obj2) throws IllegalArgumentException {
     if (obj.getNumDimensions() != obj2.getNumDimensions())
       throw new IllegalArgumentException("Cannot check the intersection of CartesianElements with different dimensions");
-    final double[][] objBounds = obj.getBounds();
-    final int minIdx = obj.getMinBoundIndx();
-    final int maxIdx = obj.getMaxBoundIndx();
+    final double[][] bounds1 = obj.getBounds();
+    final double[][] bounds2 = obj2.getBounds();
+    final int min1 = obj.getMinBoundIndx();
+    final int max1 = obj.getMaxBoundIndx();
+    final int min2 = obj2.getMaxBoundIndx();
+    final int max2 = obj2.getMaxBoundIndx();
+
 
     for (int i = 0; i < obj.getNumDimensions(); i++) {
-      if (!(objBounds[i][minIdx] < p.getDim(i) && p.getDim(i) < objBounds[i][maxIdx])) {
+      if (Math.max(bounds1[i][min1], bounds2[i][min2]) > Math.min(bounds1[i][max1], bounds2[i][max2])) {
         return false;
       }
     }
-
     return true;
-    return false;
   }
 }

@@ -100,6 +100,20 @@ public class Vector implements CartesianElement {
     return sum;
   }
 
+  /**
+   * Calculates the angle between two vectors.
+   * @param vec2 the second vector
+   * @return The angle in rad between the two vectors
+   */
+  public double getAngleBetweenVectors(Vector vec2) {
+    double vec1Mag = this.magnitude();
+    double vec2Mag = vec2.magnitude();
+    if (vec1Mag == 0 || vec2Mag == 0) {
+      return 0;
+    }
+    return  Math.acos(this.dot(vec2) / (this.magnitude() * vec2.magnitude()));
+  }
+
   public Point toPoint(){
     return new Point(headPoint_);
   }

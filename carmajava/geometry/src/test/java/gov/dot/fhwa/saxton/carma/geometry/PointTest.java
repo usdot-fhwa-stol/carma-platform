@@ -44,7 +44,7 @@ public class PointTest {
     assertTrue(p.getDim(19) == 5);
     assertTrue(p.getDim(10) == 5);
 
-    //Deep copy constructor
+    // Deep copy constructor
     dims = new double[] { 1, 2 };
     Point p2 = new Point(dims);
     p = new Point(new Point(dims));
