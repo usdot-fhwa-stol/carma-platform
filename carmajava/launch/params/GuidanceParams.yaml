@@ -19,8 +19,6 @@ max_acceleration_capability: 2.0
 max_deceleration_capability: 1.0
 
 ignored_plugins: []
-required_plugins:
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.MockCruisingPlugin
 
 # Double: Time the mock trajectory will initially command the operating speed for
 # Units: seconds

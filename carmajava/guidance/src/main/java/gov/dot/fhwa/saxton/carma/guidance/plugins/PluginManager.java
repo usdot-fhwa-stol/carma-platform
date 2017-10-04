@@ -57,7 +57,6 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected PluginServiceLocator pluginServiceLocator;
     protected List<IPlugin> registeredPlugins = new ArrayList<>();
     protected List<String> ignoredPluginClassNames = new ArrayList<>();
-    protected List<String> requiredPluginClassNames = new ArrayList<>();
 
     protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma.guidance.plugins";
     protected final String messagingBaseUrl = "plugins";
@@ -68,7 +67,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
     protected ServiceServer<PluginListRequest, PluginListResponse> registeredPluginService;
     protected ServiceServer<PluginListRequest, PluginListResponse> activePluginService;
-    protected ServiceServer<PluginActivationRequest, PluginActivationResponse> activatePluginService;
+    protected ServiceServer<PluginActivationRequest, PluginActivationResponse>
+        activatePluginService;
     protected IPublisher<cav_msgs.PluginList> pluginPublisher;
 
     protected MessageFactory messageFactory;
@@ -81,7 +81,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         super(state, pubSubManager, node);
         this.executor = new PluginExecutor(node.getLog());
 
-        pluginServiceLocator = new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
+        pluginServiceLocator =
+            new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
                 pubSubService, new RosParameterSource(node.getParameterTree()), node.getLog());
     }
 
@@ -104,8 +105,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             }
 
             // Check if we haven't ignored it and that it isn't an abstract class or an interface
-            if (!ignored && !Modifier.isAbstract(pluginClass.getModifiers())
-                    && !Modifier.isInterface(pluginClass.getModifiers())) {
+            if (!ignored
+                && !Modifier.isAbstract(pluginClass.getModifiers())
+                && !Modifier.isInterface(pluginClass.getModifiers())) {
 
                 out.add(pluginClass);
                 if (log != null) {
@@ -127,8 +129,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
      * @param pluginServiceLocator The service locator to pass as their constructor argument
      * @return A list containing instantiated plugin instances where the instantiation was successful
      */
-    protected List<IPlugin> instantiatePluginsFromClasses(List<Class<? extends IPlugin>> classes,
-            PluginServiceLocator pluginServiceLocator) {
+    protected List<IPlugin> instantiatePluginsFromClasses(List<Class<? extends IPlugin>> classes, PluginServiceLocator pluginServiceLocator) {
         List<IPlugin> pluginInstances = new ArrayList<>();
         for (Class<? extends IPlugin> pluginClass : classes) {
             try {
@@ -137,14 +138,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 // TODO: This is brittle, depends on convention of having a constructor taking only a PSL
                 IPlugin pluginInstance = pluginCtor.newInstance(pluginServiceLocator);
                 pluginInstance.registerAvailabilityListener(this);
-                log.info("Guidance.PluginManager instantiated new plugin instance: " + pluginInstance.getName() + ":"
-                        + pluginInstance.getVersionId());
-
-                // If the plugin is required activate it by default
-                if (requiredPluginClassNames.contains(pluginInstance.getClass().getName())) {
-                    pluginInstance.setActivation(true);
-                }
-
+                log.info("Guidance.PluginManager instantiated new plugin instance: "
+                    + pluginInstance.getName() + ":" + pluginInstance.getVersionId());
                 pluginInstances.add(pluginInstance);
             } catch (Exception e) {
                 log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
@@ -159,20 +154,16 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         return registeredPlugins;
     }
 
-    @Override
-    public String getComponentName() {
+    @Override public String getComponentName() {
         return "Guidance.PluginManager";
     }
 
-    @Override
-    public void onGuidanceStartup() {
+    @Override public void onGuidanceStartup() {
         // Instantiate the plugins and register them
-        ignoredPluginClassNames = (List<String>) node.getParameterTree().getList("~ignored_plugins", new ArrayList<>());
-        requiredPluginClassNames = (List<String>) node.getParameterTree().getList("~required_plugins",
-                new ArrayList<>());
+        ignoredPluginClassNames = (List<String>) node.getParameterTree()
+            .getList("~ignored_plugins", new ArrayList<>());
 
-        log.info("Ignoring plugins: " + ignoredPluginClassNames.toString());
-        log.info("Requiring plugins: " + requiredPluginClassNames.toString());
+        log.info("Ignoring plugins: " + ignoredPluginClassNames);
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
 
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
@@ -193,23 +184,21 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         // Configure the plugin availability topic and topic message factory
         NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
         messageFactory = nodeConfig.getTopicMessageFactory();
-        pluginPublisher = pubSubService.getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
+        pluginPublisher = pubSubService
+            .getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
                 cav_msgs.PluginList._TYPE);
     }
 
-    @Override
-    public void onSystemReady() {
+    @Override public void onSystemReady() {
     }
 
-    @Override
-    public void onGuidanceEnable() {
+    @Override public void onGuidanceEnable() {
         for (IPlugin p : getRegisteredPlugins()) {
             executor.resumePlugin(p.getName(), p.getVersionId());
         }
     }
 
-    @Override
-    public void onGuidanceShutdown() {
+    @Override public void onGuidanceShutdown() {
         // If we're shutting down, properly handle graceful plugin shutdown as well
         for (IPlugin p : getRegisteredPlugins()) {
             p.setActivation(false);
@@ -222,7 +211,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             e.printStackTrace();
         }
 
-        for (IPlugin p : getRegisteredPlugins()) {
+        for (IPlugin p: getRegisteredPlugins()) {
             executor.terminatePlugin(p.getName(), p.getVersionId());
         }
     }
@@ -232,11 +221,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
      * @param plugin The plugin who's availability has changed
      * @param availability The new state of that plugin's availability
      */
-    @Override
-    public void onAvailabilityChange(IPlugin plugin, boolean availability) {
+    @Override public void onAvailabilityChange(IPlugin plugin, boolean availability) {
         if (pluginPublisher == null) {
             // Bail if we can't yet publish
-            return;
+           return;
         }
 
         cav_msgs.PluginList availablePlugins = messageFactory.newFromType(cav_msgs.PluginList._TYPE);
@@ -260,7 +248,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pMsg.setName(p.getName());
                 pMsg.setVersionId(p.getVersionId());
                 pMsg.setActivated(p.getActivation());
-                pMsg.setRequired(requiredPluginClassNames.contains(p.getClass().getName()));
+
                 pList.add(pMsg);
             }
         }
@@ -273,11 +261,12 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
      * Configure all the services to respond with dummy data
      */
     private void setupServices() {
-        registeredPluginService = node.newServiceServer(messagingBaseUrl + "/" + getRegisteredPluginsServiceUrl,
-                PluginList._TYPE, new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
-                    @Override
-                    public void build(PluginListRequest pluginListRequest, PluginListResponse pluginListResponse)
-                            throws ServiceException {
+        registeredPluginService =
+            node.newServiceServer(messagingBaseUrl + "/" + getRegisteredPluginsServiceUrl,
+                PluginList._TYPE,
+                new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
+                    @Override public void build(PluginListRequest pluginListRequest,
+                        PluginListResponse pluginListResponse) throws ServiceException {
                         NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
                         MessageFactory factory = nodeConfig.getTopicMessageFactory();
 
@@ -295,7 +284,6 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                             p0.setName(p.getName());
                             p0.setVersionId(p.getVersionId());
                             p0.setActivated(p.getActivation());
-                            p0.setRequired(requiredPluginClassNames.contains(p.getClass().getName()));
                             pList.add(p0);
                         }
 
@@ -303,11 +291,12 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                     }
                 });
 
-        activePluginService = node.newServiceServer(messagingBaseUrl + "/" + getActivePluginsServiceUrl,
-                PluginList._TYPE, new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
-                    @Override
-                    public void build(PluginListRequest pluginListRequest, PluginListResponse pluginListResponse)
-                            throws ServiceException {
+        activePluginService =
+            node.newServiceServer(messagingBaseUrl + "/" + getActivePluginsServiceUrl,
+                PluginList._TYPE,
+                new ServiceResponseBuilder<PluginListRequest, PluginListResponse>() {
+                    @Override public void build(PluginListRequest pluginListRequest,
+                        PluginListResponse pluginListResponse) throws ServiceException {
                         NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
                         MessageFactory factory = nodeConfig.getTopicMessageFactory();
 
@@ -326,7 +315,6 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                                 p0.setName(p.getName());
                                 p0.setVersionId(p.getVersionId());
                                 p0.setActivated(p.getActivation());
-                                p0.setRequired(requiredPluginClassNames.contains(p.getClass().getName()));
                                 pList.add(p0);
                             }
                         }
@@ -335,28 +323,24 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                     }
                 });
 
-        activatePluginService = node.newServiceServer(messagingBaseUrl + "/" + activatePluginServiceUrl,
+        activatePluginService =
+            node.newServiceServer(messagingBaseUrl + "/" + activatePluginServiceUrl,
                 PluginActivation._TYPE,
                 new ServiceResponseBuilder<PluginActivationRequest, PluginActivationResponse>() {
-                    @Override
-                    public void build(PluginActivationRequest pluginActivationRequest,
-                            PluginActivationResponse pluginActivationResponse) throws ServiceException {
+                    @Override public void build(PluginActivationRequest pluginActivationRequest,
+                        PluginActivationResponse pluginActivationResponse) throws ServiceException {
                         // Walk the plugin list and see which one matches the name and version
                         boolean pluginFound = false;
                         for (IPlugin p : registeredPlugins) {
                             if (pluginActivationRequest.getPluginName().equals(p.getName())
-                                    && pluginActivationRequest.getPluginVersion().equals(p.getVersionId())) {
+                                && pluginActivationRequest.getPluginVersion().equals(p.getVersionId())) {
                                 // Match detected
-                                if (!requiredPluginClassNames.contains(p.getClass().getName())) {
-                                    // Can't change state of required plugins
-                                    p.setActivation(pluginActivationRequest.getActivated());
-                                }
-                                pluginActivationResponse.setNewState(p.getActivation());
-                                return;
+                                p.setActivation(pluginActivationRequest.getActivated());
+                                pluginFound = true;
                             }
                         }
 
-                        pluginActivationResponse.setNewState(false);
+                        pluginActivationResponse.setNewState(pluginFound && pluginActivationRequest.getActivated());
                     }
                 });
     }
