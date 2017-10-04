@@ -7,6 +7,7 @@ import cav_srvs.GetDriversWithCapabilitiesResponse;
 import cav_srvs.SetEnableRobotic;
 import cav_srvs.SetEnableRoboticRequest;
 import cav_srvs.SetEnableRoboticResponse;
+import gov.dot.fhwa.saxton.carma.rosutils.*;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
@@ -56,7 +57,7 @@ public class GuidanceCommands extends GuidanceComponent {
         enableReq.setSet((byte) 1);
 
         // TODO: Implement no-response call method
-        enableRoboticService.call(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
             @Override
             public void onSuccess(SetEnableRoboticResponse resp) {
                 // NO-OP
@@ -111,7 +112,7 @@ public class GuidanceCommands extends GuidanceComponent {
         drivers[0] = null;
 
         // Call the InterfaceManager to see if we have a driver that matches our requirements
-        driverCapabilityService.call(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
             @Override
             public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
                 log.info("Received GetDriversWithCapabilitiesResponse");
@@ -127,13 +128,6 @@ public class GuidanceCommands extends GuidanceComponent {
                 log.warn("No control/cmd_speed capable driver found!!!");
             }
         });
-
-        // TODO: Replace this hack with proper synchronization
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            // NO-OP
-        }
 
         // No message for LanePosition.msg to be published on "guidance/control/lane_position"
         // TODO: Add message type for lateral control from guidance
