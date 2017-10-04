@@ -24,16 +24,16 @@ import org.ros.exception.RemoteException;
  */
 public class RosServiceResponse<T> {
   protected T value;
+  protected boolean valuePresent = false;
   protected RemoteException error;
 
   public RosServiceResponse(T value) {
     this.value = value;
-    this.error = null;
+    valuePresent = true;
   }
 
   public RosServiceResponse(RemoteException error) {
     this.error = error;
-    this.value = null;
   }
 
   /**
@@ -41,15 +41,20 @@ public class RosServiceResponse<T> {
   * the call failed the get method will re-throw the error captured during communications.
    */
   public T get() throws RemoteException {
-    if (value != null) {
+    if (valuePresent) {
       return value;
     } else {
       throw error;
     }
   }
 
+  /**
+   * Applies the {@link ServiceResponseListener} parameter to the contained service response. If the
+   * call was a success, the .onSuccess branch will be executed. If not the .onFailure branch will be
+   * executed.
+   */
   public void get(ServiceResponseListener<T> listener) {
-    if (value != null) {
+    if (valuePresent) {
       listener.onSuccess(value);
     } else {
       listener.onFailure(error);
