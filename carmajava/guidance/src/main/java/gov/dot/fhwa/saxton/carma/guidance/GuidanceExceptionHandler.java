@@ -32,7 +32,6 @@ public class GuidanceExceptionHandler {
      */
     public void init(IPubSubService pubSubService) {
         systemAlertPub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
-
     }
 
     /**
