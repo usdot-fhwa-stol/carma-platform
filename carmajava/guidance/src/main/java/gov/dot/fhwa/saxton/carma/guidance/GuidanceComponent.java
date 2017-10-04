@@ -183,7 +183,7 @@ public abstract class GuidanceComponent implements Runnable {
         log.fatal("Publishing cav_msgs/SystemAlert.FATAL");
 
         // Alert the other ROS nodes to the FATAL condition
-        IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("sytem_alert", SystemAlert._TYPE);
+        IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
         SystemAlert fatalBroadcast = pub.newMessage();
         fatalBroadcast.setDescription(getComponentName() + " has triggered a Guidance PANIC: " + message);
         fatalBroadcast.setType(SystemAlert.FATAL);
