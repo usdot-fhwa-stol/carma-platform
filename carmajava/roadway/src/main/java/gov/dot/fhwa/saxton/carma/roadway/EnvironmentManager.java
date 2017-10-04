@@ -71,7 +71,7 @@ public class EnvironmentManager extends SaxtonBaseNode {
     return GraphName.of("environment_manager");
   }
 
-  @Override public void onStart(final ConnectedNode connectedNode) {
+  @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
 
     final Log log = connectedNode.getLog();
     nodeHandle = connectedNode;
@@ -166,15 +166,19 @@ public class EnvironmentManager extends SaxtonBaseNode {
       }
 
       @Override protected void loop() throws InterruptedException {
+        publishTF(); // Transforms may be needed before system start. Just identity prior to drivers ready
         if (!systemStarted) {
           return;
         }
-        publishTF();
         publishRoadwayEnv(sequenceNumber);
         sequenceNumber++;
         Thread.sleep(1000);
       }
     });
+  }
+
+  @Override protected void handleException(Exception e) {
+
   }
 
   /**

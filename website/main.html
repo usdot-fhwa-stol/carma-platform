@@ -6,81 +6,126 @@
     <meta name="mobile-web-app-capable" content="yes">
     <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
     <script src="scripts/roslib.js"></script>
+    <script src="scripts/control.js" defer></script>
+    <script src="scripts/rosbridge.js" defer></script>
     <link rel="stylesheet" type="text/css" href="css/styles.css">
     <!--
     Setup:
     1) Move files command: sudo cp -R -r /home/mfromm/catkin_ws/src/CarmaPlatform/website/* /var/www/html/
     2) Update IP on rosbridge.js
+    3) roslaunch carma saxton_cav.launch mock_arada:=true mock_can:=true mock_pinpoint:=true mock_radar:=true
 
-    Manual commands to run prior to website opening:
-    1) source devel/setup.bash on all terminal windows
-    2) roscore
-    3) roslaunch rosbridge_server rosbridge_websocket.launch
-    4) rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
-    5) rosparam set /route_manager/default_database_path /home/mfromm/catkin_ws/src/CarmaPlatform/carmajava/route/src/main/test/resources/routefiles
-    6) rosrun carma route gov.dot.fhwa.saxton.carma.route.RouteManager
-    7) rosrun carma guidance gov.dot.fhwa.saxton.carma.guidance.GuidanceMain
-    8) rosparam load /home/mfromm/catkin_ws/src/CarmaPlatform/carmajava/launch/params/HostVehicleParams.yaml
-    9) rosparam load /home/mfromm/catkin_ws/src/CarmaPlatform/carmajava/launch/params/CommandAPIParams.yaml
+    To Test Fatal:
+    rostopic pub /saxton_cav/system_alert cav_msgs/SystemAlert '{type: 3, description: This is the fatal message description.}'
     -->
 </head>
 <body>
-    <div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">CAPABILITIES</button>
-        <button class="tablinks" onclick="openTab(event, 'divMapCavs')">MAP &amp CAVs</button>
-        <button class="tablinks" onclick="openTab(event, 'divMoreInfo')">MORE INFO</button>
+<div class="tab">
+    <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">Driver Tasks</button>
+    <button class="tablinks" onclick="openTab(event, 'divDriverView')">Driver View</button>
+    <button class="tablinks" onclick="openTab(event, 'divMap')">Map</button>
+    <button class="tablinks" onclick="openTab(event, 'divSystemStatus')">System Status</button>
+    <button class="tablinks" onclick="openTab(event, 'divSystemLogs')">System Logs</button>
+</div>
+<div class="tabheader">
+    <button id="btnCAVGuidance" onclick="engageGuidance();" title="Start CAV Guidance" class="button_disabled" disabled>CAV Guidance</button>
+</div>
+<div id="divCapabilities" class="tabcontent">
+    <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
+    <div id="divRoutes" align="center">
     </div>
-    <div class="tabheader">
-        <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_disabled" disabled>CAV Guidance</button>
+    <div id="divSubCapabilities" hidden="true" align="center">
     </div>
-    <div id="divCapabilities" class="tabcontent">
-        <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
-        <div id="divRoutes" align="center">
+</div>
+<div id="divDriverView" class="tabcontent">
+    <h3>Driver View</h3>
+    <p>Not yet implemented.</p>
+</div>
+<div id="divMap" class="tabcontent">
+    <h3>Map View</h3>
+    <p>Not yet implemented.</p>
+</div>
+<div id="divSystemStatus" class="tabcontent">
+    <h3>System Status</h3>
+    <table id="tblSystemStatus" class="table-style1">
+        <tr>
+            <td class="col-style1">
+                <table id="tblFirst">
+                    <tr>
+                        <td class="section1" colspan="2">
+                            <strong>Important Vehicle Information</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-style2a">Title</td>
+                        <td class="col-style2b">Value</td>
+                    </tr>
+                </table>
+            </td>
+            <td class="col-style1">
+                <table id="tblSecond">
+                    <tr>
+                        <td class="section1" colspan="2">
+                            <strong>Route Information</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-style2a">Title</td>
+                        <td class="col-style2b">Value</td>
+                    </tr>
+                </table>
+            </td>
+            <td class="col-style1">
+                <table id="tblThird">
+                    <tr>
+                        <td class="section1" colspan="2">
+                            <strong>Host Vehicle Information </strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-style2a">Title</td>
+                        <td class="col-style2b">Value</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+<div id="divSystemLogs" class="tabcontent">
+    <h3>System Logs</h3>
+    <div id="statusIndicator">
+        <p id="connecting">
+            Connecting to ROSbridge...
+        </p>
+        <p id="connected" style="color:#00D600; display:none">
+            Connected to ROSBridge.
+        </p>
+        <p id="error" style="color:#FF0000; display:none">
+            ROSBridge unable to connect.
+        </p>
+        <p id="closed" style="display:none">
+            ROSBridge connection closed.
+        </p>
+    </div>
+    <p />
+    <div id="divLog" class="logStatus">
+    </div>
+</div>
+<!-- The Modal -->
+<div id="myModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close">&times;</span>
+            <h2>System Alert!</h2>
         </div>
-        <div id="divSubCapabilities" hidden="true" align="center">
+        <div class="modal-body">
+            <p>Some text in the Modal Body</p>
+        </div>
+        <div class="modal-footer">
+            <button id="btnModal" onclick="closeModal();" title="CAV Guidance">OK</button>
         </div>
     </div>
-    <div id="divMapCavs" class="tabcontent">
-        <h3>Map &amp CAVs</h3>
-        <p>Not yet implemented.</p>
-    </div>
-    <div id="divMoreInfo" class="tabcontent">
-        <h3>More Info</h3>
-        <div id="statusIndicator">
-            <p id="connecting">
-                Connecting to ROSbridge...
-            </p>
-            <p id="connected" style="color:#00D600; display:none">
-                Connected to ROSBridge.
-            </p>
-            <p id="error" style="color:#FF0000; display:none">
-                ROSBridge unable to connect.
-            </p>
-            <p id="closed" style="display:none">
-                ROSBridge connection closed.
-            </p>
-        </div>
-        <h4>System Status Logs</h4>
-        <div id="divLog" class="logStatus">
-        </div>
-    </div>
-    <!-- The Modal -->
-    <div id="myModal" class="modal">
-        <!-- Modal content -->
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="close">&times;</span>
-                <h2>System Alert!</h2>
-            </div>
-            <div class="modal-body">
-                <p>Some text in the Modal Body</p>
-            </div>
-            <div class="modal-footer">
-                <button id="btnModal" onclick="closeModal();" title="CAV Guidance">OK</button>
-            </div>
-        </div>
-    </div>
-    <script src="scripts/control.js"></script>
-    <script src="scripts/rosbridge.js"></script>
+</div>
 </body>
 </html>

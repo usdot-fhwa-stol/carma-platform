@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.message;
 
 import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
@@ -62,11 +63,11 @@ public class MessageConsumer extends SaxtonBaseNode {
   protected Publisher<cav_msgs.MobilityGreeting> mobilityGreetingPub;
   protected Publisher<cav_msgs.MobilityIntro> mobilityIntroPub;
   protected Publisher<cav_msgs.MobilityNack> mobilityNAckPub;
-//  TODO uncomment when messages are defined
-//  protected Publisher<cav_msgs.MobilityPlan> mobilityPlanPub;
-//  protected Publisher<cav_msgs.Map> mapPub;
-//  protected Publisher<cav_msgs.Spat> spatPub;
-//  protected Publisher<cav_msgs.Tim> timPub;
+  //  TODO uncomment when messages are defined
+  //  protected Publisher<cav_msgs.MobilityPlan> mobilityPlanPub;
+  //  protected Publisher<cav_msgs.Map> mapPub;
+  //  protected Publisher<cav_msgs.Spat> spatPub;
+  //  protected Publisher<cav_msgs.Tim> timPub;
 
   // Subscribers
   protected Subscriber<cav_msgs.SystemAlert> alertSub;
@@ -75,10 +76,10 @@ public class MessageConsumer extends SaxtonBaseNode {
   protected Subscriber<cav_msgs.MobilityGreeting> mobilityGreetingOutboundSub;
   protected Subscriber<cav_msgs.MobilityIntro> mobilityIntroOutboundSub;
   protected Subscriber<cav_msgs.MobilityNack> mobilityNAckOutboundSub;
-//  TODO uncomment when messages are defined
-//  protected Subscriber<cav_msgs.MobilityPlan> mobilityPlanOutboundSub;
+  //  TODO uncomment when messages are defined
+  //  protected Subscriber<cav_msgs.MobilityPlan> mobilityPlanOutboundSub;
 
-   // Used Services
+  // Used Services
   ServiceClient<cav_srvs.GetDriversWithCapabilitiesRequest, cav_srvs.GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
 
   @Override
@@ -87,13 +88,14 @@ public class MessageConsumer extends SaxtonBaseNode {
   }
 
   @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  public void onSaxtonStart(final ConnectedNode connectedNode) {
     final Log log = connectedNode.getLog();
 
     //Start of GetDriversWithCapabilitiesResponse
     // Request driver from Interface Manager
     // Used Services
-    getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities", cav_srvs.GetDriversWithCapabilities._TYPE, connectedNode, 5000);
+    getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities",
+        cav_srvs.GetDriversWithCapabilities._TYPE, connectedNode, 5000);
     if (getDriversWithCapabilitiesClient == null) {
       log.error(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
       //throw new RosRuntimeException(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
@@ -109,70 +111,78 @@ public class MessageConsumer extends SaxtonBaseNode {
     requestGetDrivers.setCapabilities(lstCapabilities);
 
     // Make Service call.
-    getDriversWithCapabilitiesClient.call(requestGetDrivers, new ServiceResponseListener<cav_srvs.GetDriversWithCapabilitiesResponse>() {
-      @Override
-      public void onSuccess(cav_srvs.GetDriversWithCapabilitiesResponse response) {
+    try {
+      RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, requestGetDrivers,
+          new ServiceResponseListener<cav_srvs.GetDriversWithCapabilitiesResponse>() {
+            @Override
+            public void onSuccess(cav_srvs.GetDriversWithCapabilitiesResponse response) {
 
-        //Log as is.
-        connectedNode.getLog().info("MessageConsumer GetDriversWithCapabilitiesResponse: " + response.getDriverData());
+              //Log as is.
+              connectedNode.getLog()
+                  .info("MessageConsumer GetDriversWithCapabilitiesResponse: " + response.getDriverData());
 
-        List<String> responseCapabilities = new ArrayList<>();
-        responseCapabilities = response.getDriverData();
+              List<String> responseCapabilities = new ArrayList<>();
+              responseCapabilities = response.getDriverData();
 
-        //Loop through each string array and print out the results.
-        for (String driverDataItem : response.getDriverData()) {
-          connectedNode.getLog().info("MessageConsumer GetDriversWithCapabilitiesResponse Driver Data Item: " + driverDataItem);
-        }
-      }
+              //Loop through each string array and print out the results.
+              for (String driverDataItem : response.getDriverData()) {
+                connectedNode.getLog()
+                    .info("MessageConsumer GetDriversWithCapabilitiesResponse Driver Data Item: " + driverDataItem);
+              }
+            }
 
-      @Override
-      public void onFailure(RemoteException e) {
-        throw new RosRuntimeException(e);
-      }
-    });
+            @Override
+            public void onFailure(RemoteException e) {
+              throw new RosRuntimeException(e);
+            }
+          });
+    } catch (InterruptedException e) {
+      throw new RosRuntimeException(e);
+    }
     // End of Service Request to GetDriversWithCapabilitiesResponse
 
     // Fake Pubs and Subs TODO: Remove!!!
     // The following are two example pub/subs for connecting to the mock arada driver using the launch file.
     // They should be removed as this process should be handled through the interface manager instead
-    final Publisher<cav_msgs.ByteArray> outboundPub = connectedNode.newPublisher("/saxton_cav/drivers/arada_application/comms/outbound", ByteArray._TYPE);
-    final Subscriber<cav_msgs.ByteArray> recvSub = connectedNode.newSubscriber("/saxton_cav/drivers/arada_application/comms/recv", ByteArray._TYPE);
+    final Publisher<cav_msgs.ByteArray> outboundPub = connectedNode
+        .newPublisher("/saxton_cav/drivers/arada_application/comms/outbound", ByteArray._TYPE);
+    final Subscriber<cav_msgs.ByteArray> recvSub = connectedNode
+        .newSubscriber("/saxton_cav/drivers/arada_application/comms/recv", ByteArray._TYPE);
     recvSub.addMessageListener(new MessageListener<ByteArray>() {
-      @Override public void onNewMessage(ByteArray byteArray) {
+      @Override
+      public void onNewMessage(ByteArray byteArray) {
         switch (byteArray.getMessageType()) {
-          case "BSM":
-            log.info("MessageConsumer received ByteArray of type BSM. Publishing BSM message");
-            bsmPub.publish(bsmPub.newMessage());
-            break;
-          case "MobilityAck":
-            log.info("MessageConsumer received ByteArray of type MobilityAck. Publishing MobilityAck message");
-            mobilityAckPub.publish(mobilityAckPub.newMessage());
-            break;
-          case "MobilityGreeting":
-            log.info("MessageConsumer received ByteArray of type MobilityGreeting. Publishing MobilityGreeting message");
-            mobilityGreetingPub.publish(mobilityGreetingPub.newMessage());
-            break;
-          case "MobilityIntro":
-            log.info("MessageConsumer received ByteArray of type MobilityIntro. Publishing MobilityIntro message");
-            mobilityIntroPub.publish(mobilityIntroPub.newMessage());
-            break;
-          case "MobilityNack":
-            log.info("MessageConsumer received ByteArray of type MobilityNack. Publishing MobilityNack message");
-            mobilityNAckPub.publish(mobilityNAckPub.newMessage());
-            break;
-//        TODO uncomment when messages are defined
-//        case "MobilityPlan":
-//          log.info("MessageConsumer received ByteArray of type MobilityPlan. Publishing MobilityPlan message");
-//          mobilityPlanPub.publish(mobilityPlanPub.newMessage());
-//          break;
-          default:
-            log.info("MessageConsumer received ByteArray of type Unknown. Publishing as example BSM message");
-            bsmPub.publish(bsmPub.newMessage());
+        case "BSM":
+          log.info("MessageConsumer received ByteArray of type BSM. Publishing BSM message");
+          bsmPub.publish(bsmPub.newMessage());
+          break;
+        case "MobilityAck":
+          log.info("MessageConsumer received ByteArray of type MobilityAck. Publishing MobilityAck message");
+          mobilityAckPub.publish(mobilityAckPub.newMessage());
+          break;
+        case "MobilityGreeting":
+          log.info("MessageConsumer received ByteArray of type MobilityGreeting. Publishing MobilityGreeting message");
+          mobilityGreetingPub.publish(mobilityGreetingPub.newMessage());
+          break;
+        case "MobilityIntro":
+          log.info("MessageConsumer received ByteArray of type MobilityIntro. Publishing MobilityIntro message");
+          mobilityIntroPub.publish(mobilityIntroPub.newMessage());
+          break;
+        case "MobilityNack":
+          log.info("MessageConsumer received ByteArray of type MobilityNack. Publishing MobilityNack message");
+          mobilityNAckPub.publish(mobilityNAckPub.newMessage());
+          break;
+        //        TODO uncomment when messages are defined
+        //        case "MobilityPlan":
+        //          log.info("MessageConsumer received ByteArray of type MobilityPlan. Publishing MobilityPlan message");
+        //          mobilityPlanPub.publish(mobilityPlanPub.newMessage());
+        //          break;
+        default:
+          log.info("MessageConsumer received ByteArray of type Unknown. Publishing as example BSM message");
+          bsmPub.publish(bsmPub.newMessage());
         }
       }
     });
-
-
 
     // Publishers
     alertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
@@ -181,12 +191,11 @@ public class MessageConsumer extends SaxtonBaseNode {
     mobilityGreetingPub = connectedNode.newPublisher("mobility_greeting_recv", cav_msgs.MobilityGreeting._TYPE);
     mobilityIntroPub = connectedNode.newPublisher("mobility_intro_recv", cav_msgs.MobilityIntro._TYPE);
     mobilityNAckPub = connectedNode.newPublisher("mobility_nack_recv", cav_msgs.MobilityNack._TYPE);
-//    TODO uncomment when messages are defined
-//    mobilityPlanPub = connectedNode.newPublisher("mobility_plan_recv", cav_msgs.MobilityPlan._TYPE);
-//    mapPub = connectedNode.newPublisher("map", cav_msgs.Map._TYPE);
-//    spatPub = connectedNode.newPublisher("spat", cav_msgs.Spat._TYPE);
-//    timPub = connectedNode.newPublisher("tim", cav_msgs.Tim._TYPE);
-
+    //    TODO uncomment when messages are defined
+    //    mobilityPlanPub = connectedNode.newPublisher("mobility_plan_recv", cav_msgs.MobilityPlan._TYPE);
+    //    mapPub = connectedNode.newPublisher("map", cav_msgs.Map._TYPE);
+    //    spatPub = connectedNode.newPublisher("spat", cav_msgs.Spat._TYPE);
+    //    timPub = connectedNode.newPublisher("tim", cav_msgs.Tim._TYPE);
 
     // Subscribers
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
@@ -196,26 +205,26 @@ public class MessageConsumer extends SaxtonBaseNode {
         String messageTypeFullDescription = "NA";
 
         switch (message.getType()) {
-          case cav_msgs.SystemAlert.NOT_READY:
-            systemReady = false;
-            messageTypeFullDescription = "system not ready alert and will not publish";
-            break;
-          case cav_msgs.SystemAlert.DRIVERS_READY:
-            systemReady = true;
-            messageTypeFullDescription = "system ready alert and is beginning to publish";
-            break;
-          default:
-            systemReady = false;
-            messageTypeFullDescription = "Unknown system alert type. Assuming system it not ready";
+        case cav_msgs.SystemAlert.NOT_READY:
+          systemReady = false;
+          messageTypeFullDescription = "system not ready alert and will not publish";
+          break;
+        case cav_msgs.SystemAlert.DRIVERS_READY:
+          systemReady = true;
+          messageTypeFullDescription = "system ready alert and is beginning to publish";
+          break;
+        default:
+          systemReady = false;
+          messageTypeFullDescription = "Unknown system alert type. Assuming system it not ready";
         }
         log.info("message_consumer heard: " + message.getDescription() + "; " + messageTypeFullDescription);
       }
     });//addMessageListener
 
-
     hostBsmSub = connectedNode.newSubscriber("host_bsm", cav_msgs.BSM._TYPE);
     hostBsmSub.addMessageListener(new MessageListener<BSM>() {
-      @Override public void onNewMessage(BSM bsm) {
+      @Override
+      public void onNewMessage(BSM bsm) {
         if (systemReady) {
           log.info("MessageConsumer received BSM outbound. Publishing as ByteArray message");
           ByteArray byteArray = outboundPub.newMessage();
@@ -227,7 +236,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 
     mobilityAckOutboundSub = connectedNode.newSubscriber("mobility_ack_outbound", cav_msgs.MobilityAck._TYPE);
     mobilityAckOutboundSub.addMessageListener(new MessageListener<MobilityAck>() {
-      @Override public void onNewMessage(MobilityAck mobilityAck) {
+      @Override
+      public void onNewMessage(MobilityAck mobilityAck) {
         if (systemReady) {
           log.info("MessageConsumer received BSM outbound. Publishing as ByteArray message");
           ByteArray byteArray = outboundPub.newMessage();
@@ -237,9 +247,11 @@ public class MessageConsumer extends SaxtonBaseNode {
       }
     });
 
-    mobilityGreetingOutboundSub = connectedNode.newSubscriber("mobility_greeting_outbound", cav_msgs.MobilityGreeting._TYPE);
+    mobilityGreetingOutboundSub = connectedNode.newSubscriber("mobility_greeting_outbound",
+        cav_msgs.MobilityGreeting._TYPE);
     mobilityGreetingOutboundSub.addMessageListener(new MessageListener<MobilityGreeting>() {
-      @Override public void onNewMessage(MobilityGreeting mobilityGreeting) {
+      @Override
+      public void onNewMessage(MobilityGreeting mobilityGreeting) {
         if (systemReady) {
           log.info("MessageConsumer received BSM outbound. Publishing as ByteArray message");
           ByteArray byteArray = outboundPub.newMessage();
@@ -251,7 +263,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 
     mobilityIntroOutboundSub = connectedNode.newSubscriber("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
     mobilityIntroOutboundSub.addMessageListener(new MessageListener<MobilityIntro>() {
-      @Override public void onNewMessage(MobilityIntro mobilityIntro) {
+      @Override
+      public void onNewMessage(MobilityIntro mobilityIntro) {
         if (systemReady) {
           log.info("MessageConsumer received BSM outbound. Publishing as ByteArray message");
           ByteArray byteArray = outboundPub.newMessage();
@@ -263,8 +276,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 
     mobilityNAckOutboundSub = connectedNode.newSubscriber("mobility_nack_outbound", cav_msgs.MobilityNack._TYPE);
     mobilityNAckOutboundSub.addMessageListener(new MessageListener<MobilityNack>() {
-      @Override public void onNewMessage(MobilityNack mobilityNack) {
-        if (systemReady ) {
+      @Override
+      public void onNewMessage(MobilityNack mobilityNack) {
+        if (systemReady) {
           log.info("MessageConsumer received BSM outbound. Publishing as ByteArray message");
           ByteArray byteArray = outboundPub.newMessage();
           byteArray.setMessageType("MobilityNack"); // Not sure if this is correct type use but will help validate messaging
@@ -272,18 +286,18 @@ public class MessageConsumer extends SaxtonBaseNode {
         }
       }
     });
-//    TODO Uncomment when messages are defined
-//    mobilityPlanOutboundSub = connectedNode.newSubscriber("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
-//    mobilityPlanOutboundSub.addMessageListener(new MessageListener<MobilityPlan>() {
-//      @Override public void onNewMessage(MobilityPlan mobilityPlan) {
-//        if (systemReady) {
-//          log.info("MessageConsumer received MobilityPlan outbound. Publishing as ByteArray message");
-//          ByteArray byteArray = outboundPub.newMessage();
-//          byteArray.setMessageType("MobilityPlan"); // Not sure if this is correct type use but will help validate messaging
-//          outboundPub.publish(byteArray);
-//        }
-//      }
-//    });
+    //    TODO Uncomment when messages are defined
+    //    mobilityPlanOutboundSub = connectedNode.newSubscriber("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
+    //    mobilityPlanOutboundSub.addMessageListener(new MessageListener<MobilityPlan>() {
+    //      @Override public void onNewMessage(MobilityPlan mobilityPlan) {
+    //        if (systemReady) {
+    //          log.info("MessageConsumer received MobilityPlan outbound. Publishing as ByteArray message");
+    //          ByteArray byteArray = outboundPub.newMessage();
+    //          byteArray.setMessageType("MobilityPlan"); // Not sure if this is correct type use but will help validate messaging
+    //          outboundPub.publish(byteArray);
+    //        }
+    //      }
+    //    });
 
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
@@ -292,16 +306,21 @@ public class MessageConsumer extends SaxtonBaseNode {
 
       @Override
       protected void setup() {
-       sequenceNumber = 0;
-     }//setup
+        sequenceNumber = 0;
+      }//setup
+
       @Override
       protected void loop() throws InterruptedException {
         sequenceNumber++;
         Thread.sleep(1000);
       }//loop
 
-   }//CancellableLoop
+    }//CancellableLoop
     );//executeCancellableLoop
   }//onStart
-}//AbstractNodeMain
 
+  @Override
+  protected void handleException(Exception e) {
+
+  }
+}//AbstractNodeMain

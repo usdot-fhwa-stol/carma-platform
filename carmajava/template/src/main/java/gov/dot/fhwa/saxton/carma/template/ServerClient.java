@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.template;
 
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -46,14 +47,14 @@ public class ServerClient extends SaxtonBaseNode {
   }
 
   @Override
-  public void onStart(final ConnectedNode connectedNode) {
+  public void onSaxtonStart(final ConnectedNode connectedNode) {
 
     // Services (SetBool Example)
 
     // Setup Server
     // TODO: Replace set_bool with Column G name
-    ServiceServer<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> setBoolServer = connectedNode
-      .newServiceServer("set_bool", std_srvs.SetBool._TYPE,
+    ServiceServer<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> setBoolServer = connectedNode.newServiceServer(
+        "set_bool", std_srvs.SetBool._TYPE,
         new ServiceResponseBuilder<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse>() {
 
           @Override
@@ -66,12 +67,12 @@ public class ServerClient extends SaxtonBaseNode {
         });
 
     // Setup Client
-    final ServiceClient<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> serviceClient =
-      this.waitForService("set_bool", std_srvs.SetBool._TYPE, connectedNode, 5000);
+    final ServiceClient<std_srvs.SetBoolRequest, std_srvs.SetBoolResponse> serviceClient = this
+        .waitForService("set_bool", std_srvs.SetBool._TYPE, connectedNode, 5000);
 
-     if (serviceClient == null) {
-       connectedNode.getLog().error("ServerClient Node could not find service set_bool");
-     }
+    if (serviceClient == null) {
+      connectedNode.getLog().error("ServerClient Node could not find service set_bool");
+    }
 
     // Example cav_srvs
     final ServiceClient<cav_srvs.PluginListRequest, cav_srvs.PluginListResponse> pluginsClient;
@@ -93,20 +94,26 @@ public class ServerClient extends SaxtonBaseNode {
         request.setData(true);
 
         //Make Service call.
-        serviceClient.call(request, new ServiceResponseListener<std_srvs.SetBoolResponse>() {
-          @Override
-          public void onSuccess(std_srvs.SetBoolResponse response) {
-            connectedNode.getLog().info(response.getMessage());
-          }
+        RosServiceSynchronizer.callSync(serviceClient, request,
+            new ServiceResponseListener<std_srvs.SetBoolResponse>() {
+              @Override
+              public void onSuccess(std_srvs.SetBoolResponse response) {
+                connectedNode.getLog().info(response.getMessage());
+              }
 
-          @Override
-          public void onFailure(RemoteException e) {
-            throw new RosRuntimeException(e);
-          }
-        });
+              @Override
+              public void onFailure(RemoteException e) {
+                throw new RosRuntimeException(e);
+              }
+            });
 
         Thread.sleep(30000);
       }
     });
+  }
+
+  @Override
+  protected void handleException(Exception e) {
+
   }
 }

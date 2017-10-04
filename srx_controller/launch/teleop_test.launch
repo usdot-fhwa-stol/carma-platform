@@ -1,0 +1,13 @@
+<launch>
+	<arg name="cmd_topic" default="cmd_longitudinal_effort" />
+	<arg name="enable_robotic_svc" default="control/enable_robotic" />
+	<arg name="set_lights_svc" default="control/set_lights" />
+	<node name="joy" pkg="joy" type="joy_node" output="screen">
+		<param name="autorepeat_rate" value="20" />
+	</node>
+	<node name="teleop" pkg="srx_controller" type="teleop_controller_node" output="screen" >
+		<remap name="output" value="$(arg cmd_topic)"/>
+		<remap name="control/set_lights" value="$(arg set_lights_svc)"/>
+		<remap name="control/enable_robotic" value="$(arg enable_robotic_svc)"/>
+	</node>
+</launch>

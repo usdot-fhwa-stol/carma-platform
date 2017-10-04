@@ -70,9 +70,9 @@ public class RouteWorker {
   protected double downtrackDistance = 0;
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
-  protected double MAX_CROSSTRACK_DISTANCE_M = 10.0;
+  protected double MAX_CROSSTRACK_DISTANCE_M = 1000.0;
     // TODO put in route files as may change based on road type
-  protected double MAX_START_DISTANCE_M = 15.0; // Can only join route if within 15m of waypoint
+  protected double MAX_START_DISTANCE_M = 1000.0; // Can only join route if within this many meters of waypoint
   protected int routeStateSeq = 0;
 
   /**
@@ -100,7 +100,7 @@ public class RouteWorker {
 
     for (int i = 0; i < listOfFiles.length; i++) {
       if (listOfFiles[i].isFile()) {
-        FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath());
+        FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath(), log);
         loadAdditionalRoute(loadStrategy);
       }
     }
@@ -114,6 +114,9 @@ public class RouteWorker {
    */
   protected void next(WorkerEvent event) {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
+    log.info("Route State = " + currentSegmentIndex);
+    // Publish the new route state
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), false));
   }
 
   /**
@@ -131,10 +134,13 @@ public class RouteWorker {
         log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.CAUTION,
+        alertMsg = buildSystemAlertMsg(SystemAlert.SHUTDOWN,
           "Route: The end of the active route has been reached");
+        // Notify system of route completion
         routeManager.publishSystemAlert(alertMsg);
+        routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), true));
         log.info("Route has been completed");
+        routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
         alertMsg = buildSystemAlertMsg(SystemAlert.WARNING,
@@ -144,7 +150,8 @@ public class RouteWorker {
         break;
       case SYSTEM_FAILURE:
         log.info(
-          "Route has received a system failure message and is switching to pausing the active route");
+          "Route: Received a system failure message and is shutting down");
+        routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
         log.info(
@@ -256,7 +263,11 @@ public class RouteWorker {
     if (activeRoute == null) {
       return StartActiveRouteResponse.NO_ACTIVE_ROUTE;
     }
+    if (getCurrentState() == WorkerState.FOLLOWING_ROUTE) {
+      return StartActiveRouteResponse.ALREADY_FOLLOWING_ROUTE;
+    }
     int startingIndex = getValidStartingWPIndex();
+    log.debug("Route starting index = " + startingIndex);
     if (startingIndex == -1) {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
@@ -313,7 +324,7 @@ public class RouteWorker {
 
     currentSegment = activeRoute.getSegments().get(index);
     currentSegmentIndex = index;
-    currentWaypointIndex = index;
+    currentWaypointIndex = index + 1; // The current waypoint should be the downtrack one
     downtrackDistance = activeRoute.lengthOfSegments(0, index - 1);
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
@@ -332,17 +343,17 @@ public class RouteWorker {
         return;
       case NavSatStatus.STATUS_FIX:
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       case NavSatStatus.STATUS_SBAS_FIX:
         //TODO: Handle this variant
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       case NavSatStatus.STATUS_GBAS_FIX:
         //TODO: Handle this variant
         hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), msg.getAltitude());
+          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
@@ -357,6 +368,7 @@ public class RouteWorker {
     // Loop to find current segment. This allows for small breaks in gps data
     while (atNextSegment()) { // TODO this might be problematic on tight turns
       currentSegmentIndex++;
+      currentWaypointIndex++;
       // Check if the route has been completed
       if (currentSegmentIndex >= activeRoute.getSegments().size()) {
         handleEvent(WorkerEvent.ROUTE_COMPLETED);
@@ -372,12 +384,16 @@ public class RouteWorker {
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
+    log.debug("CrossTrackDistance = " + crossTrackDistance);
+    log.debug("DownTrackDistance = " + downtrackDistance);
+    log.debug("CurrentSegmentIndex = " + currentSegmentIndex);
+    log.debug("CurrentWaypointIndex = " + currentWaypointIndex);
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);
     }
 
     // Publish updated route information
-    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime()));
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), false));
     routeManager.publishCurrentRouteSegment(getCurrentRouteSegmentTopicMsg());
   }
 
@@ -404,6 +420,10 @@ public class RouteWorker {
       case cav_msgs.SystemAlert.DRIVERS_READY:
         systemOkay = true;
         log.info("route_manager received system ready on system_alert and is starting to publish");
+        break;
+      case cav_msgs.SystemAlert.SHUTDOWN:
+        log.info("Route manager received a shutdown message");
+        routeManager.shutdown();
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
@@ -444,13 +464,33 @@ public class RouteWorker {
    * @param time the time
    * @return route state message
    */
-  protected RouteState getRouteStateTopicMsg(int seq, Time time) {
-    if (activeRoute == null)
-      return messageFactory.newFromType(cav_msgs.RouteState._TYPE);
+  protected RouteState getRouteStateTopicMsg(int seq, Time time, boolean routeComplete) {
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
-    routeState.setCrossTrack(crossTrackDistance);
-    routeState.setRouteID(activeRoute.getRouteID());
-    routeState.setDownTrack(downtrackDistance);
+    // ROUTE_COMPLETE is not an internal state so we set it here
+    if (routeComplete) {
+      routeState.setState(RouteState.ROUTE_COMPLETE);
+    } else {
+      switch (getCurrentState()) {
+        case LOADING_ROUTES:
+          routeState.setState(RouteState.LOADING_ROUTES);
+          break;
+        case ROUTE_SELECTION:
+          routeState.setState(RouteState.ROUTE_SELECTION);
+          break;
+        case WAITING_TO_START:
+          routeState.setState(RouteState.WAITING_TO_START);
+          break;
+        case FOLLOWING_ROUTE:
+          routeState.setState(RouteState.FOLLOWING_ROUTE);
+          break;
+      }
+    }
+
+    if (activeRoute != null) {
+      routeState.setCrossTrack(crossTrackDistance);
+      routeState.setRouteID(activeRoute.getRouteID());
+      routeState.setDownTrack(downtrackDistance);
+    }
 
     std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
     hdr.setFrameId("0");

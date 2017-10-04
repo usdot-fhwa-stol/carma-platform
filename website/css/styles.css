@@ -238,6 +238,7 @@ div.message_box {
     overflow: auto; /* Enable scroll if needed */
     background-color: rgb(0,0,0); /* Fallback color */
     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    text-align: center;
 }
 
 /* Modal Content */
@@ -299,14 +300,44 @@ div.message_box {
     padding: 2px 16px;
     background-color: #ffcc00;
     color: black;
+    align: center;
+    text-align: middle;
 }
 
 .modal-body {
     padding: 2px 20px;
+    width: 100%;
 }
 
 .modal-footer {
     padding: 10px 16px 10px 10px;
     background-color: #ffcc00;
     color: black;
+}
+
+/* System Status Table */
+.table-style1 {
+    width: 100%;
+}
+
+.col-style1 {
+    vertical-align: top;
+    width: 30%;
+    max-width: 200px;
+    overflow-wrap: normal;
+}
+
+.section1 {
+    color: #FFFFFF;
+    background-color: #999999;
+    vertical-align: top;
+}
+
+.col-style2a {
+    width: 15%;
+    font-weight: bold;
+}
+
+.col-style2b {
+    width: 15%;
 }

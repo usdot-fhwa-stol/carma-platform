@@ -16,7 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+import gov.dot.fhwa.saxton.carma.rosutils.*;
+
 import org.ros.exception.RemoteException;
+import org.ros.internal.node.response.StatusCode;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
 
@@ -38,21 +41,49 @@ public class RosService<T, S> implements IService<T, S> {
         this.parent = parent;
     }
 
-    @Override public void call(T request, final OnServiceResponseCallback<S> callback) {
+    @Override
+    public RosServiceResult<S> callAsync(T request) {
         if (open) {
-            serviceClient.call(request, new ServiceResponseListener<S>() {
-                @Override public void onSuccess(S s) {
-                    callback.onSuccess(s);
-                }
-
-                @Override public void onFailure(RemoteException e) {
-                    callback.onFailure(e);
-                }
-            });
+            return RosServiceSynchronizer.callAsync(serviceClient, request);
+        } else {
+            RosServiceResult<S> out = new RosServiceResult<>();
+            out.complete(new RosServiceResponse<S>(
+                    new RemoteException(StatusCode.FAILURE, "Service resource has already been closed!")));
+            return out;
         }
     }
 
-    @Override public void close() {
+    @Override
+    public void callSync(T request, final OnServiceResponseCallback<S> callback) {
+        if (open) {
+            try {
+                RosServiceSynchronizer.callSync(serviceClient, request, new ServiceResponseListener<S>() {
+                    @Override
+                    public void onSuccess(S msg) {
+                        callback.onSuccess(msg);
+                    }
+
+                    @Override
+                    public void onFailure(RemoteException e) {
+                        callback.onFailure(e);
+                    }
+                });
+            } catch (InterruptedException e) {
+                callback.onFailure(
+                        new RemoteException(StatusCode.FAILURE, "Interrupted while waiting for service response!"));
+            }
+        } else {
+            callback.onFailure(new RemoteException(StatusCode.FAILURE, "Service resource has already been closed!"));
+        }
+    }
+
+    @Override
+    public T newMessage() {
+        return serviceClient.newMessage();
+    }
+
+    @Override
+    public void close() {
         parent.notifyClientShutdown();
     }
 }
