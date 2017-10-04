@@ -12,12 +12,15 @@ public class ConvexHull implements DimensionalObject {
   protected double[][] bounds; // 2 rows as every dim has a min and max value
   protected Point centroidOfBounds;
   protected int numDimensions;
+  protected List<Point> vertices;
+  protected List<Point> originalPointSet;
 
   public ConvexHull(List<Point> points) throws IllegalArgumentException {
     this.validateInput(points);
     this.numDimensions = points.get(0).getNumDimensions();
     this.calculateBounds(points);
     this.calculateCentroidOfBounds();
+    this.originalPointSet = points;
     //TODO calculate convex hull
     //TODO calculate centroid of convex hull
   }
@@ -64,6 +67,10 @@ public class ConvexHull implements DimensionalObject {
         }
       }
     }
+  }
+
+  protected void calculateConvexHull(List<Point> points) {
+
   }
 
   @Override public int getNumDimensions() {
