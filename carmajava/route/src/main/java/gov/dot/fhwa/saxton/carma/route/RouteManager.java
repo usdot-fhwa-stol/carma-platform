@@ -82,7 +82,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     final Log log = connectedNode.getLog();
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
-    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
 
     /// Topics
     // Publishers
@@ -160,6 +159,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
             }
           }
         });
+
+    // Worker must be initialized at end of on start
+    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
   }//onStart
 
   @Override protected void handleException(Exception e) {
@@ -191,5 +193,10 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
       return new Time();
     }
     return connectedNode.getCurrentTime();
+  }
+
+  @Override public void shutdown() {
+    connectedNode.getLog().info("Route: Route Manager shutdown method called");
+    this.connectedNode.shutdown();
   }
 }//AbstractNodeMain
