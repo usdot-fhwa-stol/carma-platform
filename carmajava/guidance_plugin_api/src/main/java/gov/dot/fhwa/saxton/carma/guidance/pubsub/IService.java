@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+import gov.dot.fhwa.saxton.carma.rosutils.*;
+
 /**
  * Generic interface for supporting calls to a remote service. Designed to share an underlying
  * resource between many clients to avoid duplication.
@@ -29,15 +31,24 @@ public interface IService<T, S> {
      * call failure.
      *
      * @param request  The message for the request
-     * @param callback A callback to be executed upon success or failure of the call
+     * @returns An awaitable future containing an {@link RosServiceResponse} indicating the status of the call
      */
-    void call(T request, OnServiceResponseCallback<S> callback);
+    RosServiceResult<S> callAsync(T request);
 
-        /**
-     * Generate a new (empty) request-type message instance to have it's fields populated before transmission.
-     *
-     * @return An empty message of type T
+    /**
+     * Perform a synchronous call for the service, waiting until the response is returned and executing the appropriate
+     * callback.
+     * 
+     * @param request The message for the request
+     * @param callback The callback to execute on message failure or success
      */
+    void callSync(T request, OnServiceResponseCallback<S> callback);
+
+    /**
+    * Generate a new (empty) request-type message instance to have it's fields populated before transmission.
+    *
+    * @return An empty message of type T
+    */
     T newMessage();
 
     /**
