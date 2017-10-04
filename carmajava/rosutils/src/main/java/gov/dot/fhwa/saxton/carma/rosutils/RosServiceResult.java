@@ -25,14 +25,36 @@ import java.util.concurrent.*;
 public class RosServiceResult<T> {
   protected BlockingQueue<RosServiceResponse<T>> value = new ArrayBlockingQueue<>(1);
 
+  /**
+   * Signal completion of this RosServiceResult. This should wake up any threads waiting on this future.
+   */
   public void complete(RosServiceResponse<T> value) {
     this.value.add(value);
   }
 
+  /**
+   * Sleep while waiting for the value of this future to be available.
+   * <p>
+   * It is not recommended for more than one thread to wait on a single RosServiceResult instance.
+   * The underlying implementation will only supply one value per call of complete(). This may
+   * lead to race conditions or deadlocks if more than one thread waits on it.
+   * 
+   * @throws InterruptedException If the thread is interrupted while waiting for the value
+   */
   public RosServiceResponse<T> get() throws InterruptedException {
     return value.take();
   }
 
+  /**
+   * Sleep while waiting for the value of this future to be available, timing out after a fixed duration.
+   * <p>
+   * It is not recommended for more than one thread to wait on a single RosServiceResult instance.
+   * The underlying implementation will only supply one value per call of complete(). This may
+   * lead to race conditions or deadlocks if more than one thread waits on it.
+   * 
+   * @return The RosServiceResponse<T> if the value became available before timeout or null if it timed out
+   * @throws InterruptedException If the thread is interrupted while waiting for the value
+   */
   public RosServiceResponse<T> get(long timeout, TimeUnit unit) throws InterruptedException {
     return value.poll(timeout, unit);
   }
