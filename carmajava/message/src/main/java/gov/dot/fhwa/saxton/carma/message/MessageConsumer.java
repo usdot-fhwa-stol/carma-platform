@@ -18,20 +18,11 @@ package gov.dot.fhwa.saxton.carma.message;
 
 import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
-//import java.io.IOException;
-//import java.io.InputStream;
-//import java.io.OutputStream;
-//import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-//import java.nio.channels.GatheringByteChannel;
-//import java.nio.channels.ScatteringByteChannel;
-//import java.nio.charset.Charset;
-
 import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffer;
-//import org.jboss.netty.buffer.ChannelBufferFactory;
-//import org.jboss.netty.buffer.ChannelBufferIndexFinder;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
@@ -130,30 +121,37 @@ public class MessageConsumer extends SaxtonBaseNode {
 		//lstCapabilities.add("inbound_binary_msg");
 		//requestGetDrivers.setCapabilities(lstCapabilities);
 
-		// Make Service call.
-		//getDriversWithCapabilitiesClient.call(requestGetDrivers, new ServiceResponseListener<cav_srvs.GetDriversWithCapabilitiesResponse>() {
-//			@Override
-//			public void onSuccess(cav_srvs.GetDriversWithCapabilitiesResponse response) {
+		// Make Service call with synchronizer.
+//	    try {
+//	      RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, requestGetDrivers,
+//	          new ServiceResponseListener<cav_srvs.GetDriversWithCapabilitiesResponse>() {
+//	            @Override
+//	            public void onSuccess(cav_srvs.GetDriversWithCapabilitiesResponse response) {
 //
-//        //Log as is.
-//			connectedNode.getLog().info("MessageConsumer GetDriversWithCapabilitiesResponse: " + response.getDriverData());
+//	              //Log as is.
+//	              connectedNode.getLog()
+//	                  .info("MessageConsumer GetDriversWithCapabilitiesResponse: " + response.getDriverData());
 //
-//			List<String> responseCapabilities = new ArrayList<>();
-//			responseCapabilities = response.getDriverData();
+//	              List<String> responseCapabilities = new ArrayList<>();
+//	              responseCapabilities = response.getDriverData();
 //
-//			//Loop through each string array and print out the results.
-//			for (String driverDataItem : response.getDriverData()) {
-//				connectedNode.getLog().info("MessageConsumer GetDriversWithCapabilitiesResponse Driver Data Item: " + driverDataItem);
-//			}
-//		}
+//	              //Loop through each string array and print out the results.
+//	              for (String driverDataItem : response.getDriverData()) {
+//	                connectedNode.getLog()
+//	                    .info("MessageConsumer GetDriversWithCapabilitiesResponse Driver Data Item: " + driverDataItem);
+//	              }
+//	            }
 //
-//      	@Override
-//      	public void onFailure(RemoteException e) {
-//        		throw new RosRuntimeException(e);
-//      	}
-//    	});
-		// End of Service Request to GetDriversWithCapabilitiesResponse
-
+//	            @Override
+//	            public void onFailure(RemoteException e) {
+//	              throw new RosRuntimeException(e);
+//	            }
+//	          });
+//	    } catch (InterruptedException e) {
+//	      throw new RosRuntimeException(e);
+//	    }
+	    // End of Service Request to GetDriversWithCapabilitiesResponse
+		
     // Fake Pubs and Subs TODO: Remove!!!
     // The following are two example pub/subs for connecting to the mock arada driver using the launch file.
     // They should be removed as this process should be handled through the interface manager instead
@@ -182,11 +180,11 @@ public class MessageConsumer extends SaxtonBaseNode {
 //            log.info("MessageConsumer received ByteArray of type MobilityNack. Publishing MobilityNack message");
 //            mobilityNAckPub.publish(mobilityNAckPub.newMessage());
 //            break;
-////        TODO uncomment when messages are defined
-////        case "MobilityPlan":
-////          log.info("MessageConsumer received ByteArray of type MobilityPlan. Publishing MobilityPlan message");
-////          mobilityPlanPub.publish(mobilityPlanPub.newMessage());
-////          break;
+//        TODO uncomment when messages are defined
+//        case "MobilityPlan":
+//          log.info("MessageConsumer received ByteArray of type MobilityPlan. Publishing MobilityPlan message");
+//          mobilityPlanPub.publish(mobilityPlanPub.newMessage());
+//          break;
 //          default:
 //            log.info("MessageConsumer received ByteArray of type Unknown. Publishing as example BSM message");
 //            bsmPub.publish(bsmPub.newMessage());
@@ -305,12 +303,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 //      }
 //    });
 
-		// This CancellableLoop will be canceled automatically when the node shuts
-		// down.
+		// This CancellableLoop will be canceled automatically when the node shuts down.
 		connectedNode.executeCancellableLoop(new CancellableLoop() {
+			
 			private int sequenceNumber;
+			
 			@Override
 			protected void setup() { sequenceNumber = 0; } //setup
+			
 			@Override
 			protected void loop() throws InterruptedException {
 				sequenceNumber++;
@@ -321,4 +321,5 @@ public class MessageConsumer extends SaxtonBaseNode {
 
 	@Override
 	protected void handleException(Exception e) { }
+	
 }//AbstractNodeMain

@@ -115,6 +115,8 @@ public class RouteWorker {
   protected void next(WorkerEvent event) {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
     log.info("Route State = " + currentSegmentIndex);
+    // Publish the new route state
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), false));
   }
 
   /**
@@ -132,10 +134,13 @@ public class RouteWorker {
         log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.CAUTION,
+        alertMsg = buildSystemAlertMsg(SystemAlert.SHUTDOWN,
           "Route: The end of the active route has been reached");
+        // Notify system of route completion
         routeManager.publishSystemAlert(alertMsg);
+        routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), true));
         log.info("Route has been completed");
+        routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
         alertMsg = buildSystemAlertMsg(SystemAlert.WARNING,
@@ -145,7 +150,8 @@ public class RouteWorker {
         break;
       case SYSTEM_FAILURE:
         log.info(
-          "Route has received a system failure message and is switching to pausing the active route");
+          "Route: Received a system failure message and is shutting down");
+        routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
         log.info(
@@ -387,7 +393,7 @@ public class RouteWorker {
     }
 
     // Publish updated route information
-    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime()));
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), false));
     routeManager.publishCurrentRouteSegment(getCurrentRouteSegmentTopicMsg());
   }
 
@@ -414,6 +420,10 @@ public class RouteWorker {
       case cav_msgs.SystemAlert.DRIVERS_READY:
         systemOkay = true;
         log.info("route_manager received system ready on system_alert and is starting to publish");
+        break;
+      case cav_msgs.SystemAlert.SHUTDOWN:
+        log.info("Route manager received a shutdown message");
+        routeManager.shutdown();
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
@@ -454,13 +464,33 @@ public class RouteWorker {
    * @param time the time
    * @return route state message
    */
-  protected RouteState getRouteStateTopicMsg(int seq, Time time) {
-    if (activeRoute == null)
-      return messageFactory.newFromType(cav_msgs.RouteState._TYPE);
+  protected RouteState getRouteStateTopicMsg(int seq, Time time, boolean routeComplete) {
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
-    routeState.setCrossTrack(crossTrackDistance);
-    routeState.setRouteID(activeRoute.getRouteID());
-    routeState.setDownTrack(downtrackDistance);
+    // ROUTE_COMPLETE is not an internal state so we set it here
+    if (routeComplete) {
+      routeState.setState(RouteState.ROUTE_COMPLETE);
+    } else {
+      switch (getCurrentState()) {
+        case LOADING_ROUTES:
+          routeState.setState(RouteState.LOADING_ROUTES);
+          break;
+        case ROUTE_SELECTION:
+          routeState.setState(RouteState.ROUTE_SELECTION);
+          break;
+        case WAITING_TO_START:
+          routeState.setState(RouteState.WAITING_TO_START);
+          break;
+        case FOLLOWING_ROUTE:
+          routeState.setState(RouteState.FOLLOWING_ROUTE);
+          break;
+      }
+    }
+
+    if (activeRoute != null) {
+      routeState.setCrossTrack(crossTrackDistance);
+      routeState.setRouteID(activeRoute.getRouteID());
+      routeState.setDownTrack(downtrackDistance);
+    }
 
     std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
     hdr.setFrameId("0");

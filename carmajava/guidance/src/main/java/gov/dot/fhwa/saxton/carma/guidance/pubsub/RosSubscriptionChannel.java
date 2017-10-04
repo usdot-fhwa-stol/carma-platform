@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.node.topic.Subscriber;
+import gov.dot.fhwa.saxton.carma.guidance.*;
 
 /**
  * Package private class for use in the PubSubManager
@@ -30,23 +31,27 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
     protected int numOpenChannels = 0;
     protected boolean open = true;
     protected Subscriber<T> subscriber;
+    protected GuidanceExceptionHandler exceptionHandler;
 
-    RosSubscriptionChannel(Subscriber<T> subscriber) {
+    RosSubscriptionChannel(Subscriber<T> subscriber, GuidanceExceptionHandler exceptionHandler) {
         this.subscriber = subscriber;
+        this.exceptionHandler = exceptionHandler;
     }
 
     /**
      * Acquire a new ISubscriber instance
      */
-    @Override public ISubscriber<T> getSubscriber() {
+    @Override
+    public ISubscriber<T> getSubscriber() {
         numOpenChannels++;
-        return new RosSubscriber<>(subscriber, this);
+        return new RosSubscriber<>(subscriber, this, exceptionHandler);
     }
 
     /**
      * Register the destruction of a channel interface instance. If none are open then close the resource.
      */
-    @Override public void notifyClientShutdown() {
+    @Override
+    public void notifyClientShutdown() {
         numOpenChannels--;
 
         if (numOpenChannels <= 0) {
@@ -64,11 +69,13 @@ public class RosSubscriptionChannel<T> implements ISubscriptionChannel<T> {
     /**
      * Return whether or not the underlying resource for this RosPublicationChannel has been shut down
      */
-    @Override public boolean isOpen() {
+    @Override
+    public boolean isOpen() {
         return open;
     }
 
-    @Override public void close() {
+    @Override
+    public void close() {
         open = false;
         subscriber.shutdown();
     }

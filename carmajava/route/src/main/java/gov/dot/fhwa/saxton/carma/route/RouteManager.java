@@ -82,7 +82,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     final Log log = connectedNode.getLog();
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
-    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
 
     /// Topics
     // Publishers
@@ -91,6 +90,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
+
+    // Worker must be initialized after publishers but before subscribers
+    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
 
     // Subscribers
     //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
@@ -160,6 +162,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
             }
           }
         });
+
   }//onStart
 
   @Override protected void handleException(Exception e) {
@@ -191,5 +194,10 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
       return new Time();
     }
     return connectedNode.getCurrentTime();
+  }
+
+  @Override public void shutdown() {
+    connectedNode.getLog().info("Route: Route Manager shutdown method called");
+    this.connectedNode.shutdown();
   }
 }//AbstractNodeMain

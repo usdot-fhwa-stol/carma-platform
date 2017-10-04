@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.node.ConnectedNode;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceExceptionHandler;
 
 /**
  * Concrete ROS implementation of the logic outlined in {@link ISubscriptionChannelFactory}
@@ -26,13 +27,15 @@ import org.ros.node.ConnectedNode;
  */
 public class RosSubscriptionChannelFactory implements ISubscriptionChannelFactory {
     protected ConnectedNode node;
+    protected GuidanceExceptionHandler exceptionHandler;
 
-    public RosSubscriptionChannelFactory(ConnectedNode node) {
+    public RosSubscriptionChannelFactory(ConnectedNode node, GuidanceExceptionHandler exceptionHandler) {
         this.node = node;
+        this.exceptionHandler = exceptionHandler;
     }
 
     @Override public <T> ISubscriptionChannel<T> newSubscriptionChannel(String topic, String type) {
         return (ISubscriptionChannel<T>) new RosSubscriptionChannel<>(
-            node.newSubscriber(topic, type));
+            node.newSubscriber(topic, type), exceptionHandler);
     }
 }

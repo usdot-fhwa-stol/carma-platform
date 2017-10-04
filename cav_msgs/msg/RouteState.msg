@@ -18,8 +18,11 @@ string routeID
 # Enum denoting the state of the route following
 uint8 state
 
-uint8 WAITING_TO_START=0
-uint8 FOLLOWING_ROUTE=1
+uint8 LOADING_ROUTES=0
+uint8 ROUTE_SELECTION=1
+uint8 WAITING_TO_START=2
+uint8 FOLLOWING_ROUTE=3
+uint8 ROUTE_COMPLETE=4
 
 # Cross-track distance of vehicle along route
 float64 cross_track
