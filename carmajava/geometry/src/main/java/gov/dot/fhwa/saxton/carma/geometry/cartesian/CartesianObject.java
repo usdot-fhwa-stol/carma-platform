@@ -3,26 +3,25 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 import java.util.List;
 
 /**
- * Created by mcconnelms on 9/22/17.
+ * An object in n-dimensional cartesian space defined by a point cloud. The bounds of the object are calculated and can be used for intersection checking
  */
-public class ConvexHull implements DimensionalObject {
+public class CartesianObject implements CartesianElement {
 
   protected final int MIN_BOUND_IDX = 0;
   protected final int MAX_BOUND_IDX = 1;
   protected double[][] bounds; // 2 rows as every dim has a min and max value
   protected Point centroidOfBounds;
+  protected Point centroidOfHull;
   protected int numDimensions;
-  protected List<Point> vertices;
-  protected List<Point> originalPointSet;
+  protected List<Point> pointCloud;
 
-  public ConvexHull(List<Point> points) throws IllegalArgumentException {
-    this.validateInput(points);
-    this.numDimensions = points.get(0).getNumDimensions();
-    this.calculateBounds(points);
+  public CartesianObject(List<Point> pointCloud) throws IllegalArgumentException {
+    this.validateInput(pointCloud);
+    this.numDimensions = pointCloud.get(0).getNumDimensions();
+    this.calculateBounds(pointCloud);
     this.calculateCentroidOfBounds();
-    this.originalPointSet = points;
-    //TODO calculate convex hull
-    //TODO calculate centroid of convex hull
+    this.pointCloud = pointCloud;
+    this.calculateCentroidOfCloud();
   }
 
   protected void validateInput(List<Point> points) throws IllegalArgumentException {
@@ -39,6 +38,14 @@ public class ConvexHull implements DimensionalObject {
         throw new IllegalArgumentException("Inconsistent dimensions in list of points provided to ConvexHull constructor");
       }
     }
+  }
+
+  protected void calculateCentroidOfCloud() {
+    Vector centroidValues = new Vector(new Point(getNumDimensions(), 0));
+    for (int i = 0; i < pointCloud.size(); i++) {
+      centroidValues.setDim(i, centroidValues.getDim(i) + pointCloud.get(i).getDim(i));
+    }
+    centroidOfHull = centroidValues.scalarMultiply(1.0 / pointCloud.size()).toPoint();
   }
 
   protected void calculateCentroidOfBounds() {
@@ -59,21 +66,41 @@ public class ConvexHull implements DimensionalObject {
         if (firstPoint) {
           bounds[i][MIN_BOUND_IDX] = p.getDim(i);
           bounds[i][MAX_BOUND_IDX] = p.getDim(i);
-          firstPoint = false;
-        } else if (p.getDim(i) < bounds[i][MAX_BOUND_IDX]) {
-          bounds[i][MAX_BOUND_IDX] = p.getDim(i);
+        } else if (p.getDim(i) < bounds[i][MIN_BOUND_IDX]) {
+          bounds[i][MIN_BOUND_IDX] = p.getDim(i);
         } else if (p.getDim(i) > bounds[i][MAX_BOUND_IDX]) {
           bounds[i][MAX_BOUND_IDX] = p.getDim(i);
         }
       }
+      firstPoint = false;
     }
-  }
-
-  protected void calculateConvexHull(List<Point> points) {
-
   }
 
   @Override public int getNumDimensions() {
     return numDimensions;
+  }
+
+  public List<Point> getPointCloud() {
+    return pointCloud;
+  }
+
+  public int getMinBoundIndx() {
+    return MIN_BOUND_IDX;
+  }
+
+  public int getMaxBoundIndx() {
+    return MAX_BOUND_IDX;
+  }
+
+  public double[][] getBounds() {
+    return bounds;
+  }
+
+  public Point getCentroidOfBounds() {
+    return centroidOfBounds;
+  }
+
+  public Point getCentroidOfHull() {
+    return centroidOfHull;
   }
 }

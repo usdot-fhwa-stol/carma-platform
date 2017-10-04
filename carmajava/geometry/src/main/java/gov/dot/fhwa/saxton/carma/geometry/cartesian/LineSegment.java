@@ -19,7 +19,7 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 /**
  * A representation of a point in N-dimensional space.
  */
-public class LineSegment implements DimensionalObject {
+public class LineSegment implements CartesianElement {
   private Point p1;
   private Point p2;
   private Vector vector;

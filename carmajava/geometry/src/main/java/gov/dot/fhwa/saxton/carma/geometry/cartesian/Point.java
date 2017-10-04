@@ -21,7 +21,7 @@ import java.util.Arrays;
 /**
  * A representation of a point in N-dimensional space.
  */
-public class Point implements DimensionalObject{
+public class Point implements CartesianElement {
   protected double[] dimensions;
 
   public Point(double[] dimensions){

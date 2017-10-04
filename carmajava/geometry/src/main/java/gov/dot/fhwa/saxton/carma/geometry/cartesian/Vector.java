@@ -19,7 +19,7 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 /**
  * A representation of a point in N-dimensional space.
  */
-public class Vector implements DimensionalObject {
+public class Vector implements CartesianElement {
   protected Point headPoint_;
 
   public Vector(Point head, Point tail) throws IllegalArgumentException {

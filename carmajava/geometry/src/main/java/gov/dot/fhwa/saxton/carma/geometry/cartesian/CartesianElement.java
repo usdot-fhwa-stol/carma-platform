@@ -3,7 +3,7 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 /**
  * Created by mcconnelms on 9/22/17.
  */
-public interface DimensionalObject {
+public interface CartesianElement {
 
   /**
    * Gets the number of dimensions which fully define the respective object
