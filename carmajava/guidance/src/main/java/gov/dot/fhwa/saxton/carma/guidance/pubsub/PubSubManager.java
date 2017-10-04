@@ -42,10 +42,9 @@ public class PubSubManager implements IPubSubService {
     protected Map<String, IPublicationChannel> pubChannelManagers;
     protected Map<String, ISubscriptionChannel> subChannelManagers;
     protected Map<String, IServiceChannel> srvManagers;
-    protected GuidanceExceptionHandler exceptionHandler;
 
-    public PubSubManager(ISubscriptionChannelFactory subFactory,
-        IPublicationChannelFactory pubFactory, IServiceChannelFactory srvFactory) {
+    public PubSubManager(ISubscriptionChannelFactory subFactory, IPublicationChannelFactory pubFactory,
+            IServiceChannelFactory srvFactory) {
 
         this.subFactory = subFactory;
         this.pubFactory = pubFactory;
@@ -65,8 +64,9 @@ public class PubSubManager implements IPubSubService {
      * @param <S>      Type parameter for the response message
      * @return An IService instance that can call the service
      */
-    @Override @SuppressWarnings("unchecked") public <T, S> IService<T, S> getServiceForTopic(
-        String topicUrl, String type) throws TopicNotFoundException {
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T, S> IService<T, S> getServiceForTopic(String topicUrl, String type) throws TopicNotFoundException {
         if (srvManagers.containsKey(topicUrl) && srvManagers.get(topicUrl).isOpen()) {
             return srvManagers.get(topicUrl).getService();
         } else {
@@ -84,8 +84,9 @@ public class PubSubManager implements IPubSubService {
      * @param <T>      Type parameter of the topic message
      * @return An ISubscriber instance that has subscription access to the topic
      */
-    @Override @SuppressWarnings("unchecked") public <T> ISubscriber<T> getSubscriberForTopic(
-        String topicUrl, String type) {
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> ISubscriber<T> getSubscriberForTopic(String topicUrl, String type) {
         if (subChannelManagers.containsKey(topicUrl) && subChannelManagers.get(topicUrl).isOpen()) {
             return subChannelManagers.get(topicUrl).getSubscriber();
         } else {
@@ -103,8 +104,9 @@ public class PubSubManager implements IPubSubService {
      * @param <T>      Type parameter of the topic message
      * @return An IPublisher instance that has publish access to the topic
      */
-    @Override @SuppressWarnings("unchecked") public <T> IPublisher<T> getPublisherForTopic(
-        String topicUrl, String type) {
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> IPublisher<T> getPublisherForTopic(String topicUrl, String type) {
         if (pubChannelManagers.containsKey(topicUrl) && pubChannelManagers.get(topicUrl).isOpen()) {
             return pubChannelManagers.get(topicUrl).getPublisher();
         } else {
