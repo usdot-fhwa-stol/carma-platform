@@ -304,7 +304,7 @@ function showSubCapabilitiesView2() {
     var divSubCapabilities = document.getElementById('divSubCapabilities');
     divSubCapabilities.style.display = 'block';
 
-    showRouteInfo();
+    checkRouteInfo();
     showPluginOptions();
 
 }
@@ -536,9 +536,8 @@ function showGuidanceEngaged() {
 
         //AFTER dis-engaging, redirect to a page. Guidance is sending all the nodes to stop.
         //Currently, only way to re-engage would be to re-run the roslaunch file.
-        //TODO: Discuss if UI should wait to disconnect and redirect to show any shutdown errors from Guidance.
+        //Discussed that UI DOES NOT need to wait to disconnect and redirect to show any shutdown errors from Guidance.
         showModal(true, "You are disengaging guidance. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
-
     }
 }
 /*
@@ -708,10 +707,10 @@ function getFutureTopics() {
 }
 
 /*
-    Display the Route State in the System Status tab.
-    Values are only set and can be shown when Route has been selected.
+    Watch out for route completed, and display the Route State in the System Status tab.
+    Route state are only set and can be shown after Route has been selected.
 */
-function showRouteInfo() {
+function checkRouteInfo() {
     //Get Route State
     var listenerRouteState = new ROSLIB.Topic({
         ros: ros,
@@ -724,8 +723,12 @@ function showRouteInfo() {
         insertNewTableRow('tblSecond', 'Route State', message.state);
         insertNewTableRow('tblSecond', 'Cross Track', message.cross_track.toFixed(2));
         insertNewTableRow('tblSecond', 'Down Track', message.down_track.toFixed(2));
-    });
 
+        //If completed, then route topic will publish something to guidance to shutdown.
+        //For UI purpose, only need to notify the USER and show them that route has completed.
+        if (message.state == 4) //ROUTE_COMPLETE=4
+        	showModal(true, "Route completed. You have reached your destination. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
+    });
 }
 
 /*
