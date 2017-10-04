@@ -91,6 +91,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
 
+    // Worker must be initialized after publishers but before subscribers
+    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
+
     // Subscribers
     //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
@@ -160,8 +163,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
           }
         });
 
-    // Worker must be initialized at end of on start
-    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
   }//onStart
 
   @Override protected void handleException(Exception e) {
