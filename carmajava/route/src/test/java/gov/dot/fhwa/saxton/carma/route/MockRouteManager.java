@@ -25,6 +25,8 @@ import org.ros.message.Time;
  * Fake route manager for use in unit testing
  */
 public class MockRouteManager implements IRouteManager {
+  public boolean routeStateRouteCompleteSent = false;
+
   @Override public void publishSystemAlert(SystemAlert systemAlert) {
 
   }
@@ -38,7 +40,9 @@ public class MockRouteManager implements IRouteManager {
   }
 
   @Override public void publishRouteState(RouteState routeState) {
-
+    if (routeState.getState() == RouteState.ROUTE_COMPLETE) {
+      routeStateRouteCompleteSent = true;
+    }
   }
 
   @Override public Time getTime() {
@@ -47,5 +51,20 @@ public class MockRouteManager implements IRouteManager {
 
   @Override public void shutdown() {
 
+  }
+
+  /**
+   * Returns true if a attempt was made to send a route completion message
+   * @return
+   */
+  public boolean routeCompletionDeclared() {
+    return routeStateRouteCompleteSent;
+  }
+
+  /**
+   * Resets the indicator of a route completion message being sent
+   */
+  public void resetRouteCompletionStatus() {
+    routeStateRouteCompleteSent = false;
   }
 }

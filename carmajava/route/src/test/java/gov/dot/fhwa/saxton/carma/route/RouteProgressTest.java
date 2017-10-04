@@ -57,7 +57,8 @@ public class RouteProgressTest {
    */
   @Test
   public void testRouteProgress() throws Exception {
-    RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
+    MockRouteManager routeMgr = new MockRouteManager();
+    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/");
 
     routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
@@ -121,6 +122,8 @@ public class RouteProgressTest {
 
     assertTrue(routeWorker.currentSegment == routeWorker.activeRoute.getLastSegment()); // third segment
     assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION); // Route was completed and no longer followed
+    assertTrue(routeMgr.routeCompletionDeclared());
+    routeMgr.resetRouteCompletionStatus();
   }
 
   /**

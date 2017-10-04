@@ -173,26 +173,18 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   }
 
   @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {
-    if (systemAlertPub == null)
-      return;
     systemAlertPub.publish(systemAlert);
   }
 
   @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
-    if (segmentPub == null)
-      return;
     segmentPub.publish(routeSegment);
   }
 
   @Override public void publishActiveRoute(cav_msgs.Route route) {
-    if (routePub == null)
-      return;
     routePub.publish(route);
   }
 
   @Override public void publishRouteState(cav_msgs.RouteState routeState) {
-    if (routeStatePub == null)
-      return;
     routeStatePub.publish(routeState);
   }
 
