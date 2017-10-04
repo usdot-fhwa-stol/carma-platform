@@ -23,13 +23,18 @@ import java.util.concurrent.*;
  * particularly in the context of ROS services
  */
 public class RosServiceResult<T> {
-  protected BlockingQueue<RosServiceResponse<T>> value = new ArrayBlockingQueue<>(1);
+  protected BlockingQueue<RosServiceResponse<T>> value = new LinkedBlockingQueue<>();
 
   /**
    * Signal completion of this RosServiceResult. This should wake up any threads waiting on this future.
    */
   public void complete(RosServiceResponse<T> value) {
-    this.value.add(value);
+    try {
+      this.value.put(value);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Unable to complete RosServiceResult!");
+    }
   }
 
   /**
