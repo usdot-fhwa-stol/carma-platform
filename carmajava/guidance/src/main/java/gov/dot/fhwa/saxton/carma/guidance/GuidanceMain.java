@@ -28,7 +28,6 @@ import org.ros.concurrent.CancellableLoop;
 import org.ros.exception.ServiceException;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 import java.util.concurrent.ExecutorService;
@@ -48,136 +47,130 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GuidanceMain extends SaxtonBaseNode {
 
-    // Member Variables
-    protected ExecutorService executor;
-    protected int numThreads = 6;
+  // Member Variables
+  protected ExecutorService executor;
+  protected final int numThreads = 6;
 
-    protected IPubSubService pubSubService;
-    protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>
-        guidanceEngageService;
+  protected GuidanceExceptionHandler guidanceExceptionHandler;
+  protected IPubSubService pubSubService;
+  protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse> guidanceEngageService;
 
-    protected final AtomicBoolean enabled = new AtomicBoolean(false);
-    protected final AtomicBoolean systemReady = new AtomicBoolean(false);
-    protected boolean initialized = false;
+  protected GuidanceExceptionHandler exceptionHandler;
 
-    @Override public GraphName getDefaultNodeName() {
-        return GraphName.of("guidance_main");
-    }
+  protected final AtomicBoolean engaged = new AtomicBoolean(false);
+  protected final AtomicBoolean systemReady = new AtomicBoolean(false);
+  protected boolean initialized = false;
 
-    /**
-     * Initialize the runnable thread members of the Guidance package.
-     */
-    private void initExecutor(AtomicReference<GuidanceState> state, ConnectedNode node) {
-        executor = Executors.newFixedThreadPool(numThreads);
+  @Override
+  public GraphName getDefaultNodeName() {
+    return GraphName.of("guidance_main");
+  }
 
-        Arbitrator arbitrator = new Arbitrator(state, pubSubService, node);
-        PluginManager pluginManager = new PluginManager(state, pubSubService, node);
-        Tracking tracking = new Tracking(state, pubSubService, node);
-        GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
-        TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands);
-        Maneuvers maneuvers = new Maneuvers(state, pubSubService, node);
+  /**
+   * Initialize the runnable thread members of the Guidance package.
+   */
+  private void initExecutor(AtomicReference<GuidanceState> state, ConnectedNode node) {
+    executor = Executors.newFixedThreadPool(numThreads);
 
-        executor.execute(maneuvers);
-        executor.execute(arbitrator);
-        executor.execute(pluginManager);
-        executor.execute(trajectoryExecutor);
-        executor.execute(tracking);
-        executor.execute(guidanceCommands);
-    }
+    Arbitrator arbitrator = new Arbitrator(state, pubSubService, node);
+    PluginManager pluginManager = new PluginManager(state, pubSubService, node);
+    GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
+    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands);
+    Tracking tracking = new Tracking(state, pubSubService, node);
+    Maneuvers maneuvers = new Maneuvers(state, pubSubService, node);
 
-    /**
-     * Initialize the PubSubManager and setup it's message queue.
-     */
-    private void initPubSubManager(ConnectedNode node) {
-        ISubscriptionChannelFactory subscriptionChannelFactory =
-            new RosSubscriptionChannelFactory(node);
-        IPublicationChannelFactory publicationChannelFactory =
-            new RosPublicationChannelFactory(node);
-        IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node);
+    executor.execute(maneuvers);
+    executor.execute(arbitrator);
+    executor.execute(pluginManager);
+    executor.execute(trajectoryExecutor);
+    executor.execute(tracking);
+    executor.execute(guidanceCommands);
+  }
 
-        pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory,
-            serviceChannelFactory);
-    }
+  /**
+   * Initialize the PubSubManager and setup it's message queue.
+   */
+  private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidance) {
+    ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node,
+        guidanceExceptionHandler);
+    IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
+    IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node);
 
-    @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
-        final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
+    pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory);
+  }
 
-        // Configure the comms classes
-        final Log log = connectedNode.getLog();
+  @Override
+  public void onSaxtonStart(final ConnectedNode connectedNode) {
+    final Log log = connectedNode.getLog();
+    final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
+    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state, log);
+    this.exceptionHandler = guidanceExceptionHandler;
+    log.info("Guidance exception handler partially initialized");
 
-        initPubSubManager(connectedNode);
-        log.info("Guidance main PubSubManager initialized");
-        initExecutor(state, connectedNode);
-        log.info("Guidance main executor initialized");
+    // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
+    // Will apply to any thread that lacks an otherwise specified ExceptionHandler
+    // Not sure how this interacts with multiple processes sharing the same JVM
+    Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        log.fatal("Guidance thread " + t.getName() + " raised uncaught exception! Handling!!!");
+        guidanceExceptionHandler.handleException(e);
+      }
+    });
 
-        // Currently setup to listen to it's own message. Change to listen to someone other topic.
-        ISubscriber<SystemAlert> subscriber =
-            pubSubService.getSubscriberForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+    initPubSubManager(connectedNode, guidanceExceptionHandler);
+    log.info("Guidance main PubSubManager initialized");
 
-        subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
-                                                 @Override public void onMessage(cav_msgs.SystemAlert message) {
-                                                     if (message.getType() == SystemAlert.DRIVERS_READY) {
-                                                         state.set(GuidanceState.DRIVERS_READY);
-                                                         log.info("Guidance main received DRIVERS_READY!");
-                                                     }
-                                                 }//onNewMessage
-                                             }//MessageListener
-        );//addMessageListener
+    guidanceExceptionHandler.init(pubSubService);
+    log.info("Guidance main exception handler fully initialized");
 
-        final IPublisher<SystemAlert> systemAlertPublisher =
-            pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
+    initExecutor(state, connectedNode);
+    log.info("Guidance main executor initialized");
 
-        guidanceEngageService = connectedNode.newServiceServer("set_guidance_engaged",
-            SetGuidanceEngaged._TYPE,
-            new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
-                @Override public void build(SetGuidanceEngagedRequest setGuidanceEngagedRequest,
-                    SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
-                        if (state.get() == GuidanceState.DRIVERS_READY && setGuidanceEngagedRequest.getGuidanceEngage()) {
-                            state.set(GuidanceState.ENGAGED);
-                        }
-                        
-                        // Detect a shutdown from UI
-                        if (!setGuidanceEngagedRequest.getGuidanceEngage()) {
-                            state.set(GuidanceState.SHUTDOWN);
-                        }
+    // Currently setup to listen to it's own message. Change to listen to someone other topic.
+    ISubscriber<SystemAlert> subscriber = pubSubService.getSubscriberForTopic("system_alert",
+        cav_msgs.SystemAlert._TYPE);
 
-                        setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
-                }
-            });
+    subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
+      @Override
+      public void onMessage(cav_msgs.SystemAlert message) {
+        if (message.getType() == SystemAlert.DRIVERS_READY) {
+          state.set(GuidanceState.DRIVERS_READY);
+          log.info("Guidance main received DRIVERS_READY!");
+        } else if (message.getType() == SystemAlert.FATAL) {
+          log.info("!!!!!! GuidanceMain received SystemAlert.FATAL! Shutting down! !!!!!");
+          state.set(GuidanceState.SHUTDOWN);
+        }
+      }//onNewMessage
+    } //MessageListener
+    );//addMessageListener
 
+    final IPublisher<SystemAlert> systemAlertPublisher = pubSubService.getPublisherForTopic("system_alert",
+        cav_msgs.SystemAlert._TYPE);
 
-        // Primary GuidanceMain loop logic
-        //Getting the ros param called run_id.
-        ParameterTree param = connectedNode.getParameterTree();
-        final String rosRunID = param.getString("/run_id");
+    guidanceEngageService = connectedNode.newServiceServer("set_guidance_engaged", SetGuidanceEngaged._TYPE,
+        new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
+          @Override
+          public void build(SetGuidanceEngagedRequest setGuidanceEngagedRequest,
+              SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
+            state.set(GuidanceState.ENGAGED);
+            setGuidanceEngagedResponse.setGuidanceStatus(engaged.get());
+          }
+        });
 
-        // This CancellableLoop will be canceled automatically when the node shuts
-        // down.
-        connectedNode.executeCancellableLoop(new CancellableLoop() {
-                                                 private int sequenceNumber;
+    // This CancellableLoop will be canceled automatically when the node shuts
+    // down.
+    connectedNode.executeCancellableLoop(new CancellableLoop() {
+      @Override
+      protected void loop() throws InterruptedException {
+        Thread.sleep(5000);
+      }//loop
+    }//CancellableLoop
+    );//executeCancellableLoop
+  }//onStart
 
-                                                 @Override protected void setup() {
-                                                     sequenceNumber = 0;
-                                                 }//setup
-
-                                                 @Override protected void loop() throws InterruptedException {
-
-                                                     cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-                                                     systemAlertMsg.setDescription(
-                                                         "Hello World! " + "I am guidance_main. " + sequenceNumber + " run_id = "
-                                                             + rosRunID + ".");
-                                                     systemAlertMsg.setType(SystemAlert.CAUTION);
-                                                     systemAlertPublisher.publish(systemAlertMsg);
-                                                     sequenceNumber++;
-
-                                                     Thread.sleep(30000);
-                                                 }//loop
-
-                                             }//CancellableLoop
-        );//executeCancellableLoop
-    }//onStart
-
-    @Override protected void handleException(Exception e) {
-
-    }
+  @Override
+  protected void handleException(Exception e) {
+    exceptionHandler.handleException(e);
+  }
 }//AbstractNodeMain
