@@ -47,6 +47,7 @@ dependencies {
   testCompile 'junit:junit:4.12'
   /* Local subproject dependency */
   compile project(':rosutils')
+  compile project(':geometry')
   testCompile project (path: ':rosutils', configuration: 'rosUtilsTestArtifacts')
 }
 
