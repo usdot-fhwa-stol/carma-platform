@@ -3,7 +3,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.139' // TODO: Update with proper environment IP address.
+var ip = '192.168.32.141' // TODO: Update with proper environment IP address.
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -13,7 +13,8 @@ var t_current_segment = 'current_segment';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = "route_state";
-var t_cmd_speed = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
+var t_active_route = "route";
+var t_cmd_speed = "cmd_speed";
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -193,6 +194,7 @@ function showRouteOptions() {
 
         for (i = 0; i < myRoutes.length; i++) {
             createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes');
+
         }
 
         if (myRoutes.length == 0) {
@@ -213,9 +215,13 @@ function setRoute(id) {
         serviceType: 'cav_srvs/SetActiveRoute'
     });
 
+    //TODO: Remove this when Route Manager has updated the RouteID to not have spaces. For now have to do this.
+    var selectedRouteid = id.toString().replace('rb', '').replace( /_/g,' ');
+
     // Then we create a Service Request.
+    // replace rb with empty string and underscore with space to go back to original ID from topic.
     var request = new ROSLIB.ServiceRequest({
-        routeID: id.toString().replace('rb', '')
+        routeID: selectedRouteid
     });
 
     //Selected Route
@@ -223,7 +229,6 @@ function setRoute(id) {
 
     // Call the service and get back the results in the callback.
     setActiveRouteClient.callService(request, function (result) {
-
         if (result.errorStatus == 1) //Error: NO_ROUTE
         {
             divCapabilitiesMessage.innerHTML = '<p> Activating the route failed, please try it again.</p>';
@@ -239,7 +244,6 @@ function setRoute(id) {
             //      Once selected, it wouldn't be activated until at least 1 Plugin is selected (based on Route).
             //      Only when a route is selected and at least one plugin is selected, could Guidance be Engaged.
             startActiveRoute(id);
-
         }
     });
 }
@@ -267,7 +271,6 @@ function startActiveRoute(id) {
             divCapabilitiesMessage.innerHTML += '<p> Starting the active the route failed, please try it again.</p>';
         }
         else { //Call succeeded //NO_ERROR=0 ; ALREADY_FOLLOWING_ROUTE=3;
-
             showSubCapabilitiesView(id);
         }
     });
@@ -277,7 +280,9 @@ function startActiveRoute(id) {
     After capabilities is initially selected, store route name and the plugin list.
 */
 function showSubCapabilitiesView(id) {
-    var lblRoute = document.getElementById(id.toString().replace('rb', 'lbl'));
+
+    var labelId = id.toString().replace('rb', 'lbl');
+    var lblRoute = document.getElementById(labelId);
 
     if (lblRoute == null)
         return;
@@ -337,9 +342,10 @@ function showPluginOptions() {
             var cbTitle = pluginList[i].name + ' ' + pluginList[i].versionId;
             var cbId = pluginList[i].name.replace(/\s/g, '_') + '&' + pluginList[i].versionId.replace(/\./g, '_');
             var isChecked = pluginList[i].activated;
+            var isRequired = pluginList[i].required;
 
             //Create the checkbox based on the plugin properties.
-            createCheckboxElement(divSubCapabilities, cbId, cbTitle, pluginList.length, 'groupPlugins', isChecked);
+            createCheckboxElement(divSubCapabilities, cbId, cbTitle, pluginList.length, 'groupPlugins', isChecked, isRequired);
         }
 
         //If no selection available.
@@ -358,9 +364,20 @@ function showPluginOptions() {
 function activatePlugin(id) {
 
     var cbCapabilities = document.getElementById(id);
+    var lblCapabilities = document.getElementById(id.toString().replace('cb', 'lbl'));
 
     //NOTE: Already set by browser to have NEW checked value.
     var newStatus = cbCapabilities.checked;
+
+    //If the plugin is required to be on all times, it cannot be deactivated by the user, so need to notify users with a specific message.
+    //Regardless, the call to activate plugin will fail.
+    if (newStatus == false && lblCapabilities.innerHTML.indexOf('*') > 0 )
+    {
+        divCapabilitiesMessage.innerHTML = 'Sorry, this capability is required. It cannot be deactivated.';
+        //Need to set it back to original value.
+        cbCapabilities.checked = !newStatus;
+        return;
+    }
 
     // If guidance is engaged, at least 1 plugin must be selected.
     if (guidance_engaged == true) {
@@ -376,7 +393,7 @@ function activatePlugin(id) {
         }
     }
 
-    // Calling setActiveRoute service
+    // Calling service
     var activatePluginClient = new ROSLIB.Service({
         ros: ros,
         name: s_activate_plugins,
@@ -418,8 +435,6 @@ function activatePlugin(id) {
 
         //Set to new state set by the PluginManager.
         cbCapabilities.checked = result.newState;
-
-        var lblCapabilities = document.getElementById(id.toString().replace('cb', 'lbl'));
 
         if (cbCapabilities.checked == false) {
             lblCapabilities.style.backgroundColor = 'gray';
@@ -735,6 +750,7 @@ function checkRouteInfo() {
     Display the close loop control of speed
 */
 function showSpeedAccelInfo() {
+
     //Get Route State
     var listenerSpeedAccel = new ROSLIB.Topic({
         ros: ros,
@@ -851,6 +867,7 @@ function evaluateNextStep() {
     }
 
     if (route_name != '') {
+
         showSubCapabilitiesView2();
         showStatusandLogs();
 
@@ -887,7 +904,9 @@ window.onload = function () {
             system_ready = Boolean(isSystemReady);
 
         if (routeName != 'undefined' && routeName != null)
+        {
             route_name = routeName;
+        }
 
         if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '')
             guidance_engaged = Boolean(isGuidanceEngaged);
