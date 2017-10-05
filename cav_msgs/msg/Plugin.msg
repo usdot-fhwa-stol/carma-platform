@@ -15,3 +15,6 @@ string versionId
 bool available
 bool activated
 
+# Whether or not the plugin is required for operation of the system
+# Required plugins may not be deactivated
+bool required
