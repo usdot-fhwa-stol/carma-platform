@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017 Michael McConnell.
- * 
+ * TODO: Copyright (C) 2017 LEIDOS.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,41 +17,62 @@
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 
 /**
- * A representation of a point in N-dimensional space.
+ * A representation of a vector in N-dimensional space.
+ * While a vector can be calculated form a head and tail point,
+ * it is always represented only as the distances between these two points.
  */
 public class Vector implements CartesianElement {
   protected Point headPoint_;
 
+  /**
+   * Constructor defines a vector from the tail point to the head point
+   * @param head The head of the vector (the arrow when drawing)
+   * @param tail The tail of the vector. Must be the same dimension as the head
+   * @throws IllegalArgumentException Thrown if the dimensions of the two points do not match
+   */
   public Vector(Point head, Point tail) throws IllegalArgumentException {
     if (head.getNumDimensions() != tail.getNumDimensions()) {
       throw new IllegalArgumentException("Point dimensions do not match");
     }
 
-    headPoint_ = new Point(head.getNumDimensions(), 0);
+    headPoint_ = new Point(new double[head.getNumDimensions()]);
     for(int i = 0; i < head.getNumDimensions(); i++){
       headPoint_.setDim(i, head.getDim(i) - tail.getDim(i));
     }
   }
 
-  // Assumes the vector tail is at the origin
+  /**
+   * Constructor defines a vector from an origin to the provided head point.
+   * The origin is in the frame used to define the provided head point
+   * @param head The head point of the vector. Point is deep copied.
+   */
   public Vector(Point head){
-    //Does this need to be a deep copy?
-    headPoint_ = head;
+    headPoint_ = new Point(head);
   }
 
+  /**
+   * Defines a vector as a deep copy of the provided vector.
+   * @param vec The vector to copy
+   */
   public Vector(Vector vec){
     // Create this vector as a deep copy of input vector
-    headPoint_ = new Point(vec.getNumDimensions(), 0);
-    for(int i = 0; i < headPoint_.getNumDimensions(); i++){
-      headPoint_.setDim(i, vec.getDim(i));
-    }
+    headPoint_ = new Point(vec.headPoint_);
   }
 
+  /**
+   * Returns the magnitude of the vector
+   * @return Magnitude of vector
+   */
   public double magnitude(){
-    return headPoint_.distanceFrom(new Point(this.getNumDimensions(), 0));
+    return headPoint_.distanceFrom(new Point(new double[getNumDimensions()]));
   }
 
-
+  /**
+   * Adds two vectors.
+   * If vectors are not of the same dimensions the resulting vector will have the size of this vector.
+   * @param v2 The vector to add
+   * @return Vector resulting from addition of the two vectors
+   */
   public Vector add(Vector v2) {
     int size = (this.getNumDimensions() < v2.getNumDimensions()) ? this.getNumDimensions() : v2.getNumDimensions();
     Vector newVec = new Vector(this);
@@ -61,6 +82,12 @@ public class Vector implements CartesianElement {
     return newVec;
   }
 
+  /**
+   * Subtracts provided vector from this vector.
+   * If vectors are not of the same dimensions the resulting vector will have the size of this vector.
+   * @param v2 The vector to subtract
+   * @return Vector resulting from subtraction of the two vectors
+   */
   public Vector subtract(Vector v2) {
     int size = (this.getNumDimensions() < v2.getNumDimensions()) ? this.getNumDimensions() : v2.getNumDimensions();
     Vector newVec = new Vector(this);
@@ -70,6 +97,11 @@ public class Vector implements CartesianElement {
     return newVec;
   }
 
+  /**
+   * Performs scalar multiplication on this vector
+   * @param s The scalar to multiply by
+   * @return The resulting vector
+   */
   public Vector scalarMultiply(double s){
     Vector newVec = new Vector(this);
     for (int i = 0; i < this.getNumDimensions(); i++){
@@ -78,6 +110,12 @@ public class Vector implements CartesianElement {
     return newVec;
   }
 
+  /**
+   * Performs an element wide multiplication of this vector with the provided vector.
+   * If vectors are not of the same dimensions the resulting vector will have the size of this vector.
+   * @param v2 The vector to multiply
+   * @return Vector resulting from element wide multiplication of the two vectors
+   */
   public Vector elementWiseMultiply(Vector v2) {
     int size = (this.getNumDimensions() < v2.getNumDimensions()) ? this.getNumDimensions() : v2.getNumDimensions();
     Vector newVec = new Vector(this);
@@ -87,6 +125,12 @@ public class Vector implements CartesianElement {
     return newVec;
   }
 
+  /**
+   * Computes dot product of two vectors
+   * @param v2 The vector to dot with this vector. Must be same dimension as this vector
+   * @return The result fo the dot product.
+   * @throws IllegalArgumentException Thrown if the dimensions of this vector and the provided vector do not match.
+   */
   public double dot(Vector v2) throws IllegalArgumentException {
     if (this.getNumDimensions() != v2.getNumDimensions()) {
       throw new IllegalArgumentException("Vector dimensions do not match");
@@ -114,22 +158,40 @@ public class Vector implements CartesianElement {
     return  Math.acos(this.dot(vec2) / (this.magnitude() * vec2.magnitude()));
   }
 
+  /**
+   * Converts this vector into a point where the frame of the point has an origin at the vector tail.
+   * @return the point
+   */
   public Point toPoint(){
     return new Point(headPoint_);
   }
 
+  /**
+   * Sets the value of a dimension of this vector
+   * @param dimension The dimension to set
+   * @param value The value to apply
+   */
   public void setDim(int dimension, double value) {
     headPoint_.setDim(dimension, value);
   }
 
+  /**
+   * Gets the unit vector of this vector
+   * @return The unit vector
+   */
   public Vector getUnitVector(){
     return this.scalarMultiply(1.0 / this.magnitude());
   }
 
-  public int getNumDimensions(){
+  @Override public int getNumDimensions(){
     return headPoint_.getNumDimensions();
   }
 
+  /**
+   * Gets the value of the requested dimension
+   * @param dim Dimension to retrieve
+   * @return The value of the requested dimension
+   */
   public double getDim(int dim){
     return headPoint_.getDim(dim);
   }

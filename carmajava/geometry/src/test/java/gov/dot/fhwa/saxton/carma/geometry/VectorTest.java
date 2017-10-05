@@ -1,3 +1,19 @@
+/*
+ * TODO: Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.geometry;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.*;
@@ -7,6 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -241,5 +258,39 @@ public class VectorTest {
     v2 = new Vector3D(0,0,0);
     angle = v1.getAngleBetweenVectors(v2);
     assertTrue(Math.abs(angle - 0.0) < 0.00001);
+  }
+
+  /**
+   * Tests the cross product function
+   * @throws Exception
+   */
+  @Test
+  public void testCrossProduct() throws Exception {
+    // Simple unit vector test
+    Vector3D v = new Vector3D(new Point3D(1,0,0));
+    Vector3D v2 = new Vector3D(new Point3D(0,1,0));
+    assertEquals(0, v.cross(v2).getX(),0.0000001);
+    assertEquals(0, v.cross(v2).getY(),0.0000001);
+    assertEquals(1, v.cross(v2).getZ(),0.0000001);
+
+    // Test with negatives
+    v = new Vector3D(new Point3D(-4,5,7));
+    v2 = new Vector3D(new Point3D(2,5,6));
+    assertEquals(-5, v.cross(v2).getX(),0.0000001);
+    assertEquals(38, v.cross(v2).getY(),0.0000001);
+    assertEquals(-30, v.cross(v2).getZ(),0.0000001);
+
+    // Test with decimals
+    v = new Vector3D(new Point3D(1.45,5.23,0.5));
+    v2 = new Vector3D(new Point3D(-4.3,0.2,5));
+    assertEquals(26.05, v.cross(v2).getX(),0.0000001);
+    assertEquals(-9.4, v.cross(v2).getY(),0.0000001);
+    assertEquals(22.779, v.cross(v2).getZ(),0.0000001);
+
+    // Test same vector
+    v = new Vector3D(new Point3D(1,2,3));
+    assertEquals(0, v.cross(v).getX(),0.0000001);
+    assertEquals(0, v.cross(v).getY(),0.0000001);
+    assertEquals(0, v.cross(v).getZ(),0.0000001);
   }
 }

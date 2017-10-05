@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017 Michael McConnell.
- * 
+ * TODO: Copyright (C) 2017 LEIDOS.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,9 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
-
-import java.util.Arrays;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
 /**
  * A representation of a point in N-dimensional space.
@@ -24,15 +22,20 @@ import java.util.Arrays;
 public class Point implements CartesianElement {
   protected double[] dimensions;
 
+  /**
+   * Constructor defines this point with values from the provided array
+   * Each value corresponds to the specified dimension with 1 indexing.
+   * Such that index 0 in the array specified the value of dimension 1 (x axis)
+   * @param dimensions An array of dimension values
+   */
   public Point(double... dimensions){
     this.dimensions = dimensions;
   }
 
-  public Point(int size, double value){
-    this.dimensions = new double[size];
-    Arrays.fill(this.dimensions, value);
-  }
-  //Create this point as a deep copy of the previous point
+  /**
+   * Constructor defines this point as a deep copy of the provided point
+   * @param p1 The point to be copied
+   */
   public Point(Point p1){
     this.dimensions = new double[p1.getNumDimensions()];
     for (int i = 0; i < p1.getNumDimensions(); i++){
@@ -40,18 +43,33 @@ public class Point implements CartesianElement {
     }
   }
 
-  public int getNumDimensions(){
+  @Override public int getNumDimensions(){
     return dimensions.length;
   }
 
+  /**
+   * Returns the value corresponding to the specified dimension
+   * @param dimension The dimension to return
+   * @return The value of the specified dimension
+   */
   public double getDim(int dimension){
     return dimensions[dimension];
   }
 
+  /**
+   * Sets the value of the specified dimension
+   * @param dimension The dimension to set
+   * @param value The value to apply
+   */
   public void setDim(int dimension, double value) {
     dimensions[dimension] = value;
   }
 
+  /**
+   * Calculates the euclidean distance from this point to the provided point
+   * @param p2 The point to calculate distance from
+   * @return The calculated euclidean distance
+   */
   public double distanceFrom(Point p2){
     int size = (this.getNumDimensions() < p2.getNumDimensions()) ? this.getNumDimensions() : p2.getNumDimensions();
     double squareSum = 0;
@@ -61,6 +79,12 @@ public class Point implements CartesianElement {
     return Math.sqrt(squareSum);
   }
 
+  /**
+   * Returns true if two points are equivalent within the specified delta
+   * @param p The point to compare against this point
+   * @param delta The delta to use as the margin of error
+   * @return True if points are equal within delta
+   */
   public boolean almostEquals(Point p, double delta) {
     int numDim = this.getNumDimensions() < p.getNumDimensions() ? this.getNumDimensions() : p.getNumDimensions();
 

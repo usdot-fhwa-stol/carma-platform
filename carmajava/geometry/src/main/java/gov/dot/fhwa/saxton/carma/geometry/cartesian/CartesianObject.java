@@ -1,9 +1,26 @@
+/*
+ * TODO: Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
 import java.util.List;
 
 /**
- * An object in n-dimensional cartesian space defined by a point cloud. The bounds of the object are calculated and can be used for intersection checking
+ * An object in n-dimensional cartesian space defined by a point cloud.
+ * The bounds of the object are calculated on construction and can be used for intersection checking
  */
 public class CartesianObject implements CartesianElement {
 
@@ -15,6 +32,12 @@ public class CartesianObject implements CartesianElement {
   protected int numDimensions;
   protected List<? extends Point> pointCloud;
 
+  /**
+   * Constructor which defines a cartesian object by the provided point cloud
+   * All provided points must be of the same dimension
+   * @param pointCloud The point cloud which defines this object
+   * @throws IllegalArgumentException Thrown if the provided point cloud has points of varying dimensions
+   */
   public CartesianObject(List<? extends Point> pointCloud) throws IllegalArgumentException {
     this.validateInput(pointCloud);
     this.numDimensions = pointCloud.get(0).getNumDimensions();
@@ -24,6 +47,11 @@ public class CartesianObject implements CartesianElement {
     this.calculateCentroidOfCloud();
   }
 
+  /**
+   * Helper function to validate the input to the constuctor
+   * @param points The point cloud to validate
+   * @throws IllegalArgumentException Thrown if the provided point cloud has points of varying dimensions
+   */
   protected void validateInput(List<? extends Point> points) throws IllegalArgumentException {
     if (points.size() <= 0) {
       throw new IllegalArgumentException("Empty list of points provided to ConvexHull constructor");
@@ -40,8 +68,12 @@ public class CartesianObject implements CartesianElement {
     }
   }
 
+  /**
+   * Calculates the centroid of this object's point cloud
+   * Called in constructor
+   */
   protected void calculateCentroidOfCloud() {
-    Vector centroidValues = new Vector(new Point(getNumDimensions(), 0));
+    Vector centroidValues = new Vector(new Point(new double[getNumDimensions()]));
     for (int i = 0; i < pointCloud.size(); i++) {
       for (int j = 0; j < getNumDimensions(); j++) {
         centroidValues.setDim(j, centroidValues.getDim(j) + pointCloud.get(i).getDim(j));
@@ -50,6 +82,10 @@ public class CartesianObject implements CartesianElement {
     centroidOfCloud = centroidValues.scalarMultiply(1.0 / pointCloud.size()).toPoint();
   }
 
+  /**
+   * Calculates the centroid of this object's bounds
+   * Called in constructor
+   */
   protected void calculateCentroidOfBounds() {
     double[] centroidValues = new double[bounds.length];
     for (int i = 0; i < bounds.length; i++) {
@@ -58,6 +94,11 @@ public class CartesianObject implements CartesianElement {
     centroidOfBounds = new Point(centroidValues);
   }
 
+  /**
+   * Calculates the bounds of the provided point cloud
+   * Called in the constructor
+   * @param points A list of points assumed to be of the same dimension
+   */
   protected void calculateBounds(List<? extends Point> points) {
     int dims = this.getNumDimensions();
     bounds = new double[dims][2];
@@ -78,31 +119,55 @@ public class CartesianObject implements CartesianElement {
     }
   }
 
-  @Override public int getNumDimensions() {
-    return numDimensions;
-  }
-
+  /**
+   * Get's the set of points originally used to define this object
+   * @return list of points of the same dimension
+   */
   public List<? extends Point> getPointCloud() {
     return pointCloud;
   }
 
+  /**
+   * Gets the index used for minimum bounds in the 2d bounds array
+   * @return index
+   */
   public int getMinBoundIndx() {
     return MIN_BOUND_IDX;
   }
 
+  /**
+   * Gets the index used for maximum bounds in the 2d bounds array
+   * @return index
+   */
   public int getMaxBoundIndx() {
     return MAX_BOUND_IDX;
   }
 
+  /**
+   * Gets the bounds of this object
+   * @return A 2d array where the rows are the dimension and the columns are the min/max values
+   */
   public double[][] getBounds() {
     return bounds;
   }
 
+  /**
+   * Gets the centroid of this object's bounds
+   * @return the bounds centroid
+   */
   public Point getCentroidOfBounds() {
     return centroidOfBounds;
   }
 
+  /**
+   * Gets the centroid of this object's original point cloud
+   * @return the point cloud centroid
+   */
   public Point getCentroidOfCloud() {
     return centroidOfCloud;
+  }
+
+  @Override public int getNumDimensions() {
+    return numDimensions;
   }
 }

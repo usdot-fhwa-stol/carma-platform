@@ -20,6 +20,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
 
 /**
  * Class responsible for converting between the different special representations in the geometry sub-package.
@@ -48,8 +49,8 @@ public class GeodesicCartesianConverter {
   public Location cartesian2Geodesic(Point3D point, Transform ecef2frameTransform) {
     // ecef2frameTransform need to define the position of the desired frame relative to the ecefFrame
     // Transform into ECEF frame
-    Vector3D pointBeforeTransform = new Vector3D(new Point3D(point.getX(), point.getY(), point.getZ()));
-    Vector3D pointInECEF = new Vector3D(ecef2frameTransform.apply(pointBeforeTransform.toVector3()));
+    Vector3 pointBeforeTransform = new Vector3(point.getX(), point.getY(), point.getZ());
+    Vector3 pointInECEF = ecef2frameTransform.apply(pointBeforeTransform);
 
     double x = pointInECEF.getX();
     double y = pointInECEF.getY();
@@ -95,8 +96,8 @@ public class GeodesicCartesianConverter {
     double y = (Ne + alt)*Math.cos(latRad)*Math.sin(lonRad);
     double z = (Ne*(1-e_sqr) + alt) * Math.sin(latRad);
 
-    Vector3D pointBeforeTransform = new Vector3D(new Point3D(x,y,z));
-    Vector3D resultant = new Vector3D(frame2ecefTransform.apply(pointBeforeTransform.toVector3()));
+    Vector3 pointBeforeTransform = new Vector3(x,y,z);
+    Vector3 resultant = frame2ecefTransform.apply(pointBeforeTransform);
 
     return new Point3D(resultant.getX(), resultant.getY(), resultant.getZ());
   }

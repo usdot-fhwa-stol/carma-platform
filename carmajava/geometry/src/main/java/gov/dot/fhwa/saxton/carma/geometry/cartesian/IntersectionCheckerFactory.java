@@ -17,13 +17,21 @@
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
 /**
- * Interface which defines any geometric concept in cartesian space
+ * Factory for creating IIntersectionChecker objects
  */
-public interface CartesianElement {
-
+public class IntersectionCheckerFactory {
   /**
-   * Gets the number of dimensions which fully define the respective object
-   * @return the number of dimensions. A value greater than 0.
+   * Initializes a IIntersectionChecker object based on the provided string
+   * @param method The name or shorthand for the desired IIntersectionChecker class
+   *               The default returned type is an AxisAlignedBoundingBox
+   * @return An Initialized intersection checked
    */
-  int getNumDimensions();
+  public IIntersectionChecker buildChecker(String method) {
+    switch (method) {
+      case "AABB":
+        return new AxisAlignedBoundingBox();
+      default:
+        return new AxisAlignedBoundingBox();
+    }
+  }
 }
