@@ -111,8 +111,6 @@
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="get_drivers_with_capabilities"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
         <remap from="new_plan_inbound"
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>
         <remap from="plan_status"
@@ -170,6 +168,8 @@
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_nack"/>
           <remap from="mobility_plan_outbound"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_plan"/>
+          <remap from="get_drivers_with_capabilities"
+                 to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
         </node>
       </group>
 
@@ -208,6 +208,8 @@
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="bsm"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
+          <remap from="get_drivers_with_capabilities"
+                 to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
         </node>
       </group>
 
@@ -230,7 +232,7 @@
           <remap from="odometry"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/odometry"/>
           <remap from="tracked_objects"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_objects"/>
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/objects"/>
           <remap from="tracked_vehicles"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
           <remap from="velocity"
@@ -260,12 +262,8 @@
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="tim"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/tim"/>
-          <!-- TODO Use this topic remapping instead once sensor fusion does pass through right
           <remap from="nav_sat_fix"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-                 -->
-          <remap from="nav_sat_fix"
-                 to="/saxton_cav/drivers/pin_point_application/position/nav_sat_fix"/>
         </node>
       </group>
     </group>
