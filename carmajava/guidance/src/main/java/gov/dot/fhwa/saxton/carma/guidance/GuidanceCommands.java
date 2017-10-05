@@ -133,30 +133,33 @@ public class GuidanceCommands extends GuidanceComponent {
         // TODO: Add message type for lateral control from guidance
 
         // Verify that the message returned drivers that we can use
-        String driverFqn = null;
+        String speedCmdTopic = null;
+        String roboticEnableTopic = null;
         if (drivers[0] != null) {
-            List<String> driverFqns = drivers[0].getDriverData();
-            if (driverFqns.size() > 0) {
-                driverFqn = driverFqns.get(0);
+            for (String topicName : drivers[0].getDriverData()) {
+                if (topicName.endsWith(SPEED_CMD_CAPABILITY)) {
+                    speedCmdTopic = topicName;
+                }
+                if (topicName.endsWith(ENABLE_ROBOTIC_CAPABILITY)) {
+                    roboticEnableTopic = topicName;
+                }
             }
         }
 
-        if (driverFqn != null) {
+        if (speedCmdTopic != null && roboticEnableTopic != null) {
             // Open the publication channel to the driver and start sending it commands
-            log.info("GuidanceCommands connecting to " + driverFqn);
+            log.info("GuidanceCommands connecting to " + speedCmdTopic + " and " + roboticEnableTopic);
 
-            speedAccelPublisher = pubSubService.getPublisherForTopic(driverFqn + "/" + SPEED_CMD_CAPABILITY,
-                    SpeedAccel._TYPE);
+            speedAccelPublisher = pubSubService.getPublisherForTopic(speedCmdTopic, SpeedAccel._TYPE);
 
             try {
-                enableRoboticService = pubSubService.getServiceForTopic(driverFqn + "/" + ENABLE_ROBOTIC_CAPABILITY,
-                        SetEnableRobotic._TYPE);
+                enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
                 driverConnected = true;
             } catch (TopicNotFoundException tnfe) {
-                log.fatal("GuidanceCommands unable to locate control/enable_robotic service for " + driverFqn);
+                log.fatal("GuidanceCommands unable to locate control/enable_robotic service for " + roboticEnableTopic);
             }
         } else {
-            log.fatal("GuidanceCommands unable to find suitable controller driver.");
+            log.fatal("GuidanceCommands unable to find suitable controller driver!");
         }
     }
 
