@@ -18,7 +18,6 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.Lane;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
-import gov.dot.fhwa.saxton.carma.guidance.Maneuvers;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageFactory;

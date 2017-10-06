@@ -96,7 +96,7 @@ public class MockDriverNode extends SaxtonBaseNode {
 
   }//onStart
 
-  @Override protected void handleException(Exception e) {
+  @Override protected void handleException(Throwable e) {
 
   }
 }//SaxtonBaseNode

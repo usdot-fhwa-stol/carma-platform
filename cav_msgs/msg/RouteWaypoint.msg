@@ -45,3 +45,12 @@ cav_msgs/RoadType road_type
 
 # The speed limit
 uint8 speed_limit
+
+# The lane markings found between interior lanes
+cav_msgs/LaneEdgeType interior_lane_markings
+
+# The lane markings on the left edge of the left most lane
+cav_msgs/LaneEdgeType left_most_lane_marking
+
+# The lane markings on the right edge of the right most lane
+cav_msgs/LaneEdgeType right_most_lane_marking
