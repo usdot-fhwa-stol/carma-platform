@@ -206,7 +206,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     }//onStart
 
     @Override
-    protected void handleException(Exception e) {
+    protected void handleException(Throwable e) {
 
     }
 

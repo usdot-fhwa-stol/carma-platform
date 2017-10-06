@@ -113,7 +113,7 @@ public class ServerClient extends SaxtonBaseNode {
   }
 
   @Override
-  protected void handleException(Exception e) {
+  protected void handleException(Throwable e) {
 
   }
 }

@@ -180,7 +180,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     });
   }//onStart
 
-  @Override protected void handleException(Exception e) {
+  @Override protected void handleException(Throwable e) {
 
   }
 }//AbstractNodeMain

@@ -37,7 +37,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
   @Override public final void onStart(ConnectedNode connectedNode) {
     try {
       onSaxtonStart(connectedNode);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       String strace = "\n";
       for (StackTraceElement ste : e.getStackTrace()) {
           strace += "\t" + ste.toString();
@@ -62,7 +62,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
    *
    * @param e The exception to handle
    */
-  protected abstract void handleException(Exception e);
+  protected abstract void handleException(Throwable e);
 
   /**
    * Blocks until the desired service is found and returned or timeout expires. If the timeout expires then returns null.

@@ -170,7 +170,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   }//onStart
 
   @Override
-  protected void handleException(Exception e) {
+  protected void handleException(Throwable e) {
     exceptionHandler.handleException(e);
   }
 }//AbstractNodeMain

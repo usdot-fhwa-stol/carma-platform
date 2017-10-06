@@ -320,7 +320,7 @@ public class MessageConsumer extends SaxtonBaseNode {
   }//onStart
 
   @Override
-  protected void handleException(Exception e) {
+  protected void handleException(Throwable e) {
 
   }
 }//AbstractNodeMain

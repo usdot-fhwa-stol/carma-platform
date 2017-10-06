@@ -16,12 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
+import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
 import org.apache.commons.logging.Log;
 import org.ros.RosCore;
 import org.ros.message.MessageListener;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
+import org.ros.node.topic.Publisher;
 import org.ros.rosjava_geometry.FrameTransform;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.message.MessageFactory;
@@ -41,66 +43,120 @@ import tf2_msgs.TFMessage;
  */
 public class TransformServer extends SaxtonBaseNode {
 
+  private ConnectedNode connectedNode;
+  //Topics
+  // Publishers
+  private Publisher<SystemAlert> systemAlertPub;
+  // Subscribers
+  private Subscriber<cav_msgs.SystemAlert> systemAlertSub;
+  private Subscriber<tf2_msgs.TFMessage> tf_sub;
+  private Subscriber<tf2_msgs.TFMessage> tf_static_sub;
+
+  // Services
+  // Server
+  private ServiceServer<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> transformServer;
+
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("transform_server");
   }
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
-
-    final Log log = connectedNode.getLog();
+    this.connectedNode = connectedNode;
     final FrameTransformTree tfTree = new FrameTransformTree();
     final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
     //Topics
+    // Publishers
+    systemAlertPub = connectedNode.newPublisher("system_alert", SystemAlert._TYPE);
+
     // Subscribers
-    Subscriber<tf2_msgs.TFMessage> tf_sub =
-      connectedNode.newSubscriber("/tf", tf2_msgs.TFMessage._TYPE);
-    tf_sub.addMessageListener(new MessageListener<TFMessage>() {
-      @Override public void onNewMessage(TFMessage tfMessage) {
-        for (TransformStamped transform : tfMessage.getTransforms()) {
-          // Add new transform to internal tree
-          tfTree.update(transform);
+    systemAlertSub = connectedNode.newSubscriber("system_alert", SystemAlert._TYPE);
+    systemAlertSub.addMessageListener(new MessageListener<SystemAlert>() {
+      @Override public void onNewMessage(SystemAlert alertMsg) {
+        try {
+          switch (alertMsg.getType()) {
+            case SystemAlert.SHUTDOWN:
+              connectedNode.getLog().info("TransformServer: Shutting down from SHUTDOWN on system_alert");
+              connectedNode.shutdown();
+              break;
+            case SystemAlert.FATAL:
+              connectedNode.getLog().info("TransformServer: Shutting down from FATAL on system_alert");
+              connectedNode.shutdown();
+              break;
+            default:
+              // No action needed for other types of system alert
+          }
+        } catch (Throwable e) {
+          handleException(e);
         }
       }
     });
 
-    Subscriber<tf2_msgs.TFMessage> tf_static_sub =
-      connectedNode.newSubscriber("/tf_static", tf2_msgs.TFMessage._TYPE);
-    tf_static_sub.addMessageListener(new MessageListener<TFMessage>() {
+    tf_sub = connectedNode.newSubscriber("/tf", tf2_msgs.TFMessage._TYPE);
+    tf_sub.addMessageListener(new MessageListener<TFMessage>() {
       @Override public void onNewMessage(TFMessage tfMessage) {
-        for (TransformStamped transform : tfMessage.getTransforms()) {
-          // Add new transform to internal tree
-          tfTree.update(transform);
+        try {
+          for (TransformStamped transform : tfMessage.getTransforms()) {
+            // Add new transform to internal tree
+            tfTree.update(transform);
+          }
+        } catch (Throwable e) {
+          handleException(e);
         }
       }
     });
+
+    tf_static_sub = connectedNode.newSubscriber("/tf_static", tf2_msgs.TFMessage._TYPE);
+    tf_static_sub.addMessageListener(new MessageListener<TFMessage>() {
+      @Override public void onNewMessage(TFMessage tfMessage) {
+        try {
+          for (TransformStamped transform : tfMessage.getTransforms()) {
+            // Add new transform to internal tree
+            tfTree.update(transform);
+          }
+        } catch (Throwable e) {
+          handleException(e);
+        }
+      }
+    });
+
+
 
     // Services
     // Server
-    ServiceServer<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> transformServer =
-      connectedNode.newServiceServer("get_transform", cav_srvs.GetTransform._TYPE,
+    transformServer = connectedNode.newServiceServer("get_transform", cav_srvs.GetTransform._TYPE,
         new ServiceResponseBuilder<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse>() {
           @Override public void build(cav_srvs.GetTransformRequest request,
             cav_srvs.GetTransformResponse response) {
-            // Calculate transform between provided frames and return result
-            // Rosjava frame transform tree has an reversed concept of source and target
-            FrameTransform transform =
-              tfTree.transform(request.getChildFrame(), request.getParentFrame());
-            geometry_msgs.TransformStamped transformMsg =
-              messageFactory.newFromType(TransformStamped._TYPE);
-            if (transform != null) {
-              transformMsg = transform.toTransformStampedMessage(transformMsg);
-              response.setErrorStatus(response.NO_ERROR);
-            } else {
-              response.setErrorStatus(response.NO_TRANSFORM_EXISTS);
+            try {
+              // Calculate transform between provided frames and return result
+              // RosJava frame transform tree has an reversed concept of source and target
+              FrameTransform transform =
+                tfTree.transform(request.getChildFrame(), request.getParentFrame());
+              geometry_msgs.TransformStamped transformMsg =
+                messageFactory.newFromType(TransformStamped._TYPE);
+              if (transform != null) {
+                transformMsg = transform.toTransformStampedMessage(transformMsg);
+                response.setErrorStatus(response.NO_ERROR);
+              } else {
+                response.setErrorStatus(response.NO_TRANSFORM_EXISTS);
+              }
+              response.setTransform(transformMsg);
+            } catch (Throwable e) {
+              handleException(e);
             }
-            response.setTransform(transformMsg);
           }
         });
   }
 
-  @Override protected void handleException(Exception e) {
-
+  @Override protected void handleException(Throwable e) {
+    String msg = "TransformServer: Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+    connectedNode.getLog().fatal(msg, e);
+    SystemAlert alertMsg = systemAlertPub.newMessage();
+    alertMsg.setType(SystemAlert.FATAL);
+    alertMsg.setDescription(msg);
+    systemAlertPub.publish(alertMsg);
+    connectedNode.shutdown();
   }
 }
