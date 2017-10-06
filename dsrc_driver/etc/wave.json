@@ -1,0 +1,37 @@
+[
+  {
+    "name" : "BSM",
+    "psid" : "0020",
+    "dsrc_id" : "20",
+    "channel" : "172",
+    "priority" :  "6"
+  },
+  {
+	"name" : "TIM",
+    "psid" : "0083",
+    "dsrc_id" : "31",
+    "channel" : "CCH",
+    "priority" : "3"
+  },
+  {
+	"name" : "MAP",
+    "psid" : "0082",
+    "dsrc_id" : "18",
+    "channel" : "CCH",
+    "priority" : "3"
+  },
+  {
+	"name" : "SPAT",
+    "psid" : "0082",
+    "dsrc_id" : "19",
+    "channel" : "CCH",
+    "priority" : "3"
+  },
+  {
+	"name" : "Mobility",
+    "psid" : "00FF",
+    "dsrc_id" : "255",
+    "channel" : "172",
+    "priority" : "6"
+  }
+]
