@@ -16,7 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import cav_msgs.Lane;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.guidance.Maneuvers;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageFactory;
@@ -39,9 +41,12 @@ public class RouteWaypoint {
   protected int lowerSpeedLimit = -1;
   protected int upperSpeedLimit = -1;
   protected double nearestMileMarker = -1;
-  //protected List<Maneuvers> neededManeuvers; //TODO uncomment when class is implemented
+  //protected List<Maneuvers> neededManeuvers; //TODO uncomment when manuevers class is available
   protected int requiredLaneIndex = -1;
   protected RoadType roadType = RoadType.FREEWAY;
+  protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.BROKEN_WHITE;
+  protected LaneEdgeType leftMostLaneMarking = LaneEdgeType.SOLID_YELLOW;
+  protected LaneEdgeType rightMostLaneMarking = LaneEdgeType.SOLID_WHITE;
 
   /**
    * Default constructor
@@ -326,5 +331,50 @@ public class RouteWaypoint {
    */
   public int getRequiredLaneIndex() {
     return requiredLaneIndex;
+  }
+
+  /**
+   * Gets the type of lane marking which separates interior lanes on this segment
+   * @return the interior lane marking type
+   */
+  public LaneEdgeType getInteriorLaneMarkings() {
+    return interiorLaneMarkings;
+  }
+
+  /**
+   * Sets the type of lane marking which separates interior lanes on this segment
+   */
+  public void setInteriorLaneMarkings(LaneEdgeType interiorLaneMarkings) {
+    this.interiorLaneMarkings = interiorLaneMarkings;
+  }
+
+  /**
+   * Gets the type of lane marking on the left side of the left most lane
+   * @return the lane edge type
+   */
+  public LaneEdgeType getLeftMostLaneMarking() {
+    return leftMostLaneMarking;
+  }
+
+  /**
+   * Sets the type of lane marking on the right side of the right most lane
+   */
+  public void setLeftMostLaneMarking(LaneEdgeType leftMostLaneMarking) {
+    this.leftMostLaneMarking = leftMostLaneMarking;
+  }
+
+  /**
+   * Gets the type of lane marking on the right side of the right most lane
+   * @return the lane edge type
+   */
+  public LaneEdgeType getRightMostLaneMarking() {
+    return rightMostLaneMarking;
+  }
+
+  /**
+   * Sets the type of lane marking on the right side of the right most lane
+   */
+  public void setRightMostLaneMarking(LaneEdgeType rightMostLaneMarking) {
+    this.rightMostLaneMarking = rightMostLaneMarking;
   }
 }
