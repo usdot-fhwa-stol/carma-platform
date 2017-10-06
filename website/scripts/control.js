@@ -18,8 +18,6 @@ function openTab(evt, name) {
     }
     document.getElementById(name).style.display = 'block';
     evt.currentTarget.className += ' active';
-
-
 }
 
 // Get the element with id="defaultOpen" and click on it
@@ -34,24 +32,27 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
     var newInput = document.createElement('input');
     newInput.type = 'radio';
     newInput.name = groupName;
-    newInput.id = 'rb' + radioId.toString();
+
+    //TODO: Remove this when RouteID has been changed to have no spaces.
+    //Currently, RouteID and RouteName are same and have spaces, but ID should not have any spaces. For now, updating to have underscore
+    var revisedId = radioId.toString().replace( / /g, '_' );
+    newInput.id = 'rb' + revisedId;
     newInput.onclick = function () { setRoute(newInput.id.toString()) };
 
     var newLabel = document.createElement('label');
-    newLabel.id = 'lbl' + radioId.toString();
+    newLabel.id = 'lbl' + revisedId;
     newLabel.htmlFor = newInput.id.toString();
     newLabel.innerHTML = radioTitle;
 
     // Add the new elements to the container
     container.appendChild(newInput);
     container.appendChild(newLabel);
-
 }
 
 /*
 * Adds a new checkbox onto the container.
 */
-function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, groupName, isChecked) {
+function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, groupName, isChecked, isRequired) {
 
     var newInput = document.createElement('input');
     newInput.type = 'checkbox';
@@ -63,7 +64,12 @@ function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, 
     var newLabel = document.createElement('label');
     newLabel.id = 'lbl' + checkboxId.toString();
     newLabel.htmlFor = newInput.id.toString();
-    newLabel.innerHTML = checkboxTitle;
+
+    if (isRequired == true)
+        newLabel.innerHTML = '<span style="color:#FF0000">* </span>'
+
+    newLabel.innerHTML += checkboxTitle;
+
 
     container.appendChild(newInput);
     container.appendChild(newLabel);

@@ -32,6 +32,7 @@ public class InterfaceWorker {
     protected IInterfaceMgr                 mgr_;
     protected Log                           log_;
     protected long                          startedWaiting_;
+    protected long							systemReadyTime_;
     protected boolean                       systemOperational_ = false;
 
     InterfaceWorker(IInterfaceMgr mgr, Log log) {
@@ -262,10 +263,22 @@ public class InterfaceWorker {
                 //log the time required to get to this point
                 log_.info("///// InterfaceWorker declaring SYSTEM OPERATIONAL.");
                 log_.info("---elapsed = " + elapsed + ", waitTime = " + waitTime_);
+                
+                //record the time of this event
+                systemReadyTime_ = System.currentTimeMillis();
             }
         }
 
         return systemOperational_;
+    }
+    
+    
+    /**
+     * Returns the time since this class declared the system ready for operation.
+     * @return time in ms
+     */
+    public long timeSinceSystemReady() {
+    	return System.currentTimeMillis() - systemReadyTime_;
     }
 
     //////////
