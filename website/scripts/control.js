@@ -18,6 +18,10 @@ function openTab(evt, name) {
     }
     document.getElementById(name).style.display = 'block';
     evt.currentTarget.className += ' active';
+
+    //Initialize the map.
+    if (name == 'divMap')
+        initMap();
 }
 
 // Get the element with id="defaultOpen" and click on it
