@@ -244,6 +244,10 @@ function setRoute(id) {
             //      Once selected, it wouldn't be activated until at least 1 Plugin is selected (based on Route).
             //      Only when a route is selected and at least one plugin is selected, could Guidance be Engaged.
             startActiveRoute(id);
+
+            //Subscribe to active route to map the segments
+            showActiveRoute();
+            showNavSatFix();
         }
     });
 }
@@ -267,8 +271,14 @@ function startActiveRoute(id) {
     // Call the service and get back the results in the callback.
     startActiveRouteClient.callService(request, function (result) {
 
+        //alert ('result.errorStatus:' + result.errorStatus);
+
         if (result.errorStatus != 0 && result.errorStatus != 3) {
-            divCapabilitiesMessage.innerHTML += '<p> Starting the active the route failed, please try it again.</p>';
+            divCapabilitiesMessage.innerHTML = '<p> Starting the active the route failed, please try it again or contact your System Administrator.</p>';
+
+            //Allow user to select the route again
+            var rbRoute = document.getElementById(id.toString());
+            rbRoute.checked = false;
         }
         else { //Call succeeded //NO_ERROR=0 ; ALREADY_FOLLOWING_ROUTE=3;
             showSubCapabilitiesView(id);
@@ -671,17 +681,6 @@ function printParam(itemName, index) {
 */
 function getFutureTopics() {
 
-    var listenerNavSatFix = new ROSLIB.Topic({
-        ros: ros,
-        name: t_nav_sat_fix,
-        messageType: 'sensor_msgs/NavSatFix'
-    });
-
-    listenerNavSatFix.subscribe(function (message) {
-        document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerNavSatFix.name + ': ' + message.status;
-        //listenerNavSatFix.unsubscribe();
-    });
-
     /*
       var listenerRouteSegment = new ROSLIB.Topic({
         ros : ros,
@@ -746,6 +745,92 @@ function checkRouteInfo() {
     });
 }
 
+/*
+    Watch out for route completed, and display the Route State in the System Status tab.
+    Route state are only set and can be shown after Route has been selected.
+*/
+function showActiveRoute() {
+
+    //Get Route State
+    var listenerRoute = new ROSLIB.Topic({
+        ros: ros,
+        name: t_active_route,
+        messageType: 'cav_msgs/Route'
+    });
+
+    listenerRoute.subscribe(function (message) {
+        //message.routeID
+        //message.routeName
+        //message.segments
+
+        if (route_name == 'undefined' || route_name == null)
+            return;
+
+        //If nothing on the list, set all selected checkboxes back to blue (or active).
+        if (message.segments == null || message.segments.length == 0) {
+            divCapabilitiesMessage.innerHTML += '<p> There were no segments found the active route.</p>';
+            return;
+        }
+
+        //Only map the segment one time.
+        if (sessionStorage.getItem('routePlanCoordinates') == null)
+            message.segments.forEach(mapEachRouteSegment);
+
+    });
+}
+
+/*
+    Loop through each available plugin
+*/
+function mapEachRouteSegment(segment) {
+
+    var segmentLat = segment.waypoint.latitude;
+    var segmentLon = segment.waypoint.longitude;
+    var position = new google.maps.LatLng( segmentLat, segmentLon);
+
+    //create new list
+    if (sessionStorage.getItem('routePlanCoordinates') == null)
+    {
+        var routeCoordinates = [];
+        routeCoordinates.push(position);
+        sessionStorage.setItem("routePlanCoordinates", JSON.stringify(routeCoordinates));
+    }
+    else //add to existing list.
+    {
+        var routeCoordinates = sessionStorage.getItem("routePlanCoordinates");
+        routeCoordinates = JSON.parse(routeCoordinates);
+        routeCoordinates.push(position);
+        sessionStorage.setItem("routePlanCoordinates", JSON.stringify(routeCoordinates));
+    }
+}
+
+/*
+    Update the host marker based on the latest NavSatFix position.
+*/
+function showNavSatFix() {
+
+    var listenerNavSatFix = new ROSLIB.Topic({
+        ros: ros,
+        name: t_nav_sat_fix,
+        messageType: 'sensor_msgs/NavSatFix'
+    });
+
+    listenerNavSatFix.subscribe(function (message) {
+        if (message.latitude == null || message.longitude == null)
+            return;
+
+        if (hostmarker != null)
+        {
+            moveMarkerWithTimeout(hostmarker, message.latitude, message.longitude, 0);
+            insertNewTableRow('tblFirst', 'NavSatStatus', message.status.status);
+            insertNewTableRow('tblFirst', 'Latitude', message.latitude.toFixed(6));
+            insertNewTableRow('tblFirst', 'Longitude', message.longitude.toFixed(6));
+            insertNewTableRow('tblFirst', 'Altitude', message.altitude.toFixed(6));
+        }
+        //listenerNavSatFix.unsubscribe();
+    });
+
+}
 /*
     Display the close loop control of speed
 */
@@ -819,7 +904,7 @@ function showStatusandLogs()
 
     //Displays under System Logs
     getParams();
-    getFutureTopics();
+    //getFutureTopics();
     getVehicleInfo();
     showSpeedAccelInfo();
 }
@@ -851,11 +936,10 @@ function waitForSystemReady() {
     }, 5000)//  ..  setTimeout()
 }
 
-/* Evaluate next step AFTER connecting
-
-Scenario1 : Initial Load
-Scenario 2: Refresh on particular STEP
-
+/*
+    Evaluate next step AFTER connecting
+    Scenario1 : Initial Load
+    Scenario 2: Refresh on particular STEP
 */
 function evaluateNextStep() {
 
@@ -869,6 +953,12 @@ function evaluateNextStep() {
     if (route_name != '') {
 
         showSubCapabilitiesView2();
+
+        //Subscribe to active route to map the segments
+        showActiveRoute();
+        //Subscribe to NavSatFix to follow the host vehicle on the map.
+        showNavSatFix();
+        //Display the System Status and Logs.
         showStatusandLogs();
 
         //Enable the CAV Guidance button regardless plugins are selected
@@ -880,7 +970,6 @@ function evaluateNextStep() {
         }
 
         return;
-
     }//IF
 }//evaluateNextStep
 
