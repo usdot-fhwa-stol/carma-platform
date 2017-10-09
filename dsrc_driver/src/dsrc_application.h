@@ -171,7 +171,7 @@ private:
     * @brief Handles messages received from the DSRCDSRCOBUClient
     *
     * Populates a ROS message with the contents of the incoming OBU message, and
-    * publishes to the ROS 'recv' topic.
+    * publishes to the ROS 'inbound_binary_msg' topic.
     */
     void onMessageReceivedHandler(const std::vector<uint8_t> &data, uint16_t id);
 
@@ -180,10 +180,7 @@ private:
     * @param message
     *
     * This processes an incoming ByteArray message, and packs it according to the
-    * J2735 standard.
-    *
-    * TODO: Right now it doesn't do anything except return the message data (ignoring message type).
-    * Depending on what the input is, that might be all that's necessary, but possibly more.
+    * Active Message file for the OSU.
     */
     std::vector<uint8_t> packMessage(const cav_msgs::ByteArray& message);
 

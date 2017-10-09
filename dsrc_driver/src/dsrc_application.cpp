@@ -84,11 +84,11 @@ void DSRCApplication::initialize() {
     api_.clear();
     
     //Comms Subscriber
-    comms_sub_ = comms_api_nh_->subscribe("outbound", output_queue_size_, &DSRCApplication::onOutboundMessage, this);
+    comms_sub_ = comms_api_nh_->subscribe("outbound_binary_msg", output_queue_size_, &DSRCApplication::onOutboundMessage, this);
     api_.push_back(comms_sub_.getTopic());
 
     //Comms Publisher
-    comms_pub_ = comms_api_nh_->advertise<cav_msgs::ByteArray>("recv", 1000);
+    comms_pub_ = comms_api_nh_->advertise<cav_msgs::ByteArray>("inbound_binary_msg", 1000);
     api_.push_back(comms_pub_.getTopic());
 
     //Comms Service
@@ -161,9 +161,9 @@ std::vector<uint8_t> DSRCApplication::packMessage(const cav_msgs::ByteArray& mes
     {
         ROS_WARN_STREAM("No wave config entry for type: " << message.messageType << ", using defaults");
         cfg.name = message.messageType;
-        cfg.channel = 178;
-        cfg.priority = 1;
-        cfg.dsrc_id = (message.content[0] << 8 ) | message.content[1];
+        cfg.channel = "CCH";  //Assuming the Default channel is not the safety related info that would be in a BSM message
+        cfg.priority = "1";
+        cfg.dsrc_id = std::to_string((message.content[0] << 8 ) | message.content[1]);
         cfg.psid = cfg.dsrc_id;
     }
     else
