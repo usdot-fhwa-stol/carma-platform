@@ -36,7 +36,7 @@ public class LineSegment implements CartesianElement {
     }
     this.p1 = p1;
     this.p2 = p2;
-    this.vector = new Vector(p2,p1);
+    this.vector = new Vector(p1,p2);
   }
 
   /**

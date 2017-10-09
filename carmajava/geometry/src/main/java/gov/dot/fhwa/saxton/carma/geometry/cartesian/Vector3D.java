@@ -38,7 +38,7 @@ public class Vector3D extends Vector {
    * @param tail The tail of the vector. Must be the same dimension as the head
    */
   public Vector3D(Point3D head, Point3D tail) {
-    super(head, tail);
+    super(tail, head);
   }
 
   /**

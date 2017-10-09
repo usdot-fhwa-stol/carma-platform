@@ -38,7 +38,7 @@ public class Point implements CartesianElement {
    */
   public Point(Point p1){
     this.dimensions = new double[p1.getNumDimensions()];
-    for (int i = 0; i < p1.getNumDimensions(); i++){
+    for (int i = 0; i < this.dimensions.length; i++){
       this.dimensions[i] = p1.getDim(i);
     }
   }
@@ -70,11 +70,15 @@ public class Point implements CartesianElement {
    * @param p2 The point to calculate distance from
    * @return The calculated euclidean distance
    */
-  public double distanceFrom(Point p2){
-    int size = (this.getNumDimensions() < p2.getNumDimensions()) ? this.getNumDimensions() : p2.getNumDimensions();
+  public double distanceFrom(Point p2) throws IllegalArgumentException {
+    if (this.getNumDimensions() != p2.getNumDimensions()) {
+      throw new IllegalArgumentException("Point dimensions do not match");
+    }
+    int size = this.getNumDimensions();
     double squareSum = 0;
     for (int i = 0; i < size; i++){
-      squareSum += Math.pow(this.getDim(i) - p2.getDim(i), 2);
+      double diff = this.getDim(i) - p2.getDim(i);
+      squareSum += diff*diff;
     }
     return Math.sqrt(squareSum);
   }

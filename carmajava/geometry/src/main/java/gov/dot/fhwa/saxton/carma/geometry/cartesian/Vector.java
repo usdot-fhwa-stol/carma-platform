@@ -30,13 +30,14 @@ public class Vector implements CartesianElement {
    * @param tail The tail of the vector. Must be the same dimension as the head
    * @throws IllegalArgumentException Thrown if the dimensions of the two points do not match
    */
-  public Vector(Point head, Point tail) throws IllegalArgumentException {
+  public Vector(Point tail, Point head) throws IllegalArgumentException {
     if (head.getNumDimensions() != tail.getNumDimensions()) {
       throw new IllegalArgumentException("Point dimensions do not match");
     }
 
     headPoint_ = new Point(new double[head.getNumDimensions()]);
-    for(int i = 0; i < head.getNumDimensions(); i++){
+    int size = head.getNumDimensions();
+    for(int i = 0; i < size; i++){
       headPoint_.setDim(i, head.getDim(i) - tail.getDim(i));
     }
   }
@@ -73,9 +74,12 @@ public class Vector implements CartesianElement {
    * @param v2 The vector to add
    * @return Vector resulting from addition of the two vectors
    */
-  public Vector add(Vector v2) {
-    int size = (this.getNumDimensions() < v2.getNumDimensions()) ? this.getNumDimensions() : v2.getNumDimensions();
+  public Vector add(Vector v2) throws IllegalArgumentException {
+    if (this.getNumDimensions() != v2.getNumDimensions()) {
+      throw new IllegalArgumentException("Vector dimensions do not match");
+    }
     Vector newVec = new Vector(this);
+    int size = this.getNumDimensions();
     for (int i = 0; i < size; i++){
       newVec.setDim(i, v2.getDim(i) + newVec.getDim(i));
     }
@@ -88,8 +92,11 @@ public class Vector implements CartesianElement {
    * @param v2 The vector to subtract
    * @return Vector resulting from subtraction of the two vectors
    */
-  public Vector subtract(Vector v2) {
-    int size = (this.getNumDimensions() < v2.getNumDimensions()) ? this.getNumDimensions() : v2.getNumDimensions();
+  public Vector subtract(Vector v2) throws IllegalArgumentException {
+    if (this.getNumDimensions() != v2.getNumDimensions()) {
+      throw new IllegalArgumentException("Vector dimensions do not match");
+    }
+    int size = this.getNumDimensions();
     Vector newVec = new Vector(this);
     for (int i = 0; i < size; i++){
       newVec.setDim(i, newVec.getDim(i) - v2.getDim(i));

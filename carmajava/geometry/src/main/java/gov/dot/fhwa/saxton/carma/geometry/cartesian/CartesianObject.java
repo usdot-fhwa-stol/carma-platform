@@ -26,7 +26,7 @@ public class CartesianObject implements CartesianElement {
 
   protected final int MIN_BOUND_IDX = 0;
   protected final int MAX_BOUND_IDX = 1;
-  protected double[][] bounds; // 2 rows as every dim has a min and max value
+  protected double[][] bounds; // 2 cols as every dim has a min and max value
   protected Point centroidOfBounds;
   protected Point centroidOfCloud;
   protected int numDimensions;
@@ -54,7 +54,7 @@ public class CartesianObject implements CartesianElement {
    */
   protected void validateInput(List<? extends Point> points) throws IllegalArgumentException {
     if (points.size() <= 0) {
-      throw new IllegalArgumentException("Empty list of points provided to ConvexHull constructor");
+      throw new IllegalArgumentException("Empty list of points provided to CartesianObject constructor");
     }
     int expectedDimensions = 0;
     boolean firstPoint = true;
@@ -63,7 +63,7 @@ public class CartesianObject implements CartesianElement {
         expectedDimensions = p.getNumDimensions();
         firstPoint = false;
       } else if (p.getNumDimensions() != expectedDimensions) {
-        throw new IllegalArgumentException("Inconsistent dimensions in list of points provided to ConvexHull constructor");
+        throw new IllegalArgumentException("Inconsistent dimensions in list of points provided to CartesianObject constructor");
       }
     }
   }
@@ -71,11 +71,12 @@ public class CartesianObject implements CartesianElement {
   /**
    * Calculates the centroid of this object's point cloud
    * Called in constructor
+   * Assumes that validateInput() has already been called
    */
   protected void calculateCentroidOfCloud() {
-    Vector centroidValues = new Vector(new Point(new double[getNumDimensions()]));
+    Vector centroidValues = new Vector(new Point(new double[numDimensions]));
     for (int i = 0; i < pointCloud.size(); i++) {
-      for (int j = 0; j < getNumDimensions(); j++) {
+      for (int j = 0; j < numDimensions; j++) {
         centroidValues.setDim(j, centroidValues.getDim(j) + pointCloud.get(i).getDim(j));
       }
     }
@@ -85,10 +86,11 @@ public class CartesianObject implements CartesianElement {
   /**
    * Calculates the centroid of this object's bounds
    * Called in constructor
+   * Assumes calculateBounds() has already been called
    */
   protected void calculateCentroidOfBounds() {
-    double[] centroidValues = new double[bounds.length];
-    for (int i = 0; i < bounds.length; i++) {
+    double[] centroidValues = new double[numDimensions];
+    for (int i = 0; i < numDimensions; i++) {
       centroidValues[i] = (bounds[i][MIN_BOUND_IDX] + bounds[i][MAX_BOUND_IDX]) / 2;
     }
     centroidOfBounds = new Point(centroidValues);
@@ -97,6 +99,7 @@ public class CartesianObject implements CartesianElement {
   /**
    * Calculates the bounds of the provided point cloud
    * Called in the constructor
+   * Assumes that validateInput() has already been called
    * @param points A list of points assumed to be of the same dimension
    */
   protected void calculateBounds(List<? extends Point> points) {
@@ -105,7 +108,7 @@ public class CartesianObject implements CartesianElement {
 
     boolean firstPoint = true;
     for (Point p : points) {
-      for (int i = 0; i < p.getNumDimensions(); i++) {
+      for (int i = 0; i < dims; i++) {
         if (firstPoint) {
           bounds[i][MIN_BOUND_IDX] = p.getDim(i);
           bounds[i][MAX_BOUND_IDX] = p.getDim(i);
