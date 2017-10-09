@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>dsrc</name>
+  <name>dsrc_driver</name>
   <version>1.0.0</version>
   <description>The dsrc package</description>
   <maintainer email="support@torcrobotics.com">Torc Robotics</maintainer>
