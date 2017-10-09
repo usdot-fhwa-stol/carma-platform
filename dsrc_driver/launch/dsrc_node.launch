@@ -4,7 +4,7 @@
     <arg name="local_address" default="::" />
     <arg name="local_port" default="5398" />
     <arg name="wave_cfg_file" default="$(find dsrc_driver)/etc/wave.json" />
-    <node name="dsrc" pkg="dsrc" type="dsrc_node" output="screen">
+    <node name="dsrc" pkg="dsrc_driver" type="dsrc_node" output="screen">
         <param name="dsrc_address" value="$(arg dsrc_address)" />
         <param name="dsrc_listening_port" value="$(arg dsrc_listening_port)" />
         <param name="local_address" value="$(arg local_address)" />
