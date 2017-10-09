@@ -116,10 +116,12 @@ public class VectorTest {
     head = new Point3D(0,0,0);
     v = new Vector(head);
     v2 = new Vector(new Point2D(0,0));
-    v = v.add(v2);
-    assertTrue(Math.abs(v.getDim(0) - 0.0) < 0.0000001);
-    assertTrue(Math.abs(v.getDim(1) - 0.0) < 0.0000001);
-    assertTrue(Math.abs(v.getDim(2) - 0.0) < 0.0000001);
+    try {
+      v = v.add(v2);
+      fail("Exception for mismatched vector dimensions not thrown");
+    } catch (IllegalArgumentException e) {
+      //If we make it here the test has passed
+    }
   }
 
   /**
@@ -140,10 +142,12 @@ public class VectorTest {
     head = new Point3D(0,0,0);
     v = new Vector(head);
     v2 = new Vector(new Point2D(0,0));
-    v = v.subtract(v2);
-    assertTrue(Math.abs(v.getDim(0) - 0.0) < 0.0000001);
-    assertTrue(Math.abs(v.getDim(1) - 0.0) < 0.0000001);
-    assertTrue(Math.abs(v.getDim(2) - 0.0) < 0.0000001);
+    try {
+      v = v.subtract(v2);
+      fail("Exception for mismatched vector dimensions not thrown");
+    } catch (IllegalArgumentException e) {
+      // If we make it here the test has passed
+    }
   }
 
   /**
@@ -178,7 +182,7 @@ public class VectorTest {
     head = new Point3D(0,0,0);
     v = new Vector(head);
     v2 = new Vector(new Point2D(0,0));
-    v = v.subtract(v2);
+    v = v.elementWiseMultiply(v2);
     assertTrue(Math.abs(v.getDim(0) - 0.0) < 0.0000001);
     assertTrue(Math.abs(v.getDim(1) - 0.0) < 0.0000001);
     assertTrue(Math.abs(v.getDim(2) - 0.0) < 0.0000001);

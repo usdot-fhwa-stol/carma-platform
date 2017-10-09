@@ -133,6 +133,11 @@ public class PointTest {
     p2 = new Point(dims2);
     assertTrue(Math.abs(p.distanceFrom(p2) - 0.0) < 0.00000001);
 
+    // 2D test
+    p = new Point(0,0);
+    p2 = new Point(0,1);
+    assertTrue(Math.abs(p.distanceFrom(p2) - 1.0) < 0.00000001);
+
     // Complicated distance calc
     dims = new double[]{7,4,3};
     dims2 = new double[]{17,6,2};
@@ -140,12 +145,17 @@ public class PointTest {
     p2 = new Point(dims2);
     assertTrue(Math.abs(p.distanceFrom(p2) - 10.246951) < 0.000001);
 
-    // Dimension truncation test
+    // Mismatched dimensions test
     dims = new double[]{1};
     dims2 = new double[]{5,7,9};
     p = new Point(dims);
     p2 = new Point(dims2);
-    assertTrue(Math.abs(p.distanceFrom(p2) - 4.0) < 0.00000001);
+    try {
+      p.distanceFrom(p2);
+      fail("Exception for mismatched point dimensions not thrown");
+    } catch (IllegalArgumentException e) {
+      assertTrue(1==1);
+    }
   }
 
   /**

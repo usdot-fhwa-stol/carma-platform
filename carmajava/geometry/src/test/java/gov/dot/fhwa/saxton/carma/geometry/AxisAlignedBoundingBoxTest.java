@@ -171,6 +171,45 @@ public class AxisAlignedBoundingBoxTest {
 
     assertTrue(checker.intersects(obj, obj2));
 
+    // Test edge intersection of square and line
+    points = new LinkedList<>(Arrays.asList(
+      // Line of 3 points
+      new Point2D(1,1),
+      new Point2D(2,1),
+      new Point2D(3,1)
+    ));
+    obj = new CartesianObject(points);
+
+    points2 = new LinkedList<>(Arrays.asList(
+      new Point2D(1,1),
+      new Point2D(2,1),
+      new Point2D(2,2),
+      new Point2D(1,2)
+    ));
+    obj2 = new CartesianObject(points2);
+
+    assertTrue(checker.intersects(obj, obj2));
+
+    // Test intersection of 2 lines at tip
+    points2 = new LinkedList<>(Arrays.asList(
+      new Point2D(1,1),
+      new Point2D(1,2),
+      new Point2D(1,3)
+    ));
+    obj2 = new CartesianObject(points2);
+
+    assertTrue(checker.intersects(obj, obj2));
+
+    // Test not intersection of 2 lines
+    points2 = new LinkedList<>(Arrays.asList(
+      new Point2D(1,2),
+      new Point2D(1,3),
+      new Point2D(1,4)
+    ));
+    obj2 = new CartesianObject(points2);
+
+    assertFalse(checker.intersects(obj, obj2));
+
     // Test No Intersect 3D
     points = new LinkedList<>(Arrays.asList(
       new Point3D(1,0, 7),

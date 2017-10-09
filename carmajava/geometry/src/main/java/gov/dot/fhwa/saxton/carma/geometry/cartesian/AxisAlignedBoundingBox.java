@@ -46,7 +46,7 @@ public class AxisAlignedBoundingBox implements IIntersectionChecker {
     final double[][] bounds2 = obj2.getBounds();
     final int min1 = obj.getMinBoundIndx();
     final int max1 = obj.getMaxBoundIndx();
-    final int min2 = obj2.getMaxBoundIndx();
+    final int min2 = obj2.getMinBoundIndx();
     final int max2 = obj2.getMaxBoundIndx();
 
 
