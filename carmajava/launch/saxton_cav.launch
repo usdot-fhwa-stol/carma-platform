@@ -94,7 +94,7 @@
       <remap from="set_guidance_engaged"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_engaged"/>
       <remap from="cmd_speed"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_application/control/cmd_speed"/>
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
 
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
@@ -331,7 +331,7 @@
         <arg name="srx_controller_can_device" value="can1"/>
       </include>
       <!-- Simulated SRX Controller Driver Node -->
-      <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_application"
+      <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_controller"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
         <param name="simulated_driver" type="string" value="srx_controller"/>
         <param name="data_file_path" type="string" value="$(arg srx_controller_data_file)"/>
