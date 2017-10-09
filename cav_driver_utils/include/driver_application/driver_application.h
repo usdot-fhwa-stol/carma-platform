@@ -38,6 +38,7 @@
 #include <cav_srvs/GetDriverApi.h>
 #include <cav_srvs/GetDriverStatus.h>
 #include <cav_msgs/DriverStatus.h>
+#include <cav_msgs/SystemAlert.h>
 
 #include <bondcpp/bond.h>
 
@@ -64,7 +65,7 @@ public:
      * @param argv - Array of command line arguments
      * @param name - Node name
      */
-    DriverApplication(int argc, char** argv, std::string name = "driver") : status_(), spin_rate(50)
+    DriverApplication(int argc, char** argv, std::string name = "driver") : status_(), spin_rate(50),shutdown_(false)
     {
         ros::init(argc,argv,name);
     }
@@ -183,8 +184,14 @@ private:
      */
     virtual void post_spin() = 0;
 
+    virtual void shutdown(){((void)0);};
+
+    void system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg);
+
 
     ros::Publisher driver_status_pub_;
+    ros::Subscriber system_alert_sub_;
+    bool shutdown_;
     cav_msgs::DriverStatus status_;
     std::unordered_map<std::string, std::shared_ptr<bond::Bond>> bond_map_;
     std::mutex bond_mutex_;
