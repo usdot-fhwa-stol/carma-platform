@@ -52,7 +52,7 @@
 #include <cav_srvs/SendMessage.h>
 
 #include <dynamic_reconfigure/server.h>
-#include <dsrc/DSRCConfig.h>
+#include <dsrc_driver/DSRCConfig.h>
 
 #include <ros/ros.h>
 
