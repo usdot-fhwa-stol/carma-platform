@@ -158,6 +158,7 @@ void DSRCOBUClient::process(const std::shared_ptr<const std::vector<uint8_t>>& d
         else {
             // TODO lengths greater than 16383 (0x3FFF) are encoded by splitting up the message into discrete chunks, each with its own length
             // marker. It doesn't look like we'll be receiving anything that long
+            std::cerr << "DSRCOBUClient::process() : received a message with length field longer than 16383." << std::endl;
             continue;
         }
         if (len == -1) { continue; }
