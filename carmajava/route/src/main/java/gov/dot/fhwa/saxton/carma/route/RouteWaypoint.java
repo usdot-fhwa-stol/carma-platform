@@ -35,7 +35,7 @@ import java.util.List;
 public class RouteWaypoint {
   protected List<String> disabledGuidanceAlgorithms = new LinkedList<>();
   protected List<Integer> laneClosures = new ArrayList<>();
-  protected int laneCount = 0;
+  protected int laneCount = 1;
   protected Location location;
   protected int lowerSpeedLimit = -1;
   protected int upperSpeedLimit = -1;
@@ -87,6 +87,15 @@ public class RouteWaypoint {
       bitMask = bitMask | 0x0200; //0000 0010 0000 0000
     if (upperSpeedLimit != -1)
       bitMask = bitMask | 0x0100; //0000 0001 0000 0000
+    if (upperSpeedLimit != -1)
+      bitMask = bitMask | 0x0100; //0000 0001 0000 0000
+    if (upperSpeedLimit != -1)
+      bitMask = bitMask | 0x0100; //0000 0001 0000 0000
+    if (upperSpeedLimit != -1)
+      bitMask = bitMask | 0x0100; //0000 0001 0000 0000
+    protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.BROKEN_WHITE;
+    protected LaneEdgeType leftMostLaneMarking = LaneEdgeType.SOLID_YELLOW;
+    protected LaneEdgeType rightMostLaneMarking = LaneEdgeType.SOLID_WHITE;
 
     return (short) bitMask;
   }

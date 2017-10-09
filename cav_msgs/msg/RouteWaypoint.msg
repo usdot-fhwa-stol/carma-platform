@@ -19,29 +19,8 @@ float64 longitude
 # Altitude [m]. Positive is above the WGS 84 ellipsoid
 float64 altitude
 
-# A bit flag desribing which of the following fields are set. 1 = set, 0 = not set
-uint16 set_fields
-
-# A list of guidance algorithms which are disabled on the segment which ends in this waypoint
-string[] disabled_guidance_algorithms
-
-# A list of lane closures described by index
-uint8[] lane_closures
-
 # The number of lanes on the current road in the current direction of travel
 uint8 lane_count
-
-# The value of the nearest mile marker
-float32 nearest_mile_marker
-
-# A list of needed manuevers
-# cav_msgs/Manuever[] needed_manuevers
-
-# The index of the lane that the vehicle must enter to continue on its route
-uint8 required_lane_index
-
-# The roadway type which the waypoint applies to
-cav_msgs/RoadType road_type
 
 # The speed limit
 uint8 speed_limit
@@ -54,3 +33,24 @@ cav_msgs/LaneEdgeType left_most_lane_marking
 
 # The lane markings on the right edge of the right most lane
 cav_msgs/LaneEdgeType right_most_lane_marking
+
+# A bit flag describing which of the following fields are set. 1 = set, 0 = not set
+uint16 set_fields
+
+# A list of guidance algorithms which are disabled on the segment which ends in this waypoint
+string[] disabled_guidance_algorithms
+
+# A list of lane closures described by index
+uint8[] lane_closures
+
+# The value of the nearest mile marker
+float32 nearest_mile_marker
+
+# A list of needed manuevers
+# cav_msgs/Manuever[] needed_manuevers
+
+# The index of the lane that the vehicle must enter to continue on its route
+uint8 required_lane_index
+
+# The roadway type which the waypoint applies to
+cav_msgs/RoadType road_type
