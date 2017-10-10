@@ -158,7 +158,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 				log.info("MessageConsumer received BSM. Publishing it as ByteArray message...");
 				ByteArray byteArray = outboundPub.newMessage();
 				BSMFactory.encode(bsm, byteArray);
-				log.info("Waiting for bsm binary!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 				outboundPub.publish(byteArray);
 			}
 		});		

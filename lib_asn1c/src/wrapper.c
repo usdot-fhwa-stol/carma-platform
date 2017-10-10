@@ -144,11 +144,6 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 
 	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, message, buffer, buffer_size);
 
-	if(ec.encoded == -1) {
-		fprintf(stderr, "Could not encode BSM");
-		exit(1);
-	}
-
 	jsize length = ec.encoded / 8;
 	jbyteArray outJNIArray = (*env) -> NewByteArray(env, length);
 	if(outJNIArray == NULL) return NULL;
