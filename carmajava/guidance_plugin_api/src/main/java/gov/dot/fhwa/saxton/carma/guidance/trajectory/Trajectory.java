@@ -71,7 +71,21 @@ public class Trajectory {
   }
 
   public List<IManeuver> getManeuversAt(double loc) {
-    return new ArrayList<IManeuver>();
+    List<IManeuver> out = new ArrayList<>();
+
+    for (IManeuver m : lateralManeuvers) {
+      if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
+        out.add(m);
+      }
+    }
+
+    for (IManeuver m : longitudinalManeuvers) {
+      if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
+        out.add(m);
+      }
+    }
+
+    return out;
   }
 
   public IManeuver getNextLateralManeuverAfter(double loc) {

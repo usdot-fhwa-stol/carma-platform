@@ -110,7 +110,7 @@ public class TrajectoryTest {
 
   @Test
   public void testGetManeuversAt1() {
-    IManeuver m = new TestManeuver(ManeuverType.LATERAL, 0, 0);
+    IManeuver m = new TestManeuver(ManeuverType.LATERAL, 0, 1);
     traj.addLateralManeuver(m);
 
     List<IManeuver> maneuvers = traj.getManeuversAt(0.0);
@@ -120,8 +120,8 @@ public class TrajectoryTest {
 
   @Test
   public void testGetManeuversAt2() {
-    IManeuver m1 = new TestManeuver(ManeuverType.LATERAL, 0, 0);
-    IManeuver m2 = new TestManeuver(ManeuverType.LONGITUDINAL, 0, 0);
+    IManeuver m1 = new TestManeuver(ManeuverType.LATERAL, 0, 1);
+    IManeuver m2 = new TestManeuver(ManeuverType.LONGITUDINAL, 0, 1);
     traj.addLateralManeuver(m1);
     traj.addLongitudinalManeuver(m2);
 
