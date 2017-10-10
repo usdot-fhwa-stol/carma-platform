@@ -3,6 +3,7 @@ package gov.dot.fhwa.saxton.carma.roadway;
 import cav_msgs.RouteSegment;
 import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
@@ -18,6 +19,10 @@ public class EnvironmentWorker {
   protected boolean navSatFixRecieved = false;
   protected Location hostVehicleLocation = null;
   protected double hostVehicleHeading = 0.0; // The heading of the vehicle in degrees east of north in an NED frame.
+  protected final String earth_frame = "earth";
+  protected final String map_frame = "map";
+  protected final String odom_frame = "odom";
+  protected final String base_link_frame = "base_link";
 
   public EnvironmentWorker(IEnvironmentManager envMgr, ConnectedNode connectedNode) {
     this.log = connectedNode.getLog();
@@ -48,7 +53,9 @@ public class EnvironmentWorker {
       return; // If we don't have a heading and a gps fix the map->odom transform cannot be calculated
     }
     GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
-    gcc.geodesic2Cartesian(hostVehicleLocation);
+    // Get the vehicle location in the map frame
+    Point3D hostPoint = gcc.geodesic2Cartesian(hostVehicleLocation, envMgr.getTransform(earth_frame, map_frame));
+    // TODO calculate the rest of the transform
   }
 
   public void handleOdometryMsg(nav_msgs.Odometry odometry) {

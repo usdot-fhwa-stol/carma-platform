@@ -215,11 +215,27 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     roadwayEnvPub.publish(roadwayEnvMsg);
   }
 
-  @Override public Transform getTransformSrv(String parentFrame, String childFrame) {
+  /** TODO move to rosutils
+   * Helper class to allow communication of non-constant data out of the anonymous inner class
+   * defined for the getDriverWithApi() method
+   */
+  protected class ResultHolder <T> {
+    private T result;
+
+    void setResult(T res) {
+      result = res;
+    }
+
+    T getResult() {
+      return result;
+    }
+  }
+
+  @Override public Transform getTransform(String parentFrame, String childFrame) {
     final GetTransformRequest req = getTransformClient.newMessage();
     req.setParentFrame(parentFrame);
     req.setChildFrame(childFrame);
-    final ResultHolder rh = new ResultHolder();
+    final ResultHolder<Transform> rh = new ResultHolder<>();
     try {
       RosServiceSynchronizer.callSync(getTransformClient, req,
         new ServiceResponseListener<GetTransformResponse>() {
@@ -227,20 +243,23 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
           public void onSuccess(GetTransformResponse response) {
             if (response.getErrorStatus() != GetTransformResponse.NO_ERROR) {
               connectedNode.getLog().warn("Attempt to get transform failed with error code: " + response.getErrorStatus());
-              resultTF = null;
+              rh.setResult(null);
               return;
             }
+            rh.setResult(Transform.fromTransformMessage(response.getTransform().getTransform()));
           }
 
           @Override
           public void onFailure(RemoteException e) {
-            connectedNode.getLog().warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+            connectedNode.getLog().warn("EnvironmentManager.getTransform call failed for " + getTransformClient.getName());
+            rh.setResult(null);
           }
         });
     } catch (InterruptedException e) {
-      connectedNode.getLog().warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+      connectedNode.getLog().warn("EnvironmentManager.getTransform call failed for " + getTransformClient.getName());
+      rh.setResult(null);
     }
-    return null;
+    return rh.getResult();
   }
 
   @Override public Time getTime() {
