@@ -33,7 +33,7 @@ float64 longitude
 #  -- In units of 10 cm steps above or below the reference ellipsoid
 #  -- Providing a range of -409.5 to + 6143.9 meters
 #  -- The value -4096 shall be used when Unknown is to be sent
-float32 elev            
+float64 elev            
 
 # Used to model the accuracy of the positional determination with respect to each given axis.
 cav_msgs/PositionalAccuracy accuracy 
@@ -44,12 +44,12 @@ cav_msgs/TransmissionState transmission
 #Speed ::= INTEGER (0..8191) -- Units of 0.02 m/s
 #          -- The value 8191 indicates that 
 #          -- speed is unavailable
-float32 speed         
+float64 speed         
 
 #Heading ::= INTEGER (0..28800) 
 #   -- LSB of 0.0125 degrees
 #   -- A range of 0 to 359.9875 degrees
-float32 heading        
+float64 heading        
 
 # SteeringWheelAngle ::= INTEGER (-126..127) 
 #    -- LSB units of 1.5 degrees, a range of -189 to +189 degrees
@@ -57,7 +57,7 @@ float32 heading
 #    -- -126 = -189 deg and beyond  
 #    -- +126 = +189 deg and beyond
 #    -- +127 to be used for unavailable
-float32 angle        
+float64 angle        
 
 # Set of acceleration values in 3 orthogonal directions of the vehicle and with yaw rotation rates expressed as a structure. 
 cav_msgs/AccelerationSet4Way accelSet      

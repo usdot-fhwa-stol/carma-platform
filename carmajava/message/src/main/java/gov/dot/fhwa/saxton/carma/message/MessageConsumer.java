@@ -55,19 +55,6 @@ import org.ros.exception.RosRuntimeException;
 
 public class MessageConsumer extends SaxtonBaseNode {
 
-	// Declare native methods
-	private static native byte[] encode_BSM(Object output_bsm);
-
-	// Load libasn1c.so external C library
-	static {
-		try {
-			System.loadLibrary("asn1c");
-		} catch (Exception e) {
-			System.out.println("Exception trapped while trying to load the asn1c libtaty" + e.toString());
-			e.printStackTrace();
-		}
-	}
-
 	private boolean driversReady = false;
 
 	// Publisher
@@ -168,11 +155,10 @@ public class MessageConsumer extends SaxtonBaseNode {
 		hostBsmSub.addMessageListener(new MessageListener<BSM>() {
 			@Override
 			public void onNewMessage(BSM bsm) {
-				log.info("MessageConsumer received BSM soutbound. Publishing as ByteArray message");
+				log.info("MessageConsumer received BSM. Publishing it as ByteArray message...");
 				ByteArray byteArray = outboundPub.newMessage();
-				byteArray.setMessageType("BSM");
-				ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_BSM(bsm));//Set message content with JNI native function call
-				byteArray.setContent(buffer);
+				BSMFactory.encode(bsm, byteArray);
+				log.info("Waiting for bsm binary!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 				outboundPub.publish(byteArray);
 			}
 		});		

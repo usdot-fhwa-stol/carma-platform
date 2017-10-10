@@ -10,6 +10,10 @@ project(asn1c)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also nee
 
+SET(CMAKE_C_FLAGS " -DASN_DISABLE_OER_SUPPORT -DPDU=MessageFrame")
+
+aux_source_directory(src SRC_LIST)
+
 catkin_package(
 	INCLUDE_DIRS include
 	##LIBRARIES
@@ -31,5 +35,5 @@ include_directories(
 ##Declare the C library
 add_library(
 	asn1c
-	src/wrapper.c
+	${SRC_LIST}
 )
