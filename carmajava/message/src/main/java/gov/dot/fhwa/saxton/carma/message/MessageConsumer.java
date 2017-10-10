@@ -112,6 +112,12 @@ public class MessageConsumer extends SaxtonBaseNode {
 						driversReady = true;
 						messageTypeFullDescription = "System ready alert and is beginning to publish";
 						break;
+					case SystemAlert.SHUTDOWN:
+						if(driversReady) {
+							log.info("MessageConsumer: Received SHUTDOWN Message. Message node is shutting down...");
+							connectedNode.shutdown();
+						}
+						break;
 					default:
 						if(driversReady) messageTypeFullDescription = "Unknown system alert type but system is ready";
 						else messageTypeFullDescription = "Unknown system alert type and system is not ready";
@@ -130,7 +136,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		try {
 			GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
 			request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
-			while(!driversReady) Thread.sleep(5000);
+			while(!driversReady) Thread.sleep(3000);
 			RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
 				@Override
 				public void onSuccess(GetDriversWithCapabilitiesResponse response) {

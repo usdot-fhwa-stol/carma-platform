@@ -8,7 +8,8 @@ project(asn1c)
 ## Declare things to be passed to dependent projects
 ## INCLUDE_DIRS: uncomment this if you package contains header files
 ## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also nee
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
 
 SET(CMAKE_C_FLAGS " -DASN_DISABLE_OER_SUPPORT -DPDU=MessageFrame")
 
@@ -37,3 +38,5 @@ add_library(
 	asn1c
 	${SRC_LIST}
 )
+
+target_link_libraries(asn1c ${Boost_LIBRARIES})
