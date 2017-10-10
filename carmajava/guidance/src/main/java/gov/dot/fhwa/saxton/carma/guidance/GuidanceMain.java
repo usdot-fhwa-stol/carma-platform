@@ -140,6 +140,9 @@ public class GuidanceMain extends SaxtonBaseNode {
         } else if (message.getType() == SystemAlert.FATAL) {
           log.info("!!!!!! GuidanceMain received SystemAlert.FATAL! Shutting down! !!!!!");
           state.set(GuidanceState.SHUTDOWN);
+        } else if (message.getType() == SystemAlert.SHUTDOWN) {
+          log.info("GuidanceMain received shutdown command. Shutting down!");
+          state.set(GuidanceState.SHUTDOWN);
         }
       }//onNewMessage
     } //MessageListener
@@ -154,7 +157,7 @@ public class GuidanceMain extends SaxtonBaseNode {
           public void build(SetGuidanceEngagedRequest setGuidanceEngagedRequest,
               SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
             state.set(GuidanceState.ENGAGED);
-            setGuidanceEngagedResponse.setGuidanceStatus(engaged.get());
+            setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
           }
         });
 

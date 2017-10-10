@@ -141,7 +141,8 @@ public abstract class GuidanceComponent implements Runnable {
     }
 
     /**
-     * Optionally overridable method to hook when the Guidance node is shutting down or restarting.
+     * Optionally overridable method to hook when the Guidance node is gracefuly shutting down
+     * or has received a SystemAlert.FATAL message
      *
      * Default implementation does nothing.
      */

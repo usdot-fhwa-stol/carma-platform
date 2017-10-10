@@ -7,7 +7,13 @@
     <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
     <script src="scripts/roslib.js"></script>
     <script src="scripts/control.js" defer></script>
+
     <script src="scripts/rosbridge.js" defer></script>
+    <script src="scripts/googlemap.js"></script>
+
+    <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMzV4biqVN0pf3l1lYVWQ4KSWLyoG6OV0&callback=initMap">
+    </script>
     <link rel="stylesheet" type="text/css" href="css/styles.css">
     <!--
     Setup:
@@ -42,8 +48,7 @@
     <p>Not yet implemented.</p>
 </div>
 <div id="divMap" class="tabcontent">
-    <h3>Map View</h3>
-    <p>Not yet implemented.</p>
+    <div id="map"></div>
 </div>
 <div id="divSystemStatus" class="tabcontent">
     <h3>System Status</h3>

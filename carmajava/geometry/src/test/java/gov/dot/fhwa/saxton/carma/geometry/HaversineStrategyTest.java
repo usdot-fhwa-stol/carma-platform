@@ -1,6 +1,22 @@
+/*
+ * TODO: Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.geometry;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.GreatCircleSegment;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
@@ -9,9 +25,6 @@ import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.ros.rosjava_geometry.Quaternion;
-import org.ros.rosjava_geometry.Transform;
-import org.ros.rosjava_geometry.Vector3;
 
 import static org.junit.Assert.assertTrue;
 
@@ -127,42 +140,5 @@ public class HaversineStrategyTest {
     seg = new GreatCircleSegment(loc1, loc2);
     solution = 991.4;
     assertTrue(Math.abs(haversineStrategy.downtrackDistance(loc2, seg) - solution) < solution * 0.005); // Check accuracy to within .5% of haversine result
-  }
-
-  /**
-   * Tests the getInteriorAngle function
-   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
-   * @throws Exception
-   */
-  @Test
-  public void testGetInteriorAngle() throws Exception {
-
-    log.info("// Entering get interior angle test");
-    HaversineStrategy haversineStrategy = new HaversineStrategy();
-    Vector3 v1 = new Vector3(1,1,1);
-    Vector3 v2 = new Vector3(1,2,4);
-    double angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
-    assertTrue(Math.abs(angle - 0.4908826) < 0.00001);
-
-    v1 = new Vector3(8,-2,13);
-    v2 = new Vector3(-2,14,-2);
-    angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
-    assertTrue(Math.abs(angle - 1.89478) < 0.00001);
-
-    v1 = new Vector3(1,0,0);
-    v2 = new Vector3(0,1,0);
-    angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
-    assertTrue(Math.abs(angle - Math.PI/2.0) < 0.00001);
-
-    v1 = new Vector3(1,0,0);
-    v2 = new Vector3(0,0,1);
-    angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
-    assertTrue(Math.abs(angle - Math.PI/2.0) < 0.00001);
-
-    v1 = new Vector3(0,0,0);
-    v2 = new Vector3(0,0,0);
-    angle = haversineStrategy.getAngleBetweenVectors(v1, v2);
-    assertTrue(Math.abs(angle - 0.0) < 0.00001);
-
   }
 }
