@@ -51,7 +51,7 @@ std::string DSRCApplication::uint8_vector_to_hex_string(const std::vector<uint8_
 
 DSRCApplication::DSRCApplication(int argc, char **argv) : cav::DriverApplication(argc, argv, "dsrc")
 {
-    output_queue_size_ = 1000;
+    queue_size_ = 1000;
     cav_msgs::DriverStatus status;
     status.status = cav_msgs::DriverStatus::OFF;
     status.comms = true;
@@ -65,7 +65,7 @@ void DSRCApplication::initialize() {
     pnh.param<std::string>("wave_cfg_file",wave_cfg_file,"etc/wave.json");
     pnh.param<int>("listening_port",config_.listening_port, 5398);
     pnh.param<int>("dsrc_listening_port",config_.dsrc_listening_port, 1516);
-    pnh.param<std::string>("dsrc_address",config_.dsrc_address, "169.254.1.1");
+    pnh.param<std::string>("dsrc_address",config_.dsrc_address, "169.254.1.1");    
     loadWaveConfig(wave_cfg_file);
     comms_api_nh_.reset(new ros::NodeHandle("~comms"));
     dyn_cfg_server_.reset(new dynamic_reconfigure::Server<dsrc::DSRCConfig>(dyn_cfg_mutex_));
@@ -84,11 +84,11 @@ void DSRCApplication::initialize() {
     api_.clear();
     
     //Comms Subscriber
-    comms_sub_ = comms_api_nh_->subscribe("outbound_binary_msg", output_queue_size_, &DSRCApplication::onOutboundMessage, this);
+    comms_sub_ = comms_api_nh_->subscribe("outbound_binary_msg", queue_size_, &DSRCApplication::onOutboundMessage, this);
     api_.push_back(comms_sub_.getTopic());
 
     //Comms Publisher
-    comms_pub_ = comms_api_nh_->advertise<cav_msgs::ByteArray>("inbound_binary_msg", 1000);
+    comms_pub_ = comms_api_nh_->advertise<cav_msgs::ByteArray>("inbound_binary_msg", queue_size_);
     api_.push_back(comms_pub_.getTopic());
 
     //Comms Service

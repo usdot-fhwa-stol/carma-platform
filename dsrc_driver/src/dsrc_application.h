@@ -118,7 +118,7 @@ private:
 
     DSRCOBUClient dsrc_client_;
     boost::system::error_code dsrc_client_error_;
-    uint32_t output_queue_size_;
+    uint32_t queue_size_;
 
     /**
      * @brief Initializes ROS context for this node
