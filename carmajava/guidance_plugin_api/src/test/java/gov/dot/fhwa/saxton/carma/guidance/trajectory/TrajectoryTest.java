@@ -19,7 +19,6 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
 import java.util.List;
 
@@ -243,24 +242,24 @@ public class TrajectoryTest {
   @Test
   public void testGetNextLateralManeuverAfter1() {
     IManeuver m = new TestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
-    traj.addLongitudinalManeuver(m);
+    traj.addLateralManeuver(m);
     IManeuver m1 = traj.getNextLateralManeuverAfter(0.0);
     assertEquals(m, m1);
   }
 
   @Test
   public void testGetNextLateralManeuverAfter2() {
-    traj.addLongitudinalManeuver(new TestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
+    traj.addLateralManeuver(new TestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
 
     IManeuver m = new TestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
-    traj.addLongitudinalManeuver(m);
+    traj.addLateralManeuver(m);
     IManeuver m1 = traj.getNextLateralManeuverAfter(0.0);
     assertEquals(m, m1);
   }
 
   @Test
   public void testGetNextLateralManeuverAfterFail() {
-    traj.addLongitudinalManeuver(new TestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
+    traj.addLateralManeuver(new TestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
 
     IManeuver m = traj.getNextLateralManeuverAfter(0.0);
     assertEquals(null, m);

@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
@@ -89,10 +90,34 @@ public class Trajectory {
   }
 
   public IManeuver getNextLateralManeuverAfter(double loc) {
+    lateralManeuvers.sort(new Comparator<IManeuver>() {
+		@Override
+		public int compare(IManeuver o1, IManeuver o2) {
+			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+		}
+    });
+
+    for (IManeuver m : lateralManeuvers) {
+      if (m.getStartLocation() > loc) {
+        return m;
+      }
+    }
     return null;
   }
 
   public IManeuver getNextLongitudinalManeuverAfter(double loc) {
+    longitudinalManeuvers.sort(new Comparator<IManeuver>() {
+		@Override
+		public int compare(IManeuver o1, IManeuver o2) {
+			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+		}
+    });
+
+    for (IManeuver m : longitudinalManeuvers) {
+      if (m.getStartLocation() > loc) {
+        return m;
+      }
+    }
     return null;
   }
 }
