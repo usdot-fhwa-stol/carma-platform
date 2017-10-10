@@ -20,18 +20,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Trajectory {
+
+  protected double startLocation;
+  protected double endLocation;
   protected List<IManeuver> lateralManeuvers;
   protected List<IManeuver> longitudinalManeuvers;
 
-  public Trajectory() {
+  public Trajectory(double startLocation, double endLocation) {
+    this.startLocation = startLocation;
+    this.endLocation = endLocation;
+
+    lateralManeuvers = new ArrayList<IManeuver>();
+    longitudinalManeuvers = new ArrayList<IManeuver>();
   }
 
-  public void addLateralManeuver(IManeuver maneuver) {
-    lateralManeuvers.add(maneuver);
+  public boolean addLateralManeuver(IManeuver maneuver) {
+    return lateralManeuvers.add(maneuver);
   }
 
-  public void addLongitudinalManeuver(IManeuver maneuver) {
-    longitudinalManeuvers.add(maneuver);
+  public boolean addLongitudinalManeuver(IManeuver maneuver) {
+    return longitudinalManeuvers.add(maneuver);
   }
 
   public double findEarliestWindowOfSize(double size) {
