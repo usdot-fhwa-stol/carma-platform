@@ -19,6 +19,8 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 import java.util.ArrayList;
 import java.util.List;
 
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
+
 public class Trajectory {
 
   protected double startLocation;
@@ -35,10 +37,28 @@ public class Trajectory {
   }
 
   public boolean addLateralManeuver(IManeuver maneuver) {
+    if (maneuver.getType() != ManeuverType.LATERAL) {
+      return false;
+    }
+
+    if (!(maneuver.getStartLocation() >= startLocation 
+    && maneuver.getEndLocation() < endLocation)) {
+      return false;
+    }
+
     return lateralManeuvers.add(maneuver);
   }
 
   public boolean addLongitudinalManeuver(IManeuver maneuver) {
+    if (maneuver.getType() != ManeuverType.LONGITUDINAL) {
+      return false;
+    }
+
+    if (!(maneuver.getStartLocation() >= startLocation 
+    && maneuver.getEndLocation() < endLocation)) {
+      return false;
+    }
+
     return longitudinalManeuvers.add(maneuver);
   }
 
