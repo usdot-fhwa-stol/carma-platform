@@ -43,7 +43,7 @@ public class Trajectory {
     }
 
     if (!(maneuver.getStartLocation() >= startLocation 
-    && maneuver.getEndLocation() < endLocation)) {
+    && maneuver.getEndLocation() <= endLocation)) {
       return false;
     }
 
@@ -56,7 +56,7 @@ public class Trajectory {
     }
 
     if (!(maneuver.getStartLocation() >= startLocation 
-    && maneuver.getEndLocation() < endLocation)) {
+    && maneuver.getEndLocation() <= endLocation)) {
       return false;
     }
 
@@ -64,11 +64,52 @@ public class Trajectory {
   }
 
   public double findEarliestWindowOfSize(double size) {
-    return 0;
+    if (longitudinalManeuvers.size() == 0) {
+      return -1;
+    }
+
+    longitudinalManeuvers.sort(new Comparator<IManeuver>() {
+		@Override
+		public int compare(IManeuver o1, IManeuver o2) {
+			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+		}
+    });
+
+    double lastEnd = 0;
+    for (IManeuver m : longitudinalManeuvers) {
+      if (m.getStartLocation() - lastEnd >= size)  {
+        return lastEnd;
+      }
+
+      lastEnd = m.getEndLocation();
+    }
+
+    return -1;
   }
 
   public double findLatestWindowOfSize(double size) {
-    return 0;
+    if (longitudinalManeuvers.size() == 0) {
+      return -1;
+    }
+
+    longitudinalManeuvers.sort(new Comparator<IManeuver>() {
+		@Override
+		public int compare(IManeuver o1, IManeuver o2) {
+			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+		}
+    });
+
+    double lastStart = longitudinalManeuvers.get(longitudinalManeuvers.size() - 1).getEndLocation();
+    for (int i = longitudinalManeuvers.size() - 1; i >= 0; i--) {
+      IManeuver m = longitudinalManeuvers.get(i);
+      if (m.getEndLocation() - lastStart >= size)  {
+        return m.getEndLocation();
+      }
+
+      lastStart = m.getStartLocation();
+    }
+
+    return -1;
   }
 
   public List<IManeuver> getManeuversAt(double loc) {
