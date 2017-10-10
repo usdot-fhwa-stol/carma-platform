@@ -290,9 +290,6 @@
 
       <!-- DSRC OBU Driver Node -->
       <include unless="$(arg mock_arada)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
-      <node unless="$(arg mock_arada)" pkg="arada" type="arada_node" name="arada_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
-      </node>
       <!-- Simulated Arada Driver Node -->
       <node if="$(arg mock_arada)" pkg="carma" type="mock_drivers" name="arada_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
