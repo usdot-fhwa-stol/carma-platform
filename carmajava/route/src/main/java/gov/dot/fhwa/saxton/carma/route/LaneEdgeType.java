@@ -7,15 +7,16 @@ import org.ros.node.NodeConfiguration;
  * An enumeration which identifies the different types of edges in a lane.
  */
 public enum LaneEdgeType {
-  /**
-   * A solid white line which should not be crossed
-   */
-  SOLID_WHITE(cav_msgs.LaneEdgeType.SOLID_WHITE),
 
   /**
    * A solid yellow line which should not be crossed and has opposing traffic on the opposite side
    */
   SOLID_YELLOW(cav_msgs.LaneEdgeType.SOLID_YELLOW),
+
+  /**
+   * A solid white line which should not be crossed
+   */
+  SOLID_WHITE(cav_msgs.LaneEdgeType.SOLID_WHITE),
 
   /**
    * A broken yellow line which can be crossed to pass but not as a lane merge

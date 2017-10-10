@@ -20,9 +20,13 @@ float64 longitude
 float64 altitude
 
 # The number of lanes on the current road in the current direction of travel
+# Must be set with value >= 1
 uint8 lane_count
 
-# The speed limit
+# The lower speed limit
+uint8 lower_speed_limit
+
+# The upper speed limit
 uint8 speed_limit
 
 # The lane markings found between interior lanes
@@ -46,8 +50,8 @@ uint8[] lane_closures
 # The value of the nearest mile marker
 float32 nearest_mile_marker
 
-# A list of needed manuevers
-# cav_msgs/Manuever[] needed_manuevers
+# A list of needed maneuvers
+# cav_msgs/Maneuver[] needed_maneuvers
 
 # The index of the lane that the vehicle must enter to continue on its route
 uint8 required_lane_index

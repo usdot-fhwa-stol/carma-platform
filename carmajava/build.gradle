@@ -19,7 +19,7 @@ task wrapper(type: Wrapper) {
 }
 
 buildscript {
-  apply from: "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
+    apply from: "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
 }
 
 apply plugin: 'catkin'

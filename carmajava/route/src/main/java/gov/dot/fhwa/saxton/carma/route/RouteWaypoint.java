@@ -16,8 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
-import cav_msgs.Lane;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.guidance.Maneuvers;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageFactory;
@@ -37,13 +37,13 @@ public class RouteWaypoint {
   protected List<Integer> laneClosures = new ArrayList<>();
   protected int laneCount = 1;
   protected Location location;
-  protected int lowerSpeedLimit = -1;
-  protected int upperSpeedLimit = -1;
+  protected int lowerSpeedLimit = 0;
+  protected int upperSpeedLimit = 5;
   protected double nearestMileMarker = -1;
-  //protected List<Maneuvers> neededManeuvers; //TODO uncomment when manuevers class is available
+  protected List<cav_msgs.Maneuver> neededManeuvers;
   protected int requiredLaneIndex = -1;
   protected RoadType roadType = RoadType.FREEWAY;
-  protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.BROKEN_WHITE;
+  protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.SOLID_WHITE;
   protected LaneEdgeType leftMostLaneMarking = LaneEdgeType.SOLID_YELLOW;
   protected LaneEdgeType rightMostLaneMarking = LaneEdgeType.SOLID_WHITE;
 
@@ -75,27 +75,14 @@ public class RouteWaypoint {
       bitMask = bitMask | 0x8000; //1000 0000 0000 0000
     if (laneClosures != null)
       bitMask = bitMask | 0x4000; //0100 0000 0000 0000
-    if (laneCount != -1)
-      bitMask = bitMask | 0x2000; //0010 0000 0000 0000
     if (nearestMileMarker != -1)
+      bitMask = bitMask | 0x2000; //0010 0000 0000 0000
+    if (neededManeuvers != null)
       bitMask = bitMask | 0x1000; //0001 0000 0000 0000
-    //  if (needed_manuevers != -1) //TODO uncomment when manuevers class is available
-    //    bitMask = bitMaks | 0x0800; //0000 1000 0000 0000
     if (requiredLaneIndex != -1)
-      bitMask = bitMask | 0x0400; //0000 0100 0000 0000
+      bitMask = bitMask | 0x0800; //0000 1000 0000 0000
     if (roadType != null)
-      bitMask = bitMask | 0x0200; //0000 0010 0000 0000
-    if (upperSpeedLimit != -1)
-      bitMask = bitMask | 0x0100; //0000 0001 0000 0000
-    if (upperSpeedLimit != -1)
-      bitMask = bitMask | 0x0100; //0000 0001 0000 0000
-    if (upperSpeedLimit != -1)
-      bitMask = bitMask | 0x0100; //0000 0001 0000 0000
-    if (upperSpeedLimit != -1)
-      bitMask = bitMask | 0x0100; //0000 0001 0000 0000
-    protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.BROKEN_WHITE;
-    protected LaneEdgeType leftMostLaneMarking = LaneEdgeType.SOLID_YELLOW;
-    protected LaneEdgeType rightMostLaneMarking = LaneEdgeType.SOLID_WHITE;
+      bitMask = bitMask | 0x0400; //0000 0100 0000 0000
 
     return (short) bitMask;
   }
@@ -122,6 +109,7 @@ public class RouteWaypoint {
     routeWPMsg.setAltitude(location.getAltitude());
     routeWPMsg.setLaneCount((byte) laneCount);
     routeWPMsg.setDisabledGuidanceAlgorithms(disabledGuidanceAlgorithms);
+    routeWPMsg.setNeededManeuvers(neededManeuvers);
 
     byte[] laneClosuresAsBytes = new byte[laneClosures.size()];
     for (int i = 0; i < laneClosures.size(); i++) {
@@ -148,6 +136,13 @@ public class RouteWaypoint {
       new Location(waypointMsg.getLatitude(), waypointMsg.getLongitude(),
         waypointMsg.getAltitude()));
 
+    wp.setLaneCount(waypointMsg.getLaneCount());
+    wp.setLowerSpeedLimit(waypointMsg.getLowerSpeedLimit());
+    wp.setUpperSpeedLimit(waypointMsg.getSpeedLimit());
+    wp.setLeftMostLaneMarking(waypointMsg.getLeftMostLaneMarking());
+    wp.setInteriorLaneMarkings(waypointMsg.getInteriorLaneMarking());
+    wp.setRightMostLaneMarking(waypointMsg.getRightMostLaneMarking());
+
     // Set member variables according to set fields bit mask
     int bitMask = waypointMsg.getSetFields();
     if ((bitMask & 0x8000) != 0) //1000 0000 0000 0000
@@ -161,21 +156,14 @@ public class RouteWaypoint {
       wp.setLaneClosures(laneClosures);
     }
     if ((bitMask & 0x2000) != 0) //0010 0000 0000 0000
-      wp.setLaneCount(waypointMsg.getLaneCount());
-    if ((bitMask & 0x1000) != 0) //0001 0000 0000 0000
       wp.setNearestMileMarker(waypointMsg.getNearestMileMarker());
-    //TODO uncomment when manuevers class is available
-    //  if ((bitMaks & 0x0800) != 0) //0000 1000 0000 0000
-    //    wp.setNeededManeuvers(waypointMsg.getNeededManeuvers());
-    if ((bitMask & 0x0400) != 0) //0000 0100 0000 0000
+    if ((bitMask & 0x1000) != 0) //0001 1000 0000 0000
+      wp.setNeededManeuvers(waypointMsg.getNeededManeuvers());
+    if ((bitMask & 0x0800) != 0) //0000 1000 0000 0000
       wp.setRequiredLaneIndex(waypointMsg.getRequiredLaneIndex());
-    if ((bitMask & 0x0200) != 0) //0000 0010 0000 0000
+    if ((bitMask & 0x0400) != 0) //0000 0100 0000 0000
       wp.setRoadType(RoadType.fromMessage(waypointMsg.getRoadType()));
-    if ((bitMask & 0x0100) != 0) //0000 0001 0000 0000
-      wp.setUpperSpeedLimit(waypointMsg.getSpeedLimit());
 
-    // TODO Add lower speed to message specification file
-    wp.setLowerSpeedLimit(0);
     return wp;
   }
 
@@ -384,5 +372,21 @@ public class RouteWaypoint {
    */
   public void setRightMostLaneMarking(LaneEdgeType rightMostLaneMarking) {
     this.rightMostLaneMarking = rightMostLaneMarking;
+  }
+
+  /**
+   * Gets the list of needed maneuvers at this waypoint
+   * @return list of maneuvers
+   */
+  public List<cav_msgs.Maneuver> getNeededManeuvers() {
+    return neededManeuvers;
+  }
+
+  /**
+   * Sets the list of needed maneuvers at this waypoint
+   * @param neededManeuvers list of required maneuvers
+   */
+  public void setNeededManeuvers(List<cav_msgs.Maneuver> neededManeuvers) {
+    this.neededManeuvers = neededManeuvers;
   }
 }
