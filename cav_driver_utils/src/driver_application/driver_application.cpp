@@ -54,19 +54,24 @@ int DriverApplication::run()
     ros::ServiceServer driver_status_svs = pnh_->advertiseService("get_status", &DriverApplication::get_status_cb,this);
 
     driver_status_pub_ = nh_->advertise<cav_msgs::DriverStatus>("driver_discovery",1);
+    system_alert_sub_ = nh_->subscribe("system_alert",10,&DriverApplication::system_alert_cb, this);
     ros::Timer timer = pnh_->createTimer(ros::Duration(1), &DriverApplication::status_publish_timer,this);
     ROS_INFO("Driver services initialized");
 
     initialize();
 
     ros::Rate r(spin_rate);
-    while(ros::ok())
+    while(ros::ok() && !shutdown_)
     {
         pre_spin();
         ros::spinOnce();
         post_spin();
         r.sleep();
     }
+
+    ROS_INFO_STREAM("Driver Shutting Down");
+    shutdown();
+    ros::shutdown();
 }
 
 bool DriverStatusEquals(cav_msgs::DriverStatus a, cav_msgs::DriverStatus b)
@@ -133,6 +138,20 @@ bool DriverApplication::get_status_cb(cav_srvs::GetDriverStatusRequest &req, cav
     res.status = status_;
 
     return true;
+}
+
+void DriverApplication::system_alert_cb(const cav_msgs::SystemAlertConstPtr &msg)
+{
+   switch(msg->type)
+   {
+       case cav_msgs::SystemAlert::FATAL:
+       case cav_msgs::SystemAlert::SHUTDOWN:
+           shutdown_ = true;
+           break;
+       default:
+           break;
+   }
+
 }
 
 

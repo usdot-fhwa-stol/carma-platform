@@ -91,35 +91,66 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
             @Override
             public void onNewMessage(cav_msgs.DriverStatus msg) {
-                DriverInfo info = new DriverInfo();
-                info.setName(msg.getName());
-                switch (msg.getStatus()) {
-                case DriverStatus.OFF:
-                    info.setState(DriverState.OFF);
-                    break;
-                case DriverStatus.DEGRADED:
-                    info.setState(DriverState.DEGRADED);
-                    break;
-                case DriverStatus.FAULT:
-                    info.setState(DriverState.FAULT);
-                    break;
-                case DriverStatus.OPERATIONAL:
-                    info.setState(DriverState.OPERATIONAL);
-                    break;
-                default:
-                    info.setState(DriverState.FAULT);
-                }
-                info.setCan(msg.getCanBus());
-                info.setSensor(msg.getSensor());
-                info.setPosition(msg.getPosition());
-                info.setComms(msg.getComms());
-                info.setController(msg.getController());
-                log_.debug("InterfaceMgr.driverDiscoveryListener received new status: " + info.getName() + ", "
-                        + info.getState().toString());
-
-                //add the new driver info to our database
-                worker_.handleNewDriverStatus(info);
+            	try {
+	                DriverInfo info = new DriverInfo();
+	                info.setName(msg.getName());
+	                switch (msg.getStatus()) {
+	                case DriverStatus.OFF:
+	                    info.setState(DriverState.OFF);
+	                    break;
+	                case DriverStatus.DEGRADED:
+	                    info.setState(DriverState.DEGRADED);
+	                    break;
+	                case DriverStatus.FAULT:
+	                    info.setState(DriverState.FAULT);
+	                    break;
+	                case DriverStatus.OPERATIONAL:
+	                    info.setState(DriverState.OPERATIONAL);
+	                    break;
+	                default:
+	                    info.setState(DriverState.FAULT);
+	                }
+	                info.setCan(msg.getCanBus());
+	                info.setSensor(msg.getSensor());
+	                info.setPosition(msg.getPosition());
+	                info.setComms(msg.getComms());
+	                info.setController(msg.getController());
+	                log_.debug("InterfaceMgr.driverDiscoveryListener received new status: " + info.getName() + ", "
+	                        + info.getState().toString());
+	
+	                //add the new driver info to our database
+	                worker_.handleNewDriverStatus(info);
+            	}catch (Exception e) {
+            		handleException(e);
+            	}
             }
+        });
+        
+        //message listener for system alerts coming from other nodes
+        Subscriber<cav_msgs.SystemAlert> alertListener = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
+        alertListener.addMessageListener(new MessageListener<SystemAlert>() {
+        	
+        	@Override
+        	public void onNewMessage(cav_msgs.SystemAlert msg) {
+        		try {
+        		
+	        		//if the alert is a FATAL or SHUTDOWN, then proceed to shut down this node
+	        		if (msg.getType() == AlertSeverity.FATAL.getVal()  ||
+	        			msg.getType() == AlertSeverity.SHUTDOWN.getVal()) {
+	        			
+	        			String alertType;
+	        			if (msg.getType() == AlertSeverity.FATAL.getVal()) {
+	        				alertType = "FATAL - ";
+	        			}else {
+	        				alertType = "SHUTDOWN - ";
+	        			}
+	        			log_.warn("InterfaceMgr SHUTTING DOWN after receipt of alert: " + alertType + msg.getDescription());
+	        			connectedNode.shutdown();
+	        		}
+            	}catch (Exception e) {
+            		handleException(e);
+            	}
+        	}
         });
 
         //listener for ACC engaged (from the CAN driver), which will tell us if the brake pedal has been pushed
@@ -127,15 +158,19 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         accListener.addMessageListener(new MessageListener<Bool>() {
             @Override
             public void onNewMessage(std_msgs.Bool msg) {
-                if (!msg.getData()) {
-                    log_.warn("InterfaceMgr.accListener sensed ACC has been disengaged at the hardware level.");
-
-                    //alert all other ROS nodes
-                    sendSystemAlert(AlertSeverity.FATAL, "Hardware ACC has been disengaged.");
-
-                    //shut down this node
-                    connectedNode.shutdown();
-                }
+            	try {
+	            	if (!msg.getData()) {
+	                    log_.warn("InterfaceMgr.accListener sensed ACC has been disengaged at the hardware level.");
+	
+	                    //alert all other ROS nodes
+	                    sendSystemAlert(AlertSeverity.FATAL, "Hardware ACC has been disengaged.");
+	
+	                    //shut down this node
+	                    connectedNode.shutdown();
+	                }
+            	}catch (Exception e) {
+            		handleException(e);
+            	}
             }
         });
 
@@ -170,7 +205,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                     log_.info("///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
 
                     //stop the loop
-                    throw new InterruptedException("System is OPERATIONAL. Stopping loop.");
+                    mainLoop_.cancel();
                 }
 
                 Thread.sleep(1000);
@@ -190,16 +225,20 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                             public void build(cav_srvs.GetDriversWithCapabilitiesRequest request,
                                     cav_srvs.GetDriversWithCapabilitiesResponse response) {
 
-                                log_.debug("InterfaceMgr.driverCapSvr: received request with "
-                                        + request.getCapabilities().size() + " capabilities listed.");
-
-                                //figure out which drivers match the request
-                                List<String> res = worker_.getDrivers(request.getCapabilities());
-                                log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size()
-                                        + " matching drivers.");
-
-                                //formulate the service response
-                                response.setDriverData(res);
+                            	try {
+	                                log_.debug("InterfaceMgr.driverCapSvr: received request with "
+	                                        + request.getCapabilities().size() + " capabilities listed.");
+	
+	                                //figure out which drivers match the request
+	                                List<String> res = worker_.getDrivers(request.getCapabilities());
+	                                log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size()
+	                                        + " matching drivers.");
+	
+	                                //formulate the service response
+	                                response.setDriverData(res);
+                            	}catch (Exception e) {
+                            		handleException(e);
+                            	}
                             }
                         });
 
@@ -207,7 +246,16 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
     @Override
     protected void handleException(Throwable e) {
-
+    	
+		//don't need to log anything here because SaxtonBaseNode handler has already done that
+    	
+    	//if it has been less than 2 min since we declared the system to be ready for operation then
+    	if (worker_.timeSinceSystemReady() < 2*60*1000) {
+    		sendSystemAlert(AlertSeverity.FATAL, "Unknown exception trapped in InterfaceMgr - COMMANDING SYSTEM SHUT DOWN.");
+    	}else {
+    		sendSystemAlert(AlertSeverity.WARNING, "Unknown exception trapped in InterfaceMgr - shutting down myself only.");
+    	}
+		connectedNode_.shutdown();
     }
 
     ///// service requestors /////

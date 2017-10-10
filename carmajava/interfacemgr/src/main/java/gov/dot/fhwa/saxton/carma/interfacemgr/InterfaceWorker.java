@@ -21,9 +21,9 @@
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 import org.apache.commons.logging.Log;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class InterfaceWorker {
 
@@ -32,6 +32,7 @@ public class InterfaceWorker {
     protected IInterfaceMgr                 mgr_;
     protected Log                           log_;
     protected long                          startedWaiting_;
+    protected long							systemReadyTime_;
     protected boolean                       systemOperational_ = false;
 
     InterfaceWorker(IInterfaceMgr mgr, Log log) {
@@ -173,7 +174,8 @@ public class InterfaceWorker {
     }
 
     /**
-     * Returns a list of drivers that each provide all of the given capabilities once the system is OPERATIONAL.
+     * Returns a list of capabilities provided by drivers that each provide all of the requested capabilities
+     * once the system is OPERATIONAL.
      * Note that each capability in the input list may be of the form
      *     [name]
      * or of the form
@@ -182,7 +184,8 @@ public class InterfaceWorker {
      * is specified, then only drivers of that category will be considered.
      *
      * @param requestedCapabilities - a list of capabilities that must be met (inclusive)
-     * @return - a list of driver names that meet all the capabilities
+     * @return - a list of fully-qualified driver names and capabilities where each driver involved can satisfy
+     * all of the requestedCapabilities
      */
     public List<String> getDrivers(List<String> requestedCapabilities) {
         List<String> result = new ArrayList<String>();
@@ -194,6 +197,7 @@ public class InterfaceWorker {
             for (int driverIndex = 0;  driverIndex < drivers_.size();  ++driverIndex) {
                 DriverInfo driver = drivers_.get(driverIndex);
                 List<String> driverCaps = driver.getCapabilities();
+                List<String> tentativeResult = new ArrayList<>();
 
                 //loop through all requested capabilities
                 boolean foundAllCapabilities = true;
@@ -215,6 +219,7 @@ public class InterfaceWorker {
                             String driverCap = capBreakout[capBreakout.length - 1];
                             if (reqCapability.equals(driverCap)) {
                                 foundThisCapability = true;
+                                tentativeResult.add(driverCaps.get(capIndex));
                                 break;
                             }
                         }
@@ -227,8 +232,8 @@ public class InterfaceWorker {
 
                 //if the driver is satisfactory then
                 if (foundAllCapabilities) {
-                    //add the driver to the return list
-                    result.add(driver.getName());
+                    //add them all to the return list
+                    result.addAll(tentativeResult);
                 }
             }
         }
@@ -258,10 +263,22 @@ public class InterfaceWorker {
                 //log the time required to get to this point
                 log_.info("///// InterfaceWorker declaring SYSTEM OPERATIONAL.");
                 log_.info("---elapsed = " + elapsed + ", waitTime = " + waitTime_);
+                
+                //record the time of this event
+                systemReadyTime_ = System.currentTimeMillis();
             }
         }
 
         return systemOperational_;
+    }
+    
+    
+    /**
+     * Returns the time since this class declared the system ready for operation.
+     * @return time in ms
+     */
+    public long timeSinceSystemReady() {
+    	return System.currentTimeMillis() - systemReadyTime_;
     }
 
     //////////

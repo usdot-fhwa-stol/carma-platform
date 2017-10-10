@@ -3,7 +3,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.139' // TODO: Update with proper environment IP address.
+var ip = '192.168.32.141' // TODO: Update with proper environment IP address.
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -13,7 +13,8 @@ var t_current_segment = 'current_segment';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = "route_state";
-var t_cmd_speed = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
+var t_active_route = "route";
+var t_cmd_speed = "cmd_speed";
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -193,6 +194,7 @@ function showRouteOptions() {
 
         for (i = 0; i < myRoutes.length; i++) {
             createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes');
+
         }
 
         if (myRoutes.length == 0) {
@@ -213,9 +215,13 @@ function setRoute(id) {
         serviceType: 'cav_srvs/SetActiveRoute'
     });
 
+    //TODO: Remove this when Route Manager has updated the RouteID to not have spaces. For now have to do this.
+    var selectedRouteid = id.toString().replace('rb', '').replace( /_/g,' ');
+
     // Then we create a Service Request.
+    // replace rb with empty string and underscore with space to go back to original ID from topic.
     var request = new ROSLIB.ServiceRequest({
-        routeID: id.toString().replace('rb', '')
+        routeID: selectedRouteid
     });
 
     //Selected Route
@@ -223,7 +229,6 @@ function setRoute(id) {
 
     // Call the service and get back the results in the callback.
     setActiveRouteClient.callService(request, function (result) {
-
         if (result.errorStatus == 1) //Error: NO_ROUTE
         {
             divCapabilitiesMessage.innerHTML = '<p> Activating the route failed, please try it again.</p>';
@@ -240,6 +245,9 @@ function setRoute(id) {
             //      Only when a route is selected and at least one plugin is selected, could Guidance be Engaged.
             startActiveRoute(id);
 
+            //Subscribe to active route to map the segments
+            showActiveRoute();
+            showNavSatFix();
         }
     });
 }
@@ -263,11 +271,16 @@ function startActiveRoute(id) {
     // Call the service and get back the results in the callback.
     startActiveRouteClient.callService(request, function (result) {
 
+        //alert ('result.errorStatus:' + result.errorStatus);
+
         if (result.errorStatus != 0 && result.errorStatus != 3) {
-            divCapabilitiesMessage.innerHTML += '<p> Starting the active the route failed, please try it again.</p>';
+            divCapabilitiesMessage.innerHTML = '<p> Starting the active the route failed, please try it again or contact your System Administrator.</p>';
+
+            //Allow user to select the route again
+            var rbRoute = document.getElementById(id.toString());
+            rbRoute.checked = false;
         }
         else { //Call succeeded //NO_ERROR=0 ; ALREADY_FOLLOWING_ROUTE=3;
-
             showSubCapabilitiesView(id);
         }
     });
@@ -277,7 +290,9 @@ function startActiveRoute(id) {
     After capabilities is initially selected, store route name and the plugin list.
 */
 function showSubCapabilitiesView(id) {
-    var lblRoute = document.getElementById(id.toString().replace('rb', 'lbl'));
+
+    var labelId = id.toString().replace('rb', 'lbl');
+    var lblRoute = document.getElementById(labelId);
 
     if (lblRoute == null)
         return;
@@ -337,9 +352,10 @@ function showPluginOptions() {
             var cbTitle = pluginList[i].name + ' ' + pluginList[i].versionId;
             var cbId = pluginList[i].name.replace(/\s/g, '_') + '&' + pluginList[i].versionId.replace(/\./g, '_');
             var isChecked = pluginList[i].activated;
+            var isRequired = pluginList[i].required;
 
             //Create the checkbox based on the plugin properties.
-            createCheckboxElement(divSubCapabilities, cbId, cbTitle, pluginList.length, 'groupPlugins', isChecked);
+            createCheckboxElement(divSubCapabilities, cbId, cbTitle, pluginList.length, 'groupPlugins', isChecked, isRequired);
         }
 
         //If no selection available.
@@ -358,9 +374,20 @@ function showPluginOptions() {
 function activatePlugin(id) {
 
     var cbCapabilities = document.getElementById(id);
+    var lblCapabilities = document.getElementById(id.toString().replace('cb', 'lbl'));
 
     //NOTE: Already set by browser to have NEW checked value.
     var newStatus = cbCapabilities.checked;
+
+    //If the plugin is required to be on all times, it cannot be deactivated by the user, so need to notify users with a specific message.
+    //Regardless, the call to activate plugin will fail.
+    if (newStatus == false && lblCapabilities.innerHTML.indexOf('*') > 0 )
+    {
+        divCapabilitiesMessage.innerHTML = 'Sorry, this capability is required. It cannot be deactivated.';
+        //Need to set it back to original value.
+        cbCapabilities.checked = !newStatus;
+        return;
+    }
 
     // If guidance is engaged, at least 1 plugin must be selected.
     if (guidance_engaged == true) {
@@ -376,7 +403,7 @@ function activatePlugin(id) {
         }
     }
 
-    // Calling setActiveRoute service
+    // Calling service
     var activatePluginClient = new ROSLIB.Service({
         ros: ros,
         name: s_activate_plugins,
@@ -418,8 +445,6 @@ function activatePlugin(id) {
 
         //Set to new state set by the PluginManager.
         cbCapabilities.checked = result.newState;
-
-        var lblCapabilities = document.getElementById(id.toString().replace('cb', 'lbl'));
 
         if (cbCapabilities.checked == false) {
             lblCapabilities.style.backgroundColor = 'gray';
@@ -656,17 +681,6 @@ function printParam(itemName, index) {
 */
 function getFutureTopics() {
 
-    var listenerNavSatFix = new ROSLIB.Topic({
-        ros: ros,
-        name: t_nav_sat_fix,
-        messageType: 'sensor_msgs/NavSatFix'
-    });
-
-    listenerNavSatFix.subscribe(function (message) {
-        document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerNavSatFix.name + ': ' + message.status;
-        //listenerNavSatFix.unsubscribe();
-    });
-
     /*
       var listenerRouteSegment = new ROSLIB.Topic({
         ros : ros,
@@ -732,9 +746,96 @@ function checkRouteInfo() {
 }
 
 /*
+    Watch out for route completed, and display the Route State in the System Status tab.
+    Route state are only set and can be shown after Route has been selected.
+*/
+function showActiveRoute() {
+
+    //Get Route State
+    var listenerRoute = new ROSLIB.Topic({
+        ros: ros,
+        name: t_active_route,
+        messageType: 'cav_msgs/Route'
+    });
+
+    listenerRoute.subscribe(function (message) {
+        //message.routeID
+        //message.routeName
+        //message.segments
+
+        if (route_name == 'undefined' || route_name == null)
+            return;
+
+        //If nothing on the list, set all selected checkboxes back to blue (or active).
+        if (message.segments == null || message.segments.length == 0) {
+            divCapabilitiesMessage.innerHTML += '<p> There were no segments found the active route.</p>';
+            return;
+        }
+
+        //Only map the segment one time.
+        if (sessionStorage.getItem('routePlanCoordinates') == null)
+            message.segments.forEach(mapEachRouteSegment);
+
+    });
+}
+
+/*
+    Loop through each available plugin
+*/
+function mapEachRouteSegment(segment) {
+
+    var segmentLat = segment.waypoint.latitude;
+    var segmentLon = segment.waypoint.longitude;
+    var position = new google.maps.LatLng( segmentLat, segmentLon);
+
+    //create new list
+    if (sessionStorage.getItem('routePlanCoordinates') == null)
+    {
+        var routeCoordinates = [];
+        routeCoordinates.push(position);
+        sessionStorage.setItem("routePlanCoordinates", JSON.stringify(routeCoordinates));
+    }
+    else //add to existing list.
+    {
+        var routeCoordinates = sessionStorage.getItem("routePlanCoordinates");
+        routeCoordinates = JSON.parse(routeCoordinates);
+        routeCoordinates.push(position);
+        sessionStorage.setItem("routePlanCoordinates", JSON.stringify(routeCoordinates));
+    }
+}
+
+/*
+    Update the host marker based on the latest NavSatFix position.
+*/
+function showNavSatFix() {
+
+    var listenerNavSatFix = new ROSLIB.Topic({
+        ros: ros,
+        name: t_nav_sat_fix,
+        messageType: 'sensor_msgs/NavSatFix'
+    });
+
+    listenerNavSatFix.subscribe(function (message) {
+        if (message.latitude == null || message.longitude == null)
+            return;
+
+        if (hostmarker != null)
+        {
+            moveMarkerWithTimeout(hostmarker, message.latitude, message.longitude, 0);
+            insertNewTableRow('tblFirst', 'NavSatStatus', message.status.status);
+            insertNewTableRow('tblFirst', 'Latitude', message.latitude.toFixed(6));
+            insertNewTableRow('tblFirst', 'Longitude', message.longitude.toFixed(6));
+            insertNewTableRow('tblFirst', 'Altitude', message.altitude.toFixed(6));
+        }
+        //listenerNavSatFix.unsubscribe();
+    });
+
+}
+/*
     Display the close loop control of speed
 */
 function showSpeedAccelInfo() {
+
     //Get Route State
     var listenerSpeedAccel = new ROSLIB.Topic({
         ros: ros,
@@ -803,7 +904,7 @@ function showStatusandLogs()
 
     //Displays under System Logs
     getParams();
-    getFutureTopics();
+    //getFutureTopics();
     getVehicleInfo();
     showSpeedAccelInfo();
 }
@@ -835,11 +936,10 @@ function waitForSystemReady() {
     }, 5000)//  ..  setTimeout()
 }
 
-/* Evaluate next step AFTER connecting
-
-Scenario1 : Initial Load
-Scenario 2: Refresh on particular STEP
-
+/*
+    Evaluate next step AFTER connecting
+    Scenario1 : Initial Load
+    Scenario 2: Refresh on particular STEP
 */
 function evaluateNextStep() {
 
@@ -851,7 +951,14 @@ function evaluateNextStep() {
     }
 
     if (route_name != '') {
+
         showSubCapabilitiesView2();
+
+        //Subscribe to active route to map the segments
+        showActiveRoute();
+        //Subscribe to NavSatFix to follow the host vehicle on the map.
+        showNavSatFix();
+        //Display the System Status and Logs.
         showStatusandLogs();
 
         //Enable the CAV Guidance button regardless plugins are selected
@@ -863,7 +970,6 @@ function evaluateNextStep() {
         }
 
         return;
-
     }//IF
 }//evaluateNextStep
 
@@ -887,7 +993,9 @@ window.onload = function () {
             system_ready = Boolean(isSystemReady);
 
         if (routeName != 'undefined' && routeName != null)
+        {
             route_name = routeName;
+        }
 
         if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '')
             guidance_engaged = Boolean(isGuidanceEngaged);
