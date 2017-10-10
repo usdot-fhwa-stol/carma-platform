@@ -16,6 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+/**
+ * Temporary stand-in IManeuver interface, pending implementation of Maneuvers assembly
+ * TODO: Replace with Maneuvers implementation
+ */
 public interface IManeuver {
   enum ManeuverType {
     LATERAL,

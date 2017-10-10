@@ -22,6 +22,12 @@ import java.util.List;
 
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
 
+/**
+ * Data structure and helper method container for describing and creating vehicle trajectories
+ * </p>
+ * Stores both lateral and longitudinal trajectories made of maneuvers that can be individually executed
+ * to command the vehicle
+ */
 public class Trajectory {
 
   protected double startLocation;
@@ -29,6 +35,9 @@ public class Trajectory {
   protected List<IManeuver> lateralManeuvers;
   protected List<IManeuver> longitudinalManeuvers;
 
+  /**
+   * Create a new trajectory instance that will command the vehicle on distances [startLocation, endLocation)
+   */
   public Trajectory(double startLocation, double endLocation) {
     this.startLocation = startLocation;
     this.endLocation = endLocation;
@@ -37,6 +46,12 @@ public class Trajectory {
     longitudinalManeuvers = new ArrayList<IManeuver>();
   }
 
+  /**
+   * Add a lateral maneuver to the Trajectory.
+   * </p>
+   * The maneuver will be added to the list of lateral maneuvers if the maneuver is
+   * actually a lateral maneuver and falls within the space domain boundaries of the trajectory
+   */
   public boolean addLateralManeuver(IManeuver maneuver) {
     if (maneuver.getType() != ManeuverType.LATERAL) {
       return false;
@@ -50,6 +65,12 @@ public class Trajectory {
     return lateralManeuvers.add(maneuver);
   }
 
+  /**
+   * Add a longitudinal maneuver to the Trajectory.
+   * </p>
+   * The maneuver will be added to the list of longitudinal maneuvers if the maneuver is
+   * actually a longitudinal maneuver and falls within the space domain boundaries of the trajectory
+   */
   public boolean addLongitudinalManeuver(IManeuver maneuver) {
     if (maneuver.getType() != ManeuverType.LONGITUDINAL) {
       return false;
@@ -63,6 +84,12 @@ public class Trajectory {
     return longitudinalManeuvers.add(maneuver);
   }
 
+  /**
+   * Find the earliest available space in the longitudinal domain of the current trajectory for 
+   * which a maneuver of the specified size might fit.
+   * 
+   * @returns The distance location of the start of the window if found, -1 otherwise
+   */
   public double findEarliestWindowOfSize(double size) {
     if (longitudinalManeuvers.size() == 0) {
       return -1;
@@ -87,6 +114,12 @@ public class Trajectory {
     return -1;
   }
 
+  /**
+   * Find the latest available space in the longitudinal domain of the current trajectory for 
+   * which a maneuver of the specified size might fit.
+   * 
+   * @returns The distance location of the start of the window if found, -1 otherwise
+   */
   public double findLatestWindowOfSize(double size) {
     if (longitudinalManeuvers.size() == 0) {
       return -1;
@@ -112,6 +145,9 @@ public class Trajectory {
     return -1;
   }
 
+  /**
+   * Get a list of all maneuvers that will be active at loc
+   */
   public List<IManeuver> getManeuversAt(double loc) {
     List<IManeuver> out = new ArrayList<>();
 
@@ -130,6 +166,9 @@ public class Trajectory {
     return out;
   }
 
+  /**
+   * Get the next lateral maneuver which will be active after loc, null if one cannot be found
+   */
   public IManeuver getNextLateralManeuverAfter(double loc) {
     lateralManeuvers.sort(new Comparator<IManeuver>() {
 		@Override
@@ -146,6 +185,9 @@ public class Trajectory {
     return null;
   }
 
+  /**
+   * Get the next longitudinal maneuver which will be active after loc, null if one cannot be found
+   */
   public IManeuver getNextLongitudinalManeuverAfter(double loc) {
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
 		@Override
