@@ -290,10 +290,8 @@
       <remap from="system_alert"
              to="/$(arg TOP_NS)/system_alert"/>
 
-      <!-- Arada OBU Driver Node -->
-      <node unless="$(arg mock_arada)" pkg="arada" type="arada_node" name="arada_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
-      </node>
+      <!-- DSRC OBU Driver Node -->
+      <include unless="$(arg mock_arada)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
       <!-- Simulated Arada Driver Node -->
       <node if="$(arg mock_arada)" pkg="carma" type="mock_drivers" name="arada_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
