@@ -102,7 +102,7 @@ public class Trajectory {
     double lastStart = longitudinalManeuvers.get(longitudinalManeuvers.size() - 1).getEndLocation();
     for (int i = longitudinalManeuvers.size() - 1; i >= 0; i--) {
       IManeuver m = longitudinalManeuvers.get(i);
-      if (m.getEndLocation() - lastStart >= size)  {
+      if (lastStart - m.getEndLocation() >= size)  {
         return m.getEndLocation();
       }
 
