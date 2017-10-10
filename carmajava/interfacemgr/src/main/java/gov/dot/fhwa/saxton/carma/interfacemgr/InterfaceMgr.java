@@ -51,7 +51,7 @@ import java.util.List;
  * rosparam set /interface_mgr/driver_wait_time 10
  * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  */
-public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
+public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
     protected InterfaceWorker worker_;
     protected Log log_;

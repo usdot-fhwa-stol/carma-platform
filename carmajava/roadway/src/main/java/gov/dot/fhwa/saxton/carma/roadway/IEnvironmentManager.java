@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.roadway;
 
 import org.ros.message.Time;
+import org.ros.rosjava_geometry.Transform;
 import tf2_msgs.TFMessage;
 
 /**
@@ -22,6 +23,11 @@ public interface IEnvironmentManager {
    * Publishes a roadway environment ros message
    */
   void publishRoadwayEnvironment(cav_msgs.RoadwayEnvironment roadwayEnvMsg);
+
+  /**
+   * Gets the transform of between the requested frames
+   */
+  Transform getTransformSrv(String parentFrame, String childFrame);
 
   /**
    * Gets the current time

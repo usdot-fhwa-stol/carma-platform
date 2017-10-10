@@ -51,7 +51,7 @@ uint8[] lane_closures
 float32 nearest_mile_marker
 
 # A list of needed maneuvers
-# cav_msgs/Maneuver[] needed_maneuvers
+cav_msgs/Maneuver[] needed_maneuvers
 
 # The index of the lane that the vehicle must enter to continue on its route
 uint8 required_lane_index

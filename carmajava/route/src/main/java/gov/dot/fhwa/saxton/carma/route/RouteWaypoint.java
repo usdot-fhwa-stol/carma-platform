@@ -110,6 +110,9 @@ public class RouteWaypoint {
     routeWPMsg.setLaneCount((byte) laneCount);
     routeWPMsg.setDisabledGuidanceAlgorithms(disabledGuidanceAlgorithms);
     routeWPMsg.setNeededManeuvers(neededManeuvers);
+    routeWPMsg.setInteriorLaneMarkings(interiorLaneMarkings.toMessage());
+    routeWPMsg.setLeftMostLaneMarking(leftMostLaneMarking.toMessage());
+    routeWPMsg.setRightMostLaneMarking(rightMostLaneMarking.toMessage());
 
     byte[] laneClosuresAsBytes = new byte[laneClosures.size()];
     for (int i = 0; i < laneClosures.size(); i++) {
@@ -139,9 +142,9 @@ public class RouteWaypoint {
     wp.setLaneCount(waypointMsg.getLaneCount());
     wp.setLowerSpeedLimit(waypointMsg.getLowerSpeedLimit());
     wp.setUpperSpeedLimit(waypointMsg.getSpeedLimit());
-    wp.setLeftMostLaneMarking(waypointMsg.getLeftMostLaneMarking());
-    wp.setInteriorLaneMarkings(waypointMsg.getInteriorLaneMarking());
-    wp.setRightMostLaneMarking(waypointMsg.getRightMostLaneMarking());
+    wp.setLeftMostLaneMarking(LaneEdgeType.fromMessge(waypointMsg.getLeftMostLaneMarking()));
+    wp.setInteriorLaneMarkings(LaneEdgeType.fromMessge(waypointMsg.getInteriorLaneMarkings()));
+    wp.setRightMostLaneMarking(LaneEdgeType.fromMessge(waypointMsg.getRightMostLaneMarking()));
 
     // Set member variables according to set fields bit mask
     int bitMask = waypointMsg.getSetFields();

@@ -17,8 +17,13 @@
 package gov.dot.fhwa.saxton.carma.roadway;
 
 import cav_msgs.*;
+import cav_srvs.GetDriverApiResponse;
+import cav_srvs.GetTransformRequest;
+import cav_srvs.GetTransformResponse;
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
+import org.ros.exception.RemoteException;
 import org.ros.message.MessageFactory;
 import org.ros.message.MessageListener;
 import org.ros.concurrent.CancellableLoop;
@@ -26,9 +31,11 @@ import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
+import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.service.ServiceClient;
+import org.ros.rosjava_geometry.Transform;
 import tf2_msgs.TFMessage;
 
 /**
@@ -197,15 +204,43 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
   }
 
   @Override public void publishTF(TFMessage tfMessage) {
-
+    tfPub.publish(tfMessage);
   }
 
   @Override public void publishSystemAlert(SystemAlert alertMsg) {
-
+    systemAlertPub.publish(alertMsg);
   }
 
   @Override public void publishRoadwayEnvironment(RoadwayEnvironment roadwayEnvMsg) {
+    roadwayEnvPub.publish(roadwayEnvMsg);
+  }
 
+  @Override public Transform getTransformSrv(String parentFrame, String childFrame) {
+    final GetTransformRequest req = getTransformClient.newMessage();
+    req.setParentFrame(parentFrame);
+    req.setChildFrame(childFrame);
+    final ResultHolder rh = new ResultHolder();
+    try {
+      RosServiceSynchronizer.callSync(getTransformClient, req,
+        new ServiceResponseListener<GetTransformResponse>() {
+          @Override
+          public void onSuccess(GetTransformResponse response) {
+            if (response.getErrorStatus() != GetTransformResponse.NO_ERROR) {
+              connectedNode.getLog().warn("Attempt to get transform failed with error code: " + response.getErrorStatus());
+              resultTF = null;
+              return;
+            }
+          }
+
+          @Override
+          public void onFailure(RemoteException e) {
+            connectedNode.getLog().warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+          }
+        });
+    } catch (InterruptedException e) {
+      connectedNode.getLog().warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+    }
+    return null;
   }
 
   @Override public Time getTime() {
