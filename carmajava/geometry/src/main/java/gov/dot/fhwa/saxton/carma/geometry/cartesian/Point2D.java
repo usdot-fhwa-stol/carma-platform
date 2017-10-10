@@ -14,35 +14,32 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian;// Change
 
 /**
- * A representation of a point in 3-dimensional space.
+ * A representation of a point in 2-dimensional space.
  */
-public class Point3D extends Point{
+public class Point2D extends Point{
 
   private static final int X_DIM = 0;
   private static final int Y_DIM = 1;
-  private static final int Z_DIM = 2;
 
   /**
-   * Constructor defines a 3d point with the provided x and y values
+   * Constructor defines a 2d point with the provided x and y values
    * @param x x-axis value
    * @param y y-axis value
-   * @param z z-axis value
    */
-  public Point3D(double x, double y, double z){
-    super(0, 0, 0); // Ensure there is space for x,y,z
+  public Point2D(double x, double y) {
+    super(0, 0); //Ensure there is room for x and y
     this.dimensions[X_DIM] = x;
     this.dimensions[Y_DIM] = y;
-    this.dimensions[Z_DIM] = z;
   }
 
   /**
    * Constructor defines this point as a deep copy of the provided point
    * @param p The point to copy
    */
-  public Point3D(Point3D p) {
+  public Point2D(Point2D p) {
     super(p);
   }
 
@@ -63,14 +60,6 @@ public class Point3D extends Point{
   }
 
   /**
-   * Gets the z-axis value
-   * @return z-axis value
-   */
-  public double getZ(){
-    return this.dimensions[Z_DIM];
-  }
-
-  /**
    * Sets the x-axis value
    * @param value x-axis value to set
    */
@@ -87,14 +76,6 @@ public class Point3D extends Point{
   }
 
   /**
-   * Sets the z-axis value
-   * @param value z-axis value to set
-   */
-  public void setZ(double value){
-    this.dimensions[Z_DIM] = value;
-  }
-
-  /**
    * Gets the index used internally to mark the x-axis dimension
    * @return The index
    */
@@ -108,13 +89,5 @@ public class Point3D extends Point{
    */
   public static int getYIndex() {
     return Y_DIM;
-  }
-
-  /**
-   * Gets the index used internally to mark the z-axis dimension
-   * @return The index
-   */
-  public static int getZIndex() {
-    return Z_DIM;
   }
 }
