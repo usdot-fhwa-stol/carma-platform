@@ -53,8 +53,6 @@ public class NodeName extends SaxtonBaseNode {
 
     setSource(NodeName.class.getName()); //Source name for the log
 
-    final Log log = connectedNode.getLog();
-
     //TODO: Column G topic name
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
     Subscriber<cav_msgs.SystemAlert> subscriber = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
@@ -86,7 +84,6 @@ public class NodeName extends SaxtonBaseNode {
                                       }
 
                                       //TODO: Replace with Column D node name
-                                      //log.info("node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
                                       logInfo("TAGNAME", "node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
 
                                     }//onNewMessage
