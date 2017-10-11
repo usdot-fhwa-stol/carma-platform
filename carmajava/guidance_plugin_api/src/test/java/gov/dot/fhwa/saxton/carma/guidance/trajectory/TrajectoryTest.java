@@ -221,11 +221,11 @@ public class TrajectoryTest {
 
   @Test
   public void testGetNextLateralManeuverAfterEmpty() {
-    IManeuver m = traj.getNextLateralManeuverAfter(0.0);
+    IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(null, m);
 
     traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0));
-    m = traj.getNextLateralManeuverAfter(0.0);
+    m = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(null, m);
   }
 
@@ -233,7 +233,7 @@ public class TrajectoryTest {
   public void testGetNextLateralManeuverAfter1() {
     IManeuver m = new TestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
     traj.addManeuver(m);
-    IManeuver m1 = traj.getNextLateralManeuverAfter(0.0);
+    IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(m, m1);
   }
 
@@ -243,7 +243,7 @@ public class TrajectoryTest {
 
     IManeuver m = new TestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
     traj.addManeuver(m);
-    IManeuver m1 = traj.getNextLateralManeuverAfter(0.0);
+    IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(m, m1);
   }
 
@@ -251,17 +251,17 @@ public class TrajectoryTest {
   public void testGetNextLateralManeuverAfterFail() {
     traj.addManeuver(new TestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
 
-    IManeuver m = traj.getNextLateralManeuverAfter(0.0);
+    IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(null, m);
   }
 
   @Test
   public void testGetNextLongitudinalManeuverAfterEmpty() {
-    IManeuver m = traj.getNextLongitudinalManeuverAfter(0.0);
+    IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(null, m);
 
     traj.addManeuver(new TestManeuver(ManeuverType.LATERAL, 1.0, 2.0));
-    m = traj.getNextLongitudinalManeuverAfter(0.0);
+    m = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(null, m);
   }
 
@@ -269,7 +269,7 @@ public class TrajectoryTest {
   public void testGetNextLongitudinalManeuverAfter1() {
     IManeuver m = new TestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
     traj.addManeuver(m);
-    IManeuver m1 = traj.getNextLongitudinalManeuverAfter(0.0);
+    IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(m, m1);
   }
 
@@ -279,7 +279,7 @@ public class TrajectoryTest {
 
     IManeuver m = new TestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
     traj.addManeuver(m);
-    IManeuver m1 = traj.getNextLongitudinalManeuverAfter(0.0);
+    IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(m, m1);
   }
 
@@ -287,7 +287,7 @@ public class TrajectoryTest {
   public void testGetNextLongitudinalManeuverAfterFail() {
     traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0.0, 0.0));
 
-    IManeuver m = traj.getNextLongitudinalManeuverAfter(0.0);
+    IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(null, m);
   }
 

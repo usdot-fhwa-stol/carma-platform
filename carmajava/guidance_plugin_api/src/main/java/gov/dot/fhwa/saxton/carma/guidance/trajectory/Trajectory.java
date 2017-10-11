@@ -143,19 +143,6 @@ public class Trajectory {
     return out;
   }
 
-  /**
-   * Get the next lateral maneuver which will be active after loc, null if one cannot be found
-   */
-  public IManeuver getNextLateralManeuverAfter(double loc) {
-    sortLateralManeuvers();
-    for (IManeuver m : lateralManeuvers) {
-      if (m.getStartLocation() > loc) {
-        return m;
-      }
-    }
-    return null;
-  }
-
   private void sortLateralManeuvers() {
     lateralManeuvers.sort(new Comparator<IManeuver>() {
 		@Override
@@ -175,16 +162,33 @@ public class Trajectory {
   }
 
   /**
-   * Get the next longitudinal maneuver which will be active after loc, null if one cannot be found
+   * Get the next maneuver of the specified type which will be active after loc, null if one cannot be found
    */
-  public IManeuver getNextLongitudinalManeuverAfter(double loc) {
-    sortLongitudinalManeuvers();
+  public IManeuver getNextManeuverAfter(double loc, ManeuverType type) {
+    if (type == ManeuverType.LONGITUDINAL) {
+      sortLongitudinalManeuvers();
 
-    for (IManeuver m : longitudinalManeuvers) {
-      if (m.getStartLocation() > loc) {
-        return m;
+      for (IManeuver m : longitudinalManeuvers) {
+        if (m.getStartLocation() > loc) {
+          return m;
+        }
       }
+
+      return null;
+    } 
+
+    if (type == ManeuverType.LATERAL) {
+      sortLateralManeuvers();
+
+      for (IManeuver m : lateralManeuvers) {
+        if (m.getStartLocation() > loc) {
+          return m;
+        }
+      }
+
+      return null;
     }
+
     return null;
   }
 }
