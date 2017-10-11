@@ -70,8 +70,11 @@ public class GeodesicCartesianConverter {
     double lon = 2.0*Math.atan(y / (x + p));
     double lat = Math.atan((z + (e_p * e_p) * Reb * Math.pow(Math.sin(theta), 3)) / (p - e_sqr * Rea * Math.pow(Math.cos(theta), 3)));
 
-    double N = Rea_sqr / Math.sqrt(Rea_sqr * Math.pow(Math.cos(lat), 2) + Reb_sqr * Math.pow(Math.sin(lat),2));
-    double alt = (p / Math.cos(lat)) - N;
+    double cosLat = Math.cos(lat);
+    double sinLat = Math.sin(lat);
+
+    double N = Rea_sqr / Math.sqrt(Rea_sqr * cosLat * cosLat + Reb_sqr * sinLat * sinLat);
+    double alt = (p / cosLat) - N;
 
     return new Location(Math.toDegrees(lat),Math.toDegrees(lon),alt);
   }
@@ -90,11 +93,16 @@ public class GeodesicCartesianConverter {
     double latRad = location.getLatRad();
     double alt = location.getAltitude();
 
-    double Ne = Rea / Math.sqrt(1.0 - e_sqr * Math.pow(Math.sin(latRad),2));// The prime vertical radius of curvature
+    double sinLat = Math.sin(latRad);
+    double sinLon = Math.sin(lonRad);
+    double cosLat = Math.cos(latRad);
+    double cosLon = Math.cos(lonRad);
 
-    double x = (Ne + alt)*Math.cos(latRad)*Math.cos(lonRad);
-    double y = (Ne + alt)*Math.cos(latRad)*Math.sin(lonRad);
-    double z = (Ne*(1-e_sqr) + alt) * Math.sin(latRad);
+    double Ne = Rea / Math.sqrt(1.0 - e_sqr * sinLat * sinLat);// The prime vertical radius of curvature
+
+    double x = (Ne + alt)*cosLat*cosLon;
+    double y = (Ne + alt)*cosLat*sinLon;
+    double z = (Ne*(1-e_sqr) + alt) * sinLat;
 
     Vector3 pointBeforeTransform = new Vector3(x,y,z);
     Vector3 resultant = frame2ecefTransform.apply(pointBeforeTransform);
