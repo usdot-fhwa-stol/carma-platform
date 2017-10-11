@@ -33,7 +33,7 @@ public class EnvironmentWorker {
   protected boolean headingRecieved = false;
   protected boolean navSatFixRecieved = false;
   protected Location hostVehicleLocation = null;
-  protected double hostVehicleHeading = 0.0;
+  protected double[] hostVehicleHeadingYPR = new double[3];
     // The heading of the vehicle in degrees east of north in an NED frame.
 
   protected Transform mapToOdom = null;
@@ -51,10 +51,13 @@ public class EnvironmentWorker {
 
   public void handleHeadingMsg(cav_msgs.HeadingStamped heading) {
     //TODO updates
-    hostVehicleHeading = heading.getHeading();
+    hostVehicleHeadingYPR[0] = heading.getYaw();
+    hostVehicleHeadingYPR[1] = heading.getPitch();
+    hostVehicleHeadingYPR[2] = heading.getRoll();
     headingRecieved = true;
-    Vector3 zAxis = new Vector3(0,0,1);
-    Quaternion hostOrientation = Quaternion.fromAxisAngle(zAxis, hostVehicleHeading);
+    //Vector3 zAxis = new Vector3(0,0,1);
+    //Quaternion hostOrientation = Quaternion.fromAxisAngle(zAxis, hostVehicleHeading);
+    Quaternion hostOrientation = quaternionFromYPR(hostVehicleHeadingYPR[0], hostVehicleHeadingYPR[1], hostVehicleHeadingYPR[2]);
     odomToBaseLink = new Transform(odomToBaseLink.getTranslation(), hostOrientation);
   }
 
@@ -76,14 +79,21 @@ public class EnvironmentWorker {
     //mapToOdom = ecefToNEDFromLocaton(hostVehicleLocation);
     // Check if this will be the first calculated transform
     if (mapToOdom == null) {
-      // Find an NED frame to identify location of north axis
-      Transform initialNED = ecefToNEDFromLocaton(hostVehicleLocation);
-      // Rotate NED frame by heading so it lines up with vehicle
-      Vector3 zAxis = new Vector3(0,0,1);
-      Vector3 identity = new Vector3 (0,0,0);
-      Transform rotateByHeading = new Transform(identity, Quaternion.fromAxisAngle(zAxis, hostVehicleHeading));
-      // Multiply NED by heading to get starting odom location as Front Right Down (FRD) frame
-      mapToOdom = initialNED.multiply(rotateByHeading);
+//      // Find an NED frame to identify location of north axis
+//      Transform initialNED = ecefToNEDFromLocaton(hostVehicleLocation);
+//      // Rotate NED frame by heading so it lines up with vehicle
+//      Vector3 zAxis = new Vector3(0,0,1);
+//      Vector3 identity = new Vector3 (0,0,0);
+//      Transform rotateByHeading = new Transform(identity, Quaternion.fromAxisAngle(zAxis, hostVehicleHeading));
+//      // Multiply NED by heading to get starting odom location as Front Right Down (FRD) frame
+//      mapToOdom = initialNED.multiply(rotateByHeading);
+      GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+      Point3D hostInMap =
+        gcc.geodesic2Cartesian(hostVehicleLocation, envMgr.getTransform(map_frame, earth_frame));
+      Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
+      Quaternion hostRotInMap = quaternionFromYPR(hostVehicleHeadingYPR[0], hostVehicleHeadingYPR[1], hostVehicleHeadingYPR[2]);
+      mapToOdom = new Transform(nTranslation, hostRotInMap);
+      return;
     }
 
     GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
@@ -96,7 +106,7 @@ public class EnvironmentWorker {
     // b = baselink frame (as has been calculated by odometry up to this point)
     // T_n_b = inv(T_m_n) * T_m_o * T_o_b; This is equivalent to the difference between where odom should be and where it is
     Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
-    Quaternion hostRotInMap = quaternionFromYPR(hostVehicleHeading.yaw, hostVehicleHeading.pitch, hostVehicleHeading.roll);
+    Quaternion hostRotInMap = quaternionFromYPR(hostVehicleHeadingYPR[0], hostVehicleHeadingYPR[1], hostVehicleHeadingYPR[2]);
     Transform T_m_n = new Transform(nTranslation, hostRotInMap);
     Transform T_m_o = mapToOdom;
     Transform T_o_b = odomToBaseLink;

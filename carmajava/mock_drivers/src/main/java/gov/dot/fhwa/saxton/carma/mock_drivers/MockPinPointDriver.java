@@ -112,7 +112,7 @@ public class MockPinPointDriver extends AbstractMockDriver {
       // Build Heading Message
       hdr.setFrameId("pinpoint");
       headingMsg.setHeader(hdr);
-      headingMsg.setHeading(Float.parseFloat(elements[HEADING_IDX]));
+      headingMsg.setYaw(Float.parseFloat(elements[HEADING_IDX]));
 
       // Build NavSatFix Message
       hdr.setFrameId("earth");
