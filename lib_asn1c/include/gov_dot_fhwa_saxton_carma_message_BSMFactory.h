@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     gov_dot_fhwa_saxton_carma_message_BSMFactory
  * Method:    encode_BSM
- * Signature: (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;[BLjava/lang/Object;)[B
+ * Signature: (Ljava/lang/Object;[BLjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;[BLjava/lang/Object;)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_encode_1BSM
-  (JNIEnv *, jclass, jobject, jobject, jobject, jobject, jbyteArray, jobject);
+  (JNIEnv *, jclass, jobject, jbyteArray, jobject, jobject, jobject, jbyteArray, jobject);
 
 #ifdef __cplusplus
 }

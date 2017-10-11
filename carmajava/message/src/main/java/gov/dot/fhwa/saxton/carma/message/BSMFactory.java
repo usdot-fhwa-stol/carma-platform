@@ -21,8 +21,8 @@ public class BSMFactory {
 	}
 
 	// Declare native methods
-	private static native byte[] encode_BSM(Object bsm_core, Object accuracy, Object transmission, Object accelset,
-			byte[] brakeStatus, Object size);
+	private static native byte[] encode_BSM(Object bsm_core, byte[] bsm_id, Object accuracy, Object transmission,
+			Object accelset, byte[] brakeStatus, Object size);
 
 	public static void encode(BSM plain_msg, ByteArray skelecton) {
 		byte[] brakeStatus = new byte[] { plain_msg.getCoreData().getBrakes().getWheelBrakes().getBrakeAppliedStatus(),
@@ -31,9 +31,11 @@ public class BSMFactory {
 				plain_msg.getCoreData().getBrakes().getScs().getStabilityControlStatus(),
 				plain_msg.getCoreData().getBrakes().getBrakeBoost().getBrakeBoostApplied(),
 				plain_msg.getCoreData().getBrakes().getAuxBrakes().getAuxiliaryBrakeStatus() };
-		byte[] encode_msg = encode_BSM(plain_msg.getCoreData(), plain_msg.getCoreData().getAccuracy(),
-				plain_msg.getCoreData().getTransmission(), plain_msg.getCoreData().getAccelSet(), brakeStatus,
-				plain_msg.getCoreData().getSize());
+		byte[] encode_msg = encode_BSM(plain_msg.getCoreData(),
+				new byte[] { plain_msg.getCoreData().getId().getByte(0), plain_msg.getCoreData().getId().getByte(1),
+						plain_msg.getCoreData().getId().getByte(2), plain_msg.getCoreData().getId().getByte(3) },
+				plain_msg.getCoreData().getAccuracy(), plain_msg.getCoreData().getTransmission(),
+				plain_msg.getCoreData().getAccelSet(), brakeStatus, plain_msg.getCoreData().getSize());
 		skelecton.setMessageType("BSM");
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
 		skelecton.setContent(buffer);

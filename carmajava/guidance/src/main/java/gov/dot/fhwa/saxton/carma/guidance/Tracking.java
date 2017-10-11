@@ -115,7 +115,7 @@ public class Tracking extends GuidanceComponent {
             cav_msgs.BSM bsmFrame = bsmPublisher.newMessage();
             BSMCoreData coreData = bsmFrame.getCoreData();
             coreData.setMsgCount((byte) 101);
-            coreData.setId((byte) 0); //TODO change it to the right type
+            coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, new byte[] {(byte) 0xAB, 0x44, (byte) 0xD4, 0x4D}));
             coreData.setSecMark((short) 31202);
             coreData.setLatitude(41252 / 10000000.0);
             coreData.setLongitude(-21000001 / 10000000.0);

@@ -5,7 +5,7 @@
 
 //This is just a test for C wrapper of asn1c library
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_encode_1BSM
-  (JNIEnv *env, jclass cls, jobject bsm, jobject accuracy, jobject transmission, jobject accelset, jbyteArray brakestatus, jobject size) {
+  (JNIEnv *env, jclass cls, jobject bsm, jbyteArray bsm_id, jobject accuracy, jobject transmission, jobject accelset, jbyteArray brakestatus, jobject size) {
 
 	uint8_t buffer[128];
 	size_t buffer_size = sizeof(buffer);
@@ -37,8 +37,13 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	message->value.choice.BasicSafetyMessage.coreData.msgCnt = msgCount;
 	//message->value.choice.BasicSafetyMessage.coreData.msgCnt = 101;
 
-	//TODO it is hard code for now and will fix later
-	uint8_t content[4] = {0xAB, 0x44, 0xD4, 0x4D};
+	uint8_t content[4] = {0x00, 0x00, 0x00, 0x00};
+	jbyte *bsm_msg_id = (*env) -> GetByteArrayElements(env, bsm_id, 0);
+	if(bsm_msg_id == NULL) return NULL;
+	for(int i = 0; i < 4; i++) {
+		content[i] = bsm_msg_id[i];
+	}
+	(*env) -> ReleaseByteArrayElements(env, bsm_id, bsm_msg_id, 0);
 	message->value.choice.BasicSafetyMessage.coreData.id.buf = content;
 	message->value.choice.BasicSafetyMessage.coreData.id.size = 4;
 
@@ -125,6 +130,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	message->value.choice.BasicSafetyMessage.coreData.brakes.scs = inCArray[3];
 	message->value.choice.BasicSafetyMessage.coreData.brakes.brakeBoost = inCArray[4];
 	message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes = inCArray[5];
+	(*env) -> ReleaseByteArrayElements(env, brakestatus, inCArray, 0);
 //	message->value.choice.BasicSafetyMessage.coreData.brakes.traction = 2;
 //	message->value.choice.BasicSafetyMessage.coreData.brakes.abs = 3;
 //	message->value.choice.BasicSafetyMessage.coreData.brakes.scs = 1;

@@ -14,7 +14,7 @@
 uint8 msg_count 
 
 #TemporaryID ::= OCTET STRING (SIZE(4))
-byte id 
+uint8[] id 
 
 #DSecond ::= INTEGER (0..65535) -- units of milliseconds
 uint16 sec_mark 

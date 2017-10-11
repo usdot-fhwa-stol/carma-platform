@@ -112,12 +112,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 						driversReady = true;
 						messageTypeFullDescription = "System ready alert and is beginning to publish";
 						break;
-					case SystemAlert.SHUTDOWN:
-						if(driversReady) {
-							log.info("MessageConsumer: Received SHUTDOWN Message. Message node is shutting down...");
-							connectedNode.shutdown();
-						}
-						break;
 					default:
 						if(driversReady) messageTypeFullDescription = "Unknown system alert type but system is ready";
 						else messageTypeFullDescription = "Unknown system alert type and system is not ready";
@@ -132,39 +126,17 @@ public class MessageConsumer extends SaxtonBaseNode {
 			log.warn(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
 		}
 		
-		//Setup request and make service call with synchronizer to GetDriversWithCapabilitiesResponse to find comms driver
-		try {
-			GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
-			request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
-			while(!driversReady) Thread.sleep(3000);
-			RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
-				@Override
-				public void onSuccess(GetDriversWithCapabilitiesResponse response) {
-					responseCapabilities_comms = response.getDriverData();
-					log.info("MessageConsumer GetDriversWithCapabilitiesResponse: " + responseCapabilities_comms);
-				}
-				@Override
-				public void onFailure(RemoteException e) {
-					throw new RosRuntimeException(e);
-				}
-			});
-		} catch(Exception e) {
-			log.error("Excepetion trapped while request driver capabilities");
-			e.printStackTrace();
-		}
-		
-		//Publishers
-		outboundPub = connectedNode.newPublisher(responseCapabilities_comms.get(1), ByteArray._TYPE);
-		
 		//Subscribers
 		hostBsmSub = connectedNode.newSubscriber("/saxton_cav/guidance/bsm", BSM._TYPE);
 		hostBsmSub.addMessageListener(new MessageListener<BSM>() {
 			@Override
 			public void onNewMessage(BSM bsm) {
-				log.info("MessageConsumer received BSM. Publishing it as ByteArray message...");
-				ByteArray byteArray = outboundPub.newMessage();
-				BSMFactory.encode(bsm, byteArray);
-				outboundPub.publish(byteArray);
+				if(outboundPub != null && driversReady) {
+					log.info("MessageConsumer received BSM. Publishing it as ByteArray message...");
+					ByteArray byteArray = outboundPub.newMessage();
+					BSMFactory.encode(bsm, byteArray);
+					outboundPub.publish(byteArray);
+				}
 			}
 		});		
 		
@@ -290,6 +262,28 @@ public class MessageConsumer extends SaxtonBaseNode {
 			protected void setup() { sequenceNumber = 0; } //setup
 			@Override
 			protected void loop() throws InterruptedException {
+				if(outboundPub == null && driversReady) {
+					//Setup request and make service call with synchronizer to GetDriversWithCapabilitiesResponse to find comms driver
+					try {
+						GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
+						request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
+						RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
+							@Override
+							public void onSuccess(GetDriversWithCapabilitiesResponse response) {
+								responseCapabilities_comms = response.getDriverData();
+								log.info("MessageConsumer GetDriversWithCapabilitiesResponse: " + responseCapabilities_comms);
+							}
+							@Override
+							public void onFailure(RemoteException e) {
+								throw new RosRuntimeException(e);
+							}
+						});
+					} catch(Exception e) {
+						log.error("Excepetion trapped while request driver capabilities");
+						e.printStackTrace();
+					}
+					outboundPub = connectedNode.newPublisher(responseCapabilities_comms.get(1), ByteArray._TYPE);
+				}
 				sequenceNumber++;
 				Thread.sleep(1000);
 			}//loop

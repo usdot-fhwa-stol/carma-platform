@@ -17,7 +17,7 @@ aux_source_directory(src SRC_LIST)
 
 catkin_package(
 	INCLUDE_DIRS include
-	##LIBRARIES
+	LIBRARIES asn1c
 	##CATKIN_DEPENDS
 	##DEPENDS
 )
