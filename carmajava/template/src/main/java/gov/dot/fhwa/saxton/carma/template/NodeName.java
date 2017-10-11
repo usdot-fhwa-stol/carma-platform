@@ -51,6 +51,8 @@ public class NodeName extends SaxtonBaseNode {
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
 
+    setSource(NodeName.class.getName()); //Source name for the log
+
     final Log log = connectedNode.getLog();
 
     //TODO: Column G topic name
@@ -84,7 +86,8 @@ public class NodeName extends SaxtonBaseNode {
                                       }
 
                                       //TODO: Replace with Column D node name
-                                      log.info("node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+                                      //log.info("node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+                                      logInfo("TAGNAME", "node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
 
                                     }//onNewMessage
                                   }//MessageListener
