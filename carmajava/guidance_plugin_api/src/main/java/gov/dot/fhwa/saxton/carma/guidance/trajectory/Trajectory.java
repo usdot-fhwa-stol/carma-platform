@@ -34,6 +34,8 @@ public class Trajectory {
   protected double endLocation;
   protected List<IManeuver> lateralManeuvers;
   protected List<IManeuver> longitudinalManeuvers;
+  protected boolean lateralManeuversSorted = true;
+  protected boolean longitudinalManeuversSorted = true;
 
   /**
    * Create a new trajectory instance that will command the vehicle on distances [startLocation, endLocation)
@@ -47,41 +49,28 @@ public class Trajectory {
   }
 
   /**
-   * Add a lateral maneuver to the Trajectory.
+   * Add a maneuver to the Trajectory.
    * </p>
-   * The maneuver will be added to the list of lateral maneuvers if the maneuver is
-   * actually a lateral maneuver and falls within the space domain boundaries of the trajectory
+   * The maneuver will be added to the appropriate maneuvers list if it fits spatially within the domain of
+   * this trajectory instance.
    */
-  public boolean addLateralManeuver(IManeuver maneuver) {
-    if (maneuver.getType() != ManeuverType.LATERAL) {
-      return false;
-    }
-
+  public boolean addManeuver(IManeuver maneuver) {
     if (!(maneuver.getStartLocation() >= startLocation 
     && maneuver.getEndLocation() <= endLocation)) {
       return false;
     }
 
-    return lateralManeuvers.add(maneuver);
-  }
-
-  /**
-   * Add a longitudinal maneuver to the Trajectory.
-   * </p>
-   * The maneuver will be added to the list of longitudinal maneuvers if the maneuver is
-   * actually a longitudinal maneuver and falls within the space domain boundaries of the trajectory
-   */
-  public boolean addLongitudinalManeuver(IManeuver maneuver) {
-    if (maneuver.getType() != ManeuverType.LONGITUDINAL) {
-      return false;
+    if (maneuver.getType() == ManeuverType.LATERAL) {
+      lateralManeuversSorted = false;
+      return lateralManeuvers.add(maneuver);
     }
 
-    if (!(maneuver.getStartLocation() >= startLocation 
-    && maneuver.getEndLocation() <= endLocation)) {
-      return false;
+    if (maneuver.getType() == ManeuverType.LONGITUDINAL) {
+      longitudinalManeuversSorted = false;
+      return longitudinalManeuvers.add(maneuver);
     }
 
-    return longitudinalManeuvers.add(maneuver);
+    return false;
   }
 
   /**
@@ -95,12 +84,7 @@ public class Trajectory {
       return -1;
     }
 
-    longitudinalManeuvers.sort(new Comparator<IManeuver>() {
-		@Override
-		public int compare(IManeuver o1, IManeuver o2) {
-			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
-		}
-    });
+    sortLongitudinalManeuvers();
 
     double lastEnd = 0;
     for (IManeuver m : longitudinalManeuvers) {
@@ -124,13 +108,6 @@ public class Trajectory {
     if (longitudinalManeuvers.size() == 0) {
       return -1;
     }
-
-    longitudinalManeuvers.sort(new Comparator<IManeuver>() {
-		@Override
-		public int compare(IManeuver o1, IManeuver o2) {
-			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
-		}
-    });
 
     double lastStart = longitudinalManeuvers.get(longitudinalManeuvers.size() - 1).getEndLocation();
     for (int i = longitudinalManeuvers.size() - 1; i >= 0; i--) {
@@ -170,13 +147,7 @@ public class Trajectory {
    * Get the next lateral maneuver which will be active after loc, null if one cannot be found
    */
   public IManeuver getNextLateralManeuverAfter(double loc) {
-    lateralManeuvers.sort(new Comparator<IManeuver>() {
-		@Override
-		public int compare(IManeuver o1, IManeuver o2) {
-			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
-		}
-    });
-
+    sortLateralManeuvers();
     for (IManeuver m : lateralManeuvers) {
       if (m.getStartLocation() > loc) {
         return m;
@@ -185,16 +156,29 @@ public class Trajectory {
     return null;
   }
 
-  /**
-   * Get the next longitudinal maneuver which will be active after loc, null if one cannot be found
-   */
-  public IManeuver getNextLongitudinalManeuverAfter(double loc) {
+  private void sortLateralManeuvers() {
+    lateralManeuvers.sort(new Comparator<IManeuver>() {
+		@Override
+		public int compare(IManeuver o1, IManeuver o2) {
+			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+		}
+    });
+  }
+
+  private void sortLongitudinalManeuvers() {
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
 		@Override
 		public int compare(IManeuver o1, IManeuver o2) {
 			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
 		}
     });
+  }
+
+  /**
+   * Get the next longitudinal maneuver which will be active after loc, null if one cannot be found
+   */
+  public IManeuver getNextLongitudinalManeuverAfter(double loc) {
+    sortLongitudinalManeuvers();
 
     for (IManeuver m : longitudinalManeuvers) {
       if (m.getStartLocation() > loc) {
