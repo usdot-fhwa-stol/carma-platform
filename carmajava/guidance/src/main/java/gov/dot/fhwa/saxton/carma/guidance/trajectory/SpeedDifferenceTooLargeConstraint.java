@@ -20,12 +20,12 @@ public class SpeedDifferenceTooLargeConstraint implements TrajectoryValidationCo
 
 	@Override
 	public void visit(IManeuver maneuver) {
-		
+		// NO-OP
 	}
 
 	@Override
 	public TrajectoryValidationResult getResult() {
-		return null;
+		return new TrajectoryValidationResult();
 	}
 
 }
