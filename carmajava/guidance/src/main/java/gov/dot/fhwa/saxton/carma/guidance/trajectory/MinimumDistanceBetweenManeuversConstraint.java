@@ -16,16 +16,63 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
+
+import java.util.List;
+import java.util.ArrayList;
+
 public class MinimumDistanceBetweenManeuversConstraint implements TrajectoryValidationConstraint {
+
+  public IManeuver lastLateralManeuver = null;
+  public IManeuver lastLongitudinalManeuver = null;
+  public boolean valid = true;
+  public List<IManeuver> offendingManeuvers = new ArrayList<>();
+  public double minimumDistanceBetweenManeuvers;
+
+  public MinimumDistanceBetweenManeuversConstraint(double minDist) {
+    this.minimumDistanceBetweenManeuvers = minDist;
+  }
 
 	@Override
 	public void visit(IManeuver maneuver) {
-		
+    if (!valid) {
+      return;
+    }
+
+    if (maneuver.getType() == ManeuverType.LATERAL) {
+      if (lastLateralManeuver != null) {
+        if (Math.abs(lastLateralManeuver.getEndLocation() - maneuver.getStartLocation())
+            < minimumDistanceBetweenManeuvers) {
+          valid = false;
+          offendingManeuvers.add(lastLateralManeuver);
+          offendingManeuvers.add(maneuver);
+        }
+      }
+
+      lastLateralManeuver = maneuver;
+    }
+
+    if (maneuver.getType() == ManeuverType.LONGITUDINAL) {
+      if (lastLongitudinalManeuver != null) {
+        if (Math.abs(lastLongitudinalManeuver.getEndLocation() - maneuver.getStartLocation())
+            < minimumDistanceBetweenManeuvers) {
+          valid = false;
+          offendingManeuvers.add(lastLongitudinalManeuver);
+          offendingManeuvers.add(maneuver);
+        }
+      }
+
+      lastLongitudinalManeuver = maneuver;
+    }
 	}
 
 	@Override
 	public TrajectoryValidationResult getResult() {
-		return null;
+    if (valid) {
+      return new TrajectoryValidationResult();
+    } else {
+      return new TrajectoryValidationResult(new TrajectoryValidationError("Minimum distance between maneuvers not observed!", offendingManeuvers));
+    }
 	}
 
 }
