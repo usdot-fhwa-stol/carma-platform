@@ -66,39 +66,37 @@ public class EnvironmentWorker {
     hostVehicleLocation =
       new Location(navSatFix.getLatitude(), navSatFix.getLongitude(), navSatFix.getAltitude());
     navSatFixRecieved = true;
-    mapToOdom = ecefToNEDFromLocaton(hostVehicleLocation);
+    //mapToOdom = ecefToNEDFromLocaton(hostVehicleLocation);
+    updateMapToOdom();
     publishTF(mapToOdom, map_frame, odom_frame);
   }
 
-  //TODO deprecated
   protected void updateMapToOdom() {
     if (!navSatFixRecieved || !headingRecieved) {
       return; // If we don't have a heading and a gps fix the map->odom transform cannot be calculated
     }
 
-    //mapToOdom = ecefToNEDFromLocaton(hostVehicleLocation);
-    // Check if this will be the first calculated transform
-    if (mapToOdom == null) {
-//      // Find an NED frame to identify location of north axis
-//      Transform initialNED = ecefToNEDFromLocaton(hostVehicleLocation);
-//      // Rotate NED frame by heading so it lines up with vehicle
-//      Vector3 zAxis = new Vector3(0,0,1);
-//      Vector3 identity = new Vector3 (0,0,0);
-//      Transform rotateByHeading = new Transform(identity, Quaternion.fromAxisAngle(zAxis, hostVehicleHeading));
-//      // Multiply NED by heading to get starting odom location as Front Right Down (FRD) frame
-//      mapToOdom = initialNED.multiply(rotateByHeading);
-      GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
-      Point3D hostInMap =
-        gcc.geodesic2Cartesian(hostVehicleLocation, envMgr.getTransform(map_frame, earth_frame));
-      Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
-      Quaternion hostRotInMap = quaternionFromYPR(hostVehicleHeadingYPR[0], hostVehicleHeadingYPR[1], hostVehicleHeadingYPR[2]);
-      mapToOdom = new Transform(nTranslation, hostRotInMap);
-      return;
-    }
-
+//    //mapToOdom = ecefToNEDFromLocaton(hostVehicleLocation);
+//    // Check if this will be the first calculated transform
+//    if (mapToOdom == null) {
+////      // Find an NED frame to identify location of north axis
+////      Transform initialNED = ecefToNEDFromLocaton(hostVehicleLocation);
+////      // Rotate NED frame by heading so it lines up with vehicle
+////      Vector3 zAxis = new Vector3(0,0,1);
+////      Vector3 identity = new Vector3 (0,0,0);
+////      Transform rotateByHeading = new Transform(identity, Quaternion.fromAxisAngle(zAxis, hostVehicleHeading));
+////      // Multiply NED by heading to get starting odom location as Front Right Down (FRD) frame
+////      mapToOdom = initialNED.multiply(rotateByHeading);
+//      Point3D hostInMap =
+//        gcc.geodesic2Cartesian(hostVehicleLocation, envMgr.getTransform(map_frame, earth_frame));
+//      Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
+//      Quaternion hostRotInMap = quaternionFromYPR(hostVehicleHeadingYPR[0], hostVehicleHeadingYPR[1], hostVehicleHeadingYPR[2]);
+//
+//      return;
+//    }
     GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
-    Point3D hostInMap =
-      gcc.geodesic2Cartesian(hostVehicleLocation, envMgr.getTransform(map_frame, earth_frame));
+    //Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, envMgr.getTransform(map_frame, earth_frame));
+    Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, Transform.identity());
     // T_x_y = transform describing location of y with respect to x
     // m = map frame
     // n = nav sat fix frame
@@ -107,6 +105,12 @@ public class EnvironmentWorker {
     // T_n_b = inv(T_m_n) * T_m_o * T_o_b; This is equivalent to the difference between where odom should be and where it is
     Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
     Quaternion hostRotInMap = quaternionFromYPR(hostVehicleHeadingYPR[0], hostVehicleHeadingYPR[1], hostVehicleHeadingYPR[2]);
+
+    if (mapToOdom == null) {
+      mapToOdom = new Transform(nTranslation, hostRotInMap);
+      return;
+    }
+
     Transform T_m_n = new Transform(nTranslation, hostRotInMap);
     Transform T_m_o = mapToOdom;
     Transform T_o_b = odomToBaseLink;
@@ -150,33 +154,6 @@ public class EnvironmentWorker {
     return new Quaternion(x,y,z,w);
   }
 
-  //TODO UNIT TEST THIS!!!
-  protected Transform ecefToNEDFromLocaton(Location loc) {
-    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
-    Point3D hostInMap =
-      gcc.geodesic2Cartesian(loc, envMgr.getTransform(map_frame, earth_frame)); //TODO validate that this works even with an earth map transform
-
-    Vector3 trans = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
-
-    // Rotation matrix of north east down frame with respect to ecef
-    double sinLat = Math.sin(hostVehicleLocation.getLatRad());
-    double sinLon = Math.sin(hostVehicleLocation.getLonRad());
-    double cosLat = Math.cos(hostVehicleLocation.getLatRad());
-    double cosLon = Math.cos(hostVehicleLocation.getLonRad());
-    double[][] R = new double[][] {
-      { -sinLat * cosLon, -sinLon,  -cosLat * cosLon },
-      { -sinLat * sinLon,  cosLon,  -cosLat * sinLat },
-      {           cosLat,       0,           -sinLat }
-    };
-    double qw = Math.sqrt(1.0 + R[0][0] + R[1][1] + R[2][2]) / 2.0;
-    double qw4 = 4.0 * qw;
-    double qx = (R[2][1] - R[1][2]) / qw4;
-    double qy = (R[0][2] - R[2][0]) / qw4;
-    double qz = (R[1][0] - R[0][1]) / qw4;
-    Quaternion quat = new Quaternion(qx, qy, qz, qw);
-
-    return new Transform(trans, quat);
-  }
 
   public void handleOdometryMsg(nav_msgs.Odometry odometry) {
     // TODO I drop the covariance here. Does the covariance matter if we are getting this from sensor fusion?
@@ -185,6 +162,7 @@ public class EnvironmentWorker {
     Quaternion hostOrientation = Quaternion.fromQuaternionMessage(hostPose.getOrientation());
     Vector3 trans = new Vector3(hostPoint.getX(), hostPoint.getY(), hostPoint.getZ());
     odomToBaseLink = new Transform(trans, hostOrientation);
+    publishTF(odomToBaseLink, odom_frame, base_link_frame);
   }
 
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {

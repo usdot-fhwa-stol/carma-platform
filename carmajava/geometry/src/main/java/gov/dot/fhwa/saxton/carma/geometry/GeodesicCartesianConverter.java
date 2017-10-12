@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.geometry;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -108,5 +109,40 @@ public class GeodesicCartesianConverter {
     Vector3 resultant = frame2ecefTransform.apply(pointBeforeTransform);
 
     return new Point3D(resultant.getX(), resultant.getY(), resultant.getZ());
+  }
+
+  /**
+   * Calculates the transform from an ECEF frame to NED frame with it's origin at the specified location.
+   * ECEF: Earth Centered Earth Fixed Frame
+   * NED: North Up Down = (x,y,z)
+   * @param loc The location to place the origin of the NED frame at
+   * @return The calculated transform between the two frames.
+   */
+  // TODO Unit test and validate if map -> earth transform is needed
+  protected Transform ecefToNEDFromLocaton(Location loc) {
+    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+    Point3D hostInMap =
+      gcc.geodesic2Cartesian(loc, Transform.identity()); //TODO validate that this works even with an earth map transform
+
+    Vector3 trans = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
+
+    // Rotation matrix of north east down frame with respect to ecef
+    double sinLat = Math.sin(loc.getLatRad());
+    double sinLon = Math.sin(loc.getLonRad());
+    double cosLat = Math.cos(loc.getLatRad());
+    double cosLon = Math.cos(loc.getLonRad());
+    double[][] R = new double[][] {
+      { -sinLat * cosLon, -sinLon,  -cosLat * cosLon },
+      { -sinLat * sinLon,  cosLon,  -cosLat * sinLat },
+      {           cosLat,       0,           -sinLat }
+    };
+    double qw = Math.sqrt(1.0 + R[0][0] + R[1][1] + R[2][2]) / 2.0;
+    double qw4 = 4.0 * qw;
+    double qx = (R[2][1] - R[1][2]) / qw4;
+    double qy = (R[0][2] - R[2][0]) / qw4;
+    double qz = (R[1][0] - R[0][1]) / qw4;
+    Quaternion quat = new Quaternion(qx, qy, qz, qw);
+
+    return new Transform(trans, quat);
   }
 }
