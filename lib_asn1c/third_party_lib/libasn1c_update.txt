@@ -3,6 +3,7 @@ To update or change this libasn1c.so library, please follow those steps:
 Preparation:
 
 To generate this libasn1c.so library, your workspace should have this structure:
+(Workspace in this context is a temporary folder ouside the Carma code tree for creating the third party shared library)
 
 Workspace
   |
@@ -14,9 +15,25 @@ All generated header files from asn1c and JNI header files shoube be in include 
 
 All generated source files from asn1c(except for converter-sample.c) and wrapper.c shoube be in src folder.
 
+Make sure asn1c is working in your system.
+
+For the complete list of dependencies, check https://github.com/vlm/asn1c/blob/master/REQUIREMENTS.md
+
+For configurations and build steps, check https://github.com/vlm/asn1c/blob/master/INSTALL.md
+
+To use asn1c, check https://github.com/vlm/asn1c/blob/master/doc/asn1c-usage.pdf
+
+A stable version ticket is: 59b1bc8, which is on Sep 19th 2017.
+
 Build:
 
-In Workspace, run "gcc -DASN_DISABLE_OER_SUPPORT -DPDU=MessageFrame -shared -o libasn1c.so -I./include/ -I/usr/lib/jvm/default-java/include -I/usr/lib/jvm/default-java/include/linux/ ./src/*.c -fPIC".
+To generate code for the usage of our platform, run "asn1c -pdu=MessageFrame -fcompound-names -gen-PER ***.asn"
+
+Note: ***.asn here is the message spec file. We used J2735_201603.asn1 in Carma.
+
+In Workspace, make changes on wrapper.c.
+
+To generate the shared library, run "gcc -DASN_DISABLE_OER_SUPPORT -DPDU=MessageFrame -shared -o libasn1c.so -I./include/ -I/usr/lib/jvm/default-java/include -I/usr/lib/jvm/default-java/include/linux/ ./src/*.c -fPIC".
 
 Copy the new generated shared library in your Workspace.
 
@@ -25,17 +42,3 @@ Paste and replace the old libasn1c.so library in this folder.
 Post Build:
 
 Make sure to update the wrapper.c file in ../src as well.
-
-Notes on using asn1c tool:
-
-For the complete list of dependencies, check https://github.com/vlm/asn1c/blob/master/REQUIREMENTS.md
-
-For configurations and build steps, check https://github.com/vlm/asn1c/blob/master/INSTALL.md
-
-To use asn1c, check https://github.com/vlm/asn1c/blob/master/doc/asn1c-usage.pdf
-
-A stable version ticket might be: 59b1bc8, which is on Sep 19th 2017.
-
-Example:
-
-To generate code for the usage of our platform, run "asn1c -pdu=MessageFrame -fcompound-names -gen-PER ***.asn"

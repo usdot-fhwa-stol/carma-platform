@@ -3,7 +3,11 @@
 #include "gov_dot_fhwa_saxton_carma_message_BSMFactory.h"
 #include "MessageFrame.h"
 
-//This is just a test for C wrapper of asn1c library
+/**
+ * BSM Encoder:
+ * This function can decode an BSM object from Java to a byte array in J2735 standards.
+ * When an error happened, this function will return NULL.
+ */
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_encode_1BSM
   (JNIEnv *env, jclass cls, jobject bsm, jbyteArray bsm_id, jobject accuracy, jobject transmission, jobject accelset, jbyteArray brakestatus, jobject size) {
 
@@ -14,8 +18,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 
 	message = calloc(1, sizeof(MessageFrame_t));
 	if(!message) {
-		perror("calloc() failed");
-		exit(1);
+		return NULL;
 	}
 
 	//get a reference to classes
@@ -35,7 +38,6 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	//Get and set msgCnt
 	jbyte msgCount = (*env) -> CallByteMethod(env, bsm, mid_getMsgCount);
 	message->value.choice.BasicSafetyMessage.coreData.msgCnt = msgCount;
-	//message->value.choice.BasicSafetyMessage.coreData.msgCnt = 101;
 
 	uint8_t content[4] = {0x00, 0x00, 0x00, 0x00};
 	jbyte *bsm_msg_id = (*env) -> GetByteArrayElements(env, bsm_id, 0);
@@ -51,22 +53,18 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	jmethodID mid_getSecMark = (*env) -> GetMethodID(env, bsm_core_class, "getSecMark", "()S");
 	jshort secMark = (*env) -> CallShortMethod(env, bsm, mid_getSecMark);
 	message->value.choice.BasicSafetyMessage.coreData.secMark = secMark;
-	//message->value.choice.BasicSafetyMessage.coreData.secMark = 31202;
 
 	jmethodID mid_getLatitude = (*env) -> GetMethodID(env, bsm_core_class, "getLatitude", "()D");
 	jdouble lat = (*env) -> CallDoubleMethod(env, bsm, mid_getLatitude);
 	message->value.choice.BasicSafetyMessage.coreData.lat = lat * 10000000;
-	//message->value.choice.BasicSafetyMessage.coreData.lat = 41252;
 
 	jmethodID mid_getLongitude = (*env) -> GetMethodID(env, bsm_core_class, "getLongitude", "()D");
 	jdouble lon = (*env) -> CallDoubleMethod(env, bsm, mid_getLongitude);
 	message->value.choice.BasicSafetyMessage.coreData.Long = lon * 10000000;
-	//message->value.choice.BasicSafetyMessage.coreData.Long = -21000001;
 
 	jmethodID mid_getElev = (*env) -> GetMethodID(env, bsm_core_class, "getElev", "()F");
 	jfloat elev = (*env) -> CallFloatMethod(env, bsm, mid_getElev);
 	message->value.choice.BasicSafetyMessage.coreData.elev = elev * 10;
-	//message->value.choice.BasicSafetyMessage.coreData.elev = 312;
 
 	jmethodID mid_getSemiMajor = (*env) -> GetMethodID(env, accuracy_class, "getSemiMajor", "()F");
 	jmethodID mid_getSemiMinor = (*env) -> GetMethodID(env, accuracy_class, "getSemiMinor", "()F");
@@ -77,29 +75,22 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor = major / 0.05;
 	message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor = minor / 0.05;
 	message->value.choice.BasicSafetyMessage.coreData.accuracy.orientation = orientation / 0.054932479;
-//	message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor = 145;
-//	message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor = 125;
-//	message->value.choice.BasicSafetyMessage.coreData.accuracy.orientation = 30252;
 
 	jmethodID mid_getTransmissionState = (*env) -> GetMethodID(env, transmission_class, "getTransmissionState", "()B");
 	jbyte transmissionstate = (*env) -> CallByteMethod(env, transmission, mid_getTransmissionState);
 	message->value.choice.BasicSafetyMessage.coreData.transmission = transmissionstate;
-	//message->value.choice.BasicSafetyMessage.coreData.transmission = 2;
 
 	jmethodID mid_getSpeed = (*env) -> GetMethodID(env, bsm_core_class, "getSpeed", "()F");
 	jfloat speed = (*env) -> CallFloatMethod(env, bsm, mid_getSpeed);
 	message->value.choice.BasicSafetyMessage.coreData.speed = speed / 0.02;
-	//message->value.choice.BasicSafetyMessage.coreData.speed = 2100;
 
 	jmethodID mid_getHeading = (*env) -> GetMethodID(env, bsm_core_class, "getHeading", "()F");
 	jfloat heading = (*env) -> CallFloatMethod(env, bsm, mid_getHeading);
 	message->value.choice.BasicSafetyMessage.coreData.heading = heading / 0.0125;
-	//message->value.choice.BasicSafetyMessage.coreData.heading = 22049;
 
 	jmethodID mid_getAngle = (*env) -> GetMethodID(env, bsm_core_class, "getAngle", "()F");
 	jfloat angle = (*env) -> CallFloatMethod(env, bsm, mid_getAngle);
 	message->value.choice.BasicSafetyMessage.coreData.angle = angle / 1.5;
-	//message->value.choice.BasicSafetyMessage.coreData.angle = 13;
 
 	jmethodID mid_accelset_getLongitude = (*env) -> GetMethodID(env, accelset_class, "getLongitude", "()F");
 	jmethodID mid_accelset_getLatitude = (*env) -> GetMethodID(env, accelset_class, "getLatitude", "()F");
@@ -113,13 +104,8 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	message->value.choice.BasicSafetyMessage.coreData.accelSet.lat = accel_lat / 0.01;
 	message->value.choice.BasicSafetyMessage.coreData.accelSet.vert = accel_vert / 0.02;
 	message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = accel_yaw / 0.01;
-//	message->value.choice.BasicSafetyMessage.coreData.accelSet.Long = 12;
-//	message->value.choice.BasicSafetyMessage.coreData.accelSet.lat = -180;
-//	message->value.choice.BasicSafetyMessage.coreData.accelSet.vert = 55;
-//	message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = -16001;
 
 	jbyte *inCArray = (*env) -> GetByteArrayElements(env, brakestatus, 0);
-//	uint8_t break_content[1] = {0x48};
 	uint8_t break_content[1] = {0};
 	break_content[0] = inCArray[0];
 	message->value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.bits_unused = 3;
@@ -131,11 +117,6 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	message->value.choice.BasicSafetyMessage.coreData.brakes.brakeBoost = inCArray[4];
 	message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes = inCArray[5];
 	(*env) -> ReleaseByteArrayElements(env, brakestatus, inCArray, 0);
-//	message->value.choice.BasicSafetyMessage.coreData.brakes.traction = 2;
-//	message->value.choice.BasicSafetyMessage.coreData.brakes.abs = 3;
-//	message->value.choice.BasicSafetyMessage.coreData.brakes.scs = 1;
-//	message->value.choice.BasicSafetyMessage.coreData.brakes.brakeBoost = 0;
-//	message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes = 1;
 
 
 
@@ -145,14 +126,17 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	jfloat v_length = (*env) -> CallFloatMethod(env, size, mid_getVehicleLength);
 	message->value.choice.BasicSafetyMessage.coreData.size.width = v_width * 100;
 	message->value.choice.BasicSafetyMessage.coreData.size.length = v_length * 100;
-//	message->value.choice.BasicSafetyMessage.coreData.size.width = 199;
-//	message->value.choice.BasicSafetyMessage.coreData.size.length = 3069;
 
 	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, message, buffer, buffer_size);
+	if(ec.encoded == -1) {
+		return NULL;
+	}
 
 	jsize length = ec.encoded / 8;
 	jbyteArray outJNIArray = (*env) -> NewByteArray(env, length);
-	if(outJNIArray == NULL) return NULL;
+	if(outJNIArray == NULL) {
+		return NULL;
+	}
 	(*env) -> SetByteArrayRegion(env, outJNIArray, 0, length, buffer);
 	return outJNIArray;
 }
