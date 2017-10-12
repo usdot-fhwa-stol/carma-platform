@@ -20,14 +20,14 @@
 #   -- range 0-12.7 meter, LSB = .05m
 #   -- 254 = any value equal or greater than 12.70 meter
 #   -- 255 = unavailable semi-major axis value
-float64 semiMajor   
+float32 semiMajor   
 
 #SemiMinorAxisAccuracy ::= INTEGER (0..255)
 #   -- semi-minor axis accuracy at one standard dev 
 #   -- range 0-12.7 meter, LSB = .05m
 #   -- 254 = any value equal or greater than 12.70 meter
 #   -- 255 = unavailable semi-minor axis value
-float64 semiMinor
+float32 semiMinor
 
 #SemiMajorAxisOrientation ::= INTEGER (0..65535)
 #   -- orientation of semi-major axis 

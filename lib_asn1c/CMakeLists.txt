@@ -11,32 +11,14 @@ project(asn1c)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
-SET(CMAKE_C_FLAGS " -DASN_DISABLE_OER_SUPPORT -DPDU=MessageFrame")
-
-aux_source_directory(src SRC_LIST)
-
 catkin_package(
-	INCLUDE_DIRS include
-	LIBRARIES asn1c
+	#INCLUDE_DIRS
+	#LIBRARIES
 	##CATKIN_DEPENDS
 	##DEPENDS
 )
 
-###########
-## Build ##
-###########
-
-##Specify additional locations of header files
-include_directories(
-	include
-	/usr/lib/jvm/default-java/include
-	/usr/lib/jvm/default-java/include/linux
-)
-
-##Declare the C library
-add_library(
-	asn1c
-	${SRC_LIST}
-)
-
-target_link_libraries(asn1c ${Boost_LIBRARIES})
+################
+## POST BUILD ##
+################
+file(COPY third_party_lib/libasn1c.so DESTINATION ../../devel/lib)

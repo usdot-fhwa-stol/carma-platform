@@ -119,26 +119,26 @@ public class Tracking extends GuidanceComponent {
             coreData.setSecMark((short) 31202);
             coreData.setLatitude(41252 / 10000000.0);
             coreData.setLongitude(-21000001 / 10000000.0);
-            coreData.setElev(312 / 10.0);
-            coreData.getAccuracy().setSemiMajor(145 * 0.05);
-            coreData.getAccuracy().setSemiMinor(125 * 0.05);
+            coreData.setElev((float) (312 / 10.0));
+            coreData.getAccuracy().setSemiMajor((float) (145 * 0.05));
+            coreData.getAccuracy().setSemiMinor((float) (125 * 0.05));
             coreData.getAccuracy().setOrientation(30252 * 0.054932479);
             coreData.getTransmission().setTransmissionState((byte) 2);
-            coreData.setSpeed(2100 * 0.02);
-            coreData.setHeading(22049 * 0.0125);
-            coreData.setAngle(13 * 1.5);
-            coreData.getAccelSet().setLongitude(12 * 0.01);
-            coreData.getAccelSet().setLatitude(-180 * 0.01);
-            coreData.getAccelSet().setVert(55 * 0.02);
-            coreData.getAccelSet().setYaw(-16001 * 0.01);
+            coreData.setSpeed((float) (2100 * 0.02));
+            coreData.setHeading((float) (22049 * 0.0125));
+            coreData.setAngle((float) (13 * 1.5));
+            coreData.getAccelSet().setLongitude((float) (12 * 0.01));
+            coreData.getAccelSet().setLatitude((float) (-180 * 0.01));
+            coreData.getAccelSet().setVert((float) (55 * 0.02));
+            coreData.getAccelSet().setYaw((float) (-16001 * 0.01));
             coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 0x48); //TODO change it to correct description
             coreData.getBrakes().getTraction().setTractionControlStatus((byte) 2);
             coreData.getBrakes().getAbs().setAntiLockBrakeStatus((byte) 3);
             coreData.getBrakes().getScs().setStabilityControlStatus((byte) 1);
             coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied((byte) 0);
             coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus((byte) 1);
-            coreData.getSize().setVehicleWidth(199 / 100.0);
-            coreData.getSize().setVehicleLength(3069 / 100.0);
+            coreData.getSize().setVehicleWidth((float) (199 / 100.0));
+            coreData.getSize().setVehicleLength((float) (3069 / 100.0));
 
             // Publish the BSM data
             bsmPublisher.publish(bsmFrame);

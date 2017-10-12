@@ -63,16 +63,16 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	message->value.choice.BasicSafetyMessage.coreData.Long = lon * 10000000;
 	//message->value.choice.BasicSafetyMessage.coreData.Long = -21000001;
 
-	jmethodID mid_getElev = (*env) -> GetMethodID(env, bsm_core_class, "getElev", "()D");
-	jdouble elev = (*env) -> CallDoubleMethod(env, bsm, mid_getElev);
+	jmethodID mid_getElev = (*env) -> GetMethodID(env, bsm_core_class, "getElev", "()F");
+	jfloat elev = (*env) -> CallFloatMethod(env, bsm, mid_getElev);
 	message->value.choice.BasicSafetyMessage.coreData.elev = elev * 10;
 	//message->value.choice.BasicSafetyMessage.coreData.elev = 312;
 
-	jmethodID mid_getSemiMajor = (*env) -> GetMethodID(env, accuracy_class, "getSemiMajor", "()D");
-	jmethodID mid_getSemiMinor = (*env) -> GetMethodID(env, accuracy_class, "getSemiMinor", "()D");
+	jmethodID mid_getSemiMajor = (*env) -> GetMethodID(env, accuracy_class, "getSemiMajor", "()F");
+	jmethodID mid_getSemiMinor = (*env) -> GetMethodID(env, accuracy_class, "getSemiMinor", "()F");
 	jmethodID mid_getOrientation = (*env) -> GetMethodID(env, accuracy_class, "getOrientation", "()D");
-	jdouble major = (*env) -> CallDoubleMethod(env, accuracy, mid_getSemiMajor);
-	jdouble minor = (*env) -> CallDoubleMethod(env, accuracy, mid_getSemiMinor);
+	jfloat major = (*env) -> CallFloatMethod(env, accuracy, mid_getSemiMajor);
+	jfloat minor = (*env) -> CallFloatMethod(env, accuracy, mid_getSemiMinor);
 	jdouble orientation = (*env) -> CallDoubleMethod(env, accuracy, mid_getOrientation);
 	message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor = major / 0.05;
 	message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor = minor / 0.05;
@@ -86,33 +86,33 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	message->value.choice.BasicSafetyMessage.coreData.transmission = transmissionstate;
 	//message->value.choice.BasicSafetyMessage.coreData.transmission = 2;
 
-	jmethodID mid_getSpeed = (*env) -> GetMethodID(env, bsm_core_class, "getSpeed", "()D");
-	jdouble speed = (*env) -> CallDoubleMethod(env, bsm, mid_getSpeed);
+	jmethodID mid_getSpeed = (*env) -> GetMethodID(env, bsm_core_class, "getSpeed", "()F");
+	jfloat speed = (*env) -> CallFloatMethod(env, bsm, mid_getSpeed);
 	message->value.choice.BasicSafetyMessage.coreData.speed = speed / 0.02;
 	//message->value.choice.BasicSafetyMessage.coreData.speed = 2100;
 
-	jmethodID mid_getHeading = (*env) -> GetMethodID(env, bsm_core_class, "getHeading", "()D");
-	jdouble heading = (*env) -> CallDoubleMethod(env, bsm, mid_getHeading);
+	jmethodID mid_getHeading = (*env) -> GetMethodID(env, bsm_core_class, "getHeading", "()F");
+	jfloat heading = (*env) -> CallFloatMethod(env, bsm, mid_getHeading);
 	message->value.choice.BasicSafetyMessage.coreData.heading = heading / 0.0125;
 	//message->value.choice.BasicSafetyMessage.coreData.heading = 22049;
 
-	jmethodID mid_getAngle = (*env) -> GetMethodID(env, bsm_core_class, "getAngle", "()D");
-	jdouble angle = (*env) -> CallDoubleMethod(env, bsm, mid_getAngle);
+	jmethodID mid_getAngle = (*env) -> GetMethodID(env, bsm_core_class, "getAngle", "()F");
+	jfloat angle = (*env) -> CallFloatMethod(env, bsm, mid_getAngle);
 	message->value.choice.BasicSafetyMessage.coreData.angle = angle / 1.5;
 	//message->value.choice.BasicSafetyMessage.coreData.angle = 13;
 
-	jmethodID mid_accelset_getLongitude = (*env) -> GetMethodID(env, accelset_class, "getLongitude", "()D");
-	jmethodID mid_accelset_getLatitude = (*env) -> GetMethodID(env, accelset_class, "getLatitude", "()D");
-	jmethodID mid_accelset_getVert = (*env) -> GetMethodID(env, accelset_class, "getVert", "()D");
-	jmethodID mid_accelset_getYaw = (*env) -> GetMethodID(env, accelset_class, "getYaw", "()D");
-	jdouble accel_long = (*env) -> CallDoubleMethod(env, accelset, mid_accelset_getLongitude);
-	jdouble accel_lat = (*env) -> CallDoubleMethod(env, accelset, mid_accelset_getLatitude);
-	jdouble accel_vert = (*env) -> CallDoubleMethod(env, accelset, mid_accelset_getVert);
-	jdouble accel_yaw = (*env) -> CallDoubleMethod(env, accelset, mid_accelset_getYaw);
+	jmethodID mid_accelset_getLongitude = (*env) -> GetMethodID(env, accelset_class, "getLongitude", "()F");
+	jmethodID mid_accelset_getLatitude = (*env) -> GetMethodID(env, accelset_class, "getLatitude", "()F");
+	jmethodID mid_accelset_getVert = (*env) -> GetMethodID(env, accelset_class, "getVert", "()F");
+	jmethodID mid_accelset_getYaw = (*env) -> GetMethodID(env, accelset_class, "getYaw", "()F");
+	jfloat accel_long = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getLongitude);
+	jfloat accel_lat = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getLatitude);
+	jfloat accel_vert = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getVert);
+	jfloat accel_yaw = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getYaw);
 	message->value.choice.BasicSafetyMessage.coreData.accelSet.Long = accel_long / 0.01;
 	message->value.choice.BasicSafetyMessage.coreData.accelSet.lat = accel_lat / 0.01;
 	message->value.choice.BasicSafetyMessage.coreData.accelSet.vert = accel_vert / 0.02;
-	message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = accel_yaw / 0.01; //TODO This line cause an one-bit error
+	message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = accel_yaw / 0.01;
 //	message->value.choice.BasicSafetyMessage.coreData.accelSet.Long = 12;
 //	message->value.choice.BasicSafetyMessage.coreData.accelSet.lat = -180;
 //	message->value.choice.BasicSafetyMessage.coreData.accelSet.vert = 55;
@@ -139,10 +139,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 
 
 
-	jmethodID mid_getVehicleWidth = (*env) -> GetMethodID(env, size_class, "getVehicleWidth", "()D");
-	jmethodID mid_getVehicleLength = (*env) -> GetMethodID(env, size_class, "getVehicleLength", "()D");
-	jdouble v_width = (*env) -> CallDoubleMethod(env, size, mid_getVehicleWidth);
-	jdouble v_length = (*env) -> CallDoubleMethod(env, size, mid_getVehicleLength);
+	jmethodID mid_getVehicleWidth = (*env) -> GetMethodID(env, size_class, "getVehicleWidth", "()F");
+	jmethodID mid_getVehicleLength = (*env) -> GetMethodID(env, size_class, "getVehicleLength", "()F");
+	jfloat v_width = (*env) -> CallFloatMethod(env, size, mid_getVehicleWidth);
+	jfloat v_length = (*env) -> CallFloatMethod(env, size, mid_getVehicleLength);
 	message->value.choice.BasicSafetyMessage.coreData.size.width = v_width * 100;
 	message->value.choice.BasicSafetyMessage.coreData.size.length = v_length * 100;
 //	message->value.choice.BasicSafetyMessage.coreData.size.width = 199;
