@@ -8,28 +8,17 @@ project(asn1c)
 ## Declare things to be passed to dependent projects
 ## INCLUDE_DIRS: uncomment this if you package contains header files
 ## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also nee
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
 
 catkin_package(
-	INCLUDE_DIRS include
-	##LIBRARIES
+	#INCLUDE_DIRS
+	#LIBRARIES
 	##CATKIN_DEPENDS
 	##DEPENDS
 )
 
-###########
-## Build ##
-###########
-
-##Specify additional locations of header files
-include_directories(
-	include
-	/usr/lib/jvm/default-java/include
-	/usr/lib/jvm/default-java/include/linux
-)
-
-##Declare the C library
-add_library(
-	asn1c
-	src/wrapper.c
-)
+################
+## POST BUILD ##
+################
+file(COPY third_party_lib/libasn1c.so DESTINATION ../../devel/lib)

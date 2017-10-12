@@ -208,7 +208,7 @@ void SensorFusionApplication::publish_updates() {
 
         //todo: process a bsm message, update this to the BSM message type
         msg.objects.push_back(externalObject);
-        msg.bsm_temp_ids.push_back(uint16_t(bsm->id));
+        //msg.bsm_temp_ids.push_back(bsm->id);
 
         bsm_q_.pop();
     }
