@@ -37,7 +37,7 @@ public class EnvironmentWorker {
     // The heading of the vehicle in degrees east of north in an NED frame.
 
   protected Transform mapToOdom = null;
-  protected Transform odomToBaseLink = null;
+  protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
   protected int tfSequenceCount = 0;
 
   public EnvironmentWorker(IEnvironmentManager envMgr, ConnectedNode connectedNode) {
@@ -58,6 +58,7 @@ public class EnvironmentWorker {
     //Vector3 zAxis = new Vector3(0,0,1);
     //Quaternion hostOrientation = Quaternion.fromAxisAngle(zAxis, hostVehicleHeading);
     Quaternion hostOrientation = quaternionFromYPR(hostVehicleHeadingYPR[0], hostVehicleHeadingYPR[1], hostVehicleHeadingYPR[2]);
+    hostOrientation = hostOrientation.normalize();
     odomToBaseLink = new Transform(odomToBaseLink.getTranslation(), hostOrientation);
   }
 
@@ -71,6 +72,7 @@ public class EnvironmentWorker {
     publishTF(mapToOdom, map_frame, odom_frame);
   }
 
+  // TODO include transform for host_vehicle->pinpoint
   protected void updateMapToOdom() {
     if (!navSatFixRecieved || !headingRecieved) {
       return; // If we don't have a heading and a gps fix the map->odom transform cannot be calculated
@@ -105,6 +107,7 @@ public class EnvironmentWorker {
     // T_n_b = inv(T_m_n) * T_m_o * T_o_b; This is equivalent to the difference between where odom should be and where it is
     Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
     Quaternion hostRotInMap = quaternionFromYPR(hostVehicleHeadingYPR[0], hostVehicleHeadingYPR[1], hostVehicleHeadingYPR[2]);
+    hostRotInMap = hostRotInMap.normalize();
 
     if (mapToOdom == null) {
       mapToOdom = new Transform(nTranslation, hostRotInMap);
