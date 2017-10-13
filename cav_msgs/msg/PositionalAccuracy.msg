@@ -37,4 +37,4 @@ float32 semiMinor
 #   -- a value of 1 shall be 0.0054932479 degrees 
 #   -- a value of 65534 shall be 359.9945078786 deg
 #   -- a value of 65535 shall be used for orientation unavailable
-float32 orientation
+float64 orientation
