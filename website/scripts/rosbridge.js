@@ -40,7 +40,7 @@ var guidance_engaged = false;
 var route_name = '';
 
 var ready_counter = 0;
-var ready_max_trial = 3;
+var ready_max_trial = 20;
 
 var host_instructions = '';
 var listenerPluginAvailability;
@@ -784,20 +784,29 @@ function showActiveRoute() {
 */
 function mapEachRouteSegment(segment) {
 
-    var segmentLat = segment.waypoint.latitude;
-    var segmentLon = segment.waypoint.longitude;
-    var position = new google.maps.LatLng( segmentLat, segmentLon);
+    var segmentLat;
+    var segmentLon;
+    var position;
+    var routeCoordinates;
 
     //create new list
     if (sessionStorage.getItem('routePlanCoordinates') == null)
     {
-        var routeCoordinates = [];
+        segmentLat = segment.prev_waypoint.latitude;
+        segmentLon = segment.prev_waypoint.longitude;
+        position = new google.maps.LatLng( segmentLat, segmentLon);
+
+        routeCoordinates = [];
         routeCoordinates.push(position);
         sessionStorage.setItem("routePlanCoordinates", JSON.stringify(routeCoordinates));
     }
     else //add to existing list.
     {
-        var routeCoordinates = sessionStorage.getItem("routePlanCoordinates");
+        segmentLat = segment.waypoint.latitude;
+        segmentLon = segment.waypoint.longitude;
+        position = new google.maps.LatLng( segmentLat, segmentLon);
+
+        routeCoordinates = sessionStorage.getItem("routePlanCoordinates");
         routeCoordinates = JSON.parse(routeCoordinates);
         routeCoordinates.push(position);
         sessionStorage.setItem("routePlanCoordinates", JSON.stringify(routeCoordinates));
