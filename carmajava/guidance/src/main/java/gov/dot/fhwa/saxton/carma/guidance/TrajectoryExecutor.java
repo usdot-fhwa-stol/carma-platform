@@ -24,6 +24,9 @@ import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
+
 import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 
@@ -43,7 +46,8 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected ISubscriber<RouteState> routeStateSubscriber;
     protected GuidanceCommands commands;
     protected AtomicReference<GuidanceState> state;
-    
+    protected TrajectoryExecutorWorker trajectoryExecutorWorker;
+
     protected long startTime = 0;
     protected long holdTimeMs = 0;
     protected double operatingSpeed;
@@ -53,22 +57,26 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected double maxAccel;
     protected final long sleepDurationMillis = 100;
 
-    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node, GuidanceCommands commands) {
+    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
+            GuidanceCommands commands) {
         super(state, iPubSubService, node);
         this.state = state;
         this.commands = commands;
     }
 
-    @Override public String getComponentName() {
+    @Override
+    public String getComponentName() {
         return "Guidance.TrajectoryExecutor";
     }
 
-    @Override public void onGuidanceStartup() {
-        routeStateSubscriber = pubSubService
-            .getSubscriberForTopic("route_status", RouteState._TYPE);
+    @Override
+    public void onGuidanceStartup() {
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-            @Override public void onMessage(RouteState msg) {
+            @Override
+            public void onMessage(RouteState msg) {
                 log.info("Received RouteState:" + msg);
+                trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
             }
         });
 
@@ -104,22 +112,56 @@ public class TrajectoryExecutor extends GuidanceComponent {
         double s = t / 1000.0;
         double pFactor = 2 * Math.PI / period;
 
-        return amplitude * Math.sin((pFactor *  s) + phase);
+        return amplitude * Math.sin((pFactor * s) + phase);
     }
 
     public void loop() {
-            try {
-                // Generate a simple sin(t) speed command
-                if (state.get() == GuidanceState.ENGAGED) { 
-                    if (System.currentTimeMillis() - startTime < holdTimeMs) {
-                        commands.setCommand(operatingSpeed, maxAccel);
-                    } else {
-                        commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase), maxAccel);
-                    }
+        try {
+            // Generate a simple sin(t) speed command
+            if (state.get() == GuidanceState.ENGAGED) {
+                if (System.currentTimeMillis() - startTime < holdTimeMs) {
+                    commands.setCommand(operatingSpeed, maxAccel);
+                } else {
+                    commands.setCommand(
+                            operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase),
+                            maxAccel);
                 }
-
-                Thread.sleep(sleepDurationMillis);
-            } catch (InterruptedException e) {
             }
+
+            Thread.sleep(sleepDurationMillis);
+        } catch (InterruptedException e) {
+        }
+    }
+
+    public void abortTrajectory() {
+        trajectoryExecutorWorker.abortTrajectory();
+    }
+
+    public IManeuver getCurrentLateralManeuver() {
+        return trajectoryExecutorWorker.getCurrentLateralManeuver();        
+    }
+
+    public IManeuver getCurrentLongitudinalManeuver() {
+        return trajectoryExecutorWorker.getCurrentLongitudinalManeuver();        
+    }
+
+    public IManeuver getNextLateralManeuver() {
+        return trajectoryExecutorWorker.getNextLateralManeuver();
+    }
+
+    public IManeuver getNextLongitudinalManeuver() {
+        return trajectoryExecutorWorker.getNextLongitudinalManeuver();
+    }
+
+    public double getTrajectoryCompletionPct() {
+        return trajectoryExecutorWorker.getTrajectoryCompletionPct();
+    }
+
+    public void registerOnTrajectoryProgressCallback(double pct, OnTrajectoryProgressCallback callback) {
+        trajectoryExecutorWorker.registerOnTrajectoryProgressCallback(pct, callback);
+    }
+
+    public void runTrajectory(Trajectory traj) {
+        trajectoryExecutorWorker.runTrajectory(traj);
     }
 }
