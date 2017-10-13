@@ -33,26 +33,32 @@ public class OverlappingManeuversConstraint implements TrajectoryValidationConst
 	}
 
   /**
-   * Compute if the ranges [x1, y1) and [x2, y2) overlap
+   * Compute if the ranges [start1, end1) and [start2, end2) overlap by analyizing the boundary points
    */
-	private boolean checkOverlap(double x1, double y1, double x2, double y2) {
-		if (x2 >= x1 && x2 < y1) {
+	private boolean checkOverlap(double start1, double end1, double start2, double end2) {
+		// Start2 is inside the first range
+		if (start2 >= start1 && start2 < end1) {
 			return true;
 		}
-		if (y2 > x1 && y2 < y1) { 
+		//End2 is inside the range
+		if (end2 > start1 && end2 < end1) { 
 			return true;
 		}
-		if (x2 <= x1 && y2 >= y1) {
+		// The whole of range 2 overlaps range1
+		if (start2 <= start1 && end2 >= end1) {
 			return true;
 		}
 
-		if (x1 >= x2 && x1 < y2) {
+		// Start2 is inside the first range
+		if (start1 >= start2 && start1 < end2) {
 			return true;
 		}
-		if (y1 > x2 && y1 < y2) { 
+		//End2 is inside the range
+		if (end1 > start2 && end1 < end2) { 
 			return true;
 		}
-		if (x1 <= x2 && y1 >= y2) {
+		// The whole of range 2 overlaps range1
+		if (start1 <= start2 && end1 >= end2) {
 			return true;
 		}
 
