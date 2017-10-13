@@ -16,12 +16,28 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
-public class TrajectoryValidator {
+import java.util.List;
+import java.util.ArrayList;
 
-  public void addValidationConstraint() {
+public class TrajectoryValidator {
+  protected List<TrajectoryValidationConstraint> constraints = new ArrayList<>();
+
+  public void addValidationConstraint(TrajectoryValidationConstraint constraint) {
+    constraints.add(constraint);
   }
 
-  public TrajectoryValidationResult validate(Trajectory traj) {
-    return null;
+  public boolean validate(Trajectory traj) {
+    boolean valid = true;
+    for (IManeuver m : traj.getManeuvers()) {
+      for (TrajectoryValidationConstraint c : constraints) {
+        c.visit(m);
+      }
+    }
+
+    for (TrajectoryValidationConstraint c : constraints) {
+      valid = valid & c.getResult().getSuccess();
+    }
+
+    return valid;
   }
 }

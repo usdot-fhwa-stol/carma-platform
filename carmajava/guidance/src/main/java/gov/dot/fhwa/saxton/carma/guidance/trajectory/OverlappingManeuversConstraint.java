@@ -69,6 +69,7 @@ public class OverlappingManeuversConstraint implements TrajectoryValidationConst
 			}
 		}
 
+    visited = new ArrayList<>();
 		return new TrajectoryValidationResult();
 	}
 

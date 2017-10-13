@@ -191,4 +191,38 @@ public class Trajectory {
 
     return null;
   }
+
+  /**
+   * Get the trajectories stored lateral maneuvers in sorted order by start location
+   */
+  public List<IManeuver> getLateralManeuvers() {
+    sortLateralManeuvers();
+    return this.lateralManeuvers;
+  }
+
+  /**
+   * Get the trajectories stored longitudinal maneuvers in sorted order by start location
+   */
+  public List<IManeuver> getLongitudinalManeuvers() {
+    sortLongitudinalManeuvers();
+    return this.longitudinalManeuvers;
+  }
+
+  /**
+   * Get the trajectories stored maneuvers in sorted order by start location
+   */
+  public List<IManeuver> getManeuvers() {
+    List<IManeuver> out = new ArrayList<IManeuver>();
+    out.addAll(longitudinalManeuvers);
+    out.addAll(lateralManeuvers);
+
+    out.sort(new Comparator<IManeuver>() {
+        @Override
+        public int compare(IManeuver o1, IManeuver o2) {
+          return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+        }
+      });
+
+    return out;
+  }
 }

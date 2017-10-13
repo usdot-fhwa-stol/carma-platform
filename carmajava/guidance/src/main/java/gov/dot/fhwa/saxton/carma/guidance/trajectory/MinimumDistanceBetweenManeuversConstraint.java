@@ -69,10 +69,20 @@ public class MinimumDistanceBetweenManeuversConstraint implements TrajectoryVali
 	@Override
 	public TrajectoryValidationResult getResult() {
     if (valid) {
+      reset();
       return new TrajectoryValidationResult();
     } else {
-      return new TrajectoryValidationResult(new TrajectoryValidationError("Minimum distance between maneuvers not observed!", offendingManeuvers));
+      TrajectoryValidationResult out = new TrajectoryValidationResult(new TrajectoryValidationError("Minimum distance between maneuvers not observed!", offendingManeuvers));
+
+      reset();
+      return out;
     }
 	}
 
+  private void reset() {
+    valid = true;
+    lastLongitudinalManeuver = null;
+    lastLateralManeuver = null;
+    offendingManeuvers = new ArrayList<>();
+  }
 }
