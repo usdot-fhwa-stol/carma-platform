@@ -19,6 +19,10 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Trajectory constraint ensuring that Maneuvers are only allowed to overlap their
+ * endpoint with the startpoint of another maneuver, but at no other locations.
+ */
 public class OverlappingManeuversConstraint implements TrajectoryValidationConstraint {
 
 	protected List<IManeuver> visited = new ArrayList<>();
@@ -28,6 +32,9 @@ public class OverlappingManeuversConstraint implements TrajectoryValidationConst
 		visited.add(maneuver);
 	}
 
+  /**
+   * Compute if the ranges [x1, y1) and [x2, y2) overlap
+   */
 	private boolean checkOverlap(double x1, double y1, double x2, double y2) {
 		if (x2 >= x1 && x2 < y1) {
 			return true;

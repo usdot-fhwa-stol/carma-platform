@@ -16,6 +16,15 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+/**
+ * Constraint which ensures that consecutive Maneuvers cannot exceed a speed difference
+ * such as to not violate acceleration limits (or otherwise be impossible to execute)
+ *
+ * Currently only a stub, pending real implementation of Maneuvers package to get
+ * speed data.
+ *
+ * TODO: Implement after Maneuvers package.
+ */
 public class SpeedDifferenceTooLargeConstraint implements TrajectoryValidationConstraint {
 
 	@Override

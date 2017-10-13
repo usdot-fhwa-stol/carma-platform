@@ -16,7 +16,21 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+/**
+ * Interface implemented by constraints for Trajectory validation
+ */
 public interface TrajectoryValidationConstraint {
+  /**
+   * Inform this TrajectoryValidationConstraint about a Maneuver in the Trajectory
+   * under evaluation.
+   * <p>
+   * All maneuvers are passed in in order by start location but not separated by
+   * Maneuver type.
+   */
   public void visit(IManeuver maneuver);
+
+  /**
+   * Get the result of this constraint after it has visited any number of Maneuvers
+   */
   public TrajectoryValidationResult getResult();
 }

@@ -16,20 +16,36 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+/**
+ * DTO class for representing validaiton success or containing more information
+ * about an error or failure that ocurred
+ */
 public class TrajectoryValidationResult {
   protected TrajectoryValidationError error = null;
 
+  /**
+   * Construct a TrajectoryValidationResult that indicates success
+   */
   public TrajectoryValidationResult() {
   }
 
+  /**
+   * Construct a TrajectoryValidationResult that indicates failure
+   */
   public TrajectoryValidationResult(TrajectoryValidationError error) {
     this.error = error;
   }
 
+  /**
+   * Get the error if there was one, return null o.w.
+   */
   public TrajectoryValidationError getError() {
     return error;
   }
 
+  /**
+   * True if validation was successful, false o.w.
+   */
   public boolean getSuccess() {
     return error == null;
   }

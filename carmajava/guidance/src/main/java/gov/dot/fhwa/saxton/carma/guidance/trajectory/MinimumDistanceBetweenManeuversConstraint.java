@@ -21,6 +21,11 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+ * TrajectoryValidationConstraint implementation responsible for ensuring that maneuvers
+ * in a planned trajectory allow for enough space in between to smoothly blend the
+ * maneuvers together
+ */
 public class MinimumDistanceBetweenManeuversConstraint implements TrajectoryValidationConstraint {
 
   public IManeuver lastLateralManeuver = null;
@@ -79,6 +84,9 @@ public class MinimumDistanceBetweenManeuversConstraint implements TrajectoryVali
     }
 	}
 
+  /**
+   * Reset the state so the constraint can accept another Trajectory
+   */
   private void reset() {
     valid = true;
     lastLongitudinalManeuver = null;

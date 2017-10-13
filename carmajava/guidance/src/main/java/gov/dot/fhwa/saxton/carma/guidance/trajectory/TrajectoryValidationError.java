@@ -18,6 +18,9 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import java.util.List;
 
+/**
+ * DTO class for describing an error or failure during Trajectory validation
+ */
 public class TrajectoryValidationError {
   protected String errorDescriptor;
   protected List<IManeuver> offendingManeuvers;
@@ -27,10 +30,17 @@ public class TrajectoryValidationError {
     this.offendingManeuvers = offendingManeuvers;
   }
 
+  /**
+   * Get a human-readable description of the validation failure that ocurred.
+   */
   public String getErrorDescriptor() {
     return errorDescriptor;
   }
 
+  /**
+   * Get a list of the Maneuver instances that violated the constraint or otherwise
+   * cause the validation failure
+   */
   public List<IManeuver> getOffendingManeuvers() {
     return offendingManeuvers;
   }
