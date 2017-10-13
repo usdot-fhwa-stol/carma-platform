@@ -49,6 +49,20 @@ public class Trajectory {
   }
 
   /**
+   * Get the location along the route that this Trajectory will start at
+   */
+  public double getStartLocation() {
+    return this.startLocation;
+  }
+
+  /**
+   * Get the location along the route that this Trajectory will finish at
+   */
+  public double getEndLocation() {
+    return this.startLocation;
+  }
+
+  /**
    * Add a maneuver to the Trajectory.
    * </p>
    * The maneuver will be added to the appropriate maneuvers list if it fits spatially within the domain of

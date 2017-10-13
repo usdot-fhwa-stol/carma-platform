@@ -28,6 +28,8 @@ public interface IManeuver {
   }
 
   public void execute();
+  public boolean halt();
+  public boolean isRunning();
   public ManeuverType getType();
   public double getStartLocation();
   public double getEndLocation();
