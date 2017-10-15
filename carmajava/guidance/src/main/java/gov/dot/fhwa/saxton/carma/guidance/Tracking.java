@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Tracking extends GuidanceComponent {
     // Member variables
-    protected final long sleepDurationMillis = 30000;
+    protected final long sleepDurationMillis = 5000; // Not the real frequency for J2735
     protected int msgCount = 0;
     private IPublisher<SystemAlert> statusPublisher;
     private ISubscriber<NavSatFix> navSatFixSubscriber;
@@ -111,41 +111,44 @@ public class Tracking extends GuidanceComponent {
             systemAlertMsg.setType(SystemAlert.CAUTION);
             statusPublisher.publish(systemAlertMsg);
 
-            // Generate static BSM data
-            cav_msgs.BSM bsmFrame = bsmPublisher.newMessage();
-            BSMCoreData coreData = bsmFrame.getCoreData();
-            coreData.setMsgCount((byte) 101);
-            coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, new byte[] {(byte) 0xAB, 0x44, (byte) 0xD4, 0x4D}));
-            coreData.setSecMark((short) 31202);
-            coreData.setLatitude(41252 / 10000000.0);
-            coreData.setLongitude(-21000001 / 10000000.0);
-            coreData.setElev((float) (312 / 10.0));
-            coreData.getAccuracy().setSemiMajor((float) (145 * 0.05));
-            coreData.getAccuracy().setSemiMinor((float) (125 * 0.05));
-            coreData.getAccuracy().setOrientation(30252 * 0.054932479);
-            coreData.getTransmission().setTransmissionState((byte) 2);
-            coreData.setSpeed((float) (2100 * 0.02));
-            coreData.setHeading((float) (22049 * 0.0125));
-            coreData.setAngle((float) (13 * 1.5));
-            coreData.getAccelSet().setLongitude((float) (12 * 0.01));
-            coreData.getAccelSet().setLatitude((float) (-180 * 0.01));
-            coreData.getAccelSet().setVert((float) (55 * 0.02));
-            coreData.getAccelSet().setYaw((float) (-16001 * 0.01));
-            coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 0x48); //TODO change it to correct description
-            coreData.getBrakes().getTraction().setTractionControlStatus((byte) 2);
-            coreData.getBrakes().getAbs().setAntiLockBrakeStatus((byte) 3);
-            coreData.getBrakes().getScs().setStabilityControlStatus((byte) 1);
-            coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied((byte) 0);
-            coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus((byte) 1);
-            coreData.getSize().setVehicleWidth((float) (199 / 100.0));
-            coreData.getSize().setVehicleLength((float) (3069 / 100.0));
-
-            // Publish the BSM data
-            bsmPublisher.publish(bsmFrame);
-
+            //Publish dynamic BSM data
+            bsmPublisher.publish(composeBSMData());
+            
             try {
                 Thread.sleep(sleepDurationMillis);
             } catch (InterruptedException e) {
             }
+    }
+    
+    private BSM composeBSMData() {
+    	BSM bsmFrame = bsmPublisher.newMessage();
+    	BSMCoreData coreData = bsmFrame.getCoreData();
+        coreData.setMsgCount((byte) (msgCount++ % 127));
+        //ID is fixed to identify each for now
+        coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, new byte[] {0, 0, 0, 1}));
+        coreData.setSecMark((short) (System.currentTimeMillis() % 65535));
+        coreData.setLatitude(41252 / 10000000.0);
+        coreData.setLongitude(-21000001 / 10000000.0);
+        coreData.setElev((float) (312 / 10.0));
+        coreData.getAccuracy().setSemiMajor((float) (145 * 0.05));
+        coreData.getAccuracy().setSemiMinor((float) (125 * 0.05));
+        coreData.getAccuracy().setOrientation(30252 * 0.054932479);
+        coreData.getTransmission().setTransmissionState((byte) 2);
+        coreData.setSpeed((float) (2100 * 0.02));
+        coreData.setHeading((float) (22049 * 0.0125));
+        coreData.setAngle((float) (13 * 1.5));
+        coreData.getAccelSet().setLongitude((float) (12 * 0.01));
+        coreData.getAccelSet().setLatitude((float) (-180 * 0.01));
+        coreData.getAccelSet().setVert((float) (55 * 0.02));
+        coreData.getAccelSet().setYaw((float) (-16001 * 0.01));
+        coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 0x48); //TODO change it to correct description
+        coreData.getBrakes().getTraction().setTractionControlStatus((byte) 2);
+        coreData.getBrakes().getAbs().setAntiLockBrakeStatus((byte) 3);
+        coreData.getBrakes().getScs().setStabilityControlStatus((byte) 1);
+        coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied((byte) 0);
+        coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus((byte) 1);
+        coreData.getSize().setVehicleWidth((float) (199 / 100.0));
+        coreData.getSize().setVehicleLength((float) (3069 / 100.0));
+    	return bsmFrame;
     }
 }
