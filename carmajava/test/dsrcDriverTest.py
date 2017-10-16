@@ -32,7 +32,7 @@ class TestDSRCDriver(unittest.TestCase):
         rospy.init_node('dsrc_test_node', anonymous=True)
         
         try:
-            rospy.wait_for_service('get_drivers_with_capabilities', timeout=None)
+            rospy.wait_for_service('get_drivers_with_capabilities', timeout=20)
         except rospy.ROSException, e:
             self.fail('Service get_drivers_with_capabilities not found: %s' % e)
         
@@ -52,7 +52,7 @@ class TestDSRCDriver(unittest.TestCase):
     def test_send_service(self):
         
         try:
-            rospy.wait_for_service('/saxton_cav/drivers/dsrc/comms/send', timeout=None)
+            rospy.wait_for_service('/saxton_cav/drivers/dsrc/comms/send', timeout=20)
         except rospy.ROSException, e:
             self.fail('Service sendMessage not found: %s' % e)
             
@@ -62,24 +62,6 @@ class TestDSRCDriver(unittest.TestCase):
             self.assertEqual(send_message_response.errorStatus, 0, 'Service sendMessage got failure')
         except rospy.ServiceException, e:
             self.fail('Service sendMessage call failed: %s' % e)
-    
-    def test_inbound_topic(self):
-        
-        try:
-            inbound_pub = rospy.Publisher('/saxton_cav/drivers/dsrc/comms/inbound_binary_msg', cav_msgs.msg.ByteArray, queue_size=10)
-            inbound_pub.publish(ByteArray(std_msgs.msg.Header(), 'BSM', [1, 1, 1, 1]))
-            rospy.Subscriber('/saxton_cav/drivers/dsrc/comms/inbound_binary_msg', cav_msgs.msg.ByteArray)
-        except rospy.ROSException, e:
-            self.fail('inbound_binary_msg sub & pub test failed')
-            
-    def test_outbound_topic(self):
-        
-        try:
-            outbound_pub = rospy.Publisher('/saxton_cav/drivers/dsrc/comms/outbound_binary_msg', cav_msgs.msg.ByteArray, queue_size=10)
-            outbound_pub.publish(ByteArray(std_msgs.msg.Header(), 'BSM', [1, 1, 1, 1]))
-            rospy.Subscriber('/saxton_cav/drivers/dsrc/comms/outbound_binary_msg', cav_msgs.msg.ByteArray)
-        except rospy.ROSException, e:
-            self.fail('outbound_binary_msg sub & pub test failed')
 
 # Main (entry point)
 if __name__ == '__main__':
