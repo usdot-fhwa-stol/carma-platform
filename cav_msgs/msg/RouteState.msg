@@ -22,7 +22,16 @@ uint8 LOADING_ROUTES=0
 uint8 ROUTE_SELECTION=1
 uint8 WAITING_TO_START=2
 uint8 FOLLOWING_ROUTE=3
-uint8 ROUTE_COMPLETE=4
+
+# Enum denoting an event which has just occurred on the route
+uint8 event
+
+uint8 NONE=0
+uint8 ROUTE_SELECTED=1
+uint8 ROUTE_STARTED=2
+uint8 ROUTE_COMPLETED=3
+uint8 LEFT_ROUTE=4
+uint8 ROUTE_ABORTED=5
 
 # Cross-track distance of vehicle along route
 float64 cross_track
