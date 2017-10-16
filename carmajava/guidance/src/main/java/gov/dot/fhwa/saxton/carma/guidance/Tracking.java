@@ -18,21 +18,37 @@
 //Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import cav_msgs.AccelerationSet4Way;
 import cav_msgs.BSM;
 import cav_msgs.BSMCoreData;
 import cav_msgs.HeadingStamped;
 import cav_msgs.SystemAlert;
+import cav_srvs.GetDriversWithCapabilities;
+import cav_srvs.GetDriversWithCapabilitiesRequest;
+import cav_srvs.GetDriversWithCapabilitiesResponse;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
+import nav_msgs.Odometry;
+
 import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.ros.exception.RosRuntimeException;
+import org.ros.internal.message.RawMessage;
 import org.ros.node.ConnectedNode;
+import org.ros.node.service.ServiceClient;
+
 import sensor_msgs.NavSatFix;
 
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,12 +61,20 @@ public class Tracking extends GuidanceComponent {
     // Member variables
     protected final long sleepDurationMillis = 5000; // Not the real frequency for J2735
     protected int msgCount = 0;
+    protected boolean drivers_ready = false;
     private IPublisher<SystemAlert> statusPublisher;
+    private IPublisher<BSM> bsmPublisher;
     private ISubscriber<NavSatFix> navSatFixSubscriber;
     private ISubscriber<HeadingStamped> headingStampedSubscriber;
-    private ISubscriber<TwistStamped> twistStampedSubscriber;
-    private IPublisher<BSM> bsmPublisher;
-
+    private ISubscriber<TwistStamped> velocitySubscriber;
+    private ISubscriber<Odometry> odometrySubscriber;
+    private ISubscriber<AccelerationSet4Way> accelerationSubscriber;
+    private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversService;
+    private List<String> req_drivers = Arrays.asList(
+    		"acceleration", "brake_position", "parking_brake", "speed", "steering_wheel_angle"
+    		);
+    private List<String> resp_drivers = new ArrayList();
+    
     public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
         super(state, pubSubService, node);
     }
@@ -66,7 +90,6 @@ public class Tracking extends GuidanceComponent {
 
         // Configure subscribers
         // TODO: Gather trajectory data internally from Guidance.Arbitrator and Guidance.Trajectory
-        // TODO: Update when NavSatFix.msg is available
         navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
         navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
             @Override public void onMessage(NavSatFix msg) {
@@ -74,25 +97,60 @@ public class Tracking extends GuidanceComponent {
             }
         });
 
-        headingStampedSubscriber = pubSubService.getSubscriberForTopic(
-            "heading", HeadingStamped._TYPE);
-
+        headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
         headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
             @Override public void onMessage(HeadingStamped msg) {
                 log.info("Received HeadingStamped:" + msg.toString());
             }
         });
 
-        twistStampedSubscriber = pubSubService.getSubscriberForTopic(
-            "velocity", TwistStamped._TYPE);
-
-        twistStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
+        velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+        velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
             @Override public void onMessage(TwistStamped msg) {
                 log.info("Received TwistStamped:" + msg.toString());
             }
         });
-
+        
+        odometrySubscriber = pubSubService.getSubscriberForTopic("odometry", Odometry._TYPE);
+        odometrySubscriber.registerOnMessageCallback(new OnMessageCallback<Odometry>() {
+            @Override public void onMessage(Odometry msg) {
+                log.info("Received Odometry:" + msg.toString());
+            }
+        });
+        
         // TODO: Integrate CAN data from Environment layer when available
+        try {
+			getDriversService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversService.newMessage();
+			driver_request_wrapper.setCapabilities(req_drivers);
+			getDriversService.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+				
+				@Override
+				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+					resp_drivers = msg.getDriverData();
+					log.info("call is successful!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + resp_drivers.size());
+				}
+				
+				@Override
+				public void onFailure(Exception e) {
+					throw new RosRuntimeException(e);
+				}
+			});
+		} catch (Exception e) {
+			handleException(e);
+		}
+        
+        try {
+        	accelerationSubscriber = pubSubService.getSubscriberForTopic(resp_drivers.get(0), AccelerationSet4Way._TYPE);
+            accelerationSubscriber.registerOnMessageCallback(new OnMessageCallback<AccelerationSet4Way>() {
+            	@Override public void onMessage(AccelerationSet4Way msg) {
+                    log.info("Received accelerationSet:" + msg.toString());
+                }
+    		});
+        } catch (Exception e) {
+        	handleException(e);
+		}
+        
     }
 
     @Override public void onSystemReady() {
@@ -117,6 +175,7 @@ public class Tracking extends GuidanceComponent {
             try {
                 Thread.sleep(sleepDurationMillis);
             } catch (InterruptedException e) {
+            	handleException(e);
             }
     }
     
@@ -124,18 +183,24 @@ public class Tracking extends GuidanceComponent {
     	BSM bsmFrame = bsmPublisher.newMessage();
     	BSMCoreData coreData = bsmFrame.getCoreData();
         coreData.setMsgCount((byte) (msgCount++ % 127));
-        //ID is fixed to identify each for now
+        
+        //ID is fixed to identify each vehicle for now
         coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, new byte[] {0, 0, 0, 1}));
+        
         coreData.setSecMark((short) (System.currentTimeMillis() % 65535));
-        coreData.setLatitude(41252 / 10000000.0);
-        coreData.setLongitude(-21000001 / 10000000.0);
-        coreData.setElev((float) (312 / 10.0));
-        coreData.getAccuracy().setSemiMajor((float) (145 * 0.05));
-        coreData.getAccuracy().setSemiMinor((float) (125 * 0.05));
-        coreData.getAccuracy().setOrientation(30252 * 0.054932479);
+        coreData.setLatitude(navSatFixSubscriber.getLastMessage().getLatitude());
+        coreData.setLongitude(navSatFixSubscriber.getLastMessage().getLongitude());
+        coreData.setElev((float) navSatFixSubscriber.getLastMessage().getAltitude());
+        
+        //Left blank for now
+        coreData.getAccuracy().setSemiMajor((float) 0);
+        coreData.getAccuracy().setSemiMinor((float) 0);
+        coreData.getAccuracy().setOrientation(0);
+        
         coreData.getTransmission().setTransmissionState((byte) 2);
-        coreData.setSpeed((float) (2100 * 0.02));
-        coreData.setHeading((float) (22049 * 0.0125));
+        
+        coreData.setSpeed(0);
+        coreData.setHeading((float) (headingStampedSubscriber.getLastMessage().getHeading() * 0.0125));
         coreData.setAngle((float) (13 * 1.5));
         coreData.getAccelSet().setLongitude((float) (12 * 0.01));
         coreData.getAccelSet().setLatitude((float) (-180 * 0.01));
@@ -151,4 +216,9 @@ public class Tracking extends GuidanceComponent {
         coreData.getSize().setVehicleLength((float) (3069 / 100.0));
     	return bsmFrame;
     }
+    
+    protected void handleException(Exception e) {
+		log.error(this.getComponentName() + "throws an exception and is about to shutdown...");
+		node.shutdown();
+	}
 }
