@@ -60,7 +60,7 @@ public class HaversineStrategy implements IDistanceStrategy{
     // Calculate the sign of the crosstrack distance
     // Find the vector normal to the path and third point
     Vector3D normalVec = startToEndVec.cross(startToExternalVec);
-    // This forms a plane along the the segment.
+    // This forms a plane along the the path segment.
     // With points A (end point) B(start point) and C (point along normal vector)
     // Point X is the external point
     // B' = B-A  :  C' = C-A   : X' = X-A

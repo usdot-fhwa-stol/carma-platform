@@ -110,6 +110,13 @@ public class Vector3D extends Vector {
     return headPoint_.getDim(Point3D.getZIndex());
   }
 
+  /**
+   * Helper function to convert a Vector to a 3D vector.
+   * Any dimensions not set which are < 3 are set to 0
+   * Any dimensions > 3 are dropped
+   * @param v The vector to convert to a Vector3D
+   * @return A new vector 3d
+   */
   public static Vector3D fromVector(Vector v) {
     Point3D p = new Point3D(0,0,0);
     for (int i = 0; i < 3; i++) {
