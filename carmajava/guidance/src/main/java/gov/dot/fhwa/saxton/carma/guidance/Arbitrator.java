@@ -80,7 +80,7 @@ public class Arbitrator extends GuidanceComponent {
 
                 // TODO: This is brittle, depends on convention of having a constructor taking only a PSL
                 TrajectoryValidationConstraint constraintInstance = constraintCtor.newInstance();
-                log.info("Guidance.Arbitrator instantiated new TrajectoryValidationConstraint instance: " + constraintInstance.getName());
+                log.info("Guidance.Arbitrator instantiated new TrajectoryValidationConstraint instance: " + constraintClass.getCanonicalName());
 
                 constraintInstances.add(constraintInstance);
             } catch (Exception e) {
