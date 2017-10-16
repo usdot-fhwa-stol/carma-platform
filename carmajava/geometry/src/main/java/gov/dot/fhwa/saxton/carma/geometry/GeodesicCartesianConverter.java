@@ -130,7 +130,7 @@ public class GeodesicCartesianConverter {
     double sinLat = Math.sin(loc.getLatRad());
     double sinLon = Math.sin(loc.getLonRad());
     double cosLat = Math.cos(loc.getLatRad());
-    double cosLon = Math.cos(loc.getLonRad());
+    double cosLon = Math.cos(loc.getLonRad()); Exception e; e.
     double[][] R = new double[][] {
       { -sinLat * cosLon, -sinLon,  -cosLat * cosLon },
       { -sinLat * sinLon,  cosLon,  -cosLat * sinLat },
