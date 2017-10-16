@@ -73,6 +73,20 @@ public class Vector3D extends Vector {
   }
 
   /**
+   * Calculates the determinate of a 3x3 square matrix defined by 3 col vectors
+   * @param c1 First column vector
+   * @param c2 Second column vector
+   * @param c3 Third column vector
+   * @return The determinate
+   */
+  public static double get3by3Determinate(Vector3D c1, Vector3D c2, Vector3D c3) {
+    final double det1 = c2.getY()*c3.getZ() - c3.getY()*c2.getZ();
+    final double det2 = c1.getY()*c3.getZ() - c3.getY()*c1.getZ();
+    final double det3 = c1.getY()*c2.getZ() - c2.getY()*c1.getZ();
+    return c1.getX()*det1 - c2.getX()*det2 + c3.getX()*det3;
+  }
+
+  /**
    * Gets the x-axis value
    * @return x-axis value
    */
@@ -94,5 +108,18 @@ public class Vector3D extends Vector {
    */
   public double getZ() {
     return headPoint_.getDim(Point3D.getZIndex());
+  }
+
+  public static Vector3D fromVector(Vector v) {
+    Point3D p = new Point3D(0,0,0);
+    for (int i = 0; i < 3; i++) {
+      if (i < v.getNumDimensions()) {
+        p.setDim(i, v.getDim(i));
+      } else {
+        break;
+      }
+    }
+
+    return new Vector3D(p);
   }
 }

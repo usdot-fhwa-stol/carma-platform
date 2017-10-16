@@ -70,9 +70,6 @@ public class RouteWorker {
   protected double downtrackDistance = 0;
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
-  protected double MAX_CROSSTRACK_DISTANCE_M = 1000.0;
-    // TODO put in route files as may change based on road type
-  protected double MAX_START_DISTANCE_M = 1000.0; // Can only join route if within this many meters of waypoint
   protected int routeStateSeq = 0;
 
   /**
@@ -208,7 +205,8 @@ public class RouteWorker {
    * @return vehicle on route status
    */
   protected boolean leftRouteVicinity() {
-    return Math.abs(crossTrackDistance) > MAX_CROSSTRACK_DISTANCE_M;
+    RouteWaypoint wp = currentSegment.getDowntrackWaypoint();
+    return crossTrackDistance < wp.getMinCrossTrack() || wp.getMaxCrossTrack() < crossTrackDistance;
   }
 
   /**
@@ -287,9 +285,10 @@ public class RouteWorker {
     }
     int startingIndex = -1;
     int count = 0;
+    double maxJoinDistance = activeRoute.getMaxJoinDistance();
     for (RouteWaypoint wp : activeRoute.getWaypoints()) {
       double dist = hostVehicleLocation.distanceFrom(wp.getLocation(), new HaversineStrategy());
-      if (MAX_START_DISTANCE_M > dist) {
+      if (maxJoinDistance > dist) {
         startingIndex = count;
         break;
       }
