@@ -22,6 +22,8 @@ ignored_plugins: []
 required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.plugins.MockCruisingPlugin
 
+use_sin_trajectory: true
+
 # Double: Time the mock trajectory will initially command the operating speed for
 # Units: seconds
 trajectory_initial_hold_duration: 10.0

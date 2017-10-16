@@ -8,10 +8,7 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the * License for the specific language governing permissions and limitations under * the License.
  */
 
 //TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
@@ -50,6 +47,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected AtomicReference<GuidanceState> state;
     protected TrajectoryExecutorWorker trajectoryExecutorWorker;
 
+    protected boolean useSinTrajectory = false;
     protected long startTime = 0;
     protected long holdTimeMs = 0;
     protected double operatingSpeed;
@@ -88,6 +86,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         period = node.getParameterTree().getDouble("~trajectory_period");
         maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
         holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
+        useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
     }
 
     @Override
@@ -120,7 +119,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
     public void loop() {
         try {
             // Generate a simple sin(t) speed command
-            if (state.get() == GuidanceState.ENGAGED) {
+            if (state.get() == GuidanceState.ENGAGED && useSinTrajectory) {
                 if (System.currentTimeMillis() - startTime < holdTimeMs) {
                     commands.setCommand(operatingSpeed, maxAccel);
                 } else {
@@ -135,35 +134,64 @@ public class TrajectoryExecutor extends GuidanceComponent {
         }
     }
 
+  /**
+   * Abort the current and queued trajectories and the currently executing maneuvers
+   */
     public void abortTrajectory() {
         trajectoryExecutorWorker.abortTrajectory();
     }
 
+  /**
+   * Get the current lateral maneuver, null if none are currently executing
+   */
     public IManeuver getCurrentLateralManeuver() {
         return trajectoryExecutorWorker.getCurrentLateralManeuver();        
     }
 
+  /**
+   * Get the current longitudinal maneuver, null if none are currently executing
+   */
     public IManeuver getCurrentLongitudinalManeuver() {
         return trajectoryExecutorWorker.getCurrentLongitudinalManeuver();        
     }
 
+  /**
+   * Get the next lateral maneuver, null if none are currently executing
+   */
     public IManeuver getNextLateralManeuver() {
         return trajectoryExecutorWorker.getNextLateralManeuver();
     }
 
+  /**
+   * Get the next longitudinal maneuver, null if none are currently executing
+   */
     public IManeuver getNextLongitudinalManeuver() {
         return trajectoryExecutorWorker.getNextLongitudinalManeuver();
     }
 
+  /**
+   * Get the current complection pct of the trajectory, -1.0 if a trajectory isn't currently executing
+   */
     public double getTrajectoryCompletionPct() {
         return trajectoryExecutorWorker.getTrajectoryCompletionPct();
     }
 
+  /**
+   * Register a callback function to be invoked when the specified percent completion is acheived
+   */
     public void registerOnTrajectoryProgressCallback(double pct, OnTrajectoryProgressCallback callback) {
         trajectoryExecutorWorker.registerOnTrajectoryProgressCallback(pct, callback);
     }
 
+  /**
+   * Submit the specified trajectory for execution
+   * </p>
+   * If no trajectories are running it will be run right away, otherwise it will be queued to run after the current
+   * trajectory finishes execution.
+   */
     public void runTrajectory(Trajectory traj) {
-        trajectoryExecutorWorker.runTrajectory(traj);
+        if (state.get() == GuidanceState.ENGAGED) {
+            trajectoryExecutorWorker.runTrajectory(traj);
+        }
     }
 }
