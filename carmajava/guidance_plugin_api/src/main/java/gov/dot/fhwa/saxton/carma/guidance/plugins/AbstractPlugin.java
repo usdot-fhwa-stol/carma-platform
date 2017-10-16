@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import org.apache.commons.logging.Log;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public abstract class AbstractPlugin implements IPlugin {
         return availability.get();
     }
 
-    @Override public void planTrajectory() {
+    @Override public void planTrajectory(Trajectory traj) {
         throw new UnsupportedOperationException();
     }
 
