@@ -46,6 +46,8 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   protected ConnectedNode connectedNode;
   protected boolean systemReady = false;
   protected NewPlan lastNewPlanMsg = null;
+  protected Log log;
+
   // Topics
   // Publishers
   protected Publisher<cav_msgs.MobilityAck> mobAckOutPub;
@@ -73,8 +75,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
     this.connectedNode = connectedNode;
-    final Log log = connectedNode.getLog();
-
+    log =  connectedNode.getLog();
     // Topics
     // Publishers
     mobAckOutPub = connectedNode.newPublisher("mobility_ack_outbound", cav_msgs.MobilityAck._TYPE);
@@ -140,23 +141,12 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
       @Override public void onNewMessage(cav_msgs.SystemAlert message) {
-        switch (message.getType()) {
-          case SystemAlert.NOT_READY:
-            systemReady = false;
-            log.info("Negotiator received SystemAlert.NOT_READY");
-            break;
-          case SystemAlert.DRIVERS_READY:
-            systemReady = true;
-            log.info("Negotiator received SystemAlert.DRIVERS_READY");
-            break;
-          case SystemAlert.FATAL:
-            systemReady = false;
-            log.info("Negotiator received SystemAlert.FATAL");
-            break;
-          default:
-            log.info("Negotiator received new SystemAlert");
-            break;
-        }
+          try {
+            handleSystemAlertMsg(message);
+          } catch (Exception e) {
+            handleException(e);
+          }//try
+
       }//onNewMessage
     });//addMessageListener
 
@@ -181,6 +171,61 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   }//onStart
 
   @Override protected void handleException(Exception e) {
+    String msg = "Uncaught exception in " + this.connectedNode.getName() + " caught by handleException.";
+    log.fatal(msg, e);
 
+    SystemAlert alertMsg = systemAlertPub.newMessage();
+    alertMsg.setType(SystemAlert.FATAL);
+    alertMsg.setDescription(msg);
+
+    systemAlertPub.publish(alertMsg);
+  }
+
+  /*
+  	Basic shutdown procedure.
+  	Add more procedures here as needed.
+   */
+  public void shutdown() {
+    log.info("Negotiator shutdown method called.");
+    this.connectedNode.shutdown();
+  }
+
+  /**
+   * Function to be used as a callback for received system alert messages
+   *
+   * @param msg the system alert message
+   *
+   * TODO: Create additional methods to handle the different alerts.
+   */
+  protected void handleSystemAlertMsg(SystemAlert msg) {
+    switch (msg.getType()) {
+      case cav_msgs.SystemAlert.CAUTION:
+        // TODO: Handle this message type
+        break;
+      case cav_msgs.SystemAlert.WARNING:
+        // TODO: Handle this message type
+        break;
+      case cav_msgs.SystemAlert.FATAL:
+        //TODO:  Handle this message type
+        log.info("Negotiator received system fatal on system_alert and will be shutting down");
+        shutdown();
+        break;
+      case cav_msgs.SystemAlert.NOT_READY:
+        //TODO:  Handle this message type
+        log.info("Negotiator received system not ready on system_alert.");
+        break;
+      case cav_msgs.SystemAlert.DRIVERS_READY:
+        //TODO:  Handle this message type
+        systemReady = true;
+        log.info("Negotiator received drivers ready on system_alert.");
+        break;
+      case cav_msgs.SystemAlert.SHUTDOWN:
+        log.info("Negotiator received a shutdown message");
+        shutdown();
+        break;
+      default:
+        //TODO: Handle this variant maybe throw exception?
+        log.error("Negotiator received a system alert message with unknown type: " + msg.getType());
+    }
   }
 }//AbstractNodeMain
