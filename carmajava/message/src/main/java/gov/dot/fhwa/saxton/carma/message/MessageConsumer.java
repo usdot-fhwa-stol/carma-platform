@@ -160,7 +160,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 			route_state_sub.addMessageListener(new MessageListener<RouteState>() {
 				@Override
 				public void onNewMessage(RouteState rs_msg) {
-					if(rs_msg.getState() == RouteState.ROUTE_COMPLETE) {
+					if(rs_msg.getEvent() == RouteState.ROUTE_COMPLETED) {
 						connectedNode.shutdown();
 					}
 				}

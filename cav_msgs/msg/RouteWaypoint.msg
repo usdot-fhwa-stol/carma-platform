@@ -19,7 +19,6 @@ float64 longitude
 # Altitude [m]. Positive is above the WGS 84 ellipsoid
 float64 altitude
 
-<<<<<<< HEAD
 # The number of lanes on the current road in the current direction of travel
 # Must be set with value >= 1
 uint8 lane_count
@@ -39,8 +38,6 @@ cav_msgs/LaneEdgeType left_most_lane_marking
 # The lane markings on the right edge of the right most lane
 cav_msgs/LaneEdgeType right_most_lane_marking
 
-# A bit flag describing which of the following fields are set. 1 = set, 0 = not set
-=======
 # Marks the maximum negative cross track distance a vehicle can have and still be considered on a route
 # Units: Meters
 float64 min_cross_track
@@ -50,7 +47,6 @@ float64 min_cross_track
 float64 max_cross_track
 
 # A bit flag desribing which of the following fields are set. 1 = set, 0 = not set
->>>>>>> develop
 uint16 set_fields
 
 # A list of guidance algorithms which are disabled on the segment which ends in this waypoint
