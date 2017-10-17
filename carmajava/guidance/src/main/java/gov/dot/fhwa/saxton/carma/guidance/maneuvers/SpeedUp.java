@@ -25,16 +25,11 @@ public class SpeedUp extends LongitudinalManeuver {
 
 
     @Override
-    public void executeTimeStep() {
+    public void executeTimeStep() throws IllegalStateException {
 
-        //if current location along route < maneuver start distance then
-            //set command to start speed
+        //if current location is outside the defined boundaries for this maneuver throw an exception
 
-        //if current location along route > maneuver end distance then
-            //set command to target speed
-
-        //else if current location is > start distances then
-            //compute command based on linear interpolation on time steps
+        //compute command based on linear interpolation on time steps
 
         //invoke the ACC override
 

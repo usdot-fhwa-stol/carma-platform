@@ -6,8 +6,8 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
  */
 public class ManeuverInputs implements IManeuverInputs {
 
-    protected ISubscribe<Route>                 routeSubscriber_;
-    protected ISubscribe<RoadwayEnvironment>    roadwayEnvSubscriber_;
+    protected ISubscriber<Route>                 routeSubscriber_;
+    protected ISubscriber<RoadwayEnvironment>    roadwayEnvSubscriber_;
 
 
     @Override

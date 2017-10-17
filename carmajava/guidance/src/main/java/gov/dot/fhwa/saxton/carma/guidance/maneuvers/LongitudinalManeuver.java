@@ -23,7 +23,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     }
 
 
-    public abstract void executeTimeStep();
+    public abstract void executeTimeStep() throws IllegalStateException;
 
 
     @Override

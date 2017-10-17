@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 /**
  * Defines an interface to all Maneuver objects.
@@ -15,7 +15,7 @@ public interface IManeuver {
      * @param startDist - distance from beginning of route at which this maneuver is to begin, m
      * @throws IllegalStateException if required target quantity is not defined prior to this call
      */
-    void plan(IManeuverInputs inputs, GuidanceCommands commands, double startDist) throws IllegalStateException;
+    void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException;
 
 
     /**
@@ -23,8 +23,11 @@ public interface IManeuver {
      * instantaneous commands then passing those commands to the vehicle's controller driver.
      *
      * ASSUMES that the plan method has already run to completion - there is no check for this condition!
+     *
+     * @throws IllegalStateException if called when vehicle's position along route is not between the
+     * maneuver's start and end distances
      */
-    void executeTimeStep();
+    void executeTimeStep() throws IllegalStateException;
 
 
     /**

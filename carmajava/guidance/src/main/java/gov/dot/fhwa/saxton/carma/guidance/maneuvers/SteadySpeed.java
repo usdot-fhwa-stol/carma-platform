@@ -35,7 +35,9 @@ public class SteadySpeed extends LongitudinalManeuver {
 
 
     @Override
-    public void executeTimeStep() {
+    public void executeTimeStep() throws IllegalStateException {
+
+        //if current location is not within the defined boundaries for this maneuver throw exception
 
         //set command to the target speed
 

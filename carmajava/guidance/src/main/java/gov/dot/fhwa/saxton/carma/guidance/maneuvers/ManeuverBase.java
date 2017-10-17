@@ -25,7 +25,7 @@ public abstract class ManeuverBase implements IManeuver {
     }
 
 
-    public abstract void executeTimeStep();
+    public abstract void executeTimeStep() throws IllegalStateException;
 
 
     public abstract void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException;
