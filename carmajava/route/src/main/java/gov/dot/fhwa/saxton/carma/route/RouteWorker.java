@@ -479,6 +479,10 @@ public class RouteWorker {
       case FOLLOWING_ROUTE:
         routeState.setState(RouteState.FOLLOWING_ROUTE);
         break;
+      default:
+        routeState.setState(RouteState.ROUTE_SELECTION);
+        log.warn("Sending a route state message an unsupported state was set. Defaulted to ROUTE_SELECTION");
+        break;
     }
 
     // Set a recent event which this message serves as a notification of
