@@ -16,21 +16,19 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
-/**
- * Temporary stand-in IManeuver interface, pending implementation of Maneuvers assembly
- * <p>
- * TODO: Replace with Maneuvers implementation
- */
-public interface IManeuver {
-  enum ManeuverType {
-    LATERAL,
-    LONGITUDINAL
-  }
+import org.apache.commons.logging.Log;
 
-  public void execute();
-  public boolean halt();
-  public boolean isRunning();
-  public ManeuverType getType();
-  public double getStartLocation();
-  public double getEndLocation();
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+/**
+ * Interface for receiving information about Trajectory progress from TrajectoryExecutor
+ */
+public interface OnTrajectoryProgressCallback {
+
+  /**
+   * Called when progress on current trajectory reaches the specified pct or a multiple of pct
+   */
+  void onProgress(double pct);
 }
