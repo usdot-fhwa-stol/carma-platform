@@ -155,7 +155,7 @@ public class TransformServerTest extends RosTest {
       }
 
       @Override
-      protected void handleException(Exception e) {
+      protected void handleException(Throwable e) {
         fail("Handle exception reached in test case");
       }
     };

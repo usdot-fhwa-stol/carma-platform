@@ -48,6 +48,7 @@ dependencies {
   /* Local subproject dependency */
   compile project(':rosutils')
   compile project(':geometry')
+  compile project(':route')
   testCompile project (path: ':rosutils', configuration: 'rosUtilsTestArtifacts')
 }
 

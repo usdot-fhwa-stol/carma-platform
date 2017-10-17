@@ -2,6 +2,4 @@
 # Orientation of the vehicle in global frame
 Header header
 
-float32 roll
-float32 pitch
-float32 yaw # Formerly heading
+float32 heading # Heading of the vehicle east of north

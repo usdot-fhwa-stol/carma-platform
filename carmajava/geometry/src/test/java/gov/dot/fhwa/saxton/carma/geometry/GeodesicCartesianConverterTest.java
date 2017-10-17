@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.geometry;
 
+import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.apache.commons.logging.Log;
@@ -161,6 +162,53 @@ public class GeodesicCartesianConverterTest {
     point = gcConvertor.geodesic2Cartesian(loc, tf);
     solution = new Point3D(0, -6378137, -6356752);
     assertTrue(point.almostEquals(solution, 1)); // Check accuracy to within 1m
+  }
+
+  /**
+   * Tests the ecefToNEDFromLocaton frunction
+   * @throws Exception
+   */
+  @Test
+  public void testEcefToNEDFromLocaton() throws Exception {
+    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+
+    // Prime meridian and equator
+    Location locOfNED = new Location(0, 0, 0);
+    Transform ecefToNED = gcc.ecefToNEDFromLocaton(locOfNED);
+    Vector3 trans = ecefToNED.getTranslation();
+    Quaternion rot = ecefToNED.getRotationAndScale();
+    // an NED at lat = 0 lon = 0 is rotated -90 deg around the ecef y-axis
+    Vector3 solutionTrans = new Vector3(6378137.0, 0, 0);
+    Vector3 solRotAxis = new Vector3(0,1,0);
+    Quaternion solutionRot = Quaternion.fromAxisAngle(solRotAxis, Math.toRadians(-90));
+    assertTrue(trans.almostEquals(solutionTrans, 1.0));// Check accuracy to within 1m
+    assertTrue(rot.almostEquals(solutionRot, 0.0001)); // Check accuracy to within ~0.01 deg
+
+    // Equator at intersection of ECEF y-axis
+    locOfNED = new Location(0, 90, 0);
+    ecefToNED = gcc.ecefToNEDFromLocaton(locOfNED);
+    trans = ecefToNED.getTranslation();
+    rot = ecefToNED.getRotationAndScale();
+    // an NED at lat = 0 lon = 90 is rotated -90 deg around the ecef y-axis then +90 around the new x-axis
+    // Equivalent quaternion found with http://www.andre-gaschler.com/rotationconverter/
+    solutionTrans = new Vector3(0, 6378137.0, 0);
+    solutionRot = new Quaternion(0.5, -0.5, 0.5, 0.5);
+    assertTrue(trans.almostEquals(solutionTrans, 1.0));// Check accuracy to within 1m
+    assertTrue(rot.almostEquals(solutionRot.normalize(), 0.0001)); // Check accuracy to within ~0.01 deg
+
+    // Prime meridian at 45 deg lat
+    locOfNED = new Location(45, 0, 0);
+    ecefToNED = gcc.ecefToNEDFromLocaton(locOfNED);
+    trans = ecefToNED.getTranslation();
+    rot = ecefToNED.getRotationAndScale();
+    // an NED at lat = 45 lon = 0 is rotated -135 deg around the ecef y-axis
+    Point3D locInECEF = gcc.geodesic2Cartesian(locOfNED, Transform.identity());
+    solutionTrans = new Vector3(locInECEF.getX(), locInECEF.getY(), locInECEF.getZ());
+    solRotAxis = new Vector3(0,1,0);
+    solutionRot = Quaternion.fromAxisAngle(solRotAxis, Math.toRadians(-135));
+    assertTrue(trans.almostEquals(solutionTrans, 1.0));// Check accuracy to within 1m
+    assertTrue(rot.almostEquals(solutionRot, 0.0001)); // Check accuracy to within ~0.01 deg
+
   }
 
 }

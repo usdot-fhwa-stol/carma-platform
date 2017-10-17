@@ -248,17 +248,13 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     msg.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
     msg.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
     global_pose_pub_.publish(msg);
-    //TODO this was changed by Michael McConnell on 10_11_17 for changes in Roadway
+
     cav_msgs::HeadingStamped heading;
     heading.header = msg.header;
     heading.header.frame_id = sensor_frame;
 
     //Convert yaw [-180,180] to  [0,360] degrees east of north
-    //heading.heading = pose.yaw < 0 ? 360 + pose.yaw : pose.yaw;
-    heading.roll = pose.roll;
-    heading.pitch = pose.pitch;
-    heading.yaw = pose.yaw;
-    // TODO end of Michael McConnell's changes
+    heading.heading = pose.yaw < 0 ? 360 + pose.yaw : pose.yaw;
     heading_pub_.publish(heading);
 
 }

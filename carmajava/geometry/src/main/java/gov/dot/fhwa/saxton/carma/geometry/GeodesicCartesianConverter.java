@@ -118,30 +118,31 @@ public class GeodesicCartesianConverter {
    * @param loc The location to place the origin of the NED frame at
    * @return The calculated transform between the two frames.
    */
-  // TODO Unit test and validate if map -> earth transform is needed
-  protected Transform ecefToNEDFromLocaton(Location loc) {
+  public Transform ecefToNEDFromLocaton(Location loc) {
     GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
-    Point3D hostInMap =
+    Point3D locInECEF =
       gcc.geodesic2Cartesian(loc, Transform.identity()); //TODO validate that this works even with an earth map transform
 
-    Vector3 trans = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
+    Vector3 trans = new Vector3(locInECEF.getX(), locInECEF.getY(), locInECEF.getZ());
 
     // Rotation matrix of north east down frame with respect to ecef
+    // Found at https://en.wikipedia.org/wiki/North_east_down
     double sinLat = Math.sin(loc.getLatRad());
     double sinLon = Math.sin(loc.getLonRad());
     double cosLat = Math.cos(loc.getLatRad());
-    double cosLon = Math.cos(loc.getLonRad()); Exception e; e.
+    double cosLon = Math.cos(loc.getLonRad());
     double[][] R = new double[][] {
       { -sinLat * cosLon, -sinLon,  -cosLat * cosLon },
-      { -sinLat * sinLon,  cosLon,  -cosLat * sinLat },
+      { -sinLat * sinLon,  cosLon,  -cosLat * sinLon },
       {           cosLat,       0,           -sinLat }
     };
+    // Convert rotation matrix into quaternion
     double qw = Math.sqrt(1.0 + R[0][0] + R[1][1] + R[2][2]) / 2.0;
     double qw4 = 4.0 * qw;
     double qx = (R[2][1] - R[1][2]) / qw4;
     double qy = (R[0][2] - R[2][0]) / qw4;
     double qz = (R[1][0] - R[0][1]) / qw4;
-    Quaternion quat = new Quaternion(qx, qy, qz, qw);
+    Quaternion quat = new Quaternion(qx, qy, qz, qw).normalize();
 
     return new Transform(trans, quat);
   }

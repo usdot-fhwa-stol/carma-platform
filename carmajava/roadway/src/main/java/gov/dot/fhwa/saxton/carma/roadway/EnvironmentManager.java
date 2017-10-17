@@ -84,7 +84,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
       connectedNode.newPublisher("roadway_environment", cav_msgs.RoadwayEnvironment._TYPE);
 
     // EnvironmentWorker must be initialized after publishers and before subscribers
-    environmentWorker = new EnvironmentWorker(this, connectedNode);
+    environmentWorker = new EnvironmentWorker(this, connectedNode.getLog());
 
     // Subscribers
     //Subscriber<cav_msgs.Map> mapSub = connectedNode.newSubscriber("map", cav_msgs.Map._TYPE);//TODO: Include once Map.msg is created
