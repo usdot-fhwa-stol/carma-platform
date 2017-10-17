@@ -8,11 +8,12 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the * License for the specific language governing permissions and limitations under * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
-//TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
-//Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
@@ -55,7 +56,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected double phase;
     protected double period;
     protected double maxAccel;
-    protected final long sleepDurationMillis = 100;
+    protected long sleepDurationMillis = 100;
 
     public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
             GuidanceCommands commands) {
@@ -87,6 +88,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
         holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
         useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
+        sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
     }
 
     @Override

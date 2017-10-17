@@ -40,7 +40,7 @@ public class TrajectoryExecutorWorker {
   protected IManeuver currentLateralManeuver = null;
   protected IManeuver currentLongitudinalManeuver = null;
 
-  // Storage struct for internal representation of callbacks
+  // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
     boolean called = false;
     double pct;
@@ -180,6 +180,8 @@ public class TrajectoryExecutorWorker {
 
   /**
    * Get the current complection pct of the trajectory, -1.0 if a trajectory isn't currently executing
+   * <p>
+   * Percent completion is defined over [0, 1] U (-1.0)
    */
   public double getTrajectoryCompletionPct() {
     // Handle the case where we're not running a trajectory yet
@@ -194,6 +196,8 @@ public class TrajectoryExecutorWorker {
 
   /**
    * Register a callback function to be invoked when the specified percent completion is acheived
+   * <p>
+   * Percent completion is defined over [0, 1] U (-1.0)
    */
   public void registerOnTrajectoryProgressCallback(double pct, OnTrajectoryProgressCallback callback) {
     callbacks.add(new PctCallback(pct, callback));
