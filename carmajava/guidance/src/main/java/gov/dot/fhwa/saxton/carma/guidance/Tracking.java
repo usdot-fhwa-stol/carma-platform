@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Tracking extends GuidanceComponent {
     // Member variables
-    protected final long sleepDurationMillis = 30000;
+    protected final long sleepDurationMillis = 5000;
     protected int msgCount = 0;
     private IPublisher<SystemAlert> statusPublisher;
     private ISubscriber<NavSatFix> navSatFixSubscriber;
