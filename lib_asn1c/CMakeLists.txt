@@ -21,4 +21,8 @@ catkin_package(
 ################
 ## POST BUILD ##
 ################
-file(COPY third_party_lib/libasn1c.so DESTINATION ../../devel/lib)
+set(LIBRARY_PATH_STRING $ENV{LD_LIBRARY_PATH})
+string(REPLACE ":" ";" LIBRARY_PATH_LIST ${LIBRARY_PATH_STRING})
+list(GET LIBRARY_PATH_LIST 0 COPY_TARGET)
+
+file(COPY third_party_lib/libasn1c.so DESTINATION ${COPY_TARGET})
