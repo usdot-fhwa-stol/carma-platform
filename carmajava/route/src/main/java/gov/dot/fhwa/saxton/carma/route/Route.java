@@ -31,6 +31,7 @@ public class Route {
   protected String routeID;
   protected String routeName;
   protected double routeLength;
+  protected double maxJoinDistance = 20.0;
   protected List<RouteSegment> segments;
   protected List<RouteWaypoint> waypoints;
 
@@ -272,4 +273,19 @@ public class Route {
     return routeLength;
   }
 
+  /**
+   * Get the maximum distance which a vehicle can be from a route and still join it
+   * @return distance in meters
+   */
+  public double getMaxJoinDistance() {
+    return maxJoinDistance;
+  }
+
+  /**
+   * Set the max distance which a vehicle can be from a route and still join it
+   * @param maxJoinDistance The max distance in meters
+   */
+  public void setMaxJoinDistance(double maxJoinDistance) {
+    this.maxJoinDistance = maxJoinDistance;
+  }
 }

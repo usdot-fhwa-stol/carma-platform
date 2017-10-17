@@ -39,6 +39,8 @@ public class RouteWaypoint {
   protected int lowerSpeedLimit = -1;
   protected int upperSpeedLimit = -1;
   protected double nearestMileMarker = -1;
+  protected double minCrossTrack = -10.0;
+  protected double maxCrossTrack = 10.0;
   //protected List<Maneuvers> neededManeuvers; //TODO uncomment when class is implemented
   protected int requiredLaneIndex = -1;
   protected RoadType roadType = RoadType.FREEWAY;
@@ -107,6 +109,8 @@ public class RouteWaypoint {
     routeWPMsg.setLongitude(location.getLongitude());
     routeWPMsg.setLatitude(location.getLatitude());
     routeWPMsg.setAltitude(location.getAltitude());
+    routeWPMsg.setMinCrossTrack(minCrossTrack);
+    routeWPMsg.setMaxCrossTrack(maxCrossTrack);
     routeWPMsg.setLaneCount((byte) laneCount);
     routeWPMsg.setDisabledGuidanceAlgorithms(disabledGuidanceAlgorithms);
 
@@ -134,6 +138,9 @@ public class RouteWaypoint {
     RouteWaypoint wp = new RouteWaypoint(
       new Location(waypointMsg.getLatitude(), waypointMsg.getLongitude(),
         waypointMsg.getAltitude()));
+
+    wp.setMinCrossTrack(waypointMsg.getMinCrossTrack());
+    wp.setMaxCrossTrack(waypointMsg.getMaxCrossTrack());
 
     // Set member variables according to set fields bit mask
     int bitMask = waypointMsg.getSetFields();
@@ -200,6 +207,38 @@ public class RouteWaypoint {
    */
   public Location getLocation() {
     return location;
+  }
+
+  /**
+   * Gets the minimum cross track value a vehicle can have along the segment defined by this waypoint
+   * @return The min cross track distance in meters
+   */
+  public double getMinCrossTrack() {
+    return minCrossTrack;
+  }
+
+  /**
+   * Sets the minimum cross track value a vehicle can have along the segment defined by this waypoint
+   * @param minCrossTrack The min cross track distance in meters
+   */
+  public void setMinCrossTrack(double minCrossTrack) {
+    this.minCrossTrack = minCrossTrack;
+  }
+
+  /**
+   * Gets the maximum cross track value a vehicle can have along the segment defined by this waypoint
+   * @return The max cross track distance in meters
+   */
+  public double getMaxCrossTrack() {
+    return maxCrossTrack;
+  }
+
+  /**
+   * Sets the maximum cross track value a vehicle can have along the segment defined by this waypoint
+   * @param maxCrossTrack The max cross track distance in meters
+   */
+  public void setMaxCrossTrack(double maxCrossTrack) {
+    this.maxCrossTrack = maxCrossTrack;
   }
 
   /**

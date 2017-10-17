@@ -85,13 +85,19 @@ public class HaversineStrategyTest {
     log.info("// Entering crossTrackDistance test");
     HaversineStrategy haversineStrategy = new HaversineStrategy();
 
-    // Test on km long segment
+    // Test on km long segment (Right side)
     Location loc1 = new Location(38.942201,-77.160108, 0);
     Location loc2 = new Location(38.943804, -77.148832, 0);
     GreatCircleSegment seg = new GreatCircleSegment(loc1, loc2);
     Location sideLoc = new Location(38.942422, -77.154786, 0);
     double solution = 58.59;
     assertTrue(Math.abs(haversineStrategy.crossTrackDistance(sideLoc, seg) - solution) < 0.1); // Check accuracy to within .1m
+
+    // Test on km long segment (Left side)
+    sideLoc = new Location(38.94348, -77.15505, 0);
+    solution = -61.14;
+    assertTrue(Math.abs(haversineStrategy.crossTrackDistance(sideLoc, seg) - solution) < 0.1); // Check accuracy to within .1m
+
 
     // Test point on segment start
     loc1 = new Location(38.942201,-77.160108, 0);

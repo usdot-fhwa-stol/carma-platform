@@ -70,9 +70,6 @@ public class RouteWorker {
   protected double downtrackDistance = 0;
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
-  protected double MAX_CROSSTRACK_DISTANCE_M = 1000.0;
-    // TODO put in route files as may change based on road type
-  protected double MAX_START_DISTANCE_M = 1000.0; // Can only join route if within this many meters of waypoint
   protected int routeStateSeq = 0;
 
   /**
@@ -116,7 +113,7 @@ public class RouteWorker {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
     log.info("Route State = " + currentSegmentIndex);
     // Publish the new route state
-    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), false));
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), event));
   }
 
   /**
@@ -138,7 +135,6 @@ public class RouteWorker {
           "Route: The end of the active route has been reached");
         // Notify system of route completion
         routeManager.publishSystemAlert(alertMsg);
-        routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), true));
         log.info("Route has been completed");
         routeManager.shutdown(); // Shutdown this node
         break;
@@ -208,7 +204,8 @@ public class RouteWorker {
    * @return vehicle on route status
    */
   protected boolean leftRouteVicinity() {
-    return Math.abs(crossTrackDistance) > MAX_CROSSTRACK_DISTANCE_M;
+    RouteWaypoint wp = currentSegment.getDowntrackWaypoint();
+    return crossTrackDistance < wp.getMinCrossTrack() || wp.getMaxCrossTrack() < crossTrackDistance;
   }
 
   /**
@@ -287,9 +284,10 @@ public class RouteWorker {
     }
     int startingIndex = -1;
     int count = 0;
+    double maxJoinDistance = activeRoute.getMaxJoinDistance();
     for (RouteWaypoint wp : activeRoute.getWaypoints()) {
       double dist = hostVehicleLocation.distanceFrom(wp.getLocation(), new HaversineStrategy());
-      if (MAX_START_DISTANCE_M > dist) {
+      if (maxJoinDistance > dist) {
         startingIndex = count;
         break;
       }
@@ -393,7 +391,7 @@ public class RouteWorker {
     }
 
     // Publish updated route information
-    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), false));
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), WorkerEvent.NONE));
     routeManager.publishCurrentRouteSegment(getCurrentRouteSegmentTopicMsg());
   }
 
@@ -462,28 +460,50 @@ public class RouteWorker {
    *
    * @param seq  The header sequence
    * @param time the time
+   * @param event A worker event which is this message will serve as a notification for
    * @return route state message
    */
-  protected RouteState getRouteStateTopicMsg(int seq, Time time, boolean routeComplete) {
+  protected RouteState getRouteStateTopicMsg(int seq, Time time, WorkerEvent event) {
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
-    // ROUTE_COMPLETE is not an internal state so we set it here
-    if (routeComplete) {
-      routeState.setState(RouteState.ROUTE_COMPLETE);
-    } else {
-      switch (getCurrentState()) {
-        case LOADING_ROUTES:
-          routeState.setState(RouteState.LOADING_ROUTES);
-          break;
-        case ROUTE_SELECTION:
-          routeState.setState(RouteState.ROUTE_SELECTION);
-          break;
-        case WAITING_TO_START:
-          routeState.setState(RouteState.WAITING_TO_START);
-          break;
-        case FOLLOWING_ROUTE:
-          routeState.setState(RouteState.FOLLOWING_ROUTE);
-          break;
-      }
+    // Set the state of route following
+    switch (getCurrentState()) {
+      case LOADING_ROUTES:
+        routeState.setState(RouteState.LOADING_ROUTES);
+        break;
+      case ROUTE_SELECTION:
+        routeState.setState(RouteState.ROUTE_SELECTION);
+        break;
+      case WAITING_TO_START:
+        routeState.setState(RouteState.WAITING_TO_START);
+        break;
+      case FOLLOWING_ROUTE:
+        routeState.setState(RouteState.FOLLOWING_ROUTE);
+        break;
+      default:
+        routeState.setState(RouteState.ROUTE_SELECTION);
+        log.warn("Sending a route state message an unsupported state was set. Defaulted to ROUTE_SELECTION");
+        break;
+    }
+
+    // Set a recent event which this message serves as a notification of
+    switch (event) {
+      case ROUTE_SELECTED:
+        routeState.setEvent(RouteState.ROUTE_SELECTED);
+        break;
+      case ROUTE_STARTED:
+        routeState.setEvent(RouteState.ROUTE_STARTED);
+        break;
+      case ROUTE_COMPLETED:
+        routeState.setEvent(RouteState.ROUTE_COMPLETED);
+        break;
+      case LEFT_ROUTE:
+        routeState.setEvent(RouteState.LEFT_ROUTE);
+        break;
+      case ROUTE_ABORTED:
+        routeState.setEvent(RouteState.ROUTE_ABORTED);
+        break;
+      default:
+        routeState.setEvent(RouteState.NONE);
     }
 
     if (activeRoute != null) {
