@@ -55,19 +55,6 @@ import org.ros.exception.RosRuntimeException;
 
 public class MessageConsumer extends SaxtonBaseNode {
 
-	// Declare native methods
-	private static native byte[] encode_BSM(Object output_bsm);
-
-	// Load libasn1c.so external C library
-	static {
-		try {
-			System.loadLibrary("asn1c");
-		} catch (Exception e) {
-			System.out.println("Exception trapped while trying to load the asn1c libtaty" + e.toString());
-			e.printStackTrace();
-		}
-	}
-
 	private boolean driversReady = false;
 
 	// Publisher
@@ -100,6 +87,11 @@ public class MessageConsumer extends SaxtonBaseNode {
 	ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
 	List<String> responseCapabilities_comms = new ArrayList();
 
+	//Log for this node
+	Log log = null;
+	
+	//Connected Node
+	ConnectedNode connectedNode = null;
 	@Override
 	public GraphName getDefaultNodeName() {
 		return GraphName.of("message_consumer");
@@ -108,74 +100,52 @@ public class MessageConsumer extends SaxtonBaseNode {
 	@Override
 	public void onSaxtonStart(final ConnectedNode connectedNode) {
 		
-		//System info: log, sub, pub
-		final Log log = connectedNode.getLog();
+		//initialize connectedNode and log
+		this.connectedNode = connectedNode;
+		this.log = connectedNode.getLog();
+		
+		//initialize alert sub, pub
 		alertPub = connectedNode.newPublisher("system_alert", SystemAlert._TYPE);
 		alertSub = connectedNode.newSubscriber("system_alert", SystemAlert._TYPE);
-		alertSub.addMessageListener(new MessageListener<SystemAlert>() {
-			@Override
-			public void onNewMessage(SystemAlert message) {
-				String messageTypeFullDescription = "Unknown system status";
-				switch (message.getType()) {
-					case SystemAlert.NOT_READY:
-						driversReady = false;
-						messageTypeFullDescription = "System not ready alert and will not publish";
-						break;
-					case SystemAlert.DRIVERS_READY:
+		try {
+			alertSub.addMessageListener(new MessageListener<SystemAlert>() {
+				@Override
+				public void onNewMessage(SystemAlert message) {
+					if(message.getType() == SystemAlert.DRIVERS_READY) {
 						driversReady = true;
-						messageTypeFullDescription = "System ready alert and is beginning to publish";
-						break;
-					default:
-						if(driversReady) messageTypeFullDescription = "Unknown system alert type but system is ready";
-						else messageTypeFullDescription = "Unknown system alert type and system is not ready";
+					}
 				}
-				log.info("message_consumer heard: " + message.getDescription() + "; " + messageTypeFullDescription);
-			}
-		});
+			});
+		} catch (Exception e) {
+			handleException(e);
+		}
 		
-		//Use cav_srvs.GetDriversWithCapabilities,
+		
+		//Use cav_srvs.GetDriversWithCapabilities.
+		//This is a discouraged practice since name prefixes will be handled by launch file. Should be fix later.
 		getDriversWithCapabilitiesClient = this.waitForService("/saxton_cav/interface_manager/get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 5000);
 		if(getDriversWithCapabilitiesClient == null) {
 			log.warn(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
 		}
 		
-		//Setup request and make service call with synchronizer to GetDriversWithCapabilitiesResponse to find comms driver
-		try {
-			GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
-			request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
-			while(!driversReady) Thread.sleep(5000);
-			RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
-				@Override
-				public void onSuccess(GetDriversWithCapabilitiesResponse response) {
-					responseCapabilities_comms = response.getDriverData();
-					log.info("MessageConsumer GetDriversWithCapabilitiesResponse: " + responseCapabilities_comms);
-				}
-				@Override
-				public void onFailure(RemoteException e) {
-					throw new RosRuntimeException(e);
-				}
-			});
-		} catch(Exception e) {
-			log.error("Excepetion trapped while request driver capabilities");
-			e.printStackTrace();
-		}
-		
-		//Publishers
-		outboundPub = connectedNode.newPublisher(responseCapabilities_comms.get(1), ByteArray._TYPE);
-		
 		//Subscribers
 		hostBsmSub = connectedNode.newSubscriber("/saxton_cav/guidance/bsm", BSM._TYPE);
-		hostBsmSub.addMessageListener(new MessageListener<BSM>() {
-			@Override
-			public void onNewMessage(BSM bsm) {
-				log.info("MessageConsumer received BSM soutbound. Publishing as ByteArray message");
-				ByteArray byteArray = outboundPub.newMessage();
-				byteArray.setMessageType("BSM");
-				ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_BSM(bsm));//Set message content with JNI native function call
-				byteArray.setContent(buffer);
-				outboundPub.publish(byteArray);
-			}
-		});		
+		try {
+			hostBsmSub.addMessageListener(new MessageListener<BSM>() {
+				@Override
+				public void onNewMessage(BSM bsm) {
+					if(outboundPub != null && driversReady) {
+						log.info("MessageConsumer received BSM. Publishing it as ByteArray message...");
+						ByteArray byteArray = outboundPub.newMessage();
+						BSMFactory.encode(bsm, byteArray);
+						outboundPub.publish(byteArray);
+					}
+				}
+			});
+		} catch (Exception e) {
+			handleException(e);
+		}
+			
 		
     // Fake Pubs and Subs TODO: Remove!!!
     // The following are two example pub/subs for connecting to the mock arada driver using the launch file.
@@ -299,6 +269,27 @@ public class MessageConsumer extends SaxtonBaseNode {
 			protected void setup() { sequenceNumber = 0; } //setup
 			@Override
 			protected void loop() throws InterruptedException {
+				if(outboundPub == null && driversReady) {
+					//Setup request and make service call with synchronizer to GetDriversWithCapabilitiesResponse to find comms driver
+					try {
+						GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
+						request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
+						RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
+							@Override
+							public void onSuccess(GetDriversWithCapabilitiesResponse response) {
+								responseCapabilities_comms = response.getDriverData();
+								log.info("MessageConsumer GetDriversWithCapabilitiesResponse: " + responseCapabilities_comms);
+							}
+							@Override
+							public void onFailure(RemoteException e) {
+								throw new RosRuntimeException(e);
+							}
+						});
+						outboundPub = connectedNode.newPublisher(responseCapabilities_comms.get(1), ByteArray._TYPE);
+					} catch(Exception e) {
+						handleException(e);
+					}
+				}
 				sequenceNumber++;
 				Thread.sleep(1000);
 			}//loop
@@ -306,5 +297,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 	}// onStart
 
 	@Override
-	protected void handleException(Exception e) { }
+	protected void handleException(Exception e) {
+		log.error(connectedNode.getName() + "throws an exception and is about to shutdown...");
+		connectedNode.shutdown();
+	}
 }// AbstractNodeMain
