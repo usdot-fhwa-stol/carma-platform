@@ -54,6 +54,15 @@ public class RoadwayWorkerTest {
   public void tearDown() throws Exception {
   }
 
+  /**
+   * Tests the detection of a vehicle leaving a route
+   * @throws Exception
+   */
+  @Test
+  public void testLeavingRouteVicinity() throws Exception {
+
+  }
+
 
 //  /**
 //   * Tests the detection of a vehicle leaving a route

@@ -1,39 +1,34 @@
 package gov.dot.fhwa.saxton.carma.roadway;
 
-import cav_msgs.RouteSegment;
 import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
-import gov.dot.fhwa.saxton.carma.route.LaneEdgeType;
 import org.apache.commons.logging.Log;
 import org.ros.message.Duration;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
-import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
-import org.ros.node.topic.Subscriber;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 import std_msgs.Header;
 import tf2_msgs.TFMessage;
-import gov.dot.fhwa.saxton.carma.route.RouteWaypoint;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by mcconnelms on 10/6/17.
  */
 public class EnvironmentWorker {
-  protected final String earth_frame = "earth";
-  protected final String map_frame = "map";
-  protected final String odom_frame = "odom";
-  protected final String base_link_frame = "base_link";
+  protected final String earthFrame = "earth";
+  protected final String mapFrame = "map";
+  protected final String odomFrame = "odom";
+  protected final String baseLinkFrame = "base_link";
+  protected final String positionSensorFrame = "sensor";
 
   protected Log log;
   protected IEnvironmentManager envMgr;
@@ -45,6 +40,7 @@ public class EnvironmentWorker {
 
   protected Transform mapToOdom = Transform.identity(); // At start odom = map
   protected Transform earthToMap = null;
+  protected Transform baseToPositionSensor = null;
   protected Time prevMapTime = null;
   protected Duration MAP_UPDATE_PERIOD = new Duration(5);
   protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
@@ -81,11 +77,19 @@ public class EnvironmentWorker {
     updateMapAndOdomTFs();
   }
 
-  // TODO include transform for host_vehicle->pinpoint
   protected void updateMapAndOdomTFs() {
     if (!navSatFixRecieved || !headingRecieved) {
       return; // If we don't have a heading and a gps fix the map->odom transform cannot be calculated
     }
+
+    if (baseToPositionSensor == null) {
+      // This transform should be static. No need to look up more than once
+      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame);
+      if (baseToPositionSensor == null) {
+        return; // If the request for this transform failed wait for another position update to request it
+      }
+    }
+
     GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
     List<geometry_msgs.TransformStamped> tfStampedMsgs = new LinkedList<>();
@@ -94,16 +98,16 @@ public class EnvironmentWorker {
     if (prevMapTime == null || 0 < envMgr.getTime().subtract(prevMapTime).compareTo(MAP_UPDATE_PERIOD)) {
       // Map will be an NED frame on the current vehicle location
       earthToMap = gcc.ecefToNEDFromLocaton(hostVehicleLocation);
-      tfStampedMsgs.add(buildTFStamped(earthToMap, earth_frame, map_frame));
+      tfStampedMsgs.add(buildTFStamped(earthToMap, earthFrame, mapFrame));
     }
 
     Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
     // T_x_y = transform describing location of y with respect to x
     // m = map frame
-    // n = nav sat fix frame
+    // p = position sensor frame
     // o = odom frame
     // b = baselink frame (as has been calculated by odometry up to this point)
-    // T_n_b = inv(T_m_n) * T_m_o * T_o_b; This is equivalent to the difference between where odom should be and where it is
+    // T_n_b = inv(T_m_s) * T_m_o * T_o_b * T_b_p; This is equivalent to the difference between where odom should be and where it is
     Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
     // The vehicle heading is relative to NED so over short distances heading in NED = heading in map
     Vector3 zAxis = new Vector3(0,0,1);
@@ -113,12 +117,13 @@ public class EnvironmentWorker {
     Transform T_m_n = new Transform(nTranslation, hostRotInMap);
     Transform T_m_o = mapToOdom;
     Transform T_o_b = odomToBaseLink;
+    Transform T_b_p = baseToPositionSensor;
 
-    Transform T_n_b = T_m_n.invert().multiply(T_m_o.multiply(T_o_b)); // TODO validate that the rosjava transforms uses this order of multiplication
-
-    mapToOdom = mapToOdom.multiply(T_n_b);
+    Transform T_s_b = T_m_n.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p))); // TODO validate that the rosjava transforms uses this order of multiplication
+    // Modify map to odom with the difference from the expected and real sensor positions
+    mapToOdom = mapToOdom.multiply(T_s_b);
     // Publish newly calculated transforms
-    tfStampedMsgs.add(buildTFStamped(mapToOdom, map_frame, odom_frame));
+    tfStampedMsgs.add(buildTFStamped(mapToOdom, mapFrame, odomFrame));
     publishTF(tfStampedMsgs);
   }
 
@@ -130,7 +135,7 @@ public class EnvironmentWorker {
     Quaternion hostOrientation = Quaternion.fromQuaternionMessage(hostPose.getOrientation());
     Vector3 trans = new Vector3(hostPoint.getX(), hostPoint.getY(), hostPoint.getZ());
     odomToBaseLink = new Transform(trans, hostOrientation);
-    publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odom_frame, base_link_frame)));
+    publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
   }
 
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
