@@ -76,6 +76,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// Some existed Subs are not working. Disable them to focus on BSM.
 	Subscriber<SystemAlert> alertSub;
 	Subscriber<BSM> hostBsmSub;
+	Subscriber<RouteState> route_state_sub;
 	// TODO uncomment when messages are defined
 	// protected Subscriber<cav_msgs.MobilityAck> mobilityAckOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityGreeting> mobilityGreetingOutboundSub;
@@ -111,6 +112,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 			alertSub.addMessageListener(new MessageListener<SystemAlert>() {
 				@Override
 				public void onNewMessage(SystemAlert message) {
+					if(message.getType() == SystemAlert.FATAL || message.getType() == SystemAlert.SHUTDOWN) {
+						connectedNode.shutdown();
+					}
 					if(message.getType() == SystemAlert.DRIVERS_READY) {
 						driversReady = true;
 					}
@@ -122,11 +126,16 @@ public class MessageConsumer extends SaxtonBaseNode {
 		
 		
 		//Use cav_srvs.GetDriversWithCapabilities.
-		//This is a discouraged practice since name prefixes will be handled by launch file. Should be fix later.
-		getDriversWithCapabilitiesClient = this.waitForService("/saxton_cav/interface_manager/get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 5000);
-		if(getDriversWithCapabilitiesClient == null) {
-			log.warn(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
+		try {
+			getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 5000);
+			if(getDriversWithCapabilitiesClient == null) {
+				log.warn(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
+			}
+		} catch (Exception e) {
+			handleException(e, "Cannot find service get_drivers_with_capabilities after waiting");
 		}
+		
+		
 		
 		//Subscribers
 		hostBsmSub = connectedNode.newSubscriber("/saxton_cav/guidance/bsm", BSM._TYPE);
@@ -145,8 +154,20 @@ public class MessageConsumer extends SaxtonBaseNode {
 		} catch (Exception e) {
 			handleException(e);
 		}
-			
 		
+		route_state_sub = connectedNode.newSubscriber("/saxton_cav/vehicle_environment/route/route_state", RouteState._TYPE);
+		try {
+			route_state_sub.addMessageListener(new MessageListener<RouteState>() {
+				@Override
+				public void onNewMessage(RouteState rs_msg) {
+					if(rs_msg.getState() == RouteState.ROUTE_COMPLETE) {
+						connectedNode.shutdown();
+					}
+				}
+			});
+		} catch (Exception e) {
+			handleException(e);
+		}
     // Fake Pubs and Subs TODO: Remove!!!
     // The following are two example pub/subs for connecting to the mock arada driver using the launch file.
     // They should be removed as this process should be handled through the interface manager instead
@@ -301,4 +322,10 @@ public class MessageConsumer extends SaxtonBaseNode {
 		log.error(connectedNode.getName() + "throws an exception and is about to shutdown...");
 		connectedNode.shutdown();
 	}
-}// AbstractNodeMain
+	
+	protected void handleException(Exception e, String s) {
+		log.error(connectedNode.getName() + ": " + s);
+		log.error(connectedNode.getName() + "throws an exception and is about to shutdown...");
+		connectedNode.shutdown();
+	}
+}

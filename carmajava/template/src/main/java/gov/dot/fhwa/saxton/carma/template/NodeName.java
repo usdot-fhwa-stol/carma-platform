@@ -14,8 +14,6 @@
  * the License.
  */
 
-//TODO: Naming convention of "package gov.dot.fhwa.saxton.carma.<template>;"
-//Originally "com.github.rosjava.carma.template;"
 package gov.dot.fhwa.saxton.carma.template;
 
 import org.apache.commons.logging.Log;
@@ -33,6 +31,8 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.NameResolver;
 import org.ros.message.MessageFactory;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+
 /**
  * A simple {@link Publisher} {@link NodeMain}.
  * <p>
@@ -41,6 +41,8 @@ import org.ros.message.MessageFactory;
  * Command line test: rosrun carma template gov.dot.fhwa.saxton.carma.template.NodeName
  */
 public class NodeName extends SaxtonBaseNode {
+
+  private SaxtonLogger log;
 
   //TODO: Replace with Column D node name
   @Override
@@ -51,7 +53,8 @@ public class NodeName extends SaxtonBaseNode {
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
 
-    final Log log = connectedNode.getLog();
+    log = new SaxtonLogger(NodeName.class.getName(), connectedNode.getLog());
+
 
     //TODO: Column G topic name
     // Currently setup to listen to it's own message. Change to listen to someone other topic.
@@ -84,7 +87,7 @@ public class NodeName extends SaxtonBaseNode {
                                       }
 
                                       //TODO: Replace with Column D node name
-                                      log.info("node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+                                      log.logInfo("TAGNAME", "node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
 
                                     }//onNewMessage
                                   }//MessageListener

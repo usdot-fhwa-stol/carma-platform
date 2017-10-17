@@ -41,6 +41,8 @@ public class RouteWaypoint {
   protected int upperSpeedLimit = 5;
   protected double nearestMileMarker = -1;
   protected List<cav_msgs.Maneuver> neededManeuvers;
+  protected double minCrossTrack = -10.0;
+  protected double maxCrossTrack = 10.0;
   protected int requiredLaneIndex = -1;
   protected RoadType roadType = RoadType.FREEWAY;
   protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.SOLID_WHITE;
@@ -107,6 +109,8 @@ public class RouteWaypoint {
     routeWPMsg.setLongitude(location.getLongitude());
     routeWPMsg.setLatitude(location.getLatitude());
     routeWPMsg.setAltitude(location.getAltitude());
+    routeWPMsg.setMinCrossTrack(minCrossTrack);
+    routeWPMsg.setMaxCrossTrack(maxCrossTrack);
     routeWPMsg.setLaneCount((byte) laneCount);
     routeWPMsg.setDisabledGuidanceAlgorithms(disabledGuidanceAlgorithms);
     routeWPMsg.setNeededManeuvers(neededManeuvers);
@@ -145,6 +149,8 @@ public class RouteWaypoint {
     wp.setLeftMostLaneMarking(LaneEdgeType.fromMessge(waypointMsg.getLeftMostLaneMarking()));
     wp.setInteriorLaneMarkings(LaneEdgeType.fromMessge(waypointMsg.getInteriorLaneMarkings()));
     wp.setRightMostLaneMarking(LaneEdgeType.fromMessge(waypointMsg.getRightMostLaneMarking()));
+    wp.setMinCrossTrack(waypointMsg.getMinCrossTrack());
+    wp.setMaxCrossTrack(waypointMsg.getMaxCrossTrack());
 
     // Set member variables according to set fields bit mask
     int bitMask = waypointMsg.getSetFields();
@@ -204,6 +210,38 @@ public class RouteWaypoint {
    */
   public Location getLocation() {
     return location;
+  }
+
+  /**
+   * Gets the minimum cross track value a vehicle can have along the segment defined by this waypoint
+   * @return The min cross track distance in meters
+   */
+  public double getMinCrossTrack() {
+    return minCrossTrack;
+  }
+
+  /**
+   * Sets the minimum cross track value a vehicle can have along the segment defined by this waypoint
+   * @param minCrossTrack The min cross track distance in meters
+   */
+  public void setMinCrossTrack(double minCrossTrack) {
+    this.minCrossTrack = minCrossTrack;
+  }
+
+  /**
+   * Gets the maximum cross track value a vehicle can have along the segment defined by this waypoint
+   * @return The max cross track distance in meters
+   */
+  public double getMaxCrossTrack() {
+    return maxCrossTrack;
+  }
+
+  /**
+   * Sets the maximum cross track value a vehicle can have along the segment defined by this waypoint
+   * @param maxCrossTrack The max cross track distance in meters
+   */
+  public void setMaxCrossTrack(double maxCrossTrack) {
+    this.maxCrossTrack = maxCrossTrack;
   }
 
   /**
