@@ -124,50 +124,42 @@ public class MessageConsumer extends SaxtonBaseNode {
 			handleException(e);
 		}
 		
-		
 		//Use cav_srvs.GetDriversWithCapabilities.
 		try {
-			getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 5000);
-			if(getDriversWithCapabilitiesClient == null) {
-				log.warn(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
-			}
+			while(getDriversWithCapabilitiesClient == null) {
+				if(driversReady) {
+					getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 5000);
+					if(getDriversWithCapabilitiesClient == null) {
+						log.warn(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities and is keeping trying...");
+					}
+				}
+				Thread.sleep(1000);
+			}	
 		} catch (Exception e) {
-			handleException(e, "Cannot find service get_drivers_with_capabilities after waiting");
+			handleException(e);
 		}
 		
 		
 		
 		//Subscribers
 		hostBsmSub = connectedNode.newSubscriber("/saxton_cav/guidance/bsm", BSM._TYPE);
-		try {
-			hostBsmSub.addMessageListener(new MessageListener<BSM>() {
-				@Override
-				public void onNewMessage(BSM bsm) {
+		hostBsmSub.addMessageListener(new MessageListener<BSM>() {
+			@Override
+			public void onNewMessage(BSM bsm) {
+				try {
 					if(outboundPub != null && driversReady) {
-						log.info("MessageConsumer received BSM. Publishing it as ByteArray message...");
+						log.info("MessageConsumer received BSM. Calling factory to encode data...");
 						ByteArray byteArray = outboundPub.newMessage();
-						BSMFactory.encode(bsm, byteArray);
+						BSMFactory.encode(bsm, byteArray, log);
+						log.info("MessageConsumer finished encoding BSM and is going to publish...");
 						outboundPub.publish(byteArray);
 					}
+				} catch (Exception e) {
+					handleException(e);
 				}
-			});
-		} catch (Exception e) {
-			handleException(e);
-		}
-		
-		route_state_sub = connectedNode.newSubscriber("/saxton_cav/vehicle_environment/route/route_state", RouteState._TYPE);
-		try {
-			route_state_sub.addMessageListener(new MessageListener<RouteState>() {
-				@Override
-				public void onNewMessage(RouteState rs_msg) {
-					if(rs_msg.getState() == RouteState.ROUTE_COMPLETE) {
-						connectedNode.shutdown();
-					}
-				}
-			});
-		} catch (Exception e) {
-			handleException(e);
-		}
+			}
+		});
+
     // Fake Pubs and Subs TODO: Remove!!!
     // The following are two example pub/subs for connecting to the mock arada driver using the launch file.
     // They should be removed as this process should be handled through the interface manager instead
@@ -319,13 +311,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 
 	@Override
 	protected void handleException(Exception e) {
-		log.error(connectedNode.getName() + "throws an exception and is about to shutdown...");
-		connectedNode.shutdown();
-	}
-	
-	protected void handleException(Exception e, String s) {
-		log.error(connectedNode.getName() + ": " + s);
-		log.error(connectedNode.getName() + "throws an exception and is about to shutdown...");
+		log.error(connectedNode.getName() + "throws an exception and is about to shutdown...", e);
 		connectedNode.shutdown();
 	}
 }
