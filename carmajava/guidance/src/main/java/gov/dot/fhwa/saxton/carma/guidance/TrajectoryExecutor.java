@@ -98,7 +98,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
 
     @Override
     public void onGuidanceEnable() {
-        startTime = System.currentTimeMillis();
+        startTime = (long) node.getCurrentTime().toSeconds() * 1000;
     }
 
     /**
@@ -122,7 +122,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         try {
             // Generate a simple sin(t) speed command
             if (state.get() == GuidanceState.ENGAGED && useSinTrajectory) {
-                if (System.currentTimeMillis() - startTime < holdTimeMs) {
+                if ((node.getCurrentTime().toSeconds() * 1000) - startTime < holdTimeMs) {
                     commands.setCommand(operatingSpeed, maxAccel);
                 } else {
                     commands.setCommand(
