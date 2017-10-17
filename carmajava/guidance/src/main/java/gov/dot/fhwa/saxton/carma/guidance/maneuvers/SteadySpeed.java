@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 /**
  * Represents a steady-speed longitudinal maneuver.
@@ -16,7 +16,7 @@ public class SteadySpeed extends LongitudinalManeuver {
      * to set it to whatever larger distance is desired.
      */
     @Override
-    public void plan(IManeuverInputs inputs, GuidanceCommands commands, double startDist) throws IllegalStateException {
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
         super.plan(inputs, commands, startDist);
 
         //set end distance to start distance

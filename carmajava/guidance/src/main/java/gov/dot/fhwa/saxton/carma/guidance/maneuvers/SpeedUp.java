@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 /**
  * Represents a longitudinal maneuver in which the vehicle steadily increases its speed.
@@ -11,7 +11,7 @@ public class SpeedUp extends LongitudinalManeuver {
      * ASSUMES that the target speed has been specified such that it does not exceed and infrastructure speed limit.
      */
     @Override
-    public void plan(IManeuverInputs inputs, GuidanceCommands commands, double startDist) throws IllegalStateException {
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
         super.plan(inputs, commands, startDist);
 
         //if speed change is going to be only slight then

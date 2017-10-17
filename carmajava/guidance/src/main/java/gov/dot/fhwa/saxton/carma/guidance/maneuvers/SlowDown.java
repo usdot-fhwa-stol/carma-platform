@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 /**
  * Represents a longitudinal maneuver in which the vehicle steadily decreases its speed.
@@ -8,7 +8,7 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 public class SlowDown extends LongitudinalManeuver {
 
     @Override
-    public void plan(IManeuverInputs inputs, GuidanceCommands commands, double startDist) throws IllegalStateException {
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
         super.plan(inputs, commands, startDist);
 
         //if speed change is going to be only slight then

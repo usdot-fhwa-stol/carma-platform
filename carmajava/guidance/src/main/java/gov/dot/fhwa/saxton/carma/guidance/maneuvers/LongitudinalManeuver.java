@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 /**
  * Base class for all longitudinal maneuvers, providing the adaptive cruise control (ACC) functionality.
@@ -13,7 +13,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
 
 
     @Override
-    public void plan(IManeuverInputs inputs, GuidanceCommands commands, double startDist) throws IllegalStateException {
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
         super.plan(inputs, commands, startDist);
 
         //check that target speed has been defined
@@ -39,7 +39,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     }
 
 
-    public void setMaxAccel_(double limit) {
+    public void setMaxAccel(double limit) {
         if (limit > 0.0) {
             maxAccel_ = limit;
         }

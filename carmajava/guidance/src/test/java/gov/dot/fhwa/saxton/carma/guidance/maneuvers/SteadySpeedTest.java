@@ -9,7 +9,7 @@ import static junit.framework.Assert.assertTrue;
 
 public class SteadySpeedTest {
 
-    private IManeuverInputs     inputs_;
+    private FakeManeuverInputs   inputs_;
     private FakeGuidanceCommands commands_;
 
 
@@ -23,12 +23,12 @@ public class SteadySpeedTest {
     public void testSteadySpeedNominal() {
 
         //specify the start & end speeds
-        double targetSpeed = 14.33;
-        double maxAccel = 1.5;
+        double targetSpeed = inputs_.getTargetSpeed();
+        double maxAccel = inputs_.getAccel();
 
         //plan the maneuver
         SteadySpeed mvr = new SteadySpeed();
-        mvr.setSpeeds(targetSpeed, targetSpeed); //yes, the same variable is repeated here
+        mvr.setSpeeds(targetSpeed, targetSpeed); //yes, the same variable is repeated here for start & end speeds
         mvr.setMaxAccel(maxAccel);
 
         double startDist = inputs_.getStartDist();
@@ -72,5 +72,15 @@ public class SteadySpeedTest {
     @Test
     public void testSteadySpeedNoTarget() {
 
+        SteadySpeed mvr = new SteadySpeed();
+        double startDist = inputs_.getStartDist();
+        try {
+            mvr.plan(inputs_, commands_, startDist); //should throw exception
+            double endDist = mvr.getEndDistance();
+            assertEquals(startDist, endDist, 0.001);
+            assertTrue(false);
+        }catch (UnsupportedOperationException uoe) {
+            assertTrue(true);
+        }
     }
 }
