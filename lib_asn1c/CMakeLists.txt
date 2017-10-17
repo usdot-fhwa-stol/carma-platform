@@ -21,8 +21,6 @@ catkin_package(
 ################
 ## POST BUILD ##
 ################
-set(LIBRARY_PATH_STRING $ENV{LD_LIBRARY_PATH})
-string(REPLACE ":" ";" LIBRARY_PATH_LIST ${LIBRARY_PATH_STRING})
-list(GET LIBRARY_PATH_LIST 0 COPY_TARGET)
+message(STATUS "The copy target path is: " ${CATKIN_DEVEL_PREFIX}/lib)
 
-file(COPY third_party_lib/libasn1c.so DESTINATION ${COPY_TARGET})
+file(COPY third_party_lib/libasn1c.so DESTINATION ${CATKIN_DEVEL_PREFIX}/lib)
