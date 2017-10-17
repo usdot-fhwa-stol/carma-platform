@@ -18,6 +18,7 @@ public abstract class AbstractPlugin implements IPlugin {
     protected String versionId;
     protected Log log;
     protected IPubSubService pubSubService;
+    protected PluginServiceLocator pluginServiceLocator;
 
     // Private fields so that extendees can't access them
     private AtomicBoolean activation = new AtomicBoolean(false);
@@ -25,6 +26,7 @@ public abstract class AbstractPlugin implements IPlugin {
     private List<AvailabilityListener> availabilityListeners = new ArrayList<>();
 
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
+        this.pluginServiceLocator = pluginServiceLocator;
         this.pubSubService = pluginServiceLocator.getPubSubService();
         this.log = pluginServiceLocator.getLog();
     }
