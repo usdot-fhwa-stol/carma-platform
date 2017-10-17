@@ -22,26 +22,11 @@ import org.ros.node.AbstractNodeMain;
 import org.ros.exception.ServiceNotFoundException;
 import org.ros.message.Time;
 import org.ros.message.Duration;
-import org.apache.commons.logging.Log;
 
 /**
  * Abstract base class for rosjava nodes used in the carma package.
  */
 public abstract class SaxtonBaseNode extends AbstractNodeMain {
-
-  private Log saxtonBaseNodelog;
-  private String source = "NO SOURCE SET";
-
-  /**
-   * Get the human readable String representation of the className.
-   */
-  public void setSource(String sourceName) {
-    source = sourceName;
-  }
-
-  public String getSource() {
-    return source;
-  }
 
   /**
    * Entry point for node once connected to ros network. Wraps the onSaxtonStart method in a try-catch.
@@ -52,8 +37,6 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
   @Override public final void onStart(ConnectedNode connectedNode) {
     try {
       onSaxtonStart(connectedNode);
-      saxtonBaseNodelog = connectedNode.getLog();
-
     } catch (Exception e) {
       String strace = "\n";
       for (StackTraceElement ste : e.getStackTrace()) {
@@ -61,8 +44,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
           strace += "\n";
       }
 
-      saxtonBaseNodelog = connectedNode.getLog();
-      saxtonBaseNodelog.fatal("Exception reached SaxtonBaseNode onStart function for node " + getDefaultNodeName() + ". StackTrace: " + strace);
+      connectedNode.getLog().fatal("Exception reached SaxtonBaseNode onStart function for node " + getDefaultNodeName() + ". StackTrace: " + strace);
       handleException(e);
     }
   }
@@ -110,63 +92,6 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
       }
     }
     return client;
-  }
-
-  /**
-   * The log* methods below were created to leverage the ROS node log and then adds the source and tag from the calling procedure
-   * onto the message.
-   *
-   * @param tag       A string representing the category of the data
-   * @param message   A string containing the message to be logged
-   */
-  protected final void logInfo(String tag, String message) {
-    String messageToStore = "|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.info(messageToStore);
-  }
-
- protected final void logInfo(String tag, String message, Throwable t){
-    String messageToStore = "|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.info(messageToStore, t);
-  }
-
-  protected final void logError(String tag, String message) {
-    String messageToStore = "|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.error(messageToStore);
-  }
-
-  protected final void logError(String tag, String message, Throwable t){
-    String messageToStore = "|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.error(messageToStore, t);
-  }
-
-  protected final void logWarn(String tag, String message) {
-    String messageToStore ="|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.warn(messageToStore);
-  }
-
-  protected final void logWarn(String tag, String message, Throwable t){
-    String messageToStore ="|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.warn(messageToStore, t);
-  }
-
-  protected final void logFatal(String tag, String message) {
-    String messageToStore = "|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.fatal(messageToStore);
-  }
-
-  protected final void logFatal(String tag, String message, Throwable t){
-    String messageToStore = "|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.fatal(messageToStore, t);
-  }
-
-  protected final void logTrace(String tag, String message) {
-    String messageToStore = "|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.trace(messageToStore);
-  }
-
-  protected final void logTrace(String tag, String message, Throwable t){
-    String messageToStore = "|" + getSource() + "|" + tag + "|" + message;
-    saxtonBaseNodelog.trace(messageToStore, t);
   }
 
  }
