@@ -113,7 +113,6 @@ public class Arbitrator extends GuidanceComponent {
         longitudinalPluginName = ptree.getString("~arbitrator_longitudinal_plugin");
         lateralPluginName = ptree.getString("~arbitrator_lateral_plugin");
 
-
         // Instantiate the configured constraints and register them with the TrajectoryValidator
         List<String> constraintNames = (List<String>) ptree.getList("~trajectory_constraints");
         List<Class<? extends TrajectoryValidationConstraint>> constraintClasses = new ArrayList<>();
@@ -124,7 +123,6 @@ public class Arbitrator extends GuidanceComponent {
                 log.warn("Unable to get Class object for name: " + className);
             }
         }
-
 
         List<TrajectoryValidationConstraint> constraints = instantiateConstraints(constraintClasses);
         for (TrajectoryValidationConstraint tvc : constraints) {
