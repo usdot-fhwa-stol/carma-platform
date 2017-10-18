@@ -76,7 +76,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// Some existed Subs are not working. Disable them to focus on BSM.
 	Subscriber<SystemAlert> alertSub;
 	Subscriber<BSM> hostBsmSub;
-	Subscriber<RouteState> route_state_sub;
 	// TODO uncomment when messages are defined
 	// protected Subscriber<cav_msgs.MobilityAck> mobilityAckOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityGreeting> mobilityGreetingOutboundSub;
@@ -155,19 +154,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 			handleException(e);
 		}
 		
-		route_state_sub = connectedNode.newSubscriber("/saxton_cav/vehicle_environment/route/route_state", RouteState._TYPE);
-		try {
-			route_state_sub.addMessageListener(new MessageListener<RouteState>() {
-				@Override
-				public void onNewMessage(RouteState rs_msg) {
-					if(rs_msg.getState() == RouteState.ROUTE_COMPLETE) {
-						connectedNode.shutdown();
-					}
-				}
-			});
-		} catch (Exception e) {
-			handleException(e);
-		}
     // Fake Pubs and Subs TODO: Remove!!!
     // The following are two example pub/subs for connecting to the mock arada driver using the launch file.
     // They should be removed as this process should be handled through the interface manager instead
