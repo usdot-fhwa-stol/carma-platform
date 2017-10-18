@@ -40,7 +40,7 @@ public class MockRouteManager implements IRouteManager {
   }
 
   @Override public void publishRouteState(RouteState routeState) {
-    if (routeState.getState() == RouteState.ROUTE_COMPLETE) {
+    if (routeState.getEvent() == RouteState.ROUTE_COMPLETED) {
       routeStateRouteCompleteSent = true;
     }
   }
