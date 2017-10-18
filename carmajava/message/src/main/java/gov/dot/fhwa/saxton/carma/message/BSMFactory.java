@@ -2,6 +2,7 @@ package gov.dot.fhwa.saxton.carma.message;
 
 import java.nio.ByteOrder;
 
+import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
@@ -46,7 +47,7 @@ public class BSMFactory {
 	 * @param plain_msg whole BSM object
 	 * @param skeleton the empty ByteArray object
 	 */
-	public static void encode(BSM plain_msg, ByteArray skeleton) {
+	public static void encode(BSM plain_msg, ByteArray skeleton, Log log) {
 		byte[] brakeStatus = new byte[] {
 				plain_msg.getCoreData().getBrakes().getWheelBrakes().getBrakeAppliedStatus(),
 				plain_msg.getCoreData().getBrakes().getTraction().getTractionControlStatus(),
@@ -55,6 +56,7 @@ public class BSMFactory {
 				plain_msg.getCoreData().getBrakes().getBrakeBoost().getBrakeBoostApplied(),
 				plain_msg.getCoreData().getBrakes().getAuxBrakes().getAuxiliaryBrakeStatus()
 				};
+		log.info("BSMFactory: Start to encode bsm message");
 		byte[] encode_msg = encode_BSM(
 				plain_msg.getCoreData(),
 				new byte[] {
