@@ -104,24 +104,26 @@ public class EnvironmentWorker {
     Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
     // T_x_y = transform describing location of y with respect to x
     // m = map frame
-    // p = position sensor frame
+    // p = position sensor frame (from odometry)
+    // r = position sensor frame (from nav sat fix)
     // o = odom frame
     // b = baselink frame (as has been calculated by odometry up to this point)
-    // T_n_b = inv(T_m_s) * T_m_o * T_o_b * T_b_p; This is equivalent to the difference between where odom should be and where it is
+    // We want to find T_p_r. This tells us how much to move odom to correct for drift in odometry
+    // T_p_r = inv((inv(T_m_r) * T_m_o * T_o_b * T_b_p); This is equivalent to the difference between where odom should be and where it is
     Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
     // The vehicle heading is relative to NED so over short distances heading in NED = heading in map
     Vector3 zAxis = new Vector3(0,0,1);
     Quaternion hostRotInMap =  Quaternion.fromAxisAngle(zAxis, hostVehicleHeading);
     hostRotInMap = hostRotInMap.normalize();
 
-    Transform T_m_n = new Transform(nTranslation, hostRotInMap);
+    Transform T_m_r = new Transform(nTranslation, hostRotInMap);
     Transform T_m_o = mapToOdom;
     Transform T_o_b = odomToBaseLink;
     Transform T_b_p = baseToPositionSensor;
 
-    Transform T_s_b = T_m_n.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p))); // TODO validate that the rosjava transforms uses this order of multiplication
+    Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert(); // TODO validate that the rosjava transforms uses this order of multiplication
     // Modify map to odom with the difference from the expected and real sensor positions
-    mapToOdom = mapToOdom.multiply(T_s_b);
+    mapToOdom = mapToOdom.multiply(T_p_r);
     // Publish newly calculated transforms
     tfStampedMsgs.add(buildTFStamped(mapToOdom, mapFrame, odomFrame));
     publishTF(tfStampedMsgs);
