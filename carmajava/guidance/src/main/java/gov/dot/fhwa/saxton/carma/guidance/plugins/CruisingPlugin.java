@@ -42,6 +42,8 @@ public class CruisingPlugin extends AbstractPlugin {
   private class TrajectorySegment {
     double start;
     double end;
+    double startSpeed;
+    double endSpeed;
   }
 
   public CruisingPlugin(PluginServiceLocator psl) {
@@ -77,11 +79,6 @@ public class CruisingPlugin extends AbstractPlugin {
 
 	@Override
 	public void onResume() {
-		
-	}
-
-	@Override
-	public void loop() throws InterruptedException {
 		
 	}
 
