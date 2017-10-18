@@ -18,9 +18,19 @@ max_acceleration_capability: 2.0
 # Units: m/s^2
 max_deceleration_capability: 1.0
 
+# Class names of plugins to be ignored by the PluginManager
 ignored_plugins: []
+
+# Class names of plugins required to always be activated
 required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.plugins.MockCruisingPlugin
+
+# Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
+use_sin_trajectory: true
+
+# Double: The frequency at which the trajectory executor will tick
+# Units: Hz
+trajectory_executor_frequency: 10.0
 
 # Double: Time the mock trajectory will initially command the operating speed for
 # Units: seconds

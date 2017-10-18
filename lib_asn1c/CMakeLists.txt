@@ -21,4 +21,6 @@ catkin_package(
 ################
 ## POST BUILD ##
 ################
-file(COPY third_party_lib/libasn1c.so DESTINATION ../../devel/lib)
+message(STATUS "The copy target path is: " ${CATKIN_DEVEL_PREFIX}/lib)
+
+file(COPY third_party_lib/libasn1c.so DESTINATION ${CATKIN_DEVEL_PREFIX}/lib)
