@@ -40,7 +40,6 @@ import tf2_msgs.TFMessage;
 
 /**
  * ROS Node which maintains a description of the roadway geometry and obstacles while the STOL CARMA platform is in operation
- * Does not publish on any topics until system ready is received on system_alert
  * <p>
  * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager
  **/
@@ -198,9 +197,9 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     roadwayEnvPub.publish(roadwayEnvMsg);
   }
 
-  /** TODO move to rosutils?
+  /** TODO move to rosutils as this is a duplicate of a function in interface mgr?
    * Helper class to allow communication of non-constant data out of the anonymous inner class
-   * defined for the getDriverWithApi() method
+   * defined for the getTransform() method
    */
   protected class ResultHolder <T> {
     private T result;

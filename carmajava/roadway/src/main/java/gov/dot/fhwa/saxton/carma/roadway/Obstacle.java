@@ -4,7 +4,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import org.ros.rosjava_geometry.Transform;
 
 /**
- * Created by mcconnelms on 10/5/17.
+ * An implementation of IObstacle with no special attributes.
  */
 public class Obstacle implements IObstacle {
   @Override public Vector3D getAcceleration() {

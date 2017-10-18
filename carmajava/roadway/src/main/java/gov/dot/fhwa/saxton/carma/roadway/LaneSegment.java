@@ -5,7 +5,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
- * Represents a section of lane as
+ * Represents a section of lane as a straight line with a width and lane markings
  */
 public class LaneSegment {
   Point3D uptrackPoint;

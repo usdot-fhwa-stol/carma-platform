@@ -1,8 +1,9 @@
 package gov.dot.fhwa.saxton.carma.roadway;
 
 /**
- * Created by mcconnelms on 10/5/17.
+ * Class representing a Vehicle on a roadway can be connected or have no communication.
+ * In future development Vehicle can be extended to support more specializations such as car or truck.
  */
 public class Vehicle extends Obstacle {
-
+  protected boolean connectedVehicle;
 }

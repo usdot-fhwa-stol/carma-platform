@@ -21,38 +21,51 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by mcconnelms on 10/6/17.
+ * The EnvironmentWorker is responsible for implementing all non pub-sub logic of the EnvironmentManager node
+ * Primary responsibility is updating of coordinate transforms and providing a representation of local geometry
  */
 public class EnvironmentWorker {
+  // Messaging and logging
+  protected Log log;
+  protected IEnvironmentManager envMgr;
+  protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
+
+  // Host vehicle state variables
+  protected boolean headingRecieved = false;
+  protected boolean navSatFixRecieved = false;
+  protected Location hostVehicleLocation = null;
+  protected double hostVehicleHeading; // The heading of the vehicle in degrees east of north in an NED frame.
+  // Frame ids
   protected final String earthFrame = "earth";
   protected final String mapFrame = "map";
   protected final String odomFrame = "odom";
   protected final String baseLinkFrame = "base_link";
-  protected final String positionSensorFrame = "sensor";
-
-  protected Log log;
-  protected IEnvironmentManager envMgr;
-  protected boolean headingRecieved = false;
-  protected boolean navSatFixRecieved = false;
-  protected Location hostVehicleLocation = null;
-  protected double hostVehicleHeading;
-    // The heading of the vehicle in degrees east of north in an NED frame.
-
+  protected final String positionSensorFrame = "position_sensor";
+  // Transforms
   protected Transform mapToOdom = Transform.identity();
   protected Transform earthToMap = null;
   protected Transform baseToPositionSensor = null;
+  protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
+  // Transform Update parameters
   protected Time prevMapTime = null;
   protected Duration MAP_UPDATE_PERIOD = new Duration(5);
-  protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
   protected int tfSequenceCount = 0;
-  protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
-  protected final static double DISTANCE_PER_LANE_SEGMENT = 2.0; // 2m
 
+  /**
+   * Constructor
+   * @param envMgr EnvironmentWorker used to publish data and get stored transforms
+   * @param log Logging object
+   */
   public EnvironmentWorker(IEnvironmentManager envMgr, Log log) {
     this.log = log;
     this.envMgr = envMgr;
   }
 
+  /**
+   * Handle for new route segments.
+   * This will help define lane geometries
+   * @param currentSeg The current route segment
+   */
   public void handleCurrentSegmentMsg(cav_msgs.RouteSegment currentSeg) {
     //TODO update lane geometry here. For now we will need to assume linear interpolation
 //    RouteWaypoint wp = RouteWaypoint.fromMessage(currentSeg.getWaypoint());
@@ -64,11 +77,21 @@ public class EnvironmentWorker {
 //    Location uptrackLoc = RouteWaypoint.fromMessage(currentSeg.getPrevWaypoint()).getLocation();
   }
 
+  /**
+   * Handler for new vehicle heading messages
+   * Headings should be specified as degrees east of north
+   * @param heading The heading message
+   */
   public void handleHeadingMsg(cav_msgs.HeadingStamped heading) {
     hostVehicleHeading = heading.getHeading();
     headingRecieved = true;
   }
 
+  /**
+   * NavSatFix Handler
+   * Updates the host vehicle's location and updates the earth->map and map->odom transforms
+   * @param navSatFix The nav sat fix message
+   */
   public void handleNavSatFixMsg(sensor_msgs.NavSatFix navSatFix) {
     // Assign the new host vehicle location
     hostVehicleLocation =
@@ -77,11 +100,18 @@ public class EnvironmentWorker {
     updateMapAndOdomTFs();
   }
 
+  /**
+   * Helper function for use in handleNavSatFix
+   * Updates the earth->map and map->odom transforms based on the current vehicle odometry, lat/lon, and heading.
+   * For full functionality at least one nav sat fix and heading message needs to have been received.
+   * Additionally, a transform from base_link to position_sensor needs to be available
+   */
   protected void updateMapAndOdomTFs() {
     if (!navSatFixRecieved || !headingRecieved) {
-      return; // If we don't have a heading and a gps fix the map->odom transform cannot be calculated
+      return; // If we don't have a heading and a nav sat fix the map->odom transform cannot be calculated
     }
 
+    // Check if base_link->position_sensor tf is available. If not look it up
     if (baseToPositionSensor == null) {
       // This transform should be static. No need to look up more than once
       baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame);
@@ -102,6 +132,7 @@ public class EnvironmentWorker {
       prevMapTime = envMgr.getTime();
     }
 
+    // Calculate map->odom transform
     Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
     // T_x_y = transform describing location of y with respect to x
     // m = map frame
@@ -130,25 +161,42 @@ public class EnvironmentWorker {
     publishTF(tfStampedMsgs);
   }
 
-
+  /**
+   * Odometry message handler
+   * @param odometry Odometry message
+   */
   public void handleOdometryMsg(nav_msgs.Odometry odometry) {
     // Covariance is ignored as filtering was already done by sensor fusion
     geometry_msgs.Pose hostPose = odometry.getPose().getPose();
     geometry_msgs.Point hostPoint = hostPose.getPosition();
     Quaternion hostOrientation = Quaternion.fromQuaternionMessage(hostPose.getOrientation());
     Vector3 trans = new Vector3(hostPoint.getX(), hostPoint.getY(), hostPoint.getZ());
+    // Set the position of the vehicle in the odom frame based on the odometry
     odomToBaseLink = new Transform(trans, hostOrientation);
     publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
   }
 
+  /**
+   * External object message handler
+   * @param externalObjects External object list. Should be relative to base_link frame
+   */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
     //TODO implement
   }
 
+  /**
+   * Velocity message handler
+   * @param velocity host vehicle velocity
+   */
   public void handleVelocityMsg(geometry_msgs.TwistStamped velocity) {
-    //TODO update host vehicle specification (pose)
+    //TODO update host vehicle specification
   }
 
+  /**
+   * SystemAlert message handler.
+   * Will shutdown this node on receipt of FATAL or SHUTDOWN
+   * @param alert alert message
+   */
   public void handleSystemAlertMsg(cav_msgs.SystemAlert alert) {
     switch (alert.getType()) {
       case SystemAlert.DRIVERS_READY:
@@ -185,6 +233,10 @@ public class EnvironmentWorker {
     return tfStampedMsg;
   }
 
+  /**
+   * Publishes a list of transforms in a single tf2 TFMessage
+   * @param tfList List of transforms
+   */
   protected void publishTF(List<TransformStamped> tfList) {
     TFMessage tfMsg = messageFactory.newFromType(TFMessage._TYPE);
     tfMsg.setTransforms(tfList);
