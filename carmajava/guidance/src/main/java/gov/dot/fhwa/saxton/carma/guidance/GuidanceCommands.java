@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.*;
  * and it's Maneuver instances and latching on those commands until a new one is received. This will output
  * the most recently latched value at a fixed frequency.
  */
-public class GuidanceCommands extends GuidanceComponent {
+public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
@@ -82,6 +82,7 @@ public class GuidanceCommands extends GuidanceComponent {
      * @param speed The speed to output
      * @param accel The maximum allowable acceleration in attaining and maintaining that speed
      */
+    @Override
     public void setCommand(double speed, double accel) {
         speedCommand.set(speed);
         maxAccel.set(accel);

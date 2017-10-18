@@ -34,7 +34,8 @@ public class Maneuvers extends GuidanceComponent {
             pubSubService.getSubscriberForTopic("roadway_environment",
                 RoadwayEnvironment._TYPE);
 
-        roadwayEnvironmentSubscriber.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
+        roadwayEnvironmentSubscriber.registerOnMessageCallback(
+                new OnMessageCallback<RoadwayEnvironment>() {
             @Override public void onMessage(RoadwayEnvironment msg) {
                 log.info("Received RoadwayEnvironment:" + msg);
             }

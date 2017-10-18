@@ -51,3 +51,11 @@ trajectory_phase: 0.0
 # Double: Period of the sinusoidal sample trajectory for the Trajectory executor
 # Units: seconds
 trajectory_period: 15.0
+
+# Double: Time that it takes the host vehicle to respond to a new speed command
+# Units: seconds
+vehicle_response_lag: 1.4
+
+# Integer: the duration of a computational time step
+# Units: milliseconds
+time_step: 100
