@@ -52,6 +52,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
 	@Override
 	public void onInitialize() {
+    log.info("Cruisng plugin initializing...");
     routeStateSub = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
     routeStateSub.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
   		@Override
@@ -75,21 +76,31 @@ public class CruisingPlugin extends AbstractPlugin {
 	  		currentSegment.set(msg);
 	  	}
     });
-	}
+    log.info("Cruising plugin initialized.");
+  }
+  
+  @Override
+  public void loop() {
+    try {
+      Thread.sleep(500);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
+  }
 
 	@Override
 	public void onResume() {
-		
+    // NO-OP
 	}
 
 	@Override
 	public void onSuspend() {
-		
+    // NO-OP
 	}
 
 	@Override
 	public void onTerminate() {
-		
+		// NO-OP
   }
   
   private double mphToMps(byte milesPerHour) {
@@ -134,7 +145,7 @@ public class CruisingPlugin extends AbstractPlugin {
     return spanned;
   }
 
-  private List<TrajectorySegment> findTrajectoryGaps(Trajectory traj) {
+  private List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed, double trajEndSpeed) {
     List<IManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
   		@Override
@@ -144,10 +155,26 @@ public class CruisingPlugin extends AbstractPlugin {
     });
 
     List<TrajectorySegment> gaps = new ArrayList<>();
-    if (!longitudinalManeuvers.isEmpty() && longitudinalManeuvers.get(0).getStartLocation() != traj.getStartLocation()) {
+
+    // Will be the only case to be handled for now, nothing else should be generating longitudinal maneuvers
+    if (longitudinalManeuvers.isEmpty()) {
+      TrajectorySegment seg = new TrajectorySegment();
+      seg.start = traj.getStartLocation();
+      seg.end = traj.getEndLocation();
+      seg.startSpeed = trajStartSpeed;
+      seg.endSpeed = trajEndSpeed;
+
+      gaps.add(seg);
+    }
+
+    // Find the gaps between
+    if (longitudinalManeuvers.get(0).getStartLocation() != traj.getStartLocation()) {
       TrajectorySegment seg = new TrajectorySegment();
       seg.start = traj.getStartLocation();
       seg.end = longitudinalManeuvers.get(0).getStartLocation();
+      seg.startSpeed = trajStartSpeed;
+      seg.endSpeed = longitudinalManeuvers.get(0).getStartSpeed();
+
       gaps.add(seg);
     }
 
@@ -158,15 +185,19 @@ public class CruisingPlugin extends AbstractPlugin {
           TrajectorySegment seg = new TrajectorySegment();
           seg.start = prev.getEndLocation();
           seg.end = maneuver.getStartLocation();
+          seg.startSpeed = prev.getEndSpeed();
+          seg.endSpeed = maneuver.getEndSpeed();
           gaps.add(seg);
         }
       }
     }
 
-    if (!longitudinalManeuvers.isEmpty() && prev.getEndLocation() != traj.getEndLocation()) {
+    if (prev.getEndLocation() != traj.getEndLocation()) {
       TrajectorySegment seg = new TrajectorySegment();
       seg.start = prev.getEndLocation();
       seg.end = traj.getEndLocation();
+      seg.startSpeed = prev.getEndSpeed();
+      seg.endSpeed = trajEndSpeed;
       gaps.add(seg);
     }
 
@@ -181,19 +212,53 @@ public class CruisingPlugin extends AbstractPlugin {
   public void planTrajectory() {
     double trajStartDist = 0.0;
     double trajEndDist = 20.0;
+    double trajStartSpeed = 10.0;
     Trajectory traj = new Trajectory(trajStartDist, trajEndDist);
 
-    List<TrajectorySegment> gaps = findTrajectoryGaps(traj);
-    
-    for (TrajectorySegment gap : gaps) {
-      List<SpeedLimit> limits = getSpeedLimits(gap.start, gap.end);
+    List<SpeedLimit> trajLimits = getSpeedLimits(traj.getStartLocation(), traj.getEndLocation());
 
-      double prevDist = gap.start;
-      double prevSpeed = limits.get(0).speedLimit;
-      for (SpeedLimit limit  : getSpeedLimits(gap.start, gap.end)) {
-        traj.addManeuver(generateManeuver(prevDist, limit.location, prevSpeed, limit.speedLimit));
-        prevDist = limit.location;
-        prevSpeed = limit.speedLimit;
+    // Find the gaps and record the speeds at the boundaries (pass in params for start and end speed)
+    List<TrajectorySegment> gaps = null;
+    if (trajLimits.size() >= 1) {
+       gaps = findTrajectoryGaps(traj, trajStartSpeed, trajLimits.get(trajLimits.size() - 1).speedLimit);
+    } else {
+      gaps = findTrajectoryGaps(traj, trajStartSpeed, trajStartSpeed);
+    }
+
+    if (traj.getLongitudinalManeuvers().size() > 0) {
+      log.info("Multiple pre-planned maneuvers found, with gaps to fill. Planning interpolating cruising trajectory.");
+
+      if (gaps.size() == 0) {
+        log.info("No gaps found to interpolate. Generating no maneuvers.");
+        return;
+      }
+
+      for (TrajectorySegment gap : gaps) {
+        traj.addManeuver(generateManeuver(gap.start, gap.end, gap.startSpeed, gap.endSpeed));
+      }
+    } else {
+      log.info("No pre-planned longitudinal maneuvers found. Generating trajectory to follow speed limit.");
+
+      if (trajLimits.isEmpty()) {
+        // Hold the initial speed for the whole trajectory
+        traj.addManeuver(generateManeuver(traj.getStartLocation(), traj.getEndLocation(), trajStartSpeed, trajStartSpeed));
+      } else {
+        // Take the first speed limit
+        SpeedLimit first = trajLimits.get(0);
+        traj.addManeuver(generateManeuver(traj.getStartLocation(), first.location, trajStartSpeed, first.speedLimit));
+
+        // Take any intermediary speed limits
+        double prevDist = first.location;
+        double prevSpeed = first.speedLimit;
+        for (SpeedLimit limit  : getSpeedLimits(traj.getStartLocation(), traj.getEndLocation())) {
+          traj.addManeuver(generateManeuver(prevDist, limit.location, prevSpeed, limit.speedLimit));
+          prevDist = limit.location;
+          prevSpeed = limit.speedLimit;
+        }
+
+        // Hold the last speed limit until the end of the trajectory
+        SpeedLimit last = trajLimits.get(trajLimits.size() - 1);
+        traj.addManeuver(generateManeuver(last.location, traj.getEndLocation(), last.speedLimit, last.speedLimit));
       }
     }
   }

@@ -33,4 +33,6 @@ public interface IManeuver {
   public ManeuverType getType();
   public double getStartLocation();
   public double getEndLocation();
+  public double getStartSpeed();
+  public double getEndSpeed();
 }
