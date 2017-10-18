@@ -18,8 +18,11 @@ package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import cav_srvs.GetLightsRequest;
 import cav_srvs.GetLightsResponse;
+import cav_srvs.SetEnableRoboticRequest;
+import cav_srvs.SetEnableRoboticResponse;
 import cav_srvs.SetLightsRequest;
 import cav_srvs.SetLightsResponse;
+import org.ros.exception.ServiceException;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceResponseBuilder;
@@ -45,7 +48,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   // Topics
   // Published
   protected final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub;
-  protected final Publisher<cav_msgs.RobotEnabled> enabledPub;
+  protected final ServiceServer<SetEnableRoboticRequest, SetEnableRoboticResponse> enabledPub;
 
   // Subscribed
   protected final Subscriber<std_msgs.Float32> longEffortSub;
@@ -80,7 +83,13 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     diagnosticsPub =
       connectedNode.newPublisher("~/control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
     enabledPub =
-      connectedNode.newPublisher("~/control/robot_enabled", cav_msgs.RobotEnabled._TYPE);
+      connectedNode.newServiceServer("~/control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
+      new ServiceResponseBuilder<SetEnableRoboticRequest, SetEnableRoboticResponse>() {
+		    @Override
+	  	  public void build(SetEnableRoboticRequest arg0, SetEnableRoboticResponse arg1) throws ServiceException {
+          // NO-OP
+	    	}
+      });
 
     // Subscribed
     longEffortSub =
@@ -126,13 +135,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
 
     for(String[] elements : data) {
       // Make messages
-      cav_msgs.RobotEnabled enabledMsg = enabledPub.newMessage();
       diagnostic_msgs.DiagnosticArray diagMsg = diagnosticsPub.newMessage();
-
-      // Build RobotEnabled Message
-      enabledMsg.setBrakeDecel(Double.parseDouble(elements[BRAKE_DECEL_IDX]));
-      enabledMsg.setRobotEnabled(Boolean.parseBoolean(elements[ROBOT_ENABLED_IDX]));
-      enabledMsg.setTorque(Double.parseDouble(elements[TORQUE_IDX]));
 
       // Build Diagnostics Message: Assumes that only diagnostic is in a data file line
       std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
@@ -156,7 +159,6 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
       diagMsg.setStatus(new ArrayList<>(Arrays.asList(diagnosticStatus)));
 
       // Publish Data
-      enabledPub.publish(enabledMsg);
       diagnosticsPub.publish(diagMsg);
     }
   }
@@ -176,7 +178,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   @Override public List<String> getDriverAPI(){
     return new ArrayList<>(Arrays.asList(
       "control/diagnostics",
-      "control/robot_enabled",
+      "control/enable_robotic",
       "control/cmd_longitudinal_effort",
       "control/cmd_speed",
       "control/get_lights",
