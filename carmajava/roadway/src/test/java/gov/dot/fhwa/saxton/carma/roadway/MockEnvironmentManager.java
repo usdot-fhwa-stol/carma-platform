@@ -13,7 +13,9 @@ import tf2_msgs.TFMessage;
  * ROS Agnostic implementation of IEnvironmentManager for use in unit testing the roadway package
  */
 public class MockEnvironmentManager implements IEnvironmentManager {
-  final FrameTransformTree tfTree = new FrameTransformTree();
+  private final FrameTransformTree tfTree = new FrameTransformTree();
+  private boolean shutdown = false;
+
   @Override public void publishTF(TFMessage tfMessage) {
     for (TransformStamped transform : tfMessage.getTransforms()) {
       // Add new transform to internal tree
@@ -38,6 +40,10 @@ public class MockEnvironmentManager implements IEnvironmentManager {
   }
 
   @Override public void shutdown() {
-    // Nothing to do
+    shutdown = true;
+  }
+
+  public boolean isShutdown(){
+    return shutdown;
   }
 }

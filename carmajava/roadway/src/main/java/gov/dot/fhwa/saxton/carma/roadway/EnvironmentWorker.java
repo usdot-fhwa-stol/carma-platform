@@ -38,7 +38,7 @@ public class EnvironmentWorker {
   protected double hostVehicleHeading;
     // The heading of the vehicle in degrees east of north in an NED frame.
 
-  protected Transform mapToOdom = Transform.identity(); // At start odom = map
+  protected Transform mapToOdom = Transform.identity();
   protected Transform earthToMap = null;
   protected Transform baseToPositionSensor = null;
   protected Time prevMapTime = null;
@@ -99,6 +99,7 @@ public class EnvironmentWorker {
       // Map will be an NED frame on the current vehicle location
       earthToMap = gcc.ecefToNEDFromLocaton(hostVehicleLocation);
       tfStampedMsgs.add(buildTFStamped(earthToMap, earthFrame, mapFrame));
+      prevMapTime = envMgr.getTime();
     }
 
     Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
@@ -113,7 +114,7 @@ public class EnvironmentWorker {
     Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
     // The vehicle heading is relative to NED so over short distances heading in NED = heading in map
     Vector3 zAxis = new Vector3(0,0,1);
-    Quaternion hostRotInMap =  Quaternion.fromAxisAngle(zAxis, hostVehicleHeading);
+    Quaternion hostRotInMap =  Quaternion.fromAxisAngle(zAxis, Math.toRadians(hostVehicleHeading));
     hostRotInMap = hostRotInMap.normalize();
 
     Transform T_m_r = new Transform(nTranslation, hostRotInMap);
