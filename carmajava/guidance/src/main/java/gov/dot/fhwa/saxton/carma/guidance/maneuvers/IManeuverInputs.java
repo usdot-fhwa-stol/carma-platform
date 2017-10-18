@@ -13,20 +13,14 @@ public interface IManeuverInputs {
     double getDistanceFromRouteStart();
 
     /**
-     * Provides a smoothed picture of the vehicle's current speed.
+     * Provides the vehicle's current speed.
      * @return current speed, m/s
      */
     double getCurrentSpeed();
 
     /**
-     * Provides the vehicle's dynamic response lag time.
+     * Provides the vehicle's expected dynamic response lag time.
      * @return lag time, sec
      */
     double getResponseLag();
-
-    /**
-     * Provides the duration of the computational time step.
-     * @return time step size, mx
-     */
-    int getTimeStep();
 }

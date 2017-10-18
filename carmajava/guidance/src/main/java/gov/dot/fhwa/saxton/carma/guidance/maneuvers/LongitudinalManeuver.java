@@ -17,14 +17,14 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
         super.plan(inputs, commands, startDist);
 
-        //check that target speed has been defined
-        if (endSpeed_ < 0.0) {
-            throw new IllegalStateException("Longitudinal maneuver plan attempted without previously defining the target speed.");
+        //check that speeds have been defined
+        if (startSpeed_ < 0.0  ||  endSpeed_ < 0.0) {
+            throw new IllegalStateException("Longitudinal maneuver plan attempted without previously defining the start/target speeds.");
         }
     }
 
 
-    public abstract void executeTimeStep() throws IllegalStateException;
+    public abstract boolean executeTimeStep() throws IllegalStateException;
 
 
     @Override
@@ -40,6 +40,11 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     }
 
 
+    /**
+     * Specifies the maximum acceleration allowed in the maneuver.  Note that this value will apply to both speeding
+     * up and slowing down (symmetrical).
+     * @param limit - max (absolute value) allowed, m/s^2
+     */
     public void setMaxAccel(double limit) {
         if (limit > 0.0) { //can't be equal to zero
             maxAccel_ = limit;
@@ -86,7 +91,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
 
 
     /**
-     * Provides the ACC functionality of adjusting the speed command downward as necessary to resped the desired
+     * Provides the ACC functionality of adjusting the speed command downward as necessary to regain the desired
      * minimum time gap.
      * @param rawCmd - the speed command computed assuming there is no preceding vehicle in the way, m/s
      * @return adjusted speed command that will prevent a crash with the preceding vehicle, m/s

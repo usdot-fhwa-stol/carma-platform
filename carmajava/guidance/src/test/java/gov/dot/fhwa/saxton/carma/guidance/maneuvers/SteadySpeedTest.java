@@ -12,7 +12,7 @@ public class SteadySpeedTest {
 
 
     @Before
-    void setup() {
+    public void setup() {
         inputs_ = new FakeManeuverInputs();
         commands_ = new FakeGuidanceCommands();
     }
@@ -34,7 +34,7 @@ public class SteadySpeedTest {
         double endDist = mvr.getEndDistance();
         assertEquals(startDist, endDist, 0.001);
 
-        double newEndDist = startDist + 443.8;
+        double newEndDist = startDist + 143.8;
         mvr.overrideEndDistance(newEndDist);
         endDist = mvr.getEndDistance();
         assertEquals(newEndDist, endDist, 0.001);
@@ -53,13 +53,15 @@ public class SteadySpeedTest {
         //execute a couple time steps of the maneuver when it is supposed to happen
         inputs_.setTestCase("SteadySpeedNominal-2");
         try {
-            for (int i = 0;  i < 3;  ++i) {
-                mvr.executeTimeStep();
+            boolean done;
+            do {
+                inputs_.getDistanceFromRouteStart(); //sleeps a while, making this test run fewer loops
+                done = mvr.executeTimeStep();
                 double speedCmd = commands_.getSpeedCmd();
                 double accelCmd = commands_.getAccelCmd();
                 assertEquals(targetSpeed, speedCmd, 0.001);
-                assertEquals(maxAccel, accelCmd, 0.001);
-            }
+                assertEquals(0.5*maxAccel, accelCmd, 0.001);
+            } while (!done);
 
         }catch(IllegalStateException ise) {
             assertTrue(false);
@@ -77,7 +79,7 @@ public class SteadySpeedTest {
             double endDist = mvr.getEndDistance();
             assertEquals(startDist, endDist, 0.001);
             assertTrue(false);
-        }catch (UnsupportedOperationException uoe) {
+        }catch (IllegalStateException ise) {
             assertTrue(true);
         }
     }

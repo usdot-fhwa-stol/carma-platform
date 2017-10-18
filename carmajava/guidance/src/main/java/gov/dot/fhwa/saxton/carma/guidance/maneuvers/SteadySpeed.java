@@ -19,8 +19,13 @@ public class SteadySpeed extends LongitudinalManeuver {
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
         super.plan(inputs, commands, startDist);
 
+        //check that both the beginning and end speeds are the same
+        if (Math.abs(startSpeed_ - endSpeed_) > 0.05) {
+            throw new IllegalStateException("SteadySpeed maneuver being planned with start speed = " + startSpeed_
+                                            + ", target speed = " + endSpeed_);
+        }
+
         //set end distance to start distance
-        startDist_ = startDist;
         endDist_ = startDist;
     }
 
@@ -36,13 +41,16 @@ public class SteadySpeed extends LongitudinalManeuver {
 
 
     @Override
-    public void executeTimeStep() throws IllegalStateException {
+    public boolean executeTimeStep() throws IllegalStateException {
+        boolean completed = false;
 
-        //if current location is not within the defined boundaries for this maneuver throw exception
-        double currentLocation = inputs_.getDistanceFromRouteStart();
-        if (currentLocation < startDist_  ||  currentLocation > endDist_) {
-            throw new IllegalStateException("SteadySpeed maneuver attempted to execute at distance " + currentLocation
-                                            + ". Maneuver start dist = " + startDist_ + ", end dist = " + endDist_);
+        verifyLocation();
+
+        //if we are within a slow time step of the maneuver's end, mark it as completed
+        double location = inputs_.getDistanceFromRouteStart();
+        double prettyClose = 0.2*endSpeed_;
+        if (endDist_ - location < prettyClose) {
+            completed = true;
         }
 
         //set command to the target speed and invoke the ACC override
@@ -51,5 +59,6 @@ public class SteadySpeed extends LongitudinalManeuver {
         //send the command to the vehicle; since there should only be slight speed adjustments throughout this maneuver,
         // we use a milder acceleration than would normally be allowed
         commands_.setCommand(cmd, 0.5*maxAccel_);
+        return completed;
     }
 }

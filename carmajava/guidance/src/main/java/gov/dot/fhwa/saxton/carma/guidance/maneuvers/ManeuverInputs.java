@@ -1,7 +1,5 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-import cav_msgs.RoadwayEnvironment;
-import cav_msgs.Route;
 import cav_msgs.RouteState;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
@@ -100,11 +98,5 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     @Override
     public double getResponseLag() {
         return responseLag_;
-    }
-
-
-    @Override
-    public int getTimeStep() {
-        return timeStep_;
     }
 }

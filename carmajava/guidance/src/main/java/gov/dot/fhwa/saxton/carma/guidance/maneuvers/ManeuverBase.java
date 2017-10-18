@@ -25,7 +25,7 @@ public abstract class ManeuverBase implements IManeuver {
     }
 
 
-    public abstract void executeTimeStep() throws IllegalStateException;
+    public abstract boolean executeTimeStep() throws IllegalStateException;
 
 
     public abstract void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException;
@@ -43,5 +43,18 @@ public abstract class ManeuverBase implements IManeuver {
     @Override
     public double getEndDistance() {
         return endDist_;
+    }
+
+
+    /**
+     * Verifies that the vehicle is between the specified start & end locations for this maneuver
+     * @throws IllegalStateException if we are outside the allowable region
+     */
+    protected void verifyLocation() throws IllegalStateException {
+        double currentLocation = inputs_.getDistanceFromRouteStart();
+        if (currentLocation < startDist_  ||  currentLocation > endDist_) {
+            throw new IllegalStateException("Maneuver attempted to execute at distance " + currentLocation
+                                            + ". Maneuver start dist = " + startDist_ + ", end dist = " + endDist_);
+        }
     }
 }

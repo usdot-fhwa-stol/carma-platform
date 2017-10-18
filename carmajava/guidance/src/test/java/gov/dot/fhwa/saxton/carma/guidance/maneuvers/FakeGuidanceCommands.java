@@ -11,14 +11,8 @@ public class FakeGuidanceCommands implements IGuidanceCommands {
 
     @Override
     public void setCommand(double speed, double accel) {
-
-    }
-
-    public void setTestCase(String testCase) {
-
-        switch (testCase) {
-
-        }
+        speedCmd_ = speed;
+        accelCmd_ = accel;
     }
 
     public double getSpeedCmd() {

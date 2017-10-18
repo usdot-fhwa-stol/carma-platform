@@ -20,14 +20,16 @@ public interface IManeuver {
 
     /**
      * Executes a single time step of the maneuver that has already been planned, by calculating the
-     * instantaneous commands then passing those commands to the vehicle's controller driver.
+     * instantaneous commands then passing those commands to the vehicle's controller driver.  There is no
+     * assumption made about the duration or uniformity of time steps.
      *
      * ASSUMES that the plan method has already run to completion - there is no check for this condition!
      *
+     * @return true if the maneuver has completed; false if it is still in progress
      * @throws IllegalStateException if called when vehicle's position along route is not between the
      * maneuver's start and end distances
      */
-    void executeTimeStep() throws IllegalStateException;
+    boolean executeTimeStep() throws IllegalStateException;
 
 
     /**

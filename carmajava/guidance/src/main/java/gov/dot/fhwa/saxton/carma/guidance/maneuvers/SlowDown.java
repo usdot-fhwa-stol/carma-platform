@@ -8,16 +8,13 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 public class SlowDown extends LongitudinalManeuver {
 
     private double                  workingAccel_;              // m/s^2 that we will actually use
-    private double                  timeStep_;                  // duration of a single computational time step, sec
-    private double                  prevCmd_;                   // speed command from the previous time step, m/s
+    private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
+    private long                    startTime_ = 0;             // time that the maneuver execution started, ms
 
 
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
         super.plan(inputs, commands, startDist);
-
-        timeStep_ = (double)inputs_.getTimeStep() / 1000.0; //convert from ms to sec
-        prevCmd_ = startSpeed_;
 
         //verify proper speed relationships
         if (endSpeed_ >= startSpeed_) {
@@ -36,38 +33,41 @@ public class SlowDown extends LongitudinalManeuver {
         //compute the distance to be covered during a linear (in time) speed change, assuming perfect vehicle response
         double idealLength = (startSpeed_*deltaV + 0.5*deltaV*deltaV) / workingAccel_;
 
-        //compute the time it will take to perform this ideal speed change and the interpolation factor
-        //TODO: do we need this - maybe caller will want it?     deltaT_ = deltaV / workingAccel_;
+        //compute the time it will take to perform this ideal speed change
+        deltaT_ = deltaV / workingAccel_;
 
-        //add the distance covered by the expected vehicle lag
+        //add the distance covered by the expected vehicle lag and account for a little settling buffer
         double lagDistance = startSpeed_*inputs_.getResponseLag();
-        endDist_ = startDist_ + idealLength + lagDistance;
-    }
+        endDist_ = startDist_ + idealLength + lagDistance + 0.2*endSpeed_;
+   }
 
 
     @Override
-    public void executeTimeStep() throws IllegalStateException {
+    public boolean executeTimeStep() throws IllegalStateException {
+        boolean completed = false;
 
-        //if current location is outside the defined boundaries for this maneuver throw an exception
-        double currentLocation = inputs_.getDistanceFromRouteStart();
-        if (currentLocation < startDist_  ||  currentLocation > endDist_) {
-            throw new IllegalStateException("SlowDown maneuver attempted to execute at distance " + currentLocation
-                    + ". Maneuver start dist = " + startDist_ + ", end dist = " + endDist_);
+        verifyLocation();
+
+        if (startTime_ == 0) {
+            startTime_ = System.currentTimeMillis();
         }
 
-        //compute command based on linear interpolation on time steps
+        //compute command based on linear interpolation on time
         //Note that commands will begin changing immediately, although the actual speed will not change much until
         // the response lag has passed. Thus, we will hit the target speed command sooner than we pass the end distance.
-        double cmd = prevCmd_ - workingAccel_*timeStep_;
-        if (cmd < endSpeed_) {
-            cmd = endSpeed_;
+        double currentTime = System.currentTimeMillis();
+        double factor = 0.001 * (double)(currentTime - startTime_) / deltaT_;
+        if (factor > 1.0) {
+            factor = 1.0;
+            completed = true;
         }
-        prevCmd_ = cmd;
+        double cmd = startSpeed_ + factor*(endSpeed_ - startSpeed_);
 
         //invoke the ACC override
         cmd = accOverride(cmd);
 
         //send the command to the vehicle
         commands_.setCommand(cmd, workingAccel_);
+        return completed;
     }
 }

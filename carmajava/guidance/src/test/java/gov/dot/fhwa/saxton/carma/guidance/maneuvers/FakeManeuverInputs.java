@@ -29,7 +29,7 @@ public class FakeManeuverInputs implements IManeuverInputs {
     }
 
     public double getSlowSpeed() {
-        return DEFAULT_SPEED - 3.1;
+        return DEFAULT_SPEED - 2.509;
     }
 
     public double getFastSpeed() {
@@ -46,6 +46,12 @@ public class FakeManeuverInputs implements IManeuverInputs {
     @Override
     public double getDistanceFromRouteStart() {
         double dist;
+
+        //build in a delay to simulate the rest of the guidance thread executing
+        try {
+            Thread.sleep(99);
+        }catch (InterruptedException e) {
+        }
 
         switch(testCase_) {
             case "SteadySpeedNominal-1":
@@ -94,10 +100,5 @@ public class FakeManeuverInputs implements IManeuverInputs {
     @Override
     public double getResponseLag() {
         return 0.0;
-    }
-
-    @Override
-    public int getTimeStep() {
-        return 100;
     }
 }
