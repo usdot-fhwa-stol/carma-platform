@@ -18,7 +18,6 @@ max_acceleration_capability: 2.0
 # Units: m/s^2
 max_deceleration_capability: 1.0
 
-<<<<<<< HEAD
 # Integer: Number of times to attempt to replan a Trajectory if validation fails
 trajectory_planning_max_attempts: 3
 
@@ -40,9 +39,6 @@ trajectory_constraints:
   - gov.dot.fhwa.saxton.carma.guidance.trajectory.OverlappingManeuversConstraint
 
 # The set of IPlugin instances which will be ignored based on class name
-=======
-# Class names of plugins to be ignored by the PluginManager
->>>>>>> develop
 ignored_plugins: []
 
 # Class names of plugins required to always be activated
