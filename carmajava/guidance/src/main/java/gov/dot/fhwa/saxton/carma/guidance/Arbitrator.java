@@ -23,6 +23,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryValidationConstraint;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryValidator;
@@ -151,9 +152,13 @@ public class Arbitrator extends GuidanceComponent {
         }
 
         currentTrajectory = planTrajectory(downtrackDistance.get());
-        // TODO: Command execution of planned and validated trajectory
-        // TODO: Subscribe to callback at 75% completion
-        // TODO: Trigger planning of new trajectory
+        trajectoryExecutor.registerOnTrajectoryProgressCallback(0.75, new OnTrajectoryProgressCallback() {
+			@Override
+			public void onProgress(double pct) {
+                needsReplan.set(true);
+			}
+        });
+        trajectoryExecutor.runTrajectory(currentTrajectory);
     }
 
     @Override public void loop() {
@@ -161,6 +166,7 @@ public class Arbitrator extends GuidanceComponent {
             // TODO: planTrajectory(Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation()));
             planningWindow *= planningWindowGrowthFactor;
             currentTrajectory = planTrajectory(downtrackDistance.get());
+            needsReplan.set(false);
         }
 
         try {
