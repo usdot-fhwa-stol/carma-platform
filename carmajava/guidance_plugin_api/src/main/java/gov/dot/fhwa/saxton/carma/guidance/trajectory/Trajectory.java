@@ -49,6 +49,20 @@ public class Trajectory {
   }
 
   /**
+   * Get the location along the route that this Trajectory will start at
+   */
+  public double getStartLocation() {
+    return this.startLocation;
+  }
+
+  /**
+   * Get the location along the route that this Trajectory will finish at
+   */
+  public double getEndLocation() {
+    return this.endLocation;
+  }
+
+  /**
    * Add a maneuver to the Trajectory.
    * </p>
    * The maneuver will be added to the appropriate maneuvers list if it fits spatially within the domain of
@@ -137,6 +151,32 @@ public class Trajectory {
     for (IManeuver m : longitudinalManeuvers) {
       if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
         out.add(m);
+      }
+    }
+
+    return out;
+  }
+
+  /**
+   * Get a list of all maneuver of a specific type that will be active at loc
+   * Undefined behavior if there are overlapping maneuvers of the same type
+   */
+  public IManeuver getManeuverAt(double loc, ManeuverType type) {
+    IManeuver out = null;
+
+    if (type == ManeuverType.LATERAL) {
+      for (IManeuver m : lateralManeuvers) {
+        if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
+          out = m;
+        }
+      }
+    }
+
+    if (type == ManeuverType.LONGITUDINAL) {
+      for (IManeuver m : longitudinalManeuvers) {
+        if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
+          out = m;
+        }
       }
     }
 

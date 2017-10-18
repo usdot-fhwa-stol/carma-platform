@@ -50,5 +50,9 @@ public enum WorkerEvent {
   /**
    * A route has been aborted
    */
-  ROUTE_ABORTED
+  ROUTE_ABORTED,
+  /**
+   * Indication of lack of event
+   */
+  NONE
 }

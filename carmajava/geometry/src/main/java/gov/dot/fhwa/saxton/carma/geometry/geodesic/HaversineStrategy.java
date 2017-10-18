@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import org.ros.rosjava_geometry.Transform;
 
 /**
@@ -46,20 +47,36 @@ public class HaversineStrategy implements IDistanceStrategy{
   @Override public double crossTrackDistance(Location loc, GreatCircleSegment seg) {
     // Get vectors from earth center to path and external location
     GeodesicCartesianConverter gCC = new GeodesicCartesianConverter();
-    Vector vec2StartPoint = new Vector(gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()));
-    Vector vec2EndPoint = new Vector(gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()));
-    Vector vec2ExternalPoint = new Vector(gCC.geodesic2Cartesian(loc, Transform.identity()));
+    Vector3D vec2StartPoint = new Vector3D(gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()));
+    Vector3D vec2EndPoint = new Vector3D(gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()));
+    Vector3D vec2ExternalPoint = new Vector3D(gCC.geodesic2Cartesian(loc, Transform.identity()));
 
     // Get vector from start to external point
-    Vector startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
+    Vector3D startToExternalVec = Vector3D.fromVector(vec2ExternalPoint.subtract(vec2StartPoint));
 
     // Get vector from start to end point
-    Vector startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+    Vector3D startToEndVec = Vector3D.fromVector(vec2EndPoint.subtract(vec2StartPoint));
+
+    // Calculate the sign of the crosstrack distance
+    // Find the vector normal to the path and third point
+    Vector3D normalVec = startToEndVec.cross(startToExternalVec);
+    // This forms a plane along the the path segment.
+    // With points A (end point) B(start point) and C (point along normal vector)
+    // Point X is the external point
+    // B' = B-A  :  C' = C-A   : X' = X-A
+    // The sign of the 3x3 determinate of the matrix [B' C' X'] determines the sign of the crosstrack distance
+    // Calculate B' C' X'
+    Vector3D bPrime = startToEndVec;
+    Vector3D cPrime = Vector3D.fromVector(normalVec.subtract(vec2EndPoint));
+    Vector3D xPrime = Vector3D.fromVector(vec2ExternalPoint.subtract(vec2EndPoint));
+
+    double determinateOfPlane = Vector3D.get3by3Determinate(bPrime, cPrime, xPrime);
+    double sign = determinateOfPlane < 0 ? 1.0 : -1.0; // if det is less than 0 location is on the left.
 
     // Get angle between both vectors
     double interiorAngle = startToExternalVec.getAngleBetweenVectors(startToEndVec);
 
-    return startToExternalVec.magnitude() * Math.sin(interiorAngle);
+    return startToExternalVec.magnitude() * Math.sin(interiorAngle) * sign;
   }
 
   @Override public double downtrackDistance(Location loc, GreatCircleSegment seg) {
