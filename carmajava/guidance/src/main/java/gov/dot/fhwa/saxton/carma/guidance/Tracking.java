@@ -170,10 +170,10 @@ public class Tracking extends GuidanceComponent {
     }
 
     @Override public void loop() {
-    	cav_msgs.SystemAlert systemAlertMsg = statusPublisher.newMessage();
-        systemAlertMsg.setDescription("Tracking has not detected a running trajectory, no means to compute crosstrack error");
-        systemAlertMsg.setType(SystemAlert.CAUTION);
     	try {
+    		cav_msgs.SystemAlert systemAlertMsg = statusPublisher.newMessage();
+            systemAlertMsg.setDescription("Tracking has not detected a running trajectory, no means to compute crosstrack error");
+            systemAlertMsg.setType(SystemAlert.CAUTION);
     		if(nav_sat_fix_ready && steer_wheel_ready && heading_ready && velocity_ready) {
     			log.info("Guidance.Tracking is publishing bsm...");
                 statusPublisher.publish(systemAlertMsg);
@@ -187,69 +187,70 @@ public class Tracking extends GuidanceComponent {
     
     private BSM composeBSMData() {
     	
-    	if(msgCount == 0) {
-    		randomIdGenerator.nextBytes(random_id);
-    	}
-    	
     	BSM bsmFrame = bsmPublisher.newMessage();
     	
-    	//Set header
-    	bsmFrame.getHeader().setStamp(node.getCurrentTime());
-    	bsmFrame.getHeader().setFrameId("MessageNode");
-    	
-    	//Set core data
-    	BSMCoreData coreData = bsmFrame.getCoreData();
-        coreData.setMsgCount((byte) (msgCount++ % 127));
-        
-        //ID is random and changes every 5 minutes
-        if(msgCount == 3000) {
-        	msgCount = 0;
-        }
-        coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
-        
-        //Use ros node time
-        coreData.setSecMark((short) (node.getCurrentTime().toSeconds() % 65535));
-        
-        //Set GPS data
-        coreData.setLatitude(navSatFixSubscriber.getLastMessage().getLatitude());
-        coreData.setLongitude(navSatFixSubscriber.getLastMessage().getLongitude());
-        coreData.setElev((float) navSatFixSubscriber.getLastMessage().getAltitude());
-        
-        //N/A for now
-        coreData.getAccuracy().setSemiMajor((float) (255 * 0.05));
-        coreData.getAccuracy().setSemiMinor((float) (255 * 0.05));
-        coreData.getAccuracy().setOrientation(65535 * 0.0054932479);
-        coreData.getTransmission().setTransmissionState((byte) 7);
-        
-        coreData.setSpeed((float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX());
-        coreData.setHeading((float) (headingStampedSubscriber.getLastMessage().getHeading()));
-        coreData.setAngle((float) steeringWheelSubscriber.getLastMessage().getData());
-        
-        //N/A for now
-        coreData.getAccelSet().setLongitude((float) (2001 * 0.01));
-        coreData.getAccelSet().setLatitude((float) (2001 * 0.01));
-        coreData.getAccelSet().setVert((float) (-127 * 0.02));
-        coreData.getAccelSet().setYaw(0);
-        coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 10);
-        coreData.getBrakes().getTraction().setTractionControlStatus((byte) 0);
-        coreData.getBrakes().getAbs().setAntiLockBrakeStatus((byte) 0);
-        coreData.getBrakes().getScs().setStabilityControlStatus((byte) 0);
-        coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied((byte) 0);
-        coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus((byte) 0);
-        
-        //Set length and width
-        if(vehicleLength == 0 && vehicleWidth == 0) {
-        	try {
-        		ParameterTree param = node.getParameterTree();
+    	try {
+    		
+    		if(msgCount == 0) {
+        		randomIdGenerator.nextBytes(random_id);
+        	}
+
+        	//Set header
+        	bsmFrame.getHeader().setStamp(node.getCurrentTime());
+        	bsmFrame.getHeader().setFrameId("MessageNode");
+        	
+        	//Set core data
+        	BSMCoreData coreData = bsmFrame.getCoreData();
+            coreData.setMsgCount((byte) (msgCount++ % 127));
+            
+            //ID is random and changes every 5 minutes
+            if(msgCount == 3000) {
+            	msgCount = 0;
+            }
+            coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
+            
+            //Use ros node time
+            coreData.setSecMark((short) (node.getCurrentTime().toSeconds() % 65535));
+            
+            //Set GPS data
+            coreData.setLatitude(navSatFixSubscriber.getLastMessage().getLatitude());
+            coreData.setLongitude(navSatFixSubscriber.getLastMessage().getLongitude());
+            coreData.setElev((float) navSatFixSubscriber.getLastMessage().getAltitude());
+            
+            //N/A for now
+            coreData.getAccuracy().setSemiMajor((float) (255 * 0.05));
+            coreData.getAccuracy().setSemiMinor((float) (255 * 0.05));
+            coreData.getAccuracy().setOrientation(65535 * 0.0054932479);
+            coreData.getTransmission().setTransmissionState((byte) 7);
+            
+            coreData.setSpeed((float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX());
+            coreData.setHeading((float) (headingStampedSubscriber.getLastMessage().getHeading()));
+            coreData.setAngle((float) steeringWheelSubscriber.getLastMessage().getData());
+            
+            //N/A for now
+            coreData.getAccelSet().setLongitude((float) (2001 * 0.01));
+            coreData.getAccelSet().setLatitude((float) (2001 * 0.01));
+            coreData.getAccelSet().setVert((float) (-127 * 0.02));
+            coreData.getAccelSet().setYaw(0);
+            coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 10);
+            coreData.getBrakes().getTraction().setTractionControlStatus((byte) 0);
+            coreData.getBrakes().getAbs().setAntiLockBrakeStatus((byte) 0);
+            coreData.getBrakes().getScs().setStabilityControlStatus((byte) 0);
+            coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied((byte) 0);
+            coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus((byte) 0);
+            
+            //Set length and width
+            if(vehicleLength == 0 && vehicleWidth == 0) {
+            	ParameterTree param = node.getParameterTree();
                 vehicleLength = (float) param.getDouble("/saxton_cav/vehicle_length");
                 vehicleWidth = (float) param.getDouble("/saxton_cav/vehicle_width");
-        	} catch (Exception e) {
-        		handleException(e);
-        	}
-        }
-        coreData.getSize().setVehicleLength(vehicleLength);
-        coreData.getSize().setVehicleWidth(vehicleWidth);
-        
+            }
+            coreData.getSize().setVehicleLength(vehicleLength);
+            coreData.getSize().setVehicleWidth(vehicleWidth);
+            
+    	} catch (Exception e) {
+    		handleException(e);
+    	}
     	return bsmFrame;
     }
     
