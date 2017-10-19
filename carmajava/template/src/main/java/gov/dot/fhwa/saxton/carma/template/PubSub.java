@@ -18,6 +18,7 @@
 //Originally "com.github.rosjava.carma.template;"
 package gov.dot.fhwa.saxton.carma.template;
 
+import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.ros.concurrent.CancellableLoop;
