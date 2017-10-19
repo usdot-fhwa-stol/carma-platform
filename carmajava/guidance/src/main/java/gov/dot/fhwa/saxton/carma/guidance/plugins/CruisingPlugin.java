@@ -19,10 +19,14 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
+import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -48,7 +52,8 @@ public class CruisingPlugin extends AbstractPlugin {
   protected AtomicReference<Route> currentRoute;
   protected AtomicReference<RouteSegment> currentSegment;
   protected List<SpeedLimit> speedLimits;
-  public static final double MPH_TO_MPS = 0.44704; // From Google calculator
+  protected double maxAccel;
+  protected static final double MPH_TO_MPS = 0.44704; // From Google calculator
 
   private class SpeedLimit {
     double speedLimit;
@@ -92,6 +97,8 @@ public class CruisingPlugin extends AbstractPlugin {
 	  		currentSegment.set(msg);
 	  	}
     });
+
+    maxAccel = pluginServiceLocator.getParameterSource().getDouble("~cruising_max_accel", 3.0);
     log.info("Cruising plugin initialized.");
   }
   
@@ -166,7 +173,7 @@ public class CruisingPlugin extends AbstractPlugin {
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
   		@Override
   		public int compare(IManeuver o1, IManeuver o2) {
-  			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+  			return Double.compare(o1.getStartDistance(), o2.getStartDistance());
   		}
     });
 
@@ -184,10 +191,10 @@ public class CruisingPlugin extends AbstractPlugin {
     }
 
     // Find the gaps between
-    if (longitudinalManeuvers.get(0).getStartLocation() != traj.getStartLocation()) {
+    if (longitudinalManeuvers.get(0).getStartDistance() != traj.getStartLocation()) {
       TrajectorySegment seg = new TrajectorySegment();
       seg.start = traj.getStartLocation();
-      seg.end = longitudinalManeuvers.get(0).getStartLocation();
+      seg.end = longitudinalManeuvers.get(0).getStartDistance();
       seg.startSpeed = trajStartSpeed;
       seg.endSpeed = longitudinalManeuvers.get(0).getStartSpeed();
 
@@ -197,22 +204,24 @@ public class CruisingPlugin extends AbstractPlugin {
     IManeuver prev = null;
     for (IManeuver maneuver : longitudinalManeuvers) {
       if (prev != null) {
-        if (prev.getEndLocation() != maneuver.getStartLocation()) {
+        if (prev.getEndDistance() != maneuver.getStartDistance()) {
           TrajectorySegment seg = new TrajectorySegment();
-          seg.start = prev.getEndLocation();
-          seg.end = maneuver.getStartLocation();
-          seg.startSpeed = prev.getEndSpeed();
-          seg.endSpeed = maneuver.getEndSpeed();
+          seg.start = prev.getEndDistance();
+          seg.end = maneuver.getStartDistance();
+          seg.startSpeed = prev.getTargetSpeed();
+          seg.endSpeed = maneuver.getTargetSpeed();
           gaps.add(seg);
         }
       }
+
+      prev = maneuver;
     }
 
-    if (prev.getEndLocation() != traj.getEndLocation()) {
+    if (prev.getEndDistance() != traj.getEndLocation()) {
       TrajectorySegment seg = new TrajectorySegment();
-      seg.start = prev.getEndLocation();
+      seg.start = prev.getEndDistance();
       seg.end = traj.getEndLocation();
-      seg.startSpeed = prev.getEndSpeed();
+      seg.startSpeed = prev.getTargetSpeed();
       seg.endSpeed = trajEndSpeed;
       gaps.add(seg);
     }
@@ -220,8 +229,40 @@ public class CruisingPlugin extends AbstractPlugin {
     return gaps;
   }
 
-  private IManeuver generateManeuver(double startDist, double endDist, double startSpeed, double endSpeed) {
-    return null; // TODO: Implement pending Maneuvers implementation
+  private void planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
+    ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
+
+    double maneuverEnd = startDist;
+    if (startSpeed < endSpeed) {
+      // Generate a speed-up maneuver
+      SpeedUp speedUp = new SpeedUp();
+      speedUp.setSpeeds(startSpeed, endSpeed);
+      speedUp.setMaxAccel(maxAccel);
+      planner.planManeuver(speedUp, startDist);
+      t.addManeuver(speedUp);
+
+      maneuverEnd = speedUp.getEndDistance();
+    } else if (startSpeed > endSpeed) {
+      // Generate a slowdown maneuver
+      SlowDown slowDown = new SlowDown();
+      slowDown.setSpeeds(startSpeed, endSpeed);
+      slowDown.setMaxAccel(maxAccel);
+      planner.planManeuver(slowDown, startDist);
+
+      maneuverEnd = slowDown.getEndDistance();
+      t.addManeuver(slowDown);
+    }
+
+    // Insert a steady speed maneuver to fill whatever's left
+    if (maneuverEnd < endDist) {
+      SteadySpeed steady = new SteadySpeed();
+      steady.setSpeeds(endSpeed, endSpeed);
+      steady.setMaxAccel(maxAccel);
+      planner.planManeuver(steady, maneuverEnd);
+      steady.overrideEndDistance(endDist);
+
+      t.addManeuver(steady);
+    }
   }
   
   @Override
@@ -250,31 +291,31 @@ public class CruisingPlugin extends AbstractPlugin {
       }
 
       for (TrajectorySegment gap : gaps) {
-        traj.addManeuver(generateManeuver(gap.start, gap.end, gap.startSpeed, gap.endSpeed));
+        planManeuvers(traj, gap.start, gap.end, gap.startSpeed, gap.endSpeed);
       }
     } else {
       log.info("No pre-planned longitudinal maneuvers found. Generating trajectory to follow speed limit.");
 
       if (trajLimits.isEmpty()) {
         // Hold the initial speed for the whole trajectory
-        traj.addManeuver(generateManeuver(traj.getStartLocation(), traj.getEndLocation(), trajStartSpeed, trajStartSpeed));
+        planManeuvers(traj, traj.getStartLocation(), traj.getEndLocation(), trajStartSpeed, trajStartSpeed);
       } else {
         // Take the first speed limit
         SpeedLimit first = trajLimits.get(0);
-        traj.addManeuver(generateManeuver(traj.getStartLocation(), first.location, trajStartSpeed, first.speedLimit));
+        planManeuvers(traj, traj.getStartLocation(), first.location, trajStartSpeed, first.speedLimit);
 
         // Take any intermediary speed limits
         double prevDist = first.location;
         double prevSpeed = first.speedLimit;
         for (SpeedLimit limit  : getSpeedLimits(traj.getStartLocation(), traj.getEndLocation())) {
-          traj.addManeuver(generateManeuver(prevDist, limit.location, prevSpeed, limit.speedLimit));
+          planManeuvers(traj, prevDist, limit.location, prevSpeed, limit.speedLimit);
           prevDist = limit.location;
           prevSpeed = limit.speedLimit;
         }
 
         // Hold the last speed limit until the end of the trajectory
         SpeedLimit last = trajLimits.get(trajLimits.size() - 1);
-        traj.addManeuver(generateManeuver(last.location, traj.getEndLocation(), last.speedLimit, last.speedLimit));
+        planManeuvers(traj, last.location, traj.getEndLocation(), last.speedLimit, last.speedLimit);
       }
     }
   }
