@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,7 +64,7 @@ public class PluginManagerTest {
             return false;
         }
 
-        @Override public void planTrajectory() {
+        @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
 
         }
 
@@ -119,7 +120,7 @@ public class PluginManagerTest {
             return false;
         }
 
-        @Override public void planTrajectory() {
+        @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
 
         }
 

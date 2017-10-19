@@ -55,7 +55,7 @@ public abstract class AbstractPlugin implements IPlugin {
         return availability.get();
     }
 
-    @Override public void planTrajectory(Trajectory traj) {
+    @Override public void planTrajectory(Trajectory traj, double predictedEntrySpeed) {
         throw new UnsupportedOperationException();
     }
 

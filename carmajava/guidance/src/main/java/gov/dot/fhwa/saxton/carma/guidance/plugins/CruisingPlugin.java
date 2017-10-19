@@ -266,12 +266,7 @@ public class CruisingPlugin extends AbstractPlugin {
   }
   
   @Override
-  public void planTrajectory() {
-    double trajStartDist = 0.0;
-    double trajEndDist = 20.0;
-    double trajStartSpeed = 10.0;
-    Trajectory traj = new Trajectory(trajStartDist, trajEndDist);
-
+  public void planTrajectory(Trajectory traj, double trajStartSpeed) {
     List<SpeedLimit> trajLimits = getSpeedLimits(traj.getStartLocation(), traj.getEndLocation());
 
     // Find the gaps and record the speeds at the boundaries (pass in params for start and end speed)

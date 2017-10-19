@@ -18,6 +18,9 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
+import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
@@ -44,18 +47,20 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Arbitrator extends GuidanceComponent {
   protected ISubscriber<RouteState> routeStateSubscriber;
+  protected ISubscriber<TwistStamped> twistSubscriber;
   protected AtomicReference<GuidanceState> state;
   protected AtomicBoolean needsReplan = new AtomicBoolean(false);
   protected PluginManager pluginManager;
   protected IPlugin lateralPlugin;
   protected IPlugin longitudinalPlugin;
   protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
+  protected AtomicDouble currentSpeed = new AtomicDouble(0.0);
   protected double replanTriggerPercent = 0.75;
   protected double planningWindow = 0.0;
   protected double planningWindowGrowthFactor = 0.0;
   protected double planningWindowShrinkFactor = 0.0;
   protected int numAcceptableFailures = 0;
-  protected Trajectory currentTrajectory;
+  protected Trajectory currentTrajectory = null;
   protected TrajectoryValidator trajectoryValidator;
   protected TrajectoryExecutor trajectoryExecutor;
   protected String lateralPluginName = "Route-Following Plugin";
@@ -135,6 +140,14 @@ public class Arbitrator extends GuidanceComponent {
       trajectoryValidator.addValidationConstraint(tvc);
       log.info("Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
     }
+
+    twistSubscriber = pubSubService.getSubscriberForTopic("twist_stamped", TwistStamped._TYPE);
+    twistSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
+      @Override
+      public void onMessage(TwistStamped msg) {
+        currentSpeed.set(msg.getTwist().getLinear().getX());
+      }
+    });
   }
 
   @Override
@@ -197,8 +210,17 @@ public class Arbitrator extends GuidanceComponent {
     Trajectory out = null;
     for (int failures = 0; failures < numAcceptableFailures; failures++) {
       Trajectory traj = new Trajectory(trajectoryStart, trajectoryStart + planningWindow);
-      lateralPlugin.planTrajectory(traj);
-      longitudinalPlugin.planTrajectory(traj);
+      double expectedEntrySpeed = 0.0;
+      if (currentTrajectory != null) {
+        List<IManeuver> lonManeuvers = currentTrajectory.getLongitudinalManeuvers();
+        IManeuver lastManeuver = lonManeuvers.get(lonManeuvers.size() - 1);
+        expectedEntrySpeed = ((LongitudinalManeuver) lastManeuver).getTargetSpeed();
+      } else {
+        expectedEntrySpeed = currentSpeed.get();
+      }
+
+      lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
+      longitudinalPlugin.planTrajectory(traj, expectedEntrySpeed);
       if (trajectoryValidator.validate(traj)) {
         out = traj;
         break;

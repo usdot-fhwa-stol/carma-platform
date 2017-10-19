@@ -63,7 +63,7 @@ public class CruisingPluginTest {
     Header header = messageFactory.newFromType(Header._TYPE);
     header.setFrameId("0");
     header.setSeq(0);
-    header.setStamp(Time.fromMillis(System.currentTimeMillis());
+    header.setStamp(Time.fromMillis(System.currentTimeMillis()));
 
     route.setHeader(header);
     route.setRouteID("test-route");
