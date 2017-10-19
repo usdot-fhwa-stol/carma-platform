@@ -263,6 +263,6 @@ public abstract class AbstractMockDriver implements IMockDriver {
   @Override public abstract List<String> getDriverAPI();
 
   @Override public long getPublishDelay() {
-    return 1000;
+    return 100;
   }
 }
