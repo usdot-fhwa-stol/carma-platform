@@ -18,6 +18,10 @@ max_acceleration_capability: 2.0
 # Units: m/s^2
 max_deceleration_capability: 1.0
 
+# Double: Percent of Trajectory executor allowed to elapse before the Arbitrator begins planning a new one
+# Units: Percent in range [0.0, 1.0]
+arbitrator_replan_threshold: 0.75
+
 # Integer: Number of times to attempt to replan a Trajectory if validation fails
 trajectory_planning_max_attempts: 3
 

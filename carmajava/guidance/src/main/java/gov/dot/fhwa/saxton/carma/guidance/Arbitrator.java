@@ -43,162 +43,173 @@ import java.util.concurrent.atomic.AtomicReference;
  * to plan trajectories for the vehicle to execute.
  */
 public class Arbitrator extends GuidanceComponent {
-    protected ISubscriber<RouteState> routeStateSubscriber;
-    protected AtomicReference<GuidanceState> state;
-    protected AtomicBoolean needsReplan = new AtomicBoolean(false);
-    protected PluginManager pluginManager;
-    protected IPlugin lateralPlugin;
-    protected IPlugin longitudinalPlugin;
-    protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
-    protected double planningWindow = 0.0;
-    protected double planningWindowGrowthFactor = 0.0;
-    protected double planningWindowShrinkFactor = 0.0;
-    protected int numAcceptableFailures = 0;
-    protected Trajectory currentTrajectory;
-    protected TrajectoryValidator trajectoryValidator;
-    protected TrajectoryExecutor trajectoryExecutor;
-    protected String lateralPluginName = "Route-Following Plugin";
-    protected String longitudinalPluginName = "Cruising Plugin";
-    protected static final long SLEEP_DURATION_MILLIS = 100;
+  protected ISubscriber<RouteState> routeStateSubscriber;
+  protected AtomicReference<GuidanceState> state;
+  protected AtomicBoolean needsReplan = new AtomicBoolean(false);
+  protected PluginManager pluginManager;
+  protected IPlugin lateralPlugin;
+  protected IPlugin longitudinalPlugin;
+  protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
+  protected double replanTriggerPercent = 0.75;
+  protected double planningWindow = 0.0;
+  protected double planningWindowGrowthFactor = 0.0;
+  protected double planningWindowShrinkFactor = 0.0;
+  protected int numAcceptableFailures = 0;
+  protected Trajectory currentTrajectory;
+  protected TrajectoryValidator trajectoryValidator;
+  protected TrajectoryExecutor trajectoryExecutor;
+  protected String lateralPluginName = "Route-Following Plugin";
+  protected String longitudinalPluginName = "Cruising Plugin";
+  protected static final long SLEEP_DURATION_MILLIS = 100;
 
-    Arbitrator(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node, PluginManager pluginManager, TrajectoryExecutor trajectoryExecutor) {
-        super(state, iPubSubService, node);
-        this.state = state;
-        this.pluginManager = pluginManager;
-        this.trajectoryValidator = new TrajectoryValidator();
-        this.trajectoryExecutor = trajectoryExecutor;
+  Arbitrator(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
+      PluginManager pluginManager, TrajectoryExecutor trajectoryExecutor) {
+    super(state, iPubSubService, node);
+    this.state = state;
+    this.pluginManager = pluginManager;
+    this.trajectoryValidator = new TrajectoryValidator();
+    this.trajectoryExecutor = trajectoryExecutor;
+  }
+
+  /**
+   * Instantiate a list of constraint classes into live objects
+   * @param classes The list of classes which implement {@link TrajectoryValidationConstraint}
+   * @return A list containing instantiated TrajectoryValidationConstraint instances where the instantiation was successful
+   */
+  protected List<TrajectoryValidationConstraint> instantiateConstraints(
+      List<Class<? extends TrajectoryValidationConstraint>> classes) {
+    List<TrajectoryValidationConstraint> constraintInstances = new ArrayList<>();
+    for (Class<? extends TrajectoryValidationConstraint> constraintClass : classes) {
+      try {
+        Constructor<? extends TrajectoryValidationConstraint> constraintCtor = constraintClass.getConstructor();
+
+        // TODO: This is brittle, depends on convention of having a constructor taking no arguments
+        TrajectoryValidationConstraint constraintInstance = constraintCtor.newInstance();
+        log.info("Guidance.Arbitrator instantiated new TrajectoryValidationConstraint instance: "
+            + constraintClass.getCanonicalName());
+
+        constraintInstances.add(constraintInstance);
+      } catch (Exception e) {
+        log.error("Unable to instantiate: " + constraintClass.getCanonicalName());
+        log.error(e);
+      }
     }
 
-    /**
-     * Instantiate a list of constraint classes into live objects
-     * @param classes The list of classes which implement {@link TrajectoryValidationConstraint}
-     * @return A list containing instantiated TrajectoryValidationConstraint instances where the instantiation was successful
-     */
-    protected List<TrajectoryValidationConstraint> instantiateConstraints(List<Class<? extends TrajectoryValidationConstraint>> classes) {
-        List<TrajectoryValidationConstraint> constraintInstances = new ArrayList<>();
-        for (Class<? extends TrajectoryValidationConstraint> constraintClass : classes) {
-            try {
-                Constructor<? extends TrajectoryValidationConstraint> constraintCtor = constraintClass.getConstructor();
+    return constraintInstances;
+  }
 
-                // TODO: This is brittle, depends on convention of having a constructor taking only a PSL
-                TrajectoryValidationConstraint constraintInstance = constraintCtor.newInstance();
-                log.info("Guidance.Arbitrator instantiated new TrajectoryValidationConstraint instance: " + constraintClass.getCanonicalName());
+  @Override
+  public void onGuidanceStartup() {
+    log.info("Arbitrator running!");
+    routeStateSubscriber = pubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
+    routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+      @Override
+      public void onMessage(RouteState msg) {
+        log.info("Received RouteState:" + msg);
+        downtrackDistance.set(msg.getDownTrack());
+      }
+    });
 
-                constraintInstances.add(constraintInstance);
-            } catch (Exception e) {
-                log.error("Unable to instantiate: " + constraintClass.getCanonicalName());
-                log.error(e);
-            }
-        }
+    ParameterTree ptree = node.getParameterTree();
+    replanTriggerPercent = ptree.getDouble("~arbitrator_replan_threshold", 0.75);
+    planningWindow = ptree.getDouble("~initial_planning_window", 10.0);
+    planningWindowGrowthFactor = ptree.getDouble("~planning_window_growth_factor", 1.0);
+    planningWindowShrinkFactor = ptree.getDouble("~planning_window_shrink_factor", 1.0);
+    numAcceptableFailures = ptree.getInteger("~trajectory_planning_max_attempts", 3);
+    longitudinalPluginName = ptree.getString("~arbitrator_longitudinal_plugin");
+    lateralPluginName = ptree.getString("~arbitrator_lateral_plugin");
 
-        return constraintInstances;
+    // Instantiate the configured constraints and register them with the TrajectoryValidator
+    List<String> constraintNames = (List<String>) ptree.getList("~trajectory_constraints");
+    List<Class<? extends TrajectoryValidationConstraint>> constraintClasses = new ArrayList<>();
+    for (String className : constraintNames) {
+      try {
+        constraintClasses.add((Class<? extends TrajectoryValidationConstraint>) Class.forName(className));
+      } catch (Exception e) {
+        log.warn("Unable to get Class object for name: " + className);
+      }
     }
 
+    List<TrajectoryValidationConstraint> constraints = instantiateConstraints(constraintClasses);
+    for (TrajectoryValidationConstraint tvc : constraints) {
+      trajectoryValidator.addValidationConstraint(tvc);
+      log.info("Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
+    }
+  }
 
-    @Override public void onGuidanceStartup() {
-        log.info("Arbitrator running!");
-        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
-        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-            @Override public void onMessage(RouteState msg) {
-                log.info("Received RouteState:" + msg);
-                downtrackDistance.set(msg.getDownTrack());
-            }
-        });
+  @Override
+  public String getComponentName() {
+    return "Guidance.Arbitrator";
+  }
 
-        ParameterTree ptree = node.getParameterTree();
-        planningWindow = ptree.getDouble("~initial_planning_window");
-        planningWindowGrowthFactor = ptree.getDouble("~planning_window_growth_factor");
-        planningWindowShrinkFactor = ptree.getDouble("~planning_window_shrink_factor");
-        numAcceptableFailures = ptree.getInteger("~trajectory_planning_max_attempts");
-        longitudinalPluginName = ptree.getString("~arbitrator_longitudinal_plugin");
-        lateralPluginName = ptree.getString("~arbitrator_lateral_plugin");
+  @Override
+  public void onSystemReady() {
+    // NO-OP
+  }
 
-        // Instantiate the configured constraints and register them with the TrajectoryValidator
-        List<String> constraintNames = (List<String>) ptree.getList("~trajectory_constraints");
-        List<Class<? extends TrajectoryValidationConstraint>> constraintClasses = new ArrayList<>();
-        for (String className : constraintNames) {
-            try {
-                constraintClasses.add((Class<? extends TrajectoryValidationConstraint>) Class.forName(className));
-            } catch (Exception e) {
-                log.warn("Unable to get Class object for name: " + className);
-            }
-        }
+  @Override
+  public void onGuidanceEnable() {
+    // For now, find the configured lateral and longitudinal plugins
+    for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
+      if (plugin.getName().equals(lateralPluginName)) {
+        lateralPlugin = plugin;
+      }
 
-        List<TrajectoryValidationConstraint> constraints = instantiateConstraints(constraintClasses);
-        for (TrajectoryValidationConstraint tvc : constraints) {
-            trajectoryValidator.addValidationConstraint(tvc);
-            log.info("Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
-        }
+      if (plugin.getName().equals(longitudinalPluginName)) {
+        longitudinalPlugin = plugin;
+      }
     }
 
-    @Override public String getComponentName() {
-        return "Guidance.Arbitrator";
+    if (lateralPlugin == null || longitudinalPlugin == null) {
+      panic("Arbitrator unable to locate the configured and required plugins!");
     }
 
-    @Override public void onSystemReady() {
-        // NO-OP
+    log.info("Arbitrator using plugins: [" + lateralPluginName + ", " + longitudinalPluginName + "]");
+
+    currentTrajectory = planTrajectory(downtrackDistance.get());
+    trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, new OnTrajectoryProgressCallback() {
+      @Override
+      public void onProgress(double pct) {
+        needsReplan.set(true);
+      }
+    });
+    trajectoryExecutor.runTrajectory(currentTrajectory);
+  }
+
+  @Override
+  public void loop() {
+    if (needsReplan.get()) {
+      planningWindow *= planningWindowGrowthFactor;
+      planTrajectory(Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation()));
+      needsReplan.set(false);
     }
 
-    @Override public void onGuidanceEnable() {
-        // For now, find the configured lateral and longitudinal plugins
-        for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
-            if (plugin.getName().equals(lateralPluginName)) {
-                lateralPlugin = plugin;
-            }
+    try {
+      Thread.sleep(SLEEP_DURATION_MILLIS);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt(); // Re-throw the exception to be handled higher up
+    }
+  }
 
-            if (plugin.getName().equals(longitudinalPluginName)) {
-                longitudinalPlugin = plugin;
-            }
-        }
-
-        if (lateralPlugin == null || longitudinalPlugin == null) {
-            panic("Arbitrator unable to locate the configured and required plugins!");
-        }
-
-        log.info("Arbitrator using plugins: [" + lateralPluginName + ", " + longitudinalPluginName + "]");
-
-        currentTrajectory = planTrajectory(downtrackDistance.get());
-        trajectoryExecutor.registerOnTrajectoryProgressCallback(0.75, new OnTrajectoryProgressCallback() {
-			@Override
-			public void onProgress(double pct) {
-                needsReplan.set(true);
-			}
-        });
-        trajectoryExecutor.runTrajectory(currentTrajectory);
+  protected Trajectory planTrajectory(double trajectoryStart) {
+    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryStart + planningWindow
+        + ")");
+    Trajectory out = null;
+    for (int failures = 0; failures < numAcceptableFailures; failures++) {
+      Trajectory traj = new Trajectory(trajectoryStart, trajectoryStart + planningWindow);
+      lateralPlugin.planTrajectory(traj);
+      longitudinalPlugin.planTrajectory(traj);
+      if (trajectoryValidator.validate(traj)) {
+        out = traj;
+        break;
+      }
+      log.warn("Candidate trajectory #" + (failures + 1) + " failed validation.");
     }
 
-    @Override public void loop() {
-        if (needsReplan.get()) {
-            planningWindow *= planningWindowGrowthFactor;
-            planTrajectory(Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation()));
-            needsReplan.set(false);
-        }
-
-        try {
-            Thread.sleep(SLEEP_DURATION_MILLIS);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt(); // Re-throw the exception to be handled higher up
-        }
+    if (out == null) {
+      panic("Arbitrator unable to plan valid trajectory after " + numAcceptableFailures + " attempts!");
     }
 
-    protected Trajectory planTrajectory(double trajectoryStart) {
-        log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryStart + planningWindow + ")");
-        Trajectory out = null;
-         for (int failures = 0; failures < numAcceptableFailures; failures++) {
-            Trajectory traj = new Trajectory(trajectoryStart, trajectoryStart + planningWindow);
-            lateralPlugin.planTrajectory(traj);
-            longitudinalPlugin.planTrajectory(traj); 
-            if (trajectoryValidator.validate(traj)) {
-                out = traj;
-                break;
-            }
-            log.warn("Candidate trajectory #" + (failures + 1) + " failed validation.");
-        }
-
-        if (out == null) {
-            panic("Arbitrator unable to plan valid trajectory after " + numAcceptableFailures + " attempts!");
-        }
-
-        return out;
-    }
+    return out;
+  }
 }
