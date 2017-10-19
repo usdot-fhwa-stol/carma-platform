@@ -74,10 +74,10 @@ public class GuidanceMain extends SaxtonBaseNode {
   private void initExecutor(AtomicReference<GuidanceState> state, ConnectedNode node) {
     executor = Executors.newFixedThreadPool(numThreads);
 
-    Arbitrator arbitrator = new Arbitrator(state, pubSubService, node);
     PluginManager pluginManager = new PluginManager(state, pubSubService, node);
     GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands);
+    Arbitrator arbitrator = new Arbitrator(state, pubSubService, node, pluginManager, trajectoryExecutor);
     Tracking tracking = new Tracking(state, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(state, pubSubService, node);
 

@@ -63,6 +63,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         super(state, iPubSubService, node);
         this.state = state;
         this.commands = commands;
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands);
     }
 
     @Override
