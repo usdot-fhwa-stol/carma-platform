@@ -25,6 +25,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+
 public class TrajectoryValidatorTest {
 
   @Before

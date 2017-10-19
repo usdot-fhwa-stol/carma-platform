@@ -16,14 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
 
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 
 public class MinimumDistanceBetweenManeuversConstraintTest {
   @Before
@@ -34,19 +34,16 @@ public class MinimumDistanceBetweenManeuversConstraintTest {
   @Test
   public void testSuccess() {
     IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(1.0);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    when(m1.getStartDistance()).thenReturn(0.0);
+    when(m1.getEndDistance()).thenReturn(1.0);
 
     IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(6.0);
-    when(m2.getEndLocation()).thenReturn(7.0);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    when(m2.getStartDistance()).thenReturn(6.0);
+    when(m2.getEndDistance()).thenReturn(7.0);
 
     IManeuver m3 = mock(IManeuver.class);
-    when(m3.getStartLocation()).thenReturn(15.0);
-    when(m3.getEndLocation()).thenReturn(20.0);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    when(m3.getStartDistance()).thenReturn(15.0);
+    when(m3.getEndDistance()).thenReturn(20.0);
 
     mdbmc.visit(m1);
     mdbmc.visit(m2);
@@ -57,20 +54,17 @@ public class MinimumDistanceBetweenManeuversConstraintTest {
 
   @Test
   public void testSuccessMixedTypes() {
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(1.0);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    IManeuver m1 = mock(LongitudinalManeuver.class);
+    when(m1.getStartDistance()).thenReturn(0.0);
+    when(m1.getEndDistance()).thenReturn(1.0);
 
     IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(2.0);
-    when(m2.getEndLocation()).thenReturn(7.0);
-    when(m2.getType()).thenReturn(ManeuverType.LATERAL);
+    when(m2.getStartDistance()).thenReturn(2.0);
+    when(m2.getEndDistance()).thenReturn(7.0);
 
-    IManeuver m3 = mock(IManeuver.class);
-    when(m3.getStartLocation()).thenReturn(15.0);
-    when(m3.getEndLocation()).thenReturn(20.0);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    IManeuver m3 = mock(LongitudinalManeuver.class);
+    when(m3.getStartDistance()).thenReturn(15.0);
+    when(m3.getEndDistance()).thenReturn(20.0);
 
     mdbmc.visit(m1);
     mdbmc.visit(m2);
@@ -82,14 +76,12 @@ public class MinimumDistanceBetweenManeuversConstraintTest {
   @Test
   public void testRejection1() {
     IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(1.0);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    when(m1.getStartDistance()).thenReturn(0.0);
+    when(m1.getEndDistance()).thenReturn(1.0);
 
     IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(2.0);
-    when(m2.getEndLocation()).thenReturn(7.0);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    when(m2.getStartDistance()).thenReturn(2.0);
+    when(m2.getEndDistance()).thenReturn(7.0);
 
     mdbmc.visit(m1);
     mdbmc.visit(m2);
@@ -100,19 +92,16 @@ public class MinimumDistanceBetweenManeuversConstraintTest {
   @Test
   public void testRejection2() {
     IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(1.0);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    when(m1.getStartDistance()).thenReturn(0.0);
+    when(m1.getEndDistance()).thenReturn(1.0);
 
     IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(6.0);
-    when(m2.getEndLocation()).thenReturn(7.0);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    when(m2.getStartDistance()).thenReturn(6.0);
+    when(m2.getEndDistance()).thenReturn(7.0);
 
     IManeuver m3 = mock(IManeuver.class);
-    when(m3.getStartLocation()).thenReturn(7.0);
-    when(m3.getEndLocation()).thenReturn(8.0);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    when(m3.getStartDistance()).thenReturn(7.0);
+    when(m3.getEndDistance()).thenReturn(8.0);
 
     mdbmc.visit(m1);
     mdbmc.visit(m2);

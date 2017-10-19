@@ -16,9 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
-
 import java.util.List;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import java.util.ArrayList;
 
 /**
@@ -38,15 +39,27 @@ public class MinimumDistanceBetweenManeuversConstraint implements TrajectoryVali
     this.minimumDistanceBetweenManeuvers = minDist;
   }
 
+	/**
+	 * Current workaround for maneuvers not providing their own types
+	 * TODO: Replace with more robust system of differentiating Maneuvers
+	 */
+	private ManeuverType getType(IManeuver maneuver) {
+		if (maneuver instanceof LongitudinalManeuver) {
+			return ManeuverType.LONGITUDINAL;
+		} else {
+			return ManeuverType.LATERAL;
+		}
+	}
+
 	@Override
 	public void visit(IManeuver maneuver) {
     if (!valid) {
       return;
     }
 
-    if (maneuver.getType() == ManeuverType.LATERAL) {
+    if (getType(maneuver) == ManeuverType.LATERAL) {
       if (lastLateralManeuver != null) {
-        if (Math.abs(lastLateralManeuver.getEndLocation() - maneuver.getStartLocation())
+        if (Math.abs(lastLateralManeuver.getEndDistance() - maneuver.getStartDistance())
             < minimumDistanceBetweenManeuvers) {
           valid = false;
           offendingManeuvers.add(lastLateralManeuver);
@@ -57,9 +70,9 @@ public class MinimumDistanceBetweenManeuversConstraint implements TrajectoryVali
       lastLateralManeuver = maneuver;
     }
 
-    if (maneuver.getType() == ManeuverType.LONGITUDINAL) {
+    if (getType(maneuver) == ManeuverType.LONGITUDINAL) {
       if (lastLongitudinalManeuver != null) {
-        if (Math.abs(lastLongitudinalManeuver.getEndLocation() - maneuver.getStartLocation())
+        if (Math.abs(lastLongitudinalManeuver.getEndDistance() - maneuver.getStartDistance())
             < minimumDistanceBetweenManeuvers) {
           valid = false;
           offendingManeuvers.add(lastLongitudinalManeuver);
