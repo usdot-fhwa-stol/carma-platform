@@ -19,41 +19,129 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
-class TestManeuver implements IManeuver {
-  TestManeuver(ManeuverType type, double start, double end) {
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+
+class LongitudinalTestManeuver extends LongitudinalManeuver {
+  LongitudinalTestManeuver(ManeuverType type, double start, double end) {
     this.type = type;
     this.start = start;
     this.end = end;
   }
 
-	@Override
-	public void execute() {
-		
-	}
+  public ManeuverType getType() {
+    return type;
+  }
 
-	@Override
-	public ManeuverType getType() {
-		return type;
-	}
+  @Override
+  public double getStartDistance() {
+    return start;
+  }
 
-	@Override
-	public double getStartLocation() {
-		return start;
-	}
+  @Override
+  public double getEndDistance() {
+    return end;
+  }
 
-	@Override
-	public double getEndLocation() {
-		return end;
+  @Override
+  public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+
+  }
+
+  @Override
+  public boolean executeTimeStep() throws IllegalStateException {
+    return false;
+  }
+
+  @Override
+  public void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException {
+
+  }
+
+  @Override
+  public double getStartSpeed() throws UnsupportedOperationException {
+    return 0;
+  }
+
+  @Override
+  public double getTargetSpeed() throws UnsupportedOperationException {
+    return 0;
+  }
+
+  @Override
+  public void setTargetLane(int targetLane) throws UnsupportedOperationException {
+
   }
 
   private double end;
   private double start;
   private ManeuverType type;
+
+}
+
+// Bit of a hack to deal with how maneuvers are differentiated now
+class LateralTestManeuver implements IManeuver {
+  LateralTestManeuver(ManeuverType type, double start, double end) {
+    this.type = type;
+    this.start = start;
+    this.end = end;
+  }
+
+  public ManeuverType getType() {
+    return type;
+  }
+
+  @Override
+  public double getStartDistance() {
+    return start;
+  }
+
+  @Override
+  public double getEndDistance() {
+    return end;
+  }
+
+  @Override
+  public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+
+  }
+
+  @Override
+  public boolean executeTimeStep() throws IllegalStateException {
+    return false;
+  }
+
+  @Override
+  public void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException {
+
+  }
+
+  @Override
+  public double getStartSpeed() throws UnsupportedOperationException {
+    return 0;
+  }
+
+  @Override
+  public double getTargetSpeed() throws UnsupportedOperationException {
+    return 0;
+  }
+
+  @Override
+  public void setTargetLane(int targetLane) throws UnsupportedOperationException {
+
+  }
+
+  private double end;
+  private double start;
+  private ManeuverType type;
+
 }
 
 public class TrajectoryTest {
@@ -69,37 +157,37 @@ public class TrajectoryTest {
 
   @Test
   public void testAddLateralManeuver() {
-    assertTrue(traj.addManeuver(new TestManeuver(ManeuverType.LATERAL, 0, 0)));
+    assertTrue(traj.addManeuver(new LateralTestManeuver(ManeuverType.LATERAL, 0, 0)));
   }
 
   @Test
   public void testAddLateralManeuverRejection2() {
-    assertFalse(traj.addManeuver(new TestManeuver(ManeuverType.LATERAL, 0, 21)));
+    assertFalse(traj.addManeuver(new LateralTestManeuver(ManeuverType.LATERAL, 0, 21)));
   }
 
   @Test
   public void testAddLateralManeuverRejection3() {
-    assertFalse(traj.addManeuver(new TestManeuver(ManeuverType.LATERAL, 21, 25)));
+    assertFalse(traj.addManeuver(new LateralTestManeuver(ManeuverType.LATERAL, 21, 25)));
   }
 
   @Test
   public void testAddLongitudinalManeuver() {
-    assertTrue(traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 0)));
+    assertTrue(traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 0)));
   }
 
   @Test
   public void testAddLongitudinalManeuverRejection2() {
-    assertFalse(traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 21)));
+    assertFalse(traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 21)));
   }
 
   @Test
   public void testAddLongitudinalManeuverRejection3() {
-    assertFalse(traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 21, 25)));
+    assertFalse(traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 21, 25)));
   }
 
   @Test
   public void testGetManeuversAt1() {
-    IManeuver m = new TestManeuver(ManeuverType.LATERAL, 0, 1);
+    IManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 0, 1);
     traj.addManeuver(m);
 
     List<IManeuver> maneuvers = traj.getManeuversAt(0.0);
@@ -109,8 +197,8 @@ public class TrajectoryTest {
 
   @Test
   public void testGetManeuversAt2() {
-    IManeuver m1 = new TestManeuver(ManeuverType.LATERAL, 0, 1);
-    IManeuver m2 = new TestManeuver(ManeuverType.LONGITUDINAL, 0, 1);
+    IManeuver m1 = new LateralTestManeuver(ManeuverType.LATERAL, 0, 1);
+    IManeuver m2 = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 1);
     traj.addManeuver(m1);
     traj.addManeuver(m2);
 
@@ -123,8 +211,8 @@ public class TrajectoryTest {
 
   @Test
   public void testGetManeuversAt3() {
-    IManeuver m1 = new TestManeuver(ManeuverType.LATERAL, 0, 10);
-    IManeuver m2 = new TestManeuver(ManeuverType.LONGITUDINAL, 5, 15);
+    IManeuver m1 = new LateralTestManeuver(ManeuverType.LATERAL, 0, 10);
+    IManeuver m2 = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 5, 15);
     traj.addManeuver(m1);
     traj.addManeuver(m2);
 
@@ -137,8 +225,8 @@ public class TrajectoryTest {
 
   @Test
   public void testFindEarliestWindowOfSize1() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
 
     double loc = traj.findEarliestWindowOfSize(2.0);
 
@@ -147,9 +235,9 @@ public class TrajectoryTest {
 
   @Test
   public void testFindEarliestWindowOfSize2() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 15, 20));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 15, 20));
 
     double loc = traj.findEarliestWindowOfSize(5.0);
 
@@ -158,9 +246,9 @@ public class TrajectoryTest {
 
   @Test
   public void testFindEarliestWindowOfSize3() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 15, 20));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 15, 20));
 
     double loc = traj.findEarliestWindowOfSize(2.0);
 
@@ -169,8 +257,8 @@ public class TrajectoryTest {
 
   @Test
   public void testFindEarliestWindowOfSizeFail() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
 
     double loc = traj.findLatestWindowOfSize(3.0);
 
@@ -179,8 +267,8 @@ public class TrajectoryTest {
 
   @Test
   public void testFindLatestWindowOfSize1() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
 
     double loc = traj.findLatestWindowOfSize(2.0);
 
@@ -189,9 +277,9 @@ public class TrajectoryTest {
 
   @Test
   public void testFindLatestWindowOfSize2() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 15, 20));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 15, 20));
 
     double loc = traj.findLatestWindowOfSize(5.0);
 
@@ -200,9 +288,9 @@ public class TrajectoryTest {
 
   @Test
   public void testFindLatestWindowOfSize3() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 15, 20));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 15, 20));
 
     double loc = traj.findLatestWindowOfSize(2.0);
 
@@ -211,8 +299,8 @@ public class TrajectoryTest {
 
   @Test
   public void testFindLatestWindowOfSizeFail() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
 
     double loc = traj.findLatestWindowOfSize(3.0);
 
@@ -224,14 +312,14 @@ public class TrajectoryTest {
     IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(null, m);
 
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0));
     m = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(null, m);
   }
 
   @Test
   public void testGetNextLateralManeuverAfter1() {
-    IManeuver m = new TestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
+    IManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
     traj.addManeuver(m);
     IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(m, m1);
@@ -239,9 +327,9 @@ public class TrajectoryTest {
 
   @Test
   public void testGetNextLateralManeuverAfter2() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
+    traj.addManeuver(new LateralTestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
 
-    IManeuver m = new TestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
+    IManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
     traj.addManeuver(m);
     IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(m, m1);
@@ -249,7 +337,7 @@ public class TrajectoryTest {
 
   @Test
   public void testGetNextLateralManeuverAfterFail() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
+    traj.addManeuver(new LateralTestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
 
     IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(null, m);
@@ -260,14 +348,14 @@ public class TrajectoryTest {
     IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(null, m);
 
-    traj.addManeuver(new TestManeuver(ManeuverType.LATERAL, 1.0, 2.0));
+    traj.addManeuver(new LateralTestManeuver(ManeuverType.LATERAL, 1.0, 2.0));
     m = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(null, m);
   }
 
   @Test
   public void testGetNextLongitudinalManeuverAfter1() {
-    IManeuver m = new TestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
+    IManeuver m = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
     traj.addManeuver(m);
     IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(m, m1);
@@ -275,9 +363,9 @@ public class TrajectoryTest {
 
   @Test
   public void testGetNextLongitudinalManeuverAfter2() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0.0, 0.0));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0.0, 0.0));
 
-    IManeuver m = new TestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
+    IManeuver m = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
     traj.addManeuver(m);
     IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(m, m1);
@@ -285,7 +373,7 @@ public class TrajectoryTest {
 
   @Test
   public void testGetNextLongitudinalManeuverAfterFail() {
-    traj.addManeuver(new TestManeuver(ManeuverType.LONGITUDINAL, 0.0, 0.0));
+    traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0.0, 0.0));
 
     IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(null, m);
