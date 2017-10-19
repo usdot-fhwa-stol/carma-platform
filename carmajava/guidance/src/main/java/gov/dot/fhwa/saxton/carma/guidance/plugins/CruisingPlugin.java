@@ -146,17 +146,18 @@ public class CruisingPlugin extends AbstractPlugin {
     // If we processed at least one waypoint, get the last waypoint, the endpoint of the last segment
     if (!limits.isEmpty()) {
       List<RouteSegment> segments = route.getSegments();
-      RouteSegment lastSeg = segments.get(segments.size());
+      RouteSegment lastSeg = segments.get(segments.size() - 1);
       SpeedLimit limit = new SpeedLimit();
       limit.location = dtdAccum;
       limit.speedLimit = mphToMps(lastSeg.getWaypoint().getSpeedLimit());
+      limits.add(limit);
     }
 
     return limits;
   }
 
   // TODO: Improve handling of first and last speed limits on boundaries
-  protected List<SpeedLimit> getSpeedLimits(double startDistance, double endDistance) {
+  protected List<SpeedLimit> getSpeedLimits(List<SpeedLimit> speedLimits, double startDistance, double endDistance) {
     // Get all the speed limits spanned by [startDistance, endDistance)
     List<SpeedLimit> spanned = new ArrayList<>();
     for (SpeedLimit limit : speedLimits) {
@@ -188,6 +189,8 @@ public class CruisingPlugin extends AbstractPlugin {
       seg.endSpeed = trajEndSpeed;
 
       gaps.add(seg);
+
+      return gaps;
     }
 
     // Find the gaps between
@@ -267,7 +270,7 @@ public class CruisingPlugin extends AbstractPlugin {
   
   @Override
   public void planTrajectory(Trajectory traj, double trajStartSpeed) {
-    List<SpeedLimit> trajLimits = getSpeedLimits(traj.getStartLocation(), traj.getEndLocation());
+    List<SpeedLimit> trajLimits = getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation());
 
     // Find the gaps and record the speeds at the boundaries (pass in params for start and end speed)
     List<TrajectorySegment> gaps = null;
@@ -302,7 +305,7 @@ public class CruisingPlugin extends AbstractPlugin {
         // Take any intermediary speed limits
         double prevDist = first.location;
         double prevSpeed = first.speedLimit;
-        for (SpeedLimit limit  : getSpeedLimits(traj.getStartLocation(), traj.getEndLocation())) {
+        for (SpeedLimit limit  : getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation())) {
           planManeuvers(traj, prevDist, limit.location, prevSpeed, limit.speedLimit);
           prevDist = limit.location;
           prevSpeed = limit.speedLimit;

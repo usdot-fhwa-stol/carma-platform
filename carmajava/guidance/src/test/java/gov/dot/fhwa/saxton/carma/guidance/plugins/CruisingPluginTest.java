@@ -78,13 +78,15 @@ public class CruisingPluginTest {
       waypoint.setWaypointId(curId++);
       waypoint.setLaneCount((byte) 1);
       waypoint.setSpeedLimit(mpsToMph(speed));
+      waypoints.add(waypoint);
     }
 
     for (int i = 0; i < waypoints.size() - 1; i++) {
       RouteSegment seg = messageFactory.newFromType(RouteSegment._TYPE);
       seg.setLength(segLength);
       seg.setPrevWaypoint(waypoints.get(i));
-      seg.setPrevWaypoint(waypoints.get(i + 1));
+      seg.setWaypoint(waypoints.get(i + 1));
+      segments.add(seg);
     }
 
     route.setSegments(segments);
@@ -138,6 +140,27 @@ public class CruisingPluginTest {
     assertEquals(20.0, gaps.get(0).end, 0.01);
     assertEquals(0.0, gaps.get(0).startSpeed, 0.01);
     assertEquals(5.0, gaps.get(0).endSpeed, 0.01);
+  }
+
+  @Test
+  public void testGetSpeedLimits() {
+    List<Double> speeds = new ArrayList<>();
+    speeds.add(1.0);
+    speeds.add(2.0);
+    speeds.add(3.0);
+    speeds.add(4.0);
+    speeds.add(5.0);
+
+    Route route = generateRouteWithSpeedLimits(speeds, 5.0);
+
+    List<SpeedLimit> limits = cruise.processSpeedLimits(route);
+    List<SpeedLimit> filteredLimits = cruise.getSpeedLimits(limits, 5.5, 15.5);
+
+    assertEquals(2, filteredLimits.size());
+    assertEquals(3.0, filteredLimits.get(0).speedLimit, 0.5);
+    assertEquals(4.0, filteredLimits.get(1).speedLimit, 0.5);
+    assertEquals(10.0, filteredLimits.get(0).location, 0.01);
+    assertEquals(15.0, filteredLimits.get(1).location, 0.01);
   }
 
   private CruisingPlugin cruise;
