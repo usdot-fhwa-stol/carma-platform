@@ -42,6 +42,8 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected GuidanceCommands commands;
     protected AtomicReference<GuidanceState> state;
     protected TrajectoryExecutorWorker trajectoryExecutorWorker;
+    protected Trajectory currentTrajectory;
+    protected boolean bufferedTrajectoryRunning = false;
 
     protected boolean useSinTrajectory = false;
     protected long startTime = 0;
@@ -98,6 +100,10 @@ public class TrajectoryExecutor extends GuidanceComponent {
     @Override
     public void onGuidanceEnable() {
         startTime = (long) node.getCurrentTime().toSeconds() * 1000;
+
+        if (currentTrajectory != null && !bufferedTrajectoryRunning) {
+            trajectoryExecutorWorker.runTrajectory(currentTrajectory);
+        }
     }
 
     /**
@@ -139,6 +145,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
    * Abort the current and queued trajectories and the currently executing maneuvers
    */
     public void abortTrajectory() {
+        log.info("Trajectory executor commanded to abort trajectory");
         trajectoryExecutorWorker.abortTrajectory();
     }
 
@@ -191,8 +198,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
    * trajectory finishes execution.
    */
     public void runTrajectory(Trajectory traj) {
+        log.info("TrajectoryExecutor received new trajectory!");
         if (state.get() == GuidanceState.ENGAGED) {
+            log.info("TrajectoryExecutor running trajectory!");
             trajectoryExecutorWorker.runTrajectory(traj);
+            bufferedTrajectoryRunning = true;
+        } else {
+            currentTrajectory = traj;
         }
     }
 }

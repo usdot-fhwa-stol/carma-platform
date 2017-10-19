@@ -27,11 +27,11 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
  */
 public class NoOpPlugin extends AbstractPlugin {
   private static final long SLEEP_DURATION = 10000;
-  protected String name = "NoOp Plugin";
-  protected String versionId = "v00.00.01";
 
   public NoOpPlugin(PluginServiceLocator psl)  {
     super(psl);
+    name = "NoOp Plugin";
+    versionId = "v00.00.01";
   }
 
   @Override

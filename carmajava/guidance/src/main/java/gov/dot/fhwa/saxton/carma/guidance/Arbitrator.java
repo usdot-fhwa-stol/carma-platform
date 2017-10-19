@@ -205,7 +205,7 @@ public class Arbitrator extends GuidanceComponent {
   }
 
   protected Trajectory planTrajectory(double trajectoryStart) {
-    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryStart + planningWindow
+    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + (trajectoryStart + planningWindow)
         + ")");
     Trajectory out = null;
     for (int failures = 0; failures < numAcceptableFailures; failures++) {

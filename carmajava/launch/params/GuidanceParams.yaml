@@ -56,7 +56,7 @@ arbitrator_lateral_plugin: NoOp Plugin
 arbitrator_longitudinal_plugin: Mock Cruising Plugin
 
 # Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
-use_sin_trajectory: true
+use_sin_trajectory: false
 
 # Double: The frequency at which the trajectory executor will tick
 # Units: Hz

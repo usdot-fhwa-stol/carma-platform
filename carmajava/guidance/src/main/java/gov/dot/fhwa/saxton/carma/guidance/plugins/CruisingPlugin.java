@@ -43,8 +43,6 @@ import org.apache.commons.logging.Log;
  * at each route segment.
  */
 public class CruisingPlugin extends AbstractPlugin {
-  protected String name = "Cruising";
-  protected String versionId = "v00.00.01";
   protected ISubscriber<RouteState> routeStateSub;
   protected ISubscriber<Route> routeSub;
   protected ISubscriber<RouteSegment> currentSegmentSub;
@@ -69,6 +67,8 @@ public class CruisingPlugin extends AbstractPlugin {
 
   public CruisingPlugin(PluginServiceLocator psl) {
     super(psl);
+    name = "Cruising";
+    versionId = "v00.00.01";
   }
 
 	@Override
