@@ -1039,6 +1039,7 @@ var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = "route_state";
 var t_active_route = "route";
 var t_cmd_speed = "cmd_speed";
+var t_current_segment = "current_segment";
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -1271,7 +1272,6 @@ function setRoute(id) {
 
             //Subscribe to active route to map the segments
             showActiveRoute();
-            showNavSatFix();
         }
     });
 }
@@ -1705,19 +1705,6 @@ function printParam(itemName, index) {
 */
 function getFutureTopics() {
 
-    /*
-      var listenerRouteSegment = new ROSLIB.Topic({
-        ros : ros,
-        name : t_current_segment,
-        messageType : 'cav_msgs/RouteSegment'
-      });
-
-      listenerRouteSegment.subscribe(function(message) {
-         document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerRouteSegment.name + ': ' + message.length;
-         //listenerRouteSegment.unsubscribe();
-      });
-
-    */
     //TODO: Not yet published by Guidance.
     var listenerUiInstructions = new ROSLIB.Topic({
         ros: ros,
@@ -1764,8 +1751,11 @@ function checkRouteInfo() {
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
-        if (message.state == 4) //ROUTE_COMPLETE=4
+        if (message.event == 3) //ROUTE_COMPLETED=3
         	showModal(true, "Route completed. You have reached your destination. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
+        if (message.event == 4)//LEFT_ROUTE=4
+            showModal(true, "You have left the route. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
+
     });
 }
 
@@ -1869,7 +1859,7 @@ function showNavSatFix() {
 */
 function showSpeedAccelInfo() {
 
-    //Get Route State
+    //Get Speed Accell Info
     var listenerSpeedAccel = new ROSLIB.Topic({
         ros: ros,
         name: t_cmd_speed,
@@ -1879,6 +1869,26 @@ function showSpeedAccelInfo() {
     listenerSpeedAccel.subscribe(function (message) {
         insertNewTableRow('tblFirst', 'Speed', message.speed.toFixed(2));
         insertNewTableRow('tblFirst', 'Max Acceleration', message.max_accel.toFixed(2));
+    });
+}
+
+/*
+    Display the close loop control of speed
+*/
+function showCurrentSegmentInfo() {
+
+    //Get Speed Accell Info
+    var listenerCurrentSegment = new ROSLIB.Topic({
+        ros: ros,
+        name: t_current_segment,
+        messageType: 'cav_msgs/RouteSegment'
+    });
+
+    listenerCurrentSegment.subscribe(function (message) {
+
+        insertNewTableRow('tblSecond', 'Current Segment Max Speed', message.waypoint.speed_limit);
+        if (message.waypoint.speed_limit != null && message.waypoint.speed_limit != 'undefined')
+            document.getElementById('divSpeedLimitValue').innerHTML = message.waypoint.speed_limit;
     });
 }
 
@@ -1932,14 +1942,12 @@ function toCamelCase(str) {
 
 function showStatusandLogs()
 {
-    //Displays under System Status
-    showRouteOptions();
-
-    //Displays under System Logs
     getParams();
-    //getFutureTopics();
     getVehicleInfo();
+
+    showNavSatFix();
     showSpeedAccelInfo();
+    showCurrentSegmentInfo();
 }
 /*
   Loop function to
@@ -1957,12 +1965,13 @@ function waitForSystemReady() {
             divCapabilitiesMessage.innerHTML = '<p> Awaiting SYSTEM READY status ... </p>';
         }
 
-        //If over max tries
+        //If system is now ready
         if (system_ready == true) {
+            showRouteOptions();
             showStatusandLogs();
             enableGuidance();
         }
-        else {
+        else { //If over max tries
             if (ready_counter >= ready_max_trial)
                 divCapabilitiesMessage.innerHTML = '<p> Sorry, did not receive SYSTEM READY status, please refresh your browser to try again. </p>';
         }
@@ -1989,8 +1998,7 @@ function evaluateNextStep() {
 
         //Subscribe to active route to map the segments
         showActiveRoute();
-        //Subscribe to NavSatFix to follow the host vehicle on the map.
-        showNavSatFix();
+
         //Display the System Status and Logs.
         showStatusandLogs();
 

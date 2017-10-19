@@ -18,12 +18,42 @@ max_acceleration_capability: 2.0
 # Units: m/s^2
 max_deceleration_capability: 1.0
 
-# Class names of plugins to be ignored by the PluginManager
+# Double: Percent of Trajectory executor allowed to elapse before the Arbitrator begins planning a new one
+# Units: Percent in range [0.0, 1.0]
+arbitrator_replan_threshold: 0.75
+
+# Integer: Number of times to attempt to replan a Trajectory if validation fails
+trajectory_planning_max_attempts: 3
+
+# Double: The initial size of the trajectory planning window for the Arbitrator
+# Units: m
+initial_planning_window: 10.0
+
+# Double: The scaling factor which will be multiplied by the current planning window in the event of
+# trajectory success
+planning_window_growth_factor: 1.25
+
+# Double: The scaling factor which will be multiplied by the current planning window in the event of
+# trajectory failure
+planning_window_shrink_factor: 0.5
+
+# The class names which will be used to instantiate the concrete TrajectoryValidationConstraints
+trajectory_constraints:
+  - gov.dot.fhwa.saxton.carma.guidance.trajectory.MinimumDistanceBetweenManeuversConstraint
+  - gov.dot.fhwa.saxton.carma.guidance.trajectory.OverlappingManeuversConstraint
+
+# The set of IPlugin instances which will be ignored based on class name
 ignored_plugins: []
 
 # Class names of plugins required to always be activated
 required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.plugins.MockCruisingPlugin
+
+# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's lateral trajectory
+arbitrator_lateral_plugin: Mock Route-Following Plugin
+
+# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's longitudinal trajectory
+arbitrator_longitudinal_plugin: Mock Cruising Plugin
 
 # Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
 use_sin_trajectory: true
@@ -51,3 +81,8 @@ trajectory_phase: 0.0
 # Double: Period of the sinusoidal sample trajectory for the Trajectory executor
 # Units: seconds
 trajectory_period: 15.0
+
+# Double: Time that it takes the host vehicle to respond to a new speed command
+# Units: seconds
+vehicle_response_lag: 1.4
+

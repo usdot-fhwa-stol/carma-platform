@@ -18,14 +18,19 @@ package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import cav_srvs.GetLightsRequest;
 import cav_srvs.GetLightsResponse;
+import cav_srvs.SetEnableRoboticRequest;
+import cav_srvs.SetEnableRoboticResponse;
 import cav_srvs.SetLightsRequest;
 import cav_srvs.SetLightsResponse;
+import org.ros.exception.ServiceException;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
+
+import cav_msgs.RobotEnabled;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,7 +50,8 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   // Topics
   // Published
   protected final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub;
-  protected final Publisher<cav_msgs.RobotEnabled> enabledPub;
+  protected Publisher<RobotEnabled> statusPub;
+  protected final ServiceServer<SetEnableRoboticRequest, SetEnableRoboticResponse> enabledSrv;
 
   // Subscribed
   protected final Subscriber<std_msgs.Float32> longEffortSub;
@@ -77,62 +83,64 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    diagnosticsPub =
-      connectedNode.newPublisher("~/control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
-    enabledPub =
-      connectedNode.newPublisher("~/control/robot_enabled", cav_msgs.RobotEnabled._TYPE);
+    statusPub = connectedNode.newPublisher("~/control/robot_status", RobotEnabled._TYPE);
+
+    diagnosticsPub = connectedNode.newPublisher("~/control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
+    enabledSrv = connectedNode.newServiceServer("~/control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
+        new ServiceResponseBuilder<SetEnableRoboticRequest, SetEnableRoboticResponse>() {
+          @Override
+          public void build(SetEnableRoboticRequest arg0, SetEnableRoboticResponse arg1) throws ServiceException {
+            // NO-OP
+          }
+        });
 
     // Subscribed
-    longEffortSub =
-      connectedNode.newSubscriber("~/control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
-    subscriber =
-      connectedNode.newSubscriber("~/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
+    longEffortSub = connectedNode.newSubscriber("~/control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
+    subscriber = connectedNode.newSubscriber("~/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
 
     // Services
     // Server
-    getLightsService = connectedNode
-      .newServiceServer("~/control/get_lights", cav_srvs.GetLights._TYPE,
+    getLightsService = connectedNode.newServiceServer("~/control/get_lights", cav_srvs.GetLights._TYPE,
         new ServiceResponseBuilder<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse>() {
-          @Override public void build(cav_srvs.GetLightsRequest request,
-            cav_srvs.GetLightsResponse response) {
+          @Override
+          public void build(cav_srvs.GetLightsRequest request, cav_srvs.GetLightsResponse response) {
 
             cav_msgs.LightBarStatus lightStatus = response.getStatus();
-            lightStatus.setFlash((byte)(lightBarFlash ? 1:0));
-            lightStatus.setLeftArrow((byte)(leftArrow ? 1:0));
-            lightStatus.setRightArrow((byte)(rightArrow ? 1:0));
-            lightStatus.setTakedown((byte)(takedown ? 1:0));
+            lightStatus.setFlash((byte) (lightBarFlash ? 1 : 0));
+            lightStatus.setLeftArrow((byte) (leftArrow ? 1 : 0));
+            lightStatus.setRightArrow((byte) (rightArrow ? 1 : 0));
+            lightStatus.setTakedown((byte) (takedown ? 1 : 0));
             response.setStatus(lightStatus);
           }
         });
-    setLightsService = connectedNode
-      .newServiceServer("~/control/set_lights", cav_srvs.SetLights._TYPE,
+    setLightsService = connectedNode.newServiceServer("~/control/set_lights", cav_srvs.SetLights._TYPE,
         new ServiceResponseBuilder<SetLightsRequest, SetLightsResponse>() {
-          @Override public void build(cav_srvs.SetLightsRequest request,
-            cav_srvs.SetLightsResponse response) {
+          @Override
+          public void build(cav_srvs.SetLightsRequest request, cav_srvs.SetLightsResponse response) {
 
             cav_msgs.LightBarStatus lightStatus = request.getSetState();
             lightBarFlash = lightStatus.getFlash() == 1;
             leftArrow = lightStatus.getLeftArrow() == 1;
             rightArrow = lightStatus.getRightArrow() == 1;
             takedown = lightStatus.getTakedown() == 1;
-            log.info(
-              "Lights have been set to Flash: " + lightBarFlash + " Left: " + leftArrow + " Right: "
-                + rightArrow + " Takedown: " + takedown);
+            log.info("Lights have been set to Flash: " + lightBarFlash + " Left: " + leftArrow + " Right: " + rightArrow
+                + " Takedown: " + takedown);
           }
         });
   }
 
-  @Override protected void publishData(List<String[]> data) throws IllegalArgumentException {
+  @Override
+  protected void publishData(List<String[]> data) throws IllegalArgumentException {
 
-    for(String[] elements : data) {
+    for (String[] elements : data) {
       // Make messages
-      cav_msgs.RobotEnabled enabledMsg = enabledPub.newMessage();
       diagnostic_msgs.DiagnosticArray diagMsg = diagnosticsPub.newMessage();
+      RobotEnabled statusMsg = statusPub.newMessage();
 
       // Build RobotEnabled Message
-      enabledMsg.setBrakeDecel(Double.parseDouble(elements[BRAKE_DECEL_IDX]));
-      enabledMsg.setRobotEnabled(Boolean.parseBoolean(elements[ROBOT_ENABLED_IDX]));
-      enabledMsg.setTorque(Double.parseDouble(elements[TORQUE_IDX]));
+      statusMsg.setBrakeDecel(Double.parseDouble(elements[BRAKE_DECEL_IDX]));
+      statusMsg.setRobotEnabled(Boolean.parseBoolean(elements[ROBOT_ENABLED_IDX]));
+      statusMsg.setTorque(Double.parseDouble(elements[TORQUE_IDX]));
 
       // Build Diagnostics Message: Assumes that only diagnostic is in a data file line
       std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
@@ -142,7 +150,8 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
 
       diagMsg.setHeader(hdr);
 
-      diagnostic_msgs.DiagnosticStatus diagnosticStatus = messageFactory.newFromType(diagnostic_msgs.DiagnosticStatus._TYPE);
+      diagnostic_msgs.DiagnosticStatus diagnosticStatus = messageFactory
+          .newFromType(diagnostic_msgs.DiagnosticStatus._TYPE);
       diagnosticStatus.setHardwareId(elements[HARDWARE_ID_IDX]);
       diagnosticStatus.setLevel(Byte.valueOf(elements[DIAG_LEVEL_IDX]));
       diagnosticStatus.setName(getGraphName().toString());
@@ -156,31 +165,30 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
       diagMsg.setStatus(new ArrayList<>(Arrays.asList(diagnosticStatus)));
 
       // Publish Data
-      enabledPub.publish(enabledMsg);
       diagnosticsPub.publish(diagMsg);
+      statusPub.publish(statusMsg);
     }
   }
 
-  @Override protected short getExpectedColCount() {
+  @Override
+  protected short getExpectedColCount() {
     return EXPECTED_DATA_COL_COUNT;
   }
 
-  @Override protected short getSampleIdIdx(){
+  @Override
+  protected short getSampleIdIdx() {
     return SAMPLE_ID_IDX;
   }
 
-  @Override protected List<String> getDriverTypesList() {
+  @Override
+  protected List<String> getDriverTypesList() {
     return new ArrayList<>(Arrays.asList("controller"));
   }
 
-  @Override public List<String> getDriverAPI(){
-    return new ArrayList<>(Arrays.asList(
-      "control/diagnostics",
-      "control/robot_enabled",
-      "control/cmd_longitudinal_effort",
-      "control/cmd_speed",
-      "control/get_lights",
-      "control/set_lights"
-    ));
+  @Override
+  public List<String> getDriverAPI() {
+    return new ArrayList<>(
+        Arrays.asList("control/diagnostics", "control/enable_robotic", "control/cmd_longitudinal_effort",
+            "control/cmd_speed", "control/get_lights", "control/set_lights", "control/robot_status"));
   }
 }

@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.*;
  * and it's Maneuver instances and latching on those commands until a new one is received. This will output
  * the most recently latched value at a fixed frequency.
  */
-public class GuidanceCommands extends GuidanceComponent {
+public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
@@ -82,6 +82,7 @@ public class GuidanceCommands extends GuidanceComponent {
      * @param speed The speed to output
      * @param accel The maximum allowable acceleration in attaining and maintaining that speed
      */
+    @Override
     public void setCommand(double speed, double accel) {
         speedCommand.set(speed);
         maxAccel.set(accel);
@@ -95,7 +96,7 @@ public class GuidanceCommands extends GuidanceComponent {
             driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
                     GetDriversWithCapabilities._TYPE);
         } catch (TopicNotFoundException tnfe) {
-            log.fatal("Interface manager not found. Shutting down Guidance.Commands");
+            panic("Interface manager not found.");
         }
 
         // Build our request message
@@ -125,7 +126,7 @@ public class GuidanceCommands extends GuidanceComponent {
 
             @Override
             public void onFailure(Exception e) {
-                log.warn("No control/cmd_speed capable driver found!!!");
+                panic("InterfaceManager failed to return a control/cmd_speed capable driver!!!");
             }
         });
 
@@ -156,10 +157,10 @@ public class GuidanceCommands extends GuidanceComponent {
                 enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
                 driverConnected = true;
             } catch (TopicNotFoundException tnfe) {
-                log.fatal("GuidanceCommands unable to locate control/enable_robotic service for " + roboticEnableTopic);
+                panic("GuidanceCommands unable to locate control/enable_robotic service for " + roboticEnableTopic);
             }
         } else {
-            log.fatal("GuidanceCommands unable to find suitable controller driver!");
+            panic("GuidanceCommands unable to find suitable controller driver!");
         }
     }
 
