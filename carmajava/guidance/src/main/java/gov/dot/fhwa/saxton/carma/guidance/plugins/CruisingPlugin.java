@@ -67,7 +67,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
   public CruisingPlugin(PluginServiceLocator psl) {
     super(psl);
-    name = "Cruising";
+    name = "Cruising Plugin";
     versionId = "v00.00.01";
   }
 
