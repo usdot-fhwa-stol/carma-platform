@@ -23,6 +23,9 @@ import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import org.apache.commons.logging.Log;
@@ -77,12 +80,14 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected int registeredPluginsSeqNum = 0;
     protected int activePluginsSeqNum = 0;
 
-    public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, ConnectedNode node) {
+    public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, 
+    IGuidanceCommands commands, IManeuverInputs maneuverInputs, ConnectedNode node) {
         super(state, pubSubManager, node);
         this.executor = new PluginExecutor(node.getLog());
 
         pluginServiceLocator = new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
-                pubSubService, new RosParameterSource(node.getParameterTree()), node.getLog());
+                pubSubService, new RosParameterSource(node.getParameterTree()), new ManeuverPlanner(commands, maneuverInputs), 
+                node.getLog());
     }
 
     /**
