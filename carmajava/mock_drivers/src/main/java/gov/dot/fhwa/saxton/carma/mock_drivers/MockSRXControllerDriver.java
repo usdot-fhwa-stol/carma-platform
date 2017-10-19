@@ -48,7 +48,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   // Topics
   // Published
   protected final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub;
-  protected final ServiceServer<SetEnableRoboticRequest, SetEnableRoboticResponse> enabledPub;
+  protected final ServiceServer<SetEnableRoboticRequest, SetEnableRoboticResponse> enabledSrv;
 
   // Subscribed
   protected final Subscriber<std_msgs.Float32> longEffortSub;
@@ -81,7 +81,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     // Topics
     // Published
     diagnosticsPub = connectedNode.newPublisher("~/control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
-    enabledPub = connectedNode.newServiceServer("~/control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
+    enabledSrv = connectedNode.newServiceServer("~/control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
         new ServiceResponseBuilder<SetEnableRoboticRequest, SetEnableRoboticResponse>() {
           @Override
           public void build(SetEnableRoboticRequest arg0, SetEnableRoboticResponse arg1) throws ServiceException {
