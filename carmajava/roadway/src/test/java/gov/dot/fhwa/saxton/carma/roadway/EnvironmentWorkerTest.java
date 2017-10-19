@@ -117,6 +117,17 @@ public class EnvironmentWorkerTest {
   public void testhandleOdometryMsg() throws Exception {
     MockEnvironmentManager envMgr = new MockEnvironmentManager();
     EnvironmentWorker envWkr = new EnvironmentWorker(envMgr, log);
+    // Publish the transform from base_link to position sensor
+    Transform baseToPositionSensor = Transform.identity();
+    TFMessage tfMsg = messageFactory.newFromType(TFMessage._TYPE);
+    geometry_msgs.Transform baseToPositionSensorMsg = messageFactory.newFromType(geometry_msgs.Transform._TYPE);
+    baseToPositionSensorMsg = baseToPositionSensor.toTransformMessage(baseToPositionSensorMsg);
+    geometry_msgs.TransformStamped tfStamped = messageFactory.newFromType(TransformStamped._TYPE);
+    tfStamped.setChildFrameId(envWkr.positionSensorFrame);
+    tfStamped.getHeader().setFrameId(envWkr.baseLinkFrame);
+    tfStamped.setTransform(baseToPositionSensorMsg);
+    tfMsg.setTransforms(Arrays.asList(tfStamped));
+    envMgr.publishTF(tfMsg);
     // Build odometry message
     Odometry odometryMsg = messageFactory.newFromType(Odometry._TYPE);
     PoseWithCovariance pose = odometryMsg.getPose();
@@ -138,6 +149,43 @@ public class EnvironmentWorkerTest {
     Quaternion resultFromTFRot = resultFromTF.getRotationAndScale();
 
     assertTrue(resultFromTFTrans.almostEquals(new Vector3(1,2,0), 0.0000001));
+    assertTrue(resultFromTFRot.almostEquals(quat, 0.0001));
+
+    // Try with non-identity base->position_sensor
+    envMgr = new MockEnvironmentManager();
+    envWkr = new EnvironmentWorker(envMgr, log);
+    // Publish the transform from base_link to position sensor
+    baseToPositionSensor = new Transform(new Vector3(0,0,1), Quaternion.identity());
+    tfMsg = messageFactory.newFromType(TFMessage._TYPE);
+    baseToPositionSensorMsg = messageFactory.newFromType(geometry_msgs.Transform._TYPE);
+    baseToPositionSensorMsg = baseToPositionSensor.toTransformMessage(baseToPositionSensorMsg);
+    tfStamped = messageFactory.newFromType(TransformStamped._TYPE);
+    tfStamped.setChildFrameId(envWkr.positionSensorFrame);
+    tfStamped.getHeader().setFrameId(envWkr.baseLinkFrame);
+    tfStamped.setTransform(baseToPositionSensorMsg);
+    tfMsg.setTransforms(Arrays.asList(tfStamped));
+    envMgr.publishTF(tfMsg);
+    // Build odometry message
+    odometryMsg = messageFactory.newFromType(Odometry._TYPE);
+    pose = odometryMsg.getPose();
+    pose.getPose().getPosition().setX(1);
+    pose.getPose().getPosition().setY(2);
+    pose.getPose().getPosition().setZ(0);
+    zAxis = new Vector3(0,0,1);
+    angle = Math.toRadians(45);
+    quat = Quaternion.fromAxisAngle(zAxis, angle);
+    quatMsg = pose.getPose().getOrientation();
+    quatMsg = quat.toQuaternionMessage(quatMsg);
+    pose.getPose().setOrientation(quatMsg);
+    odometryMsg.setPose(pose);
+    // Call function
+    envWkr.handleOdometryMsg(odometryMsg);
+    // Request transform from envMgr. It should be the same as what was passed in the odometry message
+    resultFromTF = envMgr.getTransform(envWkr.odomFrame, envWkr.baseLinkFrame);
+    resultFromTFTrans = resultFromTF.getTranslation();
+    resultFromTFRot = resultFromTF.getRotationAndScale();
+
+    assertTrue(resultFromTFTrans.almostEquals(new Vector3(1,2,-1), 0.0000001));
     assertTrue(resultFromTFRot.almostEquals(quat, 0.0001));
   }
 

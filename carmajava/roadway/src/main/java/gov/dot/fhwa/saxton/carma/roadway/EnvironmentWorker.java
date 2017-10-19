@@ -125,15 +125,11 @@ public class EnvironmentWorker {
     List<geometry_msgs.TransformStamped> tfStampedMsgs = new LinkedList<>();
 
     // Update map location on start and every MAP_UPDATE_PERIOD after that
-//    if (prevMapTime != null) { //TODO remove
-//      prevMapTime = envMgr.getTime();
-//    }
     if (prevMapTime == null || 0 < envMgr.getTime().subtract(prevMapTime).compareTo(MAP_UPDATE_PERIOD)) {
       // Map will be an NED frame on the current vehicle location
       earthToMap = gcc.ecefToNEDFromLocaton(hostVehicleLocation);
       tfStampedMsgs.add(buildTFStamped(earthToMap, earthFrame, mapFrame));
       prevMapTime = envMgr.getTime();
-      log.warn("\n\n\n NEW MAPPPPPPP!!!!!!\n\n\n");
     }
 
     // Calculate map->odom transform
@@ -158,15 +154,9 @@ public class EnvironmentWorker {
     Transform T_o_b = odomToBaseLink;
     Transform T_b_p = baseToPositionSensor;
 
-//    log.warn("\n\n\n T_m_r: " + T_m_r + "\n\n\n");
-//    log.warn("\n\n\n T_m_o: " + T_m_o + "\n\n\n");
-//    log.warn("\n\n\n T_o_b: " + T_o_b + "\n\n\n");
-//    log.warn("\n\n\n T_b_p: " + T_b_p + "\n\n\n");
     Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
-    log.warn("\n\n\n T_p_r: " + T_p_r + "\n\n\n");
     // Modify map to odom with the difference from the expected and real sensor positions
     mapToOdom = mapToOdom.multiply(T_p_r);
-    log.warn("\n\n\n 11MapToOdom: " + mapToOdom + "\n\n\n");
     // Publish newly calculated transforms
     tfStampedMsgs.add(buildTFStamped(mapToOdom, mapFrame, odomFrame));
     publishTF(tfStampedMsgs);
