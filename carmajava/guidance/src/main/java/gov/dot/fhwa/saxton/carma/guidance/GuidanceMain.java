@@ -17,6 +17,8 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import cav_srvs.SetGuidanceEngaged;
 import cav_srvs.SetGuidanceEngagedRequest;
@@ -77,9 +79,9 @@ public class GuidanceMain extends SaxtonBaseNode {
     GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands);
     Tracking tracking = new Tracking(state, pubSubService, node);
-    Maneuvers maneuvers = new Maneuvers(state, pubSubService, node);
+    ManeuverInputs maneuverInputs = new ManeuverInputs(state, pubSubService, node);
 
-    executor.execute(maneuvers);
+    executor.execute(maneuverInputs);
     executor.execute(arbitrator);
     executor.execute(pluginManager);
     executor.execute(trajectoryExecutor);

@@ -1,3 +1,19 @@
+/*
+ * TODO: Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import cav_msgs.RouteState;
@@ -26,7 +42,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected int                                   timeStep_ = 0;              // ms
 
 
-    ManeuverInputs(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
+    public ManeuverInputs(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
         super(state, iPubSubService, node);
     }
 
@@ -53,12 +69,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
         //parameters
         RosParameterSource params = new RosParameterSource(node.getParameterTree());
-        responseLag_ = params.getDouble("vehicle_response_lag");
-        timeStep_ = params.getInteger("time_step", 100);
-
-
-        while (!Thread.currentThread().isInterrupted()) {
-        }
+        responseLag_ = params.getDouble("~vehicle_response_lag");
     }
 
 
@@ -73,13 +84,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
 
     @Override
-    public void loop() {
-    }
-
-
-    @Override
     public String getComponentName() {
-        return "guidance.maneuvers.ManeuverInputs";
+        return "Guidance.Maneuvers.ManeuverInputs";
     }
 
 
