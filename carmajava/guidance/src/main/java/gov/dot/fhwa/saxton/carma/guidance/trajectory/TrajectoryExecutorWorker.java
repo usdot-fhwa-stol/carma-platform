@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import org.apache.commons.logging.Log;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverRunner;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +40,8 @@ public class TrajectoryExecutorWorker {
   protected Trajectory nextTrajectory = null;
   protected IManeuver currentLateralManeuver = null;
   protected IManeuver currentLongitudinalManeuver = null;
+  protected Thread lateralManeuverThread;
+  protected Thread longitudinalManeuverThread;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -65,6 +68,7 @@ public class TrajectoryExecutorWorker {
     && downtrackDistance >= currentLateralManeuver.getStartLocation() 
     && !currentLateralManeuver.isRunning()) {
       currentLateralManeuver.execute();
+      lateralManeuverThread = new Thread(new ManeuverRunner());
     }
 
     if (currentLongitudinalManeuver != null 
