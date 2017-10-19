@@ -16,15 +16,13 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
-import org.apache.commons.logging.Log;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverRunner;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package TrajectoryExecutorWorker
@@ -40,8 +38,9 @@ public class TrajectoryExecutorWorker {
   protected Trajectory nextTrajectory = null;
   protected IManeuver currentLateralManeuver = null;
   protected IManeuver currentLongitudinalManeuver = null;
-  protected Thread lateralManeuverThread;
-  protected Thread longitudinalManeuverThread;
+  protected Thread lateralManeuverThread = new Thread();
+  protected Thread longitudinalManeuverThread = new Thread();
+  protected double maneuverTickFrequency = 10.0;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -55,8 +54,29 @@ public class TrajectoryExecutorWorker {
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequency) {
     this.commands = commands;
+    this.maneuverTickFrequency = maneuverTickFrequency;
+  }
+
+  private void execute(IManeuver maneuver) {
+    if (maneuver instanceof LongitudinalManeuver) {
+      if (longitudinalManeuverThread != null) {
+        longitudinalManeuverThread.interrupt();
+      }
+
+      longitudinalManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequency));
+      longitudinalManeuverThread.setName("Longitudinal Maneuver Runner");
+      longitudinalManeuverThread.start();
+    } else {
+      if (lateralManeuverThread != null) {
+        lateralManeuverThread.interrupt();
+      }
+
+      lateralManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequency));
+      lateralManeuverThread.setName("Lateral Maneuver Runner");
+      lateralManeuverThread.start();
+    }
   }
 
   /**
@@ -65,16 +85,15 @@ public class TrajectoryExecutorWorker {
   private void checkAndStartManeuvers() {
     // Start the maneuvers if they aren't already running
     if (currentLateralManeuver != null 
-    && downtrackDistance >= currentLateralManeuver.getStartLocation() 
-    && !currentLateralManeuver.isRunning()) {
-      currentLateralManeuver.execute();
-      lateralManeuverThread = new Thread(new ManeuverRunner());
+    && downtrackDistance >= currentLateralManeuver.getStartDistance() 
+    && !lateralManeuverThread.isAlive()) {
+      execute(currentLateralManeuver);
     }
 
     if (currentLongitudinalManeuver != null 
-    && downtrackDistance >= currentLongitudinalManeuver.getStartLocation() 
-    && !currentLongitudinalManeuver.isRunning()) {
-      currentLongitudinalManeuver.execute();
+    && downtrackDistance >= currentLongitudinalManeuver.getStartDistance() 
+    && !longitudinalManeuverThread.isAlive()) {
+      execute(currentLongitudinalManeuver);
     }
   }
 
@@ -102,24 +121,22 @@ public class TrajectoryExecutorWorker {
     }
 
     // If we've finished executing a maneuver, move onto the next one
-    if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getEndLocation()) {
-      currentLateralManeuver.halt();
-      currentLateralManeuver = currentTrajectory.getManeuverAt(currentLateralManeuver.getEndLocation(), ManeuverType.LATERAL);
+    if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getEndDistance()) {
+      lateralManeuverThread.interrupt();
+      currentLateralManeuver = currentTrajectory.getManeuverAt(currentLateralManeuver.getEndDistance(), ManeuverType.LATERAL);
 
       if (currentLateralManeuver != null 
-      && downtrackDistance >= currentLateralManeuver.getStartLocation() 
-      && !currentLateralManeuver.isRunning()) {
-        currentLateralManeuver.execute();
+      && downtrackDistance >= currentLateralManeuver.getStartDistance() ) {
+        execute(currentLateralManeuver);
       }
     }
-    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndLocation()) {
-      currentLongitudinalManeuver.halt();
-      currentLongitudinalManeuver = currentTrajectory.getManeuverAt(currentLongitudinalManeuver.getEndLocation(), ManeuverType.LONGITUDINAL);
+    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndDistance()) {
+      longitudinalManeuverThread.interrupt();
+      currentLongitudinalManeuver = currentTrajectory.getManeuverAt(currentLongitudinalManeuver.getEndDistance(), ManeuverType.LONGITUDINAL);
 
       if (currentLongitudinalManeuver != null 
-      && downtrackDistance >= currentLongitudinalManeuver.getStartLocation() 
-      && !currentLongitudinalManeuver.isRunning()) {
-        currentLongitudinalManeuver.execute();
+      && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()) {
+        execute(currentLongitudinalManeuver);
       }
     }
 
@@ -138,16 +155,16 @@ public class TrajectoryExecutorWorker {
     nextTrajectory = null;
 
     if (currentLateralManeuver != null) {
-      if (currentLateralManeuver.isRunning()) {
-        currentLateralManeuver.halt();
+      if (!lateralManeuverThread.isInterrupted()) {
+        lateralManeuverThread.interrupt();
       }
 
       currentLateralManeuver = null;
     }
 
     if (currentLongitudinalManeuver != null) {
-      if (currentLongitudinalManeuver.isRunning()) {
-        currentLongitudinalManeuver.halt();
+      if (!longitudinalManeuverThread.isInterrupted()) {
+        longitudinalManeuverThread.interrupt();
       }
 
       currentLongitudinalManeuver = null;

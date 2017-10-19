@@ -17,19 +17,14 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
-import cav_msgs.SystemAlert;
-import cav_srvs.GetDriversWithCapabilities;
-import cav_srvs.GetDriversWithCapabilitiesRequest;
-import cav_srvs.GetDriversWithCapabilitiesResponse;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 
 import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -63,6 +58,10 @@ public class TrajectoryExecutor extends GuidanceComponent {
         super(state, iPubSubService, node);
         this.state = state;
         this.commands = commands;
+
+        double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
+
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
     }
 
     @Override

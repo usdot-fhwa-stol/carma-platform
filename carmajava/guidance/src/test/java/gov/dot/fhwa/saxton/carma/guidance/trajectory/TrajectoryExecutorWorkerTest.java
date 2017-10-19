@@ -22,7 +22,9 @@ import org.mockito.MockitoAnnotations;
 
 import cav_msgs.Maneuver;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -32,21 +34,27 @@ public class TrajectoryExecutorWorkerTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    tew = new TrajectoryExecutorWorker(guidanceCommands);
+    tew = new TrajectoryExecutorWorker(guidanceCommands, 10.0);
   }
 
   private IManeuver newManeuver(double start, double end, ManeuverType type, boolean running) {
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(start);
-    when(m1.getEndLocation()).thenReturn(end);
-    when(m1.getType()).thenReturn(type);
-    when(m1.isRunning()).thenReturn(running);
+    if (type == ManeuverType.LONGITUDINAL) {
+      IManeuver m1 = mock(LongitudinalManeuver.class);
+      when(m1.getStartDistance()).thenReturn(start);
+      when(m1.getEndDistance()).thenReturn(end);
 
-    return m1;
+      return m1;
+    } else {
+      IManeuver m1 = mock(IManeuver.class);
+      when(m1.getStartDistance()).thenReturn(start);
+      when(m1.getEndDistance()).thenReturn(end);
+
+      return m1;
+    }
   }
 
   @Test
-  public void testBasicTrajectory() {
+  public void testBasicTrajectory() throws InterruptedException {
     Trajectory t = new Trajectory(0.0, 20.0);
 
     IManeuver m1 = newManeuver(0.0, 10.0, ManeuverType.LONGITUDINAL, false);
@@ -67,37 +75,27 @@ public class TrajectoryExecutorWorkerTest {
     tew.runTrajectory(t);
 
     tew.updateDowntrackDistance(0.0);
-    verify(m1).execute();
-    verify(m1a).execute();
+    Thread.sleep(1000);
+    verify(m1).executeTimeStep();
+    verify(m1a).executeTimeStep();
     tew.updateDowntrackDistance(10.0);
-    verify(m2).execute();
-    verify(m2a).execute();
+    Thread.sleep(1000);
+    verify(m2).executeTimeStep();
+    verify(m2a).executeTimeStep();
     tew.updateDowntrackDistance(15.0);
-    verify(m3).execute();
-    verify(m3a).execute();
+    Thread.sleep(1000);
+    verify(m3).executeTimeStep();
+    verify(m3a).executeTimeStep();
   }
 
   @Test
-  public void testAbortTrajectory() {
+  public void testAbortTrajectory() throws InterruptedException {
     Trajectory t = new Trajectory(0.0, 20.0);
 
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(10.0);
-    when(m1.getType()).thenReturn(ManeuverType.LATERAL);
-    IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(10.0);
-    when(m2.getEndLocation()).thenReturn(15.0);
-    when(m2.getType()).thenReturn(ManeuverType.LATERAL);
-    IManeuver m3 = mock(IManeuver.class);
-    when(m3.getStartLocation()).thenReturn(15.0);
-    when(m3.getEndLocation()).thenReturn(20.0);
-    when(m3.getType()).thenReturn(ManeuverType.LATERAL);
-
-    IManeuver m4 = mock(IManeuver.class);
-    when(m4.getStartLocation()).thenReturn(0.0);
-    when(m4.getEndLocation()).thenReturn(20.0);
-    when(m4.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    IManeuver m1 = newManeuver(0.0, 10.0, ManeuverType.LATERAL, false);
+    IManeuver m2 = newManeuver(10.0, 15.0, ManeuverType.LATERAL, false);
+    IManeuver m3 = newManeuver(15.0, 20.0, ManeuverType.LATERAL, false);
+    IManeuver m4 = newManeuver(0.0, 20.0, ManeuverType.LONGITUDINAL, false);
 
     t.addManeuver(m1);
     t.addManeuver(m2);
@@ -107,9 +105,11 @@ public class TrajectoryExecutorWorkerTest {
     tew.runTrajectory(t);
 
     tew.updateDowntrackDistance(0.0);
-    verify(m1).execute();
+    Thread.sleep(1000);
+    verify(m1).executeTimeStep();
     tew.updateDowntrackDistance(10.0);
-    verify(m2).execute();
+    Thread.sleep(1000);
+    verify(m2).executeTimeStep();
     tew.abortTrajectory();
 
     assertNull(tew.getCurrentLateralManeuver());
@@ -120,18 +120,9 @@ public class TrajectoryExecutorWorkerTest {
   public void testGetCurrentManeuvers() {
     Trajectory t = new Trajectory(0.0, 20.0);
 
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(20.0);
-    when(m1.getType()).thenReturn(ManeuverType.LATERAL);
-    IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(0.0);
-    when(m2.getEndLocation()).thenReturn(15.0);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    IManeuver m3 = mock(IManeuver.class);
-    when(m3.getStartLocation()).thenReturn(15.0);
-    when(m3.getEndLocation()).thenReturn(20.0);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    IManeuver m1 = newManeuver(0.0, 20.0, ManeuverType.LATERAL, false);
+    IManeuver m2 = newManeuver(0.0, 15.0, ManeuverType.LONGITUDINAL, false);
+    IManeuver m3 = newManeuver(15.0, 20.0, ManeuverType.LONGITUDINAL, false);
 
     t.addManeuver(m1);
     t.addManeuver(m2);
@@ -151,18 +142,9 @@ public class TrajectoryExecutorWorkerTest {
   public void testGetNextManeuvers() {
     Trajectory t = new Trajectory(0.0, 20.0);
 
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(20.0);
-    when(m1.getType()).thenReturn(ManeuverType.LATERAL);
-    IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(0.0);
-    when(m2.getEndLocation()).thenReturn(15.0);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    IManeuver m3 = mock(IManeuver.class);
-    when(m3.getStartLocation()).thenReturn(15.0);
-    when(m3.getEndLocation()).thenReturn(20.0);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    IManeuver m1 = newManeuver(0.0, 20.0, ManeuverType.LATERAL, false);
+    IManeuver m2 = newManeuver(0.0, 15.0, ManeuverType.LONGITUDINAL, false);
+    IManeuver m3 = newManeuver(15.0, 20.0, ManeuverType.LONGITUDINAL, false);
 
     t.addManeuver(m1);
     t.addManeuver(m2);
@@ -182,15 +164,9 @@ public class TrajectoryExecutorWorkerTest {
   public void testGetTrajectoryCompletionPct() {
     Trajectory t = new Trajectory(0.0, 20.0);
 
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(20.0);
-    when(m1.getType()).thenReturn(ManeuverType.LATERAL);
+    IManeuver m1 = newManeuver(0.0, 20.0, ManeuverType.LATERAL, false);
 
-    IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(0.0);
-    when(m2.getEndLocation()).thenReturn(20.0);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    IManeuver m2 = newManeuver(0.0, 20.0, ManeuverType.LONGITUDINAL, false);
 
     t.addManeuver(m1);
     t.addManeuver(m2);
@@ -214,15 +190,9 @@ public class TrajectoryExecutorWorkerTest {
   public void testTrajectoryProgressCallback() {
     Trajectory t = new Trajectory(0.0, 20.0);
 
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(20.0);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
+    IManeuver m1 = newManeuver(0.0, 20.0, ManeuverType.LONGITUDINAL, false);
 
-    IManeuver m2 = mock(IManeuver.class);
-    when(m2.getStartLocation()).thenReturn(0.0);
-    when(m2.getEndLocation()).thenReturn(20.0);
-    when(m2.getType()).thenReturn(ManeuverType.LATERAL);
+    IManeuver m2 = newManeuver(0.0, 20.0, ManeuverType.LATERAL, false);
 
     t.addManeuver(m1);
     t.addManeuver(m2);
