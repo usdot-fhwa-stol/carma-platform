@@ -14,7 +14,7 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import java.util.List;
 import java.util.ArrayList;
-
+import org.apache.commons.logging.Log;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -34,7 +34,7 @@ public class TrajectoryExecutorWorkerTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    tew = new TrajectoryExecutorWorker(guidanceCommands, 10.0);
+    tew = new TrajectoryExecutorWorker(guidanceCommands, 10.0, mock(Log.class));
   }
 
   private IManeuver newManeuver(double start, double end, ManeuverType type, boolean running) {

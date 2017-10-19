@@ -44,7 +44,7 @@ public class ManeuverRunner implements Runnable {
       long timestepEnd = System.currentTimeMillis();
 
       try {
-        Thread.sleep(timestepDuration - timestepEnd - timestepStart);
+        Thread.sleep(Math.max(timestepDuration - timestepEnd - timestepStart, 0));
       } catch (InterruptedException ie) {
         break;
       }

@@ -63,7 +63,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
 
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
 
-        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, node.getLog());
     }
 
     @Override

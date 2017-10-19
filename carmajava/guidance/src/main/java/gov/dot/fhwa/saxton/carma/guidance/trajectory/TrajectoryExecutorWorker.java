@@ -23,6 +23,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverRunner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.logging.Log;
 
 /**
  * Guidance package TrajectoryExecutorWorker
@@ -41,6 +42,7 @@ public class TrajectoryExecutorWorker {
   protected Thread lateralManeuverThread = new Thread();
   protected Thread longitudinalManeuverThread = new Thread();
   protected double maneuverTickFrequency = 10.0;
+  protected Log log;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -54,12 +56,14 @@ public class TrajectoryExecutorWorker {
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequency) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequency, Log log) {
     this.commands = commands;
     this.maneuverTickFrequency = maneuverTickFrequency;
+    this.log = log;
   }
 
   private void execute(IManeuver maneuver) {
+    log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", " + maneuver.getEndDistance() + ")");
     if (maneuver instanceof LongitudinalManeuver) {
       if (longitudinalManeuverThread != null) {
         longitudinalManeuverThread.interrupt();
@@ -229,9 +233,11 @@ public class TrajectoryExecutorWorker {
    * failure mode.
    */
   private void swapTrajectories() {
+    log.info("TrajectoryExecutorWorker attempting to swap to buffered Trajectory");
     // If we don't have any trajectories to swap, just exit
     if (nextTrajectory == null) {
       currentTrajectory = null;
+      log.warn("TrajectoryExecutorWorker failed to swap to buffered Trajectory! It was null!");
       return;
     }
 
@@ -241,6 +247,7 @@ public class TrajectoryExecutorWorker {
     if (currentTrajectory != null) {
       currentLateralManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       currentLongitudinalManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
+      log.info("TrajectoryExecutorWorker successfully swapped Trajectories");
     }
 
      for (PctCallback callback : callbacks) {
