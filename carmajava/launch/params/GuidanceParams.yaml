@@ -50,7 +50,7 @@ required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.plugins.MockCruisingPlugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's lateral trajectory
-arbitrator_lateral_plugin: Mock Route-Following Plugin
+arbitrator_lateral_plugin: NoOp Plugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's longitudinal trajectory
 arbitrator_longitudinal_plugin: Mock Cruising Plugin

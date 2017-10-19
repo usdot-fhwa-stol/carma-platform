@@ -63,7 +63,7 @@ public class Arbitrator extends GuidanceComponent {
   protected Trajectory currentTrajectory = null;
   protected TrajectoryValidator trajectoryValidator;
   protected TrajectoryExecutor trajectoryExecutor;
-  protected String lateralPluginName = "Route-Following Plugin";
+  protected String lateralPluginName = "NoOp Plugin";
   protected String longitudinalPluginName = "Cruising Plugin";
   protected static final long SLEEP_DURATION_MILLIS = 100;
 
