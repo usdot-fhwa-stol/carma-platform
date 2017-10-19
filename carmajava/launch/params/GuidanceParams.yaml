@@ -53,7 +53,7 @@ required_plugins:
 arbitrator_lateral_plugin: NoOp Plugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's longitudinal trajectory
-arbitrator_longitudinal_plugin: Mock Cruising Plugin
+arbitrator_longitudinal_plugin: Cruising Plugin
 
 # Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
 use_sin_trajectory: false
