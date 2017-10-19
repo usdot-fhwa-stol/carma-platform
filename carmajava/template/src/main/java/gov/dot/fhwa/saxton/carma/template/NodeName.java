@@ -16,21 +16,15 @@
 
 package gov.dot.fhwa.saxton.carma.template;
 
-import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
-
 import org.ros.node.parameter.ParameterTree;
-import org.ros.namespace.NameResolver;
-import org.ros.message.MessageFactory;
-
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 /**
@@ -124,7 +118,7 @@ public class NodeName extends SaxtonBaseNode {
                                              systemAlertPublisher.publish(systemAlertMsg);
 
                                              sequenceNumber++;
-                                             Thread.sleep(30000);
+                                             Thread.sleep(5000);
                                            }//loop
 
                                          }//CancellableLoop
@@ -134,5 +128,5 @@ public class NodeName extends SaxtonBaseNode {
   @Override protected void handleException(Exception e) {
 
   }
-}//AbstractNodeMain
+}//SaxtonBaseNode
 
