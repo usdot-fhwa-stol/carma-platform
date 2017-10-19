@@ -55,7 +55,7 @@ int SensorFusionApplication::run() {
     vehicles_pub_= pnh.advertise<cav_msgs::ConnectedVehicleList>("tracked_vehicles",1);
 
 
-    ros::Rate r(50);
+    ros::Rate r(1);
     while(ros::ok())
     {
         ros::spinOnce();

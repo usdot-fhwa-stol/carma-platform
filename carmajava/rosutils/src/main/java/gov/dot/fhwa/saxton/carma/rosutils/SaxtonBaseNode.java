@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.rosutils;
 
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.AbstractNodeMain;
@@ -88,6 +89,8 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
         client = connectedNode.newServiceClient(service, typeString);
         serviceFound = true;
       } catch (ServiceNotFoundException e) {
+        serviceFound = false;
+      } catch (RosRuntimeException e) {
         serviceFound = false;
       }
     }

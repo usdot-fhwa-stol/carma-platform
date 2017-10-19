@@ -91,6 +91,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
       SystemAlert alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
       alertMsg.setType(SystemAlert.FATAL);
       alertMsg.setDescription("get_transform service is not available. Roadway package will not be able to function");
+      publishSystemAlert(alertMsg);
       log.fatal(connectedNode.getName() + " Node could not find service get_transform");
     }
 

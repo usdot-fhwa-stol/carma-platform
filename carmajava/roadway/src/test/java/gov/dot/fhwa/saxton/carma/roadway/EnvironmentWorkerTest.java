@@ -148,7 +148,7 @@ public class EnvironmentWorkerTest {
    * @throws Exception
    */
   @Test
-  public void testUpdatingOdomToBaseLink() throws Exception {
+  public void testHandleNavSatFix() throws Exception {
     MockEnvironmentManager envMgr = new MockEnvironmentManager();
     EnvironmentWorker envWkr = new EnvironmentWorker(envMgr, log);
 

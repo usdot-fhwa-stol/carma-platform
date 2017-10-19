@@ -125,15 +125,20 @@ public class EnvironmentWorker {
     List<geometry_msgs.TransformStamped> tfStampedMsgs = new LinkedList<>();
 
     // Update map location on start and every MAP_UPDATE_PERIOD after that
+//    if (prevMapTime != null) { //TODO remove
+//      prevMapTime = envMgr.getTime();
+//    }
     if (prevMapTime == null || 0 < envMgr.getTime().subtract(prevMapTime).compareTo(MAP_UPDATE_PERIOD)) {
       // Map will be an NED frame on the current vehicle location
       earthToMap = gcc.ecefToNEDFromLocaton(hostVehicleLocation);
       tfStampedMsgs.add(buildTFStamped(earthToMap, earthFrame, mapFrame));
       prevMapTime = envMgr.getTime();
+      log.warn("\n\n\n NEW MAPPPPPPP!!!!!!\n\n\n");
     }
 
     // Calculate map->odom transform
     Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
+
     // T_x_y = transform describing location of y with respect to x
     // m = map frame
     // p = position sensor frame (from odometry)
@@ -153,9 +158,15 @@ public class EnvironmentWorker {
     Transform T_o_b = odomToBaseLink;
     Transform T_b_p = baseToPositionSensor;
 
-    Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert(); // TODO validate that the rosjava transforms uses this order of multiplication
+//    log.warn("\n\n\n T_m_r: " + T_m_r + "\n\n\n");
+//    log.warn("\n\n\n T_m_o: " + T_m_o + "\n\n\n");
+//    log.warn("\n\n\n T_o_b: " + T_o_b + "\n\n\n");
+//    log.warn("\n\n\n T_b_p: " + T_b_p + "\n\n\n");
+    Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
+    log.warn("\n\n\n T_p_r: " + T_p_r + "\n\n\n");
     // Modify map to odom with the difference from the expected and real sensor positions
     mapToOdom = mapToOdom.multiply(T_p_r);
+    log.warn("\n\n\n 11MapToOdom: " + mapToOdom + "\n\n\n");
     // Publish newly calculated transforms
     tfStampedMsgs.add(buildTFStamped(mapToOdom, mapFrame, odomFrame));
     publishTF(tfStampedMsgs);
@@ -166,13 +177,31 @@ public class EnvironmentWorker {
    * @param odometry Odometry message
    */
   public void handleOdometryMsg(nav_msgs.Odometry odometry) {
+    // Check if base_link->position_sensor tf is available. If not look it up
+    if (baseToPositionSensor == null) {
+      // This transform should be static. No need to look up more than once
+      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame);
+      if (baseToPositionSensor == null) {
+        return; // If the request for this transform failed wait for another odometry update to request it
+      }
+    }
+    // Extract the location of the position sensor relative to the odom frame
     // Covariance is ignored as filtering was already done by sensor fusion
     geometry_msgs.Pose hostPose = odometry.getPose().getPose();
     geometry_msgs.Point hostPoint = hostPose.getPosition();
     Quaternion hostOrientation = Quaternion.fromQuaternionMessage(hostPose.getOrientation());
     Vector3 trans = new Vector3(hostPoint.getX(), hostPoint.getY(), hostPoint.getZ());
-    // Set the position of the vehicle in the odom frame based on the odometry
-    odomToBaseLink = new Transform(trans, hostOrientation);
+    // Calculate odom->base_link
+    // T_x_y = transform describing location of y with respect to x
+    // p = position sensor frame (from odometry)
+    // o = odom frame
+    // b = baselink frame (as has been calculated by odometry up to this point)
+    // T_o_b = T_o_p * inv(T_b_p)
+    Transform T_o_p = new Transform(trans, hostOrientation);
+    Transform T_b_p = baseToPositionSensor;
+    Transform T_o_b = T_o_p.multiply(T_b_p.invert());
+    odomToBaseLink = T_o_b;
+    // Publish updated transform
     publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
   }
 
