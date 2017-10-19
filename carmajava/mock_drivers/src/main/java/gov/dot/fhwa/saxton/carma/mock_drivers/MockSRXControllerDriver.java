@@ -30,6 +30,8 @@ import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
+import cav_msgs.RobotEnabled;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,6 +50,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   // Topics
   // Published
   protected final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub;
+  protected Publisher<RobotEnabled> statusPub;
   protected final ServiceServer<SetEnableRoboticRequest, SetEnableRoboticResponse> enabledSrv;
 
   // Subscribed
@@ -80,6 +83,8 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
+    statusPub = connectedNode.newPublisher("~/control/robot_status", RobotEnabled._TYPE);
+
     diagnosticsPub = connectedNode.newPublisher("~/control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
     enabledSrv = connectedNode.newServiceServer("~/control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
         new ServiceResponseBuilder<SetEnableRoboticRequest, SetEnableRoboticResponse>() {
@@ -130,6 +135,12 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     for (String[] elements : data) {
       // Make messages
       diagnostic_msgs.DiagnosticArray diagMsg = diagnosticsPub.newMessage();
+      RobotEnabled statusMsg = statusPub.newMessage();
+
+      // Build RobotEnabled Message
+      statusMsg.setBrakeDecel(Double.parseDouble(elements[BRAKE_DECEL_IDX]));
+      statusMsg.setRobotEnabled(Boolean.parseBoolean(elements[ROBOT_ENABLED_IDX]));
+      statusMsg.setTorque(Double.parseDouble(elements[TORQUE_IDX]));
 
       // Build Diagnostics Message: Assumes that only diagnostic is in a data file line
       std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
@@ -155,6 +166,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
 
       // Publish Data
       diagnosticsPub.publish(diagMsg);
+      statusPub.publish(statusMsg);
     }
   }
 
