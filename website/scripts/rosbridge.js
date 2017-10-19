@@ -727,9 +727,9 @@ function checkRouteInfo() {
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
-        if (message.state == 3) //ROUTE_COMPLETED=3
+        if (message.event == 3) //ROUTE_COMPLETED=3
         	showModal(true, "Route completed. You have reached your destination. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
-        if (message.state == 4)//LEFT_ROUTE=4
+        if (message.event == 4)//LEFT_ROUTE=4
             showModal(true, "You have left the route. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
 
     });
