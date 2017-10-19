@@ -55,12 +55,12 @@ public class CruisingPlugin extends AbstractPlugin {
   protected double maxAccel;
   protected static final double MPH_TO_MPS = 0.44704; // From Google calculator
 
-  private class SpeedLimit {
+  protected class SpeedLimit {
     double speedLimit;
     double location;
   }
   
-  private class TrajectorySegment {
+  protected class TrajectorySegment {
     double start;
     double end;
     double startSpeed;
@@ -126,11 +126,11 @@ public class CruisingPlugin extends AbstractPlugin {
 		// NO-OP
   }
   
-  private double mphToMps(byte milesPerHour) {
+  protected double mphToMps(byte milesPerHour) {
     return milesPerHour * MPH_TO_MPS;
   }
 
-  private List<SpeedLimit> processSpeedLimits(Route route) {
+  protected List<SpeedLimit> processSpeedLimits(Route route) {
     List<SpeedLimit> limits = new ArrayList<>();
 
     // Walk the segment list getting the start points speed limits
@@ -156,7 +156,7 @@ public class CruisingPlugin extends AbstractPlugin {
   }
 
   // TODO: Improve handling of first and last speed limits on boundaries
-  private List<SpeedLimit> getSpeedLimits(double startDistance, double endDistance) {
+  protected List<SpeedLimit> getSpeedLimits(double startDistance, double endDistance) {
     // Get all the speed limits spanned by [startDistance, endDistance)
     List<SpeedLimit> spanned = new ArrayList<>();
     for (SpeedLimit limit : speedLimits) {
@@ -168,7 +168,7 @@ public class CruisingPlugin extends AbstractPlugin {
     return spanned;
   }
 
-  private List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed, double trajEndSpeed) {
+  protected List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed, double trajEndSpeed) {
     List<IManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
   		@Override
@@ -229,7 +229,7 @@ public class CruisingPlugin extends AbstractPlugin {
     return gaps;
   }
 
-  private void planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
+  protected void planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
     ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
 
     double maneuverEnd = startDist;

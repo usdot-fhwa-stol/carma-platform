@@ -35,10 +35,10 @@ public class PluginServiceLocator {
     private final Log log;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
-        PluginManagementService pluginManagementService, IPubSubService IPubSubService,
+        PluginManagementService pluginManagementService, IPubSubService iPubSubService,
         ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, Log log) {
         this.arbitratorService = arbitratorService;
-        this.IPubSubService = IPubSubService;
+        this.IPubSubService = iPubSubService;
         this.pluginManagementService = pluginManagementService;
         this.parameterSource = parameterSource;
         this.maneuverPlanner = maneuverPlanner;

@@ -2,6 +2,7 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 /**
  * Base class for Mock plugin implementations
@@ -71,5 +72,9 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     private void computeAvailability() {
         boolean availability = Math.random() > 0.5;
         setAvailability(availability);
+    }
+
+    @Override public void planTrajectory(Trajectory traj) {
+        // NO-OP
     }
 }

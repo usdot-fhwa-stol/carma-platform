@@ -96,7 +96,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
                     GetDriversWithCapabilities._TYPE);
         } catch (TopicNotFoundException tnfe) {
-            log.fatal("Interface manager not found. Shutting down Guidance.Commands");
+            panic("Interface manager not found.");
         }
 
         // Build our request message
@@ -126,7 +126,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
             @Override
             public void onFailure(Exception e) {
-                log.warn("No control/cmd_speed capable driver found!!!");
+                panic("InterfaceManager failed to return a control/cmd_speed capable driver!!!");
             }
         });
 
@@ -157,10 +157,10 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
                 driverConnected = true;
             } catch (TopicNotFoundException tnfe) {
-                log.fatal("GuidanceCommands unable to locate control/enable_robotic service for " + roboticEnableTopic);
+                panic("GuidanceCommands unable to locate control/enable_robotic service for " + roboticEnableTopic);
             }
         } else {
-            log.fatal("GuidanceCommands unable to find suitable controller driver!");
+            panic("GuidanceCommands unable to find suitable controller driver!");
         }
     }
 
