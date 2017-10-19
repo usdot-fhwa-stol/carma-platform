@@ -153,6 +153,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 						log.info("MessageConsumer finished encoding BSM and is going to publish...");
 						outboundPub.publish(byteArray);
 					}
+				} catch (IllegalArgumentException ex) {
+					log.info("Invalid BSM is not published");
 				} catch (Exception e) {
 					handleException(e);
 				}
