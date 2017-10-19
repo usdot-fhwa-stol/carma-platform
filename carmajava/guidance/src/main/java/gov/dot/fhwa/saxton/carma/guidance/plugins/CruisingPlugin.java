@@ -49,7 +49,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
   protected AtomicReference<Route> currentRoute;
   protected AtomicReference<RouteSegment> currentSegment;
-  protected List<SpeedLimit> speedLimits;
+  protected List<SpeedLimit> speedLimits = new ArrayList<>();
   protected double maxAccel;
   protected static final double MPH_TO_MPS = 0.44704; // From Google calculator
 
