@@ -165,12 +165,14 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   }//onStart
 
-  @Override protected void handleException(Exception e) {
+  @Override protected void handleException(Throwable e) {
     String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
     connectedNode.getLog().fatal(msg, e);
     SystemAlert alertMsg = systemAlertPub.newMessage();
     alertMsg.setType(SystemAlert.FATAL);
     alertMsg.setDescription(msg);
+    systemAlertPub.publish(alertMsg);
+    this.shutdown();
   }
 
   @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {

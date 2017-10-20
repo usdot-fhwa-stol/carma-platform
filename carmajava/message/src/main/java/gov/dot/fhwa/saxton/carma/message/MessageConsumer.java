@@ -198,7 +198,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 	}// onStart
 
 	@Override
-	protected void handleException(Exception e) {
+	protected void handleException(Throwable e) {
 		log.error(connectedNode.getName() + "throws an exception and is about to shutdown...", e);
 		connectedNode.shutdown();
 	}

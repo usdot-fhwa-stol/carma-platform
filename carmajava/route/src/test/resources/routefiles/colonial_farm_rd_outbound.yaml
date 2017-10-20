@@ -15,6 +15,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -28,6 +31,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -41,6 +47,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -54,6 +63,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -67,6 +79,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -80,6 +95,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -93,6 +111,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -106,6 +127,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -119,6 +143,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -132,6 +159,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -145,6 +175,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -158,6 +191,9 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -171,3 +207,6 @@ waypoints:
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE

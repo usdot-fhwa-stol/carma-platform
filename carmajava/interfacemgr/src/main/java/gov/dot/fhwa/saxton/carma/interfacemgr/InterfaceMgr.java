@@ -51,7 +51,7 @@ import java.util.List;
  * rosparam set /interface_mgr/driver_wait_time 10
  * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  */
-public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
+public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
     protected InterfaceWorker worker_;
     protected Log log_;
@@ -245,7 +245,7 @@ public class InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     }//onStart
 
     @Override
-    protected void handleException(Exception e) {
+    protected void handleException(Throwable e) {
     	
 		//don't need to log anything here because SaxtonBaseNode handler has already done that
     	

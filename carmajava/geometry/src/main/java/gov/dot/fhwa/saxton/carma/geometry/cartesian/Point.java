@@ -104,11 +104,14 @@ public class Point implements CartesianElement {
   @Override public String toString() {
     String str = super.toString() + " (";
     for (int i = 0; i < dimensions.length; i++) {
-      str.concat(" " + i + ",");
+      str = str.concat(" " + i + ",");
     }
-    str.concat(" ): (");
+    str = str.concat(" ): (");
     for (int i = 0; i < dimensions.length; i++) {
-      str.concat(" " + dimensions[i] + ",");
+      str = str.concat(" " + dimensions[i]);
+      if (i != dimensions.length - 1) {
+        str = str.concat(",");
+      }
     }
     return str.concat(" )");
   }

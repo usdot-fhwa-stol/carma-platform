@@ -131,7 +131,7 @@ public class NodeName extends SaxtonBaseNode {
     );//executeCancellableLoop
   }//onStart
 
-  @Override protected void handleException(Exception e) {
+  @Override protected void handleException(Throwable e) {
 
   }
 }//AbstractNodeMain

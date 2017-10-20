@@ -170,7 +170,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     });
   }//onStart
 
-  @Override protected void handleException(Exception e) {
+  @Override protected void handleException(Throwable e) {
     String msg = "Uncaught exception in " + this.connectedNode.getName() + " caught by handleException.";
     log.fatal(msg, e);
 
