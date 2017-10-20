@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.roadway;
 
 /**
+ * TODO implement
  * Class representing a Vehicle on a roadway can be connected or have no communication.
  * In future development Vehicle can be extended to support more specializations such as car or truck.
  */

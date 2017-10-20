@@ -64,6 +64,29 @@ public class EnvironmentWorkerTest {
   }
 
   /**
+   * Tests the direction of rosjava Transform.multiply
+   * Expecting A.multiply(B) to be equivalent to AB
+   * @throws Exception
+   */
+  @Test
+  public void testDirectionOfTransformation() {
+    // Have a base frame a with frame b located at (1,1,0)
+    // Frame c is located at (1,1,0) with respect to frame b and is rotated +90 around z
+    // Therefore frame c with respect to frame a should be at (2,2,0) rotated +90 around z
+    Transform T_a_b = Transform.translation(1,1,0);
+    Vector3 trans_b_c = new Vector3(1,1,0);
+    Quaternion rot_b_c = Quaternion.fromAxisAngle(new Vector3(0,0,1), Math.toRadians(90));
+    Transform T_b_c = new Transform(trans_b_c, rot_b_c);
+    Transform expected_T_a_c = new Transform(new Vector3(2,2,0), rot_b_c);
+    Transform result = T_a_b.multiply(T_b_c);
+    assertTrue(expected_T_a_c.almostEquals(result, 0.0001));
+    // Multiply the other way
+    Transform expected_wrong = new Transform(new Vector3(0,2,0), rot_b_c);
+    result = T_b_c.multiply(T_a_b);
+    assertTrue(expected_wrong.almostEquals(result, 0.0001));
+  }
+
+  /**
    * Test the handling of system alert messages
    * @throws Exception
    */
@@ -100,13 +123,13 @@ public class EnvironmentWorkerTest {
     MockEnvironmentManager envMgr = new MockEnvironmentManager();
     EnvironmentWorker envWkr = new EnvironmentWorker(envMgr, log);
 
-    assertTrue(!envWkr.headingRecieved);
+    assertTrue(!envWkr.headingReceived);
     HeadingStamped headingMsg = messageFactory.newFromType(HeadingStamped._TYPE);
     float heading = 135;
     headingMsg.setHeading(heading);
     envWkr.handleHeadingMsg(headingMsg);
     assertEquals(heading, envWkr.hostVehicleHeading, 0.0000000001);
-    assertTrue(envWkr.headingRecieved);
+    assertTrue(envWkr.headingReceived);
   }
 
   /**
@@ -225,7 +248,7 @@ public class EnvironmentWorkerTest {
     navMsg.setAltitude(0);
     envWkr.handleNavSatFixMsg(navMsg);
 
-    assertTrue(envWkr.navSatFixRecieved);
+    assertTrue(envWkr.nabSatFixReceived);
     assertTrue(envWkr.hostVehicleLocation.almostEqual(new Location(0,0,0), 0.00001, 0.0000001));
 
     // First time calling nav sat fix so check earth to map transform (should be an NED frame at starting location)

@@ -31,8 +31,8 @@ public class EnvironmentWorker {
   protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
 
   // Host vehicle state variables
-  protected boolean headingRecieved = false;
-  protected boolean navSatFixRecieved = false;
+  protected boolean headingReceived = false;
+  protected boolean nabSatFixReceived = false;
   protected Location hostVehicleLocation = null;
   protected double hostVehicleHeading; // The heading of the vehicle in degrees east of north in an NED frame.
   // Frame ids
@@ -48,7 +48,7 @@ public class EnvironmentWorker {
   protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
   // Transform Update parameters
   protected Time prevMapTime = null;
-  protected Duration MAP_UPDATE_PERIOD = new Duration(5);
+  protected Duration MAP_UPDATE_PERIOD = new Duration(5); // Time in seconds between updating the map frame location
   protected int tfSequenceCount = 0;
 
   /**
@@ -84,7 +84,7 @@ public class EnvironmentWorker {
    */
   public void handleHeadingMsg(cav_msgs.HeadingStamped heading) {
     hostVehicleHeading = heading.getHeading();
-    headingRecieved = true;
+    headingReceived = true;
   }
 
   /**
@@ -96,7 +96,7 @@ public class EnvironmentWorker {
     // Assign the new host vehicle location
     hostVehicleLocation =
       new Location(navSatFix.getLatitude(), navSatFix.getLongitude(), navSatFix.getAltitude());
-    navSatFixRecieved = true;
+    nabSatFixReceived = true;
     updateMapAndOdomTFs();
   }
 
@@ -107,7 +107,7 @@ public class EnvironmentWorker {
    * Additionally, a transform from base_link to position_sensor needs to be available
    */
   protected void updateMapAndOdomTFs() {
-    if (!navSatFixRecieved || !headingRecieved) {
+    if (!nabSatFixReceived || !headingReceived) {
       return; // If we don't have a heading and a nav sat fix the map->odom transform cannot be calculated
     }
 

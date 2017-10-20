@@ -4,6 +4,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import org.ros.rosjava_geometry.Transform;
 
 /**
+ * TODO implement
  * An implementation of IObstacle with no special attributes.
  */
 public class Obstacle implements IObstacle {
@@ -27,7 +28,7 @@ public class Obstacle implements IObstacle {
     return false;
   }
 
-  @Override public boolean collision(IObstacle obj, long timeSpan, long timeStep) {
+  @Override public boolean collision(IObstacle obj, long timeSpan) {
     return false;
   }
 }

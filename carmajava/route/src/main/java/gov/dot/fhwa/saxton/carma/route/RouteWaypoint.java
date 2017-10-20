@@ -37,12 +37,12 @@ public class RouteWaypoint {
   protected List<Integer> laneClosures = new ArrayList<>();
   protected int laneCount = 1;
   protected Location location;
-  protected int lowerSpeedLimit = 0;
-  protected int upperSpeedLimit = 5;
+  protected int lowerSpeedLimit = 0; // Units: m/s
+  protected int upperSpeedLimit = 5; // Units: m/s
   protected double nearestMileMarker = -1;
   protected List<cav_msgs.Maneuver> neededManeuvers;
-  protected double minCrossTrack = -10.0;
-  protected double maxCrossTrack = 10.0;
+  protected double minCrossTrack = -10.0; // Units: m
+  protected double maxCrossTrack = 10.0; // Units: m
   protected int requiredLaneIndex = -1;
   protected RoadType roadType = RoadType.FREEWAY;
   protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.SOLID_WHITE;

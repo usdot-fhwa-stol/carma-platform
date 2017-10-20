@@ -23,10 +23,12 @@ float64 altitude
 # Must be set with value >= 1
 uint8 lane_count
 
-# The lower speed limit
+# The lower speed limit in m/s
+# Units: m/s
 uint8 lower_speed_limit
 
 # The upper speed limit
+# Units: m/s
 uint8 speed_limit
 
 # The lane markings found between interior lanes
@@ -46,8 +48,11 @@ float64 min_cross_track
 # Units: Meters
 float64 max_cross_track
 
-# A bit flag desribing which of the following fields are set. 1 = set, 0 = not set
+# A bit flag describing which of the following fields are set. 1 = set, 0 = not set
 uint16 set_fields
+
+# Each variable below corresponds to the bit in set_fields moving from MSB->LSM as you read down the list
+# Example disabled_guidance_algorithms is the MSB (0x8000) and lane_closures is (0x4000)
 
 # A list of guidance algorithms which are disabled on the segment which ends in this waypoint
 string[] disabled_guidance_algorithms

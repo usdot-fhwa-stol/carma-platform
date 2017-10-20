@@ -11,6 +11,7 @@ public class Lane {
   List<LaneSegment> segments;
 
   /**
+   * TODO Implement
    * True if the specified point can be considered in the lane
    * @param point point to compare
    * @return true if in lane
@@ -20,6 +21,7 @@ public class Lane {
   }
 
   /**
+   * TODO Implement
    * True if the specified obstacle can be considered in the lane
    * @param obstacle obstacle to compare
    * @return true if in lane

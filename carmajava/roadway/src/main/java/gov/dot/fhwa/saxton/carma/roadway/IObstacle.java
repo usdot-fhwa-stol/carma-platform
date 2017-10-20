@@ -40,11 +40,10 @@ public interface IObstacle {
   boolean collision(IObstacle obj);
 
   /**
-   * Checks if an obstacle will collide with this obstacle given a linear interpolation of their positions over time.
+   * Checks if an obstacle will collide with this obstacle given a linear extrapolation of their positions over time.
    * @param obj The obstacle to compare
    * @param timeSpan The span of time to compare against
-   * @param timeStep The resolution of timesteps to check for collusion in
    * @return True if will collide
    */
-  boolean collision(IObstacle obj, long timeSpan, long timeStep);
+  boolean collision(IObstacle obj, long timeSpan);
 }
