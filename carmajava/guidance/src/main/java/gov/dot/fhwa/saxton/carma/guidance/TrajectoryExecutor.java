@@ -17,19 +17,14 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
-import cav_msgs.SystemAlert;
-import cav_srvs.GetDriversWithCapabilities;
-import cav_srvs.GetDriversWithCapabilitiesRequest;
-import cav_srvs.GetDriversWithCapabilitiesResponse;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 
 import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,6 +42,8 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected GuidanceCommands commands;
     protected AtomicReference<GuidanceState> state;
     protected TrajectoryExecutorWorker trajectoryExecutorWorker;
+    protected Trajectory currentTrajectory;
+    protected boolean bufferedTrajectoryRunning = false;
 
     protected boolean useSinTrajectory = false;
     protected long startTime = 0;
@@ -63,7 +60,10 @@ public class TrajectoryExecutor extends GuidanceComponent {
         super(state, iPubSubService, node);
         this.state = state;
         this.commands = commands;
-        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands);
+
+        double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
+
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, node.getLog());
     }
 
     @Override
@@ -77,7 +77,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
             @Override
             public void onMessage(RouteState msg) {
-                log.info("Received RouteState:" + msg);
+                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
                 trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
             }
         });
@@ -100,6 +100,10 @@ public class TrajectoryExecutor extends GuidanceComponent {
     @Override
     public void onGuidanceEnable() {
         startTime = (long) node.getCurrentTime().toSeconds() * 1000;
+
+        if (currentTrajectory != null && !bufferedTrajectoryRunning) {
+            trajectoryExecutorWorker.runTrajectory(currentTrajectory);
+        }
     }
 
     /**
@@ -141,6 +145,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
    * Abort the current and queued trajectories and the currently executing maneuvers
    */
     public void abortTrajectory() {
+        log.info("Trajectory executor commanded to abort trajectory");
         trajectoryExecutorWorker.abortTrajectory();
     }
 
@@ -193,8 +198,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
    * trajectory finishes execution.
    */
     public void runTrajectory(Trajectory traj) {
+        log.info("TrajectoryExecutor received new trajectory!");
         if (state.get() == GuidanceState.ENGAGED) {
+            log.info("TrajectoryExecutor running trajectory!");
             trajectoryExecutorWorker.runTrajectory(traj);
+            bufferedTrajectoryRunning = true;
+        } else {
+            currentTrajectory = traj;
         }
     }
 }

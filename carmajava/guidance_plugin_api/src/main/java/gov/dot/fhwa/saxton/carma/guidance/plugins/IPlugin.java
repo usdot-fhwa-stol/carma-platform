@@ -102,8 +102,9 @@ public interface IPlugin {
      * possible.
      * 
      * @param traj The current partially planned Trajectory, which cannot be modified
+     * @param expectedEntrySpeed The speed (in m/s) the vehicle is expected to have upon the start of the new trajectory
      */
-    void planTrajectory(Trajectory traj);
+    void planTrajectory(Trajectory traj, double expectedEntrySpeed);
 
     /**
      * Callback method to handle negotiation requests received from external or internal sources

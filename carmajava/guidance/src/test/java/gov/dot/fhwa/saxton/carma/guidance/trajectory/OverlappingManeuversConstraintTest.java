@@ -23,7 +23,9 @@ import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
 
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+
 
 public class OverlappingManeuversConstraintTest {
 
@@ -34,20 +36,17 @@ public class OverlappingManeuversConstraintTest {
 
   @Test
   public void testSuccess() {
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(1.0);
+    IManeuver m1 = mock(LongitudinalManeuver.class);
+    when(m1.getStartDistance()).thenReturn(0.0);
+    when(m1.getEndDistance()).thenReturn(1.0);
 
-    IManeuver m2 = mock(IManeuver.class);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m2.getStartLocation()).thenReturn(1.0);
-    when(m2.getEndLocation()).thenReturn(2.0);
+    IManeuver m2 = mock(LongitudinalManeuver.class);
+    when(m2.getStartDistance()).thenReturn(1.0);
+    when(m2.getEndDistance()).thenReturn(2.0);
 
-    IManeuver m3 = mock(IManeuver.class);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m3.getStartLocation()).thenReturn(5.0);
-    when(m3.getEndLocation()).thenReturn(10.0);
+    IManeuver m3 = mock(LongitudinalManeuver.class);
+    when(m3.getStartDistance()).thenReturn(5.0);
+    when(m3.getEndDistance()).thenReturn(10.0);
 
     omc.visit(m1);
     omc.visit(m2);
@@ -58,20 +57,17 @@ public class OverlappingManeuversConstraintTest {
 
   @Test
   public void testMultiDomainSuccess() {
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(1.0);
+    IManeuver m1 = mock(LongitudinalManeuver.class);
+    when(m1.getStartDistance()).thenReturn(0.0);
+    when(m1.getEndDistance()).thenReturn(1.0);
 
     IManeuver m2 = mock(IManeuver.class);
-    when(m2.getType()).thenReturn(ManeuverType.LATERAL);
-    when(m2.getStartLocation()).thenReturn(0.0);
-    when(m2.getEndLocation()).thenReturn(2.0);
+    when(m2.getStartDistance()).thenReturn(0.0);
+    when(m2.getEndDistance()).thenReturn(2.0);
 
-    IManeuver m3 = mock(IManeuver.class);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m3.getStartLocation()).thenReturn(5.0);
-    when(m3.getEndLocation()).thenReturn(10.0);
+    IManeuver m3 = mock(LongitudinalManeuver.class);
+    when(m3.getStartDistance()).thenReturn(5.0);
+    when(m3.getEndDistance()).thenReturn(10.0);
 
     omc.visit(m1);
     omc.visit(m2);
@@ -82,20 +78,17 @@ public class OverlappingManeuversConstraintTest {
 
   @Test
   public void testSingleManeuverRejection() {
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(1.0);
+    IManeuver m1 = mock(LongitudinalManeuver.class);
+    when(m1.getStartDistance()).thenReturn(0.0);
+    when(m1.getEndDistance()).thenReturn(1.0);
 
-    IManeuver m2 = mock(IManeuver.class);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m2.getStartLocation()).thenReturn(0.0);
-    when(m2.getEndLocation()).thenReturn(2.0);
+    IManeuver m2 = mock(LongitudinalManeuver.class);
+    when(m2.getStartDistance()).thenReturn(0.0);
+    when(m2.getEndDistance()).thenReturn(2.0);
 
-    IManeuver m3 = mock(IManeuver.class);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m3.getStartLocation()).thenReturn(5.0);
-    when(m3.getEndLocation()).thenReturn(10.0);
+    IManeuver m3 = mock(LongitudinalManeuver.class);
+    when(m3.getStartDistance()).thenReturn(5.0);
+    when(m3.getEndDistance()).thenReturn(10.0);
 
     omc.visit(m1);
     omc.visit(m2);
@@ -106,20 +99,17 @@ public class OverlappingManeuversConstraintTest {
 
   @Test
   public void testMultipleManeuverRejection() {
-    IManeuver m1 = mock(IManeuver.class);
-    when(m1.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m1.getStartLocation()).thenReturn(0.0);
-    when(m1.getEndLocation()).thenReturn(1.0);
+    IManeuver m1 = mock(LongitudinalManeuver.class);
+    when(m1.getStartDistance()).thenReturn(0.0);
+    when(m1.getEndDistance()).thenReturn(1.0);
 
-    IManeuver m2 = mock(IManeuver.class);
-    when(m2.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m2.getStartLocation()).thenReturn(0.0);
-    when(m2.getEndLocation()).thenReturn(2.0);
+    IManeuver m2 = mock(LongitudinalManeuver.class);
+    when(m2.getStartDistance()).thenReturn(0.0);
+    when(m2.getEndDistance()).thenReturn(2.0);
 
-    IManeuver m3 = mock(IManeuver.class);
-    when(m3.getType()).thenReturn(ManeuverType.LONGITUDINAL);
-    when(m3.getStartLocation()).thenReturn(0.0);
-    when(m3.getEndLocation()).thenReturn(10.0);
+    IManeuver m3 = mock(LongitudinalManeuver.class);
+    when(m3.getStartDistance()).thenReturn(0.0);
+    when(m3.getEndDistance()).thenReturn(10.0);
 
     omc.visit(m1);
     omc.visit(m2);

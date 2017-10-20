@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -61,7 +64,7 @@ public class PluginManagerTest {
             return false;
         }
 
-        @Override public void planTrajectory() {
+        @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
 
         }
 
@@ -117,7 +120,7 @@ public class PluginManagerTest {
             return false;
         }
 
-        @Override public void planTrajectory() {
+        @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
 
         }
 
@@ -135,7 +138,8 @@ public class PluginManagerTest {
         psl = mock(PluginServiceLocator.class);
         ConnectedNode node = mock(ConnectedNode.class);
         when(node.getLog()).thenReturn(log);
-        pm = new PluginManager(new AtomicReference<GuidanceState>(GuidanceState.DRIVERS_READY), mock(IPubSubService.class), node);
+        pm = new PluginManager(new AtomicReference<GuidanceState>(GuidanceState.DRIVERS_READY), mock(IPubSubService.class), 
+        mock(IGuidanceCommands.class), mock(IManeuverInputs.class), node);
         pluginClasses = new ArrayList<>();
         plugins = new ArrayList<>();
     }

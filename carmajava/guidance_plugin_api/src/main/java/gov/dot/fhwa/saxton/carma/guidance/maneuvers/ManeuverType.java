@@ -14,23 +14,9 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.trajectory;
+package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-/**
- * Temporary stand-in IManeuver interface, pending implementation of Maneuvers assembly
- * <p>
- * TODO: Replace with Maneuvers implementation
- */
-public interface IManeuver {
-  enum ManeuverType {
-    LATERAL,
-    LONGITUDINAL
-  }
-
-  public void execute();
-  public boolean halt();
-  public boolean isRunning();
-  public ManeuverType getType();
-  public double getStartLocation();
-  public double getEndLocation();
+public enum ManeuverType {
+  LATERAL,
+  LONGITUDINAL
 }

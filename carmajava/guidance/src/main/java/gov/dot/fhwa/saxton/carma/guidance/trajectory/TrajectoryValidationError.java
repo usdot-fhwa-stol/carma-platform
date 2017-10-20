@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import java.util.List;
 
 /**

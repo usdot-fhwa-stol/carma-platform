@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +68,18 @@ public class OverlappingManeuversConstraint implements TrajectoryValidationConst
 		return false;
 	}
 
+	/**
+	 * Current workaround for maneuvers not providing their own types
+	 * TODO: Replace with more robust system of differentiating Maneuvers
+	 */
+	private ManeuverType getType(IManeuver maneuver) {
+		if (maneuver instanceof LongitudinalManeuver) {
+			return ManeuverType.LONGITUDINAL;
+		} else {
+			return ManeuverType.LATERAL;
+		}
+	}
+
 	@Override
 	public TrajectoryValidationResult getResult() {
 		List<IManeuver> overlappingManeuvers = new ArrayList<>();
@@ -73,8 +88,8 @@ public class OverlappingManeuversConstraint implements TrajectoryValidationConst
 			for (int j = i + 1; j < visited.size(); j++) {
 				IManeuver m2 = visited.get(j);
 
-				if (checkOverlap(m.getStartLocation(), m.getEndLocation(), m2.getStartLocation(), m2.getEndLocation())
-				&& m.getType() == m2.getType()) {
+				if (checkOverlap(m.getStartDistance(), m.getEndDistance(), m2.getStartDistance(), m2.getEndDistance())
+				&& getType(m) == getType(m2)) {
 					overlappingManeuvers.add(m);
 					overlappingManeuvers.add(m2);
 					return new TrajectoryValidationResult(new TrajectoryValidationError("Overlapping maneuvers detected!", overlappingManeuvers));

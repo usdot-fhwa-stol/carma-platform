@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+
 /**
  * Interface implemented by constraints for Trajectory validation
  */

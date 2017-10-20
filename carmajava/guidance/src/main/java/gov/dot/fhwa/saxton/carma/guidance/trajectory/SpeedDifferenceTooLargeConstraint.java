@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+
 /**
  * Constraint which ensures that consecutive Maneuvers cannot exceed a speed difference
  * such as to not violate acceleration limits (or otherwise be impossible to execute)

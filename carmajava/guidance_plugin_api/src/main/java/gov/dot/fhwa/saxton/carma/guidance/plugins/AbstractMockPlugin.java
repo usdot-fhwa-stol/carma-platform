@@ -74,7 +74,7 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
         setAvailability(availability);
     }
 
-    @Override public void planTrajectory(Trajectory traj) {
+    @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
         // NO-OP
     }
 }

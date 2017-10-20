@@ -39,7 +39,6 @@ planning_window_shrink_factor: 0.5
 
 # The class names which will be used to instantiate the concrete TrajectoryValidationConstraints
 trajectory_constraints:
-  - gov.dot.fhwa.saxton.carma.guidance.trajectory.MinimumDistanceBetweenManeuversConstraint
   - gov.dot.fhwa.saxton.carma.guidance.trajectory.OverlappingManeuversConstraint
 
 # The set of IPlugin instances which will be ignored based on class name
@@ -50,13 +49,13 @@ required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.plugins.MockCruisingPlugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's lateral trajectory
-arbitrator_lateral_plugin: Mock Route-Following Plugin
+arbitrator_lateral_plugin: NoOp Plugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's longitudinal trajectory
-arbitrator_longitudinal_plugin: Mock Cruising Plugin
+arbitrator_longitudinal_plugin: Cruising Plugin
 
 # Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
-use_sin_trajectory: true
+use_sin_trajectory: false
 
 # Double: The frequency at which the trajectory executor will tick
 # Units: Hz

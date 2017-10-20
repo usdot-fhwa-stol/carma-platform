@@ -16,11 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.IManeuver.ManeuverType;
 
 /**
  * Data structure and helper method container for describing and creating vehicle trajectories
@@ -69,22 +70,19 @@ public class Trajectory {
    * this trajectory instance.
    */
   public boolean addManeuver(IManeuver maneuver) {
-    if (!(maneuver.getStartLocation() >= startLocation 
-    && maneuver.getEndLocation() <= endLocation)) {
+    if (!(maneuver.getStartDistance() >= startLocation 
+    && maneuver.getEndDistance() <= endLocation)) {
       return false;
     }
 
-    if (maneuver.getType() == ManeuverType.LATERAL) {
+    // Not a fan of using instanceof here, but without more information exposed by the maneuvers, not much I can do
+    if (maneuver instanceof LongitudinalManeuver) {
+      longitudinalManeuversSorted = false;
+      return longitudinalManeuvers.add(maneuver);
+    } else {
       lateralManeuversSorted = false;
       return lateralManeuvers.add(maneuver);
     }
-
-    if (maneuver.getType() == ManeuverType.LONGITUDINAL) {
-      longitudinalManeuversSorted = false;
-      return longitudinalManeuvers.add(maneuver);
-    }
-
-    return false;
   }
 
   /**
@@ -102,11 +100,11 @@ public class Trajectory {
 
     double lastEnd = 0;
     for (IManeuver m : longitudinalManeuvers) {
-      if (m.getStartLocation() - lastEnd >= size)  {
+      if (m.getStartDistance() - lastEnd >= size)  {
         return lastEnd;
       }
 
-      lastEnd = m.getEndLocation();
+      lastEnd = m.getEndDistance();
     }
 
     return -1;
@@ -123,14 +121,14 @@ public class Trajectory {
       return -1;
     }
 
-    double lastStart = longitudinalManeuvers.get(longitudinalManeuvers.size() - 1).getEndLocation();
+    double lastStart = longitudinalManeuvers.get(longitudinalManeuvers.size() - 1).getEndDistance();
     for (int i = longitudinalManeuvers.size() - 1; i >= 0; i--) {
       IManeuver m = longitudinalManeuvers.get(i);
-      if (lastStart - m.getEndLocation() >= size)  {
-        return m.getEndLocation();
+      if (lastStart - m.getEndDistance() >= size)  {
+        return m.getEndDistance();
       }
 
-      lastStart = m.getStartLocation();
+      lastStart = m.getStartDistance();
     }
 
     return -1;
@@ -143,13 +141,13 @@ public class Trajectory {
     List<IManeuver> out = new ArrayList<>();
 
     for (IManeuver m : lateralManeuvers) {
-      if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
+      if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
         out.add(m);
       }
     }
 
     for (IManeuver m : longitudinalManeuvers) {
-      if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
+      if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
         out.add(m);
       }
     }
@@ -166,7 +164,7 @@ public class Trajectory {
 
     if (type == ManeuverType.LATERAL) {
       for (IManeuver m : lateralManeuvers) {
-        if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
+        if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
           out = m;
         }
       }
@@ -174,7 +172,7 @@ public class Trajectory {
 
     if (type == ManeuverType.LONGITUDINAL) {
       for (IManeuver m : longitudinalManeuvers) {
-        if (m.getStartLocation() <= loc && m.getEndLocation() > loc) {
+        if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
           out = m;
         }
       }
@@ -187,7 +185,7 @@ public class Trajectory {
     lateralManeuvers.sort(new Comparator<IManeuver>() {
 		@Override
 		public int compare(IManeuver o1, IManeuver o2) {
-			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+			return Double.compare(o1.getStartDistance(), o2.getStartDistance());
 		}
     });
   }
@@ -196,7 +194,7 @@ public class Trajectory {
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
 		@Override
 		public int compare(IManeuver o1, IManeuver o2) {
-			return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+			return Double.compare(o1.getStartDistance(), o2.getStartDistance());
 		}
     });
   }
@@ -209,7 +207,7 @@ public class Trajectory {
       sortLongitudinalManeuvers();
 
       for (IManeuver m : longitudinalManeuvers) {
-        if (m.getStartLocation() > loc) {
+        if (m.getStartDistance() > loc) {
           return m;
         }
       }
@@ -221,7 +219,7 @@ public class Trajectory {
       sortLateralManeuvers();
 
       for (IManeuver m : lateralManeuvers) {
-        if (m.getStartLocation() > loc) {
+        if (m.getStartDistance() > loc) {
           return m;
         }
       }
@@ -259,7 +257,7 @@ public class Trajectory {
     out.sort(new Comparator<IManeuver>() {
         @Override
         public int compare(IManeuver o1, IManeuver o2) {
-          return Double.compare(o1.getStartLocation(), o2.getStartLocation());
+          return Double.compare(o1.getStartDistance(), o2.getStartDistance());
         }
       });
 
