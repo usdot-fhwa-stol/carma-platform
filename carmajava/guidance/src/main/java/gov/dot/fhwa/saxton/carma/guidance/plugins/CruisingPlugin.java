@@ -58,7 +58,7 @@ public class CruisingPlugin extends AbstractPlugin {
     double speedLimit;
     double location;
   }
-  
+
   protected class TrajectorySegment {
     double start;
     double end;
@@ -72,37 +72,37 @@ public class CruisingPlugin extends AbstractPlugin {
     versionId = "v00.00.01";
   }
 
-	@Override
-	public void onInitialize() {
+  @Override
+  public void onInitialize() {
     log.info("Cruisng plugin initializing...");
     routeStateSub = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
     routeStateSub.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-  		@Override
-  		public void onMessage(RouteState msg) {
-  		}
+      @Override
+      public void onMessage(RouteState msg) {
+      }
     });
 
     routeSub = pubSubService.getSubscriberForTopic("route", Route._TYPE);
     routeSub.registerOnMessageCallback(new OnMessageCallback<Route>() {
-		  @Override
-	  	public void onMessage(Route msg) {
+      @Override
+      public void onMessage(Route msg) {
         currentRoute.set(msg);
         speedLimits = processSpeedLimits(msg);
-	  	}
+      }
     });
 
     currentSegmentSub = pubSubService.getSubscriberForTopic("current_segment", RouteSegment._TYPE);
     currentSegmentSub.registerOnMessageCallback(new OnMessageCallback<RouteSegment>() {
-		  @Override
-	  	public void onMessage(RouteSegment msg) {
-	  		currentSegment.set(msg);
-	  	}
+      @Override
+      public void onMessage(RouteSegment msg) {
+        currentSegment.set(msg);
+      }
     });
 
     maxAccel = pluginServiceLocator.getParameterSource().getDouble("~cruising_max_accel", 3.0);
     log.info("Cruising plugin initialized.");
   }
-  
+
   @Override
   public void loop() {
     try {
@@ -112,21 +112,21 @@ public class CruisingPlugin extends AbstractPlugin {
     }
   }
 
-	@Override
-	public void onResume() {
+  @Override
+  public void onResume() {
     // NO-OP
-	}
-
-	@Override
-	public void onSuspend() {
-    // NO-OP
-	}
-
-	@Override
-	public void onTerminate() {
-		// NO-OP
   }
-  
+
+  @Override
+  public void onSuspend() {
+    // NO-OP
+  }
+
+  @Override
+  public void onTerminate() {
+    // NO-OP
+  }
+
   protected double mphToMps(byte milesPerHour) {
     return milesPerHour * MPH_TO_MPS;
   }
@@ -167,10 +167,10 @@ public class CruisingPlugin extends AbstractPlugin {
   protected List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed, double trajEndSpeed) {
     List<IManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
-  		@Override
-  		public int compare(IManeuver o1, IManeuver o2) {
-  			return Double.compare(o1.getStartDistance(), o2.getStartDistance());
-  		}
+      @Override
+      public int compare(IManeuver o1, IManeuver o2) {
+        return Double.compare(o1.getStartDistance(), o2.getStartDistance());
+      }
     });
 
     List<TrajectorySegment> gaps = new ArrayList<>();
@@ -262,7 +262,7 @@ public class CruisingPlugin extends AbstractPlugin {
       t.addManeuver(steady);
     }
   }
-  
+
   @Override
   public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
     List<SpeedLimit> trajLimits = getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation());
@@ -270,7 +270,7 @@ public class CruisingPlugin extends AbstractPlugin {
     // Find the gaps and record the speeds at the boundaries (pass in params for start and end speed)
     List<TrajectorySegment> gaps = null;
     if (trajLimits.size() >= 1) {
-       gaps = findTrajectoryGaps(traj, expectedEntrySpeed, trajLimits.get(trajLimits.size() - 1).speedLimit);
+      gaps = findTrajectoryGaps(traj, expectedEntrySpeed, trajLimits.get(trajLimits.size() - 1).speedLimit);
     } else {
       gaps = findTrajectoryGaps(traj, expectedEntrySpeed, expectedEntrySpeed);
     }
@@ -300,7 +300,7 @@ public class CruisingPlugin extends AbstractPlugin {
         // Take any intermediary speed limits
         double prevDist = first.location;
         double prevSpeed = first.speedLimit;
-        for (SpeedLimit limit  : getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation())) {
+        for (SpeedLimit limit : getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation())) {
           planManeuvers(traj, prevDist, limit.location, prevSpeed, limit.speedLimit);
           prevDist = limit.location;
           prevSpeed = limit.speedLimit;
