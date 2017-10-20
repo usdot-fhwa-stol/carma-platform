@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Tracking extends GuidanceComponent {
 	// Member variables
-	protected final long sleepDurationMillis = 5000; // Not the real frequency for J2735
+	protected final long sleepDurationMillis = 100; // Frequency for J2735
 	protected int msgCount = 0;
 	private float vehicleWidth = 0;
 	private float vehicleLength = 0;
@@ -71,7 +71,6 @@ public class Tracking extends GuidanceComponent {
 	private ISubscriber<NavSatFix> navSatFixSubscriber;
 	private ISubscriber<HeadingStamped> headingStampedSubscriber;
 	private ISubscriber<TwistStamped> velocitySubscriber;
-	private ISubscriber<SystemAlert> statusSubscriber;
 	private ISubscriber<Float64> steeringWheelSubscriber;
 	private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversService = null;
 	private List<String> req_drivers = Arrays.asList("steering_wheel_angle");
@@ -93,15 +92,6 @@ public class Tracking extends GuidanceComponent {
 		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
 
 		// Subscribers
-		statusSubscriber = pubSubService.getSubscriberForTopic("system_alert", SystemAlert._TYPE);
-		statusSubscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
-			@Override
-			public void onMessage(SystemAlert msg) {
-				if (msg.getType() == SystemAlert.DRIVERS_READY) {
-					drivers_ready = true;
-				}
-			}
-		});
 
 		navSatFixSubscriber = pubSubService.getSubscriberForTopic(
 				"/saxton_cav/vehicle_environment/sensor_fusion/filtered/nav_sat_fix", NavSatFix._TYPE);
@@ -130,40 +120,34 @@ public class Tracking extends GuidanceComponent {
 				velocity_ready = true;
 			}
 		});
+		
+	}
 
+	@Override
+	public void onSystemReady() {
 		// Make service call to get drivers
 		try {
-			// Use this only because drivers_ready is not working correctly
-			Thread.sleep(20000);
-			while (getDriversService == null) {
-				if (drivers_ready) {
-					getDriversService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-							GetDriversWithCapabilities._TYPE);
+			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
+			getDriversService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+			log.info("Tracking is making a call to interfaceMgr...");
+			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversService.newMessage();
+			driver_request_wrapper.setCapabilities(req_drivers);
+			getDriversService.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+				@Override
+				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+					resp_drivers = msg.getDriverData();
+					log.info("Tracking: service call is successful: " + resp_drivers);
 				}
-				Thread.sleep(1000);
-			}
-			while (resp_drivers == null || resp_drivers.size() == 0) {
-				GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversService.newMessage();
-				driver_request_wrapper.setCapabilities(req_drivers);
-				getDriversService.callSync(driver_request_wrapper,
-						new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-							@Override
-							public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-								resp_drivers = msg.getDriverData();
-								log.info("Tracking: service call is successful: " + resp_drivers);
-							}
-
-							@Override
-							public void onFailure(Exception e) {
-								throw new RosRuntimeException(e);
-							}
-						});
-				Thread.sleep(1000);
-			}
+				
+				@Override
+				public void onFailure(Exception e) {
+					throw new RosRuntimeException(e);
+				}
+			});
 		} catch (Exception e) {
 			handleException(e);
 		}
-
+		
 		steeringWheelSubscriber = pubSubService.getSubscriberForTopic(resp_drivers.get(0), Float64._TYPE);
 		steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
 			@Override
@@ -171,11 +155,7 @@ public class Tracking extends GuidanceComponent {
 				steer_wheel_ready = true;
 			}
 		});
-	}
-
-	@Override
-	public void onSystemReady() {
-		// NO-OP
+		drivers_ready = true;
 	}
 
 	@Override
@@ -185,20 +165,23 @@ public class Tracking extends GuidanceComponent {
 	@Override
 	public void loop() {
 		try {
-			cav_msgs.SystemAlert systemAlertMsg = statusPublisher.newMessage();
-			systemAlertMsg.setDescription(
-					"Tracking has not detected a running trajectory, no means to compute crosstrack error");
-			systemAlertMsg.setType(SystemAlert.CAUTION);
-			if (nav_sat_fix_ready && steer_wheel_ready && heading_ready && velocity_ready) {
-				log.info("Guidance.Tracking is publishing bsm...");
-				statusPublisher.publish(systemAlertMsg);
-				bsmPublisher.publish(composeBSMData());
-			}
 			Thread.sleep(sleepDurationMillis);
+			log.info("Tracking: here is sleep time: " + System.currentTimeMillis());
 		} catch (InterruptedException e) {
 			log.info("Tracking loop is interrupted");
+			Thread.currentThread().interrupt();
 		} catch (Exception e) {
 			handleException(e);
+		}
+		if(drivers_ready) {
+			try {
+				if (nav_sat_fix_ready && steer_wheel_ready && heading_ready && velocity_ready) {
+					log.info("Guidance.Tracking is publishing bsm...");
+					bsmPublisher.publish(composeBSMData());
+				}	
+			}  catch (Exception e) {
+				handleException(e);
+			}
 		}
 	}
 
