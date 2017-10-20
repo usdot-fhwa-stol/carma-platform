@@ -123,22 +123,19 @@ public class TrajectoryExecutor extends GuidanceComponent {
         return amplitude * Math.sin((pFactor * s) + phase);
     }
 
-    public void loop() {
-        try {
-            // Generate a simple sin(t) speed command
-            if (state.get() == GuidanceState.ENGAGED && useSinTrajectory) {
-                if ((node.getCurrentTime().toSeconds() * 1000) - startTime < holdTimeMs) {
-                    commands.setCommand(operatingSpeed, maxAccel);
-                } else {
-                    commands.setCommand(
-                            operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase),
-                            maxAccel);
-                }
+    @Override
+    public void loop() throws InterruptedException {
+        // Generate a simple sin(t) speed command
+        if (state.get() == GuidanceState.ENGAGED && useSinTrajectory) {
+            if ((node.getCurrentTime().toSeconds() * 1000) - startTime < holdTimeMs) {
+                commands.setCommand(operatingSpeed, maxAccel);
+            } else {
+                commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase),
+                        maxAccel);
             }
-
-            Thread.sleep(sleepDurationMillis);
-        } catch (InterruptedException e) {
         }
+
+        Thread.sleep(sleepDurationMillis);
     }
 
   /**
