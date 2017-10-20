@@ -40,7 +40,7 @@ public class RouteWaypoint {
   protected int lowerSpeedLimit = 0; // Units: mph
   protected int upperSpeedLimit = 5; // Units: mph
   protected double nearestMileMarker = -1;
-  protected List<cav_msgs.Maneuver> neededManeuvers;
+  protected List<cav_msgs.Maneuver> neededManeuvers = new LinkedList<>();
   protected double minCrossTrack = -10.0; // Units: m
   protected double maxCrossTrack = 10.0; // Units: m
   protected int requiredLaneIndex = -1;
@@ -73,13 +73,13 @@ public class RouteWaypoint {
    */
   public short getSetFields() {
     int bitMask = 0x0000;
-    if (disabledGuidanceAlgorithms != null)
+    if (!disabledGuidanceAlgorithms.isEmpty())
       bitMask = bitMask | 0x8000; //1000 0000 0000 0000
-    if (laneClosures != null)
+    if (!laneClosures.isEmpty())
       bitMask = bitMask | 0x4000; //0100 0000 0000 0000
     if (nearestMileMarker != -1)
       bitMask = bitMask | 0x2000; //0010 0000 0000 0000
-    if (neededManeuvers != null)
+    if (!neededManeuvers.isEmpty())
       bitMask = bitMask | 0x1000; //0001 0000 0000 0000
     if (requiredLaneIndex != -1)
       bitMask = bitMask | 0x0800; //0000 1000 0000 0000
