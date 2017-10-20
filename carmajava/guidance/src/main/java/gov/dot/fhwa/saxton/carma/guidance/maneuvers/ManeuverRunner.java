@@ -36,15 +36,17 @@ public class ManeuverRunner implements Runnable {
 
 	@Override
 	public void run() {
+    long timestepStart = 0;
+    long timestepEnd = 0;
     while (!Thread.currentThread().isInterrupted()) {
-      long timestepStart = System.currentTimeMillis();
+      timestepStart = System.currentTimeMillis();
 
       maneuver.executeTimeStep();
 
-      long timestepEnd = System.currentTimeMillis();
+      timestepEnd = System.currentTimeMillis();
 
       try {
-        Thread.sleep(Math.max(timestepDuration - timestepEnd - timestepStart, 0));
+        Thread.sleep(Math.max(timestepDuration - (timestepEnd - timestepStart), 0));
       } catch (InterruptedException ie) {
         break;
       }

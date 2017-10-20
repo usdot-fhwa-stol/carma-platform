@@ -41,7 +41,7 @@ public class TrajectoryExecutorWorker {
   protected IManeuver currentLongitudinalManeuver = null;
   protected Thread lateralManeuverThread = new Thread();
   protected Thread longitudinalManeuverThread = new Thread();
-  protected double maneuverTickFrequency = 10.0;
+  protected double maneuverTickFrequencyHz = 10.0;
   protected Log log;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
@@ -56,9 +56,9 @@ public class TrajectoryExecutorWorker {
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequency, Log log) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, Log log) {
     this.commands = commands;
-    this.maneuverTickFrequency = maneuverTickFrequency;
+    this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
     this.log = log;
   }
 
@@ -69,7 +69,7 @@ public class TrajectoryExecutorWorker {
         longitudinalManeuverThread.interrupt();
       }
 
-      longitudinalManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequency));
+      longitudinalManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz));
       longitudinalManeuverThread.setName("Longitudinal Maneuver Runner");
       longitudinalManeuverThread.start();
     } else {
@@ -77,7 +77,7 @@ public class TrajectoryExecutorWorker {
         lateralManeuverThread.interrupt();
       }
 
-      lateralManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequency));
+      lateralManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz));
       lateralManeuverThread.setName("Lateral Maneuver Runner");
       lateralManeuverThread.start();
     }

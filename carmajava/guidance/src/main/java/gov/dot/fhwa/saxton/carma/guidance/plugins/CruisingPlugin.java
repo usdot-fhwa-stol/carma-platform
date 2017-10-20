@@ -52,6 +52,7 @@ public class CruisingPlugin extends AbstractPlugin {
   protected List<SpeedLimit> speedLimits = new ArrayList<>();
   protected double maxAccel;
   protected static final double MPH_TO_MPS = 0.44704; // From Google calculator
+  protected static final double DISTANCE_EPSILON = 0.0001;
 
   protected class SpeedLimit {
     double speedLimit;
@@ -130,6 +131,10 @@ public class CruisingPlugin extends AbstractPlugin {
     return milesPerHour * MPH_TO_MPS;
   }
 
+  protected boolean fpEquals(double a, double b, double epsilon) {
+    return Math.abs(a - b) < epsilon;
+  }
+
   protected List<SpeedLimit> processSpeedLimits(Route route) {
     List<SpeedLimit> limits = new ArrayList<>();
 
@@ -138,19 +143,9 @@ public class CruisingPlugin extends AbstractPlugin {
     for (RouteSegment seg : route.getSegments()) {
       SpeedLimit limit = new SpeedLimit();
       limit.location = dtdAccum;
-      limit.speedLimit = mphToMps(seg.getPrevWaypoint().getSpeedLimit());
+      limit.speedLimit = mphToMps(seg.getWaypoint().getSpeedLimit());
       limits.add(limit);
       dtdAccum += seg.getLength();
-    }
-
-    // If we processed at least one waypoint, get the last waypoint, the endpoint of the last segment
-    if (!limits.isEmpty()) {
-      List<RouteSegment> segments = route.getSegments();
-      RouteSegment lastSeg = segments.get(segments.size() - 1);
-      SpeedLimit limit = new SpeedLimit();
-      limit.location = dtdAccum;
-      limit.speedLimit = mphToMps(lastSeg.getWaypoint().getSpeedLimit());
-      limits.add(limit);
     }
 
     return limits;
@@ -194,7 +189,7 @@ public class CruisingPlugin extends AbstractPlugin {
     }
 
     // Find the gaps between
-    if (longitudinalManeuvers.get(0).getStartDistance() != traj.getStartLocation()) {
+    if (!fpEquals(longitudinalManeuvers.get(0).getStartDistance(), traj.getStartLocation(), DISTANCE_EPSILON)) {
       TrajectorySegment seg = new TrajectorySegment();
       seg.start = traj.getStartLocation();
       seg.end = longitudinalManeuvers.get(0).getStartDistance();
@@ -207,7 +202,7 @@ public class CruisingPlugin extends AbstractPlugin {
     IManeuver prev = null;
     for (IManeuver maneuver : longitudinalManeuvers) {
       if (prev != null) {
-        if (prev.getEndDistance() != maneuver.getStartDistance()) {
+        if (!fpEquals(prev.getEndDistance(), maneuver.getStartDistance(), DISTANCE_EPSILON)) {
           TrajectorySegment seg = new TrajectorySegment();
           seg.start = prev.getEndDistance();
           seg.end = maneuver.getStartDistance();
@@ -220,7 +215,7 @@ public class CruisingPlugin extends AbstractPlugin {
       prev = maneuver;
     }
 
-    if (prev.getEndDistance() != traj.getEndLocation()) {
+    if (!fpEquals(prev.getEndDistance(), traj.getEndLocation(), DISTANCE_EPSILON)) {
       TrajectorySegment seg = new TrajectorySegment();
       seg.start = prev.getEndDistance();
       seg.end = traj.getEndLocation();
@@ -269,24 +264,24 @@ public class CruisingPlugin extends AbstractPlugin {
   }
   
   @Override
-  public void planTrajectory(Trajectory traj, double trajStartSpeed) {
+  public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
     List<SpeedLimit> trajLimits = getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation());
 
     // Find the gaps and record the speeds at the boundaries (pass in params for start and end speed)
     List<TrajectorySegment> gaps = null;
     if (trajLimits.size() >= 1) {
-       gaps = findTrajectoryGaps(traj, trajStartSpeed, trajLimits.get(trajLimits.size() - 1).speedLimit);
+       gaps = findTrajectoryGaps(traj, expectedEntrySpeed, trajLimits.get(trajLimits.size() - 1).speedLimit);
     } else {
-      gaps = findTrajectoryGaps(traj, trajStartSpeed, trajStartSpeed);
+      gaps = findTrajectoryGaps(traj, expectedEntrySpeed, expectedEntrySpeed);
     }
 
     if (traj.getLongitudinalManeuvers().size() > 0) {
-      log.info("Multiple pre-planned maneuvers found, with gaps to fill. Planning interpolating cruising trajectory.");
-
       if (gaps.size() == 0) {
         log.info("No gaps found to interpolate. Generating no maneuvers.");
         return;
       }
+
+      log.info("Multiple pre-planned maneuvers found, with gaps to fill. Planning interpolating cruising trajectory.");
 
       for (TrajectorySegment gap : gaps) {
         planManeuvers(traj, gap.start, gap.end, gap.startSpeed, gap.endSpeed);
@@ -296,11 +291,11 @@ public class CruisingPlugin extends AbstractPlugin {
 
       if (trajLimits.isEmpty()) {
         // Hold the initial speed for the whole trajectory
-        planManeuvers(traj, traj.getStartLocation(), traj.getEndLocation(), trajStartSpeed, trajStartSpeed);
+        planManeuvers(traj, traj.getStartLocation(), traj.getEndLocation(), expectedEntrySpeed, expectedEntrySpeed);
       } else {
         // Take the first speed limit
         SpeedLimit first = trajLimits.get(0);
-        planManeuvers(traj, traj.getStartLocation(), first.location, trajStartSpeed, first.speedLimit);
+        planManeuvers(traj, traj.getStartLocation(), first.location, expectedEntrySpeed, first.speedLimit);
 
         // Take any intermediary speed limits
         double prevDist = first.location;

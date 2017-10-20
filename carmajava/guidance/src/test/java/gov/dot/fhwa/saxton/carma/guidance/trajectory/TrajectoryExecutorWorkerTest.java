@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.ArrayList;
 import org.apache.commons.logging.Log;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -76,16 +77,16 @@ public class TrajectoryExecutorWorkerTest {
 
     tew.updateDowntrackDistance(0.0);
     Thread.sleep(1000);
-    verify(m1).executeTimeStep();
-    verify(m1a).executeTimeStep();
+    verify(m1, atLeastOnce()).executeTimeStep();
+    verify(m1a, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(10.0);
     Thread.sleep(1000);
-    verify(m2).executeTimeStep();
-    verify(m2a).executeTimeStep();
+    verify(m2, atLeastOnce()).executeTimeStep();
+    verify(m2a, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(15.0);
     Thread.sleep(1000);
-    verify(m3).executeTimeStep();
-    verify(m3a).executeTimeStep();
+    verify(m3, atLeastOnce()).executeTimeStep();
+    verify(m3a, atLeastOnce()).executeTimeStep();
   }
 
   @Test
@@ -106,10 +107,10 @@ public class TrajectoryExecutorWorkerTest {
 
     tew.updateDowntrackDistance(0.0);
     Thread.sleep(1000);
-    verify(m1).executeTimeStep();
+    verify(m1, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(10.0);
     Thread.sleep(1000);
-    verify(m2).executeTimeStep();
+    verify(m2, atLeastOnce()).executeTimeStep();
     tew.abortTrajectory();
 
     assertNull(tew.getCurrentLateralManeuver());

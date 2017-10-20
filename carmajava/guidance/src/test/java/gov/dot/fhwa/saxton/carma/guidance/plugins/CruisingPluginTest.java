@@ -49,8 +49,9 @@ public class CruisingPluginTest {
 
   @Before
   public void setup() {
-    PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class), mock(PluginManagementService.class),
-    mock(IPubSubService.class), mock(ParameterSource.class), mock(ManeuverPlanner.class), mock(Log.class));
+    PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
+        mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
+        mock(ManeuverPlanner.class), mock(Log.class));
     cruise = new CruisingPlugin(psl);
   }
 
@@ -73,6 +74,12 @@ public class CruisingPluginTest {
     List<RouteWaypoint> waypoints = new ArrayList<>();
 
     int curId = 0;
+    RouteWaypoint initialWp = messageFactory.newFromType(RouteWaypoint._TYPE);
+    initialWp.setWaypointId(curId++);
+    initialWp.setLaneCount((byte) 1);
+    initialWp.setSpeedLimit(mpsToMph(0.0));
+    waypoints.add(initialWp);
+
     for (Double speed : speeds) {
       RouteWaypoint waypoint = messageFactory.newFromType(RouteWaypoint._TYPE);
       waypoint.setWaypointId(curId++);
@@ -108,7 +115,6 @@ public class CruisingPluginTest {
       assertEquals(speeds.get(i), limits.get(i).speedLimit, 0.5);
     }
   }
-
 
   // We'll only have the CrusingPlugin generating longitudinal maneuvers, so the whole
   // longitudinal trajectory will always be open for now.

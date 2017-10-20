@@ -77,7 +77,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
             @Override
             public void onMessage(RouteState msg) {
-                log.info("Received RouteState:" + msg);
+                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
                 trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
             }
         });

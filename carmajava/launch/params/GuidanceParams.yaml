@@ -39,7 +39,6 @@ planning_window_shrink_factor: 0.5
 
 # The class names which will be used to instantiate the concrete TrajectoryValidationConstraints
 trajectory_constraints:
-  - gov.dot.fhwa.saxton.carma.guidance.trajectory.MinimumDistanceBetweenManeuversConstraint
   - gov.dot.fhwa.saxton.carma.guidance.trajectory.OverlappingManeuversConstraint
 
 # The set of IPlugin instances which will be ignored based on class name
