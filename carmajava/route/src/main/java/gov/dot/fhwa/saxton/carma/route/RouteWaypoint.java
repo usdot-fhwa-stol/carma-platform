@@ -37,8 +37,8 @@ public class RouteWaypoint {
   protected List<Integer> laneClosures = new ArrayList<>();
   protected int laneCount = 1;
   protected Location location;
-  protected int lowerSpeedLimit = 0; // Units: m/s
-  protected int upperSpeedLimit = 5; // Units: m/s
+  protected int lowerSpeedLimit = 0; // Units: mph
+  protected int upperSpeedLimit = 5; // Units: mph
   protected double nearestMileMarker = -1;
   protected List<cav_msgs.Maneuver> neededManeuvers;
   protected double minCrossTrack = -10.0; // Units: m

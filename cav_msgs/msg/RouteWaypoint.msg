@@ -23,12 +23,12 @@ float64 altitude
 # Must be set with value >= 1
 uint8 lane_count
 
-# The lower speed limit in m/s
-# Units: m/s
+# The lower speed limit
+# Units: mph
 uint8 lower_speed_limit
 
 # The upper speed limit
-# Units: m/s
+# Units: mph
 uint8 speed_limit
 
 # The lane markings found between interior lanes
