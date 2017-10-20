@@ -85,7 +85,6 @@ public class SaxtonLogger {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.info(messageToStore);
     writeToFile(messageToStore);
-
   }
 
   public void logInfo(String tag, String message, Throwable t) {
