@@ -163,22 +163,14 @@ public class Tracking extends GuidanceComponent {
 	}
 
 	@Override
-	public void loop() {
-		try {
-			Thread.sleep(sleepDurationMillis);
-			log.info("Tracking: here is sleep time: " + System.currentTimeMillis());
-		} catch (InterruptedException e) {
-			log.info("Tracking loop is interrupted");
-			Thread.currentThread().interrupt();
-		} catch (Exception e) {
-			handleException(e);
-		}
+	public void loop() throws InterruptedException {
+		Thread.sleep(sleepDurationMillis);
 		if(drivers_ready) {
 			try {
 				if (nav_sat_fix_ready && steer_wheel_ready && heading_ready && velocity_ready) {
 					log.info("Guidance.Tracking is publishing bsm...");
 					bsmPublisher.publish(composeBSMData());
-				}	
+				}
 			}  catch (Exception e) {
 				handleException(e);
 			}
