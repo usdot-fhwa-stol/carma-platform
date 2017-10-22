@@ -18,10 +18,7 @@
 //Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import cav_msgs.BSM;
-import cav_msgs.BSMCoreData;
-import cav_msgs.HeadingStamped;
-import cav_msgs.SystemAlert;
+import cav_msgs.*;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
@@ -87,15 +84,9 @@ public class Tracking extends GuidanceComponent {
 	@Override
 	public void onGuidanceStartup() {
 		
-		try {
-			Thread.sleep(30000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		
 		// Publishers
 		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
-		
+
 		// Subscribers
 		navSatFixSubscriber = pubSubService.getSubscriberForTopic("/saxton_cav/vehicle_environment/sensor_fusion/filtered/nav_sat_fix", NavSatFix._TYPE);
 		navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
@@ -154,7 +145,7 @@ public class Tracking extends GuidanceComponent {
 				steer_wheel_ready = true;
 			}
 		});
-		
+
 		drivers_ready = true;
 	}
 
