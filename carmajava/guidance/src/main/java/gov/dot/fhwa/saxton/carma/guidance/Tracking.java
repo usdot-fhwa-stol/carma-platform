@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Tracking extends GuidanceComponent {
 	// Member variables
 	protected final long sleepDurationMillis = 100; // Frequency for J2735
-	protected int msgCount = 0;
+	private int msgCount = 0;
 	private float vehicleWidth = 0;
 	private float vehicleLength = 0;
 	private boolean drivers_ready = false;
@@ -64,9 +64,8 @@ public class Tracking extends GuidanceComponent {
 	private boolean nav_sat_fix_ready = false;
 	private boolean heading_ready = false;
 	private boolean velocity_ready = false;
-	Random randomIdGenerator = new Random();
+	private Random randomIdGenerator = new Random();
 	private byte[] random_id = new byte[4];
-	private IPublisher<SystemAlert> statusPublisher;
 	private IPublisher<BSM> bsmPublisher;
 	private ISubscriber<NavSatFix> navSatFixSubscriber;
 	private ISubscriber<HeadingStamped> headingStampedSubscriber;
@@ -87,40 +86,40 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void onGuidanceStartup() {
+		
+		try {
+			Thread.sleep(30000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 		// Publishers
-		statusPublisher = pubSubService.getPublisherForTopic("system_alert", cav_msgs.SystemAlert._TYPE);
 		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
-
+		
 		// Subscribers
-
-		navSatFixSubscriber = pubSubService.getSubscriberForTopic(
-				"/saxton_cav/vehicle_environment/sensor_fusion/filtered/nav_sat_fix", NavSatFix._TYPE);
+		navSatFixSubscriber = pubSubService.getSubscriberForTopic("/saxton_cav/vehicle_environment/sensor_fusion/filtered/nav_sat_fix", NavSatFix._TYPE);
 		navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
 			@Override
 			public void onMessage(NavSatFix msg) {
-				;
 				nav_sat_fix_ready = true;
 			}
 		});
-
-		headingStampedSubscriber = pubSubService.getSubscriberForTopic(
-				"/saxton_cav/vehicle_environment/sensor_fusion/filtered/heading", HeadingStamped._TYPE);
+		
+		headingStampedSubscriber = pubSubService.getSubscriberForTopic("/saxton_cav/vehicle_environment/sensor_fusion/filtered/heading", HeadingStamped._TYPE);
 		headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
 			@Override
 			public void onMessage(HeadingStamped msg) {
 				heading_ready = true;
 			}
 		});
-
-		velocitySubscriber = pubSubService.getSubscriberForTopic(
-				"/saxton_cav/vehicle_environment/sensor_fusion/filtered/velocity", TwistStamped._TYPE);
+		
+		velocitySubscriber = pubSubService.getSubscriberForTopic("/saxton_cav/vehicle_environment/sensor_fusion/filtered/velocity", TwistStamped._TYPE);
 		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
 			@Override
 			public void onMessage(TwistStamped msg) {
 				velocity_ready = true;
 			}
 		});
-		
 	}
 
 	@Override
@@ -129,7 +128,7 @@ public class Tracking extends GuidanceComponent {
 		try {
 			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
 			getDriversService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
-			log.info("Tracking is making a call to interfaceMgr...");
+			log.info("Tracking is making a service call to interfaceMgr...");
 			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversService.newMessage();
 			driver_request_wrapper.setCapabilities(req_drivers);
 			getDriversService.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
@@ -155,18 +154,20 @@ public class Tracking extends GuidanceComponent {
 				steer_wheel_ready = true;
 			}
 		});
+		
 		drivers_ready = true;
 	}
 
 	@Override
 	public void onGuidanceEnable() {
+		
 	}
 
 	@Override
 	public void loop() throws InterruptedException {
-		Thread.sleep(sleepDurationMillis);
 		if(drivers_ready) {
 			try {
+				log.info("Tracking: loop is running..." + nav_sat_fix_ready + " " + steer_wheel_ready + " " + heading_ready + " " + velocity_ready);
 				if (nav_sat_fix_ready && steer_wheel_ready && heading_ready && velocity_ready) {
 					log.info("Guidance.Tracking is publishing bsm...");
 					bsmPublisher.publish(composeBSMData());
@@ -175,6 +176,7 @@ public class Tracking extends GuidanceComponent {
 				handleException(e);
 			}
 		}
+		Thread.sleep(sleepDurationMillis);
 	}
 
 	private BSM composeBSMData() {
@@ -182,7 +184,6 @@ public class Tracking extends GuidanceComponent {
 		BSM bsmFrame = bsmPublisher.newMessage();
 
 		try {
-
 			if (msgCount == 0) {
 				randomIdGenerator.nextBytes(random_id);
 			}
@@ -231,7 +232,7 @@ public class Tracking extends GuidanceComponent {
 			coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied((byte) 0);
 			coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus((byte) 0);
 
-			// Set length and width
+			// Set length and width only for the first time
 			if (vehicleLength == 0 && vehicleWidth == 0) {
 				ParameterTree param = node.getParameterTree();
 				vehicleLength = (float) param.getDouble("/saxton_cav/vehicle_length");
