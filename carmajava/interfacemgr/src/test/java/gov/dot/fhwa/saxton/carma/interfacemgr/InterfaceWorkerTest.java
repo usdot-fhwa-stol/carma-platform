@@ -90,8 +90,8 @@ public class InterfaceWorkerTest {
 
         //let's go find them
         List<String> res = w_.getDrivers(capabilities);
-        assertEquals(res.size(), 1);
-        assertEquals(res.get(0), "position3");
+        assertEquals(res.size(), 3);
+        assertEquals(res.get(0), "position3/latitude");
 
         //simplify the list of capabilities we need
         capabilities.clear();
@@ -101,9 +101,10 @@ public class InterfaceWorkerTest {
         capabilities.add("longitude");
         capabilities.add("latitude"); //purposely did these in reverse order
         res = w_.getDrivers(capabilities);
-        assertEquals(res.size(), 2);
-        assertEquals(res.get(0), "position1");
-        assertEquals(res.get(1), "position3");
+        assertEquals(res.size(), 4);
+        assertEquals(res.get(0), "position1/longitude");
+        assertEquals(res.get(2), "position3/longitude");
+        assertEquals(res.get(3), "position3/latitude");
 
         //look for another capability
         capabilities.clear();
@@ -113,7 +114,7 @@ public class InterfaceWorkerTest {
         capabilities.add("acceleration");
         res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 1);
-        assertEquals(res.get(0), "position3");
+        assertEquals(res.get(0), "position3/acceleration");
     }
 
     @Test
@@ -141,7 +142,7 @@ public class InterfaceWorkerTest {
 
         DriverInfo sensor5 = new DriverInfo();
         sensor5.setSensor(true);
-        sensor5.setName("sensor/sensor5"); //provides elev only, simple name only
+        sensor5.setName("radar/typeR/sensor/R5"); //provides elev only; long name
         sensor5.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(sensor5);
 
@@ -154,22 +155,24 @@ public class InterfaceWorkerTest {
         capabilities.add("position/latitude");
         capabilities.add("position/longitude");
         res = w_.getDrivers(capabilities);
-        assertEquals(res.size(), 2);
+        assertEquals(res.size(), 4);
+        assertEquals(res.get(1), "~/pinpoint/position/position4/longitude");
+        assertEquals(res.get(2), "position/position5/latitude");
 
         //look for elevation from a position driver
         capabilities.clear();
         capabilities.add("position/elevation");
         res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 2);
-        assertTrue(res.get(0).equals("~/pinpoint/position/position4"));
-        assertTrue(res.get(1).equals("position/position5"));
+        assertTrue(res.get(0).equals("~/pinpoint/position/position4/elevation"));
+        assertTrue(res.get(1).equals("position/position5/elevation"));
 
         //look for elevation from any type of driver
         capabilities.clear();
         capabilities.add("elevation");
         res = w_.getDrivers(capabilities);
         assertEquals(res.size(), 3);
-        assertTrue(res.get(2).equals("sensor/sensor5"));
+        assertTrue(res.get(2).equals("radar/typeR/sensor/R5/elevation"));
     }
 
     @Test

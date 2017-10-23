@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
+import gov.dot.fhwa.saxton.carma.guidance.*;
 
 /**
  * Concrete ROS implementation of the logic outlined in {@link ISubscriber}
@@ -29,10 +30,13 @@ public class RosSubscriber<T> implements ISubscriber<T> {
     protected Subscriber<T> subscriber;
     protected RosSubscriptionChannel<T> parent;
     protected T lastMessage = null;
+    protected GuidanceExceptionHandler exceptionHandler;
 
-    RosSubscriber(Subscriber<T> subscriber, RosSubscriptionChannel<T> parent) {
+    RosSubscriber(Subscriber<T> subscriber, RosSubscriptionChannel<T> parent, GuidanceExceptionHandler exceptionHandler) {
         this.subscriber = subscriber;
         this.parent = parent;
+        this.exceptionHandler = exceptionHandler;
+
         subscriber.addMessageListener(new MessageListener<T>() {
             @Override public void onNewMessage(T t) {
                 lastMessage = t;
@@ -47,7 +51,12 @@ public class RosSubscriber<T> implements ISubscriber<T> {
     @Override public void registerOnMessageCallback(final OnMessageCallback<T> callback) {
         subscriber.addMessageListener(new MessageListener<T>() {
             @Override public void onNewMessage(T t) {
-                callback.onMessage(t);
+                try {
+                    callback.onMessage(t);
+                } catch (Exception e) {
+                    // Uncaught exception received, throw it up to the top level handler
+                    exceptionHandler.handleException(e);
+                }
             }
         });
     }

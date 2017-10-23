@@ -17,7 +17,9 @@
 package gov.dot.fhwa.saxton.carma.geometry;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -69,8 +71,11 @@ public class GeodesicCartesianConverter {
     double lon = 2.0*Math.atan(y / (x + p));
     double lat = Math.atan((z + (e_p * e_p) * Reb * Math.pow(Math.sin(theta), 3)) / (p - e_sqr * Rea * Math.pow(Math.cos(theta), 3)));
 
-    double N = Rea_sqr / Math.sqrt(Rea_sqr * Math.pow(Math.cos(lat), 2) + Reb_sqr * Math.pow(Math.sin(lat),2));
-    double alt = (p / Math.cos(lat)) - N;
+    double cosLat = Math.cos(lat);
+    double sinLat = Math.sin(lat);
+
+    double N = Rea_sqr / Math.sqrt(Rea_sqr * cosLat * cosLat + Reb_sqr * sinLat * sinLat);
+    double alt = (p / cosLat) - N;
 
     return new Location(Math.toDegrees(lat),Math.toDegrees(lon),alt);
   }
@@ -89,15 +94,56 @@ public class GeodesicCartesianConverter {
     double latRad = location.getLatRad();
     double alt = location.getAltitude();
 
-    double Ne = Rea / Math.sqrt(1.0 - e_sqr * Math.pow(Math.sin(latRad),2));// The prime vertical radius of curvature
+    double sinLat = Math.sin(latRad);
+    double sinLon = Math.sin(lonRad);
+    double cosLat = Math.cos(latRad);
+    double cosLon = Math.cos(lonRad);
 
-    double x = (Ne + alt)*Math.cos(latRad)*Math.cos(lonRad);
-    double y = (Ne + alt)*Math.cos(latRad)*Math.sin(lonRad);
-    double z = (Ne*(1-e_sqr) + alt) * Math.sin(latRad);
+    double Ne = Rea / Math.sqrt(1.0 - e_sqr * sinLat * sinLat);// The prime vertical radius of curvature
+
+    double x = (Ne + alt)*cosLat*cosLon;
+    double y = (Ne + alt)*cosLat*sinLon;
+    double z = (Ne*(1-e_sqr) + alt) * sinLat;
 
     Vector3 pointBeforeTransform = new Vector3(x,y,z);
     Vector3 resultant = frame2ecefTransform.apply(pointBeforeTransform);
 
     return new Point3D(resultant.getX(), resultant.getY(), resultant.getZ());
+  }
+
+  /**
+   * Calculates the transform from an ECEF frame to NED frame with it's origin at the specified location.
+   * ECEF: Earth Centered Earth Fixed Frame
+   * NED: North Up Down = (x,y,z)
+   * @param loc The location to place the origin of the NED frame at
+   * @return The calculated transform between the two frames.
+   */
+  public Transform ecefToNEDFromLocaton(Location loc) {
+    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+    Point3D locInECEF =
+      gcc.geodesic2Cartesian(loc, Transform.identity()); //TODO validate that this works even with an earth map transform
+
+    Vector3 trans = new Vector3(locInECEF.getX(), locInECEF.getY(), locInECEF.getZ());
+
+    // Rotation matrix of north east down frame with respect to ecef
+    // Found at https://en.wikipedia.org/wiki/North_east_down
+    double sinLat = Math.sin(loc.getLatRad());
+    double sinLon = Math.sin(loc.getLonRad());
+    double cosLat = Math.cos(loc.getLatRad());
+    double cosLon = Math.cos(loc.getLonRad());
+    double[][] R = new double[][] {
+      { -sinLat * cosLon, -sinLon,  -cosLat * cosLon },
+      { -sinLat * sinLon,  cosLon,  -cosLat * sinLon },
+      {           cosLat,       0,           -sinLat }
+    };
+    // Convert rotation matrix into quaternion
+    double qw = Math.sqrt(1.0 + R[0][0] + R[1][1] + R[2][2]) / 2.0;
+    double qw4 = 4.0 * qw;
+    double qx = (R[2][1] - R[1][2]) / qw4;
+    double qy = (R[0][2] - R[2][0]) / qw4;
+    double qz = (R[1][0] - R[0][1]) / qw4;
+    Quaternion quat = new Quaternion(qx, qy, qz, qw).normalize();
+
+    return new Transform(trans, quat);
   }
 }

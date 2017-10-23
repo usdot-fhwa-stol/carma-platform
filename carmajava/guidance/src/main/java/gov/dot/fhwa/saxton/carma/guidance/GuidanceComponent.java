@@ -5,6 +5,8 @@ import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.ConnectedNode;
 
+import cav_msgs.SystemAlert;
+
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -61,7 +63,7 @@ public abstract class GuidanceComponent implements Runnable {
      *
      * Default behavior if not overridden is to sleep for 5s.
      */
-    public void loop() {
+    public void loop() throws InterruptedException {
         try {
             Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
         } catch (InterruptedException e) {
@@ -69,14 +71,17 @@ public abstract class GuidanceComponent implements Runnable {
     }
 
     public final void run() {
+        Thread.currentThread().setName(getComponentName() + "Runner");
         log.info(getComponentName() + " starting up.");
         onGuidanceStartup();
         CancellableLoop loop = new CancellableLoop() {
-            @Override protected void loop() throws InterruptedException {
+            @Override
+            protected void loop() throws InterruptedException {
                 GuidanceComponent.this.loop();
             }
         };
         loopThread = new Thread(loop);
+        loopThread.setName(getComponentName() + "Looper");
         loopThread.start();
 
         // Wait for DRIVERS_READY
@@ -91,11 +96,13 @@ public abstract class GuidanceComponent implements Runnable {
 
         onSystemReady();
         loop = new CancellableLoop() {
-            @Override protected void loop() throws InterruptedException {
+            @Override
+            protected void loop() throws InterruptedException {
                 GuidanceComponent.this.loop();
             }
         };
         loopThread = new Thread(loop);
+        loopThread.setName(getComponentName() + "Looper");
         loopThread.start();
 
         // Wait for GUIDANCE_ENGAGED
@@ -110,11 +117,13 @@ public abstract class GuidanceComponent implements Runnable {
         log.info(getComponentName() + " transitioning to ENGAGED state.");
         onGuidanceEnable();
         loop = new CancellableLoop() {
-            @Override protected void loop() throws InterruptedException {
+            @Override
+            protected void loop() throws InterruptedException {
                 GuidanceComponent.this.loop();
             }
         };
         loopThread = new Thread(loop);
+        loopThread.setName(getComponentName() + "Looper");
         loopThread.start();
 
         // Wait for Guidance to shutdown
@@ -132,7 +141,8 @@ public abstract class GuidanceComponent implements Runnable {
     }
 
     /**
-     * Optionally overridable method to hook when the Guidance node is shutting down or restarting.
+     * Optionally overridable method to hook when the Guidance node is gracefuly shutting down
+     * or has received a SystemAlert.FATAL message
      *
      * Default implementation does nothing.
      */
@@ -159,6 +169,29 @@ public abstract class GuidanceComponent implements Runnable {
             } catch (InterruptedException e) {
             }
         }
+    }
+
+    /**
+     * Signal a panic in a Guidance component that necessitates full system shutdown
+     * 
+     * Will log the fatal condition, alert the other ROS nodes in the CAV network to begin
+     * shutdown procedures and then trigger all other Guidance activity to cease as well.
+     */
+    protected final void panic(String message) {
+        // Log the fatal error
+        log.fatal("!!!!! Guidance component " + getComponentName()
+                + " has entered a PANIC state !!!!!\nCause of panic: " + message);
+        log.fatal("Publishing cav_msgs/SystemAlert.FATAL");
+
+        // Alert the other ROS nodes to the FATAL condition
+        IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
+        SystemAlert fatalBroadcast = pub.newMessage();
+        fatalBroadcast.setDescription(getComponentName() + " has triggered a Guidance PANIC: " + message);
+        fatalBroadcast.setType(SystemAlert.FATAL);
+        pub.publish(fatalBroadcast);
+
+        // Signal the other guidance components to shutdown as well
+        state.set(GuidanceState.SHUTDOWN);
     }
 
 }

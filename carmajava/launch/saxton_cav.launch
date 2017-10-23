@@ -79,6 +79,8 @@
              to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/start_active_route"/>
       <remap from="route_state"
              to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
+      <remap from="route"
+             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="ui_platoon_vehicle_info"
@@ -91,6 +93,8 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
       <remap from="set_guidance_engaged"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_engaged"/>
+      <remap from="cmd_speed"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
 
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
@@ -107,8 +111,6 @@
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="get_drivers_with_capabilities"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
         <remap from="new_plan_inbound"
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>
         <remap from="plan_status"
@@ -166,6 +168,8 @@
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_nack"/>
           <remap from="mobility_plan_outbound"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_plan"/>
+          <remap from="get_drivers_with_capabilities"
+                 to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
         </node>
       </group>
 
@@ -204,6 +208,8 @@
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="bsm"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
+          <remap from="get_drivers_with_capabilities"
+                 to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
         </node>
       </group>
 
@@ -226,7 +232,7 @@
           <remap from="odometry"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/odometry"/>
           <remap from="tracked_objects"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_objects"/>
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/objects"/>
           <remap from="tracked_vehicles"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
           <remap from="velocity"
@@ -256,12 +262,8 @@
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="tim"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/tim"/>
-          <!-- TODO Use this topic remapping instead once sensor fusion does pass through right
           <remap from="nav_sat_fix"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-                 -->
-          <remap from="nav_sat_fix"
-                 to="/saxton_cav/drivers/pin_point_application/position/nav_sat_fix"/>
         </node>
       </group>
     </group>
@@ -288,10 +290,8 @@
       <remap from="system_alert"
              to="/$(arg TOP_NS)/system_alert"/>
 
-      <!-- Arada OBU Driver Node -->
-      <node unless="$(arg mock_arada)" pkg="arada" type="arada_node" name="arada_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
-      </node>
+      <!-- DSRC OBU Driver Node -->
+      <include unless="$(arg mock_arada)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
       <!-- Simulated Arada Driver Node -->
       <node if="$(arg mock_arada)" pkg="carma" type="mock_drivers" name="arada_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
@@ -329,7 +329,7 @@
         <arg name="srx_controller_can_device" value="can1"/>
       </include>
       <!-- Simulated SRX Controller Driver Node -->
-      <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_application"
+      <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_controller"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
         <param name="simulated_driver" type="string" value="srx_controller"/>
         <param name="data_file_path" type="string" value="$(arg srx_controller_data_file)"/>
@@ -351,12 +351,6 @@
 
 
     <!-- TF2 Setup Initial Static Transforms -->
-    <!-- Earth -> Map Transform -->
-    <!-- Identity Transform -->
-    <!-- Arguments (x y z yaw pitch roll frame_id child_frame_id) -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="earth_map_transform_pub"
-          args="0 0 0 0 0 0 earth map"/>
-
     <!-- Vehicle Transforms -->
     <param name="robot_description" textfile="$(arg URDF_FILE)"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>

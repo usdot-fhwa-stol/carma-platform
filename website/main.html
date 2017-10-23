@@ -7,7 +7,13 @@
     <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
     <script src="scripts/roslib.js"></script>
     <script src="scripts/control.js" defer></script>
+
     <script src="scripts/rosbridge.js" defer></script>
+    <script src="scripts/googlemap.js"></script>
+
+    <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMzV4biqVN0pf3l1lYVWQ4KSWLyoG6OV0&callback=initMap">
+    </script>
     <link rel="stylesheet" type="text/css" href="css/styles.css">
     <!--
     Setup:
@@ -38,12 +44,13 @@
     </div>
 </div>
 <div id="divDriverView" class="tabcontent">
-    <h3>Driver View</h3>
-    <p>Not yet implemented.</p>
+    <div class="divSpeedLimit">
+        <img src="images/speedlimitsign.png" alt="Speed Limit" style="width:200px;height:200px">
+        <div id="divSpeedLimitValue"></div>
+    </div>
 </div>
 <div id="divMap" class="tabcontent">
-    <h3>Map View</h3>
-    <p>Not yet implemented.</p>
+    <div id="map"></div>
 </div>
 <div id="divSystemStatus" class="tabcontent">
     <h3>System Status</h3>
@@ -57,8 +64,8 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="col-style2a">Title</td>
-                        <td class="col-style2b">Value</td>
+                        <td class="col-title">Title</td>
+                        <td class="col-title">Value</td>
                     </tr>
                 </table>
             </td>
@@ -70,8 +77,8 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="col-style2a">Title</td>
-                        <td class="col-style2b">Value</td>
+                        <td class="col-title">Title</td>
+                        <td class="col-title">Value</td>
                     </tr>
                 </table>
             </td>
@@ -83,8 +90,8 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="col-style2a">Title</td>
-                        <td class="col-style2b">Value</td>
+                        <td class="col-title">Title</td>
+                        <td class="col-title">Value</td>
                     </tr>
                 </table>
             </td>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>cav_driver_utils</name>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
   <description>Common CAV Platform driver utilities</description>
   <maintainer email="support@torcrobotics.com">Torc Robotics</maintainer>
   <license>BSD</license>

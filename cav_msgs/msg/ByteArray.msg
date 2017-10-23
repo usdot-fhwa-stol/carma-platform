@@ -17,4 +17,4 @@ std_msgs/Header header
 string messageType
 
 # The DSRC message content
-byte[] content
+uint8[] content

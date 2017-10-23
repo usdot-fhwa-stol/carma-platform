@@ -19,8 +19,40 @@ float64 longitude
 # Altitude [m]. Positive is above the WGS 84 ellipsoid
 float64 altitude
 
-# A bit flag desribing which of the following fields are set. 1 = set, 0 = not set
+# The number of lanes on the current road in the current direction of travel
+# Must be set with value >= 1
+uint8 lane_count
+
+# The lower speed limit
+# Units: mph
+uint8 lower_speed_limit
+
+# The upper speed limit
+# Units: mph
+uint8 speed_limit
+
+# The lane markings found between interior lanes
+cav_msgs/LaneEdgeType interior_lane_markings
+
+# The lane markings on the left edge of the left most lane
+cav_msgs/LaneEdgeType left_most_lane_marking
+
+# The lane markings on the right edge of the right most lane
+cav_msgs/LaneEdgeType right_most_lane_marking
+
+# Marks the maximum negative cross track distance a vehicle can have and still be considered on a route
+# Units: Meters
+float64 min_cross_track
+
+# Marks the maximum positive cross track distance a vehicle can have and still be considered on a route
+# Units: Meters
+float64 max_cross_track
+
+# A bit flag describing which of the following fields are set. 1 = set, 0 = not set
 uint16 set_fields
+
+# Each variable below corresponds to the bit in set_fields moving from MSB->LSM as you read down the list
+# Example disabled_guidance_algorithms is the MSB (0x8000) and lane_closures is (0x4000)
 
 # A list of guidance algorithms which are disabled on the segment which ends in this waypoint
 string[] disabled_guidance_algorithms
@@ -28,20 +60,14 @@ string[] disabled_guidance_algorithms
 # A list of lane closures described by index
 uint8[] lane_closures
 
-# The number of lanes on the current road in the current direction of travel
-uint8 lane_count
-
 # The value of the nearest mile marker
 float32 nearest_mile_marker
 
-# A list of needed manuevers
-# cav_msgs/Manuever[] needed_manuevers
+# A list of needed maneuvers
+cav_msgs/Maneuver[] needed_maneuvers
 
 # The index of the lane that the vehicle must enter to continue on its route
 uint8 required_lane_index
 
 # The roadway type which the waypoint applies to
 cav_msgs/RoadType road_type
-
-# The speed limit
-uint8 speed_limit

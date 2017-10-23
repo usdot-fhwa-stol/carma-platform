@@ -13,66 +13,108 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
-import org.ros.rosjava_geometry.Vector3;
-
 /**
- * A point in a 3D cartesian coordinate system.
- * While this class is an extension of Point, it will only support 3D locations.
+ * A representation of a point in 3-dimensional space.
  */
-public class Point3D {
-  // These variables will be moved once Point is implemented
-  private double x;
-  private double y;
-  private double z;
+public class Point3D extends Point{
 
-  public Point3D() {
-    this.x = 0;
-    this.y = 0;
-    this.z = 0;
+  private static final int X_DIM = 0;
+  private static final int Y_DIM = 1;
+  private static final int Z_DIM = 2;
+
+  /**
+   * Constructor defines a 3d point with the provided x and y values
+   * @param x x-axis value
+   * @param y y-axis value
+   * @param z z-axis value
+   */
+  public Point3D(double x, double y, double z){
+    super(0, 0, 0); // Ensure there is space for x,y,z
+    this.dimensions[X_DIM] = x;
+    this.dimensions[Y_DIM] = y;
+    this.dimensions[Z_DIM] = z;
   }
 
-  public Point3D(double x, double y, double z) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
+  /**
+   * Constructor defines this point as a deep copy of the provided point
+   * @param p The point to copy
+   */
+  public Point3D(Point3D p) {
+    super(p);
   }
 
-  public double getX() {
-    return x;
+  /**
+   * Gets the x-axis value
+   * @return x-axis value
+   */
+  public double getX(){
+    return this.dimensions[X_DIM];
   }
 
-  public void setX(double x) {
-    this.x = x;
+  /**
+   * Gets the y-axis value
+   * @return y-axis value
+   */
+  public double getY(){
+    return this.dimensions[Y_DIM];
   }
 
-  public double getY() {
-    return y;
+  /**
+   * Gets the z-axis value
+   * @return z-axis value
+   */
+  public double getZ(){
+    return this.dimensions[Z_DIM];
   }
 
-  public void setY(double y) {
-    this.y = y;
+  /**
+   * Sets the x-axis value
+   * @param value x-axis value to set
+   */
+  public void setX(double value){
+    this.dimensions[X_DIM] = value;
   }
 
-  public double getZ() {
-    return z;
+  /**
+   * Sets the y-axis value
+   * @param value y-axis value to set
+   */
+  public void setY(double value){
+    this.dimensions[Y_DIM] = value;
   }
 
-  public void setZ(double z) {
-    this.z = z;
+  /**
+   * Sets the z-axis value
+   * @param value z-axis value to set
+   */
+  public void setZ(double value){
+    this.dimensions[Z_DIM] = value;
   }
 
-  public boolean almostEquals(Point3D p2, double delta) {
-    Vector3 v1 = new Vector3(getX(), getY(), getZ());
-    return v1.almostEquals(new Vector3(p2.getX(), p2.getY(), p2.getZ()), delta);
+  /**
+   * Gets the index used internally to mark the x-axis dimension
+   * @return The index
+   */
+  public static int getXIndex() {
+    return X_DIM;
   }
 
-  public Vector3 toVector3() {
-    return new Vector3(x,y,z);
+  /**
+   * Gets the index used internally to mark the y-axis dimension
+   * @return The index
+   */
+  public static int getYIndex() {
+    return Y_DIM;
   }
 
-  @Override public String toString() {
-    return super.toString() + " (x,y,z): (" + x + ", " + y + ", " + z + ")";
+  /**
+   * Gets the index used internally to mark the z-axis dimension
+   * @return The index
+   */
+  public static int getZIndex() {
+    return Z_DIM;
   }
 }

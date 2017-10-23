@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.rosutils;
 
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.AbstractNodeMain;
@@ -37,7 +38,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
   @Override public final void onStart(ConnectedNode connectedNode) {
     try {
       onSaxtonStart(connectedNode);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       String strace = "\n";
       for (StackTraceElement ste : e.getStackTrace()) {
           strace += "\t" + ste.toString();
@@ -62,7 +63,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
    *
    * @param e The exception to handle
    */
-  protected abstract void handleException(Exception e);
+  protected abstract void handleException(Throwable e);
 
   /**
    * Blocks until the desired service is found and returned or timeout expires. If the timeout expires then returns null.
@@ -88,6 +89,8 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
         client = connectedNode.newServiceClient(service, typeString);
         serviceFound = true;
       } catch (ServiceNotFoundException e) {
+        serviceFound = false;
+      } catch (RosRuntimeException e) {
         serviceFound = false;
       }
     }

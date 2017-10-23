@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import org.apache.commons.logging.Log;
@@ -30,15 +31,17 @@ public class PluginServiceLocator {
     private final PluginManagementService pluginManagementService;
     private final ParameterSource parameterSource;
     private final IPubSubService IPubSubService;
+    private final ManeuverPlanner maneuverPlanner;
     private final Log log;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
-        PluginManagementService pluginManagementService, IPubSubService IPubSubService,
-        ParameterSource parameterSource, Log log) {
+        PluginManagementService pluginManagementService, IPubSubService iPubSubService,
+        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, Log log) {
         this.arbitratorService = arbitratorService;
-        this.IPubSubService = IPubSubService;
+        this.IPubSubService = iPubSubService;
         this.pluginManagementService = pluginManagementService;
         this.parameterSource = parameterSource;
+        this.maneuverPlanner = maneuverPlanner;
         this.log = log;
     }
 
@@ -68,6 +71,13 @@ public class PluginServiceLocator {
      */
     public ParameterSource getParameterSource() {
         return parameterSource;
+    }
+
+    /**
+     * Get the {@link ManeuverPlanner} instance available to the plugins
+     */
+    public ManeuverPlanner getManeuverPlanner() {
+        return maneuverPlanner;
     }
 
     /**

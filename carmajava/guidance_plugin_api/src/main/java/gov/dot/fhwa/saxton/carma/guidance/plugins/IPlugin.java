@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+
 /**
  * Interface describing the basic functionality of a CARMA Platform Guidance Plugin
  * <p>
@@ -98,8 +100,11 @@ public interface IPlugin {
     /**
      * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if
      * possible.
+     * 
+     * @param traj The current partially planned Trajectory, which cannot be modified
+     * @param expectedEntrySpeed The speed (in m/s) the vehicle is expected to have upon the start of the new trajectory
      */
-    void planTrajectory();
+    void planTrajectory(Trajectory traj, double expectedEntrySpeed);
 
     /**
      * Callback method to handle negotiation requests received from external or internal sources

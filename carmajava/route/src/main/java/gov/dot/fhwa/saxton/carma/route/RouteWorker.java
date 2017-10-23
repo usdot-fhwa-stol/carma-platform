@@ -70,9 +70,6 @@ public class RouteWorker {
   protected double downtrackDistance = 0;
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
-  protected double MAX_CROSSTRACK_DISTANCE_M = 1000.0;
-    // TODO put in route files as may change based on road type
-  protected double MAX_START_DISTANCE_M = 1000.0; // Can only join route if within this many meters of waypoint
   protected int routeStateSeq = 0;
 
   /**
@@ -115,6 +112,8 @@ public class RouteWorker {
   protected void next(WorkerEvent event) {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
     log.info("Route State = " + currentSegmentIndex);
+    // Publish the new route state
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), event));
   }
 
   /**
@@ -132,10 +131,12 @@ public class RouteWorker {
         log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.CAUTION,
+        alertMsg = buildSystemAlertMsg(SystemAlert.SHUTDOWN,
           "Route: The end of the active route has been reached");
+        // Notify system of route completion
         routeManager.publishSystemAlert(alertMsg);
         log.info("Route has been completed");
+        routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
         alertMsg = buildSystemAlertMsg(SystemAlert.WARNING,
@@ -145,7 +146,8 @@ public class RouteWorker {
         break;
       case SYSTEM_FAILURE:
         log.info(
-          "Route has received a system failure message and is switching to pausing the active route");
+          "Route: Received a system failure message and is shutting down");
+        routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
         log.info(
@@ -202,7 +204,8 @@ public class RouteWorker {
    * @return vehicle on route status
    */
   protected boolean leftRouteVicinity() {
-    return Math.abs(crossTrackDistance) > MAX_CROSSTRACK_DISTANCE_M;
+    RouteWaypoint wp = currentSegment.getDowntrackWaypoint();
+    return crossTrackDistance < wp.getMinCrossTrack() || wp.getMaxCrossTrack() < crossTrackDistance;
   }
 
   /**
@@ -281,9 +284,10 @@ public class RouteWorker {
     }
     int startingIndex = -1;
     int count = 0;
+    double maxJoinDistance = activeRoute.getMaxJoinDistance();
     for (RouteWaypoint wp : activeRoute.getWaypoints()) {
       double dist = hostVehicleLocation.distanceFrom(wp.getLocation(), new HaversineStrategy());
-      if (MAX_START_DISTANCE_M > dist) {
+      if (maxJoinDistance > dist) {
         startingIndex = count;
         break;
       }
@@ -387,7 +391,7 @@ public class RouteWorker {
     }
 
     // Publish updated route information
-    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime()));
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), WorkerEvent.NONE));
     routeManager.publishCurrentRouteSegment(getCurrentRouteSegmentTopicMsg());
   }
 
@@ -414,6 +418,10 @@ public class RouteWorker {
       case cav_msgs.SystemAlert.DRIVERS_READY:
         systemOkay = true;
         log.info("route_manager received system ready on system_alert and is starting to publish");
+        break;
+      case cav_msgs.SystemAlert.SHUTDOWN:
+        log.info("Route manager received a shutdown message");
+        routeManager.shutdown();
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
@@ -452,15 +460,57 @@ public class RouteWorker {
    *
    * @param seq  The header sequence
    * @param time the time
+   * @param event A worker event which is this message will serve as a notification for
    * @return route state message
    */
-  protected RouteState getRouteStateTopicMsg(int seq, Time time) {
-    if (activeRoute == null)
-      return messageFactory.newFromType(cav_msgs.RouteState._TYPE);
+  protected RouteState getRouteStateTopicMsg(int seq, Time time, WorkerEvent event) {
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
-    routeState.setCrossTrack(crossTrackDistance);
-    routeState.setRouteID(activeRoute.getRouteID());
-    routeState.setDownTrack(downtrackDistance);
+    // Set the state of route following
+    switch (getCurrentState()) {
+      case LOADING_ROUTES:
+        routeState.setState(RouteState.LOADING_ROUTES);
+        break;
+      case ROUTE_SELECTION:
+        routeState.setState(RouteState.ROUTE_SELECTION);
+        break;
+      case WAITING_TO_START:
+        routeState.setState(RouteState.WAITING_TO_START);
+        break;
+      case FOLLOWING_ROUTE:
+        routeState.setState(RouteState.FOLLOWING_ROUTE);
+        break;
+      default:
+        routeState.setState(RouteState.ROUTE_SELECTION);
+        log.warn("Sending a route state message an unsupported state was set. Defaulted to ROUTE_SELECTION");
+        break;
+    }
+
+    // Set a recent event which this message serves as a notification of
+    switch (event) {
+      case ROUTE_SELECTED:
+        routeState.setEvent(RouteState.ROUTE_SELECTED);
+        break;
+      case ROUTE_STARTED:
+        routeState.setEvent(RouteState.ROUTE_STARTED);
+        break;
+      case ROUTE_COMPLETED:
+        routeState.setEvent(RouteState.ROUTE_COMPLETED);
+        break;
+      case LEFT_ROUTE:
+        routeState.setEvent(RouteState.LEFT_ROUTE);
+        break;
+      case ROUTE_ABORTED:
+        routeState.setEvent(RouteState.ROUTE_ABORTED);
+        break;
+      default:
+        routeState.setEvent(RouteState.NONE);
+    }
+
+    if (activeRoute != null) {
+      routeState.setCrossTrack(crossTrackDistance);
+      routeState.setRouteID(activeRoute.getRouteID());
+      routeState.setDownTrack(downtrackDistance);
+    }
 
     std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
     hdr.setFrameId("0");

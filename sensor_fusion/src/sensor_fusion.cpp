@@ -51,7 +51,7 @@ int SensorFusionApplication::run() {
     navsatfix_pub_ = pnh.advertise<sensor_msgs::NavSatFix>("nav_sat_fix",1);
     velocity_pub_ = pnh.advertise<geometry_msgs::TwistStamped>("velocity",1);
     heading_pub_ = pnh.advertise<cav_msgs::HeadingStamped>("heading",1);
-    objects_pub_ = pnh.advertise<cav_msgs::ExternalObjectList>("tracked_objects",1);
+    objects_pub_ = pnh.advertise<cav_msgs::ExternalObjectList>("objects",1);
     vehicles_pub_= pnh.advertise<cav_msgs::ConnectedVehicleList>("tracked_vehicles",1);
 
 
@@ -151,8 +151,8 @@ void SensorFusionApplication::update_subscribed_services() {
         sub_map_[it] = nh_->subscribe<geometry_msgs::TwistStamped>(it,1,[this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg);});
     }
 
-    //tracked_objects
-    ret = get_api("sensor/tracked_objects");
+    //objects
+    ret = get_api("sensor/objects");
     for(const std::string& it : ret)
     {
         sub_map_[it] = nh_->subscribe<cav_msgs::ExternalObjectList>(it,1,[this](const ros::MessageEvent<cav_msgs::ExternalObjectList>& msg){ trackedobjects_cb(msg);});
@@ -208,7 +208,7 @@ void SensorFusionApplication::publish_updates() {
 
         //todo: process a bsm message, update this to the BSM message type
         msg.objects.push_back(externalObject);
-        msg.bsm_temp_ids.push_back(uint16_t(bsm->id));
+        //msg.bsm_temp_ids.push_back(bsm->id);
 
         bsm_q_.pop();
     }

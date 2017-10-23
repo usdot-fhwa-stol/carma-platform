@@ -333,6 +333,12 @@ div.message_box {
     vertical-align: top;
 }
 
+.col-title {
+    width: 15%;
+    font-weight: bold;
+    background-color: #DCDCDC;
+}
+
 .col-style2a {
     width: 15%;
     font-weight: bold;
@@ -340,4 +346,67 @@ div.message_box {
 
 .col-style2b {
     width: 15%;
+}
+
+/* Map *
+ * Always set the map height explicitly to define the size of the div
+ * element that contains the map.
+ */
+#map {
+    height: 550px;
+}
+
+/* Container holding the image and the text */
+.divSpeedLimit {
+    position: relative;
+    text-align: center;
+    padding-top: 5%;
+}
+
+/* Bottom left text */
+ .bottom-left {
+    position: absolute;
+    bottom: 8px;
+    left: 16px;
+}
+
+/* Top left text */
+.top-left {
+    position: absolute;
+    top: 8px;
+    left: 16px;
+}
+
+/* Top right text */
+.top-right {
+    position: absolute;
+    top: 8px;
+    right: 16px;
+}
+
+/* Bottom right text */
+ .bottom-right {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+}
+
+/* Centered text */
+.centered {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+/* Centered text in speed limit */
+#divSpeedLimitValue {
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 75px;
+    font-weight: bold;
 }

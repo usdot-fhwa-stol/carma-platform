@@ -253,10 +253,8 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     heading.header = msg.header;
     heading.header.frame_id = sensor_frame;
 
-
     //Convert yaw [-180,180] to  [0,360] degrees east of north
     heading.heading = pose.yaw < 0 ? 360 + pose.yaw : pose.yaw;
-
     heading_pub_.publish(heading);
 
 }

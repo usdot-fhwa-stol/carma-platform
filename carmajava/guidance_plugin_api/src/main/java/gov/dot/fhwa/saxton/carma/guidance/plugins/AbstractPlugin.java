@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import org.apache.commons.logging.Log;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ public abstract class AbstractPlugin implements IPlugin {
     protected String versionId;
     protected Log log;
     protected IPubSubService pubSubService;
+    protected PluginServiceLocator pluginServiceLocator;
 
     // Private fields so that extendees can't access them
     private AtomicBoolean activation = new AtomicBoolean(false);
@@ -25,6 +27,7 @@ public abstract class AbstractPlugin implements IPlugin {
     private List<AvailabilityListener> availabilityListeners = new ArrayList<>();
 
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
+        this.pluginServiceLocator = pluginServiceLocator;
         this.pubSubService = pluginServiceLocator.getPubSubService();
         this.log = pluginServiceLocator.getLog();
     }
@@ -52,7 +55,7 @@ public abstract class AbstractPlugin implements IPlugin {
         return availability.get();
     }
 
-    @Override public void planTrajectory() {
+    @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
         throw new UnsupportedOperationException();
     }
 

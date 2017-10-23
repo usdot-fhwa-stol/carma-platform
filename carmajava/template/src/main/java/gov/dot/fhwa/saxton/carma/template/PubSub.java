@@ -18,16 +18,15 @@
 //Originally "com.github.rosjava.carma.template;"
 package gov.dot.fhwa.saxton.carma.template;
 
-import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 /**
  * A simple {@link Publisher} {@link NodeMain}.
@@ -44,10 +43,13 @@ public class PubSub extends SaxtonBaseNode {
         return GraphName.of("pub_sub");
     }
 
-    @Override
+  private SaxtonLogger log;
+
+  @Override
     public void onSaxtonStart(final ConnectedNode connectedNode) {
 
-        final Log log = connectedNode.getLog();
+        //final Log log = connectedNode.getLog();
+        log = new SaxtonLogger(SaxtonBaseNode.class.getName(), connectedNode.getLog());
 
         //TODO: Column G topic name
         // Currently setup to listen to it's own message. Change to listen to someone other topic.
@@ -57,7 +59,7 @@ public class PubSub extends SaxtonBaseNode {
                                           @Override
                                           public void onNewMessage(std_msgs.String message) {
                                               //TODO: Replace with Column D node name
-                                              log.info("pub_sub heard: \"" + message.getData() + "\"");
+                                              log.logInfo("TAGNAME", "pub_sub heard: \"" + message.getData() + "\"");
                                           }//onNewMessage
                                       }//MessageListener
         );//addMessageListener
@@ -87,7 +89,7 @@ public class PubSub extends SaxtonBaseNode {
                                                      str.setData("Hello World! " + "I am pub_sub. " + sequenceNumber);
                                                      publisher.publish(str);
                                                      sequenceNumber++;
-                                                     Thread.sleep(30000);
+                                                     Thread.sleep(5000);
                                                  }//loop
 
                                              }//CancellableLoop
@@ -96,8 +98,8 @@ public class PubSub extends SaxtonBaseNode {
 
     }//onStart
 
-  @Override protected void handleException(Exception e) {
+  @Override protected void handleException(Throwable e) {
 
   }
-}//AbstractNodeMain
+}//SaxtonBaseNode
 
