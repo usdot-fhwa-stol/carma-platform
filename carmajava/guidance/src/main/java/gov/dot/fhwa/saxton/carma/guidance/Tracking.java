@@ -29,11 +29,15 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
+import org.ros.node.service.ServiceClient;
+import org.ros.node.service.ServiceResponseListener;
 
 import sensor_msgs.NavSatFix;
 import std_msgs.Float64;
@@ -69,7 +73,8 @@ public class Tracking extends GuidanceComponent {
 	private ISubscriber<HeadingStamped> headingStampedSubscriber;
 	private ISubscriber<TwistStamped> velocitySubscriber;
 	private ISubscriber<Float64> steeringWheelSubscriber;
-	private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversService = null;
+	private ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversService;
+	//private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversService = null;
 	private List<String> req_drivers = Arrays.asList("steering_wheel_angle");
 	private List<String> resp_drivers;
 
@@ -119,22 +124,36 @@ public class Tracking extends GuidanceComponent {
 		// Make service call to get drivers
 		try {
 			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
-			getDriversService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+			getDriversService = node.newServiceClient("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+			//getDriversService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
 			log.info("Tracking is making a service call to interfaceMgr...");
 			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversService.newMessage();
 			driver_request_wrapper.setCapabilities(req_drivers);
-			getDriversService.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+			RosServiceSynchronizer.callSync(getDriversService, driver_request_wrapper, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
+
 				@Override
-				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-					resp_drivers = msg.getDriverData();
+				public void onFailure(RemoteException arg0) {
+					throw new RosRuntimeException(arg0);
+				}
+
+				@Override
+				public void onSuccess(GetDriversWithCapabilitiesResponse arg0) {
+					resp_drivers = arg0.getDriverData();
 					log.info("Tracking: service call is successful: " + resp_drivers);
-				}
-				
-				@Override
-				public void onFailure(Exception e) {
-					throw new RosRuntimeException(e);
-				}
+				}				
 			});
+//			getDriversService.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+//				@Override
+//				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+//					resp_drivers = msg.getDriverData();
+//					log.info("Tracking: service call is successful: " + resp_drivers);
+//				}
+//				
+//				@Override
+//				public void onFailure(Exception e) {
+//					throw new RosRuntimeException(e);
+//				}
+//			});
 		} catch (Exception e) {
 			handleException(e);
 		}
