@@ -14,8 +14,6 @@
  * the License.
  */
 
-//TODO: Naming convention of "package gov.dot.fhwa.saxton.carmajava.<template>;"
-//Originally "com.github.rosjava.carmajava.template;"
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.*;
@@ -25,10 +23,8 @@ import cav_srvs.GetDriversWithCapabilitiesResponse;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -65,7 +61,8 @@ public class Tracking extends GuidanceComponent {
 	private boolean nav_sat_fix_ready = false;
 	private boolean heading_ready = false;
 	private boolean velocity_ready = false;
-
+	protected GuidanceExceptionHandler exceptionHandler;
+	private AtomicReference<GuidanceState> state = new AtomicReference<GuidanceState>();
 	private Random randomIdGenerator = new Random();
 	private byte[] random_id = new byte[4];
 	private IPublisher<BSM> bsmPublisher;
@@ -73,13 +70,13 @@ public class Tracking extends GuidanceComponent {
 	private ISubscriber<HeadingStamped> headingStampedSubscriber;
 	private ISubscriber<TwistStamped> velocitySubscriber;
 	private ISubscriber<Float64> steeringWheelSubscriber;
-	private ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversService;
-	//private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversService = null;
+	private ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
 	private List<String> req_drivers = Arrays.asList("steering_wheel_angle");
 	private List<String> resp_drivers;
 
 	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
 		super(state, pubSubService, node);
+		this.exceptionHandler = new GuidanceExceptionHandler(state, log);
 	}
 
 	@Override
@@ -89,6 +86,8 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void onGuidanceStartup() {
+		
+		state.set(GuidanceState.STARTUP);
 		
 		// Publishers
 		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
@@ -121,16 +120,25 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void onSystemReady() {
+		
+		state.set(GuidanceState.DRIVERS_READY);
+		
 		// Make service call to get drivers
+		// Do not have access to SaxtonBaseNode method from here. Implement a simple waitForService.
 		try {
 			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
-			getDriversService = node.newServiceClient("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
-			//getDriversService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+			while(getDriversWithCapabilitiesClient == null) {
+				getDriversWithCapabilitiesClient = node.newServiceClient("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+				if(getDriversWithCapabilitiesClient == null) {
+					log.warn("Tracking: node could not find service get_drivers_with_capabilities and is keeping trying...");
+				}
+				Thread.sleep(1000);
+			}
 			log.info("Tracking is making a service call to interfaceMgr...");
-			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversService.newMessage();
+			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
 			driver_request_wrapper.setCapabilities(req_drivers);
-			RosServiceSynchronizer.callSync(getDriversService, driver_request_wrapper, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
-
+			RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, driver_request_wrapper, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
+				
 				@Override
 				public void onFailure(RemoteException arg0) {
 					throw new RosRuntimeException(arg0);
@@ -140,20 +148,9 @@ public class Tracking extends GuidanceComponent {
 				public void onSuccess(GetDriversWithCapabilitiesResponse arg0) {
 					resp_drivers = arg0.getDriverData();
 					log.info("Tracking: service call is successful: " + resp_drivers);
-				}				
+				}
+				
 			});
-//			getDriversService.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-//				@Override
-//				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-//					resp_drivers = msg.getDriverData();
-//					log.info("Tracking: service call is successful: " + resp_drivers);
-//				}
-//				
-//				@Override
-//				public void onFailure(Exception e) {
-//					throw new RosRuntimeException(e);
-//				}
-//			});
 		} catch (Exception e) {
 			handleException(e);
 		}
@@ -171,7 +168,7 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void onGuidanceEnable() {
-		
+		state.set(GuidanceState.ENGAGED);
 	}
 
 	@Override
@@ -259,7 +256,7 @@ public class Tracking extends GuidanceComponent {
 	}
 
 	protected void handleException(Exception e) {
-		log.error(this.getComponentName() + "throws an exception and is about to shutdown...", e);
-		throw new RosRuntimeException(e);
+		log.error("Tracking throws an exception...");
+		exceptionHandler.handleException(e);
 	}
 }
