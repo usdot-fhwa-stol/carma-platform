@@ -61,6 +61,7 @@ public class Tracking extends GuidanceComponent {
 	private boolean nav_sat_fix_ready = false;
 	private boolean heading_ready = false;
 	private boolean velocity_ready = false;
+
 	private Random randomIdGenerator = new Random();
 	private byte[] random_id = new byte[4];
 	private IPublisher<BSM> bsmPublisher;
@@ -88,7 +89,7 @@ public class Tracking extends GuidanceComponent {
 		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
 
 		// Subscribers
-		navSatFixSubscriber = pubSubService.getSubscriberForTopic("/saxton_cav/vehicle_environment/sensor_fusion/filtered/nav_sat_fix", NavSatFix._TYPE);
+		navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
 		navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
 			@Override
 			public void onMessage(NavSatFix msg) {
@@ -96,7 +97,7 @@ public class Tracking extends GuidanceComponent {
 			}
 		});
 		
-		headingStampedSubscriber = pubSubService.getSubscriberForTopic("/saxton_cav/vehicle_environment/sensor_fusion/filtered/heading", HeadingStamped._TYPE);
+		headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
 		headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
 			@Override
 			public void onMessage(HeadingStamped msg) {
@@ -104,7 +105,7 @@ public class Tracking extends GuidanceComponent {
 			}
 		});
 		
-		velocitySubscriber = pubSubService.getSubscriberForTopic("/saxton_cav/vehicle_environment/sensor_fusion/filtered/velocity", TwistStamped._TYPE);
+		velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
 		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
 			@Override
 			public void onMessage(TwistStamped msg) {
@@ -158,7 +159,7 @@ public class Tracking extends GuidanceComponent {
 	public void loop() throws InterruptedException {
 		if(drivers_ready) {
 			try {
-				log.info("Tracking: loop is running..." + nav_sat_fix_ready + " " + steer_wheel_ready + " " + heading_ready + " " + velocity_ready);
+				log.info("Tracking subscribers status" + nav_sat_fix_ready + " " + steer_wheel_ready + " " + heading_ready + " " + velocity_ready);
 				if (nav_sat_fix_ready && steer_wheel_ready && heading_ready && velocity_ready) {
 					log.info("Guidance.Tracking is publishing bsm...");
 					bsmPublisher.publish(composeBSMData());
@@ -240,6 +241,6 @@ public class Tracking extends GuidanceComponent {
 
 	protected void handleException(Exception e) {
 		log.error(this.getComponentName() + "throws an exception and is about to shutdown...", e);
-		node.shutdown();
+		throw new RosRuntimeException(e);
 	}
 }
