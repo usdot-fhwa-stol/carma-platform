@@ -24,6 +24,7 @@
 #   -- the value 2000 shall be used for values greater than 2000     
 #   -- the value -2000 shall be used for values less than -2000  
 #   -- a value of 2001 shall be used for Unavailable
+#   -- Convert to m/s^2 with factor 0.01 when this field is used
 float32 longitude
 float32 latitude
 
@@ -32,8 +33,10 @@ float32 latitude
 #   -- The value +127 shall be used for ranges >= 2.54 G
 #   -- The value -126 shall be used for ranges <= 2.52 G
 #   -- The value -127 shall be used for unavailable
+#   -- Convert to m/s^2 with factor 0.196 when this field is used
 float32 vert
 
 #YawRate ::= INTEGER (-32767..32767) 
 #   -- LSB units of 0.01 degrees per second (signed)
+#   -- Convert to degree with factor 0.01 when this field is used
 float32 yaw
