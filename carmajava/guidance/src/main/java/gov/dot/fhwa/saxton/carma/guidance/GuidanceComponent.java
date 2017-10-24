@@ -63,7 +63,7 @@ public abstract class GuidanceComponent implements Runnable {
      *
      * Default behavior if not overridden is to sleep for 5s.
      */
-    public void loop() {
+    public void loop() throws InterruptedException {
         try {
             Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
         } catch (InterruptedException e) {

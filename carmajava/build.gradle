@@ -69,6 +69,9 @@ subprojects {
         configFile = rootProject.file("config/checkstyle.xml")
     }
 
+    targetCompatibility = 1.8
+    sourceCompatibility = 1.8
+
     /*
      * Some IDE support if you use it.
      */

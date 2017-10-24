@@ -47,8 +47,8 @@ public class CruisingPlugin extends AbstractPlugin {
   protected ISubscriber<Route> routeSub;
   protected ISubscriber<RouteSegment> currentSegmentSub;
 
-  protected AtomicReference<Route> currentRoute;
-  protected AtomicReference<RouteSegment> currentSegment;
+  protected AtomicReference<Route> currentRoute = new AtomicReference<>();
+  protected AtomicReference<RouteSegment> currentSegment = new AtomicReference<>();
   protected List<SpeedLimit> speedLimits = new ArrayList<>();
   protected double maxAccel;
   protected static final double MPH_TO_MPS = 0.44704; // From Google calculator

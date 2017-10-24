@@ -3,7 +3,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.141' // TODO: Update with proper environment IP address.
+var ip = '192.168.32.141' // TODO: Update with proper environment IP address to 166.241.207.252
 
 // Topics
 var t_system_alert = 'system_alert';
