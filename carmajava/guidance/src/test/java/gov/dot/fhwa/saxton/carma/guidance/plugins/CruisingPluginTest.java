@@ -163,10 +163,23 @@ public class CruisingPluginTest {
     List<SpeedLimit> filteredLimits = cruise.getSpeedLimits(limits, 5.5, 15.5);
 
     assertEquals(2, filteredLimits.size());
-    assertEquals(3.0, filteredLimits.get(0).speedLimit, 0.5);
-    assertEquals(4.0, filteredLimits.get(1).speedLimit, 0.5);
+    assertEquals(2.0, filteredLimits.get(0).speedLimit, 0.5);
+    assertEquals(3.0, filteredLimits.get(1).speedLimit, 0.5);
     assertEquals(10.0, filteredLimits.get(0).location, 0.01);
     assertEquals(15.0, filteredLimits.get(1).location, 0.01);
+  }
+
+  @Test
+  public void testManeuverGeneration() {
+    List<Double> speeds = new ArrayList<>();
+    speeds.add(5.0);
+
+    Route route = generateRouteWithSpeedLimits(speeds, 5.0);
+
+    cruise.setSpeedLimits(cruise.processSpeedLimits(route));
+    Trajectory traj = new Trajectory(0.0, 10.0);
+
+    cruise.planTrajectory(traj, 0.0);
   }
 
   private CruisingPlugin cruise;

@@ -87,7 +87,7 @@ public class CruisingPlugin extends AbstractPlugin {
       @Override
       public void onMessage(Route msg) {
         currentRoute.set(msg);
-        speedLimits = processSpeedLimits(msg);
+        setSpeedLimits(processSpeedLimits(msg));
       }
     });
 
@@ -141,14 +141,18 @@ public class CruisingPlugin extends AbstractPlugin {
     // Walk the segment list getting the start points speed limits
     double dtdAccum = 0.0;
     for (RouteSegment seg : route.getSegments()) {
+      dtdAccum += seg.getLength();
       SpeedLimit limit = new SpeedLimit();
       limit.location = dtdAccum;
       limit.speedLimit = mphToMps(seg.getWaypoint().getSpeedLimit());
       limits.add(limit);
-      dtdAccum += seg.getLength();
     }
 
     return limits;
+  }
+
+  protected void setSpeedLimits(List<SpeedLimit> speedLimits) {
+    this.speedLimits = speedLimits;
   }
 
   // TODO: Improve handling of first and last speed limits on boundaries
@@ -240,6 +244,7 @@ public class CruisingPlugin extends AbstractPlugin {
       t.addManeuver(speedUp);
 
       maneuverEnd = speedUp.getEndDistance();
+      log.info(String.format("Planned SPEED-UP maneuver from [%.02f, %.02f) m/s over [%.02f, %.02f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     } else if (startSpeed > endSpeed) {
       // Generate a slowdown maneuver
       SlowDown slowDown = new SlowDown();
@@ -249,6 +254,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
       maneuverEnd = slowDown.getEndDistance();
       t.addManeuver(slowDown);
+      log.info(String.format("Planned SLOW-DOWN maneuver from [%.02f, %.02f) m/s over [%.02f, %.02f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     }
 
     // Insert a steady speed maneuver to fill whatever's left
@@ -260,6 +266,7 @@ public class CruisingPlugin extends AbstractPlugin {
       steady.overrideEndDistance(endDist);
 
       t.addManeuver(steady);
+      log.info(String.format("Planned STEADY-SPEED maneuver at %.02f m/s over [%.02f, %.02f) m", startSpeed, startDist, endDist));
     }
   }
 
@@ -300,7 +307,9 @@ public class CruisingPlugin extends AbstractPlugin {
         // Take any intermediary speed limits
         double prevDist = first.location;
         double prevSpeed = first.speedLimit;
-        for (SpeedLimit limit : getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation())) {
+
+        // Usage of DISTANCE_EPSILON here is a bit of a hack
+        for (SpeedLimit limit : getSpeedLimits(speedLimits, first.location + DISTANCE_EPSILON, traj.getEndLocation())) {
           planManeuvers(traj, prevDist, limit.location, prevSpeed, limit.speedLimit);
           prevDist = limit.location;
           prevSpeed = limit.speedLimit;
