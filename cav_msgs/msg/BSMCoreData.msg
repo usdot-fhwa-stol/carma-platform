@@ -18,7 +18,6 @@ uint8[] id
 
 #DSecond ::= INTEGER (0..65535) 
 #  -- Unit is milliseconds
-#  -- Convert to seconds with factor 0.001 when field is used
 uint16 sec_mark 
 
 #Latitude ::= INTEGER (-900000000..900000001)  

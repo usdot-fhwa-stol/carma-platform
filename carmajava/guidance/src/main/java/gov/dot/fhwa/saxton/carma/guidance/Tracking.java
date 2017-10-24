@@ -245,10 +245,10 @@ public class Tracking extends GuidanceComponent {
 			coreData.setAngle((float) steeringWheelSubscriber.getLastMessage().getData());
 
 			// N/A for now
-			coreData.getAccelSet().setLongitude((float) (2001 * 0.01));
-			coreData.getAccelSet().setLatitude((float) (2001 * 0.01));
+			coreData.getAccelSet().setLongitudinal((float) (2001 * 0.01));
+			coreData.getAccelSet().setLateral((float) (2001 * 0.01));
 			coreData.getAccelSet().setVert((float) (-127 * 0.02));
-			coreData.getAccelSet().setYaw(0);
+			coreData.getAccelSet().setYawRate(0);
 			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 10);
 			coreData.getBrakes().getTraction().setTractionControlStatus((byte) 0);
 			coreData.getBrakes().getAbs().setAntiLockBrakeStatus((byte) 0);
