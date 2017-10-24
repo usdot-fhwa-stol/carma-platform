@@ -140,3 +140,12 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	(*env) -> SetByteArrayRegion(env, outJNIArray, 0, length, buffer);
 	return outJNIArray;
 }
+
+JNIEXPORT void JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_decode_1BSM
+  (JNIEnv *env, jclass cls, jbyteArray encoded_bsm, jobject plain_bsm) {
+
+	//Set bsm msgCnt for test
+	jclass bsm_core_class = (*env) -> GetObjectClass(env, plain_bsm);
+	jmethodID mid_setMsgCount = (*env) -> GetMethodID(env, bsm_core_class, "setMsgCount", "(B)V");
+	(*env) -> CallVoidMethod(env, plain_bsm, mid_setMsgCount, 111);
+}

@@ -206,8 +206,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 			@Override
 			public void onNewMessage(ByteArray arg0) {
 				BSM decodedBSM = bsmPub.newMessage();
-				//decodedBSM.getHeader().setFrameId("DECODED BSM");
-				log.info("publishing decoded BSM!!!!!!!!!!!!!!!!!!!");
+				decodedBSM.getHeader().setFrameId("MessageNode");
+				BSMFactory.decode(arg0, decodedBSM, log);
 				bsmPub.publish(decodedBSM);
 			}
 			
