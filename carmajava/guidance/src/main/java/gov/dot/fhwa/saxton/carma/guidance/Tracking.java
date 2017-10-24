@@ -30,6 +30,7 @@ import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
+import org.ros.exception.ServiceNotFoundException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceClient;
@@ -127,12 +128,16 @@ public class Tracking extends GuidanceComponent {
 		// Do not have access to SaxtonBaseNode method from here. Implement a simple waitForService.
 		try {
 			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
-			while(getDriversWithCapabilitiesClient == null) {
+			int counter = 0;
+			while(getDriversWithCapabilitiesClient == null && counter++ < 10) {
 				getDriversWithCapabilitiesClient = node.newServiceClient("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
 				if(getDriversWithCapabilitiesClient == null) {
 					log.warn("Tracking: node could not find service get_drivers_with_capabilities and is keeping trying...");
 				}
 				Thread.sleep(1000);
+			}
+			if(getDriversWithCapabilitiesClient == null) {
+				throw new ServiceNotFoundException("get_drivers_with_capabilities service can not be found");
 			}
 			log.info("Tracking is making a service call to interfaceMgr...");
 			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
