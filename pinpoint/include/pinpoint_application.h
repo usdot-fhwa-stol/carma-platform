@@ -113,7 +113,7 @@ private:
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
     //parameters
-    std::string base_link_frame, odom_frame, sensor_frame, world_frame;
+    std::string base_link_frame, odom_frame, sensor_frame;
     bool publish_tf;
 
     pinpoint::pinpointConfig config_;

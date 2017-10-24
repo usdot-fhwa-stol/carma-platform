@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>pinpoint</name>
-  <version>1.0.5</version>
+  <version>1.0.6</version>
   <description>The pinpoint package</description>
   <maintainer email="support@torcrobotics.com">Torc Robotics</maintainer>
   <license>BSD</license>

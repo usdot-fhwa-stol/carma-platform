@@ -76,7 +76,6 @@ void PinPointApplication::initialize() {
     pnh_->param<std::string>("odom_frame", odom_frame, "odom");
     pnh_->param<std::string>("base_link_frame", base_link_frame, "base_link");
     pnh_->param<std::string>("sensor_frame", sensor_frame, "pinpoint");
-    pnh_->param<std::string>("world_frame", world_frame, "earth");
 
     pnh_->param<bool>("publish_tf", publish_tf, false);
 
@@ -165,11 +164,9 @@ void PinPointApplication::onDisconnectHandler() {
  * Translates torc PinPoint Velocity into base_link_frame and publishes topic
  */
 void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity &vel) {
-    static unsigned int seq = 1;
     geometry_msgs::TwistStamped msg;
 
     msg.header.frame_id = base_link_frame;
-    msg.header.seq = seq++;
     try {
         msg.header.stamp.fromNSec(vel.time * static_cast<uint64_t>(1000));
     }catch(std::runtime_error e)
@@ -222,12 +219,10 @@ void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity 
  */
 void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalPose &pose) {
 
-    static unsigned int seq = 1;
 
     /// <a href="http://docs.ros.org/api/sensor_msgs/html/msg/NavSatFix.html">http://docs.ros.org/api/sensor_msgs/html/msg/NavSatFix.html</a>
     sensor_msgs::NavSatFix msg;
-    msg.header.frame_id = world_frame;
-    msg.header.seq = seq++;
+    msg.header.frame_id = sensor_frame;
     try {
         msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
     }catch(std::runtime_error e)
@@ -251,10 +246,12 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
 
     cav_msgs::HeadingStamped heading;
     heading.header = msg.header;
-    heading.header.frame_id = sensor_frame;
+    heading.header.frame_id = "0"; //no frame
+
 
     //Convert yaw [-180,180] to  [0,360] degrees east of north
     heading.heading = pose.yaw < 0 ? 360 + pose.yaw : pose.yaw;
+
     heading_pub_.publish(heading);
 
 }
@@ -262,10 +259,8 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
 void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPose &pose) {
     geometry_msgs::TransformStamped tf;
 
-    static unsigned int seq = 1;
     nav_msgs::Odometry msg;
     msg.header.frame_id = odom_frame;
-    msg.header.seq = seq++;
     try {
         msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
     }catch(std::runtime_error e)
@@ -325,6 +320,7 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
         geometry_msgs::TransformStamped transformStamped;
 
         transformStamped.header = msg.header;
+        transformStamped.child_frame_id = msg.child_frame_id;
         transformStamped.transform.translation.x = msg.pose.pose.position.x;
         transformStamped.transform.translation.y = msg.pose.pose.position.y;
         transformStamped.transform.translation.z = msg.pose.pose.position.z;
