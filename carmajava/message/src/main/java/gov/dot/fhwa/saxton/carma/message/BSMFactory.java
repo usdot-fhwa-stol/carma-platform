@@ -59,10 +59,7 @@ public class BSMFactory {
 		log.info("BSMFactory: Start to encode bsm message");
 		byte[] encode_msg = encode_BSM(
 				plain_msg.getCoreData(),
-				new byte[] {
-						plain_msg.getCoreData().getId().getByte(0), plain_msg.getCoreData().getId().getByte(1),
-						plain_msg.getCoreData().getId().getByte(2), plain_msg.getCoreData().getId().getByte(3)
-						},
+				plain_msg.getCoreData().getId().toByteBuffer().array(),
 				plain_msg.getCoreData().getAccuracy(), plain_msg.getCoreData().getTransmission(),
 				plain_msg.getCoreData().getAccelSet(), brakeStatus, plain_msg.getCoreData().getSize());
 		skeleton.setMessageType("BSM");
