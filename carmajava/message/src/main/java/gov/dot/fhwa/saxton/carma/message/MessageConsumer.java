@@ -82,7 +82,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 	List<String> drivers_data = new ArrayList<>();
 
 	//Log for this node
-	Log log;
+	Log log = null;
 	
 	//Connected Node
 	ConnectedNode connectedNode = null;
@@ -214,18 +214,19 @@ public class MessageConsumer extends SaxtonBaseNode {
 		});
 		
 		// This CancellableLoop will be canceled automatically when the node shuts down.
-//		connectedNode.executeCancellableLoop(new CancellableLoop() {
-//			private int sequenceNumber;
-//			@Override
-//			protected void setup() {
-//				sequenceNumber = 0;
-//			}
-//			@Override
-//			protected void loop() throws InterruptedException {
-//				sequenceNumber++;
-//				Thread.sleep(1000);
-//			}
-//		});
+		connectedNode.executeCancellableLoop(new CancellableLoop() {
+			private int sequenceNumber;
+			@Override
+			protected void setup() {
+				sequenceNumber = 0;
+			}
+			@Override
+			protected void loop() throws InterruptedException {
+				sequenceNumber++;
+				Thread.sleep(1000);
+			}
+		});
+
 	}
 
 	@Override

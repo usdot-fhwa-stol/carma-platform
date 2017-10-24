@@ -79,7 +79,6 @@ public class BSMFactory {
 		for(int i = 0; i < channelBuffer.capacity(); i++) {
 			encoded_bsm[i] = channelBuffer.getByte(i);
 		}
-		log.info("Here!!!!!!!!!!!!!!" + Arrays.toString(encoded_bsm));
 		decode_BSM(encoded_bsm, skeleton.getCoreData());
 	}
 }
