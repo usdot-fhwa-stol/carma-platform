@@ -109,7 +109,7 @@ public class MockPinPointDriver extends AbstractMockDriver {
       // Set Data
       // Build Heading Message
       headingMsg.getHeader().setFrameId("0"); // Heading is deg east of north and therefore does not have a frame
-      headingMsg.getHeader().setSeq(Integer.parseInt(elements[SAMPLE_ID_IDX]));
+      headingMsg.getHeader().setStamp(time);
       headingMsg.getHeader().setSeq(seq);
       headingMsg.setHeading(Float.parseFloat(elements[HEADING_IDX]));
 
