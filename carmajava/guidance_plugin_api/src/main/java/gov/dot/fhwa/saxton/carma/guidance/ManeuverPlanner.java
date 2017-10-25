@@ -40,7 +40,7 @@ public class ManeuverPlanner {
    * Modifies the argument maneuver m in place
    */
   public void planManeuver(IManeuver m, double startDist) {
-    m.planToTargetSpeed(maneuverInputs, guidanceCommands, startDist);
+    m.plan(maneuverInputs, guidanceCommands, startDist);
   }
 
   /**
