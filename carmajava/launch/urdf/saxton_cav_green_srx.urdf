@@ -30,7 +30,7 @@
   <!-- host_vehicle -> position_sensor Transform -->
   <joint name="host_vehicle_to_position_sensor" type="fixed">
     <parent link="host_vehicle" />
-    <child link="position_sensor" />
+    <child link="pinpoint" />
     <origin xyz="-.5 0 -1" rpy="3.145159 0 0" />
   </joint>
 
