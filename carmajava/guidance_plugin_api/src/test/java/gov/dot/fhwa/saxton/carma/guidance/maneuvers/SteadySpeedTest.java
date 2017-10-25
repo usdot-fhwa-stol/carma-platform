@@ -24,13 +24,13 @@ public class SteadySpeedTest {
         double targetSpeed = inputs_.getTargetSpeed();
         double maxAccel = inputs_.getAccel();
 
-        //plan the maneuver
+        //planToTargetSpeed the maneuver
         SteadySpeed mvr = new SteadySpeed();
         mvr.setSpeeds(targetSpeed, targetSpeed); //yes, the same variable is repeated here for start & end speeds
         mvr.setMaxAccel(maxAccel);
 
         double startDist = inputs_.getStartDist();
-        mvr.plan(inputs_, commands_, startDist);
+        mvr.planToTargetSpeed(inputs_, commands_, startDist);
         double endDist = mvr.getEndDistance();
         assertEquals(startDist, endDist, 0.001);
 
@@ -75,7 +75,7 @@ public class SteadySpeedTest {
         SteadySpeed mvr = new SteadySpeed();
         double startDist = inputs_.getStartDist();
         try {
-            mvr.plan(inputs_, commands_, startDist); //should throw exception
+            mvr.planToTargetSpeed(inputs_, commands_, startDist); //should throw exception
             double endDist = mvr.getEndDistance();
             assertEquals(startDist, endDist, 0.001);
             assertTrue(false);

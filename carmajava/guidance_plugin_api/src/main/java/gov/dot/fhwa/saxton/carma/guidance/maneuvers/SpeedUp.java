@@ -32,8 +32,8 @@ public class SpeedUp extends LongitudinalManeuver {
      * ASSUMES that the target speed has been specified such that it does not exceed and infrastructure speed limit.
      */
     @Override
-    public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double targetSpeed) throws IllegalStateException, ArithmeticException {
-        super.planToTargetSpeed(inputs, commands, startDist, targetSpeed);
+    public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
+        super.planToTargetSpeed(inputs, commands, startDist);
 
         //verify proper speed relationships
         if (endSpeed_ <= startSpeed_) {
@@ -73,7 +73,8 @@ public class SpeedUp extends LongitudinalManeuver {
 
         //if speed change is going to be only slight then
         double deltaV = endSpeed_ - startSpeed_; //always positive
-        double displacement = endDist - startDist;
+        double lagDistance = startSpeed_*inputs_.getResponseLag();
+        double displacement = endDist - startDist - lagDistance;
         workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement;
 
         //compute the time it will take to perform this ideal speed change

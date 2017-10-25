@@ -51,11 +51,6 @@ class LongitudinalTestManeuver extends LongitudinalManeuver {
   }
 
   @Override
-  public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
-
-  }
-
-  @Override
   public boolean executeTimeStep() throws IllegalStateException {
     return false;
   }
@@ -109,7 +104,12 @@ class LateralTestManeuver implements IManeuver {
   }
 
   @Override
-  public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+  public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+
+  }
+
+  @Override
+  public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
 
   }
 

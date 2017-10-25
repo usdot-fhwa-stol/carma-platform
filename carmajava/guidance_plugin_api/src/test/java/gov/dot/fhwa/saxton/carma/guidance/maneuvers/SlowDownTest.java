@@ -23,14 +23,14 @@ public class SlowDownTest {
         double targetSpeed = inputs_.getTargetSpeed();
         double maxAccel = inputs_.getAccel();
 
-        //plan the maneuver
+        //planToTargetSpeed the maneuver
         SlowDown mvr = new SlowDown();
         double startSpeed = inputs_.getFastSpeed();
         mvr.setSpeeds(startSpeed, targetSpeed);
         mvr.setMaxAccel(maxAccel);
 
         double startDist = inputs_.getStartDist();
-        mvr.plan(inputs_, commands_, startDist);
+        mvr.planToTargetSpeed(inputs_, commands_, startDist);
         double endDist = mvr.getEndDistance();
 
         //compute expected distance required to perform the maneuver
