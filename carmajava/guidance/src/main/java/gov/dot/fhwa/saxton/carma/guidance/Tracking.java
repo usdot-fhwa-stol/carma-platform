@@ -63,7 +63,6 @@ public class Tracking extends GuidanceComponent {
 	private boolean heading_ready = false;
 	private boolean velocity_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
-	private AtomicReference<GuidanceState> state = new AtomicReference<GuidanceState>();
 	private Random randomIdGenerator = new Random();
 	private byte[] random_id = new byte[4];
 	private IPublisher<BSM> bsmPublisher;
@@ -87,8 +86,6 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void onGuidanceStartup() {
-		
-		state.set(GuidanceState.STARTUP);
 		
 		// Publishers
 		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
@@ -122,17 +119,21 @@ public class Tracking extends GuidanceComponent {
 	@Override
 	public void onSystemReady() {
 		
-		state.set(GuidanceState.DRIVERS_READY);
-		
 		// Make service call to get drivers
 		// Do not have access to SaxtonBaseNode method from here. Implement a simple waitForService.
 		try {
 			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
 			int counter = 0;
 			while(getDriversWithCapabilitiesClient == null && counter++ < 10) {
-				getDriversWithCapabilitiesClient = node.newServiceClient("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+				try{
+					getDriversWithCapabilitiesClient = node.newServiceClient("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+				} catch (ServiceNotFoundException ex_0) {
+					log.warn("Tracking: node could not find service get_drivers_with_capabilities.");
+				} catch (RosRuntimeException ex_1) {
+					log.info("Tracking: runtime exception happened and ignored.");
+				}
 				if(getDriversWithCapabilitiesClient == null) {
-					log.warn("Tracking: node could not find service get_drivers_with_capabilities and is keeping trying...");
+					log.warn("Tracking: Trying to find service get_drivers_with_capabilities again.");
 				}
 				Thread.sleep(1000);
 			}
@@ -173,7 +174,6 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void onGuidanceEnable() {
-		state.set(GuidanceState.ENGAGED);
 	}
 
 	@Override
@@ -248,8 +248,8 @@ public class Tracking extends GuidanceComponent {
 			// Set length and width only for the first time
 			if (vehicleLength == 0 && vehicleWidth == 0) {
 				ParameterTree param = node.getParameterTree();
-				vehicleLength = (float) param.getDouble("/saxton_cav/vehicle_length");
-				vehicleWidth = (float) param.getDouble("/saxton_cav/vehicle_width");
+				vehicleLength = (float) param.getDouble("~vehicle_length");
+				vehicleWidth = (float) param.getDouble("~vehicle_width");
 			}
 			coreData.getSize().setVehicleLength(vehicleLength);
 			coreData.getSize().setVehicleWidth(vehicleWidth);

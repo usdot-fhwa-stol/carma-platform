@@ -120,6 +120,10 @@
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Tracking Thread-->
+        <remap from="~vehicle_length"
+               to="/$(arg TOP_NS)/vehicle_length"/>
+        <remap from="~vehicle_width"
+               to="/$(arg TOP_NS)/vehicle_width"/>
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
