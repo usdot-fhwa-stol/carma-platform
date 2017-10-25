@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.message;
 
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -39,6 +40,7 @@ public class BSMFactory {
 	private static native byte[] encode_BSM(Object bsm_core, byte[] bsm_id, Object accuracy, Object transmission,
 			Object accelset, byte[] brakeStatus, Object size);
 
+	private static native void decode_BSM(byte[] encoded_array, Object plain_msg);
 	/**
 	 * This method is used by MessageConsumer. It takes whole BSM message object
 	 * and an empty ByteArray message. After calling this method,
@@ -57,13 +59,26 @@ public class BSMFactory {
 				plain_msg.getCoreData().getBrakes().getAuxBrakes().getAuxiliaryBrakeStatus()
 				};
 		log.info("BSMFactory: Start to encode bsm message");
+		byte[] temp_ID = new byte[4];
+		for(int i = 0; i < plain_msg.getCoreData().getId().capacity(); i++) {
+			temp_ID[i] = plain_msg.getCoreData().getId().getByte(i);
+		}
 		byte[] encode_msg = encode_BSM(
 				plain_msg.getCoreData(),
-				plain_msg.getCoreData().getId().toByteBuffer().array(),
+				temp_ID,
 				plain_msg.getCoreData().getAccuracy(), plain_msg.getCoreData().getTransmission(),
 				plain_msg.getCoreData().getAccelSet(), brakeStatus, plain_msg.getCoreData().getSize());
 		skeleton.setMessageType("BSM");
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
 		skeleton.setContent(buffer);
+	}
+	
+	public static void decode(ByteArray encoded_msg, BSM skeleton, Log log) {
+		ChannelBuffer channelBuffer = encoded_msg.getContent();
+		byte[] encoded_bsm = new byte[channelBuffer.capacity()];
+		for(int i = 0; i < channelBuffer.capacity(); i++) {
+			encoded_bsm[i] = channelBuffer.getByte(i);
+		}
+		decode_BSM(encoded_bsm, skeleton.getCoreData());
 	}
 }
