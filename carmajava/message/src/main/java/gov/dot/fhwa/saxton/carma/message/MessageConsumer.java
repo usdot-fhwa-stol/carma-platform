@@ -85,7 +85,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 	private Log log = null;
 	
 	//Connected Node
-	private ConnectedNode connectedNode = null;
+	protected ConnectedNode connectedNode = null;
 	
 	@Override
 	public GraphName getDefaultNodeName() {
@@ -204,7 +204,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 					if(outboundPub != null && driversReady) {
 						log.info("MessageConsumer received BSM. Calling factory to encode data...");
 						ByteArray byteArray = outboundPub.newMessage();
-						BSMFactory.encode(bsm, byteArray, log);
+						BSMFactory.encode(bsm, byteArray, log, connectedNode);
 						log.info("MessageConsumer finished encoding BSM and is going to publish...");
 						outboundPub.publish(byteArray);
 					}
@@ -221,11 +221,16 @@ public class MessageConsumer extends SaxtonBaseNode {
 		inboundSub.addMessageListener(new MessageListener<ByteArray>() {
 
 			@Override
-			public void onNewMessage(ByteArray arg0) {
+			public void onNewMessage(ByteArray msg) {
 				BSM decodedBSM = bsmPub.newMessage();
-				decodedBSM.getHeader().setFrameId("MessageNode");
-				BSMFactory.decode(arg0, decodedBSM, log);
-				bsmPub.publish(decodedBSM);
+				int result = BSMFactory.decode(msg, decodedBSM, log, connectedNode);
+				if(result == -1) {
+					log.error(connectedNode.getName() +  ": Incomming BSM cannot be decoded.");
+				}
+				else {
+					log.info(connectedNode.getName() + ": Incomming BSM is decoded and publishing...");
+					bsmPub.publish(decodedBSM);
+				}
 			}
 			
 		});
