@@ -22,6 +22,7 @@ import cav_srvs.GetTransformRequest;
 import cav_srvs.GetTransformResponse;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.ros.exception.RemoteException;
 import org.ros.message.MessageFactory;
@@ -49,6 +50,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   protected ConnectedNode connectedNode;
   protected EnvironmentWorker environmentWorker;
+  protected SaxtonLogger log;
 
   // Publishers
   protected Publisher<tf2_msgs.TFMessage> tfPub;
@@ -71,7 +73,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
 
-    final Log log = connectedNode.getLog();
+    this.log = new SaxtonLogger("EnvironmentManager", connectedNode.getLog());
     this.connectedNode = connectedNode;
 
     // Topics Initialization
@@ -93,7 +95,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
       alertMsg.setType(SystemAlert.FATAL);
       alertMsg.setDescription("get_transform service is not available. Roadway package will not be able to function");
       publishSystemAlert(alertMsg);
-      log.fatal(connectedNode.getName() + " Node could not find service get_transform");
+      log.logFatal("TRANSFORM", " Node could not find service get_transform");
     }
 
     // Subscribers
@@ -178,8 +180,8 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
   }
 
   @Override protected void handleException(Throwable e) {
-    String msg = "Roadway: Uncaught exception in " + connectedNode.getName() + " caught by handleException";
-    connectedNode.getLog().fatal(msg, e);
+    String msg = "Uncaught exception made it to top level handleException method";
+    log.logFatal("SHUTDOWN", msg, e);
     SystemAlert alertMsg = systemAlertPub.newMessage();
     alertMsg.setType(SystemAlert.FATAL);
     alertMsg.setDescription(msg);
@@ -226,7 +228,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
           @Override
           public void onSuccess(GetTransformResponse response) {
             if (response.getErrorStatus() != GetTransformResponse.NO_ERROR) {
-              connectedNode.getLog().warn("Attempt to get transform failed with error code: " + response.getErrorStatus());
+              log.logWarn("TRANSFORM", "Attempt to get transform failed with error code: " + response.getErrorStatus());
               rh.setResult(null);
               return;
             }
@@ -235,12 +237,12 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
           @Override
           public void onFailure(RemoteException e) {
-            connectedNode.getLog().warn("EnvironmentManager.getTransform call failed for " + getTransformClient.getName());
+            log.logWarn("TRANSFORM", "getTransform call failed for " + getTransformClient.getName());
             rh.setResult(null);
           }
         });
     } catch (InterruptedException e) {
-      connectedNode.getLog().warn("EnvironmentManager.getTransform call failed for " + getTransformClient.getName());
+      log.logWarn("TRANSFORM", "getTransform call failed for " + getTransformClient.getName());
       rh.setResult(null);
     }
     return rh.getResult();
@@ -251,7 +253,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
   }
 
   @Override public void shutdown() {
-    connectedNode.getLog().info("EnvironmentManager: Shutting down after call to shutdown function");
+    log.logInfo("SHUTDOWN", "Shutting down after call to shutdown function");
     connectedNode.shutdown();
   }
 }

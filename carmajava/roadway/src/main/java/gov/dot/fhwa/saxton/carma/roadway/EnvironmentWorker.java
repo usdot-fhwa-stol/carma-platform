@@ -5,6 +5,7 @@ import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.ros.message.Duration;
 import org.ros.message.MessageFactory;
@@ -26,7 +27,7 @@ import java.util.List;
  */
 public class EnvironmentWorker {
   // Messaging and logging
-  protected Log log;
+  protected SaxtonLogger log;
   protected IEnvironmentManager envMgr;
   protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
 
@@ -57,7 +58,7 @@ public class EnvironmentWorker {
    * @param log Logging object
    */
   public EnvironmentWorker(IEnvironmentManager envMgr, Log log) {
-    this.log = log;
+    this.log = new SaxtonLogger("EnvironmentWorker", log);
     this.envMgr = envMgr;
   }
 
@@ -223,11 +224,11 @@ public class EnvironmentWorker {
       case SystemAlert.NOT_READY:
         break;
       case SystemAlert.SHUTDOWN:
-        log.info("EnvironmentWorker: Received SHUTDOWN on system_alert");
+        log.logInfo("SHUTDOWN", "Received SHUTDOWN on system_alert");
         envMgr.shutdown();
         break;
       case SystemAlert.FATAL:
-        log.info("EnvironmentWorker: Received FATAL on system_alert");
+        log.logInfo("SHUTDOWN", "Received FATAL on system_alert");
         envMgr.shutdown();
         break;
       default:
