@@ -104,7 +104,7 @@ class LateralTestManeuver implements IManeuver {
   }
 
   @Override
-  public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+  public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
 
   }
 

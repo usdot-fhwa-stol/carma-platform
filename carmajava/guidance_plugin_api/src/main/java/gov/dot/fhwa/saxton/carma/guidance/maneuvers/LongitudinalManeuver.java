@@ -30,8 +30,8 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
 
 
     @Override
-    public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
-        super.planToTargetSpeed(inputs, commands, startDist);
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+        super.plan(inputs, commands, startDist);
 
         //check that speeds have been defined
         if (startSpeed_ < 0.0  ||  endSpeed_ < 0.0) {

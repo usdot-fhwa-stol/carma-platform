@@ -29,8 +29,8 @@ public class SlowDown extends LongitudinalManeuver {
 
 
     @Override
-    public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
-        super.planToTargetSpeed(inputs, commands, startDist);
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
+        super.plan(inputs, commands, startDist);
 
         //verify proper speed relationships
         if (endSpeed_ >= startSpeed_) {

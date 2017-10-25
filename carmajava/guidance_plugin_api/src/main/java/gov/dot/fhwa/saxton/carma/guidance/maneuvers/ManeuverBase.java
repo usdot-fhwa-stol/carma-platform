@@ -33,7 +33,7 @@ public abstract class ManeuverBase implements IManeuver {
      * will need to provide their own plan() methods to fill in the details and execute this one first.
      */
     @Override
-    public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
         inputs_ = inputs;
         commands_ = commands;
         startDist_ = startDist;

@@ -32,8 +32,8 @@ public class SpeedUp extends LongitudinalManeuver {
      * ASSUMES that the target speed has been specified such that it does not exceed and infrastructure speed limit.
      */
     @Override
-    public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
-        super.planToTargetSpeed(inputs, commands, startDist);
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
+        super.plan(inputs, commands, startDist);
 
         //verify proper speed relationships
         if (endSpeed_ <= startSpeed_) {

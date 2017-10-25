@@ -24,7 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 public interface IManeuver {
 
     /**
-     * Plans the maneuver to a target speed and makes it ready for execution
+     * Plans the maneuver to and makes it ready for execution
      *
      * @param inputs - the object that provides necessary input data about the route
      * @param commands - the object that will take output commands
@@ -32,7 +32,7 @@ public interface IManeuver {
      * @param targetSpeed - the speed at which this maneuver is to complete, m/s
      * @throws IllegalStateException if required target quantity is not defined prior to this call
      */
-    void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, UnsupportedOperationException;
+    void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, UnsupportedOperationException;
 
     /**
      * Plans the maneuver to a target end distance and makes it ready for execution
