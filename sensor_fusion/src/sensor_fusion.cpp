@@ -84,31 +84,31 @@ SensorFusionApplication::get_api(const std::string &name) {
             size_t pos = fqn.find(name);
             std::string driverName = fqn.substr(0,pos);
 
-            //Bond with the node if we haven't already
-            if(bond_map_.find(driverName) == bond_map_.end())
-            {
-                ROS_DEBUG_STREAM("Bonding to node: " << driverName);
-                ros::ServiceClient bond_client = nh_->serviceClient<cav_srvs::Bind>(driverName+"/bind");
-                cav_srvs::Bind req;
-                req.request.id = boost::lexical_cast<std::string>(uuid_);
-
-                if(bond_client.call(req))
-                {
-                    bond_map_[driverName]= std::unique_ptr<bond::Bond>(new bond::Bond(driverName+"/bond",
-                                                                              boost::lexical_cast<std::string>(uuid_),
-                                                                              boost::bind(&SensorFusionApplication::on_broken_cb,
-                                                                                          this,
-                                                                                          driverName),boost::bind(
-                                    &SensorFusionApplication::on_connected_cb,this,driverName)));
-
-                    bond_map_[driverName]->start();
+//            //Bond with the node if we haven't already
+//            if(bond_map_.find(driverName) == bond_map_.end())
+//            {
+//                ROS_DEBUG_STREAM("Bonding to node: " << driverName);
+//                ros::ServiceClient bond_client = nh_->serviceClient<cav_srvs::Bind>(driverName+"/bind");
+//                cav_srvs::Bind req;
+//                req.request.id = boost::lexical_cast<std::string>(uuid_);
+//
+//                if(bond_client.call(req))
+//                {
+//                    bond_map_[driverName]= std::unique_ptr<bond::Bond>(new bond::Bond(driverName+"/bond",
+//                                                                              boost::lexical_cast<std::string>(uuid_),
+//                                                                              boost::bind(&SensorFusionApplication::on_broken_cb,
+//                                                                                          this,
+//                                                                                          driverName),boost::bind(
+//                                    &SensorFusionApplication::on_connected_cb,this,driverName)));
+//
+//                    bond_map_[driverName]->start();
 //                    if(!bond_map_[driverName]->waitUntilFormed(ros::Duration(1.0)))
 //                    {
 //                        ROS_ERROR_STREAM("Failed to form bond");
 //                        continue;
 //                    }
-
-                }
+//
+//                }
             }
 
             //If we haven't subscribed to the topic formed by the name of the node and the service
