@@ -81,6 +81,7 @@ public class EnvironmentWorker {
   /**
    * Handler for new vehicle heading messages
    * Headings should be specified as degrees east of north
+   * TODO if base_link frame is not an +X forward frame this will need a transform as well.
    * @param heading The heading message
    */
   public void handleHeadingMsg(cav_msgs.HeadingStamped heading) {
@@ -154,7 +155,6 @@ public class EnvironmentWorker {
     Transform T_m_o = mapToOdom;
     Transform T_o_b = odomToBaseLink;
     Transform T_b_p = baseToPositionSensor;
-   // Transform T_b_p = Transform.identity();
 
     Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
     // Modify map to odom with the difference from the expected and real sensor positions
