@@ -55,9 +55,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 	private boolean driversReady = false;
 
 	// Publishers
-	Publisher<SystemAlert> alertPub;
-	Publisher<ByteArray> outboundPub; //outgoing byte array, after encode
-	Publisher<BSM> bsmPub; //incoming BSM, after decoded
+	private Publisher<SystemAlert> alertPub;
+	private Publisher<ByteArray> outboundPub; //outgoing byte array, after encode
+	private Publisher<BSM> bsmPub; //incoming BSM, after decoded
 	// protected Publisher<cav_msgs.MobilityAck> mobilityAckPub;
 	// protected Publisher<cav_msgs.MobilityGreeting> mobilityGreetingPub;
 	// protected Publisher<cav_msgs.MobilityIntro> mobilityIntroPub;
@@ -68,9 +68,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// protected Publisher<cav_msgs.Tim> timPub;
 
 	// Subscribers
-	Subscriber<SystemAlert> alertSub;
-	Subscriber<ByteArray> inboundSub; //incoming byte array, need to decode
-	Subscriber<BSM> bsmSub; //outgoing BSM, need to encode
+	private Subscriber<SystemAlert> alertSub;
+	private Subscriber<ByteArray> inboundSub; //incoming byte array, need to decode
+	private Subscriber<BSM> bsmSub; //outgoing BSM, need to encode
 	// protected Subscriber<cav_msgs.MobilityAck> mobilityAckOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityGreeting> mobilityGreetingOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityIntro> mobilityIntroOutboundSub;
@@ -78,14 +78,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// protected Subscriber<cav_msgs.MobilityPlan> mobilityPlanOutboundSub;
 
 	// Used Services
-	ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
-	List<String> drivers_data = new ArrayList<>();
+	private ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
+	private List<String> drivers_data = new ArrayList<>();
 
 	//Log for this node
-	Log log = null;
+	private Log log = null;
 	
 	//Connected Node
-	ConnectedNode connectedNode = null;
+	private ConnectedNode connectedNode = null;
 	
 	@Override
 	public GraphName getDefaultNodeName() {
@@ -119,7 +119,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		});
 		
 		//initialize bsm pub
-		bsmPub = connectedNode.newPublisher("/saxton_cav/vehicle_environment/message/bsm", BSM._TYPE);
+		bsmPub = connectedNode.newPublisher("incoming_bsm", BSM._TYPE);
 		
 		//Use cav_srvs.GetDriversWithCapabilities and wait for driversReady signal
 		try {
@@ -164,8 +164,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 						throw new RosRuntimeException("MessageConsumer can not find drivers.");
 					}
 					
-					outboundPub = connectedNode.newPublisher(drivers_data.get(1), ByteArray._TYPE);
-					inboundSub = connectedNode.newSubscriber(drivers_data.get(0), ByteArray._TYPE);
+					if(drivers_data.get(1).endsWith("outbound_binary_msg") && drivers_data.get(0).endsWith("inbound_binary_msg")) {
+						outboundPub = connectedNode.newPublisher(drivers_data.get(1), ByteArray._TYPE);
+						inboundSub = connectedNode.newSubscriber(drivers_data.get(0), ByteArray._TYPE);
+					}
+					else {
+						outboundPub = connectedNode.newPublisher(drivers_data.get(0), ByteArray._TYPE);
+						inboundSub = connectedNode.newSubscriber(drivers_data.get(1), ByteArray._TYPE);
+					}
 					
 				} catch(Exception e) {
 					handleException(e);
@@ -179,7 +185,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		}
 		
 		//Subscribers
-		bsmSub = connectedNode.newSubscriber("/saxton_cav/guidance/bsm", BSM._TYPE);
+		bsmSub = connectedNode.newSubscriber("outgoing_bsm", BSM._TYPE);
 		bsmSub.addMessageListener(new MessageListener<BSM>() {
 			@Override
 			public void onNewMessage(BSM bsm) {
