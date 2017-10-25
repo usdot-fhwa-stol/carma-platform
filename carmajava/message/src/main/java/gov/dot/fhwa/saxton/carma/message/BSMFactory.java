@@ -68,6 +68,7 @@ public class BSMFactory {
 	 * @param plain_msg Entire BSM object
 	 * @param skeleton The empty ByteArray object
 	 * @param log Logging any necessary messages
+	 * @param node ConnectedNode helps to set message header
 	 */
 	public static void encode(BSM plain_msg, ByteArray skeleton, Log log, ConnectedNode node) {
 		byte[] brakeStatus = new byte[] {
@@ -104,6 +105,7 @@ public class BSMFactory {
 	 * @param encoded_msg The encoded BSM message as a binary array
 	 * @param skeleton The empty BSM object
 	 * @param log Logging any necessary messages
+	 * @param node ConnectedNode helps to set message header
 	 * @return
 	 */
 	public static int decode(ByteArray encoded_msg, BSM skeleton, Log log, ConnectedNode node) {
