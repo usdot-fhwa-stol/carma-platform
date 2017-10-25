@@ -241,9 +241,21 @@ public class CruisingPlugin extends AbstractPlugin {
       speedUp.setSpeeds(startSpeed, endSpeed);
       speedUp.setMaxAccel(maxAccel);
       planner.planManeuver(speedUp, startDist);
-      t.addManeuver(speedUp);
 
-      maneuverEnd = speedUp.getEndDistance();
+      // Adjust our accel to complete the maneuver
+      if (speedUp.getEndDistance() > endDist)  {
+        SpeedUp speedUp2 = new SpeedUp();
+
+        speedUp2.setSpeeds(startSpeed, endSpeed);
+        speedUp2.setMaxAccel(maxAccel);
+        planner.planManeuver(speedUp2, startDist, endDist);
+        t.addManeuver(speedUp2);
+        maneuverEnd = speedUp2.getEndDistance();
+      } else {
+        t.addManeuver(speedUp);
+        maneuverEnd = speedUp.getEndDistance();
+      }
+
       log.info(String.format("Planned SPEED-UP maneuver from [%.02f, %.02f) m/s over [%.02f, %.02f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     } else if (startSpeed > endSpeed) {
       // Generate a slowdown maneuver
@@ -252,8 +264,19 @@ public class CruisingPlugin extends AbstractPlugin {
       slowDown.setMaxAccel(maxAccel);
       planner.planManeuver(slowDown, startDist);
 
-      maneuverEnd = slowDown.getEndDistance();
-      t.addManeuver(slowDown);
+      // Adjust our accel to complete the maneuver
+      if (slowDown.getEndDistance() > endDist)  {
+        SpeedUp slowDown2 = new SpeedUp();
+
+        slowDown2.setSpeeds(startSpeed, endSpeed);
+        slowDown2.setMaxAccel(maxAccel);
+        planner.planManeuver(slowDown2, startDist, endDist);
+        t.addManeuver(slowDown2);
+        maneuverEnd = slowDown2.getEndDistance();
+      } else {
+        t.addManeuver(slowDown);
+        maneuverEnd = slowDown.getEndDistance();
+      }
       log.info(String.format("Planned SLOW-DOWN maneuver from [%.02f, %.02f) m/s over [%.02f, %.02f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     }
 

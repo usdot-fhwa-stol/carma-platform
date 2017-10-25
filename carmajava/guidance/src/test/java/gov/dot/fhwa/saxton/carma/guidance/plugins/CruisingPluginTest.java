@@ -34,8 +34,10 @@ import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.SpeedLimit;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.TrajectorySegment;
@@ -51,7 +53,7 @@ public class CruisingPluginTest {
   public void setup() {
     PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
         mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-        mock(ManeuverPlanner.class), mock(Log.class));
+        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), mock(Log.class));
     cruise = new CruisingPlugin(psl);
   }
 
