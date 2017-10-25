@@ -64,7 +64,7 @@ public class TransformServer extends SaxtonBaseNode {
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
     this.connectedNode = connectedNode;
-    this.log = new SaxtonLogger("TransformServer", connectedNode.getLog());
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
     final FrameTransformTree tfTree = new FrameTransformTree();
     final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();

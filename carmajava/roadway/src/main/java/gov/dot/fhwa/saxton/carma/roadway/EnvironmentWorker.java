@@ -58,7 +58,7 @@ public class EnvironmentWorker {
    * @param log Logging object
    */
   public EnvironmentWorker(IEnvironmentManager envMgr, Log log) {
-    this.log = new SaxtonLogger("EnvironmentWorker", log);
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.envMgr = envMgr;
   }
 

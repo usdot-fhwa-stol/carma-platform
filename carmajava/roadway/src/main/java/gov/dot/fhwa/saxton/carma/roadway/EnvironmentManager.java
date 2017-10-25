@@ -73,7 +73,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
 
-    this.log = new SaxtonLogger("EnvironmentManager", connectedNode.getLog());
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
     this.connectedNode = connectedNode;
 
     // Topics Initialization

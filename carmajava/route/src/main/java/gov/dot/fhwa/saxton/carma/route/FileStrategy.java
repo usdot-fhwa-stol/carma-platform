@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -27,7 +28,7 @@ import java.io.FileReader;
  */
 public class FileStrategy implements IRouteLoadStrategy{
   protected String filePath;
-  protected Log log;
+  protected SaxtonLogger log;
 
   /**
    * Constructor initializes a FileStrategy by providing the file path
@@ -35,7 +36,7 @@ public class FileStrategy implements IRouteLoadStrategy{
    */
   public FileStrategy(String path, Log log){
     this.filePath = path;
-    this.log = log;
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
   }
 
   @Override public Route load() {
@@ -44,11 +45,11 @@ public class FileStrategy implements IRouteLoadStrategy{
       YamlReader reader = new YamlReader(fr);
       return reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
     } catch (FileNotFoundException e) {
-      log.warn("FileNotFoundException in FileStrategy route load", e);
+      log.logWarn("","FileNotFoundException in FileStrategy route load", e);
     } catch (YamlException e) {
-      log.warn("YamlException in FileStrategy route load", e);
+      log.logWarn("","YamlException in FileStrategy route load", e);
     } catch (Exception e) {
-      log.warn("Exception in FileStrategy route load", e);
+      log.logWarn("","Exception in FileStrategy route load", e);
     }
     return null;
   }

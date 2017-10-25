@@ -20,6 +20,7 @@ import cav_msgs.RouteSegment;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
@@ -53,7 +54,7 @@ import java.util.List;
 public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   protected ConnectedNode connectedNode;
-
+  protected SaxtonLogger log;
   // Topics
   // Publishers
   Publisher<cav_msgs.SystemAlert> systemAlertPub;
@@ -79,7 +80,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
     this.connectedNode = connectedNode;
 
-    final Log log = connectedNode.getLog();
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
 
@@ -92,7 +93,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
-    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
+    routeWorker = new RouteWorker(this, connectedNode.getLog(), params.getString("~default_database_path"));
 
     // Subscribers
     //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
@@ -166,8 +167,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   }//onStart
 
   @Override protected void handleException(Throwable e) {
-    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
-    connectedNode.getLog().fatal(msg, e);
+    String msg = "Uncaught exception made it to top level handleException method";
+    log.logFatal("SHUTDOWN", msg, e);
     SystemAlert alertMsg = systemAlertPub.newMessage();
     alertMsg.setType(SystemAlert.FATAL);
     alertMsg.setDescription(msg);
@@ -199,7 +200,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   }
 
   @Override public void shutdown() {
-    connectedNode.getLog().info("Route: Route Manager shutdown method called");
+    log.logInfo("SHUTDOWN", "Shutdown method called");
     this.connectedNode.shutdown();
   }
 }//AbstractNodeMain
