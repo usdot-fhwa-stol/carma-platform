@@ -109,7 +109,7 @@ SensorFusionApplication::get_api(const std::string &name) {
 //                    }
 //
 //                }
-            }
+//            }
 
             //If we haven't subscribed to the topic formed by the name of the node and the service
             //add this topic to the return list
