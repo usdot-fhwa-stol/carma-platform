@@ -164,14 +164,25 @@ public class MessageConsumer extends SaxtonBaseNode {
 						throw new RosRuntimeException("MessageConsumer can not find drivers.");
 					}
 					
-					if(drivers_data.get(1).endsWith("outbound_binary_msg") && drivers_data.get(0).endsWith("inbound_binary_msg")) {
-						outboundPub = connectedNode.newPublisher(drivers_data.get(1), ByteArray._TYPE);
-						inboundSub = connectedNode.newSubscriber(drivers_data.get(0), ByteArray._TYPE);
+					String J2735_inbound_binary_msg = null;
+					String J2735_outbound_binary_msg = null;
+					
+					for(String s : drivers_data) {
+						if(s.endsWith("/arada_application/comms/inbound_binary_msg") || s.endsWith("/dsrc/comms/inbound_binary_msg")) {
+							J2735_inbound_binary_msg = s;
+						}
+						else if(s.endsWith("/arada_application/comms/outbound_binary_msg") || s.endsWith("/dsrc/comms/outbound_binary_msg")) {
+							J2735_outbound_binary_msg = s;
+						}
 					}
-					else {
-						outboundPub = connectedNode.newPublisher(drivers_data.get(0), ByteArray._TYPE);
-						inboundSub = connectedNode.newSubscriber(drivers_data.get(1), ByteArray._TYPE);
+					
+					if(J2735_inbound_binary_msg == null || J2735_outbound_binary_msg == null) {
+						log.error("MessageConsumer unable to find suitable dsrc driver!");
+						throw new RosRuntimeException("Unable to find suitable dsrc driver!");
 					}
+					
+					outboundPub = connectedNode.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
+					inboundSub = connectedNode.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
 					
 				} catch(Exception e) {
 					handleException(e);
