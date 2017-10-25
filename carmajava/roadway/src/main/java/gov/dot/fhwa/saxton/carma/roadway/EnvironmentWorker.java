@@ -46,7 +46,6 @@ public class EnvironmentWorker {
   protected Transform earthToMap = null;
   protected Transform baseToPositionSensor = null;
   protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
-  protected boolean baseToPositionSensorProvidedByDriver = false;
   // Transform Update parameters
   protected Time prevMapTime = null;
   protected Duration MAP_UPDATE_PERIOD = new Duration(5); // Time in seconds between updating the map frame location
