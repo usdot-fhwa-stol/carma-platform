@@ -46,6 +46,7 @@ public class EnvironmentWorker {
   protected Transform earthToMap = null;
   protected Transform baseToPositionSensor = null;
   protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
+  protected boolean baseToPositionSensorProvidedByDriver = false;
   // Transform Update parameters
   protected Time prevMapTime = null;
   protected Duration MAP_UPDATE_PERIOD = new Duration(5); // Time in seconds between updating the map frame location
@@ -175,19 +176,20 @@ public class EnvironmentWorker {
         return; // If the request for this transform failed wait for another odometry update to request it
       }
     }
+    if (odometry.getChildFrameId().equals(baseLinkFrame)) { // If the odometry is already in the base_link frame TODO make this check more robust
+      odomToBaseLink = Transform.fromPoseMessage(odometry.getPose().getPose());
+      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
+      return;
+    }
     // Extract the location of the position sensor relative to the odom frame
     // Covariance is ignored as filtering was already done by sensor fusion
-    geometry_msgs.Pose hostPose = odometry.getPose().getPose();
-    geometry_msgs.Point hostPoint = hostPose.getPosition();
-    Quaternion hostOrientation = Quaternion.fromQuaternionMessage(hostPose.getOrientation());
-    Vector3 trans = new Vector3(hostPoint.getX(), hostPoint.getY(), hostPoint.getZ());
     // Calculate odom->base_link
     // T_x_y = transform describing location of y with respect to x
     // p = position sensor frame (from odometry)
     // o = odom frame
     // b = baselink frame (as has been calculated by odometry up to this point)
     // T_o_b = T_o_p * inv(T_b_p)
-    Transform T_o_p = new Transform(trans, hostOrientation);
+    Transform T_o_p = Transform.fromPoseMessage(odometry.getPose().getPose());
     Transform T_b_p = baseToPositionSensor;
     Transform T_o_b = T_o_p.multiply(T_b_p.invert());
     odomToBaseLink = T_o_b;
