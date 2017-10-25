@@ -40,7 +40,7 @@ public class EnvironmentWorker {
   protected final String mapFrame = "map";
   protected final String odomFrame = "odom";
   protected final String baseLinkFrame = "base_link";
-  protected final String positionSensorFrame = "position_sensor";
+  protected final String positionSensorFrame = "pinpoint"; //TODO set this name via ros param
   // Transforms
   protected Transform mapToOdom = Transform.identity();
   protected Transform earthToMap = null;
