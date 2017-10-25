@@ -32,8 +32,8 @@ public class SteadySpeed extends LongitudinalManeuver {
      * to set it to whatever larger distance is desired to fill up space in a trajectory.
      */
     @Override
-    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
-        super.plan(inputs, commands, startDist);
+    public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+        super.planToTargetSpeed(inputs, commands, startDist);
 
         //check that both the beginning and end speeds are the same
         if (Math.abs(startSpeed_ - endSpeed_) > 0.05) {
@@ -43,6 +43,21 @@ public class SteadySpeed extends LongitudinalManeuver {
 
         //set end distance to start distance
         endDist_ = startDist;
+    }
+
+
+    @Override
+    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
+        super.planToTargetDistance(inputs, commands, startDist, endDist);
+
+        //check that both the beginning and end speeds are the same
+        if (Math.abs(startSpeed_ - endSpeed_) > 0.05) {
+            throw new IllegalStateException("SteadySpeed maneuver being planned with start speed = " + startSpeed_
+                                            + ", target speed = " + endSpeed_);
+        }
+
+        //set end distance to start distance
+        endDist_ = endDist;
     }
 
 

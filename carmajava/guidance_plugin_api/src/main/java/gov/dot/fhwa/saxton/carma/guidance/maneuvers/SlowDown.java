@@ -29,8 +29,8 @@ public class SlowDown extends LongitudinalManeuver {
 
 
     @Override
-    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
-        super.plan(inputs, commands, startDist);
+    public void planToTargetSpeed(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
+        super.planToTargetSpeed(inputs, commands, startDist);
 
         //verify proper speed relationships
         if (endSpeed_ >= startSpeed_) {
@@ -56,6 +56,28 @@ public class SlowDown extends LongitudinalManeuver {
         double lagDistance = startSpeed_*inputs_.getResponseLag();
         endDist_ = startDist_ + idealLength + lagDistance + 0.2*endSpeed_;
    }
+
+
+    @Override
+    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
+        super.planToTargetDistance(inputs, commands, startDist, endDist);
+
+        //verify proper speed relationships
+        if (endSpeed_ >= startSpeed_) {
+            throw new ArithmeticException("SlowDown maneuver being planned with startSpeed = " + startSpeed_ +
+                                            ", endSpeed = " + endSpeed_);
+        }
+
+        //if speed change is going to be only slight then
+        double deltaV = endSpeed_ - startSpeed_; //always positive
+        double displacement = endDist - startDist;
+        workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement;
+
+        //compute the time it will take to perform this ideal speed change
+        deltaT_ = deltaV / workingAccel_;
+
+        endDist_ = endDist;
+    }
 
 
     @Override
