@@ -154,6 +154,7 @@ public class EnvironmentWorker {
     Transform T_m_o = mapToOdom;
     Transform T_o_b = odomToBaseLink;
     Transform T_b_p = baseToPositionSensor;
+   // Transform T_b_p = Transform.identity();
 
     Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
     // Modify map to odom with the difference from the expected and real sensor positions
