@@ -44,7 +44,7 @@ int SensorFusionApplication::run() {
     ROS_INFO_STREAM("Waiting for Interface Manager");
     ros::service::waitForService("get_drivers_with_capabilities");
 
-    ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSMCoreData>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
+    ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSM>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
     ros::Timer timer = nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent& ev){ update_subscribed_services();});
 
     odom_pub_ = pnh.advertise<nav_msgs::Odometry>("odometry",1);

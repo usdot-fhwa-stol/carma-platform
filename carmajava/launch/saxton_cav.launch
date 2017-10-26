@@ -160,8 +160,6 @@
               args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
-          <remap from="incoming_bsm"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
           <remap from="outgoing_bsm"
                  to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
           <remap from="mobility_ack_outbound"
@@ -213,7 +211,7 @@
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="bsm"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/incoming_bsm"/>
           <remap from="get_drivers_with_capabilities"
                  to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
         </node>
@@ -348,7 +346,7 @@
       </include>
       <!-- Simulated Radar Driver Node -->
       <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_object_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+            launch-prefix="xterm -e jdb" args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
         <param name="simulated_driver" type="string" value="radar"/>
         <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
