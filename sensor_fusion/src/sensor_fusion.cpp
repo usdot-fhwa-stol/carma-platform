@@ -44,7 +44,7 @@ int SensorFusionApplication::run() {
     ROS_INFO_STREAM("Waiting for Interface Manager");
     ros::service::waitForService("get_drivers_with_capabilities");
 
-    ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSMCoreData>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
+    ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSM>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
     ros::Timer timer = nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent& ev){ update_subscribed_services();});
 
     odom_pub_ = pnh.advertise<nav_msgs::Odometry>("odometry",1);
@@ -186,7 +186,7 @@ void SensorFusionApplication::publish_updates() {
     while(!bsm_q_.empty())
     {
         cav_msgs::ExternalObject externalObject;
-        cav_msgs::BSMCoreDataConstPtr& bsm = bsm_q_.front();
+        cav_msgs::BSMConstPtr& bsm = bsm_q_.front();
         externalObject.header = header;
 
         //todo: add real pose calculation
@@ -195,15 +195,15 @@ void SensorFusionApplication::publish_updates() {
         externalObject.pose.pose = pose;
 
         geometry_msgs::Twist twist;
-        twist.linear.x = bsm->speed;
+        twist.linear.x = bsm->core_data.speed;
 
         externalObject.velocity.twist = twist;
         externalObject.velocity_inst.twist = twist;
 
         geometry_msgs::Vector3 size;
-        size.x = bsm->size.vehicle_length;
-        size.y = bsm->size.vehicle_width;
-        size.z = bsm->size.vehicle_width;
+        size.x = bsm->core_data.size.vehicle_length;
+        size.y = bsm->core_data.size.vehicle_width;
+        size.z = bsm->core_data.size.vehicle_width;
         externalObject.size = size;
 
         //todo: process a bsm message, update this to the BSM message type
