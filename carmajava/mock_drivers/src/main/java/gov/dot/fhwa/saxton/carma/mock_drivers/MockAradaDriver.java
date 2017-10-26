@@ -87,7 +87,10 @@ public class MockAradaDriver extends AbstractMockDriver {
       recvMsg.setMessageType(elements[MSG_TYPE_IDX]);
 
       // Raw byte data has the form "0a 1f 23"
-      String rawByteString = elements[RAW_BYTES_IDX];
+      // String rawByteString = elements[RAW_BYTES_IDX];
+      // Set to static data for test
+      String rawByteString = "00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8";
+      
       // All non hex characters are removed. This does not support use of x such as 0x00
       rawByteString = rawByteString.replaceAll("[^A-Fa-f0-9]", "");
       // An uneven number of characters will have a 0 appended to the end

@@ -92,10 +92,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	jfloat angle = (*env) -> CallFloatMethod(env, bsm, mid_getAngle);
 	message->value.choice.BasicSafetyMessage.coreData.angle = angle / 1.5;
 
-	jmethodID mid_accelset_getLongitude = (*env) -> GetMethodID(env, accelset_class, "getLongitude", "()F");
-	jmethodID mid_accelset_getLatitude = (*env) -> GetMethodID(env, accelset_class, "getLatitude", "()F");
+	jmethodID mid_accelset_getLongitude = (*env) -> GetMethodID(env, accelset_class, "getLongitudinal", "()F");
+	jmethodID mid_accelset_getLatitude = (*env) -> GetMethodID(env, accelset_class, "getLateral", "()F");
 	jmethodID mid_accelset_getVert = (*env) -> GetMethodID(env, accelset_class, "getVert", "()F");
-	jmethodID mid_accelset_getYaw = (*env) -> GetMethodID(env, accelset_class, "getYaw", "()F");
+	jmethodID mid_accelset_getYaw = (*env) -> GetMethodID(env, accelset_class, "getYawRate", "()F");
 	jfloat accel_long = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getLongitude);
 	jfloat accel_lat = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getLatitude);
 	jfloat accel_vert = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getVert);
@@ -139,4 +139,13 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	}
 	(*env) -> SetByteArrayRegion(env, outJNIArray, 0, length, buffer);
 	return outJNIArray;
+}
+
+JNIEXPORT void JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_decode_1BSM
+  (JNIEnv *env, jclass cls, jbyteArray encoded_bsm, jobject plain_bsm) {
+
+	//Set bsm msgCnt for test
+	jclass bsm_core_class = (*env) -> GetObjectClass(env, plain_bsm);
+	jmethodID mid_setMsgCount = (*env) -> GetMethodID(env, bsm_core_class, "setMsgCount", "(B)V");
+	(*env) -> CallVoidMethod(env, plain_bsm, mid_setMsgCount, 111);
 }

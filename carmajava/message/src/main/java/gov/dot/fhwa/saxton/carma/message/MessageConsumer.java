@@ -21,14 +21,11 @@ import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
@@ -57,12 +54,10 @@ public class MessageConsumer extends SaxtonBaseNode {
 
 	private boolean driversReady = false;
 
-	// Publisher
-	// Some existed Pubs are not working. Disable them to focus on BSM.
-	Publisher<SystemAlert> alertPub;
-	Publisher<ByteArray> outboundPub;
-	// TODO uncomment when messages are defined and BSM is ready.
-	// protected Publisher<cav_msgs.BSM> bsmPub;
+	// Publishers
+	private Publisher<SystemAlert> alertPub;
+	private Publisher<ByteArray> outboundPub; //outgoing byte array, after encode
+	private Publisher<BSM> bsmPub; //incoming BSM, after decoded
 	// protected Publisher<cav_msgs.MobilityAck> mobilityAckPub;
 	// protected Publisher<cav_msgs.MobilityGreeting> mobilityGreetingPub;
 	// protected Publisher<cav_msgs.MobilityIntro> mobilityIntroPub;
@@ -73,10 +68,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// protected Publisher<cav_msgs.Tim> timPub;
 
 	// Subscribers
-	// Some existed Subs are not working. Disable them to focus on BSM.
-	Subscriber<SystemAlert> alertSub;
-	Subscriber<BSM> hostBsmSub;
-	// TODO uncomment when messages are defined
+	private Subscriber<SystemAlert> alertSub;
+	private Subscriber<ByteArray> inboundSub; //incoming byte array, need to decode
+	private Subscriber<BSM> bsmSub; //outgoing BSM, need to encode
 	// protected Subscriber<cav_msgs.MobilityAck> mobilityAckOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityGreeting> mobilityGreetingOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityIntro> mobilityIntroOutboundSub;
@@ -84,14 +78,15 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// protected Subscriber<cav_msgs.MobilityPlan> mobilityPlanOutboundSub;
 
 	// Used Services
-	ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
-	List<String> responseCapabilities_comms = new ArrayList();
+	private ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
+	private List<String> drivers_data = new ArrayList<>();
 
 	//Log for this node
-	Log log = null;
+	private Log log = null;
 	
 	//Connected Node
-	ConnectedNode connectedNode = null;
+	private ConnectedNode connectedNode = null;
+	
 	@Override
 	public GraphName getDefaultNodeName() {
 		return GraphName.of("message_consumer");
@@ -114,7 +109,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 					if(message.getType() == SystemAlert.FATAL || message.getType() == SystemAlert.SHUTDOWN) {
 						connectedNode.shutdown();
 					}
-					if(message.getType() == SystemAlert.DRIVERS_READY) {
+					else if(message.getType() == SystemAlert.DRIVERS_READY) {
 						driversReady = true;
 					}
 				} catch (Exception e) {
@@ -123,7 +118,10 @@ public class MessageConsumer extends SaxtonBaseNode {
 			}
 		});
 		
-		//Use cav_srvs.GetDriversWithCapabilities.
+		//initialize bsm pub
+		bsmPub = connectedNode.newPublisher("incoming_bsm", BSM._TYPE);
+		
+		//Use cav_srvs.GetDriversWithCapabilities and wait for driversReady signal
 		try {
 			while(getDriversWithCapabilitiesClient == null) {
 				if(driversReady) {
@@ -138,11 +136,68 @@ public class MessageConsumer extends SaxtonBaseNode {
 			handleException(e);
 		}
 		
-		
+		//initialize outboundPub
+		while(outboundPub == null) {
+			if(driversReady) {
+				try {
+					GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
+					request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
+					int counter = 0;
+					while(drivers_data.size() == 0 && counter++ < 10) {
+						RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
+							
+							@Override
+							public void onSuccess(GetDriversWithCapabilitiesResponse response) {
+								drivers_data = response.getDriverData();
+								log.info("MessageConsumer GetDriversWithCapabilitiesResponse: " + drivers_data);
+							}
+							
+							@Override
+							public void onFailure(RemoteException e) {
+								throw new RosRuntimeException(e);
+							}
+							
+						});
+					}
+					
+					if(counter == 10 && drivers_data.size() == 0) {
+						throw new RosRuntimeException("MessageConsumer can not find drivers.");
+					}
+					
+					String J2735_inbound_binary_msg = null;
+					String J2735_outbound_binary_msg = null;
+					
+					for(String s : drivers_data) {
+						if(s.endsWith("/arada_application/comms/inbound_binary_msg") || s.endsWith("/dsrc/comms/inbound_binary_msg")) {
+							J2735_inbound_binary_msg = s;
+						}
+						else if(s.endsWith("/arada_application/comms/outbound_binary_msg") || s.endsWith("/dsrc/comms/outbound_binary_msg")) {
+							J2735_outbound_binary_msg = s;
+						}
+					}
+					
+					if(J2735_inbound_binary_msg == null || J2735_outbound_binary_msg == null) {
+						log.error("MessageConsumer unable to find suitable dsrc driver!");
+						throw new RosRuntimeException("Unable to find suitable dsrc driver!");
+					}
+					
+					outboundPub = connectedNode.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
+					inboundSub = connectedNode.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
+					
+				} catch(Exception e) {
+					handleException(e);
+				}
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				handleException(e);
+			}
+		}
 		
 		//Subscribers
-		hostBsmSub = connectedNode.newSubscriber("/saxton_cav/guidance/bsm", BSM._TYPE);
-		hostBsmSub.addMessageListener(new MessageListener<BSM>() {
+		bsmSub = connectedNode.newSubscriber("outgoing_bsm", BSM._TYPE);
+		bsmSub.addMessageListener(new MessageListener<BSM>() {
 			@Override
 			public void onNewMessage(BSM bsm) {
 				try {
@@ -163,39 +218,33 @@ public class MessageConsumer extends SaxtonBaseNode {
 			}
 		});
 
+		inboundSub.addMessageListener(new MessageListener<ByteArray>() {
+
+			@Override
+			public void onNewMessage(ByteArray arg0) {
+				BSM decodedBSM = bsmPub.newMessage();
+				decodedBSM.getHeader().setFrameId("MessageNode");
+				BSMFactory.decode(arg0, decodedBSM, log);
+				bsmPub.publish(decodedBSM);
+			}
+			
+		});
+		
 		// This CancellableLoop will be canceled automatically when the node shuts down.
 		connectedNode.executeCancellableLoop(new CancellableLoop() {
 			private int sequenceNumber;
 			@Override
-			protected void setup() { sequenceNumber = 0; } //setup
+			protected void setup() {
+				sequenceNumber = 0;
+			}
 			@Override
 			protected void loop() throws InterruptedException {
-				if(outboundPub == null && driversReady) {
-					//Setup request and make service call with synchronizer to GetDriversWithCapabilitiesResponse to find comms driver
-					try {
-						GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
-						request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
-						RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
-							@Override
-							public void onSuccess(GetDriversWithCapabilitiesResponse response) {
-								responseCapabilities_comms = response.getDriverData();
-								log.info("MessageConsumer GetDriversWithCapabilitiesResponse: " + responseCapabilities_comms);
-							}
-							@Override
-							public void onFailure(RemoteException e) {
-								throw new RosRuntimeException(e);
-							}
-						});
-						outboundPub = connectedNode.newPublisher(responseCapabilities_comms.get(1), ByteArray._TYPE);
-					} catch(Exception e) {
-						handleException(e);
-					}
-				}
 				sequenceNumber++;
 				Thread.sleep(1000);
-			}//loop
-		});//executeCancellableLoop
-	}// onStart
+			}
+		});
+
+	}
 
 	@Override
 	protected void handleException(Throwable e) {

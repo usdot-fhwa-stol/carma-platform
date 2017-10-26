@@ -120,6 +120,10 @@
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Tracking Thread-->
+        <remap from="~vehicle_length"
+               to="/$(arg TOP_NS)/vehicle_length"/>
+        <remap from="~vehicle_width"
+               to="/$(arg TOP_NS)/vehicle_width"/>
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
@@ -156,8 +160,10 @@
               args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
-          <remap from="host_bsm"
-                 to="/$(arg TOP_NS)/$(arg GUIDE_NS)/tracking/bsm"/>
+          <remap from="incoming_bsm"
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
+          <remap from="outgoing_bsm"
+                 to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
           <remap from="mobility_ack_outbound"
                  to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_ack"/>
           <remap from="mobility_greeting_outbound"
