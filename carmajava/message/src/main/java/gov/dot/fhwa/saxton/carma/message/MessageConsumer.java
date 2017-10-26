@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.message;
 
 import cav_msgs.*;
 import cav_srvs.*;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
@@ -55,7 +56,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 	private boolean driversReady = false;
 
 	// Publishers
-	private Publisher<SystemAlert> alertPub;
 	private Publisher<ByteArray> outboundPub; //outgoing byte array, after encode
 	private Publisher<BSM> bsmPub; //incoming BSM, after decoded
 	// protected Publisher<cav_msgs.MobilityAck> mobilityAckPub;
@@ -100,7 +100,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 		this.log = connectedNode.getLog();
 		
 		//initialize alert sub, pub
-		alertPub = connectedNode.newPublisher("system_alert", SystemAlert._TYPE);
 		alertSub = connectedNode.newSubscriber("system_alert", SystemAlert._TYPE);
 		alertSub.addMessageListener(new MessageListener<SystemAlert>() {
 			@Override
@@ -246,9 +245,15 @@ public class MessageConsumer extends SaxtonBaseNode {
 
 	}
 
+	/***
+	 * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
+	 * @param e The exception to handle
+	 */
 	@Override
 	protected void handleException(Throwable e) {
-		log.error(connectedNode.getName() + "throws an exception and is about to shutdown...", e);
+
+		String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+		publishSystemAlert(AlertSeverity.FATAL, msg, e);
 		connectedNode.shutdown();
 	}
 }
