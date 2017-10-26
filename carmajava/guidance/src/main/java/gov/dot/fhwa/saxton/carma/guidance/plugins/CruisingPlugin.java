@@ -148,6 +148,8 @@ public class CruisingPlugin extends AbstractPlugin {
       limits.add(limit);
     }
 
+    log.info(String.format("Processed route with %d waypoints over %.2f m", limits.size(), dtdAccum));
+
     return limits;
   }
 
@@ -256,7 +258,7 @@ public class CruisingPlugin extends AbstractPlugin {
         maneuverEnd = speedUp.getEndDistance();
       }
 
-      log.info(String.format("Planned SPEED-UP maneuver from [%.02f, %.02f) m/s over [%.02f, %.02f) m", startSpeed, endSpeed, startDist, maneuverEnd));
+      log.info(String.format("Planned SPEED-UP maneuver from [%.2f, %.2f) m/s over [%.02f, %.2f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     } else if (startSpeed > endSpeed) {
       // Generate a slowdown maneuver
       SlowDown slowDown = new SlowDown();
@@ -277,7 +279,7 @@ public class CruisingPlugin extends AbstractPlugin {
         t.addManeuver(slowDown);
         maneuverEnd = slowDown.getEndDistance();
       }
-      log.info(String.format("Planned SLOW-DOWN maneuver from [%.02f, %.02f) m/s over [%.02f, %.02f) m", startSpeed, endSpeed, startDist, maneuverEnd));
+      log.info(String.format("Planned SLOW-DOWN maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     }
 
     // Insert a steady speed maneuver to fill whatever's left
@@ -289,7 +291,7 @@ public class CruisingPlugin extends AbstractPlugin {
       steady.overrideEndDistance(endDist);
 
       t.addManeuver(steady);
-      log.info(String.format("Planned STEADY-SPEED maneuver at %.02f m/s over [%.02f, %.02f) m", startSpeed, startDist, endDist));
+      log.info(String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", startSpeed, startDist, endDist));
     }
   }
 
