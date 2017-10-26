@@ -201,8 +201,8 @@ private:
         objects_map_[name] = event.getMessage();
     }
 
-    std::queue<cav_msgs::BSMCoreDataConstPtr> bsm_q_;
-    void bsm_cb(const cav_msgs::BSMCoreDataConstPtr& msg)
+    std::queue<cav_msgs::BSMConstPtr> bsm_q_;
+    void bsm_cb(const cav_msgs::BSMConstPtr& msg)
     {
         bsm_q_.push(msg);
     }
