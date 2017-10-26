@@ -14,7 +14,7 @@
  * the License.
  **/
 
-package gov.dot.fhwa.saxton.carma.interfacemgr;
+package gov.dot.fhwa.saxton.carma.rosutils;
 
 public enum AlertSeverity {
 

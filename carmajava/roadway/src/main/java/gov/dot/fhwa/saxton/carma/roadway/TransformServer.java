@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.roadway;
 
 import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import org.apache.commons.logging.Log;
 import org.ros.RosCore;
 import org.ros.message.MessageListener;
@@ -46,7 +47,6 @@ public class TransformServer extends SaxtonBaseNode {
   private ConnectedNode connectedNode;
   //Topics
   // Publishers
-  private Publisher<SystemAlert> systemAlertPub;
   // Subscribers
   private Subscriber<cav_msgs.SystemAlert> systemAlertSub;
   private Subscriber<tf2_msgs.TFMessage> tf_sub;
@@ -65,10 +65,6 @@ public class TransformServer extends SaxtonBaseNode {
     final FrameTransformTree tfTree = new FrameTransformTree();
     final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
-
-    //Topics
-    // Publishers
-    systemAlertPub = connectedNode.newPublisher("system_alert", SystemAlert._TYPE);
 
     // Subscribers
     systemAlertSub = connectedNode.newSubscriber("system_alert", SystemAlert._TYPE);
@@ -151,12 +147,10 @@ public class TransformServer extends SaxtonBaseNode {
   }
 
   @Override protected void handleException(Throwable e) {
-    String msg = "TransformServer: Uncaught exception in " + connectedNode.getName() + " caught by handleException";
-    connectedNode.getLog().fatal(msg, e);
-    SystemAlert alertMsg = systemAlertPub.newMessage();
-    alertMsg.setType(SystemAlert.FATAL);
-    alertMsg.setDescription(msg);
-    systemAlertPub.publish(alertMsg);
+
+    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+    publishSystemAlert( AlertSeverity.FATAL, msg, e);
     connectedNode.shutdown();
+
   }
 }

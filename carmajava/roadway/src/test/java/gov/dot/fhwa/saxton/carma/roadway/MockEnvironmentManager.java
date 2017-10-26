@@ -23,10 +23,6 @@ public class MockEnvironmentManager implements IEnvironmentManager {
     }
   }
 
-  @Override public void publishSystemAlert(SystemAlert alertMsg) {
-    // Nothing to do
-  }
-
   @Override public void publishRoadwayEnvironment(RoadwayEnvironment roadwayEnvMsg) {
     // Nothing to do
   }

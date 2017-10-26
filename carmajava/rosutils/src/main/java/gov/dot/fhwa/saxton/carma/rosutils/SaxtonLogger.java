@@ -17,6 +17,8 @@
 package gov.dot.fhwa.saxton.carma.rosutils;
 
 import org.apache.commons.logging.Log;
+import org.ros.RosCore;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.BufferedWriter;
@@ -24,6 +26,7 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
 
 /**
  * Extending the ROS Logger functionality for Carma purposes.
@@ -34,6 +37,7 @@ public class SaxtonLogger {
   private String source = "NO SOURCE SET";
   private File file = null;
   private String fileName;
+  private String emptyTag = "NO TAG";
 
   /***
    * Get source name which is usually the className.
@@ -74,6 +78,70 @@ public class SaxtonLogger {
     }
   }
 
+  /***
+   * Need to apply this to not break existing calls to regular logs *
+   * */
+  public void info(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.info(messageToStore);
+    writeToFile(messageToStore);
+
+  }
+
+  public void info(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.info(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void error(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.error(messageToStore);
+    writeToFile(messageToStore);
+  }
+
+  public void error(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.error(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void warn(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.warn(messageToStore);
+    writeToFile(messageToStore);
+  }
+
+  public void warn(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.warn(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void fatal(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.fatal(messageToStore);
+    writeToFile(messageToStore);
+  }
+
+  public void fatal(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.fatal(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void trace(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.trace(messageToStore);
+    writeToFile(messageToStore);
+  }
+
+  public void trace(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.trace(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
   /**
    * The log* methods below were created to leverage the ROS node log and then adds the source and tag from the calling procedure
    * onto the message.
@@ -85,6 +153,7 @@ public class SaxtonLogger {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.info(messageToStore);
     writeToFile(messageToStore);
+
   }
 
   public void logInfo(String tag, String message, Throwable t) {

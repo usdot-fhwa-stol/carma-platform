@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.negotiator;
 
 import cav_msgs.*;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
@@ -57,7 +58,6 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   protected Publisher<cav_msgs.MobilityPlan> mobPlanOutPub;
   protected Publisher<cav_msgs.NewPlan> newPlanInPub;
   protected Publisher<cav_msgs.PlanStatus> planStatusPub;
-  protected Publisher<cav_msgs.SystemAlert> systemAlertPub;
 
   // Subscribers
   protected Subscriber<cav_msgs.NewPlan> newPlanOutSub;
@@ -85,7 +85,6 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     mobPlanOutPub = connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
     newPlanInPub = connectedNode.newPublisher("new_plan_inbound", cav_msgs.NewPlan._TYPE);
     planStatusPub = connectedNode.newPublisher("plan_status", cav_msgs.PlanStatus._TYPE);
-    systemAlertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
 
     // Subscribers
     newPlanOutSub = connectedNode.newSubscriber("new_plan_outbound", cav_msgs.NewPlan._TYPE);
@@ -170,15 +169,16 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     });
   }//onStart
 
-  @Override protected void handleException(Throwable e) {
-    String msg = "Uncaught exception in " + this.connectedNode.getName() + " caught by handleException.";
-    log.fatal(msg, e);
+  /***
+   * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
+   * @param e The exception to handle
+   */
+  @Override
+  protected void handleException(Throwable e) {
 
-    SystemAlert alertMsg = systemAlertPub.newMessage();
-    alertMsg.setType(SystemAlert.FATAL);
-    alertMsg.setDescription(msg);
-
-    systemAlertPub.publish(alertMsg);
+    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+    publishSystemAlert(AlertSeverity.FATAL, msg, e);
+    connectedNode.shutdown();
   }
 
   /*
