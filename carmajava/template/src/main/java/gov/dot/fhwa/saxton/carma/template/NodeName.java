@@ -48,7 +48,7 @@ public class NodeName extends SaxtonBaseNode {
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
 
-    log = new SaxtonLogger(NodeName.class.getName(), connectedNode.getLog());
+    log = new SaxtonLogger(NodeName.class.getSimpleName(), connectedNode.getLog());
 
 
     //TODO: Column G topic name

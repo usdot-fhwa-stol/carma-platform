@@ -42,7 +42,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
    */
   @Override public final void onStart(ConnectedNode connectedNode) {
     try {
-      log = new SaxtonLogger(connectedNode.getName().toString(), connectedNode.getLog());
+      log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
 
       // Define our alert publisher as latching so that recipients are guaranteed to see a message
       // even if it is published before the recipient starts up
