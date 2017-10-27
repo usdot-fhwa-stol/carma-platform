@@ -160,8 +160,6 @@
               args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
-          <remap from="incoming_bsm"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
           <remap from="outgoing_bsm"
                  to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
           <remap from="mobility_ack_outbound"
@@ -213,7 +211,7 @@
           <remap from="system_alert"
                  to="/$(arg TOP_NS)/system_alert"/>
           <remap from="bsm"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/bsm"/>
+                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/incoming_bsm"/>
           <remap from="get_drivers_with_capabilities"
                  to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
         </node>
