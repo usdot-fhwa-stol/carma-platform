@@ -224,11 +224,11 @@ public class EnvironmentWorker {
       case SystemAlert.NOT_READY:
         break;
       case SystemAlert.SHUTDOWN:
-        log.logInfo("SHUTDOWN", "Received SHUTDOWN on system_alert");
+        log.info("SHUTDOWN", "Received SHUTDOWN on system_alert");
         envMgr.shutdown();
         break;
       case SystemAlert.FATAL:
-        log.logInfo("SHUTDOWN", "Received FATAL on system_alert");
+        log.info("SHUTDOWN", "Received FATAL on system_alert");
         envMgr.shutdown();
         break;
       default:

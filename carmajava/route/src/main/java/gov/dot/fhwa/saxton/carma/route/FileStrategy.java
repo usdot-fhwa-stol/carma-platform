@@ -45,11 +45,11 @@ public class FileStrategy implements IRouteLoadStrategy{
       YamlReader reader = new YamlReader(fr);
       return reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
     } catch (FileNotFoundException e) {
-      log.logWarn("","FileNotFoundException in FileStrategy route load", e);
+      log.warn("FileNotFoundException in FileStrategy route load", e);
     } catch (YamlException e) {
-      log.logWarn("","YamlException in FileStrategy route load", e);
+      log.warn("YamlException in FileStrategy route load", e);
     } catch (Exception e) {
-      log.logWarn("","Exception in FileStrategy route load", e);
+      log.warn("Exception in FileStrategy route load", e);
     }
     return null;
   }
