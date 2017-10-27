@@ -204,7 +204,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		
 		//test Pubs
 		if(bsmPub == null || outboundPub == null) {
-			publishSystemAlert(AlertSeverity.FATAL, "MessageConsumer cannot find suitable drivers", null);
+			publishSystemAlert(AlertSeverity.WARNING, "MessageConsumer cannot set up topic publishers.", null);
 		}
 		
 		//initialize Subs
@@ -252,8 +252,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 				}
 				
 			});
-		} catch (NullPointerException npe) {
-			handleException(npe);
+		} catch (Exception ex) {
+			handleException(ex);
 		}
 		
 		
