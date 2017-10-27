@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.route;
 import cav_msgs.RouteSegment;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
@@ -56,7 +57,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   // Topics
   // Publishers
-  Publisher<cav_msgs.SystemAlert> systemAlertPub;
   Publisher<cav_msgs.RouteSegment> segmentPub;
   Publisher<cav_msgs.Route> routePub;
   Publisher<cav_msgs.RouteState> routeStatePub;
@@ -85,7 +85,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
     /// Topics
     // Publishers
-    systemAlertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
     segmentPub = connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
@@ -166,17 +165,11 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   }//onStart
 
   @Override protected void handleException(Throwable e) {
-    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
-    connectedNode.getLog().fatal(msg, e);
-    SystemAlert alertMsg = systemAlertPub.newMessage();
-    alertMsg.setType(SystemAlert.FATAL);
-    alertMsg.setDescription(msg);
-    systemAlertPub.publish(alertMsg);
-    this.shutdown();
-  }
 
-  @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {
-    systemAlertPub.publish(systemAlert);
+    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+    publishSystemAlert(AlertSeverity.FATAL, msg, e);
+    connectedNode.shutdown();
+
   }
 
   @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {

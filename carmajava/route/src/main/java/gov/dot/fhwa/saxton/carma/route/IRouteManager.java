@@ -31,13 +31,6 @@ import java.util.PriorityQueue;
 public interface IRouteManager {
 
   /**
-   * Publishes a system alert message
-   *
-   * @param systemAlert  system alert messages
-   */
-  void publishSystemAlert(SystemAlert systemAlert);
-
-  /**
    * Publishes a ros message corresponding to the current route segment
    *
    * @param routeSegment The current route segment message

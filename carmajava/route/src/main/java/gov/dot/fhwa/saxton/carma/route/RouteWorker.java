@@ -20,6 +20,8 @@ import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -131,17 +133,12 @@ public class RouteWorker {
         log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.SHUTDOWN,
-          "Route: The end of the active route has been reached");
-        // Notify system of route completion
-        routeManager.publishSystemAlert(alertMsg);
+        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.SHUTDOWN, "Route: The end of the active route has been reached", null );
         log.info("Route has been completed");
         routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
-        alertMsg = buildSystemAlertMsg(SystemAlert.WARNING,
-          "Route: The host vehicle has left the route vicinity");
-        routeManager.publishSystemAlert(alertMsg);
+        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.WARNING, "Route: The host vehicle has left the route vicinity", null );
         log.info("The vehicle has left the active route");
         break;
       case SYSTEM_FAILURE:
@@ -154,8 +151,7 @@ public class RouteWorker {
           "Route has received a system not ready message and is switching to pausing the active route");
         break;
       case ROUTE_ABORTED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.WARNING, "Route: The active route was aborted");
-        routeManager.publishSystemAlert(alertMsg);
+        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.WARNING, "Route: The active route was aborted", null );
         log.info("Route has been aborted");
         break;
       case ROUTE_STARTED:
@@ -214,20 +210,6 @@ public class RouteWorker {
    */
   protected Collection<Route> getAvailableRoutes() {
     return availableRoutes.values();
-  }
-
-  /**
-   * Helper function which builds a system alert message
-   *
-   * @param type        The type of the alert
-   * @param description Description of the message
-   * @return System Alert message
-   */
-  protected SystemAlert buildSystemAlertMsg(byte type, String description) {
-    SystemAlert alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
-    alertMsg.setType(type);
-    alertMsg.setDescription(description);
-    return alertMsg;
   }
 
   /**
