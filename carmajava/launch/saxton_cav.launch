@@ -43,7 +43,7 @@
 
   <!-- Debug -->
   <!-- JVM Debug arguments -->
-  <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
+  <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_environment_mgr" default="false" doc="Set true to enable debugging on the Environment Manager node"/>
   <arg name="debug_transform_svr"   default="false" doc="Set true to enable debugging on the Transform Server node"/>
