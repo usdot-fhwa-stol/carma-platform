@@ -74,7 +74,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
 
     @Override
     public void onGuidanceStartup() {
-        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
             @Override
             public void onMessage(RouteState msg) {
@@ -103,6 +103,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         startTime = (long) node.getCurrentTime().toSeconds() * 1000;
 
         if (currentTrajectory != null && !bufferedTrajectoryRunning) {
+            log.info("Running buffered trajectory!");
             trajectoryExecutorWorker.runTrajectory(currentTrajectory);
         }
     }

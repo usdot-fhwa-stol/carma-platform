@@ -53,6 +53,7 @@ public class Arbitrator extends GuidanceComponent {
   protected PluginManager pluginManager;
   protected IPlugin lateralPlugin;
   protected IPlugin longitudinalPlugin;
+  protected AtomicBoolean receivedDtdUpdate = new AtomicBoolean(false);
   protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
   protected AtomicDouble currentSpeed = new AtomicDouble(0.0);
   protected double replanTriggerPercent = 0.75;
@@ -106,7 +107,7 @@ public class Arbitrator extends GuidanceComponent {
   @Override
   public void onGuidanceStartup() {
     log.info("Arbitrator running!");
-    routeStateSubscriber = pubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
+    routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
     routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
       @Override
       public void onMessage(RouteState msg) {
@@ -146,6 +147,7 @@ public class Arbitrator extends GuidanceComponent {
       @Override
       public void onMessage(TwistStamped msg) {
         currentSpeed.set(msg.getTwist().getLinear().getX());
+        receivedDtdUpdate.set(true);
       }
     });
   }
@@ -178,6 +180,15 @@ public class Arbitrator extends GuidanceComponent {
     }
 
     log.info("Arbitrator using plugins: [" + lateralPluginName + ", " + longitudinalPluginName + "]");
+
+    // Wait until we've received a downtrack distance update to try to plan our first trajectory
+    if (!receivedDtdUpdate.get()) {
+      log.info("Arbitrator waiting for DTD update from Route...");
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+      }
+    }
 
     currentTrajectory = planTrajectory(downtrackDistance.get());
     trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, new OnTrajectoryProgressCallback() {
