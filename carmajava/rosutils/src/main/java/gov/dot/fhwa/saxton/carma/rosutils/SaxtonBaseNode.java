@@ -90,7 +90,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
    * @param <S>           The service response type such as srd_srvs.SetBoolResponse
    * @return An initialized ServiceClient for the desired service
    */
-  protected final <T, S> ServiceClient<T, S> waitForService(String service, String typeString,
+  public final <T, S> ServiceClient<T, S> waitForService(String service, String typeString,
     final ConnectedNode connectedNode, int timeout) {
     ServiceClient<T, S> client = null;
     boolean serviceFound = false;
