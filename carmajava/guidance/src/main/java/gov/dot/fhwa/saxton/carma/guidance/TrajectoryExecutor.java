@@ -204,6 +204,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
             if (m instanceof LongitudinalManeuver) {
                 log.info("Speeds from " + m.getStartSpeed() + " to " + m.getTargetSpeed());
             }
+            idx++;
         }
 
         if (state.get() == GuidanceState.ENGAGED) {
