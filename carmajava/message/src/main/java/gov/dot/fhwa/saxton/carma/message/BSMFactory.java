@@ -10,6 +10,7 @@ import org.ros.node.ConnectedNode;
 
 import cav_msgs.BSM;
 import cav_msgs.ByteArray;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 public class BSMFactory {
 
@@ -70,7 +71,7 @@ public class BSMFactory {
 	 * @param log Logging any necessary messages
 	 * @param node ConnectedNode helps to set message header
 	 */
-	public static void encode(BSM plain_msg, ByteArray binary_msg, Log log, ConnectedNode node) {
+	public static void encode(BSM plain_msg, ByteArray binary_msg, SaxtonLogger log, ConnectedNode node) {
 		byte[] brakeStatus = new byte[] {
 				plain_msg.getCoreData().getBrakes().getWheelBrakes().getBrakeAppliedStatus(),
 				plain_msg.getCoreData().getBrakes().getTraction().getTractionControlStatus(),
@@ -108,7 +109,7 @@ public class BSMFactory {
 	 * @param node ConnectedNode helps to set message header
 	 * @return
 	 */
-	public static int decode(ByteArray encoded_msg, BSM msg_object, Log log, ConnectedNode node) {
+	public static int decode(ByteArray encoded_msg, BSM msg_object, SaxtonLogger log, ConnectedNode node) {
 		ChannelBuffer channelBuffer = encoded_msg.getContent();
 		byte[] encoded_bsm = new byte[channelBuffer.capacity()];
 		for(int i = 0; i < channelBuffer.capacity(); i++) {

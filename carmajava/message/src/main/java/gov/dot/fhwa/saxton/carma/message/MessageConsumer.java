@@ -20,6 +20,7 @@ import cav_msgs.*;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
 import java.util.ArrayList;
@@ -84,7 +85,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 	private String J2735_outbound_binary_msg = null;
 
 	//Log for this node
-	protected Log log = null;
+	protected SaxtonLogger log = null;
 	
 	//Connected Node
 	protected ConnectedNode connectedNode_ = null;
@@ -99,7 +100,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		
 		//initialize connectedNode and log
 		this.connectedNode_ = connectedNode;
-		this.log = connectedNode_.getLog();
+		this.log = new SaxtonLogger(connectedNode_.getName().toString(), connectedNode.getLog());
 		
 		//initialize alert sub, pub
 		alertSub = this.connectedNode_.newSubscriber("system_alert", SystemAlert._TYPE);
