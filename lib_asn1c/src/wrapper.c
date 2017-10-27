@@ -147,6 +147,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
  * BSM Decoder:
  * This function can decode a byte array in J2735 standards to a messageFrame structure and map to a Java BSMCore object.
  * When an error happened, this function will return without any mapping.
+ * Return -1 mains an error is happened; return 0 mains decoding succeed.
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_decode_1BSM
   (JNIEnv *env, jclass cls, jbyteArray encoded_bsm,
@@ -234,15 +235,15 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_decode_
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setVert, accel_vert);
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setYaw, accel_yaw);
 
-		uint8_t break_content[6];
-		uint8_t *break_buf = message -> value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.buf;
-		break_content[0] = break_buf[0];
-		break_content[1] = message -> value.choice.BasicSafetyMessage.coreData.brakes.traction;
-		break_content[2] = message -> value.choice.BasicSafetyMessage.coreData.brakes.abs;
-		break_content[3] = message -> value.choice.BasicSafetyMessage.coreData.brakes.scs;
-		break_content[4] = message->value.choice.BasicSafetyMessage.coreData.brakes.brakeBoost;
-		break_content[5] = message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes;
-		(*env) -> SetByteArrayRegion(env, brakeStatus, 0, 6, break_content);
+		uint8_t brake_content[6];
+		uint8_t *brake_buf = message -> value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.buf;
+		brake_content[0] = brake_buf[0];
+		brake_content[1] = message -> value.choice.BasicSafetyMessage.coreData.brakes.traction;
+		brake_content[2] = message -> value.choice.BasicSafetyMessage.coreData.brakes.abs;
+		brake_content[3] = message -> value.choice.BasicSafetyMessage.coreData.brakes.scs;
+		brake_content[4] = message->value.choice.BasicSafetyMessage.coreData.brakes.brakeBoost;
+		brake_content[5] = message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes;
+		(*env) -> SetByteArrayRegion(env, brakeStatus, 0, 6, brake_content);
 
 		jmethodID mid_setVehicleWidth = (*env) -> GetMethodID(env, size_class, "setVehicleWidth", "(F)V");
 		jmethodID mid_setVehicleLength = (*env) -> GetMethodID(env, size_class, "setVehicleLength", "(F)V");

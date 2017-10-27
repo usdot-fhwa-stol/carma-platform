@@ -66,11 +66,11 @@ public class BSMFactory {
 	 * the content of the empty byte array will be the encoded information of BSM.
 	 * 
 	 * @param plain_msg Entire BSM object
-	 * @param skeleton The empty ByteArray object
+	 * @param binary_msg The empty ByteArray object
 	 * @param log Logging any necessary messages
 	 * @param node ConnectedNode helps to set message header
 	 */
-	public static void encode(BSM plain_msg, ByteArray skeleton, Log log, ConnectedNode node) {
+	public static void encode(BSM plain_msg, ByteArray binary_msg, Log log, ConnectedNode node) {
 		byte[] brakeStatus = new byte[] {
 				plain_msg.getCoreData().getBrakes().getWheelBrakes().getBrakeAppliedStatus(),
 				plain_msg.getCoreData().getBrakes().getTraction().getTractionControlStatus(),
@@ -88,13 +88,13 @@ public class BSMFactory {
 				plain_msg.getCoreData(), temp_ID,
 				plain_msg.getCoreData().getAccuracy(), plain_msg.getCoreData().getTransmission(),
 				plain_msg.getCoreData().getAccelSet(), brakeStatus, plain_msg.getCoreData().getSize());
-		skeleton.setMessageType("BSM");
+		binary_msg.setMessageType("BSM");
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
-		skeleton.setContent(buffer);
-		skeleton.setMessageType("BSM");
-		skeleton.getHeader().setFrameId("MessageConsumer");
-		skeleton.getHeader().getStamp().secs = node.getCurrentTime().secs;
-		skeleton.getHeader().getStamp().nsecs = node.getCurrentTime().nsecs;
+		binary_msg.setContent(buffer);
+		binary_msg.setMessageType("BSM");
+		binary_msg.getHeader().setFrameId("MessageConsumer");
+		binary_msg.getHeader().getStamp().secs = node.getCurrentTime().secs;
+		binary_msg.getHeader().getStamp().nsecs = node.getCurrentTime().nsecs;
 	}
 	
 	/**
@@ -103,12 +103,12 @@ public class BSMFactory {
 	 * the content of the empty BSM will be the decoded results.
 	 * 
 	 * @param encoded_msg The encoded BSM message as a binary array
-	 * @param skeleton The empty BSM object
+	 * @param msg_object The empty BSM object
 	 * @param log Logging any necessary messages
 	 * @param node ConnectedNode helps to set message header
 	 * @return
 	 */
-	public static int decode(ByteArray encoded_msg, BSM skeleton, Log log, ConnectedNode node) {
+	public static int decode(ByteArray encoded_msg, BSM msg_object, Log log, ConnectedNode node) {
 		ChannelBuffer channelBuffer = encoded_msg.getContent();
 		byte[] encoded_bsm = new byte[channelBuffer.capacity()];
 		for(int i = 0; i < channelBuffer.capacity(); i++) {
@@ -119,23 +119,27 @@ public class BSMFactory {
 		byte[] brakeStatus = new byte[6];
 		Arrays.fill(brakeStatus, (byte) 0);
 		int result = decode_BSM(
-				encoded_bsm, skeleton.getCoreData(),
-				temp_ID, skeleton.getCoreData().getAccuracy(),
-				skeleton.getCoreData().getTransmission(), skeleton.getCoreData().getAccelSet(),
-				brakeStatus, skeleton.getCoreData().getSize()
+				encoded_bsm, msg_object.getCoreData(),
+				temp_ID, msg_object.getCoreData().getAccuracy(),
+				msg_object.getCoreData().getTransmission(), msg_object.getCoreData().getAccelSet(),
+				brakeStatus, msg_object.getCoreData().getSize()
 				);
+		if(result == -1) {
+			log.warn("BSMFactory: Cannot decode the incoming binary BSM message.");
+			return result;
+		}
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, temp_ID);
-		skeleton.getCoreData().setId(buffer);
+		msg_object.getCoreData().setId(buffer);
 		//Set BrakeAppliedStatus after default shift in asn1c library
-		skeleton.getCoreData().getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) (brakeStatus[0] >>> 3));
-		skeleton.getCoreData().getBrakes().getTraction().setTractionControlStatus(brakeStatus[1]);
-		skeleton.getCoreData().getBrakes().getAbs().setAntiLockBrakeStatus(brakeStatus[2]);
-		skeleton.getCoreData().getBrakes().getScs().setStabilityControlStatus(brakeStatus[3]);
-		skeleton.getCoreData().getBrakes().getBrakeBoost().setBrakeBoostApplied(brakeStatus[4]);
-		skeleton.getCoreData().getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(brakeStatus[5]);
-		skeleton.getHeader().setFrameId("MessageConsumer");
-		skeleton.getHeader().getStamp().secs = node.getCurrentTime().secs;
-		skeleton.getHeader().getStamp().nsecs = node.getCurrentTime().nsecs;
+		msg_object.getCoreData().getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) (brakeStatus[0] >>> 3));
+		msg_object.getCoreData().getBrakes().getTraction().setTractionControlStatus(brakeStatus[1]);
+		msg_object.getCoreData().getBrakes().getAbs().setAntiLockBrakeStatus(brakeStatus[2]);
+		msg_object.getCoreData().getBrakes().getScs().setStabilityControlStatus(brakeStatus[3]);
+		msg_object.getCoreData().getBrakes().getBrakeBoost().setBrakeBoostApplied(brakeStatus[4]);
+		msg_object.getCoreData().getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(brakeStatus[5]);
+		msg_object.getHeader().setFrameId("MessageConsumer");
+		msg_object.getHeader().getStamp().secs = node.getCurrentTime().secs;
+		msg_object.getHeader().getStamp().nsecs = node.getCurrentTime().nsecs;
 		return result;
 	}
 }
