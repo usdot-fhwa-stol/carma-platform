@@ -258,11 +258,7 @@ public class CruisingPlugin extends AbstractPlugin {
         maneuverEnd = speedUp.getEndDistance();
       }
 
-      log.info(String.format("Planned SPEED-UP maneuver from [%.2f, %.2f) m/s over [%.02f, %.2f) m", 
-      speedUp.getStartSpeed(), 
-      speedUp.getTargetSpeed(),  
-      speedUp.getStartDistance(), 
-      speedUp.getEndDistance());
+      log.info(String.format("Planned SPEED-UP maneuver from [%.2f, %.2f) m/s over [%.02f, %.2f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     } else if (startSpeed > endSpeed) {
       // Generate a slowdown maneuver
       SlowDown slowDown = new SlowDown();
