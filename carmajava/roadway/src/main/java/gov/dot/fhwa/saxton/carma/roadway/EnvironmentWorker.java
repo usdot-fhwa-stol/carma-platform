@@ -40,7 +40,7 @@ public class EnvironmentWorker {
   protected final String mapFrame = "map";
   protected final String odomFrame = "odom";
   protected final String baseLinkFrame = "base_link";
-  protected final String positionSensorFrame = "position_sensor";
+  protected final String positionSensorFrame = "pinpoint"; //TODO set this name via ros param
   // Transforms
   protected Transform mapToOdom = Transform.identity();
   protected Transform earthToMap = null;
@@ -80,6 +80,7 @@ public class EnvironmentWorker {
   /**
    * Handler for new vehicle heading messages
    * Headings should be specified as degrees east of north
+   * TODO if base_link frame is not an +X forward frame this will need a transform as well.
    * @param heading The heading message
    */
   public void handleHeadingMsg(cav_msgs.HeadingStamped heading) {
@@ -175,19 +176,20 @@ public class EnvironmentWorker {
         return; // If the request for this transform failed wait for another odometry update to request it
       }
     }
+    if (odometry.getChildFrameId().equals(baseLinkFrame)) { // If the odometry is already in the base_link frame TODO make this check more robust
+      odomToBaseLink = Transform.fromPoseMessage(odometry.getPose().getPose());
+      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
+      return;
+    }
     // Extract the location of the position sensor relative to the odom frame
     // Covariance is ignored as filtering was already done by sensor fusion
-    geometry_msgs.Pose hostPose = odometry.getPose().getPose();
-    geometry_msgs.Point hostPoint = hostPose.getPosition();
-    Quaternion hostOrientation = Quaternion.fromQuaternionMessage(hostPose.getOrientation());
-    Vector3 trans = new Vector3(hostPoint.getX(), hostPoint.getY(), hostPoint.getZ());
     // Calculate odom->base_link
     // T_x_y = transform describing location of y with respect to x
     // p = position sensor frame (from odometry)
     // o = odom frame
     // b = baselink frame (as has been calculated by odometry up to this point)
     // T_o_b = T_o_p * inv(T_b_p)
-    Transform T_o_p = new Transform(trans, hostOrientation);
+    Transform T_o_p = Transform.fromPoseMessage(odometry.getPose().getPose());
     Transform T_b_p = baseToPositionSensor;
     Transform T_o_b = T_o_p.multiply(T_b_p.invert());
     odomToBaseLink = T_o_b;

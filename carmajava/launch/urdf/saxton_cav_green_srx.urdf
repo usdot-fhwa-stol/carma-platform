@@ -8,7 +8,7 @@
   <link name="base_link" />
   <link name="host_vehicle"/>
   <link name="vehicle_front" />
-  <link name="position_sensor" />
+  <link name="pinpoint" />
   <link name="radar" />
 
    <!-- base_link -> host_vehicle Transform -->
@@ -30,8 +30,8 @@
   <!-- host_vehicle -> position_sensor Transform -->
   <joint name="host_vehicle_to_position_sensor" type="fixed">
     <parent link="host_vehicle" />
-    <child link="position_sensor" />
-    <origin xyz="-.5 0 -1" rpy="3.145159 0 0" />
+    <child link="pinpoint" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
   </joint>
 
   <!-- host_vehicle -> radar Transform -->

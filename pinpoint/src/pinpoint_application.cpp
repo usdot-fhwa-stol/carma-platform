@@ -137,6 +137,7 @@ void PinPointApplication::initialize() {
 
     //Heading
     heading_pub_ = position_api_nh_->advertise<cav_msgs::HeadingStamped>("heading", 1);
+    api_.push_back(heading_pub_.getTopic());
 
     updater_.setHardwareID("PinPoint");
     diagnostic_timer_ = nh_->createTimer(ros::Duration(1), &PinPointApplication::diagnosticUpdate, this);
