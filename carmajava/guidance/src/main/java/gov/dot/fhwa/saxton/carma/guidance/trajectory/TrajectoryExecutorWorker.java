@@ -69,7 +69,7 @@ public class TrajectoryExecutorWorker {
         longitudinalManeuverThread.interrupt();
       }
 
-      longitudinalManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz));
+      longitudinalManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz, log));
       longitudinalManeuverThread.setName("Longitudinal Maneuver Runner");
       longitudinalManeuverThread.start();
     } else {
@@ -77,7 +77,7 @@ public class TrajectoryExecutorWorker {
         lateralManeuverThread.interrupt();
       }
 
-      lateralManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz));
+      lateralManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz, log));
       lateralManeuverThread.setName("Lateral Maneuver Runner");
       lateralManeuverThread.start();
     }
@@ -87,16 +87,19 @@ public class TrajectoryExecutorWorker {
    * Check the status of the current maneuvers and start them if the need to be started
    */
   private void checkAndStartManeuvers() {
+    log.debug("TrajectoryExecutorWorker checking if maneuvers need to be started.");
     // Start the maneuvers if they aren't already running
     if (currentLateralManeuver != null 
     && downtrackDistance >= currentLateralManeuver.getStartDistance() 
     && !lateralManeuverThread.isAlive()) {
+      log.debug("TrajectoryExecutorWorker starting lateral maneuver");
       execute(currentLateralManeuver);
     }
 
     if (currentLongitudinalManeuver != null 
     && downtrackDistance >= currentLongitudinalManeuver.getStartDistance() 
     && !longitudinalManeuverThread.isAlive()) {
+      log.debug("TrajectoryExecutorWorker starting longitudinal maneuver");
       execute(currentLongitudinalManeuver);
     }
   }
@@ -111,6 +114,7 @@ public class TrajectoryExecutorWorker {
    * @param downtrack The current downtrack distance from RouteState
    */
   public void updateDowntrackDistance(double downtrack) {
+    log.debug("TrajectoryExecutorWorker updating downtrack distance to " + downtrack);
     this.downtrackDistance = downtrack;
 
     checkAndStartManeuvers();
@@ -119,6 +123,7 @@ public class TrajectoryExecutorWorker {
     double completePct = getTrajectoryCompletionPct();
     for (PctCallback callback : callbacks) {
       if (!callback.called && completePct >= callback.pct) {
+        log.debug("Calling Trajectory Completion callback at " + completePct);
         callback.callback.onProgress(completePct);
         callback.called = true;
       }
@@ -155,6 +160,7 @@ public class TrajectoryExecutorWorker {
    * Abort the current and queued trajectories and the currently executing maneuvers
    */
   public void abortTrajectory() {
+    log.debug("TrajectoryWorker aborting currently executing trajectory.");
     currentTrajectory = null;
     nextTrajectory = null;
 

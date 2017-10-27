@@ -46,6 +46,21 @@ public class SteadySpeed extends LongitudinalManeuver {
     }
 
 
+    @Override
+    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
+        super.planToTargetDistance(inputs, commands, startDist, endDist);
+
+        //check that both the beginning and end speeds are the same
+        if (Math.abs(startSpeed_ - endSpeed_) > 0.05) {
+            throw new IllegalStateException("SteadySpeed maneuver being planned with start speed = " + startSpeed_
+                                            + ", target speed = " + endSpeed_);
+        }
+
+        //set end distance to start distance
+        endDist_ = endDist;
+    }
+
+
     /**
      * Used only for SteadySpeed maneuver, this allows the caller to set the length of the maneuver to whatever is
      * desired.

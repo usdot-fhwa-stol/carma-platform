@@ -39,6 +39,12 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         }
     }
 
+    
+    @Override
+    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
+        super.planToTargetDistance(inputs, commands, startDist, endDist);
+    }
+
 
     public abstract boolean executeTimeStep() throws IllegalStateException;
 

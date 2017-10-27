@@ -34,8 +34,10 @@ import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.SpeedLimit;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.TrajectorySegment;
@@ -51,7 +53,7 @@ public class CruisingPluginTest {
   public void setup() {
     PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
         mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-        mock(ManeuverPlanner.class), mock(Log.class));
+        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), mock(Log.class));
     cruise = new CruisingPlugin(psl);
   }
 
@@ -163,10 +165,23 @@ public class CruisingPluginTest {
     List<SpeedLimit> filteredLimits = cruise.getSpeedLimits(limits, 5.5, 15.5);
 
     assertEquals(2, filteredLimits.size());
-    assertEquals(3.0, filteredLimits.get(0).speedLimit, 0.5);
-    assertEquals(4.0, filteredLimits.get(1).speedLimit, 0.5);
+    assertEquals(2.0, filteredLimits.get(0).speedLimit, 0.5);
+    assertEquals(3.0, filteredLimits.get(1).speedLimit, 0.5);
     assertEquals(10.0, filteredLimits.get(0).location, 0.01);
     assertEquals(15.0, filteredLimits.get(1).location, 0.01);
+  }
+
+  @Test
+  public void testManeuverGeneration() {
+    List<Double> speeds = new ArrayList<>();
+    speeds.add(5.0);
+
+    Route route = generateRouteWithSpeedLimits(speeds, 5.0);
+
+    cruise.setSpeedLimits(cruise.processSpeedLimits(route));
+    Trajectory traj = new Trajectory(0.0, 10.0);
+
+    cruise.planTrajectory(traj, 0.0);
   }
 
   private CruisingPlugin cruise;

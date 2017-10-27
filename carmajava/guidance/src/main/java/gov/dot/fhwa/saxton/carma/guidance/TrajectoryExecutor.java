@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
@@ -73,7 +74,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
 
     @Override
     public void onGuidanceStartup() {
-        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_status", RouteState._TYPE);
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
             @Override
             public void onMessage(RouteState msg) {
@@ -102,6 +103,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         startTime = (long) node.getCurrentTime().toSeconds() * 1000;
 
         if (currentTrajectory != null && !bufferedTrajectoryRunning) {
+            log.info("Running buffered trajectory!");
             trajectoryExecutorWorker.runTrajectory(currentTrajectory);
         }
     }
@@ -196,6 +198,15 @@ public class TrajectoryExecutor extends GuidanceComponent {
    */
     public void runTrajectory(Trajectory traj) {
         log.info("TrajectoryExecutor received new trajectory!");
+        int idx = 1;
+        for (IManeuver m : traj.getManeuvers()) {
+            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type" + (m instanceof LongitudinalManeuver ? "LONGITUDINAL" : "LATERAL"));
+            if (m instanceof LongitudinalManeuver) {
+                log.info("Speeds from " + m.getStartSpeed() + " to " + m.getTargetSpeed());
+            }
+            idx++;
+        }
+
         if (state.get() == GuidanceState.ENGAGED) {
             log.info("TrajectoryExecutor running trajectory!");
             trajectoryExecutorWorker.runTrajectory(traj);

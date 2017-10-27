@@ -87,7 +87,7 @@ public class CruisingPlugin extends AbstractPlugin {
       @Override
       public void onMessage(Route msg) {
         currentRoute.set(msg);
-        speedLimits = processSpeedLimits(msg);
+        setSpeedLimits(processSpeedLimits(msg));
       }
     });
 
@@ -141,14 +141,20 @@ public class CruisingPlugin extends AbstractPlugin {
     // Walk the segment list getting the start points speed limits
     double dtdAccum = 0.0;
     for (RouteSegment seg : route.getSegments()) {
+      dtdAccum += seg.getLength();
       SpeedLimit limit = new SpeedLimit();
       limit.location = dtdAccum;
       limit.speedLimit = mphToMps(seg.getWaypoint().getSpeedLimit());
       limits.add(limit);
-      dtdAccum += seg.getLength();
     }
 
+    log.info(String.format("Processed route with %d waypoints over %.2f m", limits.size(), dtdAccum));
+
     return limits;
+  }
+
+  protected void setSpeedLimits(List<SpeedLimit> speedLimits) {
+    this.speedLimits = speedLimits;
   }
 
   // TODO: Improve handling of first and last speed limits on boundaries
@@ -237,9 +243,22 @@ public class CruisingPlugin extends AbstractPlugin {
       speedUp.setSpeeds(startSpeed, endSpeed);
       speedUp.setMaxAccel(maxAccel);
       planner.planManeuver(speedUp, startDist);
-      t.addManeuver(speedUp);
 
-      maneuverEnd = speedUp.getEndDistance();
+      // Adjust our accel to complete the maneuver
+      if (speedUp.getEndDistance() > endDist)  {
+        SpeedUp speedUp2 = new SpeedUp();
+
+        speedUp2.setSpeeds(startSpeed, endSpeed);
+        speedUp2.setMaxAccel(maxAccel);
+        planner.planManeuver(speedUp2, startDist, endDist);
+        t.addManeuver(speedUp2);
+        maneuverEnd = speedUp2.getEndDistance();
+      } else {
+        t.addManeuver(speedUp);
+        maneuverEnd = speedUp.getEndDistance();
+      }
+
+      log.info(String.format("Planned SPEED-UP maneuver from [%.2f, %.2f) m/s over [%.02f, %.2f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     } else if (startSpeed > endSpeed) {
       // Generate a slowdown maneuver
       SlowDown slowDown = new SlowDown();
@@ -247,8 +266,20 @@ public class CruisingPlugin extends AbstractPlugin {
       slowDown.setMaxAccel(maxAccel);
       planner.planManeuver(slowDown, startDist);
 
-      maneuverEnd = slowDown.getEndDistance();
-      t.addManeuver(slowDown);
+      // Adjust our accel to complete the maneuver
+      if (slowDown.getEndDistance() > endDist)  {
+        SpeedUp slowDown2 = new SpeedUp();
+
+        slowDown2.setSpeeds(startSpeed, endSpeed);
+        slowDown2.setMaxAccel(maxAccel);
+        planner.planManeuver(slowDown2, startDist, endDist);
+        t.addManeuver(slowDown2);
+        maneuverEnd = slowDown2.getEndDistance();
+      } else {
+        t.addManeuver(slowDown);
+        maneuverEnd = slowDown.getEndDistance();
+      }
+      log.info(String.format("Planned SLOW-DOWN maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, endSpeed, startDist, maneuverEnd));
     }
 
     // Insert a steady speed maneuver to fill whatever's left
@@ -260,6 +291,7 @@ public class CruisingPlugin extends AbstractPlugin {
       steady.overrideEndDistance(endDist);
 
       t.addManeuver(steady);
+      log.info(String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", steady.getTargetSpeed(), steady.getStartDistance(), steady.getEndDistance()));
     }
   }
 
@@ -300,7 +332,9 @@ public class CruisingPlugin extends AbstractPlugin {
         // Take any intermediary speed limits
         double prevDist = first.location;
         double prevSpeed = first.speedLimit;
-        for (SpeedLimit limit : getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation())) {
+
+        // Usage of DISTANCE_EPSILON here is a bit of a hack
+        for (SpeedLimit limit : getSpeedLimits(speedLimits, first.location + DISTANCE_EPSILON, traj.getEndLocation())) {
           planManeuvers(traj, prevDist, limit.location, prevSpeed, limit.speedLimit);
           prevDist = limit.location;
           prevSpeed = limit.speedLimit;

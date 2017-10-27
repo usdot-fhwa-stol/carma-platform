@@ -16,12 +16,15 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
+import org.apache.commons.logging.Log;
+
 /**
  * Runnable to handle execution of Maneuvers on regular timestep intervals
  */
 public class ManeuverRunner implements Runnable {
   private long timestepDuration = 0;
   private IManeuver maneuver;
+  private Log log;
 
   /**
    * Construct a ManeuverRunner to invoke the IManeuver at freq Hz
@@ -29,9 +32,10 @@ public class ManeuverRunner implements Runnable {
    * @param maneuver The maneuver to execute. Must be already properly configured and planned.
    * @param freq The rate (in Hz) to call maneuver's execute timestep (approximate)
    */
-  public ManeuverRunner(IManeuver maneuver, double freq) {
+  public ManeuverRunner(IManeuver maneuver, double freq, Log log) {
     timestepDuration = Math.round(1000 / freq);
     this.maneuver = maneuver;
+    this.log = log;
   }
 
 	@Override
