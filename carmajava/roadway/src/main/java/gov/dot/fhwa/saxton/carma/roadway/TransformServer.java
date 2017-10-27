@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.roadway;
 import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import org.apache.commons.logging.Log;
 import org.ros.RosCore;
 import org.ros.message.MessageListener;
@@ -48,7 +49,6 @@ public class TransformServer extends SaxtonBaseNode {
   private SaxtonLogger log;
   //Topics
   // Publishers
-  private Publisher<SystemAlert> systemAlertPub;
   // Subscribers
   private Subscriber<cav_msgs.SystemAlert> systemAlertSub;
   private Subscriber<tf2_msgs.TFMessage> tf_sub;
@@ -69,10 +69,6 @@ public class TransformServer extends SaxtonBaseNode {
     final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
-    //Topics
-    // Publishers
-    systemAlertPub = connectedNode.newPublisher("system_alert", SystemAlert._TYPE);
-
     // Subscribers
     systemAlertSub = connectedNode.newSubscriber("system_alert", SystemAlert._TYPE);
     systemAlertSub.addMessageListener(new MessageListener<SystemAlert>() {
@@ -80,11 +76,11 @@ public class TransformServer extends SaxtonBaseNode {
         try {
           switch (alertMsg.getType()) {
             case SystemAlert.SHUTDOWN:
-              log.logInfo("SHUTDOWN", "Shutting down from SHUTDOWN on system_alert");
+              log.info("SHUTDOWN", "Shutting down from SHUTDOWN on system_alert");
               connectedNode.shutdown();
               break;
             case SystemAlert.FATAL:
-              log.logInfo("SHUTDOWN", "Shutting down from FATAL on system_alert");
+              log.info("SHUTDOWN", "Shutting down from FATAL on system_alert");
               connectedNode.shutdown();
               break;
             default:
@@ -154,12 +150,9 @@ public class TransformServer extends SaxtonBaseNode {
   }
 
   @Override protected void handleException(Throwable e) {
-    String msg = "Uncaught exception made it to top level handleException method";
-    log.logFatal("SHUTDOWN", msg, e);
-    SystemAlert alertMsg = systemAlertPub.newMessage();
-    alertMsg.setType(SystemAlert.FATAL);
-    alertMsg.setDescription(msg);
-    systemAlertPub.publish(alertMsg);
+    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+    publishSystemAlert( AlertSeverity.FATAL, msg, e);
     connectedNode.shutdown();
+
   }
 }

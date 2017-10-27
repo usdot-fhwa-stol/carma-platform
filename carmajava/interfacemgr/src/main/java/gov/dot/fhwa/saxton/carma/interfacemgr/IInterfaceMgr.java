@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import java.util.List;
 
 public interface IInterfaceMgr {
@@ -36,14 +37,4 @@ public interface IInterfaceMgr {
      */
     List<String> getDriverApi(String driverName);
 
-
-    /**
-     * Generates a message on the system_alert topic that all nodes listen to.  Typically
-     * a handler for a detected broken driver bond.
-     * Note that this is not the callback to be provided to the driver's bind service.
-     *
-     * @param sev - severity of the problem
-     * @param message - description of the problem
-     */
-    void sendSystemAlert(AlertSeverity sev, String message);
 }

@@ -21,6 +21,8 @@ import cav_srvs.StartActiveRouteResponse;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -112,7 +114,7 @@ public class RouteWorker {
    */
   protected void next(WorkerEvent event) {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
-    log.logInfo("","Route State = " + getCurrentState());
+    log.info("Route State = " + getCurrentState());
     // Publish the new route state
     routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), event));
   }
@@ -126,44 +128,36 @@ public class RouteWorker {
     SystemAlert alertMsg;
     switch (event) {
       case FILES_LOADED:
-        log.logInfo("", "Loaded new routes");
+        log.info("Loaded new routes");
         break;
       case ROUTE_SELECTED:
-        log.logInfo("", "Route has been selected");
+        log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.SHUTDOWN,
-          "Route: The end of the active route has been reached");
-        // Notify system of route completion
-        routeManager.publishSystemAlert(alertMsg);
-        log.logInfo("", "Route has been completed");
+        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.SHUTDOWN, "Route: The end of the active route has been reached", null );
+        log.info("Route has been completed");
         routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
-        alertMsg = buildSystemAlertMsg(SystemAlert.WARNING,
-          "Route: The host vehicle has left the route vicinity");
-        routeManager.publishSystemAlert(alertMsg);
-        log.logInfo("", "The vehicle has left the active route");
+        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.WARNING, "Route: The host vehicle has left the route vicinity", null );
+        log.info("The vehicle has left the active route");
         break;
       case SYSTEM_FAILURE:
-        log.logInfo("",
-          "Received a system failure message and is shutting down");
+        log.info("Received a system failure message and is shutting down");
         routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
-        log.logInfo("",
-          "Received a system not ready message and is switching to pausing the active route");
+        log.info("Received a system not ready message and is switching to pausing the active route");
         break;
       case ROUTE_ABORTED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.WARNING, "Route: The active route was aborted");
-        routeManager.publishSystemAlert(alertMsg);
-        log.logInfo("", "Route has been aborted");
+        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.WARNING, "Route: The active route was aborted", null );
+        log.info("Route has been aborted");
         break;
       case ROUTE_STARTED:
-        log.logInfo("", "Route has been started");
+        log.info("Route has been started");
         break;
       default:
-        log.logWarn("", "Route was provided with an unsupported event");
+        log.info("Route was provided with an unsupported event");
     }
     // Update current state
     next(event);
@@ -218,20 +212,6 @@ public class RouteWorker {
   }
 
   /**
-   * Helper function which builds a system alert message
-   *
-   * @param type        The type of the alert
-   * @param description Description of the message
-   * @return System Alert message
-   */
-  protected SystemAlert buildSystemAlertMsg(byte type, String description) {
-    SystemAlert alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
-    alertMsg.setType(type);
-    alertMsg.setDescription(description);
-    return alertMsg;
-  }
-
-  /**
    * Function to be used in a callback for the setActiveRoute service
    *
    * @param routeID The route
@@ -265,7 +245,7 @@ public class RouteWorker {
       return StartActiveRouteResponse.ALREADY_FOLLOWING_ROUTE;
     }
     int startingIndex = getValidStartingWPIndex();
-    log.logInfo("","Starting waypoint index = " + startingIndex);
+    log.info("Starting waypoint index = " + startingIndex);
     if (startingIndex == -1) {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
@@ -312,12 +292,12 @@ public class RouteWorker {
       ableToConnectToRoute = activeRoute.insertWaypoint(startingWP, index);
     } catch (Exception e) {
       ableToConnectToRoute = false;
-      log.logInfo("","Exception caught when inserting route starting waypoint Exception = " + e);
+      log.info("Exception caught when inserting route starting waypoint Exception = " + e);
     }
 
     // If we can't join the route return
     if (ableToConnectToRoute == false) {
-      log.logInfo("","Could not join the route from the current location");
+      log.info("Could not join the route from the current location");
       return;
     }
 
@@ -338,7 +318,7 @@ public class RouteWorker {
   protected void handleNavSatFixMsg(NavSatFix msg) {
     switch (msg.getStatus().getStatus()) {
       case NavSatStatus.STATUS_NO_FIX:
-        log.logWarn("","Gps data with no fix received by route");
+        log.warn("Gps data with no fix received by route");
         return;
       case NavSatStatus.STATUS_FIX:
         hostVehicleLocation
@@ -356,7 +336,7 @@ public class RouteWorker {
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
-        log.logError("","Unknown nav sat fix status type: " + msg.getStatus().getStatus());
+        log.warn("Unknown nav sat fix status type: " + msg.getStatus().getStatus());
         return;
     }
 
@@ -407,22 +387,22 @@ public class RouteWorker {
         break;
       case cav_msgs.SystemAlert.FATAL:
         handleEvent(WorkerEvent.SYSTEM_FAILURE);
-        log.logInfo("","Received system fatal on system_alert and is abandoning the route");
+        log.info("Received system fatal on system_alert and is abandoning the route");
         break;
       case cav_msgs.SystemAlert.NOT_READY:
         handleEvent(WorkerEvent.SYSTEM_NOT_READY);
         break;
       case cav_msgs.SystemAlert.DRIVERS_READY:
         systemOkay = true;
-        log.logInfo("","Received system ready on system_alert and is starting to publish");
+        log.info("Received system ready on system_alert and is starting to publish");
         break;
       case cav_msgs.SystemAlert.SHUTDOWN:
-        log.logInfo("","Received a shutdown message");
+        log.info("Received a shutdown message");
         routeManager.shutdown();
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
-        log.logError("","System alert message received with unknown type: " + msg.getType());
+        log.warn("System alert message received with unknown type: " + msg.getType());
     }
   }
 
@@ -433,7 +413,7 @@ public class RouteWorker {
    */
   protected cav_msgs.RouteSegment getCurrentRouteSegmentTopicMsg() {
     if (currentSegment == null) {
-      log.logWarn("", "Request for current segment message when current segment is null");
+      log.warn("Request for current segment message when current segment is null");
       return messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
     }
     return currentSegment.toMessage(messageFactory, currentWaypointIndex);
@@ -446,7 +426,7 @@ public class RouteWorker {
    */
   protected cav_msgs.Route getActiveRouteTopicMsg() {
     if (activeRoute == null) {
-      log.logWarn("","Request for active route message when current segment is null");
+      log.warn("Request for active route message when current segment is null");
       return messageFactory.newFromType(cav_msgs.Route._TYPE);
     }
     return activeRoute.toMessage(messageFactory);
@@ -478,7 +458,7 @@ public class RouteWorker {
         break;
       default:
         routeState.setState(RouteState.ROUTE_SELECTION);
-        log.logWarn("","Sending a route state message an unsupported state was set. Defaulted to ROUTE_SELECTION");
+        log.warn("Sending a route state message an unsupported state was set. Defaulted to ROUTE_SELECTION");
         break;
     }
 

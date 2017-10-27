@@ -15,11 +15,6 @@ public interface IEnvironmentManager {
   void publishTF(TFMessage tfMessage);
 
   /**
-   * Publishes a system alert ros message
-   */
-  void publishSystemAlert(cav_msgs.SystemAlert alertMsg);
-
-  /**
    * Publishes a roadway environment ros message
    */
   void publishRoadwayEnvironment(cav_msgs.RoadwayEnvironment roadwayEnvMsg);
