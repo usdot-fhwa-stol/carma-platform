@@ -100,6 +100,8 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
       try {
         client = connectedNode.newServiceClient(service, typeString);
         serviceFound = true;
+      } catch(NullPointerException e) {
+    	serviceFound = false;
       } catch (ServiceNotFoundException e) {
         serviceFound = false;
       } catch (RosRuntimeException e) {
