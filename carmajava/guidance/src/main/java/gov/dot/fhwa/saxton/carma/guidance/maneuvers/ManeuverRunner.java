@@ -46,7 +46,6 @@ public class ManeuverRunner implements Runnable {
       timestepStart = System.currentTimeMillis();
 
       maneuver.executeTimeStep();
-      log.info("Executed maneuver timestep!");
 
       timestepEnd = System.currentTimeMillis();
 
