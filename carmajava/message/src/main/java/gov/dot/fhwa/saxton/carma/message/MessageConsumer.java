@@ -40,6 +40,7 @@ import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
+import org.ros.exception.ServiceNotFoundException;
 
 /*
  * The Message package is part of the Vehicle Environment package.
@@ -130,15 +131,11 @@ public class MessageConsumer extends SaxtonBaseNode {
 		
 		//Use cav_srvs.GetDriversWithCapabilities and wait for driversReady signal
 		try {
-			while(getDriversWithCapabilitiesClient == null) {
-				if(driversReady) {
-					getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode_, 5000);
-					if(getDriversWithCapabilitiesClient == null) {
-						log.warn(connectedNode_.getName() + " Node could not find service get_drivers_with_capabilities and is keeping trying...");
-					}
-				}
-				Thread.sleep(1000);
-			}	
+			getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 10000);
+			if(getDriversWithCapabilitiesClient == null) {
+				log.warn(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
+				throw new ServiceNotFoundException("get_drivers_with_capabilities is not found!");
+			}
 		} catch (Exception e) {
 			handleException(e);
 		}

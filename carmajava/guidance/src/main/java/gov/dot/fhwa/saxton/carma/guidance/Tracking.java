@@ -23,8 +23,10 @@ import cav_srvs.GetDriversWithCapabilitiesResponse;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -70,7 +72,7 @@ public class Tracking extends GuidanceComponent {
 	private ISubscriber<HeadingStamped> headingStampedSubscriber;
 	private ISubscriber<TwistStamped> velocitySubscriber;
 	private ISubscriber<Float64> steeringWheelSubscriber;
-	private ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
+	private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
 	private List<String> req_drivers = Arrays.asList("steering_wheel_angle");
 	private List<String> resp_drivers;
 
@@ -123,37 +125,24 @@ public class Tracking extends GuidanceComponent {
 		// Do not have access to SaxtonBaseNode method from here. Implement a simple waitForService.
 		try {
 			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
-			int counter = 0;
-			while(getDriversWithCapabilitiesClient == null && counter++ < 10) {
-				try{
-					getDriversWithCapabilitiesClient = node.newServiceClient("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
-				} catch (ServiceNotFoundException ex_0) {
-					log.warn("Tracking: node could not find service get_drivers_with_capabilities.");
-				} catch (RosRuntimeException ex_1) {
-					log.info("Tracking: runtime exception happened and ignored.");
-				}
-				if(getDriversWithCapabilitiesClient == null) {
-					log.warn("Tracking: Trying to find service get_drivers_with_capabilities again.");
-				}
-				Thread.sleep(1000);
-			}
+			getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
 			if(getDriversWithCapabilitiesClient == null) {
 				throw new ServiceNotFoundException("get_drivers_with_capabilities service can not be found");
 			}
 			log.info("Tracking is making a service call to interfaceMgr...");
 			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
 			driver_request_wrapper.setCapabilities(req_drivers);
-			RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, driver_request_wrapper, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
+			getDriversWithCapabilitiesClient.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
 				
 				@Override
-				public void onFailure(RemoteException arg0) {
-					throw new RosRuntimeException(arg0);
-				}
-
-				@Override
-				public void onSuccess(GetDriversWithCapabilitiesResponse arg0) {
-					resp_drivers = arg0.getDriverData();
+				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+					resp_drivers = msg.getDriverData();
 					log.info("Tracking: service call is successful: " + resp_drivers);
+				}
+				
+				@Override
+				public void onFailure(Exception e) {
+					throw new RosRuntimeException(e);				
 				}
 				
 			});
