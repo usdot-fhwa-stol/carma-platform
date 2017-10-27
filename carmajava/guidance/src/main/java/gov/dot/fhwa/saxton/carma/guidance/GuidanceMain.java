@@ -24,6 +24,7 @@ import cav_srvs.SetGuidanceEngaged;
 import cav_srvs.SetGuidanceEngagedRequest;
 import cav_srvs.SetGuidanceEngagedResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
@@ -32,6 +33,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -105,6 +107,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   public void onSaxtonStart(final ConnectedNode connectedNode) {
     final Log log = connectedNode.getLog();
     final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
+
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state, log);
     this.exceptionHandler = guidanceExceptionHandler;
     log.info("Guidance exception handler partially initialized");
@@ -150,8 +153,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     } //MessageListener
     );//addMessageListener
 
-    final IPublisher<SystemAlert> systemAlertPublisher = pubSubService.getPublisherForTopic("system_alert",
-        cav_msgs.SystemAlert._TYPE);
+
 
     guidanceEngageService = connectedNode.newServiceServer("set_guidance_engaged", SetGuidanceEngaged._TYPE,
         new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
@@ -177,7 +179,13 @@ public class GuidanceMain extends SaxtonBaseNode {
   }//onStart
 
   @Override
+  /**
+   * Handle an exception that hasn't been caught anywhere else, which will cause guidance to shutdown.
+   */
   protected void handleException(Throwable e) {
     exceptionHandler.handleException(e);
+
+    //Leverage SaxtonNode to publish the system alert.
+    publishSystemAlert(AlertSeverity.FATAL, "Guidance panic triggered in thread " + Thread.currentThread().getName() + " by an uncaught exception!", e);
   }
 }//AbstractNodeMain
