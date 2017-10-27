@@ -82,7 +82,7 @@ public class NodeName extends SaxtonBaseNode {
                                       }
 
                                       //TODO: Replace with Column D node name
-                                      log.logInfo("TAGNAME", "node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+                                      log.info("TAGNAME", "node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
 
                                     }//onNewMessage
                                   }//MessageListener

@@ -135,15 +135,15 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
       if (e!=null)
       {
         if (severity == AlertSeverity.FATAL)
-          log.logFatal("ALERT", "sendSystemAlert: " + severity + ", " + message, e);
+          log.fatal("ALERT", "sendSystemAlert: " + severity + ", " + message, e);
         else
-          log.logInfo("ALERT", "sendSystemAlert: " + severity + ", " + message, e);
+          log.info("ALERT", "sendSystemAlert: " + severity + ", " + message, e);
       }
       else{
         if (severity == AlertSeverity.FATAL)
-          log.logFatal("ALERT", "sendSystemAlert: " + severity + ", " + message);
+          log.fatal("ALERT", "sendSystemAlert: " + severity + ", " + message);
         else
-          log.logInfo("ALERT", "sendSystemAlert: " + severity + ", " + message);
+          log.info("ALERT", "sendSystemAlert: " + severity + ", " + message);
       }
     }
   }
