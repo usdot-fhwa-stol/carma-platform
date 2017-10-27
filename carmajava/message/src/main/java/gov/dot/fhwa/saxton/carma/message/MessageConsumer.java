@@ -144,7 +144,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		}
 		
 		//Make service calls and validate drivers information
-		while(outboundPub == null) {
+		while(true) {
 			if(driversReady) {
 				try {
 					GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
@@ -188,11 +188,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 				} catch(Exception e) {
 					handleException(e);
 				}
+				break;
 			}
 			try {
 				Thread.sleep(1000);
+				log.debug("MessageConsumer is checking if driver_ready is true.");
 			} catch (InterruptedException e) {
-				handleException(e);
+				log.debug("Wait for messageConsumer is interrupted.");;
 			}
 		}
 		
