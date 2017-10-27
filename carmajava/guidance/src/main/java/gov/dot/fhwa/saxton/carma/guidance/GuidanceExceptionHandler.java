@@ -2,8 +2,6 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import java.util.concurrent.atomic.*;
 import org.apache.commons.logging.Log;
-
-import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 
 /**
@@ -16,8 +14,6 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 public class GuidanceExceptionHandler {
     protected final Log log;
     protected AtomicReference<GuidanceState> state;
-    protected IPubSubService pubSubService;
-    protected IPublisher<SystemAlert> systemAlertPub;
 
     GuidanceExceptionHandler(AtomicReference<GuidanceState> state, Log log) {
         this.state = state;
@@ -32,13 +28,11 @@ public class GuidanceExceptionHandler {
      * GuidanceExceptionHandler
      */
     public void init(IPubSubService pubSubService) {
-        systemAlertPub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
     }
 
     /**
-     * Handle an exception that hasn't been caught anywhere else
-     * </p>
-     * Will result in guidance shutdown and publishing of SystemAlert.FATAL
+     * Handle an exception that hasn't been caught anywhere else.
+     * Will result in guidance shutdown.
      */
     public void handleException(Throwable e) {
         // This code feels redundant with GuidanceComponent#panic() but I'm not sure how to handle that
@@ -49,16 +43,6 @@ public class GuidanceExceptionHandler {
                 e);
 
         state.set(GuidanceState.SHUTDOWN);
-
-        if (systemAlertPub != null) {
-            SystemAlert alert = systemAlertPub.newMessage();
-            alert.setDescription("Guidance panic triggered in thread " + Thread.currentThread().getName()
-                    + " by an uncaught exception!");
-            alert.setType(SystemAlert.FATAL);
-            systemAlertPub.publish(alert);
-        } else {
-            log.fatal("Exception raised before GuidanceExceptionHandler fully initialized!!!"
-                    + "Unable to publish SystemAlert.FATAL. System may be in undefined state!!!");
-        }
     }
+
 }
