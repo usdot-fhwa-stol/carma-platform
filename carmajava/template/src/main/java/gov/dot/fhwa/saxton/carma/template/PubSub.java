@@ -59,7 +59,7 @@ public class PubSub extends SaxtonBaseNode {
                                           @Override
                                           public void onNewMessage(std_msgs.String message) {
                                               //TODO: Replace with Column D node name
-                                              log.logInfo("TAGNAME", "pub_sub heard: \"" + message.getData() + "\"");
+                                              log.info("TAGNAME", "pub_sub heard: \"" + message.getData() + "\"");
                                           }//onNewMessage
                                       }//MessageListener
         );//addMessageListener

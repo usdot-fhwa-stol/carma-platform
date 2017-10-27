@@ -19,8 +19,8 @@ package gov.dot.fhwa.saxton.carma.interfacemgr;
 import cav_msgs.DriverStatus;
 import cav_msgs.SystemAlert;
 import cav_srvs.GetDriverApiResponse;
-import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import org.apache.commons.logging.Log;
@@ -57,7 +57,6 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected Log log_;
     protected ConnectedNode connectedNode_;
     protected CancellableLoop mainLoop_;
-    protected Publisher<cav_msgs.SystemAlert> systemAlertPublisher_;
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -163,7 +162,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	                    log_.warn("InterfaceMgr.accListener sensed ACC has been disengaged at the hardware level.");
 	
 	                    //alert all other ROS nodes
-	                    sendSystemAlert(AlertSeverity.FATAL, "Hardware ACC has been disengaged.");
+	                    publishSystemAlert(AlertSeverity.FATAL, "Hardware ACC has been disengaged.", null);
 	
 	                    //shut down this node
 	                    connectedNode.shutdown();
@@ -179,15 +178,8 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         //      an as-yet non-existent JNI wrapper for the ros bindcpp library.
         //Subscriber<std_msgs.Bond> bondListener =
 
-        ///// topic publisher /////
-
-        //define our alert publisher as latching so that recipients are guaranteed to see a message even if it is
-        // published before the recipient starts up
-        systemAlertPublisher_ = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
-        systemAlertPublisher_.setLatchMode(true);
-
         //publish the system not ready message
-        sendSystemAlert(AlertSeverity.NOT_READY, "System is starting up...");
+        publishSystemAlert(AlertSeverity.NOT_READY, "System is starting up...", null);
 
         // This CancellableLoop will be canceled automatically when the node shuts down
         mainLoop_ = new CancellableLoop() {
@@ -201,7 +193,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 if (worker_.isSystemReady()) {
 
                     //log it and publish the notification
-                    sendSystemAlert(AlertSeverity.DRIVERS_READY, "SYSTEM IS NOW OPERATIONAL");
+                    publishSystemAlert(AlertSeverity.DRIVERS_READY, "SYSTEM IS NOW OPERATIONAL", null);
                     log_.info("///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
 
                     //stop the loop
@@ -243,20 +235,6 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                         });
 
     }//onStart
-
-    @Override
-    protected void handleException(Throwable e) {
-    	
-		//don't need to log anything here because SaxtonBaseNode handler has already done that
-    	
-    	//if it has been less than 2 min since we declared the system to be ready for operation then
-    	if (worker_.timeSinceSystemReady() < 2*60*1000) {
-    		sendSystemAlert(AlertSeverity.FATAL, "Unknown exception trapped in InterfaceMgr - COMMANDING SYSTEM SHUT DOWN.");
-    	}else {
-    		sendSystemAlert(AlertSeverity.WARNING, "Unknown exception trapped in InterfaceMgr - shutting down myself only.");
-    	}
-		connectedNode_.shutdown();
-    }
 
     ///// service requestors /////
 
@@ -329,21 +307,23 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         return rh.getResult();
     }
 
-    @Override
-    public void sendSystemAlert(AlertSeverity sev, String message) {
+  /***
+   * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
+   * @param e The exception to handle
+   */
+  @Override
+  protected void handleException(Throwable e) {
 
-        //in case this method gets called before our onStart is complete, need to check for valid publisher
-        if (systemAlertPublisher_ != null) {
+    //don't need to log anything here because SaxtonBaseNode handler has already done that
 
-            //convert the severity to the appropriate message type
-            SystemAlert alert = systemAlertPublisher_.newMessage();
-            alert.setType((byte) sev.getVal());
-
-            //set the alert content and send the message
-            alert.setDescription(message);
-
-            systemAlertPublisher_.publish(alert);
-            log_.info("InterfaceMgr.sendSystemAlert: " + alert.toString() + ", " + message);
-        }
+    //if it has been less than 2 min since we declared the system to be ready for operation then
+    if (worker_.timeSinceSystemReady() < 2*60*1000) {
+      publishSystemAlert(AlertSeverity.FATAL, "Unknown exception trapped in InterfaceMgr - COMMANDING SYSTEM SHUT DOWN.", e);
+    }else {
+      publishSystemAlert(AlertSeverity.WARNING, "Unknown exception trapped in InterfaceMgr - shutting down myself only.", e);
     }
+
+    connectedNode_.shutdown();
+  }
+
 }

@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.message;
 
 import cav_msgs.*;
 import cav_srvs.*;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
@@ -55,7 +56,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 	private boolean driversReady = false;
 
 	// Publishers
-	protected Publisher<SystemAlert> alertPub;
 	protected Publisher<ByteArray> outboundPub; //outgoing byte array, after encode
 	protected Publisher<BSM> bsmPub; //incoming BSM, after decoded
 	// protected Publisher<cav_msgs.MobilityAck> mobilityAckPub;
@@ -102,7 +102,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 		this.log = connectedNode_.getLog();
 		
 		//initialize alert sub, pub
-		alertPub = this.connectedNode_.newPublisher("system_alert", SystemAlert._TYPE);
 		alertSub = this.connectedNode_.newSubscriber("system_alert", SystemAlert._TYPE);
 		alertSub.addMessageListener(new MessageListener<SystemAlert>() {
 			@Override
@@ -121,7 +120,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		});
 		
 		try {
-			if(alertPub == null || alertSub == null) {
+			if(alertSub == null) {
 				log.warn("MessageConsumer: Cannot initialize alert Pubs and Subs.");
 			}
 		} catch (RosRuntimeException e) {
@@ -202,12 +201,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		
 		//test Pubs
 		if(bsmPub == null || outboundPub == null) {
-			log.warn("MessageConsumer: Initialize Pubs fails...");
-			SystemAlert alert = alertPub.newMessage();
-			alert.setType(SystemAlert.FATAL);
-			alert.setDescription("MessageConsumer: Cannot find suitble drivers.");
-			alertPub.publish(alert);
-			
+			publishSystemAlert(AlertSeverity.FATAL, "MessageConsumer cannot find suitable drivers", null);
 		}
 		
 		//initialize Subs
@@ -276,9 +270,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 
 	}
 
+	/***
+	 * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
+	 * @param e The exception to handle
+	 */
 	@Override
 	protected void handleException(Throwable e) {
-		log.error(connectedNode_.getName() + "throws an exception and is about to shutdown...", e);
+		String msg = "Uncaught exception in " + connectedNode_.getName() + " caught by handleException";
+		publishSystemAlert(AlertSeverity.FATAL, msg, e);
 		connectedNode_.shutdown();
 	}
 }

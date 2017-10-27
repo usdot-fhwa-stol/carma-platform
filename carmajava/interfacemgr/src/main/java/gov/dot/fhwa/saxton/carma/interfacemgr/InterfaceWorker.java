@@ -20,10 +20,11 @@
 
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import org.apache.commons.logging.Log;
-
 import java.util.ArrayList;
 import java.util.List;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 
 public class InterfaceWorker {
 
@@ -169,7 +170,7 @@ public class InterfaceWorker {
                 msg = "Driver " + driverName + " is " + level;
             }
 
-            mgr_.sendSystemAlert(sev, msg);
+            ((SaxtonBaseNode)mgr_).publishSystemAlert(sev, msg, null );
         }
     }
 
