@@ -96,7 +96,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node,
         guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
-    IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node);
+    IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node, this);
 
     pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory);
   }

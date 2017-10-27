@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.ros.exception.ServiceNotFoundException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceClient;
@@ -27,42 +28,21 @@ import org.ros.node.service.ServiceClient;
  * {@link RosServiceChannel} instances and their children {@link RosService} instances
  */
 public class RosServiceChannelFactory implements IServiceChannelFactory {
-    protected ConnectedNode node;
-    protected static final long SERVICE_LOCATE_TIMEOUT = 5000;
+    protected ConnectedNode conn;
+    protected SaxtonBaseNode node;
+    protected static final int SERVICE_LOCATE_TIMEOUT = 5000;
 
-    public RosServiceChannelFactory(ConnectedNode node) {
+    public RosServiceChannelFactory(ConnectedNode conn, SaxtonBaseNode node) {
+        this.conn = conn;
         this.node = node;
     }
 
     @Override public <T, S> IServiceChannel<T, S> newServiceChannel(String topic, String type)
         throws TopicNotFoundException {
-        /*
-         * Duplication of SaxtonBaseNode's waitForService functionality
-         *
-         * I don't want the GuidancePlugins to have any sort of dependency on the Guidance node
-         * itself, so they can't have a reference to the SaxtonBaseNode instance. The logic is
-         * simple enough so I've just reimplemented it here.
-         */
+        ServiceClient<T, S> client = node.waitForService(topic, type, conn, SERVICE_LOCATE_TIMEOUT);
 
-        boolean serviceFound = false;
-        IServiceChannel<T, S> out = null;
-        long curTime = System.currentTimeMillis();
-        long timeAccumulator = 0;
-        while (!serviceFound && timeAccumulator < SERVICE_LOCATE_TIMEOUT) {
-            try {
-                out = (IServiceChannel<T, S>) new RosServiceChannel<>(node.newServiceClient(topic, type));
-                serviceFound = true;
-            } catch (ServiceNotFoundException e) {
-                serviceFound = false;
-            }
-
-            long newTime = System.currentTimeMillis();
-            timeAccumulator += newTime - curTime;
-            curTime = newTime;
-        }
-
-        if (serviceFound) {
-            return out;
+        if (client != null) {
+            return (IServiceChannel<T, S>) new RosServiceChannel<T, S>(client);
         } else {
             throw new TopicNotFoundException();
         }
