@@ -30,8 +30,10 @@ public class NoOpPlugin extends AbstractPlugin {
 
   public NoOpPlugin(PluginServiceLocator psl)  {
     super(psl);
-    name = "NoOp Plugin";
-    versionId = "v00.00.01";
+    version.setName("NoOp Plugin");
+    version.setMajorRevision(0);
+    version.setIntermediateRevision(0);
+    version.setMinorRevision(1);
   }
 
   @Override

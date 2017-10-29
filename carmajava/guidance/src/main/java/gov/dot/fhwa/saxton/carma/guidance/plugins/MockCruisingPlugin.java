@@ -9,7 +9,9 @@ public class MockCruisingPlugin extends AbstractMockPlugin {
 
     public MockCruisingPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
-        name = "Mock Cruising Plugin";
-        versionId = "v00.00.01";
+        version.setName("Mock Cruising Plugin");
+        version.setMajorRevision(0);
+        version.setIntermediateRevision(0);
+        version.setMinorRevision(1);
     }
 }

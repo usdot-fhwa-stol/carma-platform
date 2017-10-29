@@ -28,6 +28,8 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -39,7 +41,7 @@ import org.apache.commons.logging.Log;
 /**
  * Cruising Plugin
  * </p>
- * Implements the basic behavior of commmanding the speed limit (as specified by RouteManager)
+ * Implements the basic behavior of commanding the speed limit (as specified by RouteManager)
  * at each route segment.
  */
 public class CruisingPlugin extends AbstractPlugin {
@@ -68,10 +70,12 @@ public class CruisingPlugin extends AbstractPlugin {
 
   public CruisingPlugin(PluginServiceLocator psl) {
     super(psl);
-    name = "Cruising Plugin";
-    versionId = "v00.00.01";
+    version.setName("Cruising Plugin");
+    version.setMajorRevision(0);
+    version.setIntermediateRevision(0);
+    version.setMinorRevision(1);
   }
-
+  
   @Override
   public void onInitialize() {
     log.info("Cruisng plugin initializing...");
