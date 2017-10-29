@@ -27,16 +27,12 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
-import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.exception.ServiceNotFoundException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.node.service.ServiceClient;
-import org.ros.node.service.ServiceResponseListener;
 
 import sensor_msgs.NavSatFix;
 import std_msgs.Float64;
@@ -64,6 +60,7 @@ public class Tracking extends GuidanceComponent {
 	private boolean nav_sat_fix_ready = false;
 	private boolean heading_ready = false;
 	private boolean velocity_ready = false;
+	private boolean transmission_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
 	private Random randomIdGenerator = new Random();
 	private byte[] random_id = new byte[4];
@@ -89,47 +86,59 @@ public class Tracking extends GuidanceComponent {
 	@Override
 	public void onGuidanceStartup() {
 		
-		// Publishers
-		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
+		try {
+			// Publishers
+			bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
 
-		// Subscribers
-		navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
-		navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
-			@Override
-			public void onMessage(NavSatFix msg) {
-				nav_sat_fix_ready = true;
+			// Subscribers
+			navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
+			headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
+			velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+			
+			if(bsmPublisher == null || navSatFixSubscriber == null || headingStampedSubscriber == null || velocitySubscriber == null) {
+				log.warn("Tracking cannot initialize pubs and subs");
 			}
-		});
+			
+			navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
+				@Override
+				public void onMessage(NavSatFix msg) {
+					nav_sat_fix_ready = true;
+				}
+			});
+			
+			
+			headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
+				@Override
+				public void onMessage(HeadingStamped msg) {
+					heading_ready = true;
+				}
+			});
+			
+			
+			velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
+				@Override
+				public void onMessage(TwistStamped msg) {
+					velocity_ready = true;
+				}
+			});
+			
+		} catch (Exception e) {
+			handleException(e);
+		}
 		
-		headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
-		headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
-			@Override
-			public void onMessage(HeadingStamped msg) {
-				heading_ready = true;
-			}
-		});
-		
-		velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
-		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
-			@Override
-			public void onMessage(TwistStamped msg) {
-				velocity_ready = true;
-			}
-		});
 	}
 
 	@Override
 	public void onSystemReady() {
 		
 		// Make service call to get drivers
-		// Do not have access to SaxtonBaseNode method from here. Implement a simple waitForService.
 		try {
 			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
 			getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
 			if(getDriversWithCapabilitiesClient == null) {
-				throw new ServiceNotFoundException("get_drivers_with_capabilities service can not be found");
+				log.warn("get_drivers_with_capabilities service can not be found");
 			}
-			log.info("Tracking is making a service call to interfaceMgr...");
+			
 			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
 			driver_request_wrapper.setCapabilities(req_drivers);
 			getDriversWithCapabilitiesClient.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
@@ -146,18 +155,33 @@ public class Tracking extends GuidanceComponent {
 				}
 				
 			});
+			
+			if(resp_drivers != null && resp_drivers.size() != 0) {
+				for(String driver_url : resp_drivers) {
+					if(driver_url.endsWith("/can/steering_wheel_angle")) {
+						steeringWheelSubscriber = pubSubService.getSubscriberForTopic(resp_drivers.get(0), Float64._TYPE);
+						break;
+					}
+				}
+			} else {
+				log.warn("Tracking: cannot find suitable drivers");
+			}
+			
+			if(steeringWheelSubscriber == null) {
+				log.warn("Tracking: initialize subs failed");
+			}
+			
+			steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
+				@Override
+				public void onMessage(Float64 msg) {
+					steer_wheel_ready = true;
+				}
+			});
+			
 		} catch (Exception e) {
 			handleException(e);
 		}
 		
-		steeringWheelSubscriber = pubSubService.getSubscriberForTopic(resp_drivers.get(0), Float64._TYPE);
-		steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
-			@Override
-			public void onMessage(Float64 msg) {
-				steer_wheel_ready = true;
-			}
-		});
-
 		drivers_ready = true;
 	}
 
@@ -167,18 +191,22 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void loop() throws InterruptedException {
+		
 		if(drivers_ready) {
 			try {
-				log.info("Tracking subscribers status: " + nav_sat_fix_ready + " " + steer_wheel_ready + " " + heading_ready + " " + velocity_ready);
-				if (nav_sat_fix_ready && steer_wheel_ready && heading_ready && velocity_ready) {
-					log.info("Guidance.Tracking is publishing bsm...");
-					bsmPublisher.publish(composeBSMData());
-				}
-			}  catch (Exception e) {
+				log.info("Tracking nav_sat_fix subscribers status: " + nav_sat_fix_ready);
+				log.info("Tracking steer_wheel subscribers status: " + steer_wheel_ready);
+				log.info("Tracking heading subscribers status: " + heading_ready);
+				log.info("Tracking velocity subscribers status: " + velocity_ready);
+				log.info("Guidance.Tracking is publishing bsm...");
+				bsmPublisher.publish(composeBSMData());
+			} catch (Exception e) {
 				handleException(e);
 			}
 		}
+		
 		Thread.sleep(sleepDurationMillis);
+		
 	}
 
 	private BSM composeBSMData() {
@@ -186,40 +214,67 @@ public class Tracking extends GuidanceComponent {
 		BSM bsmFrame = bsmPublisher.newMessage();
 
 		try {
-			if (msgCount == 0) {
-				randomIdGenerator.nextBytes(random_id);
-			}
-
 			// Set header
 			bsmFrame.getHeader().setStamp(node.getCurrentTime());
 			bsmFrame.getHeader().setFrameId("MessageNode");
 
 			// Set core data
 			BSMCoreData coreData = bsmFrame.getCoreData();
-			coreData.setMsgCount((byte) (msgCount++ % 127));
+			coreData.setMsgCount((byte) (msgCount % 127));
 
 			// ID is random and changes every 5 minutes
-			if (msgCount == 3000) {
+			if (msgCount == 0) {
+				randomIdGenerator.nextBytes(random_id);
+			} else if (msgCount == 3000) {
 				msgCount = 0;
 			}
 			coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
 
 			// Use ros node time
-			coreData.setSecMark((short) (node.getCurrentTime().toSeconds() % 65535));
+			coreData.setSecMark((short) ((node.getCurrentTime().toSeconds() * 1000) % 65535));
 
 			// Set GPS data
-			coreData.setLatitude(navSatFixSubscriber.getLastMessage().getLatitude());
-			coreData.setLongitude(navSatFixSubscriber.getLastMessage().getLongitude());
-			coreData.setElev((float) navSatFixSubscriber.getLastMessage().getAltitude());
-
-			// N/A for now
+			coreData.setLatitude(90.0000001); // Default value when unknown
+			coreData.setLongitude(180.0000001);
+			coreData.setElev((float) -409.6);
 			coreData.getAccuracy().setSemiMajor((float) (255 * 0.05));
 			coreData.getAccuracy().setSemiMinor((float) (255 * 0.05));
 			coreData.getAccuracy().setOrientation(65535 * 0.0054932479);
+			if(nav_sat_fix_ready) {
+				double lat = navSatFixSubscriber.getLastMessage().getLatitude();
+				double Lon = navSatFixSubscriber.getLastMessage().getLongitude();
+				float elev = (float) navSatFixSubscriber.getLastMessage().getAltitude();
+				float semi_major = (float) navSatFixSubscriber.getLastMessage().getPositionCovariance()[0];
+				float semi_minor = (float) navSatFixSubscriber.getLastMessage().getPositionCovariance()[4];
+				double orientation = 0; //orientation of semi_major axis
+				if(lat >= -90 && lat <= 90) {
+					coreData.setLatitude(lat);
+				}
+				if(Lon >= -179.9999999 && Lon <= 180) {
+					coreData.setLongitude(Lon);
+				}
+				if(elev >= -409.5 && elev <= 6143.9) {
+					coreData.setElev(elev);
+				}
+				if(semi_major >= 0 && Math.sqrt(semi_major) <= 12.7) {
+					coreData.getAccuracy().setSemiMajor((float) Math.sqrt(semi_major));
+				}
+				if(semi_minor >= 0 && Math.sqrt(semi_minor) <= 12.7) {
+					coreData.getAccuracy().setSemiMinor((float) Math.sqrt(semi_minor));
+				}
+				if(orientation >= 0 && orientation <= 359.9945078786) {
+					coreData.getAccuracy().setOrientation(orientation);
+				}
+			}
+			
+			// Set transmission state
 			coreData.getTransmission().setTransmissionState((byte) 7);
+			if(transmission_ready) {
+				// N/A for now
+			}
 
 			coreData.setSpeed((float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX());
-			coreData.setHeading((float) (headingStampedSubscriber.getLastMessage().getHeading()));
+			coreData.setHeading((float) headingStampedSubscriber.getLastMessage().getHeading());
 			coreData.setAngle((float) steeringWheelSubscriber.getLastMessage().getData());
 
 			// N/A for now

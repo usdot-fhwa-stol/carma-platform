@@ -149,7 +149,8 @@
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-        <remap from="velocity" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
+        <remap from="velocity" 
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
 
         <!-- Trajectory Thread-->
         <remap from="get_drivers_with_capabilities"
