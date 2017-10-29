@@ -20,6 +20,7 @@ import cav_msgs.*;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
 import java.util.ArrayList;
@@ -57,8 +58,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 	private boolean driversReady = false;
 
 	// Publishers
-	private Publisher<ByteArray> outboundPub; //outgoing byte array, after encode
-	private Publisher<BSM> bsmPub; //incoming BSM, after decoded
+	protected Publisher<ByteArray> outboundPub; //outgoing byte array, after encode
+	protected Publisher<BSM> bsmPub; //incoming BSM, after decoded
 	// protected Publisher<cav_msgs.MobilityAck> mobilityAckPub;
 	// protected Publisher<cav_msgs.MobilityGreeting> mobilityGreetingPub;
 	// protected Publisher<cav_msgs.MobilityIntro> mobilityIntroPub;
@@ -69,9 +70,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// protected Publisher<cav_msgs.Tim> timPub;
 
 	// Subscribers
-	private Subscriber<SystemAlert> alertSub;
-	private Subscriber<ByteArray> inboundSub; //incoming byte array, need to decode
-	private Subscriber<BSM> bsmSub; //outgoing BSM, need to encode
+	protected Subscriber<SystemAlert> alertSub;
+	protected Subscriber<ByteArray> inboundSub; //incoming byte array, need to decode
+	protected Subscriber<BSM> bsmSub; //outgoing BSM, need to encode
 	// protected Subscriber<cav_msgs.MobilityAck> mobilityAckOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityGreeting> mobilityGreetingOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityIntro> mobilityIntroOutboundSub;
@@ -79,14 +80,16 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// protected Subscriber<cav_msgs.MobilityPlan> mobilityPlanOutboundSub;
 
 	// Used Services
-	private ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
+	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
 	private List<String> drivers_data = new ArrayList<>();
+	private String J2735_inbound_binary_msg = null;
+	private String J2735_outbound_binary_msg = null;
 
 	//Log for this node
-	private Log log = null;
+	protected SaxtonLogger log = null;
 	
 	//Connected Node
-	private ConnectedNode connectedNode = null;
+	protected ConnectedNode connectedNode_ = null;
 	
 	@Override
 	public GraphName getDefaultNodeName() {
@@ -97,17 +100,17 @@ public class MessageConsumer extends SaxtonBaseNode {
 	public void onSaxtonStart(final ConnectedNode connectedNode) {
 		
 		//initialize connectedNode and log
-		this.connectedNode = connectedNode;
-		this.log = connectedNode.getLog();
+		this.connectedNode_ = connectedNode;
+		this.log = new SaxtonLogger(connectedNode_.getName().toString(), connectedNode.getLog());
 		
 		//initialize alert sub, pub
-		alertSub = connectedNode.newSubscriber("system_alert", SystemAlert._TYPE);
+		alertSub = this.connectedNode_.newSubscriber("system_alert", SystemAlert._TYPE);
 		alertSub.addMessageListener(new MessageListener<SystemAlert>() {
 			@Override
 			public void onNewMessage(SystemAlert message) {
 				try {
 					if(message.getType() == SystemAlert.FATAL || message.getType() == SystemAlert.SHUTDOWN) {
-						connectedNode.shutdown();
+						connectedNode_.shutdown();
 					}
 					else if(message.getType() == SystemAlert.DRIVERS_READY) {
 						driversReady = true;
@@ -118,8 +121,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 			}
 		});
 		
-		//initialize bsm pub
-		bsmPub = connectedNode.newPublisher("incoming_bsm", BSM._TYPE);
+		try {
+			if(alertSub == null) {
+				log.warn("MessageConsumer: Cannot initialize alert Pubs and Subs.");
+			}
+		} catch (RosRuntimeException e) {
+			handleException(e);
+		}
 		
 		//Use cav_srvs.GetDriversWithCapabilities and wait for driversReady signal
 		try {
@@ -128,12 +136,12 @@ public class MessageConsumer extends SaxtonBaseNode {
 				log.warn(connectedNode.getName() + " Node could not find service get_drivers_with_capabilities");
 				throw new ServiceNotFoundException("get_drivers_with_capabilities is not found!");
 			}
-		}	catch (Exception e) {
+		} catch (Exception e) {
 			handleException(e);
 		}
 		
-		//initialize outboundPub
-		while(outboundPub == null) {
+		//Make service calls and validate drivers information
+		while(true) {
 			if(driversReady) {
 				try {
 					GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
@@ -160,9 +168,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 						throw new RosRuntimeException("MessageConsumer can not find drivers.");
 					}
 					
-					String J2735_inbound_binary_msg = null;
-					String J2735_outbound_binary_msg = null;
-					
 					for(String s : drivers_data) {
 						if(s.endsWith("/arada_application/comms/inbound_binary_msg") || s.endsWith("/dsrc/comms/inbound_binary_msg")) {
 							J2735_inbound_binary_msg = s;
@@ -177,57 +182,80 @@ public class MessageConsumer extends SaxtonBaseNode {
 						throw new RosRuntimeException("Unable to find suitable dsrc driver!");
 					}
 					
-					outboundPub = connectedNode.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
-					inboundSub = connectedNode.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
-					
 				} catch(Exception e) {
 					handleException(e);
 				}
+				break;
 			}
 			try {
 				Thread.sleep(1000);
+				log.debug("MessageConsumer is checking if driver_ready is true.");
 			} catch (InterruptedException e) {
-				handleException(e);
+				log.debug("Wait for messageConsumer is interrupted.");;
 			}
 		}
 		
-		//Subscribers
-		bsmSub = connectedNode.newSubscriber("outgoing_bsm", BSM._TYPE);
-		bsmSub.addMessageListener(new MessageListener<BSM>() {
-			@Override
-			public void onNewMessage(BSM bsm) {
-				try {
-					if(outboundPub != null && driversReady) {
-						log.info("MessageConsumer received BSM. Calling factory to encode data...");
-						ByteArray byteArray = outboundPub.newMessage();
-						BSMFactory.encode(bsm, byteArray, log);
-						log.info("MessageConsumer finished encoding BSM and is going to publish...");
-						outboundPub.publish(byteArray);
+		//initialize Pubs
+		bsmPub = connectedNode_.newPublisher("incoming_bsm", BSM._TYPE);
+		outboundPub = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
+		
+		//test Pubs
+		if(bsmPub == null || outboundPub == null) {
+			publishSystemAlert(AlertSeverity.WARNING, "MessageConsumer cannot set up topic publishers.", null);
+		}
+		
+		//initialize Subs
+		try {
+			bsmSub = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);
+			bsmSub.addMessageListener(new MessageListener<BSM>() {
+				@Override
+				public void onNewMessage(BSM bsm) {
+					try {
+						if(outboundPub != null && driversReady) {
+							log.info("MessageConsumer received BSM. Calling factory to encode data...");
+							ByteArray byteArray = outboundPub.newMessage();
+							BSMFactory.encode(bsm, byteArray, log, connectedNode_);
+							log.info("MessageConsumer finished encoding BSM and is going to publish...");
+							outboundPub.publish(byteArray);
+						}
+					} catch (NullPointerException npe) {
+						log.warn("MessageConsumer: BSM message is not ready");
+					} catch (IllegalArgumentException iae) {
+						log.warn("MessageConsumer: Invalid BSM is not published");
+					} catch (Exception e) {
+						handleException(e);
 					}
-				} catch (NullPointerException exx) {
-					log.info("MessageConsumer: BSM message is not ready");
-				} catch (IllegalArgumentException ex) {
-					log.info("MessageConsumer: Invalid BSM is not published");
-				} catch (Exception e) {
-					handleException(e);
 				}
-			}
-		});
+			});
 
-		inboundSub.addMessageListener(new MessageListener<ByteArray>() {
+			inboundSub = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
+			inboundSub.addMessageListener(new MessageListener<ByteArray>() {
 
-			@Override
-			public void onNewMessage(ByteArray arg0) {
-				BSM decodedBSM = bsmPub.newMessage();
-				decodedBSM.getHeader().setFrameId("MessageNode");
-				BSMFactory.decode(arg0, decodedBSM, log);
-				bsmPub.publish(decodedBSM);
-			}
-			
-		});
+				@Override
+				public void onNewMessage(ByteArray msg) {
+					try {
+						BSM decodedBSM = bsmPub.newMessage();
+						int result = BSMFactory.decode(msg, decodedBSM, log, connectedNode_);
+						if(result == -1) {
+							log.warn(connectedNode_.getName() +  ": Incomming BSM cannot be decoded.");
+						}
+						else {
+							log.info(connectedNode_.getName() + ": Incomming BSM is decoded and publishing...");
+							bsmPub.publish(decodedBSM);
+						}
+					} catch (Exception e) {
+						handleException(e);
+					}
+				}
+				
+			});
+		} catch (Exception ex) {
+			handleException(ex);
+		}
+		
 		
 		// This CancellableLoop will be canceled automatically when the node shuts down.
-		connectedNode.executeCancellableLoop(new CancellableLoop() {
+		connectedNode_.executeCancellableLoop(new CancellableLoop() {
 			private int sequenceNumber;
 			@Override
 			protected void setup() {
@@ -248,9 +276,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 	 */
 	@Override
 	protected void handleException(Throwable e) {
-
-		String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+		String msg = "Uncaught exception in " + connectedNode_.getName() + " caught by handleException";
 		publishSystemAlert(AlertSeverity.FATAL, msg, e);
-		connectedNode.shutdown();
+		connectedNode_.shutdown();
 	}
 }
