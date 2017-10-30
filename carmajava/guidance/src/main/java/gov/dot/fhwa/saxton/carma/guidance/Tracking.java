@@ -20,6 +20,7 @@ import cav_msgs.*;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
+import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
@@ -60,17 +61,22 @@ public class Tracking extends GuidanceComponent {
 	private boolean nav_sat_fix_ready = false;
 	private boolean heading_ready = false;
 	private boolean velocity_ready = false;
+	private boolean brake_ready = false;
 	private boolean transmission_ready = false;
+	private boolean acceleration_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
 	private Random randomIdGenerator = new Random();
 	private byte[] random_id = new byte[4];
 	private IPublisher<BSM> bsmPublisher;
+	private ISubscriber<AccelStamped> accelerationSubscriber;
 	private ISubscriber<NavSatFix> navSatFixSubscriber;
 	private ISubscriber<HeadingStamped> headingStampedSubscriber;
 	private ISubscriber<TwistStamped> velocitySubscriber;
 	private ISubscriber<Float64> steeringWheelSubscriber;
+	private ISubscriber<Float64> brakeSubscriber;
+	private ISubscriber<TransmissionState> transmissionSubscriber;
 	private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
-	private List<String> req_drivers = Arrays.asList("steering_wheel_angle");
+	private List<String> req_drivers = Arrays.asList("steering_wheel_angle", "brake_position", "transmission_state");
 	private List<String> resp_drivers;
 
 	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
@@ -94,8 +100,13 @@ public class Tracking extends GuidanceComponent {
 			navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
 			headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
 			velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+			accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration_set", AccelerationSet4Way._TYPE);
 			
-			if(bsmPublisher == null || navSatFixSubscriber == null || headingStampedSubscriber == null || velocitySubscriber == null) {
+			if(bsmPublisher == null 
+					|| navSatFixSubscriber == null 
+					|| headingStampedSubscriber == null 
+					|| velocitySubscriber == null 
+					|| accelerationSubscriber == null) {
 				log.warn("Tracking cannot initialize pubs and subs");
 			}
 			
@@ -119,6 +130,13 @@ public class Tracking extends GuidanceComponent {
 				@Override
 				public void onMessage(TwistStamped msg) {
 					velocity_ready = true;
+				}
+			});
+			
+			accelerationSubscriber.registerOnMessageCallback(new OnMessageCallback<AccelStamped>() {
+				@Override
+				public void onMessage(AccelStamped msg) {
+					acceleration_ready = true;
 				}
 			});
 			
@@ -156,18 +174,25 @@ public class Tracking extends GuidanceComponent {
 				
 			});
 			
-			if(resp_drivers != null && resp_drivers.size() != 0) {
+			if(resp_drivers != null) {
 				for(String driver_url : resp_drivers) {
 					if(driver_url.endsWith("/can/steering_wheel_angle")) {
-						steeringWheelSubscriber = pubSubService.getSubscriberForTopic(resp_drivers.get(0), Float64._TYPE);
-						break;
+						steeringWheelSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
+						continue;
+					}
+					if(driver_url.endsWith("/can/brake_position")) {
+						brakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
+						continue;
+					}
+					if(driver_url.endsWith("/can/transmission_state")) {
+						transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url, TransmissionState._TYPE);
 					}
 				}
 			} else {
 				log.warn("Tracking: cannot find suitable drivers");
 			}
 			
-			if(steeringWheelSubscriber == null) {
+			if(steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null) {
 				log.warn("Tracking: initialize subs failed");
 			}
 			
@@ -175,6 +200,20 @@ public class Tracking extends GuidanceComponent {
 				@Override
 				public void onMessage(Float64 msg) {
 					steer_wheel_ready = true;
+				}
+			});
+			
+			brakeSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
+				@Override
+				public void onMessage(Float64 msg) {
+					brake_ready = true;
+				}
+			});
+			
+			transmissionSubscriber.registerOnMessageCallback(new OnMessageCallback<TransmissionState>() {
+				@Override
+				public void onMessage(TransmissionState msg) {
+					transmission_ready = true;
 				}
 			});
 			
@@ -230,9 +269,6 @@ public class Tracking extends GuidanceComponent {
 			}
 			coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
 
-			// Use ros node time
-			coreData.setSecMark((short) ((node.getCurrentTime().toSeconds() * 1000) % 65535));
-
 			// Set GPS data
 			coreData.setLatitude(90.0000001); // Default value when unknown
 			coreData.setLongitude(180.0000001);
@@ -270,19 +306,52 @@ public class Tracking extends GuidanceComponent {
 			// Set transmission state
 			coreData.getTransmission().setTransmissionState((byte) 7);
 			if(transmission_ready) {
-				// N/A for now
+				TransmissionState transmission_state = transmissionSubscriber.getLastMessage();
+				if(transmission_state.getTransmissionState() >= 0 && transmission_state.getTransmissionState() < 7) {
+					coreData.getTransmission().setTransmissionState(transmission_state.getTransmissionState());
+				}
 			}
 
-			coreData.setSpeed((float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX());
-			coreData.setHeading((float) headingStampedSubscriber.getLastMessage().getHeading());
-			coreData.setAngle((float) steeringWheelSubscriber.getLastMessage().getData());
+			coreData.setSpeed((float) (8191 * 0.02));
+			if(velocity_ready) {
+				float speed = (float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
+				if(speed >= 0 && speed <= 163.8) {
+					coreData.setSpeed(speed);
+				}
+			}
+			
+			coreData.setHeading(360);
+			if(heading_ready) {
+				float heading = (float) headingStampedSubscriber.getLastMessage().getHeading();
+				if(heading >= 0 && heading <= 359.9875) {
+					coreData.setHeading(heading);
+				}
+			}
+			
+			coreData.setAngle((float) 190.5);
+			if(steer_wheel_ready) {
+				float angle = (float) steeringWheelSubscriber.getLastMessage().getData();
+				if(angle >= -189 && angle <= 189) {
+					coreData.setAngle(angle);
+				}
+			}
 
 			// N/A for now
 			coreData.getAccelSet().setLongitudinal((float) (2001 * 0.01));
 			coreData.getAccelSet().setLateral((float) (2001 * 0.01));
-			coreData.getAccelSet().setVert((float) (-127 * 0.02));
+			coreData.getAccelSet().setVert((float) (-127 * 0.02 * 9.8));
 			coreData.getAccelSet().setYawRate(0);
-			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 10);
+			
+			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 16);
+			if(brake_ready) {
+				if(brakeSubscriber.getLastMessage().getData() >= 0) {
+					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 15);
+				} else {
+					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 0);
+				}
+			}
+			
+			// N/A for now
 			coreData.getBrakes().getTraction().setTractionControlStatus((byte) 0);
 			coreData.getBrakes().getAbs().setAntiLockBrakeStatus((byte) 0);
 			coreData.getBrakes().getScs().setStabilityControlStatus((byte) 0);
@@ -297,6 +366,9 @@ public class Tracking extends GuidanceComponent {
 			}
 			coreData.getSize().setVehicleLength(vehicleLength);
 			coreData.getSize().setVehicleWidth(vehicleWidth);
+			
+			// Use ros node time
+			coreData.setSecMark((short) ((node.getCurrentTime().toSeconds() * 1000) % 65535));
 
 		} catch (Exception e) {
 			handleException(e);
