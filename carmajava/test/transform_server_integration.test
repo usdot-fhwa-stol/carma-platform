@@ -21,7 +21,7 @@
   <group ns="/saxton_cav/test">
     <test test-name="transform_server_test" pkg="carma" type="transformServerTest.py" time-limit="35.0">
       <remap from="get_transform"
-             to="/saxton_cav/vehicle_environment/roadway/get_transform"/>
+             to="/saxton_cav/roadway/get_transform"/>
     </test>
   </group>
 </launch>
