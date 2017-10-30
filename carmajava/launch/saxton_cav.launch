@@ -138,7 +138,8 @@
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/plan_status"/>
 
         <!-- Arbitrator Thread-->
-        <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="route_state"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Tracking Thread-->
         <remap from="~vehicle_length"
@@ -149,11 +150,14 @@
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
                to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-        <remap from="velocity" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
+        <remap from="velocity"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
 
         <!-- Trajectory Thread-->
         <remap from="get_drivers_with_capabilities"
                to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        <remap from="current_segment"
+               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/current_segment"/>
 
         <!-- Trajectory and Arbitrator -->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>

@@ -142,7 +142,7 @@ public class Arbitrator extends GuidanceComponent {
       log.info("Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
     }
 
-    twistSubscriber = pubSubService.getSubscriberForTopic("twist_stamped", TwistStamped._TYPE);
+    twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
     twistSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
       @Override
       public void onMessage(TwistStamped msg) {

@@ -59,7 +59,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             }
         });
 
-        twistSubscriber_ = pubSubService.getSubscriberForTopic("twist_stamped", TwistStamped._TYPE);
+        twistSubscriber_ = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
         twistSubscriber_.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
             @Override
             public void onMessage(TwistStamped msg) {
