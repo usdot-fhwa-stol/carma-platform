@@ -78,7 +78,6 @@
   <!-- ROS Namespaces -->
   <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
   <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
-  <arg name="VE_NS"     default="vehicle_environment" doc="Namespace of nodes in vehicle environment package"/>
   <arg name="NEGTR_NS"  default="negotiator" doc="Namespace of nodes in negotiator package"/>
   <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
   <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
@@ -102,19 +101,19 @@
       <remap from="system_alert"
              to="/$(arg TOP_NS)/system_alert"/>
       <remap from="nav_sat_fix"
-             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+             to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
       <remap from="current_segment"
-             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/current_segment"/>
+             to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
       <remap from="get_available_routes"
-             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>
+             to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
       <remap from="set_active_route"
-             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/set_active_route"/>
+             to="/$(arg TOP_NS)/$(arg RT_NS)/set_active_route"/>
       <remap from="start_active_route"
-             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/start_active_route"/>
+             to="/$(arg TOP_NS)/$(arg RT_NS)/start_active_route"/>
       <remap from="route_state"
-             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
+             to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
       <remap from="route"
-             to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route"/>
+             to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="ui_platoon_vehicle_info"
@@ -149,12 +148,13 @@
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="new_plan_inbound"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/new_plan"/>
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
         <remap from="plan_status"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/plan_status"/>
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/plan_status"/>
 
         <!-- Arbitrator Thread-->
-        <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="route_state"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Tracking Thread-->
         <remap from="~vehicle_length"
@@ -162,165 +162,164 @@
         <remap from="~vehicle_width"
                to="/$(arg TOP_NS)/vehicle_width"/>
         <remap from="heading"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-        <remap from="velocity" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+        <remap from="velocity"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
 
         <!-- Trajectory Thread-->
         <remap from="get_drivers_with_capabilities"
                to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        <remap from="current_segment"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
 
         <!-- Trajectory and Arbitrator -->
-        <remap from="route_state" to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="route_state" to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Maneuvers Thread-->
         <remap from="roadway_environment"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/roadway_environment"/>
+               to="/$(arg TOP_NS)/$(arg RD_NS)/roadway_environment"/>
         <remap from="route"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/route"/>
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
         <!-- Plugin Cruising Thread-->
         <remap from="get_available_routes"
-               to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/get_available_routes"/>
+               to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
       </node>
     </group>
 
-    <!-- Vehicle Environment Package -->
-    <group ns="$(arg VE_NS)">
+    <!-- Message Package -->
+    <group ns="$(arg MSG_NS)">
 
-      <!-- Message Package -->
-      <group ns="$(arg MSG_NS)">
+      <!-- Message Consumer Node -->
+      <node pkg="carma" type="message" name="message_consumer"
+            args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
 
-        <!-- Message Consumer Node -->
-        <node pkg="carma" type="message" name="message_consumer"
-              args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
+        <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-          <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="outgoing_bsm"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
+        <remap from="mobility_ack_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_ack"/>
+        <remap from="mobility_greeting_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_greeting"/>
+        <remap from="mobility_intro_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro"/>
+        <remap from="mobility_nack_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_nack"/>
+        <remap from="mobility_plan_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_plan"/>
+        <remap from="get_drivers_with_capabilities"
+               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+      </node>
+    </group>
 
-          <remap from="system_alert"
-                 to="/$(arg TOP_NS)/system_alert"/>
-          <remap from="outgoing_bsm"
-                 to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
-          <remap from="mobility_ack_outbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_ack"/>
-          <remap from="mobility_greeting_outbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_greeting"/>
-          <remap from="mobility_intro_outbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_intro"/>
-          <remap from="mobility_nack_outbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_nack"/>
-          <remap from="mobility_plan_outbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg NEGTR_NS)/mobility_plan"/>
-          <remap from="get_drivers_with_capabilities"
-                 to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-        </node>
-      </group>
+    <!-- Negotiator Package -->
+    <group ns="$(arg NEGTR_NS)">
 
-      <!-- Negotiator Package -->
-      <group ns="$(arg NEGTR_NS)">
+      <!-- Negotiator Node -->
+      <node pkg="carma" type="negotiator" name="negotiator_mgr"
+            args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr">
 
-        <!-- Negotiator Node -->
-        <node pkg="carma" type="negotiator" name="negotiator_mgr"
-              args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr">
+        <env if="$(arg debug_negotiator)" name="NEGOTIATOR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-          <env if="$(arg debug_negotiator)" name="NEGOTIATOR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="host_bsm"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
+        <remap from="mobility_ack_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+        <remap from="mobility_greeting_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_greeting"/>
+        <remap from="mobility_intro_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_intro"/>
+        <remap from="mobility_nack_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_nack"/>
+        <remap from="mobility_plan_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_plan"/>
+      </node>
+    </group>
 
-          <remap from="system_alert"
-                 to="/$(arg TOP_NS)/system_alert"/>
-          <remap from="host_bsm"
-                 to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
-          <remap from="mobility_ack_inbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_ack"/>
-          <remap from="mobility_greeting_inbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_greeting"/>
-          <remap from="mobility_intro_inbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_intro"/>
-          <remap from="mobility_nack_inbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_nack"/>
-          <remap from="mobility_plan_inbound"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/mobility_plan"/>
-        </node>
-      </group>
+    <!-- Sensor Fusion Package -->
+    <group ns="$(arg SF_NS)">
 
-      <!-- Sensor Fusion Package -->
-      <group ns="$(arg SF_NS)">
+      <!-- Sensor Fusion Node -->
+      <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
+        <remap from="~filtered"
+               to="filtered"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="bsm"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+        <remap from="get_drivers_with_capabilities"
+               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+      </node>
+    </group>
 
-        <!-- Sensor Fusion Node -->
-        <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
-          <remap from="~filtered"
-                 to="filtered"/>
-          <remap from="system_alert"
-                 to="/$(arg TOP_NS)/system_alert"/>
-          <remap from="bsm"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/incoming_bsm"/>
-          <remap from="get_drivers_with_capabilities"
-                 to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-        </node>
-      </group>
+    <!-- Roadway Package -->
+    <group ns="$(arg RD_NS)">
 
-      <!-- Roadway Package -->
-      <group ns="$(arg RD_NS)">
+      <!-- Environment Manager Node -->
+      <node pkg="carma" type="roadway" name="environment_manager"
+            args="gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager">
 
-        <!-- Environment Manager Node -->
-        <node pkg="carma" type="roadway" name="environment_manager"
-              args="gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager">
+        <env if="$(arg debug_environment_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-          <env if="$(arg debug_environment_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="map"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/map"/>
+        <remap from="route_current_segment"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
+        <remap from="heading"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
+        <remap from="nav_sat_fix"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+        <remap from="odometry"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/odometry"/>
+        <remap from="objects"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/objects"/>
+        <remap from="tracked_vehicles"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
+        <remap from="velocity"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
+        <remap from="get_transform"
+               to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
+      </node>
 
-          <remap from="system_alert"
-                 to="/$(arg TOP_NS)/system_alert"/>
-          <remap from="map"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/map"/>
-          <remap from="route_current_segment"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RT_NS)/current_segment"/>
-          <remap from="heading"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/heading"/>
-          <remap from="nav_sat_fix"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-          <remap from="odometry"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/odometry"/>
-          <remap from="tracked_objects"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/objects"/>
-          <remap from="tracked_vehicles"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
-          <remap from="velocity"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/velocity"/>
-          <remap from="get_transform"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg RD_NS)/get_transform"/>
-        </node>
+      <!-- Transform Server Node -->
+      <node pkg="carma" type="roadway" name="transform_server"
+            args="gov.dot.fhwa.saxton.carma.roadway.TransformServer">
 
-        <!-- Transform Server Node -->
-        <node pkg="carma" type="roadway" name="transform_server"
-              args="gov.dot.fhwa.saxton.carma.roadway.TransformServer">
+        <env if="$(arg debug_transform_svr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-          <env if="$(arg debug_transform_svr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+      </node>
+    </group>
 
-          <remap from="system_alert"
-                 to="/$(arg TOP_NS)/system_alert"/>
-        </node>
-      </group>
+    <!-- Route Package -->
+    <group ns="$(arg RT_NS)">
 
-      <!-- Route Package -->
-      <group ns="$(arg RT_NS)">
+      <!-- Route Manager Node -->
+      <node pkg="carma" type="route" name="route_manager"
+            args="gov.dot.fhwa.saxton.carma.route.RouteManager">
 
-        <!-- Route Manager Node -->
-        <node pkg="carma" type="route" name="route_manager"
-              args="gov.dot.fhwa.saxton.carma.route.RouteManager">
+        <env if="$(arg debug_route)" name="ROUTE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-          <env if="$(arg debug_route)" name="ROUTE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
+        <param name="default_database_path" type="string" value="$(arg ROUTES_DIR)"/>
 
-          <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
-          <param name="default_database_path" type="string" value="$(arg ROUTES_DIR)"/>
-
-          <remap from="system_alert"
-                 to="/$(arg TOP_NS)/system_alert"/>
-          <remap from="tim"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg MSG_NS)/tim"/>
-          <remap from="nav_sat_fix"
-                 to="/$(arg TOP_NS)/$(arg VE_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-        </node>
-      </group>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="tim"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/tim"/>
+        <remap from="nav_sat_fix"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+      </node>
     </group>
 
     <!-- Interface Manager Package -->
