@@ -1,3 +1,5 @@
+
+
 % Generate fake pinpoint data for non-moving vehicle
 % 10 minutes of data coming from a stationary host vehicle pinpoint
 % The data will be published at 50Hz in accorance with the real driver
