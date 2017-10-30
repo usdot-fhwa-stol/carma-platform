@@ -3,7 +3,6 @@ package gov.dot.fhwa.saxton.carma.message;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.node.ConnectedNode;
@@ -29,7 +28,7 @@ public class BSMFactory {
 	 * object and return an byte array with encoded information. Because of the
 	 * efficiency of JNI method call, it takes different parts of BSM instead of a
 	 * single BSM object.
-	 * 
+	 *
 	 * @param bsm_core The BSMCoreData object of the BSM object
 	 * @param bsm_id  The id number of the BSM message in order to handle ChannelBuffer type
 	 * @param accuracy The positional accuracy set
@@ -47,7 +46,7 @@ public class BSMFactory {
 	 * and a empty BSM object as input. It will decode the message and set all fields in BSM.
 	 * Because of the efficiency of JNI method call, it takes different parts of BSM as parameters
 	 * instead of a single BSM object.
-	 * 
+	 *
 	 * @param encoded_array The encoded BSM message
 	 * @param plain_msg The empty BSM object
 	 * @param bsm_id Decoded id number of the BSM message in order to handle ChannelBuffer type
@@ -58,14 +57,14 @@ public class BSMFactory {
 	 * @param size Decoded size of the vehicle
 	 * @return -1 means decode failed; 0 means decode is successful
 	 */
-	
+
 	private static native int decode_BSM(byte[] encoded_array, Object plain_msg, byte[] bsm_id, Object accuracy,
 			Object transmission, Object accelset, byte[] brakeStatus, Object size);
 	/**
 	 * This method is used by MessageConsumer. It takes whole BSM message object
 	 * and an empty ByteArray message. After calling this method,
 	 * the content of the empty byte array will be the encoded information of BSM.
-	 * 
+	 *
 	 * @param plain_msg Entire BSM object
 	 * @param binary_msg The empty ByteArray object
 	 * @param log Logging any necessary messages
@@ -80,7 +79,7 @@ public class BSMFactory {
 				plain_msg.getCoreData().getBrakes().getBrakeBoost().getBrakeBoostApplied(),
 				plain_msg.getCoreData().getBrakes().getAuxBrakes().getAuxiliaryBrakeStatus()
 				};
-		log.info("BSMFactory: Start to encode bsm message");
+		log.info("BSM", "Start to encode bsm message.");
 		byte[] temp_ID = new byte[4];
 		for(int i = 0; i < plain_msg.getCoreData().getId().capacity(); i++) {
 			temp_ID[i] = plain_msg.getCoreData().getId().getByte(i);
@@ -97,12 +96,12 @@ public class BSMFactory {
 		binary_msg.getHeader().getStamp().secs = node.getCurrentTime().secs;
 		binary_msg.getHeader().getStamp().nsecs = node.getCurrentTime().nsecs;
 	}
-	
+
 	/**
 	 * This method is used by MessageConsumer. It takes empty BSM message object
 	 * and an ByteArray message as encoded BSM. After calling this method,
 	 * the content of the empty BSM will be the decoded results.
-	 * 
+	 *
 	 * @param encoded_msg The encoded BSM message as a binary array
 	 * @param msg_object The empty BSM object
 	 * @param log Logging any necessary messages
@@ -126,7 +125,7 @@ public class BSMFactory {
 				brakeStatus, msg_object.getCoreData().getSize()
 				);
 		if(result == -1) {
-			log.warn("BSMFactory: Cannot decode the incoming binary BSM message.");
+			log.warn("BSM", "Cannot decode the incoming binary BSM message.");
 			return result;
 		}
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, temp_ID);
