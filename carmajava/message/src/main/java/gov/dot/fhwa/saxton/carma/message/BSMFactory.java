@@ -3,7 +3,6 @@ package gov.dot.fhwa.saxton.carma.message;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.node.ConnectedNode;
@@ -13,6 +12,8 @@ import cav_msgs.ByteArray;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 public class BSMFactory {
+
+	private static SaxtonLogger log;
 
 	// Load libasn1c.so external C library
 	static {
@@ -80,7 +81,7 @@ public class BSMFactory {
 				plain_msg.getCoreData().getBrakes().getBrakeBoost().getBrakeBoostApplied(),
 				plain_msg.getCoreData().getBrakes().getAuxBrakes().getAuxiliaryBrakeStatus()
 				};
-		log.info("BSMFactory: Start to encode bsm message");
+		log.info("BSM", "Start to encode bsm message.");
 		byte[] temp_ID = new byte[4];
 		for(int i = 0; i < plain_msg.getCoreData().getId().capacity(); i++) {
 			temp_ID[i] = plain_msg.getCoreData().getId().getByte(i);
@@ -126,7 +127,7 @@ public class BSMFactory {
 				brakeStatus, msg_object.getCoreData().getSize()
 				);
 		if(result == -1) {
-			log.warn("BSMFactory: Cannot decode the incoming binary BSM message.");
+			log.warn("BSM", "Cannot decode the incoming binary BSM message.");
 			return result;
 		}
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, temp_ID);
