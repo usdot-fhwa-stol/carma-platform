@@ -159,7 +159,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         // just make the direct call to the worker class since we have access to it)
         String robotTopic = null;
         List<String> capabilities = new ArrayList<>();
-        capabilities.add("robot_active");
+        capabilities.add("robot_status");
         List<String> topics = worker_.getDrivers(capabilities);
         if (topics.size() == 1) {
         	robotTopic = topics.get(0);
