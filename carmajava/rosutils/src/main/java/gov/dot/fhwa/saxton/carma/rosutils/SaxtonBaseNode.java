@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
   @Override public final void onStart(ConnectedNode connectedNode) {
     try {
       log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
-
+      log.info ("STARTUP", "Node called SaxtonBaseNode.onStart().");
       // Define our alert publisher as latching so that recipients are guaranteed to see a message
       // even if it is published before the recipient starts up
       systemAlertPublisher = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);

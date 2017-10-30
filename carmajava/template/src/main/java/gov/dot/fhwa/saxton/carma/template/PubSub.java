@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,8 +14,6 @@
  * the License.
  */
 
-//TODO: Naming convention of "package gov.dot.fhwa.saxton.carma.<template>;"
-//Originally "com.github.rosjava.carma.template;"
 package gov.dot.fhwa.saxton.carma.template;
 
 import org.ros.message.MessageListener;

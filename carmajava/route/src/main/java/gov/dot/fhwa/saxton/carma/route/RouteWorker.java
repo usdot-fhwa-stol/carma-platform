@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.*;
@@ -20,6 +21,7 @@ import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
@@ -39,7 +41,7 @@ import java.util.HashMap;
  */
 public class RouteWorker {
   protected final IRouteManager routeManager;
-  protected final Log log;
+  protected final SaxtonLogger log;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   // State array to assign indexes to states
@@ -80,7 +82,7 @@ public class RouteWorker {
    * @param log The logger to be used
    */
   public RouteWorker(IRouteManager manager, Log log) {
-    this.log = log;
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.routeManager = manager;
   }
 
@@ -92,7 +94,7 @@ public class RouteWorker {
    */
   public RouteWorker(IRouteManager manager, Log log, String database_path) {
     this.routeManager = manager;
-    this.log = log;
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     // Load route files from database
     File folder = new File(database_path);
     File[] listOfFiles = folder.listFiles();
@@ -113,7 +115,7 @@ public class RouteWorker {
    */
   protected void next(WorkerEvent event) {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
-    log.info("Route State = " + currentSegmentIndex);
+    log.info("Route State = " + getCurrentState());
     // Publish the new route state
     routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), event));
   }
@@ -127,7 +129,7 @@ public class RouteWorker {
     SystemAlert alertMsg;
     switch (event) {
       case FILES_LOADED:
-        log.info("Route has loaded new routes");
+        log.info("Loaded new routes");
         break;
       case ROUTE_SELECTED:
         log.info("Route has been selected");
@@ -142,13 +144,11 @@ public class RouteWorker {
         log.info("The vehicle has left the active route");
         break;
       case SYSTEM_FAILURE:
-        log.info(
-          "Route: Received a system failure message and is shutting down");
+        log.info("Received a system failure message and is shutting down");
         routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
-        log.info(
-          "Route has received a system not ready message and is switching to pausing the active route");
+        log.info("Received a system not ready message and is switching to pausing the active route");
         break;
       case ROUTE_ABORTED:
         ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.WARNING, "Route: The active route was aborted", null );
@@ -158,7 +158,7 @@ public class RouteWorker {
         log.info("Route has been started");
         break;
       default:
-        log.warn("Route was provided with an unsupported event");
+        log.info("Route was provided with an unsupported event");
     }
     // Update current state
     next(event);
@@ -246,7 +246,7 @@ public class RouteWorker {
       return StartActiveRouteResponse.ALREADY_FOLLOWING_ROUTE;
     }
     int startingIndex = getValidStartingWPIndex();
-    log.debug("Route starting index = " + startingIndex);
+    log.info("Starting waypoint index = " + startingIndex);
     if (startingIndex == -1) {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
@@ -293,7 +293,7 @@ public class RouteWorker {
       ableToConnectToRoute = activeRoute.insertWaypoint(startingWP, index);
     } catch (Exception e) {
       ableToConnectToRoute = false;
-      log.debug("Exception caught when inserting route starting waypoint Exception = " + e);
+      log.info("Exception caught when inserting route starting waypoint Exception = " + e);
     }
 
     // If we can't join the route return
@@ -337,7 +337,7 @@ public class RouteWorker {
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
-        log.error("Unknown nav sat fix status type: " + msg.getStatus().getStatus());
+        log.warn("Unknown nav sat fix status type: " + msg.getStatus().getStatus());
         return;
     }
 
@@ -364,10 +364,6 @@ public class RouteWorker {
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
-    log.debug("CrossTrackDistance = " + crossTrackDistance);
-    log.debug("DownTrackDistance = " + downtrackDistance);
-    log.debug("CurrentSegmentIndex = " + currentSegmentIndex);
-    log.debug("CurrentWaypointIndex = " + currentWaypointIndex);
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);
     }
@@ -392,22 +388,22 @@ public class RouteWorker {
         break;
       case cav_msgs.SystemAlert.FATAL:
         handleEvent(WorkerEvent.SYSTEM_FAILURE);
-        log.info("route_manager received system fatal on system_alert and is abandoning the route");
+        log.info("Received system fatal on system_alert and is abandoning the route");
         break;
       case cav_msgs.SystemAlert.NOT_READY:
         handleEvent(WorkerEvent.SYSTEM_NOT_READY);
         break;
       case cav_msgs.SystemAlert.DRIVERS_READY:
         systemOkay = true;
-        log.info("route_manager received system ready on system_alert and is starting to publish");
+        log.info("Received system ready on system_alert and is starting to publish");
         break;
       case cav_msgs.SystemAlert.SHUTDOWN:
-        log.info("Route manager received a shutdown message");
+        log.info("Received a shutdown message");
         routeManager.shutdown();
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
-        log.error("System alert message received with unknown type: " + msg.getType());
+        log.warn("System alert message received with unknown type: " + msg.getType());
     }
   }
 

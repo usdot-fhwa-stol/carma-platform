@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -142,7 +142,7 @@ public class Arbitrator extends GuidanceComponent {
       log.info("Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
     }
 
-    twistSubscriber = pubSubService.getSubscriberForTopic("twist_stamped", TwistStamped._TYPE);
+    twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
     twistSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
       @Override
       public void onMessage(TwistStamped msg) {
