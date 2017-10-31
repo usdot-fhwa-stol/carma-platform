@@ -55,12 +55,8 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 
 	//set other fields
 	jmethodID mid_getSecMark = (*env) -> GetMethodID(env, bsm_core_class, "getSecMark", "()S");
-	jshort secMark = (*env) -> CallShortMethod(env, bsm, mid_getSecMark);
-	if(secMark >= 0) {
-		out_message->value.choice.BasicSafetyMessage.coreData.secMark = secMark;
-	} else {
-		out_message->value.choice.BasicSafetyMessage.coreData.secMark = secMark + 65535 + 1; //signed to unsigned
-	}
+	jchar secMark = (jchar) ((*env) -> CallShortMethod(env, bsm, mid_getSecMark));
+	out_message->value.choice.BasicSafetyMessage.coreData.secMark = secMark;
 
 
 	jmethodID mid_getLatitude = (*env) -> GetMethodID(env, bsm_core_class, "getLatitude", "()D");
@@ -165,7 +161,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	if(((long) (accel_yaw / 0.01)) >= -32767 && ((long) (accel_yaw / 0.01)) <= 32767) {
 		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = accel_yaw / 0.01;
 	} else {
-		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = 0;
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = 0; //TODO: default value is undefined
 	}
 
 	jbyte *inCArray = (*env) -> GetByteArrayElements(env, brakestatus, 0);
