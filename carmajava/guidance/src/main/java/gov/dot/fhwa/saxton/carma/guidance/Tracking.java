@@ -37,7 +37,9 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
+import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
 
 import sensor_msgs.NavSatFix;
 import std_msgs.Float64;
@@ -68,6 +70,8 @@ public class Tracking extends GuidanceComponent {
 	private boolean brake_ready = false;
 	private boolean transmission_ready = false;
 	private boolean acceleration_ready = false;
+	private boolean base_to_vehicle_transform_ready = false;
+	private boolean base_to_map_transform_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
 	protected SaxtonLogger log_ = new SaxtonLogger(Tracking.class.getSimpleName(), log);
 	private Random randomIdGenerator = new Random();
@@ -86,7 +90,9 @@ public class Tracking extends GuidanceComponent {
 	private List<String> resp_drivers;
 	private final String baseLinkFrame = "base_link";
 	private final String vehicleFrame = "host_vehicle";
+	private final String mapFrame = "map";
 	private Transform baseToVehicle = null;
+	private Transform baseToMap = null;
 
 	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
 		super(state, pubSubService, node);
@@ -188,25 +194,6 @@ public class Tracking extends GuidanceComponent {
 			if(getTransformClient == null) {
 				log_.warn("get_transform service can not be found");
 			}
-			
-			GetTransformRequest transform_request = getTransformClient.newMessage();
-			transform_request.setParentFrame(vehicleFrame);
-			transform_request.setChildFrame(baseLinkFrame);
-			getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
-				
-				@Override
-				public void onSuccess(GetTransformResponse msg) {
-					log_.info("BSM", "Get transform response " + msg.getErrorStatus());
-					if(msg.getErrorStatus() == 0) {
-						baseToVehicle = Transform.fromTransformMessage(msg.getTransform().getTransform());
-					}
-				}
-				
-				@Override
-				public void onFailure(Exception e) {
-					throw new RosRuntimeException(e);
-				}
-			});
 			
 			if(resp_drivers != null) {
 				for(String driver_url : resp_drivers) {
@@ -320,31 +307,68 @@ public class Tracking extends GuidanceComponent {
 			coreData.getAccuracy().setSemiMajor((float) (255 * 0.05));
 			coreData.getAccuracy().setSemiMinor((float) (255 * 0.05));
 			coreData.getAccuracy().setOrientation(65535 * 0.0054932479);
-			if(nav_sat_fix_ready && baseToVehicle != null) {
-				double lat = navSatFixSubscriber.getLastMessage().getLatitude();
-				double Lon = navSatFixSubscriber.getLastMessage().getLongitude();
-				float elev = (float) navSatFixSubscriber.getLastMessage().getAltitude();
+			if(nav_sat_fix_ready && getTransformClient != null) {
+				GetTransformRequest transform_request = getTransformClient.newMessage();
+				transform_request.setParentFrame(vehicleFrame);
+				transform_request.setChildFrame(baseLinkFrame);
+				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
+					
+					@Override
+					public void onSuccess(GetTransformResponse msg) {
+						log_.info("BSM", "Get base_to_vehicle_transform response " + msg.getErrorStatus());
+						if(msg.getErrorStatus() == 0) {
+							//TODO: fix this transform later
+							baseToVehicle = Transform.identity();
+							base_to_vehicle_transform_ready = true;
+						}
+					}
+					
+					@Override
+					public void onFailure(Exception e) {
+						throw new RosRuntimeException(e);
+					}
+				});
+				
+				if(base_to_vehicle_transform_ready) {
+					double lat = navSatFixSubscriber.getLastMessage().getLatitude();
+					double Lon = navSatFixSubscriber.getLastMessage().getLongitude();
+					float elev = (float) navSatFixSubscriber.getLastMessage().getAltitude();
+					Vector3 after_transform_location = baseToVehicle.apply(new Vector3(lat, Lon, elev));
+					if(after_transform_location.getX() >= -90 && after_transform_location.getX() <= 90) {
+						coreData.setLatitude(after_transform_location.getX());
+					}
+					if(after_transform_location.getY() >= -179.9999999 && after_transform_location.getY() <= 180) {
+						coreData.setLongitude(after_transform_location.getY());
+					}
+					if(after_transform_location.getZ() >= -409.5 && after_transform_location.getZ() <= 6143.9) {
+						coreData.setElev((float) after_transform_location.getZ());
+					}
+				}
 				float semi_major = (float) navSatFixSubscriber.getLastMessage().getPositionCovariance()[0];
 				float semi_minor = (float) navSatFixSubscriber.getLastMessage().getPositionCovariance()[4];
 				double orientation = 0; //orientation of semi_major axis
-				if(lat >= -90 && lat <= 90) {
-					coreData.setLatitude(lat);
+				
+				if(semi_major >= 0) {
+					if(Math.sqrt(semi_major) >= 12.7) {
+						coreData.getAccuracy().setSemiMajor((float) 12.7);
+					} else {
+						coreData.getAccuracy().setSemiMajor((float) Math.sqrt(semi_major));
+					}
+					
 				}
-				if(Lon >= -179.9999999 && Lon <= 180) {
-					coreData.setLongitude(Lon);
+				
+				if(semi_minor >= 0) {
+					if(Math.sqrt(semi_minor) >= 12.7) {
+						coreData.getAccuracy().setSemiMinor((float) 12.7);
+					} else {
+						coreData.getAccuracy().setSemiMinor((float) Math.sqrt(semi_minor));
+					}
 				}
-				if(elev >= -409.5 && elev <= 6143.9) {
-					coreData.setElev(elev);
-				}
-				if(semi_major >= 0 && Math.sqrt(semi_major) <= 12.7) {
-					coreData.getAccuracy().setSemiMajor((float) Math.sqrt(semi_major));
-				}
-				if(semi_minor >= 0 && Math.sqrt(semi_minor) <= 12.7) {
-					coreData.getAccuracy().setSemiMinor((float) Math.sqrt(semi_minor));
-				}
+				
 				if(orientation >= 0 && orientation <= 359.9945078786) {
 					coreData.getAccuracy().setOrientation(orientation);
 				}
+				
 			}
 			
 			// Set transmission state
@@ -359,7 +383,7 @@ public class Tracking extends GuidanceComponent {
 			coreData.setSpeed((float) (8191 * 0.02));
 			if(velocity_ready) {
 				float speed = (float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
-				if(speed >= 0 && speed <= 163.8) {
+				if(speed >= 0 && speed <= 163.82) {
 					coreData.setSpeed(speed);
 				}
 			}
@@ -375,7 +399,12 @@ public class Tracking extends GuidanceComponent {
 			coreData.setAngle((float) 190.5);
 			if(steer_wheel_ready) {
 				float angle = (float) steeringWheelSubscriber.getLastMessage().getData();
-				if(angle >= -189 && angle <= 189) {
+				
+				if(angle <= -189) {
+					coreData.setAngle(-189);
+				} else if(angle >= 189) {
+					coreData.setAngle(189);
+				} else {
 					coreData.setAngle(angle);
 				}
 			}
@@ -385,8 +414,60 @@ public class Tracking extends GuidanceComponent {
 			coreData.getAccelSet().setLateral((float) (2001 * 0.01));
 			coreData.getAccelSet().setVert((float) (-127 * 0.02 * 9.8));
 			coreData.getAccelSet().setYawRate(0);
-			if(acceleration_ready) {
+			if(acceleration_ready && getTransformClient != null) {
+				GetTransformRequest transform_request = getTransformClient.newMessage();
+				transform_request.setParentFrame(mapFrame);
+				transform_request.setChildFrame(baseLinkFrame);
+				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
+					
+					@Override
+					public void onSuccess(GetTransformResponse msg) {
+						log_.info("BSM", "Get base_to_map_transform response " + msg.getErrorStatus());
+						if(msg.getErrorStatus() == 0) {
+							baseToMap = Transform.fromTransformMessage(msg.getTransform().getTransform());
+							base_to_map_transform_ready = true;
+						}
+					}
+					
+					@Override
+					public void onFailure(Exception e) {
+						throw new RosRuntimeException(e);
+					}
+				});
 				
+				if(base_to_map_transform_ready) {
+					geometry_msgs.Vector3 accel_linear = accelerationSubscriber.getLastMessage().getAccel().getLinear();
+					Vector3 after_transform_accel_linear = baseToMap.apply((Vector3) accel_linear);
+					
+					if(after_transform_accel_linear.getX() <= -20) {
+						coreData.getAccelSet().setLongitudinal(-20);
+					} else if(after_transform_accel_linear.getX() >= 20) {
+						coreData.getAccelSet().setLongitudinal(20);
+					} else {
+						coreData.getAccelSet().setLongitudinal((float) after_transform_accel_linear.getX());
+					}
+					
+					if(after_transform_accel_linear.getY() <= -20) {
+						coreData.getAccelSet().setLateral(-20);
+					} else if(after_transform_accel_linear.getY() >= 20) {
+						coreData.getAccelSet().setLateral(20);
+					} else {
+						coreData.getAccelSet().setLateral((float) after_transform_accel_linear.getY());
+					}
+
+					if(after_transform_accel_linear.getZ() <= -24.696) {
+						coreData.getAccelSet().setLateral((float) -24.696);
+					} else if(after_transform_accel_linear.getZ() >= 24.892) {
+						coreData.getAccelSet().setLateral((float) 24.892);
+					} else {
+						coreData.getAccelSet().setLateral((float) after_transform_accel_linear.getZ());
+					}
+				}
+				
+				if(accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() >= -327.67
+						&& accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() <= 327.67) {
+					coreData.getAccelSet().setYawRate((float) accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ());
+				}
 			}
 			
 			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 16);
