@@ -37,7 +37,7 @@ public class SaxtonLogger {
   private String source = "NONE";
   private String emptyTag = "NONE";
   private File file = null;
-  private String fileName;
+  private final static String fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm")) + ".txt";;
 
   /***
    * Get source name which is usually the className.
@@ -65,8 +65,8 @@ public class SaxtonLogger {
     this.source = className;
 
     try {
-      DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-      fileName = LocalDateTime.now().format(dateFormatter) + ".txt";
+      //DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+      //fileName = LocalDateTime.now().format(dateFormatter) + ".txt";
       file = new File("/tmp/carmalogs/" + fileName); //TODO: Will see later if needed to be stored in param.
       file.getParentFile().mkdirs();
 
