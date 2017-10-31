@@ -20,6 +20,9 @@ import cav_msgs.*;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
+import cav_srvs.GetTransform;
+import cav_srvs.GetTransformRequest;
+import cav_srvs.GetTransformResponse;
 import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
@@ -28,12 +31,13 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
+import org.ros.rosjava_geometry.Transform;
 
 import sensor_msgs.NavSatFix;
 import std_msgs.Float64;
@@ -65,6 +69,7 @@ public class Tracking extends GuidanceComponent {
 	private boolean transmission_ready = false;
 	private boolean acceleration_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
+	protected SaxtonLogger log_ = new SaxtonLogger(Tracking.class.getSimpleName(), log);
 	private Random randomIdGenerator = new Random();
 	private byte[] random_id = new byte[4];
 	private IPublisher<BSM> bsmPublisher;
@@ -76,8 +81,12 @@ public class Tracking extends GuidanceComponent {
 	private ISubscriber<Float64> brakeSubscriber;
 	private ISubscriber<TransmissionState> transmissionSubscriber;
 	private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
+	private IService<GetTransformRequest, GetTransformResponse> getTransformClient;
 	private List<String> req_drivers = Arrays.asList("steering_wheel_angle", "brake_position", "transmission_state");
 	private List<String> resp_drivers;
+	private final String baseLinkFrame = "base_link";
+	private final String vehicleFrame = "host_vehicle";
+	private Transform baseToVehicle = null;
 
 	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
 		super(state, pubSubService, node);
@@ -100,14 +109,14 @@ public class Tracking extends GuidanceComponent {
 			navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
 			headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
 			velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
-			accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration_set", AccelerationSet4Way._TYPE);
+			accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
 			
 			if(bsmPublisher == null 
 					|| navSatFixSubscriber == null 
 					|| headingStampedSubscriber == null 
 					|| velocitySubscriber == null 
 					|| accelerationSubscriber == null) {
-				log.warn("Tracking cannot initialize pubs and subs");
+				log_.warn("Cannot initialize pubs and subs");
 			}
 			
 			navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
@@ -151,10 +160,10 @@ public class Tracking extends GuidanceComponent {
 		
 		// Make service call to get drivers
 		try {
-			log.info("Tracking is trying to get get_drivers_with_capabilities service...");
+			log_.info("Trying to get get_drivers_with_capabilities service...");
 			getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
 			if(getDriversWithCapabilitiesClient == null) {
-				log.warn("get_drivers_with_capabilities service can not be found");
+				log_.warn("get_drivers_with_capabilities service can not be found");
 			}
 			
 			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
@@ -164,14 +173,39 @@ public class Tracking extends GuidanceComponent {
 				@Override
 				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
 					resp_drivers = msg.getDriverData();
-					log.info("Tracking: service call is successful: " + resp_drivers);
+					log_.info("Tracking: service call is successful: " + resp_drivers);
 				}
 				
 				@Override
 				public void onFailure(Exception e) {
-					throw new RosRuntimeException(e);				
+					throw new RosRuntimeException(e);
 				}
 				
+			});
+			
+			log_.info("Trying to get get_transform...");
+			getTransformClient = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
+			if(getTransformClient == null) {
+				log_.warn("get_transform service can not be found");
+			}
+			
+			GetTransformRequest transform_request = getTransformClient.newMessage();
+			transform_request.setParentFrame(vehicleFrame);
+			transform_request.setChildFrame(baseLinkFrame);
+			getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
+				
+				@Override
+				public void onSuccess(GetTransformResponse msg) {
+					log_.info("BSM", "Get transform response " + msg.getErrorStatus());
+					if(msg.getErrorStatus() == 0) {
+						baseToVehicle = Transform.fromTransformMessage(msg.getTransform().getTransform());
+					}
+				}
+				
+				@Override
+				public void onFailure(Exception e) {
+					throw new RosRuntimeException(e);
+				}
 			});
 			
 			if(resp_drivers != null) {
@@ -189,11 +223,11 @@ public class Tracking extends GuidanceComponent {
 					}
 				}
 			} else {
-				log.warn("Tracking: cannot find suitable drivers");
+				log_.warn("Tracking: cannot find suitable drivers");
 			}
 			
 			if(steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null) {
-				log.warn("Tracking: initialize subs failed");
+				log_.warn("Tracking: initialize subs failed");
 			}
 			
 			steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
@@ -221,6 +255,12 @@ public class Tracking extends GuidanceComponent {
 			handleException(e);
 		}
 		
+		
+		
+		ParameterTree param = node.getParameterTree();
+		vehicleLength = (float) param.getDouble("~vehicle_length");
+		vehicleWidth = (float) param.getDouble("~vehicle_width");
+		
 		drivers_ready = true;
 	}
 
@@ -233,11 +273,14 @@ public class Tracking extends GuidanceComponent {
 		
 		if(drivers_ready) {
 			try {
-				log.info("Tracking nav_sat_fix subscribers status: " + nav_sat_fix_ready);
-				log.info("Tracking steer_wheel subscribers status: " + steer_wheel_ready);
-				log.info("Tracking heading subscribers status: " + heading_ready);
-				log.info("Tracking velocity subscribers status: " + velocity_ready);
-				log.info("Guidance.Tracking is publishing bsm...");
+				log_.info("BSM", "nav_sat_fix subscribers status: " + nav_sat_fix_ready);
+				log_.info("BSM", "steer_wheel subscribers status: " + steer_wheel_ready);
+				log_.info("BSM", "heading subscribers status: " + heading_ready);
+				log_.info("BSM", "velocity subscribers status: " + velocity_ready);
+				log_.info("BSM", "brake subscribers status: " + brake_ready);
+				log_.info("BSM", "transmission subscribers status: " + transmission_ready);
+				log_.info("BSM", "acceleration subscribers status: " + acceleration_ready);
+				log_.info("BSM", "Guidance.Tracking is publishing bsm...");
 				bsmPublisher.publish(composeBSMData());
 			} catch (Exception e) {
 				handleException(e);
@@ -264,6 +307,7 @@ public class Tracking extends GuidanceComponent {
 			// ID is random and changes every 5 minutes
 			if (msgCount == 0) {
 				randomIdGenerator.nextBytes(random_id);
+				msgCount++;
 			} else if (msgCount == 3000) {
 				msgCount = 0;
 			}
@@ -276,7 +320,7 @@ public class Tracking extends GuidanceComponent {
 			coreData.getAccuracy().setSemiMajor((float) (255 * 0.05));
 			coreData.getAccuracy().setSemiMinor((float) (255 * 0.05));
 			coreData.getAccuracy().setOrientation(65535 * 0.0054932479);
-			if(nav_sat_fix_ready) {
+			if(nav_sat_fix_ready && baseToVehicle != null) {
 				double lat = navSatFixSubscriber.getLastMessage().getLatitude();
 				double Lon = navSatFixSubscriber.getLastMessage().getLongitude();
 				float elev = (float) navSatFixSubscriber.getLastMessage().getAltitude();
@@ -341,6 +385,9 @@ public class Tracking extends GuidanceComponent {
 			coreData.getAccelSet().setLateral((float) (2001 * 0.01));
 			coreData.getAccelSet().setVert((float) (-127 * 0.02 * 9.8));
 			coreData.getAccelSet().setYawRate(0);
+			if(acceleration_ready) {
+				
+			}
 			
 			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 16);
 			if(brake_ready) {
@@ -359,11 +406,6 @@ public class Tracking extends GuidanceComponent {
 			coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus((byte) 0);
 
 			// Set length and width only for the first time
-			if (vehicleLength == 0 && vehicleWidth == 0) {
-				ParameterTree param = node.getParameterTree();
-				vehicleLength = (float) param.getDouble("~vehicle_length");
-				vehicleWidth = (float) param.getDouble("~vehicle_width");
-			}
 			coreData.getSize().setVehicleLength(vehicleLength);
 			coreData.getSize().setVehicleWidth(vehicleWidth);
 			

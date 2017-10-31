@@ -46,6 +46,7 @@ public class MockCANDriver extends AbstractMockDriver {
   final Publisher<std_msgs.Float64> steeringPub;
   final Publisher<std_msgs.Float64> throttlePub;
   final Publisher<cav_msgs.TurnSignal> turnSignalPub;
+  final Publisher<cav_msgs.TransmissionState> transmissionPub;
 
   final short EXPECTED_DATA_COL_COUNT = 13;
 
@@ -79,6 +80,7 @@ public class MockCANDriver extends AbstractMockDriver {
     steeringPub = connectedNode.newPublisher("~/can/steering_wheel_angle", std_msgs.Float64._TYPE);
     throttlePub = connectedNode.newPublisher("~/can/throttle_position", std_msgs.Float64._TYPE);
     turnSignalPub = connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
+    transmissionPub = connectedNode.newPublisher("~/can/transmission_state", cav_msgs.TransmissionState._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) {
@@ -153,6 +155,7 @@ public class MockCANDriver extends AbstractMockDriver {
       "can/speed",
       "can/steering_wheel_angle",
       "can/throttle_position",
-      "can/turn_signal_state"));
+      "can/turn_signal_state",
+      "can/transmission_state"));
   }
 }

@@ -16,10 +16,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	uint8_t buffer[128];
 	size_t buffer_size = sizeof(buffer);
 	asn_enc_rval_t ec;
-	MessageFrame_t *message;
+	MessageFrame_t *out_message;
 
-	message = calloc(1, sizeof(MessageFrame_t));
-	if(!message) {
+	out_message = calloc(1, sizeof(MessageFrame_t));
+	if(!out_message) {
 		return NULL;
 	}
 
@@ -31,42 +31,63 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	jclass size_class = (*env) -> GetObjectClass(env, size);
 
 	//set default fields of BSM
-	message->messageId = 20;
-	message->value.present = value_PR_BasicSafetyMessage;
+	out_message->messageId = 20;
+	out_message->value.present = value_PR_BasicSafetyMessage;
 
 	//get the method ID of "getMsgCount"
 	jmethodID mid_getMsgCount = (*env) -> GetMethodID(env, bsm_core_class, "getMsgCount", "()B");
 
 	//Get and set msgCnt
 	jbyte msgCount = (*env) -> CallByteMethod(env, bsm, mid_getMsgCount);
-	message->value.choice.BasicSafetyMessage.coreData.msgCnt = msgCount;
+	out_message->value.choice.BasicSafetyMessage.coreData.msgCnt = msgCount;
 
-	uint8_t content[4] = {0x00, 0x00, 0x00, 0x00};
+	uint8_t content[4] = {0, 0, 0, 0};
 	jbyte *bsm_msg_id = (*env) -> GetByteArrayElements(env, bsm_id, 0);
-	if(bsm_msg_id == NULL) return NULL;
+	if(bsm_msg_id == NULL) {
+		return NULL;
+	}
 	for(int i = 0; i < 4; i++) {
 		content[i] = bsm_msg_id[i];
 	}
 	(*env) -> ReleaseByteArrayElements(env, bsm_id, bsm_msg_id, 0);
-	message->value.choice.BasicSafetyMessage.coreData.id.buf = content;
-	message->value.choice.BasicSafetyMessage.coreData.id.size = 4;
+	out_message->value.choice.BasicSafetyMessage.coreData.id.buf = content;
+	out_message->value.choice.BasicSafetyMessage.coreData.id.size = 4;
 
 	//set other fields
 	jmethodID mid_getSecMark = (*env) -> GetMethodID(env, bsm_core_class, "getSecMark", "()S");
 	jshort secMark = (*env) -> CallShortMethod(env, bsm, mid_getSecMark);
-	message->value.choice.BasicSafetyMessage.coreData.secMark = secMark;
+	if(secMark >= 0) {
+		out_message->value.choice.BasicSafetyMessage.coreData.secMark = secMark;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.secMark = secMark + 65535 + 1; //signed to unsigned
+	}
+
 
 	jmethodID mid_getLatitude = (*env) -> GetMethodID(env, bsm_core_class, "getLatitude", "()D");
 	jdouble lat = (*env) -> CallDoubleMethod(env, bsm, mid_getLatitude);
-	message->value.choice.BasicSafetyMessage.coreData.lat = lat * 10000000;
+	if(((long) (lat * 10000000)) >= -90 && ((long) (lat * 10000000)) <= 90) {
+		out_message->value.choice.BasicSafetyMessage.coreData.lat = lat * 10000000;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.lat = 900000001;
+	}
+
 
 	jmethodID mid_getLongitude = (*env) -> GetMethodID(env, bsm_core_class, "getLongitude", "()D");
 	jdouble lon = (*env) -> CallDoubleMethod(env, bsm, mid_getLongitude);
-	message->value.choice.BasicSafetyMessage.coreData.Long = lon * 10000000;
+	if(((long) (lon * 10000000)) >= -1799999999 && ((long) (lon * 10000000)) <= 1800000000) {
+		out_message->value.choice.BasicSafetyMessage.coreData.Long = lon * 10000000;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.Long = 1800000001;
+	}
+
 
 	jmethodID mid_getElev = (*env) -> GetMethodID(env, bsm_core_class, "getElev", "()F");
 	jfloat elev = (*env) -> CallFloatMethod(env, bsm, mid_getElev);
-	message->value.choice.BasicSafetyMessage.coreData.elev = elev * 10;
+	if(((long) (elev * 10)) >= -4095 && ((long) (elev * 10)) <= 61439) {
+		out_message->value.choice.BasicSafetyMessage.coreData.elev = elev * 10;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.elev = -4096;
+	}
 
 	jmethodID mid_getSemiMajor = (*env) -> GetMethodID(env, accuracy_class, "getSemiMajor", "()F");
 	jmethodID mid_getSemiMinor = (*env) -> GetMethodID(env, accuracy_class, "getSemiMinor", "()F");
@@ -74,25 +95,49 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	jfloat major = (*env) -> CallFloatMethod(env, accuracy, mid_getSemiMajor);
 	jfloat minor = (*env) -> CallFloatMethod(env, accuracy, mid_getSemiMinor);
 	jdouble orientation = (*env) -> CallDoubleMethod(env, accuracy, mid_getOrientation);
-	message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor = major / 0.05;
-	message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor = minor / 0.05;
-	message->value.choice.BasicSafetyMessage.coreData.accuracy.orientation = orientation / 0.054932479;
+	if(((long) (major / 0.05)) >= 0 && ((long) (major / 0.05)) <= 254) {
+		out_message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor = major / 0.05;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor = 255;
+	}
+	if(((long) (minor / 0.05)) >= 0 && ((long) (minor / 0.05)) <= 254) {
+		out_message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor = minor / 0.05;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor = 255;
+	}
+	if(((long) (orientation / 0.054932479)) >= 0 && ((long) (orientation / 0.054932479)) <= 65534) {
+		out_message->value.choice.BasicSafetyMessage.coreData.accuracy.orientation = orientation / 0.054932479;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.accuracy.orientation = 65535;
+	}
 
 	jmethodID mid_getTransmissionState = (*env) -> GetMethodID(env, transmission_class, "getTransmissionState", "()B");
 	jbyte transmissionstate = (*env) -> CallByteMethod(env, transmission, mid_getTransmissionState);
-	message->value.choice.BasicSafetyMessage.coreData.transmission = transmissionstate;
+	out_message->value.choice.BasicSafetyMessage.coreData.transmission = transmissionstate;
 
 	jmethodID mid_getSpeed = (*env) -> GetMethodID(env, bsm_core_class, "getSpeed", "()F");
 	jfloat speed = (*env) -> CallFloatMethod(env, bsm, mid_getSpeed);
-	message->value.choice.BasicSafetyMessage.coreData.speed = speed / 0.02;
+	if(((long) (speed / 0.02)) >= 0 && ((long) (speed / 0.02)) <= 8190) {
+		out_message->value.choice.BasicSafetyMessage.coreData.speed = speed / 0.02;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.speed = 8191;
+	}
 
 	jmethodID mid_getHeading = (*env) -> GetMethodID(env, bsm_core_class, "getHeading", "()F");
 	jfloat heading = (*env) -> CallFloatMethod(env, bsm, mid_getHeading);
-	message->value.choice.BasicSafetyMessage.coreData.heading = heading / 0.0125;
+	if(((long) (heading / 0.0125)) >= 0 && ((long) (heading / 0.0125)) <= 28799) {
+		out_message->value.choice.BasicSafetyMessage.coreData.heading = heading / 0.0125;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.heading = 28800;
+	}
 
 	jmethodID mid_getAngle = (*env) -> GetMethodID(env, bsm_core_class, "getAngle", "()F");
 	jfloat angle = (*env) -> CallFloatMethod(env, bsm, mid_getAngle);
-	message->value.choice.BasicSafetyMessage.coreData.angle = angle / 1.5;
+	if(((long) (angle / 1.5)) >= -126 && ((long) (angle / 1.5)) <= 126) {
+		out_message->value.choice.BasicSafetyMessage.coreData.angle = angle / 1.5;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.angle = 127;
+	}
 
 	jmethodID mid_accelset_getLongitude = (*env) -> GetMethodID(env, accelset_class, "getLongitudinal", "()F");
 	jmethodID mid_accelset_getLatitude = (*env) -> GetMethodID(env, accelset_class, "getLateral", "()F");
@@ -102,34 +147,56 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
 	jfloat accel_lat = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getLatitude);
 	jfloat accel_vert = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getVert);
 	jfloat accel_yaw = (*env) -> CallFloatMethod(env, accelset, mid_accelset_getYaw);
-	message->value.choice.BasicSafetyMessage.coreData.accelSet.Long = accel_long / 0.01;
-	message->value.choice.BasicSafetyMessage.coreData.accelSet.lat = accel_lat / 0.01;
-	message->value.choice.BasicSafetyMessage.coreData.accelSet.vert = accel_vert / 0.02;
-	message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = accel_yaw / 0.01;
+	if(((long) (accel_long / 0.01)) >= -2000 && ((long) (accel_long / 0.01)) <= 2000) {
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.Long = accel_long / 0.01;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.Long = 2001;
+	}
+	if(((long) (accel_lat / 0.01)) >= -2000 && ((long) (accel_lat / 0.01)) <= 2000) {
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.lat = accel_lat / 0.01;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.lat = 2001;
+	}
+	if(((long) (accel_vert / (0.02 * 9.8))) >= -126 && ((long) (accel_vert / (0.02 * 9.8))) <= 127) {
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.vert = accel_vert / (0.02 * 9.8);
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.vert = -127;
+	}
+	if(((long) (accel_yaw / 0.01)) >= -32767 && ((long) (accel_yaw / 0.01)) <= 32767) {
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = accel_yaw / 0.01;
+	} else {
+		out_message->value.choice.BasicSafetyMessage.coreData.accelSet.yaw = 0;
+	}
 
 	jbyte *inCArray = (*env) -> GetByteArrayElements(env, brakestatus, 0);
-	uint8_t break_content[1] = {0};
+	uint8_t break_content[1] = {16};
 	break_content[0] = inCArray[0];
-	message->value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.bits_unused = 3;
-	message->value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.buf = break_content;
-	message->value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.size = 1;
-	message->value.choice.BasicSafetyMessage.coreData.brakes.traction = inCArray[1];
-	message->value.choice.BasicSafetyMessage.coreData.brakes.abs = inCArray[2];
-	message->value.choice.BasicSafetyMessage.coreData.brakes.scs = inCArray[3];
-	message->value.choice.BasicSafetyMessage.coreData.brakes.brakeBoost = inCArray[4];
-	message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes = inCArray[5];
+	out_message->value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.bits_unused = 3;
+	out_message->value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.buf = break_content;
+	out_message->value.choice.BasicSafetyMessage.coreData.brakes.wheelBrakes.size = 1;
+	out_message->value.choice.BasicSafetyMessage.coreData.brakes.traction = inCArray[1];
+	out_message->value.choice.BasicSafetyMessage.coreData.brakes.abs = inCArray[2];
+	out_message->value.choice.BasicSafetyMessage.coreData.brakes.scs = inCArray[3];
+	out_message->value.choice.BasicSafetyMessage.coreData.brakes.brakeBoost = inCArray[4];
+	out_message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes = inCArray[5];
 	(*env) -> ReleaseByteArrayElements(env, brakestatus, inCArray, 0);
-
-
 
 	jmethodID mid_getVehicleWidth = (*env) -> GetMethodID(env, size_class, "getVehicleWidth", "()F");
 	jmethodID mid_getVehicleLength = (*env) -> GetMethodID(env, size_class, "getVehicleLength", "()F");
 	jfloat v_width = (*env) -> CallFloatMethod(env, size, mid_getVehicleWidth);
 	jfloat v_length = (*env) -> CallFloatMethod(env, size, mid_getVehicleLength);
-	message->value.choice.BasicSafetyMessage.coreData.size.width = v_width * 100;
-	message->value.choice.BasicSafetyMessage.coreData.size.length = v_length * 100;
+	if(((long) (v_width * 100)) >= 0 && ((long) (v_width * 100)) <= 1023) {
+		out_message->value.choice.BasicSafetyMessage.coreData.size.width = v_width * 100;
+	} else {
+		return NULL;
+	}
+	if(((long) (v_length * 100)) >= 0 && ((long) (v_length * 100)) <= 4095) {
+		out_message->value.choice.BasicSafetyMessage.coreData.size.length = v_length * 100;
+	} else {
+		return NULL;
+	}
 
-	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, message, buffer, buffer_size);
+	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, out_message, buffer, buffer_size);
 	if(ec.encoded == -1) {
 		return NULL;
 	}
@@ -228,7 +295,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_decode_
 		jmethodID mid_accelset_setYaw = (*env) -> GetMethodID(env, accelset_class, "setYawRate", "(F)V");
 		jfloat accel_long = message -> value.choice.BasicSafetyMessage.coreData.accelSet.Long * 0.01;
 		jfloat accel_lat = message -> value.choice.BasicSafetyMessage.coreData.accelSet.lat * 0.01;
-		jfloat accel_vert = message -> value.choice.BasicSafetyMessage.coreData.accelSet.vert * 0.02;
+		jfloat accel_vert = message -> value.choice.BasicSafetyMessage.coreData.accelSet.vert * 0.02 * 9.8;
 		jfloat accel_yaw = message -> value.choice.BasicSafetyMessage.coreData.accelSet.yaw * 0.01;
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setLongitude, accel_long);
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setLatitude, accel_lat);
