@@ -53,7 +53,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
 
   // Topics
   // Published
-  protected final Publisher<bond.Status> bondPub;
+  //protected final Publisher<bond.Status> bondPub;
   protected final Publisher<cav_msgs.DriverStatus> discoveryPub;
 
   // Server
@@ -81,7 +81,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
 
     // Topics
     // Published
-    bondPub = connectedNode.newPublisher("~/bond", bond.Status._TYPE);
+    //bondPub = connectedNode.newPublisher("~/bond", bond.Status._TYPE); //TODO add once bind cpp is wrapped in jni
     discoveryPub = connectedNode.newPublisher("driver_discovery", cav_msgs.DriverStatus._TYPE);
 
     // Service
