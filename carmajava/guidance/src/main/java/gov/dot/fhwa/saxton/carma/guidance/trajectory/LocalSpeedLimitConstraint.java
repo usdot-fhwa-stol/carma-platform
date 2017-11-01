@@ -69,16 +69,13 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
   // END LOGIC BORROWED FROM CRUISING PLUGIN
 
   protected SpeedLimit getLimitAtDistance(double dist) {
-    SpeedLimit last = null;
     for (SpeedLimit limit : speedLimits) {
       if (limit.location > dist) {
-        return last;
+        return limit;
       }
-
-      last = limit;
     }
 
-    return last;
+    return null;
   }
 
 	@Override
@@ -87,8 +84,16 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
       return;
     }
 
-    boolean startSpeedLegal = maneuver.getStartSpeed() <= getLimitAtDistance(maneuver.getStartDistance()).speedLimit;
-    boolean endSpeedLegal = maneuver.getTargetSpeed() <= getLimitAtDistance(maneuver.getEndDistance()).speedLimit;
+    SpeedLimit start = getLimitAtDistance(maneuver.getStartDistance());
+    SpeedLimit end = getLimitAtDistance(maneuver.getEndDistance());
+
+    if (start == null || end == null) {
+      offendingManeuvers.add(maneuver);
+      return;
+    }
+
+    boolean startSpeedLegal = maneuver.getStartSpeed() <= start.speedLimit;
+    boolean endSpeedLegal = maneuver.getTargetSpeed() <= end.speedLimit;
 
     if (!(startSpeedLegal && endSpeedLegal)) {
       offendingManeuvers.add(maneuver);

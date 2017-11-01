@@ -38,12 +38,12 @@ public class GlobalSpeedLimitConstraintTest {
     when(m1.getTargetSpeed()).thenReturn(10.0);
 
     IManeuver m2 = mock(LongitudinalManeuver.class);
-    when(m2.getStartDistance()).thenReturn(10.0);
-    when(m2.getEndDistance()).thenReturn(10.0);
+    when(m2.getStartSpeed()).thenReturn(10.0);
+    when(m2.getTargetSpeed()).thenReturn(10.0);
 
     IManeuver m3 = mock(LongitudinalManeuver.class);
-    when(m3.getStartDistance()).thenReturn(10.0);
-    when(m3.getEndDistance()).thenReturn(15.0);
+    when(m3.getStartSpeed()).thenReturn(10.0);
+    when(m3.getTargetSpeed()).thenReturn(15.0);
 
     gslc.visit(m1);
     gslc.visit(m2);
@@ -111,4 +111,3 @@ public class GlobalSpeedLimitConstraintTest {
   protected GlobalSpeedLimitConstraint gslc;
   protected final static double MAX_SPEED = 20.0;
 }
-
