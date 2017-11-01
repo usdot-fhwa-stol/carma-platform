@@ -101,7 +101,7 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
       reset();
       return new TrajectoryValidationResult();
     } else {
-      TrajectoryValidationResult out = new TrajectoryValidationResult(new TrajectoryValidationError("Maneuvers exceed Local Speed Limit of " + globalSpeedLimit + "m/s", offendingManeuvers));
+      TrajectoryValidationResult out = new TrajectoryValidationResult(new TrajectoryValidationError("Maneuvers exceed route defined Speed Limit", offendingManeuvers));
       reset();
       return out;
     }
