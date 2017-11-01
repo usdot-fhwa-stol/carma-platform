@@ -17,10 +17,17 @@
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import cav_msgs.ByteArray;
+import cav_srvs.GetLightsRequest;
+import cav_srvs.GetLightsResponse;
+import cav_srvs.SendMessageRequest;
+import cav_srvs.SendMessageResponse;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.ros.exception.ServiceException;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
+import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
@@ -39,7 +46,7 @@ import java.util.List;
  * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
-public class MockAradaDriver extends AbstractMockDriver {
+public class MockDSRCDriver extends AbstractMockDriver {
 
   // Topics
   // Published
@@ -50,13 +57,17 @@ public class MockAradaDriver extends AbstractMockDriver {
   Subscriber<cav_msgs.ByteArray> outboundSub;
   final String outboundTopic = "comms/outbound_binary_msg";
 
+  //Services
+  protected ServiceServer<cav_srvs.SendMessageRequest, cav_srvs.SendMessageResponse> sendServer;
+  final String sendService = "comms/send";
+
   private final int EXPECTED_DATA_COL_COUNT = 3;
 
   private final short SAMPLE_ID_IDX = 0;
   private final short MSG_TYPE_IDX = 1;
   private final short RAW_BYTES_IDX = 2;
 
-  public MockAradaDriver(ConnectedNode connectedNode) {
+  public MockDSRCDriver(ConnectedNode connectedNode) {
     super(connectedNode);
     // Topics
     // Published
@@ -66,10 +77,20 @@ public class MockAradaDriver extends AbstractMockDriver {
     outboundSub = connectedNode.newSubscriber("~/" + outboundTopic, cav_msgs.ByteArray._TYPE);
     outboundSub.addMessageListener(new MessageListener<ByteArray>() {
       @Override public void onNewMessage(ByteArray byteArray) {
-        log.info("Outbound " + byteArray.getMessageType() + " message received by "
-          + getGraphName());
+        log.info(
+          "Outbound " + byteArray.getMessageType() + " message received by " + getGraphName());
       }
     });
+
+    //Services
+    //Server
+    sendServer = connectedNode.newServiceServer("~/" + sendService, cav_srvs.SendMessage._TYPE,
+      new ServiceResponseBuilder<SendMessageRequest, SendMessageResponse>() {
+        @Override public void build(SendMessageRequest sendMessageRequest,
+          SendMessageResponse sendMessageResponse) throws ServiceException {
+          log.info("Send request received by " + getGraphName() + " with contents " + sendMessageRequest);
+        }
+      });
   }
 
   @Override protected void publishData(List<String[]> data) {
@@ -89,12 +110,13 @@ public class MockAradaDriver extends AbstractMockDriver {
       // Raw byte data has the form "0a 1f 23"
       // String rawByteString = elements[RAW_BYTES_IDX];
       // Set to static data for test
-      String rawByteString = "00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8";
-      
+      String rawByteString =
+        "00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8";
+
       // All non hex characters are removed. This does not support use of x such as 0x00
       rawByteString = rawByteString.replaceAll("[^A-Fa-f0-9]", "");
       // An uneven number of characters will have a 0 appended to the end
-      if (rawByteString.length()%2 != 0)
+      if (rawByteString.length() % 2 != 0)
         rawByteString = rawByteString.concat("0");
       // Convert the string to a byte array
       byte[] rawBytes = DatatypeConverter.parseHexBinary(rawByteString);
@@ -110,7 +132,7 @@ public class MockAradaDriver extends AbstractMockDriver {
     return EXPECTED_DATA_COL_COUNT;
   }
 
-  @Override protected short getSampleIdIdx(){
+  @Override protected short getSampleIdIdx() {
     return SAMPLE_ID_IDX;
   }
 
@@ -119,6 +141,6 @@ public class MockAradaDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI() {
-    return new ArrayList<>(Arrays.asList(recvTopic, outboundTopic));
+    return new ArrayList<>(Arrays.asList(recvTopic, outboundTopic, sendService));
   }
 }
