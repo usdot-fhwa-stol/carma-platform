@@ -9,6 +9,3 @@ arada_listening_port: 8089
 
 # Integer: The port to listen for UDP packets from the Arada OBU
 listening_port: 8090
-
-# Integer: The size of the outgoing message queue for messages published to the outbound topic
-output_queue_size: 20
