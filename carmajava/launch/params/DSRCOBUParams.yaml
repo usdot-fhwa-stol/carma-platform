@@ -1,11 +1,14 @@
-# AradaOBUParams.yaml
-# Defines the ros parameters which are required by the Arada OBU Driver
+# DSRCOBUParams.yaml
+# Defines the ros parameters which are required by the DSRC OBU Driver
 
-# String: The IPv4/6 address of the Arada OBU
-arada_address: '192.168.1.2'
+# String: The IPv4/6 address of the DSRC OBU
+dsrc_address: '192.168.1.2'
 
-# Integer: The port the Arada OBU is listening on for outgoing messages
-arada_listening_port: 8089
+# Integer: The port the DSRC OBU is listening on for outgoing messages
+listening_port: 8089
+
+# Integer: The port the for communication with drsc device
+dsrc_listening_port: 9001
 
 # Integer: The port to listen for UDP packets from the Arada OBU
 listening_port: 8090

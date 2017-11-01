@@ -16,11 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import cav_srvs.GetDriverApiRequest;
-import cav_srvs.GetDriverApiResponse;
+import cav_msgs.DriverStatus;
+import cav_srvs.*;
 import org.apache.commons.logging.Log;
-import cav_srvs.BindRequest;
-import cav_srvs.BindResponse;
+import org.ros.exception.ServiceException;
 import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -59,6 +58,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
   // Server
   protected final ServiceServer<cav_srvs.BindRequest, cav_srvs.BindResponse> bindService;
   protected final ServiceServer<GetDriverApiRequest, GetDriverApiResponse> getApiService;
+  protected final ServiceServer<GetDriverStatusRequest, GetDriverStatusResponse> getStatusService;
 
   protected final String delimiter = ","; // Comma for csv file
   protected RandomAccessFile reader = null;
@@ -104,6 +104,13 @@ public abstract class AbstractMockDriver implements IMockDriver {
             response.setApiList(FQNs);
           }
         });
+    getStatusService = connectedNode.newServiceServer("~/get_status", GetDriverStatus._TYPE,
+      new ServiceResponseBuilder<GetDriverStatusRequest, GetDriverStatusResponse>() {
+        @Override public void build(GetDriverStatusRequest request,
+          GetDriverStatusResponse response) {
+          response.setStatus(getDriverStatus());
+        }
+      });
   }
 
   /**
@@ -187,7 +194,11 @@ public abstract class AbstractMockDriver implements IMockDriver {
     }
   }
 
-  @Override public void publishDriverStatus() {
+  /**
+   * Helper function to build a driver status message
+   * @return The driver status message
+   */
+  protected DriverStatus getDriverStatus() {
     cav_msgs.DriverStatus driverStatusMsg = discoveryPub.newMessage();
     driverStatusMsg.setName(getGraphName().toString());
     driverStatusMsg.setStatus(driverStatus);
@@ -216,7 +227,11 @@ public abstract class AbstractMockDriver implements IMockDriver {
           break;
       }
     }
-    discoveryPub.publish(driverStatusMsg);
+    return driverStatusMsg;
+  }
+
+  @Override public void publishDriverStatus() {
+    discoveryPub.publish(getDriverStatus());
   }
 
   /**
