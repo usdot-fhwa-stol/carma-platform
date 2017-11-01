@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<package>
+	<name>saxton_utils</name>
+	<version>2.0.0</version>
+	<description>Saxton utilities library for Java</description>
+	<maintainer email="carma@xxx.xxx">Carma</maintainer>
+	<license>Apache 2.0</license>
+	<buildtool_depend>catkin</buildtool_depend>
+</package>

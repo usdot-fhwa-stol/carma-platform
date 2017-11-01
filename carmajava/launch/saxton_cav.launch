@@ -100,6 +100,8 @@
 
       <remap from="system_alert"
              to="/$(arg TOP_NS)/system_alert"/>
+      <remap from="get_system_version"
+      		 to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
       <remap from="nav_sat_fix"
              to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
       <remap from="current_segment"
