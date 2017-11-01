@@ -166,11 +166,11 @@ public class Arbitrator extends GuidanceComponent {
   public void onGuidanceEnable() {
     // For now, find the configured lateral and longitudinal plugins
     for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
-      if (plugin.getName().equals(lateralPluginName)) {
+      if (plugin.getVersionInfo().componentName().equals(lateralPluginName)) {
         lateralPlugin = plugin;
       }
 
-      if (plugin.getName().equals(longitudinalPluginName)) {
+      if (plugin.getVersionInfo().componentName().equals(longitudinalPluginName)) {
         longitudinalPlugin = plugin;
       }
     }

@@ -47,7 +47,7 @@ public class PluginLifecycleHandler {
      * Private helper method for actually performing plugin initialization
      */
     private void doInitialize() {
-        log.info("Initializing " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("Initializing " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
         state.set(PluginState.INITIALIZING);
         try {
             tasks.put(new InitializePluginTask(plugin, new TaskCompletionCallback() {
@@ -85,7 +85,7 @@ public class PluginLifecycleHandler {
      * Private helper method for actually performing the resume operation
      */
     private void doResume() {
-        log.info("Resuming " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("Resuming " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
         state.set(PluginState.RESUMING);
         try {
             tasks.put(new ResumePluginTask(plugin, new TaskCompletionCallback() {
@@ -98,7 +98,7 @@ public class PluginLifecycleHandler {
         }
 
         // After resuming we always return to looping
-        log.info("Looping " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("Looping " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
         try {
             tasks.put(new LoopPluginTask(plugin, new TaskCompletionCallback() {
                 @Override public void onComplete() {
