@@ -7,8 +7,5 @@ dsrc_address: '192.168.1.2'
 # Integer: The port the DSRC OBU is listening on for outgoing messages
 listening_port: 8089
 
-# Integer: The port the for communication with drsc device
-dsrc_listening_port: 9001
-
-# Integer: The port to listen for UDP packets from the Arada OBU
-listening_port: 8090
+# Integer: The port to listen for UDP packets from the DSRC OBU
+dsrc_listening_port: 8090
