@@ -24,6 +24,9 @@ import cav_srvs.SetGuidanceEngaged;
 import cav_srvs.SetGuidanceEngagedRequest;
 import cav_srvs.SetGuidanceEngagedResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
@@ -103,9 +106,19 @@ public class GuidanceMain extends SaxtonBaseNode {
     pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory);
   }
 
+  /**
+   * Initialize the Guidance logging system
+   */
+  private void initLogger(Log baseLog) {
+    SaxtonLoggerProxyFactory slpf = new SaxtonLoggerProxyFactory(baseLog);
+    LoggerManager.setLoggerFactory(slpf);
+  }
+
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
-    final Log log = connectedNode.getLog();
+    initLogger(connectedNode.getLog());
+    final ILogger log = LoggerManager.getLogger();
+
     final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
 
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state, log);
