@@ -114,11 +114,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
                 out.add(pluginClass);
                 if (log != null) {
-                    log.info("Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
+                    log.info("PLUGIN", "Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
                 }
             } else {
                 if (log != null) {
-                    log.info("Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
+                    log.info("PLUGIN", "Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
                 }
             }
         }
@@ -142,7 +142,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 // TODO: This is brittle, depends on convention of having a constructor taking only a PSL
                 IPlugin pluginInstance = pluginCtor.newInstance(pluginServiceLocator);
                 pluginInstance.registerAvailabilityListener(this);
-                log.info("Guidance.PluginManager instantiated new plugin instance: " + pluginInstance.getName() + ":"
+                log.info("PLUGIN", "Guidance.PluginManager instantiated new plugin instance: " + pluginInstance.getName() + ":"
                         + pluginInstance.getVersionId());
 
                 // If the plugin is required activate it by default
@@ -152,7 +152,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
                 pluginInstances.add(pluginInstance);
             } catch (Exception e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
+                log.error("PLUGIN", "Unable to instantiate: " + pluginClass.getCanonicalName());
                 log.error(e);
             }
         }
@@ -176,8 +176,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         requiredPluginClassNames = (List<String>) node.getParameterTree().getList("~required_plugins",
                 new ArrayList<>());
 
-        log.info("Ignoring plugins: " + ignoredPluginClassNames.toString());
-        log.info("Requiring plugins: " + requiredPluginClassNames.toString());
+        log.info("STARTUP", "Ignoring plugins: " + ignoredPluginClassNames.toString());
+        log.info("STARTUP", "Requiring plugins: " + requiredPluginClassNames.toString());
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
 
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
