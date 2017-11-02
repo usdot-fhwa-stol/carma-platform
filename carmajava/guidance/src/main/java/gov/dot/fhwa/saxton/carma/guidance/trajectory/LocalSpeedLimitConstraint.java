@@ -115,7 +115,7 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
     List<SpeedLimit> spanned = getSpeedLimits(speedLimits, maneuver.getStartDistance(), maneuver.getEndDistance());
     boolean spannedLegal = true;
     for (SpeedLimit limit : spanned) {
-      double distFactor = (maneuver.getEndDistance() - limit.location)/(maneuver.getEndDistance() - maneuver.getStartDistance());
+      double distFactor = (limit.location - maneuver.getStartDistance())/(maneuver.getEndDistance() - maneuver.getStartDistance());
       double deltaV = maneuver.getTargetSpeed() - maneuver.getStartSpeed();
       double interpolatedSpeed = maneuver.getStartSpeed() + (deltaV * distFactor);
       spannedLegal = spannedLegal && interpolatedSpeed <= limit.speedLimit;
