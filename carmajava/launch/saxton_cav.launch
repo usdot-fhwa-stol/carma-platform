@@ -159,16 +159,18 @@
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Tracking Thread-->
-        <remap from="~vehicle_length"
+        <remap from="vehicle_length"
                to="/$(arg TOP_NS)/vehicle_length"/>
-        <remap from="~vehicle_width"
+        <remap from="vehicle_width"
                to="/$(arg TOP_NS)/vehicle_width"/>
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-        <remap from="velocity"
+        <remap from="velocity" 
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
+        <remap from="get_transform"
+               to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
 
         <!-- Trajectory Thread-->
         <remap from="get_drivers_with_capabilities"
