@@ -37,7 +37,6 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -57,6 +56,14 @@ import java.util.concurrent.atomic.AtomicReference;
  * trajectory and signalling the failure on the /system_alert topic
  */
 public class Tracking extends GuidanceComponent {
+	private static final double ACCURACY_ORIENTATION_UNAVAILABLE = 65535 * 0.0054932479;
+	protected static final float ACCURACY_UNAVAILABLE = 12.75f;
+	protected static final float ELEVATION_UNAVAILABLE = 409.6f;
+	protected static final double LONGITUDE_UNAVAILABLE = 180.0000001;
+	protected static final double LATITUDE_UNAVAILABLE = 90.0000001;
+	protected static final int DSECOND_MAX = 65535;
+	protected static final int ID_TIME_MAX = 3000;
+	protected static final int MSG_COUNT_MAX = 127; // 10 msg/sec * 5 min * 60 sec/min
 	// Member variables
 	protected final long sleepDurationMillis = 100; // Frequency for J2735
 	private int msgCount = 0;
@@ -91,6 +98,7 @@ public class Tracking extends GuidanceComponent {
 	private final String baseLinkFrame = "base_link";
 	private final String vehicleFrame = "host_vehicle";
 	private final String mapFrame = "map";
+	private final String earthFrame = "earth";
 	private Transform baseToVehicle = null;
 	private Transform baseToMap = null;
 
@@ -285,40 +293,40 @@ public class Tracking extends GuidanceComponent {
 		try {
 			// Set header
 			bsmFrame.getHeader().setStamp(node.getCurrentTime());
-			bsmFrame.getHeader().setFrameId("MessageNode");
+			bsmFrame.getHeader().setFrameId(Tracking.class.getSimpleName());
 
 			// Set core data
 			BSMCoreData coreData = bsmFrame.getCoreData();
-			coreData.setMsgCount((byte) (msgCount % 127));
+			coreData.setMsgCount((byte) (msgCount % MSG_COUNT_MAX));
 
 			// ID is random and changes every 5 minutes
 			if (msgCount == 0) {
 				randomIdGenerator.nextBytes(random_id);
 				msgCount++;
-			} else if (msgCount == 3000) {
+			} else if (msgCount == ID_TIME_MAX) {
 				msgCount = 0;
 			}
 			coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
 
 			// Set GPS data
-			coreData.setLatitude(90.0000001); // Default value when unknown
-			coreData.setLongitude(180.0000001);
-			coreData.setElev((float) -409.6);
-			coreData.getAccuracy().setSemiMajor((float) (255 * 0.05));
-			coreData.getAccuracy().setSemiMinor((float) (255 * 0.05));
-			coreData.getAccuracy().setOrientation(65535 * 0.0054932479);
+			coreData.setLatitude(LATITUDE_UNAVAILABLE); // Default value when unknown
+			coreData.setLongitude(LONGITUDE_UNAVAILABLE);
+			coreData.setElev(ELEVATION_UNAVAILABLE);
+			coreData.getAccuracy().setSemiMajor(ACCURACY_UNAVAILABLE);
+			coreData.getAccuracy().setSemiMinor(ACCURACY_UNAVAILABLE);
+			coreData.getAccuracy().setOrientation(ACCURACY_ORIENTATION_UNAVAILABLE);
 			if(nav_sat_fix_ready && getTransformClient != null) {
 				GetTransformRequest transform_request = getTransformClient.newMessage();
-				transform_request.setParentFrame(vehicleFrame);
-				transform_request.setChildFrame(baseLinkFrame);
+				transform_request.setParentFrame(earthFrame);
+				transform_request.setChildFrame(vehicleFrame);
 				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
 					
 					@Override
 					public void onSuccess(GetTransformResponse msg) {
-						log_.info("BSM", "Get base_to_vehicle_transform response " + msg.getErrorStatus());
+						log_.info("BSM", "Get vehicle_to_earth_transform response " + msg.getErrorStatus());
 						if(msg.getErrorStatus() == 0) {
 							//TODO: fix this transform later
-							baseToVehicle = Transform.identity();
+							baseToVehicle = Transform.fromTransformMessage(msg.getTransform().getTransform());
 							base_to_vehicle_transform_ready = true;
 						}
 					}
@@ -491,7 +499,7 @@ public class Tracking extends GuidanceComponent {
 			coreData.getSize().setVehicleWidth(vehicleWidth);
 			
 			// Use ros node time
-			coreData.setSecMark((short) ((node.getCurrentTime().toSeconds() * 1000) % 65535));
+			coreData.setSecMark((short) ((node.getCurrentTime().toSeconds() * 1000) % DSECOND_MAX));
 
 		} catch (Exception e) {
 			handleException(e);
