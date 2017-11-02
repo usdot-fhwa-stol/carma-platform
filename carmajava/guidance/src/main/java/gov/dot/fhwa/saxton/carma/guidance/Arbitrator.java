@@ -161,7 +161,7 @@ public class Arbitrator extends GuidanceComponent {
     }
 
     constraints.add(new GlobalSpeedLimitConstraint(configuredSpeedLimit));
-    log.info("Arbitrator using GlobalSpeedLimitConstraint with limit: " + configuredSpeedLimit);
+    log.info("Arbitrator using GlobalSpeedLimitConstraint with limit: " + configuredSpeedLimit + " m/s");
 
     twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
     twistSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
