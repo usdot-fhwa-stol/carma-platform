@@ -59,6 +59,16 @@ import java.util.concurrent.atomic.AtomicReference;
  * trajectory and signalling the failure on the /system_alert topic
  */
 public class Tracking extends GuidanceComponent {
+	protected static final int SECONDS_TO_MILLISECONDS = 1000;
+	protected static final byte BRAKES_STATUS_UNAVAILABLE = 16;
+	protected static final byte BRAKES_NOT_APPLIED = 0;
+	protected static final byte BRAKES_APPLIED = 15;
+	protected static final double YAWRATE_MAX = 327.67;
+	protected static final double YAWRATE_MIN = -327.67;
+	protected static final float VERTICAL_ACCELERATION_MIN = -24.696f;
+	protected static final float VERTICAL_ACCELERATION_MAX = 24.892f;
+	protected static final int ACCELERATION_MAX = 20;
+	protected static final int ACCELERATION_MIN = -20;
 	protected static final float VERTICAL_ACCELERATION_UNAVAILABLE = -24.892f;
 	protected static final float ACCELERATION_UNAVAILABLE = 20.01f;
 	protected static final int STEEL_WHEEL_ANGLE_MAX = 189;
@@ -277,8 +287,8 @@ public class Tracking extends GuidanceComponent {
 		
 		
 		ParameterTree param = node.getParameterTree();
-		vehicleLength = (float) param.getDouble("~vehicle_length");
-		vehicleWidth = (float) param.getDouble("~vehicle_width");
+		vehicleLength = (float) param.getDouble("vehicle_length");
+		vehicleWidth = (float) param.getDouble("vehicle_width");
 		
 		drivers_ready = true;
 	}
@@ -305,9 +315,7 @@ public class Tracking extends GuidanceComponent {
 				handleException(e);
 			}
 		}
-		
 		Thread.sleep(sleepDurationMillis);
-		
 	}
 
 	private BSM composeBSMData() {
@@ -361,33 +369,12 @@ public class Tracking extends GuidanceComponent {
 					}
 				});
 				
-				//TODO: find transformation
-//				transform_request.setParentFrame(earthFrame);
-//				transform_request.setChildFrame(vehicleFrame);
-//				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
-//					
-//					@Override
-//					public void onSuccess(GetTransformResponse msg) {
-//						log_.info("BSM", "Get vehicle_to_earth_transform response " + msg.getErrorStatus());
-//						if(msg.getErrorStatus() == 0) {
-//							//TODO: fix this transform later
-//							vehicleToEarth = Transform.fromTransformMessage(msg.getTransform().getTransform());
-//							vehicle_to_earth_transform_ready = true;
-//						}
-//					}
-//					
-//					@Override
-//					public void onFailure(Exception e) {
-//						throw new RosRuntimeException(e);
-//					}
-//				});
-				
-				if(vehicle_to_earth_transform_ready && earth_to_map_ready) {
+				if(vehicle_to_earth_transform_ready) {
 					Point3D point_3d = new Point3D(
 							vehicleToEarth.getTranslation().getX(), 
 							vehicleToEarth.getTranslation().getY(), 
 							vehicleToEarth.getTranslation().getZ()); 
-					Location location = converter.cartesian2Geodesic(point_3d, earthtoMap);
+					Location location = converter.cartesian2Geodesic(point_3d, Transform.identity());
 					double lat = location.getLatitude();
 					double Lon = location.getLongitude();
 					float elev = (float) location.getAltitude();
@@ -496,43 +483,43 @@ public class Tracking extends GuidanceComponent {
 					geometry_msgs.Vector3 accel_linear = accelerationSubscriber.getLastMessage().getAccel().getLinear();
 					Vector3 after_transform_accel_linear = baseToMap.apply((Vector3) accel_linear);
 					
-					if(after_transform_accel_linear.getX() <= -20) {
-						coreData.getAccelSet().setLongitudinal(-20);
-					} else if(after_transform_accel_linear.getX() >= 20) {
-						coreData.getAccelSet().setLongitudinal(20);
+					if(after_transform_accel_linear.getX() <= ACCELERATION_MIN) {
+						coreData.getAccelSet().setLongitudinal(ACCELERATION_MIN);
+					} else if(after_transform_accel_linear.getX() >= ACCELERATION_MAX) {
+						coreData.getAccelSet().setLongitudinal(ACCELERATION_MAX);
 					} else {
 						coreData.getAccelSet().setLongitudinal((float) after_transform_accel_linear.getX());
 					}
 					
-					if(after_transform_accel_linear.getY() <= -20) {
-						coreData.getAccelSet().setLateral(-20);
-					} else if(after_transform_accel_linear.getY() >= 20) {
-						coreData.getAccelSet().setLateral(20);
+					if(after_transform_accel_linear.getY() <= ACCELERATION_MIN) {
+						coreData.getAccelSet().setLateral(ACCELERATION_MIN);
+					} else if(after_transform_accel_linear.getY() >= ACCELERATION_MAX) {
+						coreData.getAccelSet().setLateral(ACCELERATION_MAX);
 					} else {
 						coreData.getAccelSet().setLateral((float) after_transform_accel_linear.getY());
 					}
 
-					if(after_transform_accel_linear.getZ() <= -24.696) {
-						coreData.getAccelSet().setLateral((float) -24.696);
-					} else if(after_transform_accel_linear.getZ() >= 24.892) {
-						coreData.getAccelSet().setLateral((float) 24.892);
+					if(after_transform_accel_linear.getZ() <= VERTICAL_ACCELERATION_MIN) {
+						coreData.getAccelSet().setLateral(VERTICAL_ACCELERATION_MIN);
+					} else if(after_transform_accel_linear.getZ() >= VERTICAL_ACCELERATION_MAX) {
+						coreData.getAccelSet().setLateral(VERTICAL_ACCELERATION_MAX);
 					} else {
 						coreData.getAccelSet().setLateral((float) after_transform_accel_linear.getZ());
 					}
 				}
 				
-				if(accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() >= -327.67
-						&& accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() <= 327.67) {
+				if(accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() >= YAWRATE_MIN
+						&& accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() <= YAWRATE_MAX) {
 					coreData.getAccelSet().setYawRate((float) accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ());
 				}
 			}
 			
-			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 16);
+			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_STATUS_UNAVAILABLE);
 			if(brake_ready) {
 				if(brakeSubscriber.getLastMessage().getData() >= 0) {
-					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 15);
+					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_APPLIED);
 				} else {
-					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) 0);
+					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_NOT_APPLIED);
 				}
 			}
 			
@@ -548,7 +535,7 @@ public class Tracking extends GuidanceComponent {
 			coreData.getSize().setVehicleWidth(vehicleWidth);
 			
 			// Use ros node time
-			coreData.setSecMark((short) ((node.getCurrentTime().toSeconds() * 1000) % DSECOND_MAX));
+			coreData.setSecMark((short) ((node.getCurrentTime().toSeconds() * SECONDS_TO_MILLISECONDS) % DSECOND_MAX));
 
 		} catch (Exception e) {
 			handleException(e);
