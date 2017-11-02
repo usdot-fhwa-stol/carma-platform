@@ -121,7 +121,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
 
-    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state, log);
+    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state);
     this.exceptionHandler = guidanceExceptionHandler;
     log.info("Guidance exception handler partially initialized");
 

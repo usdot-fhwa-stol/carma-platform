@@ -17,6 +17,9 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.ConnectedNode;
@@ -34,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class GuidanceComponent implements Runnable {
     protected ConnectedNode node;
     protected IPubSubService pubSubService;
-    protected Log log;
+    protected ILogger log;
     protected Thread loopThread;
 
     private final long WAIT_DURATION_MS = 200;
@@ -46,7 +49,7 @@ public abstract class GuidanceComponent implements Runnable {
         this.state = state;
         this.node = node;
         this.pubSubService = pubSubService;
-        this.log = node.getLog();
+        this.log = LoggerManager.getLogger();
     }
 
     /**
