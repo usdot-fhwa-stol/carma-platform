@@ -98,6 +98,11 @@ public class MockAradaDriver extends AbstractMockDriver {
     	  rawByteString = "00 14 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00";
       }
       
+      boolean publish_control = false;
+      if(rawByteString.equals("00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8")) {
+    	  publish_control = true;
+      }
+      
       // All non hex characters are removed. This does not support use of x such as 0x00
       rawByteString = rawByteString.replaceAll("[^A-Fa-f0-9]", "");
       // An uneven number of characters will have a 0 appended to the end
@@ -107,9 +112,11 @@ public class MockAradaDriver extends AbstractMockDriver {
       byte[] rawBytes = DatatypeConverter.parseHexBinary(rawByteString);
       // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
       recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
-
+      
       // Publish Data
-      recvPub.publish(recvMsg);
+      if(!publish_control || (publish_control && System.currentTimeMillis() % 8000 < 4000)) {
+    	  recvPub.publish(recvMsg);
+      }
     }
   }
 
