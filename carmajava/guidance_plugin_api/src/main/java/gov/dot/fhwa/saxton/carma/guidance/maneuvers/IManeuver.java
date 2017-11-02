@@ -68,7 +68,6 @@ public interface IManeuver {
      * @param targetSpeed - target speed at end of maneuver, m/s
      * @throws UnsupportedOperationException if called on a lateral maneuver object
      */
-    @Deprecated
     void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException;
 
 
@@ -77,7 +76,6 @@ public interface IManeuver {
      * @return m/s
      * @throws UnsupportedOperationException if called on a lateral maneuver object
      */
-    @Deprecated
     double getStartSpeed() throws UnsupportedOperationException;
 
 
