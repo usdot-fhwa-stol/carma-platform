@@ -21,9 +21,10 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverRunner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.logging.Log;
 
 /**
  * Guidance package TrajectoryExecutorWorker
@@ -42,7 +43,7 @@ public class TrajectoryExecutorWorker {
   protected Thread lateralManeuverThread = new Thread();
   protected Thread longitudinalManeuverThread = new Thread();
   protected double maneuverTickFrequencyHz = 10.0;
-  protected Log log;
+  protected ILogger log = LoggerManager.getLogger();
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -56,10 +57,9 @@ public class TrajectoryExecutorWorker {
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, Log log) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
-    this.log = log;
   }
 
   private void execute(IManeuver maneuver) {
