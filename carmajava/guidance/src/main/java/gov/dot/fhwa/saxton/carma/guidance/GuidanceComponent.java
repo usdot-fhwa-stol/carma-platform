@@ -91,7 +91,7 @@ public abstract class GuidanceComponent implements Runnable {
 
     public final void run() {
         Thread.currentThread().setName(getComponentName() + "Runner");
-        log.info(getComponentName() + " starting up.");
+        log.info("STARTUP", getComponentName() + " starting up.");
         onGuidanceStartup();
         CancellableLoop loop = new CancellableLoop() {
             @Override
@@ -154,9 +154,9 @@ public abstract class GuidanceComponent implements Runnable {
         }
         cancelAndWaitForLoop(loop);
 
-        log.info(getComponentName() + " shutting down.");
+        log.info("SHUTDOWN", getComponentName() + " shutting down.");
         onGuidanceShutdown();
-        log.info(getComponentName() + " shut down.");
+        log.info("SHUTDOWN", getComponentName() + " shut down.");
     }
 
     /**
