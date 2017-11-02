@@ -110,8 +110,19 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // Raw byte data has the form "0a 1f 23"
       // String rawByteString = elements[RAW_BYTES_IDX];
       // Set to static data for test
-      String rawByteString =
-        "00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8";
+      String rawByteString = "00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8";
+      if(System.currentTimeMillis() % 4 == 1) {
+    	  rawByteString = "00 14 25 00 00 00 00 00 40 00 1A D2 74 80 35 A4 E8 FF 88 00 00 00 00 00 10 00 3A 98 7E 00 00 00 00 00 00 FA A0 C8 3E 80";
+      } else if(System.currentTimeMillis() % 4 == 2) {
+    	  rawByteString = "00 14 25 1F E6 66 66 66 7F FF F5 A4 E9 00 EB 49 D2 00 7F FF FF FF FF FF EF FF F0 80 FD FA 1F A1 FE FF FE FF F7 FF FF F8";
+      } else if(System.currentTimeMillis() % 4 == 3) {
+    	  rawByteString = "00 14 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00";
+      }
+      
+      boolean publish_control = false;
+      if(rawByteString.equals("00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8")) {
+    	  publish_control = true;
+      }
 
       // All non hex characters are removed. This does not support use of x such as 0x00
       rawByteString = rawByteString.replaceAll("[^A-Fa-f0-9]", "");
@@ -122,9 +133,11 @@ public class MockDSRCDriver extends AbstractMockDriver {
       byte[] rawBytes = DatatypeConverter.parseHexBinary(rawByteString);
       // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
       recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
-
+      
       // Publish Data
-      recvPub.publish(recvMsg);
+      if(!publish_control || (publish_control && System.currentTimeMillis() % 8000 < 4000)) {
+    	  recvPub.publish(recvMsg);
+      }
     }
   }
 
