@@ -40,7 +40,7 @@
   <arg name="DATA_DIR" default="$(find carma)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
   <!-- Simulation Usage -->
   <arg name="mock_can"            default="false" doc="True if using a simulated can driver"/>
-  <arg name="mock_arada"          default="false" doc="True if using a simulated arada driver"/>
+  <arg name="mock_dsrc"          default="false" doc="True if using a simulated dsrc driver"/>
   <arg name="mock_srx_controller" default="false" doc="True if using a simulated srx controller driver"/>
   <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
   <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
@@ -48,11 +48,11 @@
 
   <!-- Data Files -->
   <arg name="can_data_file"            default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
-  <arg name="arada_data_file"          default="$(arg DATA_DIR)/arada.csv" doc="Path for arada simulation data"/>
+  <arg name="dsrc_data_file"          default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
   <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
   <arg name="pinpoint_data_file"       default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
   <arg name="radar_data_file"          default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
-  <arg name="cellular_data_file"       default="$(arg DATA_DIR)/arada.csv" doc="Path cellular can simulation data"/>
+  <arg name="cellular_data_file"       default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
 
   <!-- RouteFiles -->
   <arg name="ROUTES_DIR" default="$(find carma)/route/src/test/resources/routefiles/" doc="Path to the directory containing example route files"/>
@@ -71,7 +71,7 @@
   <arg name="debug_mock_pinpoint"   default="false" doc="Set true to enable debugging on the Mock Pinpoint Driver"/>
   <arg name="debug_mock_srx_controller" default="false" doc="Set true to enable debugging on the Mock SRX Controller Driver"/>
   <arg name="debug_mock_can"        default="false" doc="Set true to enable debugging on the Mock CAN Driver"/>
-  <arg name="debug_mock_arada"      default="false" doc="Set true to enable debugging on the Mock Arada Driver"/>
+  <arg name="debug_mock_dsrc"      default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
   <arg name="debug_mock_radar"      default="false" doc="Set true to enable debugging on the Mock Radar Driver"/>
 
 
@@ -349,16 +349,16 @@
              to="/$(arg TOP_NS)/system_alert"/>
 
       <!-- DSRC OBU Driver Node -->
-      <include unless="$(arg mock_arada)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
-      <!-- Simulated Arada Driver Node -->
-      <node if="$(arg mock_arada)" pkg="carma" type="mock_drivers" name="arada_application"
+      <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
+      <!-- Simulated DSRC Driver Node -->
+      <node if="$(arg mock_dsrc)" pkg="carma" type="mock_drivers" name="dsrc"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
-        <env if="$(arg debug_mock_arada)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <env if="$(arg debug_mock_dsrc)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-        <param name="simulated_driver" type="string" value="arada"/>
-        <param name="data_file_path" type="string" value="$(arg arada_data_file)"/>
-        <rosparam command="load" file="$(arg PARAM_DIR)/AradaOBUParams.yaml"/>
+        <param name="simulated_driver" type="string" value="dsrc"/>
+        <param name="data_file_path" type="string" value="$(arg dsrc_data_file)"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/DSRCOBUParams.yaml"/>
       </node>
 
       <!-- PinPoint Driver Node -->
@@ -381,7 +381,7 @@
         <arg name="srx_can_can_device" value="can0" />
       </include>
       <!-- Simulated CAN Driver Node -->
-      <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can_application"
+      <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_can)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
@@ -411,7 +411,7 @@
         <arg name="srx_objects_can_device" value="ics0can0"/>
       </include>
       <!-- Simulated Radar Driver Node -->
-      <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_object_application"
+      <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_radar)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>

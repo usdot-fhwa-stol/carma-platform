@@ -19,9 +19,7 @@ package gov.dot.fhwa.saxton.carma.mock_drivers;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.Node;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.GraphName;
 
@@ -51,8 +49,8 @@ public class MockDriverNode extends SaxtonBaseNode {
       case "can":
         simulatedDriver = new MockCANDriver(connectedNode);
         break;
-      case "arada":
-        simulatedDriver = new MockAradaDriver(connectedNode);
+      case "dsrc":
+        simulatedDriver = new MockDSRCDriver(connectedNode);
         break;
       case "srx_controller":
         simulatedDriver = new MockSRXControllerDriver(connectedNode);
