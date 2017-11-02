@@ -317,7 +317,7 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
     local_pose_pub_.publish(msg);
 
     if (publish_tf) {
-        tf2_ros::TransformBroadcaster br;
+        static tf2_ros::TransformBroadcaster br;
         geometry_msgs::TransformStamped transformStamped;
 
         transformStamped.header = msg.header;
@@ -327,7 +327,6 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
         transformStamped.transform.translation.z = msg.pose.pose.position.z;
 
         transformStamped.transform.rotation = msg.pose.pose.orientation;
-
         br.sendTransform(transformStamped);
     }
 
