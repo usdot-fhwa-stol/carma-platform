@@ -41,7 +41,6 @@ public class PluginLifecycleHandlerTest {
 
         p = null;
         handler = null;
-        log = null;
     }
 
     // Happy path tests

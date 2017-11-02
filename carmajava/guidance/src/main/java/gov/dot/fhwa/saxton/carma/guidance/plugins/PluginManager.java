@@ -82,11 +82,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, 
     IGuidanceCommands commands, IManeuverInputs maneuverInputs, ConnectedNode node) {
         super(state, pubSubManager, node);
-        this.executor = new PluginExecutor(node.getLog());
+        this.executor = new PluginExecutor();
 
         pluginServiceLocator = new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
-                pubSubService, new RosParameterSource(node.getParameterTree()), new ManeuverPlanner(commands, maneuverInputs), 
-                node.getLog());
+                pubSubService, new RosParameterSource(node.getParameterTree()), new ManeuverPlanner(commands, maneuverInputs));
     }
 
     /**

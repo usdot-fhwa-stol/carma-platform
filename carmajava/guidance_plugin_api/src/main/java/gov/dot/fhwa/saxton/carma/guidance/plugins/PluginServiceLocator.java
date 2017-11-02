@@ -20,7 +20,6 @@ import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import org.apache.commons.logging.Log;
 
 /**
  * Service collection for the Plugin interface. Provides access to the generic, ROS agnostic interfaces
@@ -32,17 +31,15 @@ public class PluginServiceLocator {
     private final ParameterSource parameterSource;
     private final IPubSubService IPubSubService;
     private final ManeuverPlanner maneuverPlanner;
-    private final Log log;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
         PluginManagementService pluginManagementService, IPubSubService iPubSubService,
-        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, Log log) {
+        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner) {
         this.arbitratorService = arbitratorService;
         this.IPubSubService = iPubSubService;
         this.pluginManagementService = pluginManagementService;
         this.parameterSource = parameterSource;
         this.maneuverPlanner = maneuverPlanner;
-        this.log = log;
     }
 
     /**
@@ -78,12 +75,5 @@ public class PluginServiceLocator {
      */
     public ManeuverPlanner getManeuverPlanner() {
         return maneuverPlanner;
-    }
-
-    /**
-     * Get the logger instance available to the plugins
-     */
-    public Log getLog() {
-        return log;
     }
 }

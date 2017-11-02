@@ -18,7 +18,8 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import org.apache.commons.logging.Log;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -33,7 +34,7 @@ import java.util.concurrent.atomic.*;
 public abstract class AbstractPlugin implements IPlugin {
     protected String name;
     protected String versionId;
-    protected Log log;
+    protected ILogger log = LoggerManager.getLogger();
     protected IPubSubService pubSubService;
     protected PluginServiceLocator pluginServiceLocator;
 
@@ -45,7 +46,6 @@ public abstract class AbstractPlugin implements IPlugin {
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
         this.pluginServiceLocator = pluginServiceLocator;
         this.pubSubService = pluginServiceLocator.getPubSubService();
-        this.log = pluginServiceLocator.getLog();
     }
 
     @Override public String getName() {
