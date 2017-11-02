@@ -80,14 +80,19 @@ public class GuidanceMain extends SaxtonBaseNode {
    * every build) must have a unique ID (combination of major/intermediate/minor/build).
    * =============================================================================================================================
    */
-  GuidanceMain() {
+  public GuidanceMain() {
 	  version.setName("Carma Platform");
-	  version.setMajorRevision(0);
+	  version.setMajorRevision(2);
 	  //if any one of the below items is not explicitly set it will not be displayed in the revision string.
 	  version.setIntermediateRevision(0);
-	  version.setMinorRevision(1);
+	  version.setMinorRevision(0);
+
+      //if we can implement automated version assignments, uncomment this line and have the build script assign this value
 	  //version.setBuild(0);
-	  //version.setSuffix(""); //may want to add an explanatory tag to the end of the ID string to make test builds or one-offs more obvious
+
+      //may want to add an explanatory tag to the end of the ID string to make test builds or one-offs more obvious
+      //For now, this should always be DEV for an in-work release, and an empty string for a formal release to the customer
+	  version.setSuffix("DEV");
   }
   
   
@@ -135,6 +140,9 @@ public class GuidanceMain extends SaxtonBaseNode {
   public void onSaxtonStart(final ConnectedNode connectedNode) {
     final Log log = connectedNode.getLog();
     final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
+    log.info("//////////");
+    log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
+    log.info("//////////");
 
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state, log);
     this.exceptionHandler = guidanceExceptionHandler;
