@@ -78,7 +78,7 @@ public class Tracking extends GuidanceComponent {
 
 	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
 		super(state, pubSubService, node);
-		this.exceptionHandler = new GuidanceExceptionHandler(state, log);
+		this.exceptionHandler = new GuidanceExceptionHandler(state);
 	}
 
 	@Override
@@ -169,9 +169,9 @@ public class Tracking extends GuidanceComponent {
 	public void loop() throws InterruptedException {
 		if(drivers_ready) {
 			try {
-				log.info("Tracking subscribers status: " + nav_sat_fix_ready + " " + steer_wheel_ready + " " + heading_ready + " " + velocity_ready);
+				log.info("BSM", "Tracking subscribers status: " + nav_sat_fix_ready + " " + steer_wheel_ready + " " + heading_ready + " " + velocity_ready);
 				if (nav_sat_fix_ready && steer_wheel_ready && heading_ready && velocity_ready) {
-					log.info("Guidance.Tracking is publishing bsm...");
+					log.info("BSM", "Guidance.Tracking is publishing bsm...");
 					bsmPublisher.publish(composeBSMData());
 				}
 			}  catch (Exception e) {
