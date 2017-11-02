@@ -19,7 +19,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.141' // TODO: Update with proper environment IP address to 166.241.207.252
+var ip = '192.168.32.143' // TODO: Update with proper environment IP address to 166.241.207.252
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -37,6 +37,7 @@ var t_current_segment = "current_segment";
 var s_get_available_routes = 'get_available_routes';
 var s_set_active_route = 'set_active_route';
 var s_start_active_route = "start_active_route";
+var s_get_system_version = "get_system_version";
 
 var s_get_registered_plugins = 'plugins/get_registered_plugins';
 var s_activate_plugins = 'plugins/activate_plugin';
@@ -941,6 +942,31 @@ function showStatusandLogs()
     showSpeedAccelInfo();
     showCurrentSegmentInfo();
 }
+
+/*
+    Show the system name and version on the footer.
+*/
+function showSystemVersion()
+{
+
+    // Calling service
+    var serviceClient = new ROSLIB.Service({
+        ros: ros,
+        name: s_get_system_version,
+        serviceType: 'cav_srvs/GetSystemVersion'
+    });
+
+    // Then we create a Service Request.
+    var request = new ROSLIB.ServiceRequest({
+    });
+
+    // Call the service and get back the results in the callback.
+    serviceClient.callService(request, function (result) {
+
+         var elemSystemVersion = document.getElementsByClassName("systemversion");
+         elemSystemVersion[0].innerHTML = result.system_name + ' ' + result.revision;
+    });
+}
 /*
   Loop function to
    for System Ready status from interface manager.
@@ -959,6 +985,7 @@ function waitForSystemReady() {
 
         //If system is now ready
         if (system_ready == true) {
+            showSystemVersion();
             showRouteOptions();
             showStatusandLogs();
             enableGuidance();
