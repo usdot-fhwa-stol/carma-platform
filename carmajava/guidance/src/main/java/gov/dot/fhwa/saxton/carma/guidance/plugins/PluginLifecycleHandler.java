@@ -16,8 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import org.apache.commons.logging.Log;
-
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,19 +35,18 @@ public class PluginLifecycleHandler {
     protected Thread t; // Worker thread
     protected AtomicReference<PluginState> state = new AtomicReference<>(PluginState.UNINITIALIZED);
         // Current state, thread safe
-    protected Log log;
+    protected ILogger log = LoggerManager.getLogger();;
 
-    PluginLifecycleHandler(IPlugin plugin, Log log) {
+    PluginLifecycleHandler(IPlugin plugin) {
         this.tasks = new LinkedBlockingQueue<>();
         this.plugin = plugin;
-        this.log = log;
     }
 
     /**
      * Private helper method for actually performing plugin initialization
      */
     private void doInitialize() {
-        log.info("Initializing " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("PLUGIN", "Initializing " + plugin.getName() + ":" + plugin.getVersionId());
         state.set(PluginState.INITIALIZING);
         try {
             tasks.put(new InitializePluginTask(plugin, new TaskCompletionCallback() {
@@ -85,7 +84,7 @@ public class PluginLifecycleHandler {
      * Private helper method for actually performing the resume operation
      */
     private void doResume() {
-        log.info("Resuming " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("PLUGIN", "Resuming " + plugin.getName() + ":" + plugin.getVersionId());
         state.set(PluginState.RESUMING);
         try {
             tasks.put(new ResumePluginTask(plugin, new TaskCompletionCallback() {
@@ -98,7 +97,7 @@ public class PluginLifecycleHandler {
         }
 
         // After resuming we always return to looping
-        log.info("Looping " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("PLUGIN", "Looping " + plugin.getName() + ":" + plugin.getVersionId());
         try {
             tasks.put(new LoopPluginTask(plugin, new TaskCompletionCallback() {
                 @Override public void onComplete() {
@@ -154,6 +153,7 @@ public class PluginLifecycleHandler {
      * Private helper method for actually performing the suspend operation
      */
     private void doSuspend() {
+        log.info("PLUGIN", "Suspending " + plugin.getName() + ":" + plugin.getVersionId());
         t.interrupt();
         tasks.clear();
         state.set(PluginState.SUSPENDING);
@@ -213,6 +213,7 @@ public class PluginLifecycleHandler {
      * the switch/case statement below.
      */
     private void doTerminate() {
+        log.info("PLUGIN", "Terminating " + plugin.getName() + ":" + plugin.getVersionId());
         t.interrupt();
         tasks.clear();
         state.set(PluginState.DESTROYING);

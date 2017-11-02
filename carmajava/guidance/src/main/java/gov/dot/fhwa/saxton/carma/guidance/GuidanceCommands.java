@@ -27,7 +27,6 @@ import gov.dot.fhwa.saxton.carma.rosutils.*;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
-import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;

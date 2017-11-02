@@ -28,7 +28,6 @@ import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
-import org.apache.commons.logging.Log;
 import org.reflections.Reflections;
 import org.ros.exception.ServiceException;
 import org.ros.message.MessageFactory;

@@ -24,7 +24,6 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallbac
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 
-import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +63,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
 
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
 
-        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, node.getLog());
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
     }
 
     @Override

@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import org.apache.commons.logging.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +52,7 @@ public class CruisingPluginTest {
   public void setup() {
     PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
         mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), mock(Log.class));
+        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)));
     cruise = new CruisingPlugin(psl);
   }
 

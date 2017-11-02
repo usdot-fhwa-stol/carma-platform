@@ -16,12 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
-import org.apache.commons.logging.Log;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Interface for receiving information about Trajectory progress from TrajectoryExecutor
  */

@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import org.apache.commons.logging.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,8 +30,7 @@ import static org.mockito.Mockito.*;
 public class PluginLifecycleHandlerTest {
     @Before public void setUp() throws Exception {
         p = mock(IPlugin.class);
-        log = mock(Log.class);
-        handler = new PluginLifecycleHandler(p, log);
+        handler = new PluginLifecycleHandler(p);
     }
 
     @After public void tearDown() throws Exception {
@@ -197,6 +195,5 @@ public class PluginLifecycleHandlerTest {
 
     private PluginLifecycleHandler handler;
     private IPlugin p;
-    private Log log;
     private boolean running;
 }
