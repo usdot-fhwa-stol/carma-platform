@@ -102,11 +102,11 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     @Override
     public void setCommand(double speed, double accel) {
         if (speed > MAX_SPEED_CMD_M_S) {
-            log.warn("GuidanceCommands Attempted to set speed command higher than maximum limit of " 
-            + MAX_SPEED_CMD_M_S
-            + " using " 
+            log.warn("GuidanceCommands attempted to set speed command ("
+            + speed
+            + " m/s) higher than maximum limit of " 
             + MAX_SPEED_CMD_M_S 
-            + " instead.");
+            + " m/s. Capping to speed limit.");
             speed = MAX_SPEED_CMD_M_S;
         }
 
