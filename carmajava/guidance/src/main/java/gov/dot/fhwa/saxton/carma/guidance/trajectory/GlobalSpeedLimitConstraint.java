@@ -33,28 +33,31 @@ public class GlobalSpeedLimitConstraint implements TrajectoryValidationConstrain
     offendingManeuvers = new ArrayList<>();
   }
 
-	@Override
-	public void visit(IManeuver maneuver) {
+  @Override
+  public void visit(IManeuver maneuver) {
     if (!(maneuver instanceof LongitudinalManeuver)) {
       return;
     }
 
+    // Note: Assumes longitudinal maneuvers linearly interpolate speed over distance
+    // If non-linear longitudinal maneuvers are ever implemented this logic will not handle that case
     if (maneuver.getStartSpeed() > globalSpeedLimit || maneuver.getTargetSpeed() > globalSpeedLimit) {
       offendingManeuvers.add(maneuver);
     }
-	}
+  }
 
-	@Override
-	public TrajectoryValidationResult getResult() {
+  @Override
+  public TrajectoryValidationResult getResult() {
     if (offendingManeuvers.isEmpty()) {
       reset();
       return new TrajectoryValidationResult();
     } else {
-      TrajectoryValidationResult out = new TrajectoryValidationResult(new TrajectoryValidationError("Maneuvers exceed Global Speed Limit of " + globalSpeedLimit + "m/s", offendingManeuvers));
+      TrajectoryValidationResult out = new TrajectoryValidationResult(new TrajectoryValidationError(
+          "Maneuvers exceed Global Speed Limit of " + globalSpeedLimit + "m/s", offendingManeuvers));
       reset();
       return out;
     }
-	}
+  }
 
   /**
    * Reset the state so the constraint can accept another Trajectory
@@ -63,4 +66,3 @@ public class GlobalSpeedLimitConstraint implements TrajectoryValidationConstrain
     offendingManeuvers = new ArrayList<>();
   }
 }
-
