@@ -49,7 +49,7 @@ public class MockCANDriver extends AbstractMockDriver {
   final Publisher<cav_msgs.TurnSignal> turnSignalPub;
   final Publisher<cav_msgs.TransmissionState> transmissionPub;
 
-  final short EXPECTED_DATA_COL_COUNT = 13;
+  final short EXPECTED_DATA_COL_COUNT = 14;
 
   private final short SAMPLE_ID_IDX = 0;
   private final short ACC_IDX = 1;
