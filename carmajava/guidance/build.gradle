@@ -47,6 +47,7 @@ dependencies {
 
   compile project(':guidance_plugin_api')
   compile project(':rosutils')
+  compile project(':geometry')
 
   testCompile 'org.mockito:mockito-core:2.+'
   testCompile 'junit:junit:4.12'

@@ -25,6 +25,9 @@ import cav_srvs.GetTransformRequest;
 import cav_srvs.GetTransformResponse;
 import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
@@ -56,7 +59,24 @@ import java.util.concurrent.atomic.AtomicReference;
  * trajectory and signalling the failure on the /system_alert topic
  */
 public class Tracking extends GuidanceComponent {
-	private static final double ACCURACY_ORIENTATION_UNAVAILABLE = 65535 * 0.0054932479;
+	protected static final float VERTICAL_ACCELERATION_UNAVAILABLE = -24.892f;
+	protected static final float ACCELERATION_UNAVAILABLE = 20.01f;
+	protected static final int STEEL_WHEEL_ANGLE_MAX = 189;
+	protected static final int STEEL_WHEEL_ANGLE_MIN = -189;
+	protected static final float STEEL_WHEEL_ANGLE_UNAVAILABLE = 190.5f;
+	protected static final float HEADING_MAX = 359.9875f;
+	protected static final int HEADING_UNAVAILABLE = 360;
+	protected static final float SPEED_MAX = 163.8f;
+	protected static final float SPEED_UNAVAILABLE = 163.82f;
+	protected static final double ACCURACY_ORIENTATION_MAX = 359.9945078786;
+	protected static final float ACCURACY_MAX = 12.7f;
+	protected static final float ELEVATION_MAX = 6143.9f;
+	protected static final int LONGITUDE_MAX = 180;
+	protected static final float ELEVATION_MIN = -409.5f;
+	protected static final double LONGITUDE_MIN = -179.9999999;
+	protected static final int LATITUDE_MAX = 90;
+	protected static final int LATITUDE_MIN = -90;
+	protected static final double ACCURACY_ORIENTATION_UNAVAILABLE = 65535 * 0.0054932479;
 	protected static final float ACCURACY_UNAVAILABLE = 12.75f;
 	protected static final float ELEVATION_UNAVAILABLE = 409.6f;
 	protected static final double LONGITUDE_UNAVAILABLE = 180.0000001;
@@ -77,8 +97,9 @@ public class Tracking extends GuidanceComponent {
 	private boolean brake_ready = false;
 	private boolean transmission_ready = false;
 	private boolean acceleration_ready = false;
-	private boolean base_to_vehicle_transform_ready = false;
+	private boolean vehicle_to_earth_transform_ready = false;
 	private boolean base_to_map_transform_ready = false;
+	private boolean earth_to_map_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
 	protected SaxtonLogger log_ = new SaxtonLogger(Tracking.class.getSimpleName(), log);
 	private Random randomIdGenerator = new Random();
@@ -99,8 +120,11 @@ public class Tracking extends GuidanceComponent {
 	private final String vehicleFrame = "host_vehicle";
 	private final String mapFrame = "map";
 	private final String earthFrame = "earth";
-	private Transform baseToVehicle = null;
+	private Transform vehicleToEarth = null;
+	private Transform earthtoMap = null;
 	private Transform baseToMap = null;
+	private GeodesicCartesianConverter converter = new GeodesicCartesianConverter();
+	
 
 	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
 		super(state, pubSubService, node);
@@ -326,8 +350,8 @@ public class Tracking extends GuidanceComponent {
 						log_.info("BSM", "Get vehicle_to_earth_transform response " + msg.getErrorStatus());
 						if(msg.getErrorStatus() == 0) {
 							//TODO: fix this transform later
-							baseToVehicle = Transform.fromTransformMessage(msg.getTransform().getTransform());
-							base_to_vehicle_transform_ready = true;
+							vehicleToEarth = Transform.fromTransformMessage(msg.getTransform().getTransform());
+							vehicle_to_earth_transform_ready = true;
 						}
 					}
 					
@@ -337,28 +361,54 @@ public class Tracking extends GuidanceComponent {
 					}
 				});
 				
-				if(base_to_vehicle_transform_ready) {
-					double lat = navSatFixSubscriber.getLastMessage().getLatitude();
-					double Lon = navSatFixSubscriber.getLastMessage().getLongitude();
-					float elev = (float) navSatFixSubscriber.getLastMessage().getAltitude();
-					Vector3 after_transform_location = baseToVehicle.apply(new Vector3(lat, Lon, elev));
-					if(after_transform_location.getX() >= -90 && after_transform_location.getX() <= 90) {
-						coreData.setLatitude(after_transform_location.getX());
+				//TODO: find transformation
+//				transform_request.setParentFrame(earthFrame);
+//				transform_request.setChildFrame(vehicleFrame);
+//				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
+//					
+//					@Override
+//					public void onSuccess(GetTransformResponse msg) {
+//						log_.info("BSM", "Get vehicle_to_earth_transform response " + msg.getErrorStatus());
+//						if(msg.getErrorStatus() == 0) {
+//							//TODO: fix this transform later
+//							vehicleToEarth = Transform.fromTransformMessage(msg.getTransform().getTransform());
+//							vehicle_to_earth_transform_ready = true;
+//						}
+//					}
+//					
+//					@Override
+//					public void onFailure(Exception e) {
+//						throw new RosRuntimeException(e);
+//					}
+//				});
+				
+				if(vehicle_to_earth_transform_ready && earth_to_map_ready) {
+					Point3D point_3d = new Point3D(
+							vehicleToEarth.getTranslation().getX(), 
+							vehicleToEarth.getTranslation().getY(), 
+							vehicleToEarth.getTranslation().getZ()); 
+					Location location = converter.cartesian2Geodesic(point_3d, earthtoMap);
+					double lat = location.getLatitude();
+					double Lon = location.getLongitude();
+					float elev = (float) location.getAltitude();
+					if(lat >= LATITUDE_MIN && lat <= LATITUDE_MAX) {
+						coreData.setLatitude(lat);
 					}
-					if(after_transform_location.getY() >= -179.9999999 && after_transform_location.getY() <= 180) {
-						coreData.setLongitude(after_transform_location.getY());
+					if(Lon >= LONGITUDE_MIN && Lon <= LONGITUDE_MAX) {
+						coreData.setLongitude(Lon);
 					}
-					if(after_transform_location.getZ() >= -409.5 && after_transform_location.getZ() <= 6143.9) {
-						coreData.setElev((float) after_transform_location.getZ());
+					if(elev >= ELEVATION_MIN && elev <= ELEVATION_MAX) {
+						coreData.setElev(elev);
 					}
 				}
+				
 				float semi_major = (float) navSatFixSubscriber.getLastMessage().getPositionCovariance()[0];
 				float semi_minor = (float) navSatFixSubscriber.getLastMessage().getPositionCovariance()[4];
 				double orientation = 0; //orientation of semi_major axis
 				
 				if(semi_major >= 0) {
-					if(Math.sqrt(semi_major) >= 12.7) {
-						coreData.getAccuracy().setSemiMajor((float) 12.7);
+					if(Math.sqrt(semi_major) >= ACCURACY_MAX) {
+						coreData.getAccuracy().setSemiMajor(ACCURACY_MAX);
 					} else {
 						coreData.getAccuracy().setSemiMajor((float) Math.sqrt(semi_major));
 					}
@@ -366,62 +416,61 @@ public class Tracking extends GuidanceComponent {
 				}
 				
 				if(semi_minor >= 0) {
-					if(Math.sqrt(semi_minor) >= 12.7) {
-						coreData.getAccuracy().setSemiMinor((float) 12.7);
+					if(Math.sqrt(semi_minor) >= ACCURACY_MAX) {
+						coreData.getAccuracy().setSemiMinor(ACCURACY_MAX);
 					} else {
 						coreData.getAccuracy().setSemiMinor((float) Math.sqrt(semi_minor));
 					}
 				}
 				
-				if(orientation >= 0 && orientation <= 359.9945078786) {
+				if(orientation >= 0 && orientation <= ACCURACY_ORIENTATION_MAX) {
 					coreData.getAccuracy().setOrientation(orientation);
 				}
-				
 			}
 			
 			// Set transmission state
-			coreData.getTransmission().setTransmissionState((byte) 7);
+			coreData.getTransmission().setTransmissionState(TransmissionState.UNAVAILABLE);
 			if(transmission_ready) {
 				TransmissionState transmission_state = transmissionSubscriber.getLastMessage();
-				if(transmission_state.getTransmissionState() >= 0 && transmission_state.getTransmissionState() < 7) {
+				if(transmission_state.getTransmissionState() >= 0 && transmission_state.getTransmissionState() < TransmissionState.UNAVAILABLE) {
 					coreData.getTransmission().setTransmissionState(transmission_state.getTransmissionState());
 				}
 			}
 
-			coreData.setSpeed((float) (8191 * 0.02));
+			coreData.setSpeed(SPEED_UNAVAILABLE);
 			if(velocity_ready) {
 				float speed = (float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
-				if(speed >= 0 && speed <= 163.82) {
+				if(speed >= 0 && speed <= SPEED_MAX) {
 					coreData.setSpeed(speed);
 				}
 			}
 			
-			coreData.setHeading(360);
+			coreData.setHeading(HEADING_UNAVAILABLE);
 			if(heading_ready) {
 				float heading = (float) headingStampedSubscriber.getLastMessage().getHeading();
-				if(heading >= 0 && heading <= 359.9875) {
+				if(heading >= 0 && heading <= HEADING_MAX) {
 					coreData.setHeading(heading);
 				}
 			}
 			
-			coreData.setAngle((float) 190.5);
+			coreData.setAngle(STEEL_WHEEL_ANGLE_UNAVAILABLE);
 			if(steer_wheel_ready) {
-				float angle = (float) steeringWheelSubscriber.getLastMessage().getData();
 				
-				if(angle <= -189) {
-					coreData.setAngle(-189);
-				} else if(angle >= 189) {
-					coreData.setAngle(189);
+				float angle = (float) steeringWheelSubscriber.getLastMessage().getData();	
+				if(angle <= STEEL_WHEEL_ANGLE_MIN) {
+					coreData.setAngle(STEEL_WHEEL_ANGLE_MIN);
+				} else if(angle >= STEEL_WHEEL_ANGLE_MAX) {
+					coreData.setAngle(STEEL_WHEEL_ANGLE_MAX);
 				} else {
 					coreData.setAngle(angle);
 				}
 			}
 
 			// N/A for now
-			coreData.getAccelSet().setLongitudinal((float) (2001 * 0.01));
-			coreData.getAccelSet().setLateral((float) (2001 * 0.01));
-			coreData.getAccelSet().setVert((float) (-127 * 0.02 * 9.8));
-			coreData.getAccelSet().setYawRate(0);
+			coreData.getAccelSet().setLongitudinal(ACCELERATION_UNAVAILABLE);
+			coreData.getAccelSet().setLateral(ACCELERATION_UNAVAILABLE);
+			coreData.getAccelSet().setVert(VERTICAL_ACCELERATION_UNAVAILABLE);
+			coreData.getAccelSet().setYawRate(0);  //TODO: It is not defined well
 			if(acceleration_ready && getTransformClient != null) {
 				GetTransformRequest transform_request = getTransformClient.newMessage();
 				transform_request.setParentFrame(mapFrame);
