@@ -66,6 +66,18 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
 
     return limits;
   }
+
+  protected List<SpeedLimit> getSpeedLimits(List<SpeedLimit> speedLimits, double startDistance, double endDistance) {
+    // Get all the speed limits spanned by [startDistance, endDistance)
+    List<SpeedLimit> spanned = new ArrayList<>();
+    for (SpeedLimit limit : speedLimits) {
+      if (limit.location >= startDistance && limit.location < endDistance) {
+        spanned.add(limit);
+      }
+    }
+
+    return spanned;
+  }
   // END LOGIC BORROWED FROM CRUISING PLUGIN
 
   protected SpeedLimit getLimitAtDistance(double dist) {
@@ -78,8 +90,8 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
     return null;
   }
 
-	@Override
-	public void visit(IManeuver maneuver) {
+  @Override
+  public void visit(IManeuver maneuver) {
     if (!(maneuver instanceof LongitudinalManeuver)) {
       return;
     }
@@ -98,19 +110,30 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
     if (!(startSpeedLegal && endSpeedLegal)) {
       offendingManeuvers.add(maneuver);
     }
-	}
 
-	@Override
-	public TrajectoryValidationResult getResult() {
+    // Now check to see if any spanned limits are illegal, may sometimes be redundant with above
+    List<SpeedLimit> spanned = getSpeedLimits(speedLimits, maneuver.getStartDistance(), maneuver.getEndDistance());
+    boolean spannedLegal = true;
+    for (SpeedLimit limit : spanned) {
+      double distFactor = (maneuver.getEndDistance() - limit.location)/(maneuver.getEndDistance() - maneuver.getStartDistance());
+      double deltaV = maneuver.getTargetSpeed() - maneuver.getStartSpeed();
+      double interpolatedSpeed = maneuver.getStartSpeed() + (deltaV * distFactor);
+      spannedLegal = spannedLegal && interpolatedSpeed <= limit.speedLimit;
+    }
+  }
+
+  @Override
+  public TrajectoryValidationResult getResult() {
     if (offendingManeuvers.isEmpty()) {
       reset();
       return new TrajectoryValidationResult();
     } else {
-      TrajectoryValidationResult out = new TrajectoryValidationResult(new TrajectoryValidationError("Maneuvers exceed route defined Speed Limit", offendingManeuvers));
+      TrajectoryValidationResult out = new TrajectoryValidationResult(
+          new TrajectoryValidationError("Maneuvers exceed route defined Speed Limit", offendingManeuvers));
       reset();
       return out;
     }
-	}
+  }
 
   /**
    * Reset the state so the constraint can accept another Trajectory
@@ -119,5 +142,3 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
     offendingManeuvers = new ArrayList<>();
   }
 }
-
-
