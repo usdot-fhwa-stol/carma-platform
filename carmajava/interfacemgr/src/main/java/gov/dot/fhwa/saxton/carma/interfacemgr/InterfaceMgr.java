@@ -50,7 +50,7 @@ import java.util.List;
  * and provides all of the ROS communications interfaces.
  *
  * Command line test:
- * rosparam set /interface_mgr/driver_wait_time 10
+ * rosparam set /interface_mgr/driver_wait_time 20
  * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  */
 public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
