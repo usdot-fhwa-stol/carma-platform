@@ -39,6 +39,16 @@ public interface IAccStrategy {
   void setDesiredTimeGap(double timeGap);
 
   /**
+   * Set the maximum acceleration configured for the vehicle
+   */
+  void setMaxAccel(double accel);
+
+  /**
+   * Set the upper and lower speed limits for the vehicle
+   */
+  void setSpeedLimit(double lowerSpeedLimit, double upperSpeedLimit);
+
+  /**
    * Evaluate whether or not ACC would activate given the input conditions
    * 
    * @param distToFrontVehicle Distance, in meters, to the vehicle directly in front of the current vehicle.
@@ -59,11 +69,12 @@ public interface IAccStrategy {
    * @param currentSpeed The current vehicles speed, in meters per second,
    * @param frontVehicleSpeed The front vehicle's speed, in meters per second. Use NO_FRONT_VEHICLE_SPEED if there
    * is no such vehicle detected
+   * @param desiredSpeedCommand The desired speed of the current vehicle
    * 
    * @return The speed deemed necessary to acheieve and maintain the desired headway. If no change is required,
-   * currentSpeed will be returned
+   * desiredSpeedCommand will be returned
    */
-  double computeAccOverrideSpeed(double distToFrontVehicle, double currentSpeed, double frontVehicleSpeed);
+  double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed, double desiredSpeedCommand);
 
   /**
    * Compute the desired headway (in meters) at currentSpeed

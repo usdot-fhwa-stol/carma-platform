@@ -82,15 +82,7 @@ public class SlowDown extends LongitudinalManeuver {
 
 
     @Override
-    public boolean executeTimeStep() throws IllegalStateException {
-        boolean completed = false;
-
-        verifyLocation();
-
-        if (startTime_ == 0) {
-            startTime_ = System.currentTimeMillis();
-        }
-
+    public double generateSpeedCommand() throws IllegalStateException {
         //compute command based on linear interpolation on time
         //Note that commands will begin changing immediately, although the actual speed will not change much until
         // the response lag has passed. Thus, we will hit the target speed command sooner than we pass the end distance.
@@ -101,12 +93,6 @@ public class SlowDown extends LongitudinalManeuver {
             completed = true;
         }
         double cmd = startSpeed_ + factor*(endSpeed_ - startSpeed_);
-
-        //invoke the ACC override
-        cmd = accOverride(cmd);
-
-        //send the command to the vehicle
-        commands_.setCommand(cmd, workingAccel_);
-        return completed;
+        return cmd;
     }
 }
