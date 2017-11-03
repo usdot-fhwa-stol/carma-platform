@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -24,7 +26,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class FakeInterfaceMgr implements IInterfaceMgr {
-    private Log log = LogFactory.getLog(FakeInterfaceMgr.class);
+    private SaxtonLogger log = new SaxtonLogger(FakeInterfaceMgr.class.getSimpleName(), LogFactory.getLog(FakeInterfaceMgr.class));
 
     public void bindWithDriver(String driverName){
 

@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.negotiator;
 import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.MessageFactory;
@@ -47,7 +48,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   protected ConnectedNode connectedNode;
   protected boolean systemReady = false;
   protected NewPlan lastNewPlanMsg = null;
-  protected Log log;
+  protected SaxtonLogger log;
 
   // Topics
   // Publishers
@@ -75,7 +76,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
     this.connectedNode = connectedNode;
-    log =  connectedNode.getLog();
+    log = new SaxtonLogger(NegotiatorMgr.class.getSimpleName(), connectedNode.getLog());
     // Topics
     // Publishers
     mobAckOutPub = connectedNode.newPublisher("mobility_ack_outbound", cav_msgs.MobilityAck._TYPE);
@@ -90,7 +91,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     newPlanOutSub = connectedNode.newSubscriber("new_plan_outbound", cav_msgs.NewPlan._TYPE);
     newPlanOutSub.addMessageListener(new MessageListener<cav_msgs.NewPlan>() {
       @Override public void onNewMessage(cav_msgs.NewPlan message) {
-        log.info("Negotiator received new PlanMessage");
+        log.info("V2V", "Negotiator received new PlanMessage");
         lastNewPlanMsg = message;
       }//onNewMessage
     });//addMessageListener
@@ -98,42 +99,42 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     mobAckInSub = connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
     mobAckInSub.addMessageListener(new MessageListener<cav_msgs.MobilityAck>() {
       @Override public void onNewMessage(cav_msgs.MobilityAck message) {
-        log.info("Negotiator received new MobilityAck");
+        log.info("V2V", "Negotiator received new MobilityAck");
       }//onNewMessage
     });//addMessageListener
 
     mobGreetInSub = connectedNode.newSubscriber("mobility_greeting_inbound", cav_msgs.MobilityGreeting._TYPE);
     mobGreetInSub.addMessageListener(new MessageListener<cav_msgs.MobilityGreeting>() {
       @Override public void onNewMessage(cav_msgs.MobilityGreeting message) {
-        log.info("Negotiator received new MobilityGreeting");
+        log.info("V2V", "Negotiator received new MobilityGreeting");
       }//onNewMessage
     });//addMessageListener
 
     mobIntroInSub = connectedNode.newSubscriber("mobility_intro_inbound", cav_msgs.MobilityIntro._TYPE);
     mobIntroInSub.addMessageListener(new MessageListener<cav_msgs.MobilityIntro>() {
       @Override public void onNewMessage(cav_msgs.MobilityIntro message) {
-        log.info("Negotiator received new MobilityIntro");
+        log.info("V2V", "Negotiator received new MobilityIntro");
       }//onNewMessage
     });//addMessageListener
 
     mobNackInSub = connectedNode.newSubscriber("mobility_nack_inbound", cav_msgs.MobilityNack._TYPE);
     mobNackInSub.addMessageListener(new MessageListener<cav_msgs.MobilityNack>() {
       @Override public void onNewMessage(cav_msgs.MobilityNack message) {
-        log.info("Negotiator received new MobilityNack");
+        log.info("V2V", "Negotiator received new MobilityNack");
       }//onNewMessage
     });//addMessageListener
 
     mobPlanInSub = connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
     mobPlanInSub.addMessageListener(new MessageListener<cav_msgs.MobilityPlan>() {
       @Override public void onNewMessage(cav_msgs.MobilityPlan message) {
-        log.info("Negotiator received new MobilityPlan");
+        log.info("V2V", "Negotiator received new MobilityPlan");
       }//onNewMessage
     });//addMessageListener
 
     planStatusSub = connectedNode.newSubscriber("plan_progress", cav_msgs.PlanStatus._TYPE);
     planStatusSub.addMessageListener(new MessageListener<cav_msgs.PlanStatus>() {
       @Override public void onNewMessage(cav_msgs.PlanStatus message) {
-        log.info("Negotiator received new PlanProgress");
+        log.info("V2V", "Negotiator received new PlanProgress");
       }//onNewMessage
     });//addMessageListener
 
@@ -186,7 +187,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   	Add more procedures here as needed.
    */
   public void shutdown() {
-    log.info("Negotiator shutdown method called.");
+    log.info("SHUTDOWN", "Negotiator shutdown method called.");
     this.connectedNode.shutdown();
   }
 
@@ -207,25 +208,25 @@ public class NegotiatorMgr extends SaxtonBaseNode{
         break;
       case cav_msgs.SystemAlert.FATAL:
         //TODO:  Handle this message type
-        log.info("Negotiator received system fatal on system_alert and will be shutting down");
+        log.info("SHUTDOWN", "Negotiator received system fatal on system_alert and will be shutting down");
         shutdown();
         break;
       case cav_msgs.SystemAlert.NOT_READY:
         //TODO:  Handle this message type
-        log.info("Negotiator received system not ready on system_alert.");
+        log.info("STARTUP", "Negotiator received system not ready on system_alert.");
         break;
       case cav_msgs.SystemAlert.DRIVERS_READY:
         //TODO:  Handle this message type
         systemReady = true;
-        log.info("Negotiator received drivers ready on system_alert.");
+        log.info("STARTUP", "Negotiator received drivers ready on system_alert.");
         break;
       case cav_msgs.SystemAlert.SHUTDOWN:
-        log.info("Negotiator received a shutdown message");
+        log.info("SHUTDOWN", "Negotiator received a shutdown message");
         shutdown();
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
-        log.error("Negotiator received a system alert message with unknown type: " + msg.getType());
+        log.error("ALERT", "Negotiator received a system alert message with unknown type: " + msg.getType());
     }
   }
 }//AbstractNodeMain
