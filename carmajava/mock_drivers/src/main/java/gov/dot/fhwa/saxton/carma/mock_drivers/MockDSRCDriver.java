@@ -110,17 +110,17 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // Raw byte data has the form "0a 1f 23"
       // String rawByteString = elements[RAW_BYTES_IDX];
       // Set to static data for test
-      String rawByteString = "00 14 25 09 0B 3F A5 F3 40 D4 F5 A4 E9 00 9E A6 CB E1 90 00 7F FF 8C CC AF FF F0 80 7E FA 1F A1 00 7F FF 08 00 4B 09 B0";
+      String rawByteString = "00 14 25 09 0b 3f a5 f3 40 d4 f5 a4 e9 0 9e a6 cb e1 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0";
       if(System.currentTimeMillis() % 4 == 1) {
-    	  rawByteString = "00 14 25 15 C6 0A B2 2C B8 32 35 A4 E9 00 9E A6 CB E1 90 00 7F FF 8C CC AF FF F0 80 7E FA 1F A1 00 7F FF 08 00 4B 09 B0";
+    	  rawByteString = "00 14 25 15 c6 0a b2 2c b8 32 35 a4 e9 00 9e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0";
       } else if(System.currentTimeMillis() % 4 == 2) {
-    	  rawByteString = "00 14 25 00 16 00 60 EB 2B 6A F5 A4 E9 00 9E A6 CB E1 90 00 7F FF 8C CC AF FF F0 80 7E FA 1F A1 00 7F FF 08 00 4B 09 B0";
+    	  rawByteString = "00 14 25 00 16 00 60 eb 2b 6a f5 a4 e9 00 9e a6 bd 3b 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0";
       } else if(System.currentTimeMillis() % 4 == 3) {
-    	  rawByteString = "00 14 25 02 E9 1E E0 07 07 63 35 A4 E9 00 9E A6 CB E1 90 00 7F FF 8C CC AF FF F0 80 7E FA 1F A1 00 7F FF 08 00 4B 09 B0";
+    	  rawByteString = "00 14 25 02 e9 1e e0 07 07 63 35 a4 e9 00 9e a6 b8 59 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0";
       }
       
       boolean publish_control = false;
-      if(rawByteString.equals("00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8")) {
+      if(rawByteString.equals("00 14 25 09 0b 3f a5 f3 40 d4 f5 a4 e9 0 9e a6 cb e1 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0")) {
     	  publish_control = true;
       }
 
@@ -132,6 +132,8 @@ public class MockDSRCDriver extends AbstractMockDriver {
     	  rawByteString = rawByteString.concat("0");
       }
       
+      long pause_length = 4000; //Set one bsm to pause for 4 seconds and resume for 4 seconds...
+      
       // Convert the string to a byte array
       byte[] rawBytes = DatatypeConverter.parseHexBinary(rawByteString);
       
@@ -139,7 +141,7 @@ public class MockDSRCDriver extends AbstractMockDriver {
       recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
       
       // Publish Data
-      if(!publish_control || (publish_control && System.currentTimeMillis() % 8000 < 4000)) {
+      if(!publish_control || (publish_control && ((System.currentTimeMillis() % (pause_length * 2)) < pause_length))) {
     	  recvPub.publish(recvMsg);
       }
     }
