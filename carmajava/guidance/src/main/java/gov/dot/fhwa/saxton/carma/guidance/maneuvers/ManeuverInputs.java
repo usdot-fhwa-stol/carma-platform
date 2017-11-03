@@ -105,4 +105,16 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     public double getResponseLag() {
         return responseLag_;
     }
+
+
+	@Override
+	public double getDistanceToFrontVehicle() {
+		return IAccStrategy.NO_FRONT_VEHICLE_DISTANCE;
+	}
+
+
+	@Override
+	public double getFrontVehicleSpeed() {
+		return IAccStrategy.NO_FRONT_VEHICLE_SPEED;
+	}
 }
