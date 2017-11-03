@@ -52,6 +52,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private boolean driverConnected = false;
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
+    public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
 
     GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
         super(state, iPubSubService, node);
@@ -99,6 +100,15 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
      */
     @Override
     public void setCommand(double speed, double accel) {
+        if (speed > MAX_SPEED_CMD_M_S) {
+            log.warn("GuidanceCommands attempted to set speed command ("
+            + speed
+            + " m/s) higher than maximum limit of " 
+            + MAX_SPEED_CMD_M_S 
+            + " m/s. Capping to speed limit.");
+            speed = MAX_SPEED_CMD_M_S;
+        }
+
         speedCommand.set(speed);
         maxAccel.set(accel);
         log.info("CONTROLS", "Speed command set to " + speed + "m/s and " + accel + "m/s/s");

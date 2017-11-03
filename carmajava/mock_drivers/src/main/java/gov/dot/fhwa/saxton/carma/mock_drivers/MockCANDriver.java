@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
+import cav_msgs.TransmissionState;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.namespace.GraphName;
@@ -46,8 +47,9 @@ public class MockCANDriver extends AbstractMockDriver {
   final Publisher<std_msgs.Float64> steeringPub;
   final Publisher<std_msgs.Float64> throttlePub;
   final Publisher<cav_msgs.TurnSignal> turnSignalPub;
+  final Publisher<cav_msgs.TransmissionState> transmissionPub;
 
-  final short EXPECTED_DATA_COL_COUNT = 13;
+  final short EXPECTED_DATA_COL_COUNT = 14;
 
   private final short SAMPLE_ID_IDX = 0;
   private final short ACC_IDX = 1;
@@ -62,6 +64,7 @@ public class MockCANDriver extends AbstractMockDriver {
   private final short STEERING_IDX = 10;
   private final short THROTTLE_IDX = 11;
   private final short TURN_SIGNAL_STATE_IDX = 12;
+  private final short TRANSMISSION_STATE_IDX = 13;
 
   public MockCANDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -79,6 +82,7 @@ public class MockCANDriver extends AbstractMockDriver {
     steeringPub = connectedNode.newPublisher("~/can/steering_wheel_angle", std_msgs.Float64._TYPE);
     throttlePub = connectedNode.newPublisher("~/can/throttle_position", std_msgs.Float64._TYPE);
     turnSignalPub = connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
+    transmissionPub = connectedNode.newPublisher("~/can/transmission_state", cav_msgs.TransmissionState._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) {
@@ -97,6 +101,7 @@ public class MockCANDriver extends AbstractMockDriver {
       std_msgs.Float64 steering = steeringPub.newMessage();
       std_msgs.Float64 throttle = throttlePub.newMessage();
       cav_msgs.TurnSignal turnSignalState = turnSignalPub.newMessage();
+      cav_msgs.TransmissionState transmissionState = transmissionPub.newMessage();
 
       // Set Data
       acc.setData(Boolean.parseBoolean(elements[ACC_IDX]));
@@ -111,6 +116,7 @@ public class MockCANDriver extends AbstractMockDriver {
       steering.setData(Float.parseFloat(elements[STEERING_IDX]));
       throttle.setData(Float.parseFloat(elements[THROTTLE_IDX]));
       turnSignalState.setState(Byte.parseByte(elements[TURN_SIGNAL_STATE_IDX]));
+      transmissionState.setTransmissionState(Byte.parseByte(elements[TRANSMISSION_STATE_IDX]));
 
       // Publish Data
       accPub.publish(acc);
@@ -125,6 +131,7 @@ public class MockCANDriver extends AbstractMockDriver {
       steeringPub.publish(steering);
       throttlePub.publish(throttle);
       turnSignalPub.publish(turnSignalState);
+      transmissionPub.publish(transmissionState);
     }
   }
 
@@ -153,6 +160,7 @@ public class MockCANDriver extends AbstractMockDriver {
       "can/speed",
       "can/steering_wheel_angle",
       "can/throttle_position",
-      "can/turn_signal_state"));
+      "can/turn_signal_state",
+      "can/transmission_state"));
   }
 }

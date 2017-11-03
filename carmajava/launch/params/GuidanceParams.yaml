@@ -41,6 +41,10 @@ planning_window_shrink_factor: 0.5
 trajectory_constraints:
   - gov.dot.fhwa.saxton.carma.guidance.trajectory.OverlappingManeuversConstraint
 
+# Double: The maximum speed allowable in a trajectory
+# Units: m/s
+trajectory_speed_limit: 30.00
+
 # The set of IPlugin instances which will be ignored based on class name
 ignored_plugins: []
 

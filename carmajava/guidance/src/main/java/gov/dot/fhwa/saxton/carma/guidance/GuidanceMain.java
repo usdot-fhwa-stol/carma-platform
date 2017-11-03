@@ -20,6 +20,9 @@ import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
+import cav_srvs.GetSystemVersion;
+import cav_srvs.GetSystemVersionRequest;
+import cav_srvs.GetSystemVersionResponse;
 import cav_srvs.SetGuidanceEngaged;
 import cav_srvs.SetGuidanceEngagedRequest;
 import cav_srvs.SetGuidanceEngagedResponse;
@@ -29,6 +32,8 @@ import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
+
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.exception.ServiceException;
@@ -57,6 +62,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   // Member Variables
   protected ExecutorService executor;
   protected final int numThreads = 6;
+  protected ComponentVersion version = new ComponentVersion();
 
   protected GuidanceExceptionHandler guidanceExceptionHandler;
   protected IPubSubService pubSubService;
@@ -67,6 +73,33 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected final AtomicBoolean engaged = new AtomicBoolean(false);
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
+  
+  
+  
+  /**
+   * =============================================================================================================================
+   * This is the one and only place where system level version ID information is stored.  The rest of the system can get the info
+   * from here by using the get_system_version ROS service call.  Every release that external stakeholders will see (preferably
+   * every build) must have a unique ID (combination of major/intermediate/minor/build).
+   * =============================================================================================================================
+   */
+  public GuidanceMain() {
+	  version.setName("Carma Platform");
+	  version.setMajorRevision(2);
+	  //if any one of the below items is not explicitly set it will not be displayed in the revision string.
+	  version.setIntermediateRevision(0);
+	  version.setMinorRevision(0);
+
+      //if we can implement automated version assignments, uncomment this line and have the build script assign this value
+	  //version.setBuild(0);
+
+      //may want to add an explanatory tag to the end of the ID string to make test builds or one-offs more obvious
+      //For now, this should always be DEV for an in-work release, and an empty string for a formal release to the customer
+	  version.setSuffix("DEV");
+  }
+  
+  
+  
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -120,6 +153,9 @@ public class GuidanceMain extends SaxtonBaseNode {
     final ILogger log = LoggerManager.getLogger();
 
     final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
+    log.info("//////////");
+    log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
+    log.info("//////////");
 
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state);
     this.exceptionHandler = guidanceExceptionHandler;
@@ -163,8 +199,6 @@ public class GuidanceMain extends SaxtonBaseNode {
     } //MessageListener
     );//addMessageListener
 
-
-
     guidanceEngageService = connectedNode.newServiceServer("set_guidance_engaged", SetGuidanceEngaged._TYPE,
         new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
           @Override
@@ -176,6 +210,16 @@ public class GuidanceMain extends SaxtonBaseNode {
             setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
           }
         });
+    
+    ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer = 
+    		connectedNode.newServiceServer("get_system_version",  GetSystemVersion._TYPE, 
+    		new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
+    			@Override
+    			public void build(GetSystemVersionRequest request, GetSystemVersionResponse response) throws ServiceException {
+    				response.setSystemName(version.componentName());
+    				response.setRevision(version.revisionString());
+    			}
+    		});
 
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.

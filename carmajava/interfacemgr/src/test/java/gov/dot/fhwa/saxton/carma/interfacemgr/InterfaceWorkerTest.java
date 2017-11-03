@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
@@ -31,11 +32,11 @@ public class InterfaceWorkerTest {
 
     IInterfaceMgr   mgr_;
     InterfaceWorker w_;
-    Log             log_;
+    SaxtonLogger    log_;
 
     @Before
     public void setUp() throws Exception {
-        log_ = LogFactory.getLog(InterfaceWorkerTest.class);
+        log_ = new SaxtonLogger(InterfaceWorkerTest.class.getSimpleName(), LogFactory.getLog(InterfaceWorkerTest.class));
         mgr_ = new FakeInterfaceMgr();
         w_ = new InterfaceWorker(mgr_, log_);
     }

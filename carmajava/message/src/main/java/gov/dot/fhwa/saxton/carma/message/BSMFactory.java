@@ -85,8 +85,10 @@ public class BSMFactory {
 	 * @param binary_msg The empty ByteArray object
 	 * @param log Logging any necessary messages
 	 * @param node ConnectedNode helps to set message header
+	 * @return -1 means encode failed; 0 means encode is successful
 	 */
-	public static void encode(BSM plain_msg, ByteArray binary_msg, SaxtonLogger log, ConnectedNode node) {
+	public static int encode(BSM plain_msg, ByteArray binary_msg, SaxtonLogger log, ConnectedNode node) {
+		log.info("BSM", "Start to encode bsm message.");
 		byte[] brakeStatus = new byte[] {
 				plain_msg.getCoreData().getBrakes().getWheelBrakes().getBrakeAppliedStatus(),
 				plain_msg.getCoreData().getBrakes().getTraction().getTractionControlStatus(),
@@ -95,7 +97,6 @@ public class BSMFactory {
 				plain_msg.getCoreData().getBrakes().getBrakeBoost().getBrakeBoostApplied(),
 				plain_msg.getCoreData().getBrakes().getAuxBrakes().getAuxiliaryBrakeStatus()
 				};
-		log.info("BSM", "Start to encode bsm message.");
 		byte[] temp_ID = new byte[4];
 		for(int i = 0; i < plain_msg.getCoreData().getId().capacity(); i++) {
 			temp_ID[i] = plain_msg.getCoreData().getId().getByte(i);
@@ -104,13 +105,17 @@ public class BSMFactory {
 				plain_msg.getCoreData(), temp_ID,
 				plain_msg.getCoreData().getAccuracy(), plain_msg.getCoreData().getTransmission(),
 				plain_msg.getCoreData().getAccelSet(), brakeStatus, plain_msg.getCoreData().getSize());
-		binary_msg.setMessageType("BSM");
+		if(encode_msg == null) {
+			log.warn("BSM", "Cannot encode the outgoing binary BSM message.");
+			return -1;
+		}
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
 		binary_msg.setContent(buffer);
 		binary_msg.setMessageType("BSM");
 		binary_msg.getHeader().setFrameId("MessageConsumer");
 		binary_msg.getHeader().getStamp().secs = node.getCurrentTime().secs;
 		binary_msg.getHeader().getStamp().nsecs = node.getCurrentTime().nsecs;
+		return 0;
 	}
 
 	/**
@@ -122,9 +127,10 @@ public class BSMFactory {
 	 * @param msg_object The empty BSM object
 	 * @param log Logging any necessary messages
 	 * @param node ConnectedNode helps to set message header
-	 * @return
+	 * @return -1 means decode failed; 0 means decode is successful
 	 */
 	public static int decode(ByteArray encoded_msg, BSM msg_object, SaxtonLogger log, ConnectedNode node) {
+		log.info("BSM", "Start to decode bsm message.");
 		ChannelBuffer channelBuffer = encoded_msg.getContent();
 		byte[] encoded_bsm = new byte[channelBuffer.capacity()];
 		for(int i = 0; i < channelBuffer.capacity(); i++) {

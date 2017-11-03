@@ -30,7 +30,7 @@ public class TrajectoryValidator {
   /**
    * Register a new validation constraint with the TrajectoryValidator
    */
-  public void addValidationConstraint(TrajectoryValidationConstraint constraint) {
+  public synchronized void addValidationConstraint(TrajectoryValidationConstraint constraint) {
     constraints.add(constraint);
   }
 
@@ -41,7 +41,7 @@ public class TrajectoryValidator {
    * The result is the logical AND of the results of all the registered
    * TrajectoryValidationConstraints associated with this TrajectoryValidator.
    */
-  public boolean validate(Trajectory traj) {
+  public synchronized boolean validate(Trajectory traj) {
     boolean valid = true;
     for (IManeuver m : traj.getManeuvers()) {
       for (TrajectoryValidationConstraint c : constraints) {

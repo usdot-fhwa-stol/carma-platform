@@ -210,17 +210,15 @@ public class MessageConsumer extends SaxtonBaseNode {
 				@Override
 				public void onNewMessage(BSM bsm) {
 					try {
-						if(outboundPub != null && driversReady) {
-							log.info("BSM", "Received BSM. Calling factory to encode data...");
-							ByteArray byteArray = outboundPub.newMessage();
-							BSMFactory.encode(bsm, byteArray, log, connectedNode_);
-							log.info("BSM", "Finished encoding BSM and is going to publish...");
+						log.info("BSM", "BSM Received. Calling factory to encode data...");
+						ByteArray byteArray = outboundPub.newMessage();
+						int result = BSMFactory.encode(bsm, byteArray, log, connectedNode_);
+						if(result == -1) {
+							log.warn("BSM", "Outgoing BSM cannot be encoded. The message seq is: " + bsm.getHeader().getSeq());
+						} else {
+							log.info("BSM", "Outgoing BSM is encoded and publishing...");
 							outboundPub.publish(byteArray);
 						}
-					} catch (NullPointerException npe) {
-						log.warn("BSM", "BSM message is not ready");
-					} catch (IllegalArgumentException iae) {
-						log.warn("BSM", "Invalid BSM is not published");
 					} catch (Exception e) {
 						handleException(e);
 					}
@@ -237,8 +235,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 						int result = BSMFactory.decode(msg, decodedBSM, log, connectedNode_);
 						if(result == -1) {
 							log.warn("BSM", "Incoming BSM cannot be decoded.");
-						}
-						else {
+						} else {
 							log.info("BSM", "Incoming BSM is decoded and publishing...");
 							bsmPub.publish(decodedBSM);
 						}

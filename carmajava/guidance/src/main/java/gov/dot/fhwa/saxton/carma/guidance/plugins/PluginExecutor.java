@@ -51,7 +51,7 @@ public class PluginExecutor {
      */
     public void submitPlugin(IPlugin plugin) {
         PluginLifecycleHandler handler = new PluginLifecycleHandler(plugin);
-        lifecycleHandlers.put(plugin.getName() + plugin.getVersionId(), handler);
+        lifecycleHandlers.put(plugin.getVersionInfo().componentName() + plugin.getVersionInfo().revisionString(), handler);
     }
 
     /**

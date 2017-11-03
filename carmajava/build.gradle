@@ -69,6 +69,12 @@ subprojects {
         configFile = rootProject.file("config/checkstyle.xml")
     }
 
+    repositories {
+        flatDir {
+            dirs "../libs"
+        }
+    }
+
     targetCompatibility = 1.8
     sourceCompatibility = 1.8
 

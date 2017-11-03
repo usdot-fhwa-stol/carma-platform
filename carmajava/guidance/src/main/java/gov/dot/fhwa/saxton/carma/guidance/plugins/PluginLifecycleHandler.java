@@ -46,7 +46,7 @@ public class PluginLifecycleHandler {
      * Private helper method for actually performing plugin initialization
      */
     private void doInitialize() {
-        log.info("PLUGIN", "Initializing " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("PLUGIN", "Initializing " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
         state.set(PluginState.INITIALIZING);
         try {
             tasks.put(new InitializePluginTask(plugin, new TaskCompletionCallback() {
@@ -84,7 +84,7 @@ public class PluginLifecycleHandler {
      * Private helper method for actually performing the resume operation
      */
     private void doResume() {
-        log.info("PLUGIN", "Resuming " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("PLUGIN", "Resuming " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
         state.set(PluginState.RESUMING);
         try {
             tasks.put(new ResumePluginTask(plugin, new TaskCompletionCallback() {
@@ -97,7 +97,7 @@ public class PluginLifecycleHandler {
         }
 
         // After resuming we always return to looping
-        log.info("PLUGIN", "Looping " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("PLUGIN", "Looping " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
         try {
             tasks.put(new LoopPluginTask(plugin, new TaskCompletionCallback() {
                 @Override public void onComplete() {
@@ -153,7 +153,7 @@ public class PluginLifecycleHandler {
      * Private helper method for actually performing the suspend operation
      */
     private void doSuspend() {
-        log.info("PLUGIN", "Suspending " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("PLUGIN", "Suspending " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
         t.interrupt();
         tasks.clear();
         state.set(PluginState.SUSPENDING);
@@ -213,7 +213,7 @@ public class PluginLifecycleHandler {
      * the switch/case statement below.
      */
     private void doTerminate() {
-        log.info("PLUGIN", "Terminating " + plugin.getName() + ":" + plugin.getVersionId());
+        log.info("PLUGIN", "Terminating " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
         t.interrupt();
         tasks.clear();
         state.set(PluginState.DESTROYING);

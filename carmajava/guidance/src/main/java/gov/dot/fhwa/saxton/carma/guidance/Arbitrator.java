@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import cav_msgs.Route;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
@@ -26,6 +27,8 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.GlobalSpeedLimitConstraint;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.LocalSpeedLimitConstraint;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryValidationConstraint;
@@ -66,6 +69,8 @@ public class Arbitrator extends GuidanceComponent {
   protected TrajectoryExecutor trajectoryExecutor;
   protected String lateralPluginName = "NoOp Plugin";
   protected String longitudinalPluginName = "Cruising Plugin";
+  protected ISubscriber<Route> routeSub;
+  protected AtomicBoolean routeRecvd = new AtomicBoolean(false);
   protected static final long SLEEP_DURATION_MILLIS = 100;
 
   Arbitrator(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
@@ -123,6 +128,19 @@ public class Arbitrator extends GuidanceComponent {
     numAcceptableFailures = ptree.getInteger("~trajectory_planning_max_attempts", 3);
     longitudinalPluginName = ptree.getString("~arbitrator_longitudinal_plugin");
     lateralPluginName = ptree.getString("~arbitrator_lateral_plugin");
+    double configuredSpeedLimit = ptree.getDouble("~trajectory_speed_limit", GuidanceCommands.MAX_SPEED_CMD_M_S);
+
+    routeSub = pubSubService.getSubscriberForTopic("route", Route._TYPE);
+    routeSub.registerOnMessageCallback(new OnMessageCallback<Route>() {
+      @Override
+      public void onMessage(Route msg) {
+        if (!routeRecvd.get()) {
+          log.info("Arbitrator now using LocalSpeedLimit constraint for route " + msg.getRouteName());
+          trajectoryValidator.addValidationConstraint(new LocalSpeedLimitConstraint(msg));
+          routeRecvd.set(true);
+        }
+      }
+    });
 
     // Instantiate the configured constraints and register them with the TrajectoryValidator
     List<String> constraintNames = (List<String>) ptree.getList("~trajectory_constraints");
@@ -140,6 +158,9 @@ public class Arbitrator extends GuidanceComponent {
       trajectoryValidator.addValidationConstraint(tvc);
       log.info("STARTUP", "Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
     }
+
+    constraints.add(new GlobalSpeedLimitConstraint(configuredSpeedLimit));
+    log.info("Arbitrator using GlobalSpeedLimitConstraint with limit: " + configuredSpeedLimit + " m/s");
 
     twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
     twistSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
@@ -165,11 +186,11 @@ public class Arbitrator extends GuidanceComponent {
   public void onGuidanceEnable() {
     // For now, find the configured lateral and longitudinal plugins
     for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
-      if (plugin.getName().equals(lateralPluginName)) {
+      if (plugin.getVersionInfo().componentName().equals(lateralPluginName)) {
         lateralPlugin = plugin;
       }
 
-      if (plugin.getName().equals(longitudinalPluginName)) {
+      if (plugin.getVersionInfo().componentName().equals(longitudinalPluginName)) {
         longitudinalPlugin = plugin;
       }
     }
