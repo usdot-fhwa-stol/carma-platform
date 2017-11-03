@@ -35,24 +35,24 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     }
 
     @Override public void onInitialize() {
-        log.info("Plugin " + getName() + ":" + getVersionId() + "initializing...");
+        log.info("Plugin " + version.componentName() + ":" + version.revisionString() + "initializing...");
         publisher = pubSubService.getPublisherForTopic(topicPrefix, SystemAlert._TYPE);
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
-        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " initialized");
+        msg.setDescription("Plugin " + version.componentName() + ":" + version.revisionString() + " initialized");
         publisher.publish(msg);
     }
 
     @Override public void onResume() {
-        log.info("Plugin " + getName() + ":" + getVersionId() + " resuming...");
+        log.info("Plugin " + version.componentName() + ":" + version.revisionString() + " resuming...");
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
-        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " resumed");
+        msg.setDescription("Plugin " + version.componentName() + ":" + version.revisionString() + " resumed");
         publisher.publish(msg);
     }
 
     @Override public void loop() throws InterruptedException {
-        log.info("Plugin " + getName() + ":" + getVersionId() + " iterating...");
+        log.info("Plugin " + version.componentName() + ":" + version.revisionString() + " iterating...");
 
         if (getActivation()) {
             computeAvailability();
@@ -60,7 +60,7 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
             SystemAlert msg = publisher.newMessage();
             msg.setType(SystemAlert.CAUTION);
             msg.setDescription(
-                "Plugin " + getName() + ":" + getVersionId() + " looping. Avail=" + getAvailability());
+                "Plugin " + version.componentName() + ":" + version.revisionString() + " looping. Avail=" + getAvailability());
             publisher.publish(msg);
         }
 
@@ -68,20 +68,20 @@ public abstract class AbstractMockPlugin extends AbstractPlugin {
     }
 
     @Override public void onSuspend() {
-        log.info("Plugin " + getName() + ":" + getVersionId() + " suspending...");
+        log.info("Plugin " + version.componentName() + ":" + version.revisionString() + " suspending...");
 
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
-        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " suspended");
+        msg.setDescription("Plugin " + version.componentName() + ":" + version.revisionString() + " suspended");
         publisher.publish(msg);
     }
 
     @Override public void onTerminate() {
-        log.info("Plugin " + getName() + ":" + getVersionId() + " terminating...");
+        log.info("Plugin " + version.componentName() + ":" + version.revisionString() + " terminating...");
 
         SystemAlert msg = publisher.newMessage();
         msg.setType(SystemAlert.CAUTION);
-        msg.setDescription("Plugin " + getName() + ":" + getVersionId() + " terminated");
+        msg.setDescription("Plugin " + version.componentName() + ":" + version.revisionString() + " terminated");
         publisher.publish(msg);
     }
 

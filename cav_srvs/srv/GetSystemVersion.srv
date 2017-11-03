@@ -1,0 +1,10 @@
+# GetSystemVersion.srv
+
+#request - empty
+
+---
+
+#response
+
+string system_name
+string revision
