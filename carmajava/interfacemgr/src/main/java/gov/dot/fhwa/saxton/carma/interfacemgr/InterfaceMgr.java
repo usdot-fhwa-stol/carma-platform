@@ -22,9 +22,9 @@ import cav_msgs.SystemAlert;
 import cav_srvs.GetDriverApiResponse;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
-import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
-import org.apache.commons.logging.Log;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.exception.RemoteException;
 import org.ros.message.MessageListener;
@@ -35,9 +35,7 @@ import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.service.ServiceServer;
-import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
-import std_msgs.Bool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +54,7 @@ import java.util.List;
 public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
     protected InterfaceWorker worker_;
-    protected Log log_;
+    protected SaxtonLogger log_;
     protected ConnectedNode connectedNode_;
     protected CancellableLoop mainLoop_;
     protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
@@ -69,8 +67,8 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     @Override
     public void onSaxtonStart(final ConnectedNode connectedNode) {
         connectedNode_ = connectedNode;
-        log_ = connectedNode.getLog();
-        log_.info("InterfaceMgr starting up.");
+        log_ = new SaxtonLogger(InterfaceMgr.class.getSimpleName(), connectedNode.getLog());
+        log_.info("STARTUP", "InterfaceMgr starting up.");
 
         worker_ = new InterfaceWorker(this, log_); //must exist before first message listener
 
@@ -79,7 +77,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             ParameterTree param = connectedNode.getParameterTree();
             int waitTime = param.getInteger("~/driver_wait_time"); //seconds
             worker_.setWaitTime(waitTime);
-            log_.debug("InterfaceMgr.onStart read waitTime = " + waitTime);
+            log_.debug("STARTUP", "InterfaceMgr.onStart read waitTime = " + waitTime);
         } catch (Exception e) {
             //do nothing - the worker will use a default value
         }
@@ -117,7 +115,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	                info.setPosition(msg.getPosition());
 	                info.setComms(msg.getComms());
 	                info.setController(msg.getController());
-	                log_.debug("InterfaceMgr.driverDiscoveryListener received new status: " + info.getName() + ", "
+	                log_.debug("DRIVER", "InterfaceMgr.driverDiscoveryListener received new status: " + info.getName() + ", "
 	                        + info.getState().toString());
 	
 	                //add the new driver info to our database
@@ -146,7 +144,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	        			}else {
 	        				alertType = "SHUTDOWN - ";
 	        			}
-	        			log_.warn("InterfaceMgr SHUTTING DOWN after receipt of alert: " + alertType + msg.getDescription());
+	        			log_.warn("SHUTDOWN", "InterfaceMgr SHUTTING DOWN after receipt of alert: " + alertType + msg.getDescription());
 	        			connectedNode.shutdown();
 	        		}
             	}catch (Exception e) {
@@ -177,7 +175,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	        				
 	        				//if robotic control is no longer active then warn and alert all nodes to shut down
 	        				if (!msg.getRobotActive()) {
-	        					log_.warn("InterfaceMgr.robotListener senses robot is no longer active at the hardware level.");
+	        					log_.warn("SHUTDOWN", "InterfaceMgr.robotListener senses robot is no longer active at the hardware level.");
 	        					publishSystemAlert(AlertSeverity.FATAL, "Robotic control has been disengaged.", null);
 	        					connectedNode.shutdown();
 	        				}
@@ -202,9 +200,10 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	        });
 
         }else { //we didn't find just one topic, so don't know what to do
-        	log_.warn("InterfaceMgr search for " + capabilities.get(0) + " topic produced " + topics.size() + " results! CANNOT SENSE DISENGAGEMENT.");
+        	log_.warn("DRIVER", "InterfaceMgr search for " + capabilities.get(0) + " topic produced " + topics.size() +
+                        " results! CANNOT SENSE DISENGAGEMENT.");
         	for (String s : topics) {
-        		log_.info("    Topic found: " + s);
+        		log_.info("DRIVER", "    Topic found: " + s);
         	}
         	publishSystemAlert(AlertSeverity.CAUTION, "InterfaceMgr unable to sense robotic capability shutdown.", null);
         }
@@ -230,7 +229,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
                     //log it and publish the notification
                     publishSystemAlert(AlertSeverity.DRIVERS_READY, "SYSTEM IS NOW OPERATIONAL", null);
-                    log_.info("///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
+                    log_.info("STARTUP", "///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
 
                     //stop the loop
                     mainLoop_.cancel();
@@ -254,12 +253,12 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                                     cav_srvs.GetDriversWithCapabilitiesResponse response) {
 
                             	try {
-	                                log_.debug("InterfaceMgr.driverCapSvr: received request with "
+	                                log_.debug("DRIVER", "InterfaceMgr.driverCapSvr: received request with "
 	                                        + request.getCapabilities().size() + " capabilities listed.");
 	
 	                                //figure out which drivers match the request
 	                                List<String> res = worker_.getDrivers(request.getCapabilities());
-	                                log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size()
+	                                log_.debug("DRIVER", "InterfaceMgr.driverCapSvr: returning a list of " + res.size()
 	                                        + " matching drivers.");
 	
 	                                //formulate the service response
@@ -283,12 +282,12 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 cav_srvs.Bind._TYPE, connectedNode_, 5000);
 
         if (serviceClient == null) {
-            log_.warn("InterfaceMgr could not find service \"" + serviceName + "\"");
+            log_.warn("DRIVER", "InterfaceMgr could not find service \"" + serviceName + "\"");
         }
 
         //wait for the bond to be formed, and log an error if it is not
         //TODO: wait for the bindcpp JNI wrapper in order to implement this
-        log_.info("InterfaceMgr would now be bound to " + driverName + " but this capability is not yet implemented");
+        log_.info("DRIVER", "InterfaceMgr would now be bound to " + driverName + " but this capability is not yet implemented");
     }
 
     /**
@@ -317,7 +316,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 serviceName, cav_srvs.GetDriverApi._TYPE, connectedNode_, 5000);
 
         if (serviceClient == null) {
-            log_.warn("InterfaceMgr could not find service \"" + serviceName + "\"");
+            log_.warn("DRIVER", "InterfaceMgr could not find service \"" + serviceName + "\"");
         } else {
 
             cav_srvs.GetDriverApiRequest req = serviceClient.newMessage();
@@ -332,11 +331,11 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
                             @Override
                             public void onFailure(RemoteException e) {
-                                log_.warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+                                log_.warn("DRIVER", "InterfaceMgr.getDriverApi call failed for " + serviceName);
                             }
                         });
             } catch (InterruptedException e) {
-                log_.warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+                log_.warn("DRIVER", "InterfaceMgr.getDriverApi call failed for " + serviceName);
             }
         }
 
