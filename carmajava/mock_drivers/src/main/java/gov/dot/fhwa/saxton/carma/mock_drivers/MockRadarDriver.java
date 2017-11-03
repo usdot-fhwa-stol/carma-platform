@@ -37,12 +37,11 @@ public class MockRadarDriver extends AbstractMockDriver {
 
   // Topics
   // Published
-  final Publisher<cav_msgs.ExternalObjectList> objectPub;
-
-  // Published	Parameter	~/aoi_angle
-  // Published	Parameter	~/device_port
-  // Published	Parameter	~/min_width
-  // Published	Parameter	~/timeout
+  Publisher<cav_msgs.ExternalObjectList> flrrObjectPub; // Front long range radar
+  Publisher<cav_msgs.ExternalObjectList> lfsrrObjectPub; // Left front short range radar
+  Publisher<cav_msgs.ExternalObjectList> rsrrObjectPub; // Rear short range radar
+  Publisher<cav_msgs.ExternalObjectList> rfsrrObjectPub; // Right front short range radar
+  Publisher<cav_msgs.ExternalObjectList> visionObjectPub; // Camera
 
   // CONSTANTS
   private final short COVARINCE_ELEMENT_COUNT = 36;
@@ -84,7 +83,11 @@ public class MockRadarDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    objectPub = connectedNode.newPublisher("~/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    flrrObjectPub = connectedNode.newPublisher("~/f_lrr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    lfsrrObjectPub = connectedNode.newPublisher("~/lf_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    rsrrObjectPub = connectedNode.newPublisher("~/r_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    rfsrrObjectPub = connectedNode.newPublisher("~/rf_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    visionObjectPub = connectedNode.newPublisher("~/vision/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) {
@@ -190,11 +193,16 @@ public class MockRadarDriver extends AbstractMockDriver {
     }
 
     // Make message
-    cav_msgs.ExternalObjectList objectListMsg = objectPub.newMessage();
+    cav_msgs.ExternalObjectList objectListMsg = flrrObjectPub.newMessage();
     objectListMsg.setObjects(objects);
 
     // Publish data
-    objectPub.publish(objectListMsg);
+    // Only publish actual data on one topic the rest will be empty lists
+    flrrObjectPub.publish(objectListMsg);
+    lfsrrObjectPub.publish(lfsrrObjectPub.newMessage());
+    rsrrObjectPub.publish(rsrrObjectPub.newMessage());
+    rfsrrObjectPub.publish(rfsrrObjectPub.newMessage());
+    visionObjectPub.publish(visionObjectPub.newMessage());
   }
 
   @Override protected short getExpectedColCount() {
@@ -210,7 +218,12 @@ public class MockRadarDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI(){
-    return new ArrayList<>(Arrays.asList("sensor/objects"
+    return new ArrayList<>(Arrays.asList(
+    "~/f_lrr/sensor/objects",
+    "~/lf_srr/sensor/objects",
+    "~/r_srr/sensor/objects",
+    "~/rf_srr/sensor/objects",
+    "~/vision/sensor/objects"
     ));
   }
 }

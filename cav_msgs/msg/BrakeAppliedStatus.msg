@@ -16,13 +16,5 @@
 #   } (SIZE (5))
 #   
 
-uint8  brake_applied_status 
-
-# enumeration values for status:
-uint8  UNAVAILABLE=0
-uint8  LEFTFRONT=1
-uint8  LEFTREAR=2
-uint8  RIGHTFRONT=3
-uint8  RIGHTREAR=4
-
+uint8  brake_applied_status
 
