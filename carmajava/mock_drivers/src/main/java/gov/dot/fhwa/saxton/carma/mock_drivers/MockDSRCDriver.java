@@ -66,6 +66,11 @@ public class MockDSRCDriver extends AbstractMockDriver {
   private final short SAMPLE_ID_IDX = 0;
   private final short MSG_TYPE_IDX = 1;
   private final short RAW_BYTES_IDX = 2;
+  
+  long pause_length = 4000; // Set one bsm to pause for 4 seconds and resume for 4 seconds...
+  int current_vehicle = 0; // Do not change it.
+  int pulishDelay = 1000; // Set to 1 second length between each BSM from the same vehicle
+  int vehicle_number = 3; //Need to match the length of binary data array
 
   public MockDSRCDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -110,32 +115,32 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // Raw byte data has the form "0a 1f 23"
       // String rawByteString = elements[RAW_BYTES_IDX];
       // Set to static data for test
-      String rawByteString = "00 14 25 09 0b 3f a5 f3 40 d4 f5 a4 e9 0 9e a6 cb e1 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0";
-      if(System.currentTimeMillis() % 4 == 1) {
-    	  rawByteString = "00 14 25 15 c6 0a b2 2c b8 32 35 a4 e9 00 9e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0";
-      } else if(System.currentTimeMillis() % 4 == 2) {
-    	  rawByteString = "00 14 25 00 16 00 60 eb 2b 6a f5 a4 e9 00 9e a6 bd 3b 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0";
-      } else if(System.currentTimeMillis() % 4 == 3) {
-    	  rawByteString = "00 14 25 02 e9 1e e0 07 07 63 35 a4 e9 00 9e a6 b8 59 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0";
-      }
+      
+
+      
+      String[] rawByteString = {
+    		  "00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0",
+    		  "00 14 25 03 fa 2f 24 8e 1c 51 a6 6e 8c 2a 1e a6 bd 3b 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0",
+    		  "00 14 25 18 ae 7d a9 0e 48 81 e6 6e 95 58 1e a6 cb e1 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0"
+      };
+      
+      String currentByteString = rawByteString[current_vehicle % rawByteString.length];
       
       boolean publish_control = false;
-      if(rawByteString.equals("00 14 25 09 0b 3f a5 f3 40 d4 f5 a4 e9 0 9e a6 cb e1 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0")) {
+      if(currentByteString.equals("00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0")) {
     	  publish_control = true;
       }
 
       // All non hex characters are removed. This does not support use of x such as 0x00
-      rawByteString = rawByteString.replaceAll("[^A-Fa-f0-9]", "");
+      currentByteString = currentByteString.replaceAll("[^A-Fa-f0-9]", "");
       
       // An uneven number of characters will have a 0 appended to the end
-      if (rawByteString.length() % 2 != 0) {
-    	  rawByteString = rawByteString.concat("0");
+      if (currentByteString.length() % 2 != 0) {
+    	  currentByteString = currentByteString.concat("0");
       }
       
-      long pause_length = 4000; //Set one bsm to pause for 4 seconds and resume for 4 seconds...
-      
       // Convert the string to a byte array
-      byte[] rawBytes = DatatypeConverter.parseHexBinary(rawByteString);
+      byte[] rawBytes = DatatypeConverter.parseHexBinary(currentByteString);
       
       // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
       recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
@@ -164,6 +169,7 @@ public class MockDSRCDriver extends AbstractMockDriver {
   }
   
   @Override public long getPublishDelay() {
-	  return 1000; //Set delay here
+	  
+	  return pulishDelay / vehicle_number; //Set delay here
   }
 }
