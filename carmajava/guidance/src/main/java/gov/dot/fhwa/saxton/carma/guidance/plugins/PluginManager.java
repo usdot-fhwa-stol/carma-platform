@@ -150,8 +150,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
                 pluginInstances.add(pluginInstance);
             } catch (Exception e) {
-                log.error("PLUGIN", "Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
+                log.error("PLUGIN", "Unable to instantiate: " + pluginClass.getCanonicalName(), e);
             }
         }
 

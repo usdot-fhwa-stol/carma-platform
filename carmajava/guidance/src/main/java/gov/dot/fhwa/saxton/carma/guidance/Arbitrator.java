@@ -96,8 +96,7 @@ public class Arbitrator extends GuidanceComponent {
 
         constraintInstances.add(constraintInstance);
       } catch (Exception e) {
-        log.error("Unable to instantiate: " + constraintClass.getCanonicalName());
-        log.error(e);
+        log.error("Unable to instantiate: " + constraintClass.getCanonicalName(), e);
       }
     }
 

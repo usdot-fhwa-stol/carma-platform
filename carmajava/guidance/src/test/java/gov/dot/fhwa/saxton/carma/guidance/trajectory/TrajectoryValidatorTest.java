@@ -61,11 +61,7 @@ public class TrajectoryValidatorTest {
 
     maneuvers.add(mock(IManeuver.class));
     maneuvers.add(mock(IManeuver.class));
-    maneuvers.add(mock(    ILoggerFactory mockFact = mock(ILoggerFactory.class);
-    ILogger mockLogger = mock(ILogger.class);
-    when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
-    LoggerManager.setLoggerFactory(mockFact);
-    IManeuver.class));
+    maneuvers.add(mock(IManeuver.class));
 
     when(t.getManeuvers()).thenReturn(maneuvers);
 
