@@ -110,13 +110,13 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // Raw byte data has the form "0a 1f 23"
       // String rawByteString = elements[RAW_BYTES_IDX];
       // Set to static data for test
-      String rawByteString = "00 14 25 19 6A D1 35 13 5E 78 9A D2 C5 12 35 04 B1 5F 08 9C 48 BE BB 16 24 1A 56 21 8B 7D C7 1C B6 41 7E 4D A2 63 DF E8";
+      String rawByteString = "00 14 25 09 0B 3F A5 F3 40 D4 F5 A4 E9 00 9E A6 CB E1 90 00 7F FF 8C CC AF FF F0 80 7E FA 1F A1 00 7F FF 08 00 4B 09 B0";
       if(System.currentTimeMillis() % 4 == 1) {
-    	  rawByteString = "00 14 25 00 00 00 00 00 40 00 1A D2 74 80 35 A4 E8 FF 88 00 00 00 00 00 10 00 3A 98 7E 00 00 00 00 00 00 FA A0 C8 3E 80";
+    	  rawByteString = "00 14 25 15 C6 0A B2 2C B8 32 35 A4 E9 00 9E A6 CB E1 90 00 7F FF 8C CC AF FF F0 80 7E FA 1F A1 00 7F FF 08 00 4B 09 B0";
       } else if(System.currentTimeMillis() % 4 == 2) {
-    	  rawByteString = "00 14 25 1F E6 66 66 66 7F FF F5 A4 E9 00 EB 49 D2 00 7F FF FF FF FF FF EF FF F0 80 FD FA 1F A1 FE FF FE FF F7 FF FF F8";
+    	  rawByteString = "00 14 25 00 16 00 60 EB 2B 6A F5 A4 E9 00 9E A6 CB E1 90 00 7F FF 8C CC AF FF F0 80 7E FA 1F A1 00 7F FF 08 00 4B 09 B0";
       } else if(System.currentTimeMillis() % 4 == 3) {
-    	  rawByteString = "00 14 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00";
+    	  rawByteString = "00 14 25 02 E9 1E E0 07 07 63 35 A4 E9 00 9E A6 CB E1 90 00 7F FF 8C CC AF FF F0 80 7E FA 1F A1 00 7F FF 08 00 4B 09 B0";
       }
       
       boolean publish_control = false;
@@ -126,11 +126,15 @@ public class MockDSRCDriver extends AbstractMockDriver {
 
       // All non hex characters are removed. This does not support use of x such as 0x00
       rawByteString = rawByteString.replaceAll("[^A-Fa-f0-9]", "");
+      
       // An uneven number of characters will have a 0 appended to the end
-      if (rawByteString.length() % 2 != 0)
-        rawByteString = rawByteString.concat("0");
+      if (rawByteString.length() % 2 != 0) {
+    	  rawByteString = rawByteString.concat("0");
+      }
+      
       // Convert the string to a byte array
       byte[] rawBytes = DatatypeConverter.parseHexBinary(rawByteString);
+      
       // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
       recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
       
@@ -155,5 +159,9 @@ public class MockDSRCDriver extends AbstractMockDriver {
 
   @Override public List<String> getDriverAPI() {
     return new ArrayList<>(Arrays.asList(recvTopic, outboundTopic, sendService));
+  }
+  
+  @Override public long getPublishDelay() {
+	  return 1000; //Set delay here
   }
 }

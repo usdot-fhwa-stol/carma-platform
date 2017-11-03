@@ -65,38 +65,39 @@ public class Tracking extends GuidanceComponent {
 	protected static final byte BRAKES_APPLIED = 15;
 	protected static final double YAWRATE_MAX = 327.67;
 	protected static final double YAWRATE_MIN = -327.67;
-	protected static final float VERTICAL_ACCELERATION_MIN = -24.696f;
-	protected static final float VERTICAL_ACCELERATION_MAX = 24.892f;
+	protected static final double VERTICAL_ACCELERATION_MIN = -24.696;
+	protected static final double VERTICAL_ACCELERATION_MAX = 24.892;
 	protected static final int ACCELERATION_MAX = 20;
 	protected static final int ACCELERATION_MIN = -20;
-	protected static final float VERTICAL_ACCELERATION_UNAVAILABLE = -24.892f;
-	protected static final float ACCELERATION_UNAVAILABLE = 20.01f;
+	protected static final double VERTICAL_ACCELERATION_UNAVAILABLE = -24.892;
+	protected static final double ACCELERATION_UNAVAILABLE = 20.01;
 	protected static final int STEEL_WHEEL_ANGLE_MAX = 189;
 	protected static final int STEEL_WHEEL_ANGLE_MIN = -189;
-	protected static final float STEEL_WHEEL_ANGLE_UNAVAILABLE = 190.5f;
-	protected static final float HEADING_MAX = 359.9875f;
+	protected static final double STEEL_WHEEL_ANGLE_UNAVAILABLE = 190.5;
+	protected static final double HEADING_MAX = 359.9875;
 	protected static final int HEADING_UNAVAILABLE = 360;
-	protected static final float SPEED_MAX = 163.8f;
-	protected static final float SPEED_UNAVAILABLE = 163.82f;
+	protected static final double SPEED_MAX = 163.8;
+	protected static final double SPEED_UNAVAILABLE = 163.82;
 	protected static final double ACCURACY_ORIENTATION_MAX = 359.9945078786;
-	protected static final float ACCURACY_MAX = 12.7f;
-	protected static final float ELEVATION_MAX = 6143.9f;
+	protected static final double ACCURACY_MAX = 12.7;
+	protected static final double ELEVATION_MAX = 6143.9;
 	protected static final int LONGITUDE_MAX = 180;
-	protected static final float ELEVATION_MIN = -409.5f;
+	protected static final double ELEVATION_MIN = -409.5;
 	protected static final double LONGITUDE_MIN = -179.9999999;
 	protected static final int LATITUDE_MAX = 90;
 	protected static final int LATITUDE_MIN = -90;
 	protected static final double ACCURACY_ORIENTATION_UNAVAILABLE = 65535 * 0.0054932479;
-	protected static final float ACCURACY_UNAVAILABLE = 12.75f;
-	protected static final float ELEVATION_UNAVAILABLE = 409.6f;
+	protected static final double ACCURACY_UNAVAILABLE = 12.75;
+	protected static final double ELEVATION_UNAVAILABLE = 409.6;
 	protected static final double LONGITUDE_UNAVAILABLE = 180.0000001;
 	protected static final double LATITUDE_UNAVAILABLE = 90.0000001;
 	protected static final int DSECOND_MAX = 65535;
-	protected static final int ID_TIME_MAX = 3000;
-	protected static final int MSG_COUNT_MAX = 127; // 10 msg/sec * 5 min * 60 sec/min
+	protected static final int ID_TIME_MAX = 300; //Change ID every 300 seconds
+	protected static final int MSG_COUNT_MAX = 127; 
 	// Member variables
 	protected final long sleepDurationMillis = 100; // Frequency for J2735
 	private int msgCount = 0;
+	private int last_id_changed = 0;
 	private float vehicleWidth = 0;
 	private float vehicleLength = 0;
 	private boolean drivers_ready = false;
@@ -109,7 +110,6 @@ public class Tracking extends GuidanceComponent {
 	private boolean acceleration_ready = false;
 	private boolean vehicle_to_earth_transform_ready = false;
 	private boolean base_to_map_transform_ready = false;
-	private boolean earth_to_map_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
 	protected SaxtonLogger log_ = new SaxtonLogger(Tracking.class.getSimpleName(), log);
 	private Random randomIdGenerator = new Random();
@@ -131,7 +131,6 @@ public class Tracking extends GuidanceComponent {
 	private final String mapFrame = "map";
 	private final String earthFrame = "earth";
 	private Transform vehicleToEarth = null;
-	private Transform earthtoMap = null;
 	private Transform baseToMap = null;
 	private GeodesicCartesianConverter converter = new GeodesicCartesianConverter();
 	
@@ -329,23 +328,21 @@ public class Tracking extends GuidanceComponent {
 
 			// Set core data
 			BSMCoreData coreData = bsmFrame.getCoreData();
-			coreData.setMsgCount((byte) (msgCount % MSG_COUNT_MAX));
-
+			coreData.setMsgCount((byte) (msgCount++ % MSG_COUNT_MAX));
+			
 			// ID is random and changes every 5 minutes
-			if (msgCount == 0) {
+			if (last_id_changed == 0 || node.getCurrentTime().secs - last_id_changed >= ID_TIME_MAX) {
 				randomIdGenerator.nextBytes(random_id);
-				msgCount++;
-			} else if (msgCount == ID_TIME_MAX) {
-				msgCount = 0;
+				last_id_changed = node.getCurrentTime().secs;
 			}
 			coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
 
 			// Set GPS data
 			coreData.setLatitude(LATITUDE_UNAVAILABLE); // Default value when unknown
 			coreData.setLongitude(LONGITUDE_UNAVAILABLE);
-			coreData.setElev(ELEVATION_UNAVAILABLE);
-			coreData.getAccuracy().setSemiMajor(ACCURACY_UNAVAILABLE);
-			coreData.getAccuracy().setSemiMinor(ACCURACY_UNAVAILABLE);
+			coreData.setElev((float) ELEVATION_UNAVAILABLE);
+			coreData.getAccuracy().setSemiMajor((float) ACCURACY_UNAVAILABLE);
+			coreData.getAccuracy().setSemiMinor((float) ACCURACY_UNAVAILABLE);
 			coreData.getAccuracy().setOrientation(ACCURACY_ORIENTATION_UNAVAILABLE);
 			if(nav_sat_fix_ready && getTransformClient != null) {
 				GetTransformRequest transform_request = getTransformClient.newMessage();
@@ -395,7 +392,7 @@ public class Tracking extends GuidanceComponent {
 				
 				if(semi_major >= 0) {
 					if(Math.sqrt(semi_major) >= ACCURACY_MAX) {
-						coreData.getAccuracy().setSemiMajor(ACCURACY_MAX);
+						coreData.getAccuracy().setSemiMajor((float) ACCURACY_MAX);
 					} else {
 						coreData.getAccuracy().setSemiMajor((float) Math.sqrt(semi_major));
 					}
@@ -404,7 +401,7 @@ public class Tracking extends GuidanceComponent {
 				
 				if(semi_minor >= 0) {
 					if(Math.sqrt(semi_minor) >= ACCURACY_MAX) {
-						coreData.getAccuracy().setSemiMinor(ACCURACY_MAX);
+						coreData.getAccuracy().setSemiMinor((float) ACCURACY_MAX);
 					} else {
 						coreData.getAccuracy().setSemiMinor((float) Math.sqrt(semi_minor));
 					}
@@ -424,7 +421,7 @@ public class Tracking extends GuidanceComponent {
 				}
 			}
 
-			coreData.setSpeed(SPEED_UNAVAILABLE);
+			coreData.setSpeed((float) SPEED_UNAVAILABLE);
 			if(velocity_ready) {
 				float speed = (float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
 				if(speed >= 0 && speed <= SPEED_MAX) {
@@ -440,7 +437,7 @@ public class Tracking extends GuidanceComponent {
 				}
 			}
 			
-			coreData.setAngle(STEEL_WHEEL_ANGLE_UNAVAILABLE);
+			coreData.setAngle((float) STEEL_WHEEL_ANGLE_UNAVAILABLE);
 			if(steer_wheel_ready) {
 				
 				float angle = (float) steeringWheelSubscriber.getLastMessage().getData();	
@@ -454,9 +451,9 @@ public class Tracking extends GuidanceComponent {
 			}
 
 			// N/A for now
-			coreData.getAccelSet().setLongitudinal(ACCELERATION_UNAVAILABLE);
-			coreData.getAccelSet().setLateral(ACCELERATION_UNAVAILABLE);
-			coreData.getAccelSet().setVert(VERTICAL_ACCELERATION_UNAVAILABLE);
+			coreData.getAccelSet().setLongitudinal((float) ACCELERATION_UNAVAILABLE);
+			coreData.getAccelSet().setLateral((float) ACCELERATION_UNAVAILABLE);
+			coreData.getAccelSet().setVert((float) VERTICAL_ACCELERATION_UNAVAILABLE);
 			coreData.getAccelSet().setYawRate(0);  //TODO: It is not defined well
 			if(acceleration_ready && getTransformClient != null) {
 				GetTransformRequest transform_request = getTransformClient.newMessage();
@@ -500,9 +497,9 @@ public class Tracking extends GuidanceComponent {
 					}
 
 					if(after_transform_accel_linear.getZ() <= VERTICAL_ACCELERATION_MIN) {
-						coreData.getAccelSet().setLateral(VERTICAL_ACCELERATION_MIN);
+						coreData.getAccelSet().setLateral((float) VERTICAL_ACCELERATION_MIN);
 					} else if(after_transform_accel_linear.getZ() >= VERTICAL_ACCELERATION_MAX) {
-						coreData.getAccelSet().setLateral(VERTICAL_ACCELERATION_MAX);
+						coreData.getAccelSet().setLateral((float) VERTICAL_ACCELERATION_MAX);
 					} else {
 						coreData.getAccelSet().setLateral((float) after_transform_accel_linear.getZ());
 					}
