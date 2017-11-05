@@ -13,7 +13,7 @@
 #MsgCount ::= INTEGER (0..127)
 uint8 msg_count
 
-uint8 MSG_COUNT_MAX = 127
+uint16 MSG_COUNT_MAX = 128
 
 #TemporaryID ::= OCTET STRING (SIZE(4))
 uint8[] id
