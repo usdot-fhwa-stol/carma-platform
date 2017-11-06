@@ -30,7 +30,6 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
-import org.apache.commons.logging.Log;
 import org.reflections.Reflections;
 import org.ros.exception.ServiceException;
 import org.ros.message.MessageFactory;
@@ -85,11 +84,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, 
     IGuidanceCommands commands, IManeuverInputs maneuverInputs, ConnectedNode node) {
         super(state, pubSubManager, node);
-        this.executor = new PluginExecutor(node.getLog());
+        this.executor = new PluginExecutor();
 
         pluginServiceLocator = new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
-                pubSubService, new RosParameterSource(node.getParameterTree()), new ManeuverPlanner(commands, maneuverInputs), 
-                node.getLog());
+                pubSubService, new RosParameterSource(node.getParameterTree()), new ManeuverPlanner(commands, maneuverInputs));
     }
 
     /**
@@ -116,11 +114,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
                 out.add(pluginClass);
                 if (log != null) {
-                    log.info("Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
+                    log.info("PLUGIN", "Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
                 }
             } else {
                 if (log != null) {
-                    log.info("Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
+                    log.info("PLUGIN", "Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
                 }
             }
         }
@@ -145,7 +143,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 IPlugin pluginInstance = pluginCtor.newInstance(pluginServiceLocator);
                 pluginInstance.registerAvailabilityListener(this);
                 ComponentVersion version = pluginInstance.getVersionInfo();
-                log.info("Guidance.PluginManager instantiated new plugin instance: " + version.componentName() + ":"
+                log.info("PLUGIN", "Guidance.PluginManager instantiated new plugin instance: " + version.componentName() + ":"
                         + version.revisionString());
 
                 // If the plugin is required activate it by default
@@ -155,8 +153,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
                 pluginInstances.add(pluginInstance);
             } catch (Exception e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
+                log.error("PLUGIN", "Unable to instantiate: " + pluginClass.getCanonicalName(), e);
             }
         }
 
@@ -179,8 +176,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         requiredPluginClassNames = (List<String>) node.getParameterTree().getList("~required_plugins",
                 new ArrayList<>());
 
-        log.info("Ignoring plugins: " + ignoredPluginClassNames.toString());
-        log.info("Requiring plugins: " + requiredPluginClassNames.toString());
+        log.info("STARTUP", "Ignoring plugins: " + ignoredPluginClassNames.toString());
+        log.info("STARTUP", "Requiring plugins: " + requiredPluginClassNames.toString());
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
 
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);

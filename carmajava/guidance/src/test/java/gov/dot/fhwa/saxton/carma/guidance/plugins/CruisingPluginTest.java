@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import org.apache.commons.logging.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +42,9 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.SpeedLimit;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.TrajectorySegment;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 public class CruisingPluginTest {
 
@@ -51,9 +53,13 @@ public class CruisingPluginTest {
 
   @Before
   public void setup() {
+    ILoggerFactory mockFact = mock(ILoggerFactory.class);
+    ILogger mockLogger = mock(ILogger.class);
+    when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+    LoggerManager.setLoggerFactory(mockFact);
     PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
         mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), mock(Log.class));
+        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)));
     cruise = new CruisingPlugin(psl);
   }
 

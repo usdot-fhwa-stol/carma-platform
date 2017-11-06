@@ -17,8 +17,8 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import java.util.concurrent.atomic.*;
-import org.apache.commons.logging.Log;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 /**
  * Top level exception handling logic for Guidance.
@@ -28,22 +28,11 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
  * the event of unrecoverable conditions arising.
  */
 public class GuidanceExceptionHandler {
-    protected final Log log;
+    protected final ILogger log = LoggerManager.getLogger();
     protected AtomicReference<GuidanceState> state;
 
-    GuidanceExceptionHandler(AtomicReference<GuidanceState> state, Log log) {
+    GuidanceExceptionHandler(AtomicReference<GuidanceState> state) {
         this.state = state;
-        this.log = log;
-    }
-
-    /**
-     * Initialize the GuidanceExceptionHandler prior to use
-     * </p>
-     * Connect to the SystemAlert topic such that Guidance panics may be broadcast to the greater ROS network.
-     * Initializing this way works around an awkward circular dependency between IPubSubService and
-     * GuidanceExceptionHandler
-     */
-    public void init(IPubSubService pubSubService) {
     }
 
     /**

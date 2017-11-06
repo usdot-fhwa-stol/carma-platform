@@ -101,8 +101,7 @@ public class Arbitrator extends GuidanceComponent {
 
         constraintInstances.add(constraintInstance);
       } catch (Exception e) {
-        log.error("Unable to instantiate: " + constraintClass.getCanonicalName());
-        log.error(e);
+        log.error("Unable to instantiate: " + constraintClass.getCanonicalName(), e);
       }
     }
 
@@ -111,7 +110,7 @@ public class Arbitrator extends GuidanceComponent {
 
   @Override
   public void onGuidanceStartup() {
-    log.info("Arbitrator running!");
+    log.info("STARTUP", "Arbitrator running!");
     routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
     routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
       @Override
@@ -150,14 +149,14 @@ public class Arbitrator extends GuidanceComponent {
       try {
         constraintClasses.add((Class<? extends TrajectoryValidationConstraint>) Class.forName(className));
       } catch (Exception e) {
-        log.warn("Unable to get Class object for name: " + className);
+        log.warn("STARTUP", "Unable to get Class object for name: " + className);
       }
     }
 
     List<TrajectoryValidationConstraint> constraints = instantiateConstraints(constraintClasses);
     for (TrajectoryValidationConstraint tvc : constraints) {
       trajectoryValidator.addValidationConstraint(tvc);
-      log.info("Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
+      log.info("STARTUP", "Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
     }
 
     constraints.add(new GlobalSpeedLimitConstraint(configuredSpeedLimit));
@@ -200,7 +199,7 @@ public class Arbitrator extends GuidanceComponent {
       panic("Arbitrator unable to locate the configured and required plugins!");
     }
 
-    log.info("Arbitrator using plugins: [" + lateralPluginName + ", " + longitudinalPluginName + "]");
+    log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + ", " + longitudinalPluginName + "]");
 
     // Wait until we've received a downtrack distance update to try to plan our first trajectory
     if (!receivedDtdUpdate.get()) {

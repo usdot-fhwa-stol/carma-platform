@@ -27,7 +27,6 @@ import gov.dot.fhwa.saxton.carma.rosutils.*;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
-import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
@@ -112,7 +111,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
         speedCommand.set(speed);
         maxAccel.set(accel);
-        log.info("Speed command set to " + speed + "m/s and " + accel + "m/s/s");
+        log.info("CONTROLS", "Speed command set to " + speed + "m/s and " + accel + "m/s/s");
     }
 
     @Override
@@ -175,7 +174,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
         if (speedCmdTopic != null && roboticEnableTopic != null) {
             // Open the publication channel to the driver and start sending it commands
-            log.info("GuidanceCommands connecting to " + speedCmdTopic + " and " + roboticEnableTopic);
+            log.info("CONTROLS", "GuidanceCommands connecting to " + speedCmdTopic + " and " + roboticEnableTopic);
 
             speedAccelPublisher = pubSubService.getPublisherForTopic(speedCmdTopic, SpeedAccel._TYPE);
 

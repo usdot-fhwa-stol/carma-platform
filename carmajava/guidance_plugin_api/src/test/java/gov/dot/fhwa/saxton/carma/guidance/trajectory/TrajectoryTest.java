@@ -22,11 +22,15 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 class LongitudinalTestManeuver extends LongitudinalManeuver {
@@ -147,6 +151,10 @@ class LateralTestManeuver implements IManeuver {
 public class TrajectoryTest {
   @Before
   public void setup() {
+    ILoggerFactory mockFact = mock(ILoggerFactory.class);
+    ILogger mockLogger = mock(ILogger.class);
+    when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+    LoggerManager.setLoggerFactory(mockFact);
     traj = new Trajectory(0, 20);
   }
 

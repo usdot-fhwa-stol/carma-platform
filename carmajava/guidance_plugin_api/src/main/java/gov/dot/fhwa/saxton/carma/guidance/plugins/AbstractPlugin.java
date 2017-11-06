@@ -18,9 +18,9 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
-
-import org.apache.commons.logging.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +32,10 @@ import java.util.concurrent.atomic.*;
  * Provides the basic getters and setters so that implementors don't have to deal with that
  */
 public abstract class AbstractPlugin implements IPlugin {
-	protected ComponentVersion version;
-    protected Log log;
+	protected ComponentVersion version = new ComponentVersion();
     protected IPubSubService pubSubService;
     protected PluginServiceLocator pluginServiceLocator;
+    protected ILogger log = LoggerManager.getLogger();
 
     // Private fields so that extendees can't access them
     private AtomicBoolean activation = new AtomicBoolean(false);
@@ -45,7 +45,6 @@ public abstract class AbstractPlugin implements IPlugin {
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
         this.pluginServiceLocator = pluginServiceLocator;
         this.pubSubService = pluginServiceLocator.getPubSubService();
-        this.log = pluginServiceLocator.getLog();
     }
 
     @Override public boolean getActivation() {

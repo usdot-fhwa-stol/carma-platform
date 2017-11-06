@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import org.apache.commons.logging.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,11 +27,18 @@ import org.mockito.stubbing.Answer;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+
 public class PluginLifecycleHandlerTest {
     @Before public void setUp() throws Exception {
+        ILoggerFactory mockFact = mock(ILoggerFactory.class);
+        ILogger mockLogger = mock(ILogger.class);
+        when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+        LoggerManager.setLoggerFactory(mockFact);
         p = mock(IPlugin.class);
-        log = mock(Log.class);
-        handler = new PluginLifecycleHandler(p, log);
+        handler = new PluginLifecycleHandler(p);
     }
 
     @After public void tearDown() throws Exception {
@@ -43,7 +49,6 @@ public class PluginLifecycleHandlerTest {
 
         p = null;
         handler = null;
-        log = null;
     }
 
     // Happy path tests
@@ -197,6 +202,5 @@ public class PluginLifecycleHandlerTest {
 
     private PluginLifecycleHandler handler;
     private IPlugin p;
-    private Log log;
     private boolean running;
 }

@@ -2,9 +2,7 @@
  * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
+ * use this file except in compliance with the License. You may obtain a copy of * the License at *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -21,9 +19,10 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverRunner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.logging.Log;
 
 /**
  * Guidance package TrajectoryExecutorWorker
@@ -42,7 +41,7 @@ public class TrajectoryExecutorWorker {
   protected Thread lateralManeuverThread = new Thread();
   protected Thread longitudinalManeuverThread = new Thread();
   protected double maneuverTickFrequencyHz = 10.0;
-  protected Log log;
+  protected ILogger log = LoggerManager.getLogger();
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -56,10 +55,9 @@ public class TrajectoryExecutorWorker {
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, Log log) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
-    this.log = log;
   }
 
   private void execute(IManeuver maneuver) {
@@ -69,7 +67,7 @@ public class TrajectoryExecutorWorker {
         longitudinalManeuverThread.interrupt();
       }
 
-      longitudinalManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz, log));
+      longitudinalManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz));
       longitudinalManeuverThread.setName("Longitudinal Maneuver Runner");
       longitudinalManeuverThread.start();
     } else {
@@ -77,7 +75,7 @@ public class TrajectoryExecutorWorker {
         lateralManeuverThread.interrupt();
       }
 
-      lateralManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz, log));
+      lateralManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz));
       lateralManeuverThread.setName("Lateral Maneuver Runner");
       lateralManeuverThread.start();
     }

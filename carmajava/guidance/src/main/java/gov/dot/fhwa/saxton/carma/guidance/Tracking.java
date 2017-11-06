@@ -34,7 +34,6 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
-import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.RosRuntimeException;
@@ -65,7 +64,7 @@ public class Tracking extends GuidanceComponent {
 	protected static final byte BRAKES_STATUS_UNAVAILABLE = 16;
 	protected static final byte BRAKES_NOT_APPLIED = 0;
 	protected static final byte BRAKES_APPLIED = 15;
-	
+
 	// Member variables
 	protected final long sleepDurationMillis = 100; // Frequency for J2735, 10Hz
 	private long msgCount = 1;
@@ -83,7 +82,6 @@ public class Tracking extends GuidanceComponent {
 	private boolean vehicle_to_earth_transform_ready = false;
 	private boolean base_to_map_transform_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
-	protected SaxtonLogger log_ = new SaxtonLogger(Tracking.class.getSimpleName(), log);
 	private Random randomIdGenerator = new Random();
 	private byte[] random_id = new byte[4];
 	private IPublisher<BSM> bsmPublisher;
@@ -105,11 +103,10 @@ public class Tracking extends GuidanceComponent {
 	private Transform vehicleToEarth = null;
 	private Transform baseToMap = null;
 	private GeodesicCartesianConverter converter = new GeodesicCartesianConverter();
-	
 
 	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
 		super(state, pubSubService, node);
-		this.exceptionHandler = new GuidanceExceptionHandler(state, log);
+		this.exceptionHandler = new GuidanceExceptionHandler(state);
 	}
 
 	@Override
@@ -135,7 +132,7 @@ public class Tracking extends GuidanceComponent {
 					|| headingStampedSubscriber == null 
 					|| velocitySubscriber == null 
 					|| accelerationSubscriber == null) {
-				log_.warn("Cannot initialize pubs and subs");
+				log.warn("Cannot initialize pubs and subs");
 			}
 			
 			navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
@@ -179,10 +176,10 @@ public class Tracking extends GuidanceComponent {
 		
 		// Make service call to get drivers
 		try {
-			log_.info("Trying to get get_drivers_with_capabilities service...");
+			log.info("Trying to get get_drivers_with_capabilities service...");
 			getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
 			if(getDriversWithCapabilitiesClient == null) {
-				log_.warn("get_drivers_with_capabilities service can not be found");
+				log.warn("get_drivers_with_capabilities service can not be found");
 			}
 			
 			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
@@ -192,7 +189,7 @@ public class Tracking extends GuidanceComponent {
 				@Override
 				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
 					resp_drivers = msg.getDriverData();
-					log_.info("Tracking: service call is successful: " + resp_drivers);
+					log.info("Tracking: service call is successful: " + resp_drivers);
 				}
 				
 				@Override
@@ -202,10 +199,10 @@ public class Tracking extends GuidanceComponent {
 				
 			});
 			
-			log_.info("Trying to get get_transform...");
+			log.info("Trying to get get_transform...");
 			getTransformClient = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
 			if(getTransformClient == null) {
-				log_.warn("get_transform service can not be found");
+				log.warn("get_transform service can not be found");
 			}
 			
 			if(resp_drivers != null) {
@@ -223,11 +220,11 @@ public class Tracking extends GuidanceComponent {
 					}
 				}
 			} else {
-				log_.warn("Tracking: cannot find suitable drivers");
+				log.warn("Tracking: cannot find suitable drivers");
 			}
 			
 			if(steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null) {
-				log_.warn("Tracking: initialize subs failed");
+				log.warn("Tracking: initialize subs failed");
 			}
 			
 			steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
@@ -255,8 +252,6 @@ public class Tracking extends GuidanceComponent {
 			handleException(e);
 		}
 		
-		
-		
 		ParameterTree param = node.getParameterTree();
 		vehicleLength = (float) param.getDouble("vehicle_length");
 		vehicleWidth = (float) param.getDouble("vehicle_width");
@@ -273,14 +268,14 @@ public class Tracking extends GuidanceComponent {
 		
 		if(drivers_ready) {
 			try {
-				log_.info("BSM", "nav_sat_fix subscribers status: " + nav_sat_fix_ready);
-				log_.info("BSM", "steer_wheel subscribers status: " + steer_wheel_ready);
-				log_.info("BSM", "heading subscribers status: " + heading_ready);
-				log_.info("BSM", "velocity subscribers status: " + velocity_ready);
-				log_.info("BSM", "brake subscribers status: " + brake_ready);
-				log_.info("BSM", "transmission subscribers status: " + transmission_ready);
-				log_.info("BSM", "acceleration subscribers status: " + acceleration_ready);
-				log_.info("BSM", "Guidance.Tracking is publishing bsm...");
+				log.info("BSM", "nav_sat_fix subscribers status: " + nav_sat_fix_ready);
+				log.info("BSM", "steer_wheel subscribers status: " + steer_wheel_ready);
+				log.info("BSM", "heading subscribers status: " + heading_ready);
+				log.info("BSM", "velocity subscribers status: " + velocity_ready);
+				log.info("BSM", "brake subscribers status: " + brake_ready);
+				log.info("BSM", "transmission subscribers status: " + transmission_ready);
+				log.info("BSM", "acceleration subscribers status: " + acceleration_ready);
+				log.info("BSM", "Guidance.Tracking is publishing bsm...");
 				bsmPublisher.publish(composeBSMData());
 			} catch (Exception e) {
 				handleException(e);
