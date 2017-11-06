@@ -124,7 +124,7 @@ public class MockDSRCDriver extends AbstractMockDriver {
     		  "00 14 25 18 ae 7d a9 0e 48 81 e6 6e 95 58 1e a6 cb e1 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0"
       };
       
-      String currentByteString = rawByteString[current_vehicle % rawByteString.length];
+      String currentByteString = rawByteString[current_vehicle++ % rawByteString.length];
       
       boolean publish_control = false;
       if(currentByteString.equals("00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0")) {
