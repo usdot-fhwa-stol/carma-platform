@@ -34,7 +34,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         super.plan(inputs, commands, startDist);
 
         //check that speeds have been defined
-        if (startSpeed_ < 0.0  ||  endSpeed_ < 0.0) {
+        if (startSpeed_ < -0.5  ||  endSpeed_ < -0.5) {
             throw new IllegalStateException("Longitudinal maneuver plan attempted without previously defining the start/target speeds.");
         }
     }
