@@ -50,7 +50,7 @@ public class BSMFactory {
 	private static native byte[] encode_BSM(
 			int msgCnt, int[] id, int secMark, int lat, int lon, int elev, int[] accuracy,
 			int transmission, int speed, int heading, int angle, int[] acceleration,
-			int wheel_brakes, int traction, int abs, int scs, int bba, int aux, int[] vehicle_siz);
+			int[] wheel_brakes, int[] vehicle_siz);
 
 	/**
 	 * This is the declaration for native method. It will take encoded BSM byte array
@@ -85,14 +85,16 @@ public class BSMFactory {
 	public static int encode(BSM plain_msg, ByteArray binary_msg, SaxtonLogger log, ConnectedNode node) {
 		log.info("BSM", "Start to encode bsm message.");
 		HelperBSM helper_bsm = new HelperBSM(plain_msg.getCoreData());
+		int[] brakes_status = {
+				helper_bsm.getWheel_brakes(), helper_bsm.getTraction(), helper_bsm.getAbs(),
+				helper_bsm.getScs(), helper_bsm.getBba(), helper_bsm.getAux()};
 		log.info("BSM", "Calling native encoding method.");
 		byte[] encode_msg = encode_BSM(
 				helper_bsm.getMsgCnt(), helper_bsm.getId(), helper_bsm.getSecMark(),
 				helper_bsm.getLat(), helper_bsm.getLon(), helper_bsm.getElev(),
 				helper_bsm.getAccuracy(), helper_bsm.getTransmission(), helper_bsm.getSpeed(),
 				helper_bsm.getHeading(), helper_bsm.getAngle(), helper_bsm.getAcceleration(),
-				helper_bsm.getWheel_brakes(), helper_bsm.getTraction(), helper_bsm.getAbs(),
-				helper_bsm.getScs(), helper_bsm.getBba(), helper_bsm.getAux(), helper_bsm.getVehicle_size()
+				brakes_status, helper_bsm.getVehicle_size()
 				);
 		if(encode_msg == null) {
 			log.warn("BSM", "Cannot encode the outgoing binary BSM message.");
