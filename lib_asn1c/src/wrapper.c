@@ -7,6 +7,9 @@
  * BSM Encoder:
  * This function can encode an BSM object from Java to a byte array in J2735 standards.
  * When an error happened, this function will return NULL.
+ * Note: In this function, we pass parameters instead of passing a single object,
+ * because making the natives to reach for many individual fields
+ * from objects passed to them leads to poor performance.
  */
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_encode_1BSM
 		(JNIEnv *env, jclass cls, jint msgCount, jintArray bsm_id, jint secMark,

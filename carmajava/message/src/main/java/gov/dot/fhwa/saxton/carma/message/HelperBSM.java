@@ -4,6 +4,10 @@ import java.util.Arrays;
 
 import cav_msgs.*;
 
+/**
+ * This is the helper class for encoding BSM.
+ * All fields' unit in this class match the units in J2735 message.
+ */
 public class HelperBSM {
 	
 	protected static final int UINT8_MAX = 255;
@@ -75,6 +79,10 @@ public class HelperBSM {
 	private int aux = AuxiliaryBrakeStatus.UNAVAILABLE;
 	private int[] vehicle_size = {VEHICLE_SIZE_UNAVAILABLE, VEHICLE_SIZE_UNAVAILABLE};
 	
+	/**
+	 * This is the constructor for HelperBSM.
+	 * @param bsm_core Take ros message as the input and set all fields in HelperBSM after necessary validations
+	 */
 	public HelperBSM(BSMCoreData bsm_core) {
 		this.setMsgCnt(bsm_core.getMsgCount());
 		byte[] temp_ID = new byte[4];

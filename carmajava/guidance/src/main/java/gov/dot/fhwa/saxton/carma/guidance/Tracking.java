@@ -60,7 +60,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Tracking extends GuidanceComponent {
 	
 	protected static final int SECONDS_TO_MILLISECONDS = 1000;
-	// TODO: Need to be generalized
+	
+	// TODO: Need to be generalized when more data are available
 	protected static final byte BRAKES_STATUS_UNAVAILABLE = 16;
 	protected static final byte BRAKES_NOT_APPLIED = 0;
 	protected static final byte BRAKES_APPLIED = 15;
@@ -319,7 +320,7 @@ public class Tracking extends GuidanceComponent {
 					
 					@Override
 					public void onSuccess(GetTransformResponse msg) {
-						log_.info("BSM", "Get vehicle_to_earth_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+						log.info("BSM", "Get vehicle_to_earth_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
 						if(msg.getErrorStatus() == 0) {
 							vehicleToEarth = Transform.fromTransformMessage(msg.getTransform().getTransform());
 							vehicle_to_earth_transform_ready = true;
@@ -429,7 +430,7 @@ public class Tracking extends GuidanceComponent {
 					
 					@Override
 					public void onSuccess(GetTransformResponse msg) {
-						log_.info("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+						log.info("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
 						if(msg.getErrorStatus() == 0) {
 							baseToMap = Transform.fromTransformMessage(msg.getTransform().getTransform());
 							base_to_map_transform_ready = true;
@@ -502,7 +503,7 @@ public class Tracking extends GuidanceComponent {
 				coreData.getSize().setVehicleWidth(vehicleWidth);
 			}
 			
-			// Use ros node time
+			// Use ros node time and ignore leap second for now since it is not announced
 			coreData.setSecMark((int) (System.currentTimeMillis() % BSMCoreData.SEC_MARK_MOD));
 
 		} catch (Exception e) {
