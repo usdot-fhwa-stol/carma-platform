@@ -42,20 +42,15 @@ public class BSMFactory {
 	/**
 	 * This is the declaration for native method. It will take data from BSM message
 	 * object and return an byte array with encoded information. Because of the
-	 * efficiency of JNI method call, it takes different parts of BSM instead of a
+	 * efficiency of JNI method call, it takes fields directly instead of a
 	 * single BSM object.
 	 *
-	 * @param bsm_core The BSMCoreData object of the BSM object
-	 * @param bsm_id  The id number of the BSM message in order to handle ChannelBuffer type
-	 * @param accuracy The positional accuracy set
-	 * @param transmission The transmission status set
-	 * @param accelset The acceleration data in 4 ways
-	 * @param brakeStatus The brake status set
-	 * @param size Size of the vehicle
 	 * @return encoded BSM message
 	 */
-	private static native byte[] encode_BSM(Object bsm_core, byte[] bsm_id, Object accuracy, Object transmission,
-			Object accelset, byte[] brakeStatus, Object size);
+	private static native byte[] encode_BSM(
+			int msgCnt, int[] id, int secMark, int lat, int lon, int elev, int[] accuracy,
+			int transmission, int speed, int heading, int angle, int[] acceleration,
+			int wheel_brakes, int traction, int abs, int scs, int bba, int aux, int[] vehicle_siz);
 
 	/**
 	 * This is the declaration for native method. It will take encoded BSM byte array
@@ -89,32 +84,27 @@ public class BSMFactory {
 	 */
 	public static int encode(BSM plain_msg, ByteArray binary_msg, SaxtonLogger log, ConnectedNode node) {
 		log.info("BSM", "Start to encode bsm message.");
-		byte[] brakeStatus = new byte[] {
-				plain_msg.getCoreData().getBrakes().getWheelBrakes().getBrakeAppliedStatus(),
-				plain_msg.getCoreData().getBrakes().getTraction().getTractionControlStatus(),
-				plain_msg.getCoreData().getBrakes().getAbs().getAntiLockBrakeStatus(),
-				plain_msg.getCoreData().getBrakes().getScs().getStabilityControlStatus(),
-				plain_msg.getCoreData().getBrakes().getBrakeBoost().getBrakeBoostApplied(),
-				plain_msg.getCoreData().getBrakes().getAuxBrakes().getAuxiliaryBrakeStatus()
-				};
-		byte[] temp_ID = new byte[4];
-		for(int i = 0; i < plain_msg.getCoreData().getId().capacity(); i++) {
-			temp_ID[i] = plain_msg.getCoreData().getId().getByte(i);
-		}
+		HelperBSM helper_bsm = new HelperBSM(plain_msg.getCoreData());
+		log.info("BSM", "Calling native encoding method.");
 		byte[] encode_msg = encode_BSM(
-				plain_msg.getCoreData(), temp_ID,
-				plain_msg.getCoreData().getAccuracy(), plain_msg.getCoreData().getTransmission(),
-				plain_msg.getCoreData().getAccelSet(), brakeStatus, plain_msg.getCoreData().getSize());
+				helper_bsm.getMsgCnt(), helper_bsm.getId(), helper_bsm.getSecMark(),
+				helper_bsm.getLat(), helper_bsm.getLon(), helper_bsm.getElev(),
+				helper_bsm.getAccuracy(), helper_bsm.getTransmission(), helper_bsm.getSpeed(),
+				helper_bsm.getHeading(), helper_bsm.getAngle(), helper_bsm.getAcceleration(),
+				helper_bsm.getWheel_brakes(), helper_bsm.getTraction(), helper_bsm.getAbs(),
+				helper_bsm.getScs(), helper_bsm.getBba(), helper_bsm.getAux(), helper_bsm.getVehicle_size()
+				);
 		if(encode_msg == null) {
 			log.warn("BSM", "Cannot encode the outgoing binary BSM message.");
 			return -1;
+		} else {
+			log.info("BSM", "Encode the outgoing binary BSM message successfully.");
 		}
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
 		binary_msg.setContent(buffer);
 		binary_msg.setMessageType("BSM");
 		binary_msg.getHeader().setFrameId("MessageConsumer");
-		binary_msg.getHeader().getStamp().secs = node.getCurrentTime().secs;
-		binary_msg.getHeader().getStamp().nsecs = node.getCurrentTime().nsecs;
+		binary_msg.getHeader().setStamp(node.getCurrentTime());;
 		return 0;
 	}
 
