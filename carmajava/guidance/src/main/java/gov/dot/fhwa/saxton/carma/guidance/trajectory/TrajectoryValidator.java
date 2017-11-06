@@ -66,7 +66,7 @@ public class TrajectoryValidator {
         StringBuilder builder = new StringBuilder();
         builder.append("{");
         for (IManeuver m : result.getError().getOffendingManeuvers()) {
-          builder.append(String.format("%s@[%0.2f, 0.2f),",
+          builder.append(String.format("%s@[%.02f, %.02f),",
           m.getClass().getSimpleName(),
           m.getStartDistance(),
           m.getEndDistance()));
