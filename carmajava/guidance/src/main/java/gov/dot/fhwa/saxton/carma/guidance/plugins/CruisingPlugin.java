@@ -53,6 +53,7 @@ public class CruisingPlugin extends AbstractPlugin {
   protected AtomicReference<RouteSegment> currentSegment = new AtomicReference<>();
   protected List<SpeedLimit> speedLimits = new ArrayList<>();
   protected double maxAccel;
+  protected boolean firstTrajectory = true;
   protected static final double MPH_TO_MPS = 0.44704; // From Google calculator
   protected static final double DISTANCE_EPSILON = 0.0001;
 
@@ -75,7 +76,7 @@ public class CruisingPlugin extends AbstractPlugin {
     version.setIntermediateRevision(0);
     version.setMinorRevision(1);
   }
-  
+
   @Override
   public void onInitialize() {
     log.info("Cruisng plugin initializing...");
@@ -240,11 +241,8 @@ public class CruisingPlugin extends AbstractPlugin {
   protected void planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
     ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
 
-    log.info(String.format("Planning maneuver {start=%.02f,end=%.02f,startSpeed=%.02f,endSpeed=%.02f}",
-	startDist,
-	endDist,
-	startSpeed,
-	endSpeed));
+    log.info(String.format("Planning maneuver {start=%.02f,end=%.02f,startSpeed=%.02f,endSpeed=%.02f}", startDist,
+        endDist, startSpeed, endSpeed));
 
     double maneuverEnd = startDist;
     if (startSpeed < endSpeed) {
@@ -255,7 +253,7 @@ public class CruisingPlugin extends AbstractPlugin {
       planner.planManeuver(speedUp, startDist);
 
       // Adjust our accel to complete the maneuver
-      if (speedUp.getEndDistance() > endDist)  {
+      if (speedUp.getEndDistance() > endDist) {
         SpeedUp speedUp2 = new SpeedUp();
 
         speedUp2.setSpeeds(startSpeed, endSpeed);
@@ -268,7 +266,8 @@ public class CruisingPlugin extends AbstractPlugin {
         maneuverEnd = speedUp.getEndDistance();
       }
 
-      log.info(String.format("Planned SPEED-UP maneuver from [%.2f, %.2f) m/s over [%.02f, %.2f) m", startSpeed, endSpeed, startDist, maneuverEnd));
+      log.info(String.format("Planned SPEED-UP maneuver from [%.2f, %.2f) m/s over [%.02f, %.2f) m", startSpeed,
+          endSpeed, startDist, maneuverEnd));
     } else if (startSpeed > endSpeed) {
       // Generate a slowdown maneuver
       SlowDown slowDown = new SlowDown();
@@ -277,7 +276,7 @@ public class CruisingPlugin extends AbstractPlugin {
       planner.planManeuver(slowDown, startDist);
 
       // Adjust our accel to complete the maneuver
-      if (slowDown.getEndDistance() > endDist)  {
+      if (slowDown.getEndDistance() > endDist) {
         SpeedUp slowDown2 = new SpeedUp();
 
         slowDown2.setSpeeds(startSpeed, endSpeed);
@@ -289,7 +288,8 @@ public class CruisingPlugin extends AbstractPlugin {
         t.addManeuver(slowDown);
         maneuverEnd = slowDown.getEndDistance();
       }
-      log.info(String.format("Planned SLOW-DOWN maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, endSpeed, startDist, maneuverEnd));
+      log.info(String.format("Planned SLOW-DOWN maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed,
+          endSpeed, startDist, maneuverEnd));
     }
 
     // Insert a steady speed maneuver to fill whatever's left
@@ -301,7 +301,8 @@ public class CruisingPlugin extends AbstractPlugin {
       steady.overrideEndDistance(endDist);
 
       t.addManeuver(steady);
-      log.info(String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", steady.getTargetSpeed(), steady.getStartDistance(), steady.getEndDistance()));
+      log.info(String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", steady.getTargetSpeed(),
+          steady.getStartDistance(), steady.getEndDistance()));
     }
   }
 
@@ -333,12 +334,19 @@ public class CruisingPlugin extends AbstractPlugin {
 
       if (trajLimits.isEmpty()) {
         // Hold the initial speed for the whole trajectory
-	log.info("Planning new trajectory with no speed limits");
-        planManeuvers(traj, traj.getStartLocation(), traj.getEndLocation(), expectedEntrySpeed, expectedEntrySpeed);
+        log.info("Planning new trajectory with no speed limits");
+        if (firstTrajectory) {
+          // Handle the case where we don't yet see a speed limit on our trajectory planning window
+          planManeuvers(traj, traj.getStartLocation(), traj.getEndLocation(), expectedEntrySpeed,
+              speedLimits.get(0).speedLimit);
+          firstTrajectory = false;
+        } else {
+          planManeuvers(traj, traj.getStartLocation(), traj.getEndLocation(), expectedEntrySpeed, expectedEntrySpeed);
+        }
       } else {
         // Take the first speed limit
         SpeedLimit first = trajLimits.get(0);
-	log.info("Planning trajectory with initial speed limit: " + first.speedLimit);
+        log.info("Planning trajectory with initial speed limit: " + first.speedLimit);
         planManeuvers(traj, traj.getStartLocation(), first.location, expectedEntrySpeed, first.speedLimit);
 
         // Take any intermediary speed limits
@@ -347,7 +355,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
         // Usage of DISTANCE_EPSILON here is a bit of a hack
         for (SpeedLimit limit : getSpeedLimits(speedLimits, first.location + DISTANCE_EPSILON, traj.getEndLocation())) {
-	  log.info("Planning trajectory with speed limit: " + limit.speedLimit);
+          log.info("Planning trajectory with speed limit: " + limit.speedLimit);
           planManeuvers(traj, prevDist, limit.location, prevSpeed, limit.speedLimit);
           prevDist = limit.location;
           prevSpeed = limit.speedLimit;
@@ -355,7 +363,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
         // Hold the last speed limit until the end of the trajectory
         SpeedLimit last = trajLimits.get(trajLimits.size() - 1);
-	  log.info("Planning trajectory with last speed limit: " + last.speedLimit);
+        log.info("Planning trajectory with last speed limit: " + last.speedLimit);
         planManeuvers(traj, last.location, traj.getEndLocation(), last.speedLimit, last.speedLimit);
       }
     }
