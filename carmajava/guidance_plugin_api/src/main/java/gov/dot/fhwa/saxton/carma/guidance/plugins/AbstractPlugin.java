@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.*;
  * Provides the basic getters and setters so that implementors don't have to deal with that
  */
 public abstract class AbstractPlugin implements IPlugin {
-	protected ComponentVersion version;
+	protected ComponentVersion version = new ComponentVersion();
     protected IPubSubService pubSubService;
     protected PluginServiceLocator pluginServiceLocator;
     protected ILogger log = LoggerManager.getLogger();
