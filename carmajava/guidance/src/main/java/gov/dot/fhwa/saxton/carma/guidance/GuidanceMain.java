@@ -64,7 +64,6 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected final int numThreads = 6;
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
-  protected GuidanceExceptionHandler guidanceExceptionHandler;
   protected IPubSubService pubSubService;
   protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse> guidanceEngageService;
 
@@ -104,7 +103,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   /**
    * Initialize the PubSubManager and setup it's message queue.
    */
-  private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidance) {
+  private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidanceExceptionHandler) {
     ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node,
         guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
@@ -132,7 +131,6 @@ public class GuidanceMain extends SaxtonBaseNode {
     log.info("//////////");
 
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state);
-    this.exceptionHandler = guidanceExceptionHandler;
     log.info("Guidance exception handler initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
