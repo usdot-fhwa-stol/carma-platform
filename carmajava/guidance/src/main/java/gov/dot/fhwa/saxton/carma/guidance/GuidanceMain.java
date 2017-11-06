@@ -27,6 +27,9 @@ import cav_srvs.SetGuidanceEngaged;
 import cav_srvs.SetGuidanceEngagedRequest;
 import cav_srvs.SetGuidanceEngagedResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
@@ -136,17 +139,27 @@ public class GuidanceMain extends SaxtonBaseNode {
     pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory);
   }
 
+  /**
+   * Initialize the Guidance logging system
+   */
+  private void initLogger(Log baseLog) {
+    SaxtonLoggerProxyFactory slpf = new SaxtonLoggerProxyFactory(baseLog);
+    LoggerManager.setLoggerFactory(slpf);
+  }
+
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
-    final Log log = connectedNode.getLog();
+    initLogger(connectedNode.getLog());
+    final ILogger log = LoggerManager.getLogger();
+
     final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
     log.info("//////////");
     log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
     log.info("//////////");
 
-    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state, log);
+    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state);
     this.exceptionHandler = guidanceExceptionHandler;
-    log.info("Guidance exception handler partially initialized");
+    log.info("Guidance exception handler initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
     // Will apply to any thread that lacks an otherwise specified ExceptionHandler
@@ -161,9 +174,6 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     initPubSubManager(connectedNode, guidanceExceptionHandler);
     log.info("Guidance main PubSubManager initialized");
-
-    guidanceExceptionHandler.init(pubSubService);
-    log.info("Guidance main exception handler fully initialized");
 
     initExecutor(state, connectedNode);
     log.info("Guidance main executor initialized");

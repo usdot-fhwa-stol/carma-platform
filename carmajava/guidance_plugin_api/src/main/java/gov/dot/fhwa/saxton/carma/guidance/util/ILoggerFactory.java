@@ -14,15 +14,8 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.trajectory;
+package gov.dot.fhwa.saxton.carma.guidance.util;
 
-/**
- * Interface for receiving information about Trajectory progress from TrajectoryExecutor
- */
-public interface OnTrajectoryProgressCallback {
-
-  /**
-   * Called when progress on current trajectory reaches the specified pct or a multiple of pct
-   */
-  void onProgress(double pct);
+public interface ILoggerFactory {
+  public ILogger createLoggerForClass(Class<?> clazz);
 }

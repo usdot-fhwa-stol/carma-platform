@@ -17,7 +17,9 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
-import org.apache.commons.logging.Log;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.ConnectedNode;
 
@@ -34,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class GuidanceComponent implements Runnable {
     protected ConnectedNode node;
     protected IPubSubService pubSubService;
-    protected Log log;
+    protected ILogger log;
     protected Thread loopThread;
 
     private final long WAIT_DURATION_MS = 200;
@@ -46,7 +48,7 @@ public abstract class GuidanceComponent implements Runnable {
         this.state = state;
         this.node = node;
         this.pubSubService = pubSubService;
-        this.log = node.getLog();
+        this.log = LoggerManager.getLogger();
     }
 
     /**
@@ -88,7 +90,7 @@ public abstract class GuidanceComponent implements Runnable {
 
     public final void run() {
         Thread.currentThread().setName(getComponentName() + "Runner");
-        log.info(getComponentName() + " starting up.");
+        log.info("STARTUP", getComponentName() + " starting up.");
         onGuidanceStartup();
         CancellableLoop loop = new CancellableLoop() {
             @Override
@@ -151,9 +153,9 @@ public abstract class GuidanceComponent implements Runnable {
         }
         cancelAndWaitForLoop(loop);
 
-        log.info(getComponentName() + " shutting down.");
+        log.info("SHUTDOWN", getComponentName() + " shutting down.");
         onGuidanceShutdown();
-        log.info(getComponentName() + " shut down.");
+        log.info("SHUTDOWN", getComponentName() + " shut down.");
     }
 
     /**

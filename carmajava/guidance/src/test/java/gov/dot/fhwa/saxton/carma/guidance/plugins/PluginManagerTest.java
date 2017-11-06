@@ -18,13 +18,13 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.ros.node.ConnectedNode;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -151,9 +151,12 @@ public class PluginManagerTest {
     }
 
     @Before public void setUp() throws Exception {
+        ILoggerFactory mockFact = mock(ILoggerFactory.class);
+        ILogger mockLogger = mock(ILogger.class);
+        when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+        LoggerManager.setLoggerFactory(mockFact);
         psl = mock(PluginServiceLocator.class);
         ConnectedNode node = mock(ConnectedNode.class);
-        when(node.getLog()).thenReturn(log);
         pm = new PluginManager(new AtomicReference<GuidanceState>(GuidanceState.DRIVERS_READY), mock(IPubSubService.class), 
         mock(IGuidanceCommands.class), mock(IManeuverInputs.class), node);
         pluginClasses = new ArrayList<>();
@@ -165,9 +168,6 @@ public class PluginManagerTest {
 
     @Test public void discoverPluginsOnClasspath() throws Exception {
         pluginClasses = pm.discoverPluginsOnClasspath();
-        for (Class<? extends IPlugin> pClass : pluginClasses) {
-            log.info("Discovered " + pClass.getName());
-        }
         assertTrue(pluginClasses.contains(TestPlugin1.class));
         assertTrue(pluginClasses.contains(TestPlugin2.class));
     }
@@ -201,5 +201,4 @@ public class PluginManagerTest {
     private PluginManager pm;
     private List<Class<? extends IPlugin>> pluginClasses;
     private List<IPlugin> plugins;
-  private Log log = LogFactory.getLog(PluginManagerTest.class);
 }
