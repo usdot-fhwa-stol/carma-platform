@@ -19,12 +19,15 @@ task wrapper(type: Wrapper) {
 }
 
 buildscript {
-  apply from: "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
+  apply from: urlCache.get("https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle")
 }
 
 apply plugin: 'catkin'
 
 allprojects {
+    plugins {
+        id 'com.kageiit.url-cache' version '1.0.0'
+    }
     /*
       A github url provides a good standard unique name for your project
       Example below, but you may wish to switch to your own unique url.
@@ -83,6 +86,20 @@ subprojects {
      */
     /* apply plugin: "eclipse" */
     /* apply plugin: "idea" */
+    ext.gitVersioner = [
+        defaultBranch           : "develop",  // default "master"
+        snapshotEnabled         : false,      // default false, the "-SNAPSHOT" postfix
+        localChangesCountEnabled: false,       // default false, the (<commitCount>) before -SNAPSHOT
+        shortName: { gitVersion ->            // optional closure to build a short name
+          // allows you to add your own short name logic
+          // All properties from gitVersion are available
+          // can be used for CI `System.getenv("BUILD_NUMBER")`
+
+          // i.e. use short sha1
+          return gitVersion.branchName.split("/").get(0).subString(0, 8)
+        }
+    ]
+    apply from: urlCache.get('https://raw.githubusercontent.com/passsy/gradle-GitVersioner/master/git-versioner.gradle')
 }
 
 /*
