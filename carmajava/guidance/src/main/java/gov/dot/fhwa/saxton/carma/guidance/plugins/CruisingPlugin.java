@@ -240,6 +240,12 @@ public class CruisingPlugin extends AbstractPlugin {
   protected void planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
     ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
 
+    log.info(String.format("Planning maneuver {start=%.02f,end=%.02f,startSpeed=%.02f,endSpeed=%.02f}",
+	startDist,
+	endDist,
+	startSpeed,
+	endSpeed));
+
     double maneuverEnd = startDist;
     if (startSpeed < endSpeed) {
       // Generate a speed-up maneuver
@@ -327,10 +333,12 @@ public class CruisingPlugin extends AbstractPlugin {
 
       if (trajLimits.isEmpty()) {
         // Hold the initial speed for the whole trajectory
+	log.info("Planning new trajectory with no speed limits");
         planManeuvers(traj, traj.getStartLocation(), traj.getEndLocation(), expectedEntrySpeed, expectedEntrySpeed);
       } else {
         // Take the first speed limit
         SpeedLimit first = trajLimits.get(0);
+	log.info("Planning trajectory with initial speed limit: " + first.speedLimit);
         planManeuvers(traj, traj.getStartLocation(), first.location, expectedEntrySpeed, first.speedLimit);
 
         // Take any intermediary speed limits
@@ -339,6 +347,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
         // Usage of DISTANCE_EPSILON here is a bit of a hack
         for (SpeedLimit limit : getSpeedLimits(speedLimits, first.location + DISTANCE_EPSILON, traj.getEndLocation())) {
+	  log.info("Planning trajectory with speed limit: " + limit.speedLimit);
           planManeuvers(traj, prevDist, limit.location, prevSpeed, limit.speedLimit);
           prevDist = limit.location;
           prevSpeed = limit.speedLimit;
@@ -346,6 +355,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
         // Hold the last speed limit until the end of the trajectory
         SpeedLimit last = trajLimits.get(trajLimits.size() - 1);
+	  log.info("Planning trajectory with last speed limit: " + last.speedLimit);
         planManeuvers(traj, last.location, traj.getEndLocation(), last.speedLimit, last.speedLimit);
       }
     }
