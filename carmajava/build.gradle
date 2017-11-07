@@ -106,12 +106,26 @@ ext.gitVersioner = [
     snapshotEnabled         : true,
     localChangesCountEnabled: true,
     shortName: { gitVersion ->
-      // Get the branch name, after the / if it exists  
-      String[] branchName = gitVersion.branchName.split("/") 
-      if (branchName.size() > 1) {
-          return branchName[1]
+      // Get the branch name, after the / if it exists
+      String verString = "";
+      String[] branchNameParts = gitVersion.branchName.split("/") 
+      String branchName = "";
+      if (branchNameParts.size() > 1) {
+          branchName = branchNameParts[1]
       } else {
-          return branchName[0]
+          branchName = branchNameParts[0]
       }
+
+      verString += branchName
+      if (gitVersion.branchVersion > 0 ) {
+          verString += gitVersion.branchVersion
+      }
+
+      if (gitVersion.localChanges > 0) {
+          verString += "-SNAPSHOT"
+          verString += "(" + gitVersion.localChanges + ")"
+      }
+
+      return verString
     }
 ]

@@ -57,14 +57,11 @@ dependencies {
 }
 
 task modifyCarmaVersionFile << {
-    println "Updating build number to: " + gitVersion. version
-    ant.replaceregexp(match:"7777777", replace: gitVersion.version.toString()) {
-        file("src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java")
-    }
+    //def versionFile = "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java"
+    println "Updating build number to: " + gitVersion.version
+    ant.replaceregexp(file: "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java", match: "(.*build\\W*=\\W*).*(;.*)", replace: ("\\1" +gitVersion.version + "\\2"), byline: true)
     println "Updating build suffix to: " + gitVersion.shortBranch
-    ant.replaceregexp(match:"DEV", replace: gitVersion.shortBranch) {
-        file("src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java")
-    }
+    ant.replaceregexp(file: "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java", match: "(.*suffix\\W*=\\W*\").*(\";.*)", replace: ("\\1" + gitVersion.shortBranch + "\\2"), byline: true)
 }
 
 compileJava {
