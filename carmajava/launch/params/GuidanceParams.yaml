@@ -90,3 +90,6 @@ trajectory_period: 15.0
 # Units: seconds
 vehicle_response_lag: 1.4
 
+# Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
+# Units: milliseconds
+shutdown_wait_time: 5000
