@@ -140,26 +140,19 @@ public class RouteWorker {
         log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.SHUTDOWN, "Route: The end of the active route has been reached", null );
         log.info("Route has been completed");
-        routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
-        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.FATAL, "Route: The host vehicle has left the route vicinity", null );
         log.info("The vehicle has left the active route");
-        routeManager.shutdown();
         break;
       case SYSTEM_FAILURE:
         log.info("Received a system failure message and is shutting down");
-        routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
         log.info("Received a system not ready message and is switching to pausing the active route");
         break;
       case ROUTE_ABORTED:
-        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.SHUTDOWN, "Route: The active route was aborted", null );
         log.info("Route has been aborted");
-        routeManager.shutdown();
         break;
       case ROUTE_STARTED:
         log.info("Route has been started");
