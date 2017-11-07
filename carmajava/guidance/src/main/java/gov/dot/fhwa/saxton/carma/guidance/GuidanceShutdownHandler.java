@@ -56,14 +56,14 @@ public class GuidanceShutdownHandler extends GuidanceComponent {
     routeStateSub.registerOnMessageCallback(new OnMessageCallback<RouteState>(){
       @Override
       public void onMessage(RouteState msg) {
-        if (msg.getState() == RouteState.LEFT_ROUTE) {
-          log.info("Recieved route state LEFT_ROUTE, beginning FATAL shutdown procedures");
+        if (msg.getEvent() == RouteState.LEFT_ROUTE) {
+          log.info("SHUTDOWN", "Recieved route state LEFT_ROUTE, beginning FATAL shutdown procedures");
           SystemAlert alert = systemAlertPub.newMessage();
           alert.setDescription("Guidance detected LEFT_ROUTE state!");
           alert.setType(SystemAlert.FATAL);
           systemAlertPub.publish(alert);
-        } else if (msg.getState() == RouteState.ROUTE_COMPLETED || msg.getState() == RouteState.ROUTE_ABORTED) {
-          log.info("Recieved route state ROUTE_COMPLETED or ROUTE_ABORTED, beginning normal shutdown procedures");
+        } else if (msg.getEvent() == RouteState.ROUTE_COMPLETED || msg.getEvent() == RouteState.ROUTE_ABORTED) {
+          log.info("SHUTDOWN", "Recieved route state ROUTE_COMPLETED or ROUTE_ABORTED, beginning normal shutdown procedures");
           SystemAlert alert = systemAlertPub.newMessage();
           alert.setDescription("Guidance detected ROUTE_COMPLETED or ROUTE_ABORTED state.");
           alert.setType(SystemAlert.SHUTDOWN);
