@@ -291,7 +291,6 @@ public class Tracking extends GuidanceComponent {
 		
 		if(drivers_ready) {
 			try {
-				log.info("BSM", "Guidance.Tracking is publishing bsm...");
 				bsmPublisher.publish(composeBSMData());
 			} catch (Exception e) {
 				handleException(e);
@@ -335,7 +334,7 @@ public class Tracking extends GuidanceComponent {
 					
 					@Override
 					public void onSuccess(GetTransformResponse msg) {
-						log.info("BSM", "Get vehicle_to_earth_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+						//log.debug("BSM", "Get vehicle_to_earth_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
 						if(msg.getErrorStatus() == 0) {
 							vehicleToEarth = Transform.fromTransformMessage(msg.getTransform().getTransform());
 							vehicle_to_earth_transform_ready = true;
@@ -457,7 +456,7 @@ public class Tracking extends GuidanceComponent {
 					
 					@Override
 					public void onSuccess(GetTransformResponse msg) {
-						log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+						//log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
 						if(msg.getErrorStatus() == 0) {
 							baseToMap = Transform.fromTransformMessage(msg.getTransform().getTransform());
 							base_to_map_transform_ready = true;

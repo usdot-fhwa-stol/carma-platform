@@ -82,13 +82,11 @@ public class BSMFactory {
 	 * @param node ConnectedNode helps to set message header
 	 * @return -1 means encode failed; 0 means encode is successful
 	 */
-	public static int encode(BSM plain_msg, ByteArray binary_msg, SaxtonLogger log, ConnectedNode node) {
-		log.info("BSM", "Start to encode bsm message.");
+	public static int encode(BSM plain_msg, ByteArray binary_msg, ConnectedNode node) {
 		HelperBSM helper_bsm = new HelperBSM(plain_msg.getCoreData());
 		int[] brakes_status = {
 				helper_bsm.getWheel_brakes(), helper_bsm.getTraction(), helper_bsm.getAbs(),
 				helper_bsm.getScs(), helper_bsm.getBba(), helper_bsm.getAux()};
-		log.info("BSM", "Calling native encoding method.");
 		byte[] encode_msg = encode_BSM(
 				helper_bsm.getMsgCnt(), helper_bsm.getId(), helper_bsm.getSecMark(),
 				helper_bsm.getLat(), helper_bsm.getLon(), helper_bsm.getElev(),
@@ -97,10 +95,7 @@ public class BSMFactory {
 				brakes_status, helper_bsm.getVehicle_size()
 				);
 		if(encode_msg == null) {
-			log.warn("BSM", "Cannot encode the outgoing binary BSM message.");
 			return -1;
-		} else {
-			log.info("BSM", "Encode the outgoing binary BSM message successfully.");
 		}
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
 		binary_msg.setContent(buffer);
@@ -117,12 +112,10 @@ public class BSMFactory {
 	 *
 	 * @param encoded_msg The encoded BSM message as a binary array
 	 * @param msg_object The empty BSM object
-	 * @param log Logging any necessary messages
 	 * @param node ConnectedNode helps to set message header
 	 * @return -1 means decode failed; 0 means decode is successful
 	 */
-	public static int decode(ByteArray encoded_msg, BSM msg_object, SaxtonLogger log, ConnectedNode node) {
-		log.info("BSM", "Start to decode bsm message.");
+	public static int decode(ByteArray encoded_msg, BSM msg_object, ConnectedNode node) {
 		ChannelBuffer channelBuffer = encoded_msg.getContent();
 		byte[] encoded_bsm = new byte[channelBuffer.capacity()];
 		for(int i = 0; i < channelBuffer.capacity(); i++) {
@@ -139,7 +132,6 @@ public class BSMFactory {
 				brakeStatus, msg_object.getCoreData().getSize()
 				);
 		if(result == -1) {
-			log.warn("BSM", "Cannot decode the incoming binary BSM message.");
 			return result;
 		}
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, temp_ID);

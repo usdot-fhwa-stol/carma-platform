@@ -210,13 +210,12 @@ public class MessageConsumer extends SaxtonBaseNode {
 				@Override
 				public void onNewMessage(BSM bsm) {
 					try {
-						log.info("BSM", "BSM Received. Calling factory to encode data...");
 						ByteArray byteArray = outboundPub.newMessage();
-						int result = BSMFactory.encode(bsm, byteArray, log, connectedNode_);
+						int result = BSMFactory.encode(bsm, byteArray, connectedNode_);
 						if(result == -1) {
 							log.warn("BSM", "Outgoing BSM cannot be encoded. The message seq is: " + bsm.getHeader().getSeq());
 						} else {
-							log.info("BSM", "Outgoing BSM is encoded and publishing...");
+							log.info("BSM", "Outgoing BSM is encoded and is publishing...");
 							outboundPub.publish(byteArray);
 						}
 					} catch (Exception e) {
@@ -232,11 +231,11 @@ public class MessageConsumer extends SaxtonBaseNode {
 				public void onNewMessage(ByteArray msg) {
 					try {
 						BSM decodedBSM = bsmPub.newMessage();
-						int result = BSMFactory.decode(msg, decodedBSM, log, connectedNode_);
+						int result = BSMFactory.decode(msg, decodedBSM, connectedNode_);
 						if(result == -1) {
 							log.warn("BSM", "Incoming BSM cannot be decoded.");
 						} else {
-							log.info("BSM", "Incoming BSM is decoded and publishing...");
+							log.info("BSM", "Incoming BSM is decoded and is publishing...");
 							bsmPub.publish(decodedBSM);
 						}
 					} catch (Exception e) {
