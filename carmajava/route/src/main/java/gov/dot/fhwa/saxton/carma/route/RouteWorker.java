@@ -96,9 +96,14 @@ public class RouteWorker {
     this.routeManager = manager;
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     // Load route files from database
+    log.info("RouteDatabasePath: " + database_path);
     File folder = new File(database_path);
     File[] listOfFiles = folder.listFiles();
-
+    log.info("FolderPathInJava: " + folder.getAbsolutePath());
+    if (listOfFiles == null || listOfFiles.length == 0) { // Check if route files exist
+      log.warn("No route files found at directory: " + folder.getAbsolutePath());
+      return;
+    }
     for (int i = 0; i < listOfFiles.length; i++) {
       if (listOfFiles[i].isFile()) {
         FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath(), log);

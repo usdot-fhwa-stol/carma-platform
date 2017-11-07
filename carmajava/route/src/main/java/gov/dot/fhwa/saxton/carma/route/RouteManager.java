@@ -92,7 +92,16 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
-    routeWorker = new RouteWorker(this, connectedNode.getLog(), params.getString("~default_database_path"));
+    String packagePath = params.getString("package_path");
+    String databasePath = params.getString("~default_database_path");
+    String finalDatabasePath;
+    if (databasePath.charAt(0) == '/') { // Check if path should be treated as absolute
+      finalDatabasePath = databasePath;
+    } else {
+      finalDatabasePath = packagePath + "/" + databasePath;
+    }
+
+    routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath);
 
     // Subscribers
     //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages

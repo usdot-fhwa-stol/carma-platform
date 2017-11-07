@@ -32,12 +32,13 @@
 <launch>
   <!-- Constants -->
   <!-- Directory of Parameter Files -->
-  <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
+  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
   <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
-  <arg name="URDF_FILE" default="$(find carma)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
+  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
-  <arg name="DATA_DIR" default="$(find carma)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
+  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
   <!-- Simulation Usage -->
   <arg name="mock_can"            default="false" doc="True if using a simulated can driver"/>
   <arg name="mock_dsrc"          default="false" doc="True if using a simulated dsrc driver"/>
@@ -53,9 +54,6 @@
   <arg name="pinpoint_data_file"       default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
   <arg name="radar_data_file"          default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
   <arg name="cellular_data_file"       default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
-
-  <!-- RouteFiles -->
-  <arg name="ROUTES_DIR" default="$(find carma)/route/src/test/resources/routefiles/" doc="Path to the directory containing example route files"/>
 
   <!-- Debug -->
   <!-- JVM Debug arguments -->
@@ -89,6 +87,9 @@
 
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
+
+    <!-- Set package path for use with relative file paths -->
+    <param name="package_path" value="$(arg CARMA_DIR)"/>
 
     <!-- Load Vehicle Characteristics -->
     <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
@@ -264,8 +265,9 @@
         <env if="$(arg debug_route)" name="ROUTE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
         <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
-        <param name="default_database_path" type="string" value="$(arg ROUTES_DIR)"/>
 
+        <remap from="package_path"
+               to="/$(arg TOP_NS)/package_path"/>
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="tim"
