@@ -48,7 +48,7 @@ public class GuidanceShutdownHandler extends GuidanceComponent {
 
   @Override
   public void onGuidanceStartup() {
-    shutdownDelayMs = node.getParameterTree().getInteger("shutdown_wait_time", 5000);
+    shutdownDelayMs = node.getParameterTree().getInteger("~shutdown_wait_time", 5000);
 
     systemAlertPub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
 
