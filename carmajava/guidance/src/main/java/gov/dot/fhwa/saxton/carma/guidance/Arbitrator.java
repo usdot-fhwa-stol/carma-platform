@@ -224,7 +224,8 @@ public class Arbitrator extends GuidanceComponent {
   public void loop() {
     if (needsReplan.get()) {
       planningWindow *= planningWindowGrowthFactor;
-      planTrajectory(Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation()));
+      currentTrajectory = planTrajectory(Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation()));
+      trajectoryExecutor.runTrajectory(currentTrajectory);
       needsReplan.set(false);
     }
 
