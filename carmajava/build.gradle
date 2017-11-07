@@ -25,9 +25,6 @@ buildscript {
 apply plugin: 'catkin'
 
 allprojects {
-    plugins {
-        id 'com.kageiit.url-cache' version '1.0.0'
-    }
     /*
       A github url provides a good standard unique name for your project
       Example below, but you may wish to switch to your own unique url.
@@ -101,3 +98,20 @@ subprojects {
   in CMakeLists.txt
 */
 defaultTasks 'tasks'
+
+ext.gitVersioner = [
+    defaultBranch           : "develop",
+    stableBranches          : ["master"],
+    yearFactor              : 1000,
+    snapshotEnabled         : true,
+    localChangesCountEnabled: true,
+    shortName: { gitVersion ->
+      // Get the branch name, after the / if it exists  
+      String[] branchName = gitVersion.branchName.split("/") 
+      if (branchName.size() > 1) {
+          return branchName[1]
+      } else {
+          return branchName[0]
+      }
+    }
+]
