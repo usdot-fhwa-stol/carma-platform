@@ -3,4 +3,4 @@
 
 # String: The path to the database containing any route files for use in testing and demonstration.
 # Still trying to determine how to make this work with relative paths
-default_database_path: '/home/mcconnelms/to13_ws/src/CarmaPlatform/carmajava/route/src/main/test/resources/routefiles'
+default_database_path: 'main/test/resources/routefiles'

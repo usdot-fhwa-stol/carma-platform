@@ -54,9 +54,6 @@
   <arg name="radar_data_file"          default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
   <arg name="cellular_data_file"       default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
 
-  <!-- RouteFiles -->
-  <arg name="ROUTES_DIR" default="$(find carma)/route/src/test/resources/routefiles/" doc="Path to the directory containing example route files"/>
-
   <!-- Debug -->
   <!-- JVM Debug arguments -->
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
@@ -315,7 +312,6 @@
         <env if="$(arg debug_route)" name="ROUTE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
         <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
-        <param name="default_database_path" type="string" value="$(arg ROUTES_DIR)"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
@@ -380,7 +376,7 @@
 
       <!-- SRX CAN Driver Node -->
       <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
-        <arg name="srx_can_can_device" value="can0" />
+        <arg name="srx_can_can_device" value="can2" />
       </include>
       <!-- Simulated CAN Driver Node -->
       <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can"
@@ -410,7 +406,7 @@
 
       <!-- SRX Radar Driver Node -->
       <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
-        <arg name="srx_objects_can_device" value="ics0can0"/>
+        <arg name="srx_objects_can_device" value="can3"/>
       </include>
       <!-- Simulated Radar Driver Node -->
       <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
