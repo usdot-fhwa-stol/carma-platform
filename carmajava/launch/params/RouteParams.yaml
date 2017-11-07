@@ -3,4 +3,5 @@
 
 # String: The path to the database containing any route files for use in testing and demonstration.
 # Still trying to determine how to make this work with relative paths
-default_database_path: 'main/test/resources/routefiles'
+# If the path starts with a "/" then it is treated as relative to the package path otherwise it should be absolute
+default_database_path: 'route/src/test/resources/routefiles/'
