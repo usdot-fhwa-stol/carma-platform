@@ -48,7 +48,7 @@ public abstract class GuidanceComponent implements Runnable {
         this.state = state;
         this.node = node;
         this.pubSubService = pubSubService;
-        this.log = LoggerManager.getLogger();
+        this.log = LoggerManager.getLogger(this.getClass().getCanonicalName());
     }
 
     /**
