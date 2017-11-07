@@ -87,6 +87,12 @@ public class GuidanceShutdownHandler extends GuidanceComponent {
   public void onGuidanceShutdown() {
     log.info("SHUTDOWN", "Guidance shutdown handler waiting" + shutdownDelayMs + "ms for guidance thread shutdown...");
 
+    log.info("Publishing system_alert shutdown to ensure whole system shutdown");
+    SystemAlert alert = systemAlertPub.newMessage();
+    alert.setDescription("GuidanceShutdownHandler shutting down Guidance and CARMA platform");
+    alert.setType(SystemAlert.SHUTDOWN);
+    systemAlertPub.publish(alert);
+
     try {
       Thread.sleep(5000);
     } catch (InterruptedException e) {
