@@ -51,9 +51,9 @@ public class HelperBSM {
 	protected static final int YAWRATE_UNAVAILABLE = 0;
 	protected static final int YAWRATE_MAX = 32767;
 	protected static final int YAWRATE_MIN = -32767;
-	protected static final int BRAKES_STATUS_UNAVAILABLE = 16;
-	protected static final int BRAKES_NOT_APPLIED = 0;
-	protected static final int BRAKES_APPLIED = 15;
+	protected static final int BRAKES_STATUS_UNAVAILABLE = 0x10;
+	protected static final int BRAKES_NOT_APPLIED = 0x0;
+	protected static final int BRAKES_APPLIED = 0x78;
 	protected static final int VEHICLE_WIDTH_MAX = 1023;
 	protected static final int VEHICLE_LENGTH_MAX = 4095;
 	protected static final int VEHICLE_SIZE_UNAVAILABLE = 0;
@@ -270,7 +270,7 @@ public class HelperBSM {
 	}
 
 	protected void setWheel_brakes(byte wheel_brakes_input) {
-		if(wheel_brakes_input == BRAKES_APPLIED) {
+		if(wheel_brakes_input == (BRAKES_APPLIED >> 3)) {
 			this.wheel_brakes = BRAKES_APPLIED;
 		} else if(wheel_brakes_input == BRAKES_NOT_APPLIED) {
 			this.wheel_brakes = BRAKES_NOT_APPLIED;
