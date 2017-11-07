@@ -358,8 +358,8 @@ public class RouteWorker {
     }
 
     // Update downtrack distance
-    downtrackDistance = activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment
-      .downTrackDistance(hostVehicleLocation);
+    downtrackDistance = Math.max(0.0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment
+      .downTrackDistance(hostVehicleLocation));
 
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);

@@ -27,7 +27,7 @@ trajectory_planning_max_attempts: 3
 
 # Double: The initial size of the trajectory planning window for the Arbitrator
 # Units: m
-initial_planning_window: 10.0
+initial_planning_window: 50.0
 
 # Double: The scaling factor which will be multiplied by the current planning window in the event of
 # trajectory success

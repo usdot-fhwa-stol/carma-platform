@@ -18,6 +18,8 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import java.util.List;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import java.util.ArrayList;
 
 /**
@@ -25,6 +27,7 @@ import java.util.ArrayList;
  * the validity and viability of a fully or partially planned Trajectory.
  */
 public class TrajectoryValidator {
+  protected ILogger log = LoggerManager.getLogger();
   protected List<TrajectoryValidationConstraint> constraints = new ArrayList<>();
 
   /**
@@ -50,7 +53,28 @@ public class TrajectoryValidator {
     }
 
     for (TrajectoryValidationConstraint c : constraints) {
-      valid = valid & c.getResult().getSuccess();
+      TrajectoryValidationResult result = c.getResult();
+      valid = valid & result.getSuccess();
+      if (!result.getSuccess()) {
+        // Log our failure state, including as much detail on the failure as possible
+        log.warn(String.format("Trajectory from [%.02f, %.02f) failed validation on constraint: %s for reason: %s!",
+        traj.getStartLocation(),
+        traj.getEndLocation(),
+        c.getClass().getSimpleName(),
+        result.getError().getErrorDescriptor()));
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("{");
+        for (IManeuver m : result.getError().getOffendingManeuvers()) {
+          builder.append(String.format("%s@[%.02f, %.02f),",
+          m.getClass().getSimpleName(),
+          m.getStartDistance(),
+          m.getEndDistance()));
+        }
+        builder.setCharAt(builder.length() - 1, '}');
+
+        log.warn("Offending maneuvers: " + builder.toString());
+      }
     }
 
     return valid;

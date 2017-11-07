@@ -78,7 +78,9 @@ public class TrajectoryExecutor extends GuidanceComponent {
             @Override
             public void onMessage(RouteState msg) {
                 log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
-                trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
+                if (state.get() == GuidanceState.ENGAGED) {
+                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
+                }
             }
         });
 
@@ -199,7 +201,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
         log.info("TrajectoryExecutor received new trajectory!");
         int idx = 1;
         for (IManeuver m : traj.getManeuvers()) {
-            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type" + (m instanceof LongitudinalManeuver ? "LONGITUDINAL" : "LATERAL"));
+            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + (m instanceof LongitudinalManeuver ? "LONGITUDINAL" : "LATERAL"));
             if (m instanceof LongitudinalManeuver) {
                 log.info("Speeds from " + m.getStartSpeed() + " to " + m.getTargetSpeed());
             }
