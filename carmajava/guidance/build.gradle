@@ -37,6 +37,21 @@ repositories {
     jcenter()
 }
 
+ext.gitVersioner = [
+    defaultBranch           : "develop",  // default "master"
+    snapshotEnabled         : false,      // default false, the "-SNAPSHOT" postfix
+    localChangesCountEnabled: false,       // default false, the (<commitCount>) before -SNAPSHOT
+    shortName: { gitVersion ->            // optional closure to build a short name
+      // allows you to add your own short name logic
+      // All properties from gitVersion are available
+      // can be used for CI `System.getenv("BUILD_NUMBER")`
+
+      // i.e. use short sha1
+      return gitVersion.branchName.split("/")[0].subString(0, 8)
+    }
+]
+apply from: 'https://raw.githubusercontent.com/passsy/gradle-GitVersioner/master/git-versioner.gradle'
+
 dependencies {
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_core:rosjava_geometry:0.3.5'
