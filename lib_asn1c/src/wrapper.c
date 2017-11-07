@@ -172,7 +172,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_decode_
 		jmethodID mid_setOrientation = (*env) -> GetMethodID(env, accuracy_class, "setOrientation", "(D)V");
 		jfloat major = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor * 0.05;
 		jfloat minor = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor * 0.05;
-		jdouble orientation = message -> value.choice.BasicSafetyMessage.coreData.accuracy.orientation * 0.054932479;
+		jdouble orientation = message -> value.choice.BasicSafetyMessage.coreData.accuracy.orientation * 0.0054932479;
 		(*env) -> CallVoidMethod(env, accuracy, mid_setSemiMajor, major);
 		(*env) -> CallVoidMethod(env, accuracy, mid_setSemiMinor, minor);
 		(*env) -> CallVoidMethod(env, accuracy, mid_setOrientation, orientation);
