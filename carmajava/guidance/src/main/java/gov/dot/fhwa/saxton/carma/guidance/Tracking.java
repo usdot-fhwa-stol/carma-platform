@@ -344,7 +344,6 @@ public class Tracking extends GuidanceComponent {
 					
 					@Override
 					public void onFailure(Exception e) {
-						throw new RosRuntimeException(e);
 					}
 				});
 				

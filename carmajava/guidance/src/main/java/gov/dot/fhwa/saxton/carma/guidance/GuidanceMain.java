@@ -62,9 +62,8 @@ public class GuidanceMain extends SaxtonBaseNode {
   // Member Variables
   protected ExecutorService executor;
   protected final int numThreads = 6;
-  protected ComponentVersion version = new ComponentVersion();
+  protected static ComponentVersion version = CarmaVersion.getVersion();
 
-  protected GuidanceExceptionHandler guidanceExceptionHandler;
   protected IPubSubService pubSubService;
   protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse> guidanceEngageService;
 
@@ -75,32 +74,6 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected boolean initialized = false;
   
   
-  
-  /**
-   * =============================================================================================================================
-   * This is the one and only place where system level version ID information is stored.  The rest of the system can get the info
-   * from here by using the get_system_version ROS service call.  Every release that external stakeholders will see (preferably
-   * every build) must have a unique ID (combination of major/intermediate/minor/build).
-   * =============================================================================================================================
-   */
-  public GuidanceMain() {
-	  version.setName("Carma Platform");
-	  version.setMajorRevision(2);
-	  //if any one of the below items is not explicitly set it will not be displayed in the revision string.
-	  version.setIntermediateRevision(0);
-	  version.setMinorRevision(0);
-
-      //if we can implement automated version assignments, uncomment this line and have the build script assign this value
-	  //version.setBuild(0);
-
-      //may want to add an explanatory tag to the end of the ID string to make test builds or one-offs more obvious
-      //For now, this should always be DEV for an in-work release, and an empty string for a formal release to the customer
-	  version.setSuffix("DEV");
-  }
-  
-  
-  
-
   @Override
   public GraphName getDefaultNodeName() {
     return GraphName.of("guidance_main");
@@ -130,7 +103,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   /**
    * Initialize the PubSubManager and setup it's message queue.
    */
-  private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidance) {
+  private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidanceExceptionHandler) {
     ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node,
         guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
@@ -158,7 +131,6 @@ public class GuidanceMain extends SaxtonBaseNode {
     log.info("//////////");
 
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state);
-    this.exceptionHandler = guidanceExceptionHandler;
     log.info("Guidance exception handler initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
