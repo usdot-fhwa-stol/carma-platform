@@ -30,7 +30,7 @@ import java.util.List;
  * Performs all the non-ROS functionality of the TrajectoryWorker Guidance component.
  * Handles the execution and management of planned trajectories.
  */
-public class TrajectoryExecutorWorker {
+public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected GuidanceCommands commands;
   protected List<PctCallback> callbacks = new ArrayList<>();
   protected double downtrackDistance = 0.0;
@@ -61,13 +61,15 @@ public class TrajectoryExecutorWorker {
   }
 
   private void execute(IManeuver maneuver) {
-    log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", " + maneuver.getEndDistance() + ")");
+    log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", "
+        + maneuver.getEndDistance() + ")");
     if (maneuver instanceof LongitudinalManeuver) {
       if (longitudinalManeuverThread != null) {
         longitudinalManeuverThread.interrupt();
       }
-
-      longitudinalManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz));
+      ManeuverRunner runner = new ManeuverRunner(maneuver, maneuverTickFrequencyHz);
+      runner.setListener(this);
+      longitudinalManeuverThread = new Thread(runner);
       longitudinalManeuverThread.setName("Longitudinal Maneuver Runner");
       longitudinalManeuverThread.start();
     } else {
@@ -75,7 +77,9 @@ public class TrajectoryExecutorWorker {
         lateralManeuverThread.interrupt();
       }
 
-      lateralManeuverThread = new Thread(new ManeuverRunner(maneuver, maneuverTickFrequencyHz));
+      ManeuverRunner runner = new ManeuverRunner(maneuver, maneuverTickFrequencyHz);
+      runner.setListener(this);
+      lateralManeuverThread = new Thread(runner);
       lateralManeuverThread.setName("Lateral Maneuver Runner");
       lateralManeuverThread.start();
     }
@@ -87,19 +91,40 @@ public class TrajectoryExecutorWorker {
   private void checkAndStartManeuvers() {
     log.debug("TrajectoryExecutorWorker checking if maneuvers need to be started.");
     // Start the maneuvers if they aren't already running
-    if (currentLateralManeuver != null 
-    && downtrackDistance >= currentLateralManeuver.getStartDistance() 
-    && !lateralManeuverThread.isAlive()) {
+    if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getStartDistance()) {
       log.debug("TrajectoryExecutorWorker starting lateral maneuver");
       execute(currentLateralManeuver);
     }
 
-    if (currentLongitudinalManeuver != null 
-    && downtrackDistance >= currentLongitudinalManeuver.getStartDistance() 
-    && !longitudinalManeuverThread.isAlive()) {
+    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()) {
       log.debug("TrajectoryExecutorWorker starting longitudinal maneuver");
       execute(currentLongitudinalManeuver);
     }
+  }
+
+  private void checkAndStartNextLateralManeuver() {
+    if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getEndDistance()) {
+      lateralManeuverThread.interrupt();
+      currentLateralManeuver = currentTrajectory.getManeuverAt(currentLateralManeuver.getEndDistance(),
+          ManeuverType.LATERAL);
+
+      if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getStartDistance()) {
+        execute(currentLateralManeuver);
+      }
+    }
+  }
+
+  private void checkAndStartNextLongitudinalManeuver() {
+    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndDistance()) {
+      longitudinalManeuverThread.interrupt();
+      currentLongitudinalManeuver = currentTrajectory.getManeuverAt(currentLongitudinalManeuver.getEndDistance(),
+          ManeuverType.LONGITUDINAL);
+
+      if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()) {
+        execute(currentLongitudinalManeuver);
+      }
+    }
+
   }
 
   /**
@@ -127,26 +152,10 @@ public class TrajectoryExecutorWorker {
       }
     }
 
+    checkAndStartNextLongitudinalManeuver();
+    checkAndStartNextLateralManeuver();
+
     // If we've finished executing a maneuver, move onto the next one
-    if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getEndDistance()) {
-      lateralManeuverThread.interrupt();
-      currentLateralManeuver = currentTrajectory.getManeuverAt(currentLateralManeuver.getEndDistance(), ManeuverType.LATERAL);
-
-      if (currentLateralManeuver != null 
-      && downtrackDistance >= currentLateralManeuver.getStartDistance() ) {
-        execute(currentLateralManeuver);
-      }
-    }
-    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndDistance()) {
-      longitudinalManeuverThread.interrupt();
-      currentLongitudinalManeuver = currentTrajectory.getManeuverAt(currentLongitudinalManeuver.getEndDistance(), ManeuverType.LONGITUDINAL);
-
-      if (currentLongitudinalManeuver != null 
-      && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()) {
-        execute(currentLongitudinalManeuver);
-      }
-    }
-
     // See if we need to swap to our queued trajectory
     if (currentLateralManeuver == null && currentLongitudinalManeuver == null) {
       swapTrajectories();
@@ -254,9 +263,9 @@ public class TrajectoryExecutorWorker {
       log.info("TrajectoryExecutorWorker successfully swapped Trajectories");
     }
 
-     for (PctCallback callback : callbacks) {
-       callback.called = false;
-     }
+    for (PctCallback callback : callbacks) {
+      callback.called = false;
+    }
   }
 
   /**
@@ -277,5 +286,17 @@ public class TrajectoryExecutorWorker {
       // Hold onto this trajectory for double buffering, flip to it when we finish trajectory
       nextTrajectory = traj;
     }
+  }
+
+  @Override
+  public void onLateralManeuverFinished() {
+    log.warn("Caught lateral maneuver running after its endpoint, switching maneuvers");
+    checkAndStartNextLateralManeuver();
+  }
+
+  @Override
+  public void onLongitudinalManeuverFinished() {
+    log.warn("Caught longitudinal maneuver running after its endpoint, switching maneuvers");
+    checkAndStartNextLongitudinalManeuver();
   }
 }
