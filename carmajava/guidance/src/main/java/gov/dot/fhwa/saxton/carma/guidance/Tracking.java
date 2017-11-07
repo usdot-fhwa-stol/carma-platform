@@ -61,10 +61,11 @@ public class Tracking extends GuidanceComponent {
 	
 	protected static final int SECONDS_TO_MILLISECONDS = 1000;
 	
-	// TODO: Need to be generalized when more data are available
-	protected static final byte BRAKES_STATUS_UNAVAILABLE = 16;
-	protected static final byte BRAKES_NOT_APPLIED = 0;
-	protected static final byte BRAKES_APPLIED = 15;
+	// TODO: brake information on each individual wheel is not available
+	// When brake is applied at any angle, we set brake status to be 0xF
+	protected static final byte BRAKES_STATUS_UNAVAILABLE = 0x10;
+	protected static final byte BRAKES_NOT_APPLIED = 0x0;
+	protected static final byte BRAKES_APPLIED = 0xF;
 
 	// Member variables
 	protected final long sleepDurationMillis = 100; // Frequency for J2735, 10Hz
@@ -139,7 +140,10 @@ public class Tracking extends GuidanceComponent {
 			navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
 				@Override
 				public void onMessage(NavSatFix msg) {
-					nav_sat_fix_ready = true;
+					if(!nav_sat_fix_ready) {
+						nav_sat_fix_ready = true;
+						log.info("BSM", "nav_sat_fix subscriber is ready");
+					}
 				}
 			});
 			
@@ -147,7 +151,10 @@ public class Tracking extends GuidanceComponent {
 			headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
 				@Override
 				public void onMessage(HeadingStamped msg) {
-					heading_ready = true;
+					if(!heading_ready) {
+						heading_ready = true;
+						log.info("BSM", "heading subscriber is ready");
+					}
 				}
 			});
 			
@@ -155,14 +162,20 @@ public class Tracking extends GuidanceComponent {
 			velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
 				@Override
 				public void onMessage(TwistStamped msg) {
-					velocity_ready = true;
+					if(!velocity_ready) {
+						velocity_ready = true;
+						log.info("BSM", "velocity subscriber is ready");
+					}
 				}
 			});
 			
 			accelerationSubscriber.registerOnMessageCallback(new OnMessageCallback<AccelStamped>() {
 				@Override
 				public void onMessage(AccelStamped msg) {
-					acceleration_ready = true;
+					if(!acceleration_ready) {
+						acceleration_ready = true;
+						log.info("BSM", "acceleration subscriber is ready");
+					}
 				}
 			});
 			
@@ -231,21 +244,30 @@ public class Tracking extends GuidanceComponent {
 			steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
 				@Override
 				public void onMessage(Float64 msg) {
-					steer_wheel_ready = true;
+					if(!steer_wheel_ready) {
+						steer_wheel_ready = true;
+						log.info("BSM", "steer_wheel subscriber is ready");
+					}
 				}
 			});
 			
 			brakeSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
 				@Override
 				public void onMessage(Float64 msg) {
-					brake_ready = true;
+					if(!brake_ready) {
+						brake_ready = true;
+						log.info("BSM", "brake subscriber is ready");
+					}
 				}
 			});
 			
 			transmissionSubscriber.registerOnMessageCallback(new OnMessageCallback<TransmissionState>() {
 				@Override
 				public void onMessage(TransmissionState msg) {
-					transmission_ready = true;
+					if(!transmission_ready) {
+						transmission_ready = true;
+						log.info("BSM", "transmission subscriber is ready");
+					}
 				}
 			});
 			
@@ -269,13 +291,6 @@ public class Tracking extends GuidanceComponent {
 		
 		if(drivers_ready) {
 			try {
-				log.info("BSM", "nav_sat_fix subscribers status: " + nav_sat_fix_ready);
-				log.info("BSM", "steer_wheel subscribers status: " + steer_wheel_ready);
-				log.info("BSM", "heading subscribers status: " + heading_ready);
-				log.info("BSM", "velocity subscribers status: " + velocity_ready);
-				log.info("BSM", "brake subscribers status: " + brake_ready);
-				log.info("BSM", "transmission subscribers status: " + transmission_ready);
-				log.info("BSM", "acceleration subscribers status: " + acceleration_ready);
 				log.info("BSM", "Guidance.Tracking is publishing bsm...");
 				bsmPublisher.publish(composeBSMData());
 			} catch (Exception e) {
@@ -296,10 +311,10 @@ public class Tracking extends GuidanceComponent {
 
 			// Set core data
 			BSMCoreData coreData = bsmFrame.getCoreData();
-			coreData.setMsgCount((byte) (msgCount++ % BSMCoreData.MSG_COUNT_MAX));
+			coreData.setMsgCount((byte) ((msgCount++ % BSMCoreData.MSG_COUNT_MAX) + 1));
 
 			// ID is random and changes every 5 minutes
-			if(last_id_changed == 0 || node.getCurrentTime().secs - last_id_changed >= BSMCoreData.ID_TIME_MAX) {
+			if(node.getCurrentTime().secs - last_id_changed >= BSMCoreData.ID_TIME_MAX) {
 				randomIdGenerator.nextBytes(random_id);
 				last_id_changed = node.getCurrentTime().secs;
 			}
@@ -353,25 +368,34 @@ public class Tracking extends GuidanceComponent {
 					}
 				}
 				
-				float semi_major_square = (float) navSatFixSubscriber.getLastMessage().getPositionCovariance()[0];
-				float semi_minor_square = (float) navSatFixSubscriber.getLastMessage().getPositionCovariance()[4];
-				//orientation of semi_major axis
-				//TODO: May need to change for other PinPoints
+				double semi_major_square = navSatFixSubscriber.getLastMessage().getPositionCovariance()[0];
+				double semi_minor_square = navSatFixSubscriber.getLastMessage().getPositionCovariance()[4];
+				// Orientation of semi_major axis
+				// Orientation of accuracy eclipse is fixed to north based on Pinpoint documentations
+				// TODO: May need to change if we use other Pinpoints
 				double orientation = PositionalAccuracy.ACCURACY_ORIENTATION_MIN; 
 				
-				if(semi_major_square >= PositionalAccuracy.ACCURACY_MIN) {
-					if(Math.sqrt(semi_major_square) >= PositionalAccuracy.ACCURACY_MAX) {
+				float semi_major = -1;
+				float semi_minor = -1;
+				if(semi_major_square >= 0) {
+					semi_major = (float) Math.sqrt(semi_major_square);
+				}
+				if(semi_minor_square >= 0) {
+					semi_minor = (float) Math.sqrt(semi_minor_square);
+				}
+				if(semi_major != -1) {
+					if(semi_major >= PositionalAccuracy.ACCURACY_MAX) {
 						coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_MAX);
 					} else {
-						coreData.getAccuracy().setSemiMajor((float) Math.sqrt(semi_major_square));
+						coreData.getAccuracy().setSemiMajor(semi_major);
 					}
 				}
 				
-				if(semi_minor_square >= PositionalAccuracy.ACCURACY_MIN) {
-					if(Math.sqrt(semi_minor_square) >= PositionalAccuracy.ACCURACY_MAX) {
+				if(semi_minor != -1) {
+					if(semi_minor >= PositionalAccuracy.ACCURACY_MAX) {
 						coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_MAX);
 					} else {
-						coreData.getAccuracy().setSemiMinor((float) Math.sqrt(semi_minor_square));
+						coreData.getAccuracy().setSemiMinor(semi_minor);
 					}
 				}
 				
@@ -381,11 +405,15 @@ public class Tracking extends GuidanceComponent {
 			}
 			
 			// Set transmission state
+			// Reserved values are illegal values at this time
 			coreData.getTransmission().setTransmissionState(TransmissionState.UNAVAILABLE);
 			if(transmission_ready) {
-				TransmissionState transmission_state = transmissionSubscriber.getLastMessage();
-				if(transmission_state.getTransmissionState() >= TransmissionState.NEUTRAL && transmission_state.getTransmissionState() < TransmissionState.UNAVAILABLE) {
-					coreData.getTransmission().setTransmissionState(transmission_state.getTransmissionState());
+				byte transmission_state = transmissionSubscriber.getLastMessage().getTransmissionState();
+				if(transmission_state == TransmissionState.NEUTRAL
+						|| transmission_state == TransmissionState.FORWARDGEARS
+						|| transmission_state == TransmissionState.PARK
+						|| transmission_state == TransmissionState.REVERSEGEARS) {
+					coreData.getTransmission().setTransmissionState(transmission_state);
 				}
 			}
 
@@ -405,13 +433,13 @@ public class Tracking extends GuidanceComponent {
 				}
 			}
 			
-			coreData.setAngle(BSMCoreData.STEEL_WHEEL_ANGLE_UNAVAILABLE);
+			coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE);
 			if(steer_wheel_ready) {
 				float angle = (float) steeringWheelSubscriber.getLastMessage().getData();	
-				if(angle <= BSMCoreData.STEEL_WHEEL_ANGLE_MIN) {
-					coreData.setAngle(BSMCoreData.STEEL_WHEEL_ANGLE_MIN);
-				} else if(angle >= BSMCoreData.STEEL_WHEEL_ANGLE_MAX) {
-					coreData.setAngle(BSMCoreData.STEEL_WHEEL_ANGLE_MAX);
+				if(angle <= BSMCoreData.STEER_WHEEL_ANGLE_MIN) {
+					coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_MIN);
+				} else if(angle >= BSMCoreData.STEER_WHEEL_ANGLE_MAX) {
+					coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_MAX);
 				} else {
 					coreData.setAngle(angle);
 				}
@@ -430,7 +458,7 @@ public class Tracking extends GuidanceComponent {
 					
 					@Override
 					public void onSuccess(GetTransformResponse msg) {
-						log.info("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+						log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
 						if(msg.getErrorStatus() == 0) {
 							baseToMap = Transform.fromTransformMessage(msg.getTransform().getTransform());
 							base_to_map_transform_ready = true;
@@ -445,29 +473,29 @@ public class Tracking extends GuidanceComponent {
 				
 				if(base_to_map_transform_ready) {
 					Vector3 after_transform_accel_linear = baseToMap.apply(Vector3.fromVector3Message(accelerationSubscriber.getLastMessage().getAccel().getLinear()));
-					
+					AccelerationSet4Way acceleration = coreData.getAccelSet();
 					if(after_transform_accel_linear.getX() <= AccelerationSet4Way.ACCELERATION_MIN) {
-						coreData.getAccelSet().setLongitudinal(AccelerationSet4Way.ACCELERATION_MIN);
+						acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MIN);
 					} else if(after_transform_accel_linear.getX() >= AccelerationSet4Way.ACCELERATION_MAX) {
-						coreData.getAccelSet().setLongitudinal(AccelerationSet4Way.ACCELERATION_MAX);
+						acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MAX);
 					} else {
-						coreData.getAccelSet().setLongitudinal((float) after_transform_accel_linear.getX());
+						acceleration.setLongitudinal((float) after_transform_accel_linear.getX());
 					}
 					
 					if(after_transform_accel_linear.getY() <= AccelerationSet4Way.ACCELERATION_MIN) {
-						coreData.getAccelSet().setLateral(AccelerationSet4Way.ACCELERATION_MIN);
+						acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MIN);
 					} else if(after_transform_accel_linear.getY() >= AccelerationSet4Way.ACCELERATION_MAX) {
-						coreData.getAccelSet().setLateral(AccelerationSet4Way.ACCELERATION_MAX);
+						acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MAX);
 					} else {
-						coreData.getAccelSet().setLateral((float) after_transform_accel_linear.getY());
+						acceleration.setLateral((float) after_transform_accel_linear.getY());
 					}
 
 					if(after_transform_accel_linear.getZ() <= AccelerationSet4Way.ACCELERATION_VERTICAL_MIN) {
-						coreData.getAccelSet().setLateral(AccelerationSet4Way.ACCELERATION_VERTICAL_MIN);
+						acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MIN);
 					} else if(after_transform_accel_linear.getZ() >= AccelerationSet4Way.ACCELERATION_VERTICAL_MAX) {
-						coreData.getAccelSet().setLateral(AccelerationSet4Way.ACCELERATION_VERTICAL_MAX);
+						acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MAX);
 					} else {
-						coreData.getAccelSet().setLateral((float) after_transform_accel_linear.getZ());
+						acceleration.setVert((float) after_transform_accel_linear.getZ());
 					}
 				}
 				

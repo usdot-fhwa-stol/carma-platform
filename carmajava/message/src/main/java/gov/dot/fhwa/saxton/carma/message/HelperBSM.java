@@ -39,9 +39,9 @@ public class HelperBSM {
 	protected static final int HEADING_UNAVAILABLE = 28800;
 	protected static final int HEADING_MAX = 28799;
 	protected static final int HEADING_MIN = 0;
-	protected static final int STEEL_WHEEL_ANGLE_UNAVAILABLE = 127;
-	protected static final int STEEL_WHEEL_ANGLE_MAX = 126;
-	protected static final int STEEL_WHEEL_ANGLE_MIN = -126;
+	protected static final int STEER_WHEEL_ANGLE_UNAVAILABLE = 127;
+	protected static final int STEER_WHEEL_ANGLE_MAX = 126;
+	protected static final int STEER_WHEEL_ANGLE_MIN = -126;
 	protected static final int ACCELERATION_UNAVAILABLE = 2001;
 	protected static final int ACCELERATION_MAX = 2000;
 	protected static final int ACCELERATION_MIN = -2000;
@@ -69,7 +69,7 @@ public class HelperBSM {
 	private int transmission = TransmissionState.UNAVAILABLE;
 	private int speed = SPEED_UNAVAILABLE;
 	private int heading = HEADING_UNAVAILABLE;
-	private int angle = STEEL_WHEEL_ANGLE_UNAVAILABLE;
+	private int angle = STEER_WHEEL_ANGLE_UNAVAILABLE;
 	private int[] acceleration = {ACCELERATION_UNAVAILABLE, ACCELERATION_UNAVAILABLE, ACCELERATION_VERTICAL_UNAVAILABLE, YAWRATE_UNAVAILABLE};
 	private int wheel_brakes = BRAKES_STATUS_UNAVAILABLE;
 	private int traction = TractionControlStatus.UNAVAILABLE;
@@ -217,14 +217,14 @@ public class HelperBSM {
 	}
 
 	protected void setAngle(float angle_input) {
-		if(angle_input == BSMCoreData.STEEL_WHEEL_ANGLE_UNAVAILABLE) {
+		if(angle_input == BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE) {
 			return;
 		}
 		int integer_angle_input = (int) (angle_input / 1.5);
-		if(integer_angle_input >= STEEL_WHEEL_ANGLE_MAX) {
-			this.angle = STEEL_WHEEL_ANGLE_MAX; 
-		} else if(integer_angle_input <= STEEL_WHEEL_ANGLE_MIN) {
-			this.angle = STEEL_WHEEL_ANGLE_MIN;
+		if(integer_angle_input >= STEER_WHEEL_ANGLE_MAX) {
+			this.angle = STEER_WHEEL_ANGLE_MAX; 
+		} else if(integer_angle_input <= STEER_WHEEL_ANGLE_MIN) {
+			this.angle = STEER_WHEEL_ANGLE_MIN;
 		} else {
 			this.angle = integer_angle_input;
 		}
@@ -252,7 +252,7 @@ public class HelperBSM {
 			}
 		}
 		if(acceleration_vert_input != AccelerationSet4Way.ACCELERATION_VERTICAL_UNAVAILABLE) {
-			int integer_acceleration_vert_input = (int) (acceleration_vert_input / (0.02 * 9.8));
+			int integer_acceleration_vert_input = (int) (acceleration_vert_input / (0.02 * 9.807));
 			if(integer_acceleration_vert_input >= ACCELERATION_VERTICAL_MAX) {
 				this.acceleration[2] = ACCELERATION_VERTICAL_MAX;
 			} else if(integer_acceleration_vert_input <= ACCELERATION_VERTICAL_MIN) {

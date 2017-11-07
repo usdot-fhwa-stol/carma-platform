@@ -13,11 +13,12 @@
 #MsgCount ::= INTEGER (0..127)
 uint8 msg_count
 
-uint16 MSG_COUNT_MAX = 128
+uint16 MSG_COUNT_MAX = 127
 
 #TemporaryID ::= OCTET STRING (SIZE(4))
 uint8[] id
 
+#TemporaryID will change every 3000 seconds.
 uint16 ID_TIME_MAX = 3000
 
 #DSecond ::= INTEGER (0..65535)
@@ -94,9 +95,9 @@ float32 HEADING_MIN = 0
 #  -- +127 to be used for unavailable
 #  -- Convert to degree with factor 1.5 when this field is used
 float32 angle
-float32 STEEL_WHEEL_ANGLE_UNAVAILABLE = 190.5
-float32 STEEL_WHEEL_ANGLE_MAX = 189.0
-float32 STEEL_WHEEL_ANGLE_MIN = -189.0
+float32 STEER_WHEEL_ANGLE_UNAVAILABLE = 190.5
+float32 STEER_WHEEL_ANGLE_MAX = 189.0
+float32 STEER_WHEEL_ANGLE_MIN = -189.0
 
 # Set of acceleration values in 3 orthogonal directions of the vehicle and with yaw rotation rates expressed as a structure.
 cav_msgs/AccelerationSet4Way accelSet
