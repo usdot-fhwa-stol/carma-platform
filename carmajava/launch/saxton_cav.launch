@@ -380,7 +380,7 @@
 
       <!-- SRX CAN Driver Node -->
       <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
-        <arg name="srx_can_can_device" value="can0" />
+        <arg name="srx_can_can_device" value="can2" />
       </include>
       <!-- Simulated CAN Driver Node -->
       <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can"
@@ -410,7 +410,7 @@
 
       <!-- SRX Radar Driver Node -->
       <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
-        <arg name="srx_objects_can_device" value="ics0can0"/>
+        <arg name="srx_objects_can_device" value="can3"/>
       </include>
       <!-- Simulated Radar Driver Node -->
       <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
