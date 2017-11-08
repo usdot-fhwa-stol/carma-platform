@@ -91,12 +91,14 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   private void checkAndStartManeuvers() {
     log.debug("TrajectoryExecutorWorker checking if maneuvers need to be started.");
     // Start the maneuvers if they aren't already running
-    if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getStartDistance()) {
+    if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getStartDistance()
+        && !lateralManeuverThread.isAlive()) {
       log.debug("TrajectoryExecutorWorker starting lateral maneuver");
       execute(currentLateralManeuver);
     }
 
-    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()) {
+    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()
+        && !longitudinalManeuverThread.isAlive()) {
       log.debug("TrajectoryExecutorWorker starting longitudinal maneuver");
       execute(currentLongitudinalManeuver);
     }
@@ -104,7 +106,9 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   private void checkAndStartNextLateralManeuver() {
     if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getEndDistance()) {
-      lateralManeuverThread.interrupt();
+      if (lateralManeuverThread != null && lateralManeuverThread.isAlive()) {
+        lateralManeuverThread.interrupt();
+      }
       currentLateralManeuver = currentTrajectory.getManeuverAt(currentLateralManeuver.getEndDistance(),
           ManeuverType.LATERAL);
 
@@ -116,7 +120,9 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   private void checkAndStartNextLongitudinalManeuver() {
     if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndDistance()) {
-      longitudinalManeuverThread.interrupt();
+      if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
+        longitudinalManeuverThread.interrupt();
+      }
       currentLongitudinalManeuver = currentTrajectory.getManeuverAt(currentLongitudinalManeuver.getEndDistance(),
           ManeuverType.LONGITUDINAL);
 
