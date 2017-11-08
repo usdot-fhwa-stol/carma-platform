@@ -81,7 +81,7 @@ public class Tracking extends GuidanceComponent {
 	private boolean brake_ready = false;
 	private boolean transmission_ready = false;
 	private boolean acceleration_ready = false;
-	private boolean vehicle_to_earth_transform_ready = false;
+	private boolean vehicle_to_baselink_transform_ready = false;
 	private boolean base_to_map_transform_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
 	private Random randomIdGenerator = new Random();
@@ -345,7 +345,7 @@ public class Tracking extends GuidanceComponent {
 						log.info("BSM", "Get baselink_to_vehicle_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
 						if(msg.getErrorStatus() == 0) {
 							vehicleToBaselink = Transform.fromTransformMessage(msg.getTransform().getTransform());
-							vehicle_to_earth_transform_ready = true;
+							vehicle_to_baselink_transform_ready = true;
 						}
 					}
 					
@@ -354,7 +354,7 @@ public class Tracking extends GuidanceComponent {
 					}
 				});
 				
-				if(vehicle_to_earth_transform_ready) {
+				if(vehicle_to_baselink_transform_ready) {
 					Vector3 after_transform = vehicleToBaselink.apply(new Vector3(point_on_baselink.getX(), point_on_baselink.getY(), point_on_baselink.getZ()));
 					Point3D point_on_vehicle = new Point3D(after_transform.getX(), after_transform.getY(), after_transform.getZ());
 					Location location_on_vehicle = converter.cartesian2Geodesic(point_on_vehicle, Transform.identity());
@@ -372,8 +372,8 @@ public class Tracking extends GuidanceComponent {
 					}
 				}
 				
-				double semi_major_square = navSatFixSubscriber.getLastMessage().getPositionCovariance()[0];
-				double semi_minor_square = navSatFixSubscriber.getLastMessage().getPositionCovariance()[4];
+				double semi_major_square = gps_msg.getPositionCovariance()[0];
+				double semi_minor_square = gps_msg.getPositionCovariance()[4];
 				// Orientation of semi_major axis
 				// Orientation of accuracy eclipse is fixed to north based on Pinpoint documentations
 				// TODO: May need to change if we use other Pinpoints
