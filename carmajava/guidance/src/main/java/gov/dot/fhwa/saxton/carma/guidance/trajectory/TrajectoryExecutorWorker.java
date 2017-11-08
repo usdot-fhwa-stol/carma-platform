@@ -109,8 +109,14 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       if (lateralManeuverThread != null && lateralManeuverThread.isAlive()) {
         lateralManeuverThread.interrupt();
       }
+
       currentLateralManeuver = currentTrajectory.getManeuverAt(currentLateralManeuver.getEndDistance(),
           ManeuverType.LATERAL);
+      if (currentLateralManeuver != null) {
+        log.info(String.format("Switching to lateral maneuver from [%.02f, %.02f)", currentLateralManeuver.getStartDistance(), currentLateralManeuver.getEndDistance()));
+      } else {
+        log.info("New lateral manuever was null!");
+      }
 
       if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getStartDistance()) {
         execute(currentLateralManeuver);
@@ -118,13 +124,17 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     }
   }
 
-  private void checkAndStartNextLongitudinalManeuver() {
-    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndDistance()) {
-      if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
+  private void checkAndStartNextLongitudinalManeuver() { if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndDistance()) { if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
         longitudinalManeuverThread.interrupt();
       }
+
       currentLongitudinalManeuver = currentTrajectory.getManeuverAt(currentLongitudinalManeuver.getEndDistance(),
           ManeuverType.LONGITUDINAL);
+      if (currentLongitudinalManeuver != null) {
+        log.info(String.format("Switching to longitudinal maneuver from [%.02f, %.02f)", currentLongitudinalManeuver.getStartDistance(), currentLongitudinalManeuver.getEndDistance()));
+      } else {
+        log.info("New longitudinal maneuver was null!");
+      }
 
       if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()) {
         execute(currentLongitudinalManeuver);
@@ -167,6 +177,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       swapTrajectories();
       checkAndStartManeuvers();
     }
+    log.info("Finished downtrack distance update.");
   }
 
   /**
@@ -255,7 +266,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     log.info("TrajectoryExecutorWorker attempting to swap to buffered Trajectory");
     // If we don't have any trajectories to swap, just exit
     if (nextTrajectory == null) {
-      currentTrajectory = null;
+      /**
+       * WARNING: Trajectories may somehow end up null due to a race condition with updateDownTrackDistance and this method
+       * I've removed this nulling of current trajectory functionality as a fix, but lack complete understanding of the 
+       * race condition so do not trust this code too heavily.
+       */
       log.warn("TrajectoryExecutorWorker failed to swap to buffered Trajectory! It was null!");
       return;
     }
@@ -285,6 +300,19 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       this.currentTrajectory = traj;
       this.currentLateralManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       this.currentLongitudinalManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
+
+      if (currentLateralManeuver != null) {
+        log.info(String.format("Switching to lateral maneuver from [%.02f, %.02f)", currentLateralManeuver.getStartDistance(), currentLateralManeuver.getEndDistance()));
+      } else {
+        log.info("New lateral manuever was null!");
+      }
+
+      if (currentLongitudinalManeuver != null) {
+        log.info(String.format("Switching to longitudinal maneuver from [%.02f, %.02f)", currentLongitudinalManeuver.getStartDistance(), currentLongitudinalManeuver.getEndDistance()));
+      } else {
+        log.info("New longitudinal maneuver was null!");
+      }
+
       for (PctCallback callback : callbacks) {
         callback.called = false;
       }
