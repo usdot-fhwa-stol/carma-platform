@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2017 LEIDOS.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Copyright (C) 2017 LEIDOS.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
@@ -34,13 +34,13 @@ import java.util.List;
 import java.util.concurrent.atomic.*;
 
 /**
- * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
- *
- * GuidanceCommands' primary function is to ensure that controller timeouts do not occur during normal
- * operation of the CARMA platform. It does so by buffering commands received from the TrajectoryExecutor
- * and it's Maneuver instances and latching on those commands until a new one is received. This will output
- * the most recently latched value at a fixed frequency.
- */
+* GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
+*
+* GuidanceCommands' primary function is to ensure that controller timeouts do not occur during normal
+* operation of the CARMA platform. It does so by buffering commands received from the TrajectoryExecutor
+* and it's Maneuver instances and latching on those commands until a new one is received. This will output
+* the most recently latched value at a fixed frequency.
+*/
 public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
@@ -91,23 +91,20 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
 
     /**
-     * Change the current output of the GuidanceCommands thread.
-     *
-     * GuidanceCommands will output the specified speed and accel commands at the configured
-     * frequency until new values are set. This function is thread safe through usage of
-     * {@link AtomicDouble} functionality
-     *
-     * @param speed The speed to output
-     * @param accel The maximum allowable acceleration in attaining and maintaining that speed
-     */
+    * Change the current output of the GuidanceCommands thread.
+    *
+    * GuidanceCommands will output the specified speed and accel commands at the configured
+    * frequency until new values are set. This function is thread safe through usage of
+    * {@link AtomicDouble} functionality
+    *
+    * @param speed The speed to output
+    * @param accel The maximum allowable acceleration in attaining and maintaining that speed
+    */
     @Override
     public void setCommand(double speed, double accel) {
         if (speed > MAX_SPEED_CMD_M_S) {
-            log.warn("GuidanceCommands attempted to set speed command ("
-            + speed
-            + " m/s) higher than maximum limit of " 
-            + MAX_SPEED_CMD_M_S 
-            + " m/s. Capping to speed limit.");
+            log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
+                    + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
             speed = MAX_SPEED_CMD_M_S;
         }
 
@@ -205,13 +202,14 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
         long iterEndTime = System.currentTimeMillis();
 
-	// Not our first timestep, check timestep spacings
-	if (lastTimestep > -1) {
-	    if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
-	        log.error("!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT. CONTROLLER MAY BE UNRESPONSIVE. !!!!!");
-	    }
-	}
-	lastTimestep = iterEndTime;
+        // Not our first timestep, check timestep spacings
+        if (lastTimestep > -1) {
+            if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
+                log.error(
+                        "!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT. CONTROLLER MAY BE UNRESPONSIVE. !!!!!");
+            }
+        }
+        lastTimestep = iterEndTime;
 
         try {
             Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
