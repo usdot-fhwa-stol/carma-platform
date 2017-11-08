@@ -126,7 +126,7 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
     }
 
     // Now check to see if any spanned limits are illegal, may sometimes be redundant with above
-    List<SpeedLimit> spanned = getSpeedLimits(speedLimits, maneuver.getStartDistance(), maneuver.getEndDistance());
+    List<SpeedLimit> spanned = getSpeedLimits(speedLimits, maneuver.getStartDistance(), maneuver.getEndDistance() - DISTANCE_EPSILON);
     boolean spannedLegal = true;
     for (SpeedLimit limit : spanned) {
       double distFactor = (limit.location - maneuver.getStartDistance())/(maneuver.getEndDistance() - maneuver.getStartDistance());
