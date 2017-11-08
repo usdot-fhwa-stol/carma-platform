@@ -48,10 +48,12 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
+    private long lastTimestep = -1;
     private AtomicBoolean engaged = new AtomicBoolean(false);
     private boolean driverConnected = false;
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
+    private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
 
     GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
@@ -202,6 +204,14 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         }
 
         long iterEndTime = System.currentTimeMillis();
+
+	// Not our first timestep, check timestep spacings
+	if (lastTimestep > -1) {
+	    if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
+	        log.error("!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT. CONTROLLER MAY BE UNRESPONSIVE. !!!!!");
+	    }
+	}
+	lastTimestep = iterEndTime;
 
         try {
             Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
