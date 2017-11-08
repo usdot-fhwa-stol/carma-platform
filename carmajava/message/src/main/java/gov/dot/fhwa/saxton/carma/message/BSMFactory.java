@@ -145,7 +145,7 @@ public class BSMFactory {
 		ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, temp_ID);
 		msg_object.getCoreData().setId(buffer);
 		//Set BrakeAppliedStatus after default shift in asn1c library
-		msg_object.getCoreData().getBrakes().getWheelBrakes().setBrakeAppliedStatus(brakeStatus[0]);
+		msg_object.getCoreData().getBrakes().getWheelBrakes().setBrakeAppliedStatus((byte) (brakeStatus[0] >> 3));
 		msg_object.getCoreData().getBrakes().getTraction().setTractionControlStatus(brakeStatus[1]);
 		msg_object.getCoreData().getBrakes().getAbs().setAntiLockBrakeStatus(brakeStatus[2]);
 		msg_object.getCoreData().getBrakes().getScs().setStabilityControlStatus(brakeStatus[3]);
