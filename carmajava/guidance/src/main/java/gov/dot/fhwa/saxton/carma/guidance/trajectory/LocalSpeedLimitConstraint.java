@@ -21,6 +21,7 @@ import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
@@ -106,12 +107,32 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
       return;
     }
 
+    // Special case for slowdowns, we only care about where they end up
+    if (maneuver instanceof SlowDown) {
+      SpeedLimit end = getLimitAtDistance(maneuver.getEndDistance() - DISTANCE_EPSILON);
+
+      if (end == null) {
+        log.warn(String.format("Maneuver from [%.02f, %.02f) deemed illegal due to missing speed limits",
+            maneuver.getStartDistance(), maneuver.getEndDistance()));
+        offendingManeuvers.add(maneuver);
+        return;
+      }
+     
+      if (!(maneuver.getTargetSpeed() <= end.speedLimit)) {
+        log.warn(String.format("Slowdown maneuver from [%.02f, %.02f) deemed illegal. End limit = %.02f",
+            maneuver.getStartDistance(), maneuver.getEndDistance(), end.speedLimit));
+        offendingManeuvers.add(maneuver);
+      }
+
+      return;
+    }
+
     SpeedLimit start = getLimitAtDistance(maneuver.getStartDistance());
     SpeedLimit end = getLimitAtDistance(maneuver.getEndDistance() - DISTANCE_EPSILON);
 
     if (start == null || end == null) {
-      log.warn(String.format("Maneuver from [%.02f, %.02f) deemed illegal due to missing speed limits", 
-                              maneuver.getStartDistance(), maneuver.getEndDistance()));
+      log.warn(String.format("Maneuver from [%.02f, %.02f) deemed illegal due to missing speed limits",
+          maneuver.getStartDistance(), maneuver.getEndDistance()));
       offendingManeuvers.add(maneuver);
       return;
     }
@@ -120,22 +141,26 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
     boolean endSpeedLegal = maneuver.getTargetSpeed() <= end.speedLimit;
 
     if (!(startSpeedLegal && endSpeedLegal)) {
-      log.warn(String.format("Maneuver from [%.02f, %.02f) deemed illegal. Start limit = %.02f, End limit = %.02f", 
-                              maneuver.getStartDistance(), maneuver.getEndDistance(), start.speedLimit, end.speedLimit));
+      log.warn(String.format("Maneuver from [%.02f, %.02f) deemed illegal. Start limit = %.02f, End limit = %.02f",
+          maneuver.getStartDistance(), maneuver.getEndDistance(), start.speedLimit, end.speedLimit));
       offendingManeuvers.add(maneuver);
     }
 
     // Now check to see if any spanned limits are illegal, may sometimes be redundant with above
-    List<SpeedLimit> spanned = getSpeedLimits(speedLimits, maneuver.getStartDistance(), maneuver.getEndDistance() - DISTANCE_EPSILON);
+    List<SpeedLimit> spanned = getSpeedLimits(speedLimits, maneuver.getStartDistance(),
+        maneuver.getEndDistance() - DISTANCE_EPSILON);
     boolean spannedLegal = true;
     for (SpeedLimit limit : spanned) {
-      double distFactor = (limit.location - maneuver.getStartDistance())/(maneuver.getEndDistance() - maneuver.getStartDistance());
+      double distFactor = (limit.location - maneuver.getStartDistance())
+          / (maneuver.getEndDistance() - maneuver.getStartDistance());
       double deltaV = maneuver.getTargetSpeed() - maneuver.getStartSpeed();
       double interpolatedSpeed = maneuver.getStartSpeed() + (deltaV * distFactor);
       spannedLegal = spannedLegal && interpolatedSpeed <= limit.speedLimit;
       if (interpolatedSpeed > limit.speedLimit) {
-        log.warn(String.format("Maneuver from [%.02f, %.02f) deemed illegal using interpolated speed. Distance = %.02f, Interpolated speed = %.02f, Limit = %.02f", 
-                                maneuver.getStartDistance(), maneuver.getEndDistance(), limit.location, interpolatedSpeed, limit.speedLimit));
+        log.warn(String.format(
+            "Maneuver from [%.02f, %.02f) deemed illegal using interpolated speed. Distance = %.02f, Interpolated speed = %.02f, Limit = %.02f",
+            maneuver.getStartDistance(), maneuver.getEndDistance(), limit.location, interpolatedSpeed,
+            limit.speedLimit));
       }
     }
   }
