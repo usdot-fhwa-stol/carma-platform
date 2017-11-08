@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.Route;
+import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
@@ -70,6 +71,8 @@ public class Arbitrator extends GuidanceComponent {
   protected String lateralPluginName = "NoOp Plugin";
   protected String longitudinalPluginName = "Cruising Plugin";
   protected ISubscriber<Route> routeSub;
+  protected AtomicDouble routeLength = new AtomicDouble(-1.0);
+  protected AtomicReference<Route> currentRoute = new AtomicReference<>();
   protected AtomicBoolean routeRecvd = new AtomicBoolean(false);
   protected static final long SLEEP_DURATION_MILLIS = 100;
 
@@ -138,6 +141,14 @@ public class Arbitrator extends GuidanceComponent {
           log.info("Arbitrator now using LocalSpeedLimit constraint for route " + msg.getRouteName());
           trajectoryValidator.addValidationConstraint(new LocalSpeedLimitConstraint(msg));
           routeRecvd.set(true);
+          currentRoute.set(msg);
+
+          double length = 0.0;
+          for (RouteSegment segment : msg.getSegments()) {
+            length += segment.getLength();
+          }
+          routeLength.set(length);
+          log.info("Computed total route length to be " + routeLength.get());
         }
       }
     });
@@ -205,7 +216,7 @@ public class Arbitrator extends GuidanceComponent {
     if (!receivedDtdUpdate.get()) {
       log.info("Arbitrator waiting for DTD update from Route...");
       try {
-        Thread.sleep(100);
+        Thread.sleep(1000);
       } catch (InterruptedException e) {
       }
     }
@@ -237,11 +248,18 @@ public class Arbitrator extends GuidanceComponent {
   }
 
   protected Trajectory planTrajectory(double trajectoryStart) {
-    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + (trajectoryStart + planningWindow)
+    // Check route state to ensure we don't overrun the route
+    double trajectoryEnd = trajectoryStart + planningWindow;
+    if (routeLength.get() > -1.0) {
+      // We've already received the route, just to be sure
+      trajectoryEnd = Math.min(routeLength.get(), trajectoryEnd);
+    }
+
+    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryEnd
         + ")");
     Trajectory out = null;
     for (int failures = 0; failures < numAcceptableFailures; failures++) {
-      Trajectory traj = new Trajectory(trajectoryStart, trajectoryStart + planningWindow);
+      Trajectory traj = new Trajectory(trajectoryStart, trajectoryEnd);
       double expectedEntrySpeed = 0.0;
       if (currentTrajectory != null) {
         List<IManeuver> lonManeuvers = currentTrajectory.getLongitudinalManeuvers();
