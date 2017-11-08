@@ -31,6 +31,7 @@ import org.ros.node.NodeConfiguration;
 import sensor_msgs.NavSatFix;
 import sensor_msgs.NavSatStatus;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -98,7 +99,12 @@ public class RouteWorker {
     // Load route files from database
     log.info("RouteDatabasePath: " + database_path);
     File folder = new File(database_path);
-    File[] listOfFiles = folder.listFiles();
+    File[] listOfFiles = folder.listFiles(new FilenameFilter() {
+      public boolean accept(File dir, String filename)
+      {
+        return filename.endsWith(".yaml") || filename.endsWith(".yml");
+      }
+    });
     log.info("FolderPathInJava: " + folder.getAbsolutePath());
     if (listOfFiles == null || listOfFiles.length == 0) { // Check if route files exist
       log.warn("No route files found at directory: " + folder.getAbsolutePath());

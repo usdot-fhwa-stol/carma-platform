@@ -173,6 +173,16 @@ public class EnvironmentWorker {
     Transform T_b_p = baseToPositionSensor;
 
     Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
+    Transform tempResult = mapToOdom.multiply(T_p_r);
+    Vector3 transResult = tempResult.getTranslation();
+    Quaternion quatResult = tempResult.getRotationAndScale();
+    // If an NaN transform is calculated do not save or publish it.
+    if (Double.isNaN(transResult.getX()) || Double.isNaN(transResult.getY()) || Double.isNaN(transResult.getZ())
+      || Double.isNaN(quatResult.getX()) || Double.isNaN(quatResult.getY()) || Double.isNaN(quatResult.getZ())
+      || Double.isNaN(quatResult.getW())) {
+      log.warn("TRANSFORM", "The mapToOdom transform contains NaN and is being ignored: " + tempResult);
+      return;
+    }
     // Modify map to odom with the difference from the expected and real sensor positions
     mapToOdom = mapToOdom.multiply(T_p_r);
     // Publish newly calculated transforms
