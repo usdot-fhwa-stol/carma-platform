@@ -366,6 +366,8 @@
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
         <remap from="get_transform"
                to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
+        <remap from="acceleration"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/acceleration"/>
 
         <!-- Trajectory Thread-->
         <remap from="get_drivers_with_capabilities"
