@@ -113,7 +113,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       currentLateralManeuver = currentTrajectory.getManeuverAt(currentLateralManeuver.getEndDistance(),
           ManeuverType.LATERAL);
       if (currentLateralManeuver != null) {
-        log.info(String.format("Switching to lateral maneuver from [%.02f, %.02f)", currentLateralManeuver.getStartDistance(), currentLateralManeuver.getEndDistance()));
+        log.info(String.format("Switching to lateral maneuver from [%.02f, %.02f)",
+            currentLateralManeuver.getStartDistance(), currentLateralManeuver.getEndDistance()));
       } else {
         log.info("New lateral manuever was null!");
       }
@@ -124,14 +125,17 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     }
   }
 
-  private void checkAndStartNextLongitudinalManeuver() { if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndDistance()) { if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
+  private void checkAndStartNextLongitudinalManeuver() {
+    if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getEndDistance()) {
+      if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
         longitudinalManeuverThread.interrupt();
       }
 
       currentLongitudinalManeuver = currentTrajectory.getManeuverAt(currentLongitudinalManeuver.getEndDistance(),
           ManeuverType.LONGITUDINAL);
       if (currentLongitudinalManeuver != null) {
-        log.info(String.format("Switching to longitudinal maneuver from [%.02f, %.02f)", currentLongitudinalManeuver.getStartDistance(), currentLongitudinalManeuver.getEndDistance()));
+        log.info(String.format("Switching to longitudinal maneuver from [%.02f, %.02f)",
+            currentLongitudinalManeuver.getStartDistance(), currentLongitudinalManeuver.getEndDistance()));
       } else {
         log.info("New longitudinal maneuver was null!");
       }
@@ -302,13 +306,15 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       this.currentLongitudinalManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
 
       if (currentLateralManeuver != null) {
-        log.info(String.format("Switching to lateral maneuver from [%.02f, %.02f)", currentLateralManeuver.getStartDistance(), currentLateralManeuver.getEndDistance()));
+        log.info(String.format("Switching to lateral maneuver from [%.02f, %.02f)",
+            currentLateralManeuver.getStartDistance(), currentLateralManeuver.getEndDistance()));
       } else {
         log.info("New lateral manuever was null!");
       }
 
       if (currentLongitudinalManeuver != null) {
-        log.info(String.format("Switching to longitudinal maneuver from [%.02f, %.02f)", currentLongitudinalManeuver.getStartDistance(), currentLongitudinalManeuver.getEndDistance()));
+        log.info(String.format("Switching to longitudinal maneuver from [%.02f, %.02f)",
+            currentLongitudinalManeuver.getStartDistance(), currentLongitudinalManeuver.getEndDistance()));
       } else {
         log.info("New longitudinal maneuver was null!");
       }
