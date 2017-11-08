@@ -81,7 +81,7 @@ waypoints: # The list of waypoints in the route
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 15
+    upperSpeedLimit: 10
     laneCount: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -109,7 +109,7 @@ waypoints: # The list of waypoints in the route
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
