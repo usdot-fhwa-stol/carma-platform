@@ -118,7 +118,7 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
         return;
       }
      
-      if (!(maneuver.getTargetSpeed() <= end.speedLimit)) {
+      if (maneuver.getTargetSpeed() > end.speedLimit) {
         log.warn(String.format("Slowdown maneuver from [%.02f, %.02f) deemed illegal. End limit = %.02f",
             maneuver.getStartDistance(), maneuver.getEndDistance(), end.speedLimit));
         offendingManeuvers.add(maneuver);
