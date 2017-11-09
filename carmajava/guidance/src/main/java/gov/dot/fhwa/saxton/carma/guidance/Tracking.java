@@ -356,7 +356,6 @@ public class Tracking extends GuidanceComponent {
 				}
 				
 				if(vehicle_to_baselink_transform_ready) {
-					log.info("BSM", vehicleToBaselink.toString());
 					Vector3 after_transform = vehicleToBaselink.apply(new Vector3(point_on_baselink.getX(), point_on_baselink.getY(), point_on_baselink.getZ()));
 					Point3D point_on_vehicle = new Point3D(after_transform.getX(), after_transform.getY(), after_transform.getZ());
 					Location location_on_vehicle = converter.cartesian2Geodesic(point_on_vehicle, Transform.identity());

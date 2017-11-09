@@ -90,6 +90,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 	//Connected Node
 	protected ConnectedNode connectedNode_ = null;
 	
+	//For recoding message frequency
+	protected final int sample_window = 5;
+	protected int last_outgoing_sample_time = 0;
+	protected int outgoing_bsm_counter = 0;
+	protected int last_incoming_sample_time = 0;
+	protected int incoming_bsm_counter = 0;
+	
 	@Override
 	public GraphName getDefaultNodeName() {
 		return GraphName.of("message_consumer");
@@ -215,7 +222,17 @@ public class MessageConsumer extends SaxtonBaseNode {
 						if(result == -1) {
 							log.warn("BSM", "Outgoing BSM cannot be encoded. The message seq is: " + bsm.getHeader().getSeq());
 						} else {
-							log.info("BSM", "Outgoing BSM is encoded and is publishing...");
+							if(last_outgoing_sample_time == 0) {
+								last_outgoing_sample_time = connectedNode_.getCurrentTime().secs;
+							}
+							outgoing_bsm_counter++;
+							if(connectedNode_.getCurrentTime().secs - last_outgoing_sample_time >= sample_window) {
+								double freq = outgoing_bsm_counter / sample_window;
+								log.info("BSM", String.format("Outgoing BSM is encoded and published in %.02f Hz", freq));
+								outgoing_bsm_counter = 0;
+								last_outgoing_sample_time = connectedNode_.getCurrentTime().secs;
+							}
+							
 							outboundPub.publish(byteArray);
 						}
 					} catch (Exception e) {
@@ -235,7 +252,16 @@ public class MessageConsumer extends SaxtonBaseNode {
 						if(result == -1) {
 							log.warn("BSM", "Incoming BSM cannot be decoded.");
 						} else {
-							log.info("BSM", "Incoming BSM is decoded and is publishing...");
+							if(last_incoming_sample_time == 0) {
+								last_incoming_sample_time = connectedNode_.getCurrentTime().secs;
+							}
+							incoming_bsm_counter++;
+							if(connectedNode_.getCurrentTime().secs - last_incoming_sample_time >= sample_window) {
+								log.info("BSM", "There are " +  incoming_bsm_counter + " incoming BSMs decoded in past " + sample_window + " seconds");
+								incoming_bsm_counter = 0;
+								last_incoming_sample_time = connectedNode_.getCurrentTime().secs; 
+							}
+							
 							bsmPub.publish(decodedBSM);
 						}
 					} catch (Exception e) {
