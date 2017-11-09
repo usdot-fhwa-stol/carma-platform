@@ -189,15 +189,17 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
 
     @Override
-    public void loop() {
+    public void loop() throws InterruptedException {
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
+        log.trace("Entering GuidanceCommands loop @ clock time: " + iterStartTime + "ms");
 
         if (engaged.get() && driverConnected) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             msg.setSpeed(speedCommand.get());
             msg.setMaxAccel(maxAccel.get());
             speedAccelPublisher.publish(msg);
+            log.trace("Published cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
         }
 
         long iterEndTime = System.currentTimeMillis();
@@ -206,15 +208,16 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         if (lastTimestep > -1) {
             if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
                 log.error(
-                        "!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT. CONTROLLER MAY BE UNRESPONSIVE. !!!!!");
+                        "!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT AFTER " 
+                        + (iterEndTime - lastTimestep) 
+                        + "ms. CONTROLLER MAY BE UNRESPONSIVE. !!!!!");
             }
         }
-        lastTimestep = iterEndTime;
 
-        try {
-            Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
+        lastTimestep = iterEndTime;
+        log.trace("Finished GuidanceCommands loop @ clock time: " + iterStartTime + "ms. "
+        + "Timestep duration: " + (iterEndTime - iterEndTime) + "ms.");
+
+        Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
     }
 }
