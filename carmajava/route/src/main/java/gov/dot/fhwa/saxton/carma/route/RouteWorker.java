@@ -96,9 +96,14 @@ public class RouteWorker {
     this.routeManager = manager;
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     // Load route files from database
+    log.info("RouteDatabasePath: " + database_path);
     File folder = new File(database_path);
     File[] listOfFiles = folder.listFiles();
-
+    log.info("FolderPathInJava: " + folder.getAbsolutePath());
+    if (listOfFiles == null || listOfFiles.length == 0) { // Check if route files exist
+      log.warn("No route files found at directory: " + folder.getAbsolutePath());
+      return;
+    }
     for (int i = 0; i < listOfFiles.length; i++) {
       if (listOfFiles[i].isFile()) {
         FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath(), log);
@@ -135,12 +140,9 @@ public class RouteWorker {
         log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.SHUTDOWN, "Route: The end of the active route has been reached", null );
         log.info("Route has been completed");
-        routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
-        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.WARNING, "Route: The host vehicle has left the route vicinity", null );
         log.info("The vehicle has left the active route");
         break;
       case SYSTEM_FAILURE:
@@ -151,7 +153,6 @@ public class RouteWorker {
         log.info("Received a system not ready message and is switching to pausing the active route");
         break;
       case ROUTE_ABORTED:
-        ((SaxtonBaseNode)routeManager).publishSystemAlert(AlertSeverity.WARNING, "Route: The active route was aborted", null );
         log.info("Route has been aborted");
         break;
       case ROUTE_STARTED:

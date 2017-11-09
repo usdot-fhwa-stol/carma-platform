@@ -46,4 +46,18 @@ public class LoggerManager {
       throw new RuntimeException("Unable to create logger for class!");
     }
   }
+
+  /**
+   * Stringly typed variant of getLogger() for uses in cases where getLogger() may return the wrong class name
+   */
+  public static ILogger getLogger(String className) {
+    try {
+      // Get the callee class and make a new logger
+      Class<?> callee = Class.forName(className);
+      return loggerFactory.createLoggerForClass(callee);
+    } catch (ClassNotFoundException e) {
+      // Should never hit this branch... means we got called from a class that doesn't exist
+      throw new RuntimeException("Unable to create logger for class!");
+    }
+  }
 }

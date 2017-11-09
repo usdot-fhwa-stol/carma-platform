@@ -37,7 +37,9 @@ public class CarmaVersion {
         int major =         2;
         int intermediate =  1;
         int minor =         0;
-        int build =         7777777; //don't touch this value!  To be modified by build tools only. Default is 7 digits of '7'.
+        // Don't touch this, automatically updated
+        int build = 0;
+        String suffix = "";
 
 //==============================================================================================================================
 
@@ -52,8 +54,8 @@ public class CarmaVersion {
         }
 
         //may want to add an explanatory tag to the end of the ID string to make test builds or one-offs more obvious
-        //For now, this should always be DEV for an in-work release, and an empty string for a formal release to the customer
-        version.setSuffix("DEV");
+        //For now, this should always be automatic-versioning for an in-work release, and an empty string for a formal release to the customer
+        version.setSuffix(suffix);
 
         return version;
     }

@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2017 LEIDOS.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Copyright (C) 2017 LEIDOS.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
@@ -34,13 +34,13 @@ import java.util.List;
 import java.util.concurrent.atomic.*;
 
 /**
- * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
- *
- * GuidanceCommands' primary function is to ensure that controller timeouts do not occur during normal
- * operation of the CARMA platform. It does so by buffering commands received from the TrajectoryExecutor
- * and it's Maneuver instances and latching on those commands until a new one is received. This will output
- * the most recently latched value at a fixed frequency.
- */
+* GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
+*
+* GuidanceCommands' primary function is to ensure that controller timeouts do not occur during normal
+* operation of the CARMA platform. It does so by buffering commands received from the TrajectoryExecutor
+* and it's Maneuver instances and latching on those commands until a new one is received. This will output
+* the most recently latched value at a fixed frequency.
+*/
 public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
@@ -48,10 +48,12 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
+    private long lastTimestep = -1;
     private AtomicBoolean engaged = new AtomicBoolean(false);
     private boolean driverConnected = false;
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
+    private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
 
     GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
@@ -89,23 +91,20 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
 
     /**
-     * Change the current output of the GuidanceCommands thread.
-     *
-     * GuidanceCommands will output the specified speed and accel commands at the configured
-     * frequency until new values are set. This function is thread safe through usage of
-     * {@link AtomicDouble} functionality
-     *
-     * @param speed The speed to output
-     * @param accel The maximum allowable acceleration in attaining and maintaining that speed
-     */
+    * Change the current output of the GuidanceCommands thread.
+    *
+    * GuidanceCommands will output the specified speed and accel commands at the configured
+    * frequency until new values are set. This function is thread safe through usage of
+    * {@link AtomicDouble} functionality
+    *
+    * @param speed The speed to output
+    * @param accel The maximum allowable acceleration in attaining and maintaining that speed
+    */
     @Override
     public void setCommand(double speed, double accel) {
         if (speed > MAX_SPEED_CMD_M_S) {
-            log.warn("GuidanceCommands attempted to set speed command ("
-            + speed
-            + " m/s) higher than maximum limit of " 
-            + MAX_SPEED_CMD_M_S 
-            + " m/s. Capping to speed limit.");
+            log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
+                    + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
             speed = MAX_SPEED_CMD_M_S;
         }
 
@@ -190,23 +189,35 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
 
     @Override
-    public void loop() {
+    public void loop() throws InterruptedException {
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
+        log.trace("Entering GuidanceCommands loop @ clock time: " + iterStartTime + "ms");
 
         if (engaged.get() && driverConnected) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             msg.setSpeed(speedCommand.get());
             msg.setMaxAccel(maxAccel.get());
             speedAccelPublisher.publish(msg);
+            log.trace("Published cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
         }
 
         long iterEndTime = System.currentTimeMillis();
 
-        try {
-            Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
+        // Not our first timestep, check timestep spacings
+        if (lastTimestep > -1) {
+            if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
+                log.error(
+                        "!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT AFTER " 
+                        + (iterEndTime - lastTimestep) 
+                        + "ms. CONTROLLER MAY BE UNRESPONSIVE. !!!!!");
+            }
         }
+
+        lastTimestep = iterEndTime;
+        log.trace("Finished GuidanceCommands loop @ clock time: " + iterStartTime + "ms. "
+        + "Timestep duration: " + (iterEndTime - iterStartTime) + "ms.");
+
+        Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
     }
 }

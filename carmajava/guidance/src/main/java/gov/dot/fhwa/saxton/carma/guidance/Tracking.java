@@ -81,7 +81,7 @@ public class Tracking extends GuidanceComponent {
 	private boolean brake_ready = false;
 	private boolean transmission_ready = false;
 	private boolean acceleration_ready = false;
-	private boolean vehicle_to_earth_transform_ready = false;
+	private boolean vehicle_to_baselink_transform_ready = false;
 	private boolean base_to_map_transform_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
 	private Random randomIdGenerator = new Random();
@@ -102,7 +102,7 @@ public class Tracking extends GuidanceComponent {
 	private final String vehicleFrame = "host_vehicle";
 	private final String mapFrame = "map";
 	private final String earthFrame = "earth";
-	private Transform vehicleToEarth = null;
+	private Transform vehicleToBaselink = null;
 	private Transform baseToMap = null;
 	private GeodesicCartesianConverter converter = new GeodesicCartesianConverter();
 
@@ -127,6 +127,7 @@ public class Tracking extends GuidanceComponent {
 			navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
 			headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
 			velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+			// TODO: acceleration set is not available from SF
 			accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
 			
 			if(bsmPublisher == null 
@@ -327,34 +328,41 @@ public class Tracking extends GuidanceComponent {
 			coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 			coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
 			if(nav_sat_fix_ready && getTransformClient != null) {
-				GetTransformRequest transform_request = getTransformClient.newMessage();
-				transform_request.setParentFrame(earthFrame);
-				transform_request.setChildFrame(vehicleFrame);
-				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
-					
-					@Override
-					public void onSuccess(GetTransformResponse msg) {
-						//log.debug("BSM", "Get vehicle_to_earth_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
-						if(msg.getErrorStatus() == 0) {
-							vehicleToEarth = Transform.fromTransformMessage(msg.getTransform().getTransform());
-							vehicle_to_earth_transform_ready = true;
+				NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
+				Location location_on_baselink = new Location();
+				location_on_baselink.setLongitude(gps_msg.getLongitude());
+				location_on_baselink.setLatitude(gps_msg.getLatitude());
+				location_on_baselink.setAltitude(gps_msg.getAltitude());
+				Point3D point_on_baselink = converter.geodesic2Cartesian(location_on_baselink, Transform.identity());
+				if(!vehicle_to_baselink_transform_ready) {
+					GetTransformRequest transform_request = getTransformClient.newMessage();
+					transform_request.setParentFrame(vehicleFrame);
+					transform_request.setChildFrame(baseLinkFrame);
+					getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
+						
+						@Override
+						public void onSuccess(GetTransformResponse msg) {
+							log.debug("BSM", "Get baselink_to_vehicle_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+							if(msg.getErrorStatus() == 0) {
+								vehicleToBaselink = Transform.fromTransformMessage(msg.getTransform().getTransform());
+								vehicle_to_baselink_transform_ready = true;
+							}
 						}
-					}
-					
-					@Override
-					public void onFailure(Exception e) {
-					}
-				});
+						
+						@Override
+						public void onFailure(Exception e) {
+						}
+					});
+				}
 				
-				if(vehicle_to_earth_transform_ready) {
-					Point3D point_3d = new Point3D(
-							vehicleToEarth.getTranslation().getX(), 
-							vehicleToEarth.getTranslation().getY(), 
-							vehicleToEarth.getTranslation().getZ()); 
-					Location location = converter.cartesian2Geodesic(point_3d, Transform.identity());
-					double lat = location.getLatitude();
-					double Lon = location.getLongitude();
-					float elev = (float) location.getAltitude();
+				if(vehicle_to_baselink_transform_ready) {
+					log.info("BSM", vehicleToBaselink.toString());
+					Vector3 after_transform = vehicleToBaselink.apply(new Vector3(point_on_baselink.getX(), point_on_baselink.getY(), point_on_baselink.getZ()));
+					Point3D point_on_vehicle = new Point3D(after_transform.getX(), after_transform.getY(), after_transform.getZ());
+					Location location_on_vehicle = converter.cartesian2Geodesic(point_on_vehicle, Transform.identity());
+					double lat = location_on_vehicle.getLatitude();
+					double Lon = location_on_vehicle.getLongitude();
+					float elev = (float) location_on_vehicle.getAltitude();
 					if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
 						coreData.setLatitude(lat);
 					}
@@ -366,8 +374,8 @@ public class Tracking extends GuidanceComponent {
 					}
 				}
 				
-				double semi_major_square = navSatFixSubscriber.getLastMessage().getPositionCovariance()[0];
-				double semi_minor_square = navSatFixSubscriber.getLastMessage().getPositionCovariance()[4];
+				double semi_major_square = gps_msg.getPositionCovariance()[0];
+				double semi_minor_square = gps_msg.getPositionCovariance()[4];
 				// Orientation of semi_major axis
 				// Orientation of accuracy eclipse is fixed to north based on Pinpoint documentations
 				// TODO: May need to change if we use other Pinpoints
@@ -456,7 +464,7 @@ public class Tracking extends GuidanceComponent {
 					
 					@Override
 					public void onSuccess(GetTransformResponse msg) {
-						//log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+						log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
 						if(msg.getErrorStatus() == 0) {
 							baseToMap = Transform.fromTransformMessage(msg.getTransform().getTransform());
 							base_to_map_transform_ready = true;

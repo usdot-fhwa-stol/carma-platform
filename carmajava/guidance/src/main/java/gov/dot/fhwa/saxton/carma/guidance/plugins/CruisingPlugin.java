@@ -277,7 +277,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
       // Adjust our accel to complete the maneuver
       if (slowDown.getEndDistance() > endDist) {
-        SpeedUp slowDown2 = new SpeedUp();
+        SlowDown slowDown2 = new SlowDown();
 
         slowDown2.setSpeeds(startSpeed, endSpeed);
         slowDown2.setMaxAccel(maxAccel);
