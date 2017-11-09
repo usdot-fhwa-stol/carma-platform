@@ -219,11 +219,11 @@ public class MockRadarDriver extends AbstractMockDriver {
 
   @Override public List<String> getDriverAPI(){
     return new ArrayList<>(Arrays.asList(
-    "~/f_lrr/sensor/objects",
-    "~/lf_srr/sensor/objects",
-    "~/r_srr/sensor/objects",
-    "~/rf_srr/sensor/objects",
-    "~/vision/sensor/objects"
+    "f_lrr/sensor/objects",
+    "lf_srr/sensor/objects",
+    "r_srr/sensor/objects",
+    "rf_srr/sensor/objects",
+    "vision/sensor/objects"
     ));
   }
 }
