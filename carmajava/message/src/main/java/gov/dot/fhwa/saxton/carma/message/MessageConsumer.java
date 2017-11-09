@@ -92,9 +92,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 	
 	//For recoding message frequency
 	protected final int sample_window = 5;
-	protected int last_outgoing_sample_time = 0;
+	protected double last_outgoing_sample_time = 0;
 	protected int outgoing_bsm_counter = 0;
-	protected int last_incoming_sample_time = 0;
+	protected double last_incoming_sample_time = 0;
 	protected int incoming_bsm_counter = 0;
 	
 	@Override
@@ -223,14 +223,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 							log.warn("BSM", "Outgoing BSM cannot be encoded. The message seq is: " + bsm.getHeader().getSeq());
 						} else {
 							if(last_outgoing_sample_time == 0) {
-								last_outgoing_sample_time = connectedNode_.getCurrentTime().secs;
+								last_outgoing_sample_time = connectedNode_.getCurrentTime().toSeconds();
 							}
 							outgoing_bsm_counter++;
-							if(connectedNode_.getCurrentTime().secs - last_outgoing_sample_time >= sample_window) {
+							if(connectedNode_.getCurrentTime().toSeconds() - last_outgoing_sample_time >= sample_window) {
 								double freq = outgoing_bsm_counter / sample_window;
 								log.info("BSM", String.format("Outgoing BSM is encoded and published in %.02f Hz", freq));
 								outgoing_bsm_counter = 0;
-								last_outgoing_sample_time = connectedNode_.getCurrentTime().secs;
+								last_outgoing_sample_time = connectedNode_.getCurrentTime().toSeconds();
 							}
 							
 							outboundPub.publish(byteArray);
@@ -253,13 +253,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 							log.warn("BSM", "Incoming BSM cannot be decoded.");
 						} else {
 							if(last_incoming_sample_time == 0) {
-								last_incoming_sample_time = connectedNode_.getCurrentTime().secs;
+								last_incoming_sample_time = connectedNode_.getCurrentTime().toSeconds();
 							}
 							incoming_bsm_counter++;
-							if(connectedNode_.getCurrentTime().secs - last_incoming_sample_time >= sample_window) {
+							if(connectedNode_.getCurrentTime().toSeconds() - last_incoming_sample_time >= sample_window) {
 								log.info("BSM", "There are " +  incoming_bsm_counter + " incoming BSMs decoded in past " + sample_window + " seconds");
 								incoming_bsm_counter = 0;
-								last_incoming_sample_time = connectedNode_.getCurrentTime().secs; 
+								last_incoming_sample_time = connectedNode_.getCurrentTime().toSeconds(); 
 							}
 							
 							bsmPub.publish(decodedBSM);
