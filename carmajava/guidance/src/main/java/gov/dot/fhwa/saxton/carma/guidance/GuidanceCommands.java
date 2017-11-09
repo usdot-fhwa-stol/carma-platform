@@ -216,7 +216,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
         lastTimestep = iterEndTime;
         log.trace("Finished GuidanceCommands loop @ clock time: " + iterStartTime + "ms. "
-        + "Timestep duration: " + (iterEndTime - iterEndTime) + "ms.");
+        + "Timestep duration: " + (iterEndTime - iterStartTime) + "ms.");
 
         Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
     }

@@ -249,13 +249,17 @@ public class Arbitrator extends GuidanceComponent {
     double trajectoryEnd = trajectoryStart + planningWindow;
 
     // Examine our current route to determine if there is an acceptable segment to snap to
-    if (routeLength.get() < -1.0) {
+    if (routeLength.get() > 0.0) {
       double dtdAccum = 0.0;
       for (RouteSegment segment : currentRoute.get().getSegments()) {
         dtdAccum += segment.getLength();
       
-        if (dtdAccum > trajectoryEnd && Math.abs(dtdAccum - trajectoryEnd) < planningWindowSnapThreshold) {
-          trajectoryEnd = dtdAccum;
+        if (dtdAccum > trajectoryEnd) {
+          if (Math.abs(dtdAccum - trajectoryEnd) < planningWindowSnapThreshold) {
+            trajectoryEnd = dtdAccum;
+          } else {
+            break;
+          }
         }
       }
 
