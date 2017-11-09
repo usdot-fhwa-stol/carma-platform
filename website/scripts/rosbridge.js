@@ -32,7 +32,8 @@ var t_route_state = "route_state";
 var t_active_route = "route";
 var t_cmd_speed = "cmd_speed";
 var t_current_segment = "current_segment";
-
+var t_robot_status = 'robot_status';
+var t_diagnostics = '/diagnostics';
 // Services
 var s_get_available_routes = 'get_available_routes';
 var s_set_active_route = 'set_active_route';
@@ -58,7 +59,7 @@ var guidance_engaged = false;
 var route_name = '';
 
 var ready_counter = 0;
-var ready_max_trial = 20;
+var ready_max_trial = 10;
 
 var host_instructions = '';
 var listenerPluginAvailability;
@@ -158,6 +159,13 @@ function checkSystemAlerts() {
                 sessionStorage.setItem('isSystemReady', true);
                 messageTypeFullDescription = 'System is ready. ' + message.description;
                 break;
+          case 6:
+              system_ready = false;
+              sessionStorage.setItem('isSystemReady', false);
+              messageTypeFullDescription = 'System is shutting down. ' + message.description;
+              messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
+              showModal(true, messageTypeFullDescription);
+              break;
             default:
                 messageTypeFullDescription = 'System alert type is unknown. Assuming system it not yet ready.  ' + message.description;
         }
@@ -692,6 +700,47 @@ function printParam(itemName, index) {
     }
 }
 
+
+/*
+   Log for Diagnostics
+*/
+function showDiagnostics() {
+
+    var listenerRobotStatus = new ROSLIB.Topic({
+        ros: ros,
+        name: t_robot_status,
+        messageType: 'cav_msgs/RobotEnabled'
+    });
+
+    listenerRobotStatus.subscribe(function (message) {
+        insertNewTableRow('tblFirst', 'Robot Active', message.robot_active);
+        insertNewTableRow('tblFirst', 'Robot Enabled', message.robot_enabled);
+    });
+
+    var listenerDiagnostics = new ROSLIB.Topic({
+        ros: ros,
+        name: t_diagnostics,
+        messageType: 'diagnostic_msgs/DiagnosticArray'
+    });
+
+    listenerDiagnostics.subscribe(function (messageList) {
+
+     messageList.status.forEach(
+       function (myStatus){
+            insertNewTableRow('tblFirst', 'Diagnostic Name', myStatus.name);
+            insertNewTableRow('tblFirst', 'Diagnostic Message', myStatus.message);
+            insertNewTableRow('tblFirst', 'Diagnostic Hardware ID', myStatus.hardware_id);
+
+             myStatus.values.forEach(
+                   function (myValues){
+                        insertNewTableRow('tblFirst', 'Diagnostic Key', myValues.key);
+                        insertNewTableRow('tblFirst', 'Diagnostic Value', myValues.value);
+                   }); //foreach
+            }
+        );//foreach
+    });
+}
+
 /*
     Subscribe to future topics below:
     TODO: For future iterations.
@@ -739,6 +788,7 @@ function checkRouteInfo() {
     listenerRouteState.subscribe(function (message) {
         insertNewTableRow('tblSecond', 'Route ID', message.routeID);
         insertNewTableRow('tblSecond', 'Route State', message.state);
+        insertNewTableRow('tblSecond', 'Route Event', message.event);
         insertNewTableRow('tblSecond', 'Cross Track', message.cross_track.toFixed(2));
         insertNewTableRow('tblSecond', 'Down Track', message.down_track.toFixed(2));
 
@@ -751,6 +801,7 @@ function checkRouteInfo() {
 
     });
 }
+
 
 /*
     Watch out for route completed, and display the Route State in the System Status tab.
@@ -879,6 +930,7 @@ function showCurrentSegmentInfo() {
 
     listenerCurrentSegment.subscribe(function (message) {
 
+        insertNewTableRow('tblSecond', 'Current Segment ID', message.waypoint.id);
         insertNewTableRow('tblSecond', 'Current Segment Max Speed', message.waypoint.speed_limit);
         if (message.waypoint.speed_limit != null && message.waypoint.speed_limit != 'undefined')
             document.getElementById('divSpeedLimitValue').innerHTML = message.waypoint.speed_limit;
@@ -941,6 +993,7 @@ function showStatusandLogs()
     showNavSatFix();
     showSpeedAccelInfo();
     showCurrentSegmentInfo();
+    showDiagnostics();
 }
 
 /*
@@ -1012,7 +1065,10 @@ function evaluateNextStep() {
     }
 
     if (route_name != '') {
+        //Check System Alerts on Page refresh
+        checkSystemAlerts();
 
+        //Show Plugin
         showSubCapabilitiesView2();
 
         //Subscribe to active route to map the segments
@@ -1072,7 +1128,7 @@ window.onload = function () {
 }
 
 /* When the user clicks anywhere outside of the modal, close it.
-*/
+//TODO: Enable this later when lateral controls are implemented. Currently only FATAL, SHUTDOWN and ROUTE COMPLETED are modal popups that requires users acknowledgement to be routed to logout page.
 window.onclick = function (event) {
     var modal = document.getElementById('myModal');
 
@@ -1080,3 +1136,4 @@ window.onclick = function (event) {
         modal.style.display = "none";
     }
 }
+*/
