@@ -69,6 +69,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     @Override
     public void onGuidanceStartup() {
         vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
+        log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
     }
 
     @Override
