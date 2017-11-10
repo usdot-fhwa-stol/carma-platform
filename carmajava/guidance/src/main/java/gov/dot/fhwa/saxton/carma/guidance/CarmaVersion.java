@@ -38,8 +38,8 @@ public class CarmaVersion {
         int intermediate =  1;
         int minor =         0;
         // Don't touch this, automatically updated
-        int build = 0;
-        String suffix = "";
+        int build = 1493;
+        String suffix = "less_logs_for_bsm5-SNAPSHOT(1)";
 
 //==============================================================================================================================
 
