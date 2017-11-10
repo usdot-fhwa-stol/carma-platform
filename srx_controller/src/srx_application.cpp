@@ -146,18 +146,26 @@ void SRXApplication::initialize() {
                                                                     ROS_ERROR_STREAM("Invalid command received: speed: " << msg->speed << ", max_accel: " << msg->max_accel);
                                                                     cmd_mode_ = CommandMode_t::None;
                                                                 }
-                                                                else if(msg->speed > carma::max_commanded_speed || msg->max_accel > carma::max_commanded_accel)
-                                                                {
-                                                                    ROS_WARN_STREAM("Received command: " << msg);
-                                                                    ROS_WARN_STREAM("Commands out of range capping to: speed: " << carma::max_commanded_speed  << ", max_accel: " << carma::max_commanded_accel);
-                                                                    set_speed_ =  carma::max_commanded_speed;
-                                                                    set_accel_ = carma::max_commanded_accel;
-                                                                    cmd_mode_ = CommandMode_t::ClosedLoop;
-                                                                }
                                                                 else
-                                                                {                                                                  
-                                                                    set_speed_ = msg->speed;
-                                                                    set_accel_ = msg->max_accel;
+                                                                {
+                                                                    ROS_DEBUG_STREAM("Received command: " << msg);
+                                                                    double speed = msg->speed;
+                                                                    double accel = msg->accel;
+
+                                                                    if(speed > carma::max_commanded_speed)
+                                                                    {
+                                                                        speed  = carma::max_commanded_speed
+                                                                        ROS_WARN_STEAM("Speed Command exceeds max allowed, capping to: " << speed);
+                                                                    }
+
+                                                                    if(accel > carma::max_commanded_accel)
+                                                                    {
+                                                                        accel = carma::max_commanded_accel;
+                                                                        ROS_WARN_STEAM("Max Acce; Command exceeds max allowed, capping to: " << accel);
+                                                                    }
+                                                                    ROS_WARN_STREAM("Commands out of range capping to: speed: " << carma::max_commanded_speed  << ", max_accel: " << carma::max_commanded_accel);
+                                                                    set_speed_ =  speed;
+                                                                    set_accel_ = accel;
                                                                     cmd_mode_ = CommandMode_t::ClosedLoop;
                                                                 }
                                                               });
