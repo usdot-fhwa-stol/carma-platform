@@ -94,6 +94,10 @@ trajectory_period: 15.0
 # Units: seconds
 vehicle_response_lag: 1.4
 
+# Double: Maximum acceleration GuidanceCommands can command of the vehicle
+# Units: m/s/s
+vehicle_acceleration_limit: 2.5
+
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
 shutdown_wait_time: 5000

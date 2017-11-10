@@ -51,6 +51,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private long lastTimestep = -1;
     private AtomicBoolean engaged = new AtomicBoolean(false);
     private boolean driverConnected = false;
+    private double vehicleAccelLimit = 2.5;
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
@@ -67,6 +68,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
     @Override
     public void onGuidanceStartup() {
+        vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
+        log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
     }
 
     @Override
@@ -109,8 +112,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         }
 
         speedCommand.set(speed);
-        maxAccel.set(accel);
-        log.info("CONTROLS", "Speed command set to " + speed + "m/s and " + accel + "m/s/s");
+        maxAccel.set(Math.max(Math.abs(accel), Math.abs(vehicleAccelLimit)));
+        log.info("CONTROLS", "Speed command set to " + speedCommand.get() + "m/s and " + maxAccel.get() + "m/s/s");
     }
 
     @Override
@@ -192,7 +195,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     public void loop() throws InterruptedException {
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
-        log.trace("Entering GuidanceCommands loop @ clock time: " + iterStartTime + "ms");
 
         if (engaged.get() && driverConnected) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
@@ -205,7 +207,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         long iterEndTime = System.currentTimeMillis();
 
         // Not our first timestep, check timestep spacings
-        if (lastTimestep > -1) {
+        if (engaged.get() && driverConnected && lastTimestep > -1) {
             if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
                 log.error(
                         "!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT AFTER " 
@@ -215,8 +217,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         }
 
         lastTimestep = iterEndTime;
-        log.trace("Finished GuidanceCommands loop @ clock time: " + iterStartTime + "ms. "
-        + "Timestep duration: " + (iterEndTime - iterStartTime) + "ms.");
 
         Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
     }
