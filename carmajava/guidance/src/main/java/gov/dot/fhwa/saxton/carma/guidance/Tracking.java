@@ -431,7 +431,7 @@ public class Tracking extends GuidanceComponent {
 			}
 			
 			coreData.setHeading(BSMCoreData.HEADING_UNAVAILABLE);
-			if(navSatFixSubscriber.getLastMessage() != null) {
+			if(headingStampedSubscriber.getLastMessage() != null) {
 				float heading = (float) headingStampedSubscriber.getLastMessage().getHeading();
 				if(heading >= BSMCoreData.HEADING_MIN && heading <= BSMCoreData.HEADING_MAX) {
 					coreData.setHeading(heading);
