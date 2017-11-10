@@ -1,0 +1,22 @@
+<launch>
+    <!-- 
+        This launchfile expects two virtual can interfaces, vcan0 and vcan1. One node sends messages received
+        on vcan0 to the ros topic received_messages, another node passes the messages received here to vcan1.
+
+        With the can-utils tools you can then use:
+            cangen vcan0
+
+        to create random frames on vcan0 and:
+            candump vcan0 vcan1
+
+        to show data from both busses to see that the messages end up on vcan1 as well.
+        
+    -->
+    <node pkg="socketcan_bridge" type="socketcan_to_topic_node" name="socketcan_to_topic_node" output="screen">
+        <param name="can_device" value="vcan0" />
+    </node>
+    <node pkg="socketcan_bridge" type="topic_to_socketcan_node" name="topic_to_socketcan_node" output="screen">
+          <param name="can_device" value="vcan1" />
+          <remap from="sent_messages" to="received_messages" />
+    </node>
+</launch>
