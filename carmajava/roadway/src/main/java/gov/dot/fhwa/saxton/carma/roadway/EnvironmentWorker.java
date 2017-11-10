@@ -176,9 +176,6 @@ public class EnvironmentWorker {
     Transform T_b_p = baseToPositionSensor;
 
     Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
-    Transform tempResult = mapToOdom.multiply(T_p_r);
-    Vector3 transResult = tempResult.getTranslation();
-    Quaternion quatResult = tempResult.getRotationAndScale();
 
     // Modify map to odom with the difference from the expected and real sensor positions
     mapToOdom = mapToOdom.multiply(T_p_r);
