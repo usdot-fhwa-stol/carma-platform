@@ -38,8 +38,8 @@ public class CarmaVersion {
         int intermediate =  1;
         int minor =         0;
         // Don't touch this, automatically updated
-        int build = 1497;
-        String suffix = "nan_transform2-SNAPSHOT(3)";
+        int build = 0;
+        String suffix = "";
 
 //==============================================================================================================================
 
