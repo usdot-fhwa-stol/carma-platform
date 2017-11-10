@@ -112,7 +112,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         }
 
         speedCommand.set(speed);
-        maxAccel.set(Math.max(Math.abs(accel), Math.abs(vehicleAccelLimit)));
+        maxAccel.set(Math.min(Math.abs(accel), Math.abs(vehicleAccelLimit)));
         log.info("CONTROLS", "Speed command set to " + speedCommand.get() + "m/s and " + maxAccel.get() + "m/s/s");
     }
 
