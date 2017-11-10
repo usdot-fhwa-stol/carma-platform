@@ -96,7 +96,7 @@ vehicle_response_lag: 1.4
 
 # Double: Maximum acceleration GuidanceCommands can command of the vehicle
 # Units: m/s/s
-vehicle_acceleration_lmit: 2.5
+vehicle_acceleration_limit: 2.5
 
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
