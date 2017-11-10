@@ -37,6 +37,10 @@ planning_window_growth_factor: 1.25
 # trajectory failure
 planning_window_shrink_factor: 0.5
 
+# Double: The maximum distance the arbitrator will extend a trajectory by to line it up with the end of a route segment
+# Units: m
+planning_window_snap_threshold: 20.0
+
 # The class names which will be used to instantiate the concrete TrajectoryValidationConstraints
 trajectory_constraints:
   - gov.dot.fhwa.saxton.carma.guidance.trajectory.OverlappingManeuversConstraint

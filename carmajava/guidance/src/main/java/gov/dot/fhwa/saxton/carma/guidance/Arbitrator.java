@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.Route;
+import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
@@ -63,6 +64,7 @@ public class Arbitrator extends GuidanceComponent {
   protected double planningWindow = 0.0;
   protected double planningWindowGrowthFactor = 0.0;
   protected double planningWindowShrinkFactor = 0.0;
+  protected double planningWindowSnapThreshold = 20.0;
   protected int numAcceptableFailures = 0;
   protected Trajectory currentTrajectory = null;
   protected TrajectoryValidator trajectoryValidator;
@@ -70,8 +72,11 @@ public class Arbitrator extends GuidanceComponent {
   protected String lateralPluginName = "NoOp Plugin";
   protected String longitudinalPluginName = "Cruising Plugin";
   protected ISubscriber<Route> routeSub;
+  protected AtomicDouble routeLength = new AtomicDouble(-1.0);
+  protected AtomicReference<Route> currentRoute = new AtomicReference<>();
   protected AtomicBoolean routeRecvd = new AtomicBoolean(false);
   protected static final long SLEEP_DURATION_MILLIS = 100;
+  protected static final double TRAJ_SIZE_WARNING = 30.0;
 
   Arbitrator(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
       PluginManager pluginManager, TrajectoryExecutor trajectoryExecutor) {
@@ -128,6 +133,7 @@ public class Arbitrator extends GuidanceComponent {
     numAcceptableFailures = ptree.getInteger("~trajectory_planning_max_attempts", 3);
     longitudinalPluginName = ptree.getString("~arbitrator_longitudinal_plugin");
     lateralPluginName = ptree.getString("~arbitrator_lateral_plugin");
+    planningWindowSnapThreshold = ptree.getDouble("~planning_window_snap_threshold", 20.0);
     double configuredSpeedLimit = ptree.getDouble("~trajectory_speed_limit", GuidanceCommands.MAX_SPEED_CMD_M_S);
 
     routeSub = pubSubService.getSubscriberForTopic("route", Route._TYPE);
@@ -138,6 +144,14 @@ public class Arbitrator extends GuidanceComponent {
           log.info("Arbitrator now using LocalSpeedLimit constraint for route " + msg.getRouteName());
           trajectoryValidator.addValidationConstraint(new LocalSpeedLimitConstraint(msg));
           routeRecvd.set(true);
+          currentRoute.set(msg);
+
+          double length = 0.0;
+          for (RouteSegment segment : msg.getSegments()) {
+            length += segment.getLength();
+          }
+          routeLength.set(length);
+          log.info("Computed total route length to be " + routeLength.get());
         }
       }
     });
@@ -205,12 +219,13 @@ public class Arbitrator extends GuidanceComponent {
     if (!receivedDtdUpdate.get()) {
       log.info("Arbitrator waiting for DTD update from Route...");
       try {
-        Thread.sleep(100);
+        Thread.sleep(1000);
       } catch (InterruptedException e) {
       }
     }
 
-    currentTrajectory = planTrajectory(downtrackDistance.get());
+    double trajectoryStart = downtrackDistance.get();
+    currentTrajectory = planTrajectory(downtrackDistance.get(), getNextTrajectoryEndpoint(trajectoryStart));
     trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, new OnTrajectoryProgressCallback() {
       @Override
       public void onProgress(double pct) {
@@ -220,13 +235,55 @@ public class Arbitrator extends GuidanceComponent {
     trajectoryExecutor.runTrajectory(currentTrajectory);
   }
 
+  /**
+   * Compute the endpoint of the trajectory starting at trajectoryStart.
+   * <p>
+   * Snaps the end of the trajectory to the end of route segments within planningWindowSnapThreshold
+   * of the end of the planning window.
+   * Also ensures that the trajectory does not exceed the route length
+   * 
+   * @param trajectoryStart the start point of the desired trajectory
+   * @return The end of the trajectory adjusted as described above
+   */
+  private double getNextTrajectoryEndpoint(double trajectoryStart) {
+    double trajectoryEnd = trajectoryStart + planningWindow;
+
+    // Examine our current route to determine if there is an acceptable segment to snap to
+    if (routeLength.get() > 0.0) {
+      double dtdAccum = 0.0;
+      for (RouteSegment segment : currentRoute.get().getSegments()) {
+        dtdAccum += segment.getLength();
+      
+        if (dtdAccum > trajectoryEnd) {
+          if (Math.abs(dtdAccum - trajectoryEnd) < planningWindowSnapThreshold) {
+            trajectoryEnd = dtdAccum;
+          } else {
+            break;
+          }
+        }
+      }
+
+      trajectoryEnd = Math.min(routeLength.get(), trajectoryEnd);
+    } 
+
+    return trajectoryEnd;
+  }
+
   @Override
   public void loop() {
     if (needsReplan.get()) {
-      planningWindow *= planningWindowGrowthFactor;
-      currentTrajectory = planTrajectory(Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation()));
-      trajectoryExecutor.runTrajectory(currentTrajectory);
-      needsReplan.set(false);
+      if (downtrackDistance.get() < routeLength.get()) {
+        planningWindow *= planningWindowGrowthFactor;
+
+        double trajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
+        double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
+
+        currentTrajectory = planTrajectory(trajectoryStart, trajectoryEnd);
+        trajectoryExecutor.runTrajectory(currentTrajectory);
+        needsReplan.set(false);
+      } else {
+        log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
+      }
     }
 
     try {
@@ -236,12 +293,18 @@ public class Arbitrator extends GuidanceComponent {
     }
   }
 
-  protected Trajectory planTrajectory(double trajectoryStart) {
-    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + (trajectoryStart + planningWindow)
+  protected Trajectory planTrajectory(double trajectoryStart, double trajectoryEnd) {
+    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryEnd
         + ")");
+
+
+    if (trajectoryEnd - trajectoryStart < TRAJ_SIZE_WARNING) {
+      log.warn("Trajectory planned smaller than " + TRAJ_SIZE_WARNING + ". Maneuvers may not have space to complete.");
+    }
+
     Trajectory out = null;
     for (int failures = 0; failures < numAcceptableFailures; failures++) {
-      Trajectory traj = new Trajectory(trajectoryStart, trajectoryStart + planningWindow);
+      Trajectory traj = new Trajectory(trajectoryStart, trajectoryEnd);
       double expectedEntrySpeed = 0.0;
       if (currentTrajectory != null) {
         List<IManeuver> lonManeuvers = currentTrajectory.getLongitudinalManeuvers();
