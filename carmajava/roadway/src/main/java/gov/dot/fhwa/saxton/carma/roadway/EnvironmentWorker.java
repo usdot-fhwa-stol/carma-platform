@@ -49,7 +49,7 @@ public class EnvironmentWorker {
 
   // Host vehicle state variables
   protected boolean headingReceived = false;
-  protected boolean nabSatFixReceived = false;
+  protected boolean navSatFixReceived = false;
   protected Location hostVehicleLocation = null;
   protected double hostVehicleHeading; // The heading of the vehicle in degrees east of north in an NED frame.
   // Frame ids
@@ -114,7 +114,7 @@ public class EnvironmentWorker {
     // Assign the new host vehicle location
     hostVehicleLocation =
       new Location(navSatFix.getLatitude(), navSatFix.getLongitude(), navSatFix.getAltitude());
-    nabSatFixReceived = true;
+    navSatFixReceived = true;
     updateMapAndOdomTFs();
   }
 
@@ -125,10 +125,13 @@ public class EnvironmentWorker {
    * Additionally, a transform from base_link to position_sensor needs to be available
    */
   protected void updateMapAndOdomTFs() {
-    if (!nabSatFixReceived || !headingReceived) {
+    if (true)
+    {
+      return;
+    }
+    if (!navSatFixReceived || !headingReceived) {
       return; // If we don't have a heading and a nav sat fix the map->odom transform cannot be calculated
     }
-
     // Check if base_link->position_sensor tf is available. If not look it up
     if (baseToPositionSensor == null) {
       // This transform should be static. No need to look up more than once
@@ -173,6 +176,7 @@ public class EnvironmentWorker {
     Transform T_b_p = baseToPositionSensor;
 
     Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
+
     // Modify map to odom with the difference from the expected and real sensor positions
     mapToOdom = mapToOdom.multiply(T_p_r);
     // Publish newly calculated transforms

@@ -35,6 +35,7 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.rosjava_geometry.Transform;
 import tf2_msgs.TFMessage;
 
 /**
