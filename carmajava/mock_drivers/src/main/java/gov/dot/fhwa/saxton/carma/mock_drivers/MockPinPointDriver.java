@@ -210,8 +210,8 @@ public class MockPinPointDriver extends AbstractMockDriver {
       velocityMsg.setTwist(twist);
 
       // Publish Data
-//      headingPub.publish(headingMsg);
-//      navSatFixPub.publish(navMsg);
+      headingPub.publish(headingMsg);
+      navSatFixPub.publish(navMsg);
       odometryPub.publish(odometryMsg);
       velocityPub.publish(velocityMsg);
     }
