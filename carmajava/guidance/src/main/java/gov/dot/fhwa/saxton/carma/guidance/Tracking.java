@@ -327,7 +327,7 @@ public class Tracking extends GuidanceComponent {
 			coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 			coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 			coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
-			if(nav_sat_fix_ready && getTransformClient != null) {
+			if(navSatFixSubscriber.getLastMessage() != null && getTransformClient != null) {
 				NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
 				Location location_on_baselink = new Location();
 				location_on_baselink.setLongitude(gps_msg.getLongitude());
@@ -412,7 +412,7 @@ public class Tracking extends GuidanceComponent {
 			// Set transmission state
 			// Reserved values are illegal values at this time
 			coreData.getTransmission().setTransmissionState(TransmissionState.UNAVAILABLE);
-			if(transmission_ready) {
+			if(transmissionSubscriber.getLastMessage() != null) {
 				byte transmission_state = transmissionSubscriber.getLastMessage().getTransmissionState();
 				if(transmission_state == TransmissionState.NEUTRAL
 						|| transmission_state == TransmissionState.FORWARDGEARS
@@ -423,7 +423,7 @@ public class Tracking extends GuidanceComponent {
 			}
 
 			coreData.setSpeed(BSMCoreData.SPEED_UNAVAILABLE);
-			if(velocity_ready) {
+			if(velocitySubscriber.getLastMessage() != null) {
 				float speed = (float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
 				if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
 					coreData.setSpeed(speed);
@@ -431,7 +431,7 @@ public class Tracking extends GuidanceComponent {
 			}
 			
 			coreData.setHeading(BSMCoreData.HEADING_UNAVAILABLE);
-			if(heading_ready) {
+			if(headingStampedSubscriber.getLastMessage() != null) {
 				float heading = (float) headingStampedSubscriber.getLastMessage().getHeading();
 				if(heading >= BSMCoreData.HEADING_MIN && heading <= BSMCoreData.HEADING_MAX) {
 					coreData.setHeading(heading);
@@ -439,7 +439,7 @@ public class Tracking extends GuidanceComponent {
 			}
 			
 			coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE);
-			if(steer_wheel_ready) {
+			if(steeringWheelSubscriber.getLastMessage() != null) {
 				float angle = (float) steeringWheelSubscriber.getLastMessage().getData();	
 				if(angle <= BSMCoreData.STEER_WHEEL_ANGLE_MIN) {
 					coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_MIN);
@@ -455,7 +455,7 @@ public class Tracking extends GuidanceComponent {
 			coreData.getAccelSet().setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_UNAVAILABLE);
 			// TODO: It is not well defined in J2735
 			coreData.getAccelSet().setYawRate(AccelerationSet4Way.YAWRATE_UNAVAILABLE);
-			if(acceleration_ready && getTransformClient != null) {
+			if(accelerationSubscriber.getLastMessage() != null && getTransformClient != null) {
 				GetTransformRequest transform_request = getTransformClient.newMessage();
 				transform_request.setParentFrame(mapFrame);
 				transform_request.setChildFrame(baseLinkFrame);
@@ -511,7 +511,7 @@ public class Tracking extends GuidanceComponent {
 			}
 			
 			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_STATUS_UNAVAILABLE);
-			if(brake_ready) {
+			if(brakeSubscriber.getLastMessage() != null) {
 				if(brakeSubscriber.getLastMessage().getData() > BRAKES_NOT_APPLIED) {
 					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_APPLIED);
 				} else {
