@@ -42,6 +42,12 @@
 
 #include <boost/tokenizer.hpp>
 
+namespace carma
+{
+    const double max_commanded_speed = 35.76; //m/s
+    const double max_commanded_accel = 2.5; //m/s/s
+}
+
 
 SRXApplication::SRXApplication(int argc, char **argv) : cav::DriverApplication(argc, argv, "srx_controller") {}
 
@@ -134,9 +140,26 @@ void SRXApplication::initialize() {
     speed_sub_ = control_nh_->subscribe<cav_msgs::SpeedAccel>("cmd_speed",
                                                               1,
                                                               [this](const cav_msgs::SpeedAccelConstPtr &msg) {
-                                                                  set_speed_ = msg->speed;
-                                                                  set_accel_ = msg->max_accel;
-                                                                  cmd_mode_ = CommandMode_t::ClosedLoop;
+
+                                                                if(msg->speed < 0 || msg->max_accel < 0)
+                                                                {
+                                                                    ROS_ERROR_STREAM("Invalid command received: speed: " << msg->speed << ", max_accel: " << msg->max_accel);
+                                                                    cmd_mode_ = CommandMode_t::None;
+                                                                }
+                                                                else if(msg->speed > carma::max_commanded_speed || msg->max_accel > carma::max_commanded_accel)
+                                                                {
+                                                                    ROS_WARN_STREAM("Received command: " << msg);
+                                                                    ROS_WARN_STREAM("Commands out of range capping to: speed: " << carma::max_commanded_speed  << ", max_accel: " << carma::max_commanded_accel);
+                                                                    set_speed_ =  carma::max_commanded_speed;
+                                                                    set_accel_ = carma::max_commanded_accel;
+                                                                    cmd_mode_ = CommandMode_t::ClosedLoop;
+                                                                }
+                                                                else
+                                                                {                                                                  
+                                                                    set_speed_ = msg->speed;
+                                                                    set_accel_ = msg->max_accel;
+                                                                    cmd_mode_ = CommandMode_t::ClosedLoop;
+                                                                }
                                                               });
 
     api_list_.push_back(speed_sub_.getTopic());
