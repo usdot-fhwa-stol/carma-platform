@@ -271,24 +271,23 @@ public class RouteWorker {
     if (activeRoute == null) {
       return -1;
     }
-    int startingIndex = -1;
     int count = 0;
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
     for (RouteSegment seg : activeRoute.getSegments()) {
       double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
       double downTrack = seg.downTrackDistance(hostVehicleLocation);
 
-      if (Math.abs(crossTrack) < maxJoinDistance // Valid crosstrack
-        && ((count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) // Valid downtrack if before first segment
-        || downTrack < seg.length())) { // Valid downtrack if in middle of segment
-
-        startingIndex = count;
-        break;
+      if (Math.abs(crossTrack) < maxJoinDistance) {
+        if (count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) {
+          return 0;
+        } else if (downTrack < seg.length()) {
+          return count + 1;
+        }
       }
       count++;
     }
 
-    return startingIndex;
+    return -1;
   }
 
   /**
