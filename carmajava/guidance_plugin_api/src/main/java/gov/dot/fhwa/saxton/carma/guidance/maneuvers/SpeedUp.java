@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,29 @@ public class SpeedUp extends LongitudinalManeuver {
         //add the distance covered by the expected vehicle lag plus a little buffer to cover time step discretization
         double lagDistance = startSpeed_*inputs_.getResponseLag();
         endDist_ = startDist_ + idealLength + lagDistance + 0.2*endSpeed_;
+    }
+
+
+    @Override
+    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
+        super.planToTargetDistance(inputs, commands, startDist, endDist);
+
+        //verify proper speed relationships
+        if (endSpeed_ <= startSpeed_) {
+            throw new ArithmeticException("SpeedUp maneuver being planned with startSpeed = " + startSpeed_ +
+                                            ", endSpeed = " + endSpeed_);
+        }
+
+        //if speed change is going to be only slight then
+        double deltaV = endSpeed_ - startSpeed_; //always positive
+        double lagDistance = startSpeed_*inputs_.getResponseLag();
+        double displacement = endDist - startDist - lagDistance;
+        workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement;
+
+        //compute the time it will take to perform this ideal speed change
+        deltaT_ = deltaV / workingAccel_;
+
+        endDist_ = endDist;
     }
 
 

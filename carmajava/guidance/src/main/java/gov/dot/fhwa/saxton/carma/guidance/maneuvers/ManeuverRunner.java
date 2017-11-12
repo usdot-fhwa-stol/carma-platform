@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.ManeuverFinishedListener;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+
 /**
  * Runnable to handle execution of Maneuvers on regular timestep intervals
  */
 public class ManeuverRunner implements Runnable {
   private long timestepDuration = 0;
   private IManeuver maneuver;
+  private ManeuverFinishedListener listener = null;
 
   /**
    * Construct a ManeuverRunner to invoke the IManeuver at freq Hz
@@ -34,6 +39,13 @@ public class ManeuverRunner implements Runnable {
     this.maneuver = maneuver;
   }
 
+  /**
+   * @param listener the listener to set
+   */
+  public void setListener(ManeuverFinishedListener listener) {
+    this.listener = listener;
+  }
+
 	@Override
 	public void run() {
     long timestepStart = 0;
@@ -41,7 +53,17 @@ public class ManeuverRunner implements Runnable {
     while (!Thread.currentThread().isInterrupted()) {
       timestepStart = System.currentTimeMillis();
 
-      maneuver.executeTimeStep();
+      try {
+        maneuver.executeTimeStep();
+      } catch (IllegalStateException ise) {
+        if (listener != null) {
+          if (maneuver instanceof LongitudinalManeuver) {
+            listener.onLongitudinalManeuverFinished();
+          } else {
+            listener.onLateralManeuverFinished();
+          }
+        }
+      }
 
       timestepEnd = System.currentTimeMillis();
 

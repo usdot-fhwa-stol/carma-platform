@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,5 +41,14 @@ public class ManeuverPlanner {
    */
   public void planManeuver(IManeuver m, double startDist) {
     m.plan(maneuverInputs, guidanceCommands, startDist);
+  }
+
+  /**
+   * Plan a maneuver for execution in with the platform's controller and inputs.
+   * <p>
+   * Modifies the argument maneuver m in place
+   */
+  public void planManeuver(IManeuver m, double startDist, double endDist) {
+    m.planToTargetDistance(maneuverInputs, guidanceCommands, startDist, endDist);
   }
 }

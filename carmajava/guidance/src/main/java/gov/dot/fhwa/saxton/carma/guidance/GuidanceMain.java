@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,20 @@ import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
+import cav_srvs.GetSystemVersion;
+import cav_srvs.GetSystemVersionRequest;
+import cav_srvs.GetSystemVersionResponse;
 import cav_srvs.SetGuidanceEngaged;
 import cav_srvs.SetGuidanceEngagedRequest;
 import cav_srvs.SetGuidanceEngagedResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
+
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.exception.ServiceException;
@@ -32,6 +41,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -51,9 +61,9 @@ public class GuidanceMain extends SaxtonBaseNode {
 
   // Member Variables
   protected ExecutorService executor;
-  protected final int numThreads = 6;
+  protected final int numThreads = 7;
+  protected static ComponentVersion version = CarmaVersion.getVersion();
 
-  protected GuidanceExceptionHandler guidanceExceptionHandler;
   protected IPubSubService pubSubService;
   protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse> guidanceEngageService;
 
@@ -62,7 +72,8 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected final AtomicBoolean engaged = new AtomicBoolean(false);
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
-
+  
+  
   @Override
   public GraphName getDefaultNodeName() {
     return GraphName.of("guidance_main");
@@ -80,6 +91,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands);
     Arbitrator arbitrator = new Arbitrator(state, pubSubService, node, pluginManager, trajectoryExecutor);
     Tracking tracking = new Tracking(state, pubSubService, node);
+    GuidanceShutdownHandler shutdownHandler = new GuidanceShutdownHandler(state, pubSubService, node);
 
     executor.execute(maneuverInputs);
     executor.execute(arbitrator);
@@ -87,27 +99,41 @@ public class GuidanceMain extends SaxtonBaseNode {
     executor.execute(trajectoryExecutor);
     executor.execute(tracking);
     executor.execute(guidanceCommands);
+    executor.execute(shutdownHandler);
   }
 
   /**
    * Initialize the PubSubManager and setup it's message queue.
    */
-  private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidance) {
+  private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidanceExceptionHandler) {
     ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node,
         guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
-    IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node);
+    IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node, this);
 
     pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory);
   }
 
+  /**
+   * Initialize the Guidance logging system
+   */
+  private void initLogger(Log baseLog) {
+    SaxtonLoggerProxyFactory slpf = new SaxtonLoggerProxyFactory(baseLog);
+    LoggerManager.setLoggerFactory(slpf);
+  }
+
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
-    final Log log = connectedNode.getLog();
+    initLogger(connectedNode.getLog());
+    final ILogger log = LoggerManager.getLogger();
+
     final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
-    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state, log);
-    this.exceptionHandler = guidanceExceptionHandler;
-    log.info("Guidance exception handler partially initialized");
+    log.info("//////////");
+    log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
+    log.info("//////////");
+
+    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state);
+    log.info("Guidance exception handler initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
     // Will apply to any thread that lacks an otherwise specified ExceptionHandler
@@ -122,9 +148,6 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     initPubSubManager(connectedNode, guidanceExceptionHandler);
     log.info("Guidance main PubSubManager initialized");
-
-    guidanceExceptionHandler.init(pubSubService);
-    log.info("Guidance main exception handler fully initialized");
 
     initExecutor(state, connectedNode);
     log.info("Guidance main executor initialized");
@@ -150,20 +173,32 @@ public class GuidanceMain extends SaxtonBaseNode {
     } //MessageListener
     );//addMessageListener
 
-    final IPublisher<SystemAlert> systemAlertPublisher = pubSubService.getPublisherForTopic("system_alert",
-        cav_msgs.SystemAlert._TYPE);
-
     guidanceEngageService = connectedNode.newServiceServer("set_guidance_engaged", SetGuidanceEngaged._TYPE,
         new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
           @Override
           public void build(SetGuidanceEngagedRequest setGuidanceEngagedRequest,
               SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
-            if (state.get() == GuidanceState.DRIVERS_READY) {
+            if (setGuidanceEngagedRequest.getGuidanceEngage() && state.get() == GuidanceState.DRIVERS_READY) {
               state.set(GuidanceState.ENGAGED);
+              setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
+            } else if (!setGuidanceEngagedRequest.getGuidanceEngage()) {
+              state.set(GuidanceState.SHUTDOWN);
+              setGuidanceEngagedResponse.setGuidanceStatus(false);
+            } else {
+              setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
             }
-            setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
           }
         });
+    
+    ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer = 
+    		connectedNode.newServiceServer("get_system_version",  GetSystemVersion._TYPE, 
+    		new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
+    			@Override
+    			public void build(GetSystemVersionRequest request, GetSystemVersionResponse response) throws ServiceException {
+    				response.setSystemName(version.componentName());
+    				response.setRevision(version.revisionString());
+    			}
+    		});
 
     // This CancellableLoop will be canceled automatically when the node shuts
     // down.
@@ -177,7 +212,13 @@ public class GuidanceMain extends SaxtonBaseNode {
   }//onStart
 
   @Override
+  /**
+   * Handle an exception that hasn't been caught anywhere else, which will cause guidance to shutdown.
+   */
   protected void handleException(Throwable e) {
     exceptionHandler.handleException(e);
+
+    //Leverage SaxtonNode to publish the system alert.
+    publishSystemAlert(AlertSeverity.FATAL, "Guidance panic triggered in thread " + Thread.currentThread().getName() + " by an uncaught exception!", e);
   }
 }//AbstractNodeMain

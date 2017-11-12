@@ -1,12 +1,12 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
- * 
+ * Copyright (C) 2017 LEIDOS.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
+import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
@@ -101,22 +102,21 @@ public class MockPinPointDriver extends AbstractMockDriver {
       nav_msgs.Odometry odometryMsg = odometryPub.newMessage();
       geometry_msgs.TwistStamped velocityMsg = velocityPub.newMessage();
 
-      // Build Header
-      std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
-      hdr.setSeq(Integer.parseInt(elements[SAMPLE_ID_IDX]));
-      hdr.setStamp(connectedNode.getCurrentTime());
-
-      // TODO: Ensure that these messages remain unique and there is not a referencing issue.
+      // Get data for headers
+      int seq = Integer.parseInt(elements[SAMPLE_ID_IDX]);
+      Time time = connectedNode.getCurrentTime();
 
       // Set Data
       // Build Heading Message
-      hdr.setFrameId("pinpoint");
-      headingMsg.setHeader(hdr);
+      headingMsg.getHeader().setFrameId("0"); // Heading is deg east of north and therefore does not have a frame
+      headingMsg.getHeader().setStamp(time);
+      headingMsg.getHeader().setSeq(seq);
       headingMsg.setHeading(Float.parseFloat(elements[HEADING_IDX]));
 
       // Build NavSatFix Message
-      hdr.setFrameId("earth");
-      navMsg.setHeader(hdr);
+      navMsg.getHeader().setFrameId("pinpoint");
+      navMsg.getHeader().setSeq(seq);
+      navMsg.getHeader().setStamp(time);
 
       sensor_msgs.NavSatStatus navSatStatus = navMsg.getStatus();
       navSatStatus.setService(Short.parseShort(elements[NAV_SRV_IDX]));
@@ -135,9 +135,10 @@ public class MockPinPointDriver extends AbstractMockDriver {
       navMsg.setPositionCovariance(posCovariance);
 
       // Build Odometry Message
-      hdr.setFrameId("odom");
-      odometryMsg.setHeader(hdr);
-      odometryMsg.setChildFrameId("pinpoint");
+      odometryMsg.getHeader().setFrameId("odom");
+      odometryMsg.getHeader().setSeq(seq);
+      odometryMsg.getHeader().setStamp(time);
+      odometryMsg.setChildFrameId("base_link");
       // Odom Twist
       geometry_msgs.TwistWithCovariance odomTwistWithCovar = odometryMsg.getTwist();
       geometry_msgs.Twist odomTwist = odomTwistWithCovar.getTwist();
@@ -189,9 +190,9 @@ public class MockPinPointDriver extends AbstractMockDriver {
       odometryMsg.setPose(poseWithCovar);
 
       // Build Velocity Message (TwistStamped)
-      // TODO: Ask if this should be odom not base_link
-      hdr.setFrameId("base_link");
-      velocityMsg.setHeader(hdr);
+      velocityMsg.getHeader().setFrameId("base_link");
+      velocityMsg.getHeader().setSeq(seq);
+      velocityMsg.getHeader().setStamp(time);
 
       geometry_msgs.Twist twist = velocityMsg.getTwist();
       geometry_msgs.Vector3 angularVel = odomTwist.getAngular();

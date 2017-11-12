@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.roadway;
 
 import cav_msgs.SystemAlert;
@@ -5,6 +21,7 @@ import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.ros.message.Duration;
 import org.ros.message.MessageFactory;
@@ -26,13 +43,13 @@ import java.util.List;
  */
 public class EnvironmentWorker {
   // Messaging and logging
-  protected Log log;
+  protected SaxtonLogger log;
   protected IEnvironmentManager envMgr;
   protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
 
   // Host vehicle state variables
   protected boolean headingReceived = false;
-  protected boolean nabSatFixReceived = false;
+  protected boolean navSatFixReceived = false;
   protected Location hostVehicleLocation = null;
   protected double hostVehicleHeading; // The heading of the vehicle in degrees east of north in an NED frame.
   // Frame ids
@@ -40,7 +57,7 @@ public class EnvironmentWorker {
   protected final String mapFrame = "map";
   protected final String odomFrame = "odom";
   protected final String baseLinkFrame = "base_link";
-  protected final String positionSensorFrame = "position_sensor";
+  protected final String positionSensorFrame = "pinpoint"; //TODO set this name via ros param
   // Transforms
   protected Transform mapToOdom = Transform.identity();
   protected Transform earthToMap = null;
@@ -57,7 +74,7 @@ public class EnvironmentWorker {
    * @param log Logging object
    */
   public EnvironmentWorker(IEnvironmentManager envMgr, Log log) {
-    this.log = log;
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.envMgr = envMgr;
   }
 
@@ -80,6 +97,7 @@ public class EnvironmentWorker {
   /**
    * Handler for new vehicle heading messages
    * Headings should be specified as degrees east of north
+   * TODO if base_link frame is not an +X forward frame this will need a transform as well.
    * @param heading The heading message
    */
   public void handleHeadingMsg(cav_msgs.HeadingStamped heading) {
@@ -96,7 +114,7 @@ public class EnvironmentWorker {
     // Assign the new host vehicle location
     hostVehicleLocation =
       new Location(navSatFix.getLatitude(), navSatFix.getLongitude(), navSatFix.getAltitude());
-    nabSatFixReceived = true;
+    navSatFixReceived = true;
     updateMapAndOdomTFs();
   }
 
@@ -107,10 +125,13 @@ public class EnvironmentWorker {
    * Additionally, a transform from base_link to position_sensor needs to be available
    */
   protected void updateMapAndOdomTFs() {
-    if (!nabSatFixReceived || !headingReceived) {
+    if (true)
+    {
+      return;
+    }
+    if (!navSatFixReceived || !headingReceived) {
       return; // If we don't have a heading and a nav sat fix the map->odom transform cannot be calculated
     }
-
     // Check if base_link->position_sensor tf is available. If not look it up
     if (baseToPositionSensor == null) {
       // This transform should be static. No need to look up more than once
@@ -155,6 +176,7 @@ public class EnvironmentWorker {
     Transform T_b_p = baseToPositionSensor;
 
     Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
+
     // Modify map to odom with the difference from the expected and real sensor positions
     mapToOdom = mapToOdom.multiply(T_p_r);
     // Publish newly calculated transforms
@@ -175,19 +197,20 @@ public class EnvironmentWorker {
         return; // If the request for this transform failed wait for another odometry update to request it
       }
     }
+    if (odometry.getChildFrameId().equals(baseLinkFrame)) { // If the odometry is already in the base_link frame TODO make this check more robust
+      odomToBaseLink = Transform.fromPoseMessage(odometry.getPose().getPose());
+      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
+      return;
+    }
     // Extract the location of the position sensor relative to the odom frame
     // Covariance is ignored as filtering was already done by sensor fusion
-    geometry_msgs.Pose hostPose = odometry.getPose().getPose();
-    geometry_msgs.Point hostPoint = hostPose.getPosition();
-    Quaternion hostOrientation = Quaternion.fromQuaternionMessage(hostPose.getOrientation());
-    Vector3 trans = new Vector3(hostPoint.getX(), hostPoint.getY(), hostPoint.getZ());
     // Calculate odom->base_link
     // T_x_y = transform describing location of y with respect to x
     // p = position sensor frame (from odometry)
     // o = odom frame
     // b = baselink frame (as has been calculated by odometry up to this point)
     // T_o_b = T_o_p * inv(T_b_p)
-    Transform T_o_p = new Transform(trans, hostOrientation);
+    Transform T_o_p = Transform.fromPoseMessage(odometry.getPose().getPose());
     Transform T_b_p = baseToPositionSensor;
     Transform T_o_b = T_o_p.multiply(T_b_p.invert());
     odomToBaseLink = T_o_b;
@@ -223,11 +246,11 @@ public class EnvironmentWorker {
       case SystemAlert.NOT_READY:
         break;
       case SystemAlert.SHUTDOWN:
-        log.info("EnvironmentWorker: Received SHUTDOWN on system_alert");
+        log.info("SHUTDOWN", "Received SHUTDOWN on system_alert");
         envMgr.shutdown();
         break;
       case SystemAlert.FATAL:
-        log.info("EnvironmentWorker: Received FATAL on system_alert");
+        log.info("SHUTDOWN", "Received FATAL on system_alert");
         envMgr.shutdown();
         break;
       default:

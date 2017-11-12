@@ -1,0 +1,3 @@
+<launch>
+    <test test-name="test_to_socketcan" pkg="socketcan_bridge" type="test_to_socketcan" clear_params="true" time-limit="10.0" />
+</launch>

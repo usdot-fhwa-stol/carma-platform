@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,11 +22,15 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 class LongitudinalTestManeuver extends LongitudinalManeuver {
@@ -48,11 +52,6 @@ class LongitudinalTestManeuver extends LongitudinalManeuver {
   @Override
   public double getEndDistance() {
     return end;
-  }
-
-  @Override
-  public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
-
   }
 
   @Override
@@ -114,6 +113,11 @@ class LateralTestManeuver implements IManeuver {
   }
 
   @Override
+  public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
+
+  }
+
+  @Override
   public boolean executeTimeStep() throws IllegalStateException {
     return false;
   }
@@ -147,6 +151,10 @@ class LateralTestManeuver implements IManeuver {
 public class TrajectoryTest {
   @Before
   public void setup() {
+    ILoggerFactory mockFact = mock(ILoggerFactory.class);
+    ILogger mockLogger = mock(ILogger.class);
+    when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+    LoggerManager.setLoggerFactory(mockFact);
     traj = new Trajectory(0, 20);
   }
 

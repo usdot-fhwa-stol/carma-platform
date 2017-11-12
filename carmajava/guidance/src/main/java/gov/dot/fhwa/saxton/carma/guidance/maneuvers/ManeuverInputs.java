@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,7 +59,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             }
         });
 
-        twistSubscriber_ = pubSubService.getSubscriberForTopic("twist_stamped", TwistStamped._TYPE);
+        twistSubscriber_ = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
         twistSubscriber_.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
             @Override
             public void onMessage(TwistStamped msg) {

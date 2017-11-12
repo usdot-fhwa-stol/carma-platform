@@ -1,5 +1,5 @@
 /*
- * TODO Copyright (C) 2017 LEIDOS
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,10 @@ import cav_msgs.*;
 import cav_srvs.GetDriverApiResponse;
 import cav_srvs.GetTransformRequest;
 import cav_srvs.GetTransformResponse;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.ros.exception.RemoteException;
 import org.ros.message.MessageFactory;
@@ -49,10 +51,10 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   protected ConnectedNode connectedNode;
   protected EnvironmentWorker environmentWorker;
+  protected SaxtonLogger log;
 
   // Publishers
   protected Publisher<tf2_msgs.TFMessage> tfPub;
-  protected Publisher<cav_msgs.SystemAlert> systemAlertPub;
   protected Publisher<cav_msgs.RoadwayEnvironment> roadwayEnvPub;
   // Subscribers
   protected Subscriber<cav_msgs.RouteSegment> routeSegmentSub;
@@ -71,13 +73,13 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
 
-    final Log log = connectedNode.getLog();
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
     this.connectedNode = connectedNode;
 
     // Topics Initialization
     // Publishers
     tfPub = connectedNode.newPublisher("/tf", tf2_msgs.TFMessage._TYPE);
-    systemAlertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
+
     roadwayEnvPub =
       connectedNode.newPublisher("roadway_environment", cav_msgs.RoadwayEnvironment._TYPE);
 
@@ -89,11 +91,8 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     // Must be called before message subscribers
     getTransformClient = this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 8000);
     if (getTransformClient == null) {
-      SystemAlert alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
-      alertMsg.setType(SystemAlert.FATAL);
-      alertMsg.setDescription("get_transform service is not available. Roadway package will not be able to function");
-      publishSystemAlert(alertMsg);
-      log.fatal(connectedNode.getName() + " Node could not find service get_transform");
+      log.fatal("TRANSFORM", "Node could not find service get_transform");
+      publishSystemAlert(AlertSeverity.FATAL, "Node could not find service get_transform: get_transform service is not available. Roadway package will not be able to function", null );
     }
 
     // Subscribers
@@ -177,22 +176,19 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     });//onNewMessage
   }
 
-  @Override protected void handleException(Throwable e) {
-    String msg = "Roadway: Uncaught exception in " + connectedNode.getName() + " caught by handleException";
-    connectedNode.getLog().fatal(msg, e);
-    SystemAlert alertMsg = systemAlertPub.newMessage();
-    alertMsg.setType(SystemAlert.FATAL);
-    alertMsg.setDescription(msg);
-    systemAlertPub.publish(alertMsg);
-    this.shutdown();
+  /***
+   * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
+   * @param e The exception to handle
+   */
+  @Override
+  protected void handleException(Throwable e) {
+    String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
+    publishSystemAlert(AlertSeverity.FATAL, msg, e);
+    connectedNode.shutdown();
   }
 
   @Override public void publishTF(TFMessage tfMessage) {
     tfPub.publish(tfMessage);
-  }
-
-  @Override public void publishSystemAlert(SystemAlert alertMsg) {
-    systemAlertPub.publish(alertMsg);
   }
 
   @Override public void publishRoadwayEnvironment(RoadwayEnvironment roadwayEnvMsg) {
@@ -226,7 +222,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
           @Override
           public void onSuccess(GetTransformResponse response) {
             if (response.getErrorStatus() != GetTransformResponse.NO_ERROR) {
-              connectedNode.getLog().warn("Attempt to get transform failed with error code: " + response.getErrorStatus());
+              log.warn("TRANSFORM", "Attempt to get transform failed with error code: " + response.getErrorStatus());
               rh.setResult(null);
               return;
             }
@@ -235,12 +231,12 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
           @Override
           public void onFailure(RemoteException e) {
-            connectedNode.getLog().warn("EnvironmentManager.getTransform call failed for " + getTransformClient.getName());
+            log.warn("TRANSFORM", "getTransform call failed for " + getTransformClient.getName());
             rh.setResult(null);
           }
         });
     } catch (InterruptedException e) {
-      connectedNode.getLog().warn("EnvironmentManager.getTransform call failed for " + getTransformClient.getName());
+      log.warn("TRANSFORM", "getTransform call failed for " + getTransformClient.getName());
       rh.setResult(null);
     }
     return rh.getResult();
@@ -251,7 +247,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
   }
 
   @Override public void shutdown() {
-    connectedNode.getLog().info("EnvironmentManager: Shutting down after call to shutdown function");
+    log.info("SHUTDOWN", "Shutting down after call to shutdown function");
     connectedNode.shutdown();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,13 +29,6 @@ import java.util.PriorityQueue;
  * Interface defines the needed functions of a route worker
  */
 public interface IRouteManager {
-
-  /**
-   * Publishes a system alert message
-   *
-   * @param systemAlert  system alert messages
-   */
-  void publishSystemAlert(SystemAlert systemAlert);
 
   /**
    * Publishes a ros message corresponding to the current route segment

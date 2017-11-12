@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -27,7 +28,7 @@ import java.io.FileReader;
  */
 public class FileStrategy implements IRouteLoadStrategy{
   protected String filePath;
-  protected Log log;
+  protected SaxtonLogger log;
 
   /**
    * Constructor initializes a FileStrategy by providing the file path
@@ -35,7 +36,7 @@ public class FileStrategy implements IRouteLoadStrategy{
    */
   public FileStrategy(String path, Log log){
     this.filePath = path;
-    this.log = log;
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
   }
 
   @Override public Route load() {

@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.rosutils;
 
+import cav_msgs.*;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceClient;
@@ -23,12 +24,16 @@ import org.ros.node.AbstractNodeMain;
 import org.ros.exception.ServiceNotFoundException;
 import org.ros.message.Time;
 import org.ros.message.Duration;
+import org.ros.node.topic.Publisher;
+
 
 /**
  * Abstract base class for rosjava nodes used in the carma package.
  */
 public abstract class SaxtonBaseNode extends AbstractNodeMain {
 
+  private Publisher<cav_msgs.SystemAlert> systemAlertPublisher;
+  private SaxtonLogger log;
   /**
    * Entry point for node once connected to ros network. Wraps the onSaxtonStart method in a try-catch.
    * Hopefully all exceptions thrown by extending nodes will be caught here.
@@ -37,6 +42,13 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
    */
   @Override public final void onStart(ConnectedNode connectedNode) {
     try {
+      log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
+      log.info ("STARTUP", "Node called SaxtonBaseNode.onStart().");
+      // Define our alert publisher as latching so that recipients are guaranteed to see a message
+      // even if it is published before the recipient starts up
+      systemAlertPublisher = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
+      systemAlertPublisher.setLatchMode(true);
+
       onSaxtonStart(connectedNode);
     } catch (Throwable e) {
       String strace = "\n";
@@ -45,7 +57,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
           strace += "\n";
       }
 
-      connectedNode.getLog().fatal("Exception reached SaxtonBaseNode onStart function for node " + getDefaultNodeName() + ". StackTrace: " + strace);
+      connectedNode.getLog().fatal("Exception reached SaxtonBaseNode onStart function for node " + getDefaultNodeName() + ". ", e);
       handleException(e);
     }
   }
@@ -78,7 +90,7 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
    * @param <S>           The service response type such as srd_srvs.SetBoolResponse
    * @return An initialized ServiceClient for the desired service
    */
-  protected final <T, S> ServiceClient<T, S> waitForService(String service, String typeString,
+  public final <T, S> ServiceClient<T, S> waitForService(String service, String typeString,
     final ConnectedNode connectedNode, int timeout) {
     ServiceClient<T, S> client = null;
     boolean serviceFound = false;
@@ -88,6 +100,8 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
       try {
         client = connectedNode.newServiceClient(service, typeString);
         serviceFound = true;
+      } catch(NullPointerException e) {
+    	serviceFound = false;
       } catch (ServiceNotFoundException e) {
         serviceFound = false;
       } catch (RosRuntimeException e) {
@@ -97,4 +111,43 @@ public abstract class SaxtonBaseNode extends AbstractNodeMain {
     return client;
   }
 
- }
+
+  /***
+   * Generates a message on the system_alert topic that all nodes listen to.  Typically
+   * a handler for a detected broken driver bond.
+   * Note that this is not the callback to be provided to the driver's bind service.
+   * @param severity - severity of the problem
+   * @param message - description of the problem
+   * @param e  - throwable exception, leave null if NA
+   */
+
+  public void publishSystemAlert(AlertSeverity severity, String message, Throwable e) {
+    //in case this method gets called before our onStart is complete, need to check for valid publisher
+    if (systemAlertPublisher != null) {
+
+      //convert the severity to the appropriate message type
+      SystemAlert alert = systemAlertPublisher.newMessage();
+      alert.setType((byte)severity.getVal());
+
+      //set the alert content and send the message
+      alert.setDescription(message);
+
+      systemAlertPublisher.publish(alert);
+
+      if (e!=null)
+      {
+        if (severity == AlertSeverity.FATAL)
+          log.fatal("ALERT", "sendSystemAlert: " + severity + ", " + message, e);
+        else
+          log.info("ALERT", "sendSystemAlert: " + severity + ", " + message, e);
+      }
+      else{
+        if (severity == AlertSeverity.FATAL)
+          log.fatal("ALERT", "sendSystemAlert: " + severity + ", " + message);
+        else
+          log.info("ALERT", "sendSystemAlert: " + severity + ", " + message);
+      }
+    }
+  }
+
+  }

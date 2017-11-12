@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,30 +12,28 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- *
- ************************************************************************************
- *
- * This is the worker class that contains all of the logic for the interface manager.
- **/
+ */
 
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
-
 import java.util.ArrayList;
 import java.util.List;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 
 public class InterfaceWorker {
 
     protected ArrayList<DriverInfo>         drivers_ = new ArrayList<DriverInfo>();
     protected int                           waitTime_ = 10;  //seconds that we must wait after last driver registered
     protected IInterfaceMgr                 mgr_;
-    protected Log                           log_;
+    protected SaxtonLogger                  log_;
     protected long                          startedWaiting_;
     protected long							systemReadyTime_;
     protected boolean                       systemOperational_ = false;
 
-    InterfaceWorker(IInterfaceMgr mgr, Log log) {
+    InterfaceWorker(IInterfaceMgr mgr, SaxtonLogger log) {
         mgr_ = mgr;
         log_ = log;
         startedWaiting_ = System.currentTimeMillis();
@@ -53,7 +51,7 @@ public class InterfaceWorker {
     public void setWaitTime(int wait) {
         waitTime_ = wait;
         if (log_ != null) {
-            log_.debug("InterfaceWorker: driver wait time set at " + wait + " seconds.");
+            log_.debug("STARTUP", "InterfaceWorker: driver wait time set at " + wait + " seconds.");
         }
     }
 
@@ -75,14 +73,14 @@ public class InterfaceWorker {
                 //record the updates. Will need to fetch new driver api as well
                 newDriver.setCapabilities(mgr_.getDriverApi(name));
                 drivers_.set(index, newDriver);
-                log_.debug("InterfaceWorker.handleNewDriverStatus: status changed for " + name);
+                log_.debug("DRIVER", "InterfaceWorker.handleNewDriverStatus: status changed for " + name);
             }
         //else it's a newly discovered driver
         }else {
             //get its list of capabilities (getDriverApi)
             List<String> cap = mgr_.getDriverApi(name);
             if (cap == null) {
-                log_.warn("InterfaceWorker.handleNewDriverStatus: new driver " + name +
+                log_.warn("DRIVER", "InterfaceWorker.handleNewDriverStatus: new driver " + name +
                         " has no capabilities! IGNORING.");
             }else {
 
@@ -95,7 +93,7 @@ public class InterfaceWorker {
 
                 //reset the wait timer
                 startedWaiting_ = System.currentTimeMillis();
-                log_.info("InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
+                log_.info("STARTUP", "InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
                         " with " + cap.size() + " capabilities.");
             }
         }
@@ -122,7 +120,7 @@ public class InterfaceWorker {
         int index = getDriverIndex(driverName);
         if (index < 0) {
             String msg = "InterfaceWorker.handleBrokenBond can't find driver" + driverName + ". ABORTING.";
-            log_.warn(msg);
+            log_.warn("DRIVER", msg);
             throw new IndexOutOfBoundsException(msg);
         }
         DriverInfo driver = drivers_.get(index);
@@ -132,7 +130,7 @@ public class InterfaceWorker {
         if (state == DriverState.FAULT  ||  state == DriverState.OFF) {
             //remove the driver from the list of available drivers
             drivers_.remove(index);
-            log_.warn("InterfaceWorker.handleBrokenBond: driver " + driverName + " is no longer available.");
+            log_.warn("DRIVER", "InterfaceWorker.handleBrokenBond: driver " + driverName + " is no longer available.");
         }
 
         //if the system is OPERATIONAL and the new state of this driver is not "fully operational" then
@@ -169,7 +167,7 @@ public class InterfaceWorker {
                 msg = "Driver " + driverName + " is " + level;
             }
 
-            mgr_.sendSystemAlert(sev, msg);
+            ((SaxtonBaseNode)mgr_).publishSystemAlert(sev, msg, null );
         }
     }
 
@@ -261,8 +259,8 @@ public class InterfaceWorker {
                 //indicate that it is now OPERATIONAL
                 systemOperational_ = true;
                 //log the time required to get to this point
-                log_.info("///// InterfaceWorker declaring SYSTEM OPERATIONAL.");
-                log_.info("---elapsed = " + elapsed + ", waitTime = " + waitTime_);
+                log_.info("STARTUP", "///// InterfaceWorker declaring SYSTEM OPERATIONAL.");
+                log_.info("STARTUP", "---elapsed = " + elapsed + ", waitTime = " + waitTime_);
                 
                 //record the time of this event
                 systemReadyTime_ = System.currentTimeMillis();

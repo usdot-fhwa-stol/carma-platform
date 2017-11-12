@@ -1,10 +1,24 @@
+/*
+ * Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import java.util.concurrent.atomic.*;
-import org.apache.commons.logging.Log;
-
-import cav_msgs.SystemAlert;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 /**
  * Top level exception handling logic for Guidance.
@@ -14,31 +28,16 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
  * the event of unrecoverable conditions arising.
  */
 public class GuidanceExceptionHandler {
-    protected final Log log;
+    protected final ILogger log = LoggerManager.getLogger();
     protected AtomicReference<GuidanceState> state;
-    protected IPubSubService pubSubService;
-    protected IPublisher<SystemAlert> systemAlertPub;
 
-    GuidanceExceptionHandler(AtomicReference<GuidanceState> state, Log log) {
+    GuidanceExceptionHandler(AtomicReference<GuidanceState> state) {
         this.state = state;
-        this.log = log;
     }
 
     /**
-     * Initialize the GuidanceExceptionHandler prior to use
-     * </p>
-     * Connect to the SystemAlert topic such that Guidance panics may be broadcast to the greater ROS network.
-     * Initializing this way works around an awkward circular dependency between IPubSubService and
-     * GuidanceExceptionHandler
-     */
-    public void init(IPubSubService pubSubService) {
-        systemAlertPub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
-    }
-
-    /**
-     * Handle an exception that hasn't been caught anywhere else
-     * </p>
-     * Will result in guidance shutdown and publishing of SystemAlert.FATAL
+     * Handle an exception that hasn't been caught anywhere else.
+     * Will result in guidance shutdown.
      */
     public void handleException(Throwable e) {
         // This code feels redundant with GuidanceComponent#panic() but I'm not sure how to handle that
@@ -49,16 +48,6 @@ public class GuidanceExceptionHandler {
                 e);
 
         state.set(GuidanceState.SHUTDOWN);
-
-        if (systemAlertPub != null) {
-            SystemAlert alert = systemAlertPub.newMessage();
-            alert.setDescription("Guidance panic triggered in thread " + Thread.currentThread().getName()
-                    + " by an uncaught exception!");
-            alert.setType(SystemAlert.FATAL);
-            systemAlertPub.publish(alert);
-        } else {
-            log.fatal("Exception raised before GuidanceExceptionHandler fully initialized!!!"
-                    + "Unable to publish SystemAlert.FATAL. System may be in undefined state!!!");
-        }
     }
+
 }

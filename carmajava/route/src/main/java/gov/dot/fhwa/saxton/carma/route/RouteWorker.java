@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.*;
@@ -20,6 +21,9 @@ import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -27,6 +31,7 @@ import org.ros.node.NodeConfiguration;
 import sensor_msgs.NavSatFix;
 import sensor_msgs.NavSatStatus;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -37,7 +42,7 @@ import java.util.HashMap;
  */
 public class RouteWorker {
   protected final IRouteManager routeManager;
-  protected final Log log;
+  protected final SaxtonLogger log;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   // State array to assign indexes to states
@@ -78,7 +83,7 @@ public class RouteWorker {
    * @param log The logger to be used
    */
   public RouteWorker(IRouteManager manager, Log log) {
-    this.log = log;
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.routeManager = manager;
   }
 
@@ -90,11 +95,21 @@ public class RouteWorker {
    */
   public RouteWorker(IRouteManager manager, Log log, String database_path) {
     this.routeManager = manager;
-    this.log = log;
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     // Load route files from database
+    log.info("RouteDatabasePath: " + database_path);
     File folder = new File(database_path);
-    File[] listOfFiles = folder.listFiles();
-
+    File[] listOfFiles = folder.listFiles(new FilenameFilter() {
+      public boolean accept(File dir, String filename)
+      {
+        return filename.endsWith(".yaml") || filename.endsWith(".yml");
+      }
+    });
+    log.info("FolderPathInJava: " + folder.getAbsolutePath());
+    if (listOfFiles == null || listOfFiles.length == 0) { // Check if route files exist
+      log.warn("No route files found at directory: " + folder.getAbsolutePath());
+      return;
+    }
     for (int i = 0; i < listOfFiles.length; i++) {
       if (listOfFiles[i].isFile()) {
         FileStrategy loadStrategy = new FileStrategy(listOfFiles[i].getPath(), log);
@@ -111,7 +126,7 @@ public class RouteWorker {
    */
   protected void next(WorkerEvent event) {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
-    log.info("Route State = " + currentSegmentIndex);
+    log.info("Route State = " + getCurrentState());
     // Publish the new route state
     routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), event));
   }
@@ -125,44 +140,32 @@ public class RouteWorker {
     SystemAlert alertMsg;
     switch (event) {
       case FILES_LOADED:
-        log.info("Route has loaded new routes");
+        log.info("Loaded new routes");
         break;
       case ROUTE_SELECTED:
         log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.SHUTDOWN,
-          "Route: The end of the active route has been reached");
-        // Notify system of route completion
-        routeManager.publishSystemAlert(alertMsg);
         log.info("Route has been completed");
-        routeManager.shutdown(); // Shutdown this node
         break;
       case LEFT_ROUTE:
-        alertMsg = buildSystemAlertMsg(SystemAlert.WARNING,
-          "Route: The host vehicle has left the route vicinity");
-        routeManager.publishSystemAlert(alertMsg);
         log.info("The vehicle has left the active route");
         break;
       case SYSTEM_FAILURE:
-        log.info(
-          "Route: Received a system failure message and is shutting down");
+        log.info("Received a system failure message and is shutting down");
         routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
-        log.info(
-          "Route has received a system not ready message and is switching to pausing the active route");
+        log.info("Received a system not ready message and is switching to pausing the active route");
         break;
       case ROUTE_ABORTED:
-        alertMsg = buildSystemAlertMsg(SystemAlert.WARNING, "Route: The active route was aborted");
-        routeManager.publishSystemAlert(alertMsg);
         log.info("Route has been aborted");
         break;
       case ROUTE_STARTED:
         log.info("Route has been started");
         break;
       default:
-        log.warn("Route was provided with an unsupported event");
+        log.info("Route was provided with an unsupported event");
     }
     // Update current state
     next(event);
@@ -217,20 +220,6 @@ public class RouteWorker {
   }
 
   /**
-   * Helper function which builds a system alert message
-   *
-   * @param type        The type of the alert
-   * @param description Description of the message
-   * @return System Alert message
-   */
-  protected SystemAlert buildSystemAlertMsg(byte type, String description) {
-    SystemAlert alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
-    alertMsg.setType(type);
-    alertMsg.setDescription(description);
-    return alertMsg;
-  }
-
-  /**
    * Function to be used in a callback for the setActiveRoute service
    *
    * @param routeID The route
@@ -264,7 +253,7 @@ public class RouteWorker {
       return StartActiveRouteResponse.ALREADY_FOLLOWING_ROUTE;
     }
     int startingIndex = getValidStartingWPIndex();
-    log.debug("Route starting index = " + startingIndex);
+    log.info("Starting waypoint index = " + startingIndex);
     if (startingIndex == -1) {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
@@ -285,9 +274,14 @@ public class RouteWorker {
     int startingIndex = -1;
     int count = 0;
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
-    for (RouteWaypoint wp : activeRoute.getWaypoints()) {
-      double dist = hostVehicleLocation.distanceFrom(wp.getLocation(), new HaversineStrategy());
-      if (maxJoinDistance > dist) {
+    for (RouteSegment seg : activeRoute.getSegments()) {
+      double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
+      double downTrack = seg.downTrackDistance(hostVehicleLocation);
+
+      if (Math.abs(crossTrack) < maxJoinDistance // Valid crosstrack
+        && ((count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) // Valid downtrack if before first segment
+        || downTrack < seg.length())) { // Valid downtrack if in middle of segment
+
         startingIndex = count;
         break;
       }
@@ -311,7 +305,7 @@ public class RouteWorker {
       ableToConnectToRoute = activeRoute.insertWaypoint(startingWP, index);
     } catch (Exception e) {
       ableToConnectToRoute = false;
-      log.debug("Exception caught when inserting route starting waypoint Exception = " + e);
+      log.info("Exception caught when inserting route starting waypoint Exception = " + e);
     }
 
     // If we can't join the route return
@@ -355,7 +349,7 @@ public class RouteWorker {
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
-        log.error("Unknown nav sat fix status type: " + msg.getStatus().getStatus());
+        log.warn("Unknown nav sat fix status type: " + msg.getStatus().getStatus());
         return;
     }
 
@@ -376,16 +370,12 @@ public class RouteWorker {
     }
 
     // Update downtrack distance
-    downtrackDistance = activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment
-      .downTrackDistance(hostVehicleLocation);
+    downtrackDistance = Math.max(0.0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment
+      .downTrackDistance(hostVehicleLocation));
 
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
-    log.debug("CrossTrackDistance = " + crossTrackDistance);
-    log.debug("DownTrackDistance = " + downtrackDistance);
-    log.debug("CurrentSegmentIndex = " + currentSegmentIndex);
-    log.debug("CurrentWaypointIndex = " + currentWaypointIndex);
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);
     }
@@ -410,22 +400,22 @@ public class RouteWorker {
         break;
       case cav_msgs.SystemAlert.FATAL:
         handleEvent(WorkerEvent.SYSTEM_FAILURE);
-        log.info("route_manager received system fatal on system_alert and is abandoning the route");
+        log.info("Received system fatal on system_alert and is abandoning the route");
         break;
       case cav_msgs.SystemAlert.NOT_READY:
         handleEvent(WorkerEvent.SYSTEM_NOT_READY);
         break;
       case cav_msgs.SystemAlert.DRIVERS_READY:
         systemOkay = true;
-        log.info("route_manager received system ready on system_alert and is starting to publish");
+        log.info("Received system ready on system_alert and is starting to publish");
         break;
       case cav_msgs.SystemAlert.SHUTDOWN:
-        log.info("Route manager received a shutdown message");
+        log.info("Received a shutdown message");
         routeManager.shutdown();
         break;
       default:
         //TODO: Handle this variant maybe throw exception?
-        log.error("System alert message received with unknown type: " + msg.getType());
+        log.warn("System alert message received with unknown type: " + msg.getType());
     }
   }
 

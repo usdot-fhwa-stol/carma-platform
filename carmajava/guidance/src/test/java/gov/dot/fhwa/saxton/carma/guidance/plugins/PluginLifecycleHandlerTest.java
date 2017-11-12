@@ -1,6 +1,21 @@
+/*
+ * Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import org.apache.commons.logging.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,11 +27,18 @@ import org.mockito.stubbing.Answer;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+
 public class PluginLifecycleHandlerTest {
     @Before public void setUp() throws Exception {
+        ILoggerFactory mockFact = mock(ILoggerFactory.class);
+        ILogger mockLogger = mock(ILogger.class);
+        when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+        LoggerManager.setLoggerFactory(mockFact);
         p = mock(IPlugin.class);
-        log = mock(Log.class);
-        handler = new PluginLifecycleHandler(p, log);
+        handler = new PluginLifecycleHandler(p);
     }
 
     @After public void tearDown() throws Exception {
@@ -27,7 +49,6 @@ public class PluginLifecycleHandlerTest {
 
         p = null;
         handler = null;
-        log = null;
     }
 
     // Happy path tests
@@ -181,6 +202,5 @@ public class PluginLifecycleHandlerTest {
 
     private PluginLifecycleHandler handler;
     private IPlugin p;
-    private Log log;
     private boolean running;
 }

@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
-import org.apache.commons.logging.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,13 +33,18 @@ import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.SpeedLimit;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.TrajectorySegment;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 public class CruisingPluginTest {
 
@@ -49,9 +53,13 @@ public class CruisingPluginTest {
 
   @Before
   public void setup() {
+    ILoggerFactory mockFact = mock(ILoggerFactory.class);
+    ILogger mockLogger = mock(ILogger.class);
+    when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+    LoggerManager.setLoggerFactory(mockFact);
     PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
         mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-        mock(ManeuverPlanner.class), mock(Log.class));
+        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)));
     cruise = new CruisingPlugin(psl);
   }
 
@@ -163,10 +171,23 @@ public class CruisingPluginTest {
     List<SpeedLimit> filteredLimits = cruise.getSpeedLimits(limits, 5.5, 15.5);
 
     assertEquals(2, filteredLimits.size());
-    assertEquals(3.0, filteredLimits.get(0).speedLimit, 0.5);
-    assertEquals(4.0, filteredLimits.get(1).speedLimit, 0.5);
+    assertEquals(2.0, filteredLimits.get(0).speedLimit, 0.5);
+    assertEquals(3.0, filteredLimits.get(1).speedLimit, 0.5);
     assertEquals(10.0, filteredLimits.get(0).location, 0.01);
     assertEquals(15.0, filteredLimits.get(1).location, 0.01);
+  }
+
+  @Test
+  public void testManeuverGeneration() {
+    List<Double> speeds = new ArrayList<>();
+    speeds.add(5.0);
+
+    Route route = generateRouteWithSpeedLimits(speeds, 5.0);
+
+    cruise.setSpeedLimits(cruise.processSpeedLimits(route));
+    Trajectory traj = new Trajectory(0.0, 10.0);
+
+    cruise.planTrajectory(traj, 0.0);
   }
 
   private CruisingPlugin cruise;

@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,6 @@
  */
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
-
-import org.apache.commons.logging.Log;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Interface for receiving information about Trajectory progress from TrajectoryExecutor

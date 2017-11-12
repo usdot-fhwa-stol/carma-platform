@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,9 +34,15 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         super.plan(inputs, commands, startDist);
 
         //check that speeds have been defined
-        if (startSpeed_ < 0.0  ||  endSpeed_ < 0.0) {
+        if (startSpeed_ < -0.5  ||  endSpeed_ < -0.5) {
             throw new IllegalStateException("Longitudinal maneuver plan attempted without previously defining the start/target speeds.");
         }
+    }
+
+    
+    @Override
+    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
+        super.planToTargetDistance(inputs, commands, startDist, endDist);
     }
 
 

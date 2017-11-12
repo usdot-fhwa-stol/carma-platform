@@ -27,7 +27,7 @@ trajectory_planning_max_attempts: 3
 
 # Double: The initial size of the trajectory planning window for the Arbitrator
 # Units: m
-initial_planning_window: 10.0
+initial_planning_window: 50.0
 
 # Double: The scaling factor which will be multiplied by the current planning window in the event of
 # trajectory success
@@ -37,16 +37,25 @@ planning_window_growth_factor: 1.25
 # trajectory failure
 planning_window_shrink_factor: 0.5
 
+# Double: The maximum distance the arbitrator will extend a trajectory by to line it up with the end of a route segment
+# Units: m
+planning_window_snap_threshold: 20.0
+
 # The class names which will be used to instantiate the concrete TrajectoryValidationConstraints
 trajectory_constraints:
   - gov.dot.fhwa.saxton.carma.guidance.trajectory.OverlappingManeuversConstraint
+
+# Double: The maximum speed allowable in a trajectory
+# Units: m/s
+trajectory_speed_limit: 30.00
 
 # The set of IPlugin instances which will be ignored based on class name
 ignored_plugins: []
 
 # Class names of plugins required to always be activated
 required_plugins:
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.MockCruisingPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.plugins.NoOpPlugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's lateral trajectory
 arbitrator_lateral_plugin: NoOp Plugin
@@ -85,3 +94,10 @@ trajectory_period: 15.0
 # Units: seconds
 vehicle_response_lag: 1.4
 
+# Double: Maximum acceleration GuidanceCommands can command of the vehicle
+# Units: m/s/s
+vehicle_acceleration_limit: 2.5
+
+# Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
+# Units: milliseconds
+shutdown_wait_time: 5000

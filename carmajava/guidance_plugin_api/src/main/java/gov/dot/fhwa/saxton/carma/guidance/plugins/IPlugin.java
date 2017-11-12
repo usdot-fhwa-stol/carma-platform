@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.utils.Versionable;
 
 /**
  * Interface describing the basic functionality of a CARMA Platform Guidance Plugin
@@ -28,19 +29,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
  * PluginManager will not be able to locate the plugin on the classpath and it will not show up as
  * available for activation by the user.
  */
-public interface IPlugin {
-    // Metadata methods
-
-    /**
-     * Get the name of the plugin instance, generally the name of the algorithm or the application.
-     */
-    String getName();
-
-    /**
-     * Get a String representation of the plugin's version. getName() and getVersionId() should
-     * uniquely identify a particular deployment of a plugin.
-     */
-    String getVersionId();
+public interface IPlugin extends Versionable {
 
     // Lifecycle methods
 

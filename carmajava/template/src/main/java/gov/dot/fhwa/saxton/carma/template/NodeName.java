@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.template;
 
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
@@ -47,7 +48,7 @@ public class NodeName extends SaxtonBaseNode {
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
 
-    log = new SaxtonLogger(NodeName.class.getName(), connectedNode.getLog());
+    log = new SaxtonLogger(NodeName.class.getSimpleName(), connectedNode.getLog());
 
 
     //TODO: Column G topic name
@@ -81,16 +82,11 @@ public class NodeName extends SaxtonBaseNode {
                                       }
 
                                       //TODO: Replace with Column D node name
-                                      log.logInfo("TAGNAME", "node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
+                                      log.info("TAGNAME", "node_name heard: \"" + message.getDescription() + ";" + messageTypeFullDescription + "\"");
 
                                     }//onNewMessage
                                   }//MessageListener
     );//addMessageListener
-
-    //TODO: Column G topic name
-    final Publisher<cav_msgs.SystemAlert> systemAlertPublisher =
-      connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
-
 
     //Getting the ros param called run_id.
     ParameterTree param = connectedNode.getParameterTree();
@@ -110,12 +106,7 @@ public class NodeName extends SaxtonBaseNode {
                                            @Override
                                            protected void loop() throws InterruptedException {
 
-                                             //TODO: Replace with column D node name
-                                             cav_msgs.SystemAlert systemAlertMsg = systemAlertPublisher.newMessage();
-                                             systemAlertMsg.setDescription("Hello World! " + "I am node_name. " + sequenceNumber + " run_id = " + rosRunID + ".");
-                                             systemAlertMsg.setType(cav_msgs.SystemAlert.DRIVERS_READY);
-
-                                             systemAlertPublisher.publish(systemAlertMsg);
+                                             publishSystemAlert(AlertSeverity.DRIVERS_READY, "Hello World! " + "I am node_name. " + sequenceNumber + " run_id = " + rosRunID + ".", null );
 
                                              sequenceNumber++;
                                              Thread.sleep(5000);

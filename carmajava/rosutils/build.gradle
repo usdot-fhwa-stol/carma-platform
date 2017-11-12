@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ dependencies {
   /* Example of an external maven artifact dependency */
     compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
     compile 'junit:junit:4.12'
+    compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   /* compile 'org.ros.rosjava_core:rosjava:[0.2,)' */
   /* Example of a local subproject dependency */ 
   /* compile project(':sibling_gradle_project') */

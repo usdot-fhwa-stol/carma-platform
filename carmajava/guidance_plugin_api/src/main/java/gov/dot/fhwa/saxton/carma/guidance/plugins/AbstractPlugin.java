@@ -1,11 +1,28 @@
+/*
+ * Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import org.apache.commons.logging.Log;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.List;
 import java.util.concurrent.atomic.*;
 
@@ -15,11 +32,10 @@ import java.util.concurrent.atomic.*;
  * Provides the basic getters and setters so that implementors don't have to deal with that
  */
 public abstract class AbstractPlugin implements IPlugin {
-    protected String name;
-    protected String versionId;
-    protected Log log;
+	protected ComponentVersion version = new ComponentVersion();
     protected IPubSubService pubSubService;
     protected PluginServiceLocator pluginServiceLocator;
+    protected ILogger log = LoggerManager.getLogger();
 
     // Private fields so that extendees can't access them
     private AtomicBoolean activation = new AtomicBoolean(false);
@@ -29,15 +45,6 @@ public abstract class AbstractPlugin implements IPlugin {
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
         this.pluginServiceLocator = pluginServiceLocator;
         this.pubSubService = pluginServiceLocator.getPubSubService();
-        this.log = pluginServiceLocator.getLog();
-    }
-
-    @Override public String getName() {
-        return name;
-    }
-
-    @Override public String getVersionId() {
-        return versionId;
     }
 
     @Override public boolean getActivation() {
@@ -66,6 +73,11 @@ public abstract class AbstractPlugin implements IPlugin {
     @Override
     public final void registerAvailabilityListener(AvailabilityListener availabilityListener) {
         availabilityListeners.add(availabilityListener);
+    }
+    
+    @Override
+    public ComponentVersion getVersionInfo() {
+    	return version;
     }
 
     /**

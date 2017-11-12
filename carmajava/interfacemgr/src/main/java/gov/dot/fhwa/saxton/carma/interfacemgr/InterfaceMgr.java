@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,14 @@
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 import cav_msgs.DriverStatus;
+import cav_msgs.RobotEnabled;
 import cav_msgs.SystemAlert;
 import cav_srvs.GetDriverApiResponse;
-import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
-import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
-import org.apache.commons.logging.Log;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.exception.RemoteException;
 import org.ros.message.MessageListener;
@@ -34,10 +35,9 @@ import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.service.ServiceServer;
-import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
-import std_msgs.Bool;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,16 +48,16 @@ import java.util.List;
  * and provides all of the ROS communications interfaces.
  *
  * Command line test:
- * rosparam set /interface_mgr/driver_wait_time 10
+ * rosparam set /interface_mgr/driver_wait_time 20
  * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  */
 public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
     protected InterfaceWorker worker_;
-    protected Log log_;
+    protected SaxtonLogger log_;
     protected ConnectedNode connectedNode_;
     protected CancellableLoop mainLoop_;
-    protected Publisher<cav_msgs.SystemAlert> systemAlertPublisher_;
+    protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -67,8 +67,8 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     @Override
     public void onSaxtonStart(final ConnectedNode connectedNode) {
         connectedNode_ = connectedNode;
-        log_ = connectedNode.getLog();
-        log_.info("InterfaceMgr starting up.");
+        log_ = new SaxtonLogger(InterfaceMgr.class.getSimpleName(), connectedNode.getLog());
+        log_.info("STARTUP", "InterfaceMgr starting up.");
 
         worker_ = new InterfaceWorker(this, log_); //must exist before first message listener
 
@@ -77,7 +77,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             ParameterTree param = connectedNode.getParameterTree();
             int waitTime = param.getInteger("~/driver_wait_time"); //seconds
             worker_.setWaitTime(waitTime);
-            log_.debug("InterfaceMgr.onStart read waitTime = " + waitTime);
+            log_.debug("STARTUP", "InterfaceMgr.onStart read waitTime = " + waitTime);
         } catch (Exception e) {
             //do nothing - the worker will use a default value
         }
@@ -115,7 +115,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	                info.setPosition(msg.getPosition());
 	                info.setComms(msg.getComms());
 	                info.setController(msg.getController());
-	                log_.debug("InterfaceMgr.driverDiscoveryListener received new status: " + info.getName() + ", "
+	                log_.debug("DRIVER", "InterfaceMgr.driverDiscoveryListener received new status: " + info.getName() + ", "
 	                        + info.getState().toString());
 	
 	                //add the new driver info to our database
@@ -144,7 +144,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	        			}else {
 	        				alertType = "SHUTDOWN - ";
 	        			}
-	        			log_.warn("InterfaceMgr SHUTTING DOWN after receipt of alert: " + alertType + msg.getDescription());
+	        			log_.warn("SHUTDOWN", "InterfaceMgr SHUTTING DOWN after receipt of alert: " + alertType + msg.getDescription());
 	        			connectedNode.shutdown();
 	        		}
             	}catch (Exception e) {
@@ -152,42 +152,69 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             	}
         	}
         });
+        
+        //look for the controller driver topic that publishes robotic control status (no point in calling our own ROS service,
+        // just make the direct call to the worker class since we have access to it)
+        String robotTopic = null;
+        List<String> capabilities = new ArrayList<>();
+        capabilities.add("robot_status");
+        List<String> topics = worker_.getDrivers(capabilities);
+        if (topics.size() == 1) {
+        	robotTopic = topics.get(0);
+        
+	        //set up listener for the robot topic
+	        Subscriber<cav_msgs.RobotEnabled> robotListener = connectedNode.newSubscriber(robotTopic, cav_msgs.RobotEnabled._TYPE);
+	        robotListener.addMessageListener(new MessageListener<RobotEnabled>() {
+	        	
+	        	@Override
+	        	public void onNewMessage(cav_msgs.RobotEnabled msg) {
+	        		try {
+	        			
+	        			//if robotic control has already been enabled then
+	        			if (robotEnabled_) {
+	        				
+	        				//if robotic control is no longer active then warn and alert all nodes to shut down
+	        				if (!msg.getRobotActive()) {
+	        					log_.warn("SHUTDOWN", "InterfaceMgr.robotListener senses robot is no longer active at the hardware level.");
+	        					publishSystemAlert(AlertSeverity.FATAL, "Robotic control has been disengaged.", null);
+	        					connectedNode.shutdown();
+	        				}
+	        			
+	        			//else if it is now being commanded then
+	        			}else if (msg.getRobotEnabled()) {
+	        				//wait 200 ms to be sure the command has been acted upon, then indicate that it has; at this point
+	        				// getRobotActive() should return true until it is disengaged, but we can't rely on getRobotEnabled()
+	        				// as much since it is a command, not an actual status of the hardware
+	        				try {
+	        					Thread.sleep(200);
+	        				}catch (Exception e) {
+	        				}
+	        				robotEnabled_ = true;
+	        			}
+	        			
+	        			
+	        		}catch (Exception e) {
+	        			handleException(e);
+	        		}
+	        	}
+	        });
 
-        //listener for ACC engaged (from the CAN driver), which will tell us if the brake pedal has been pushed
-        Subscriber<std_msgs.Bool> accListener = connectedNode.newSubscriber("acc_engaged", std_msgs.Bool._TYPE);
-        accListener.addMessageListener(new MessageListener<Bool>() {
-            @Override
-            public void onNewMessage(std_msgs.Bool msg) {
-            	try {
-	            	if (!msg.getData()) {
-	                    log_.warn("InterfaceMgr.accListener sensed ACC has been disengaged at the hardware level.");
-	
-	                    //alert all other ROS nodes
-	                    sendSystemAlert(AlertSeverity.FATAL, "Hardware ACC has been disengaged.");
-	
-	                    //shut down this node
-	                    connectedNode.shutdown();
-	                }
-            	}catch (Exception e) {
-            		handleException(e);
-            	}
-            }
-        });
+        }else { //we didn't find just one topic, so don't know what to do
+        	log_.warn("DRIVER", "InterfaceMgr search for " + capabilities.get(0) + " topic produced " + topics.size() +
+                        " results! CANNOT SENSE DISENGAGEMENT.");
+        	for (String s : topics) {
+        		log_.info("DRIVER", "    Topic found: " + s);
+        	}
+        	publishSystemAlert(AlertSeverity.CAUTION, "InterfaceMgr unable to sense robotic capability shutdown.", null);
+        }
 
         //create a message listener for the bond messages coming from drivers (sendSystemAlert)
         //TODO: this will be implemented in a future iteration due to dependence on
         //      an as-yet non-existent JNI wrapper for the ros bindcpp library.
         //Subscriber<std_msgs.Bond> bondListener =
 
-        ///// topic publisher /////
-
-        //define our alert publisher as latching so that recipients are guaranteed to see a message even if it is
-        // published before the recipient starts up
-        systemAlertPublisher_ = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
-        systemAlertPublisher_.setLatchMode(true);
-
         //publish the system not ready message
-        sendSystemAlert(AlertSeverity.NOT_READY, "System is starting up...");
+        publishSystemAlert(AlertSeverity.NOT_READY, "System is starting up...", null);
 
         // This CancellableLoop will be canceled automatically when the node shuts down
         mainLoop_ = new CancellableLoop() {
@@ -201,8 +228,8 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 if (worker_.isSystemReady()) {
 
                     //log it and publish the notification
-                    sendSystemAlert(AlertSeverity.DRIVERS_READY, "SYSTEM IS NOW OPERATIONAL");
-                    log_.info("///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
+                    publishSystemAlert(AlertSeverity.DRIVERS_READY, "SYSTEM IS NOW OPERATIONAL", null);
+                    log_.info("STARTUP", "///// InterfaceMgr.onStart: all drivers in place -- SYSTEM IS NOW OPERATIONAL");
 
                     //stop the loop
                     mainLoop_.cancel();
@@ -226,12 +253,12 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                                     cav_srvs.GetDriversWithCapabilitiesResponse response) {
 
                             	try {
-	                                log_.debug("InterfaceMgr.driverCapSvr: received request with "
+	                                log_.debug("DRIVER", "InterfaceMgr.driverCapSvr: received request with "
 	                                        + request.getCapabilities().size() + " capabilities listed.");
 	
 	                                //figure out which drivers match the request
 	                                List<String> res = worker_.getDrivers(request.getCapabilities());
-	                                log_.debug("InterfaceMgr.driverCapSvr: returning a list of " + res.size()
+	                                log_.debug("DRIVER", "InterfaceMgr.driverCapSvr: returning a list of " + res.size()
 	                                        + " matching drivers.");
 	
 	                                //formulate the service response
@@ -242,21 +269,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                             }
                         });
 
-    }//onStart
-
-    @Override
-    protected void handleException(Throwable e) {
-    	
-		//don't need to log anything here because SaxtonBaseNode handler has already done that
-    	
-    	//if it has been less than 2 min since we declared the system to be ready for operation then
-    	if (worker_.timeSinceSystemReady() < 2*60*1000) {
-    		sendSystemAlert(AlertSeverity.FATAL, "Unknown exception trapped in InterfaceMgr - COMMANDING SYSTEM SHUT DOWN.");
-    	}else {
-    		sendSystemAlert(AlertSeverity.WARNING, "Unknown exception trapped in InterfaceMgr - shutting down myself only.");
-    	}
-		connectedNode_.shutdown();
-    }
+    }//onSaxtonStart
 
     ///// service requestors /////
 
@@ -269,12 +282,12 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 cav_srvs.Bind._TYPE, connectedNode_, 5000);
 
         if (serviceClient == null) {
-            log_.warn("InterfaceMgr could not find service \"" + serviceName + "\"");
+            log_.warn("DRIVER", "InterfaceMgr could not find service \"" + serviceName + "\"");
         }
 
         //wait for the bond to be formed, and log an error if it is not
         //TODO: wait for the bindcpp JNI wrapper in order to implement this
-        log_.info("InterfaceMgr would now be bound to " + driverName + " but this capability is not yet implemented");
+        log_.info("DRIVER", "InterfaceMgr would now be bound to " + driverName + " but this capability is not yet implemented");
     }
 
     /**
@@ -303,7 +316,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                 serviceName, cav_srvs.GetDriverApi._TYPE, connectedNode_, 5000);
 
         if (serviceClient == null) {
-            log_.warn("InterfaceMgr could not find service \"" + serviceName + "\"");
+            log_.warn("DRIVER", "InterfaceMgr could not find service \"" + serviceName + "\"");
         } else {
 
             cav_srvs.GetDriverApiRequest req = serviceClient.newMessage();
@@ -318,32 +331,34 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 
                             @Override
                             public void onFailure(RemoteException e) {
-                                log_.warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+                                log_.warn("DRIVER", "InterfaceMgr.getDriverApi call failed for " + serviceName);
                             }
                         });
             } catch (InterruptedException e) {
-                log_.warn("InterfaceMgr.getDriverApi call failed for " + serviceName);
+                log_.warn("DRIVER", "InterfaceMgr.getDriverApi call failed for " + serviceName);
             }
         }
 
         return rh.getResult();
     }
 
-    @Override
-    public void sendSystemAlert(AlertSeverity sev, String message) {
+  /***
+   * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
+   * @param e The exception to handle
+   */
+  @Override
+  protected void handleException(Throwable e) {
 
-        //in case this method gets called before our onStart is complete, need to check for valid publisher
-        if (systemAlertPublisher_ != null) {
+    //don't need to log anything here because SaxtonBaseNode handler has already done that
 
-            //convert the severity to the appropriate message type
-            SystemAlert alert = systemAlertPublisher_.newMessage();
-            alert.setType((byte) sev.getVal());
-
-            //set the alert content and send the message
-            alert.setDescription(message);
-
-            systemAlertPublisher_.publish(alert);
-            log_.info("InterfaceMgr.sendSystemAlert: " + alert.toString() + ", " + message);
-        }
+    //if it has been less than 2 min since we declared the system to be ready for operation then
+    if (worker_.timeSinceSystemReady() < 2*60*1000) {
+      publishSystemAlert(AlertSeverity.FATAL, "Unknown exception trapped in InterfaceMgr - COMMANDING SYSTEM SHUT DOWN.", e);
+    }else {
+      publishSystemAlert(AlertSeverity.WARNING, "Unknown exception trapped in InterfaceMgr - shutting down myself only.", e);
     }
+
+    connectedNode_.shutdown();
+  }
+
 }

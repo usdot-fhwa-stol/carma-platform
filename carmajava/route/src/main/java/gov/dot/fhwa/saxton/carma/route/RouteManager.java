@@ -1,12 +1,12 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
- * 
+ * Copyright (C) 2017 LEIDOS.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,7 +19,9 @@ package gov.dot.fhwa.saxton.carma.route;
 import cav_msgs.RouteSegment;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
+import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
@@ -53,10 +55,9 @@ import java.util.List;
 public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   protected ConnectedNode connectedNode;
-
+  protected SaxtonLogger log;
   // Topics
   // Publishers
-  Publisher<cav_msgs.SystemAlert> systemAlertPub;
   Publisher<cav_msgs.RouteSegment> segmentPub;
   Publisher<cav_msgs.Route> routePub;
   Publisher<cav_msgs.RouteState> routeStatePub;
@@ -79,20 +80,28 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
     this.connectedNode = connectedNode;
 
-    final Log log = connectedNode.getLog();
+    this.log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
 
     /// Topics
     // Publishers
-    systemAlertPub = connectedNode.newPublisher("system_alert", cav_msgs.SystemAlert._TYPE);
     segmentPub = connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
-    routeWorker = new RouteWorker(this, log, params.getString("~default_database_path"));
+    String packagePath = params.getString("package_path");
+    String databasePath = params.getString("~default_database_path");
+    String finalDatabasePath;
+    if (databasePath.charAt(0) == '/') { // Check if path should be treated as absolute
+      finalDatabasePath = databasePath;
+    } else {
+      finalDatabasePath = packagePath + "/" + databasePath;
+    }
+
+    routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath);
 
     // Subscribers
     //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
@@ -167,16 +176,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   @Override protected void handleException(Throwable e) {
     String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
-    connectedNode.getLog().fatal(msg, e);
-    SystemAlert alertMsg = systemAlertPub.newMessage();
-    alertMsg.setType(SystemAlert.FATAL);
-    alertMsg.setDescription(msg);
-    systemAlertPub.publish(alertMsg);
-    this.shutdown();
-  }
-
-  @Override public void publishSystemAlert(cav_msgs.SystemAlert systemAlert) {
-    systemAlertPub.publish(systemAlert);
+    publishSystemAlert(AlertSeverity.FATAL, msg, e);
+    connectedNode.shutdown();
   }
 
   @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
@@ -199,7 +200,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   }
 
   @Override public void shutdown() {
-    connectedNode.getLog().info("Route: Route Manager shutdown method called");
+    log.info("SHUTDOWN", "Shutdown method called");
     this.connectedNode.shutdown();
   }
 }//AbstractNodeMain

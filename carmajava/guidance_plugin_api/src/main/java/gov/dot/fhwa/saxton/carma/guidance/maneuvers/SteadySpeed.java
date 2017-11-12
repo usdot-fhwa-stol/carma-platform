@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,21 @@ public class SteadySpeed extends LongitudinalManeuver {
 
         //set end distance to start distance
         endDist_ = startDist;
+    }
+
+
+    @Override
+    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
+        super.planToTargetDistance(inputs, commands, startDist, endDist);
+
+        //check that both the beginning and end speeds are the same
+        if (Math.abs(startSpeed_ - endSpeed_) > 0.05) {
+            throw new IllegalStateException("SteadySpeed maneuver being planned with start speed = " + startSpeed_
+                                            + ", target speed = " + endSpeed_);
+        }
+
+        //set end distance to start distance
+        endDist_ = endDist;
     }
 
 

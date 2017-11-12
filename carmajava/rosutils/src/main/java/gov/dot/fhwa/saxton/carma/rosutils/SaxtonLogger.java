@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package gov.dot.fhwa.saxton.carma.rosutils;
 
 import org.apache.commons.logging.Log;
+import org.ros.RosCore;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.BufferedWriter;
@@ -25,15 +27,17 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+
 /**
  * Extending the ROS Logger functionality for Carma purposes.
  */
 public class SaxtonLogger {
 
   private Log saxtonLog;
-  private String source = "NO SOURCE SET";
+  private String source = "NONE";
+  private String emptyTag = "NONE";
   private File file = null;
-  private String fileName;
+  private final static String fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm")) + ".txt";;
 
   /***
    * Get source name which is usually the className.
@@ -61,10 +65,10 @@ public class SaxtonLogger {
     this.source = className;
 
     try {
-
-      DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-      fileName = LocalDateTime.now().format(dateFormatter) + ".txt";
-      file = new File("/tmp/carmalogs/" + fileName); //TODO: Will see later if needed to be stored in param.
+      //Initial setup requires performing 2 commands on the terminal.
+      //1) sudo mkdir -p /opt/carma/logs and
+      //2) sudo chmod -R ugo+rw /opt/carma
+      file = new File("/opt/carma/logs/" + fileName); //TODO: Will see later if needed to be stored in param.
       file.getParentFile().mkdirs();
 
     } catch (Exception e) {
@@ -74,72 +78,159 @@ public class SaxtonLogger {
     }
   }
 
+
   /**
-   * The log* methods below were created to leverage the ROS node log and then adds the source and tag from the calling procedure
+   * The log methods below were created to leverage the ROS node log and then adds the source and tag from the calling procedure
    * onto the message.
-   *
-   * @param tag     A string representing the category of the data
-   * @param message A string containing the message to be logged
    */
-  public void logInfo(String tag, String message) {
+  public void debug(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.debug(messageToStore);
+    writeToFile(messageToStore);
+
+  }
+
+  public void debug(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.debug(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void debug(String tag, String message) {
+    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
+    saxtonLog.debug(messageToStore);
+    writeToFile(messageToStore);
+
+  }
+
+  public void debug(String tag, String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
+    saxtonLog.debug(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void info(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.info(messageToStore);
+    writeToFile(messageToStore);
+
+  }
+
+  public void info(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.info(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void info(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.info(messageToStore);
     writeToFile(messageToStore);
+
   }
 
-  public void logInfo(String tag, String message, Throwable t) {
+  public void info(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.info(messageToStore, t);
     writeToFile(messageToStore, t);
   }
 
-  public void logError(String tag, String message) {
-    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
-    saxtonLog.error(messageToStore);
+  public void warn(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.warn(messageToStore);
     writeToFile(messageToStore);
   }
 
-  public void logError(String tag, String message, Throwable t) {
-    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
-    saxtonLog.error(messageToStore, t);
+  public void warn(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.warn(messageToStore, t);
     writeToFile(messageToStore, t);
   }
 
-  public void logWarn(String tag, String message) {
+  public void warn(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.warn(messageToStore);
     writeToFile(messageToStore);
   }
 
-  public void logWarn(String tag, String message, Throwable t) {
+  public void warn(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.warn(messageToStore, t);
     writeToFile(messageToStore, t);
   }
 
-  public void logFatal(String tag, String message) {
+  public void error(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.error(messageToStore);
+    writeToFile(messageToStore);
+  }
+
+  public void error(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.error(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void error(String tag, String message) {
+    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
+    saxtonLog.error(messageToStore);
+    writeToFile(messageToStore);
+  }
+
+  public void error(String tag, String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
+    saxtonLog.error(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void fatal(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.fatal(messageToStore);
+    writeToFile(messageToStore);
+  }
+
+  public void fatal(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.fatal(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void fatal(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.fatal(messageToStore);
     writeToFile(messageToStore);
   }
 
-  public void logFatal(String tag, String message, Throwable t) {
+  public void fatal(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.fatal(messageToStore, t);
     writeToFile(messageToStore, t);
   }
 
-  public void logTrace(String tag, String message) {
+  public void trace(String message) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.trace(messageToStore);
+    writeToFile(messageToStore);
+  }
+
+  public void trace(String message, Throwable t) {
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    saxtonLog.trace(messageToStore, t);
+    writeToFile(messageToStore, t);
+  }
+
+  public void trace(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.trace(messageToStore);
     writeToFile(messageToStore);
   }
 
-  public void logTrace(String tag, String message, Throwable t) {
+  public void trace(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.trace(messageToStore, t);
     writeToFile(messageToStore, t);
   }
+
 
   /***
    * Write the log to a file with no exceptions.

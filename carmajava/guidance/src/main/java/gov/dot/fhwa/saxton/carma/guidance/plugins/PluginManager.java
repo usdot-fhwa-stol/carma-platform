@@ -1,5 +1,5 @@
 /*
- * TODO: Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2017 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,8 @@ import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
-import org.apache.commons.logging.Log;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
+
 import org.reflections.Reflections;
 import org.ros.exception.ServiceException;
 import org.ros.message.MessageFactory;
@@ -83,11 +84,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, 
     IGuidanceCommands commands, IManeuverInputs maneuverInputs, ConnectedNode node) {
         super(state, pubSubManager, node);
-        this.executor = new PluginExecutor(node.getLog());
+        this.executor = new PluginExecutor();
 
         pluginServiceLocator = new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
-                pubSubService, new RosParameterSource(node.getParameterTree()), new ManeuverPlanner(commands, maneuverInputs), 
-                node.getLog());
+                pubSubService, new RosParameterSource(node.getParameterTree()), new ManeuverPlanner(commands, maneuverInputs));
     }
 
     /**
@@ -114,11 +114,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
                 out.add(pluginClass);
                 if (log != null) {
-                    log.info("Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
+                    log.info("PLUGIN", "Guidance.PluginManager will initialize plugin: " + pluginClass.getName());
                 }
             } else {
                 if (log != null) {
-                    log.info("Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
+                    log.info("PLUGIN", "Guidance.PluginManager will ignore plugin: " + pluginClass.getName());
                 }
             }
         }
@@ -142,8 +142,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 // TODO: This is brittle, depends on convention of having a constructor taking only a PSL
                 IPlugin pluginInstance = pluginCtor.newInstance(pluginServiceLocator);
                 pluginInstance.registerAvailabilityListener(this);
-                log.info("Guidance.PluginManager instantiated new plugin instance: " + pluginInstance.getName() + ":"
-                        + pluginInstance.getVersionId());
+                ComponentVersion version = pluginInstance.getVersionInfo();
+                log.info("PLUGIN", "Guidance.PluginManager instantiated new plugin instance: " + version.componentName() + ":"
+                        + version.revisionString());
 
                 // If the plugin is required activate it by default
                 if (requiredPluginClassNames.contains(pluginInstance.getClass().getName())) {
@@ -152,8 +153,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
                 pluginInstances.add(pluginInstance);
             } catch (Exception e) {
-                log.error("Unable to instantiate: " + pluginClass.getCanonicalName());
-                log.error(e);
+                log.error("PLUGIN", "Unable to instantiate: " + pluginClass.getCanonicalName(), e);
             }
         }
 
@@ -176,14 +176,15 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         requiredPluginClassNames = (List<String>) node.getParameterTree().getList("~required_plugins",
                 new ArrayList<>());
 
-        log.info("Ignoring plugins: " + ignoredPluginClassNames.toString());
-        log.info("Requiring plugins: " + requiredPluginClassNames.toString());
+        log.info("STARTUP", "Ignoring plugins: " + ignoredPluginClassNames.toString());
+        log.info("STARTUP", "Requiring plugins: " + requiredPluginClassNames.toString());
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
 
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
         for (IPlugin p : getRegisteredPlugins()) {
+        	ComponentVersion v = p.getVersionInfo();
             executor.submitPlugin(p);
-            executor.initializePlugin(p.getName(), p.getVersionId());
+            executor.initializePlugin(v.componentName(), v.revisionString()); //could provide all info in one arg with v.toString()
 
             try {
                 Thread.sleep(1000);
@@ -209,7 +210,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     @Override
     public void onGuidanceEnable() {
         for (IPlugin p : getRegisteredPlugins()) {
-            executor.resumePlugin(p.getName(), p.getVersionId());
+        	ComponentVersion v = p.getVersionInfo();
+            executor.resumePlugin(v.componentName(), v.revisionString());
         }
     }
 
@@ -217,8 +219,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     public void onGuidanceShutdown() {
         // If we're shutting down, properly handle graceful plugin shutdown as well
         for (IPlugin p : getRegisteredPlugins()) {
+        	ComponentVersion v = p.getVersionInfo();
             p.setActivation(false);
-            executor.suspendPlugin(p.getName(), p.getVersionId());
+            executor.suspendPlugin(v.componentName(), v.revisionString());
         }
 
         try {
@@ -228,7 +231,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         }
 
         for (IPlugin p : getRegisteredPlugins()) {
-            executor.terminatePlugin(p.getName(), p.getVersionId());
+        	ComponentVersion v = p.getVersionInfo();
+            executor.terminatePlugin(v.componentName(), v.revisionString());
         }
     }
 
@@ -261,9 +265,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         for (IPlugin p : registeredPlugins) {
             if (p.getAvailability()) {
                 Plugin pMsg = messageFactory.newFromType(Plugin._TYPE);
+                ComponentVersion v = p.getVersionInfo();
                 pMsg.setAvailable(p.getAvailability());
-                pMsg.setName(p.getName());
-                pMsg.setVersionId(p.getVersionId());
+                pMsg.setName(v.componentName());
+                pMsg.setVersionId(v.revisionString());
                 pMsg.setActivated(p.getActivation());
                 pMsg.setRequired(requiredPluginClassNames.contains(p.getClass().getName()));
                 pList.add(pMsg);
@@ -296,9 +301,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                         List<Plugin> pList = new ArrayList<>();
                         for (IPlugin p : registeredPlugins) {
                             Plugin p0 = factory.newFromType(Plugin._TYPE);
+                            ComponentVersion v = p.getVersionInfo();
                             p0.setAvailable(p.getAvailability());
-                            p0.setName(p.getName());
-                            p0.setVersionId(p.getVersionId());
+                            p0.setName(v.componentName());
+                            p0.setVersionId(v.revisionString());
                             p0.setActivated(p.getActivation());
                             p0.setRequired(requiredPluginClassNames.contains(p.getClass().getName()));
                             pList.add(p0);
@@ -327,9 +333,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                         for (IPlugin p : registeredPlugins) {
                             if (p.getActivation()) {
                                 Plugin p0 = factory.newFromType(Plugin._TYPE);
+                                ComponentVersion v = p.getVersionInfo();
                                 p0.setAvailable(p.getAvailability());
-                                p0.setName(p.getName());
-                                p0.setVersionId(p.getVersionId());
+                                p0.setName(v.componentName());
+                                p0.setVersionId(v.revisionString());
                                 p0.setActivated(p.getActivation());
                                 p0.setRequired(requiredPluginClassNames.contains(p.getClass().getName()));
                                 pList.add(p0);
@@ -349,8 +356,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                         // Walk the plugin list and see which one matches the name and version
                         boolean pluginFound = false;
                         for (IPlugin p : registeredPlugins) {
-                            if (pluginActivationRequest.getPluginName().equals(p.getName())
-                                    && pluginActivationRequest.getPluginVersion().equals(p.getVersionId())) {
+                        	ComponentVersion v = p.getVersionInfo();
+                            if (pluginActivationRequest.getPluginName().equals(v.componentName())
+                                    && pluginActivationRequest.getPluginVersion().equals(v.revisionString())) {
                                 // Match detected
                                 if (!requiredPluginClassNames.contains(p.getClass().getName())) {
                                     // Can't change state of required plugins
