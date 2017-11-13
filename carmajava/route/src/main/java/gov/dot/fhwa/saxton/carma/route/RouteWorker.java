@@ -280,7 +280,7 @@ public class RouteWorker {
       if (Math.abs(crossTrack) < maxJoinDistance) {
         if (count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) {
           return 0;
-        } else if (count != 0 && downTrack < seg.length()) {
+        } else if (downTrack > -0.0 && downTrack < seg.length()) {
           return count + 1;
         }
       }
