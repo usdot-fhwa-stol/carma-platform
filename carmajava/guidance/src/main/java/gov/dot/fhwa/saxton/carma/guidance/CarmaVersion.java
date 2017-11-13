@@ -38,8 +38,8 @@ public class CarmaVersion {
         int intermediate =  1;
         int minor =         0;
         // Don't touch this, automatically updated
-        int build = 1516;
-        String suffix = "join_route_in_the_middle1-SNAPSHOT(1)";
+        int build = 1528;
+        String suffix = "correct_route_joining1";
 
 //==============================================================================================================================
 
