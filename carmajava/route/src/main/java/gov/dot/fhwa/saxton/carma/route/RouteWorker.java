@@ -233,7 +233,6 @@ public class RouteWorker {
     } else {
       activeRoute = route;
 
-      routeManager.publishActiveRoute(getActiveRouteTopicMsg());
       handleEvent(WorkerEvent.ROUTE_SELECTED);
       return SetActiveRouteResponse.NO_ERROR;
     }
@@ -258,6 +257,7 @@ public class RouteWorker {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
       startRouteAtIndex(startingIndex);
+      routeManager.publishActiveRoute(getActiveRouteTopicMsg());
       return StartActiveRouteResponse.NO_ERROR;
     }
   }
