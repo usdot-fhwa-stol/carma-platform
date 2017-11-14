@@ -22,11 +22,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
  * Represents a longitudinal maneuver in which the vehicle steadily decreases its speed.
  */
 public class SlowDown extends LongitudinalManeuver {
-
-    private double                  workingAccel_;              // m/s^2 that we will actually use
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
-    private long                    startTime_ = 0;             // time that the maneuver execution started, ms
-
 
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {

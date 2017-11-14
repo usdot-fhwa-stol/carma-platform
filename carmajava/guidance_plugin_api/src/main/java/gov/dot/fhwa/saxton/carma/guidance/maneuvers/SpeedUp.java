@@ -23,8 +23,6 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
  */
 public class SpeedUp extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
-    private long                    startTime_ = 0;             // time that the maneuver execution started, ms
-
 
     /**
      * ASSUMES that the target speed has been specified such that it does not exceed and infrastructure speed limit.
