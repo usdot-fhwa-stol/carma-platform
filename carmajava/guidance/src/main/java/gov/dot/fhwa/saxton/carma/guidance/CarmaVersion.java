@@ -36,10 +36,10 @@ public class CarmaVersion {
         String name =       "Carma Platform";
         int major =         2;
         int intermediate =  1;
-        int minor =         0;
+        int minor =         1;
         // Don't touch this, automatically updated
-        int build = 1493;
-        String suffix = "less_logs_for_bsm5-SNAPSHOT(1)";
+        int build = 1540;
+        String suffix = "";
 
 //==============================================================================================================================
 
