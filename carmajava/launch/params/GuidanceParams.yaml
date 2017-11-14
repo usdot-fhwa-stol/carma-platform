@@ -102,6 +102,10 @@ vehicle_acceleration_limit: 2.5
 # Units: seconds
 desired_acc_timegap: 1.0
 
+# Double: Minimum distance between vehicle and front vehicle at any point
+# Units: m
+min_acc_standoff_distance: 5.0
+
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
 shutdown_wait_time: 5000

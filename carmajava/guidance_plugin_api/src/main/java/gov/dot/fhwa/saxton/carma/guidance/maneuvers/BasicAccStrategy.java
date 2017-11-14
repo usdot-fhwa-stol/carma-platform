@@ -25,6 +25,11 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 public class BasicAccStrategy extends AbstractAccStrategy {
   protected double standoffDistance = 5.0;
 
+  public BasicAccStrategy(double minStandoffDistance) {
+    super();
+    this.standoffDistance = minStandoffDistance;
+  }
+
 	@Override
 	public boolean evaluateAccTriggerConditions(double distToFrontVehicle, double currentSpeed,
 			double frontVehicleSpeed) {
