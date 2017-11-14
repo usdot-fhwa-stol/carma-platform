@@ -98,6 +98,10 @@ vehicle_response_lag: 1.4
 # Units: m/s/s
 vehicle_acceleration_limit: 2.5
 
+# Double: Time headway to control to with ACC
+# Units: seconds
+desired_acc_timegap: 1.0
+
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
 shutdown_wait_time: 5000

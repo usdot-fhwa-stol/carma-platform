@@ -85,6 +85,8 @@ public class GuidanceMain extends SaxtonBaseNode {
   private void initExecutor(AtomicReference<GuidanceState> state, ConnectedNode node) {
     executor = Executors.newFixedThreadPool(numThreads);
 
+    // Init the ACC system
+
     GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(state, pubSubService, node);
     PluginManager pluginManager = new PluginManager(state, pubSubService, guidanceCommands, maneuverInputs, node);

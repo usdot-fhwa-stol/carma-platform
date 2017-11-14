@@ -43,8 +43,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
       double ourSpeedFactor = (1 - blendFactor) * currentSpeed;
       double frontVehicleSpeedFactor = blendFactor * frontVehicleSpeed;
 
-      return ourSpeedFactor + frontVehicleSpeedFactor;
-
+      return ourSpeedFactor + frontVehicleSpeedFactor; // Our final blend of speeds
     } else {
       return desiredSpeedCommand;
     }
