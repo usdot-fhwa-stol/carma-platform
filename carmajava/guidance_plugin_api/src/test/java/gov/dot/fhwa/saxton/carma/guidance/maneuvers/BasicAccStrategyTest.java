@@ -40,6 +40,30 @@ public class BasicAccStrategyTest {
     assertTrue(fpEquals(10.0, bas.computeAccOverrideSpeed(20.0, 15.0, 15.0, 10.0), EPSILON));
   }
 
+  @Test
+  public void testHalfOverride() {
+    double frontVehicleSpeed = 10.0;
+    double currentSpeed = 20.0;
+    double cmdOverride = bas.computeAccOverrideSpeed(15.0, frontVehicleSpeed, currentSpeed, 10.0);
+    assertEquals(15.0, cmdOverride, 0.001);
+  }
+
+  @Test
+  public void testFullOverride() {
+    double frontVehicleSpeed = 10.0;
+    double currentSpeed = 20.0;
+    double cmdOverride = bas.computeAccOverrideSpeed(5.0, frontVehicleSpeed, currentSpeed, 10.0);
+    assertEquals(10.0, cmdOverride, 0.001);
+  }
+
+  @Test
+  public void testTooCloseOverride() {
+    double frontVehicleSpeed = 10.0;
+    double currentSpeed = 20.0;
+    double cmdOverride = bas.computeAccOverrideSpeed(3.0, frontVehicleSpeed, currentSpeed, 10.0);
+    assertEquals(10.0, cmdOverride, 0.001);
+  }
+
   @Before
   public void setUp() {
     bas = new BasicAccStrategy();

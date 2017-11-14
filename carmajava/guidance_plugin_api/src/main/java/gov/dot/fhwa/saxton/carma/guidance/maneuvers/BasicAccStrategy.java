@@ -40,8 +40,8 @@ public class BasicAccStrategy extends AbstractAccStrategy {
       // Clamp distance - adjusted to ensure at least minimum standoff distance - into the range of [0, desiredHeadway]
       double distance = Math.min(Math.max(distToFrontVehicle - standoffDistance, 0), desiredHeadway);
       double blendFactor = distance / desiredHeadway; // This factor will be used to compute our blend, as we get closer we give their speed more influence
-      double ourSpeedFactor = (1 - blendFactor) * currentSpeed;
-      double frontVehicleSpeedFactor = blendFactor * frontVehicleSpeed;
+      double ourSpeedFactor = (blendFactor) * currentSpeed;
+      double frontVehicleSpeedFactor = (1 - blendFactor) * frontVehicleSpeed;
 
       return ourSpeedFactor + frontVehicleSpeedFactor; // Our final blend of speeds
     } else {
