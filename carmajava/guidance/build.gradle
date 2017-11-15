@@ -39,6 +39,17 @@ repositories {
 
 apply from: 'https://raw.githubusercontent.com/passsy/gradle-GitVersioner/master/git-versioner.gradle'
 
+sourceSets {
+        main {
+                java {
+                        srcDirs= ["$projectDir/src/main/java"]
+                }
+                resources {
+                        srcDirs= ["$projectDir/src/main/resources"]
+                }
+        }
+}
+
 dependencies {
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_core:rosjava_geometry:0.3.5'
@@ -67,10 +78,11 @@ task writeVersionFile << {
     }
 
     // Write the file
-    def file = new File("src/main/resources/version")
-    file.createFile();
-    file.text="""
-$gitVersion.version
+    def file = new File("$projectDir/src/main/resources/version")
+    file.createNewFile();
+    
+    // Formatting is not a mistake here, the new lines and whitespace show up correctly in the file
+    file.text="""$gitVersion.version
 $gitVersion.shortBranch
 """
 }
