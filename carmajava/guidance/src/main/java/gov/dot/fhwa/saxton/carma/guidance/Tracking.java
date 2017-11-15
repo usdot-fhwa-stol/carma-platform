@@ -34,8 +34,11 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.ros.exception.ParameterClassCastException;
+import org.ros.exception.ParameterNotFoundException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
@@ -118,167 +121,170 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void onGuidanceStartup() {
-		
-		try {
-			// Publishers
-			bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
 
-			// Subscribers
-			navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
-			headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
-			velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
-			// TODO: acceleration set is not available from SF
-			accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
-			
-			if(bsmPublisher == null 
-					|| navSatFixSubscriber == null 
-					|| headingStampedSubscriber == null 
-					|| velocitySubscriber == null 
-					|| accelerationSubscriber == null) {
-				log.warn("Cannot initialize pubs and subs");
-			}
-			
-			navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
-				@Override
-				public void onMessage(NavSatFix msg) {
-					if(!nav_sat_fix_ready) {
-						nav_sat_fix_ready = true;
-						log.info("BSM", "nav_sat_fix subscriber is ready");
-					}
-				}
-			});
-			
-			
-			headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
-				@Override
-				public void onMessage(HeadingStamped msg) {
-					if(!heading_ready) {
-						heading_ready = true;
-						log.info("BSM", "heading subscriber is ready");
-					}
-				}
-			});
-			
-			
-			velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
-				@Override
-				public void onMessage(TwistStamped msg) {
-					if(!velocity_ready) {
-						velocity_ready = true;
-						log.info("BSM", "velocity subscriber is ready");
-					}
-				}
-			});
-			
-			accelerationSubscriber.registerOnMessageCallback(new OnMessageCallback<AccelStamped>() {
-				@Override
-				public void onMessage(AccelStamped msg) {
-					if(!acceleration_ready) {
-						acceleration_ready = true;
-						log.info("BSM", "acceleration subscriber is ready");
-					}
-				}
-			});
-			
-		} catch (Exception e) {
-			handleException(e);
+		// Publishers
+		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
+
+		// Subscribers
+		navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
+		headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
+		velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+		// TODO: acceleration set is not available from SF
+		accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
+		
+		if(bsmPublisher == null 
+				|| navSatFixSubscriber == null 
+				|| headingStampedSubscriber == null 
+				|| velocitySubscriber == null 
+				|| accelerationSubscriber == null) {
+			log.warn("Cannot initialize pubs and subs");
 		}
 		
+		navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
+			@Override
+			public void onMessage(NavSatFix msg) {
+				if(!nav_sat_fix_ready) {
+					nav_sat_fix_ready = true;
+					log.info("BSM", "nav_sat_fix subscriber is ready");
+				}
+			}
+		});
+		
+		
+		headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
+			@Override
+			public void onMessage(HeadingStamped msg) {
+				if(!heading_ready) {
+					heading_ready = true;
+					log.info("BSM", "heading subscriber is ready");
+				}
+			}
+		});
+		
+		
+		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
+			@Override
+			public void onMessage(TwistStamped msg) {
+				if(!velocity_ready) {
+					velocity_ready = true;
+					log.info("BSM", "velocity subscriber is ready");
+				}
+			}
+		});
+		
+		accelerationSubscriber.registerOnMessageCallback(new OnMessageCallback<AccelStamped>() {
+			@Override
+			public void onMessage(AccelStamped msg) {
+				if(!acceleration_ready) {
+					acceleration_ready = true;
+					log.info("BSM", "acceleration subscriber is ready");
+				}
+			}
+		});
 	}
 
 	@Override
 	public void onSystemReady() {
 		
 		// Make service call to get drivers
+		log.info("Trying to get get_drivers_with_capabilities service...");
 		try {
-			log.info("Trying to get get_drivers_with_capabilities service...");
 			getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
-			if(getDriversWithCapabilitiesClient == null) {
-				log.warn("get_drivers_with_capabilities service can not be found");
-			}
-			
-			GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
-			driver_request_wrapper.setCapabilities(req_drivers);
-			getDriversWithCapabilitiesClient.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-				
-				@Override
-				public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-					resp_drivers = msg.getDriverData();
-					log.info("Tracking: service call is successful: " + resp_drivers);
-				}
-				
-				@Override
-				public void onFailure(Exception e) {
-					throw new RosRuntimeException(e);
-				}
-				
-			});
-			
-			log.info("Trying to get get_transform...");
-			getTransformClient = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
-			if(getTransformClient == null) {
-				log.warn("get_transform service can not be found");
-			}
-			
-			if(resp_drivers != null) {
-				for(String driver_url : resp_drivers) {
-					if(driver_url.endsWith("/can/steering_wheel_angle")) {
-						steeringWheelSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
-						continue;
-					}
-					if(driver_url.endsWith("/can/brake_position")) {
-						brakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
-						continue;
-					}
-					if(driver_url.endsWith("/can/transmission_state")) {
-						transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url, TransmissionState._TYPE);
-					}
-				}
-			} else {
-				log.warn("Tracking: cannot find suitable drivers");
-			}
-			
-			if(steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null) {
-				log.warn("Tracking: initialize subs failed");
-			}
-			
-			steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
-				@Override
-				public void onMessage(Float64 msg) {
-					if(!steer_wheel_ready) {
-						steer_wheel_ready = true;
-						log.info("BSM", "steer_wheel subscriber is ready");
-					}
-				}
-			});
-			
-			brakeSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
-				@Override
-				public void onMessage(Float64 msg) {
-					if(!brake_ready) {
-						brake_ready = true;
-						log.info("BSM", "brake subscriber is ready");
-					}
-				}
-			});
-			
-			transmissionSubscriber.registerOnMessageCallback(new OnMessageCallback<TransmissionState>() {
-				@Override
-				public void onMessage(TransmissionState msg) {
-					if(!transmission_ready) {
-						transmission_ready = true;
-						log.info("BSM", "transmission subscriber is ready");
-					}
-				}
-			});
-			
-		} catch (Exception e) {
-			handleException(e);
+		} catch (TopicNotFoundException e1) {
+			handleException(e1);
+		}
+		if(getDriversWithCapabilitiesClient == null) {
+			log.warn("get_drivers_with_capabilities service can not be found");
 		}
 		
-		ParameterTree param = node.getParameterTree();
-		vehicleLength = (float) param.getDouble("vehicle_length");
-		vehicleWidth = (float) param.getDouble("vehicle_width");
+		GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
+		driver_request_wrapper.setCapabilities(req_drivers);
+		getDriversWithCapabilitiesClient.callSync(driver_request_wrapper, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+			
+			@Override
+			public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+				resp_drivers = msg.getDriverData();
+				log.info("Tracking: service call is successful: " + resp_drivers);
+			}
+			
+			@Override
+			public void onFailure(Exception e) {
+				throw new RosRuntimeException(e);
+			}
+			
+		});
+		
+		log.info("Trying to get get_transform...");
+		try {
+			getTransformClient = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
+		} catch (TopicNotFoundException e1) {
+			handleException(e1);
+		}
+		if(getTransformClient == null) {
+			log.warn("get_transform service can not be found");
+		}
+		
+		if(resp_drivers != null) {
+			for(String driver_url : resp_drivers) {
+				if(driver_url.endsWith("/can/steering_wheel_angle")) {
+					steeringWheelSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/brake_position")) {
+					brakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/transmission_state")) {
+					transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url, TransmissionState._TYPE);
+				}
+			}
+		} else {
+			log.warn("Tracking: cannot find suitable drivers");
+		}
+		
+		if(steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null) {
+			log.warn("Tracking: initialize subs failed");
+		}
+		
+		steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
+			@Override
+			public void onMessage(Float64 msg) {
+				if(!steer_wheel_ready) {
+					steer_wheel_ready = true;
+					log.info("BSM", "steer_wheel subscriber is ready");
+				}
+			}
+		});
+		
+		brakeSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
+			@Override
+			public void onMessage(Float64 msg) {
+				if(!brake_ready) {
+					brake_ready = true;
+					log.info("BSM", "brake subscriber is ready");
+				}
+			}
+		});
+		
+		transmissionSubscriber.registerOnMessageCallback(new OnMessageCallback<TransmissionState>() {
+			@Override
+			public void onMessage(TransmissionState msg) {
+				if(!transmission_ready) {
+					transmission_ready = true;
+					log.info("BSM", "transmission subscriber is ready");
+				}
+			}
+		});
+		
+		try {
+			ParameterTree param = node.getParameterTree();
+			vehicleLength = (float) param.getDouble("vehicle_length");
+			vehicleWidth = (float) param.getDouble("vehicle_width");
+		} catch (ParameterNotFoundException e1) {
+			handleException(e1);
+		} catch (ParameterClassCastException e2) {
+			handleException(e2);
+		}
 		
 		drivers_ready = true;
 	}
@@ -291,11 +297,7 @@ public class Tracking extends GuidanceComponent {
 	public void loop() throws InterruptedException {
 		
 		if(drivers_ready) {
-			try {
-				bsmPublisher.publish(composeBSMData());
-			} catch (Exception e) {
-				handleException(e);
-			}
+			bsmPublisher.publish(composeBSMData());
 		}
 		Thread.sleep(sleepDurationMillis);
 	}
@@ -303,245 +305,241 @@ public class Tracking extends GuidanceComponent {
 	private BSM composeBSMData() {
 
 		BSM bsmFrame = bsmPublisher.newMessage();
+		
+		// Set header
+		bsmFrame.getHeader().setStamp(node.getCurrentTime());
+		bsmFrame.getHeader().setFrameId(Tracking.class.getSimpleName());
 
-		try {
-			// Set header
-			bsmFrame.getHeader().setStamp(node.getCurrentTime());
-			bsmFrame.getHeader().setFrameId(Tracking.class.getSimpleName());
+		// Set core data
+		BSMCoreData coreData = bsmFrame.getCoreData();
+		coreData.setMsgCount((byte) ((msgCount++ % BSMCoreData.MSG_COUNT_MAX) + 1));
 
-			// Set core data
-			BSMCoreData coreData = bsmFrame.getCoreData();
-			coreData.setMsgCount((byte) ((msgCount++ % BSMCoreData.MSG_COUNT_MAX) + 1));
+		// ID is random and changes every 5 minutes
+		if(node.getCurrentTime().secs - last_id_changed >= BSMCoreData.ID_TIME_MAX) {
+			randomIdGenerator.nextBytes(random_id);
+			last_id_changed = node.getCurrentTime().secs;
+		}
+		coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
 
-			// ID is random and changes every 5 minutes
-			if(node.getCurrentTime().secs - last_id_changed >= BSMCoreData.ID_TIME_MAX) {
-				randomIdGenerator.nextBytes(random_id);
-				last_id_changed = node.getCurrentTime().secs;
-			}
-			coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
-
-			// Set GPS data
-			coreData.setLatitude(BSMCoreData.LATITUDE_UNAVAILABLE); // Default value when unknown
-			coreData.setLongitude(BSMCoreData.LONGITUDE_UNAVAILABLE);
-			coreData.setElev(BSMCoreData.ELEVATION_UNAVAILABLE);
-			coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
-			coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
-			coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
-			if(navSatFixSubscriber.getLastMessage() != null && getTransformClient != null) {
-				NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
-				Location location_on_baselink = new Location();
-				location_on_baselink.setLongitude(gps_msg.getLongitude());
-				location_on_baselink.setLatitude(gps_msg.getLatitude());
-				location_on_baselink.setAltitude(gps_msg.getAltitude());
-				Point3D point_on_baselink = converter.geodesic2Cartesian(location_on_baselink, Transform.identity());
-				if(!vehicle_to_baselink_transform_ready) {
-					GetTransformRequest transform_request = getTransformClient.newMessage();
-					transform_request.setParentFrame(vehicleFrame);
-					transform_request.setChildFrame(baseLinkFrame);
-					getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
-						
-						@Override
-						public void onSuccess(GetTransformResponse msg) {
-							log.debug("BSM", "Get baselink_to_vehicle_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
-							if(msg.getErrorStatus() == 0) {
-								vehicleToBaselink = Transform.fromTransformMessage(msg.getTransform().getTransform());
-								vehicle_to_baselink_transform_ready = true;
-							}
-						}
-						
-						@Override
-						public void onFailure(Exception e) {
-						}
-					});
-				}
-				
-				if(vehicle_to_baselink_transform_ready) {
-					Vector3 after_transform = vehicleToBaselink.apply(new Vector3(point_on_baselink.getX(), point_on_baselink.getY(), point_on_baselink.getZ()));
-					Point3D point_on_vehicle = new Point3D(after_transform.getX(), after_transform.getY(), after_transform.getZ());
-					Location location_on_vehicle = converter.cartesian2Geodesic(point_on_vehicle, Transform.identity());
-					double lat = location_on_vehicle.getLatitude();
-					double Lon = location_on_vehicle.getLongitude();
-					float elev = (float) location_on_vehicle.getAltitude();
-					if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
-						coreData.setLatitude(lat);
-					}
-					if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
-						coreData.setLongitude(Lon);
-					}
-					if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
-						coreData.setElev(elev);
-					}
-				}
-				
-				double semi_major_square = gps_msg.getPositionCovariance()[0];
-				double semi_minor_square = gps_msg.getPositionCovariance()[4];
-				// Orientation of semi_major axis
-				// Orientation of accuracy eclipse is fixed to north based on Pinpoint documentations
-				// TODO: May need to change if we use other Pinpoints
-				double orientation = PositionalAccuracy.ACCURACY_ORIENTATION_MIN; 
-				
-				float semi_major = -1;
-				float semi_minor = -1;
-				if(semi_major_square >= 0) {
-					semi_major = (float) Math.sqrt(semi_major_square);
-				}
-				if(semi_minor_square >= 0) {
-					semi_minor = (float) Math.sqrt(semi_minor_square);
-				}
-				if(semi_major != -1) {
-					if(semi_major >= PositionalAccuracy.ACCURACY_MAX) {
-						coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_MAX);
-					} else {
-						coreData.getAccuracy().setSemiMajor(semi_major);
-					}
-				}
-				
-				if(semi_minor != -1) {
-					if(semi_minor >= PositionalAccuracy.ACCURACY_MAX) {
-						coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_MAX);
-					} else {
-						coreData.getAccuracy().setSemiMinor(semi_minor);
-					}
-				}
-				
-				if(orientation >= PositionalAccuracy.ACCURACY_ORIENTATION_MIN && orientation <= PositionalAccuracy.ACCURACY_ORIENTATION_MAX) {
-					coreData.getAccuracy().setOrientation(orientation);
-				}
-			}
-			
-			// Set transmission state
-			// Reserved values are illegal values at this time
-			coreData.getTransmission().setTransmissionState(TransmissionState.UNAVAILABLE);
-			if(transmissionSubscriber.getLastMessage() != null) {
-				byte transmission_state = transmissionSubscriber.getLastMessage().getTransmissionState();
-				if(transmission_state == TransmissionState.NEUTRAL
-						|| transmission_state == TransmissionState.FORWARDGEARS
-						|| transmission_state == TransmissionState.PARK
-						|| transmission_state == TransmissionState.REVERSEGEARS) {
-					coreData.getTransmission().setTransmissionState(transmission_state);
-				}
-			}
-
-			coreData.setSpeed(BSMCoreData.SPEED_UNAVAILABLE);
-			if(velocitySubscriber.getLastMessage() != null) {
-				float speed = (float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
-				if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
-					coreData.setSpeed(speed);
-				}
-			}
-			
-			coreData.setHeading(BSMCoreData.HEADING_UNAVAILABLE);
-			if(headingStampedSubscriber.getLastMessage() != null) {
-				float heading = (float) headingStampedSubscriber.getLastMessage().getHeading();
-				if(heading >= BSMCoreData.HEADING_MIN && heading <= BSMCoreData.HEADING_MAX) {
-					coreData.setHeading(heading);
-				}
-			}
-			
-			coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE);
-			if(steeringWheelSubscriber.getLastMessage() != null) {
-				float angle = (float) steeringWheelSubscriber.getLastMessage().getData();	
-				if(angle <= BSMCoreData.STEER_WHEEL_ANGLE_MIN) {
-					coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_MIN);
-				} else if(angle >= BSMCoreData.STEER_WHEEL_ANGLE_MAX) {
-					coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_MAX);
-				} else {
-					coreData.setAngle(angle);
-				}
-			}
-
-			coreData.getAccelSet().setLongitudinal(AccelerationSet4Way.ACCELERATION_UNAVAILABLE);
-			coreData.getAccelSet().setLateral(AccelerationSet4Way.ACCELERATION_UNAVAILABLE);
-			coreData.getAccelSet().setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_UNAVAILABLE);
-			// TODO: It is not well defined in J2735
-			coreData.getAccelSet().setYawRate(AccelerationSet4Way.YAWRATE_UNAVAILABLE);
-			if(accelerationSubscriber.getLastMessage() != null && getTransformClient != null) {
+		// Set GPS data
+		coreData.setLatitude(BSMCoreData.LATITUDE_UNAVAILABLE); // Default value when unknown
+		coreData.setLongitude(BSMCoreData.LONGITUDE_UNAVAILABLE);
+		coreData.setElev(BSMCoreData.ELEVATION_UNAVAILABLE);
+		coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
+		coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
+		coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
+		if(navSatFixSubscriber.getLastMessage() != null && getTransformClient != null) {
+			NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
+			Location location_on_baselink = new Location();
+			location_on_baselink.setLongitude(gps_msg.getLongitude());
+			location_on_baselink.setLatitude(gps_msg.getLatitude());
+			location_on_baselink.setAltitude(gps_msg.getAltitude());
+			Point3D point_on_baselink = converter.geodesic2Cartesian(location_on_baselink, Transform.identity());
+			if(!vehicle_to_baselink_transform_ready) {
 				GetTransformRequest transform_request = getTransformClient.newMessage();
-				transform_request.setParentFrame(mapFrame);
+				transform_request.setParentFrame(vehicleFrame);
 				transform_request.setChildFrame(baseLinkFrame);
 				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
 					
 					@Override
 					public void onSuccess(GetTransformResponse msg) {
-						log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+						log.debug("BSM", "Get baselink_to_vehicle_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
 						if(msg.getErrorStatus() == 0) {
-							baseToMap = Transform.fromTransformMessage(msg.getTransform().getTransform());
-							base_to_map_transform_ready = true;
+							vehicleToBaselink = Transform.fromTransformMessage(msg.getTransform().getTransform());
+							vehicle_to_baselink_transform_ready = true;
 						}
 					}
 					
 					@Override
 					public void onFailure(Exception e) {
-						throw new RosRuntimeException(e);
 					}
 				});
-				
-				if(base_to_map_transform_ready) {
-					Vector3 after_transform_accel_linear = baseToMap.apply(Vector3.fromVector3Message(accelerationSubscriber.getLastMessage().getAccel().getLinear()));
-					AccelerationSet4Way acceleration = coreData.getAccelSet();
-					if(after_transform_accel_linear.getX() <= AccelerationSet4Way.ACCELERATION_MIN) {
-						acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MIN);
-					} else if(after_transform_accel_linear.getX() >= AccelerationSet4Way.ACCELERATION_MAX) {
-						acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MAX);
-					} else {
-						acceleration.setLongitudinal((float) after_transform_accel_linear.getX());
-					}
-					
-					if(after_transform_accel_linear.getY() <= AccelerationSet4Way.ACCELERATION_MIN) {
-						acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MIN);
-					} else if(after_transform_accel_linear.getY() >= AccelerationSet4Way.ACCELERATION_MAX) {
-						acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MAX);
-					} else {
-						acceleration.setLateral((float) after_transform_accel_linear.getY());
-					}
-
-					if(after_transform_accel_linear.getZ() <= AccelerationSet4Way.ACCELERATION_VERTICAL_MIN) {
-						acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MIN);
-					} else if(after_transform_accel_linear.getZ() >= AccelerationSet4Way.ACCELERATION_VERTICAL_MAX) {
-						acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MAX);
-					} else {
-						acceleration.setVert((float) after_transform_accel_linear.getZ());
-					}
+			}
+			
+			if(vehicle_to_baselink_transform_ready) {
+				Vector3 after_transform = vehicleToBaselink.apply(new Vector3(point_on_baselink.getX(), point_on_baselink.getY(), point_on_baselink.getZ()));
+				Point3D point_on_vehicle = new Point3D(after_transform.getX(), after_transform.getY(), after_transform.getZ());
+				Location location_on_vehicle = converter.cartesian2Geodesic(point_on_vehicle, Transform.identity());
+				double lat = location_on_vehicle.getLatitude();
+				double Lon = location_on_vehicle.getLongitude();
+				float elev = (float) location_on_vehicle.getAltitude();
+				if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
+					coreData.setLatitude(lat);
 				}
-				
-				if(accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() >= AccelerationSet4Way.YAWRATE_MIN
-						&& accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() <= AccelerationSet4Way.YAWRATE_MAX) {
-					coreData.getAccelSet().setYawRate((float) accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ());
+				if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
+					coreData.setLongitude(Lon);
+				}
+				if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
+					coreData.setElev(elev);
 				}
 			}
 			
-			coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_STATUS_UNAVAILABLE);
-			if(brakeSubscriber.getLastMessage() != null) {
-				if(brakeSubscriber.getLastMessage().getData() > BRAKES_NOT_APPLIED) {
-					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_APPLIED);
+			double semi_major_square = gps_msg.getPositionCovariance()[0];
+			double semi_minor_square = gps_msg.getPositionCovariance()[4];
+			// Orientation of semi_major axis
+			// Orientation of accuracy eclipse is fixed to north based on Pinpoint documentations
+			// TODO: May need to change if we use other Pinpoints
+			double orientation = PositionalAccuracy.ACCURACY_ORIENTATION_MIN; 
+			
+			float semi_major = -1;
+			float semi_minor = -1;
+			if(semi_major_square >= 0) {
+				semi_major = (float) Math.sqrt(semi_major_square);
+			}
+			if(semi_minor_square >= 0) {
+				semi_minor = (float) Math.sqrt(semi_minor_square);
+			}
+			if(semi_major != -1) {
+				if(semi_major >= PositionalAccuracy.ACCURACY_MAX) {
+					coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_MAX);
 				} else {
-					coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_NOT_APPLIED);
+					coreData.getAccuracy().setSemiMajor(semi_major);
 				}
 			}
 			
-			// TODO: N/A for now
-			coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.UNAVAILABLE);
-			coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.UNAVAILABLE);
-			coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.UNAVAILABLE);
-			coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.UNAVAILABLE);
-			coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(AuxiliaryBrakeStatus.UNAVAILABLE);
-
-			// Set length and width only for the first time
-			coreData.getSize().setVehicleLength(VehicleSize.VEHICLE_LENGTH_UNAVAILABLE);
-			coreData.getSize().setVehicleWidth(VehicleSize.VEHICLE_WIDTH_UNAVAILABLE);
-			if(vehicleLength >= VehicleSize.VEHICLE_LENGTH_MIN && vehicleLength <= VehicleSize.VEHICLE_LENGTH_MAX) {
-				coreData.getSize().setVehicleLength(vehicleLength);
-			}
-			if(vehicleWidth >= VehicleSize.VEHICLE_WIDTH_MIN && vehicleWidth <= VehicleSize.VEHICLE_WIDTH_MAX) {
-				coreData.getSize().setVehicleWidth(vehicleWidth);
+			if(semi_minor != -1) {
+				if(semi_minor >= PositionalAccuracy.ACCURACY_MAX) {
+					coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_MAX);
+				} else {
+					coreData.getAccuracy().setSemiMinor(semi_minor);
+				}
 			}
 			
-			// Use ros node time and ignore leap second for now since it is not announced
-			coreData.setSecMark((int) (System.currentTimeMillis() % BSMCoreData.SEC_MARK_MOD));
-
-		} catch (Exception e) {
-			handleException(e);
+			if(orientation >= PositionalAccuracy.ACCURACY_ORIENTATION_MIN && orientation <= PositionalAccuracy.ACCURACY_ORIENTATION_MAX) {
+				coreData.getAccuracy().setOrientation(orientation);
+			}
 		}
+		
+		// Set transmission state
+		// Reserved values are illegal values at this time
+		coreData.getTransmission().setTransmissionState(TransmissionState.UNAVAILABLE);
+		if(transmissionSubscriber.getLastMessage() != null) {
+			byte transmission_state = transmissionSubscriber.getLastMessage().getTransmissionState();
+			if(transmission_state == TransmissionState.NEUTRAL
+					|| transmission_state == TransmissionState.FORWARDGEARS
+					|| transmission_state == TransmissionState.PARK
+					|| transmission_state == TransmissionState.REVERSEGEARS) {
+				coreData.getTransmission().setTransmissionState(transmission_state);
+			}
+		}
+
+		coreData.setSpeed(BSMCoreData.SPEED_UNAVAILABLE);
+		if(velocitySubscriber.getLastMessage() != null) {
+			float speed = (float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
+			if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
+				coreData.setSpeed(speed);
+			}
+		}
+		
+		coreData.setHeading(BSMCoreData.HEADING_UNAVAILABLE);
+		if(headingStampedSubscriber.getLastMessage() != null) {
+			float heading = (float) headingStampedSubscriber.getLastMessage().getHeading();
+			if(heading >= BSMCoreData.HEADING_MIN && heading <= BSMCoreData.HEADING_MAX) {
+				coreData.setHeading(heading);
+			}
+		}
+		
+		coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE);
+		if(steeringWheelSubscriber.getLastMessage() != null) {
+			float angle = (float) steeringWheelSubscriber.getLastMessage().getData();	
+			if(angle <= BSMCoreData.STEER_WHEEL_ANGLE_MIN) {
+				coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_MIN);
+			} else if(angle >= BSMCoreData.STEER_WHEEL_ANGLE_MAX) {
+				coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_MAX);
+			} else {
+				coreData.setAngle(angle);
+			}
+		}
+
+		coreData.getAccelSet().setLongitudinal(AccelerationSet4Way.ACCELERATION_UNAVAILABLE);
+		coreData.getAccelSet().setLateral(AccelerationSet4Way.ACCELERATION_UNAVAILABLE);
+		coreData.getAccelSet().setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_UNAVAILABLE);
+		// TODO: It is not well defined in J2735
+		coreData.getAccelSet().setYawRate(AccelerationSet4Way.YAWRATE_UNAVAILABLE);
+		if(accelerationSubscriber.getLastMessage() != null && getTransformClient != null) {
+			GetTransformRequest transform_request = getTransformClient.newMessage();
+			transform_request.setParentFrame(mapFrame);
+			transform_request.setChildFrame(baseLinkFrame);
+			getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
+				
+				@Override
+				public void onSuccess(GetTransformResponse msg) {
+					log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
+					if(msg.getErrorStatus() == 0) {
+						baseToMap = Transform.fromTransformMessage(msg.getTransform().getTransform());
+						base_to_map_transform_ready = true;
+					}
+				}
+				
+				@Override
+				public void onFailure(Exception e) {
+					throw new RosRuntimeException(e);
+				}
+			});
+			
+			if(base_to_map_transform_ready) {
+				Vector3 after_transform_accel_linear = baseToMap.apply(Vector3.fromVector3Message(accelerationSubscriber.getLastMessage().getAccel().getLinear()));
+				AccelerationSet4Way acceleration = coreData.getAccelSet();
+				if(after_transform_accel_linear.getX() <= AccelerationSet4Way.ACCELERATION_MIN) {
+					acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MIN);
+				} else if(after_transform_accel_linear.getX() >= AccelerationSet4Way.ACCELERATION_MAX) {
+					acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MAX);
+				} else {
+					acceleration.setLongitudinal((float) after_transform_accel_linear.getX());
+				}
+				
+				if(after_transform_accel_linear.getY() <= AccelerationSet4Way.ACCELERATION_MIN) {
+					acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MIN);
+				} else if(after_transform_accel_linear.getY() >= AccelerationSet4Way.ACCELERATION_MAX) {
+					acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MAX);
+				} else {
+					acceleration.setLateral((float) after_transform_accel_linear.getY());
+				}
+
+				if(after_transform_accel_linear.getZ() <= AccelerationSet4Way.ACCELERATION_VERTICAL_MIN) {
+					acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MIN);
+				} else if(after_transform_accel_linear.getZ() >= AccelerationSet4Way.ACCELERATION_VERTICAL_MAX) {
+					acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MAX);
+				} else {
+					acceleration.setVert((float) after_transform_accel_linear.getZ());
+				}
+			}
+			
+			if(accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() >= AccelerationSet4Way.YAWRATE_MIN
+					&& accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() <= AccelerationSet4Way.YAWRATE_MAX) {
+				coreData.getAccelSet().setYawRate((float) accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ());
+			}
+		}
+		
+		coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_STATUS_UNAVAILABLE);
+		if(brakeSubscriber.getLastMessage() != null) {
+			if(brakeSubscriber.getLastMessage().getData() > BRAKES_NOT_APPLIED) {
+				coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_APPLIED);
+			} else {
+				coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_NOT_APPLIED);
+			}
+		}
+		
+		// TODO: N/A for now
+		coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.UNAVAILABLE);
+		coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.UNAVAILABLE);
+		coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.UNAVAILABLE);
+		coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.UNAVAILABLE);
+		coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(AuxiliaryBrakeStatus.UNAVAILABLE);
+
+		// Set length and width only for the first time
+		coreData.getSize().setVehicleLength(VehicleSize.VEHICLE_LENGTH_UNAVAILABLE);
+		coreData.getSize().setVehicleWidth(VehicleSize.VEHICLE_WIDTH_UNAVAILABLE);
+		if(vehicleLength >= VehicleSize.VEHICLE_LENGTH_MIN && vehicleLength <= VehicleSize.VEHICLE_LENGTH_MAX) {
+			coreData.getSize().setVehicleLength(vehicleLength);
+		}
+		if(vehicleWidth >= VehicleSize.VEHICLE_WIDTH_MIN && vehicleWidth <= VehicleSize.VEHICLE_WIDTH_MAX) {
+			coreData.getSize().setVehicleWidth(vehicleWidth);
+		}
+		
+		// Use ros node time and ignore leap second for now since it is not announced
+		coreData.setSecMark((int) (System.currentTimeMillis() % BSMCoreData.SEC_MARK_MOD));
+
 		return bsmFrame;
 	}
 

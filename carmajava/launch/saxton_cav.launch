@@ -429,7 +429,12 @@
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
       <remap from="robot_status"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
-             
+      <remap from="acc_engaged"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/acc_engaged"/>
+      <remap from="engine_speed"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/engine_speed"/>
+      <remap from="speed"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/speed"/>
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>

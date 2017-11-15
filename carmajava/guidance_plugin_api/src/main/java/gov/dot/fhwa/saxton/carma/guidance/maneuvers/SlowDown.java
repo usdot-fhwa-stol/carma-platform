@@ -39,11 +39,11 @@ public class SlowDown extends LongitudinalManeuver {
         }
 
         //if speed change is going to be only slight then
-        double deltaV = startSpeed_ - endSpeed_; //always positive
-        workingAccel_ = maxAccel_;
-        if (deltaV < SMALL_SPEED_CHANGE) {
+        double deltaV = endSpeed_ - startSpeed_; //always negative
+        workingAccel_ = -maxAccel_;
+        if (-deltaV < SMALL_SPEED_CHANGE) {
             //cut the acceleration rate to half the limit
-            workingAccel_ = 0.5 * maxAccel_;
+            workingAccel_ = -0.5 * maxAccel_;
         }
 
         //compute the distance to be covered during a linear (in time) speed change, assuming perfect vehicle response
@@ -69,10 +69,16 @@ public class SlowDown extends LongitudinalManeuver {
         }
 
         //if speed change is going to be only slight then
-        double deltaV = endSpeed_ - startSpeed_; //always positive
+        double deltaV = endSpeed_ - startSpeed_; //always negative
         double lagDistance = startSpeed_*inputs_.getResponseLag();
         double displacement = endDist - startDist - lagDistance;
+        if (displacement <= 0.0) {
+            throw new ArithmeticException("Slowdown.planToTargetDistance attempting to use illegal displacement of " + displacement);
+        }
         workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement;
+        if (workingAccel_ >= 0.0  ||  workingAccel_ < -maxAccel_) {
+            throw new ArithmeticException("Slowdown.plantoTargetDistance attempting to use illegal workingAccel of " + workingAccel_);
+        }
 
         //compute the time it will take to perform this ideal speed change
         deltaT_ = deltaV / workingAccel_;
