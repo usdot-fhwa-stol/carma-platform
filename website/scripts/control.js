@@ -188,8 +188,8 @@ function insertNewTableRow(tableName, rowTitle, rowValue) {
 */
 function setSpeedometer(speed)
 {
-    var maxRPM = 160;
-    var deg = (speed/maxRPM)*180;
+    var maxMPH = 160;
+    var deg = (speed/maxMPH)*180;
     document.getElementById('percent').innerHTML = speed;
     var element = document.getElementsByClassName('gauge-c')[0];
 
