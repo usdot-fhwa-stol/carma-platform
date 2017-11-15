@@ -177,8 +177,8 @@ function insertNewTableRow(tableName, rowTitle, rowValue) {
         cell2.innerHTML = rowValue;
         //cell1.setAttribute("class","col-style2a");
         //cell2.setAttribute("class","col-style2b");
-        cell1.className = 'col-style2a';
-        cell2.className = 'col-style2b';
+        cell1.className = 'col-style2a hyphenate';
+        cell2.className = 'col-style2b hyphenate';
         cell2.id = cellId;
     }
 }
