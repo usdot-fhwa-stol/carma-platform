@@ -22,11 +22,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
  * Represents a longitudinal maneuver in which the vehicle steadily decreases its speed.
  */
 public class SlowDown extends LongitudinalManeuver {
-
-    private double                  workingAccel_;              // m/s^2 that we will actually use
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
-    private long                    startTime_ = 0;             // time that the maneuver execution started, ms
-
 
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
@@ -82,15 +78,7 @@ public class SlowDown extends LongitudinalManeuver {
 
 
     @Override
-    public boolean executeTimeStep() throws IllegalStateException {
-        boolean completed = false;
-
-        verifyLocation();
-
-        if (startTime_ == 0) {
-            startTime_ = System.currentTimeMillis();
-        }
-
+    public double generateSpeedCommand() throws IllegalStateException {
         //compute command based on linear interpolation on time
         //Note that commands will begin changing immediately, although the actual speed will not change much until
         // the response lag has passed. Thus, we will hit the target speed command sooner than we pass the end distance.
@@ -101,12 +89,6 @@ public class SlowDown extends LongitudinalManeuver {
             completed = true;
         }
         double cmd = startSpeed_ + factor*(endSpeed_ - startSpeed_);
-
-        //invoke the ACC override
-        cmd = accOverride(cmd);
-
-        //send the command to the vehicle
-        commands_.setCommand(cmd, workingAccel_);
-        return completed;
+        return cmd;
     }
 }
