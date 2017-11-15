@@ -75,7 +75,13 @@ public class SpeedUp extends LongitudinalManeuver {
         double deltaV = endSpeed_ - startSpeed_; //always positive
         double lagDistance = startSpeed_*inputs_.getResponseLag();
         double displacement = endDist - startDist - lagDistance;
+        if (displacement <= 0.0) {
+            throw new ArithmeticException("SpeedUp.planToTargetDistance attempting to use illegal displacement of " + displacement);
+        }
         workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement;
+        if (workingAccel_ <= 0.0  ||  workingAccel_ > maxAccel_) {
+            throw new ArithmeticException("SpeedUp.plantoTargetDistance attempting to use illegal workingAccel of " + workingAccel_);
+        }
 
         //compute the time it will take to perform this ideal speed change
         deltaT_ = deltaV / workingAccel_;
