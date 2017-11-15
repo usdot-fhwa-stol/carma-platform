@@ -30,12 +30,12 @@ footer {
 p.copyright {
     float: right;
     text-align: right;
-    font-size: 0.7em;
+    font-size: 15px;
 }
 p.systemversion{
         float: center;
         text-align: center;
-        font-size: 0.7em;
+        font-size: 15px;
 }
 
 /*** Left Navigation Style ***/
@@ -45,7 +45,7 @@ div.tab {
     border: 1px solid #ccc;
     background-color: #f1f1f1;
     width: 12%;
-    height: 650px;
+    height: 675px;
 }
 
     /* Style the buttons inside the tab */
@@ -60,7 +60,7 @@ div.tab {
         text-align: left;
         cursor: pointer;
         transition: 0.3s;
-        font-size: 17px;
+        font-size: 20px;
         font-family: "Segoe UI";
         overflow: auto;
     }
@@ -83,9 +83,8 @@ div.tab {
     border-right: 1px solid #ccc;
     border-left: 1px solid #ccc;
     width: 88%;
-    height: 90px;
+    height: 100px;
 }
-
 
 /* Style the tab content */
 .tabcontent {
@@ -95,7 +94,8 @@ div.tab {
     border-right: 1px solid #ccc;
     width: 88%;
     border-left: 1px solid #ccc;
-    height: 560px;
+    height: 575px;
+    overflow: auto;
 }
 
 /*** Log Text Box content Style ****/
@@ -109,7 +109,6 @@ div.tab {
     font-family: sans-serif;
     padding: 10px;
 }
-
 
 /*** Checkbox and Radiobutton Style ****/
 
@@ -143,6 +142,7 @@ label {
     cursor: pointer;
     user-select: none;
     transition: background-color .2s, box-shadow .2s;
+    font-size: 22px;
 }
 
     label::before { /*button format */
@@ -190,14 +190,14 @@ div.message_box {
     margin: 10px;
     padding: 30px 30px 15px 30px;
     height: 150px;
-    color: #fff;
+    color: #404040;
     background-color: #ffcc00;
-    font-size: 20px;
+    font-size: 22px;
 }
 
 /*** Button ***/
 .button_disabled {
-    background-color: gray; /* #4CAF50; Green; gray; */
+    background-color: gray;
     border: none;
     color: white;
     padding: 15px 32px;
@@ -218,7 +218,7 @@ div.message_box {
 }
 
 .button_enabled {
-    background-color: cornflowerblue; /* #4CAF50; Green; gray; */
+    background-color: cornflowerblue;
     border: none;
     color: white;
     padding: 15px 32px;
@@ -237,7 +237,26 @@ div.message_box {
 }
 
 .button_engaged {
-    background-color: #4CAF50; /* #4CAF50; Green; gray; */
+    background-color: #4CAF50; /* Green; */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 30px;
+    margin: 4px 2px;
+    cursor: pointer;
+    width: 100%;
+    height: 75px;
+    border-radius: 100px;
+    transition: background-color .2s;
+    border-radius: 100px;
+    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
+}
+
+.button_inactive {
+    background-color: #e6e600; /* Yellow; */
     border: none;
     color: white;
     padding: 15px 32px;
@@ -285,7 +304,17 @@ div.message_box {
     -webkit-animation-name: animatetop;
     -webkit-animation-duration: 0.4s;
     animation-name: animatetop;
-    animation-duration: 0.4s font-size: 17px;
+    animation-duration: 0.4s font-size: 20px;
+}
+
+/* Modal Button */
+#btnModal{
+    height: 50px;
+    width: 110px;
+    background-color:#336699;
+    color: white;
+    border-radius: 15px;
+    font-size: 20px;
 }
 
 /* Add Animation */
@@ -339,6 +368,7 @@ div.message_box {
 .modal-body {
     padding: 2px 20px;
     width: 100%;
+    font-size: 23px;
 }
 
 .modal-footer {
@@ -390,8 +420,9 @@ div.message_box {
 
 /* Container holding the image and the text */
 .divSpeedLimit {
-    position: relative;
-    text-align: center;
+    position: absolute;
+    top: 11%;
+    left: 60%;
     padding-top: 5%;
 }
 
@@ -441,4 +472,67 @@ div.message_box {
     color: black;
     font-size: 75px;
     font-weight: bold;
+}
+
+/* Speedometer */
+.divSpeedometer {
+    width: 400px;
+    height: 200px;
+    position: absolute;
+    top: 30%;
+    left: 40%;
+    overflow: hidden;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+
+.gauge-a {
+    z-index: 1;
+    position: absolute;
+    background-color: rgba(136, 185, 195, .2);
+    width: 400px;
+    height: 200px;
+    top: 0%;
+    border-radius: 250px 250px 0px 0px;
+}
+
+.gauge-b {
+    z-index: 3;
+    position: absolute;
+    background-color: #1858cd;
+    width: 250px;
+    height: 125px;
+    top: 75px;
+    margin-left: 75px;
+    margin-right: auto;
+    border-radius: 250px 250px 0px 0px;
+}
+
+.gauge-c {
+    z-index: 2;
+    position: absolute;
+    background-color: cornflowerblue;
+    width: 400px;
+    height: 200px;
+    top: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 0px 0px 200px 200px;
+    transform-origin: center top;
+    transition: all 1.3s ease-in-out;
+}
+
+.gauge-data {
+    z-index: 4;
+    color: white;
+    font-size: 1.5em;
+    line-height: 25px;
+    position: absolute;
+    width: 400px;
+    height: 200px;
+    top: 90px;
+    margin-left: auto;
+    margin-right: auto;
+    transition: all 1s ease-out;
 }

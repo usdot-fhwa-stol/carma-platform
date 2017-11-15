@@ -182,3 +182,21 @@ function insertNewTableRow(tableName, rowTitle, rowValue) {
         cell2.id = cellId;
     }
 }
+
+/*
+    Set the values of the speedometer
+*/
+function setSpeedometer(speed)
+{
+    var maxRPM = 160;
+    var deg = (speed/maxRPM)*180;
+    document.getElementById('percent').innerHTML = speed;
+    var element = document.getElementsByClassName('gauge-c')[0];
+
+    element.style.webkitTransform = 'rotate(' + deg + 'deg)';
+    element.style.mozTransform = 'rotate(' + deg + 'deg)';
+    element.style.msTransform = 'rotate(' + deg + 'deg)';
+    element.style.oTransform = 'rotate(' + deg + 'deg)';
+    element.style.transform = 'rotate(' + deg + 'deg)';
+
+}

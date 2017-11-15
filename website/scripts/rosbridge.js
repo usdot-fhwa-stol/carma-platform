@@ -34,6 +34,10 @@ var t_cmd_speed = "cmd_speed";
 var t_current_segment = "current_segment";
 var t_robot_status = 'robot_status';
 var t_diagnostics = '/diagnostics';
+var t_acc_engaged = 'acc_engaged';
+var t_can_engine_speed = 'engine_speed';
+var t_can_speed = 'speed';
+
 // Services
 var s_get_available_routes = 'get_available_routes';
 var s_set_active_route = 'set_active_route';
@@ -63,6 +67,7 @@ var ready_max_trial = 10;
 
 var host_instructions = '';
 var listenerPluginAvailability;
+var listenerSystemAlert;
 
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 
@@ -125,14 +130,14 @@ function connectToROS() {
 function checkSystemAlerts() {
 
     // Subscribing to a Topic
-    var listener = new ROSLIB.Topic({
+    listenerSystemAlert = new ROSLIB.Topic({
         ros: ros,
         name: t_system_alert,
         messageType: 'cav_msgs/SystemAlert'
     });
 
     // Then we add a callback to be called every time a message is published on this topic.
-    listener.subscribe(function (message) {
+    listenerSystemAlert.subscribe(function (message) {
 
         var messageTypeFullDescription = 'NA';
 
@@ -148,6 +153,7 @@ function checkSystemAlerts() {
                 messageTypeFullDescription = 'System received a FATAL message. Please wait for system to shut down. <br/><br/>' + message.description;
                 messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
                 showModal(true, messageTypeFullDescription);
+                listenerSystemAlert.unsubscribe();
                 break;
             case 4:
                 system_ready = false;
@@ -162,22 +168,23 @@ function checkSystemAlerts() {
             case 6: // SHUTDOWN
                 system_ready = false;
                 sessionStorage.setItem('isSystemReady', false);
-              //Added additional logic here, since the system_alert sometimes get published before the route_state.
-              if (message.description.indexOf("LEFT_ROUTE")>0)
-              {
+                //Added additional logic here, since the system_alert sometimes get published before the route_state.
+                if (message.description.indexOf("LEFT_ROUTE")>0)
+                {
                   messageTypeFullDescription = "You have left the route.";
-              }
-              else if (message.description.indexOf("ROUTE_COMPLETED")>0)
-              {
-                  messageTypeFullDescription = "Route completed. You have reached your destination.";
-              }
-              else
-              {
-                  messageTypeFullDescription = 'System is shutting down. ' + message.description;
-              }
-              messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-              showModal(true, messageTypeFullDescription);
-              break;
+                }
+                else if (message.description.indexOf("ROUTE_COMPLETED")>0)
+                {
+                    messageTypeFullDescription = "Route completed. You have reached your destination.";
+                }
+                else
+                {
+                    messageTypeFullDescription = 'System is shutting down. ' + message.description;
+                }
+                messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
+                showModal(true, messageTypeFullDescription);
+                listenerSystemAlert.unsubscribe(); //stop subscribing after the message has been published.
+                break;
             default:
                 messageTypeFullDescription = 'System alert type is unknown. Assuming system it not yet ready.  ' + message.description;
         }
@@ -269,7 +276,8 @@ function setRoute(id) {
     setActiveRouteClient.callService(request, function (result) {
         if (result.errorStatus == 1) //Error: NO_ROUTE
         {
-            divCapabilitiesMessage.innerHTML = '<p> Activating the route failed, please try it again.</p>';
+            divCapabilitiesMessage.innerHTML = '<p> Setting the active route failed (error code: ' + result.errorStatus + '). <br/> Please try again.</p>';
+            insertNewTableRow('tblSecondA', 'Error Code', result.errorStatus);
 
             //Allow user to select it again.
             rbRoute.checked = false;
@@ -311,7 +319,8 @@ function startActiveRoute(id) {
         //alert ('result.errorStatus:' + result.errorStatus);
 
         if (result.errorStatus != 0 && result.errorStatus != 3) {
-            divCapabilitiesMessage.innerHTML = '<p> Starting the active the route failed, please try it again or contact your System Administrator.</p>';
+            divCapabilitiesMessage.innerHTML = '<p> Starting the active the route failed (error code:' + result.errorStatus + '). <br/> Please try again or contact your System Administrator.</p>';
+            insertNewTableRow('tblSecondA', 'Error Code', result.errorStatus);
 
             //Allow user to select the route again
             var rbRoute = document.getElementById(id.toString());
@@ -346,7 +355,7 @@ function showSubCapabilitiesView(id) {
 */
 function showSubCapabilitiesView2() {
 
-    divCapabilitiesMessage.innerHTML = 'You have selected the route called " ' + route_name + '". ';
+    divCapabilitiesMessage.innerHTML = 'Selected route is " ' + route_name + '". <br/>';
 
     //Hide the Route selection
     var divRoutes = document.getElementById('divRoutes');
@@ -472,7 +481,7 @@ function activatePlugin(id) {
 
         if (result.newState != newStatus) //Failed
         {
-            divCapabilitiesMessage.innerHTML = '<p> Activating the capability failed, please try it again.</p>';
+            divCapabilitiesMessage.innerHTML = '<p> Activating the capability failed, please try again.</p>';
         }
         else {
             var divSubCapabilities = document.getElementById('divSubCapabilities');
@@ -580,6 +589,9 @@ function showGuidanceEngaged() {
 
         //Start checking availability (or re-subscribe) if Guidance has been engaged.
         checkAvailability();
+
+        //Start checking if Robot is active
+        checkRobotEnabled();
 
     }
     else //To dis-engage
@@ -712,21 +724,43 @@ function printParam(itemName, index) {
     }
 }
 
+/*
+    Check for Robot State
+    TODO: If no longer active, show the Guidance as Yellow. If active, show Guidance as green.
+*/
+function checkRobotEnabled() {
+        var listenerRobotStatus = new ROSLIB.Topic({
+            ros: ros,
+            name: t_robot_status,
+            messageType: 'cav_msgs/RobotEnabled'
+        });
+
+        listenerRobotStatus.subscribe(function (message) {
+            insertNewTableRow('tblThird', 'Robot Active', message.robot_active);
+            insertNewTableRow('tblThird', 'Robot Enabled', message.robot_enabled);
+
+            //Update the button when Guidance is engaged.
+            if (message.robot_active == false)
+                btnCAVGuidance.className = 'button_inactive';
+            else
+                btnCAVGuidance.className = 'button_engaged';
+        });
+}
 
 /*
    Log for Diagnostics
 */
 function showDiagnostics() {
 
-    var listenerRobotStatus = new ROSLIB.Topic({
+
+    var listenerACCEngaged = new ROSLIB.Topic({
         ros: ros,
-        name: t_robot_status,
-        messageType: 'cav_msgs/RobotEnabled'
+        name: t_acc_engaged,
+        messageType: 'std_msgs/Bool'
     });
 
-    listenerRobotStatus.subscribe(function (message) {
-        insertNewTableRow('tblFirst', 'Robot Active', message.robot_active);
-        insertNewTableRow('tblFirst', 'Robot Enabled', message.robot_enabled);
+    listenerACCEngaged.subscribe(function (message) {
+        insertNewTableRow('tblThird', 'ACC Engaged', message.data);
     });
 
     var listenerDiagnostics = new ROSLIB.Topic({
@@ -739,14 +773,16 @@ function showDiagnostics() {
 
      messageList.status.forEach(
        function (myStatus){
-            insertNewTableRow('tblFirst', 'Diagnostic Name', myStatus.name);
-            insertNewTableRow('tblFirst', 'Diagnostic Message', myStatus.message);
-            insertNewTableRow('tblFirst', 'Diagnostic Hardware ID', myStatus.hardware_id);
+            insertNewTableRow('tblFirstA', 'Diagnostic Name', myStatus.name);
+            insertNewTableRow('tblFirstA', 'Diagnostic Message', myStatus.message);
+            insertNewTableRow('tblFirstA', 'Diagnostic Hardware ID', myStatus.hardware_id);
 
              myStatus.values.forEach(
                    function (myValues){
-                        insertNewTableRow('tblFirst', 'Diagnostic Key', myValues.key);
-                        insertNewTableRow('tblFirst', 'Diagnostic Value', myValues.value);
+                        if (myValues.key=='Primed'){
+                            insertNewTableRow('tblThird', myValues.key, myValues.value);
+                        }
+                        insertNewTableRow('tblFirstA', myValues.key, myValues.value);
                    }); //foreach
             }
         );//foreach
@@ -798,18 +834,24 @@ function checkRouteInfo() {
     });
 
     listenerRouteState.subscribe(function (message) {
-        insertNewTableRow('tblSecond', 'Route ID', message.routeID);
-        insertNewTableRow('tblSecond', 'Route State', message.state);
-        insertNewTableRow('tblSecond', 'Route Event', message.event);
-        insertNewTableRow('tblSecond', 'Cross Track', message.cross_track.toFixed(2));
-        insertNewTableRow('tblSecond', 'Down Track', message.down_track.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Route ID', message.routeID);
+        insertNewTableRow('tblSecondA', 'Route State', message.state);
+        insertNewTableRow('tblSecondA', 'Route Event', message.event);
+        insertNewTableRow('tblSecondA', 'Cross Track', message.cross_track.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Down Track', message.down_track.toFixed(2));
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
         if (message.event == 3) //ROUTE_COMPLETED=3
+        {
         	showModal(true, "Route completed. You have reached your destination. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
+        	listenerSystemAlert.unsubscribe();
+        }
         if (message.event == 4)//LEFT_ROUTE=4
+        {
             showModal(true, "You have left the route. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
+            listenerSystemAlert.unsubscribe();
+        }
 
     });
 }
@@ -901,10 +943,10 @@ function showNavSatFix() {
         if (hostmarker != null)
         {
             moveMarkerWithTimeout(hostmarker, message.latitude, message.longitude, 0);
-            insertNewTableRow('tblFirst', 'NavSatStatus', message.status.status);
-            insertNewTableRow('tblFirst', 'Latitude', message.latitude.toFixed(6));
-            insertNewTableRow('tblFirst', 'Longitude', message.longitude.toFixed(6));
-            insertNewTableRow('tblFirst', 'Altitude', message.altitude.toFixed(6));
+            insertNewTableRow('tblFirstA', 'NavSatStatus', message.status.status);
+            insertNewTableRow('tblFirstA', 'Latitude', message.latitude.toFixed(6));
+            insertNewTableRow('tblFirstA', 'Longitude', message.longitude.toFixed(6));
+            insertNewTableRow('tblFirstA', 'Altitude', message.altitude.toFixed(6));
         }
         //listenerNavSatFix.unsubscribe();
     });
@@ -923,8 +965,9 @@ function showSpeedAccelInfo() {
     });
 
     listenerSpeedAccel.subscribe(function (message) {
-        insertNewTableRow('tblFirst', 'Speed', message.speed.toFixed(2));
-        insertNewTableRow('tblFirst', 'Max Acceleration', message.max_accel.toFixed(2));
+        insertNewTableRow('tblThird', 'Cmd Speed (m/s)', message.speed.toFixed(2));
+        insertNewTableRow('tblThird', 'Cmd Speed (MPH)', Math.round(message.speed*2.23694));
+        insertNewTableRow('tblThird', 'Max Accel', message.max_accel.toFixed(2));
     });
 }
 
@@ -942,10 +985,40 @@ function showCurrentSegmentInfo() {
 
     listenerCurrentSegment.subscribe(function (message) {
 
-        insertNewTableRow('tblSecond', 'Current Segment ID', message.waypoint.id);
-        insertNewTableRow('tblSecond', 'Current Segment Max Speed', message.waypoint.speed_limit);
+        insertNewTableRow('tblSecondA', 'Current Segment ID', message.waypoint.waypoint_id);
+        insertNewTableRow('tblSecondA', 'Current Segment Max Speed', message.waypoint.speed_limit);
         if (message.waypoint.speed_limit != null && message.waypoint.speed_limit != 'undefined')
             document.getElementById('divSpeedLimitValue').innerHTML = message.waypoint.speed_limit;
+    });
+}
+
+/*
+    Display the CAN speeds
+*/
+function showCANSpeeds(){
+
+    var listenerCANEngineSpeed = new ROSLIB.Topic({
+        ros: ros,
+        name: t_can_engine_speed,
+        messageType: 'std_msgs/Float64'
+    });
+
+    listenerCANEngineSpeed.subscribe(function (message) {
+        insertNewTableRow('tblThird', 'CAN Engine Speed', message.data);
+        //setSpeedometer(Math.round(message.data));
+    });
+
+    var listenerCANSpeed = new ROSLIB.Topic({
+        ros: ros,
+        name: t_can_speed,
+        messageType: 'std_msgs/Float64'
+    });
+
+    listenerCANSpeed.subscribe(function (message) {
+        var speedMPH = Math.round(message.data * 2.23694);
+        setSpeedometer(speedMPH);
+        insertNewTableRow('tblThird', 'CAN Speed (m/s)', message.data);
+        insertNewTableRow('tblThird', 'CAN Speed (MPH)', speedMPH);
     });
 }
 
@@ -972,7 +1045,7 @@ function showVehicleInfo(itemName, index) {
         });
 
         myParam.get(function (myValue) {
-            insertNewTableRow('tblThird', toCamelCase(itemName), myValue);
+            insertNewTableRow('tblSecondB', toCamelCase(itemName), myValue);
         });
     }
 }
@@ -1002,9 +1075,11 @@ function showStatusandLogs()
     getParams();
     getVehicleInfo();
 
+    showSystemVersion();
     showNavSatFix();
     showSpeedAccelInfo();
     showCurrentSegmentInfo();
+    showCANSpeeds();
     showDiagnostics();
 }
 
@@ -1050,7 +1125,6 @@ function waitForSystemReady() {
 
         //If system is now ready
         if (system_ready == true) {
-            showSystemVersion();
             showRouteOptions();
             showStatusandLogs();
             enableGuidance();
@@ -1131,6 +1205,9 @@ window.onload = function () {
         //Refresh requires connection to ROS.
         connectToROS();
 
+        //TODO: Figure out how to focus to the top when div innerhtml changes. This doesn't seem to work.
+        //divCapabilitiesMessage.addListener('change', function (){divCapabilitiesMessage.focus();}, false);
+
     } else {
         // Sorry! No Web Storage support..
         divCapabilitiesMessage.innerHTML = '<p> Sorry, cannot proceed unless your browser support HTML Web Storage Objects. Please contact your system administrator. </p>';
@@ -1141,6 +1218,7 @@ window.onload = function () {
 
 /* When the user clicks anywhere outside of the modal, close it.
 //TODO: Enable this later when lateral controls are implemented. Currently only FATAL, SHUTDOWN and ROUTE COMPLETED are modal popups that requires users acknowledgement to be routed to logout page.
+//TODO: Need to queue and hide modal when user has not acknowledged, when new messages come in that are not fatal, shutdown, route completed, or require user acknowlegement.
 window.onclick = function (event) {
     var modal = document.getElementById('myModal');
 
