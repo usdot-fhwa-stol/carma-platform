@@ -56,7 +56,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     @Override
     public void onGuidanceStartup() {
         // Setup the ACC Strategy factory for use by maneuvers
-        double maxAccel = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.0);
+        double maxAccel = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
         double vehicleResponseLag = node.getParameterTree().getDouble("~vehicle_response_lag", 1.4);
         double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
         double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
