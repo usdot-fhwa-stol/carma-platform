@@ -47,7 +47,7 @@ trajectory_constraints:
 
 # Double: The maximum speed allowable in a trajectory
 # Units: m/s
-trajectory_speed_limit: 30.00
+trajectory_speed_limit: 34.00
 
 # The set of IPlugin instances which will be ignored based on class name
 ignored_plugins: []
