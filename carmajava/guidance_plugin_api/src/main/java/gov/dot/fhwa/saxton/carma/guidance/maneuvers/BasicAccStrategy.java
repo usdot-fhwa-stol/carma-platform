@@ -33,7 +33,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
 	@Override
 	public boolean evaluateAccTriggerConditions(double distToFrontVehicle, double currentSpeed,
 			double frontVehicleSpeed) {
-    return distToFrontVehicle < computeDesiredHeadway(currentSpeed);
+    return distToFrontVehicle < computeDesiredHeadway(currentSpeed) + standoffDistance;
 	}
 
 	@Override
@@ -43,12 +43,12 @@ public class BasicAccStrategy extends AbstractAccStrategy {
       // Linearly interpolate the speed blend between our speed and front vehicle speed
       double desiredHeadway = computeDesiredHeadway(currentSpeed);
       // Clamp distance - adjusted to ensure at least minimum standoff distance - into the range of [0, desiredHeadway]
-      double distance = Math.min(Math.max(distToFrontVehicle - standoffDistance, 0), desiredHeadway);
+      double distance = Math.max(distToFrontVehicle - standoffDistance, 0);
       double blendFactor = distance / desiredHeadway; // This factor will be used to compute our blend, as we get closer we give their speed more influence
       double ourSpeedFactor = (blendFactor) * currentSpeed;
       double frontVehicleSpeedFactor = (1 - blendFactor) * frontVehicleSpeed;
 
-      return ourSpeedFactor + frontVehicleSpeedFactor; // Our final blend of speeds
+      return applyAccelLimit(ourSpeedFactor + frontVehicleSpeedFactor, currentSpeed, maxAccel); // Our final blend of speeds
     } else {
       return desiredSpeedCommand;
     }
