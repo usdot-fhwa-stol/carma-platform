@@ -16,7 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import cav_srvs.GetDriversWithCapabilities;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Scanner;
 
 
 public class CarmaVersion {
@@ -38,8 +43,20 @@ public class CarmaVersion {
         int intermediate =  2;
         int minor =         0;
         // Don't touch this, automatically updated
-        int build = 1534;
-        String suffix = "basic-acc6-SNAPSHOT(1)";
+        int build = 0;
+        String suffix = "";
+
+        ClassLoader classLoader = CarmaVersion.class.getClassLoader();
+        File versionFile = new File(classLoader.getResource("version").getFile());
+
+        try (Scanner scanner = new Scanner(versionFile)) {
+            build = Integer.parseInt(scanner.nextLine());
+            suffix = scanner.nextLine();
+        } catch (IOException e) {
+            build = 0;
+            suffix = "VERSION-ERROR";
+        }
+
 
 //==============================================================================================================================
 

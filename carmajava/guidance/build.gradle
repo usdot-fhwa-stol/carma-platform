@@ -56,16 +56,27 @@ dependencies {
   testCompile 'junit:junit:4.12'
 }
 
-task modifyCarmaVersionFile << {
-    //def versionFile = "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java"
+task writeVersionFile << {
     println "Updating build number to: " + gitVersion.version
-    ant.replaceregexp(file: "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java", match: "(.*build\\W*=\\W*).*(;.*)", replace: ("\\1" +gitVersion.version + "\\2"), byline: true)
     println "Updating build suffix to: " + gitVersion.shortBranch
-    ant.replaceregexp(file: "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java", match: "(.*suffix\\W*=\\W*\").*(\";.*)", replace: ("\\1" + gitVersion.shortBranch + "\\2"), byline: true)
+
+    // Make sure the resources folder exists
+    def resourcesFolder = new File("src/main/resources")
+    if (!resourcesFolder.exists()) {
+        resourcesFolder.mkdirs()
+    }
+
+    // Write the file
+    def file = new File("src/main/resources/version")
+    file.createFile();
+    file.text="""
+$gitVersion.version
+$gitVersion.shortBranch
+"""
 }
 
 compileJava {
-    dependsOn modifyCarmaVersionFile
+    dependsOn writeVersionFile
 }
 
 installApp {
