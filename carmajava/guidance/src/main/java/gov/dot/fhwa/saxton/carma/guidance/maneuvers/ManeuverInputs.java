@@ -89,7 +89,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          */
 
         // TODO: Update to use actual topic provided by sensor fusion
-        externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("front_long_range_objects", ExternalObjectList._TYPE);
+        externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
         externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
 			@Override
 			public void onMessage(ExternalObjectList msg) {
