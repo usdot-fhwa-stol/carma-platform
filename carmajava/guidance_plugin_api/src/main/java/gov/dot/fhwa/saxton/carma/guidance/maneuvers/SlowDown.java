@@ -34,6 +34,7 @@ public class SlowDown extends LongitudinalManeuver {
 
         //verify proper speed relationships
         if (endSpeed_ >= startSpeed_) {
+            log_.error("SlowDown.plan called with startSpeed = " + startSpeed_ + " , endSpeed = " + endSpeed_ + ". Throwing exception.");
             throw new ArithmeticException("SlowDown maneuver being planned with startSpeed = " + startSpeed_ +
                     ", endSpeed = " + endSpeed_);
         }
@@ -55,40 +56,55 @@ public class SlowDown extends LongitudinalManeuver {
         //add the distance covered by the expected vehicle lag and account for a little settling buffer
         double lagDistance = startSpeed_*inputs_.getResponseLag();
         endDist_ = startDist_ + idealLength + lagDistance + 0.2*endSpeed_;
+        log_.debug("SpeedUp.plan completed with deltaV = " + deltaV + ", idealLength = " + idealLength + ", deltaT = " + deltaT_
+                + ", endDist = " + endDist_);
    }
 
 
+    /**
+     * This method contains bogus logic!  It needs to be replaced, but the replacement will require significant design changes.
+     * It's been modified here to allow completion of Nov 2017 system tests by ensuring that the maneuver execution will
+     * produce reasonable commands, even if they don't realistically respect the vehicle's acceleration limits.
+     *
+     * TODO:  replace this method asap!!!
+     *
+     */
     @Override
     public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
         super.planToTargetDistance(inputs, commands, startDist, endDist);
 
-        //verify proper speed relationships
+        //verify proper speed and distance relationships
         if (endSpeed_ >= startSpeed_) {
+            log_.error("SlowDown.planToTargetDistance entered with startSpeed = " + startSpeed_ + ", endSpeed = " + endSpeed_ + ". Throwing exception.");
             throw new ArithmeticException("SlowDown maneuver being planned with startSpeed = " + startSpeed_ +
                                             ", endSpeed = " + endSpeed_);
+        }
+        if (endDist <= startDist) {
+            log_.error("SlowDown.planToTargetDistance entered with startDist = " + startDist + ", endDist = " + endDist + ". Throwing exception.");
+            throw new ArithmeticException("Slowdown maneuver being planned with startDist = " + startDist + ", endDist = " + endDist);
         }
 
         //if speed change is going to be only slight then
         double deltaV = endSpeed_ - startSpeed_; //always negative
         double lagDistance = startSpeed_*inputs_.getResponseLag();
         double displacement = endDist - startDist - lagDistance;
-        if (displacement <= 0.0) {
-            throw new ArithmeticException("Slowdown.planToTargetDistance attempting to use illegal displacement of " + displacement);
-        }
-        workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement;
+        workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement; //supposed to be negative
         if (workingAccel_ >= 0.0  ||  workingAccel_ < -maxAccel_) {
-            throw new ArithmeticException("Slowdown.plantoTargetDistance attempting to use illegal workingAccel of " + workingAccel_);
+            log_.warn("SlowDown.plantoTargetDistance attempting to use illegal workingAccel of " + workingAccel_ + ", displacement = "
+                    + displacement + ". Adjusting workingAccel to a reasonable value.");
+            workingAccel_ = -maxAccel_;
         }
 
         //compute the time it will take to perform this ideal speed change
         deltaT_ = deltaV / workingAccel_;
 
         endDist_ = endDist;
+        log_.debug("SlowDown.planToTargetDistance complete with endDist = " + endDist_ + ", deltaT = " + deltaT_);
     }
 
 
     @Override
-    public boolean executeTimeStep() throws IllegalStateException {
+    public boolean executeTimeStep() throws IllegalStateException, ArithmeticException {
         boolean completed = false;
 
         verifyLocation();
@@ -102,11 +118,16 @@ public class SlowDown extends LongitudinalManeuver {
         // the response lag has passed. Thus, we will hit the target speed command sooner than we pass the end distance.
         double currentTime = System.currentTimeMillis();
         double factor = 0.001 * (double)(currentTime - startTime_) / deltaT_;
+        if (factor < 0.0) {
+            log_.error("SlowDown.executeTimeStep computed illegal factor of = " + factor + ". Throwing exception");
+            throw new ArithmeticException("SlowDown.executeTimeStep using an illegal interpolation factor.");
+        }
         if (factor > 1.0) {
             factor = 1.0;
             completed = true;
         }
         double cmd = startSpeed_ + factor*(endSpeed_ - startSpeed_);
+        log_.debug("SlowDown.executeTimeStep computed speed command (prior to accOverride) of " + cmd);
 
         //invoke the ACC override
         cmd = accOverride(cmd);

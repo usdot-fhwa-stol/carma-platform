@@ -410,6 +410,17 @@ div.message_box {
     width: 15%;
 }
 
+.hyphenate {
+ -ms-word-break: break-all;
+     word-break: break-all;
+
+     // Non standard for webkit
+     word-break: break-word;
+
+-webkit-hyphens: auto;
+   -moz-hyphens: auto;
+        hyphens: auto;
+}
 /* Map *
  * Always set the map height explicitly to define the size of the div
  * element that contains the map.
