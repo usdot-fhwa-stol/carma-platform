@@ -81,10 +81,7 @@ task writeVersionFile << {
     def file = new File("$projectDir/src/main/resources/version")
     file.createNewFile();
     
-    // Formatting is not a mistake here, the new lines and whitespace show up correctly in the file
-    file.text="""$gitVersion.version
-$gitVersion.shortBranch
-"""
+    file.text="$gitVersion.version\n$gitVersion.shortBranch\n"
 }
 
 compileJava {
