@@ -39,7 +39,7 @@ public class CarmaVersion {
         int minor =         0;
         // Don't touch this, automatically updated
         int build = 1534;
-        String suffix = "basic-acc6-SNAPSHOT(1)";
+        String suffix = "trajectory_error_tracking14-SNAPSHOT(3)";
 
 //==============================================================================================================================
 
