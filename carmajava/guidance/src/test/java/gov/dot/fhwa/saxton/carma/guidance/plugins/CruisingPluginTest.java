@@ -35,8 +35,10 @@ import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.NoOpAccStrategyFactory;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.SpeedLimit;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.TrajectorySegment;
@@ -57,6 +59,10 @@ public class CruisingPluginTest {
     ILogger mockLogger = mock(ILogger.class);
     when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
     LoggerManager.setLoggerFactory(mockFact);
+
+    NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
+    AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
+
     PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
         mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
         new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)));

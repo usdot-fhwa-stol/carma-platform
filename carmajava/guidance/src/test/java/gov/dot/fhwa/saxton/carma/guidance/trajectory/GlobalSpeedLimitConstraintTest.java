@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
 
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 
 public class GlobalSpeedLimitConstraintTest {
@@ -33,15 +33,15 @@ public class GlobalSpeedLimitConstraintTest {
 
   @Test
   public void testSuccess() {
-    IManeuver m1 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(10.0);
 
-    IManeuver m2 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartSpeed()).thenReturn(10.0);
     when(m2.getTargetSpeed()).thenReturn(10.0);
 
-    IManeuver m3 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartSpeed()).thenReturn(10.0);
     when(m3.getTargetSpeed()).thenReturn(15.0);
 
@@ -54,13 +54,13 @@ public class GlobalSpeedLimitConstraintTest {
 
   @Test
   public void testSuccessMixedTypes() {
-    IManeuver m1 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(1.0);
 
-    IManeuver m2 = mock(IManeuver.class);
+    ISimpleManeuver m2 = mock(ISimpleManeuver.class);
 
-    IManeuver m3 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartSpeed()).thenReturn(15.0);
     when(m3.getTargetSpeed()).thenReturn(19.0);
 
@@ -73,11 +73,11 @@ public class GlobalSpeedLimitConstraintTest {
 
   @Test
   public void testRejection() {
-    IManeuver m1 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(10.0);
 
-    IManeuver m2 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartSpeed()).thenReturn(10.0);
     when(m2.getTargetSpeed()).thenReturn(25.0);
 
@@ -89,15 +89,15 @@ public class GlobalSpeedLimitConstraintTest {
 
   @Test
   public void testRejection2() {
-    IManeuver m1 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartSpeed()).thenReturn(21.0);
     when(m1.getTargetSpeed()).thenReturn(25.0);
 
-    IManeuver m2 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartSpeed()).thenReturn(25.0);
     when(m2.getTargetSpeed()).thenReturn(10.0);
 
-    IManeuver m3 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartSpeed()).thenReturn(10.0);
     when(m3.getTargetSpeed()).thenReturn(30.0);
 
