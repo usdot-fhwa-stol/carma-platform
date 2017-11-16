@@ -201,10 +201,11 @@ public class TrajectoryExecutor extends GuidanceComponent {
     public void runTrajectory(Trajectory traj) {
         log.info("TrajectoryExecutor received new trajectory!");
         int idx = 1;
-        for (ISimpleManeuver m : traj.getManeuvers()) {
+        for (IManeuver m : traj.getManeuvers()) {
             log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + (m instanceof LongitudinalManeuver ? "LONGITUDINAL" : "LATERAL"));
             if (m instanceof LongitudinalManeuver) {
-                log.info("Speeds from " + m.getStartSpeed() + " to " + m.getTargetSpeed());
+                LongitudinalManeuver lonMvr = (LongitudinalManeuver) m;
+                log.info("Speeds from " + lonMvr.getStartSpeed() + " to " + lonMvr.getTargetSpeed());
             }
             idx++;
         }

@@ -58,7 +58,7 @@ public class TrajectoryValidatorTest {
     tv.addValidationConstraint(tvc3);
 
     Trajectory t = mock(Trajectory.class);
-    List<ISimpleManeuver> maneuvers = new ArrayList<ISimpleManeuver>();
+    List<IManeuver> maneuvers = new ArrayList<>();
 
     maneuvers.add(mock(ISimpleManeuver.class));
     maneuvers.add(mock(ISimpleManeuver.class));
@@ -89,7 +89,7 @@ public class TrajectoryValidatorTest {
     tv.addValidationConstraint(tvc3);
 
     Trajectory t = mock(Trajectory.class);
-    List<ISimpleManeuver> maneuvers = new ArrayList<ISimpleManeuver>();
+    List<IManeuver> maneuvers = new ArrayList<>();
 
     maneuvers.add(mock(ISimpleManeuver.class));
     maneuvers.add(mock(ISimpleManeuver.class));
