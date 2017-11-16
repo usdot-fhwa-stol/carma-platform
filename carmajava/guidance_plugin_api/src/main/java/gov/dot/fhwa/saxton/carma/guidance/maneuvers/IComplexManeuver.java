@@ -26,6 +26,23 @@ import org.ros.message.Time;
  * plugins which wish to use them.
  */
 public interface IComplexManeuver extends IManeuver {
-  Time getMinArrivalTime();
-  Time getMaxArrivalTime();
+  /**
+   * Get the shortest possible time the maneuver might take to complete, in seconds
+   */
+  Time getMinCompletionTime();
+
+  /**
+   * Get the longest possible time the maneuver might take to complete, in seconds
+   */
+  Time getMaxCompletionTime();
+
+  /**
+   * Get the highest speed this complex maneuver is expected to command, in m/s
+   */
+  double getMaxExpectedSpeed();
+
+  /**
+   * Get the lowest speed this complex maneuver is expected to command, in m/s
+   */
+  double getMinExpectedSpeed();
 }
