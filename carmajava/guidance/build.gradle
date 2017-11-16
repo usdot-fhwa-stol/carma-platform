@@ -39,6 +39,17 @@ repositories {
 
 apply from: 'https://raw.githubusercontent.com/passsy/gradle-GitVersioner/master/git-versioner.gradle'
 
+sourceSets {
+        main {
+                java {
+                        srcDirs= ["$projectDir/src/main/java"]
+                }
+                resources {
+                        srcDirs= ["$projectDir/src/main/resources"]
+                }
+        }
+}
+
 dependencies {
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_core:rosjava_geometry:0.3.5'
@@ -56,16 +67,25 @@ dependencies {
   testCompile 'junit:junit:4.12'
 }
 
-task modifyCarmaVersionFile << {
-    //def versionFile = "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java"
+task writeVersionFile << {
     println "Updating build number to: " + gitVersion.version
-    ant.replaceregexp(file: "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java", match: "(.*build\\W*=\\W*).*(;.*)", replace: ("\\1" +gitVersion.version + "\\2"), byline: true)
     println "Updating build suffix to: " + gitVersion.shortBranch
-    ant.replaceregexp(file: "src/main/java/gov/dot/fhwa/saxton/carma/guidance/CarmaVersion.java", match: "(.*suffix\\W*=\\W*\").*(\";.*)", replace: ("\\1" + gitVersion.shortBranch + "\\2"), byline: true)
+
+    // Make sure the resources folder exists
+    def resourcesFolder = new File("$projectDir/src/main/resources")
+    if (!resourcesFolder.exists()) {
+        resourcesFolder.mkdirs()
+    }
+
+    // Write the file
+    def file = new File("$projectDir/src/main/resources/version")
+    file.createNewFile();
+    
+    file.text="$gitVersion.version\n$gitVersion.shortBranch\n"
 }
 
 compileJava {
-    dependsOn modifyCarmaVersionFile
+    dependsOn writeVersionFile
 }
 
 installApp {
