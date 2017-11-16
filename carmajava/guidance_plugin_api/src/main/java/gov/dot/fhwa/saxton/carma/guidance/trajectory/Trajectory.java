@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
@@ -36,6 +37,7 @@ public class Trajectory {
   protected double endLocation;
   protected List<ISimpleManeuver> lateralManeuvers;
   protected List<LongitudinalManeuver> longitudinalManeuvers;
+  protected IComplexManeuver complexManeuver = null;
   protected boolean lateralManeuversSorted = true;
   protected boolean longitudinalManeuversSorted = true;
 
@@ -84,6 +86,35 @@ public class Trajectory {
       lateralManeuversSorted = false;
       return lateralManeuvers.add(maneuver);
     }
+  }
+
+  /**
+   * Set the complex maneuver for the current trajectory.
+   * 
+   * @param maneuver The complex maneuver to to add
+   * @return True if the maneuver has been accepted, false o.w.
+   */
+  public boolean setComplexManeuver(IComplexManeuver maneuver) {
+    if (complexManeuver != null) {
+      // Only one complex maneuver is allowed per trajectory
+      return false;
+    }
+
+    if (!(maneuver.getStartDistance() >= startLocation && maneuver.getEndDistance() <= endLocation)) {
+      // Must be within bounds like normal maneuvers
+      return false;
+    }
+
+    if (getNextManeuverAfter(maneuver.getStartDistance(), ManeuverType.LONGITUDINAL) != null ||
+        getNextManeuverAfter(maneuver.getStartDistance(), ManeuverType.LATERAL) != null) {
+      // Complex maneuver must be last maneuver in trajectory
+      return false;
+    }
+
+    // Valid complex maneuver received, adjust and accept
+    endLocation = maneuver.getEndDistance();
+    complexManeuver = maneuver;
+    return true;
   }
 
   /**
