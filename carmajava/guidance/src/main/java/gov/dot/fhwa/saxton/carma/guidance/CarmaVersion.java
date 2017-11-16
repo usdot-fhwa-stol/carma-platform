@@ -16,14 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import cav_srvs.GetDriversWithCapabilities;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
-
 
 public class CarmaVersion {
     private static ComponentVersion version = new ComponentVersion();
