@@ -14,19 +14,27 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.plugins;
+package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 /**
- * Mock implementation of something that might resemble a RouteFollowingPlugin
- * <p>
- * Just reports a the name and versionId and toggles its activation status whenever it is activated
+ * Acc strategy for execution without ACC
  */
-public class MockRouteFollowingPlugin extends AbstractMockPlugin {
-    public MockRouteFollowingPlugin(PluginServiceLocator pluginServiceLocator) {
-        super(pluginServiceLocator);
-        version.setName("Mock Route-Following Plugin");
-        version.setMajorRevision(0);
-        version.setIntermediateRevision(0);
-        version.setMinorRevision(1);
-    }
+public class NoOpAccStrategy extends AbstractAccStrategy {
+
+	@Override
+	public boolean evaluateAccTriggerConditions(double distToFrontVehicle, double currentSpeed,
+			double frontVehicleSpeed) {
+    return false;
+	}
+
+	@Override
+	public double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
+			double desiredSpeedCommand) {
+      return desiredSpeedCommand;
+	}
+
+	@Override
+	public double computeDesiredHeadway(double currentSpeed) {
+    return 0.0;
+	}
 }

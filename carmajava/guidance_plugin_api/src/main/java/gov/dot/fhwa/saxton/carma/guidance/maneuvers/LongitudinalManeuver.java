@@ -27,7 +27,14 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     protected double                    endSpeed_ = -1.0;   // m/s
     protected double                    maxAccel_ = 0.999;     // m/s^2 absolute value; default is a conservative value
     protected final double              SMALL_SPEED_CHANGE = 2.5;   // m/s
+    protected final IAccStrategy        accStrategy;
+    protected boolean                   completed = false;
+    protected long                      startTime_ = 0;
+    protected double                    workingAccel_;              // m/s^2 that we will actually use
 
+    public LongitudinalManeuver() {
+        this.accStrategy = AccStrategyManager.newAccStrategy();
+    }
 
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
@@ -46,8 +53,35 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     }
 
 
-    public abstract boolean executeTimeStep() throws IllegalStateException;
+    @Override
+    public final boolean executeTimeStep() {
+        verifyLocation();
 
+        if (startTime_ == 0) {
+            startTime_ = System.currentTimeMillis();
+        }
+
+        double speedCmd = generateSpeedCommand();
+        double distToFrontVehicle = inputs_.getDistanceToFrontVehicle();
+        double currentSpeed = inputs_.getCurrentSpeed();
+        double frontVehicleSpeed = inputs_.getFrontVehicleSpeed();
+
+        if (accStrategy.evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
+            speedCmd = accStrategy.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
+        }
+
+        executeSpeedCommand(speedCmd);
+
+        return true;
+    }
+
+    public abstract double generateSpeedCommand();
+
+    public boolean executeSpeedCommand(double executeSpeedCommand) {
+        //send the command to the vehicle
+        commands_.setCommand(executeSpeedCommand, workingAccel_);
+        return completed;
+    }
 
     @Override
     public void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException {
@@ -83,63 +117,5 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         if (limit > 0.0) { //can't be equal to zero
             maxAccel_ = limit;
         }
-    }
-
-
-    //TODO: modify executeTimeStep() in ManeuverBase to be final then call internal computeSpeedCommand() then calls this.
-
-    /**
-     * Implements the ACC capability to prevent the host vehicle from crashing into the vehicle in front of it.
-     *
-     * Each maneuver derived from this class needs to implement its executeTimeStep() method such that its last statement prior
-     * to sending the speed command to the vehicle is a call to this method.
-     * In order to maximize execution speed, there is no check provided to verify that
-     * this sequence is implemented properly; it will be up to the author to manually ensure.
-     *
-     * @param rawCmd - the speed command computed assuming there is no preceding vehicle in the way, m/s
-     * @return adjusted speed command that will prevent a crash with the preceding vehicle, m/s
-     */
-    protected double accOverride(double rawCmd) {
-
-        //if we are too close to the preceding vehicle then
-            //back off the commanded speed
-
-        return rawCmd; //TODO bogus - implement in a future iteration
-    }
-
-
-    /**
-     * Compares current following distance to configurable parameter for desired minimum time gap.
-     * @return true if actual gap < specified minimum; false otherwise
-     */
-    private boolean tooCloseToFwdVehicle() {
-
-
-
-
-        //TODO: implement this logic in a future iteration
-
-
-
-
-        return false;
-    }
-
-
-    /**
-     * Provides the ACC functionality of adjusting the speed command downward as necessary to regain the desired
-     * minimum time gap.
-     * @param rawCmd - the speed command computed assuming there is no preceding vehicle in the way, m/s
-     * @return adjusted speed command that will prevent a crash with the preceding vehicle, m/s
-     */
-    private double adaptToFwdVehicle(double rawCmd) {
-
-
-
-        //TODO:  implement this logic in a future iteration
-
-
-
-        return rawCmd; //TODO bogus
     }
 }

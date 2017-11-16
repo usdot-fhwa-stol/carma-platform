@@ -55,11 +55,6 @@ class LongitudinalTestManeuver extends LongitudinalManeuver {
   }
 
   @Override
-  public boolean executeTimeStep() throws IllegalStateException {
-    return false;
-  }
-
-  @Override
   public void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException {
 
   }
@@ -82,6 +77,10 @@ class LongitudinalTestManeuver extends LongitudinalManeuver {
   private double end;
   private double start;
   private ManeuverType type;
+@Override
+public double generateSpeedCommand() {
+	return 0;
+}
 
 }
 
