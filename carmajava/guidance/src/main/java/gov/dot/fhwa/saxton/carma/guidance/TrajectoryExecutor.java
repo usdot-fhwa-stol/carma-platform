@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
@@ -200,7 +201,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
     public void runTrajectory(Trajectory traj) {
         log.info("TrajectoryExecutor received new trajectory!");
         int idx = 1;
-        for (IManeuver m : traj.getManeuvers()) {
+        for (ISimpleManeuver m : traj.getManeuvers()) {
             log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + (m instanceof LongitudinalManeuver ? "LONGITUDINAL" : "LATERAL"));
             if (m instanceof LongitudinalManeuver) {
                 log.info("Speeds from " + m.getStartSpeed() + " to " + m.getTargetSpeed());

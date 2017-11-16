@@ -307,9 +307,9 @@ public class Arbitrator extends GuidanceComponent {
       Trajectory traj = new Trajectory(trajectoryStart, trajectoryEnd);
       double expectedEntrySpeed = 0.0;
       if (currentTrajectory != null) {
-        List<IManeuver> lonManeuvers = currentTrajectory.getLongitudinalManeuvers();
-        IManeuver lastManeuver = lonManeuvers.get(lonManeuvers.size() - 1);
-        expectedEntrySpeed = ((LongitudinalManeuver) lastManeuver).getTargetSpeed();
+        List<LongitudinalManeuver> lonManeuvers = currentTrajectory.getLongitudinalManeuvers();
+        LongitudinalManeuver lastManeuver = lonManeuvers.get(lonManeuvers.size() - 1);
+        expectedEntrySpeed = lastManeuver.getTargetSpeed();
       } else {
         expectedEntrySpeed = currentSpeed.get();
       }
