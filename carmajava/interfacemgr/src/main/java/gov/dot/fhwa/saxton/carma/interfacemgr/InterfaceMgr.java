@@ -58,6 +58,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected ConnectedNode connectedNode_;
     protected CancellableLoop mainLoop_;
     protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
+    protected boolean shutdownInitiated_ = false;
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -235,7 +236,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                     mainLoop_.cancel();
                 }
 
-                Thread.sleep(1000);
+                Thread.sleep(500);
             }//loop
 
         };
@@ -342,23 +343,37 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         return rh.getResult();
     }
 
-  /***
-   * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
-   * @param e The exception to handle
-   */
-  @Override
-  protected void handleException(Throwable e) {
 
-    //don't need to log anything here because SaxtonBaseNode handler has already done that
-
-    //if it has been less than 2 min since we declared the system to be ready for operation then
-    if (worker_.timeSinceSystemReady() < 2*60*1000) {
-      publishSystemAlert(AlertSeverity.FATAL, "Unknown exception trapped in InterfaceMgr - COMMANDING SYSTEM SHUT DOWN.", e);
-    }else {
-      publishSystemAlert(AlertSeverity.WARNING, "Unknown exception trapped in InterfaceMgr - shutting down myself only.", e);
+    @Override
+    public boolean isShutdownUnderway() {
+        return shutdownInitiated_;
     }
 
-    connectedNode_.shutdown();
-  }
+    /***
+     * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
+     * @param e The exception to handle
+     */
+    @Override
+    protected void handleException(Throwable e) {
+
+        //don't need to log anything here because SaxtonBaseNode handler has already done that
+
+        //if it has been less than 2 min since we declared the system to be ready for operation then
+        if (worker_.timeSinceSystemReady() < 2*60*1000) {
+            publishSystemAlert(AlertSeverity.FATAL, "Unknown exception trapped in InterfaceMgr - COMMANDING SYSTEM SHUT DOWN.", e);
+        }else {
+            publishSystemAlert(AlertSeverity.WARNING, "Unknown exception trapped in InterfaceMgr - shutting down myself only.", e);
+        }
+
+        shutdownInitiated_ = true;
+        connectedNode_.shutdown();
+    }
+
+    @Override
+    public void errorShutdown(String msg) {
+        shutdownInitiated_ = true;
+        publishSystemAlert(AlertSeverity.FATAL, msg, null);
+        connectedNode_.shutdown();
+    }
 
 }

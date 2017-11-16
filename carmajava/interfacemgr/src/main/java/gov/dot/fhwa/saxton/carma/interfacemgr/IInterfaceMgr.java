@@ -37,4 +37,16 @@ public interface IInterfaceMgr {
      */
     List<String> getDriverApi(String driverName);
 
+
+    /**
+     * Sends a shutdown alert to the other nodes then shuts down this node
+     * @param msg - the message that is to be sent along with the fatal error alert to other nodes
+     */
+    void errorShutdown(String msg);
+
+
+    /**
+     * @return - true of node shutdown has been initiated, false otherwise
+     */
+    boolean isShutdownUnderway();
 }
