@@ -42,7 +42,6 @@ public class CarmaVersion {
         int intermediate =  2;
         int minor =         0;
         // Don't touch this, automatically updated
-
         int build = 0;
         String suffix = "";
 
@@ -66,7 +65,8 @@ public class CarmaVersion {
                 suffix = "VERSION-FILE-ERROR";
             }
         } 
-      
+        
+        
 //==============================================================================================================================
 
 
