@@ -18,5 +18,6 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 public enum ManeuverType {
   LATERAL,
-  LONGITUDINAL
+  LONGITUDINAL,
+  COMPLEX
 }

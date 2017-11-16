@@ -100,6 +100,10 @@ public class Trajectory {
    * @return True if the maneuver has been accepted, false o.w.
    */
   public boolean setComplexManeuver(IComplexManeuver maneuver) {
+    if (maneuver == null) {
+      return false;
+    }
+
     if (complexManeuver != null) {
       // Only one complex maneuver is allowed per trajectory
       return false;
@@ -123,20 +127,36 @@ public class Trajectory {
   }
 
   /**
+   * Get the complex maneuver contained in this trajectory, if it exists.
+   * 
+   * @return The planned {@link IComplexManeuver} instance if it exists, null o.w.
+   */
+  public IComplexManeuver getComplexManeuver() {
+    return complexManeuver;
+  }
+
+  /**
    * Find the earliest available space in the longitudinal domain of the current trajectory for 
    * which a maneuver of the specified size might fit.
    * 
    * @returns The distance location of the start of the window if found, -1 otherwise
    */
   public double findEarliestWindowOfSize(double size) {
-    if (longitudinalManeuvers.size() == 0) {
+    List<IManeuver> maneuvers = new ArrayList<>();
+    maneuvers.addAll(longitudinalManeuvers);
+    if (complexManeuver != null) {
+      maneuvers.add(complexManeuver);
+    }
+
+    if (maneuvers.size() == 0) {
       return -1;
     }
 
-    sortLongitudinalManeuvers();
+    maneuvers.sort((IManeuver m1, IManeuver m2) -> 
+      Double.compare(m1.getStartDistance(), m2.getStartDistance()));
 
     double lastEnd = 0;
-    for (IManeuver m : longitudinalManeuvers) {
+    for (IManeuver m : maneuvers) {
       if (m.getStartDistance() - lastEnd >= size)  {
         return lastEnd;
       }
@@ -154,13 +174,24 @@ public class Trajectory {
    * @returns The distance location of the start of the window if found, -1 otherwise
    */
   public double findLatestWindowOfSize(double size) {
-    if (longitudinalManeuvers.size() == 0) {
+    List<IManeuver> maneuvers = new ArrayList<>();
+    maneuvers.addAll(longitudinalManeuvers);
+    if (complexManeuver != null) {
+      maneuvers.add(complexManeuver);
+    }
+
+    if (maneuvers.size() == 0) {
       return -1;
     }
 
-    double lastStart = longitudinalManeuvers.get(longitudinalManeuvers.size() - 1).getEndDistance();
-    for (int i = longitudinalManeuvers.size() - 1; i >= 0; i--) {
-      IManeuver m = longitudinalManeuvers.get(i);
+    maneuvers.sort((IManeuver m1, IManeuver m2) -> {
+      return Double.compare(m1.getStartDistance(),
+        m2.getStartDistance());
+    });
+
+    double lastStart = maneuvers.get(maneuvers.size() - 1).getEndDistance();
+    for (int i = maneuvers.size() - 1; i >= 0; i--) {
+      IManeuver m = maneuvers.get(i);
       if (lastStart - m.getEndDistance() >= size)  {
         return m.getEndDistance();
       }
@@ -174,8 +205,8 @@ public class Trajectory {
   /**
    * Get a list of all maneuvers that will be active at loc
    */
-  public List<ISimpleManeuver> getManeuversAt(double loc) {
-    List<ISimpleManeuver> out = new ArrayList<>();
+  public List<IManeuver> getManeuversAt(double loc) {
+    List<IManeuver> out = new ArrayList<>();
 
     for (ISimpleManeuver m : lateralManeuvers) {
       if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
@@ -189,6 +220,12 @@ public class Trajectory {
       }
     }
 
+    if (complexManeuver != null) {
+      if (complexManeuver.getStartDistance() <= loc && complexManeuver.getEndDistance() > loc) {
+        out.add(complexManeuver);
+      }
+    }
+
     return out;
   }
 
@@ -196,13 +233,11 @@ public class Trajectory {
    * Get a list of all maneuver of a specific type that will be active at loc
    * Undefined behavior if there are overlapping maneuvers of the same type
    */
-  public ISimpleManeuver getManeuverAt(double loc, ManeuverType type) {
-    ISimpleManeuver out = null;
-
+  public IManeuver getManeuverAt(double loc, ManeuverType type) {
     if (type == ManeuverType.LATERAL) {
       for (ISimpleManeuver m : lateralManeuvers) {
         if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
-          out = m;
+          return m;
         }
       }
     }
@@ -210,12 +245,20 @@ public class Trajectory {
     if (type == ManeuverType.LONGITUDINAL) {
       for (ISimpleManeuver m : longitudinalManeuvers) {
         if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
-          out = m;
+          return m;
         }
       }
     }
 
-    return out;
+    if (type == ManeuverType.COMPLEX) {
+      if (complexManeuver != null) {
+        if (complexManeuver.getStartDistance() <= loc && complexManeuver.getEndDistance() > loc) {
+          return complexManeuver;
+        }
+      }
+    }
+
+    return null;
   }
 
   private void sortLateralManeuvers() {
@@ -239,7 +282,7 @@ public class Trajectory {
   /**
    * Get the next maneuver of the specified type which will be active after loc, null if one cannot be found
    */
-  public ISimpleManeuver getNextManeuverAfter(double loc, ManeuverType type) {
+  public IManeuver getNextManeuverAfter(double loc, ManeuverType type) {
     if (type == ManeuverType.LONGITUDINAL) {
       sortLongitudinalManeuvers();
 
@@ -258,6 +301,16 @@ public class Trajectory {
       for (ISimpleManeuver m : lateralManeuvers) {
         if (m.getStartDistance() > loc) {
           return m;
+        }
+      }
+
+      return null;
+    }
+
+    if (type == ManeuverType.COMPLEX) {
+      if (complexManeuver != null) {
+        if (loc < complexManeuver.getStartDistance()) {
+          return complexManeuver;
         }
       }
 
@@ -286,17 +339,16 @@ public class Trajectory {
   /**
    * Get the trajectories stored maneuvers in sorted order by start location
    */
-  public List<ISimpleManeuver> getManeuvers() {
-    List<ISimpleManeuver> out = new ArrayList<>();
+  public List<IManeuver> getManeuvers() {
+    List<IManeuver> out = new ArrayList<>();
     out.addAll(longitudinalManeuvers);
     out.addAll(lateralManeuvers);
+    
+    if (complexManeuver != null) {
+      out.add(complexManeuver);
+    }
 
-    out.sort(new Comparator<IManeuver>() {
-        @Override
-        public int compare(IManeuver o1, IManeuver o2) {
-          return Double.compare(o1.getStartDistance(), o2.getStartDistance());
-        }
-      });
+    out.sort((IManeuver o1, IManeuver o2) -> Double.compare(o1.getStartDistance(), o2.getStartDistance()));
 
     return out;
   }
