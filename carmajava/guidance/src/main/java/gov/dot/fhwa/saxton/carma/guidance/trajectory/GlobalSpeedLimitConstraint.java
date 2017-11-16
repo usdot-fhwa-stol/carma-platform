@@ -39,10 +39,12 @@ public class GlobalSpeedLimitConstraint implements TrajectoryValidationConstrain
       return;
     }
 
+    LongitudinalManeuver lonMvr = (LongitudinalManeuver) maneuver;
+
     // Note: Assumes longitudinal maneuvers linearly interpolate speed over distance
     // If non-linear longitudinal maneuvers are ever implemented this logic will not handle that case
-    if (maneuver.getStartSpeed() > globalSpeedLimit || maneuver.getTargetSpeed() > globalSpeedLimit) {
-      offendingManeuvers.add(maneuver);
+    if (lonMvr.getStartSpeed() > globalSpeedLimit || lonMvr.getTargetSpeed() > globalSpeedLimit) {
+      offendingManeuvers.add(lonMvr);
     }
   }
 
