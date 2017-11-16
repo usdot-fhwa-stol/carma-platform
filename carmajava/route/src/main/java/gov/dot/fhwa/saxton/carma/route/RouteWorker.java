@@ -367,6 +367,8 @@ public class RouteWorker {
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
+    log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
+
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);
     }
