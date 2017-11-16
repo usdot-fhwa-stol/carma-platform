@@ -90,6 +90,11 @@ public class Trajectory {
 
   /**
    * Set the complex maneuver for the current trajectory.
+   * <p>
+   * In order to accept a complex maneuver, there must not already be a complex maneuver for this trajectory,
+   * the requested complex maneuver must be within trajectory boundaries, and the requested complex maneuver
+   * must be the last maneuver in the trajectory. If no maneuvers are presently planned after the start of
+   * the complex maneuver, the end of this trajectory will be set to the end of the complex manauever.
    * 
    * @param maneuver The complex maneuver to to add
    * @return True if the maneuver has been accepted, false o.w.
