@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import java.util.ArrayList;
@@ -33,8 +34,8 @@ public class Trajectory {
 
   protected double startLocation;
   protected double endLocation;
-  protected List<IManeuver> lateralManeuvers;
-  protected List<IManeuver> longitudinalManeuvers;
+  protected List<ISimpleManeuver> lateralManeuvers;
+  protected List<LongitudinalManeuver> longitudinalManeuvers;
   protected boolean lateralManeuversSorted = true;
   protected boolean longitudinalManeuversSorted = true;
 
@@ -45,8 +46,8 @@ public class Trajectory {
     this.startLocation = startLocation;
     this.endLocation = endLocation;
 
-    lateralManeuvers = new ArrayList<IManeuver>();
-    longitudinalManeuvers = new ArrayList<IManeuver>();
+    lateralManeuvers = new ArrayList<>();
+    longitudinalManeuvers = new ArrayList<>();
   }
 
   /**
@@ -69,7 +70,7 @@ public class Trajectory {
    * The maneuver will be added to the appropriate maneuvers list if it fits spatially within the domain of
    * this trajectory instance.
    */
-  public boolean addManeuver(IManeuver maneuver) {
+  public boolean addManeuver(ISimpleManeuver maneuver) {
     if (!(maneuver.getStartDistance() >= startLocation 
     && maneuver.getEndDistance() <= endLocation)) {
       return false;
@@ -78,7 +79,7 @@ public class Trajectory {
     // Not a fan of using instanceof here, but without more information exposed by the maneuvers, not much I can do
     if (maneuver instanceof LongitudinalManeuver) {
       longitudinalManeuversSorted = false;
-      return longitudinalManeuvers.add(maneuver);
+      return longitudinalManeuvers.add((LongitudinalManeuver) maneuver);
     } else {
       lateralManeuversSorted = false;
       return lateralManeuvers.add(maneuver);
@@ -137,16 +138,16 @@ public class Trajectory {
   /**
    * Get a list of all maneuvers that will be active at loc
    */
-  public List<IManeuver> getManeuversAt(double loc) {
-    List<IManeuver> out = new ArrayList<>();
+  public List<ISimpleManeuver> getManeuversAt(double loc) {
+    List<ISimpleManeuver> out = new ArrayList<>();
 
-    for (IManeuver m : lateralManeuvers) {
+    for (ISimpleManeuver m : lateralManeuvers) {
       if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
         out.add(m);
       }
     }
 
-    for (IManeuver m : longitudinalManeuvers) {
+    for (ISimpleManeuver m : longitudinalManeuvers) {
       if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
         out.add(m);
       }
@@ -159,11 +160,11 @@ public class Trajectory {
    * Get a list of all maneuver of a specific type that will be active at loc
    * Undefined behavior if there are overlapping maneuvers of the same type
    */
-  public IManeuver getManeuverAt(double loc, ManeuverType type) {
-    IManeuver out = null;
+  public ISimpleManeuver getManeuverAt(double loc, ManeuverType type) {
+    ISimpleManeuver out = null;
 
     if (type == ManeuverType.LATERAL) {
-      for (IManeuver m : lateralManeuvers) {
+      for (ISimpleManeuver m : lateralManeuvers) {
         if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
           out = m;
         }
@@ -171,7 +172,7 @@ public class Trajectory {
     }
 
     if (type == ManeuverType.LONGITUDINAL) {
-      for (IManeuver m : longitudinalManeuvers) {
+      for (ISimpleManeuver m : longitudinalManeuvers) {
         if (m.getStartDistance() <= loc && m.getEndDistance() > loc) {
           out = m;
         }
@@ -202,11 +203,11 @@ public class Trajectory {
   /**
    * Get the next maneuver of the specified type which will be active after loc, null if one cannot be found
    */
-  public IManeuver getNextManeuverAfter(double loc, ManeuverType type) {
+  public ISimpleManeuver getNextManeuverAfter(double loc, ManeuverType type) {
     if (type == ManeuverType.LONGITUDINAL) {
       sortLongitudinalManeuvers();
 
-      for (IManeuver m : longitudinalManeuvers) {
+      for (ISimpleManeuver m : longitudinalManeuvers) {
         if (m.getStartDistance() > loc) {
           return m;
         }
@@ -218,7 +219,7 @@ public class Trajectory {
     if (type == ManeuverType.LATERAL) {
       sortLateralManeuvers();
 
-      for (IManeuver m : lateralManeuvers) {
+      for (ISimpleManeuver m : lateralManeuvers) {
         if (m.getStartDistance() > loc) {
           return m;
         }
@@ -233,7 +234,7 @@ public class Trajectory {
   /**
    * Get the trajectories stored lateral maneuvers in sorted order by start location
    */
-  public List<IManeuver> getLateralManeuvers() {
+  public List<ISimpleManeuver> getLateralManeuvers() {
     sortLateralManeuvers();
     return this.lateralManeuvers;
   }
@@ -241,7 +242,7 @@ public class Trajectory {
   /**
    * Get the trajectories stored longitudinal maneuvers in sorted order by start location
    */
-  public List<IManeuver> getLongitudinalManeuvers() {
+  public List<LongitudinalManeuver> getLongitudinalManeuvers() {
     sortLongitudinalManeuvers();
     return this.longitudinalManeuvers;
   }
@@ -249,8 +250,8 @@ public class Trajectory {
   /**
    * Get the trajectories stored maneuvers in sorted order by start location
    */
-  public List<IManeuver> getManeuvers() {
-    List<IManeuver> out = new ArrayList<IManeuver>();
+  public List<ISimpleManeuver> getManeuvers() {
+    List<ISimpleManeuver> out = new ArrayList<>();
     out.addAll(longitudinalManeuvers);
     out.addAll(lateralManeuvers);
 
