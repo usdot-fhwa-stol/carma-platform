@@ -165,6 +165,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
     }
 
   /**
+   * Get the current complex maneuver, null if none are currently executing
+   */
+    public IManeuver getCurrentComplexManeuver() {
+        return trajectoryExecutorWorker.getCurrentComplexManeuver();
+    }
+
+  /**
    * Get the next lateral maneuver, null if none are currently executing
    */
     public IManeuver getNextLateralManeuver() {
@@ -176,6 +183,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
    */
     public IManeuver getNextLongitudinalManeuver() {
         return trajectoryExecutorWorker.getNextLongitudinalManeuver();
+    }
+
+  /**
+   * Get the next complex maneuver, null if none are currently executing
+   */
+    public IManeuver getNextComplexManeuver() {
+        return trajectoryExecutorWorker.getNextComplexManeuver();
     }
 
   /**

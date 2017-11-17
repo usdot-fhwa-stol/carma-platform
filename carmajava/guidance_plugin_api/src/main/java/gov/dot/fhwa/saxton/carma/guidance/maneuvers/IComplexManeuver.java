@@ -27,6 +27,11 @@ import org.ros.message.Time;
  */
 public interface IComplexManeuver extends IManeuver {
   /**
+   * Get the human readable name of this complex maneuver
+   */
+  String getManeuverName();
+
+  /**
    * Get the shortest possible time the maneuver might take to complete, in seconds
    */
   Time getMinCompletionTime();
