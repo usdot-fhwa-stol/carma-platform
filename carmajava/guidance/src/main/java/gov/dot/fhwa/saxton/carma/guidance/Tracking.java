@@ -57,8 +57,9 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Guidance package Tracking component
  * <p>
- * Reponsible for detecting when the vehicle strays from it's intended route or
- * trajectory and signalling the failure on the /system_alert topic
+ * Responsible for detecting when the vehicle strays from its intended route or
+ * trajectory and signalling the failure on the /system_alert topic. Also responsible
+ * for generating content for BSMs to be published by the host vehicle.
  */
 public class Tracking extends GuidanceComponent {
 	
@@ -297,7 +298,16 @@ public class Tracking extends GuidanceComponent {
 	public void loop() throws InterruptedException {
 		
 		if(drivers_ready) {
+
+		    //publish content for a new BSM
 			bsmPublisher.publish(composeBSMData());
+
+			//log the current vehicle forward speed
+            TwistStamped vel = velocitySubscriber.getLastMessage();
+            if(vel != null) {
+                double speed = vel.getTwist().getLinear().getX();
+                log.info("Current vehicle speed is " + speed + " m/s");
+            }
 		}
 		Thread.sleep(sleepDurationMillis);
 	}
