@@ -163,7 +163,7 @@ void SRXApplication::initialize() {
                                                                         accel = carma::max_commanded_accel;
                                                                         ROS_WARN_STEAM("Max Accel Command exceeds max allowed, capping to: " << accel);
                                                                     }
-                                                                    ROS_WARN_STREAM("Commands out of range capping to: speed: " << carma::max_commanded_speed  << ", max_accel: " << carma::max_commanded_accel);
+                                                                    
                                                                     set_speed_ =  speed;
                                                                     set_accel_ = accel;
                                                                     cmd_mode_ = CommandMode_t::ClosedLoop;
