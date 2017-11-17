@@ -137,7 +137,7 @@ public class RouteWorker {
    * @param event the event to be handled
    */
   protected void handleEvent(WorkerEvent event) {
-    log.info("A " + event.toString() + " Route Event occurred.");
+    log.info("Handled route event: " + event.toString());
     switch (event) {
       case FILES_LOADED:
         break;
@@ -300,7 +300,7 @@ public class RouteWorker {
     }
 
     // If we can't join the route return
-    if (ableToConnectToRoute == false) {
+    if (!ableToConnectToRoute) {
       log.info("Could not join the route from the current location");
       return;
     }
@@ -368,6 +368,7 @@ public class RouteWorker {
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
     log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
+    log.debug("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);
