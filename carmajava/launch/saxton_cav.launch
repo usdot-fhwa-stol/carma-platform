@@ -245,8 +245,7 @@
       </node>
 
       <!-- Transform Server Node -->
-      <node pkg="carma" type="roadway" name="transform_server"
-            args="gov.dot.fhwa.saxton.carma.roadway.TransformServer">
+      <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
 
         <env if="$(arg debug_transform_svr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
