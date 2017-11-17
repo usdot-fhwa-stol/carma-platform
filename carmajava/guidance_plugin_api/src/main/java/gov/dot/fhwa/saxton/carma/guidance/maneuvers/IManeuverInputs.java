@@ -39,4 +39,16 @@ public interface IManeuverInputs {
      * @return lag time, sec
      */
     double getResponseLag();
+
+    /**
+     * Provides the distance to the rear bumper of the nearest vehicle in the current lane
+     * @return distance, m, {@link IAccStrategy.NO_FRONT_VEHICLE_DISTANCE} if no such vehicle
+     */
+    double getDistanceToFrontVehicle();
+
+    /**
+     * Provides the speed of the nearest vehicle in the current lane
+     * @return speed, m/s, {@link IAccStrategy.NO_FRONT_VEHICLE_SPEED} if no such vehicle
+     */
+    double getFrontVehicleSpeed();
 }

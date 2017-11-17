@@ -25,3 +25,6 @@ devel
 
 # Ignore root level CMakeLists.txt
 /CMakeLists.txt
+
+# Ignore Guidance auto-generate VersionID files
+carmajava/guidance/src/main/resources/version
