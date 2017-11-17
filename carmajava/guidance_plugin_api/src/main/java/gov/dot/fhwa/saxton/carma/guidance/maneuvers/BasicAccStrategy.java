@@ -34,12 +34,10 @@ public class BasicAccStrategy extends AbstractAccStrategy {
 	public boolean evaluateAccTriggerConditions(double distToFrontVehicle, double currentSpeed,
 			double frontVehicleSpeed) {
     return distToFrontVehicle < computeDesiredHeadway(currentSpeed) + standoffDistance;
-	}
-
-	@Override
-	public double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
+  }
+  
+  protected double computeAccIdealSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
 			double desiredSpeedCommand) {
-		if (evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
       // Linearly interpolate the speed blend between our speed and front vehicle speed
       double desiredHeadway = computeDesiredHeadway(currentSpeed);
       // Clamp distance - adjusted to ensure at least minimum standoff distance - into the range of [0, desiredHeadway]
@@ -48,7 +46,15 @@ public class BasicAccStrategy extends AbstractAccStrategy {
       double ourSpeedFactor = (blendFactor) * currentSpeed;
       double frontVehicleSpeedFactor = (1 - blendFactor) * frontVehicleSpeed;
 
-      return applyAccelLimit(ourSpeedFactor + frontVehicleSpeedFactor, currentSpeed, maxAccel); // Our final blend of speeds
+      return ourSpeedFactor + frontVehicleSpeedFactor;
+  }
+
+	@Override
+	public double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
+			double desiredSpeedCommand) {
+		if (evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
+      double idealAccSpeed = computeAccIdealSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, desiredSpeedCommand);
+      return applyAccelLimit(idealAccSpeed, currentSpeed, maxAccel); // Our final blend of speeds
     } else {
       return desiredSpeedCommand;
     }
