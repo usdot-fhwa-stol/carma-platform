@@ -354,6 +354,7 @@ public class Tracking extends GuidanceComponent {
 	public void loop() throws InterruptedException {
 		
 		if(drivers_ready.get()) {
+			//publish content for a new BSM
 			bsmPublisher.publish(composeBSMData());
 			//log the current vehicle forward speed
             TwistStamped vel = velocitySubscriber.getLastMessage();
@@ -582,6 +583,7 @@ public class Tracking extends GuidanceComponent {
 			transform_request.setParentFrame(mapFrame);
 			transform_request.setChildFrame(baseLinkFrame);
 			getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
+				
 				@Override
 				public void onSuccess(GetTransformResponse msg) {
 					log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
