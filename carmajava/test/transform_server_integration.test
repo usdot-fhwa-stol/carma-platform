@@ -35,7 +35,7 @@
   <include pass_all_args="true" file="$(find carma)/launch/saxton_cav.launch"/>
   <!-- Launch Test Node -->
   <group ns="/saxton_cav/test">
-    <test test-name="transform_server_test" pkg="carma" type="transformServerTest.py" time-limit="1000.0" launch-prefix="xterm -e python -m pdb">
+    <test test-name="transform_server_test" pkg="carma" type="transformServerTest.py" time-limit="35.0">
       <remap from="get_transform"
              to="/saxton_cav/roadway/get_transform"/>
     </test>
