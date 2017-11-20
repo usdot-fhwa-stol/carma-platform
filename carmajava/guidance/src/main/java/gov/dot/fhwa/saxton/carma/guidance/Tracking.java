@@ -36,10 +36,16 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
+<<<<<<< HEAD
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 import org.jboss.netty.buffer.ChannelBuffers;
+=======
+
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.ros.exception.ParameterClassCastException;
+>>>>>>> develop
 import org.ros.exception.ParameterNotFoundException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
@@ -64,8 +70,9 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Guidance package Tracking component
  * <p>
- * Reponsible for detecting when the vehicle strays from it's intended route or
- * trajectory and signalling the failure on the /system_alert topic
+ * Responsible for detecting when the vehicle strays from its intended route or
+ * trajectory and signaling the failure on the /system_alert topic. Also responsible
+ * for generating content for BSMs to be published by the host vehicle.
  */
 public class Tracking extends GuidanceComponent {
 	
@@ -77,7 +84,7 @@ public class Tracking extends GuidanceComponent {
 	protected static final byte BRAKES_NOT_APPLIED = 0x0;
 	protected static final byte BRAKES_APPLIED = 0xF;
 
-	protected static final double MAX_SPEED_ERROR = 6.0; //speed error in meters
+	protected static final double MAX_SPEED_ERROR = 5.0; //speed error in meters
 	protected static final double MAX_DOWNTRACK_ERROR = 5.0; //downtrack error in meters
 	
 	// Member variables
@@ -142,7 +149,7 @@ public class Tracking extends GuidanceComponent {
 
 	@Override
 	public void onGuidanceStartup() {
-		
+
 		// Publishers
 		bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
 
@@ -183,7 +190,6 @@ public class Tracking extends GuidanceComponent {
 			}
 		});
 		
-		
 		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
 			@Override
 			public void onMessage(TwistStamped msg) {
@@ -222,8 +228,8 @@ public class Tracking extends GuidanceComponent {
 		log.info("Trying to get get_drivers_with_capabilities service...");
 		try {
 			getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
-		} catch (TopicNotFoundException e) {
-			handleException(e);
+		} catch (TopicNotFoundException e1) {
+			handleException(e1);
 		}
 		if(getDriversWithCapabilitiesClient == null) {
 			log.warn("get_drivers_with_capabilities service can not be found");
@@ -249,8 +255,8 @@ public class Tracking extends GuidanceComponent {
 		log.info("Trying to get get_transform...");
 		try {
 			getTransformClient = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
-		} catch (TopicNotFoundException e) {
-			handleException(e);
+		} catch (TopicNotFoundException e1) {
+			handleException(e1);
 		}
 		if(getTransformClient == null) {
 			log.warn("get_transform service can not be found");
@@ -310,10 +316,12 @@ public class Tracking extends GuidanceComponent {
 		
 		try {
 			ParameterTree param = node.getParameterTree();
-			vehicleLength = (float) param.getDouble("vehicle_length", 0);
-			vehicleWidth = (float) param.getDouble("vehicle_width", 0);
+			vehicleLength = (float) param.getDouble("vehicle_length");
+			vehicleWidth = (float) param.getDouble("vehicle_width");
 		} catch (ParameterNotFoundException e1) {
-			log.error("BSM", "VehicleSize is not found.");
+			handleException(e1);
+		} catch (ParameterClassCastException e2) {
+			handleException(e2);
 		}
 		
 		drivers_ready.set(true);
@@ -351,6 +359,12 @@ public class Tracking extends GuidanceComponent {
 		
 		if(drivers_ready.get()) {
 			bsmPublisher.publish(composeBSMData());
+			//log the current vehicle forward speed
+            TwistStamped vel = velocitySubscriber.getLastMessage();
+            if(vel != null) {
+                double speed = vel.getTwist().getLinear().getX();
+                log.info("Current vehicle speed is " + speed + " m/s");
+            }
 		}
 		if(trajectory_start.get() && routeSubscriber.getLastMessage() != null && velocitySubscriber != null) {
 			long currentTime = System.currentTimeMillis();
@@ -416,7 +430,7 @@ public class Tracking extends GuidanceComponent {
 	private BSM composeBSMData() {
 
 		BSM bsmFrame = bsmPublisher.newMessage();
-
+		
 		// Set header
 		bsmFrame.getHeader().setStamp(node.getCurrentTime());
 		bsmFrame.getHeader().setFrameId(Tracking.class.getSimpleName());
@@ -572,7 +586,6 @@ public class Tracking extends GuidanceComponent {
 			transform_request.setParentFrame(mapFrame);
 			transform_request.setChildFrame(baseLinkFrame);
 			getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
-				
 				@Override
 				public void onSuccess(GetTransformResponse msg) {
 					log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));

@@ -37,7 +37,7 @@ public class SaxtonLogger {
   private String source = "NONE";
   private String emptyTag = "NONE";
   private File file = null;
-  private final static String fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm")) + ".txt";;
+  private final static String fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")) + ".txt";;
 
   /***
    * Get source name which is usually the className.

@@ -177,8 +177,26 @@ function insertNewTableRow(tableName, rowTitle, rowValue) {
         cell2.innerHTML = rowValue;
         //cell1.setAttribute("class","col-style2a");
         //cell2.setAttribute("class","col-style2b");
-        cell1.className = 'col-style2a';
-        cell2.className = 'col-style2b';
+        cell1.className = 'col-style2a hyphenate';
+        cell2.className = 'col-style2b hyphenate';
         cell2.id = cellId;
     }
+}
+
+/*
+    Set the values of the speedometer
+*/
+function setSpeedometer(speed)
+{
+    var maxMPH = 160;
+    var deg = (speed/maxMPH)*180;
+    document.getElementById('percent').innerHTML = speed;
+    var element = document.getElementsByClassName('gauge-c')[0];
+
+    element.style.webkitTransform = 'rotate(' + deg + 'deg)';
+    element.style.mozTransform = 'rotate(' + deg + 'deg)';
+    element.style.msTransform = 'rotate(' + deg + 'deg)';
+    element.style.oTransform = 'rotate(' + deg + 'deg)';
+    element.style.transform = 'rotate(' + deg + 'deg)';
+
 }
