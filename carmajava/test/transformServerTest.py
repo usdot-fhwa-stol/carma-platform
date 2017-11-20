@@ -65,7 +65,7 @@ class TestTransformServer(unittest.TestCase):
         tf_stamped.transform.translation.y = trans[1]
         tf_stamped.transform.translation.z = trans[2]
 
-        euler = [3.145159, 0, 0]
+        euler = [3.14159265359, 0, 0]
         q = tf.transformations.quaternion_from_euler(euler[0], euler[1], euler[2], 'sxyz')  # Specify fixed rpy rotation
         tf_stamped.transform.rotation.x = q[0]
         tf_stamped.transform.rotation.y = q[1]
