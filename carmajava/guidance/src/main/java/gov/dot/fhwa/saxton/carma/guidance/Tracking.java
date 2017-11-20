@@ -36,16 +36,12 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
-<<<<<<< HEAD
+
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 import org.jboss.netty.buffer.ChannelBuffers;
-=======
-
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.ParameterClassCastException;
->>>>>>> develop
 import org.ros.exception.ParameterNotFoundException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
