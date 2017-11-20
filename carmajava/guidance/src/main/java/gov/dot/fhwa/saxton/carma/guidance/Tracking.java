@@ -80,9 +80,6 @@ public class Tracking extends GuidanceComponent {
 	protected static final byte BRAKES_NOT_APPLIED = 0x0;
 	protected static final byte BRAKES_APPLIED = 0xF;
 
-	protected static final double MAX_SPEED_ERROR = 5.0; //speed error in meters
-	protected static final double MAX_DOWNTRACK_ERROR = 5.0; //downtrack error in meters
-	
 	// Member variables
 	protected final long sleepDurationMillis = 100; // Frequency for J2735, 10Hz
 	protected long msgCount = 1;
@@ -124,6 +121,8 @@ public class Tracking extends GuidanceComponent {
 	protected Transform baseToMap = null;
 	protected GeodesicCartesianConverter converter = new GeodesicCartesianConverter();
 	
+	protected double speed_error_limit = 0; //speed error in meters
+	protected double downtrack_error_limit = 0; //downtrack error in meters
 	protected TrajectoryExecutor trajectoryExecutor = null;
 	protected Arbitrator arbitrator = null;
 	protected AtomicBoolean trajectory_start = new AtomicBoolean(false);
@@ -314,6 +313,8 @@ public class Tracking extends GuidanceComponent {
 			ParameterTree param = node.getParameterTree();
 			vehicleLength = (float) param.getDouble("vehicle_length");
 			vehicleWidth = (float) param.getDouble("vehicle_width");
+			speed_error_limit = param.getDouble("~max_speed_error");
+			downtrack_error_limit = param.getDouble("~max_downtrack_error");
 		} catch (ParameterNotFoundException e1) {
 			handleException(e1);
 		} catch (ParameterClassCastException e2) {
@@ -404,7 +405,7 @@ public class Tracking extends GuidanceComponent {
 		Entry<Long, double[]> floorEntry = speedTimeTree.floorEntry(currentT);
 		Entry<Long, double[]> ceilingEntry = speedTimeTree.ceilingEntry(currentT);
 		if(floorEntry == null || ceilingEntry == null) {
-			// Should never go into this condition
+			// This means that we are under the control of a complex maneuver and stop tracking errors. 
 			return true;
 		}
 		// Calculate current progress percentage in the current maneuver
@@ -412,13 +413,13 @@ public class Tracking extends GuidanceComponent {
 		// Validate current speed with target speed
 		double speedChange = ceilingEntry.getValue()[0] - floorEntry.getValue()[0]; 
 		double targetSpeed = floorEntry.getValue()[0] + factor * speedChange;
-		if(Math.abs(targetSpeed - currentV) > MAX_SPEED_ERROR) {
+		if(Math.abs(targetSpeed - currentV) > speed_error_limit) {
 			return true;
 		}
 		// Validate downtrack distance
 		double distanceChange = ceilingEntry.getValue()[1] - floorEntry.getValue()[1];
 		double targetDistance = floorEntry.getValue()[1] + factor * distanceChange;
-		if(Math.abs(targetDistance - currentD) > MAX_DOWNTRACK_ERROR) {
+		if(Math.abs(targetDistance - currentD) > downtrack_error_limit) {
 			return true;
 		}
 		return false;
