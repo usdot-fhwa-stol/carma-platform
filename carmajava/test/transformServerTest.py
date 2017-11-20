@@ -34,13 +34,13 @@ class TestTransformServer(unittest.TestCase):
         tf2 = msg2.transform
         return msg1.header.frame_id == msg2.header.frame_id and \
                msg1.child_frame_id == msg2.child_frame_id and \
-               abs(tf1.translation.x - tf2.translation.x) < 0.00001 and \
-               abs(tf1.translation.y - tf2.translation.y) < 0.00001 and \
-               abs(tf1.translation.z - tf2.translation.z) < 0.00001 and \
-               abs(tf1.rotation.x - tf2.rotation.x) < 0.00001 and \
-               abs(tf1.rotation.y - tf2.rotation.y) < 0.00001 and \
-               abs(tf1.rotation.z - tf2.rotation.z) < 0.00001 and \
-               abs(tf1.rotation.w - tf2.rotation.w) < 0.00001
+               abs(tf1.translation.x - tf2.translation.x) < 0.0000001 and \
+               abs(tf1.translation.y - tf2.translation.y) < 0.0000001 and \
+               abs(tf1.translation.z - tf2.translation.z) < 0.0000001 and \
+               abs(tf1.rotation.x - tf2.rotation.x) < 0.0000001 and \
+               abs(tf1.rotation.y - tf2.rotation.y) < 0.0000001 and \
+               abs(tf1.rotation.z - tf2.rotation.z) < 0.0000001 and \
+               abs(tf1.rotation.w - tf2.rotation.w) < 0.0000001
 
     # Test if the get_transform service is working
     def test_get_transform_service(self):
@@ -56,11 +56,11 @@ class TestTransformServer(unittest.TestCase):
         tf_stamped = geometry_msgs.msg.TransformStamped()
 
         tf_stamped.header.stamp = rospy.Time.now()
-        tf_stamped.header.frame_id = "host_vehicle"
-        tf_stamped.child_frame_id = "radar"
+        tf_stamped.header.frame_id = "base_link"
+        tf_stamped.child_frame_id = "host_vehicle"
 
-        # TODO when URDF file is updated this transform will need to be changed as well
-        trans = [1.0, 0.1, -0.5]
+        # If URDF file is updated this transform will need to be changed as well
+        trans = [1.524, 0.0, -0.3556]
         tf_stamped.transform.translation.x = trans[0]
         tf_stamped.transform.translation.y = trans[1]
         tf_stamped.transform.translation.z = trans[2]
@@ -76,7 +76,7 @@ class TestTransformServer(unittest.TestCase):
         # Lookup regular transform using service
         try:
             get_transform = rospy.ServiceProxy('get_transform', GetTransform)
-            response = get_transform("host_vehicle", "radar")
+            response = get_transform("base_link", "host_vehicle")
             if response.errorStatus != 0:
                 self.fail("Response returned with error %s" % response.errorStatus)
             self.assertTrue(self.are_equal_transforms(response.transform, tf_stamped), "Returned transform is not equal")

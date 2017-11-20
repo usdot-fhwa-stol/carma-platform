@@ -39,7 +39,7 @@ public class CarmaVersion {
         int minor =         3;
         // Don't touch this, automatically updated
         int build = 1587;
-        String suffix = "";
+        String suffix = "transform_server_as_cpp_node1-SNAPSHOT(4)";
 
 //==============================================================================================================================
 
