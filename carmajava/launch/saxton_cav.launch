@@ -347,6 +347,8 @@
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
         <remap from="plan_status"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/plan_status"/>
+        <remap from="objects"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/objects"/>
 
         <!-- Arbitrator Thread-->
         <remap from="route_state"

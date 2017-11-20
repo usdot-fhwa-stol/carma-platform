@@ -14,20 +14,16 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.plugins;
+package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 /**
- * Mock implementation of something that might resemble a CrusingPlugin
- * <p>
- * Just reports a the name and versionId and toggles its activation status whenever it is activated
+ * Acc strategy factory for execution without ACC
  */
-public class MockCruisingPlugin extends AbstractMockPlugin {
+public class NoOpAccStrategyFactory implements IAccStrategyFactory {
 
-    public MockCruisingPlugin(PluginServiceLocator pluginServiceLocator) {
-        super(pluginServiceLocator);
-        version.setName("Mock Cruising Plugin");
-        version.setMajorRevision(0);
-        version.setIntermediateRevision(0);
-        version.setMinorRevision(1);
-    }
+	@Override
+	public IAccStrategy newAccStrategy() {
+		return new NoOpAccStrategy();
+	}
 }
+

@@ -31,6 +31,7 @@ public class SlowDownTest {
     public void setup() {
         inputs_ = new FakeManeuverInputs();
         commands_ = new FakeGuidanceCommands();
+        AccStrategyManager.setAccStrategyFactory(new NoOpAccStrategyFactory());
     }
 
     @Test
