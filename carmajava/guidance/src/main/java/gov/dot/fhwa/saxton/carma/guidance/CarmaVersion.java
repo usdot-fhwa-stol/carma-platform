@@ -17,7 +17,11 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
-
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Scanner;
 
 public class CarmaVersion {
     private static ComponentVersion version = new ComponentVersion();
@@ -35,26 +39,44 @@ public class CarmaVersion {
 
         String name =       "Carma Platform";
         int major =         2;
-        int intermediate =  1;
-        int minor =         3;
+        int intermediate =  2;
+        int minor =         0;
         // Don't touch this, automatically updated
-        int build = 1587;
-        String suffix = "transform_server_as_cpp_node1-SNAPSHOT(4)";
+        int build = 0;
+        String suffix = "";
+
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream versionFileStream = classLoader.getResourceAsStream("version");
+
+        try (Scanner scanner = new Scanner(versionFileStream)) {
+            if (scanner.hasNextLine()) {
+                try {
+                    build = Integer.parseInt(scanner.nextLine());
+                } catch (NumberFormatException nfe) {
+                    build = 0;
+                }
+            } else {
+                build = 0;
+            }
+
+            if (scanner.hasNextLine()) {
+                suffix = scanner.nextLine();
+            } else {
+                suffix = "VERSION-FILE-ERROR";
+            }
+        } 
+
 
 //==============================================================================================================================
 
 
         version.setName(name);
         version.setMajorRevision(major);
+
         //if any one of the below items is not explicitly set it will not be displayed in the revision string.
         version.setIntermediateRevision(intermediate);
         version.setMinorRevision(minor);
-        if (build != (5555555 + 2222222)) { //auto tool will be searching for the string full of 7s, so can't use it directly here
-            version.setBuild(build);
-        }
-
-        //may want to add an explanatory tag to the end of the ID string to make test builds or one-offs more obvious
-        //For now, this should always be automatic-versioning for an in-work release, and an empty string for a formal release to the customer
+        version.setBuild(build);
         version.setSuffix(suffix);
 
         return version;
