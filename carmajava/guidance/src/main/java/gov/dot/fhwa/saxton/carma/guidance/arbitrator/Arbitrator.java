@@ -14,17 +14,17 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance;
+package gov.dot.fhwa.saxton.carma.guidance.arbitrator;
 
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
-import gov.dot.fhwa.saxton.carma.guidance.arbitrator.ArbitratorEvent;
-import gov.dot.fhwa.saxton.carma.guidance.arbitrator.ArbitratorState;
-import gov.dot.fhwa.saxton.carma.guidance.arbitrator.ArbitratorStateChangeListener;
-import gov.dot.fhwa.saxton.carma.guidance.arbitrator.ArbitratorStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
@@ -325,7 +325,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   /**
    * Job queue task for performing the planning of the first Trajectory
    */
-  class InitialPlanningTask implements Runnable {
+  private class InitialPlanningTask implements Runnable {
 
     @Override
     public void run() {
@@ -372,7 +372,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
    * Job queue task for performing replanning after successful completion of the
    * previous trajectory
    */
-  class NormalReplanningTask implements Runnable {
+  private class NormalReplanningTask implements Runnable {
 
     @Override
     public void run() {
@@ -397,7 +397,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
    * <p>
    * Plans temporary steadying trajectory for a configured duration then replans as usual
    */
-  class ComplexTrajectoryReplanTask implements Runnable {
+  private class ComplexTrajectoryReplanTask implements Runnable {
 
     @Override
     public void run() {
@@ -428,7 +428,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
    * Job queue task for replanning after the Tracking component has notified us of
    * trajectory failure.
    */
-  class FailedTrajectoryReplanTask implements Runnable {
+  private class FailedTrajectoryReplanTask implements Runnable {
 
     @Override
     public void run() {
