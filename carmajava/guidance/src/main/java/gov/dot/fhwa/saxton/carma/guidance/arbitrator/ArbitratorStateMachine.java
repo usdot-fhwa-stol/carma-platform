@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.arbitrator;
 
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,12 +27,14 @@ import java.util.List;
 public class ArbitratorStateMachine {
   private ArbitratorState state = ArbitratorState.INIT;
   private List<ArbitratorStateChangeListener> listeners = new ArrayList<>();
+  private ILogger log = LoggerManager.getLogger();
 
   /**
    * Notify the ArbitratorStateMachine that an event has occurred and may cause the
    * state to change.
    */
   public void processEvent(ArbitratorEvent event) {
+    log.info("Arbitrator processing event: " + event);
     ArbitratorState oldState;
     synchronized (this) {
       oldState = state;
@@ -76,9 +80,12 @@ public class ArbitratorStateMachine {
     
     // Call all the listeners if we've changed state
     if (oldState != state) {
+      log.info("Arbitrator transitioned to state " + state);
       for (ArbitratorStateChangeListener listener : listeners) {
         listener.onStateChange(state);
       }
+    } else {
+      log.info("Arbitrator did not change state.");
     }
   }
 

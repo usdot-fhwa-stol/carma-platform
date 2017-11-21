@@ -59,7 +59,6 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   protected ISubscriber<RouteState> routeStateSubscriber;
   protected ISubscriber<TwistStamped> twistSubscriber;
   protected AtomicReference<GuidanceState> state;
-  protected AtomicBoolean needsReplan = new AtomicBoolean(false);
   protected PluginManager pluginManager;
   protected IPlugin lateralPlugin;
   protected IPlugin longitudinalPlugin;
@@ -96,6 +95,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
     this.pluginManager = pluginManager;
     this.trajectoryValidator = new TrajectoryValidator();
     this.trajectoryExecutor = trajectoryExecutor;
+    stateMachine.registerStateChangeListener(this);
   }
 
   /**
