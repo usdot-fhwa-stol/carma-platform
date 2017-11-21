@@ -20,6 +20,11 @@ import org.junit.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
+import static org.mockito.Mockito.*;
+
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 public class SteadySpeedTest {
 
@@ -32,6 +37,10 @@ public class SteadySpeedTest {
         inputs_ = new FakeManeuverInputs();
         commands_ = new FakeGuidanceCommands();
         AccStrategyManager.setAccStrategyFactory(new NoOpAccStrategyFactory());
+        ILoggerFactory mockFact = mock(ILoggerFactory.class);
+        ILogger mockLogger = mock(ILogger.class);
+        when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+        LoggerManager.setLoggerFactory(mockFact);
     }
 
     @Test

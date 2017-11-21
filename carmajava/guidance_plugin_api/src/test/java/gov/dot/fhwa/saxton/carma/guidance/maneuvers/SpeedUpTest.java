@@ -21,6 +21,11 @@ import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
+
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 public class SpeedUpTest {
     private FakeManeuverInputs   inputs_;
@@ -32,6 +37,10 @@ public class SpeedUpTest {
         inputs_ = new FakeManeuverInputs();
         commands_ = new FakeGuidanceCommands();
         AccStrategyManager.setAccStrategyFactory(new NoOpAccStrategyFactory());
+        ILoggerFactory mockFact = mock(ILoggerFactory.class);
+        ILogger mockLogger = mock(ILogger.class);
+        when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+        LoggerManager.setLoggerFactory(mockFact);
     }
 
     @Test
