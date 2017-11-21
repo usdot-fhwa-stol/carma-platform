@@ -60,7 +60,7 @@ var max_log_lines = 100;
 
 var system_ready = false;
 var guidance_engaged = false;
-var route_name = '';
+var route_name = 'No Route Selected';
 
 var ready_counter = 0;
 var ready_max_trial = 10;
@@ -361,6 +361,11 @@ function showSubCapabilitiesView(id) {
 function showSubCapabilitiesView2() {
 
     divCapabilitiesMessage.innerHTML = 'Selected route is " ' + route_name + '". <br/>';
+
+    //Display the route name
+    var divRouteInfo = document.getElementById('divRouteInfo');
+    if (divRouteInfo != null)
+        divRouteInfo.innerHTML = route_name;
 
     //Hide the Route selection
     var divRoutes = document.getElementById('divRoutes');
