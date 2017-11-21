@@ -17,6 +17,8 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 /**
  * Base class for all maneuver objects.
@@ -27,6 +29,8 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     protected double                            endDist_ = -1.0;
     protected IManeuverInputs                   inputs_;
     protected IGuidanceCommands                 commands_;
+    protected ILogger                           log_ = LoggerManager.getLogger();
+
 
     /**
      * Provides the common planning capability that all maneuvers will need. Concrete maneuver classes

@@ -137,32 +137,24 @@ public class RouteWorker {
    * @param event the event to be handled
    */
   protected void handleEvent(WorkerEvent event) {
-    SystemAlert alertMsg;
+    log.info("Handled route event: " + event.toString());
     switch (event) {
       case FILES_LOADED:
-        log.info("Loaded new routes");
         break;
       case ROUTE_SELECTED:
-        log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        log.info("Route has been completed");
         break;
       case LEFT_ROUTE:
-        log.info("The vehicle has left the active route");
         break;
       case SYSTEM_FAILURE:
-        log.info("Received a system failure message and is shutting down");
         routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
-        log.info("Received a system not ready message and is switching to pausing the active route");
         break;
       case ROUTE_ABORTED:
-        log.info("Route has been aborted");
         break;
       case ROUTE_STARTED:
-        log.info("Route has been started");
         break;
       default:
         log.info("Route was provided with an unsupported event");
@@ -233,7 +225,6 @@ public class RouteWorker {
     } else {
       activeRoute = route;
 
-      routeManager.publishActiveRoute(getActiveRouteTopicMsg());
       handleEvent(WorkerEvent.ROUTE_SELECTED);
       return SetActiveRouteResponse.NO_ERROR;
     }
@@ -258,6 +249,7 @@ public class RouteWorker {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
       startRouteAtIndex(startingIndex);
+      routeManager.publishActiveRoute(getActiveRouteTopicMsg());
       return StartActiveRouteResponse.NO_ERROR;
     }
   }
@@ -271,24 +263,23 @@ public class RouteWorker {
     if (activeRoute == null) {
       return -1;
     }
-    int startingIndex = -1;
     int count = 0;
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
     for (RouteSegment seg : activeRoute.getSegments()) {
       double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
       double downTrack = seg.downTrackDistance(hostVehicleLocation);
 
-      if (Math.abs(crossTrack) < maxJoinDistance // Valid crosstrack
-        && ((count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) // Valid downtrack if before first segment
-        || downTrack < seg.length())) { // Valid downtrack if in middle of segment
-
-        startingIndex = count;
-        break;
+      if (Math.abs(crossTrack) < maxJoinDistance) {
+        if (count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) {
+          return 0;
+        } else if (downTrack > -0.0 && downTrack < seg.length()) {
+          return count + 1;
+        }
       }
       count++;
     }
 
-    return startingIndex;
+    return -1;
   }
 
   /**
@@ -309,7 +300,7 @@ public class RouteWorker {
     }
 
     // If we can't join the route return
-    if (ableToConnectToRoute == false) {
+    if (!ableToConnectToRoute) {
       log.info("Could not join the route from the current location");
       return;
     }
@@ -375,6 +366,9 @@ public class RouteWorker {
 
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
+
+    log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
+    log.debug("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);

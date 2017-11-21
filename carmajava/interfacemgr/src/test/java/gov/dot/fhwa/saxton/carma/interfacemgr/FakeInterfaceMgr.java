@@ -27,6 +27,7 @@ import static org.junit.Assert.*;
 
 public class FakeInterfaceMgr implements IInterfaceMgr {
     private SaxtonLogger log = new SaxtonLogger(FakeInterfaceMgr.class.getSimpleName(), LogFactory.getLog(FakeInterfaceMgr.class));
+    private boolean shutdownCalled_ = false;
 
     public void bindWithDriver(String driverName){
 
@@ -76,5 +77,14 @@ public class FakeInterfaceMgr implements IInterfaceMgr {
 
 
         log.debug("sendSystemAlert sending simulated message to system: " + alert + message);
+    }
+
+    public void errorShutdown(String msg) {
+        log.debug("errorShutdown received the following message: " + msg);
+        shutdownCalled_ = true;
+    }
+
+    public boolean isShutdownUnderway() {
+        return shutdownCalled_;
     }
 }
