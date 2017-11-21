@@ -28,6 +28,7 @@ import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
@@ -35,6 +36,9 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
+
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.ParameterClassCastException;
@@ -50,15 +54,20 @@ import std_msgs.Float64;
 
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Random;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package Tracking component
  * <p>
  * Responsible for detecting when the vehicle strays from its intended route or
- * trajectory and signalling the failure on the /system_alert topic. Also responsible
+ * trajectory and signaling the failure on the /system_alert topic. Also responsible
  * for generating content for BSMs to be published by the host vehicle.
  */
 public class Tracking extends GuidanceComponent {
@@ -73,42 +82,55 @@ public class Tracking extends GuidanceComponent {
 
 	// Member variables
 	protected final long sleepDurationMillis = 100; // Frequency for J2735, 10Hz
-	private long msgCount = 1;
-	private int last_id_changed = 0;
-	private float vehicleWidth = 0;
-	private float vehicleLength = 0;
-	private boolean drivers_ready = false;
-	private boolean steer_wheel_ready = false;
-	private boolean nav_sat_fix_ready = false;
-	private boolean heading_ready = false;
-	private boolean velocity_ready = false;
-	private boolean brake_ready = false;
-	private boolean transmission_ready = false;
-	private boolean acceleration_ready = false;
-	private boolean vehicle_to_baselink_transform_ready = false;
-	private boolean base_to_map_transform_ready = false;
+	protected long msgCount = 1;
+	protected int last_id_changed = 0;
+	protected float vehicleWidth = 0;
+	protected float vehicleLength = 0;
+	protected AtomicBoolean drivers_ready = new AtomicBoolean(false);
+	protected boolean steer_wheel_ready = false;
+	protected boolean nav_sat_fix_ready = false;
+	protected boolean heading_ready = false;
+	protected boolean velocity_ready = false;
+	protected boolean brake_ready = false;
+	protected boolean transmission_ready = false;
+	protected boolean acceleration_ready = false;
+	protected boolean vehicle_to_baselink_transform_ready = false;
+	protected boolean base_to_map_transform_ready = false;
+	protected boolean route_state_ready = false;
 	protected GuidanceExceptionHandler exceptionHandler;
-	private Random randomIdGenerator = new Random();
-	private byte[] random_id = new byte[4];
-	private IPublisher<BSM> bsmPublisher;
-	private ISubscriber<AccelStamped> accelerationSubscriber;
-	private ISubscriber<NavSatFix> navSatFixSubscriber;
-	private ISubscriber<HeadingStamped> headingStampedSubscriber;
-	private ISubscriber<TwistStamped> velocitySubscriber;
-	private ISubscriber<Float64> steeringWheelSubscriber;
-	private ISubscriber<Float64> brakeSubscriber;
-	private ISubscriber<TransmissionState> transmissionSubscriber;
-	private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
-	private IService<GetTransformRequest, GetTransformResponse> getTransformClient;
-	private List<String> req_drivers = Arrays.asList("steering_wheel_angle", "brake_position", "transmission_state");
-	private List<String> resp_drivers;
-	private final String baseLinkFrame = "base_link";
-	private final String vehicleFrame = "host_vehicle";
-	private final String mapFrame = "map";
-	private final String earthFrame = "earth";
-	private Transform vehicleToBaselink = null;
-	private Transform baseToMap = null;
-	private GeodesicCartesianConverter converter = new GeodesicCartesianConverter();
+	protected Random randomIdGenerator = new Random();
+	protected byte[] random_id = new byte[4];
+	protected IPublisher<BSM> bsmPublisher;
+	protected ISubscriber<AccelStamped> accelerationSubscriber;
+	protected ISubscriber<NavSatFix> navSatFixSubscriber;
+	protected ISubscriber<HeadingStamped> headingStampedSubscriber;
+	protected ISubscriber<TwistStamped> velocitySubscriber;
+	protected ISubscriber<Float64> steeringWheelSubscriber;
+	protected ISubscriber<Float64> brakeSubscriber;
+	protected ISubscriber<TransmissionState> transmissionSubscriber;
+	protected ISubscriber<RouteState> routeSubscriber;
+	protected IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
+	protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
+	protected List<String> req_drivers = Arrays.asList("steering_wheel_angle", "brake_position", "transmission_state");
+	protected List<String> resp_drivers;
+	protected final String baseLinkFrame = "base_link";
+	protected final String vehicleFrame = "host_vehicle";
+	protected final String mapFrame = "map";
+	protected final String earthFrame = "earth";
+	protected Transform vehicleToBaselink = null;
+	protected Transform baseToMap = null;
+	protected GeodesicCartesianConverter converter = new GeodesicCartesianConverter();
+	
+	protected double speed_error_limit = 0; //speed error in meters
+	protected double downtrack_error_limit = 0; //downtrack error in meters
+	protected TrajectoryExecutor trajectoryExecutor = null;
+	protected Arbitrator arbitrator = null;
+	protected AtomicBoolean trajectory_start = new AtomicBoolean(false);
+	protected Queue<Trajectory> trajectoryQueue = new LinkedList<Trajectory>();
+	protected TreeMap<Long, double[]> speedTimeTree = new TreeMap<Long, double[]>((a, b) -> (a - b < 0 ? -1 : 1));
+	protected double trajectoryStartLocation = 0;
+	protected long trajectoryStartTime = 0;
+	
 
 	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
 		super(state, pubSubService, node);
@@ -130,6 +152,7 @@ public class Tracking extends GuidanceComponent {
 		navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
 		headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
 		velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+		routeSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
 		// TODO: acceleration set is not available from SF
 		accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
 		
@@ -162,7 +185,6 @@ public class Tracking extends GuidanceComponent {
 			}
 		});
 		
-		
 		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
 			@Override
 			public void onMessage(TwistStamped msg) {
@@ -179,6 +201,16 @@ public class Tracking extends GuidanceComponent {
 				if(!acceleration_ready) {
 					acceleration_ready = true;
 					log.info("BSM", "acceleration subscriber is ready");
+				}
+			}
+		});
+		
+		routeSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+			@Override
+			public void onMessage(RouteState msg) {
+				if(!route_state_ready) {
+					route_state_ready = true;
+					log.info("route state subscriber is ready");
 				}
 			}
 		});
@@ -281,27 +313,50 @@ public class Tracking extends GuidanceComponent {
 			ParameterTree param = node.getParameterTree();
 			vehicleLength = (float) param.getDouble("vehicle_length");
 			vehicleWidth = (float) param.getDouble("vehicle_width");
+			speed_error_limit = param.getDouble("~max_speed_error");
+			downtrack_error_limit = param.getDouble("~max_downtrack_error");
 		} catch (ParameterNotFoundException e1) {
 			handleException(e1);
 		} catch (ParameterClassCastException e2) {
 			handleException(e2);
 		}
 		
-		drivers_ready = true;
+		drivers_ready.set(true);
 	}
 
 	@Override
 	public void onGuidanceEnable() {
+		this.trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, new OnTrajectoryProgressCallback() {
+			
+			@Override
+			public void onProgress(double pct) {
+				if(trajectoryQueue.size() == 0) {
+					log.warn("Cannot track errors for current Trajectory!");
+				} else {
+					Trajectory currentTrajectory = trajectoryQueue.poll();
+					trajectoryStartLocation = currentTrajectory.getStartLocation(); 
+					trajectoryStartTime = System.currentTimeMillis();
+					constructSpeedTimeTree(currentTrajectory.getLongitudinalManeuvers());
+					trajectory_start.set(true);
+				}
+			}
+		});
+		this.trajectoryExecutor.registerOnTrajectoryProgressCallback(1.0, new OnTrajectoryProgressCallback() {
+			
+			@Override
+			public void onProgress(double pct) {
+				trajectory_start.set(false);
+				speedTimeTree.clear();
+			}
+		});
 	}
 
 	@Override
 	public void loop() throws InterruptedException {
 		
-		if(drivers_ready) {
-
-		    //publish content for a new BSM
+		if(drivers_ready.get()) {
+			//publish content for a new BSM
 			bsmPublisher.publish(composeBSMData());
-
 			//log the current vehicle forward speed
             TwistStamped vel = velocitySubscriber.getLastMessage();
             if(vel != null) {
@@ -309,7 +364,65 @@ public class Tracking extends GuidanceComponent {
                 log.info("Current vehicle speed is " + speed + " m/s");
             }
 		}
+		if(trajectory_start.get() && routeSubscriber.getLastMessage() != null && velocitySubscriber != null) {
+			long currentTime = System.currentTimeMillis();
+			double currentDowntrack = routeSubscriber.getLastMessage().getDownTrack();
+			double currentSpeed = velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
+			if(hasTrajectoryError(currentTime, currentDowntrack, currentSpeed)) {
+				arbitrator.needsReplan.set(true);
+			}
+		}
 		Thread.sleep(sleepDurationMillis);
+	}
+
+	private void constructSpeedTimeTree(List<IManeuver> maneuvers) {
+		
+		speedTimeTree.clear();
+		long lastEntryTime = 0;
+		for(int i = 0; i < maneuvers.size(); i++) {
+			// Add the state of the start point of the first maneuver to the tree
+			if(i == 0) {
+				IManeuver m = maneuvers.get(0);
+				double[] speedAndDistance = new double[2];
+				speedAndDistance[0] = m.getStartSpeed();
+				speedAndDistance[1] = trajectoryStartLocation;
+				speedTimeTree.put(trajectoryStartTime, speedAndDistance);
+				lastEntryTime = trajectoryStartTime;
+			}
+			// Add the state of end points of maneuvers to the tree
+			IManeuver m = maneuvers.get(i);
+			double[] speedAndDistance = new double[2];
+			speedAndDistance[0] = m.getTargetSpeed();
+			speedAndDistance[1] = m.getEndDistance();
+			long finishTime = (long) (Math.abs(m.getStartDistance() - m.getEndDistance()) / 0.5 * (m.getStartSpeed() + m.getTargetSpeed()));
+			long predictFinishTime = lastEntryTime + finishTime;
+			speedTimeTree.put(predictFinishTime, speedAndDistance);
+			lastEntryTime = predictFinishTime;
+		}
+	}
+	
+	private boolean hasTrajectoryError(long currentT, double currentD, double currentV) {
+		Entry<Long, double[]> floorEntry = speedTimeTree.floorEntry(currentT);
+		Entry<Long, double[]> ceilingEntry = speedTimeTree.ceilingEntry(currentT);
+		if(floorEntry == null || ceilingEntry == null) {
+			// This means that we are under the control of a complex maneuver and stop tracking errors. 
+			return true;
+		}
+		// Calculate current progress percentage in the current maneuver
+		double factor = (currentT - floorEntry.getKey()) / (ceilingEntry.getKey() - floorEntry.getKey());
+		// Validate current speed with target speed
+		double speedChange = ceilingEntry.getValue()[0] - floorEntry.getValue()[0]; 
+		double targetSpeed = floorEntry.getValue()[0] + factor * speedChange;
+		if(Math.abs(targetSpeed - currentV) > speed_error_limit) {
+			return true;
+		}
+		// Validate downtrack distance
+		double distanceChange = ceilingEntry.getValue()[1] - floorEntry.getValue()[1];
+		double targetDistance = floorEntry.getValue()[1] + factor * distanceChange;
+		if(Math.abs(targetDistance - currentD) > downtrack_error_limit) {
+			return true;
+		}
+		return false;
 	}
 
 	private BSM composeBSMData() {
@@ -553,6 +666,18 @@ public class Tracking extends GuidanceComponent {
 		return bsmFrame;
 	}
 
+	public void addNewTrajectory(Trajectory traj) {
+		trajectoryQueue.add(traj);
+	}
+	
+	public void setTrajectoryExecutor(TrajectoryExecutor trajectoryExecutor) {
+		this.trajectoryExecutor = trajectoryExecutor;
+	}
+	
+	public void setArbitrator(Arbitrator arbitrator) {
+		this.arbitrator = arbitrator;
+	}
+	
 	protected void handleException(Exception e) {
 		log.error("Tracking throws an exception...");
 		exceptionHandler.handleException(e);
