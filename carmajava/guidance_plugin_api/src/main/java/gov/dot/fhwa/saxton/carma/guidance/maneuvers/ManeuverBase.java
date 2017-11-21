@@ -21,7 +21,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 /**
- * Base class for all maneuver objects.
+ * Base class for all simple maneuver objects.
  */
 public abstract class ManeuverBase implements ISimpleManeuver {
 
