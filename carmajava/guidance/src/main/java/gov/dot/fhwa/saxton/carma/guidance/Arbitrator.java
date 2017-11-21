@@ -323,6 +323,9 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
     return out;
   }
 
+  /**
+   * Job queue task for performing the planning of the first Trajectory
+   */
   class InitialPlanningTask implements Runnable {
 
     @Override
@@ -346,6 +349,10 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
 
   }
 
+  /**
+   * Job queue task for performing replanning after successful completion of the
+   * previous trajectory
+   */
   class NormalReplanningTask implements Runnable {
 
     @Override
@@ -366,6 +373,11 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
 
   }
 
+  /**
+   * Job queue task for performing replanning after the execution of a complex maneuver
+   * <p>
+   * Plans temporary steadying trajectory for a configured duration then replans as usual
+   */
   class ComplexTrajectoryReplanTask implements Runnable {
 
     @Override
@@ -393,6 +405,10 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
 
   }
 
+  /**
+   * Job queue task for replanning after the Tracking component has notified us of
+   * trajectory failure.
+   */
   class FailedTrajectoryReplanTask implements Runnable {
 
     @Override
@@ -414,6 +430,10 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
 
   }
 
+  /**
+   * Inform the Arbitrator of trajectory execution failure, necessitating immediate replan and
+   * execution of a new trajectory.
+   */
   public void notifyTrajectoryFailure() {
     stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_FAILED_EXECUTION);
   }
