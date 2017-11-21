@@ -106,7 +106,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
     // Start the maneuvers if they aren't already running
     if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getStartDistance()
-        && !lateralManeuverThread.isAlive()) {
+        && !complexManeuverThread.isAlive()) {
       log.debug("TrajectoryExecutorWorker starting complex maneuver: " + currentComplexManeuver.getManeuverName());
       execute(currentComplexManeuver);
     }
@@ -171,18 +171,18 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
         longitudinalManeuverThread.interrupt();
       }
+    }
 
-      currentComplexManeuver = (IComplexManeuver) currentTrajectory.getNextManeuverAfter(downtrackDistance, ManeuverType.COMPLEX);
+    currentComplexManeuver = (IComplexManeuver) currentTrajectory.getNextManeuverAfter(downtrackDistance, ManeuverType.COMPLEX);
 
-      if (currentComplexManeuver != null) {
-        log.info("Discovered complex maneuver: " + currentComplexManeuver.getManeuverName() + "on trajectory");
-      } else {
-        log.info("No complex maneuver found");
-      }
+    if (currentComplexManeuver != null) {
+      log.info("Discovered complex maneuver: " + currentComplexManeuver.getManeuverName() + "on trajectory");
+    } else {
+      log.info("No complex maneuver found");
+    }
 
-      if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getStartDistance()) {
-        execute(currentComplexManeuver);
-      }
+    if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getStartDistance()) {
+      execute(currentComplexManeuver);
     }
   }
 
@@ -199,6 +199,12 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     log.debug("TrajectoryExecutorWorker updating downtrack distance to " + downtrack);
     this.downtrackDistance = downtrack;
 
+    if (currentTrajectory == null) {
+      // Nothing to do
+      log.info("Finished downtrack distance update.");
+      return;
+    }
+
     checkAndStartManeuvers();
 
     // Call necessary callbacks
@@ -211,6 +217,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       }
     }
 
+    checkAndStartComplexManeuver();
     checkAndStartNextLongitudinalManeuver();
     checkAndStartNextLateralManeuver();
 
@@ -357,8 +364,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       this.currentTrajectory = traj;
       this.currentLateralManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       this.currentLongitudinalManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
-
-      checkAndStartComplexManeuver();
+      this.currentComplexManeuver = (IComplexManeuver) traj.getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
 
       if (currentLateralManeuver != null) {
         log.info(String.format("Switching to lateral maneuver from [%.02f, %.02f)",
@@ -372,6 +378,13 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
             currentLongitudinalManeuver.getStartDistance(), currentLongitudinalManeuver.getEndDistance()));
       } else {
         log.info("No longitudinal maneuver started yet.");
+      }
+
+      if (currentComplexManeuver != null) {
+        log.info(String.format("Switching to " + currentComplexManeuver.getManeuverName() + " maneuver from [%.02f, %.02f)",
+            currentComplexManeuver.getStartDistance(), currentComplexManeuver.getEndDistance()));
+      } else {
+        log.info("No complex maneuver started yet.");
       }
 
       for (PctCallback callback : callbacks) {

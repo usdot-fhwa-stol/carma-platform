@@ -26,6 +26,7 @@ import org.mockito.MockitoAnnotations;
 
 import cav_msgs.Maneuver;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
@@ -227,6 +228,66 @@ public class TrajectoryExecutorWorkerTest {
     verify(cb3).onProgress(1.0);
   }
 
+  @Test
+  public void testComplexManeuverExecution1() throws InterruptedException {
+    Trajectory t = new Trajectory(0.0, 30.0);
+
+    IComplexManeuver m3 = mock(IComplexManeuver.class);
+    when(m3.getStartDistance()).thenReturn(0.0);
+    when(m3.getEndDistance()).thenReturn(30.0);
+
+    t.setComplexManeuver(m3);
+
+    tew.runTrajectory(t);
+
+    tew.updateDowntrackDistance(0.0);
+    Thread.sleep(100);
+    verify(m3, atLeastOnce()).executeTimeStep();
+    tew.updateDowntrackDistance(10.0);
+    Thread.sleep(100);
+    verify(m3, atLeastOnce()).executeTimeStep();
+    tew.updateDowntrackDistance(20.0);
+    Thread.sleep(100);
+    verify(m3, atLeastOnce()).executeTimeStep();
+    Thread.sleep(100);
+    verify(m3, atLeastOnce()).executeTimeStep();
+    tew.updateDowntrackDistance(30.0);
+
+    assertEquals(null, tew.getCurrentComplexManeuver());
+  }
+
+  @Test
+  public void testComplexManeuverExecution2() throws InterruptedException {
+    Trajectory t = new Trajectory(0.0, 30.0);
+
+    ISimpleManeuver m1 = newManeuver(0.0, 20.0, ManeuverType.LONGITUDINAL, false);
+
+    ISimpleManeuver m2 = newManeuver(0.0, 20.0, ManeuverType.LATERAL, false);
+
+    IComplexManeuver m3 = mock(IComplexManeuver.class);
+    when(m3.getStartDistance()).thenReturn(20.0);
+    when(m3.getEndDistance()).thenReturn(30.0);
+
+    t.addManeuver(m1);
+    t.addManeuver(m2);
+    t.setComplexManeuver(m3);
+
+    tew.runTrajectory(t);
+
+    tew.updateDowntrackDistance(0.0);
+    tew.updateDowntrackDistance(5.0);
+    tew.updateDowntrackDistance(10.0);
+    tew.updateDowntrackDistance(15.0);
+    tew.updateDowntrackDistance(20.0);
+    Thread.sleep(100);
+    verify(m3, atLeastOnce()).executeTimeStep();
+    tew.updateDowntrackDistance(25.0);
+    Thread.sleep(100);
+    verify(m3, atLeastOnce()).executeTimeStep();
+    tew.updateDowntrackDistance(30.0);
+    Thread.sleep(100);
+    verify(m3, atLeastOnce()).executeTimeStep();
+  }
 
   protected TrajectoryExecutorWorker tew;
   @Mock
