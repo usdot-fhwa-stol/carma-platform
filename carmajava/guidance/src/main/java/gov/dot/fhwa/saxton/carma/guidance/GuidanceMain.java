@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;

@@ -89,7 +89,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   protected static final long SLEEP_DURATION_MILLIS = 100;
   protected static final double TRAJ_SIZE_WARNING = 50.0;
 
-  Arbitrator(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
+  public Arbitrator(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
       PluginManager pluginManager, TrajectoryExecutor trajectoryExecutor) {
     super(state, iPubSubService, node);
     this.state = state;
@@ -207,20 +207,32 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
     // NO-OP
   }
 
+  protected void setLateralPlugin(IPlugin plugin) {
+    lateralPlugin = plugin;
+  }
+
+  protected void setLongitudinalPlugin(IPlugin plugin) {
+    longitudinalPlugin = plugin;
+  }
+
+  protected void setCruisingPlugin(CruisingPlugin plugin) {
+    cruisingPlugin = plugin;
+  }
+
   @Override
   public void onGuidanceEnable() {
     // For now, find the configured lateral and longitudinal plugins
     for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
       if (plugin.getVersionInfo().componentName().equals(lateralPluginName)) {
-        lateralPlugin = plugin;
+        setLateralPlugin(plugin);
       }
 
       if (plugin.getVersionInfo().componentName().equals(longitudinalPluginName)) {
-        longitudinalPlugin = plugin;
+        setLongitudinalPlugin(plugin);
       }
 
       if (plugin instanceof CruisingPlugin) {
-        cruisingPlugin = (CruisingPlugin) plugin;
+        setCruisingPlugin((CruisingPlugin) plugin);
       }
     }
 
