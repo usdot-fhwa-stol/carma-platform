@@ -68,6 +68,7 @@ var ready_max_trial = 10;
 var host_instructions = '';
 var listenerPluginAvailability;
 var listenerSystemAlert;
+var isModalPopupShowing = false;
 
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 
@@ -152,8 +153,9 @@ function checkSystemAlerts() {
                 //Show modal popup for Fatal alerts.
                 messageTypeFullDescription = 'System received a FATAL message. Please wait for system to shut down. <br/><br/>' + message.description;
                 messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                showModal(true, messageTypeFullDescription);
                 listenerSystemAlert.unsubscribe();
+                if (isModalPopupShowing == false)
+                    showModal(true, messageTypeFullDescription);
                 break;
             case 4:
                 system_ready = false;
@@ -181,9 +183,12 @@ function checkSystemAlerts() {
                 {
                     messageTypeFullDescription = 'System is shutting down. ' + message.description;
                 }
+
                 messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                showModal(true, messageTypeFullDescription);
-                listenerSystemAlert.unsubscribe(); //stop subscribing after the message has been published.
+
+                listenerSystemAlert.unsubscribe();
+                if (isModalPopupShowing == false)
+                    showModal(true, messageTypeFullDescription);
                 break;
             default:
                 messageTypeFullDescription = 'System alert type is unknown. Assuming system it not yet ready.  ' + message.description;
@@ -660,38 +665,6 @@ function showAvailablePlugin(plugin) {
 }
 
 /*
- Open the modal popup.
- TODO: Update to allow caution and warning message scenarios. Currently only handles fatal and guidance dis-engage which redirects to logout page.
-*/
-function showModal(isShow, modalMessage) {
-    var modal = document.getElementById('myModal');
-    var span_modal = document.getElementsByClassName("close")[0];
-
-    // When the user clicks on <span> (x), close the modal
-    span_modal.onclick = function () {
-        modal.style.display = "none";
-    }
-
-    if (isShow)
-        modal.style.display = "block";
-    else
-        modal.style.display = "none";
-
-    var modalBody = document.getElementsByClassName("modal-body")[0];
-    modalBody.innerHTML = '<p>' + modalMessage + '</p>';
-}
-
-/*
-    Close the modal popup.
-*/
-function closeModal() {
-    var modal = document.getElementById('myModal');
-    modal.style.display = "none";
-    window.location.assign('logout.html');
-}
-
-
-/*
     Get all parameters for display.
 */
 function getParams() {
@@ -782,7 +755,8 @@ function showDiagnostics() {
                         if (myValues.key=='Primed'){
                             insertNewTableRow('tblThird', myValues.key, myValues.value);
                         }
-                        insertNewTableRow('tblFirstA', myValues.key, myValues.value);
+                        // Commented out since Diagnostics key/value pair can be many and can change. Only subscribe to specific ones.
+                        // insertNewTableRow('tblFirstA', myValues.key, myValues.value);
                    }); //foreach
             }
         );//foreach
@@ -844,13 +818,15 @@ function checkRouteInfo() {
         //For UI purpose, only need to notify the USER and show them that route has completed.
         if (message.event == 3) //ROUTE_COMPLETED=3
         {
-        	showModal(true, "Route completed. You have reached your destination. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
-        	listenerSystemAlert.unsubscribe();
+            listenerSystemAlert.unsubscribe();
+            if (isModalPopupShowing == false)
+        	    showModal(true, "ROUTE COMPLETED. You have reached your destination. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
         }
         if (message.event == 4)//LEFT_ROUTE=4
         {
-            showModal(true, "You have left the route. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
             listenerSystemAlert.unsubscribe();
+            if (isModalPopupShowing == false)
+                showModal(true, "You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
         }
 
     });
@@ -1133,7 +1109,7 @@ function waitForSystemReady() {
             if (ready_counter >= ready_max_trial)
                 divCapabilitiesMessage.innerHTML = '<p> Sorry, did not receive SYSTEM READY status, please refresh your browser to try again. </p>';
         }
-    }, 5000)//  ..  setTimeout()
+    }, 3000)//  ..  setTimeout()
 }
 
 /*

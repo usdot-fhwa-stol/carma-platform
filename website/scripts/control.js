@@ -200,3 +200,39 @@ function setSpeedometer(speed)
     element.style.transform = 'rotate(' + deg + 'deg)';
 
 }
+
+/*
+ Open the modal popup.
+ TODO: Update to allow caution and warning message scenarios. Currently only handles fatal and guidance dis-engage which redirects to logout page.
+*/
+function showModal(isShow, modalMessage) {
+    var modal = document.getElementById('myModal');
+    var span_modal = document.getElementsByClassName("close")[0];
+
+    // When the user clicks on <span> (x), close the modal
+    span_modal.onclick = function () {
+        modal.style.display = "none";
+    }
+
+    if (isShow)
+        modal.style.display = "block";
+    else
+        modal.style.display = "none";
+
+    var modalBody = document.getElementsByClassName("modal-body")[0];
+    modalBody.innerHTML = '<p>' + modalMessage + '</p>';
+
+    isModalPopupShowing = true; //flag that modal popup for an alert is currently being shown to the user.
+}
+
+/*
+    Close the modal popup.
+*/
+function closeModal() {
+    var modal = document.getElementById('myModal');
+    modal.style.display = "none";
+
+    isModalPopupShowing = false; //flag that modal popup has been closed.
+
+    window.location.assign('logout.html');
+}
