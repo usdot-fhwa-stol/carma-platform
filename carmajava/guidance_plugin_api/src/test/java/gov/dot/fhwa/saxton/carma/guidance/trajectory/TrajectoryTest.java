@@ -24,6 +24,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
@@ -385,6 +386,32 @@ public class TrajectoryTest {
 
     IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(null, m);
+  }
+
+  @Test
+  public void testSetComplexManeuverSuccess() {
+    IComplexManeuver complexManeuver = mock(IComplexManeuver.class);
+    when(complexManeuver.getStartDistance()).thenReturn(0.0);
+    when(complexManeuver.getEndDistance()).thenReturn(20.0);
+    assertTrue(traj.setComplexManeuver(complexManeuver));
+  }
+
+  @Test
+  public void testSetComplexManeuverLengthAdjustment() {
+    IComplexManeuver complexManeuver = mock(IComplexManeuver.class);
+    when(complexManeuver.getStartDistance()).thenReturn(0.0);
+    when(complexManeuver.getEndDistance()).thenReturn(10.0);
+    traj.setComplexManeuver(complexManeuver);
+    assertEquals(10.0, traj.getEndLocation(), 0.001);
+  }
+
+  @Test
+  public void testSetComplexManeuverFailure() {
+    IComplexManeuver complexManeuver = mock(IComplexManeuver.class);
+    when(complexManeuver.getStartDistance()).thenReturn(10.0);
+    when(complexManeuver.getEndDistance()).thenReturn(30.0);
+    assertFalse(traj.setComplexManeuver(complexManeuver));
+    assertEquals(20.0, traj.getEndLocation(), 0.001);
   }
 
   protected Trajectory traj;
