@@ -114,6 +114,16 @@ min_acc_standoff_distance: 5.0
 # Units: milliseconds
 shutdown_wait_time: 5000
 
+<<<<<<< HEAD
 # Double: Time to plan for after a complex trajectory to allow for our speed to steady after a complex trajectory
 # Units: seconds
 post_complex_trajectory_steadying_period: 2.0
+=======
+# Double: Maximum speed error between cmd_speed and actual vehicle speed
+# Units: m
+max_speed_error: 5.0
+
+# Double: Maximum downtrack error between planned location and current location
+# Units: m
+max_downtrack_error: 5.0
+>>>>>>> develop

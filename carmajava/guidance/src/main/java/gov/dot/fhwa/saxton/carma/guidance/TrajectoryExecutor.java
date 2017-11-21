@@ -26,8 +26,6 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 
 import org.ros.node.ConnectedNode;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -44,6 +42,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected AtomicReference<GuidanceState> state;
     protected TrajectoryExecutorWorker trajectoryExecutorWorker;
     protected Trajectory currentTrajectory;
+    protected Tracking tracking_;
     protected boolean bufferedTrajectoryRunning = false;
 
     protected boolean useSinTrajectory = false;
@@ -57,10 +56,11 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected long sleepDurationMillis = 100;
 
     public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
-            GuidanceCommands commands) {
+            GuidanceCommands commands, Tracking tracking) {
         super(state, iPubSubService, node);
         this.state = state;
         this.commands = commands;
+        this.tracking_ = tracking;
 
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
 
@@ -233,6 +233,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
 
         if (state.get() == GuidanceState.ENGAGED) {
             log.info("TrajectoryExecutor running trajectory!");
+            tracking_.addNewTrajectory(traj);
             trajectoryExecutorWorker.runTrajectory(traj);
             bufferedTrajectoryRunning = true;
         } else {
