@@ -206,6 +206,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
         trajectoryExecutorWorker.registerOnTrajectoryProgressCallback(pct, callback);
     }
 
+    /**
+     * Unregister the callback, ensuring it is no longer invoked at any point in time
+     */
+    public void unregisterOnTrajectoryProgressCallback(OnTrajectoryProgressCallback callback) {
+        trajectoryExecutorWorker.unregisterOnTrajectoryProgressCallback(callback);
+    }
+
   /**
    * Submit the specified trajectory for execution
    * </p>
@@ -231,5 +238,14 @@ public class TrajectoryExecutor extends GuidanceComponent {
         } else {
             currentTrajectory = traj;
         }
+    }
+
+    /**
+     * Get the currently executing trajectory from the TrajectoryExecutor
+     * 
+     * @return The currently executing trajectory, or null if none is running
+     */
+    public Trajectory getCurrentTrajectory() {
+        return trajectoryExecutorWorker.getCurrentTrajectory();
     }
 }

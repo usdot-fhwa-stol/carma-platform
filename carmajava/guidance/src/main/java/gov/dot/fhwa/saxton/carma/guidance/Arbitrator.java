@@ -25,7 +25,6 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.ArbitratorEvent;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.ArbitratorState;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.ArbitratorStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.ArbitratorStateMachine;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
@@ -39,7 +38,6 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallbac
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryValidationConstraint;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryValidator;
-import org.apache.commons.logging.Log;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import java.lang.reflect.Constructor;
@@ -70,6 +68,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
   protected AtomicDouble currentSpeed = new AtomicDouble(0.0);
   protected double replanTriggerPercent = 0.75;
+  protected double complexTrajectoryReplanTriggerPercent = 0.95;
   protected double minimumTrajectoryLength = 50.0;
   protected double planningWindow = 0.0;
   protected double planningWindowGrowthFactor = 0.0;
@@ -343,7 +342,27 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       double trajectoryStart = downtrackDistance.get();
       currentTrajectory = planTrajectory(downtrackDistance.get(), getNextTrajectoryEndpoint(trajectoryStart));
       trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, 
-      (pct) -> stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_COMPLETION_ALERT));
+          (pct) -> {
+            if (trajectoryExecutor.getCurrentTrajectory() != null
+                && trajectoryExecutor.getCurrentTrajectory().getComplexManeuver() != null) {
+              OnTrajectoryProgressCallback complexReplanCallback = new OnTrajectoryProgressCallback() {
+                @Override
+                public void onProgress(double pct) {
+                  // Ensure we're only called once
+                  trajectoryExecutor.unregisterOnTrajectoryProgressCallback(this);
+
+                  // Trigger the replan
+                  stateMachine.processEvent(ArbitratorEvent.COMPLEX_TRAJECTORY_COMPLETION_ALERT);
+                }
+              };
+
+              // Schedule this to execute closer to the end of the complex trajectory
+              trajectoryExecutor.registerOnTrajectoryProgressCallback(complexTrajectoryReplanTriggerPercent, complexReplanCallback);
+            } else {
+              stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_COMPLETION_ALERT);
+            }
+      });
+
       trajectoryExecutor.runTrajectory(currentTrajectory);
     }
 

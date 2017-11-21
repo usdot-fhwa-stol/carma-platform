@@ -394,4 +394,18 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     log.warn("Caught longitudinal maneuver running after its endpoint, switching maneuvers");
     checkAndStartNextLongitudinalManeuver();
   }
+
+  /**
+   * Get the currently executing trajectory or null if none is running
+   */
+  public Trajectory getCurrentTrajectory() {
+    return currentTrajectory;
+  }
+
+  /**
+   * Unregister the callback, ensuring it is no longer invoked at any point in time
+   */
+  public void unregisterOnTrajectoryProgressCallback(OnTrajectoryProgressCallback callback) {
+    callbacks.remove(callback);
+  }
 }
