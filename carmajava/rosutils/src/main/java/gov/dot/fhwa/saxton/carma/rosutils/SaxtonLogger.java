@@ -38,6 +38,13 @@ public class SaxtonLogger {
   private String emptyTag = "NONE";
   private File file = null;
   private final static String fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")) + ".txt";;
+  private final String debugLevel = "DEBUG";
+  private final String infoLevel = "INFO";
+  private final String warnLevel = "WARN";
+  private final String errorLevel = "ERROR";
+  private final String fatalLevel = "FATAL";
+  private final String traceLevel = "TRACE";
+
 
   /***
    * Get source name which is usually the className.
@@ -86,149 +93,149 @@ public class SaxtonLogger {
   public void debug(String message) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.debug(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + debugLevel + messageToStore);
 
   }
 
   public void debug(String message, Throwable t) {
-    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    String messageToStore = " | "  + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.debug(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + debugLevel + messageToStore, t);
   }
 
   public void debug(String tag, String message) {
-    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
+    String messageToStore = " | "  + getSource() + " | " + tag + " | " + message;
     saxtonLog.debug(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + debugLevel + messageToStore);
 
   }
 
   public void debug(String tag, String message, Throwable t) {
-    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
+    String messageToStore = " | "  + getSource() + " | " + tag + " | " + message;
     saxtonLog.debug(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + debugLevel + messageToStore, t);
   }
 
   public void info(String message) {
-    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
+    String messageToStore = " | "  + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.info(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + infoLevel + messageToStore);
 
   }
 
   public void info(String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.info(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + infoLevel + messageToStore, t);
   }
 
   public void info(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.info(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + infoLevel + messageToStore);
 
   }
 
   public void info(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.info(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + infoLevel + messageToStore, t);
   }
 
   public void warn(String message) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.warn(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + warnLevel + messageToStore);
   }
 
   public void warn(String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.warn(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + warnLevel + messageToStore, t);
   }
 
   public void warn(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.warn(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + warnLevel + messageToStore);
   }
 
   public void warn(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.warn(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + warnLevel + messageToStore, t);
   }
 
   public void error(String message) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.error(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + errorLevel + messageToStore);
   }
 
   public void error(String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.error(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + errorLevel + messageToStore, t);
   }
 
   public void error(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.error(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + errorLevel + messageToStore);
   }
 
   public void error(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.error(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + errorLevel + messageToStore, t);
   }
 
   public void fatal(String message) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.fatal(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + fatalLevel + messageToStore);
   }
 
   public void fatal(String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.fatal(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + fatalLevel + messageToStore, t);
   }
 
   public void fatal(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.fatal(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + fatalLevel + messageToStore);
   }
 
   public void fatal(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.fatal(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + fatalLevel + messageToStore, t);
   }
 
   public void trace(String message) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.trace(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + traceLevel + messageToStore);
   }
 
   public void trace(String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.trace(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + traceLevel + messageToStore, t);
   }
 
   public void trace(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.trace(messageToStore);
-    writeToFile(messageToStore);
+    writeToFile(" | " + traceLevel + messageToStore);
   }
 
   public void trace(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.trace(messageToStore, t);
-    writeToFile(messageToStore, t);
+    writeToFile(" | " + traceLevel + messageToStore, t);
   }
 
 
