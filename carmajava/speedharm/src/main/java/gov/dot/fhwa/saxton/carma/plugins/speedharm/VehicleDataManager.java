@@ -50,6 +50,9 @@ public class VehicleDataManager {
   protected ISubscriber<TwistStamped> twistSubscriber;
   protected ISubscriber<AccelStamped> accelSubscriber;
 
+  /**
+   * Begin the subscriptions to vehicle data
+   */
   public void init() {
     robotStatusSubscriber = pubSubService.getSubscriberForTopic("robot_enabled", RobotEnabled._TYPE);
     radarSubscriber = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
@@ -83,6 +86,7 @@ public class VehicleDataManager {
     navSatSubscriber.registerOnMessageCallback(msg -> {
       latitude = msg.getLatitude();
       longitude = msg.getLongitude();
+      // TODO: Where do I get heading from?
     });
 
     twistSubscriber.registerOnMessageCallback(msg -> speed = msg.getTwist().getLinear().getX());
@@ -93,30 +97,51 @@ public class VehicleDataManager {
     return automatedControl;
   }
 
+  /**
+   * Get the distance to the nearest radar object on the long range radars
+   */
   public double getRange() {
     return range;
   }
 
+  /**
+   * Get the heading of the vehicle in degrees
+   */
   public double getHeading() {
     return heading;
   }
 
+  /**
+   * Get the latitude of the vehicle in degrees
+   */
   public double getLatitude() {
     return latitude;
   }
 
+  /**
+   * Get the longitude of the vehicle in degrees
+   */
   public double getLongitude() {
     return longitude;
   }
 
+  /**
+   * Get the relative speed of the nearest radar object in meters per second
+   */
   public double getRangeRate() {
     return rangeRate;
   }
 
+  /**
+   * Get the current speed of the vehicle in m/s
+   */
   public double getSpeed() {
     return speed;
   }
 
+  /**
+   * Get the current acceleration of the vehicle in m/s/s
+   */
   public double getAccel() {
     return accel;
   }
