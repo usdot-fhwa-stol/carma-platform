@@ -173,11 +173,11 @@ function checkSystemAlerts() {
                 //Added additional logic here, since the system_alert sometimes get published before the route_state.
                 if (message.description.indexOf("LEFT_ROUTE")>0)
                 {
-                  messageTypeFullDescription = "You have left the route.";
+                  messageTypeFullDescription = "You have LEFT THE ROUTE.";
                 }
                 else if (message.description.indexOf("ROUTE_COMPLETED")>0)
                 {
-                    messageTypeFullDescription = "Route completed. You have reached your destination.";
+                    messageTypeFullDescription = "ROUTE COMPLETED.";
                 }
                 else
                 {
@@ -826,7 +826,7 @@ function checkRouteInfo() {
             listenerSystemAlert.unsubscribe();
 
             if (isModalPopupShowing == false)
-        	    showModal(true, "ROUTE COMPLETED. You have reached your destination. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
+        	    showModal(true, "ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
         }
 
         if (message.event == 4)//LEFT_ROUTE=4
