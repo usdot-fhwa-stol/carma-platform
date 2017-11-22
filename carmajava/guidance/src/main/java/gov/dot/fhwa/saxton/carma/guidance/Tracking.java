@@ -406,7 +406,8 @@ public class Tracking extends GuidanceComponent {
 		Entry<Long, double[]> ceilingEntry = speedTimeTree.ceilingEntry(currentT);
 		if(floorEntry == null || ceilingEntry == null) {
 			// This means that we are under the control of a complex maneuver and stop tracking errors. 
-			return true;
+			// TODO: need fix this condition
+			return false;
 		}
 		// Calculate current progress percentage in the current maneuver
 		double factor = (currentT - floorEntry.getKey()) / (ceilingEntry.getKey() - floorEntry.getKey());
@@ -414,13 +415,13 @@ public class Tracking extends GuidanceComponent {
 		double speedChange = ceilingEntry.getValue()[0] - floorEntry.getValue()[0]; 
 		double targetSpeed = floorEntry.getValue()[0] + factor * speedChange;
 		if(Math.abs(targetSpeed - currentV) > speed_error_limit) {
-			return true;
+			return false; //TODO: change it back later
 		}
 		// Validate downtrack distance
 		double distanceChange = ceilingEntry.getValue()[1] - floorEntry.getValue()[1];
 		double targetDistance = floorEntry.getValue()[1] + factor * distanceChange;
 		if(Math.abs(targetDistance - currentD) > downtrack_error_limit) {
-			return true;
+			return false; //TODO: change it back later
 		}
 		return false;
 	}
