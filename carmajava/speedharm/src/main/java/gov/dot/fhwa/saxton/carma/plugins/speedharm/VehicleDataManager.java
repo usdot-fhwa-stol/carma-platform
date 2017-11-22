@@ -34,14 +34,14 @@ import sensor_msgs.NavSatFix;
  */
 public class VehicleDataManager {
   protected IPubSubService pubSubService;
-  protected AutomatedControlStatus automatedControl;
-  protected double range;
-  protected double heading;
-  protected double latitude;
-  protected double longitude;
-  protected double rangeRate;
-  protected double speed;
-  protected double accel;
+  protected volatile AutomatedControlStatus automatedControl;
+  protected volatile double range;
+  protected volatile double heading;
+  protected volatile double latitude;
+  protected volatile double longitude;
+  protected volatile double rangeRate;
+  protected volatile double speed;
+  protected volatile double accel;
 
   // ROS Subscribers
   protected ISubscriber<RobotEnabled> robotStatusSubscriber;
