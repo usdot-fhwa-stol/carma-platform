@@ -155,13 +155,13 @@ void SRXApplication::initialize() {
                                                                     if(speed > carma::max_commanded_speed)
                                                                     {
                                                                         speed  = carma::max_commanded_speed;
-                                                                        ROS_WARN_STEAM("Speed Command exceeds max allowed, capping to: " << speed);
+                                                                        ROS_WARN_STEAM("Speed Command exceeds max allowed, capping to: %f", speed);
                                                                     }
 
                                                                     if(accel > carma::max_commanded_accel)
                                                                     {
                                                                         accel = carma::max_commanded_accel;
-                                                                        ROS_WARN_STEAM("Max Accel Command exceeds max allowed, capping to: " << accel);
+                                                                        ROS_WARN_STEAM("Max Accel Command exceeds max allowed, capping to: %f", accel);
                                                                     }
                                                                     
                                                                     set_speed_ =  speed;
