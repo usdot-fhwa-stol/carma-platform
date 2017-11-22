@@ -16,12 +16,19 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
+import cav_msgs.ExternalObjectList;
+import cav_msgs.RobotEnabled;
+import geometry_msgs.Twist;
+import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate.AutomatedControlStatus;
 
 /**
  * Manages recieving data from the vehicle
  */
 public class VehicleDataManager {
+  protected IPubSubService pubSubService;
   protected AutomatedControlStatus automatedControl;
   protected double range;
   protected double heading;
@@ -31,7 +38,15 @@ public class VehicleDataManager {
   protected double speed;
   protected double accel;
 
+  // ROS Subscribers
+  protected ISubscriber<RobotEnabled> robotStatusSubscriber;
+  protected ISubscriber<ExternalObjectList> radarSubscriber;
+  protected ISubscriber<NavSatFix> navSatSubscriber;
+  protected ISubscriber<TwistStamped> twistSubscriber;
+
   public void init() {
+    robotStatusSubscriber = pubSubService.getSubscriberForTopic("robot_enabled", RobotEnabled._TYPE);
+    radarSubscriber
 
   }
 
