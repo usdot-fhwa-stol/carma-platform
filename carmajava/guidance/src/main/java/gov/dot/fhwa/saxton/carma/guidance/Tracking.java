@@ -341,7 +341,7 @@ public class Tracking extends GuidanceComponent {
 				}
 			}
 		});
-		this.trajectoryExecutor.registerOnTrajectoryProgressCallback(1.0, new OnTrajectoryProgressCallback() {
+		this.trajectoryExecutor.registerOnTrajectoryProgressCallback(0.95, new OnTrajectoryProgressCallback() {
 			
 			@Override
 			public void onProgress(double pct) {
@@ -395,7 +395,7 @@ public class Tracking extends GuidanceComponent {
 			speedAndDistance[0] = m.getTargetSpeed();
 			speedAndDistance[1] = m.getEndDistance();
 			long finishTime = (long) (Math.abs(m.getStartDistance() - m.getEndDistance()) / 0.5 * (m.getStartSpeed() + m.getTargetSpeed()));
-			long predictFinishTime = lastEntryTime + finishTime;
+			long predictFinishTime = lastEntryTime + finishTime * SECONDS_TO_MILLISECONDS;
 			speedTimeTree.put(predictFinishTime, speedAndDistance);
 			lastEntryTime = predictFinishTime;
 		}
@@ -405,8 +405,7 @@ public class Tracking extends GuidanceComponent {
 		Entry<Long, double[]> floorEntry = speedTimeTree.floorEntry(currentT);
 		Entry<Long, double[]> ceilingEntry = speedTimeTree.ceilingEntry(currentT);
 		if(floorEntry == null || ceilingEntry == null) {
-			// This means that we are under the control of a complex maneuver and stop tracking errors. 
-			// TODO: need fix this condition
+			// This means that we are under the control of a complex maneuver and stop tracking errors.
 			return false;
 		}
 		// Calculate current progress percentage in the current maneuver
@@ -415,13 +414,15 @@ public class Tracking extends GuidanceComponent {
 		double speedChange = ceilingEntry.getValue()[0] - floorEntry.getValue()[0]; 
 		double targetSpeed = floorEntry.getValue()[0] + factor * speedChange;
 		if(Math.abs(targetSpeed - currentV) > speed_error_limit) {
-			return false; //TODO: change it back later
+			log.warn("Tracking found speed error: " + Math.abs(targetSpeed - currentV) + " and trajectory is replanning.");
+			return true;
 		}
 		// Validate downtrack distance
 		double distanceChange = ceilingEntry.getValue()[1] - floorEntry.getValue()[1];
 		double targetDistance = floorEntry.getValue()[1] + factor * distanceChange;
 		if(Math.abs(targetDistance - currentD) > downtrack_error_limit) {
-			return false; //TODO: change it back later
+			log.warn("Tracking found distance error: " + Math.abs(targetDistance - currentD) + " and trajectory is replanning.");
+			return true;
 		}
 		return false;
 	}
