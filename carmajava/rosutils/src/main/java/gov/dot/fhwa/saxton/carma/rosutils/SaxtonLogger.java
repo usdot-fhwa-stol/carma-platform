@@ -98,26 +98,26 @@ public class SaxtonLogger {
   }
 
   public void debug(String message, Throwable t) {
-    String messageToStore = " | "  + getSource() + " | " + emptyTag + " | " + message;
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.debug(messageToStore, t);
     writeToFile(" | " + debugLevel + messageToStore, t);
   }
 
   public void debug(String tag, String message) {
-    String messageToStore = " | "  + getSource() + " | " + tag + " | " + message;
+    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.debug(messageToStore);
     writeToFile(" | " + debugLevel + messageToStore);
 
   }
 
   public void debug(String tag, String message, Throwable t) {
-    String messageToStore = " | "  + getSource() + " | " + tag + " | " + message;
+    String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.debug(messageToStore, t);
     writeToFile(" | " + debugLevel + messageToStore, t);
   }
 
   public void info(String message) {
-    String messageToStore = " | "  + getSource() + " | " + emptyTag + " | " + message;
+    String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.info(messageToStore);
     writeToFile(" | " + infoLevel + messageToStore);
 
