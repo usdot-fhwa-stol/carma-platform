@@ -16,11 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import cav_msgs.Maneuver;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.Maneuvers;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageFactory;
+import org.ros.node.NodeConfiguration;
+
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -63,6 +66,41 @@ public class RouteWaypoint {
     this.location = loc;
     this.lowerSpeedLimit = 0;
     this.upperSpeedLimit = 5;
+  }
+
+  /**
+   * Deep copy constructor
+   */
+  public RouteWaypoint(RouteWaypoint wp) {
+    NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+    MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
+    // String and Integer are immutable so add basic copy will work
+    disabledGuidanceAlgorithms.addAll(wp.disabledGuidanceAlgorithms);
+    laneClosures.addAll(wp.laneClosures);
+    // Deep copy needed maneuvers
+    for (cav_msgs.Maneuver maneuver: wp.neededManeuvers) {
+      cav_msgs.Maneuver newManeuver = messageFactory.newFromType(Maneuver._TYPE);
+      newManeuver.setLength(maneuver.getLength());
+      newManeuver.setPerformers(maneuver.getPerformers());
+      newManeuver.setStartRoadwayLaneId(maneuver.getStartRoadwayLaneId());
+      newManeuver.setStartRoadwayLink(maneuver.getStartRoadwayLink());
+      newManeuver.setStartRoadwayOriginatorPosition(maneuver.getStartRoadwayOriginatorPosition());
+      newManeuver.setType(maneuver.getType());
+      neededManeuvers.add(newManeuver);
+    }
+    // Copy remaining fields
+    laneCount = wp.laneCount;
+    location = new Location(wp.location);
+    lowerSpeedLimit = wp.lowerSpeedLimit;
+    upperSpeedLimit = wp.upperSpeedLimit;
+    nearestMileMarker = wp.nearestMileMarker;
+    minCrossTrack = wp.minCrossTrack;
+    maxCrossTrack = wp.maxCrossTrack;
+    requiredLaneIndex = wp.requiredLaneIndex;
+    roadType = wp.roadType;
+    interiorLaneMarkings = wp.interiorLaneMarkings;
+    leftMostLaneMarking = wp.leftMostLaneMarking;
+    rightMostLaneMarking = wp.rightMostLaneMarking;
   }
 
   /**
