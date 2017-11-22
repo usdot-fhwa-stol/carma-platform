@@ -167,7 +167,7 @@ public class CruisingPlugin extends AbstractPlugin {
     // Get all the speed limits spanned by [startDistance, endDistance)
     List<SpeedLimit> spanned = new ArrayList<>();
     for (SpeedLimit limit : speedLimits) {
-      if (limit.location >= startDistance && limit.location < endDistance) {
+      if (limit.location > startDistance && limit.location <= endDistance) {
         spanned.add(limit);
       }
     }
