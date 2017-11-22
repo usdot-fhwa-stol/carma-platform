@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
+import cav_msgs.DriverStatus;
 import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
