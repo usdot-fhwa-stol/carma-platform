@@ -824,12 +824,15 @@ function checkRouteInfo() {
         if (message.event == 3) //ROUTE_COMPLETED=3
         {
             listenerSystemAlert.unsubscribe();
+
             if (isModalPopupShowing == false)
         	    showModal(true, "ROUTE COMPLETED. You have reached your destination. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
         }
+
         if (message.event == 4)//LEFT_ROUTE=4
         {
             listenerSystemAlert.unsubscribe();
+
             if (isModalPopupShowing == false)
                 showModal(true, "You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.");
         }
