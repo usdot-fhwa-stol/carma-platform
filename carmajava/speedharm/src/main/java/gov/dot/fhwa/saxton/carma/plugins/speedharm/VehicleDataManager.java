@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import cav_msgs.ExternalObject;
 import cav_msgs.ExternalObjectList;
+import cav_msgs.HeadingStamped;
 import cav_msgs.RobotEnabled;
 import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
@@ -49,6 +50,7 @@ public class VehicleDataManager {
   protected ISubscriber<sensor_msgs.NavSatFix> navSatSubscriber;
   protected ISubscriber<TwistStamped> twistSubscriber;
   protected ISubscriber<AccelStamped> accelSubscriber;
+  protected ISubscriber<HeadingStamped> headingSubscriber;
 
   /**
    * Begin the subscriptions to vehicle data
@@ -59,6 +61,7 @@ public class VehicleDataManager {
     navSatSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
     twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
     accelSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelStamped._TYPE);
+    headingSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
 
     robotStatusSubscriber.registerOnMessageCallback(msg -> {
       // TODO: Maybe somehow this is aware of the maneuver's execution status?
@@ -86,11 +89,11 @@ public class VehicleDataManager {
     navSatSubscriber.registerOnMessageCallback(msg -> {
       latitude = msg.getLatitude();
       longitude = msg.getLongitude();
-      // TODO: Where do I get heading from?
     });
 
     twistSubscriber.registerOnMessageCallback(msg -> speed = msg.getTwist().getLinear().getX());
     accelSubscriber.registerOnMessageCallback(msg -> accel = msg.getAccel().getLinear().getX());
+    headingSubscriber.registerOnMessageCallback(msg -> heading = msg.getHeading());
   }
 
   public AutomatedControlStatus getAutomatedControl() {
