@@ -18,6 +18,9 @@ package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
 import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate.AutomatedControlStatus;
 
+/**
+ * Manages recieving data from the vehicle
+ */
 public class VehicleDataManager {
   protected AutomatedControlStatus automatedControl;
   protected double range;
