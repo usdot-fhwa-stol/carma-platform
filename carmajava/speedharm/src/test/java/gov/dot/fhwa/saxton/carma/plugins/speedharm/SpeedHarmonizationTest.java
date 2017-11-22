@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
+package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
 import org.junit.Before;
 import org.junit.Test;

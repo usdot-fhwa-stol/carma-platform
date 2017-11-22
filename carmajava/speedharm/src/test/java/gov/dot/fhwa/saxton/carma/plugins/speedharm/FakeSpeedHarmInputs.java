@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
+package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
 import org.ros.message.Duration;
 

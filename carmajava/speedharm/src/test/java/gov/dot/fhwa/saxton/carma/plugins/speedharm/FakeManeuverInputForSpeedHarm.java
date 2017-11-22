@@ -1,9 +1,11 @@
-package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
+package gov.dot.fhwa.saxton.carma.plugins.speedharm;
+
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 
 /**
  * Helper class to test the SpeedHarmonizationManeuver class with
  */
-public class FakeManeuverInputForSpeedHarm implements IManeuverInputs{
+public class FakeManeuverInputForSpeedHarm implements IManeuverInputs {
   private double distanceFromRouteStart = 0.0;
   private double currentSpeed = 0.0;
   private double responseLag = 0.0;

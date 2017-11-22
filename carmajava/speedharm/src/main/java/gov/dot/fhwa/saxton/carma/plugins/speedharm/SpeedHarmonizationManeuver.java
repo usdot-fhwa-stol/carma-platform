@@ -13,9 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
+package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ComplexManeuverBase;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import org.ros.message.Duration;
 import org.ros.message.Time;
 
