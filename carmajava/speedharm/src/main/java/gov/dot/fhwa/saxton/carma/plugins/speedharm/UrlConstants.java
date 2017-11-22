@@ -22,5 +22,5 @@ package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 public class UrlConstants {
   public static final String VEHICLE_LIST = "/vehicles";
   public static final String STATUS_LIST = "/status";
-  public static final String COMMANDS_LIST = "/commands"
+  public static final String COMMANDS_LIST = "/commands";
 }
