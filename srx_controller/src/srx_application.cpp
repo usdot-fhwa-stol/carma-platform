@@ -150,7 +150,7 @@ void SRXApplication::initialize() {
                                                                 {
                                                                     ROS_DEBUG_STREAM("Received command: " << msg);
                                                                     double speed = msg->speed;
-                                                                    double accel = msg->accel;
+                                                                    double accel = msg->max_accel;
 
                                                                     if(speed > carma::max_commanded_speed)
                                                                     {
