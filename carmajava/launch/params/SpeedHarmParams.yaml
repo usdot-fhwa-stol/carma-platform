@@ -1,0 +1,11 @@
+# String: Infrastructure server URL base
+# Units: URL
+infrastructure_server_url: http://192.168.88.125
+
+# Double: The rate at which the Speed Harmonization Plugin will report it's status to the server
+# Units: Hz
+data_reporting_frequency: 1.0
+
+# Boolean: Whether or not the plugin should terminate the serverside vehicle session on suspend
+# Units: boolean
+unregister_on_suspend: True
