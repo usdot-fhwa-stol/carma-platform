@@ -16,28 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
+import org.springframework.web.client.RestTemplate;import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.speedharm.api.objects.NetworkLatencyInformation;
-import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleSession;
-import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate;
-import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate.AutomatedControlStatus;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-import static gov.dot.fhwa.saxton.carma.plugins.speedharm.UrlConstants.*;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;import java.time.LocalDateTime;
 
 /**
  * Plugin implementing integration withe STOL I TO 22 Infrastructure Server
