@@ -108,7 +108,9 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
 
   @Override
   public void loop() throws InterruptedException {
-    // NO-OP } 
+    // NO-OP 
+  } 
+
   @Override
   public void onSuspend() {
     if (statusUpdaterThread != null && statusUpdater != null) {

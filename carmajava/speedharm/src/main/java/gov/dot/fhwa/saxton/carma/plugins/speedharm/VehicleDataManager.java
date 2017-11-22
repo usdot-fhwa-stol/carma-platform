@@ -16,13 +16,18 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import cav_msgs.ExternalObject;
 import cav_msgs.ExternalObjectList;
 import cav_msgs.RobotEnabled;
-import geometry_msgs.Twist;
+import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate.AutomatedControlStatus;
+import sensor_msgs.NavSatFix;
 
 /**
  * Manages recieving data from the vehicle
@@ -41,13 +46,47 @@ public class VehicleDataManager {
   // ROS Subscribers
   protected ISubscriber<RobotEnabled> robotStatusSubscriber;
   protected ISubscriber<ExternalObjectList> radarSubscriber;
-  protected ISubscriber<NavSatFix> navSatSubscriber;
+  protected ISubscriber<sensor_msgs.NavSatFix> navSatSubscriber;
   protected ISubscriber<TwistStamped> twistSubscriber;
+  protected ISubscriber<AccelStamped> accelSubscriber;
 
   public void init() {
     robotStatusSubscriber = pubSubService.getSubscriberForTopic("robot_enabled", RobotEnabled._TYPE);
-    radarSubscriber
+    radarSubscriber = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
+    navSatSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
+    twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+    accelSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelStamped._TYPE);
 
+    robotStatusSubscriber.registerOnMessageCallback(msg -> {
+      // TODO: Maybe somehow this is aware of the maneuver's execution status?
+      if (msg.getRobotActive()) {
+        automatedControl = AutomatedControlStatus.ENGAGED;
+      } else {
+        automatedControl = AutomatedControlStatus.DISENGAGED;
+      }
+    });
+
+    radarSubscriber.registerOnMessageCallback(msg -> {
+      Optional<ExternalObject> closest = msg.getObjects().stream()
+      .sorted((ExternalObject obj1, ExternalObject obj2) -> {
+        return Double.compare(obj2.getPose().getPose().getPosition().getX(), 
+                              obj1.getPose().getPose().getPosition().getX());
+      })
+      .findFirst();
+
+      closest.ifPresent((obj) -> {
+        range = obj.getPose().getPose().getPosition().getX();
+        rangeRate = obj.getRangeRate();
+      });
+    });
+
+    navSatSubscriber.registerOnMessageCallback(msg -> {
+      latitude = msg.getLatitude();
+      longitude = msg.getLongitude();
+    });
+
+    twistSubscriber.registerOnMessageCallback(msg -> speed = msg.getTwist().getLinear().getX());
+    accelSubscriber.registerOnMessageCallback(msg -> accel = msg.getAccel().getLinear().getX());
   }
 
   public AutomatedControlStatus getAutomatedControl() {
