@@ -76,7 +76,8 @@ public class InterfaceWorker {
                 newDriver.setCapabilities(mgr_.getDriverApi(name));
                 drivers_.set(index, newDriver);
                 if (newDriver.isPosition() || newDriver.isController()
-                  && newDriver.getState() == DriverState.FAULT) {
+                  && (newDriver.getState() == DriverState.FAULT
+                  || newDriver.getState() == DriverState.OFF)) {
                     mgr_.errorShutdown("FAULT detected in critical driver: " + newDriver.getName());
                 }
                 log_.debug("DRIVER", "InterfaceWorker.handleNewDriverStatus: status changed for " + name);
