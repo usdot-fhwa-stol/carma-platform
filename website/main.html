@@ -42,11 +42,11 @@
 </head>
 <body>
 <div class="tab">
-    <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">Driver Tasks</button>
-    <button class="tablinks" onclick="openTab(event, 'divDriverView')">Driver View</button>
-    <button class="tablinks" onclick="openTab(event, 'divMap')">Map</button>
-    <button class="tablinks" onclick="openTab(event, 'divSystemStatus')">System Status</button>
-    <button class="tablinks" onclick="openTab(event, 'divSystemLogs')">System Logs</button>
+    <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">TASKS</button>
+    <button class="tablinks" onclick="openTab(event, 'divDriverView')">VIEW</button>
+    <button class="tablinks" onclick="openTab(event, 'divMap')">MAP</button>
+    <button class="tablinks" onclick="openTab(event, 'divSystemStatus')">STATUS</button>
+    <button class="tablinks" onclick="openTab(event, 'divSystemLogs')">LOGS</button>
 </div>
 <div class="tabheader">
     <button id="btnCAVGuidance" onclick="engageGuidance();" title="Start CAV Guidance" class="button_disabled" disabled>CAV Guidance</button>
@@ -59,9 +59,10 @@
     </div>
 </div>
 <div id="divDriverView" class="tabcontent">
+    <div id="divRouteInfo">No Route Selected</div>
     <div class="divSpeedLimit">
-        <img src="images/speedlimitsign.png" alt="Speed Limit" style="width:200px;height:200px">
-        <div id="divSpeedLimitValue"></div>
+        <img src="images/speedlimitsign.png" alt="Speed Limit" class="speed_limit_sign">
+        <div id="divSpeedLimitValue">0</div>
     </div>
     <div class="divSpeedometer">
         <div class="gauge-a"></div>
