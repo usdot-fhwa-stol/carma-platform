@@ -60,6 +60,8 @@ public class InterfaceWorker {
     /**
      * Updates the info known about a current driver.  Note that this is expected to be called frequently throughout
      * the life of the node.
+     * Only Operational drivers are added to the list of drivers available to other nodes.
+     * If a driver starts in a degraded state it will only be added once it becomes operational. (TODO Support initially degraded drivers)
      *
      * @param newDriver - all available details about the driver publishing its status
      */
@@ -93,24 +95,26 @@ public class InterfaceWorker {
 
                 //add the info to the list of known drivers
                 newDriver.setCapabilities(cap);
-                drivers_.add(newDriver);
 
-                //request InterfaceMgr to bind with it
-                mgr_.bindWithDriver(name);
-
-                //indicate if this is one of the critical drivers
+                // Only operational drivers are considered available for use
                 if (newDriver.getState() == DriverState.OPERATIONAL) {
+                    drivers_.add(newDriver);
+                    //request InterfaceMgr to bind with it
+                    mgr_.bindWithDriver(name);
+
+                    //indicate if this is one of the critical drivers
                     if (newDriver.isPosition()) {
                         positionReady_ = true;
                     }else if (newDriver.isController()) {
                         controllerReady_ = true;
                     }
+
+                    //reset the wait timer
+                    startedWaiting_ = System.currentTimeMillis();
                 }
 
-                //reset the wait timer
-                startedWaiting_ = System.currentTimeMillis();
                 log_.info("STARTUP", "InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
-                        " with " + cap.size() + " capabilities.");
+                  " with " + cap.size() + " capabilities.");
             }
         }
     }
