@@ -340,6 +340,7 @@ public class Trajectory {
 
     return null;
   }
+
   /**
    * Get the next maneuver of the specified type which will be active after loc, null if one cannot be found
    */
