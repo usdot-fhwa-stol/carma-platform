@@ -218,6 +218,10 @@ function showModal(showWarning, modalMessage) {
         return;
     }
 
+    //stop the timer when alert occurs;
+    clearInterval(routeTimer);
+
+    //display the modal
     modal.style.display = 'block';
 
     var modalBody = document.getElementsByClassName('modal-body')[0];
