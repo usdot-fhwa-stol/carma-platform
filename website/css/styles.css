@@ -196,14 +196,14 @@ div.message_box {
     padding: 35px 35px 15px 30px;
     height: 150px;
     color: #404040;
-    background-color: #ffcc00;
+    background-color: #ffffb3;/*  #e6e600; Yellow; */
     font-size: 27px;
     font-bold: true;
+    overflow: auto;
 }
 
 /*** Button ***/
-.button_disabled {
-    background-color: gray;
+.button_cav {
     border: none;
     color: white;
     padding: 15px 32px;
@@ -220,68 +220,28 @@ div.message_box {
     transition: background-color .2s;
     border-radius: 100px;
     box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
-    opacity: 0.6;
+}
+
+.button_disabled {
+    background-color: gray;
     cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .button_enabled {
     background-color: cornflowerblue;
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 40px;
-    font-bold: true;
-    margin: 4px 2px;
-    cursor: pointer;
-    width: 100%;
-    height: 75px;
-    border-radius: 100px;
-    transition: background-color .2s;
-    border-radius: 100px;
-    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
 }
 
 .button_engaged {
     background-color: #4CAF50; /* Green; */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 40px;
-    font-bold: true;
-    margin: 4px 2px;
-    cursor: pointer;
-    width: 100%;
-    height: 75px;
-    border-radius: 100px;
-    transition: background-color .2s;
-    border-radius: 100px;
-    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
+}
+
+.button_disengaged {
+    background-color: #b32400; /* Red; */
 }
 
 .button_inactive {
-    background-color: #e6e600; /* Yellow; */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 40px;
-    font-bold: true;
-    margin: 4px 2px;
-    cursor: pointer;
-    width: 100%;
-    height: 75px;
-    border-radius: 100px;
-    transition: background-color .2s;
-    border-radius: 100px;
-    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
+    background-color: #ff6600; /*orange*/
 }
 
 /*** MODAL ***/
@@ -305,7 +265,7 @@ div.message_box {
 /* Modal Popup */
 .modal-header {
     padding: 2px 16px;
-    background-color: #ffcc00;
+    background-color: #ffcc00; /* yellow */
     color: black;
     align: center;
     text-align: middle;
@@ -482,6 +442,15 @@ div.message_box {
 #divRouteInfo {
     position: relative;
     top: 5%;
+    color: black;
+    font-size: 45px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#divRouteTimer{
+    position: relative;
+    top: 10%;
     color: black;
     font-size: 45px;
     font-weight: bold;
