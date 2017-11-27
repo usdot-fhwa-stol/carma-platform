@@ -108,6 +108,8 @@ public class TrajectoryExecutor extends GuidanceComponent {
         if (currentTrajectory != null && !bufferedTrajectoryRunning) {
             log.info("Running buffered trajectory!");
             trajectoryExecutorWorker.runTrajectory(currentTrajectory);
+            tracking_.addNewTrajectory(currentTrajectory);
+            bufferedTrajectoryRunning = true;
         }
     }
 
