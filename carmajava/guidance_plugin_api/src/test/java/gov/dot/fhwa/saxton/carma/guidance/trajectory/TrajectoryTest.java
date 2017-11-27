@@ -269,7 +269,7 @@ public class TrajectoryTest {
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
 
-    double loc = traj.findLatestWindowOfSize(3.0);
+    double loc = traj.findLatestWindowOfSize(11.0);
 
     assertEquals(-1.0, loc, 0.01);
   }
@@ -281,7 +281,7 @@ public class TrajectoryTest {
 
     double loc = traj.findLatestWindowOfSize(2.0);
 
-    assertEquals(5.0, loc, 0.01);
+    assertEquals(10.0, loc, 0.01);
   }
 
   @Test
@@ -311,7 +311,7 @@ public class TrajectoryTest {
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
 
-    double loc = traj.findLatestWindowOfSize(3.0);
+    double loc = traj.findLatestWindowOfSize(11.0);
 
     assertEquals(-1.0, loc, 0.01);
   }
