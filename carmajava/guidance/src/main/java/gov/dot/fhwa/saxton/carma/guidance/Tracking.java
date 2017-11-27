@@ -452,51 +452,20 @@ public class Tracking extends GuidanceComponent {
 		coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 		coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 		coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
-		if(navSatFixSubscriber.getLastMessage() != null && getTransformClient != null) {
+		if(navSatFixSubscriber.getLastMessage() != null) {
 			NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
-			Location location_of_baselink = new Location();
-			location_of_baselink.setLongitude(gps_msg.getLongitude());
-			location_of_baselink.setLatitude(gps_msg.getLatitude());
-			location_of_baselink.setAltitude(gps_msg.getAltitude());
-			Point3D point_of_baselink_in_earth = converter.geodesic2Cartesian(location_of_baselink, Transform.identity());
-			if(!vehicle_to_baselink_transform_ready) {
-				GetTransformRequest transform_request = getTransformClient.newMessage();
-				transform_request.setParentFrame(baseLinkFrame);
-				transform_request.setChildFrame(vehicleFrame);
-				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
-					
-					@Override
-					public void onSuccess(GetTransformResponse msg) {
-						log.debug("BSM", "Get baselink_to_vehicle_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
-						if(msg.getErrorStatus() == 0) {
-							vehicleToBaselink = Transform.fromTransformMessage(msg.getTransform().getTransform());
-							vehicle_to_baselink_transform_ready = true;
-						}
-					}
-					
-					@Override
-					public void onFailure(Exception e) {
-					}
-				});
+			double lat = gps_msg.getLatitude();
+			double Lon = gps_msg.getLongitude();
+			float elev = (float) gps_msg.getAltitude();
+			//TODO: need to have transformation from baselink frame to vehicle frame
+			if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
+				coreData.setLatitude(lat);
 			}
-			
-			if(vehicle_to_baselink_transform_ready) {
-				Vector3 after_transform = vehicleToBaselink.getTranslation().add(
-						new Vector3(point_of_baselink_in_earth.getX(), point_of_baselink_in_earth.getY(), point_of_baselink_in_earth.getZ()));
-				Point3D point_of_vehicle_in_earth = new Point3D(after_transform.getX(), after_transform.getY(), after_transform.getZ());
-				Location location_of_vehicle = converter.cartesian2Geodesic(point_of_vehicle_in_earth, Transform.identity());
-				double lat = location_of_vehicle.getLatitude();
-				double Lon = location_of_vehicle.getLongitude();
-				float elev = (float) location_of_vehicle.getAltitude();
-				if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
-					coreData.setLatitude(lat);
-				}
-				if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
-					coreData.setLongitude(Lon);
-				}
-				if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
-					coreData.setElev(elev);
-				}
+			if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
+				coreData.setLongitude(Lon);
+			}
+			if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
+				coreData.setElev(elev);
 			}
 			
 			double semi_major_square = gps_msg.getPositionCovariance()[0];
@@ -521,7 +490,6 @@ public class Tracking extends GuidanceComponent {
 					coreData.getAccuracy().setSemiMajor(semi_major);
 				}
 			}
-			
 			if(semi_minor != -1) {
 				if(semi_minor >= PositionalAccuracy.ACCURACY_MAX) {
 					coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_MAX);
