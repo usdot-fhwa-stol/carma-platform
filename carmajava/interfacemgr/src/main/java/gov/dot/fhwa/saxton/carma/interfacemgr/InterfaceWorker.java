@@ -60,7 +60,7 @@ public class InterfaceWorker {
     /**
      * Updates the info known about a current driver.  Note that this is expected to be called frequently throughout
      * the life of the node.
-     * Only Operational drivers are added the to list of drivers available to other nodes.
+     * Only Operational drivers are added to the list of drivers available to other nodes.
      * If a driver starts in a degraded state it will only be added once it becomes operational. (TODO Support initially degraded drivers)
      *
      * @param newDriver - all available details about the driver publishing its status
