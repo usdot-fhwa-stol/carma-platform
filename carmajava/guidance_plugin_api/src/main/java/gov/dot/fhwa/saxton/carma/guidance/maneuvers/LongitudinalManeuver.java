@@ -55,7 +55,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
 
 
     @Override
-    public final boolean executeTimeStep() {
+    public boolean executeTimeStep() {
         verifyLocation();
 
         if (startTime_ == 0) {

@@ -27,9 +27,12 @@ import org.mockito.stubbing.Answer;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import javax.naming.CompoundName;
+
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 public class PluginLifecycleHandlerTest {
     @Before public void setUp() throws Exception {
@@ -38,6 +41,8 @@ public class PluginLifecycleHandlerTest {
         when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
         LoggerManager.setLoggerFactory(mockFact);
         p = mock(IPlugin.class);
+        ComponentVersion cv = new ComponentVersion();
+        when(p.getVersionInfo()).thenReturn(cv);
         handler = new PluginLifecycleHandler(p);
     }
 

@@ -17,7 +17,9 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
@@ -106,6 +108,8 @@ public class TrajectoryExecutor extends GuidanceComponent {
         if (currentTrajectory != null && !bufferedTrajectoryRunning) {
             log.info("Running buffered trajectory!");
             trajectoryExecutorWorker.runTrajectory(currentTrajectory);
+            tracking_.addNewTrajectory(currentTrajectory);
+            bufferedTrajectoryRunning = true;
         }
     }
 
@@ -164,6 +168,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
     }
 
   /**
+   * Get the current complex maneuver, null if none are currently executing
+   */
+    public IManeuver getCurrentComplexManeuver() {
+        return trajectoryExecutorWorker.getCurrentComplexManeuver();
+    }
+
+  /**
    * Get the next lateral maneuver, null if none are currently executing
    */
     public IManeuver getNextLateralManeuver() {
@@ -175,6 +186,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
    */
     public IManeuver getNextLongitudinalManeuver() {
         return trajectoryExecutorWorker.getNextLongitudinalManeuver();
+    }
+
+  /**
+   * Get the next complex maneuver, null if none are currently executing
+   */
+    public IManeuver getNextComplexManeuver() {
+        return trajectoryExecutorWorker.getNextComplexManeuver();
     }
 
   /**
@@ -191,6 +209,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
         trajectoryExecutorWorker.registerOnTrajectoryProgressCallback(pct, callback);
     }
 
+    /**
+     * Unregister the callback, ensuring it is no longer invoked at any point in time
+     */
+    public void unregisterOnTrajectoryProgressCallback(OnTrajectoryProgressCallback callback) {
+        trajectoryExecutorWorker.unregisterOnTrajectoryProgressCallback(callback);
+    }
+
   /**
    * Submit the specified trajectory for execution
    * </p>
@@ -201,9 +226,17 @@ public class TrajectoryExecutor extends GuidanceComponent {
         log.info("TrajectoryExecutor received new trajectory!");
         int idx = 1;
         for (IManeuver m : traj.getManeuvers()) {
-            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + (m instanceof LongitudinalManeuver ? "LONGITUDINAL" : "LATERAL"));
+            String maneuverType = "LATERAL";
             if (m instanceof LongitudinalManeuver) {
-                log.info("Speeds from " + m.getStartSpeed() + " to " + m.getTargetSpeed());
+                maneuverType = "LONGITUDINAL";
+            } else if (m instanceof IComplexManeuver) {
+                maneuverType = "COMPLEX";
+            }
+
+            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + maneuverType);
+            if (m instanceof LongitudinalManeuver) {
+                LongitudinalManeuver lonMvr = (LongitudinalManeuver) m;
+                log.info("Speeds from " + lonMvr.getStartSpeed() + " to " + lonMvr.getTargetSpeed());
             }
             idx++;
         }
@@ -216,5 +249,14 @@ public class TrajectoryExecutor extends GuidanceComponent {
         } else {
             currentTrajectory = traj;
         }
+    }
+
+    /**
+     * Get the currently executing trajectory from the TrajectoryExecutor
+     * 
+     * @return The currently executing trajectory, or null if none is running
+     */
+    public Trajectory getCurrentTrajectory() {
+        return trajectoryExecutorWorker.getCurrentTrajectory();
     }
 }

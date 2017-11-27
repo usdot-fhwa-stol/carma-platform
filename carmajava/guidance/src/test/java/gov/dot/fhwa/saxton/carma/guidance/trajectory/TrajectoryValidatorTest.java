@@ -26,6 +26,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -57,19 +58,19 @@ public class TrajectoryValidatorTest {
     tv.addValidationConstraint(tvc3);
 
     Trajectory t = mock(Trajectory.class);
-    List<IManeuver> maneuvers = new ArrayList<IManeuver>();
+    List<IManeuver> maneuvers = new ArrayList<>();
 
-    maneuvers.add(mock(IManeuver.class));
-    maneuvers.add(mock(IManeuver.class));
-    maneuvers.add(mock(IManeuver.class));
+    maneuvers.add(mock(ISimpleManeuver.class));
+    maneuvers.add(mock(ISimpleManeuver.class));
+    maneuvers.add(mock(ISimpleManeuver.class));
 
     when(t.getManeuvers()).thenReturn(maneuvers);
 
     assertTrue(tv.validate(t));
 
-    verify(tvc1, times(3)).visit((IManeuver) any());
-    verify(tvc2, times(3)).visit((IManeuver) any());
-    verify(tvc3, times(3)).visit((IManeuver) any());
+    verify(tvc1, times(3)).visit((ISimpleManeuver) any());
+    verify(tvc2, times(3)).visit((ISimpleManeuver) any());
+    verify(tvc3, times(3)).visit((ISimpleManeuver) any());
   }
 
   @Test
@@ -88,19 +89,19 @@ public class TrajectoryValidatorTest {
     tv.addValidationConstraint(tvc3);
 
     Trajectory t = mock(Trajectory.class);
-    List<IManeuver> maneuvers = new ArrayList<IManeuver>();
+    List<IManeuver> maneuvers = new ArrayList<>();
 
-    maneuvers.add(mock(IManeuver.class));
-    maneuvers.add(mock(IManeuver.class));
-    maneuvers.add(mock(IManeuver.class));
+    maneuvers.add(mock(ISimpleManeuver.class));
+    maneuvers.add(mock(ISimpleManeuver.class));
+    maneuvers.add(mock(ISimpleManeuver.class));
 
     when(t.getManeuvers()).thenReturn(maneuvers);
 
     assertFalse(tv.validate(t));
 
-    verify(tvc1, times(3)).visit((IManeuver) any());
-    verify(tvc2, times(3)).visit((IManeuver) any());
-    verify(tvc3, times(3)).visit((IManeuver) any());
+    verify(tvc1, times(3)).visit((ISimpleManeuver) any());
+    verify(tvc2, times(3)).visit((ISimpleManeuver) any());
+    verify(tvc3, times(3)).visit((ISimpleManeuver) any());
   }
 
   protected TrajectoryValidator tv;

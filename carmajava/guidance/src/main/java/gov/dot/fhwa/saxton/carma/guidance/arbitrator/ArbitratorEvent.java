@@ -14,10 +14,16 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
+package gov.dot.fhwa.saxton.carma.guidance.arbitrator;
 
-public enum ManeuverType {
-  LATERAL,
-  LONGITUDINAL,
-  COMPLEX
+/**
+ * Events that the {@link ArbitratorStateMachine} is capable of responding to
+ */
+public enum ArbitratorEvent {
+  INITIALIZE,
+  FINISHED_TRAJECTORY_PLANNING,
+  EXECUTING_COMPLEX_TRAJECTORY,
+  TRAJECTORY_COMPLETION_ALERT,
+  TRAJECTORY_FAILED_EXECUTION,
+  COMPLEX_TRAJECTORY_COMPLETION_ALERT
 }

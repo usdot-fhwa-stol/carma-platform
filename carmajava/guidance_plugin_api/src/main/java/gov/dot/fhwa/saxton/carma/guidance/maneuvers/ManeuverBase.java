@@ -23,7 +23,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 /**
  * Base class for all maneuver objects.
  */
-public abstract class ManeuverBase implements IManeuver {
+public abstract class ManeuverBase implements ISimpleManeuver {
 
     protected double                            startDist_ = -1.0;
     protected double                            endDist_ = -1.0;

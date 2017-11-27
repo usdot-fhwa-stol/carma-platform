@@ -21,6 +21,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,14 +41,6 @@ public class PluginManagerTest {
 
     public class TestPlugin1 implements IPlugin {
 
-        @Override public String getName() {
-            return null;
-        }
-
-        @Override public String getVersionId() {
-            return null;
-        }
-
         @Override public void onInitialize() {
 
         }
@@ -92,18 +85,15 @@ public class PluginManagerTest {
         public void registerAvailabilityListener(AvailabilityListener listener) {
 
         }
+
+		@Override
+		public ComponentVersion getVersionInfo() {
+			return null;
+		}
     }
 
     public class TestPlugin2 implements IPlugin {
 
-        @Override public String getName() {
-            return null;
-        }
-
-        @Override public String getVersionId() {
-            return null;
-        }
-
         @Override public void onInitialize() {
 
         }
@@ -148,6 +138,11 @@ public class PluginManagerTest {
         public void registerAvailabilityListener(AvailabilityListener listener) {
 
         }
+
+		@Override
+		public ComponentVersion getVersionInfo() {
+			return null;
+		}
     }
 
     @Before public void setUp() throws Exception {
@@ -174,8 +169,8 @@ public class PluginManagerTest {
 
     @Test public void instantiatePluginsFromClasses() throws Exception {
       List<Class<? extends IPlugin>> pluginList = new ArrayList<>();
-      pluginList.add(MockRouteFollowingPlugin.class);
-      pluginList.add(MockCruisingPlugin.class);
+      pluginList.add(CruisingPlugin.class);
+      pluginList.add(NoOpPlugin.class);
 
       List<IPlugin> instances = pm.instantiatePluginsFromClasses(pluginList, psl);
 
@@ -185,10 +180,10 @@ public class PluginManagerTest {
       boolean foundMockRouteFollowingPlugin = false;
 
       for (IPlugin p : instances) {
-        if (p instanceof MockRouteFollowingPlugin) {
+        if (p instanceof NoOpPlugin) {
           foundMockRouteFollowingPlugin = true;
         }
-        if (p instanceof MockCruisingPlugin) {
+        if (p instanceof CruisingPlugin) {
           foundMockCruisingPlugin = true;
         }
       }

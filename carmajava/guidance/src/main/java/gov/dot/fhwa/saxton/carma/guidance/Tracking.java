@@ -28,7 +28,9 @@ import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
@@ -369,20 +371,20 @@ public class Tracking extends GuidanceComponent {
 			double currentDowntrack = routeSubscriber.getLastMessage().getDownTrack();
 			double currentSpeed = velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
 			if(hasTrajectoryError(currentTime, currentDowntrack, currentSpeed)) {
-				arbitrator.needsReplan.set(true);
+				arbitrator.notifyTrajectoryFailure();
 			}
 		}
 		Thread.sleep(sleepDurationMillis);
 	}
 
-	private void constructSpeedTimeTree(List<IManeuver> maneuvers) {
+	private void constructSpeedTimeTree(List<LongitudinalManeuver> maneuvers) {
 		
 		speedTimeTree.clear();
 		long lastEntryTime = 0;
 		for(int i = 0; i < maneuvers.size(); i++) {
 			// Add the state of the start point of the first maneuver to the tree
 			if(i == 0) {
-				IManeuver m = maneuvers.get(0);
+				LongitudinalManeuver m = maneuvers.get(0);
 				double[] speedAndDistance = new double[2];
 				speedAndDistance[0] = m.getStartSpeed();
 				speedAndDistance[1] = trajectoryStartLocation;
@@ -390,7 +392,7 @@ public class Tracking extends GuidanceComponent {
 				lastEntryTime = trajectoryStartTime;
 			}
 			// Add the state of end points of maneuvers to the tree
-			IManeuver m = maneuvers.get(i);
+			LongitudinalManeuver m = maneuvers.get(i);
 			double[] speedAndDistance = new double[2];
 			speedAndDistance[0] = m.getTargetSpeed();
 			speedAndDistance[1] = m.getEndDistance();

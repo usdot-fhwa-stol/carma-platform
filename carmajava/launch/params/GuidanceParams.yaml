@@ -25,6 +25,10 @@ arbitrator_replan_threshold: 0.75
 # Integer: Number of times to attempt to replan a Trajectory if validation fails
 trajectory_planning_max_attempts: 3
 
+# Double: Minimum length of a trajectory that will be planned under any normal scenario
+# Units: m
+minimum_trajectory_length: 50.0
+
 # Double: The initial size of the trajectory planning window for the Arbitrator
 # Units: m
 initial_planning_window: 50.0
@@ -110,6 +114,9 @@ min_acc_standoff_distance: 5.0
 # Units: milliseconds
 shutdown_wait_time: 5000
 
+# Double: Time to plan for after a complex trajectory to allow for our speed to steady after a complex trajectory
+# Units: seconds
+post_complex_trajectory_steadying_period: 2.0
 # Double: Maximum speed error between cmd_speed and actual vehicle speed
 # Units: m
 max_speed_error: 5.0

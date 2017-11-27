@@ -14,10 +14,15 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
+package gov.dot.fhwa.saxton.carma.guidance.arbitrator;
 
-public enum ManeuverType {
-  LATERAL,
-  LONGITUDINAL,
-  COMPLEX
+/**
+ * Listener to receive notification of changes in the Arbitrator state machine
+ */
+public interface ArbitratorStateChangeListener {
+  /**
+   * Called when the state has changed in the Arbitrator after an event has been processed
+   * @param newState The state the Arbitrator is now in
+   */
+  public void onStateChange(ArbitratorState newState);
 }

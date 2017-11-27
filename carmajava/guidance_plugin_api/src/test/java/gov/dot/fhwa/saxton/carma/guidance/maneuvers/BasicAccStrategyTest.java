@@ -35,16 +35,16 @@ public class BasicAccStrategyTest {
   @Test
   public void testNoOverride() {
     assertFalse(bas.evaluateAccTriggerConditions(20.0, 10.0, 10.0));
-    assertFalse(bas.evaluateAccTriggerConditions(11.0, 10.0, 10.0));
+    assertFalse(bas.evaluateAccTriggerConditions(16.0, 10.0, 10.0));
 
-    assertTrue(fpEquals(10.0, bas.computeAccOverrideSpeed(20.0, 15.0, 15.0, 10.0), EPSILON));
+    assertTrue(fpEquals(20.0, bas.computeAccIdealSpeed(25.0, 10.0, 20.0, 10.0), EPSILON));
   }
 
   @Test
   public void testHalfOverride() {
     double frontVehicleSpeed = 10.0;
     double currentSpeed = 20.0;
-    double cmdOverride = bas.computeAccOverrideSpeed(15.0, frontVehicleSpeed, currentSpeed, 10.0);
+    double cmdOverride = bas.computeAccIdealSpeed(15.0, frontVehicleSpeed, currentSpeed, 10.0);
     assertEquals(15.0, cmdOverride, 0.001);
   }
 
@@ -52,7 +52,7 @@ public class BasicAccStrategyTest {
   public void testFullOverride() {
     double frontVehicleSpeed = 10.0;
     double currentSpeed = 20.0;
-    double cmdOverride = bas.computeAccOverrideSpeed(5.0, frontVehicleSpeed, currentSpeed, 10.0);
+    double cmdOverride = bas.computeAccIdealSpeed(5.0, frontVehicleSpeed, currentSpeed, 10.0);
     assertEquals(10.0, cmdOverride, 0.001);
   }
 
@@ -60,13 +60,13 @@ public class BasicAccStrategyTest {
   public void testTooCloseOverride() {
     double frontVehicleSpeed = 10.0;
     double currentSpeed = 20.0;
-    double cmdOverride = bas.computeAccOverrideSpeed(3.0, frontVehicleSpeed, currentSpeed, 10.0);
+    double cmdOverride = bas.computeAccIdealSpeed(3.0, frontVehicleSpeed, currentSpeed, 10.0);
     assertEquals(10.0, cmdOverride, 0.001);
   }
 
   @Before
   public void setUp() {
-    bas = new BasicAccStrategy();
+    bas = new BasicAccStrategy(5.0);
     bas.setDesiredTimeGap(1.0);
     bas.setMaxAccel(2.0);
     bas.setVehicleResponseDelay(0.0);

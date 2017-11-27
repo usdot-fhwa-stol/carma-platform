@@ -14,10 +14,16 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
+package gov.dot.fhwa.saxton.carma.guidance.arbitrator;
 
-public enum ManeuverType {
-  LATERAL,
-  LONGITUDINAL,
-  COMPLEX
+/**
+ * Enum describing the possible states of the Arbitrator
+ */
+public enum ArbitratorState {
+  INIT,
+  INITIAL_PLANNING,
+  AWAITING_REPLAN,
+  NORMAL_REPLANNING,
+  REPLAN_DUE_TO_FAILED_TRAJECTORY,
+  REPLAN_AFTER_COMPLEX_TRAJECTORY
 }
