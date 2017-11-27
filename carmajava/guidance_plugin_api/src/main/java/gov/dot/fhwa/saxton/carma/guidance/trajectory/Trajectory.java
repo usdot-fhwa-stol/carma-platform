@@ -37,8 +37,8 @@ public class Trajectory {
   protected double endLocation;
   protected List<ISimpleManeuver> lateralManeuvers;
   protected List<LongitudinalManeuver> longitudinalManeuvers;
-  protected IComplexManeuver complexManeuver = null;
-  protected boolean lateralManeuversSorted = true;
+  protected Set<ISimpleManeuver> lateralManeuvers;
+  protected Set<LongitudinalManeuver> longitudinalManeuvers;
   protected boolean longitudinalManeuversSorted = true;
 
   /**
