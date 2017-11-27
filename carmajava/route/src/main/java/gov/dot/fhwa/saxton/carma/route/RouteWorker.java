@@ -290,7 +290,10 @@ public class RouteWorker {
    */
   protected void startRouteAtIndex(int index) {
     // Insert a starting waypoint at the current vehicle location which is connected to the route
-    RouteWaypoint startingWP = new RouteWaypoint(new Location(hostVehicleLocation)); // don't want the route and vehicle location to reference the same object
+    RouteWaypoint downtrackWP = activeRoute.getWaypoints().get(index);
+    RouteWaypoint startingWP = new RouteWaypoint(downtrackWP); // Deep copy of downtrack waypoint
+    startingWP.setLocation(new Location(hostVehicleLocation)); // Don't want waypoint and vehicle to reference same location object
+
     boolean ableToConnectToRoute = false;
     try {
       ableToConnectToRoute = activeRoute.insertWaypoint(startingWP, index);

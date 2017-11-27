@@ -17,9 +17,9 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="mobile-web-app-capable" content="yes">
-    <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <script src="scripts/eventemitter2.min.js"></script>
     <script src="scripts/roslib.js"></script>
     <script src="scripts/control.js" defer></script>
 
@@ -29,7 +29,9 @@
     <script async defer
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMzV4biqVN0pf3l1lYVWQ4KSWLyoG6OV0&callback=initMap">
     </script>
-    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <link rel="stylesheet" type="text/css" href="css/styles.css"/>
+    <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css"/>
+
     <!--
     Setup:
     1) Move files command: sudo cp -R -r /home/mfromm/catkin_ws/src/CarmaPlatform/website/* /var/www/html/
@@ -42,26 +44,26 @@
 </head>
 <body>
 <div class="tab">
-    <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">Driver Tasks</button>
-    <button class="tablinks" onclick="openTab(event, 'divDriverView')">Driver View</button>
-    <button class="tablinks" onclick="openTab(event, 'divMap')">Map</button>
-    <button class="tablinks" onclick="openTab(event, 'divSystemStatus')">System Status</button>
-    <button class="tablinks" onclick="openTab(event, 'divSystemLogs')">System Logs</button>
+    <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">TASKS</button>
+    <button class="tablinks" onclick="openTab(event, 'divDriverView')">VIEW</button>
+    <button class="tablinks" onclick="openTab(event, 'divMap')">MAP</button>
+    <button class="tablinks" onclick="openTab(event, 'divSystemStatus')">STATUS</button>
+    <button class="tablinks" onclick="openTab(event, 'divSystemLogs')">LOGS</button>
 </div>
 <div class="tabheader">
-    <button id="btnCAVGuidance" onclick="engageGuidance();" title="Start CAV Guidance" class="button_disabled" disabled>CAV Guidance</button>
+    <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
 </div>
 <div id="divCapabilities" class="tabcontent">
     <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
-    <div id="divRoutes" align="center">
-    </div>
+    <div id="divRoutes" align="center"></div>
     <div id="divSubCapabilities" hidden="true" align="center">
     </div>
 </div>
 <div id="divDriverView" class="tabcontent">
+    <div id="divRouteInfo">No Route Selected : 00h 00m 00s</div>
     <div class="divSpeedLimit">
-        <img src="images/speedlimitsign.png" alt="Speed Limit" style="width:200px;height:200px">
-        <div id="divSpeedLimitValue"></div>
+        <img src="images/speedlimitsign.png" alt="Speed Limit" class="speed_limit_sign">
+        <div id="divSpeedLimitValue">0</div>
     </div>
     <div class="divSpeedometer">
         <div class="gauge-a"></div>
@@ -155,7 +157,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <span class="close">&times;</span>
-            <h2>System Alert!</h2>
+            <h2>SYSTEM ALERT<i class="fa fa-exclamation-triangle" style="font-size:40px;color:red;"></i></h2>
         </div>
         <div class="modal-body">
             <p>Some text in the Modal Body.</p>
@@ -170,4 +172,7 @@
     <p class="copyright">© LEIDOS 2017</p>
     <p class="systemversion">&nbsp;</p>
 </footer>
+<audio id="audioAlert1" src="sound/not-kiddin.mp3" preload="auto"></audio>
+<audio id="audioAlert2" src="sound/sunny.mp3" preload="auto"></audio>
+<audio id="audioAlert3" src="sound/hurry.mp3" preload="auto"></audio>
 </html>
