@@ -6,6 +6,22 @@
 #Header contains the frame rest of the fields will use
 Header header
 
+#a presence vector, this message is used to describe objects coming from potentially
+#different sources. The presence vector is used to determine what items are set
+#by the producer
+uint16 presence_vector
+
+uint16 ID_PRESENCE_VECTOR = 1
+uint16 POSE_PRESENCE_VECTOR = 2
+uint16 VELOCITY_PRESENCE_VECTOR = 4
+uint16 VELOCITY_INST_PRESENCE_VECTOR = 8
+uint16 SIZE_PRESENCE_VECTOR = 16
+uint16 CONFIDENCE_PRESENCE_VECTOR = 32
+uint16 RANGE_RATE_PRESENCE_VECTOR = 64
+uint16 AZIMUTH_RATE_PRESENCE_VECTOR = 128
+uint16 RELATIVE_LANE_PRESENCE_VECTOR = 256
+uint16 OBJECT_TYPE_PRESENCE_VECTOR = 512
+
 #Object id. Matching ids on a topic should refer to the same object within some time period
 uint16 id
 
