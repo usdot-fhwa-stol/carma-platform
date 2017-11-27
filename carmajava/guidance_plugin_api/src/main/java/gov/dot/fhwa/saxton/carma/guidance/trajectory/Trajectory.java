@@ -235,7 +235,7 @@ public class Trajectory {
     maneuvers.sort((IManeuver m1, IManeuver m2) -> 
       Double.compare(m1.getStartDistance(), m2.getStartDistance()));
 
-    double lastEnd = 0;
+    double lastEnd = startLocation;
     for (IManeuver m : maneuvers) {
       if (m.getStartDistance() - lastEnd >= size)  {
         return lastEnd;
@@ -269,7 +269,7 @@ public class Trajectory {
         m2.getStartDistance());
     });
 
-    double lastStart = maneuvers.get(maneuvers.size() - 1).getEndDistance();
+    double lastStart = endLocation;
     for (int i = maneuvers.size() - 1; i >= 0; i--) {
       IManeuver m = maneuvers.get(i);
       if (lastStart - m.getEndDistance() >= size)  {
