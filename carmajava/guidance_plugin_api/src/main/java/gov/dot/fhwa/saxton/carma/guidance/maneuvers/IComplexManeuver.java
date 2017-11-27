@@ -33,21 +33,29 @@ public interface IComplexManeuver extends IManeuver {
 
   /**
    * Get the shortest possible time the maneuver might take to complete, in seconds
+   * 
+   * Presently only used as an expectation rather than a hard limit but this is subject to change.
    */
   Time getMinCompletionTime();
 
   /**
    * Get the longest possible time the maneuver might take to complete, in seconds
+   * 
+   * Presently only used as an expectation rather than a hard limit but this is subject to change.
    */
   Time getMaxCompletionTime();
 
   /**
    * Get the highest speed this complex maneuver is expected to command, in m/s
+   * 
+   * Presently only used as an expectation rather than a hard limit but this is subject to change.
    */
   double getMaxExpectedSpeed();
 
   /**
    * Get the lowest speed this complex maneuver is expected to command, in m/s
+   * 
+   * Presently only used as an expectation rather than a hard limit but this is subject to change.
    */
   double getMinExpectedSpeed();
 }
