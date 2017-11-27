@@ -53,7 +53,7 @@ function setRouteMap(map){
 
         //Get the saved route.
         //Parse and loop through the waypoints to get the coordinates.
-        var routePlanCoordinates = sessionStorage.getItem("routePlanCoordinates");
+        var routePlanCoordinates = sessionStorage.getItem('routePlanCoordinates');
         routePlanCoordinates = JSON.parse(routePlanCoordinates);
 
         if (sessionStorage.getItem('routePlanCoordinates') == null)
