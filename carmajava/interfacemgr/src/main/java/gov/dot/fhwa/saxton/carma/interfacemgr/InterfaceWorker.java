@@ -75,7 +75,7 @@ public class InterfaceWorker {
                 //record the updates. Will need to fetch new driver api as well
                 newDriver.setCapabilities(mgr_.getDriverApi(name));
                 drivers_.set(index, newDriver);
-                if (newDriver.isPosition() || newDriver.isController()
+                if ((newDriver.isPosition() || newDriver.isController())
                   && (newDriver.getState() == DriverState.FAULT
                   || newDriver.getState() == DriverState.OFF)) {
                     mgr_.errorShutdown("FAULT detected in critical driver: " + newDriver.getName());
