@@ -98,7 +98,7 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
     Duration timeElapsed = speedHarmInputs_.getTimeSinceLastUpdate();
     if (timeElapsed.compareTo(timeout) > 0) {
       if (arbitratorService == null) {
-        log_.info("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
+        log_.error("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
         throw new IllegalStateException("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
       } else {
         log_.warn("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
