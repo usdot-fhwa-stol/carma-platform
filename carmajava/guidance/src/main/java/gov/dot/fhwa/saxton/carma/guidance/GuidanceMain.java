@@ -93,14 +93,15 @@ public class GuidanceMain extends SaxtonBaseNode {
     routeService.init();
     GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(state, pubSubService, node);
-    PluginManager pluginManager = new PluginManager(state, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
     Tracking tracking = new Tracking(state, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands, tracking);
+    PluginManager pluginManager = new PluginManager(state, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
     Arbitrator arbitrator = new Arbitrator(state, pubSubService, node, pluginManager, trajectoryExecutor);
     GuidanceShutdownHandler shutdownHandler = new GuidanceShutdownHandler(state, pubSubService, node);
     
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
+    pluginManager.setArbitratorService(arbitrator);
 
     executor.execute(maneuverInputs);
     executor.execute(arbitrator);

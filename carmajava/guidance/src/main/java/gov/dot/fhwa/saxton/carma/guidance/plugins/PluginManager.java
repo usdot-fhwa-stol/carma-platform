@@ -89,12 +89,27 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         this.executor = new PluginExecutor();
 
         pluginServiceLocator = new PluginServiceLocator(
-                new ArbitratorService(), 
+                null, // Need to call setArbitrator service to resolve circular dependency
                 new PluginManagementService(),
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
                 routeService);
+    }
+
+    /**
+     * Set the arbitrator service available to the plugins
+     * <p>
+     * Used to resolve circular dependency in constructors
+     */
+    public void setArbitratorService(ArbitratorService arbitratorService) {
+        pluginServiceLocator = new PluginServiceLocator(
+                arbitratorService,
+                pluginServiceLocator.getPluginManagementService(),
+                pluginServiceLocator.getPubSubService(), 
+                pluginServiceLocator.getParameterSource(), 
+                pluginServiceLocator.getManeuverPlanner(), 
+                pluginServiceLocator.getRouteService());
     }
 
     /**

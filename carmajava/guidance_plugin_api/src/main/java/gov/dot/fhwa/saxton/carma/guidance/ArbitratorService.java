@@ -19,6 +19,10 @@ package gov.dot.fhwa.saxton.carma.guidance;
 /**
  * Plugin interface to Arbitrator services provided by the Guidance package
  */
-public class ArbitratorService {
-    // STUB
+public interface ArbitratorService {
+    /**
+     * Inform the Arbitrator of trajectory execution failure, necessitating immediate replan and
+     * execution of a new trajectory.
+     */
+    void notifyTrajectoryFailure();
 }

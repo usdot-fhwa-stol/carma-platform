@@ -21,6 +21,7 @@ import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
@@ -54,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Runs inside the GuidanceMain class's executor and prompts the Guidance.Plugins
  * to plan trajectories for the vehicle to execute.
  */
-public class Arbitrator extends GuidanceComponent implements ArbitratorStateChangeListener {
+public class Arbitrator extends GuidanceComponent implements ArbitratorService, ArbitratorStateChangeListener {
   protected ArbitratorStateMachine stateMachine = new ArbitratorStateMachine();
   protected ISubscriber<RouteState> routeStateSubscriber;
   protected ISubscriber<TwistStamped> twistSubscriber;
@@ -476,10 +477,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
 
   }
 
-  /**
-   * Inform the Arbitrator of trajectory execution failure, necessitating immediate replan and
-   * execution of a new trajectory.
-   */
+  @Override
   public void notifyTrajectoryFailure() {
     stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_FAILED_EXECUTION);
   }
