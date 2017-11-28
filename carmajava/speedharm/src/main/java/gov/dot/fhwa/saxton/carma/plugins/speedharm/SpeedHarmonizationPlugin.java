@@ -16,9 +16,15 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
-import org.springframework.web.client.RestTemplate;import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
+import org.springframework.web.client.RestTemplate;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;import java.time.LocalDateTime;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.AlgorithmFlags;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.SortedSet;
 
 /**
  * Plugin implementing integration withe STOL I TO 22 Infrastructure Server
@@ -33,6 +39,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
   protected boolean endSessionOnSuspend = true;
   protected int serverVehicleId = 0;
   protected long timestepDuration = 1000;
+  protected double minimumManeuverLength = 10.0;
 
   protected StatusUpdater statusUpdater = null;
   protected Thread statusUpdaterThread = null;
@@ -44,6 +51,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
   protected VehicleDataManager vehicleDataManager;
   protected LocalDateTime lastUpdateTime = LocalDateTime.now();
 
+  private static final String SPEED_HARM_FLAG = "SPEEDHARM";
+
   public SpeedHarmonizationPlugin(PluginServiceLocator psl) {
     super(psl);
     version.setName("Speed Harmonization Plugin");
@@ -52,10 +61,11 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
 
   @Override
   public void onInitialize() {
-    serverUrl = pluginServiceLocator.getParameterSource().getString("~infrastructure_server_url");
+    serverUrl = pluginServiceLocator.getParameterSource().getString("~infrastructure_server_url", "http://localhost:5000");
     vehicleId = pluginServiceLocator.getParameterSource().getString("~vehicle_id");
-    double freq = pluginServiceLocator.getParameterSource().getDouble("~data_reporting_frequency");
+    double freq = pluginServiceLocator.getParameterSource().getDouble("~data_reporting_frequency", 1.0);
     timestepDuration = (long) (1000.0 / freq);
+    minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_min_maneuver_length", 10.0);
 
     vehicleDataManager = new VehicleDataManager();
     vehicleDataManager.init();
@@ -118,8 +128,45 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
     }
   }
 
+  private void planComplexManeuver(double start, double end) {
+    // STUB
+  }
+
   @Override
   public void planTrajectory(Trajectory traj, double expectedStartSpeed) {
-    // STUB
+    List<IManeuver> maneuvers = traj.getManeuvers();
+    double complexManeuverStartLocation = -1.0;
+    if (!maneuvers.isEmpty()) {
+      // Get the location of the last maneuver in the list
+      complexManeuverStartLocation = maneuvers.get(maneuvers.size() - 1).getEndDistance();
+    } else {
+      // Fill the whole trajectory if legal
+      complexManeuverStartLocation = traj.getStartLocation();
+    }
+
+    // Find the earliest window after the start location at which speedharm is enabled
+    SortedSet<AlgorithmFlags> flags = pluginServiceLocator.getRouteService()
+      .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
+
+    double earliestLegalWindow = complexManeuverStartLocation;
+    double endOfWindow = complexManeuverStartLocation;
+    for (AlgorithmFlags flagset : flags) {
+      if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
+        earliestLegalWindow = flagset.getLocation();
+        break;
+      }
+    }
+
+    // Find the end of that same window
+    for (AlgorithmFlags flagset : flags) {
+      if (flagset.getLocation() > earliestLegalWindow && flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
+        endOfWindow = flagset.getLocation();
+        break;
+      }
+    }
+
+    if (Math.abs(endOfWindow - earliestLegalWindow) > 10.0) {
+      planComplexManeuver(earliestLegalWindow, endOfWindow);
+    }
   }
 }
