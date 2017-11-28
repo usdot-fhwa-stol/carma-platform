@@ -67,6 +67,7 @@ var ready_max_trial = 10;
 var sound_counter = 0;
 var sound_counter_max = 3; //max # of times the sounds will be repeated.
 var sound_played_once = false;
+var audioElements = document.getElementsByTagName('audio');
 
 var host_instructions = '';
 var listenerPluginAvailability;
@@ -343,7 +344,7 @@ function startActiveRoute(id) {
 
         switch (result.errorStatus) {
             case ErrorStatus.NO_ERROR.value:
-            case ErrorStatus.ALREADY_FOLLOWING_ROUTE:
+            case ErrorStatus.ALREADY_FOLLOWING_ROUTE.value:
                  showSubCapabilitiesView(id);
                  break;
             case ErrorStatus.NO_ACTIVE_ROUTE.value:
@@ -614,8 +615,6 @@ function showGuidanceEngaged() {
 
     if (guidance_engaged == true) //To engage
     {
-        divCapabilitiesMessage.innerHTML = 'CAV Guidance has been started.'
-
         setCAVButtonState('ENGAGED');
 
         //Start checking availability (or re-subscribe) if Guidance has been engaged.
@@ -663,6 +662,8 @@ function setCAVButtonState (state){
         btnCAVGuidance.title = 'Start CAV Guidance';
         btnCAVGuidance.innerHTML = 'CAV Guidance - READY <i class="fa fa-thumbs-o-up"></i>';
 
+        //divCapabilitiesMessage.innerHTML = ''; // leave as is
+
         sessionStorage.setItem('isGuidanceEngaged', false);
         break;
 
@@ -674,6 +675,8 @@ function setCAVButtonState (state){
         btnCAVGuidance.title = 'CAV Guidance';
         btnCAVGuidance.innerHTML = 'CAV Guidance';
 
+        //divCapabilitiesMessage.innerHTML = ''; // leave as is
+
         sessionStorage.setItem('isGuidanceEngaged', false);
         break;
 
@@ -683,6 +686,8 @@ function setCAVButtonState (state){
 
          btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
          btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
+
+        divCapabilitiesMessage.innerHTML = 'CAV Guidance is engaged.';
 
          //Set session for when user refreshes
          sessionStorage.setItem('isGuidanceEngaged', true);
@@ -715,6 +720,8 @@ function setCAVButtonState (state){
         btnCAVGuidance.title = 'CAV Guidance status is inactive.';
         btnCAVGuidance.innerHTML = 'CAV Guidance - INACTIVE <i class="fa fa-times-circle-o"></i>';
         //leave isGuidanceEngaged as-is
+
+        divCapabilitiesMessage.innerHTML = 'CAV Guidance has been de-activated. <br/> To re-engage, double tap the ACC switch downward on the steering wheel.';
 
         //This check to make sure inactive sound is only played once even when it's been published multiple times in a row.
         //It will get reset when status changes back to engage.
@@ -822,8 +829,8 @@ function checkRobotEnabled() {
         });
 
         listenerRobotStatus.subscribe(function (message) {
-            insertNewTableRow('tblThird', 'Robot Active', message.robot_active);
-            insertNewTableRow('tblThird', 'Robot Enabled', message.robot_enabled);
+            insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
+            insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
 
             //Update the button when Guidance is engaged.
             if (message.robot_active == false){
@@ -849,7 +856,7 @@ function showDiagnostics() {
     });
 
     listenerACCEngaged.subscribe(function (message) {
-        insertNewTableRow('tblThird', 'ACC Engaged', message.data);
+        insertNewTableRow('tblFirstB', 'ACC Engaged', message.data);
     });
 
     var listenerDiagnostics = new ROSLIB.Topic({
@@ -869,7 +876,7 @@ function showDiagnostics() {
              myStatus.values.forEach(
                    function (myValues){
                         if (myValues.key=='Primed'){
-                            insertNewTableRow('tblThird', myValues.key, myValues.value);
+                            insertNewTableRow('tblFirstB', myValues.key, myValues.value);
                         }
                         // Commented out since Diagnostics key/value pair can be many and can change. Only subscribe to specific ones.
                         // insertNewTableRow('tblFirstA', myValues.key, myValues.value);
@@ -1057,9 +1064,9 @@ function showSpeedAccelInfo() {
     });
 
     listenerSpeedAccel.subscribe(function (message) {
-        insertNewTableRow('tblThird', 'Cmd Speed (m/s)', message.speed.toFixed(2));
-        insertNewTableRow('tblThird', 'Cmd Speed (MPH)', Math.round(message.speed*2.23694));
-        insertNewTableRow('tblThird', 'Max Accel', message.max_accel.toFixed(2));
+        insertNewTableRow('tblFirstB', 'Cmd Speed (m/s)', message.speed.toFixed(2));
+        insertNewTableRow('tblFirstB', 'Cmd Speed (MPH)', Math.round(message.speed*2.23694));
+        insertNewTableRow('tblFirstB', 'Max Accel', message.max_accel.toFixed(2));
     });
 }
 
@@ -1096,7 +1103,7 @@ function showCANSpeeds(){
     });
 
     listenerCANEngineSpeed.subscribe(function (message) {
-        insertNewTableRow('tblThird', 'CAN Engine Speed', message.data);
+        insertNewTableRow('tblFirstB', 'CAN Engine Speed', message.data);
         //setSpeedometer(Math.round(message.data));
     });
 
@@ -1109,8 +1116,8 @@ function showCANSpeeds(){
     listenerCANSpeed.subscribe(function (message) {
         var speedMPH = Math.round(message.data * 2.23694);
         setSpeedometer(speedMPH);
-        insertNewTableRow('tblThird', 'CAN Speed (m/s)', message.data);
-        insertNewTableRow('tblThird', 'CAN Speed (MPH)', speedMPH);
+        insertNewTableRow('tblFirstB', 'CAN Speed (m/s)', message.data);
+        insertNewTableRow('tblFirstB', 'CAN Speed (MPH)', speedMPH);
     });
 }
 
@@ -1318,6 +1325,9 @@ window.onload = function () {
         divCapabilitiesMessage.innerHTML = 'Sorry, cannot proceed unless your browser support HTML Web Storage Objects. Please contact your system administrator.';
 
     }
+
+    //audio fix
+    loadAudioElements();
 
 }
 
