@@ -1,8 +1,7 @@
 /*
  * Copyright (C) 2017 LEIDOS.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not * use this file except in compliance with the License. You may obtain a copy of
  * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -55,7 +54,8 @@ public class VehicleDataManager {
   /**
    * Begin the subscriptions to vehicle data
    */
-  public void init() {
+  public void init(IPubSubService pubSubService) {
+    this.pubSubService = pubSubService;
     robotStatusSubscriber = pubSubService.getSubscriberForTopic("robot_enabled", RobotEnabled._TYPE);
     radarSubscriber = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
     navSatSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);

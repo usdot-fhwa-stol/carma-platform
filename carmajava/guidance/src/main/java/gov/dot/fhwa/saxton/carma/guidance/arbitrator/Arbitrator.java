@@ -238,7 +238,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
       }
     }
 
-    if (lateralPlugin == null || !longitudinalPlugins.isEmpty()) {
+    if (lateralPlugin == null || longitudinalPlugins.isEmpty()) {
       panic("Arbitrator unable to locate the configured and required plugins!");
     }
 

@@ -17,6 +17,8 @@
 package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
 import org.ros.message.Duration;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
@@ -26,6 +28,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.AlgorithmFlags;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
 
@@ -54,6 +57,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   protected SessionManager sessionManager;
   protected VehicleDataManager vehicleDataManager;
   protected LocalDateTime lastUpdateTime = LocalDateTime.now();
+  protected RestTemplate restClient;
 
   private static final String SPEED_HARM_FLAG = "SPEEDHARM";
 
@@ -61,6 +65,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     super(psl);
     version.setName("Speed Harmonization Plugin");
     version.setMajorRevision(1);
+
+    restClient = new RestTemplate();
   }
 
   @Override
@@ -74,10 +80,15 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
         10.0);
     maxAccel = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_max_accel", 2.0);
 
-    vehicleDataManager = new VehicleDataManager();
-    vehicleDataManager.init();
+    List<HttpMessageConverter<?>> httpMappers = new ArrayList<HttpMessageConverter<?>>();
+    MappingJackson2HttpMessageConverter jsonMapper = new MappingJackson2HttpMessageConverter();
+    httpMappers.add(jsonMapper);
+    restClient.setMessageConverters(httpMappers);
 
-    sessionManager = new SessionManager(serverUrl, vehicleId, new RestTemplate());
+    vehicleDataManager = new VehicleDataManager();
+    vehicleDataManager.init(pubSubService);
+
+    sessionManager = new SessionManager(serverUrl, vehicleId, restClient);
     if (!endSessionOnSuspend) {
       sessionManager.registerNewVehicleSession();
     }
@@ -90,7 +101,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     }
 
     if (statusUpdaterThread == null && statusUpdater == null) {
-      statusUpdater = new StatusUpdater(serverUrl, sessionManager.getServerSessionId(), new RestTemplate(),
+      statusUpdater = new StatusUpdater(serverUrl, sessionManager.getServerSessionId(), restClient,
           timestepDuration, vehicleDataManager);
       statusUpdaterThread = new Thread(statusUpdater);
       statusUpdaterThread.setName("SpeedHarm Status Updater");
@@ -98,7 +109,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     }
 
     if (commandReceiverThread == null && commandReceiver == null) {
-      commandReceiver = new CommandReceiver(serverUrl, sessionManager.getServerSessionId(), new RestTemplate());
+      commandReceiver = new CommandReceiver(serverUrl, sessionManager.getServerSessionId(), restClient);
       commandReceiverThread = new Thread(commandReceiver);
       statusUpdaterThread.setName("SpeedHarm Command Receiver");
       commandReceiverThread.start();
