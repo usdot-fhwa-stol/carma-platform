@@ -79,7 +79,7 @@
     <table id="tblSystemStatus" class="table-style1">
         <tr>
             <td class="col-style1">
-                <table id="tblFirstA">
+                <table id="tblFirstA" class="table-style1">
                     <tr>
                         <td class="section1" colspan="2">
                             <strong>Important Vehicle Info</strong>
@@ -90,9 +90,20 @@
                         <td class="col-title">Value</td>
                     </tr>
                 </table>
+                <table id="tblFirstB" class="table-style1">
+                    <tr>
+                        <td class="section1" colspan="2">
+                            <strong>Guidance Related Info</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-title">Title</td>
+                        <td class="col-title">Value</td>
+                    </tr>
+                </table>
             </td>
             <td class="col-style1">
-                <table id="tblSecondA">
+                <table id="tblSecondA" class="table-style1">
                     <tr>
                         <td class="section1" colspan="2">
                             <strong>Route Info</strong>
@@ -103,23 +114,10 @@
                         <td class="col-title">Value</td>
                     </tr>
                 </table>
-                <table id="tblSecondB">
+                <table id="tblSecondB" class="table-style1">
                     <tr>
                         <td class="section1" colspan="2">
                             <strong>Host Vehicle Info</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="col-title">Title</td>
-                        <td class="col-title">Value</td>
-                    </tr>
-                </table>
-            </td>
-            <td class="col-style1">
-                <table id="tblThird">
-                    <tr>
-                        <td class="section1" colspan="2">
-                            <strong>Guidance Related Info</strong>
                         </td>
                     </tr>
                     <tr>
@@ -167,12 +165,21 @@
         </div>
     </div>
 </div>
+<audio id="audioAlert1" preload="auto">
+    <source src="sound/not-kiddin.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+<audio id="audioAlert2" preload="auto">
+    <source src="sound/sunny.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+<audio id="audioAlert3" preload="auto">
+    <source src="sound/hurry.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
 </body>
 <footer>
     <p class="copyright">© LEIDOS 2017</p>
     <p class="systemversion">&nbsp;</p>
 </footer>
-<audio id="audioAlert1" src="sound/not-kiddin.mp3" preload="auto"></audio>
-<audio id="audioAlert2" src="sound/sunny.mp3" preload="auto"></audio>
-<audio id="audioAlert3" src="sound/hurry.mp3" preload="auto"></audio>
 </html>

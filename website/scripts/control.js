@@ -251,28 +251,6 @@ function showModal(showWarning, modalMessage) {
 }
 
 /*
-    Play sound for specific alerts or notifications.
-*/
-function playSound(audioId, repeat)
-{
-    var audioAlert1 = document.getElementById(audioId);
-    audioAlert1.currentTime = 0;
-    audioAlert1.play();
-
-    if (repeat == false)
-        return;
-
-    //Repeat the sounds 5x max or until OK/logout page shows.
-    setTimeout(function () {
-        sound_counter++;
-        if (sound_counter < sound_counter_max){
-            playSound(audioId, true);
-        }
-     }, 3000)
-
-}
-
-/*
     Count up Timer for when Guidance is started.
 */
 
@@ -300,6 +278,9 @@ function countUpTimer() {
     }
 }
 
+/*
+    For countUpTimer to format the time.
+*/
 function pad(num, size) {
 	var s = "0000" + num;
 	return s.substr(s.length - size);
@@ -321,3 +302,72 @@ function closeModal() {
     window.location.assign('logout.html');
 
 }
+
+/*** Start: AUDIO ***/
+
+/*
+     It requires a “user gesture” to play or pause an audio or video element,
+     which is enabled in Opera for Android, Chrome for Android, the default Android browser,
+     Safari for iOS and probably other browsers.
+     Firefox on Android is an exception, and works without this audio-fix.
+*/
+function loadAudioElements()
+{
+    // Solves chrome for andriod issue 178297 Require user gesture
+    // https://code.google.com/p/chromium/issues/detail?id=178297
+    // Fix based on code from http://blog.foolip.org/2014/02/10/media-playback-restrictions-in-blink/
+    if (checkMediaPlaybackRequiresUserGesture()) {
+        window.addEventListener('keydown', removeBehaviorsRestrictions);
+        window.addEventListener('mousedown', removeBehaviorsRestrictions);
+        window.addEventListener('touchstart', removeBehaviorsRestrictions);
+    }
+}
+
+/*
+    Allows to know in advance if media playback requires user gesture
+*/
+function checkMediaPlaybackRequiresUserGesture() {
+    // test if play() is ignored when not called from an input event handler
+    var audio = document.createElement('audio');
+    audio.play();
+    return audio.paused;
+}
+
+/*
+    Loop through each audio element, load it, and remove the event listener.
+*/
+function removeBehaviorsRestrictions() {
+
+    for (var i = 0; i < audioElements.length; i++) {
+        audioElements[i].load();
+    }
+
+    window.removeEventListener('keydown', removeBehaviorsRestrictions);
+    window.removeEventListener('mousedown', removeBehaviorsRestrictions);
+    window.removeEventListener('touchstart', removeBehaviorsRestrictions);
+}
+
+
+/*
+    Play sound for specific alerts or notifications.
+*/
+function playSound(audioId, repeat)
+{
+    var audioAlert1 = document.getElementById(audioId);
+    audioAlert1.currentTime = 0;
+    audioAlert1.play();
+
+    if (repeat == false)
+        return;
+
+    //Repeat the sounds 5x max or until OK/logout page shows.
+    setTimeout(function () {
+        sound_counter++;
+        if (sound_counter < sound_counter_max){
+            playSound(audioId, true);
+        }
+     }, 3000)
+
+}
+
+/*** End: AUDIO ***/

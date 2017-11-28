@@ -353,6 +353,7 @@ div.message_box {
 /* System Status Table */
 .table-style1 {
     width: 100%;
+    table-layout: fixed;
 }
 
 .col-style1 {
@@ -441,16 +442,7 @@ div.message_box {
 /* RouteInfo in Driver View */
 #divRouteInfo {
     position: relative;
-    top: 5%;
-    color: black;
-    font-size: 45px;
-    font-weight: bold;
-    text-align: center;
-}
-
-#divRouteTimer{
-    position: relative;
-    top: 10%;
+    top: 0%;
     color: black;
     font-size: 45px;
     font-weight: bold;
