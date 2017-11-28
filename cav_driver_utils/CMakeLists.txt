@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   bondcpp
   cav_msgs
   cav_srvs
+  can_msgs
   roscpp
   std_msgs
 
