@@ -51,4 +51,12 @@ public class ManeuverPlanner {
   public void planManeuver(ISimpleManeuver m, double startDist, double endDist) {
     m.planToTargetDistance(maneuverInputs, guidanceCommands, startDist, endDist);
   }
+
+  public IGuidanceCommands getGuidanceCommands() {
+    return guidanceCommands;
+  }
+
+  public IManeuverInputs getManeuverInputs() {
+    return maneuverInputs;
+  }
 }

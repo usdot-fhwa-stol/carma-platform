@@ -16,7 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
+import org.ros.message.Duration;
 import org.springframework.web.client.RestTemplate;
+
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -33,13 +36,14 @@ import java.util.SortedSet;
  * state and receive speed commands as may relate to whatever algorithm the server
  * is configured to run with.
  */
-public class SpeedHarmonizationPlugin extends AbstractPlugin {
+public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHarmInputs {
   protected String vehicleId = "";
   protected String serverUrl = "";
   protected boolean endSessionOnSuspend = true;
   protected int serverVehicleId = 0;
   protected long timestepDuration = 1000;
   protected double minimumManeuverLength = 10.0;
+  protected double maxAccel = 2.0;
 
   protected StatusUpdater statusUpdater = null;
   protected Thread statusUpdaterThread = null;
@@ -61,11 +65,14 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
 
   @Override
   public void onInitialize() {
-    serverUrl = pluginServiceLocator.getParameterSource().getString("~infrastructure_server_url", "http://localhost:5000");
+    serverUrl = pluginServiceLocator.getParameterSource().getString("~infrastructure_server_url",
+        "http://localhost:5000");
     vehicleId = pluginServiceLocator.getParameterSource().getString("~vehicle_id");
     double freq = pluginServiceLocator.getParameterSource().getDouble("~data_reporting_frequency", 1.0);
     timestepDuration = (long) (1000.0 / freq);
-    minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_min_maneuver_length", 10.0);
+    minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_min_maneuver_length",
+        10.0);
+    maxAccel = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_max_accel", 2.0);
 
     vehicleDataManager = new VehicleDataManager();
     vehicleDataManager.init();
@@ -83,7 +90,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
     }
 
     if (statusUpdaterThread == null && statusUpdater == null) {
-      statusUpdater = new StatusUpdater(serverUrl, sessionManager.getServerSessionId(),  new RestTemplate() , timestepDuration, vehicleDataManager);
+      statusUpdater = new StatusUpdater(serverUrl, sessionManager.getServerSessionId(), new RestTemplate(),
+          timestepDuration, vehicleDataManager);
       statusUpdaterThread = new Thread(statusUpdater);
       statusUpdaterThread.setName("SpeedHarm Status Updater");
       statusUpdaterThread.start();
@@ -101,7 +109,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
   public void loop() throws InterruptedException {
     // We don't actually do anything on the loop thread, just set a sufficiently high sleep value
     Thread.sleep(10000);
-  } 
+  }
 
   @Override
   public void onSuspend() {
@@ -129,8 +137,18 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
     }
   }
 
-  private void planComplexManeuver(double start, double end) {
-    // STUB
+  private void planComplexManeuver(Trajectory traj, double start, double end) {
+    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(
+    this, 
+    pluginServiceLocator.getManeuverPlanner().getManeuverInputs(), 
+    pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), 
+    AccStrategyManager.newAccStrategy(), 
+    start, 
+    end, 
+    1.0,  // Dummy values for now. TODO: Replace
+    100.0);
+
+    traj.setComplexManeuver(maneuver);
   }
 
   @Override
@@ -147,7 +165,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
 
     // Find the earliest window after the start location at which speedharm is enabled
     SortedSet<AlgorithmFlags> flags = pluginServiceLocator.getRouteService()
-      .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
+        .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
 
     double earliestLegalWindow = complexManeuverStartLocation;
     double endOfWindow = complexManeuverStartLocation;
@@ -167,7 +185,24 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
     }
 
     if (Math.abs(endOfWindow - earliestLegalWindow) > minimumManeuverLength) {
-      planComplexManeuver(earliestLegalWindow, endOfWindow);
+      planComplexManeuver(traj, earliestLegalWindow, endOfWindow);
     }
+  }
+
+  @Override
+  public double getSpeedCommand() {
+    return commandReceiver.getLastCommand().getSpeed();
+  }
+
+  @Override
+  public double getMaxAccelLimit() {
+    return Math.min(Math.abs(maxAccel), 2.5);
+  }
+
+  @Override
+  public Duration getTimeSinceLastUpdate() {
+    LocalDateTime now = LocalDateTime.now();
+    long millis = java.time.Duration.between(commandReceiver.getLastCommand().getTimestamp(), now).toMillis();
+    return Duration.fromMillis(millis);
   }
 }
