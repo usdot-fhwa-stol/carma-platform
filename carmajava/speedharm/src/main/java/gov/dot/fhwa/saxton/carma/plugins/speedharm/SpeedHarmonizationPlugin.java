@@ -99,7 +99,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
 
   @Override
   public void loop() throws InterruptedException {
-    // NO-OP 
+    // We don't actually do anything on the loop thread, just set a sufficiently high sleep value
+    Thread.sleep(10000);
   } 
 
   @Override
@@ -165,7 +166,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin {
       }
     }
 
-    if (Math.abs(endOfWindow - earliestLegalWindow) > 10.0) {
+    if (Math.abs(endOfWindow - earliestLegalWindow) > minimumManeuverLength) {
       planComplexManeuver(earliestLegalWindow, endOfWindow);
     }
   }
