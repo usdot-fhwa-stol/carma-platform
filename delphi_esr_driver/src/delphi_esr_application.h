@@ -25,6 +25,7 @@ class DelphiESRApplication : public cav::DriverApplication
 
     ros::Publisher objects_pub_;
     ros::Subscriber velocity_sub_;
+    ros::Time last_radar_update_;
     geometry_msgs::TwistStampedConstPtr last_velocity_update_;
     bool recv_velocities_;
     diagnostic_updater::Updater diag_updater_;
