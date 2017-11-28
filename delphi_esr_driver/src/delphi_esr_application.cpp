@@ -150,14 +150,16 @@ void DelphiESRApplication::publish_updates() {
         obj.presence_vector |= cav_msgs::ExternalObject::POSE_PRESENCE_VECTOR;
         obj.pose.pose.position.x = it.range*cos(it.angle*boost::math::constants::pi<double>()/180.0);
         obj.pose.pose.position.y = it.range*sin(it.angle*boost::math::constants::pi<double>()/180.0);
-
+        obj.pose.pose.position.z = 0;
 
         obj.presence_vector |= cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR;
-        obj.velocity.twist.linear.x = it.range_rate * cos(it.angle*boost::math::constants::pi<double>()/180.0)
+        obj.velocity.twist.linear.x = it.range_rate*(it.angle*boost::math::constants::pi<double>()/180.0)
                                       - it.lat_rate*sin(it.angle*boost::math::constants::pi<double>()/180.0);
 
         obj.velocity.twist.linear.y = -it.range_rate*sin(it.angle*boost::math::constants::pi<double>()/180.0)
-                                      + it.lat_rate*cos(it.angle*boost::math::constants::pi<double>()/180.0);
+                                      - it.lat_rate*cos(it.angle*boost::math::constants::pi<double>()/180.0);
+
+        obj.velocity.twist.linear.z = 0;
 
 
         obj.presence_vector |= cav_msgs::ExternalObject::RANGE_RATE_PRESENCE_VECTOR;
