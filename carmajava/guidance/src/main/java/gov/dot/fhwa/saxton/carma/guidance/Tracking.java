@@ -421,14 +421,18 @@ public class Tracking extends GuidanceComponent {
 		// Validate current speed with target speed
 		double speedChange = ceilingEntry.getValue()[0] - floorEntry.getValue()[0]; 
 		double targetSpeed = floorEntry.getValue()[0] + factor * speedChange;
-		if(Math.abs(targetSpeed - currentV) > speed_error_limit) {
+		double speed_error = Math.abs(targetSpeed - currentV);
+		log.debug("Current speed error is " + speed_error);
+		if(speed_error > speed_error_limit) {
 			log.warn("Tracking found speed error: " + Math.abs(targetSpeed - currentV) + " and trajectory is replanning.");
 			return true;
 		}
 		// Validate downtrack distance
 		double distanceChange = ceilingEntry.getValue()[1] - floorEntry.getValue()[1];
 		double targetDistance = floorEntry.getValue()[1] + factor * distanceChange;
-		if(Math.abs(targetDistance - currentD) > downtrack_error_limit) {
+		double distance_error = Math.abs(targetDistance - currentD);
+		log.debug("Current downtrack error is " + distance_error);
+		if(distance_error > downtrack_error_limit) {
 			log.warn("Tracking found distance error: " + Math.abs(targetDistance - currentD) + " and trajectory is replanning.");
 			return true;
 		}
