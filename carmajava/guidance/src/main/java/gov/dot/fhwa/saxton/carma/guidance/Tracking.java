@@ -356,25 +356,31 @@ public class Tracking extends GuidanceComponent {
 	@Override
 	public void loop() throws InterruptedException {
 		
+		long th_start = System.currentTimeMillis();
+		
 		if(drivers_ready.get()) {
+			
 			//publish content for a new BSM
 			bsmPublisher.publish(composeBSMData());
+			
 			//log the current vehicle forward speed
-            TwistStamped vel = velocitySubscriber.getLastMessage();
-            if(vel != null) {
-                double speed = vel.getTwist().getLinear().getX();
-                log.info("Current vehicle speed is " + speed + " m/s");
-            }
-		}
-		if(trajectory_start.get() && routeSubscriber.getLastMessage() != null && velocitySubscriber != null) {
-			long currentTime = System.currentTimeMillis();
-			double currentDowntrack = routeSubscriber.getLastMessage().getDownTrack();
-			double currentSpeed = velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
-			if(hasTrajectoryError(currentTime, currentDowntrack, currentSpeed)) {
-				arbitrator.notifyTrajectoryFailure();
+			if(velocitySubscriber != null && velocitySubscriber.getLastMessage() != null) {
+				double speed = velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
+	            log.info("Current vehicle speed is " + speed + " m/s");
+	            if(trajectory_start.get() && routeSubscriber != null && routeSubscriber.getLastMessage() != null) {
+	    			long currentTime = System.currentTimeMillis();
+	    			double currentDowntrack = routeSubscriber.getLastMessage().getDownTrack();
+	    			double currentSpeed = speed;
+	    			if(hasTrajectoryError(currentTime, currentDowntrack, currentSpeed)) {
+	    				arbitrator.notifyTrajectoryFailure();
+	    			}
+	    		}
 			}
 		}
-		Thread.sleep(sleepDurationMillis);
+		
+		long th_end = System.currentTimeMillis();
+		
+		Thread.sleep(Math.max(sleepDurationMillis - (th_end - th_start), 0));
 	}
 
 	private void constructSpeedTimeTree(List<LongitudinalManeuver> maneuvers) {
@@ -396,8 +402,8 @@ public class Tracking extends GuidanceComponent {
 			double[] speedAndDistance = new double[2];
 			speedAndDistance[0] = m.getTargetSpeed();
 			speedAndDistance[1] = m.getEndDistance();
-			long finishTime = (long) (Math.abs(m.getStartDistance() - m.getEndDistance()) / 0.5 * (m.getStartSpeed() + m.getTargetSpeed()));
-			long predictFinishTime = lastEntryTime + finishTime * SECONDS_TO_MILLISECONDS;
+			long durationTime = (long) (Math.abs(m.getStartDistance() - m.getEndDistance()) / (0.5 * (m.getStartSpeed() + m.getTargetSpeed())));
+			long predictFinishTime = lastEntryTime + durationTime * SECONDS_TO_MILLISECONDS;
 			speedTimeTree.put(predictFinishTime, speedAndDistance);
 			lastEntryTime = predictFinishTime;
 		}
