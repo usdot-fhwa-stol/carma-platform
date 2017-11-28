@@ -17,6 +17,7 @@ package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ComplexManeuverBase;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IAccStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import org.ros.message.Duration;
 import org.ros.message.Time;
@@ -43,10 +44,10 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
    * @param maxExpectedSpeed The maximum expected speed
    */
   public SpeedHarmonizationManeuver(ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
-    double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
+    IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
     double minExpectedSpeed, double maxExpectedSpeed) {
 
-    super(inputs, commands, startDist, endDist, minCompletionTime, maxCompletionTime,
+    super(inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime,
       minExpectedSpeed, maxExpectedSpeed);
     speedHarmInputs_ = speedHarmInputs;
   }
@@ -55,9 +56,9 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
    * Constructor where the expected speeds are calculated
    */
   public SpeedHarmonizationManeuver(ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
-    double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
+    IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
 
-    super(inputs, commands, startDist, endDist, minCompletionTime, maxCompletionTime);
+    super(inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
     speedHarmInputs_ = speedHarmInputs;
   }
 
@@ -65,27 +66,37 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
    * Constructor where the expected speeds are calculated
    */
   public SpeedHarmonizationManeuver(ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
-    double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
+    IAccStrategy accStrategy, double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
 
-    super(inputs, commands, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
+    super(inputs, commands, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
     speedHarmInputs_ = speedHarmInputs;
   }
 
-  @Override public boolean executeTimeStep() throws IllegalStateException {
-    Duration timeElapsed = speedHarmInputs_.getTimeSinceLastUpdate();
-    if (timeElapsed.compareTo(timeout) > 0) {
-      throw new IllegalStateException("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
-    }
-    double speedCommand = speedHarmInputs_.getSpeedCommand();
+  @Override protected double generateSpeedCommand() throws IllegalStateException {
+    checkTimeout();
+
+    return speedHarmInputs_.getSpeedCommand();
+  }
+
+  @Override protected double generateMaxAccelCommand() throws IllegalStateException {
+    checkTimeout();
+
     double maxAccel = speedHarmInputs_.getMaxAccelLimit();
+
     if (maxAccel < 0.0) {
       throw new IllegalStateException("SpeedHarmonizationManeuver received negative maxAccel command: " + maxAccel);
     } else if (maxAccel > maxAccel_) {
       maxAccel = maxAccel_;
       log_.warn("Truncated max acceleration above limit to limit value");
     }
-    commands_.setCommand(speedCommand, maxAccel);
-    return inputs_.getDistanceFromRouteStart() > endDist_;
+    return maxAccel;
+  }
+
+  private void checkTimeout() throws IllegalStateException {
+    Duration timeElapsed = speedHarmInputs_.getTimeSinceLastUpdate();
+    if (timeElapsed.compareTo(timeout) > 0) {
+      throw new IllegalStateException("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
+    }
   }
 
   /**

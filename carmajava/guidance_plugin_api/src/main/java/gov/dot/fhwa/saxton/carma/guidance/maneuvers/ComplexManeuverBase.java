@@ -28,6 +28,7 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   protected IManeuverInputs inputs_;
   protected IGuidanceCommands commands_;
   protected ILogger log_ = LoggerManager.getLogger();
+  protected IAccStrategy accStrategy_;
   protected double startDist_;
   protected double endDist_;
   protected Time minCompletionTime_;
@@ -48,7 +49,7 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
    * @param minExpectedSpeed  The minimum expected speed
    * @param maxExpectedSpeed  The maximum expected speed
    */
-  protected ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands,
+  protected ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
     double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
     double minExpectedSpeed, double maxExpectedSpeed) {
     startDist_ = startDist;
@@ -59,16 +60,18 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
     maxExpectedSpeed_ = maxExpectedSpeed;
     inputs_ = inputs;
     commands_ = commands;
+    accStrategy_ = accStrategy;
     validateBoundsFeasibility();
   }
 
   /**
    * Constructor where the expected speeds are calculated
    */
-  public ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
-    double endDist, Time minCompletionTime, Time maxCompletionTime) {
+  public ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
+    double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
     inputs_ = inputs;
     commands_ = commands;
+    accStrategy_ = accStrategy;
     startDist_ = startDist;
     endDist_ = endDist;
     minCompletionTime_ = minCompletionTime;
@@ -81,10 +84,11 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   /**
    * Constructor where the completion times are calculated
    */
-  public ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
-    double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
+  public ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
+    double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
     inputs_ = inputs;
     commands_ = commands;
+    accStrategy_ = accStrategy;
     startDist_ = startDist;
     endDist_ = endDist;
     minExpectedSpeed_ = minExpectedSpeed;
@@ -108,7 +112,37 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
     return maxCompletionTime_;
   }
 
-  @Override public abstract boolean executeTimeStep() throws IllegalStateException;
+  @Override public final boolean executeTimeStep() throws IllegalStateException {
+    if (inputs_.getDistanceFromRouteStart() > endDist_)
+      return true;
+
+    double speedCmd = generateSpeedCommand();
+    double maxAccelCmd = generateMaxAccelCommand();
+    double distToFrontVehicle = inputs_.getDistanceToFrontVehicle();
+    double currentSpeed = inputs_.getCurrentSpeed();
+    double frontVehicleSpeed = inputs_.getFrontVehicleSpeed();
+
+    if (accStrategy_.evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
+      speedCmd = accStrategy_.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
+    }
+
+    commands_.setCommand(speedCmd, maxAccelCmd);
+    return false;
+  }
+
+  /**
+   * Generates the next speed command. Is meant to be followed by a call to generateMaxAccelCommand
+   *
+   * @return The speed command
+   */
+  protected abstract double generateSpeedCommand();
+
+  /**
+   * Generates the next Max Accel Command. Is meant to be called following generateSpeedCommand
+   *
+   * @return The max accel command
+   */
+  protected abstract double generateMaxAccelCommand();
 
   @Override public double getMaxExpectedSpeed() {
     return maxExpectedSpeed_;
