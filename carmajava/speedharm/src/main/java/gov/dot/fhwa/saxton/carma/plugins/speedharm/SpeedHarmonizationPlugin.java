@@ -118,8 +118,15 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
   @Override
   public void loop() throws InterruptedException {
-    // We don't actually do anything on the loop thread, just set a sufficiently high sleep value
-    Thread.sleep(10000);
+    if (statusUpdater.lastUpdateTime != null) {
+      // If we've successfully communicated with the server recently, signal our availability
+      java.time.Duration timeSinceLastUpdate = java.time.Duration.between(statusUpdater.lastUpdateTime, LocalDateTime.now());
+      if (timeSinceLastUpdate.toMillis() < 3 * timestepDuration) {
+        setAvailability(true);
+      } else {
+        setAvailability(false);
+      }
+    }
   }
 
   @Override

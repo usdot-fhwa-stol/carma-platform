@@ -78,36 +78,38 @@ public class StatusUpdater implements Runnable {
 
         if (response == null) {
           log.warn("Infrastructure server rejected status update: " + vsu);
+        } else {
+          lastUpdateTime = LocalDateTime.now();
+          prevLatency = measuredLatency;
+          measuredLatency = Duration.between(sendTime, lastUpdateTime).dividedBy(2L);
+
+          long prevMs = 0;
+          if (prevLatency != null) {
+            prevMs = prevLatency.toMillis();
+          }
+
+          long curMs = measuredLatency.toMillis();
+          double diff = 0.0;
+          if (prevMs > 0) {
+            diff = 100 * (curMs - prevMs) / prevMs;
+          }
+
+          if (Math.abs(diff) > 20.0) {
+            log.warn(String.format("Large network jitter detected! Latency was %.02f and now is %.02f, delta = %.02f%%",
+                prevMs, curMs, diff));
+          } else {
+            log.info(String.format("Latency was %.02f and now is %.02f, delta = %.02f%%", prevMs, curMs, diff));
+          }
+
         }
       } catch (RestClientException rce) {
         log.warn("Infrastructure server rejected status update: " + vsu);
       }
 
-      lastUpdateTime = LocalDateTime.now();
-      prevLatency = measuredLatency;
-      measuredLatency = Duration.between(sendTime, lastUpdateTime).dividedBy(2L);
-
-      long prevMs = 0;
-      if (prevLatency != null) {
-        prevMs = prevLatency.toMillis();
-      }
-
-      long curMs = measuredLatency.toMillis();
-      double diff = 0.0;
-      if (prevMs > 0) {
-        diff = 100 * (curMs - prevMs) / prevMs;
-      }
-
-      if (Math.abs(diff) > 20.0) {
-        log.warn(String.format("Large network jitter detected! Latency was %.02f and now is %.02f, delta = %.02f%%",
-            prevMs, curMs, diff));
-      } else {
-        log.info(String.format("Latency was %.02f and now is %.02f, delta = %.02f%%", prevMs, curMs, diff));
-      }
-
       long timestepEnd = System.currentTimeMillis();
       long sleepDuration = Math.max(timestepDuration - (timestepEnd - timestepStart), 0);
       log.info("Speed Harmonization timestep complete, sleeping for " + sleepDuration);
+
       try {
         Thread.sleep(sleepDuration);
       } catch (InterruptedException e) {

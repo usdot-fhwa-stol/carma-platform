@@ -328,8 +328,10 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
       lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
 
       for (IPlugin p : longitudinalPlugins) {
-        log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
-        p.planTrajectory(traj, expectedEntrySpeed);
+        if (p.getActivation() && p.getAvailability()) {
+          log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
+          p.planTrajectory(traj, expectedEntrySpeed);
+        }
       }
 
       if (trajectoryValidator.validate(traj)) {
