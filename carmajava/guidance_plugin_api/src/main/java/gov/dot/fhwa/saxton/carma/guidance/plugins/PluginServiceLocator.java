@@ -20,6 +20,7 @@ import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
  * Service collection for the Plugin interface. Provides access to the generic, ROS agnostic interfaces
@@ -31,15 +32,17 @@ public class PluginServiceLocator {
     private final ParameterSource parameterSource;
     private final IPubSubService IPubSubService;
     private final ManeuverPlanner maneuverPlanner;
+    private final RouteService routeService;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
         PluginManagementService pluginManagementService, IPubSubService iPubSubService,
-        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner) {
+        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService) {
         this.arbitratorService = arbitratorService;
         this.IPubSubService = iPubSubService;
         this.pluginManagementService = pluginManagementService;
         this.parameterSource = parameterSource;
         this.maneuverPlanner = maneuverPlanner;
+        this.routeService = routeService;
     }
 
     /**
@@ -75,5 +78,9 @@ public class PluginServiceLocator {
      */
     public ManeuverPlanner getManeuverPlanner() {
         return maneuverPlanner;
+    }
+
+    public RouteService getRouteService() {
+        return routeService;
     }
 }
