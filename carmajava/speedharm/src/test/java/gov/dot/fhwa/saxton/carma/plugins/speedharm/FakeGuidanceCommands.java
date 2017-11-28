@@ -14,15 +14,28 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
-include 'speedharm'
+package gov.dot.fhwa.saxton.carma.plugins.speedharm;
+
+
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+
+public class FakeGuidanceCommands implements IGuidanceCommands {
+
+    private double speedCmd_ = -1.0;
+    private double accelCmd_ = -1.0;
+
+
+    @Override
+    public void setCommand(double speed, double accel) {
+        speedCmd_ = speed;
+        accelCmd_ = accel;
+    }
+
+    public double getSpeedCmd() {
+        return speedCmd_;
+    }
+
+    public double getAccelCmd() {
+        return accelCmd_;
+    }
+}
