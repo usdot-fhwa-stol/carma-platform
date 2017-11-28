@@ -454,50 +454,20 @@ public class Tracking extends GuidanceComponent {
 		coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 		coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 		coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
-		if(navSatFixSubscriber.getLastMessage() != null && getTransformClient != null) {
+		if(navSatFixSubscriber.getLastMessage() != null) {
 			NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
-			Location location_on_baselink = new Location();
-			location_on_baselink.setLongitude(gps_msg.getLongitude());
-			location_on_baselink.setLatitude(gps_msg.getLatitude());
-			location_on_baselink.setAltitude(gps_msg.getAltitude());
-			Point3D point_on_baselink = converter.geodesic2Cartesian(location_on_baselink, Transform.identity());
-			if(!vehicle_to_baselink_transform_ready) {
-				GetTransformRequest transform_request = getTransformClient.newMessage();
-				transform_request.setParentFrame(vehicleFrame);
-				transform_request.setChildFrame(baseLinkFrame);
-				getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
-					
-					@Override
-					public void onSuccess(GetTransformResponse msg) {
-						log.debug("BSM", "Get baselink_to_vehicle_transform response: " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
-						if(msg.getErrorStatus() == 0) {
-							vehicleToBaselink = Transform.fromTransformMessage(msg.getTransform().getTransform());
-							vehicle_to_baselink_transform_ready = true;
-						}
-					}
-					
-					@Override
-					public void onFailure(Exception e) {
-					}
-				});
+			double lat = gps_msg.getLatitude();
+			double Lon = gps_msg.getLongitude();
+			float elev = (float) gps_msg.getAltitude();
+			//TODO: need to have transformation from baselink frame to vehicle frame
+			if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
+				coreData.setLatitude(lat);
 			}
-			
-			if(vehicle_to_baselink_transform_ready) {
-				Vector3 after_transform = vehicleToBaselink.apply(new Vector3(point_on_baselink.getX(), point_on_baselink.getY(), point_on_baselink.getZ()));
-				Point3D point_on_vehicle = new Point3D(after_transform.getX(), after_transform.getY(), after_transform.getZ());
-				Location location_on_vehicle = converter.cartesian2Geodesic(point_on_vehicle, Transform.identity());
-				double lat = location_on_vehicle.getLatitude();
-				double Lon = location_on_vehicle.getLongitude();
-				float elev = (float) location_on_vehicle.getAltitude();
-				if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
-					coreData.setLatitude(lat);
-				}
-				if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
-					coreData.setLongitude(Lon);
-				}
-				if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
-					coreData.setElev(elev);
-				}
+			if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
+				coreData.setLongitude(Lon);
+			}
+			if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
+				coreData.setElev(elev);
 			}
 			
 			double semi_major_square = gps_msg.getPositionCovariance()[0];
@@ -522,7 +492,6 @@ public class Tracking extends GuidanceComponent {
 					coreData.getAccuracy().setSemiMajor(semi_major);
 				}
 			}
-			
 			if(semi_minor != -1) {
 				if(semi_minor >= PositionalAccuracy.ACCURACY_MAX) {
 					coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_MAX);
@@ -582,58 +551,36 @@ public class Tracking extends GuidanceComponent {
 		coreData.getAccelSet().setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_UNAVAILABLE);
 		// TODO: It is not well defined in J2735
 		coreData.getAccelSet().setYawRate(AccelerationSet4Way.YAWRATE_UNAVAILABLE);
-		if(accelerationSubscriber.getLastMessage() != null && getTransformClient != null) {
-			GetTransformRequest transform_request = getTransformClient.newMessage();
-			transform_request.setParentFrame(mapFrame);
-			transform_request.setChildFrame(baseLinkFrame);
-			getTransformClient.callSync(transform_request, new OnServiceResponseCallback<GetTransformResponse>() {
-				
-				@Override
-				public void onSuccess(GetTransformResponse msg) {
-					log.debug("BSM", "Get base_to_map_transform response " + (msg.getErrorStatus() == 0 ? "Successed" : "Failed"));
-					if(msg.getErrorStatus() == 0) {
-						baseToMap = Transform.fromTransformMessage(msg.getTransform().getTransform());
-						base_to_map_transform_ready = true;
-					}
-				}
-				
-				@Override
-				public void onFailure(Exception e) {
-					throw new RosRuntimeException(e);
-				}
-			});
-			
-			if(base_to_map_transform_ready) {
-				Vector3 after_transform_accel_linear = baseToMap.apply(Vector3.fromVector3Message(accelerationSubscriber.getLastMessage().getAccel().getLinear()));
-				AccelerationSet4Way acceleration = coreData.getAccelSet();
-				if(after_transform_accel_linear.getX() <= AccelerationSet4Way.ACCELERATION_MIN) {
-					acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MIN);
-				} else if(after_transform_accel_linear.getX() >= AccelerationSet4Way.ACCELERATION_MAX) {
-					acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MAX);
-				} else {
-					acceleration.setLongitudinal((float) after_transform_accel_linear.getX());
-				}
-				
-				if(after_transform_accel_linear.getY() <= AccelerationSet4Way.ACCELERATION_MIN) {
-					acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MIN);
-				} else if(after_transform_accel_linear.getY() >= AccelerationSet4Way.ACCELERATION_MAX) {
-					acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MAX);
-				} else {
-					acceleration.setLateral((float) after_transform_accel_linear.getY());
-				}
-
-				if(after_transform_accel_linear.getZ() <= AccelerationSet4Way.ACCELERATION_VERTICAL_MIN) {
-					acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MIN);
-				} else if(after_transform_accel_linear.getZ() >= AccelerationSet4Way.ACCELERATION_VERTICAL_MAX) {
-					acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MAX);
-				} else {
-					acceleration.setVert((float) after_transform_accel_linear.getZ());
-				}
+		if(accelerationSubscriber.getLastMessage() != null) {
+			Vector3 accel_set_linear = Vector3.fromVector3Message(accelerationSubscriber.getLastMessage().getAccel().getLinear());
+			AccelerationSet4Way acceleration = coreData.getAccelSet();
+			if(accel_set_linear.getX() <= AccelerationSet4Way.ACCELERATION_MIN) {
+				acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MIN);
+			} else if(accel_set_linear.getX() >= AccelerationSet4Way.ACCELERATION_MAX) {
+				acceleration.setLongitudinal(AccelerationSet4Way.ACCELERATION_MAX);
+			} else {
+				acceleration.setLongitudinal((float) accel_set_linear.getX());
 			}
 			
-			if(accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() >= AccelerationSet4Way.YAWRATE_MIN
-					&& accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ() <= AccelerationSet4Way.YAWRATE_MAX) {
-				coreData.getAccelSet().setYawRate((float) accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ());
+			if(accel_set_linear.getY() <= AccelerationSet4Way.ACCELERATION_MIN) {
+				acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MIN);
+			} else if(accel_set_linear.getY() >= AccelerationSet4Way.ACCELERATION_MAX) {
+				acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MAX);
+			} else {
+				acceleration.setLateral((float) accel_set_linear.getY());
+			}
+
+			if(accel_set_linear.getZ() <= AccelerationSet4Way.ACCELERATION_VERTICAL_MIN) {
+				acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MIN);
+			} else if(accel_set_linear.getZ() >= AccelerationSet4Way.ACCELERATION_VERTICAL_MAX) {
+				acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MAX);
+			} else {
+				acceleration.setVert((float) accel_set_linear.getZ());
+			}
+			
+			double yaw_rate = accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ();
+			if(yaw_rate >= AccelerationSet4Way.YAWRATE_MIN && yaw_rate <= AccelerationSet4Way.YAWRATE_MAX) {
+				coreData.getAccelSet().setYawRate((float) yaw_rate);
 			}
 		}
 		
