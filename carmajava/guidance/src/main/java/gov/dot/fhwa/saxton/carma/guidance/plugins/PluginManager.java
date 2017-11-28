@@ -65,7 +65,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected List<String> ignoredPluginClassNames = new ArrayList<>();
     protected List<String> requiredPluginClassNames = new ArrayList<>();
 
-    protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma.guidance.plugins";
+    protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma";
     protected final String messagingBaseUrl = "plugins";
     protected final String getRegisteredPluginsServiceUrl = "get_registered_plugins";
     protected final String getActivePluginsServiceUrl = "get_active_plugins";
