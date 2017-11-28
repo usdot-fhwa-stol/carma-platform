@@ -61,7 +61,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   protected AtomicReference<GuidanceState> state;
   protected PluginManager pluginManager;
   protected IPlugin lateralPlugin;
-  protected IPlugin longitudinalPlugin;
+  protected List<IPlugin> longitudinalPlugins = new ArrayList<>();
   protected CruisingPlugin cruisingPlugin;
   protected AtomicBoolean receivedDtdUpdate = new AtomicBoolean(false);
   protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
@@ -79,7 +79,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   protected TrajectoryValidator trajectoryValidator;
   protected TrajectoryExecutor trajectoryExecutor;
   protected String lateralPluginName = "NoOp Plugin";
-  protected String longitudinalPluginName = "Cruising Plugin";
+  protected List<String> longitudinalPluginNames = new ArrayList<>();
   protected ISubscriber<Route> routeSub;
   protected AtomicDouble routeLength = new AtomicDouble(-1.0);
   protected AtomicReference<Route> currentRoute = new AtomicReference<>();
@@ -142,7 +142,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
     planningWindowGrowthFactor = ptree.getDouble("~planning_window_growth_factor", 1.0);
     planningWindowShrinkFactor = ptree.getDouble("~planning_window_shrink_factor", 1.0);
     numAcceptableFailures = ptree.getInteger("~trajectory_planning_max_attempts", 3);
-    longitudinalPluginName = ptree.getString("~arbitrator_longitudinal_plugin");
+    longitudinalPluginNames = (List<String>) ptree.getList("~arbitrator_longitudinal_plugins");
     lateralPluginName = ptree.getString("~arbitrator_lateral_plugin");
     planningWindowSnapThreshold = ptree.getDouble("~planning_window_snap_threshold", 20.0);
     postComplexSteadyingDuration = ptree.getDouble("~post_complex_trajectory_steadying_period", 2.0);
@@ -213,7 +213,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   }
 
   protected void setLongitudinalPlugin(IPlugin plugin) {
-    longitudinalPlugin = plugin;
+    longitudinalPlugins.add(plugin);
   }
 
   protected void setCruisingPlugin(CruisingPlugin plugin) {
@@ -228,7 +228,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
         setLateralPlugin(plugin);
       }
 
-      if (plugin.getVersionInfo().componentName().equals(longitudinalPluginName)) {
+      if (longitudinalPluginNames.contains(plugin.getVersionInfo().componentName())) {
         setLongitudinalPlugin(plugin);
       }
 
@@ -237,11 +237,16 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       }
     }
 
-    if (lateralPlugin == null || longitudinalPlugin == null) {
+    if (lateralPlugin == null || !longitudinalPlugins.isEmpty()) {
       panic("Arbitrator unable to locate the configured and required plugins!");
     }
 
-    log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + ", " + longitudinalPluginName + "]");
+    String pluginList = "";
+    for (IPlugin p : longitudinalPlugins) {
+      pluginList += ", " + p.getVersionInfo().componentName();
+    }
+
+    log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + pluginList + "]");
     stateMachine.processEvent(ArbitratorEvent.INITIALIZE);
   }
 
@@ -320,7 +325,12 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       }
 
       lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
-      longitudinalPlugin.planTrajectory(traj, expectedEntrySpeed);
+
+      for (IPlugin p : longitudinalPlugins) {
+        log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
+        p.planTrajectory(traj, expectedEntrySpeed);
+      }
+
       if (trajectoryValidator.validate(traj)) {
         out = traj;
         break;
