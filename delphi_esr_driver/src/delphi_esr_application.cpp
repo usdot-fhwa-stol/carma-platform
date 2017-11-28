@@ -257,6 +257,13 @@ void DelphiESRApplication::initialize() {
     diag_updater_.setHardwareID("Delphi-ESR2.5");
     diag_updater_.add("updater",this, &DelphiESRApplication::produce_diagnostics);
 
+    auto status = getStatus();
+    status.status = cav_msgs::DriverStatus::OPERATIONAL;
+    status.sensor = true;
+
+    setStatus(status);
+    last_radar_update_ = ros::Time::now();
+
     spin_rate = 50;
 
 }
@@ -358,6 +365,7 @@ void DelphiESRApplication::burst_cb(const DelphiESRCANClient<cav::SocketCANInter
     ROS_DEBUG_STREAM("Received burst from sensor");
     sensor_burst = data;
     received_update_ = true;
+    last_radar_update_ = ros::Time::now();
 
 }
 
@@ -368,6 +376,24 @@ void DelphiESRApplication::pre_spin() {
         publish_updates();
         received_update_ = false;
     }
+
+    if(ros::Time::now() - last_radar_update_ > ros::Duration(0.5))
+    {
+        ROS_WARN_STREAM_THROTTLE(1,"Not receiving updates from sensor");
+        auto status = getStatus();
+        status.status = cav_msgs::DriverStatus::FAULT;
+        status.sensor = true;
+
+        setStatus(status);
+    }
+    else if (getStatus().status != cav_msgs::DriverStatus::OPERATIONAL)
+    {
+        auto status = getStatus();
+        status.status = cav_msgs::DriverStatus::OPERATIONAL;
+        status.sensor = true;
+
+        setStatus(status);
+    }
 }
 
 void DelphiESRApplication::post_spin() {
@@ -375,7 +401,7 @@ void DelphiESRApplication::post_spin() {
     {
         rx0_.yaw_rate_validity = delphi::Validity::UnavailableOrInvalid;
         rx1_.vehicle_speed_validity = delphi::Validity::UnavailableOrInvalid;
-    }
+    }    
 
     client_->sendCommands(rx0_,rx1_);
 }
