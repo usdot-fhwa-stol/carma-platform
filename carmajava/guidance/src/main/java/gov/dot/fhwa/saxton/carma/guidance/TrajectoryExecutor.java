@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
@@ -107,6 +108,8 @@ public class TrajectoryExecutor extends GuidanceComponent {
         if (currentTrajectory != null && !bufferedTrajectoryRunning) {
             log.info("Running buffered trajectory!");
             trajectoryExecutorWorker.runTrajectory(currentTrajectory);
+            tracking_.addNewTrajectory(currentTrajectory);
+            bufferedTrajectoryRunning = true;
         }
     }
 
@@ -223,7 +226,14 @@ public class TrajectoryExecutor extends GuidanceComponent {
         log.info("TrajectoryExecutor received new trajectory!");
         int idx = 1;
         for (IManeuver m : traj.getManeuvers()) {
-            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + (m instanceof LongitudinalManeuver ? "LONGITUDINAL" : "LATERAL"));
+            String maneuverType = "LATERAL";
+            if (m instanceof LongitudinalManeuver) {
+                maneuverType = "LONGITUDINAL";
+            } else if (m instanceof IComplexManeuver) {
+                maneuverType = "COMPLEX";
+            }
+
+            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + maneuverType);
             if (m instanceof LongitudinalManeuver) {
                 LongitudinalManeuver lonMvr = (LongitudinalManeuver) m;
                 log.info("Speeds from " + lonMvr.getStartSpeed() + " to " + lonMvr.getTargetSpeed());

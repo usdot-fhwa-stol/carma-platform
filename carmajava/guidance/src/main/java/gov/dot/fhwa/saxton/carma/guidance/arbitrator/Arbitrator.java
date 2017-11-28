@@ -75,7 +75,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   protected double planningWindowSnapThreshold = 20.0;
   protected double postComplexSteadyingDuration = 2.0;
   protected int numAcceptableFailures = 0;
-  protected Trajectory currentTrajectory = null;
+  protected Trajectory trajectory = null;
   protected TrajectoryValidator trajectoryValidator;
   protected TrajectoryExecutor trajectoryExecutor;
   protected String lateralPluginName = "NoOp Plugin";
@@ -154,7 +154,8 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       public void onMessage(Route msg) {
         if (!routeRecvd.get()) {
           log.info("Arbitrator now using LocalSpeedLimit constraint for route " + msg.getRouteName());
-          trajectoryValidator.addValidationConstraint(new LocalSpeedLimitConstraint(msg)); routeRecvd.set(true);
+          trajectoryValidator.addValidationConstraint(new LocalSpeedLimitConstraint(msg)); 
+          routeRecvd.set(true);
           currentRoute.set(msg);
 
           double length = 0.0;
@@ -179,13 +180,13 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
     }
 
     List<TrajectoryValidationConstraint> constraints = instantiateConstraints(constraintClasses);
+    constraints.add(new GlobalSpeedLimitConstraint(configuredSpeedLimit));
+    log.info("Arbitrator using GlobalSpeedLimitConstraint with limit: " + configuredSpeedLimit + " m/s");
+
     for (TrajectoryValidationConstraint tvc : constraints) {
       trajectoryValidator.addValidationConstraint(tvc);
       log.info("STARTUP", "Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
     }
-
-    constraints.add(new GlobalSpeedLimitConstraint(configuredSpeedLimit));
-    log.info("Arbitrator using GlobalSpeedLimitConstraint with limit: " + configuredSpeedLimit + " m/s");
 
     twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
     twistSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
@@ -310,8 +311,8 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
     for (int failures = 0; failures < numAcceptableFailures; failures++) {
       Trajectory traj = new Trajectory(trajectoryStart, trajectoryEnd);
       double expectedEntrySpeed = 0.0;
-      if (currentTrajectory != null) {
-        List<LongitudinalManeuver> lonManeuvers = currentTrajectory.getLongitudinalManeuvers();
+      if (trajectory != null) {
+        List<LongitudinalManeuver> lonManeuvers = trajectory.getLongitudinalManeuvers();
         LongitudinalManeuver lastManeuver = lonManeuvers.get(lonManeuvers.size() - 1);
         expectedEntrySpeed = lastManeuver.getTargetSpeed();
       } else {
@@ -352,7 +353,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       }
 
       double trajectoryStart = downtrackDistance.get();
-      currentTrajectory = planTrajectory(downtrackDistance.get(), getNextTrajectoryEndpoint(trajectoryStart));
+      trajectory = planTrajectory(downtrackDistance.get(), getNextTrajectoryEndpoint(trajectoryStart));
       trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, 
           (pct) -> {
             if (trajectoryExecutor.getCurrentTrajectory() != null
@@ -375,7 +376,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
             }
       });
 
-      trajectoryExecutor.runTrajectory(currentTrajectory);
+      trajectoryExecutor.runTrajectory(trajectory);
     }
 
   }
@@ -392,11 +393,13 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       if (downtrackDistance.get() < routeLength.get()) {
         increasePlanningWindow();
 
+        Trajectory currentTrajectory = trajectoryExecutor.getCurrentTrajectory();
+
         double trajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
         double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
 
-        currentTrajectory = planTrajectory(trajectoryStart, trajectoryEnd);
-        trajectoryExecutor.runTrajectory(currentTrajectory);
+        trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
+        trajectoryExecutor.runTrajectory(trajectory);
       } else {
         log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
       }
@@ -416,6 +419,8 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       log.info("Arbitrator replanning trajectory after complex maneuver execution");
       if (downtrackDistance.get() < routeLength.get()) {
         increasePlanningWindow();
+
+        Trajectory currentTrajectory = trajectoryExecutor.getCurrentTrajectory();
         
         double steadyingTrajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
         double steadyingTrajectoryEnd = steadyingTrajectoryStart + (postComplexSteadyingDuration * currentSpeed.get());
@@ -423,7 +428,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
         
         cruisingPlugin.planTrajectory(steadyingTrajectory, currentSpeed.get());
         trajectoryExecutor.runTrajectory(steadyingTrajectory);
-        currentTrajectory = steadyingTrajectory;
+        trajectory = steadyingTrajectory;
 
         // Begin normal trajectory replanning immediately
         NormalReplanningTask normalReplanningTask = new NormalReplanningTask();
@@ -448,12 +453,12 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       if (downtrackDistance.get() < routeLength.get()) {
         decreasePlanningWindow();
 
-        double trajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
+        double trajectoryStart = downtrackDistance.get();
         double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
 
-        currentTrajectory = planTrajectory(trajectoryStart, trajectoryEnd);
+        trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
         trajectoryExecutor.abortTrajectory();
-        trajectoryExecutor.runTrajectory(currentTrajectory);
+        trajectoryExecutor.runTrajectory(trajectory);
       } else {
         log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
       }

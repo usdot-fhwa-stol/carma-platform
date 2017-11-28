@@ -141,7 +141,7 @@ public class Route {
       segments.add(index-1, new RouteSegment(waypoints.get(index - 1), waypoint));
       segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
     } else if (index == waypoints.size()) {
-      segments.add(new RouteSegment(waypoints.get(index), waypoint));
+      segments.add(new RouteSegment(waypoints.get(index-1), waypoint));
     } else if (index == 0){
       segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
     } else {

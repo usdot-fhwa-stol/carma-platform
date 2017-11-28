@@ -161,6 +161,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       }
 
       if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()) {
+
         execute(currentLongitudinalManeuver);
       }
     }
@@ -168,8 +169,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   private void checkAndStartComplexManeuver() {
     if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getEndDistance()) {
-      if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
-        longitudinalManeuverThread.interrupt();
+      if (complexManeuverThread != null && complexManeuverThread.isAlive()) {
+        complexManeuverThread.interrupt();
       }
     }
 
@@ -182,6 +183,15 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     }
 
     if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getStartDistance()) {
+      // Stop all currently executing maneuvers, then run the complex one.
+      if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
+        longitudinalManeuverThread.interrupt();
+      }
+
+      if (lateralManeuverThread != null && lateralManeuverThread.isAlive()) {
+        lateralManeuverThread.interrupt();
+      }
+
       execute(currentComplexManeuver);
     }
   }
@@ -205,6 +215,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       return;
     }
 
+    // Check to see if any maneuvers are overdue starting
     checkAndStartManeuvers();
 
     // Call necessary callbacks
@@ -217,6 +228,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       }
     }
 
+    // Check to see if we need to advance to the next maneuver in each category
     checkAndStartComplexManeuver();
     checkAndStartNextLongitudinalManeuver();
     checkAndStartNextLateralManeuver();
@@ -252,6 +264,14 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       }
 
       currentLongitudinalManeuver = null;
+    }
+
+    if (currentComplexManeuver != null) {
+      if (!complexManeuverThread.isInterrupted()) {
+        complexManeuverThread.interrupt();;
+      }
+
+      currentComplexManeuver = null;
     }
   }
 

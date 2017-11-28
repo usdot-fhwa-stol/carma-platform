@@ -28,7 +28,6 @@ public interface ISimpleManeuver extends IManeuver {
      * @param inputs - the object that provides necessary input data about the route
      * @param commands - the object that will take output commands
      * @param startDist - distance from beginning of route at which this maneuver is to begin, m
-     * @param targetSpeed - the speed at which this maneuver is to complete, m/s
      * @throws IllegalStateException if required target quantity is not defined prior to this call
      */
     void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, UnsupportedOperationException;

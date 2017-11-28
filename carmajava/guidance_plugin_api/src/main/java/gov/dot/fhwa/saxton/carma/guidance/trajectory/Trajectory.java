@@ -24,6 +24,8 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Data structure and helper method container for describing and creating vehicle trajectories
@@ -35,8 +37,8 @@ public class Trajectory {
 
   protected double startLocation;
   protected double endLocation;
-  protected List<ISimpleManeuver> lateralManeuvers;
-  protected List<LongitudinalManeuver> longitudinalManeuvers;
+  protected Set<ISimpleManeuver> lateralManeuvers;
+  protected Set<LongitudinalManeuver> longitudinalManeuvers;
   protected IComplexManeuver complexManeuver = null;
   protected boolean lateralManeuversSorted = true;
   protected boolean longitudinalManeuversSorted = true;
@@ -48,8 +50,12 @@ public class Trajectory {
     this.startLocation = startLocation;
     this.endLocation = endLocation;
 
-    lateralManeuvers = new ArrayList<>();
-    longitudinalManeuvers = new ArrayList<>();
+    Comparator<IManeuver> sortingComparator = (IManeuver a, IManeuver b) -> {
+      return Double.compare(a.getStartDistance(), b.getStartDistance());
+    };
+
+    lateralManeuvers = new TreeSet<>(sortingComparator);
+    longitudinalManeuvers = new TreeSet<>(sortingComparator);
   }
 
   /**
@@ -67,6 +73,39 @@ public class Trajectory {
   }
 
   /**
+   * Compute if the ranges [start1, end1) and [start2, end2) overlap by analyizing the boundary points
+   */
+	private boolean checkOverlap(double start1, double end1, double start2, double end2) {
+		// Start2 is inside the first range
+		if (start2 >= start1 && start2 < end1) {
+			return true;
+		}
+		//End2 is inside the range
+		if (end2 > start1 && end2 < end1) { 
+			return true;
+		}
+		// The whole of range 2 overlaps range1
+		if (start2 <= start1 && end2 >= end1) {
+			return true;
+		}
+
+		// Start2 is inside the first range
+		if (start1 >= start2 && start1 < end2) {
+			return true;
+		}
+		//End2 is inside the range
+		if (end1 > start2 && end1 < end2) { 
+			return true;
+		}
+		// The whole of range 2 overlaps range1
+		if (start1 <= start2 && end1 >= end2) {
+			return true;
+		}
+
+		return false;
+	}
+
+  /**
    * Add a maneuver to the Trajectory.
    * </p>
    * The maneuver will be added to the appropriate maneuvers list if it fits spatially within the domain of
@@ -80,10 +119,38 @@ public class Trajectory {
 
     // Not a fan of using instanceof here, but without more information exposed by the maneuvers, not much I can do
     if (maneuver instanceof LongitudinalManeuver) {
-      longitudinalManeuversSorted = false;
+
+      // Check for overlap of maneuvers
+      for (ISimpleManeuver m : getLongitudinalManeuvers()) {
+        if (checkOverlap(maneuver.getStartDistance(), maneuver.getEndDistance(), m.getStartDistance(), m.getEndDistance())) {
+          return false;
+        }
+      }
+
+      IComplexManeuver cm = getComplexManeuver();
+      if (cm != null) {
+        if (checkOverlap(maneuver.getStartDistance(), maneuver.getEndDistance(), cm.getStartDistance(), cm.getEndDistance())) {
+          return false;
+        }
+      }
+
       return longitudinalManeuvers.add((LongitudinalManeuver) maneuver);
     } else {
-      lateralManeuversSorted = false;
+
+      // Check for overlap of maneuvers
+      for (ISimpleManeuver m : getLateralManeuvers()) {
+        if (checkOverlap(maneuver.getStartDistance(), maneuver.getEndDistance(), m.getStartDistance(), m.getEndDistance())) {
+          return false;
+        }
+      }
+
+      IComplexManeuver cm = getComplexManeuver();
+      if (cm != null) {
+        if (checkOverlap(maneuver.getStartDistance(), maneuver.getEndDistance(), cm.getStartDistance(), cm.getEndDistance())) {
+          return false;
+        }
+      }
+
       return lateralManeuvers.add(maneuver);
     }
   }
@@ -118,6 +185,19 @@ public class Trajectory {
         getNextManeuverAfter(maneuver.getStartDistance(), ManeuverType.LATERAL) != null) {
       // Complex maneuver must be last maneuver in trajectory
       return false;
+    }
+
+    // Check for overlap with any other maneuvers currentl planned
+    for (IManeuver m : lateralManeuvers) {
+      if (checkOverlap(maneuver.getStartDistance(), maneuver.getEndDistance(), m.getStartDistance(), m.getEndDistance())) {
+        return false;
+      }
+    }
+
+    for (IManeuver m : longitudinalManeuvers) {
+      if (checkOverlap(maneuver.getStartDistance(), maneuver.getEndDistance(), m.getStartDistance(), m.getEndDistance())) {
+        return false;
+      }
     }
 
     // Valid complex maneuver received, adjust and accept
@@ -155,7 +235,7 @@ public class Trajectory {
     maneuvers.sort((IManeuver m1, IManeuver m2) -> 
       Double.compare(m1.getStartDistance(), m2.getStartDistance()));
 
-    double lastEnd = 0;
+    double lastEnd = startLocation;
     for (IManeuver m : maneuvers) {
       if (m.getStartDistance() - lastEnd >= size)  {
         return lastEnd;
@@ -189,7 +269,7 @@ public class Trajectory {
         m2.getStartDistance());
     });
 
-    double lastStart = maneuvers.get(maneuvers.size() - 1).getEndDistance();
+    double lastStart = endLocation;
     for (int i = maneuvers.size() - 1; i >= 0; i--) {
       IManeuver m = maneuvers.get(i);
       if (lastStart - m.getEndDistance() >= size)  {
@@ -261,31 +341,11 @@ public class Trajectory {
     return null;
   }
 
-  private void sortLateralManeuvers() {
-    lateralManeuvers.sort(new Comparator<IManeuver>() {
-		@Override
-		public int compare(IManeuver o1, IManeuver o2) {
-			return Double.compare(o1.getStartDistance(), o2.getStartDistance());
-		}
-    });
-  }
-
-  private void sortLongitudinalManeuvers() {
-    longitudinalManeuvers.sort(new Comparator<IManeuver>() {
-		@Override
-		public int compare(IManeuver o1, IManeuver o2) {
-			return Double.compare(o1.getStartDistance(), o2.getStartDistance());
-		}
-    });
-  }
-
   /**
    * Get the next maneuver of the specified type which will be active after loc, null if one cannot be found
    */
   public IManeuver getNextManeuverAfter(double loc, ManeuverType type) {
     if (type == ManeuverType.LONGITUDINAL) {
-      sortLongitudinalManeuvers();
-
       for (ISimpleManeuver m : longitudinalManeuvers) {
         if (m.getStartDistance() > loc) {
           return m;
@@ -296,8 +356,6 @@ public class Trajectory {
     } 
 
     if (type == ManeuverType.LATERAL) {
-      sortLateralManeuvers();
-
       for (ISimpleManeuver m : lateralManeuvers) {
         if (m.getStartDistance() > loc) {
           return m;
@@ -324,16 +382,14 @@ public class Trajectory {
    * Get the trajectories stored lateral maneuvers in sorted order by start location
    */
   public List<ISimpleManeuver> getLateralManeuvers() {
-    sortLateralManeuvers();
-    return this.lateralManeuvers;
+    return new ArrayList<>(lateralManeuvers);
   }
 
   /**
    * Get the trajectories stored longitudinal maneuvers in sorted order by start location
    */
   public List<LongitudinalManeuver> getLongitudinalManeuvers() {
-    sortLongitudinalManeuvers();
-    return this.longitudinalManeuvers;
+    return new ArrayList<>(longitudinalManeuvers);
   }
 
   /**
@@ -348,6 +404,8 @@ public class Trajectory {
       out.add(complexManeuver);
     }
 
+    // I can't think of a notable performance different between making a new TreeSet vs making this list and sorting it
+    // If anything the list is the output format, so it's O(n) better since we don't have to copy the set into the list
     out.sort((IManeuver o1, IManeuver o2) -> Double.compare(o1.getStartDistance(), o2.getStartDistance()));
 
     return out;
