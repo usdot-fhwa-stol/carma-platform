@@ -121,6 +121,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
   @Override
   public void loop() throws InterruptedException {
+    long tsStart = System.currentTimeMillis();
     if (statusUpdater.lastUpdateTime != null) {
       // If we've successfully communicated with the server recently, signal our availability
       java.time.Duration timeSinceLastUpdate = java.time.Duration.between(statusUpdater.lastUpdateTime,
@@ -134,6 +135,10 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
     vehicleDataManager.setManeuverRunning(pluginServiceLocator.getArbitratorService()
     .getCurrentlyExecutingManeuver(ManeuverType.COMPLEX) instanceof SpeedHarmonizationManeuver);
+    
+    long tsEnd = System.currentTimeMillis();
+    long sleepDuration = Math.max(100 - (tsEnd - tsStart), 0);
+    Thread.sleep(sleepDuration);
   }
 
   @Override
