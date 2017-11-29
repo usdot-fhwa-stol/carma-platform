@@ -101,8 +101,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     }
 
     if (statusUpdaterThread == null && statusUpdater == null) {
-      statusUpdater = new StatusUpdater(serverUrl, sessionManager.getServerSessionId(), restClient,
-          timestepDuration, vehicleDataManager);
+      statusUpdater = new StatusUpdater(serverUrl, sessionManager.getServerSessionId(), restClient, timestepDuration,
+          vehicleDataManager);
       statusUpdaterThread = new Thread(statusUpdater);
       statusUpdaterThread.setName("SpeedHarm Status Updater");
       statusUpdaterThread.start();
@@ -120,7 +120,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   public void loop() throws InterruptedException {
     if (statusUpdater.lastUpdateTime != null) {
       // If we've successfully communicated with the server recently, signal our availability
-      java.time.Duration timeSinceLastUpdate = java.time.Duration.between(statusUpdater.lastUpdateTime, LocalDateTime.now());
+      java.time.Duration timeSinceLastUpdate = java.time.Duration.between(statusUpdater.lastUpdateTime,
+          LocalDateTime.now());
       if (timeSinceLastUpdate.toMillis() < 3 * timestepDuration) {
         setAvailability(true);
       } else {
@@ -156,15 +157,11 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   }
 
   private void planComplexManeuver(Trajectory traj, double start, double end) {
-    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(
-    this, 
-    pluginServiceLocator.getManeuverPlanner().getManeuverInputs(), 
-    pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), 
-    AccStrategyManager.newAccStrategy(), 
-    start, 
-    end, 
-    1.0,  // Dummy values for now. TODO: Replace
-    100.0);
+    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(this,
+        pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
+        pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), AccStrategyManager.newAccStrategy(), start,
+        end, 1.0, // Dummy values for now. TODO: Replace
+        100.0);
 
     traj.setComplexManeuver(maneuver);
   }
@@ -186,24 +183,29 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
         .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
 
     double earliestLegalWindow = complexManeuverStartLocation;
-    double endOfWindow = complexManeuverStartLocation;
     for (AlgorithmFlags flagset : flags) {
-      if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
+      if (flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
         earliestLegalWindow = flagset.getLocation();
+      } else {
         break;
       }
     }
 
     // Find the end of that same window
+    double endOfWindow = earliestLegalWindow;
     for (AlgorithmFlags flagset : flags) {
-      if (flagset.getLocation() > earliestLegalWindow && flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
-        endOfWindow = flagset.getLocation();
-        break;
-      }
+      if (flagset.getLocation() > earliestLegalWindow)
+        if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
+          endOfWindow = flagset.getLocation();
+        } else {
+          break;
+        }
     }
 
     if (Math.abs(endOfWindow - earliestLegalWindow) > minimumManeuverLength) {
       planComplexManeuver(traj, earliestLegalWindow, endOfWindow);
+    } else {
+      log.warn("Unable to find sufficient window to plan Speed Harmonization maneuver");
     }
   }
 
