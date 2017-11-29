@@ -26,10 +26,7 @@ import cav_srvs.GetTransformResponse;
 import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
-import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
@@ -50,6 +47,8 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
+
+import com.google.common.util.concurrent.AtomicDouble;
 
 import sensor_msgs.NavSatFix;
 import std_msgs.Float64;
@@ -89,10 +88,11 @@ public class Tracking extends GuidanceComponent {
 	protected float vehicleWidth = 0;
 	protected float vehicleLength = 0;
 	protected AtomicBoolean drivers_ready = new AtomicBoolean(false);
+	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);;
+	protected AtomicDouble current_speed = new AtomicDouble(0);
 	protected boolean steer_wheel_ready = false;
 	protected boolean nav_sat_fix_ready = false;
 	protected boolean heading_ready = false;
-	protected boolean velocity_ready = false;
 	protected boolean brake_ready = false;
 	protected boolean transmission_ready = false;
 	protected boolean acceleration_ready = false;
@@ -129,7 +129,7 @@ public class Tracking extends GuidanceComponent {
 	protected Arbitrator arbitrator = null;
 	protected AtomicBoolean trajectory_start = new AtomicBoolean(false);
 	protected Queue<Trajectory> trajectoryQueue = new LinkedList<Trajectory>();
-	protected TreeMap<Long, double[]> speedTimeTree = new TreeMap<Long, double[]>((a, b) -> (a - b < 0 ? -1 : 1));
+	protected TreeMap<Long, double[]> speedTimeTree = new TreeMap<Long, double[]>((a, b) -> Long.compare(a, b));
 	protected double trajectoryStartLocation = 0;
 	protected long trajectoryStartTime = 0;
 	
@@ -190,8 +190,9 @@ public class Tracking extends GuidanceComponent {
 		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
 			@Override
 			public void onMessage(TwistStamped msg) {
-				if(!velocity_ready) {
-					velocity_ready = true;
+				current_speed.set(msg.getTwist().getLinear().getX());
+				if(!velocity_ready.get()) {
+					velocity_ready.set(true);
 					log.info("BSM", "velocity subscriber is ready");
 				}
 			}
@@ -356,25 +357,29 @@ public class Tracking extends GuidanceComponent {
 	@Override
 	public void loop() throws InterruptedException {
 		
+		long loop_start = System.currentTimeMillis();
+		
 		if(drivers_ready.get()) {
+			
 			//publish content for a new BSM
 			bsmPublisher.publish(composeBSMData());
+			
 			//log the current vehicle forward speed
-            TwistStamped vel = velocitySubscriber.getLastMessage();
-            if(vel != null) {
-                double speed = vel.getTwist().getLinear().getX();
-                log.info("Current vehicle speed is " + speed + " m/s");
-            }
-		}
-		if(trajectory_start.get() && routeSubscriber.getLastMessage() != null && velocitySubscriber != null) {
-			long currentTime = System.currentTimeMillis();
-			double currentDowntrack = routeSubscriber.getLastMessage().getDownTrack();
-			double currentSpeed = velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
-			if(hasTrajectoryError(currentTime, currentDowntrack, currentSpeed)) {
-				arbitrator.notifyTrajectoryFailure();
+			if(velocity_ready.get()) {
+	            log.info("Current vehicle speed is " + current_speed.get() + " m/s");
+	            if(trajectory_start.get() && routeSubscriber != null && routeSubscriber.getLastMessage() != null) {
+	    			long currentTime = System.currentTimeMillis();
+	    			double currentDowntrack = routeSubscriber.getLastMessage().getDownTrack();
+	    			if(hasTrajectoryError(currentTime, currentDowntrack, current_speed.get())) {
+	    				arbitrator.notifyTrajectoryFailure();
+	    			}
+	    		}
 			}
 		}
-		Thread.sleep(sleepDurationMillis);
+		
+		long loop_end = System.currentTimeMillis();
+		
+		Thread.sleep(Math.max(sleepDurationMillis - (loop_end - loop_start), 0));
 	}
 
 	private void constructSpeedTimeTree(List<LongitudinalManeuver> maneuvers) {
@@ -396,8 +401,8 @@ public class Tracking extends GuidanceComponent {
 			double[] speedAndDistance = new double[2];
 			speedAndDistance[0] = m.getTargetSpeed();
 			speedAndDistance[1] = m.getEndDistance();
-			long finishTime = (long) (Math.abs(m.getStartDistance() - m.getEndDistance()) / 0.5 * (m.getStartSpeed() + m.getTargetSpeed()));
-			long predictFinishTime = lastEntryTime + finishTime * SECONDS_TO_MILLISECONDS;
+			long durationTime = (long) (Math.abs(m.getStartDistance() - m.getEndDistance()) / (0.5 * (m.getStartSpeed() + m.getTargetSpeed())));
+			long predictFinishTime = lastEntryTime + durationTime * SECONDS_TO_MILLISECONDS;
 			speedTimeTree.put(predictFinishTime, speedAndDistance);
 			lastEntryTime = predictFinishTime;
 		}
@@ -415,15 +420,19 @@ public class Tracking extends GuidanceComponent {
 		// Validate current speed with target speed
 		double speedChange = ceilingEntry.getValue()[0] - floorEntry.getValue()[0]; 
 		double targetSpeed = floorEntry.getValue()[0] + factor * speedChange;
-		if(Math.abs(targetSpeed - currentV) > speed_error_limit) {
-			log.warn("Tracking found speed error: " + Math.abs(targetSpeed - currentV) + " and trajectory is replanning.");
+		double speed_error = currentV - targetSpeed;
+		log.debug("Current speed error is " + speed_error);
+		if(Math.abs(speed_error) > speed_error_limit) {
+			log.warn("Speed error " + speed_error + " is larger than its limit!");
 			return true;
 		}
 		// Validate downtrack distance
 		double distanceChange = ceilingEntry.getValue()[1] - floorEntry.getValue()[1];
 		double targetDistance = floorEntry.getValue()[1] + factor * distanceChange;
-		if(Math.abs(targetDistance - currentD) > downtrack_error_limit) {
-			log.warn("Tracking found distance error: " + Math.abs(targetDistance - currentD) + " and trajectory is replanning.");
+		double distance_error = currentD - targetDistance;
+		log.debug("Current downtrack error is " + distance_error);
+		if(Math.abs(distance_error) > downtrack_error_limit) {
+			log.warn("Distance error: " + distance_error + " is larger than its limit!");
 			return true;
 		}
 		return false;
@@ -520,8 +529,8 @@ public class Tracking extends GuidanceComponent {
 		}
 
 		coreData.setSpeed(BSMCoreData.SPEED_UNAVAILABLE);
-		if(velocitySubscriber.getLastMessage() != null) {
-			float speed = (float) velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
+		if(velocity_ready.get()) {
+			float speed = (float) current_speed.get();
 			if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
 				coreData.setSpeed(speed);
 			}
