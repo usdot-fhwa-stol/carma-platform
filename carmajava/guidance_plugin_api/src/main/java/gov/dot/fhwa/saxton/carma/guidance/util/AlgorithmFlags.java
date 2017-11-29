@@ -43,4 +43,20 @@ public class AlgorithmFlags {
   public List<String> getDisabledAlgorithms() {
     return disabledAlgorithms;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof AlgorithmFlags)) {
+      return false;
+    } else {
+      AlgorithmFlags other = (AlgorithmFlags) o;
+      return location == other.getLocation() && disabledAlgorithms.equals(other.getDisabledAlgorithms());
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return 13 * Double.hashCode(location)  + 17 * disabledAlgorithms.hashCode();
+  }
+}
 }

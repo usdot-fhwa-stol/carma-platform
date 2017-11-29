@@ -181,6 +181,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     // Find the earliest window after the start location at which speedharm is enabled
     SortedSet<AlgorithmFlags> flags = pluginServiceLocator.getRouteService()
         .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
+    AlgorithmFlags flagsAtEnd = pluginServiceLocator.getRouteService().getAlgorithmFlagsAtLocation(traj.getEndLocation());
+    flags.add(flagsAtEnd); // Since its a set if this is a duplicate it goes away
 
     double earliestLegalWindow = complexManeuverStartLocation;
     for (AlgorithmFlags flagset : flags) {

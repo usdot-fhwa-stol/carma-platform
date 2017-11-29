@@ -41,4 +41,19 @@ public class SpeedLimit {
   public double getLimit() {
     return limit;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof SpeedLimit)) {
+      return false;
+    } else {
+      SpeedLimit other = (SpeedLimit) o;
+      return limit == other.getLimit() && location == other.getLocation();
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return 13 * Double.hashCode(location)  + 17 * Double.hashCode(limit);
+  }
 }
