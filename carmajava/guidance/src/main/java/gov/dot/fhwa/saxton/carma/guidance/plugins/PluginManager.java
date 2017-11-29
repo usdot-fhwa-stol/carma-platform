@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import cav_msgs.Plugin;
+import cav_msgs.RouteState;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
@@ -28,6 +29,7 @@ import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import org.reflections.Reflections;
@@ -63,7 +65,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected List<String> ignoredPluginClassNames = new ArrayList<>();
     protected List<String> requiredPluginClassNames = new ArrayList<>();
 
-    protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma.guidance.plugins";
+    protected final String PLUGIN_DISCOVERY_ROOT = "gov.dot.fhwa.saxton.carma";
     protected final String messagingBaseUrl = "plugins";
     protected final String getRegisteredPluginsServiceUrl = "get_registered_plugins";
     protected final String getActivePluginsServiceUrl = "get_active_plugins";
@@ -82,12 +84,32 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected int activePluginsSeqNum = 0;
 
     public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, 
-    IGuidanceCommands commands, IManeuverInputs maneuverInputs, ConnectedNode node) {
+    IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService, ConnectedNode node) {
         super(state, pubSubManager, node);
         this.executor = new PluginExecutor();
 
-        pluginServiceLocator = new PluginServiceLocator(new ArbitratorService(), new PluginManagementService(),
-                pubSubService, new RosParameterSource(node.getParameterTree()), new ManeuverPlanner(commands, maneuverInputs));
+        pluginServiceLocator = new PluginServiceLocator(
+                null, // Need to call setArbitrator service to resolve circular dependency
+                new PluginManagementService(),
+                pubSubService, 
+                new RosParameterSource(node.getParameterTree()), 
+                new ManeuverPlanner(commands, maneuverInputs), 
+                routeService);
+    }
+
+    /**
+     * Set the arbitrator service available to the plugins
+     * <p>
+     * Used to resolve circular dependency in constructors
+     */
+    public void setArbitratorService(ArbitratorService arbitratorService) {
+        pluginServiceLocator = new PluginServiceLocator(
+                arbitratorService,
+                pluginServiceLocator.getPluginManagementService(),
+                pluginServiceLocator.getPubSubService(), 
+                pluginServiceLocator.getParameterSource(), 
+                pluginServiceLocator.getManeuverPlanner(), 
+                pluginServiceLocator.getRouteService());
     }
 
     /**

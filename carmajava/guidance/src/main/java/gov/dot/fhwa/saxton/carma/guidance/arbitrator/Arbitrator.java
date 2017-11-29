@@ -21,11 +21,14 @@ import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.TrajectoryExecutor;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
@@ -54,14 +57,14 @@ import java.util.concurrent.atomic.AtomicReference;
  * Runs inside the GuidanceMain class's executor and prompts the Guidance.Plugins
  * to plan trajectories for the vehicle to execute.
  */
-public class Arbitrator extends GuidanceComponent implements ArbitratorStateChangeListener {
+public class Arbitrator extends GuidanceComponent implements ArbitratorService, ArbitratorStateChangeListener {
   protected ArbitratorStateMachine stateMachine = new ArbitratorStateMachine();
   protected ISubscriber<RouteState> routeStateSubscriber;
   protected ISubscriber<TwistStamped> twistSubscriber;
   protected AtomicReference<GuidanceState> state;
   protected PluginManager pluginManager;
   protected IPlugin lateralPlugin;
-  protected IPlugin longitudinalPlugin;
+  protected List<IPlugin> longitudinalPlugins = new ArrayList<>();
   protected CruisingPlugin cruisingPlugin;
   protected AtomicBoolean receivedDtdUpdate = new AtomicBoolean(false);
   protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
@@ -79,7 +82,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   protected TrajectoryValidator trajectoryValidator;
   protected TrajectoryExecutor trajectoryExecutor;
   protected String lateralPluginName = "NoOp Plugin";
-  protected String longitudinalPluginName = "Cruising Plugin";
+  protected List<String> longitudinalPluginNames = new ArrayList<>();
   protected ISubscriber<Route> routeSub;
   protected AtomicDouble routeLength = new AtomicDouble(-1.0);
   protected AtomicReference<Route> currentRoute = new AtomicReference<>();
@@ -142,7 +145,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
     planningWindowGrowthFactor = ptree.getDouble("~planning_window_growth_factor", 1.0);
     planningWindowShrinkFactor = ptree.getDouble("~planning_window_shrink_factor", 1.0);
     numAcceptableFailures = ptree.getInteger("~trajectory_planning_max_attempts", 3);
-    longitudinalPluginName = ptree.getString("~arbitrator_longitudinal_plugin");
+    longitudinalPluginNames = (List<String>) ptree.getList("~arbitrator_longitudinal_plugins");
     lateralPluginName = ptree.getString("~arbitrator_lateral_plugin");
     planningWindowSnapThreshold = ptree.getDouble("~planning_window_snap_threshold", 20.0);
     postComplexSteadyingDuration = ptree.getDouble("~post_complex_trajectory_steadying_period", 2.0);
@@ -154,7 +157,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       public void onMessage(Route msg) {
         if (!routeRecvd.get()) {
           log.info("Arbitrator now using LocalSpeedLimit constraint for route " + msg.getRouteName());
-          trajectoryValidator.addValidationConstraint(new LocalSpeedLimitConstraint(msg)); 
+          trajectoryValidator.addValidationConstraint(new LocalSpeedLimitConstraint(msg));
           routeRecvd.set(true);
           currentRoute.set(msg);
 
@@ -213,7 +216,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   }
 
   protected void setLongitudinalPlugin(IPlugin plugin) {
-    longitudinalPlugin = plugin;
+    longitudinalPlugins.add(plugin);
   }
 
   protected void setCruisingPlugin(CruisingPlugin plugin) {
@@ -228,7 +231,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
         setLateralPlugin(plugin);
       }
 
-      if (plugin.getVersionInfo().componentName().equals(longitudinalPluginName)) {
+      if (longitudinalPluginNames.contains(plugin.getVersionInfo().componentName())) {
         setLongitudinalPlugin(plugin);
       }
 
@@ -237,11 +240,16 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       }
     }
 
-    if (lateralPlugin == null || longitudinalPlugin == null) {
+    if (lateralPlugin == null || longitudinalPlugins.isEmpty()) {
       panic("Arbitrator unable to locate the configured and required plugins!");
     }
 
-    log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + ", " + longitudinalPluginName + "]");
+    String pluginList = "";
+    for (IPlugin p : longitudinalPlugins) {
+      pluginList += ", " + p.getVersionInfo().componentName();
+    }
+
+    log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + pluginList + "]");
     stateMachine.processEvent(ArbitratorEvent.INITIALIZE);
   }
 
@@ -263,7 +271,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       double dtdAccum = 0.0;
       for (RouteSegment segment : currentRoute.get().getSegments()) {
         dtdAccum += segment.getLength();
-      
+
         if (dtdAccum > trajectoryEnd) {
           if (Math.abs(dtdAccum - trajectoryEnd) < planningWindowSnapThreshold) {
             trajectoryEnd = dtdAccum;
@@ -274,7 +282,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       }
 
       trajectoryEnd = Math.min(routeLength.get(), trajectoryEnd);
-    } 
+    }
 
     return trajectoryEnd;
   }
@@ -299,9 +307,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   }
 
   protected Trajectory planTrajectory(double trajectoryStart, double trajectoryEnd) {
-    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryEnd
-        + ")");
-
+    log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryEnd + ")");
 
     if (trajectoryEnd - trajectoryStart < TRAJ_SIZE_WARNING) {
       log.warn("Trajectory planned smaller than " + TRAJ_SIZE_WARNING + ". Maneuvers may not have space to complete.");
@@ -320,7 +326,14 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
       }
 
       lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
-      longitudinalPlugin.planTrajectory(traj, expectedEntrySpeed);
+
+      for (IPlugin p : longitudinalPlugins) {
+        if (p.getActivation() && p.getAvailability()) {
+          log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
+          p.planTrajectory(traj, expectedEntrySpeed);
+        }
+      }
+
       if (trajectoryValidator.validate(traj)) {
         out = traj;
         break;
@@ -354,26 +367,26 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
 
       double trajectoryStart = downtrackDistance.get();
       trajectory = planTrajectory(downtrackDistance.get(), getNextTrajectoryEndpoint(trajectoryStart));
-      trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, 
-          (pct) -> {
-            if (trajectoryExecutor.getCurrentTrajectory() != null
-                && trajectoryExecutor.getCurrentTrajectory().getComplexManeuver() != null) {
-              OnTrajectoryProgressCallback complexReplanCallback = new OnTrajectoryProgressCallback() {
-                @Override
-                public void onProgress(double pct) {
-                  // Ensure we're only called once
-                  trajectoryExecutor.unregisterOnTrajectoryProgressCallback(this);
+      trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, (pct) -> {
+        if (trajectoryExecutor.getCurrentTrajectory() != null
+            && trajectoryExecutor.getCurrentTrajectory().getComplexManeuver() != null) {
+          OnTrajectoryProgressCallback complexReplanCallback = new OnTrajectoryProgressCallback() {
+            @Override
+            public void onProgress(double pct) {
+              // Ensure we're only called once
+              trajectoryExecutor.unregisterOnTrajectoryProgressCallback(this);
 
-                  // Trigger the replan
-                  stateMachine.processEvent(ArbitratorEvent.COMPLEX_TRAJECTORY_COMPLETION_ALERT);
-                }
-              };
-
-              // Schedule this to execute closer to the end of the complex trajectory
-              trajectoryExecutor.registerOnTrajectoryProgressCallback(complexTrajectoryReplanTriggerPercent, complexReplanCallback);
-            } else {
-              stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_COMPLETION_ALERT);
+              // Trigger the replan
+              stateMachine.processEvent(ArbitratorEvent.COMPLEX_TRAJECTORY_COMPLETION_ALERT);
             }
+          };
+
+          // Schedule this to execute closer to the end of the complex trajectory
+          trajectoryExecutor.registerOnTrajectoryProgressCallback(complexTrajectoryReplanTriggerPercent,
+              complexReplanCallback);
+        } else {
+          stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_COMPLETION_ALERT);
+        }
       });
 
       trajectoryExecutor.runTrajectory(trajectory);
@@ -421,11 +434,11 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
         increasePlanningWindow();
 
         Trajectory currentTrajectory = trajectoryExecutor.getCurrentTrajectory();
-        
+
         double steadyingTrajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
         double steadyingTrajectoryEnd = steadyingTrajectoryStart + (postComplexSteadyingDuration * currentSpeed.get());
         Trajectory steadyingTrajectory = new Trajectory(steadyingTrajectoryStart, steadyingTrajectoryEnd);
-        
+
         cruisingPlugin.planTrajectory(steadyingTrajectory, currentSpeed.get());
         trajectoryExecutor.runTrajectory(steadyingTrajectory);
         trajectory = steadyingTrajectory;
@@ -466,10 +479,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
 
   }
 
-  /**
-   * Inform the Arbitrator of trajectory execution failure, necessitating immediate replan and
-   * execution of a new trajectory.
-   */
+  @Override
   public void notifyTrajectoryFailure() {
     stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_FAILED_EXECUTION);
   }
@@ -477,23 +487,43 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorStateChan
   @Override
   public void onStateChange(ArbitratorState newState) {
     switch (newState) {
-      case INITIAL_PLANNING:
-        jobQueue.add(new InitialPlanningTask());
-        break;
-      case AWAITING_REPLAN:
-        // Don't submit anything to the job queue
-        break;
-      case NORMAL_REPLANNING:
-        jobQueue.add(new NormalReplanningTask());
-        break;
-      case REPLAN_AFTER_COMPLEX_TRAJECTORY:
-        jobQueue.add(new ComplexTrajectoryReplanTask());
-        break;
-      case REPLAN_DUE_TO_FAILED_TRAJECTORY:
-        jobQueue.add(new FailedTrajectoryReplanTask());
-        break;
+    case INITIAL_PLANNING:
+      jobQueue.add(new InitialPlanningTask());
+      break;
+    case AWAITING_REPLAN:
+      // Don't submit anything to the job queue
+      break;
+    case NORMAL_REPLANNING:
+      jobQueue.add(new NormalReplanningTask());
+      break;
+    case REPLAN_AFTER_COMPLEX_TRAJECTORY:
+      jobQueue.add(new ComplexTrajectoryReplanTask());
+      break;
+    case REPLAN_DUE_TO_FAILED_TRAJECTORY:
+      jobQueue.add(new FailedTrajectoryReplanTask());
+      break;
+    default:
+      throw new IllegalStateException("Unrecognized arbitrator state detected!");
+    }
+  }
+
+  @Override
+  public IManeuver getCurrentlyExecutingManeuver(ManeuverType maneuverType) {
+    // For lack of a better place to put this (barring expanding a whole new abstraction into the PluginAPI) this is where
+    // this functionality landed. Eventually this should be migrated into some kind of TrajectoryExecutor service of some
+    // description. But it's needed for SpeedHarm ASAP and that system will take time to design because that's not a
+    // functionality that can be exposed without some thought.
+
+    // TODO: Move this somewhere better
+    switch (maneuverType) {
+      case COMPLEX:
+        return trajectoryExecutor.getCurrentComplexManeuver();
+      case LONGITUDINAL:
+        return trajectoryExecutor.getCurrentLongitudinalManeuver();
+      case LATERAL:
+        return trajectoryExecutor.getCurrentLateralManeuver();
       default:
-        throw new IllegalStateException("Unrecognized arbitrator state detected!");
+        return null;
     }
   }
 }

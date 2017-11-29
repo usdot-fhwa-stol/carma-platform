@@ -28,6 +28,7 @@ import cav_srvs.SetGuidanceEngaged;
 import cav_srvs.SetGuidanceEngagedRequest;
 import cav_srvs.SetGuidanceEngagedResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
@@ -88,16 +89,19 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     // Init the ACC system
 
+    GuidanceRouteService routeService = new GuidanceRouteService(pubSubService);
+    routeService.init();
     GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(state, pubSubService, node);
-    PluginManager pluginManager = new PluginManager(state, pubSubService, guidanceCommands, maneuverInputs, node);
     Tracking tracking = new Tracking(state, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands, tracking);
+    PluginManager pluginManager = new PluginManager(state, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
     Arbitrator arbitrator = new Arbitrator(state, pubSubService, node, pluginManager, trajectoryExecutor);
     GuidanceShutdownHandler shutdownHandler = new GuidanceShutdownHandler(state, pubSubService, node);
     
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
+    pluginManager.setArbitratorService(arbitrator);
 
     executor.execute(maneuverInputs);
     executor.execute(arbitrator);

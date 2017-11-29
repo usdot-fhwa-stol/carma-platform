@@ -28,7 +28,14 @@ dependencies {
   /* Example of a local subproject dependency */ 
   /* compile project(':sibling_gradle_project') */
   compile project(':guidance_plugin_api')
+  compile 'org.ros.rosjava_messages:std_msgs:0.5.10'
+  compile 'org.ros.rosjava_core:rosjava_geometry:0.3.5'
+  compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
   compile name: 'saxton-utils-2.0.0'
+  compile name: 'speedharm-common-1.0-SNAPSHOT'
+  compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.2'
+  compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.9.2'
+  compile group: 'org.springframework', name: 'spring-web', version: '5.0.1.RELEASE'
 
   testCompile 'org.mockito:mockito-core:2.+'
   testCompile 'junit:junit:4.12'

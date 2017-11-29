@@ -15,6 +15,7 @@
  */
 package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 
+import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ComplexManeuverBase;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IAccStrategy;
@@ -29,6 +30,7 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
 
   private ISpeedHarmInputs speedHarmInputs_;
   private Duration timeout = Duration.fromMillis(3000);
+  private ArbitratorService arbitratorService;
 
   /**
    * Constructor where user provides all relevant inputs
@@ -95,7 +97,13 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
   private void checkTimeout() throws IllegalStateException {
     Duration timeElapsed = speedHarmInputs_.getTimeSinceLastUpdate();
     if (timeElapsed.compareTo(timeout) > 0) {
-      throw new IllegalStateException("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
+      if (arbitratorService == null) {
+        log_.error("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
+        throw new IllegalStateException("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
+      } else {
+        log_.warn("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed + ". Notifying arbitrator of failure.");
+        arbitratorService.notifyTrajectoryFailure();
+      }
     }
   }
 
@@ -112,5 +120,12 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
    */
   public void setTimeout(Duration timeout) {
     this.timeout = timeout;
+  }
+
+  /**
+   * Sets the arbitration service the maneuver will use to force a replan in the event of a timeout.
+   */
+  public void setArbitratorService(ArbitratorService arbitratorService) {
+    this.arbitratorService = arbitratorService;
   }
 }

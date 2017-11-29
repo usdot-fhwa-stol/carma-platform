@@ -120,12 +120,12 @@ public class CruisingPlugin extends AbstractPlugin {
 
   @Override
   public void onResume() {
-    // NO-OP
+    setAvailability(true);
   }
 
   @Override
   public void onSuspend() {
-    // NO-OP
+    setAvailability(false);
   }
 
   @Override

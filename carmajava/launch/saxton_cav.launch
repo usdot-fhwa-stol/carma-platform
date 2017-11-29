@@ -340,6 +340,7 @@
 
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/SpeedHarmParams.yaml"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
@@ -359,6 +360,8 @@
                to="/$(arg TOP_NS)/vehicle_length"/>
         <remap from="vehicle_width"
                to="/$(arg TOP_NS)/vehicle_width"/>
+        <remap from="vehicle_id"
+               to="/$(arg TOP_NS)/vehicle_id"/>
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"

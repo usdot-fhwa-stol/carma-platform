@@ -16,9 +16,21 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+
 /**
  * Plugin interface to Arbitrator services provided by the Guidance package
  */
-public class ArbitratorService {
-    // STUB
+public interface ArbitratorService {
+    /**
+     * Inform the Arbitrator of trajectory execution failure, necessitating immediate replan and
+     * execution of a new trajectory.
+     */
+    void notifyTrajectoryFailure();
+
+    /**
+     * Get the currently executing maneuver of the specified type, null if none such maneuver exists.
+     */
+    IManeuver getCurrentlyExecutingManeuver(ManeuverType maneuverType);
 }
