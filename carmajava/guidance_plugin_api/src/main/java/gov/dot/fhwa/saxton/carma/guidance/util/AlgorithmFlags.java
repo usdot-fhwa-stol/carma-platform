@@ -59,4 +59,3 @@ public class AlgorithmFlags {
     return 13 * Double.hashCode(location)  + 17 * disabledAlgorithms.hashCode();
   }
 }
-}
