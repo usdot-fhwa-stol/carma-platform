@@ -73,20 +73,20 @@ public interface RouteService {
   AlgorithmFlags getAlgorithmFlagsAtLocation(double location);
 
   /**
-   * Get the set of all speed limits with locations in the range [start, end). Empty set if the vehicle is not on a route
+   * Get the set of all speed limits with locations in the range (start, end]. Empty set if the vehicle is not on a route
    * or there are no limits in the requested range.
    * 
-   * @param start The location of the start of the range (inclusive) in linear downtrack distance
-   * @param end The location of the end of the range (exclusive) in linear downtrack distance
+   * @param start The location of the start of the range (exclusive) in linear downtrack distance
+   * @param end The location of the end of the range (inclusive) in linear downtrack distance
    */
   SortedSet<SpeedLimit> getSpeedLimitsInRange(double start, double end);
 
   /**
-   * Get the set of all algorithm flags with locations in the range [start, end). Empty set if the vehicle is not on a route
+   * Get the set of all algorithm flags with locations in the range (start, end]. Empty set if the vehicle is not on a route
    * or there are no limits in the requested range.
    * 
-   * @param start The location of the start of the range (inclusive) in linear downtrack distance
-   * @param end The location of the end of the range (exclusive) in linear downtrack distance
+   * @param start The location of the start of the range (exclusive) in linear downtrack distance
+   * @param end The location of the end of the range (inclusive) in linear downtrack distance
    */
   SortedSet<AlgorithmFlags> getAlgorithmFlagsInRange(double start, double end);
 }

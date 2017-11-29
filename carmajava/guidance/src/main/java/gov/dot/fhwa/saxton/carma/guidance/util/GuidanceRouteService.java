@@ -152,7 +152,7 @@ public class GuidanceRouteService implements RouteService {
   public SortedSet<SpeedLimit> getSpeedLimitsInRange(double start, double end) {
     SortedSet<SpeedLimit> out = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
     for (SpeedLimit limit : limits) {
-      if (limit.getLocation() >= start && limit.getLocation() < end) {
+      if (limit.getLocation() > start && limit.getLocation() <= end) {
         out.add(limit);
       }
 
@@ -168,7 +168,7 @@ public class GuidanceRouteService implements RouteService {
   public SortedSet<AlgorithmFlags> getAlgorithmFlagsInRange(double start, double end) {
     SortedSet<AlgorithmFlags> out = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
     for (AlgorithmFlags flags : disabledAlgorithms) {
-      if (flags.getLocation() >= start && flags.getLocation() < end) {
+      if (flags.getLocation() > start && flags.getLocation() <= end) {
         out.add(flags);
       }
 
