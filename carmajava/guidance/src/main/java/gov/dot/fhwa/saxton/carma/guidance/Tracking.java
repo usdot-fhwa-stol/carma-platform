@@ -423,7 +423,7 @@ public class Tracking extends GuidanceComponent {
 		double speed_error = currentV - targetSpeed;
 		log.debug("Current speed error is " + speed_error);
 		if(Math.abs(speed_error) > speed_error_limit) {
-			log.warn("Speed error " + speed_error + " is larger than its limit and trajectory is replanning.");
+			log.warn("Speed error " + speed_error + " is larger than its limit!");
 			return true;
 		}
 		// Validate downtrack distance
@@ -432,7 +432,7 @@ public class Tracking extends GuidanceComponent {
 		double distance_error = currentD - targetDistance;
 		log.debug("Current downtrack error is " + distance_error);
 		if(Math.abs(distance_error) > downtrack_error_limit) {
-			log.warn("Distance error: " + distance_error + " is larger than its limit and trajectory is replanning.");
+			log.warn("Distance error: " + distance_error + " is larger than its limit!");
 			return true;
 		}
 		return false;
