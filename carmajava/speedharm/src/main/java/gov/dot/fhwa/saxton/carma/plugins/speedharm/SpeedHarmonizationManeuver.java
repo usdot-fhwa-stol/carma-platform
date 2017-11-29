@@ -101,7 +101,7 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
         log_.error("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
         throw new IllegalStateException("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
       } else {
-        log_.warn("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
+        log_.warn("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed + ". Notifying arbitrator of failure.");
         arbitratorService.notifyTrajectoryFailure();
       }
     }
