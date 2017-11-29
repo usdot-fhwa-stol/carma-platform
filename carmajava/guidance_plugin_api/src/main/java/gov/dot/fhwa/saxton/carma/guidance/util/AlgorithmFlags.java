@@ -37,6 +37,9 @@ public class AlgorithmFlags {
     return location;
   }
 
+  /**
+   * Get the list of capabilities which are disabled via the route configuration for the segment this pertains to
+   */
   public List<String> getDisabledAlgorithms() {
     return disabledAlgorithms;
   }
