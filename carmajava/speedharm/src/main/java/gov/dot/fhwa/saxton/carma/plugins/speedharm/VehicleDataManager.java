@@ -42,6 +42,7 @@ public class VehicleDataManager {
   protected volatile double rangeRate;
   protected volatile double speed;
   protected volatile double accel;
+  protected volatile boolean maneuverRunning = false;
 
   // ROS Subscribers
   protected ISubscriber<RobotEnabled> robotStatusSubscriber;
@@ -66,7 +67,11 @@ public class VehicleDataManager {
     robotStatusSubscriber.registerOnMessageCallback(msg -> {
       // TODO: Maybe somehow this is aware of the maneuver's execution status?
       if (msg.getRobotActive()) {
-        automatedControl = AutomatedControlStatus.ENGAGED;
+        if (maneuverRunning) {
+          automatedControl = AutomatedControlStatus.ENGAGED;
+        } else {
+          automatedControl = AutomatedControlStatus.ENGAGED_BUT_IGNORING;
+        }
       } else {
         automatedControl = AutomatedControlStatus.DISENGAGED;
       }
@@ -74,11 +79,10 @@ public class VehicleDataManager {
 
     radarSubscriber.registerOnMessageCallback(msg -> {
       Optional<ExternalObject> closest = msg.getObjects().stream()
-      .sorted((ExternalObject obj1, ExternalObject obj2) -> {
-        return Double.compare(obj2.getPose().getPose().getPosition().getX(), 
-                              obj1.getPose().getPose().getPosition().getX());
-      })
-      .findFirst();
+          .sorted((ExternalObject obj1, ExternalObject obj2) -> {
+            return Double.compare(obj2.getPose().getPose().getPosition().getX(),
+                obj1.getPose().getPose().getPosition().getX());
+          }).findFirst();
 
       closest.ifPresent((obj) -> {
         range = obj.getPose().getPose().getPosition().getX();
@@ -98,6 +102,15 @@ public class VehicleDataManager {
 
   public AutomatedControlStatus getAutomatedControl() {
     return automatedControl;
+  }
+
+  public void setManeuverRunning(boolean value) {
+    maneuverRunning = value;
+    if (maneuverRunning && automatedControl == AutomatedControlStatus.ENGAGED_BUT_IGNORING) {
+      automatedControl = AutomatedControlStatus.ENGAGED;
+    } else if (!maneuverRunning && automatedControl == AutomatedControlStatus.ENGAGED) {
+      automatedControl = AutomatedControlStatus.ENGAGED_BUT_IGNORING;
+    }
   }
 
   /**

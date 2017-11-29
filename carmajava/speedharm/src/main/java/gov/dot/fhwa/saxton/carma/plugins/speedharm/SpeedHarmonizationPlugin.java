@@ -23,10 +23,13 @@ import org.springframework.web.client.RestTemplate;
 
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.AlgorithmFlags;
+import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate.AutomatedControlStatus;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -128,6 +131,9 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
         setAvailability(false);
       }
     }
+
+    vehicleDataManager.setManeuverRunning(pluginServiceLocator.getArbitratorService()
+    .getCurrentlyExecutingManeuver(ManeuverType.COMPLEX) instanceof SpeedHarmonizationManeuver);
   }
 
   @Override
