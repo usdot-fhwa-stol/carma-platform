@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util;
 
+/**
+ * Data holder class for describing speed limit changes along a route.
+ */
 public class SpeedLimit {
   private double location;
   private double limit;
@@ -25,10 +28,16 @@ public class SpeedLimit {
     this.limit = limit;
   }
 
+  /**
+   * Get the downtrack distance of the end of the segment this limit pertains to, in meters.
+   */
   public double getLocation() {
     return location;
   }
 
+  /**
+   * Get the upper speed limit for the segment this limit pertains to, in m/s
+   */
   public double getLimit() {
     return limit;
   }

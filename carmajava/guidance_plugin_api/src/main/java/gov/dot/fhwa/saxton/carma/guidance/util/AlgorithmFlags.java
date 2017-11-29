@@ -18,6 +18,9 @@ package gov.dot.fhwa.saxton.carma.guidance.util;
 
 import java.util.List;
 
+/**
+ * Data holder class for Algorithm flags contained in Route data.
+ */
 public class AlgorithmFlags {
   private double location;
   private List<String> disabledAlgorithms;
@@ -27,6 +30,9 @@ public class AlgorithmFlags {
     this.disabledAlgorithms = disabledAlgorithms;
   }
 
+  /**
+   * Get the location of the downtrack waypoint for the segment this set of flags pertains to, in meters
+   */
   public double getLocation() {
     return location;
   }
