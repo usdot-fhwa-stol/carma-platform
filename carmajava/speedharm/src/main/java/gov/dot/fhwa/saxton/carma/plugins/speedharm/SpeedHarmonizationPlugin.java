@@ -210,6 +210,9 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
         }
     }
 
+    // Clamp to end of trajectory window
+    endOfWindow = Math.min(endOfWindow, traj.getEndLocation());
+
     if (Math.abs(endOfWindow - earliestLegalWindow) > minimumManeuverLength) {
       planComplexManeuver(traj, earliestLegalWindow, endOfWindow);
     } else {
