@@ -530,9 +530,9 @@ public class Tracking extends GuidanceComponent {
 
 		coreData.setSpeed(BSMCoreData.SPEED_UNAVAILABLE);
 		if(velocity_ready.get()) {
-			double speed = current_speed.get();
+			float speed = (float) current_speed.get();
 			if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
-				coreData.setSpeed((float) speed);
+				coreData.setSpeed(speed);
 			}
 		}
 		
