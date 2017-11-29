@@ -75,13 +75,13 @@ public class GuidanceRouteService implements RouteService {
 
     double dtdAccum = 0;
     for (RouteSegment seg: currentRoute.getSegments()) {
+      dtdAccum += seg.getLength();
+
       SpeedLimit segmentLimit = new SpeedLimit(dtdAccum, convertMphToMps(seg.getWaypoint().getSpeedLimit()));
       limits.add(segmentLimit);
 
       AlgorithmFlags segmentFlags = new AlgorithmFlags(dtdAccum, seg.getWaypoint().getDisabledGuidanceAlgorithms());
       disabledAlgorithms.add(segmentFlags);
-
-      dtdAccum += seg.getLength();
     }
   }
 
@@ -90,12 +90,12 @@ public class GuidanceRouteService implements RouteService {
    double dtdAccum = 0;
    RouteSegment out = null;
    for (RouteSegment segment : currentRoute.getSegments()) {
+     dtdAccum += segment.getLength();
+
      if (dtdAccum > downtrackDistance) {
        out = segment;
        break;
      }
-
-     dtdAccum += segment.getLength();
     }
 
     return out;
