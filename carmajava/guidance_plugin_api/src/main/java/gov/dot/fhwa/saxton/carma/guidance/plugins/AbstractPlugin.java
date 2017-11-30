@@ -35,7 +35,7 @@ public abstract class AbstractPlugin implements IPlugin {
 	protected ComponentVersion version = new ComponentVersion();
     protected IPubSubService pubSubService;
     protected PluginServiceLocator pluginServiceLocator;
-    protected ILogger log = LoggerManager.getLogger();
+    protected ILogger log;
 
     // Private fields so that extendees can't access them
     private AtomicBoolean activation = new AtomicBoolean(false);
@@ -45,6 +45,9 @@ public abstract class AbstractPlugin implements IPlugin {
     public AbstractPlugin(PluginServiceLocator pluginServiceLocator) {
         this.pluginServiceLocator = pluginServiceLocator;
         this.pubSubService = pluginServiceLocator.getPubSubService();
+        
+        // Work around to get the name of the extending class instead of "AbstractPlugin"
+        this.log = LoggerManager.getLogger(this.getClass().getCanonicalName());
     }
 
     @Override public boolean getActivation() {
