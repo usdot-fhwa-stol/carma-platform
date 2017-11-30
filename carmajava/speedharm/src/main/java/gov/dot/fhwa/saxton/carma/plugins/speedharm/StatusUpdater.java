@@ -71,6 +71,8 @@ public class StatusUpdater implements Runnable {
       vsu.setAccel(vehicleDataManager.getAccel());
       vsu.setNetworkLatencyInformation(latencyData);
 
+      log.info("Sending VehicleStatusUpdate: " + vsu.toString());
+
       VehicleStatusUpdate response = new VehicleStatusUpdate();
       LocalDateTime sendTime = LocalDateTime.now();
       try {
@@ -108,7 +110,7 @@ public class StatusUpdater implements Runnable {
 
       long timestepEnd = System.currentTimeMillis();
       long sleepDuration = Math.max(timestepDuration - (timestepEnd - timestepStart), 0);
-      log.info("Speed Harmonization timestep complete, sleeping for " + sleepDuration);
+      log.info("Speed Harmonization status updater timestep complete, sleeping for " + sleepDuration);
 
       try {
         Thread.sleep(sleepDuration);

@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 import org.ros.message.Duration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
@@ -92,15 +93,23 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     vehicleDataManager.init(pubSubService);
 
     sessionManager = new SessionManager(serverUrl, vehicleId, restClient);
-    if (!endSessionOnSuspend) {
-      sessionManager.registerNewVehicleSession();
-    }
   }
 
   @Override
   public void onResume() {
-    if (endSessionOnSuspend) {
-      sessionManager.registerNewVehicleSession();
+    // Loop until we connect to the server
+    while (true) {
+      try {
+        sessionManager.registerNewVehicleSession();
+        break;
+      } catch (RestClientException rce) {
+        log.warn("Unable to register with server, caught exception.", rce);
+        try {
+          Thread.sleep(100); // So we dont spin super-tight
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+        }
+      }
     }
 
     if (statusUpdaterThread == null && statusUpdater == null) {
@@ -134,8 +143,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     }
 
     vehicleDataManager.setManeuverRunning(pluginServiceLocator.getArbitratorService()
-    .getCurrentlyExecutingManeuver(ManeuverType.COMPLEX) instanceof SpeedHarmonizationManeuver);
-    
+        .getCurrentlyExecutingManeuver(ManeuverType.COMPLEX) instanceof SpeedHarmonizationManeuver);
+
     long tsEnd = System.currentTimeMillis();
     long sleepDuration = Math.max(100 - (tsEnd - tsStart), 0);
     Thread.sleep(sleepDuration);
@@ -155,16 +164,12 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
       commandReceiver = null;
     }
 
-    if (endSessionOnSuspend) {
-      sessionManager.endVehicleSession();
-    }
+    sessionManager.endVehicleSession();
   }
 
   @Override
   public void onTerminate() {
-    if (!endSessionOnSuspend) {
-      sessionManager.endVehicleSession();
-    }
+    // NO-OP
   }
 
   private void planComplexManeuver(Trajectory traj, double start, double end) {
@@ -192,7 +197,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     // Find the earliest window after the start location at which speedharm is enabled
     SortedSet<AlgorithmFlags> flags = pluginServiceLocator.getRouteService()
         .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
-    AlgorithmFlags flagsAtEnd = pluginServiceLocator.getRouteService().getAlgorithmFlagsAtLocation(traj.getEndLocation());
+    AlgorithmFlags flagsAtEnd = pluginServiceLocator.getRouteService()
+        .getAlgorithmFlagsAtLocation(traj.getEndLocation());
     flags.add(flagsAtEnd); // Since its a set if this is a duplicate it goes away
 
     double earliestLegalWindow = complexManeuverStartLocation;

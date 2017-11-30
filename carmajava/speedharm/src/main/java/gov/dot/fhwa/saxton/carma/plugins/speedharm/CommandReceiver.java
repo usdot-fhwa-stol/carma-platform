@@ -19,6 +19,8 @@ package gov.dot.fhwa.saxton.carma.plugins.speedharm;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleCommand;
+
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import static gov.dot.fhwa.saxton.carma.plugins.speedharm.UrlConstants.*;
 
@@ -46,6 +48,7 @@ public class CommandReceiver implements Runnable {
 	@Override
 	public void run() {
 		while (!Thread.currentThread().isInterrupted()) {
+			try {
 			LocalDateTime timestepStart = LocalDateTime.now();
 			VehicleCommand cmd = restClient.getForObject(serverUrl + COMMANDS_LIST + "/" + vehicleSessionId, VehicleCommand.class);
 			lastCommand.set(cmd);
@@ -54,6 +57,14 @@ public class CommandReceiver implements Runnable {
 			log.info(String.format("Received speed command %s after %dms from server!", 
 			cmd.toString(), 
 			Duration.between(timestepStart, cmdRecvd).toMillis()));
+			} catch (RestClientException rce) {
+				log.warn("Unable to wait for server speed command, received exception.", rce);
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+				}
+			}
 		}
 	}
 	
