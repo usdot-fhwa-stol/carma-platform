@@ -390,6 +390,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
       });
 
       trajectoryExecutor.runTrajectory(trajectory);
+      stateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
     }
 
   }
@@ -413,6 +414,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
 
         trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
         trajectoryExecutor.runTrajectory(trajectory);
+        stateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
       } else {
         log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
       }
@@ -472,6 +474,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
         trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
         trajectoryExecutor.abortTrajectory();
         trajectoryExecutor.runTrajectory(trajectory);
+        stateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
       } else {
         log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
       }
