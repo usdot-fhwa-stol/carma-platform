@@ -232,8 +232,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     @Override
     public void onGuidanceEnable() {
         for (IPlugin p : getRegisteredPlugins()) {
-        	ComponentVersion v = p.getVersionInfo();
-            executor.resumePlugin(v.componentName(), v.revisionString());
+            ComponentVersion v = p.getVersionInfo();
+            if (p.getActivation()) {
+                executor.resumePlugin(v.componentName(), v.revisionString());
+            }
         }
     }
 
