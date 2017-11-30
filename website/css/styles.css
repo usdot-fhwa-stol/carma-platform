@@ -449,23 +449,69 @@ div.message_box {
     text-align: center;
 }
 
-/* Container holding the image and the text */
-.divSpeedLimit {
+/* Black Rounded Border Sign */
+#divSpeedCmd {
     position: absolute;
-    top: 15%;
-    left: 60%;
-    padding-top: 5%;
+    top: 25%;
+    left: 25%;
 }
 
-.speed_limit_sign{
+#divSpeedLimit {
+    position: absolute;
+    top: 25%;
+    left: 73%;
+}
+
+.sign-black-border-outer {
     width:200px;
-    height:200px
+    height:225px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border:1px solid #000000;
+    background:rgba(227,162,11,0.0);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
 }
 
-/* Centered text in speed limit */
-#divSpeedLimitValue {
-    position: absolute;
-    top: 80%;
+.sign-black-border-inner {
+    width:95%;
+    height:95%;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border: 5px solid #000000;
+    background-color: FFFFFF;
+    text-align:center;
+   position: relative;
+}
+
+.sign-black-border-title {
+    position: relative;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 45px;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.sign-black-border-value {
+    /* position: absolute;
+    top: 75%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 110px;
+    font-weight: bold; */
+    font-family: sans-serif;
+
+    position: relative;
+    top: 25%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: black;
@@ -473,14 +519,13 @@ div.message_box {
     font-weight: bold;
 }
 
-
 /* Speedometer */
 .divSpeedometer {
     width: 400px;
     height: 200px;
     position: absolute;
-    top: 35%;
-    left: 40%;
+    top: 40%;
+    left: 55%;
     overflow: hidden;
     text-align: center;
     transform: translate(-50%, -50%);
