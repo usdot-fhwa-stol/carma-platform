@@ -75,8 +75,10 @@ var listenerSystemAlert;
 var isModalPopupShowing = false;
 
 // For Route Timer
-var startDateTime;
 var routeTimer;
+
+//Conversion from m/s to MPH.
+var meter_to_mph = 2.23694;
 
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 
@@ -338,8 +340,6 @@ function startActiveRoute(id) {
     // Call the service and get back the results in the callback.
     startActiveRouteClient.callService(request, function (result) {
 
-        //alert ('result.errorStatus:' + result.errorStatus);
-
         var errorDescription = '';
 
         switch (result.errorStatus) {
@@ -392,12 +392,14 @@ function showSubCapabilitiesView(id) {
 */
 function showSubCapabilitiesView2() {
 
+    //if route hasn't been selected, skip
+    if (route_name == 'undefined' || route_name == null || route_name == 'No Route Selected')
+        return;
+
     divCapabilitiesMessage.innerHTML = 'Selected route is " ' + route_name + '". <br/>';
 
-    //Display the route name
-    var divRouteInfo = document.getElementById('divRouteInfo');
-    if (divRouteInfo != null)
-        divRouteInfo.innerHTML = route_name;
+    //Display the route name and timer
+    startRouteTimer();
 
     //Hide the Route selection
     var divRoutes = document.getElementById('divRoutes');
@@ -649,9 +651,6 @@ function setCAVButtonState (state){
 
     var btnCAVGuidance = document.getElementById('btnCAVGuidance');
 
-    //pause any alerts
-    //document.getElementById('audioAlert3').pause();
-
     switch (state) {
 
     case 'ENABLED': // equivalent READY after user has made their selection.
@@ -690,7 +689,7 @@ function setCAVButtonState (state){
         divCapabilitiesMessage.innerHTML = 'CAV Guidance is engaged.';
 
          //Set session for when user refreshes
-         sessionStorage.setItem('isGuidanceEngaged', true);
+        sessionStorage.setItem('isGuidanceEngaged', true);
 
         //reset to replay inactive sound if it comes back again.
         sound_played_once = false;
@@ -1064,9 +1063,17 @@ function showSpeedAccelInfo() {
     });
 
     listenerSpeedAccel.subscribe(function (message) {
+
+        var cmd_speed_mph = Math.round(message.speed * meter_to_mph);
+
         insertNewTableRow('tblFirstB', 'Cmd Speed (m/s)', message.speed.toFixed(2));
-        insertNewTableRow('tblFirstB', 'Cmd Speed (MPH)', Math.round(message.speed*2.23694));
+        insertNewTableRow('tblFirstB', 'Cmd Speed (MPH)', cmd_speed_mph);
         insertNewTableRow('tblFirstB', 'Max Accel', message.max_accel.toFixed(2));
+
+        //Display on DriverView the Speed Cmd for Speed Harm or Cruising
+        //NOTE: There is currently no indicator to know if SpeedHarm is transmitting.
+        if (message.speed != null && message.speed != 'undefined')
+            document.getElementById('divSpeedCmdValue').innerHTML = cmd_speed_mph;
     });
 }
 
@@ -1114,7 +1121,7 @@ function showCANSpeeds(){
     });
 
     listenerCANSpeed.subscribe(function (message) {
-        var speedMPH = Math.round(message.data * 2.23694);
+        var speedMPH = Math.round(message.data * meter_to_mph);
         setSpeedometer(speedMPH);
         insertNewTableRow('tblFirstB', 'CAN Speed (m/s)', message.data);
         insertNewTableRow('tblFirstB', 'CAN Speed (MPH)', speedMPH);
@@ -1212,8 +1219,14 @@ function showSystemVersion()
 */
 function startRouteTimer()
 {
-    // Set the date we're counting down to
-    startDateTime = new Date().getTime();
+    // Set the date we're counting down to and save to session.
+    if  (sessionStorage.getItem('startDateTime') == null)
+    {
+        var startDateTime = new Date().getTime();
+        sessionStorage.setItem('startDateTime', startDateTime);
+    }
+
+    // Start counter
     routeTimer = setInterval(countUpTimer, 1000);
 }
 
@@ -1254,7 +1267,6 @@ function waitForSystemReady() {
 function evaluateNextStep() {
 
     //Scenario 1: Initial Load or Route hasn't been selected yet.
-
     if ((system_ready == null || system_ready == false) ||
         (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected'))
     {
@@ -1262,29 +1274,25 @@ function evaluateNextStep() {
         return;
     }
 
-        //if (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected') {
-        //Check System Alerts on Page refresh
-        //checkSystemAlerts();
+    //Show Plugin
+    showSubCapabilitiesView2();
 
-        //Show Plugin
-        showSubCapabilitiesView2();
+    //Subscribe to active route to map the segments
+    showActiveRoute();
 
-        //Subscribe to active route to map the segments
-        showActiveRoute();
+    //Display the System Status and Logs.
+    showStatusandLogs();
 
-        //Display the System Status and Logs.
-        showStatusandLogs();
+    //Enable the CAV Guidance button regardless plugins are selected
+    enableGuidance();
 
-        //Enable the CAV Guidance button regardless plugins are selected
-        enableGuidance();
+    if (guidance_engaged == true)
+    {
+        showGuidanceEngaged();
+    }
 
-        if (guidance_engaged == true)
-        {
-            showGuidanceEngaged();
-        }
+    return;
 
-        return;
-    //}//IF
 }//evaluateNextStep
 
 /*
@@ -1302,6 +1310,7 @@ window.onload = function () {
         var routeName = sessionStorage.getItem('routeName');
         var isGuidanceEngaged = sessionStorage.getItem('isGuidanceEngaged');
 
+
         //Re-Set Global variables ONLY if already connected.
         if (isSystemReady != 'undefined' && isSystemReady != null)
             system_ready = Boolean(isSystemReady);
@@ -1312,8 +1321,9 @@ window.onload = function () {
         }
 
         if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '')
-            guidance_engaged = Boolean(isGuidanceEngaged);
-
+        {
+            guidance_engaged = (isGuidanceEngaged == 'true');
+        }
         //Refresh requires connection to ROS.
         connectToROS();
 

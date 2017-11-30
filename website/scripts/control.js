@@ -258,7 +258,8 @@ function countUpTimer() {
 
     // Get todays date and time
     var now = new Date().getTime();
-
+    // Get from session
+    var startDateTime =  sessionStorage.getItem('startDateTime');
     // Find the distance between now an the count down date
     var distance = now - startDateTime;
 
@@ -273,8 +274,14 @@ function countUpTimer() {
 
     if (divRouteInfo != null)
     {
-        divRouteInfo.innerHTML = route_name + ': ' + pad(hours,2) + "h "
-                                 + pad(minutes,2) + "m " + pad(seconds,2) + "s ";
+        if (guidance_engaged == true ){
+            divRouteInfo.innerHTML = route_name + ': ' + pad(hours,2) + 'h '
+                                     + pad(minutes,2) + 'm ' + pad(seconds,2) + 's ';
+        }
+        else
+        {
+            divRouteInfo.innerHTML = route_name + ': 00h 00m 00s';
+        }
     }
 }
 
