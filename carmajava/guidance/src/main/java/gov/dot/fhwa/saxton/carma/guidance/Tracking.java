@@ -171,10 +171,7 @@ public class Tracking extends GuidanceComponent {
 		
 		if(bsmPublisher == null || navSatFixSubscriber == null 
 				|| headingStampedSubscriber == null || velocitySubscriber == null 
-				|| accelerationSubscriber == null || routeSubscriber == null
-				|| traction_active_sub == null || traction_enabled_sub == null
-				|| antilock_brake_sub == null || stability_active_sub == null
-				|| stability_enabled_sub == null || parking_brake_sub == null) {
+				|| accelerationSubscriber == null || routeSubscriber == null) {
 			log.warn("Cannot initialize pubs and subs");
 		}
 		
