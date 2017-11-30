@@ -51,6 +51,7 @@ import org.ros.rosjava_geometry.Vector3;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import sensor_msgs.NavSatFix;
+import std_msgs.Bool;
 import std_msgs.Float64;
 
 import java.nio.ByteOrder;
@@ -111,9 +112,18 @@ public class Tracking extends GuidanceComponent {
 	protected ISubscriber<Float64> brakeSubscriber;
 	protected ISubscriber<TransmissionState> transmissionSubscriber;
 	protected ISubscriber<RouteState> routeSubscriber;
+	protected ISubscriber<std_msgs.Bool> traction_active_sub;
+	protected ISubscriber<std_msgs.Bool> traction_enabled_sub;
+	protected ISubscriber<std_msgs.Bool> antilock_brake_sub;
+	protected ISubscriber<std_msgs.Bool> stability_active_sub;
+	protected ISubscriber<std_msgs.Bool> stability_enabled_sub;
+	protected ISubscriber<std_msgs.Bool> parking_brake_sub;
 	protected IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
 	protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
-	protected List<String> req_drivers = Arrays.asList("steering_wheel_angle", "brake_position", "transmission_state");
+	protected List<String> req_drivers = Arrays.asList(
+			"steering_wheel_angle", "brake_position", "transmission_state",
+			"traction_ctrl_active", "traction_ctrl_enabled", "antilock_brakes_active",
+			"stability_ctrl_active", "stability_ctrl_enabled", "parking_brake");
 	protected List<String> resp_drivers;
 	protected final String baseLinkFrame = "base_link";
 	protected final String vehicleFrame = "host_vehicle";
@@ -155,37 +165,18 @@ public class Tracking extends GuidanceComponent {
 		headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
 		velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
 		routeSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+		
 		// TODO: acceleration set is not available from SF
 		accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
 		
-		if(bsmPublisher == null 
-				|| navSatFixSubscriber == null 
-				|| headingStampedSubscriber == null 
-				|| velocitySubscriber == null 
-				|| accelerationSubscriber == null) {
+		if(bsmPublisher == null || navSatFixSubscriber == null 
+				|| headingStampedSubscriber == null || velocitySubscriber == null 
+				|| accelerationSubscriber == null || routeSubscriber == null
+				|| traction_active_sub == null || traction_enabled_sub == null
+				|| antilock_brake_sub == null || stability_active_sub == null
+				|| stability_enabled_sub == null || parking_brake_sub == null) {
 			log.warn("Cannot initialize pubs and subs");
 		}
-		
-		navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
-			@Override
-			public void onMessage(NavSatFix msg) {
-				if(!nav_sat_fix_ready) {
-					nav_sat_fix_ready = true;
-					log.info("BSM", "nav_sat_fix subscriber is ready");
-				}
-			}
-		});
-		
-		
-		headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
-			@Override
-			public void onMessage(HeadingStamped msg) {
-				if(!heading_ready) {
-					heading_ready = true;
-					log.info("BSM", "heading subscriber is ready");
-				}
-			}
-		});
 		
 		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
 			@Override
@@ -198,25 +189,6 @@ public class Tracking extends GuidanceComponent {
 			}
 		});
 		
-		accelerationSubscriber.registerOnMessageCallback(new OnMessageCallback<AccelStamped>() {
-			@Override
-			public void onMessage(AccelStamped msg) {
-				if(!acceleration_ready) {
-					acceleration_ready = true;
-					log.info("BSM", "acceleration subscriber is ready");
-				}
-			}
-		});
-		
-		routeSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-			@Override
-			public void onMessage(RouteState msg) {
-				if(!route_state_ready) {
-					route_state_ready = true;
-					log.info("route state subscriber is ready");
-				}
-			}
-		});
 	}
 
 	@Override
@@ -272,13 +244,41 @@ public class Tracking extends GuidanceComponent {
 				}
 				if(driver_url.endsWith("/can/transmission_state")) {
 					transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url, TransmissionState._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/traction_ctrl_active")) {
+					traction_active_sub = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/traction_ctrl_enabled")) {
+					traction_enabled_sub = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/antilock_brakes_active")) {
+					antilock_brake_sub = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/stability_ctrl_active")) {
+					stability_active_sub = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/stability_ctrl_enabled")) {
+					stability_enabled_sub = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/parking_brake")) {
+					parking_brake_sub = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
 				}
 			}
 		} else {
 			log.warn("Tracking: cannot find suitable drivers");
 		}
 		
-		if(steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null) {
+		if(steeringWheelSubscriber == null || brakeSubscriber == null
+				|| transmissionSubscriber == null || traction_active_sub == null
+				|| traction_enabled_sub == null || antilock_brake_sub == null
+				|| stability_active_sub == null || stability_enabled_sub == null
+				|| parking_brake_sub == null) {
 			log.warn("Tracking: initialize subs failed");
 		}
 		
@@ -603,13 +603,39 @@ public class Tracking extends GuidanceComponent {
 			}
 		}
 		
-		// TODO: N/A for now
+		
 		coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.UNAVAILABLE);
 		coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.UNAVAILABLE);
 		coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.UNAVAILABLE);
-		coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.UNAVAILABLE);
 		coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(AuxiliaryBrakeStatus.UNAVAILABLE);
-
+		// TODO: N/A for now
+		coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.UNAVAILABLE);
+		
+		if(traction_active_sub != null && traction_active_sub.getLastMessage() != null && traction_active_sub.getLastMessage().getData()) {
+			if(traction_enabled_sub != null && traction_enabled_sub.getLastMessage() != null && traction_enabled_sub.getLastMessage().getData()) {
+				coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.ENGAGED);
+			} else {
+				coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.ON);
+			}
+		}
+		if(antilock_brake_sub != null && antilock_brake_sub.getLastMessage() != null && antilock_brake_sub.getLastMessage().getData()) {
+			coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.ON);
+		}
+		if(stability_active_sub != null && stability_active_sub.getLastMessage() != null && stability_active_sub.getLastMessage().getData()) {
+			if(stability_enabled_sub != null && stability_enabled_sub.getLastMessage() != null && stability_enabled_sub.getLastMessage().getData()) {
+				coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.ENGAGED);
+			} else {
+				coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.ON);
+			}
+		}
+		if(parking_brake_sub != null && parking_brake_sub.getLastMessage() != null) {
+			if(parking_brake_sub.getLastMessage().getData()) {
+				coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.ON);
+			} else {
+				coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.OFF);
+			}
+		}
+		
 		// Set length and width only for the first time
 		coreData.getSize().setVehicleLength(VehicleSize.VEHICLE_LENGTH_UNAVAILABLE);
 		coreData.getSize().setVehicleWidth(VehicleSize.VEHICLE_WIDTH_UNAVAILABLE);
