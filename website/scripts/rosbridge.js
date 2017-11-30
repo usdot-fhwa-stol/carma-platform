@@ -341,7 +341,7 @@ function startActiveRoute(id) {
     startActiveRouteClient.callService(request, function (result) {
 
         var errorDescription = '';
-        result.errorStatus = 0;
+
         switch (result.errorStatus) {
             case ErrorStatus.NO_ERROR.value:
             case ErrorStatus.ALREADY_FOLLOWING_ROUTE.value:
