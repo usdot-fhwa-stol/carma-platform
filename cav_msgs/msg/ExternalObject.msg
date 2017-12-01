@@ -21,9 +21,13 @@ uint16 RANGE_RATE_PRESENCE_VECTOR = 64
 uint16 AZIMUTH_RATE_PRESENCE_VECTOR = 128
 uint16 RELATIVE_LANE_PRESENCE_VECTOR = 256
 uint16 OBJECT_TYPE_PRESENCE_VECTOR = 512
+uint16 BSM_ID_PRESENCE_VECTOR = 1024
 
-#Object id. Matching ids on a topic should refer to the same object within some time period
-uint16 id
+#Object id. Matching ids on a topic should refer to the same object within some time period, expanded
+uint32 id
+
+#bsm id is of the form [0xff,0xff,0xff,0xff]
+uint8[] bsm_id
 
 #Pose of the object within the frame specified in header
 geometry_msgs/PoseWithCovariance pose
