@@ -67,9 +67,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         double currentSpeed = inputs_.getCurrentSpeed();
         double frontVehicleSpeed = inputs_.getFrontVehicleSpeed();
 
-        if (accStrategy.evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
-            speedCmd = accStrategy.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
-        }
+        speedCmd = accStrategy.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
 
         executeSpeedCommand(speedCmd);
 
