@@ -37,21 +37,19 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs {
 
-    protected ISubscriber<RouteState>               routeStateSubscriber_;
-    protected ISubscriber<TwistStamped>             twistSubscriber_;
-    protected ISubscriber<ExternalObjectList>       externalObjectListSubscriber_;
-    protected double                                distanceDowntrack_ = 0.0;   // m
-    protected double                                currentSpeed_ = 0.0;        // m/s
-    protected double                                responseLag_ = 0.0;         // sec
-    protected int                                   timeStep_ = 0;              // ms
-    protected AtomicDouble                          frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
-    protected AtomicDouble                          frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
-
+    protected ISubscriber<RouteState> routeStateSubscriber_;
+    protected ISubscriber<TwistStamped> twistSubscriber_;
+    protected ISubscriber<ExternalObjectList> externalObjectListSubscriber_;
+    protected double distanceDowntrack_ = 0.0; // m
+    protected double currentSpeed_ = 0.0; // m/s
+    protected double responseLag_ = 0.0; // sec
+    protected int timeStep_ = 0; // ms
+    protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
+    protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
 
     public ManeuverInputs(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
         super(state, iPubSubService, node);
     }
-
 
     @Override
     public void onGuidanceStartup() {
@@ -60,7 +58,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double vehicleResponseLag = node.getParameterTree().getDouble("~vehicle_response_lag", 1.4);
         double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
         double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
-        BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel, vehicleResponseLag, minStandoffDistance);
+        BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel, vehicleResponseLag,
+                minStandoffDistance);
         AccStrategyManager.setAccStrategyFactory(accFactory);
 
         //subscribers
@@ -91,30 +90,29 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         // TODO: Update to use actual topic provided by sensor fusion
         externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
         externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
-			@Override
-			public void onMessage(ExternalObjectList msg) {
+            @Override
+            public void onMessage(ExternalObjectList msg) {
                 double closestDistance = Double.POSITIVE_INFINITY;
                 ExternalObject frontVehicle = null;
                 for (ExternalObject eo : msg.getObjects()) {
-                    if (eo.getRelativeLane() == ExternalObject.HOST_LANE) {
-                        // We found an object in our lane
-                        if (eo.getPose().getPose().getPosition().getX() < closestDistance) {
-                            // If its close than our previous best candidate, update our candidate
-                            frontVehicle = eo;
-                            closestDistance = eo.getPose().getPose().getPosition().getX();
-                        }
+                    // TODO: When sensor fusion publishes relative lane data, ensure object is in HOST_LANE
+                    // We found an object in our lane
+                    if (eo.getPose().getPose().getPosition().getX() < closestDistance) {
+                        // If its close than our previous best candidate, update our candidate
+                        frontVehicle = eo;
+                        closestDistance = eo.getPose().getPose().getPosition().getX();
                     }
                 }
 
                 // Store our results
                 if (frontVehicle != null) {
                     frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
-                    frontVehicleSpeed.set(frontVehicle.getVelocity().getTwist().getLinear().getX());
+                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
                 } else {
                     frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
                     frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
                 }
-			}
+            }
         });
 
         //parameters
@@ -122,49 +120,41 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         responseLag_ = params.getDouble("~vehicle_response_lag");
     }
 
-
     @Override
     public void onSystemReady() {
     }
 
-
     @Override
     public void onGuidanceEnable() {
     }
-
 
     @Override
     public String getComponentName() {
         return "Guidance.Maneuvers.ManeuverInputs";
     }
 
-
     @Override
     public double getDistanceFromRouteStart() {
         return distanceDowntrack_;
     }
-
 
     @Override
     public double getCurrentSpeed() {
         return currentSpeed_;
     }
 
-
     @Override
     public double getResponseLag() {
         return responseLag_;
     }
 
+    @Override
+    public double getDistanceToFrontVehicle() {
+        return frontVehicleDistance.get();
+    }
 
-	@Override
-	public double getDistanceToFrontVehicle() {
-		return frontVehicleDistance.get();
-	}
-
-
-	@Override
-	public double getFrontVehicleSpeed() {
-		return frontVehicleSpeed.get();
-	}
+    @Override
+    public double getFrontVehicleSpeed() {
+        return frontVehicleSpeed.get();
+    }
 }

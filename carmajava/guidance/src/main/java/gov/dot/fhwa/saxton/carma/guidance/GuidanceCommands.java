@@ -109,6 +109,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
                     + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
             speed = MAX_SPEED_CMD_M_S;
+        } else if (speed < 0.0) {
+            log.warn("GuidanceCommands received negative command from maneuver, clamping to 0.0");
+            speed = 0.0;
         }
 
         speedCommand.set(speed);
