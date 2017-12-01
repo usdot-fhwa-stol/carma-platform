@@ -453,13 +453,13 @@ div.message_box {
 #divSpeedCmd {
     position: absolute;
     top: 25%;
-    left: 25%;
+    left: 20%;
 }
 
 #divSpeedLimit {
     position: absolute;
     top: 25%;
-    left: 73%;
+    left: 75%;
 }
 
 .sign-black-border-outer {

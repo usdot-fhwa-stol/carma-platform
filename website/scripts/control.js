@@ -320,40 +320,11 @@ function closeModal() {
 */
 function loadAudioElements()
 {
-    // Solves chrome for andriod issue 178297 Require user gesture
-    // https://code.google.com/p/chromium/issues/detail?id=178297
-    // Fix based on code from http://blog.foolip.org/2014/02/10/media-playback-restrictions-in-blink/
-    if (checkMediaPlaybackRequiresUserGesture()) {
-        window.addEventListener('keydown', removeBehaviorsRestrictions);
-        window.addEventListener('mousedown', removeBehaviorsRestrictions);
-        window.addEventListener('touchstart', removeBehaviorsRestrictions);
-    }
-}
-
-/*
-    Allows to know in advance if media playback requires user gesture
-*/
-function checkMediaPlaybackRequiresUserGesture() {
-    // test if play() is ignored when not called from an input event handler
-    var audio = document.createElement('audio');
-    audio.play();
-    return audio.paused;
-}
-
-/*
-    Loop through each audio element, load it, and remove the event listener.
-*/
-function removeBehaviorsRestrictions() {
-
     for (var i = 0; i < audioElements.length; i++) {
-        audioElements[i].load();
+        audioElements[i].play();
+        audioElements[i].pause();
     }
-
-    window.removeEventListener('keydown', removeBehaviorsRestrictions);
-    window.removeEventListener('mousedown', removeBehaviorsRestrictions);
-    window.removeEventListener('touchstart', removeBehaviorsRestrictions);
 }
-
 
 /*
     Play sound for specific alerts or notifications.
@@ -374,7 +345,6 @@ function playSound(audioId, repeat)
             playSound(audioId, true);
         }
      }, 3000)
-
 }
 
 /*** End: AUDIO ***/

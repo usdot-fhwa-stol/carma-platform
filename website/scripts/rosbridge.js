@@ -19,7 +19,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.143' // TODO: Update with proper environment IP address to 166.241.207.252
+var ip = '192.168.32.143' // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -571,6 +571,9 @@ function enableGuidance() {
  Engage and Disengage Guidance.
 */
 function engageGuidance() {
+
+	//audio-fix needs to be on an actual button click event on the tablet.
+    loadAudioElements();
 
     //Sets the new status OPPOSITE to the current value.
     var newStatus = !guidance_engaged;
@@ -1335,10 +1338,6 @@ window.onload = function () {
         divCapabilitiesMessage.innerHTML = 'Sorry, cannot proceed unless your browser support HTML Web Storage Objects. Please contact your system administrator.';
 
     }
-
-    //audio fix
-    loadAudioElements();
-
 }
 
 /* When the user clicks anywhere outside of the modal, close it.
