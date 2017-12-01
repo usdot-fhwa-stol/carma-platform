@@ -86,6 +86,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
     List<HttpMessageConverter<?>> httpMappers = new ArrayList<HttpMessageConverter<?>>();
     MappingJackson2HttpMessageConverter jsonMapper = new MappingJackson2HttpMessageConverter();
+    jsonMapper.getObjectMapper().findAndRegisterModules();
     httpMappers.add(jsonMapper);
     restClient.setMessageConverters(httpMappers);
 
