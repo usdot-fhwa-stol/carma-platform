@@ -431,7 +431,7 @@ public class Tracking extends GuidanceComponent {
 		coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 		coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 		coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
-		if(navSatFixSubscriber.getLastMessage() != null) {
+		if(navSatFixSubscriber != null && navSatFixSubscriber.getLastMessage() != null) {
 			NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
 			double lat = gps_msg.getLatitude();
 			double Lon = gps_msg.getLongitude();
@@ -485,7 +485,7 @@ public class Tracking extends GuidanceComponent {
 		// Set transmission state
 		// Reserved values are illegal values at this time
 		coreData.getTransmission().setTransmissionState(TransmissionState.UNAVAILABLE);
-		if(transmissionSubscriber.getLastMessage() != null) {
+		if(transmissionSubscriber != null && transmissionSubscriber.getLastMessage() != null) {
 			byte transmission_state = transmissionSubscriber.getLastMessage().getTransmissionState();
 			if(transmission_state == TransmissionState.NEUTRAL
 					|| transmission_state == TransmissionState.FORWARDGEARS
@@ -504,7 +504,7 @@ public class Tracking extends GuidanceComponent {
 		}
 		
 		coreData.setHeading(BSMCoreData.HEADING_UNAVAILABLE);
-		if(headingStampedSubscriber.getLastMessage() != null) {
+		if(headingStampedSubscriber != null && headingStampedSubscriber.getLastMessage() != null) {
 			float heading = (float) headingStampedSubscriber.getLastMessage().getHeading();
 			if(heading >= BSMCoreData.HEADING_MIN && heading <= BSMCoreData.HEADING_MAX) {
 				coreData.setHeading(heading);
@@ -512,7 +512,7 @@ public class Tracking extends GuidanceComponent {
 		}
 		
 		coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE);
-		if(steeringWheelSubscriber.getLastMessage() != null) {
+		if(steeringWheelSubscriber != null && steeringWheelSubscriber.getLastMessage() != null) {
 			float angle = (float) steeringWheelSubscriber.getLastMessage().getData();	
 			if(angle <= BSMCoreData.STEER_WHEEL_ANGLE_MIN) {
 				coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_MIN);
@@ -528,7 +528,7 @@ public class Tracking extends GuidanceComponent {
 		coreData.getAccelSet().setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_UNAVAILABLE);
 		// TODO: It is not well defined in J2735
 		coreData.getAccelSet().setYawRate(AccelerationSet4Way.YAWRATE_UNAVAILABLE);
-		if(accelerationSubscriber.getLastMessage() != null) {
+		if(accelerationSubscriber != null && accelerationSubscriber.getLastMessage() != null) {
 			Vector3 accel_set_linear = Vector3.fromVector3Message(accelerationSubscriber.getLastMessage().getAccel().getLinear());
 			AccelerationSet4Way acceleration = coreData.getAccelSet();
 			if(accel_set_linear.getX() <= AccelerationSet4Way.ACCELERATION_MIN) {
@@ -562,7 +562,7 @@ public class Tracking extends GuidanceComponent {
 		}
 		
 		coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_STATUS_UNAVAILABLE);
-		if(brakeSubscriber.getLastMessage() != null) {
+		if(brakeSubscriber != null && brakeSubscriber.getLastMessage() != null) {
 			if(brakeSubscriber.getLastMessage().getData() > BRAKES_NOT_APPLIED) {
 				coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_APPLIED);
 			} else {
@@ -578,14 +578,14 @@ public class Tracking extends GuidanceComponent {
 		// TODO: N/A for now
 		coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.UNAVAILABLE);
 		
-		if(tractionActiveSubscriber != null && tractionActiveSubscriber.getLastMessage() != null && tractionActiveSubscriber.getLastMessage().getData()) {
-			if(tractionEnabledSubscriber != null && tractionEnabledSubscriber.getLastMessage() != null && tractionEnabledSubscriber.getLastMessage().getData()) {
+		if(tractionActiveSubscriber != null && tractionActiveSubscriber != null && tractionActiveSubscriber.getLastMessage() != null && tractionActiveSubscriber.getLastMessage().getData()) {
+			if(tractionEnabledSubscriber != null && tractionEnabledSubscriber != null && tractionEnabledSubscriber.getLastMessage() != null && tractionEnabledSubscriber.getLastMessage().getData()) {
 				coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.ENGAGED);
 			} else {
 				coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.ON);
 			}
 		}
-		if(antilockBrakeSubscriber != null && antilockBrakeSubscriber.getLastMessage() != null && antilockBrakeSubscriber.getLastMessage().getData()) {
+		if(antilockBrakeSubscriber != null && antilockBrakeSubscriber != null && antilockBrakeSubscriber.getLastMessage() != null && antilockBrakeSubscriber.getLastMessage().getData()) {
 			coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.ON);
 		}
 		if(stabilityActiveSubscriber != null && stabilityActiveSubscriber.getLastMessage() != null && stabilityActiveSubscriber.getLastMessage().getData()) {
