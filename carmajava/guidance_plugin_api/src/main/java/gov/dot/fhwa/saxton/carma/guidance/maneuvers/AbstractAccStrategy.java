@@ -43,6 +43,11 @@ public abstract class AbstractAccStrategy implements IAccStrategy {
 	@Override
 	public void setMaxAccel(double accel) {
 		maxAccel = accel;
+  }
+
+  @Override
+	public double getMaxAccel() {
+		return maxAccel;
 	}
 
 	@Override
