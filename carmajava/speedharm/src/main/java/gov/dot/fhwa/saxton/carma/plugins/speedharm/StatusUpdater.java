@@ -70,6 +70,7 @@ public class StatusUpdater implements Runnable {
       vsu.setSpeed(vehicleDataManager.getSpeed());
       vsu.setAccel(vehicleDataManager.getAccel());
       vsu.setNetworkLatencyInformation(latencyData);
+      vsu.setVehId((long) vehicleId);
 
       log.info("Sending VehicleStatusUpdate: " + vsu.toString());
 
