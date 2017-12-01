@@ -107,7 +107,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 // Store our results
                 if (frontVehicle != null) {
                     frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
-                    frontVehicleSpeed.set(frontVehicle.getVelocity().getTwist().getLinear().getX());
+                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
                 } else {
                     frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
                     frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
