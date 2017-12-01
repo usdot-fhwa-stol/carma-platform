@@ -23,36 +23,37 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
  */
 public abstract class LongitudinalManeuver extends ManeuverBase {
 
-    protected double                    startSpeed_ = -1.0; // m/s
-    protected double                    endSpeed_ = -1.0;   // m/s
-    protected double                    maxAccel_ = 0.999;     // m/s^2 absolute value; default is a conservative value
-    protected final double              SMALL_SPEED_CHANGE = 2.5;   // m/s
-    protected final IAccStrategy        accStrategy;
-    protected boolean                   completed = false;
-    protected long                      startTime_ = 0;
-    protected double                    workingAccel_;              // m/s^2 that we will actually use
+    protected double startSpeed_ = -1.0; // m/s
+    protected double endSpeed_ = -1.0; // m/s
+    protected double maxAccel_ = 0.999; // m/s^2 absolute value; default is a conservative value
+    protected final double SMALL_SPEED_CHANGE = 2.5; // m/s
+    protected final IAccStrategy accStrategy;
+    protected boolean completed = false;
+    protected long startTime_ = 0;
+    protected double workingAccel_; // m/s^2 that we will actually use
+    protected static final double SPEED_EPSILON = 0.0001;
 
     public LongitudinalManeuver() {
         this.accStrategy = AccStrategyManager.newAccStrategy();
     }
 
     @Override
-    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
+            throws IllegalStateException {
         super.plan(inputs, commands, startDist);
 
         //check that speeds have been defined
-        if (startSpeed_ < -0.5  ||  endSpeed_ < -0.5) {
-            throw new IllegalStateException("Longitudinal maneuver plan attempted without previously defining the start/target speeds.");
+        if (startSpeed_ < -0.5 || endSpeed_ < -0.5) {
+            throw new IllegalStateException(
+                    "Longitudinal maneuver plan attempted without previously defining the start/target speeds.");
         }
     }
 
-    
     @Override
-    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist)
-            throws IllegalStateException, ArithmeticException {
+    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
+            double endDist) throws IllegalStateException, ArithmeticException {
         super.planToTargetDistance(inputs, commands, startDist, endDist);
     }
-
 
     @Override
     public boolean executeTimeStep() {
@@ -67,18 +68,30 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         double currentSpeed = inputs_.getCurrentSpeed();
         double frontVehicleSpeed = inputs_.getFrontVehicleSpeed();
 
-        speedCmd = accStrategy.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
+        double overrideCmd = accStrategy.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
+        boolean overrideActive = Math.abs(speedCmd - overrideCmd) > SPEED_EPSILON;
 
-        executeSpeedCommand(speedCmd);
+        if (overrideActive) {
+            log_.warn(String.format("ACC override engaged! Speed command reduced from %.02f m/s to %.02f m/s. Adjusting max accel to command %.02f m/s^2",
+            speedCmd,
+            overrideCmd,
+            accStrategy.getMaxAccel()));
+        }
+
+        executeSpeedCommand(overrideCmd, overrideActive);
 
         return true;
     }
 
     public abstract double generateSpeedCommand();
 
-    public boolean executeSpeedCommand(double executeSpeedCommand) {
+    public boolean executeSpeedCommand(double executeSpeedCommand, boolean overrideActive) {
         //send the command to the vehicle
-        commands_.setCommand(executeSpeedCommand, workingAccel_);
+        if (overrideActive) {
+            commands_.setCommand(executeSpeedCommand, accStrategy.getMaxAccel());
+        } else {
+            commands_.setCommand(executeSpeedCommand, workingAccel_);
+        }
         return completed;
     }
 
@@ -88,24 +101,20 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         endSpeed_ = targetSpeed;
     }
 
-
     @Override
     public double getStartSpeed() {
         return startSpeed_;
     }
-
 
     @Override
     public double getTargetSpeed() {
         return endSpeed_;
     }
 
-
     @Override
     public void setTargetLane(int targetLane) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Attempting to use setTargetLane on a longitudinal maneuver.");
     }
-
 
     /**
      * Specifies the maximum acceleration allowed in the maneuver.  Note that this value will apply to both speeding

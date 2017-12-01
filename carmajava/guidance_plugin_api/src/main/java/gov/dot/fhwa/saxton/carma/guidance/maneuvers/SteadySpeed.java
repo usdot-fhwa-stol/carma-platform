@@ -43,6 +43,7 @@ public class SteadySpeed extends LongitudinalManeuver {
 
         //set end distance to start distance
         endDist_ = startDist;
+        workingAccel_ = 0.5 * maxAccel_;
     }
 
 
@@ -68,15 +69,6 @@ public class SteadySpeed extends LongitudinalManeuver {
      */
     public void overrideEndDistance(double endDist) {
         endDist_ = endDist;
-    }
-
-
-    @Override
-    public boolean executeSpeedCommand(double executeSpeedCommand) {
-        //send the command to the vehicle; since there should only be slight speed adjustments throughout this maneuver,
-        // we use a milder acceleration than would normally be allowed
-        commands_.setCommand(executeSpeedCommand, 0.5*maxAccel_);
-        return completed;
     }
 
     @Override
