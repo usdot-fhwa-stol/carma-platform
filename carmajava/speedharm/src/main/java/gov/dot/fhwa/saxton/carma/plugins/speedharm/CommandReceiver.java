@@ -49,14 +49,16 @@ public class CommandReceiver implements Runnable {
 	public void run() {
 		while (!Thread.currentThread().isInterrupted()) {
 			try {
-			LocalDateTime timestepStart = LocalDateTime.now();
-			VehicleCommand cmd = restClient.getForObject(serverUrl + COMMANDS_LIST + "/" + vehicleSessionId, VehicleCommand.class);
-			lastCommand.set(cmd);
-			LocalDateTime cmdRecvd = LocalDateTime.now();
+				LocalDateTime timestepStart = LocalDateTime.now();
+				VehicleCommand cmd = restClient.getForObject(serverUrl + COMMANDS_LIST + "/" + vehicleSessionId,
+						VehicleCommand.class);
+				if (cmd != null) {
+					lastCommand.set(cmd);
+					LocalDateTime cmdRecvd = LocalDateTime.now();
 
-			log.info(String.format("Received speed command %s after %dms from server!", 
-			cmd.toString(), 
-			Duration.between(timestepStart, cmdRecvd).toMillis()));
+					log.info(String.format("Received speed command %s after %dms from server!", cmd.toString(),
+							Duration.between(timestepStart, cmdRecvd).toMillis()));
+				}
 			} catch (RestClientException rce) {
 				log.warn("Unable to wait for server speed command, received exception.", rce);
 				try {
@@ -67,7 +69,7 @@ public class CommandReceiver implements Runnable {
 			}
 		}
 	}
-	
+
 	public VehicleCommand getLastCommand() {
 		return lastCommand.get();
 	}
