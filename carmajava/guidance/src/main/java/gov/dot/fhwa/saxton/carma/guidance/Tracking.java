@@ -51,6 +51,7 @@ import org.ros.rosjava_geometry.Vector3;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import sensor_msgs.NavSatFix;
+import std_msgs.Bool;
 import std_msgs.Float64;
 
 import java.nio.ByteOrder;
@@ -111,9 +112,18 @@ public class Tracking extends GuidanceComponent {
 	protected ISubscriber<Float64> brakeSubscriber;
 	protected ISubscriber<TransmissionState> transmissionSubscriber;
 	protected ISubscriber<RouteState> routeSubscriber;
+	protected ISubscriber<std_msgs.Bool> tractionActiveSubscriber;
+	protected ISubscriber<std_msgs.Bool> tractionEnabledSubscriber;
+	protected ISubscriber<std_msgs.Bool> antilockBrakeSubscriber;
+	protected ISubscriber<std_msgs.Bool> stabilityActiveSubscriber;
+	protected ISubscriber<std_msgs.Bool> stabilityEnabledSubscriber;
+	protected ISubscriber<std_msgs.Bool> parkingBrakeSubscriber;
 	protected IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
 	protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
-	protected List<String> req_drivers = Arrays.asList("steering_wheel_angle", "brake_position", "transmission_state");
+	protected List<String> req_drivers = Arrays.asList(
+			"steering_wheel_angle", "brake_position", "transmission_state",
+			"traction_ctrl_active", "traction_ctrl_enabled", "antilock_brakes_active",
+			"stability_ctrl_active", "stability_ctrl_enabled", "parking_brake");
 	protected List<String> resp_drivers;
 	protected final String baseLinkFrame = "base_link";
 	protected final String vehicleFrame = "host_vehicle";
@@ -155,37 +165,15 @@ public class Tracking extends GuidanceComponent {
 		headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
 		velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
 		routeSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+		
 		// TODO: acceleration set is not available from SF
 		accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
 		
-		if(bsmPublisher == null 
-				|| navSatFixSubscriber == null 
-				|| headingStampedSubscriber == null 
-				|| velocitySubscriber == null 
-				|| accelerationSubscriber == null) {
+		if(bsmPublisher == null || navSatFixSubscriber == null 
+				|| headingStampedSubscriber == null || velocitySubscriber == null 
+				|| accelerationSubscriber == null || routeSubscriber == null) {
 			log.warn("Cannot initialize pubs and subs");
 		}
-		
-		navSatFixSubscriber.registerOnMessageCallback(new OnMessageCallback<NavSatFix>() {
-			@Override
-			public void onMessage(NavSatFix msg) {
-				if(!nav_sat_fix_ready) {
-					nav_sat_fix_ready = true;
-					log.info("BSM", "nav_sat_fix subscriber is ready");
-				}
-			}
-		});
-		
-		
-		headingStampedSubscriber.registerOnMessageCallback(new OnMessageCallback<HeadingStamped>() {
-			@Override
-			public void onMessage(HeadingStamped msg) {
-				if(!heading_ready) {
-					heading_ready = true;
-					log.info("BSM", "heading subscriber is ready");
-				}
-			}
-		});
 		
 		velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
 			@Override
@@ -198,25 +186,6 @@ public class Tracking extends GuidanceComponent {
 			}
 		});
 		
-		accelerationSubscriber.registerOnMessageCallback(new OnMessageCallback<AccelStamped>() {
-			@Override
-			public void onMessage(AccelStamped msg) {
-				if(!acceleration_ready) {
-					acceleration_ready = true;
-					log.info("BSM", "acceleration subscriber is ready");
-				}
-			}
-		});
-		
-		routeSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-			@Override
-			public void onMessage(RouteState msg) {
-				if(!route_state_ready) {
-					route_state_ready = true;
-					log.info("route state subscriber is ready");
-				}
-			}
-		});
 	}
 
 	@Override
@@ -272,45 +241,43 @@ public class Tracking extends GuidanceComponent {
 				}
 				if(driver_url.endsWith("/can/transmission_state")) {
 					transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url, TransmissionState._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/traction_ctrl_active")) {
+					tractionActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/traction_ctrl_enabled")) {
+					tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/antilock_brakes_active")) {
+					antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/stability_ctrl_active")) {
+					stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/stability_ctrl_enabled")) {
+					stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+					continue;
+				}
+				if(driver_url.endsWith("/can/parking_brake")) {
+					parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
 				}
 			}
 		} else {
 			log.warn("Tracking: cannot find suitable drivers");
 		}
 		
-		if(steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null) {
+		if(steeringWheelSubscriber == null || brakeSubscriber == null
+				|| transmissionSubscriber == null || tractionActiveSubscriber == null
+				|| tractionEnabledSubscriber == null || antilockBrakeSubscriber == null
+				|| stabilityActiveSubscriber == null || stabilityEnabledSubscriber == null
+				|| parkingBrakeSubscriber == null) {
 			log.warn("Tracking: initialize subs failed");
 		}
-		
-		steeringWheelSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
-			@Override
-			public void onMessage(Float64 msg) {
-				if(!steer_wheel_ready) {
-					steer_wheel_ready = true;
-					log.info("BSM", "steer_wheel subscriber is ready");
-				}
-			}
-		});
-		
-		brakeSubscriber.registerOnMessageCallback(new OnMessageCallback<Float64>() {
-			@Override
-			public void onMessage(Float64 msg) {
-				if(!brake_ready) {
-					brake_ready = true;
-					log.info("BSM", "brake subscriber is ready");
-				}
-			}
-		});
-		
-		transmissionSubscriber.registerOnMessageCallback(new OnMessageCallback<TransmissionState>() {
-			@Override
-			public void onMessage(TransmissionState msg) {
-				if(!transmission_ready) {
-					transmission_ready = true;
-					log.info("BSM", "transmission subscriber is ready");
-				}
-			}
-		});
 		
 		try {
 			ParameterTree param = node.getParameterTree();
@@ -603,13 +570,39 @@ public class Tracking extends GuidanceComponent {
 			}
 		}
 		
-		// TODO: N/A for now
+		
 		coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.UNAVAILABLE);
 		coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.UNAVAILABLE);
 		coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.UNAVAILABLE);
-		coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.UNAVAILABLE);
 		coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(AuxiliaryBrakeStatus.UNAVAILABLE);
-
+		// TODO: N/A for now
+		coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.UNAVAILABLE);
+		
+		if(tractionActiveSubscriber != null && tractionActiveSubscriber.getLastMessage() != null && tractionActiveSubscriber.getLastMessage().getData()) {
+			if(tractionEnabledSubscriber != null && tractionEnabledSubscriber.getLastMessage() != null && tractionEnabledSubscriber.getLastMessage().getData()) {
+				coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.ENGAGED);
+			} else {
+				coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.ON);
+			}
+		}
+		if(antilockBrakeSubscriber != null && antilockBrakeSubscriber.getLastMessage() != null && antilockBrakeSubscriber.getLastMessage().getData()) {
+			coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.ON);
+		}
+		if(stabilityActiveSubscriber != null && stabilityActiveSubscriber.getLastMessage() != null && stabilityActiveSubscriber.getLastMessage().getData()) {
+			if(stabilityEnabledSubscriber != null && stabilityEnabledSubscriber.getLastMessage() != null && stabilityEnabledSubscriber.getLastMessage().getData()) {
+				coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.ENGAGED);
+			} else {
+				coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.ON);
+			}
+		}
+		if(parkingBrakeSubscriber != null && parkingBrakeSubscriber.getLastMessage() != null) {
+			if(parkingBrakeSubscriber.getLastMessage().getData()) {
+				coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.ON);
+			} else {
+				coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.OFF);
+			}
+		}
+		
 		// Set length and width only for the first time
 		coreData.getSize().setVehicleLength(VehicleSize.VEHICLE_LENGTH_UNAVAILABLE);
 		coreData.getSize().setVehicleWidth(VehicleSize.VEHICLE_WIDTH_UNAVAILABLE);
