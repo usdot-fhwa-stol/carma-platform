@@ -35,7 +35,7 @@
 #include <cav_srvs/GetDriversWithCapabilities.h>
 
 #include <ros/ros.h>
-
+#include "wgs84_utils.h"
 /**
  * @brief Just a test application to use with the sensor_fusion_node
  *
@@ -59,6 +59,8 @@ bool getDriversWithCapabilities(cav_srvs::GetDriversWithCapabilitiesRequest& req
     {        
         res.driver_data.push_back("/pinpoint/" + it);
     }
+
+    return true;
 
 
 }
