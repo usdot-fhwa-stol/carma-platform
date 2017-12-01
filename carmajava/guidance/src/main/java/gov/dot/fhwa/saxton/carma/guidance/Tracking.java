@@ -383,7 +383,10 @@ public class Tracking extends GuidanceComponent {
 			return false;
 		}
 		// Calculate current progress percentage in the current maneuver
-		double factor = (currentT - floorEntry.getKey()) / (ceilingEntry.getKey() - floorEntry.getKey());
+		double factor = 1;
+		if(ceilingEntry.getKey() - floorEntry.getKey() != 0) {
+			factor = (currentT - floorEntry.getKey()) / (ceilingEntry.getKey() - floorEntry.getKey());
+		}
 		// Validate current speed with target speed
 		double speedChange = ceilingEntry.getValue()[0] - floorEntry.getValue()[0]; 
 		double targetSpeed = floorEntry.getValue()[0] + factor * speedChange;
