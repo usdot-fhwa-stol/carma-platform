@@ -75,7 +75,7 @@ public class SteadySpeed extends LongitudinalManeuver {
     public boolean executeSpeedCommand(double executeSpeedCommand) {
         //send the command to the vehicle; since there should only be slight speed adjustments throughout this maneuver,
         // we use a milder acceleration than would normally be allowed
-        commands_.setCommand(endSpeed_, 0.5*maxAccel_);
+        commands_.setCommand(executeSpeedCommand, 0.5*maxAccel_);
         return completed;
     }
 
