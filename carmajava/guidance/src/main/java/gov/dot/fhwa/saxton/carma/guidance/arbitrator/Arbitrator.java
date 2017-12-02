@@ -238,7 +238,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
 
     for (String name : longitudinalPluginNames) {
       for (IPlugin p : pluginManager.getRegisteredPlugins()) {
-        if (p.getVersionInfo().componentName() == name) {
+        if (p.getVersionInfo().componentName().equals(name)) {
           setLongitudinalPlugin(p);
         }
       }
