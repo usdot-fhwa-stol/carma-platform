@@ -200,7 +200,9 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
         .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
     AlgorithmFlags flagsAtEnd = pluginServiceLocator.getRouteService()
         .getAlgorithmFlagsAtLocation(traj.getEndLocation());
-    flags.add(flagsAtEnd); // Since its a set if this is a duplicate it goes away
+    if (flagsAtEnd != null) {
+      flags.add(flagsAtEnd); // Since its a set if this is a duplicate it goes away
+    }
 
     double earliestLegalWindow = complexManeuverStartLocation;
     for (AlgorithmFlags flagset : flags) {
