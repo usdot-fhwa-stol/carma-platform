@@ -98,10 +98,10 @@ public class StatusUpdater implements Runnable {
           }
 
           if (Math.abs(diff) > 20.0) {
-            log.warn(String.format("Large network jitter detected! Latency was %.02f and now is %.02f, delta = %.02f%%",
-                prevMs, curMs, diff));
+            //log.warn(String.format("Large network jitter detected! Latency was %.02f and now is %.02f, delta = %.02f%%",
+            //    prevMs, curMs, diff));
           } else {
-            log.info(String.format("Latency was %.02f and now is %.02f, delta = %.02f%%", prevMs, curMs, diff));
+            //log.info(String.format("Latency was %.02f and now is %.02f, delta = %.02f%%", prevMs, curMs, diff));
           }
 
         }
