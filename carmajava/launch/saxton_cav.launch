@@ -354,6 +354,8 @@
         <!-- Arbitrator Thread-->
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="robot_enabled"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
 
         <!-- Tracking Thread-->
         <remap from="vehicle_length"
