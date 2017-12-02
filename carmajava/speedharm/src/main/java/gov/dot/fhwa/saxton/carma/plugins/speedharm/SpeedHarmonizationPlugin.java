@@ -180,7 +180,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
         end, 1.0, // Dummy values for now. TODO: Replace
         100.0);
 
-    traj.setComplexManeuver(maneuver);
+    boolean accepted = traj.setComplexManeuver(maneuver);
+    log.info("Trajectory response to complex maneuver = " + accepted);
   }
 
   @Override
@@ -226,6 +227,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
     // Clamp to end of trajectory window
     endOfWindow = Math.min(endOfWindow, traj.getEndLocation());
+    log.info(String.format("Planning SpeedHarmonization complex maneuver @ [%.02f, %.02f)", earliestLegalWindow, endOfWindow));
 
     if (Math.abs(endOfWindow - earliestLegalWindow) > minimumManeuverLength) {
       planComplexManeuver(traj, earliestLegalWindow, endOfWindow);
