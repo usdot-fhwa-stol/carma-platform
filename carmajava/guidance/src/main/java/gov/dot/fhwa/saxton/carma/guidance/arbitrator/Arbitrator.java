@@ -231,12 +231,16 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
         setLateralPlugin(plugin);
       }
 
-      if (longitudinalPluginNames.contains(plugin.getVersionInfo().componentName())) {
-        setLongitudinalPlugin(plugin);
-      }
-
       if (plugin instanceof CruisingPlugin) {
         setCruisingPlugin((CruisingPlugin) plugin);
+      }
+    }
+
+    for (String name : longitudinalPluginNames) {
+      for (IPlugin p : pluginManager.getRegisteredPlugins()) {
+        if (p.getVersionInfo().componentName() == name) {
+          setLongitudinalPlugin(p);
+        }
       }
     }
 
