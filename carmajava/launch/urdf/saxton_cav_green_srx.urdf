@@ -38,21 +38,21 @@
     <child link="host_vehicle" />
     <!-- Arguments (x y z roll pitch yaw) -->
     <!-- Units: Meters and Rad-->
-    <origin xyz="1.524 0 -0.3556" rpy="3.145159 0 0" />
+    <origin xyz="1.524 0 -0.3556" rpy="3.14159265359 0 0" />
   </joint>
 
   <!-- host_vehicle -> vehicle_front Transform vehicle_front is FLU-->
   <joint name="host_vehicle_to_vehicle_front" type="fixed">
     <parent link="host_vehicle" />
     <child link="vehicle_front" />
-    <origin xyz="2.4384 0 0" rpy="3.145159 0 0" />
+    <origin xyz="2.4384 0 0" rpy="3.14159265359 0 0" />
   </joint>
 
   <!--base_link is center of rear axle FLU oriented x down the longitudinal axis of the vehicle-->
   <joint name="base_link_pinpoint" type="fixed">
     <parent link="base_link" />
     <child link="pinpoint" />
-    <origin xyz="0 0 0" rpy="3.145159 0 0" />
+    <origin xyz="0 0 0" rpy="3.14159265359 0 0" />
   </joint>
 
   <!-- base_link -> f_lrr_frame Transform -->

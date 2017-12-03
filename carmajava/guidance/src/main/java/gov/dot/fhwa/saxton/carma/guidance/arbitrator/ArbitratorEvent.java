@@ -14,19 +14,16 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.plugins;
+package gov.dot.fhwa.saxton.carma.guidance.arbitrator;
 
 /**
- * Mock implementation of something that might resemble a RouteFollowingPlugin
- * <p>
- * Just reports a the name and versionId and toggles its activation status whenever it is activated
+ * Events that the {@link ArbitratorStateMachine} is capable of responding to
  */
-public class MockRouteFollowingPlugin extends AbstractMockPlugin {
-    public MockRouteFollowingPlugin(PluginServiceLocator pluginServiceLocator) {
-        super(pluginServiceLocator);
-        version.setName("Mock Route-Following Plugin");
-        version.setMajorRevision(0);
-        version.setIntermediateRevision(0);
-        version.setMinorRevision(1);
-    }
+public enum ArbitratorEvent {
+  INITIALIZE,
+  FINISHED_TRAJECTORY_PLANNING,
+  EXECUTING_COMPLEX_TRAJECTORY,
+  TRAJECTORY_COMPLETION_ALERT,
+  TRAJECTORY_FAILED_EXECUTION,
+  COMPLEX_TRAJECTORY_COMPLETION_ALERT
 }

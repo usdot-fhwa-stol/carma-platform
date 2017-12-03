@@ -14,20 +14,16 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.plugins;
+package gov.dot.fhwa.saxton.carma.guidance.arbitrator;
 
 /**
- * Mock implementation of something that might resemble a CrusingPlugin
- * <p>
- * Just reports a the name and versionId and toggles its activation status whenever it is activated
+ * Enum describing the possible states of the Arbitrator
  */
-public class MockCruisingPlugin extends AbstractMockPlugin {
-
-    public MockCruisingPlugin(PluginServiceLocator pluginServiceLocator) {
-        super(pluginServiceLocator);
-        version.setName("Mock Cruising Plugin");
-        version.setMajorRevision(0);
-        version.setIntermediateRevision(0);
-        version.setMinorRevision(1);
-    }
+public enum ArbitratorState {
+  INIT,
+  INITIAL_PLANNING,
+  AWAITING_REPLAN,
+  NORMAL_REPLANNING,
+  REPLAN_DUE_TO_FAILED_TRAJECTORY,
+  REPLAN_AFTER_COMPLEX_TRAJECTORY
 }

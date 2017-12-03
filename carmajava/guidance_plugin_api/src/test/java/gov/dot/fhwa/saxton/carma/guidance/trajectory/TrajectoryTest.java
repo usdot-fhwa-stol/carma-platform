@@ -24,8 +24,10 @@ import java.util.List;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -55,11 +57,6 @@ class LongitudinalTestManeuver extends LongitudinalManeuver {
   }
 
   @Override
-  public boolean executeTimeStep() throws IllegalStateException {
-    return false;
-  }
-
-  @Override
   public void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException {
 
   }
@@ -82,11 +79,15 @@ class LongitudinalTestManeuver extends LongitudinalManeuver {
   private double end;
   private double start;
   private ManeuverType type;
+@Override
+public double generateSpeedCommand() {
+	return 0;
+}
 
 }
 
 // Bit of a hack to deal with how maneuvers are differentiated now
-class LateralTestManeuver implements IManeuver {
+class LateralTestManeuver implements ISimpleManeuver {
   LateralTestManeuver(ManeuverType type, double start, double end) {
     this.type = type;
     this.start = start;
@@ -195,7 +196,7 @@ public class TrajectoryTest {
 
   @Test
   public void testGetManeuversAt1() {
-    IManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 0, 1);
+    ISimpleManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 0, 1);
     traj.addManeuver(m);
 
     List<IManeuver> maneuvers = traj.getManeuversAt(0.0);
@@ -205,8 +206,8 @@ public class TrajectoryTest {
 
   @Test
   public void testGetManeuversAt2() {
-    IManeuver m1 = new LateralTestManeuver(ManeuverType.LATERAL, 0, 1);
-    IManeuver m2 = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 1);
+    ISimpleManeuver m1 = new LateralTestManeuver(ManeuverType.LATERAL, 0, 1);
+    ISimpleManeuver m2 = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 1);
     traj.addManeuver(m1);
     traj.addManeuver(m2);
 
@@ -219,8 +220,8 @@ public class TrajectoryTest {
 
   @Test
   public void testGetManeuversAt3() {
-    IManeuver m1 = new LateralTestManeuver(ManeuverType.LATERAL, 0, 10);
-    IManeuver m2 = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 5, 15);
+    ISimpleManeuver m1 = new LateralTestManeuver(ManeuverType.LATERAL, 0, 10);
+    ISimpleManeuver m2 = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 5, 15);
     traj.addManeuver(m1);
     traj.addManeuver(m2);
 
@@ -268,7 +269,7 @@ public class TrajectoryTest {
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
 
-    double loc = traj.findLatestWindowOfSize(3.0);
+    double loc = traj.findLatestWindowOfSize(11.0);
 
     assertEquals(-1.0, loc, 0.01);
   }
@@ -280,7 +281,7 @@ public class TrajectoryTest {
 
     double loc = traj.findLatestWindowOfSize(2.0);
 
-    assertEquals(5.0, loc, 0.01);
+    assertEquals(10.0, loc, 0.01);
   }
 
   @Test
@@ -310,7 +311,7 @@ public class TrajectoryTest {
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0, 5));
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 7, 10));
 
-    double loc = traj.findLatestWindowOfSize(3.0);
+    double loc = traj.findLatestWindowOfSize(11.0);
 
     assertEquals(-1.0, loc, 0.01);
   }
@@ -327,7 +328,7 @@ public class TrajectoryTest {
 
   @Test
   public void testGetNextLateralManeuverAfter1() {
-    IManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
+    ISimpleManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
     traj.addManeuver(m);
     IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(m, m1);
@@ -337,7 +338,7 @@ public class TrajectoryTest {
   public void testGetNextLateralManeuverAfter2() {
     traj.addManeuver(new LateralTestManeuver(ManeuverType.LATERAL, 0.0, 0.0));
 
-    IManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
+    ISimpleManeuver m = new LateralTestManeuver(ManeuverType.LATERAL, 1.0, 2.0);
     traj.addManeuver(m);
     IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(m, m1);
@@ -363,7 +364,7 @@ public class TrajectoryTest {
 
   @Test
   public void testGetNextLongitudinalManeuverAfter1() {
-    IManeuver m = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
+    ISimpleManeuver m = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
     traj.addManeuver(m);
     IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(m, m1);
@@ -373,7 +374,7 @@ public class TrajectoryTest {
   public void testGetNextLongitudinalManeuverAfter2() {
     traj.addManeuver(new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 0.0, 0.0));
 
-    IManeuver m = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
+    ISimpleManeuver m = new LongitudinalTestManeuver(ManeuverType.LONGITUDINAL, 1.0, 2.0);
     traj.addManeuver(m);
     IManeuver m1 = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(m, m1);
@@ -385,6 +386,32 @@ public class TrajectoryTest {
 
     IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LONGITUDINAL);
     assertEquals(null, m);
+  }
+
+  @Test
+  public void testSetComplexManeuverSuccess() {
+    IComplexManeuver complexManeuver = mock(IComplexManeuver.class);
+    when(complexManeuver.getStartDistance()).thenReturn(0.0);
+    when(complexManeuver.getEndDistance()).thenReturn(20.0);
+    assertTrue(traj.setComplexManeuver(complexManeuver));
+  }
+
+  @Test
+  public void testSetComplexManeuverLengthAdjustment() {
+    IComplexManeuver complexManeuver = mock(IComplexManeuver.class);
+    when(complexManeuver.getStartDistance()).thenReturn(0.0);
+    when(complexManeuver.getEndDistance()).thenReturn(10.0);
+    traj.setComplexManeuver(complexManeuver);
+    assertEquals(10.0, traj.getEndLocation(), 0.001);
+  }
+
+  @Test
+  public void testSetComplexManeuverFailure() {
+    IComplexManeuver complexManeuver = mock(IComplexManeuver.class);
+    when(complexManeuver.getStartDistance()).thenReturn(10.0);
+    when(complexManeuver.getEndDistance()).thenReturn(30.0);
+    assertFalse(traj.setComplexManeuver(complexManeuver));
+    assertEquals(20.0, traj.getEndLocation(), 0.001);
   }
 
   protected Trajectory traj;

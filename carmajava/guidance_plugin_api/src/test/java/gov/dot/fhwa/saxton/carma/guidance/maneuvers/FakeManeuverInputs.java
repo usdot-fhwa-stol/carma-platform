@@ -117,4 +117,16 @@ public class FakeManeuverInputs implements IManeuverInputs {
     public double getResponseLag() {
         return 0.0;
     }
+
+
+	@Override
+	public double getDistanceToFrontVehicle() {
+		return 0;
+	}
+
+
+	@Override
+	public double getFrontVehicleSpeed() {
+		return 0;
+	}
 }

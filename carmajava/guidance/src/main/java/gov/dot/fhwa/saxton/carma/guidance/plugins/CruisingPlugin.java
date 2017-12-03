@@ -21,6 +21,7 @@ import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
@@ -119,12 +120,12 @@ public class CruisingPlugin extends AbstractPlugin {
 
   @Override
   public void onResume() {
-    // NO-OP
+    setAvailability(true);
   }
 
   @Override
   public void onSuspend() {
-    // NO-OP
+    setAvailability(false);
   }
 
   @Override
@@ -167,7 +168,7 @@ public class CruisingPlugin extends AbstractPlugin {
     // Get all the speed limits spanned by [startDistance, endDistance)
     List<SpeedLimit> spanned = new ArrayList<>();
     for (SpeedLimit limit : speedLimits) {
-      if (limit.location >= startDistance && limit.location < endDistance) {
+      if (limit.location > startDistance && limit.location <= endDistance) {
         spanned.add(limit);
       }
     }
@@ -176,7 +177,7 @@ public class CruisingPlugin extends AbstractPlugin {
   }
 
   protected List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed, double trajEndSpeed) {
-    List<IManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
+    List<LongitudinalManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
       @Override
       public int compare(IManeuver o1, IManeuver o2) {
@@ -210,8 +211,8 @@ public class CruisingPlugin extends AbstractPlugin {
       gaps.add(seg);
     }
 
-    IManeuver prev = null;
-    for (IManeuver maneuver : longitudinalManeuvers) {
+    LongitudinalManeuver prev = null;
+    for (LongitudinalManeuver maneuver : longitudinalManeuvers) {
       if (prev != null) {
         if (!fpEquals(prev.getEndDistance(), maneuver.getStartDistance(), DISTANCE_EPSILON)) {
           TrajectorySegment seg = new TrajectorySegment();

@@ -15,6 +15,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverRunner;
@@ -38,8 +39,10 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected Trajectory nextTrajectory = null;
   protected IManeuver currentLateralManeuver = null;
   protected IManeuver currentLongitudinalManeuver = null;
+  protected IComplexManeuver currentComplexManeuver = null;
   protected Thread lateralManeuverThread = new Thread();
   protected Thread longitudinalManeuverThread = new Thread();
+  protected Thread complexManeuverThread = new Thread();
   protected double maneuverTickFrequencyHz = 10.0;
   protected ILogger log = LoggerManager.getLogger();
 
@@ -72,6 +75,16 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       longitudinalManeuverThread = new Thread(runner);
       longitudinalManeuverThread.setName("Longitudinal Maneuver Runner");
       longitudinalManeuverThread.start();
+    } else if (maneuver instanceof IComplexManeuver) {
+      if (complexManeuverThread != null) {
+        complexManeuverThread.interrupt();
+      }
+
+      ManeuverRunner runner = new ManeuverRunner(maneuver, maneuverTickFrequencyHz);
+      runner.setListener(this);
+      complexManeuverThread = new Thread(runner);
+      complexManeuverThread.setName(((IComplexManeuver) maneuver).getManeuverName() + " Runner");
+      complexManeuverThread.start();
     } else {
       if (lateralManeuverThread != null) {
         lateralManeuverThread.interrupt();
@@ -90,7 +103,14 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    */
   private void checkAndStartManeuvers() {
     log.debug("TrajectoryExecutorWorker checking if maneuvers need to be started.");
+
     // Start the maneuvers if they aren't already running
+    if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getStartDistance()
+        && !complexManeuverThread.isAlive()) {
+      log.debug("TrajectoryExecutorWorker starting complex maneuver: " + currentComplexManeuver.getManeuverName());
+      execute(currentComplexManeuver);
+    }
+
     if (currentLateralManeuver != null && downtrackDistance >= currentLateralManeuver.getStartDistance()
         && !lateralManeuverThread.isAlive()) {
       log.debug("TrajectoryExecutorWorker starting lateral maneuver");
@@ -141,10 +161,39 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       }
 
       if (currentLongitudinalManeuver != null && downtrackDistance >= currentLongitudinalManeuver.getStartDistance()) {
+
         execute(currentLongitudinalManeuver);
       }
     }
+  }
 
+  private void checkAndStartComplexManeuver() {
+    if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getEndDistance()) {
+      if (complexManeuverThread != null && complexManeuverThread.isAlive()) {
+        complexManeuverThread.interrupt();
+      }
+    }
+
+    currentComplexManeuver = (IComplexManeuver) currentTrajectory.getNextManeuverAfter(downtrackDistance, ManeuverType.COMPLEX);
+
+    if (currentComplexManeuver != null) {
+      log.info("Discovered complex maneuver: " + currentComplexManeuver.getManeuverName() + "on trajectory");
+    } else {
+      log.info("No complex maneuver found");
+    }
+
+    if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getStartDistance()) {
+      // Stop all currently executing maneuvers, then run the complex one.
+      if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
+        longitudinalManeuverThread.interrupt();
+      }
+
+      if (lateralManeuverThread != null && lateralManeuverThread.isAlive()) {
+        lateralManeuverThread.interrupt();
+      }
+
+      execute(currentComplexManeuver);
+    }
   }
 
   /**
@@ -160,6 +209,13 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     log.debug("TrajectoryExecutorWorker updating downtrack distance to " + downtrack);
     this.downtrackDistance = downtrack;
 
+    if (currentTrajectory == null) {
+      // Nothing to do
+      log.info("Finished downtrack distance update.");
+      return;
+    }
+
+    // Check to see if any maneuvers are overdue starting
     checkAndStartManeuvers();
 
     // Call necessary callbacks
@@ -172,6 +228,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       }
     }
 
+    // Check to see if we need to advance to the next maneuver in each category
+    checkAndStartComplexManeuver();
     checkAndStartNextLongitudinalManeuver();
     checkAndStartNextLateralManeuver();
 
@@ -207,6 +265,14 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
       currentLongitudinalManeuver = null;
     }
+
+    if (currentComplexManeuver != null) {
+      if (!complexManeuverThread.isInterrupted()) {
+        complexManeuverThread.interrupt();;
+      }
+
+      currentComplexManeuver = null;
+    }
   }
 
   /**
@@ -224,6 +290,13 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   }
 
   /**
+   * Get the current complex maneuver, null if none are currently executing
+   */
+  public IManeuver getCurrentComplexManeuver() {
+    return currentComplexManeuver;
+  }
+
+  /**
    * Get the next lateral maneuver, null if none are currently executing
    */
   public IManeuver getNextLateralManeuver() {
@@ -235,6 +308,13 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    */
   public IManeuver getNextLongitudinalManeuver() {
     return currentTrajectory.getNextManeuverAfter(downtrackDistance, ManeuverType.LONGITUDINAL);
+  }
+
+  /**
+   * Get the next complex maneuver, null if none are currently executing
+   */
+  public IManeuver getNextComplexManeuver() {
+    return currentTrajectory.getNextManeuverAfter(downtrackDistance, ManeuverType.COMPLEX);
   }
 
   /**
@@ -304,19 +384,27 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       this.currentTrajectory = traj;
       this.currentLateralManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       this.currentLongitudinalManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
+      this.currentComplexManeuver = (IComplexManeuver) traj.getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
 
       if (currentLateralManeuver != null) {
         log.info(String.format("Switching to lateral maneuver from [%.02f, %.02f)",
             currentLateralManeuver.getStartDistance(), currentLateralManeuver.getEndDistance()));
       } else {
-        log.info("New lateral manuever was null!");
+        log.info("No lateral maneuver started yet.");
       }
 
       if (currentLongitudinalManeuver != null) {
         log.info(String.format("Switching to longitudinal maneuver from [%.02f, %.02f)",
             currentLongitudinalManeuver.getStartDistance(), currentLongitudinalManeuver.getEndDistance()));
       } else {
-        log.info("New longitudinal maneuver was null!");
+        log.info("No longitudinal maneuver started yet.");
+      }
+
+      if (currentComplexManeuver != null) {
+        log.info(String.format("Switching to " + currentComplexManeuver.getManeuverName() + " maneuver from [%.02f, %.02f)",
+            currentComplexManeuver.getStartDistance(), currentComplexManeuver.getEndDistance()));
+      } else {
+        log.info("No complex maneuver started yet.");
       }
 
       for (PctCallback callback : callbacks) {
@@ -338,5 +426,19 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   public void onLongitudinalManeuverFinished() {
     log.warn("Caught longitudinal maneuver running after its endpoint, switching maneuvers");
     checkAndStartNextLongitudinalManeuver();
+  }
+
+  /**
+   * Get the currently executing trajectory or null if none is running
+   */
+  public Trajectory getCurrentTrajectory() {
+    return currentTrajectory;
+  }
+
+  /**
+   * Unregister the callback, ensuring it is no longer invoked at any point in time
+   */
+  public void unregisterOnTrajectoryProgressCallback(OnTrajectoryProgressCallback callback) {
+    callbacks.remove(callback);
   }
 }

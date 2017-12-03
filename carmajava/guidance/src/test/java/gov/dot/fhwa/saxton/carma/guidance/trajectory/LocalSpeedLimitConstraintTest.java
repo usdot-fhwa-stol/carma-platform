@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteWaypoint;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,19 +97,19 @@ public class LocalSpeedLimitConstraintTest {
 
   @Test
   public void testSuccess() {
-    IManeuver m1 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartDistance()).thenReturn(0.0);
     when(m1.getEndDistance()).thenReturn(10.0);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(9.0);
 
-    IManeuver m2 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartDistance()).thenReturn(10.0);
     when(m2.getEndDistance()).thenReturn(20.0);
     when(m2.getStartDistance()).thenReturn(10.0);
     when(m2.getEndDistance()).thenReturn(10.0);
 
-    IManeuver m3 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartDistance()).thenReturn(20.0);
     when(m3.getEndDistance()).thenReturn(30.0);
     when(m3.getStartDistance()).thenReturn(10.0);
@@ -124,17 +124,17 @@ public class LocalSpeedLimitConstraintTest {
 
   @Test
   public void testSuccessMixedTypes() {
-    IManeuver m1 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartDistance()).thenReturn(0.0);
     when(m1.getEndDistance()).thenReturn(9.0);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(1.0);
 
-    IManeuver m2 = mock(IManeuver.class);
+    ISimpleManeuver m2 = mock(ISimpleManeuver.class);
     when(m2.getStartDistance()).thenReturn(0.0);
     when(m2.getEndDistance()).thenReturn(10.0);
 
-    IManeuver m3 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartSpeed()).thenReturn(9.0);
     when(m3.getTargetSpeed()).thenReturn(19.0);
     when(m3.getStartDistance()).thenReturn(10.0);
@@ -149,13 +149,13 @@ public class LocalSpeedLimitConstraintTest {
 
   @Test
   public void testRejection() {
-    IManeuver m1 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartDistance()).thenReturn(0.0);
     when(m1.getEndDistance()).thenReturn(10.0);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(10.0);
 
-    IManeuver m2 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartDistance()).thenReturn(10.0);
     when(m2.getEndDistance()).thenReturn(20.0);
     when(m2.getStartSpeed()).thenReturn(10.0);
@@ -169,19 +169,19 @@ public class LocalSpeedLimitConstraintTest {
 
   @Test
   public void testRejection2() {
-    IManeuver m1 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartDistance()).thenReturn(0.0);
     when(m1.getEndDistance()).thenReturn(10.0);
     when(m1.getStartSpeed()).thenReturn(21.0);
     when(m1.getTargetSpeed()).thenReturn(25.0);
 
-    IManeuver m2 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartDistance()).thenReturn(10.0);
     when(m2.getEndDistance()).thenReturn(20.0);
     when(m2.getStartSpeed()).thenReturn(35.0);
     when(m2.getTargetSpeed()).thenReturn(10.0);
 
-    IManeuver m3 = mock(LongitudinalManeuver.class);
+    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartDistance()).thenReturn(20.0);
     when(m3.getEndDistance()).thenReturn(30.0);
     when(m3.getStartSpeed()).thenReturn(10.0);

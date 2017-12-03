@@ -30,12 +30,14 @@ footer {
 p.copyright {
     float: right;
     text-align: right;
-    font-size: 15px;
+    font-size: 20px;
+    font-bold: true;
 }
 p.systemversion{
         float: center;
         text-align: center;
-        font-size: 15px;
+        font-size: 20px;
+        font-bold: true;
 }
 
 /*** Left Navigation Style ***/
@@ -60,7 +62,8 @@ div.tab {
         text-align: left;
         cursor: pointer;
         transition: 0.3s;
-        font-size: 20px;
+        font-size: 27px;
+        font-bold: true;
         font-family: "Segoe UI";
         overflow: auto;
     }
@@ -142,7 +145,9 @@ label {
     cursor: pointer;
     user-select: none;
     transition: background-color .2s, box-shadow .2s;
-    font-size: 22px;
+    font-size: 27px;
+    font-bold: true;
+    width: 85%;
 }
 
     label::before { /*button format */
@@ -188,23 +193,25 @@ div.message_box {
     vertical-align: middle;
     text-align: center;
     margin: 10px;
-    padding: 30px 30px 15px 30px;
+    padding: 35px 35px 15px 30px;
     height: 150px;
     color: #404040;
-    background-color: #ffcc00;
-    font-size: 22px;
+    background-color: #ffffb3;/*  #e6e600; Yellow; */
+    font-size: 27px;
+    font-bold: true;
+    overflow: auto;
 }
 
 /*** Button ***/
-.button_disabled {
-    background-color: gray;
+.button_cav {
     border: none;
     color: white;
     padding: 15px 32px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 30px;
+    font-size: 40px;
+    font-bold: true;
     margin: 4px 2px;
     cursor: pointer;
     width: 100%;
@@ -213,65 +220,28 @@ div.message_box {
     transition: background-color .2s;
     border-radius: 100px;
     box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
-    opacity: 0.6;
+}
+
+.button_disabled {
+    background-color: gray;
     cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .button_enabled {
     background-color: cornflowerblue;
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 30px;
-    margin: 4px 2px;
-    cursor: pointer;
-    width: 100%;
-    height: 75px;
-    border-radius: 100px;
-    transition: background-color .2s;
-    border-radius: 100px;
-    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
 }
 
 .button_engaged {
     background-color: #4CAF50; /* Green; */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 30px;
-    margin: 4px 2px;
-    cursor: pointer;
-    width: 100%;
-    height: 75px;
-    border-radius: 100px;
-    transition: background-color .2s;
-    border-radius: 100px;
-    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
+}
+
+.button_disengaged {
+    background-color: #b32400; /* Red; */
 }
 
 .button_inactive {
-    background-color: #e6e600; /* Yellow; */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 30px;
-    margin: 4px 2px;
-    cursor: pointer;
-    width: 100%;
-    height: 75px;
-    border-radius: 100px;
-    transition: background-color .2s;
-    border-radius: 100px;
-    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
+    background-color: #ff6600; /*orange*/
 }
 
 /*** MODAL ***/
@@ -292,8 +262,16 @@ div.message_box {
     text-align: center;
 }
 
-/* Modal Content */
-.modal-content {
+/* Modal Popup */
+.modal-header {
+    padding: 2px 16px;
+    background-color: #ffcc00; /* yellow */
+    color: black;
+    align: center;
+    text-align: middle;
+}
+
+.modal-content { /* header text */
     position: relative;
     background-color: #fefefe;
     margin: auto;
@@ -304,7 +282,22 @@ div.message_box {
     -webkit-animation-name: animatetop;
     -webkit-animation-duration: 0.4s;
     animation-name: animatetop;
-    animation-duration: 0.4s font-size: 20px;
+    animation-duration: 0.4s;
+    font-size: 20px;
+    font-bold: true;
+}
+
+.modal-body {
+    padding: 2px 20px;
+    width: 100%;
+    font-size: 28px;
+    font-bold: true;
+}
+
+.modal-footer {
+    padding: 10px 16px 10px 10px;
+    background-color: #ffcc00;
+    color: black;
 }
 
 /* Modal Button */
@@ -357,29 +350,10 @@ div.message_box {
         cursor: pointer;
     }
 
-.modal-header {
-    padding: 2px 16px;
-    background-color: #ffcc00;
-    color: black;
-    align: center;
-    text-align: middle;
-}
-
-.modal-body {
-    padding: 2px 20px;
-    width: 100%;
-    font-size: 23px;
-}
-
-.modal-footer {
-    padding: 10px 16px 10px 10px;
-    background-color: #ffcc00;
-    color: black;
-}
-
 /* System Status Table */
 .table-style1 {
     width: 100%;
+    table-layout: fixed;
 }
 
 .col-style1 {
@@ -429,14 +403,6 @@ div.message_box {
     height: 550px;
 }
 
-/* Container holding the image and the text */
-.divSpeedLimit {
-    position: absolute;
-    top: 11%;
-    left: 60%;
-    padding-top: 5%;
-}
-
 /* Bottom left text */
  .bottom-left {
     position: absolute;
@@ -473,11 +439,79 @@ div.message_box {
     transform: translate(-50%, -50%);
 }
 
+/* RouteInfo in Driver View */
+#divRouteInfo {
+    position: relative;
+    top: 0%;
+    color: black;
+    font-size: 45px;
+    font-weight: bold;
+    text-align: center;
+}
 
-/* Centered text in speed limit */
-#divSpeedLimitValue {
+/* Black Rounded Border Sign */
+#divSpeedCmd {
     position: absolute;
-    top: 80%;
+    top: 25%;
+    left: 20%;
+}
+
+#divSpeedLimit {
+    position: absolute;
+    top: 25%;
+    left: 75%;
+}
+
+.sign-black-border-outer {
+    width:200px;
+    height:225px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border:1px solid #000000;
+    background:rgba(227,162,11,0.0);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.sign-black-border-inner {
+    width:95%;
+    height:95%;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border: 5px solid #000000;
+    background-color: FFFFFF;
+    text-align:center;
+   position: relative;
+}
+
+.sign-black-border-title {
+    position: relative;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 45px;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.sign-black-border-value {
+    /* position: absolute;
+    top: 75%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 110px;
+    font-weight: bold; */
+    font-family: sans-serif;
+
+    position: relative;
+    top: 25%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: black;
@@ -490,8 +524,8 @@ div.message_box {
     width: 400px;
     height: 200px;
     position: absolute;
-    top: 30%;
-    left: 40%;
+    top: 40%;
+    left: 55%;
     overflow: hidden;
     text-align: center;
     transform: translate(-50%, -50%);
@@ -537,7 +571,7 @@ div.message_box {
 .gauge-data {
     z-index: 4;
     color: white;
-    font-size: 1.5em;
+    font-size: 35px;
     line-height: 25px;
     position: absolute;
     width: 400px;

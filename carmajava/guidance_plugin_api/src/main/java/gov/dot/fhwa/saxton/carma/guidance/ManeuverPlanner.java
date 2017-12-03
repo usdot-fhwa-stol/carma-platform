@@ -16,8 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 
 /**
  * Guidance Plugin Service to abstract the finer details of planning maneuvers
@@ -39,7 +39,7 @@ public class ManeuverPlanner {
    * <p>
    * Modifies the argument maneuver m in place
    */
-  public void planManeuver(IManeuver m, double startDist) {
+  public void planManeuver(ISimpleManeuver m, double startDist) {
     m.plan(maneuverInputs, guidanceCommands, startDist);
   }
 
@@ -48,7 +48,15 @@ public class ManeuverPlanner {
    * <p>
    * Modifies the argument maneuver m in place
    */
-  public void planManeuver(IManeuver m, double startDist, double endDist) {
+  public void planManeuver(ISimpleManeuver m, double startDist, double endDist) {
     m.planToTargetDistance(maneuverInputs, guidanceCommands, startDist, endDist);
+  }
+
+  public IGuidanceCommands getGuidanceCommands() {
+    return guidanceCommands;
+  }
+
+  public IManeuverInputs getManeuverInputs() {
+    return maneuverInputs;
   }
 }

@@ -245,8 +245,7 @@
       </node>
 
       <!-- Transform Server Node -->
-      <node pkg="carma" type="roadway" name="transform_server"
-            args="gov.dot.fhwa.saxton.carma.roadway.TransformServer">
+      <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
 
         <env if="$(arg debug_transform_svr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -341,6 +340,7 @@
 
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/SpeedHarmParams.yaml"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
@@ -348,16 +348,22 @@
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
         <remap from="plan_status"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/plan_status"/>
+        <remap from="objects"
+               to="/$(arg TOP_NS)/drivers/srx_objects/f_lrr/sensor/objects"/>
 
         <!-- Arbitrator Thread-->
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="robot_enabled"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
 
         <!-- Tracking Thread-->
         <remap from="vehicle_length"
                to="/$(arg TOP_NS)/vehicle_length"/>
         <remap from="vehicle_width"
                to="/$(arg TOP_NS)/vehicle_width"/>
+        <remap from="vehicle_id"
+               to="/$(arg TOP_NS)/vehicle_id"/>
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"

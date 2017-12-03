@@ -83,6 +83,7 @@ public class InterfaceWorkerTest {
 
         //add some drivers
         addNewDrivers();
+        addControllerDriver();
 
         //wait for the system to become operational
         Thread.sleep(2005);
@@ -147,6 +148,8 @@ public class InterfaceWorkerTest {
         sensor5.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(sensor5);
 
+        addControllerDriver();
+
         //wait for the system to become operational
         Thread.sleep(2005);
         boolean ready = w_.isSystemReady(); //need to make this call to force the flag to change since the FakeInterfaceMgr isn't monitoring
@@ -186,38 +189,73 @@ public class InterfaceWorkerTest {
     }
 
     @Test
-    public void testSystemReady() throws Exception {
+    public void testSystemReadyNoController() throws Exception {
         log_.info("///// Entering testSystemReady.");
 
         w_.setWaitTime(5); //5 seconds
         boolean ready = w_.isSystemReady();
+        assertFalse(ready);
 
         //initial driver discovery
         addNewDrivers();
         Thread.sleep(1000); //1.0 sec
         ready = w_.isSystemReady();
-        assertFalse(w_.isSystemReady());
+        assertFalse(ready);
 
         //add some more updates - this will not reset the timer since there are no new drivers being discovered
         addDuplicateDrivers();
         continueStatusUpdates();
         Thread.sleep(900); //1.9 sec
         ready = w_.isSystemReady();
-        assertFalse(w_.isSystemReady());
+        assertFalse(ready);
 
         //one more update
         continueStatusUpdates();
         Thread.sleep(1500); //3.4 sec
         ready = w_.isSystemReady();
-        assertFalse(w_.isSystemReady());
+        assertFalse(ready);
 
         Thread.sleep(1000); //4.4 sec
         ready = w_.isSystemReady();
-        assertFalse(w_.isSystemReady());
+        assertFalse(ready);
 
+        //this one will fail also, even though time has expired, because the controller driver was never registered
         Thread.sleep(1605); //6.05 sec - apparently the comparison truncates fractional seconds so we need this much
         ready = w_.isSystemReady();
-        assertTrue(w_.isSystemReady());
+        assertFalse(ready);
+        assertTrue(mgr_.isShutdownUnderway());
+    }
+
+    @Test
+    public void testSystemReadySuccess() throws Exception {
+        log_.info("///// Entering testSystemReady.");
+
+        w_.setWaitTime(5); //5 seconds
+        boolean ready = w_.isSystemReady();
+        assertFalse(ready);
+
+        //initial driver discovery
+        addNewDrivers();
+        addControllerDriver();
+        Thread.sleep(1000); //1.0 sec
+        ready = w_.isSystemReady();
+        assertFalse(ready);
+
+        //add some more updates - this will not reset the timer since there are no new drivers being discovered
+        addDuplicateDrivers();
+        continueStatusUpdates();
+        Thread.sleep(900); //1.9 sec
+        ready = w_.isSystemReady();
+        assertFalse(ready);
+
+        Thread.sleep(2500); //4.4 sec
+        ready = w_.isSystemReady();
+        assertFalse(ready);
+
+        Thread.sleep(1650); //6.05 sec - apparently the comparison truncates fractional seconds so we need this much
+        ready = w_.isSystemReady();
+        assertTrue(ready);
+        assertFalse(mgr_.isShutdownUnderway());
     }
 
     @Test (expected = IndexOutOfBoundsException.class)
@@ -301,6 +339,14 @@ public class InterfaceWorkerTest {
         //same driver again with a different status
         sensor1.setState(DriverState.FAULT);
         w_.handleNewDriverStatus(sensor1);
+    }
+
+    private void addControllerDriver() {
+        DriverInfo controllerDriver = new DriverInfo();
+        controllerDriver.setController(true);
+        controllerDriver.setName("controller1");
+        controllerDriver.setState(DriverState.OPERATIONAL);
+        w_.handleNewDriverStatus(controllerDriver);
     }
 
     private void continueStatusUpdates() {

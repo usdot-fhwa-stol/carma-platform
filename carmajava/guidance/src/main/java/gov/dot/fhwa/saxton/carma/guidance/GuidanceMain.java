@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.SystemAlert;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
@@ -27,6 +28,7 @@ import cav_srvs.SetGuidanceEngaged;
 import cav_srvs.SetGuidanceEngagedRequest;
 import cav_srvs.SetGuidanceEngagedResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
@@ -85,13 +87,21 @@ public class GuidanceMain extends SaxtonBaseNode {
   private void initExecutor(AtomicReference<GuidanceState> state, ConnectedNode node) {
     executor = Executors.newFixedThreadPool(numThreads);
 
+    // Init the ACC system
+
+    GuidanceRouteService routeService = new GuidanceRouteService(pubSubService);
+    routeService.init();
     GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(state, pubSubService, node);
-    PluginManager pluginManager = new PluginManager(state, pubSubService, guidanceCommands, maneuverInputs, node);
-    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands);
-    Arbitrator arbitrator = new Arbitrator(state, pubSubService, node, pluginManager, trajectoryExecutor);
     Tracking tracking = new Tracking(state, pubSubService, node);
+    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands, tracking);
+    PluginManager pluginManager = new PluginManager(state, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
+    Arbitrator arbitrator = new Arbitrator(state, pubSubService, node, pluginManager, trajectoryExecutor);
     GuidanceShutdownHandler shutdownHandler = new GuidanceShutdownHandler(state, pubSubService, node);
+    
+    tracking.setTrajectoryExecutor(trajectoryExecutor);
+    tracking.setArbitrator(arbitrator);
+    pluginManager.setArbitratorService(arbitrator);
 
     executor.execute(maneuverInputs);
     executor.execute(arbitrator);

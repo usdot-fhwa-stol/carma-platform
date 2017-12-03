@@ -32,6 +32,8 @@ public class InterfaceWorker {
     protected long                          startedWaiting_;
     protected long							systemReadyTime_;
     protected boolean                       systemOperational_ = false;
+    protected boolean                       controllerReady_ = false;
+    protected boolean                       positionReady_ = false;
 
     InterfaceWorker(IInterfaceMgr mgr, SaxtonLogger log) {
         mgr_ = mgr;
@@ -58,6 +60,8 @@ public class InterfaceWorker {
     /**
      * Updates the info known about a current driver.  Note that this is expected to be called frequently throughout
      * the life of the node.
+     * Only Operational drivers are added to the list of drivers available to other nodes.
+     * If a driver starts in a degraded state it will only be added once it becomes operational. (TODO Support initially degraded drivers)
      *
      * @param newDriver - all available details about the driver publishing its status
      */
@@ -73,6 +77,11 @@ public class InterfaceWorker {
                 //record the updates. Will need to fetch new driver api as well
                 newDriver.setCapabilities(mgr_.getDriverApi(name));
                 drivers_.set(index, newDriver);
+                if ((newDriver.isPosition() || newDriver.isController())
+                  && (newDriver.getState() == DriverState.FAULT
+                  || newDriver.getState() == DriverState.OFF)) {
+                    mgr_.errorShutdown("FAULT detected in critical driver: " + newDriver.getName());
+                }
                 log_.debug("DRIVER", "InterfaceWorker.handleNewDriverStatus: status changed for " + name);
             }
         //else it's a newly discovered driver
@@ -86,15 +95,26 @@ public class InterfaceWorker {
 
                 //add the info to the list of known drivers
                 newDriver.setCapabilities(cap);
-                drivers_.add(newDriver);
 
-                //request InterfaceMgr to bind with it
-                mgr_.bindWithDriver(name);
+                // Only operational drivers are considered available for use
+                if (newDriver.getState() == DriverState.OPERATIONAL) {
+                    drivers_.add(newDriver);
+                    //request InterfaceMgr to bind with it
+                    mgr_.bindWithDriver(name);
 
-                //reset the wait timer
-                startedWaiting_ = System.currentTimeMillis();
+                    //indicate if this is one of the critical drivers
+                    if (newDriver.isPosition()) {
+                        positionReady_ = true;
+                    }else if (newDriver.isController()) {
+                        controllerReady_ = true;
+                    }
+
+                    //reset the wait timer
+                    startedWaiting_ = System.currentTimeMillis();
+                }
+
                 log_.info("STARTUP", "InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
-                        " with " + cap.size() + " capabilities.");
+                  " with " + cap.size() + " capabilities.");
             }
         }
     }
@@ -240,12 +260,12 @@ public class InterfaceWorker {
     }
 
     /**
-     * Indicates whether the system has just become OPERATIONAL.  If it is either not ready or it has
-     * been OPERATIONAL in a previous call then it will return false.
+     * Indicates whether the system has discovered all the device drivers that it is likely to discover, thus
+     * making it ready for operations.
      * Waits an additional amount of time after the latest detected driver in case any further drivers
      * come on line.
      *
-     * @return - true if the system is newly OPERATIONAL (one call only will return true)
+     * @return - true if the system is OPERATIONAL
      */
     public boolean isSystemReady() {
 
@@ -256,14 +276,23 @@ public class InterfaceWorker {
             long elapsed = System.currentTimeMillis() - startedWaiting_;
             if (elapsed > 1000*waitTime_) {
 
-                //indicate that it is now OPERATIONAL
-                systemOperational_ = true;
-                //log the time required to get to this point
-                log_.info("STARTUP", "///// InterfaceWorker declaring SYSTEM OPERATIONAL.");
-                log_.info("STARTUP", "---elapsed = " + elapsed + ", waitTime = " + waitTime_);
-                
-                //record the time of this event
-                systemReadyTime_ = System.currentTimeMillis();
+                //if we have the essential drivers registered then
+                if (controllerReady_  &&  positionReady_) {
+
+                    //indicate that it is now OPERATIONAL
+                    systemOperational_ = true;
+                    //log the time required to get to this point
+                    log_.info("STARTUP", "///// InterfaceWorker says all known drivers are initialized -- after "
+                                + elapsed/1000 + " sec");
+
+                    //record the time of this event
+                    systemReadyTime_ = System.currentTimeMillis();
+
+                }else {
+                    //log an error and shut down
+                    log_.error("DRIVERS", "InterfaceWorker: missing one or more essential drivers - initiating system shutdown.");
+                    mgr_.errorShutdown("Unable to discover essential device drivers.  INITIATING SYSTEM SHUTDOWN.");
+                }
             }
         }
 

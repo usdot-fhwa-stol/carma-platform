@@ -137,32 +137,24 @@ public class RouteWorker {
    * @param event the event to be handled
    */
   protected void handleEvent(WorkerEvent event) {
-    SystemAlert alertMsg;
+    log.info("Handled route event: " + event.toString());
     switch (event) {
       case FILES_LOADED:
-        log.info("Loaded new routes");
         break;
       case ROUTE_SELECTED:
-        log.info("Route has been selected");
         break;
       case ROUTE_COMPLETED:
-        log.info("Route has been completed");
         break;
       case LEFT_ROUTE:
-        log.info("The vehicle has left the active route");
         break;
       case SYSTEM_FAILURE:
-        log.info("Received a system failure message and is shutting down");
         routeManager.shutdown();
         break;
       case SYSTEM_NOT_READY:
-        log.info("Received a system not ready message and is switching to pausing the active route");
         break;
       case ROUTE_ABORTED:
-        log.info("Route has been aborted");
         break;
       case ROUTE_STARTED:
-        log.info("Route has been started");
         break;
       default:
         log.info("Route was provided with an unsupported event");
@@ -298,7 +290,10 @@ public class RouteWorker {
    */
   protected void startRouteAtIndex(int index) {
     // Insert a starting waypoint at the current vehicle location which is connected to the route
-    RouteWaypoint startingWP = new RouteWaypoint(new Location(hostVehicleLocation)); // don't want the route and vehicle location to reference the same object
+    RouteWaypoint downtrackWP = activeRoute.getWaypoints().get(index);
+    RouteWaypoint startingWP = new RouteWaypoint(downtrackWP); // Deep copy of downtrack waypoint
+    startingWP.setLocation(new Location(hostVehicleLocation)); // Don't want waypoint and vehicle to reference same location object
+
     boolean ableToConnectToRoute = false;
     try {
       ableToConnectToRoute = activeRoute.insertWaypoint(startingWP, index);
@@ -308,7 +303,7 @@ public class RouteWorker {
     }
 
     // If we can't join the route return
-    if (ableToConnectToRoute == false) {
+    if (!ableToConnectToRoute) {
       log.info("Could not join the route from the current location");
       return;
     }
@@ -374,6 +369,9 @@ public class RouteWorker {
 
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
+
+    log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
+    log.debug("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
       handleEvent(WorkerEvent.LEFT_ROUTE);

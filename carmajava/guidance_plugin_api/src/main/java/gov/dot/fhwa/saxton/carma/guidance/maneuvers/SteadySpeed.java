@@ -43,6 +43,7 @@ public class SteadySpeed extends LongitudinalManeuver {
 
         //set end distance to start distance
         endDist_ = startDist;
+        workingAccel_ = 0.5 * maxAccel_;
     }
 
 
@@ -70,13 +71,8 @@ public class SteadySpeed extends LongitudinalManeuver {
         endDist_ = endDist;
     }
 
-
     @Override
-    public boolean executeTimeStep() throws IllegalStateException {
-        boolean completed = false;
-
-        verifyLocation();
-
+    public double generateSpeedCommand() throws IllegalStateException {
         //if we are within a slow time step of the maneuver's end, mark it as completed
         double location = inputs_.getDistanceFromRouteStart();
         double prettyClose = 0.2*endSpeed_;
@@ -84,12 +80,6 @@ public class SteadySpeed extends LongitudinalManeuver {
             completed = true;
         }
 
-        //set command to the target speed and invoke the ACC override
-        double cmd = accOverride(endSpeed_);
-
-        //send the command to the vehicle; since there should only be slight speed adjustments throughout this maneuver,
-        // we use a milder acceleration than would normally be allowed
-        commands_.setCommand(cmd, 0.5*maxAccel_);
-        return completed;
+        return endSpeed_;
     }
 }
