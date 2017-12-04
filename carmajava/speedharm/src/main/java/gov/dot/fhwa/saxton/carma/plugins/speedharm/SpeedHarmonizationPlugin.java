@@ -238,7 +238,11 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
   @Override
   public double getSpeedCommand() {
-    return commandReceiver.getLastCommand().getSpeed();
+    if (commandReceiver.getLastCommand() != null) {
+      return commandReceiver.getLastCommand().getSpeed();
+    } else {
+      return vehicleDataManager.getSpeed();
+    }
   }
 
   @Override
@@ -248,8 +252,12 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
   @Override
   public Duration getTimeSinceLastUpdate() {
+    if (commandReceiver.getLastCommand() != null) {
     LocalDateTime now = LocalDateTime.now();
     long millis = java.time.Duration.between(commandReceiver.getLastCommand().getTimestamp(), now).toMillis();
     return Duration.fromMillis(millis);
+    } else {
+      return Duration.fromMillis(0);
+    }
   }
 }
