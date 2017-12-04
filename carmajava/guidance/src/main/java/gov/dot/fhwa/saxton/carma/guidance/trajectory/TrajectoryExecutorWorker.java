@@ -172,27 +172,28 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       if (complexManeuverThread != null && complexManeuverThread.isAlive()) {
         complexManeuverThread.interrupt();
       }
-    }
 
-    currentComplexManeuver = (IComplexManeuver) currentTrajectory.getNextManeuverAfter(downtrackDistance, ManeuverType.COMPLEX);
+      currentComplexManeuver = (IComplexManeuver) currentTrajectory.getManeuverAt(downtrackDistance,
+          ManeuverType.COMPLEX);
 
-    if (currentComplexManeuver != null) {
-      log.info("Discovered complex maneuver: " + currentComplexManeuver.getManeuverName() + "on trajectory");
-    } else {
-      log.info("No complex maneuver found");
-    }
-
-    if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getStartDistance()) {
-      // Stop all currently executing maneuvers, then run the complex one.
-      if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
-        longitudinalManeuverThread.interrupt();
+      if (currentComplexManeuver != null) {
+        log.info("Discovered complex maneuver: " + currentComplexManeuver.getManeuverName() + "on trajectory");
+      } else {
+        log.info("No complex maneuver found");
       }
 
-      if (lateralManeuverThread != null && lateralManeuverThread.isAlive()) {
-        lateralManeuverThread.interrupt();
-      }
+      if (currentComplexManeuver != null && downtrackDistance >= currentComplexManeuver.getStartDistance()) {
+        // Stop all currently executing maneuvers, then run the complex one.
+        if (longitudinalManeuverThread != null && longitudinalManeuverThread.isAlive()) {
+          longitudinalManeuverThread.interrupt();
+        }
 
-      execute(currentComplexManeuver);
+        if (lateralManeuverThread != null && lateralManeuverThread.isAlive()) {
+          lateralManeuverThread.interrupt();
+        }
+
+        execute(currentComplexManeuver);
+      }
     }
   }
 
@@ -268,7 +269,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
     if (currentComplexManeuver != null) {
       if (!complexManeuverThread.isInterrupted()) {
-        complexManeuverThread.interrupt();;
+        complexManeuverThread.interrupt();
+        ;
       }
 
       currentComplexManeuver = null;
@@ -401,8 +403,9 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       }
 
       if (currentComplexManeuver != null) {
-        log.info(String.format("Switching to " + currentComplexManeuver.getManeuverName() + " maneuver from [%.02f, %.02f)",
-            currentComplexManeuver.getStartDistance(), currentComplexManeuver.getEndDistance()));
+        log.info(
+            String.format("Switching to " + currentComplexManeuver.getManeuverName() + " maneuver from [%.02f, %.02f)",
+                currentComplexManeuver.getStartDistance(), currentComplexManeuver.getEndDistance()));
       } else {
         log.info("No complex maneuver started yet.");
       }
