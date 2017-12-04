@@ -39,7 +39,7 @@
 #include <cmath>
 #include <sstream>
 
-torc::SRXDBWController::SRXDBWController(ros::NodeHandle &nh, ros::NodeHandle &pnh) : nh_(nh), pnh_(pnh), ctrl_msg_{}
+torc::SRXDBWController::SRXDBWController(ros::NodeHandle &nh, ros::NodeHandle &pnh) : nh_(nh), pnh_(pnh), ctrl_msg_{}, firmware_revision_(0)
 {
 
 }
@@ -55,7 +55,7 @@ void torc::SRXDBWController::connect(const std::string &recv_topic, const std::s
     //regardless of the speed of the Driver Application that is using this
     async_nh_.reset(new ros::NodeHandle(nh_.getNamespace()));
     async_nh_->setCallbackQueue(&async_q_);
-
+    version_timer_ = async_nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent&){ sendFirmwareVersionRequest(); });
     can_in_sub_ = async_nh_->subscribe<can_msgs::Frame>(recv_topic,10, [this](const can_msgs::FrameConstPtr& msg){frameReceivedCB(msg);});
 
     //Using two publishers because we want to limit the publish queue of the speed messages by 1, but it is ok to queue
@@ -68,7 +68,6 @@ void torc::SRXDBWController::connect(const std::string &recv_topic, const std::s
 
     running_ = true;
     process_thread_.reset(new std::thread([this](){process();}));
-
 
     //Calls the onConnect() signal. This signals to the connected caller that this driver has finished its initialization
     //setup and is listening for incoming messages and ready to send out going messages
@@ -123,7 +122,6 @@ void torc::SRXDBWController::setLights(const torc::SRXDBWController::LightID_t &
                                        const torc::SRXDBWController::LightParams_t &params) {
     if(!running_) return;
 
-    static unsigned int seq = 0;
     can_msgs::Frame fr;
     switch (id)
     {
@@ -135,17 +133,19 @@ void torc::SRXDBWController::setLights(const torc::SRXDBWController::LightID_t &
             break;
     }
 
-    fr.header.seq = seq++;
     fr.header.stamp = ros::Time::now();
     fr.header.frame_id = "";
 
     fr.dlc  = 1;
     fr.data[0] = 0;
 
+    fr.data[0] |= params.TakeDownOn ? 1 : 0;
+    fr.data[0] <<= 1;
+
     fr.data[0] |= params.FlashOn ? 1 : 0;
     fr.data[0] <<= 1;
 
-    fr.data[0] |= params.TakeDownOn ? 1 : 0;
+    fr.data[0] |= params.GreenSolidOn ? 1 : 0;
     fr.data[0] <<= 1;
 
     fr.data[0] |= params.RightArrowOn ? 1 : 0;
@@ -153,6 +153,8 @@ void torc::SRXDBWController::setLights(const torc::SRXDBWController::LightID_t &
 
     fr.data[0] |= params.LeftArrowOn ? 1 : 0;
     fr.data[0] <<= 1;
+
+    fr.data[0] |= params.GreenFlashOn ? 1 : 0;
 
     can_out_pub_.publish(fr);
 
@@ -175,11 +177,9 @@ void torc::SRXDBWController::setSpeedAccel(double speed, double max_accel) {
 }
 
 void torc::SRXDBWController::setPID(torc::SRXDBWController::PIDParams_t &params) {
-    static unsigned int seq = 0;
     can_msgs::Frame fr;
 
     fr.id = 0x101;
-    fr.header.seq = seq++;
     fr.header.stamp = ros::Time::now();
     fr.header.frame_id = "";
 
@@ -193,14 +193,25 @@ void torc::SRXDBWController::setPID(torc::SRXDBWController::PIDParams_t &params)
     can_out_pub_.publish(fr);
 }
 
+
+void torc::SRXDBWController::sendFirmwareVersionRequest()
+{
+    can_msgs::Frame fr;
+    fr.id = 0x105;
+    fr.header.stamp = ros::Time::now();
+    fr.header.frame_id = "";
+
+    fr.dlc = 0;
+    can_out_pub_.publish(fr);
+
+}
+
 void torc::SRXDBWController::sendSpeedCmd() {
     if(!running_) return;
-    static unsigned int seq = 0;
 
     can_msgs::Frame fr;
 
     fr.id = 0x100;
-    fr.header.seq = seq++;
     fr.header.stamp = ros::Time::now();
     fr.header.frame_id = "";
 
@@ -254,8 +265,6 @@ void torc::SRXDBWController::process() {
         }
         else
         {
-
-
             std::vector<uint8_t> data(entry->data.begin(),entry->data.end());
             switch(entry->id)
             {
@@ -269,7 +278,7 @@ void torc::SRXDBWController::process() {
                 case 0x111: //PID Echo
                 {
                     PIDParams_t params{};
-                    if(unpackPIDMessage(data, params))
+                    if(unpackPIDMessage(data, params, firmware_revision_ < 3 ? boost::endian::order::little : boost::endian::order::big))
                         onPIDEchoRecv(params);
                     break;
                 }
@@ -292,6 +301,11 @@ void torc::SRXDBWController::process() {
                     BrakeOutputFeedback_t feedback{};
                     if(unpackBrakeOutputFeedback(data, feedback))
                         onBrakeFeedbackRecv(feedback);
+                    break;
+                }
+                case 0x115:
+                {
+                    firmware_revision_ = data[1];
                     break;
                 }
                 default:
@@ -395,31 +409,28 @@ bool torc::SRXDBWController::unpackThrottleOutputFeedback(const std::vector<uint
     return true;
 }
 
-bool torc::SRXDBWController::unpackPIDMessage(const std::vector<uint8_t> &msg, torc::SRXDBWController::PIDParams_t &out) {
+bool torc::SRXDBWController::unpackPIDMessage(const std::vector<uint8_t> &msg, torc::SRXDBWController::PIDParams_t &out, const boost::endian::order& order) {
     if(msg.size() < 8)
     {
         return false;
     }
 
 
-    //As of firmware released in 1/13/2016 the PIDs are being sent as little endian
-    //unlike everything else
+    auto f = (order == boost::endian::order::little) ? boost::endian::little_to_native<uint16_t> : boost::endian::big_to_native<uint16_t>;
 
-    //todo: fix this when the firmware is updated
     uint16_t p,i,d,div;
 
     memcpy(&p,&msg[0],2);
-    p = boost::endian::little_to_native(p);
+    p = f(p);
 
     memcpy(&i,&msg[2],2);
-    i = boost::endian::little_to_native(i);
+    i = f(i);
 
     memcpy(&d,&msg[4],2);
-    d = boost::endian::little_to_native(d);
+    d = f(d);
 
     memcpy(&div,&msg[6],2);
-    div = boost::endian::little_to_native(div);
-
+    div = f(div);
 
     out.setU16(p, i, d, div);
 
