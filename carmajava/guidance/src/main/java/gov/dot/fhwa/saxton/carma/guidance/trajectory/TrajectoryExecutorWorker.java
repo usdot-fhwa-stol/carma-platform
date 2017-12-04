@@ -172,9 +172,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       if (complexManeuverThread != null && complexManeuverThread.isAlive()) {
         complexManeuverThread.interrupt();
       }
-    }
 
-    currentComplexManeuver = (IComplexManeuver) currentTrajectory.getNextManeuverAfter(downtrackDistance, ManeuverType.COMPLEX);
+    currentComplexManeuver = (IComplexManeuver) currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
 
     if (currentComplexManeuver != null) {
       log.info("Discovered complex maneuver: " + currentComplexManeuver.getManeuverName() + "on trajectory");
@@ -193,6 +192,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       }
 
       execute(currentComplexManeuver);
+    }
     }
   }
 
