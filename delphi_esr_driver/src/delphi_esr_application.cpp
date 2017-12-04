@@ -144,8 +144,8 @@ void DelphiESRApplication::publish_updates() {
         obj.header.stamp = out_list.header.stamp;
         obj.presence_vector = cav_msgs::ExternalObject::SIZE_PRESENCE_VECTOR;
         obj.size.y = it.width / 2.0;
-        obj.size.x = 1.0;
-        obj.size.z = 1.0;
+        obj.size.x = 0.0;
+        obj.size.z = 0.0;
 
         obj.presence_vector |= cav_msgs::ExternalObject::POSE_PRESENCE_VECTOR;
         obj.pose.pose.position.x = it.range*cos(it.angle*boost::math::constants::pi<double>()/180.0);
@@ -154,9 +154,9 @@ void DelphiESRApplication::publish_updates() {
 
         obj.presence_vector |= cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR;
         obj.velocity.twist.linear.x = it.range_rate*cos(it.angle*boost::math::constants::pi<double>()/180.0)
-                                      - it.lat_rate*sin(it.angle*boost::math::constants::pi<double>()/180.0);
+                                      + it.lat_rate*sin(it.angle*boost::math::constants::pi<double>()/180.0);
 
-        obj.velocity.twist.linear.y = -it.range_rate*sin(it.angle*boost::math::constants::pi<double>()/180.0)
+        obj.velocity.twist.linear.y = it.range_rate*sin(it.angle*boost::math::constants::pi<double>()/180.0)
                                       - it.lat_rate*cos(it.angle*boost::math::constants::pi<double>()/180.0);
 
         obj.velocity.twist.linear.z = 0;
@@ -166,7 +166,7 @@ void DelphiESRApplication::publish_updates() {
         obj.range_rate = it.range_rate;
 
         obj.presence_vector |= cav_msgs::ExternalObject::AZIMUTH_RATE_PRESENCE_VECTOR;
-        obj.azimuth_rate = it.lat_rate;
+        obj.azimuth_rate = -it.lat_rate/it.range;
 
         obj.presence_vector |= cav_msgs::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
         obj.confidence = it.track_status == delphi::TrackStatus::NewTarget ? 0.5 : 1.0;

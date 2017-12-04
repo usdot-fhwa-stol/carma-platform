@@ -36,7 +36,7 @@ struct CANFrameStamped
 
 
 /**
- * @brief Represents and interface to a CAN Device.
+ * @brief Represents an interface to a CAN Device.
  */
 class CANInterface {
 public:

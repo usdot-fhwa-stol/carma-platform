@@ -143,7 +143,7 @@ public:
         ifreq ifr;
 
         if ((socket_ = ::socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-            throw std::system_error(errno, std::generic_category(), "Unabled to open socket");
+            throw std::system_error(errno, std::generic_category(), "Unable to open socket");
         }
 
         std::strcpy(ifr.ifr_name, device_name_.c_str());
