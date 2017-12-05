@@ -219,15 +219,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     // Check to see if any maneuvers are overdue starting
     checkAndStartManeuvers();
 
-    // Call necessary callbacks
-    double completePct = getTrajectoryCompletionPct();
-    for (PctCallback callback : callbacks) {
-      if (!callback.called && completePct >= callback.pct) {
-        log.debug("Calling Trajectory Completion callback at " + completePct);
-        callback.callback.onProgress(completePct);
-        callback.called = true;
-      }
-    }
+    // Notify subscribers if needed
+    invokeCallbacks();
 
     // Check to see if we need to advance to the next maneuver in each category
     checkAndStartComplexManeuver();
@@ -270,7 +263,6 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     if (currentComplexManeuver != null) {
       if (!complexManeuverThread.isInterrupted()) {
         complexManeuverThread.interrupt();
-        ;
       }
 
       currentComplexManeuver = null;
@@ -340,7 +332,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * <p>
    * Percent completion is defined over [0, 1] U (-1.0)
    */
-  public void registerOnTrajectoryProgressCallback(double pct, OnTrajectoryProgressCallback callback) {
+  public synchronized void registerOnTrajectoryProgressCallback(double pct, OnTrajectoryProgressCallback callback) {
     callbacks.add(new PctCallback(pct, callback));
   }
 
@@ -370,9 +362,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       log.info("TrajectoryExecutorWorker successfully swapped Trajectories");
     }
 
-    for (PctCallback callback : callbacks) {
-      callback.called = false;
-    }
+    resetCallbacks();
   }
 
   /**
@@ -409,10 +399,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       } else {
         log.info("No complex maneuver started yet.");
       }
-
-      for (PctCallback callback : callbacks) {
-        callback.called = false;
-      }
+      resetCallbacks();
     } else {
       // Hold onto this trajectory for double buffering, flip to it when we finish trajectory
       nextTrajectory = traj;
@@ -442,6 +429,44 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * Unregister the callback, ensuring it is no longer invoked at any point in time
    */
   public void unregisterOnTrajectoryProgressCallback(OnTrajectoryProgressCallback callback) {
-    callbacks.remove(callback);
+    // Ensure that we don't get any weirdness when trying other operations simultaneously
+    synchronized (callbacks) {
+      callbacks.remove(callback);
+    }
+  }
+
+  /**
+   * Get the current downtrack distance and then call any callbacks that have been triggered
+   */
+  private void invokeCallbacks() {
+    // Buffer the callback list locally in case a callback modifies the callback list itself
+    List<PctCallback> tmpCallbacks = new ArrayList<>();
+    synchronized (callbacks) {
+      tmpCallbacks.addAll(callbacks);
+    }
+
+    double completePct = getTrajectoryCompletionPct();
+    for (PctCallback callback : tmpCallbacks) {
+      if (!callback.called && completePct >= callback.pct) {
+        log.debug("Calling Trajectory Completion callback at " + completePct);
+        callback.callback.onProgress(completePct);
+        callback.called = true;
+      }
+    }
+  }
+
+  /**
+   * Reset all callbacks to as though they had not already been called
+   */
+  private void resetCallbacks() {
+    // Take a snapshot of the contents of callbacks prior to execution
+    List<PctCallback> tmpCallbacks = new ArrayList<>();
+    synchronized (callbacks) {
+      tmpCallbacks.addAll(callbacks);
+    }
+
+    for (PctCallback callback : tmpCallbacks) {
+      callback.called = false;
+    }
   }
 }
