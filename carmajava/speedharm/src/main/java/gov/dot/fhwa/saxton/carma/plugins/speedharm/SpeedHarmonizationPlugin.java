@@ -252,7 +252,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
   @Override
   public Duration getTimeSinceLastUpdate() {
-    if (commandReceiver.getLastCommand() != null) {
+    if (commandReceiver != null && commandReceiver.getLastCommand() != null) {
     LocalDateTime now = LocalDateTime.now();
     long millis = java.time.Duration.between(commandReceiver.getLastCommand().getTimestamp(), now).toMillis();
     return Duration.fromMillis(millis);
