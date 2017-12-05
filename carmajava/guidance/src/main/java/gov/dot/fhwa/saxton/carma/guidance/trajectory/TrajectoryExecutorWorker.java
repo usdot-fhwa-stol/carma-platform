@@ -359,6 +359,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     if (currentTrajectory != null) {
       currentLateralManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       currentLongitudinalManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
+      currentComplexManeuver = currentTrajectory.getComplexManeuver();
       log.info("TrajectoryExecutorWorker successfully swapped Trajectories");
     }
 
