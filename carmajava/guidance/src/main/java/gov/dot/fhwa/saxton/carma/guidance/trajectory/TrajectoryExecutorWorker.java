@@ -428,16 +428,25 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   /**
    * Unregister the callback, ensuring it is no longer invoked at any point in time
    */
-  public synchronized void unregisterOnTrajectoryProgressCallback(OnTrajectoryProgressCallback callback) {
-    callbacks.remove(callback);
+  public void unregisterOnTrajectoryProgressCallback(OnTrajectoryProgressCallback callback) {
+    // Ensure that we don't get any weirdness when trying other operations simultaneously
+    synchronized (callbacks) {
+      callbacks.remove(callback);
+    }
   }
 
   /**
    * Get the current downtrack distance and then call any callbacks that have been triggered
    */
-  private synchronized void invokeCallbacks() {
+  private void invokeCallbacks() {
+    // Buffer the callback list locally in case a callback modifies the callback list itself
+    List<PctCallback> tmpCallbacks = new ArrayList<>();
+    synchronized (callbacks) {
+      tmpCallbacks.addAll(callbacks);
+    }
+
     double completePct = getTrajectoryCompletionPct();
-    for (PctCallback callback : callbacks) {
+    for (PctCallback callback : tmpCallbacks) {
       if (!callback.called && completePct >= callback.pct) {
         log.debug("Calling Trajectory Completion callback at " + completePct);
         callback.callback.onProgress(completePct);
@@ -449,9 +458,15 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   /**
    * Reset all callbacks to as though they had not already been called
    */
-  private synchronized void resetCallbacks() {
-      for (PctCallback callback : callbacks) {
-        callback.called = false;
-      }
+  private void resetCallbacks() {
+    // Take a snapshot of the contents of callbacks prior to execution
+    List<PctCallback> tmpCallbacks = new ArrayList<>();
+    synchronized (callbacks) {
+      tmpCallbacks.addAll(callbacks);
+    }
+
+    for (PctCallback callback : tmpCallbacks) {
+      callback.called = false;
+    }
   }
 }
