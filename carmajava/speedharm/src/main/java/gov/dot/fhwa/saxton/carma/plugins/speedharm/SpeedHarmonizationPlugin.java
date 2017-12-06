@@ -207,7 +207,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
     double earliestLegalWindow = complexManeuverStartLocation;
     for (AlgorithmFlags flagset : flags) {
-      if (flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
+      if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
         earliestLegalWindow = flagset.getLocation();
       } else {
         break;
@@ -215,10 +215,10 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     }
 
     // Find the end of that same window
-    double endOfWindow = earliestLegalWindow;
+    double endOfWindow = traj.getEndLocation();
     for (AlgorithmFlags flagset : flags) {
       if (flagset.getLocation() > earliestLegalWindow)
-        if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
+        if (flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
           endOfWindow = flagset.getLocation();
         } else {
           break;
