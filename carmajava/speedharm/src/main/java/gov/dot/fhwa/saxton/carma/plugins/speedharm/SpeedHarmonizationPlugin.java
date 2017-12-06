@@ -205,24 +205,27 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
       flags.add(flagsAtEnd); // Since its a set if this is a duplicate it goes away
     }
 
-    double earliestLegalWindow = complexManeuverStartLocation;
+    double earliestLegalWindow = traj.getEndLocation();
+    double lastLocStart = complexManeuverStartLocation;
     for (AlgorithmFlags flagset : flags) {
       if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
-        earliestLegalWindow = flagset.getLocation();
-      } else {
+        earliestLegalWindow = lastLocStart;
         break;
       }
+      lastLocStart = flagset.getLocation();
     }
 
     // Find the end of that same window
     double endOfWindow = traj.getEndLocation();
+    double lastLocEnd = earliestLegalWindow;
     for (AlgorithmFlags flagset : flags) {
-      if (flagset.getLocation() > earliestLegalWindow)
+      if (flagset.getLocation() > earliestLegalWindow) {
         if (flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
-          endOfWindow = flagset.getLocation();
-        } else {
+          endOfWindow = lastLocEnd;
           break;
         }
+      }
+      lastLocEnd = flagset.getLocation();
     }
 
     // Clamp to end of trajectory window
