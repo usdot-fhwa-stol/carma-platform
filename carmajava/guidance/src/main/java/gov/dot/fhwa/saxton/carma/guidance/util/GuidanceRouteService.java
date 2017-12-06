@@ -24,7 +24,6 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
-import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 
 /**
@@ -40,7 +39,6 @@ public class GuidanceRouteService implements RouteService {
   protected ISubscriber<RouteState> routeStateSubscriber;
   protected SortedSet<SpeedLimit> limits;
   protected SortedSet<AlgorithmFlags> disabledAlgorithms;
-  protected ILogger log = LoggerManager.getLogger();
 
   public GuidanceRouteService(IPubSubService pubSubService) {
     this.pubSubService = pubSubService;
@@ -86,7 +84,6 @@ public class GuidanceRouteService implements RouteService {
       AlgorithmFlags segmentFlags = new AlgorithmFlags(dtdAccum, seg.getWaypoint().getDisabledGuidanceAlgorithms());
       disabledAlgorithms.add(segmentFlags);
     }
-   log.info("Processing route disabledAlgorithms: = " + disabledAlgorithms);
   }
 
   @Override
