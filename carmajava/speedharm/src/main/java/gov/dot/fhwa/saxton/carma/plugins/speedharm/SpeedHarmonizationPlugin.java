@@ -247,8 +247,10 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   @Override
   public double getSpeedCommand() {
     if (commandReceiver.getLastCommand() != null) {
+      log.info("Using received command");
       return commandReceiver.getLastCommand().getSpeed();
     } else {
+      log.info("Using previous vehicle speed");
       return vehicleDataManager.getSpeed();
     }
   }
