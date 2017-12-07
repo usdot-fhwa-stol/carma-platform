@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * maneuvers in a Trajectory planned by the Arbitrator and the Guidance package's
  * currently configured plugins.
  */
-public class TrajectoryExecutor extends GuidanceComponent {
+public class TrajectoryExecutor extends GuidanceComponent implements IStateChangeListener {
     // Member variables
     protected ISubscriber<RouteState> routeStateSubscriber;
     protected GuidanceCommands commands;
@@ -72,45 +72,80 @@ public class TrajectoryExecutor extends GuidanceComponent {
         return "Guidance.TrajectoryExecutor";
     }
 
-    public void onGuidanceStartup() {
-        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-            @Override
-            public void onMessage(RouteState msg) {
-                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
-                if (state.get() == GuidanceState.ENGAGED) {
-                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
-                }
-            }
-        });
+    protected class Startup implements Runnable {
+        
+        @Override
+        public void run() {
+            operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
+            amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
+            phase = node.getParameterTree().getDouble("~trajectory_phase");
+            period = node.getParameterTree().getDouble("~trajectory_period");
+            maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
+            holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
+            useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
+            sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
-        operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
-        amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
-        phase = node.getParameterTree().getDouble("~trajectory_phase");
-        period = node.getParameterTree().getDouble("~trajectory_period");
-        maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
-        holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
-        useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
-        sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
-    }
-
-    @Override
-    public void onSystemReady() {
-        // NO-OP
-    }
-
-    @Override
-    public void onGuidanceEnable() {
-        startTime = (long) node.getCurrentTime().toSeconds() * 1000;
-
-        if (currentTrajectory != null && !bufferedTrajectoryRunning) {
-            log.info("Running buffered trajectory!");
-            trajectoryExecutorWorker.runTrajectory(currentTrajectory);
-            tracking_.addNewTrajectory(currentTrajectory);
-            bufferedTrajectoryRunning = true;
+            currentState.set(GuidanceState.STARTUP);
         }
     }
 
+    protected class SystemReady implements Runnable {
+
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.DRIVERS_READY);
+        }
+        
+    }
+
+    protected class RouteActive implements Runnable {
+
+        @Override
+        public void run() {
+            
+            routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+            routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+                @Override
+                public void onMessage(RouteState msg) {
+                    log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
+                    if (currentState.get() == GuidanceState.ENGAGED) {
+                        trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
+                    }
+                }
+            });
+            currentState.set(GuidanceState.ACTIVE);
+        }
+        
+    }
+    
+    protected class Engage implements Runnable {
+        
+        @Override
+        public void run() {
+            startTime = (long) node.getCurrentTime().toSeconds() * 1000;
+            if (currentTrajectory != null && !bufferedTrajectoryRunning) {
+                log.info("Running buffered trajectory!");
+                trajectoryExecutorWorker.runTrajectory(currentTrajectory);
+                tracking_.addNewTrajectory(currentTrajectory);
+                bufferedTrajectoryRunning = true;
+            }
+        }
+        
+    }
+
+    protected class CleanRestart implements Runnable {
+
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.DRIVERS_READY);
+            TrajectoryExecutor.this.abortTrajectory();
+            currentTrajectory = null;
+            bufferedTrajectoryRunning = false;
+            startTime = 0;
+        }
+        
+    }
+    
     /**
      * Compute the sinusoidal part of the trajectory
      * 
@@ -129,9 +164,9 @@ public class TrajectoryExecutor extends GuidanceComponent {
     }
 
     @Override
-    public void loop() throws InterruptedException {
+    public void timingLoop() throws InterruptedException {
         // Generate a simple sin(t) speed command
-        if (state.get() == GuidanceState.ENGAGED && useSinTrajectory) {
+        if (currentState.get() == GuidanceState.ENGAGED && useSinTrajectory) {
             if ((node.getCurrentTime().toSeconds() * 1000) - startTime < holdTimeMs) {
                 commands.setCommand(operatingSpeed, maxAccel);
             } else {
@@ -239,7 +274,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
             idx++;
         }
 
-        if (state.get() == GuidanceState.ENGAGED) {
+        if (currentState.get() == GuidanceState.ENGAGED) {
             log.info("TrajectoryExecutor running trajectory!");
             tracking_.addNewTrajectory(traj);
             trajectoryExecutorWorker.runTrajectory(traj);
@@ -256,5 +291,49 @@ public class TrajectoryExecutor extends GuidanceComponent {
      */
     public Trajectory getCurrentTrajectory() {
         return trajectoryExecutorWorker.getCurrentTrajectory();
+    }
+    
+    /*
+     * This method add the right job in the jobQueue base on the oldstate and newState of Guidance
+     * The actual changing of GuidanceState copy is happened after each job is finished
+     */
+    @Override
+    public void onStateChange() {
+        GuidanceState oldState = currentState.get();
+        GuidanceState newState = stateMachine.getState();
+        switch (oldState) {
+        case STARTUP:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new SystemReady());
+            }
+            break;
+        case DRIVERS_READY:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.ACTIVE) {
+                jobQueue.add(new RouteActive());
+            }
+            break;
+        case ACTIVE:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.ENGAGED) {
+                jobQueue.add(new Engage());
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new CleanRestart());
+            }
+            break;
+        case ENGAGED:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new CleanRestart());
+            }
+            break;
+        default:
+            break;
+        }
     }
 }
