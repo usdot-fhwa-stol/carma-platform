@@ -33,14 +33,14 @@ public class GuidanceStateMachine {
 
     /**
      * Define all state transitions in GuidanceStateMachine based on GuidanceEvent 
-     * @param guidance_event the event cause the transition of state
+     * @param guidance_event
      */
     public synchronized void processEvent(GuidanceEvent guidance_event) {
         log.debug("Guidance state machine reveiced " + guidance_event + " at state: " + guidance_state.get());
         GuidanceState old_state = guidance_state.get();
         switch (old_state) {
         case STARTUP:
-            if(guidance_event == GuidanceEvent.FIND_DRIVERS) {
+            if(guidance_event == GuidanceEvent.FOUND_DRIVERS) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
@@ -56,6 +56,8 @@ public class GuidanceStateMachine {
         case ACTIVE:
             if(guidance_event == GuidanceEvent.START_ROUTE) {
                 guidance_state.set(GuidanceState.ENGAGED);
+            } else if(guidance_event == GuidanceEvent.LEFT_ROUTE) {
+                guidance_state.set(GuidanceState.DRIVERS_READY);
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
             }
@@ -64,7 +66,7 @@ public class GuidanceStateMachine {
             if(guidance_event == GuidanceEvent.FINISH_ROUTE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
             } else if(guidance_event == GuidanceEvent.LEFT_ROUTE) {
-                guidance_state.set(GuidanceState.ACTIVE);
+                guidance_state.set(GuidanceState.DRIVERS_READY);
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
             }
@@ -93,7 +95,18 @@ public class GuidanceStateMachine {
         return guidance_state.get();
     }
     
+    /**
+     * Register a state change listener to be called when the state changes
+     * @param newListener
+     */
     public void registerStateChangeListener(IStateChangeListener newListener) {
         listeners.add(newListener);
+    }
+    
+    /**
+     * Unregister a state change listener
+     */
+    public void unregisterStateChangeListener(IStateChangeListener newListener) {
+        listeners.remove(newListener);
     }
 }

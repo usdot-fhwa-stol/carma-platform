@@ -17,7 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 public enum GuidanceEvent {
-    FIND_DRIVERS,
+    FOUND_DRIVERS,
     ACTIVATE_ROUTE,
     START_ROUTE,
     FINISH_ROUTE,

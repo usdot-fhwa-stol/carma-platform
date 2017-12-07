@@ -23,7 +23,6 @@ import cav_srvs.GetDriversWithCapabilitiesResponse;
 import cav_srvs.SetEnableRobotic;
 import cav_srvs.SetEnableRoboticRequest;
 import cav_srvs.SetEnableRoboticResponse;
-import gov.dot.fhwa.saxton.carma.rosutils.*;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;

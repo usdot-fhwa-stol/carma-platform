@@ -291,16 +291,6 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     return trajectoryEnd;
   }
 
-  @Override
-  public void loop() throws InterruptedException {
-    // Simple job-queue loop with jobs being added based on state machine transitions
-    log.info("Arbitrator polling job queue...");
-    Runnable job = jobQueue.take();
-
-    log.info("Arbitrator found job of type: " + job.getClass().getSimpleName() + "! Executing...");
-    job.run();
-  }
-
   protected void increasePlanningWindow() {
     planningWindow *= planningWindowGrowthFactor;
   }
