@@ -30,7 +30,6 @@ import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.*;
 
 /**
 * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
@@ -40,7 +39,7 @@ import java.util.concurrent.atomic.*;
 * and it's Maneuver instances and latching on those commands until a new one is received. This will output
 * the most recently latched value at a fixed frequency.
 */
-public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands {
+public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands, IStateChangeListener {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
@@ -48,16 +47,17 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
     private long lastTimestep = -1;
-    private AtomicBoolean engaged = new AtomicBoolean(false);
-    private boolean driverConnected = false;
     private double vehicleAccelLimit = 2.5;
+    private volatile GuidanceState currentState;
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
 
-    GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
-        super(state, iPubSubService, node);
+    GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
+        super(stateMachine, iPubSubService, node);
+        currentState = stateMachine.getState(); 
+        this.jobQueue.add(new Startup());
     }
 
     @Override
@@ -65,31 +65,34 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         return "Guidance.Commands";
     }
 
-    @Override
-    public void onGuidanceStartup() {
-        vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
-        log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
+    protected class Startup implements Runnable {
+        @Override
+        public void run() {
+            vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
+            log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
+        }
     }
 
-    @Override
-    public void onGuidanceEnable() {
-        SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
-        enableReq.setSet((byte) 1);
+    protected class Engage implements Runnable {
+        @Override
+        public void run() {
+            SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
+            enableReq.setSet((byte) 1);
 
-        // TODO: Implement no-response call method
-        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
-            @Override
-            public void onSuccess(SetEnableRoboticResponse resp) {
-                // NO-OP
-            }
+            // TODO: Implement no-response call method
+            enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+                @Override
+                public void onSuccess(SetEnableRoboticResponse resp) {
+                    // NO-OP
+                }
 
-            @Override
-            public void onFailure(Exception e) {
-                // NO-OP
-            }
-        });
-
-        engaged.set(true);
+                @Override
+                public void onFailure(Exception e) {
+                    // NO-OP
+                }
+            });
+            currentState = GuidanceState.ENGAGED;
+        }
     }
 
     /**
@@ -118,87 +121,119 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         log.info("CONTROLS", "Speed command set to " + speedCommand.get() + "m/s and " + maxAccel.get() + "m/s/s");
     }
 
-    @Override
-    public void onSystemReady() {
-        // Register with the interface manager's service
-        try {
-            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                    GetDriversWithCapabilities._TYPE);
-        } catch (TopicNotFoundException tnfe) {
-            panic("Interface manager not found.");
-        }
-
-        // Build our request message
-        GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
-
-        List<String> reqdCapabilities = new ArrayList<>();
-        reqdCapabilities.add(SPEED_CMD_CAPABILITY);
-        reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY);
-        req.setCapabilities(reqdCapabilities);
-
-        // Work around to pass a final object into our anonymous inner class so we can get the
-        // response
-        final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
-        drivers[0] = null;
-
-        // Call the InterfaceManager to see if we have a driver that matches our requirements
-        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-            @Override
-            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                log.info("Received GetDriversWithCapabilitiesResponse");
-                for (String driverName : msg.getDriverData()) {
-                    log.info("GuidanceCommands discovered driver: " + driverName);
-                }
-
-                drivers[0] = msg;
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                panic("InterfaceManager failed to return a control/cmd_speed capable driver!!!");
-            }
-        });
-
-        // No message for LanePosition.msg to be published on "guidance/control/lane_position"
-        // TODO: Add message type for lateral control from guidance
-
-        // Verify that the message returned drivers that we can use
-        String speedCmdTopic = null;
-        String roboticEnableTopic = null;
-        if (drivers[0] != null) {
-            for (String topicName : drivers[0].getDriverData()) {
-                if (topicName.endsWith(SPEED_CMD_CAPABILITY)) {
-                    speedCmdTopic = topicName;
-                }
-                if (topicName.endsWith(ENABLE_ROBOTIC_CAPABILITY)) {
-                    roboticEnableTopic = topicName;
-                }
-            }
-        }
-
-        if (speedCmdTopic != null && roboticEnableTopic != null) {
-            // Open the publication channel to the driver and start sending it commands
-            log.info("CONTROLS", "GuidanceCommands connecting to " + speedCmdTopic + " and " + roboticEnableTopic);
-
-            speedAccelPublisher = pubSubService.getPublisherForTopic(speedCmdTopic, SpeedAccel._TYPE);
-
+    protected class SystemReady implements Runnable {
+        @Override
+        public void run() {
+            // Register with the interface manager's service
             try {
-                enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
-                driverConnected = true;
+                driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
+                        GetDriversWithCapabilities._TYPE);
             } catch (TopicNotFoundException tnfe) {
-                panic("GuidanceCommands unable to locate control/enable_robotic service for " + roboticEnableTopic);
+                stateMachine.processEvent(GuidanceEvent.PANIC);
+                jobQueue.add(new Shutdown("Interface manager not found."));
             }
-        } else {
-            panic("GuidanceCommands unable to find suitable controller driver!");
+
+            // Build our request message
+            GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
+
+            List<String> reqdCapabilities = new ArrayList<>();
+            reqdCapabilities.add(SPEED_CMD_CAPABILITY);
+            reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY);
+            req.setCapabilities(reqdCapabilities);
+
+            // Work around to pass a final object into our anonymous inner class so we can get the
+            // response
+            final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
+            drivers[0] = null;
+
+            // Call the InterfaceManager to see if we have a driver that matches our requirements
+            driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+                @Override
+                public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                    log.info("Received GetDriversWithCapabilitiesResponse");
+                    for (String driverName : msg.getDriverData()) {
+                        log.info("GuidanceCommands discovered driver: " + driverName);
+                    }
+
+                    drivers[0] = msg;
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    stateMachine.processEvent(GuidanceEvent.PANIC);
+                    jobQueue.add(new Shutdown("InterfaceManager failed to return a control/cmd_speed capable driver!!!"));
+                }
+            });
+
+            // No message for LanePosition.msg to be published on "guidance/control/lane_position"
+            // TODO: Add message type for lateral control from guidance
+
+            // Verify that the message returned drivers that we can use
+            String speedCmdTopic = null;
+            String roboticEnableTopic = null;
+            if (drivers[0] != null) {
+                for (String topicName : drivers[0].getDriverData()) {
+                    if (topicName.endsWith(SPEED_CMD_CAPABILITY)) {
+                        speedCmdTopic = topicName;
+                    }
+                    if (topicName.endsWith(ENABLE_ROBOTIC_CAPABILITY)) {
+                        roboticEnableTopic = topicName;
+                    }
+                }
+            }
+
+            if (speedCmdTopic != null && roboticEnableTopic != null) {
+                // Open the publication channel to the driver and start sending it commands
+                log.info("CONTROLS", "GuidanceCommands connecting to " + speedCmdTopic + " and " + roboticEnableTopic);
+
+                speedAccelPublisher = pubSubService.getPublisherForTopic(speedCmdTopic, SpeedAccel._TYPE);
+
+                try {
+                    enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
+                } catch (TopicNotFoundException tnfe) {
+                    stateMachine.processEvent(GuidanceEvent.PANIC);
+                    jobQueue.add(new Shutdown("GuidanceCommands unable to locate control/enable_robotic service for " + roboticEnableTopic));
+                }
+            } else {
+                stateMachine.processEvent(GuidanceEvent.PANIC);
+                jobQueue.add(new Shutdown("GuidanceCommands unable to find suitable controller driver!"));
+            }
+            currentState = GuidanceState.DRIVERS_READY;
         }
     }
 
+    protected class CleanRestart implements Runnable {
+
+        @Override
+        public void run() {
+            
+            currentState = GuidanceState.DRIVERS_READY;
+            
+            SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
+            enableReq.setSet((byte) 0);
+
+            // TODO: Implement no-response call method
+            enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+                @Override
+                public void onSuccess(SetEnableRoboticResponse resp) {
+                    // NO-OP
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    // NO-OP
+                }
+            });
+        }
+        
+    }
+    
     @Override
-    public void loop() throws InterruptedException {
+    public void timingLoop() throws InterruptedException {
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
 
-        if (engaged.get() && driverConnected) {
+        if (currentState == GuidanceState.ENGAGED) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             msg.setSpeed(speedCommand.get());
             msg.setMaxAccel(maxAccel.get());
@@ -209,7 +244,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         long iterEndTime = System.currentTimeMillis();
 
         // Not our first timestep, check timestep spacings
-        if (engaged.get() && driverConnected && lastTimestep > -1) {
+        if (currentState == GuidanceState.ENGAGED && lastTimestep > -1) {
             if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
                 log.error(
                         "!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT AFTER " 
@@ -221,5 +256,45 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         lastTimestep = iterEndTime;
 
         Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
+    }
+
+    @Override
+    public void onStateChange() {
+        GuidanceState oldState = currentState;
+        GuidanceState newState = stateMachine.getState();
+        switch (oldState) {
+        case STARTUP:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new SystemReady());
+            }
+            break;
+        case DRIVERS_READY:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            }
+            break;
+        case ACTIVE:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.ENGAGED) {
+                jobQueue.add(new Engage());
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new CleanRestart());
+            }
+            break;
+        case ENGAGED:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new CleanRestart());
+            }
+            break;
+        default:
+            break;
+        
+        }
+        
     }
 }

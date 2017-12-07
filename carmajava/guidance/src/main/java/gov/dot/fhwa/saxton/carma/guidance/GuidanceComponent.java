@@ -27,7 +27,6 @@ import cav_msgs.SystemAlert;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class for all Guidance components.
@@ -36,15 +35,19 @@ import java.util.concurrent.atomic.AtomicReference;
  * due to driver initialization and user command.
  */
 public abstract class GuidanceComponent implements Runnable {
+    
+    protected final long DEFAULT_LOOP_SLEEP_MS = 10000;
+    
     protected ConnectedNode node;
     protected IPubSubService pubSubService;
     protected ILogger log;
     protected BlockingQueue<Runnable> jobQueue;
-    protected AtomicReference<GuidanceState> state;
+    protected GuidanceStateMachine stateMachine;
     protected Thread loopThread;
+    protected Thread timingLoopThread;
 
-    public GuidanceComponent(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
-        this.state = state;
+    public GuidanceComponent(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
+        this.stateMachine = stateMachine;
         this.node = node;
         this.pubSubService = pubSubService;
         this.log = LoggerManager.getLogger(this.getClass().getCanonicalName());
@@ -59,13 +62,21 @@ public abstract class GuidanceComponent implements Runnable {
     /**
      * Simple job-queue loop with jobs being added based on state machine transitions
      */
-    public void loop() throws InterruptedException {
+    public final void loop() throws InterruptedException {
         log.debug(this.getComponentName() + " is polling job queue.");
         Runnable job = jobQueue.take();
         log.debug(this.getComponentName() + " found job of type: " + job.getClass().getSimpleName() + ". Executing!");
         job.run();
     }
 
+    public void timingLoop() throws InterruptedException {
+        try {
+            Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+    
     @Override
     public final void run() {
         Thread.currentThread().setName(getComponentName() + "Runner");
@@ -76,9 +87,18 @@ public abstract class GuidanceComponent implements Runnable {
                 GuidanceComponent.this.loop();
             }
         };
+        CancellableLoop timingLoop = new CancellableLoop() {
+            @Override
+            protected void loop() throws InterruptedException {
+                GuidanceComponent.this.timingLoop();
+            }
+        };
         loopThread = new Thread(loop);
         loopThread.setName(getComponentName() + "Looper");
+        timingLoopThread = new Thread(timingLoop);
+        timingLoopThread.setName(getComponentName() + "TimingLooper");
         loopThread.start();
+        timingLoopThread.start();
     }
 
     /**
@@ -109,6 +129,7 @@ public abstract class GuidanceComponent implements Runnable {
             pub.publish(fatalBroadcast);
             
             // Cancel the loop
+            timingLoopThread.interrupt();
             loopThread.interrupt();
         }
     }
