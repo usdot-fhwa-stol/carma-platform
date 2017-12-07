@@ -16,10 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-public enum GuidanceState {
-    STARTUP,
-    DRIVERS_READY,
-    ACTIVE,
-    ENGAGED,
-    SHUTDOWN
+public enum GuidanceEvent {
+    FIND_DRIVERS,
+    ACTIVATE_ROUTE,
+    START_ROUTE,
+    FINISH_ROUTE,
+    LEFT_ROUTE,
+    PANIC,
 }

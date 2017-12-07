@@ -16,10 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-public enum GuidanceState {
-    STARTUP,
-    DRIVERS_READY,
-    ACTIVE,
-    ENGAGED,
-    SHUTDOWN
+/**
+ * Listener to receive notification of changes in the state machine
+ */
+public interface IStateChangeListener {
+    /*
+     * Called when the state has changed after an event has been processed
+     */
+    public void onStateChange();
 }
