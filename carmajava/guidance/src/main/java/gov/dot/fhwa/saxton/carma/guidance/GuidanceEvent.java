@@ -22,5 +22,6 @@ public enum GuidanceEvent {
     START_ROUTE,
     FINISH_ROUTE,
     LEFT_ROUTE,
+    DISENGAGE,
     PANIC,
 }

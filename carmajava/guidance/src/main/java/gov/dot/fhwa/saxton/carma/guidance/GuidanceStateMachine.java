@@ -60,6 +60,8 @@ public class GuidanceStateMachine {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
+            } else if(guidance_event == GuidanceEvent.DISENGAGE) {
+                guidance_state.set(GuidanceState.DRIVERS_READY);
             }
             break;
         case ENGAGED:
@@ -69,6 +71,8 @@ public class GuidanceStateMachine {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
+            } else if(guidance_event == GuidanceEvent.DISENGAGE) {
+                guidance_state.set(GuidanceState.DRIVERS_READY);
             }
             break;
         default:

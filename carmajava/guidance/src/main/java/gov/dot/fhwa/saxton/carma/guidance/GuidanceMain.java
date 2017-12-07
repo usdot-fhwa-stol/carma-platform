@@ -67,7 +67,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
   protected IPubSubService pubSubService;
-  protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse> guidanceEngageService;
+  
 
   protected GuidanceExceptionHandler exceptionHandler;
 
@@ -84,20 +84,20 @@ public class GuidanceMain extends SaxtonBaseNode {
   /**
    * Initialize the runnable thread members of the Guidance package.
    */
-  private void initExecutor(AtomicReference<GuidanceState> state, ConnectedNode node) {
+  private void initExecutor(GuidanceStateMachine stateMachine, ConnectedNode node) {
     executor = Executors.newFixedThreadPool(numThreads);
 
     // Init the ACC system
 
     GuidanceRouteService routeService = new GuidanceRouteService(pubSubService);
     routeService.init();
-    GuidanceCommands guidanceCommands = new GuidanceCommands(state, pubSubService, node);
-    ManeuverInputs maneuverInputs = new ManeuverInputs(state, pubSubService, node);
-    Tracking tracking = new Tracking(state, pubSubService, node);
-    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(state, pubSubService, node, guidanceCommands, tracking);
-    PluginManager pluginManager = new PluginManager(state, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
-    Arbitrator arbitrator = new Arbitrator(state, pubSubService, node, pluginManager, trajectoryExecutor);
-    GuidanceShutdownHandler shutdownHandler = new GuidanceShutdownHandler(state, pubSubService, node);
+    GuidanceCommands guidanceCommands = new GuidanceCommands(stateMachine, pubSubService, node);
+    ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
+    Tracking tracking = new Tracking(stateMachine, pubSubService, node);
+    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands, tracking);
+    PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
+    Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor);
+    GuidanceStateHandler shutdownHandler = new GuidanceStateHandler(stateMachine, pubSubService, node);
     
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
@@ -162,44 +162,6 @@ public class GuidanceMain extends SaxtonBaseNode {
     initExecutor(state, connectedNode);
     log.info("Guidance main executor initialized");
 
-    // Currently setup to listen to it's own message. Change to listen to someone other topic.
-    ISubscriber<SystemAlert> subscriber = pubSubService.getSubscriberForTopic("system_alert",
-        cav_msgs.SystemAlert._TYPE);
-
-    subscriber.registerOnMessageCallback(new OnMessageCallback<SystemAlert>() {
-      @Override
-      public void onMessage(cav_msgs.SystemAlert message) {
-        if (message.getType() == SystemAlert.DRIVERS_READY) {
-          state.set(GuidanceState.DRIVERS_READY);
-          log.info("Guidance main received DRIVERS_READY!");
-        } else if (message.getType() == SystemAlert.FATAL) {
-          log.info("!!!!!! GuidanceMain received SystemAlert.FATAL! Shutting down! !!!!!");
-          state.set(GuidanceState.SHUTDOWN);
-        } else if (message.getType() == SystemAlert.SHUTDOWN) {
-          log.info("GuidanceMain received shutdown command. Shutting down!");
-          state.set(GuidanceState.SHUTDOWN);
-        }
-      }//onNewMessage
-    } //MessageListener
-    );//addMessageListener
-
-    guidanceEngageService = connectedNode.newServiceServer("set_guidance_engaged", SetGuidanceEngaged._TYPE,
-        new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
-          @Override
-          public void build(SetGuidanceEngagedRequest setGuidanceEngagedRequest,
-              SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
-            if (setGuidanceEngagedRequest.getGuidanceEngage() && state.get() == GuidanceState.DRIVERS_READY) {
-              state.set(GuidanceState.ENGAGED);
-              setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
-            } else if (!setGuidanceEngagedRequest.getGuidanceEngage()) {
-              state.set(GuidanceState.SHUTDOWN);
-              setGuidanceEngagedResponse.setGuidanceStatus(false);
-            } else {
-              setGuidanceEngagedResponse.setGuidanceStatus(state.get() == GuidanceState.ENGAGED);
-            }
-          }
-        });
-    
     ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer = 
     		connectedNode.newServiceServer("get_system_version",  GetSystemVersion._TYPE, 
     		new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
@@ -209,16 +171,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     				response.setRevision(version.revisionString());
     			}
     		});
-
-    // This CancellableLoop will be canceled automatically when the node shuts
-    // down.
-    connectedNode.executeCancellableLoop(new CancellableLoop() {
-      @Override
-      protected void loop() throws InterruptedException {
-        Thread.sleep(5000);
-      }//loop
-    }//CancellableLoop
-    );//executeCancellableLoop
+    
   }//onStart
 
   @Override

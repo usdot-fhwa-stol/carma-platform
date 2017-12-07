@@ -48,7 +48,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private long sleepDurationMillis = 100;
     private long lastTimestep = -1;
     private double vehicleAccelLimit = 2.5;
-    private volatile GuidanceState currentState;
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
@@ -56,7 +55,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
     GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
         super(stateMachine, iPubSubService, node);
-        currentState = stateMachine.getState(); 
         this.jobQueue.add(new Startup());
     }
 
@@ -70,6 +68,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         public void run() {
             vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
             log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
+            currentState.set(GuidanceState.STARTUP);
         }
     }
 
@@ -91,7 +90,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                     // NO-OP
                 }
             });
-            currentState = GuidanceState.ENGAGED;
+            currentState.set(GuidanceState.ENGAGED);
         }
     }
 
@@ -150,9 +149,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
                 @Override
                 public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                    log.info("Received GetDriversWithCapabilitiesResponse");
+                    log.debug("Received GetDriversWithCapabilitiesResponse");
                     for (String driverName : msg.getDriverData()) {
-                        log.info("GuidanceCommands discovered driver: " + driverName);
+                        log.debug("GuidanceCommands discovered driver: " + driverName);
                     }
 
                     drivers[0] = msg;
@@ -198,7 +197,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 stateMachine.processEvent(GuidanceEvent.PANIC);
                 jobQueue.add(new Shutdown("GuidanceCommands unable to find suitable controller driver!"));
             }
-            currentState = GuidanceState.DRIVERS_READY;
+            currentState.set(GuidanceState.DRIVERS_READY);
         }
     }
 
@@ -207,7 +206,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         @Override
         public void run() {
             
-            currentState = GuidanceState.DRIVERS_READY;
+            currentState.set(GuidanceState.DRIVERS_READY);
             
             SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
             enableReq.setSet((byte) 0);
@@ -228,12 +227,21 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         
     }
     
+    protected class RouteActive implements Runnable {
+
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.ACTIVE);
+        }
+        
+    }
+    
     @Override
     public void timingLoop() throws InterruptedException {
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
 
-        if (currentState == GuidanceState.ENGAGED) {
+        if (currentState.get() == GuidanceState.ENGAGED) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             msg.setSpeed(speedCommand.get());
             msg.setMaxAccel(maxAccel.get());
@@ -244,7 +252,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         long iterEndTime = System.currentTimeMillis();
 
         // Not our first timestep, check timestep spacings
-        if (currentState == GuidanceState.ENGAGED && lastTimestep > -1) {
+        if (currentState.get() == GuidanceState.ENGAGED && lastTimestep > -1) {
             if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
                 log.error(
                         "!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT AFTER " 
@@ -258,9 +266,13 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
     }
 
+    /*
+     * This method add the right job in the jobQueue base on the oldstate and newState of Guidance
+     * The actual changing of GuidanceState copy is happened after each job is finished
+     */
     @Override
     public void onStateChange() {
-        GuidanceState oldState = currentState;
+        GuidanceState oldState = currentState.get();
         GuidanceState newState = stateMachine.getState();
         switch (oldState) {
         case STARTUP:
@@ -273,6 +285,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         case DRIVERS_READY:
             if(newState == GuidanceState.SHUTDOWN) {
                 jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.ACTIVE) {
+                jobQueue.add(new RouteActive());
             }
             break;
         case ACTIVE:
@@ -293,8 +307,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             break;
         default:
             break;
-        
         }
-        
     }
 }

@@ -27,6 +27,7 @@ import cav_msgs.SystemAlert;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class for all Guidance components.
@@ -45,13 +46,16 @@ public abstract class GuidanceComponent implements Runnable {
     protected GuidanceStateMachine stateMachine;
     protected Thread loopThread;
     protected Thread timingLoopThread;
+    protected AtomicReference<GuidanceState> currentState;
 
     public GuidanceComponent(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
+        // In GuidanceComponent, we only use stateMachine for get current state and process PANIC event
         this.stateMachine = stateMachine;
         this.node = node;
         this.pubSubService = pubSubService;
         this.log = LoggerManager.getLogger(this.getClass().getCanonicalName());
         this.jobQueue = new LinkedBlockingQueue<>();
+        this.currentState = new AtomicReference<GuidanceState>(GuidanceState.STARTUP);
     }
 
     /**
@@ -120,6 +124,8 @@ public abstract class GuidanceComponent implements Runnable {
             // Log the fatal error
             log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
             log.fatal(message);
+            
+            currentState.set(GuidanceState.SHUTDOWN);
             
             // Alert the other ROS nodes to the FATAL condition
             IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
