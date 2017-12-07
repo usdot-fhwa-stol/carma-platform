@@ -63,11 +63,10 @@ public class GuidanceMain extends SaxtonBaseNode {
 
   // Member Variables
   protected ExecutorService executor;
-  protected final int numThreads = 7;
+  protected final int NUMTHREADS = 7;
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
   protected IPubSubService pubSubService;
-  
 
   protected GuidanceExceptionHandler exceptionHandler;
 
@@ -75,6 +74,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
   
+  ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
   
   @Override
   public GraphName getDefaultNodeName() {
@@ -85,39 +85,39 @@ public class GuidanceMain extends SaxtonBaseNode {
    * Initialize the runnable thread members of the Guidance package.
    */
   private void initExecutor(GuidanceStateMachine stateMachine, ConnectedNode node) {
-    executor = Executors.newFixedThreadPool(numThreads);
+    executor = Executors.newFixedThreadPool(NUMTHREADS);
 
-    // Init the ACC system
+    // Init the Guidance component
 
     GuidanceRouteService routeService = new GuidanceRouteService(pubSubService);
     routeService.init();
+    
     GuidanceCommands guidanceCommands = new GuidanceCommands(stateMachine, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands, tracking);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor);
-    GuidanceStateHandler shutdownHandler = new GuidanceStateHandler(stateMachine, pubSubService, node);
+    GuidanceStateHandler stateHandler = new GuidanceStateHandler(stateMachine, pubSubService, node);
     
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
     pluginManager.setArbitratorService(arbitrator);
 
+    executor.execute(stateHandler);
     executor.execute(maneuverInputs);
     executor.execute(arbitrator);
     executor.execute(pluginManager);
     executor.execute(trajectoryExecutor);
     executor.execute(tracking);
     executor.execute(guidanceCommands);
-    executor.execute(shutdownHandler);
   }
 
   /**
    * Initialize the PubSubManager and setup it's message queue.
    */
   private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidanceExceptionHandler) {
-    ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node,
-        guidanceExceptionHandler);
+    ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node, guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
     IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node, this);
 
@@ -137,12 +137,13 @@ public class GuidanceMain extends SaxtonBaseNode {
     initLogger(connectedNode.getLog());
     final ILogger log = LoggerManager.getLogger();
 
-    final AtomicReference<GuidanceState> state = new AtomicReference<>(GuidanceState.STARTUP);
+    final GuidanceStateMachine stateMachine = new GuidanceStateMachine();
+    
     log.info("//////////");
     log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
     log.info("//////////");
 
-    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(state);
+    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(log, stateMachine);
     log.info("Guidance exception handler initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
@@ -159,19 +160,17 @@ public class GuidanceMain extends SaxtonBaseNode {
     initPubSubManager(connectedNode, guidanceExceptionHandler);
     log.info("Guidance main PubSubManager initialized");
 
-    initExecutor(state, connectedNode);
+    initExecutor(stateMachine, connectedNode);
     log.info("Guidance main executor initialized");
 
-    ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer = 
-    		connectedNode.newServiceServer("get_system_version",  GetSystemVersion._TYPE, 
-    		new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
-    			@Override
-    			public void build(GetSystemVersionRequest request, GetSystemVersionResponse response) throws ServiceException {
-    				response.setSystemName(version.componentName());
-    				response.setRevision(version.revisionString());
-    			}
-    		});
-    
+    systemVersionServer = connectedNode.newServiceServer("get_system_version", GetSystemVersion._TYPE,
+            new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
+                @Override
+                public void build(GetSystemVersionRequest request, GetSystemVersionResponse response) throws ServiceException {
+                    response.setSystemName(version.componentName());
+                    response.setRevision(version.revisionString());
+                }
+            });
   }//onStart
 
   @Override
@@ -182,6 +181,6 @@ public class GuidanceMain extends SaxtonBaseNode {
     exceptionHandler.handleException(e);
 
     //Leverage SaxtonNode to publish the system alert.
-    publishSystemAlert(AlertSeverity.FATAL, "Guidance panic triggered in thread " + Thread.currentThread().getName() + " by an uncaught exception!", e);
+    publishSystemAlert(AlertSeverity.FATAL, "Guidance PANIC triggered in thread " + Thread.currentThread().getName() + " by an uncaught exception!", e);
   }
 }//AbstractNodeMain
