@@ -322,9 +322,13 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
       Trajectory traj = new Trajectory(trajectoryStart, trajectoryEnd);
       double expectedEntrySpeed = 0.0;
       if (trajectory != null) {
-        List<LongitudinalManeuver> lonManeuvers = trajectory.getLongitudinalManeuvers();
-        LongitudinalManeuver lastManeuver = lonManeuvers.get(lonManeuvers.size() - 1);
-        expectedEntrySpeed = lastManeuver.getTargetSpeed();
+        if (trajectory.getComplexManeuver() != null) {
+          expectedEntrySpeed = currentSpeed.get();
+        } else {
+          List<LongitudinalManeuver> lonManeuvers = trajectory.getLongitudinalManeuvers();
+          LongitudinalManeuver lastManeuver = lonManeuvers.get(lonManeuvers.size() - 1);
+          expectedEntrySpeed = lastManeuver.getTargetSpeed();
+        }
       } else {
         expectedEntrySpeed = currentSpeed.get();
       }
@@ -523,14 +527,14 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
 
     // TODO: Move this somewhere better
     switch (maneuverType) {
-      case COMPLEX:
-        return trajectoryExecutor.getCurrentComplexManeuver();
-      case LONGITUDINAL:
-        return trajectoryExecutor.getCurrentLongitudinalManeuver();
-      case LATERAL:
-        return trajectoryExecutor.getCurrentLateralManeuver();
-      default:
-        return null;
+    case COMPLEX:
+      return trajectoryExecutor.getCurrentComplexManeuver();
+    case LONGITUDINAL:
+      return trajectoryExecutor.getCurrentLongitudinalManeuver();
+    case LATERAL:
+      return trajectoryExecutor.getCurrentLateralManeuver();
+    default:
+      return null;
     }
   }
 }

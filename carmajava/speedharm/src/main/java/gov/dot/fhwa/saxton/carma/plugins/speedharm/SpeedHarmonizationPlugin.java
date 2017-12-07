@@ -191,9 +191,11 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     if (!maneuvers.isEmpty()) {
       // Get the location of the last maneuver in the list
       complexManeuverStartLocation = maneuvers.get(maneuvers.size() - 1).getEndDistance();
+	log.info("planTrajectory(): IF: complexManeuverStartLocation = " + complexManeuverStartLocation);
     } else {
       // Fill the whole trajectory if legal
       complexManeuverStartLocation = traj.getStartLocation();
+      log.info("planTrajectory(): ELSE: complexManeuverStartLocation = " + complexManeuverStartLocation);
     }
 
     // Find the earliest window after the start location at which speedharm is enabled
@@ -203,14 +205,17 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
         .getAlgorithmFlagsAtLocation(traj.getEndLocation());
     if (flagsAtEnd != null) {
       flags.add(flagsAtEnd); // Since its a set if this is a duplicate it goes away
+      log.info("planTrajectory(): flagsAtEnd = " + flagsAtEnd);
     }
 
     double earliestLegalWindow = complexManeuverStartLocation;
     for (AlgorithmFlags flagset : flags) {
       if (flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
         earliestLegalWindow = flagset.getLocation();
-      } else {
-        break;
+	log.info("planTrajectory(): earliestLegalWindow = " + earliestLegalWindow);
+      } else {  
+	log.info("planTrajectory(): earliestLegalWindow = BREAK");
+	break;
       }
     }
 
@@ -220,13 +225,16 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
       if (flagset.getLocation() > earliestLegalWindow)
         if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
           endOfWindow = flagset.getLocation();
+	  log.info("planTrajectory(): endOfWindow = " + endOfWindow );
         } else {
+	  log.info("planTrajectory(): endOfWindow = BREAK");
           break;
         }
     }
 
     // Clamp to end of trajectory window
     endOfWindow = Math.min(endOfWindow, traj.getEndLocation());
+    log.info("planTrajectory(): endOfWindow : traj.getEndLocation()= " + traj.getEndLocation());
     log.info(String.format("Planning SpeedHarmonization complex maneuver @ [%.02f, %.02f)", earliestLegalWindow, endOfWindow));
 
     if (Math.abs(endOfWindow - earliestLegalWindow) > minimumManeuverLength) {
@@ -238,7 +246,13 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
   @Override
   public double getSpeedCommand() {
-    return commandReceiver.getLastCommand().getSpeed();
+    if (commandReceiver.getLastCommand() != null) {
+      log.info("Using received command");
+      return commandReceiver.getLastCommand().getSpeed();
+    } else {
+      log.info("Using previous vehicle speed");
+      return vehicleDataManager.getSpeed();
+    }
   }
 
   @Override
@@ -248,8 +262,12 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
 
   @Override
   public Duration getTimeSinceLastUpdate() {
+    if (commandReceiver != null && commandReceiver.getLastCommand() != null) {
     LocalDateTime now = LocalDateTime.now();
     long millis = java.time.Duration.between(commandReceiver.getLastCommand().getTimestamp(), now).toMillis();
     return Duration.fromMillis(millis);
+    } else {
+      return Duration.fromMillis(0);
+    }
   }
 }
