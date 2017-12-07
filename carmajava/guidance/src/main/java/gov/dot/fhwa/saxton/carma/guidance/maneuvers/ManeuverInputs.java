@@ -24,6 +24,7 @@ import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
@@ -34,7 +35,7 @@ import org.ros.node.ConnectedNode;
  * Interacts with the ROS network to provide the necessary input data to the Maneuver classes, allowing the rest
  * of the classes in this package to remain ignorant of ROS.
  */
-public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs {
+public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs, IStateChangeListener {
 
     protected ISubscriber<RouteState> routeStateSubscriber_;
     protected ISubscriber<TwistStamped> twistSubscriber_;
@@ -192,5 +193,49 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     @Override
     public double getFrontVehicleSpeed() {
         return frontVehicleSpeed.get();
+    }
+    
+    /*
+     * This method add the right job in the jobQueue base on the oldstate and newState of Guidance
+     * The actual changing of GuidanceState copy is happened after each job is finished
+     */
+    @Override
+    public void onStateChange() {
+        GuidanceState oldState = currentState.get();
+        GuidanceState newState = stateMachine.getState();
+        switch (oldState) {
+        case STARTUP:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new SystemReady());
+            }
+            break;
+        case DRIVERS_READY:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.ACTIVE) {
+                jobQueue.add(new RouteActive());
+            }
+            break;
+        case ACTIVE:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.ENGAGED) {
+                jobQueue.add(new Engage());
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new CleanRestart());
+            }
+            break;
+        case ENGAGED:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new CleanRestart());
+            }
+            break;
+        default:
+            break;
+        }
     }
 }

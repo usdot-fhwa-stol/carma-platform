@@ -173,10 +173,10 @@ public class GuidanceMain extends SaxtonBaseNode {
             });
   }//onStart
 
-  @Override
   /**
    * Handle an exception that hasn't been caught anywhere else, which will cause guidance to shutdown.
    */
+  @Override
   protected void handleException(Throwable e) {
     exceptionHandler.handleException(e);
 

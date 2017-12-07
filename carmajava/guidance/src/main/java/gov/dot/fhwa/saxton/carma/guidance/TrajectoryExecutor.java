@@ -40,7 +40,6 @@ public class TrajectoryExecutor extends GuidanceComponent {
     // Member variables
     protected ISubscriber<RouteState> routeStateSubscriber;
     protected GuidanceCommands commands;
-    protected AtomicReference<GuidanceState> state;
     protected TrajectoryExecutorWorker trajectoryExecutorWorker;
     protected Trajectory currentTrajectory;
     protected Tracking tracking_;
@@ -56,16 +55,16 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected double maxAccel;
     protected long sleepDurationMillis = 100;
 
-    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
+    public TrajectoryExecutor(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node,
             GuidanceCommands commands, Tracking tracking) {
-        super(state, iPubSubService, node);
-        this.state = state;
+        super(stateMachine, iPubSubService, node);
         this.commands = commands;
         this.tracking_ = tracking;
 
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
-
         trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
+        
+        jobQueue.add(new Startup());
     }
 
     @Override
@@ -73,7 +72,6 @@ public class TrajectoryExecutor extends GuidanceComponent {
         return "Guidance.TrajectoryExecutor";
     }
 
-    @Override
     public void onGuidanceStartup() {
         routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
