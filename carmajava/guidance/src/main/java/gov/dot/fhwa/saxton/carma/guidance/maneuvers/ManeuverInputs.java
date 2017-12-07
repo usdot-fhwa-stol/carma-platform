@@ -23,13 +23,12 @@ import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import org.ros.node.ConnectedNode;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Interacts with the ROS network to provide the necessary input data to the Maneuver classes, allowing the rest
@@ -43,91 +42,128 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected double distanceDowntrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
-    protected int timeStep_ = 0; // ms
     protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
     protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
 
-    public ManeuverInputs(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
-        super(state, iPubSubService, node);
+    public ManeuverInputs(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
+        super(stateMachine, iPubSubService, node);
+        jobQueue.add(new Startup());
     }
 
-    @Override
-    public void onGuidanceStartup() {
-        // Setup the ACC Strategy factory for use by maneuvers
-        double maxAccel = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
-        double vehicleResponseLag = node.getParameterTree().getDouble("~vehicle_response_lag", 1.4);
-        double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
-        double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
-        BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel, vehicleResponseLag,
-                minStandoffDistance);
-        AccStrategyManager.setAccStrategyFactory(accFactory);
+    protected class Startup implements Runnable {
+        
+        @Override
+        public void run() {
+            // Setup the ACC Strategy factory for use by maneuvers
+            double maxAccel = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
+            double vehicleResponseLag = node.getParameterTree().getDouble("~vehicle_response_lag", 1.4);
+            double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
+            double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
+            BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel,
+                    vehicleResponseLag, minStandoffDistance);
+            AccStrategyManager.setAccStrategyFactory(accFactory);
 
-        //subscribers
-        routeStateSubscriber_ = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSubscriber_.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-            @Override
-            public void onMessage(RouteState msg) {
-                distanceDowntrack_ = msg.getDownTrack();
-            }
-        });
+            // subscribers
+            routeStateSubscriber_ = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+            routeStateSubscriber_.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+                @Override
+                public void onMessage(RouteState msg) {
+                    distanceDowntrack_ = msg.getDownTrack();
+                }
+            });
 
-        twistSubscriber_ = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
-        twistSubscriber_.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
-            @Override
-            public void onMessage(TwistStamped msg) {
-                currentSpeed_ = msg.getTwist().getLinear().getX();
-            }
-        });
+            twistSubscriber_ = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+            twistSubscriber_.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
+                @Override
+                public void onMessage(TwistStamped msg) {
+                    currentSpeed_ = msg.getTwist().getLinear().getX();
+                }
+            });
 
-        /*
-         * Presently this subscriber will be mapped by saxton_cav.launch directly to the front long range object topic
-         * provided by the Radar Driver, bypassing sensor fusion and the interface manager. This subscriber depends on
-         * sensor frame data (rather than odom frame data) to accurately derive distance values to nearby vehicles.
-         * Pending full implementation of Sensor Fusion and Roadway modules it is recommended to change this to depend
-         * on whatever vehicle frame data is available in those data publications.
-         */
+            /*
+             * Presently this subscriber will be mapped by saxton_cav.launch directly to the
+             * front long range object topic provided by the Radar Driver, bypassing sensor
+             * fusion and the interface manager. This subscriber depends on sensor frame
+             * data (rather than odom frame data) to accurately derive distance values to
+             * nearby vehicles. Pending full implementation of Sensor Fusion and Roadway
+             * modules it is recommended to change this to depend on whatever vehicle frame
+             * data is available in those data publications.
+             */
 
-        // TODO: Update to use actual topic provided by sensor fusion
-        externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
-        externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
-            @Override
-            public void onMessage(ExternalObjectList msg) {
-                double closestDistance = Double.POSITIVE_INFINITY;
-                ExternalObject frontVehicle = null;
-                for (ExternalObject eo : msg.getObjects()) {
-                    // TODO: When sensor fusion publishes relative lane data, ensure object is in HOST_LANE
-                    // We found an object in our lane
-                    if (eo.getPose().getPose().getPosition().getX() < closestDistance) {
-                        // If its close than our previous best candidate, update our candidate
-                        frontVehicle = eo;
-                        closestDistance = eo.getPose().getPose().getPosition().getX();
+            // TODO: Update to use actual topic provided by sensor fusion
+            externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
+            externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
+                @Override
+                public void onMessage(ExternalObjectList msg) {
+                    double closestDistance = Double.POSITIVE_INFINITY;
+                    ExternalObject frontVehicle = null;
+                    for (ExternalObject eo : msg.getObjects()) {
+                        // TODO: When sensor fusion publishes relative lane data, ensure object is in HOST_LANE
+                        if (eo.getPose().getPose().getPosition().getX() < closestDistance) {
+                            // If its close than our previous best candidate, update our candidate
+                            frontVehicle = eo;
+                            closestDistance = eo.getPose().getPose().getPosition().getX();
+                        }
+                    }
+
+                    // Store our results
+                    if (frontVehicle != null) {
+                        frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
+                        frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
+                    } else {
+                        frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
+                        frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
                     }
                 }
+            });
 
-                // Store our results
-                if (frontVehicle != null) {
-                    frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
-                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
-                } else {
-                    frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
-                    frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
-                }
-            }
-        });
-
-        //parameters
-        RosParameterSource params = new RosParameterSource(node.getParameterTree());
-        responseLag_ = params.getDouble("~vehicle_response_lag");
+            // parameters
+            RosParameterSource params = new RosParameterSource(node.getParameterTree());
+            responseLag_ = params.getDouble("~vehicle_response_lag");
+            
+            currentState.set(GuidanceState.STARTUP);
+        }
     }
 
-    @Override
-    public void onSystemReady() {
+    protected class SystemReady implements Runnable {
+        
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.DRIVERS_READY);
+        }
+        
     }
 
-    @Override
-    public void onGuidanceEnable() {
+    protected class RouteActive implements Runnable {
+
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.ACTIVE);
+        }
+        
+    }
+    
+    protected class Engage implements Runnable {
+
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.ENGAGED);
+        }
     }
 
+    protected class CleanRestart implements Runnable {
+
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.DRIVERS_READY);
+            
+            distanceDowntrack_ = 0.0;
+            currentSpeed_ = 0.0;
+            frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
+            frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
+        }
+    }
+    
     @Override
     public String getComponentName() {
         return "Guidance.Maneuvers.ManeuverInputs";

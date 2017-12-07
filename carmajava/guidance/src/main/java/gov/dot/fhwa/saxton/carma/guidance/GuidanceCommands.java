@@ -208,6 +208,11 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             
             currentState.set(GuidanceState.DRIVERS_READY);
             
+            //Reset member variables
+            speedCommand.set(0.0);
+            maxAccel.set(0.0);
+            lastTimestep = -1;
+            
             SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
             enableReq.setSet((byte) 0);
 
