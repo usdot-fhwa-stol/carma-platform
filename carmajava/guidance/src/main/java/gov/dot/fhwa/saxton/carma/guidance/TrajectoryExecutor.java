@@ -63,6 +63,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
         
         jobQueue.add(new Startup());
+        stateMachine.registerStateChangeListener(this);
     }
 
     @Override

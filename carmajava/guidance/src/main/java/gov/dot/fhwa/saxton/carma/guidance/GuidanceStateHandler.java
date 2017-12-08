@@ -63,6 +63,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
 
     public GuidanceStateHandler(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
         super(stateMachine, pubSubService, node);
+        stateMachine.registerStateChangeListener(this);
         jobQueue.add(new Startup());
     }
 

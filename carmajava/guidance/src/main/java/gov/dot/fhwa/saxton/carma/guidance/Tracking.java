@@ -120,6 +120,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	public Tracking(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
 		super(stateMachine, pubSubService, node);
 		jobQueue.add(new Startup());
+		stateMachine.registerStateChangeListener(this);
 	}
 
 	@Override

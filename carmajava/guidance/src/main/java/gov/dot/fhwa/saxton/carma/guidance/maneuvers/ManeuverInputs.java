@@ -49,6 +49,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     public ManeuverInputs(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
         super(stateMachine, iPubSubService, node);
         jobQueue.add(new Startup());
+        stateMachine.registerStateChangeListener(this);
     }
 
     protected class Startup implements Runnable {
