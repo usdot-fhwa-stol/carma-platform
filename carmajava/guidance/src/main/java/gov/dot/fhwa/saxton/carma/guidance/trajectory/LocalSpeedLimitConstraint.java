@@ -35,7 +35,6 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
   protected List<SpeedLimit> speedLimits;
   protected List<IManeuver> offendingManeuvers;
   private static final double DISTANCE_EPSILON = 0.0001;
-  private static final double SPEED_EPSILON = 0.0001;
   protected ILogger log = LoggerManager.getLogger();
 
   public LocalSpeedLimitConstraint(Route route) {
@@ -120,8 +119,8 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
         return;
       }
      
-      if (lonMvr.getTargetSpeed() + SPEED_EPSILON >= lonMvr.getStartSpeed()) {
-        log.warn(String.format("Slowdown lonMvr from [%.02f, %.02f) deemed illegal. end speed >= start_speed",
+      if (lonMvr.getTargetSpeed() > lonMvr.getStartSpeed()) {
+        log.warn(String.format("Slowdown lonMvr from [%.02f, %.02f) deemed illegal. end speed > start_speed",
             lonMvr.getStartDistance(), lonMvr.getEndDistance()));
         offendingManeuvers.add(lonMvr);
       }
