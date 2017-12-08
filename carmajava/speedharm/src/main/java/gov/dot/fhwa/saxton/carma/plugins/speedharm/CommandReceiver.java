@@ -58,6 +58,8 @@ public class CommandReceiver implements Runnable {
 
 					log.info(String.format("Received speed command %s after %dms from server!", cmd.toString(),
 							Duration.between(timestepStart, cmdRecvd).toMillis()));
+				} else {
+					log.warn("Null command received");
 				}
 			} catch (RestClientException rce) {
 				log.warn("Unable to wait for server speed command, received exception.", rce);
