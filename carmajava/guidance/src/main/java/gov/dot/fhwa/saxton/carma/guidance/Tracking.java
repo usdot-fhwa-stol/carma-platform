@@ -20,19 +20,8 @@ import cav_msgs.*;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
-import cav_srvs.GetTransform;
-import cav_srvs.GetTransformRequest;
-import cav_srvs.GetTransformResponse;
-import cav_srvs.SetEnableRoboticRequest;
-import cav_srvs.SetEnableRoboticResponse;
 import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
-import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands.CleanRestart;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands.Engage;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands.RouteActive;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands.SystemReady;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent.Shutdown;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
@@ -52,17 +41,14 @@ import org.ros.exception.ParameterNotFoundException;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import com.google.common.util.concurrent.AtomicDouble;
 
 import sensor_msgs.NavSatFix;
-import std_msgs.Bool;
 import std_msgs.Float64;
 
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -71,7 +57,6 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package Tracking component

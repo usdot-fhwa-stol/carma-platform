@@ -19,7 +19,6 @@ package gov.dot.fhwa.saxton.carma.guidance;
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
@@ -27,7 +26,6 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 
 import org.ros.node.ConnectedNode;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package TrajectoryExecutor component
@@ -125,8 +123,8 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
             startTime = (long) node.getCurrentTime().toSeconds() * 1000;
             if (currentTrajectory != null && !bufferedTrajectoryRunning) {
                 log.info("Running buffered trajectory!");
-                trajectoryExecutorWorker.runTrajectory(currentTrajectory);
                 tracking_.addNewTrajectory(currentTrajectory);
+                trajectoryExecutorWorker.runTrajectory(currentTrajectory);
                 bufferedTrajectoryRunning = true;
             }
         }
