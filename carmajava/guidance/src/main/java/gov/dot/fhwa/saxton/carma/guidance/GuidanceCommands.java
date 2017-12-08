@@ -58,6 +58,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
         super(stateMachine, iPubSubService, node);
         this.jobQueue.add(new Startup());
+        stateMachine.registerStateChangeListener(this);
     }
 
     @Override
@@ -154,14 +155,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
         @Override
         public void run() {
-            currentState.set(GuidanceState.ACTIVE);
-        }
-        
-    }
-    
-    protected class Engage implements Runnable {
-        @Override
-        public void run() {
             SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
             enableReq.setSet((byte) 1);
 
@@ -177,6 +170,14 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                     exceptionHandler.handleException("Unable to call enable robotic service", e);
                 }
             });
+            currentState.set(GuidanceState.ACTIVE);
+        }
+        
+    }
+    
+    protected class Engage implements Runnable {
+        @Override
+        public void run() {
             currentState.set(GuidanceState.ENGAGED);
         }
     }

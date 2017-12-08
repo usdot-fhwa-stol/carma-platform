@@ -25,64 +25,129 @@ import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance sub-component responsible for the execution of maneuvers and generation of maneuver plans
  */
-public class Maneuvers extends GuidanceComponent {
-    Maneuvers(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
-        super(state, iPubSubService, node);
+public class Maneuvers extends GuidanceComponent implements IStateChangeListener {
+    
+    private IPublisher<NewPlan> newPlanPublisher;
+    private ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber;
+    private ISubscriber<Route> routeSubscriber;
+    
+    Maneuvers(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
+        super(stateMachine, iPubSubService, node);
+        jobQueue.add(new Startup());
+        stateMachine.registerStateChangeListener(this);
     }
 
     @Override public String getComponentName() {
         return "Guidance.Maneuvers";
     }
+    
+    protected class Startup implements Runnable {
+        
+        @Override
+        public void run() {
+            // Set up subscribers
+            roadwayEnvironmentSubscriber = pubSubService.getSubscriberForTopic("roadway_environment",
+                    RoadwayEnvironment._TYPE);
 
-    private IPublisher<NewPlan> newPlanPublisher;
-    private ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber;
-    private ISubscriber<Route> routeSubscriber;
+            roadwayEnvironmentSubscriber.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
+                @Override
+                public void onMessage(RoadwayEnvironment msg) {
+                    log.info("Received RoadwayEnvironment:" + msg);
+                }
+            });
 
-    @Override public void onGuidanceStartup() {
-        // Set up subscribers
-        roadwayEnvironmentSubscriber =
-            pubSubService.getSubscriberForTopic("roadway_environment",
-                RoadwayEnvironment._TYPE);
+            routeSubscriber = pubSubService.getSubscriberForTopic("route", Route._TYPE);
 
-        roadwayEnvironmentSubscriber.registerOnMessageCallback(
-                new OnMessageCallback<RoadwayEnvironment>() {
-            @Override public void onMessage(RoadwayEnvironment msg) {
-                log.info("Received RoadwayEnvironment:" + msg);
-            }
-        });
+            routeSubscriber.registerOnMessageCallback(new OnMessageCallback<Route>() {
+                @Override
+                public void onMessage(Route msg) {
+                    log.info("Received Route:" + msg);
+                }
+            });
 
-        routeSubscriber = pubSubService.getSubscriberForTopic("route",
-            Route._TYPE);
+            // Set up publishers
+            newPlanPublisher = pubSubService.getPublisherForTopic("new_plan", NewPlan._TYPE);
+            
+            currentState.set(GuidanceState.STARTUP);
+        }
 
-        routeSubscriber.registerOnMessageCallback(new OnMessageCallback<Route>() {
-            @Override public void onMessage(Route msg) {
-                log.info("Received Route:" + msg);
-            }
-        });
+    }
 
-        // Set up publishers
-        newPlanPublisher = pubSubService
-            .getPublisherForTopic("new_plan", NewPlan._TYPE);
-
-        while (!Thread.currentThread().isInterrupted()) {
+    protected class SystemReady implements Runnable {
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.DRIVERS_READY);
         }
     }
 
-    @Override public void onSystemReady() {
-
+    protected class RouteActive implements Runnable {
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.ACTIVE);
+        }
+    }
+    
+    protected class Engage implements Runnable {
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.ENGAGED);
+        }
+    }
+    
+    protected class CleanRestart implements Runnable {
+        @Override
+        public void run() {
+            currentState.set(GuidanceState.DRIVERS_READY);
+        }
     }
 
-    @Override public void onGuidanceEnable() {
-
+    @Override
+    public void onStateChange() {
+        GuidanceState oldState = currentState.get();
+        GuidanceState newState = stateMachine.getState();
+        log.debug("GUIDANCE_STATE", getComponentName() + " changed state from " + oldState + " to " + newState);
+        switch (oldState) {
+        case STARTUP:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new SystemReady());
+            }
+            break;
+        case DRIVERS_READY:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.ACTIVE) {
+                jobQueue.add(new RouteActive());
+            }
+            break;
+        case ACTIVE:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.ENGAGED) {
+                jobQueue.add(new Engage());
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new CleanRestart());
+            }
+            break;
+        case ENGAGED:
+            if(newState == GuidanceState.SHUTDOWN) {
+                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
+            } else if(newState == GuidanceState.DRIVERS_READY) {
+                jobQueue.add(new CleanRestart());
+            }
+            break;
+        default:
+            break;
+        }
     }
-
-    @Override public void loop() {
-        if (getState() == GuidanceState.ENGAGED) {
+    
+    @Override public void timingLoop() {
+        if (currentState.get() == GuidanceState.ENGAGED) {
             NewPlan newPlan = newPlanPublisher.newMessage();
             newPlan.setExpiration(node.getCurrentTime());
             newPlan.getHeader().setChecksum((short) 0);
