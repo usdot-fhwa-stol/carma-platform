@@ -26,6 +26,7 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.TrajectoryExecutor;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse.PlanningRequest;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
@@ -318,7 +319,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     }
 
     Trajectory out = null;
-    for (int failures = 0; failures < numAcceptableFailures; failures++) {
+    planningLoop: for (int failures = 0; failures < numAcceptableFailures; failures++) {
       Trajectory traj = new Trajectory(trajectoryStart, trajectoryEnd);
       double expectedEntrySpeed = 0.0;
       if (trajectory != null) {
@@ -335,10 +336,48 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
 
       lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
 
-      for (IPlugin p : longitudinalPlugins) {
+      // Use temp list to allow for modification
+      List<IPlugin> tmpPlugins = new ArrayList<>(longitudinalPlugins);
+      for (IPlugin p : tmpPlugins) {
         if (p.getActivation() && p.getAvailability()) {
           log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
-          p.planTrajectory(traj, expectedEntrySpeed);
+          TrajectoryPlanningResponse resp = p.planTrajectory(traj, expectedEntrySpeed);
+
+          // Process the plugin's requests
+          if (!resp.getRequests().isEmpty()) {
+            // Update downtrack end of trajectory if requested
+            if (resp.getProposedTrajectoryEnd().isPresent()) {
+              double proposedEndDistance = resp.getProposedTrajectoryEnd().get();
+              trajectoryEnd = Math.max(proposedEndDistance, trajectoryEnd);
+              log.info("Candidate trajectory #" + (failures + 1) + "Plugin: " + p.getVersionInfo().componentName()
+                  + " requested extended trajectory to " + trajectoryEnd);
+            }
+
+            // Sleep for replan delay if requested
+            final int numFails = failures;
+            resp.getProposedReplanDelay().ifPresent((delay) -> {
+              log.info("Candidate trajectory #" + (numFails + 1) + "Plugin: " + p.getVersionInfo().componentName()
+                  + " requested to delay planning for " + delay + " ms");
+
+              try {
+                Thread.sleep(delay);
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+              }
+            });
+
+            // Promote the plugin to the top of the line for the next iteration
+            if (resp.higherPriorityRequested()) {
+              log.info("Candidate trajectory #" + (failures + 1) + "Plugin: " + p.getVersionInfo().componentName()
+                  + " requested higher priority");
+              longitudinalPlugins.remove(p);
+              longitudinalPlugins.add(0, p);
+            }
+
+            // Increment planning failures and skip to next iteration of outer loop
+            failures++;
+            continue planningLoop; // Jump back to loop labled "planningLoop"
+          }
         }
       }
 

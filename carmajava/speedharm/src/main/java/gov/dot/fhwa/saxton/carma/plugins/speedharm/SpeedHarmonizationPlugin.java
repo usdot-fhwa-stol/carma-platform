@@ -21,7 +21,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
@@ -185,7 +185,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   }
 
   @Override
-  public void planTrajectory(Trajectory traj, double expectedStartSpeed) {
+  public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
     List<IManeuver> maneuvers = traj.getManeuvers();
     double complexManeuverStartLocation = -1.0;
     if (!maneuvers.isEmpty()) {
@@ -234,6 +234,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     } else {
       log.warn("Unable to find sufficient window to plan Speed Harmonization maneuver");
     }
+
+    return new TrajectoryPlanningResponse();
   }
 
   @Override

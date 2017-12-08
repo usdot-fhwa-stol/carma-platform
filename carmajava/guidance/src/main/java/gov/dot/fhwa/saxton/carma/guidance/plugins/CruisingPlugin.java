@@ -20,6 +20,7 @@ import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
@@ -308,7 +309,7 @@ public class CruisingPlugin extends AbstractPlugin {
   }
 
   @Override
-  public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+  public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
     List<SpeedLimit> trajLimits = getSpeedLimits(speedLimits, traj.getStartLocation(), traj.getEndLocation());
 
     // Find the gaps and record the speeds at the boundaries (pass in params for start and end speed)
@@ -322,7 +323,7 @@ public class CruisingPlugin extends AbstractPlugin {
     if (traj.getLongitudinalManeuvers().size() > 0) {
       if (gaps.size() == 0) {
         log.info("No gaps found to interpolate. Generating no maneuvers.");
-        return;
+        return new TrajectoryPlanningResponse();
       }
 
       log.info("Multiple pre-planned maneuvers found, with gaps to fill. Planning interpolating cruising trajectory.");
@@ -368,5 +369,7 @@ public class CruisingPlugin extends AbstractPlugin {
         planManeuvers(traj, last.location, traj.getEndLocation(), last.speedLimit, last.speedLimit);
       }
     }
+
+    return new TrajectoryPlanningResponse();
   }
 }
