@@ -81,7 +81,6 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	protected int last_id_changed = 0;
 	protected float vehicleWidth = 0;
 	protected float vehicleLength = 0;
-	protected AtomicBoolean drivers_ready = new AtomicBoolean(false);
 	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);;
 	protected AtomicDouble current_speed = new AtomicDouble(0);
 	protected Random randomIdGenerator = new Random();
@@ -329,8 +328,6 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             trajectoryStartLocation = 0;
             trajectoryStartTime = 0;
             trajectory_start.set(false);
-            
-            currentState.set(GuidanceState.DRIVERS_READY);
         }
         
     }
@@ -340,7 +337,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 		
 		long loop_start = System.currentTimeMillis();
 		
-		if(drivers_ready.get()) {
+		if(currentState.get() == GuidanceState.DRIVERS_READY) {
 			
 			//publish content for a new BSM
 			bsmPublisher.publish(composeBSMData());

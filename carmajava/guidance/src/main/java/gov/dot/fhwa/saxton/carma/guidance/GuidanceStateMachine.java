@@ -82,7 +82,7 @@ public class GuidanceStateMachine {
         // Call all the listeners if we've changed state
         GuidanceState current_state = guidance_state.get(); 
         if(old_state != current_state) {
-            log.debug("GUIDANCE_STATE", "Guidance transitioned to state" + current_state);
+            log.debug("GUIDANCE_STATE", "Guidance transited to state " + current_state);
             for(IStateChangeListener listener : listeners) {
                 listener.onStateChange();
             }
