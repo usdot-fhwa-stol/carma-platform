@@ -157,7 +157,6 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         @Override
         public void run() {
             currentState.set(GuidanceState.DRIVERS_READY);
-            
             distanceDowntrack_ = 0.0;
             currentSpeed_ = 0.0;
             frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
@@ -203,6 +202,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     public void onStateChange() {
         GuidanceState oldState = currentState.get();
         GuidanceState newState = stateMachine.getState();
+        log.debug("GUIDANCE_STATE", getComponentName() + "changed from " + oldState + " to " + newState);
         switch (oldState) {
         case STARTUP:
             if(newState == GuidanceState.SHUTDOWN) {

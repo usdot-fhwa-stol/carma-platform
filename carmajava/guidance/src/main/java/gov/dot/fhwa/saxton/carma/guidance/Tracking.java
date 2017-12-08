@@ -74,16 +74,16 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Tracking extends GuidanceComponent {
 	
-	protected static final int SECONDS_TO_MILLISECONDS = 1000;
+	protected final int SECONDS_TO_MILLISECONDS = 1000;
+	protected final long SLEEP_DURATION = 100; // Frequency for J2735, 10Hz
 	
 	// TODO: brake information on each individual wheel is not available
 	// When brake is applied at any angle, we set brake status to be 0xF
-	protected static final byte BRAKES_STATUS_UNAVAILABLE = 0x10;
-	protected static final byte BRAKES_NOT_APPLIED = 0x0;
-	protected static final byte BRAKES_APPLIED = 0xF;
-
+	protected final byte BRAKES_STATUS_UNAVAILABLE = 0x10;
+	protected final byte BRAKES_NOT_APPLIED = 0x0;
+	protected final byte BRAKES_APPLIED = 0xF;
+	
 	// Member variables
-	protected final long sleepDurationMillis = 100; // Frequency for J2735, 10Hz
 	protected long msgCount = 1;
 	protected int last_id_changed = 0;
 	protected float vehicleWidth = 0;
@@ -91,16 +91,6 @@ public class Tracking extends GuidanceComponent {
 	protected AtomicBoolean drivers_ready = new AtomicBoolean(false);
 	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);;
 	protected AtomicDouble current_speed = new AtomicDouble(0);
-	protected boolean steer_wheel_ready = false;
-	protected boolean nav_sat_fix_ready = false;
-	protected boolean heading_ready = false;
-	protected boolean brake_ready = false;
-	protected boolean transmission_ready = false;
-	protected boolean acceleration_ready = false;
-	protected boolean vehicle_to_baselink_transform_ready = false;
-	protected boolean base_to_map_transform_ready = false;
-	protected boolean route_state_ready = false;
-	protected GuidanceExceptionHandler exceptionHandler;
 	protected Random randomIdGenerator = new Random();
 	protected byte[] random_id = new byte[4];
 	protected IPublisher<BSM> bsmPublisher;
@@ -119,22 +109,12 @@ public class Tracking extends GuidanceComponent {
 	protected ISubscriber<std_msgs.Bool> stabilityEnabledSubscriber;
 	protected ISubscriber<std_msgs.Bool> parkingBrakeSubscriber;
 	protected IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
-	protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
 	protected List<String> req_drivers = Arrays.asList(
 			"steering_wheel_angle", "brake_position", "transmission_state",
 			"traction_ctrl_active", "traction_ctrl_enabled", "antilock_brakes_active",
 			"stability_ctrl_active", "stability_ctrl_enabled", "parking_brake");
-	protected List<String> resp_drivers;
-	protected final String baseLinkFrame = "base_link";
-	protected final String vehicleFrame = "host_vehicle";
-	protected final String mapFrame = "map";
-	protected final String earthFrame = "earth";
-	protected Transform vehicleToBaselink = null;
-	protected Transform baseToMap = null;
-	protected GeodesicCartesianConverter converter = new GeodesicCartesianConverter();
-	
-	protected double speed_error_limit = 0; //speed error in meters
-	protected double downtrack_error_limit = 0; //downtrack error in meters
+	protected double speed_error_limit = 5; //speed error in meters
+	protected double downtrack_error_limit = 5; //downtrack error in meters
 	protected TrajectoryExecutor trajectoryExecutor = null;
 	protected Arbitrator arbitrator = null;
 	protected AtomicBoolean trajectory_start = new AtomicBoolean(false);
@@ -144,9 +124,9 @@ public class Tracking extends GuidanceComponent {
 	protected long trajectoryStartTime = 0;
 	
 
-	public Tracking(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
-		super(state, pubSubService, node);
-		this.exceptionHandler = new GuidanceExceptionHandler(state);
+	public Tracking(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
+		super(stateMachine, pubSubService, node);
+		this.exceptionHandler = new GuidanceExceptionHandler(log, stateMachine);
 	}
 
 	@Override

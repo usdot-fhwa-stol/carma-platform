@@ -47,6 +47,8 @@ public abstract class GuidanceComponent implements Runnable {
     protected Thread loopThread;
     protected Thread timingLoopThread;
     protected AtomicReference<GuidanceState> currentState;
+    protected GuidanceExceptionHandler exceptionHandler;
+    
 
     public GuidanceComponent(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
         // In GuidanceComponent, we only use stateMachine for get current state and process PANIC event
@@ -56,6 +58,7 @@ public abstract class GuidanceComponent implements Runnable {
         this.log = LoggerManager.getLogger(this.getClass().getCanonicalName());
         this.jobQueue = new LinkedBlockingQueue<>();
         this.currentState = new AtomicReference<GuidanceState>(GuidanceState.STARTUP);
+        this.exceptionHandler = new GuidanceExceptionHandler(log, stateMachine);
     }
 
     /**
