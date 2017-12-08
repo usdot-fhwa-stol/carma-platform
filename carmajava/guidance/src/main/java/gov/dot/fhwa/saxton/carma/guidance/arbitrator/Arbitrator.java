@@ -255,7 +255,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
             }
 
             log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + pluginList + "]");
-            arbitratorStateMachine.processEvent(ArbitratorEvent.INITIALIZE);
+            
             currentState.set(GuidanceState.ACTIVE);
         }
     }
@@ -264,6 +264,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
 
         @Override
         public void run() {
+            arbitratorStateMachine.processEvent(ArbitratorEvent.INITIALIZE);
             currentState.set(GuidanceState.ENGAGED);
         }
 
@@ -279,7 +280,6 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
             longitudinalPlugins.clear();
             
             arbitratorStateMachine.processEvent(ArbitratorEvent.CLEAN_RESTART);
-            
             currentState.set(GuidanceState.DRIVERS_READY);
         }
 

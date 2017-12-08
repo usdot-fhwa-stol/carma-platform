@@ -16,8 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Listener to receive notification of changes in the state machine
  */

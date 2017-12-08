@@ -183,7 +183,6 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
             driver_request_wrapper.setCapabilities(req_drivers);
             
-            @SuppressWarnings("unchecked")
             final GetDriversWithCapabilitiesResponse[] response = new GetDriversWithCapabilitiesResponse[1];
             
             getDriversWithCapabilitiesClient.callSync(driver_request_wrapper,
@@ -276,44 +275,44 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 
         @Override
         public void run() {
+            trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, new OnTrajectoryProgressCallback() {
+
+                @Override
+                public void onProgress(double pct) {
+                    if (trajectoryQueue.size() == 0) {
+                        log.warn("Cannot track errors for current Trajectory!");
+                    } else {
+                        Trajectory currentTrajectory = trajectoryQueue.poll();
+                        trajectoryStartLocation = currentTrajectory.getStartLocation();
+                        trajectoryStartTime = System.currentTimeMillis();
+                        constructSpeedTimeTree(currentTrajectory.getLongitudinalManeuvers());
+                        trajectory_start.set(true);
+                    }
+                }
+            });
+
+            trajectoryExecutor.registerOnTrajectoryProgressCallback(0.95, new OnTrajectoryProgressCallback() {
+
+                @Override
+                public void onProgress(double pct) {
+                    trajectory_start.set(false);
+                    speedTimeTree.clear();
+                }
+            });
+
             currentState.set(GuidanceState.ACTIVE);
         }
-        
+
     }
-    
-	protected class Engage implements Runnable {
-	    
-	    @Override
+
+    protected class Engage implements Runnable {
+
+        @Override
         public void run() {
-	        trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, new OnTrajectoryProgressCallback() {
-	            
-	            @Override
-	            public void onProgress(double pct) {
-	                if(trajectoryQueue.size() == 0) {
-	                    log.warn("Cannot track errors for current Trajectory!");
-	                } else {
-	                    Trajectory currentTrajectory = trajectoryQueue.poll();
-	                    trajectoryStartLocation = currentTrajectory.getStartLocation(); 
-	                    trajectoryStartTime = System.currentTimeMillis();
-	                    constructSpeedTimeTree(currentTrajectory.getLongitudinalManeuvers());
-	                    trajectory_start.set(true);
-	                }
-	            }
-	        });
-	        
-	        trajectoryExecutor.registerOnTrajectoryProgressCallback(0.95, new OnTrajectoryProgressCallback() {
-	            
-	            @Override
-	            public void onProgress(double pct) {
-	                trajectory_start.set(false);
-	                speedTimeTree.clear();
-	            }
-	        });
-	        
-	        currentState.set(GuidanceState.ENGAGED);
+            currentState.set(GuidanceState.ENGAGED);
         }
-	    
-	}
+
+    }
 
 	protected class CleanRestart implements Runnable {
 
