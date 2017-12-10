@@ -58,50 +58,50 @@ public class SpeedUp extends LongitudinalManeuver {
         log_.debug("SpeedUp.plan completed with deltaV = " + deltaV + ", idealLength = " + idealLength + ", deltaT = " + deltaT_
                     + ", endDist = " + endDist_);
     }
-
-
-    /**
-     * This method contains bogus logic!  It needs to be replaced, but the replacement will require significant design changes.
-     * It's been modified here to allow completion of Nov 2017 system tests by ensuring that the maneuver execution will
-     * produce reasonable commands, even if they don't realistically respect the vehicle's acceleration limits.
-     *
-     * TODO:  replace this method asap!!!
-     *
-     */
+    
     @Override
-    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
+    public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
         super.planToTargetDistance(inputs, commands, startDist, endDist);
 
         //verify proper speed and distance relationships
         if (endSpeed_ <= startSpeed_) {
             log_.error("SpeedUp.planToTargetDistance entered with startSpeed = " + startSpeed_ + ", endSpeed = " + endSpeed_ + ". Throwing exception.");
-            throw new ArithmeticException("SpeedUp maneuver being planned with startSpeed = " + startSpeed_ +
-                                            ", endSpeed = " + endSpeed_);
+            throw new ArithmeticException("SpeedUp maneuver being planned with startSpeed = " + startSpeed_ + ", endSpeed = " + endSpeed_);
         }
         if (endDist <= startDist) {
             log_.error("SpeedUp.planToTargetDistance entered with startDist = " + startDist + ", endDist = " + endDist + ". Throwing exception.");
             throw new ArithmeticException("SpeedUp maneuver being planned with startDist = " + startDist + ", endDist = " + endDist);
         }
 
-        //if speed change is going to be only slight then
         double deltaV = endSpeed_ - startSpeed_; //always positive
-        double lagDistance = startSpeed_*inputs_.getResponseLag();
+        double lagDistance = startSpeed_ * inputs_.getResponseLag();
         double displacement = endDist - startDist - lagDistance;
+        if(displacement <= 0) {
+            log_.error("SpeedUp.planToTargetDistance do not have enough distance to plan. Throwing exception.");
+            throw new ArithmeticException("Negative displacement found in SpeedUp maneuver: " + displacement);
+        }
         workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement;
-        if (workingAccel_ <= 0.0  ||  workingAccel_ > maxAccel_) {
-            log_.warn("SpeedUp.plantoTargetDistance attempting to use illegal workingAccel of " + workingAccel_ + ", displacement = "
-                        + displacement + ". Adjusting workingAccel to a reasonable value.");
+        if (workingAccel_ > maxAccel_) {
             workingAccel_ = maxAccel_;
+            // Solve v^2 - v_0^2 = (2 * a * D) for v, where v_0 is startSpeed_, a is maxAccel_ and D is displacement
+            endSpeed_ = Math.sqrt(startSpeed_ * startSpeed_ + 2 * workingAccel_ * displacement);
+            deltaV = endSpeed_ - startSpeed_;
+            log_.warn("SpeedUp.plantoTargetDistance attempting to use illegal workingAccel. Adjusting target speed to a reasonable value: " + endSpeed_);
         }
 
         //compute the time it will take to perform this ideal speed change
         deltaT_ = deltaV / workingAccel_;
-
         endDist_ = endDist;
-        log_.debug("SpeedUp.planToTargetDistance complete with endDist = " + endDist_ + ", deltaT = " + deltaT_);
+        log_.debug("SpeedUp.planToTargetDistance complete with endDist = " + endDist_ + ", deltaT = " + deltaT_ + ", targetSpeed = " + endSpeed_);
+        return endSpeed_;
     }
-
-
+    
+    @Override
+    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) {
+        double displacement = endDist - startDist - (inputs.getResponseLag() * startSpeed_); 
+        return displacement > 0;
+    }
+    
     @Override
     public double generateSpeedCommand() throws IllegalStateException {
         //compute command based on linear interpolation on time steps

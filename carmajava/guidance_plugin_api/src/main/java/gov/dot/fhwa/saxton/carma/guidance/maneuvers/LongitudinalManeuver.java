@@ -50,9 +50,9 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     }
 
     @Override
-    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
+    public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
             double endDist) throws IllegalStateException, ArithmeticException {
-        super.planToTargetDistance(inputs, commands, startDist, endDist);
+        return super.planToTargetDistance(inputs, commands, startDist, endDist);
     }
 
     @Override

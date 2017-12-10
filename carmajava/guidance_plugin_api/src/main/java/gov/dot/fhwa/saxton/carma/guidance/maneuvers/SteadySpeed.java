@@ -48,7 +48,7 @@ public class SteadySpeed extends LongitudinalManeuver {
 
 
     @Override
-    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
+    public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
         super.planToTargetDistance(inputs, commands, startDist, endDist);
 
         //check that both the beginning and end speeds are the same
@@ -59,6 +59,7 @@ public class SteadySpeed extends LongitudinalManeuver {
 
         //set end distance to start distance
         endDist_ = endDist;
+        return endSpeed_;
     }
 
 
@@ -81,5 +82,11 @@ public class SteadySpeed extends LongitudinalManeuver {
         }
 
         return endSpeed_;
+    }
+
+
+    @Override
+    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException {
+        return true;
     }
 }

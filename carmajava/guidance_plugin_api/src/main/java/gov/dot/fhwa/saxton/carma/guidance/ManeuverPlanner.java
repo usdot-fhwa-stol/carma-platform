@@ -48,10 +48,17 @@ public class ManeuverPlanner {
    * <p>
    * Modifies the argument maneuver m in place
    */
-  public void planManeuver(ISimpleManeuver m, double startDist, double endDist) {
-    m.planToTargetDistance(maneuverInputs, guidanceCommands, startDist, endDist);
+  public double planManeuver(ISimpleManeuver m, double startDist, double endDist) {
+    return m.planToTargetDistance(maneuverInputs, guidanceCommands, startDist, endDist);
   }
-
+  
+  /**
+   * Check if the maneuver can be planned with vehicle lag
+   */
+  public boolean canPlan(ISimpleManeuver m, double startDist, double endDist) {
+    return m.canPlan(maneuverInputs, startDist, endDist);
+  }
+  
   public IGuidanceCommands getGuidanceCommands() {
     return guidanceCommands;
   }

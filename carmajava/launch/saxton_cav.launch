@@ -390,9 +390,6 @@
         <remap from="route"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
-        <!-- Plugin Cruising Thread-->
-        <remap from="get_available_routes"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
       </node>
     </group>
 
