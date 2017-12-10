@@ -17,10 +17,10 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import cav_msgs.Plugin;
-import cav_msgs.RouteState;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
@@ -44,12 +44,10 @@ import org.ros.node.service.ServiceServer;
 import std_msgs.Header;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package PluginManager component
@@ -315,6 +313,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
         @Override
         public void run() {
+            
+            log.fatal(getComponentName() + " is about to SHUTDOWN!");
+            
             // If we're shutting down, properly handle graceful plugin shutdown as well
             for (IPlugin p : getRegisteredPlugins()) {
                 ComponentVersion v = p.getVersionInfo();
@@ -490,40 +491,23 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     }
 
     @Override
-    public void onStateChange() {
-        GuidanceState oldState = currentState.get();
-        GuidanceState newState = stateMachine.getState();
-        log.debug("GUIDANCE_STATE", getComponentName() + " changed state from " + oldState + " to " + newState);
-        switch (oldState) {
-        case STARTUP:
-            if(newState == GuidanceState.SHUTDOWN) {
-                jobQueue.add(new Shutdown());
-            } else if(newState == GuidanceState.DRIVERS_READY) {
-                jobQueue.add(new SystemReady());
-            }
+    public void onStateChange(GuidanceAction action) {
+        log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+        switch (action) {
+        case INTIALIZE:
+            jobQueue.add(new SystemReady());
             break;
-        case DRIVERS_READY:
-            if(newState == GuidanceState.SHUTDOWN) {
-                jobQueue.add(new Shutdown());
-            } else if(newState == GuidanceState.ACTIVE) {
-                jobQueue.add(new RouteActive());
-            }
+        case ACTIVATE:
+            jobQueue.add(new RouteActive());
             break;
-        case ACTIVE:
-            if(newState == GuidanceState.SHUTDOWN) {
-                jobQueue.add(new Shutdown());
-            } else if(newState == GuidanceState.ENGAGED) {
-                jobQueue.add(new Engage());
-            } else if(newState == GuidanceState.DRIVERS_READY) {
-                jobQueue.add(new CleanRestart());
-            }
+        case ENGAGE:
+            jobQueue.add(new Engage());
             break;
-        case ENGAGED:
-            if(newState == GuidanceState.SHUTDOWN) {
-                jobQueue.add(new Shutdown());
-            } else if(newState == GuidanceState.DRIVERS_READY) {
-                jobQueue.add(new CleanRestart());
-            }
+        case SHUTDOWN:
+            jobQueue.add(new Shutdown());
+            break;
+        case RESTART:
+            jobQueue.add(new CleanRestart());
             break;
         default:
             break;

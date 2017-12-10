@@ -16,17 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import cav_msgs.SystemAlert;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import cav_srvs.GetSystemVersion;
 import cav_srvs.GetSystemVersionRequest;
 import cav_srvs.GetSystemVersionResponse;
-import cav_srvs.SetGuidanceEngaged;
-import cav_srvs.SetGuidanceEngagedRequest;
-import cav_srvs.SetGuidanceEngagedResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -37,7 +32,6 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import org.apache.commons.logging.Log;
-import org.ros.concurrent.CancellableLoop;
 import org.ros.exception.ServiceException;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -47,7 +41,6 @@ import org.ros.node.service.ServiceServer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The top-level Guidance package is responsible for providing basic facilities needed by all elements of

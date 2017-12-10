@@ -124,11 +124,12 @@ public abstract class GuidanceComponent implements Runnable {
 
         @Override
         public void run() {
+            
+            currentState.set(GuidanceState.SHUTDOWN);
+            
             // Log the fatal error
             log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
             log.fatal(message);
-            
-            currentState.set(GuidanceState.SHUTDOWN);
             
             // Alert the other ROS nodes to the FATAL condition
             IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);

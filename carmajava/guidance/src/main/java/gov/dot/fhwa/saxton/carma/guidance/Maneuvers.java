@@ -106,40 +106,23 @@ public class Maneuvers extends GuidanceComponent implements IStateChangeListener
     }
 
     @Override
-    public void onStateChange() {
-        GuidanceState oldState = currentState.get();
-        GuidanceState newState = stateMachine.getState();
-        log.debug("GUIDANCE_STATE", getComponentName() + " changed state from " + oldState + " to " + newState);
-        switch (oldState) {
-        case STARTUP:
-            if(newState == GuidanceState.SHUTDOWN) {
-                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
-            } else if(newState == GuidanceState.DRIVERS_READY) {
-                jobQueue.add(new SystemReady());
-            }
+    public void onStateChange(GuidanceAction action) {
+        log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+        switch (action) {
+        case INTIALIZE:
+            jobQueue.add(new SystemReady());
             break;
-        case DRIVERS_READY:
-            if(newState == GuidanceState.SHUTDOWN) {
-                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
-            } else if(newState == GuidanceState.ACTIVE) {
-                jobQueue.add(new RouteActive());
-            }
+        case ACTIVATE:
+            jobQueue.add(new RouteActive());
             break;
-        case ACTIVE:
-            if(newState == GuidanceState.SHUTDOWN) {
-                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
-            } else if(newState == GuidanceState.ENGAGED) {
-                jobQueue.add(new Engage());
-            } else if(newState == GuidanceState.DRIVERS_READY) {
-                jobQueue.add(new CleanRestart());
-            }
+        case ENGAGE:
+            jobQueue.add(new Engage());
             break;
-        case ENGAGED:
-            if(newState == GuidanceState.SHUTDOWN) {
-                jobQueue.add(new Shutdown(getComponentName() + " found GuidanceState changed to SHUTDOWN!"));
-            } else if(newState == GuidanceState.DRIVERS_READY) {
-                jobQueue.add(new CleanRestart());
-            }
+        case SHUTDOWN:
+            jobQueue.add(new Shutdown(getComponentName() + " is about to SHUTDOWN!"));
+            break;
+        case RESTART:
+            jobQueue.add(new CleanRestart());
             break;
         default:
             break;

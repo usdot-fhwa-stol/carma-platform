@@ -38,41 +38,54 @@ public class GuidanceStateMachine {
     public synchronized void processEvent(GuidanceEvent guidance_event) {
         log.debug("GUIDANCE_STATE", "Guidance state machine reveiced " + guidance_event + " at state: " + guidance_state.get());
         GuidanceState old_state = guidance_state.get();
+        GuidanceAction action = GuidanceAction.NOOP;
         switch (old_state) {
         case STARTUP:
             if(guidance_event == GuidanceEvent.FOUND_DRIVERS) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.INTIALIZE;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
+                action = GuidanceAction.SHUTDOWN;
             }
             break;
         case DRIVERS_READY:
             if(guidance_event == GuidanceEvent.ACTIVATE_ROUTE) {
                 guidance_state.set(GuidanceState.ACTIVE);
+                action = GuidanceAction.ACTIVATE;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
+                action = GuidanceAction.SHUTDOWN;
             }
             break;
         case ACTIVE:
             if(guidance_event == GuidanceEvent.START_ROUTE) {
                 guidance_state.set(GuidanceState.ENGAGED);
+                action = GuidanceAction.ENGAGE;
             } else if(guidance_event == GuidanceEvent.LEFT_ROUTE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
+                action = GuidanceAction.SHUTDOWN;
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
             }
             break;
         case ENGAGED:
             if(guidance_event == GuidanceEvent.FINISH_ROUTE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
             } else if(guidance_event == GuidanceEvent.LEFT_ROUTE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
+                action = GuidanceAction.SHUTDOWN;
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
             }
             break;
         default:
@@ -84,7 +97,7 @@ public class GuidanceStateMachine {
         if(old_state != current_state) {
             log.debug("GUIDANCE_STATE", "Guidance transited to state " + current_state);
             for(IStateChangeListener listener : listeners) {
-                listener.onStateChange();
+                listener.onStateChange(action);
             }
         } else {
             log.debug("GUIDANCE_STATE", "Guidance did not change state");
