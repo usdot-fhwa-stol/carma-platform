@@ -184,7 +184,16 @@ input:disabled + label { /* Disabled format */
     background-color: gray;
 }
 
-
+#btnOk
+{
+    height: 80px;
+    width: 220px;
+    background-color:#336699;
+    color: white;
+    font-size: 25px;
+    position: relative;
+    left: 0px;
+}
 /*** Message Box ***/
 div.message_box {
     display: block;
@@ -448,6 +457,17 @@ div.message_box {
     font-weight: bold;
     text-align: center;
 }
+
+/* Remaining Distance to Next Speed Limit */
+#divDistRemaining{
+ position: relative;
+ top: 50%;
+ color: black;
+ font-size: 25px;
+ font-weight: bold;
+ text-align: center;
+}
+
 
 /* Black Rounded Border Sign */
 #divSpeedCmd {
