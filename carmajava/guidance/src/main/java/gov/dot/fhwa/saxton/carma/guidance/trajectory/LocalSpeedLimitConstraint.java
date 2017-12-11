@@ -119,8 +119,8 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
         return;
       }
      
-      if (lonMvr.getTargetSpeed() > lonMvr.getStartSpeed()) {
-        log.warn(String.format("Slowdown lonMvr from [%.02f, %.02f) deemed illegal. end speed > start_speed",
+      if (lonMvr.getTargetSpeed() >= lonMvr.getStartSpeed()) {
+        log.warn(String.format("Slowdown lonMvr from [%.02f, %.02f) deemed illegal. end speed >= start_speed",
             lonMvr.getStartDistance(), lonMvr.getEndDistance()));
         offendingManeuvers.add(lonMvr);
       }
