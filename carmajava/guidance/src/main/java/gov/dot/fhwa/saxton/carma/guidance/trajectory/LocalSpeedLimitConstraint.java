@@ -20,7 +20,6 @@ import java.util.List;
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -120,9 +119,9 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
         return;
       }
      
-      if (lonMvr.getTargetSpeed() > end.speedLimit) {
-        log.warn(String.format("Slowdown lonMvr from [%.02f, %.02f) deemed illegal. End limit = %.02f",
-            lonMvr.getStartDistance(), lonMvr.getEndDistance(), end.speedLimit));
+      if (lonMvr.getTargetSpeed() >= lonMvr.getStartSpeed()) {
+        log.warn(String.format("Slowdown lonMvr from [%.02f, %.02f) deemed illegal. end speed >= start_speed",
+            lonMvr.getStartDistance(), lonMvr.getEndDistance()));
         offendingManeuvers.add(lonMvr);
       }
 
