@@ -58,7 +58,7 @@ public abstract class GuidanceComponent implements Runnable {
         this.log = LoggerManager.getLogger(this.getClass().getCanonicalName());
         this.jobQueue = new LinkedBlockingQueue<>();
         this.currentState = new AtomicReference<GuidanceState>(GuidanceState.STARTUP);
-        this.exceptionHandler = new GuidanceExceptionHandler(log, stateMachine);
+        this.exceptionHandler = new GuidanceExceptionHandler(stateMachine);
     }
 
     /**
@@ -67,9 +67,57 @@ public abstract class GuidanceComponent implements Runnable {
     public abstract String getComponentName();
 
     /**
+     * Get called once a component is initialized
+     */
+    public abstract void onStartup();
+    
+    /**
+     * Get called once a component is received a system ready alert
+     */
+    public abstract void onSystemReady();
+    
+    /**
+     * Get called once route is selected and active
+     */
+    public abstract void onRouteActive();
+    
+    /**
+     * Get called once vehicle ACC is engaged
+     */
+    public abstract void onEngaged();
+    
+    /**
+     * Get called once guidance component received a request to restart
+     */
+    public abstract void onCleanRestart();
+    
+    /**
+     * Job queue task for performing the shutting down process
+     * Will log the fatal condition, alert the other ROS nodes in the CAV network to begin
+     * shutdown procedures and then trigger GuidanceComponent activities to cease as well.
+     */
+    public void onShutdown() {
+        currentState.set(GuidanceState.SHUTDOWN);
+        
+        // Log the fatal error
+        log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
+        
+        // Alert the other ROS nodes to the FATAL condition
+        IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
+        SystemAlert fatalBroadcast = pub.newMessage();
+        fatalBroadcast.setDescription(getComponentName() + " is requested to SHUTDOWN!");
+        fatalBroadcast.setType(SystemAlert.FATAL);
+        pub.publish(fatalBroadcast);
+        
+        // Cancel the loop
+        timingLoopThread.interrupt();
+        loopThread.interrupt();
+    }
+    
+    /**
      * Simple job-queue loop with jobs being added based on state machine transitions
      */
-    public final void loop() throws InterruptedException {
+    public final void runJobQueue() throws InterruptedException {
         log.debug(this.getComponentName() + " is polling job queue.");
         Runnable job = jobQueue.take();
         log.debug(this.getComponentName() + " found job of type: " + job.getClass().getSimpleName() + ". Executing!");
@@ -81,6 +129,7 @@ public abstract class GuidanceComponent implements Runnable {
             Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            throw e;
         }
     }
     
@@ -91,7 +140,7 @@ public abstract class GuidanceComponent implements Runnable {
         CancellableLoop loop = new CancellableLoop() {
             @Override
             protected void loop() throws InterruptedException {
-                GuidanceComponent.this.loop();
+                GuidanceComponent.this.runJobQueue();
             }
         };
         CancellableLoop timingLoop = new CancellableLoop() {
@@ -107,41 +156,4 @@ public abstract class GuidanceComponent implements Runnable {
         loopThread.start();
         timingLoopThread.start();
     }
-
-    /**
-     * Job queue task for performing the shutting down process
-     * 
-     * Will log the fatal condition, alert the other ROS nodes in the CAV network to begin
-     * shutdown procedures and then trigger GuidanceComponent activities to cease as well.
-     */
-    protected class Shutdown implements Runnable {
-
-        String message = "";
-        
-        public Shutdown(String message) {
-            this.message = message;
-        }
-
-        @Override
-        public void run() {
-            
-            currentState.set(GuidanceState.SHUTDOWN);
-            
-            // Log the fatal error
-            log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
-            log.fatal(message);
-            
-            // Alert the other ROS nodes to the FATAL condition
-            IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
-            SystemAlert fatalBroadcast = pub.newMessage();
-            fatalBroadcast.setDescription(getComponentName() + " has triggered a Guidance PANIC: " + message);
-            fatalBroadcast.setType(SystemAlert.FATAL);
-            pub.publish(fatalBroadcast);
-            
-            // Cancel the loop
-            timingLoopThread.interrupt();
-            loopThread.interrupt();
-        }
-    }
-
 }

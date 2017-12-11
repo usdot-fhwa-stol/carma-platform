@@ -57,7 +57,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
     GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
         super(stateMachine, iPubSubService, node);
-        this.jobQueue.add(new Startup());
+        this.jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }
 
@@ -66,151 +66,137 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         return "Guidance.Commands";
     }
 
-    protected class Startup implements Runnable {
-        @Override
-        public void run() {
+    @Override
+    public void onStartup() {
             vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
             log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
             currentState.set(GuidanceState.STARTUP);
-        }
     }
 
-    protected class SystemReady implements Runnable {
-        @Override
-        public void run() {
-            // Register with the interface manager's service
+    @Override
+    public void onSystemReady() {
+        // Register with the interface manager's service
+        try {
+            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+        } catch (TopicNotFoundException tnfe) {
+            exceptionHandler.handleException("Interface manager not found.", tnfe);
+        }
+
+        // Build our request message
+        GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
+
+        List<String> reqdCapabilities = new ArrayList<>();
+        reqdCapabilities.add(SPEED_CMD_CAPABILITY);
+        reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY);
+        req.setCapabilities(reqdCapabilities);
+
+        // Work around to pass a final object into our anonymous inner class so we can get the
+        // response
+        final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
+        drivers[0] = null;
+
+        // Call the InterfaceManager to see if we have a driver that matches our requirements
+        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+            @Override
+            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                log.debug("Received GetDriversWithCapabilitiesResponse");
+                for (String driverName : msg.getDriverData()) {
+                    log.debug("GuidanceCommands discovered driver: " + driverName);
+                }
+
+                drivers[0] = msg;
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                exceptionHandler.handleException("InterfaceManager failed to return a control/cmd_speed capable driver!!!", e);
+            }
+        });
+
+        // No message for LanePosition.msg to be published on "guidance/control/lane_position"
+        // TODO: Add message type for lateral control from guidance
+
+        // Verify that the message returned drivers that we can use
+        String speedCmdTopic = null;
+        String roboticEnableTopic = null;
+        if (drivers[0] != null) {
+            for (String topicName : drivers[0].getDriverData()) {
+                if (topicName.endsWith(SPEED_CMD_CAPABILITY)) {
+                    speedCmdTopic = topicName;
+                }
+                if (topicName.endsWith(ENABLE_ROBOTIC_CAPABILITY)) {
+                    roboticEnableTopic = topicName;
+                }
+            }
+        }
+
+        if (speedCmdTopic != null && roboticEnableTopic != null) {
+            // Open the publication channel to the driver and start sending it commands
+            log.info("CONTROLS", "GuidanceCommands connecting to " + speedCmdTopic + " and " + roboticEnableTopic);
+
+            speedAccelPublisher = pubSubService.getPublisherForTopic(speedCmdTopic, SpeedAccel._TYPE);
+
             try {
-                driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+                enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
             } catch (TopicNotFoundException tnfe) {
-                exceptionHandler.handleException("Interface manager not found.", tnfe);
+                exceptionHandler.handleException("GuidanceCommands unable to locate control/enable_robotic service", tnfe);
             }
-
-            // Build our request message
-            GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
-
-            List<String> reqdCapabilities = new ArrayList<>();
-            reqdCapabilities.add(SPEED_CMD_CAPABILITY);
-            reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY);
-            req.setCapabilities(reqdCapabilities);
-
-            // Work around to pass a final object into our anonymous inner class so we can get the
-            // response
-            final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
-            drivers[0] = null;
-
-            // Call the InterfaceManager to see if we have a driver that matches our requirements
-            driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-                @Override
-                public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                    log.debug("Received GetDriversWithCapabilitiesResponse");
-                    for (String driverName : msg.getDriverData()) {
-                        log.debug("GuidanceCommands discovered driver: " + driverName);
-                    }
-
-                    drivers[0] = msg;
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    exceptionHandler.handleException("InterfaceManager failed to return a control/cmd_speed capable driver!!!", e);
-                }
-            });
-
-            // No message for LanePosition.msg to be published on "guidance/control/lane_position"
-            // TODO: Add message type for lateral control from guidance
-
-            // Verify that the message returned drivers that we can use
-            String speedCmdTopic = null;
-            String roboticEnableTopic = null;
-            if (drivers[0] != null) {
-                for (String topicName : drivers[0].getDriverData()) {
-                    if (topicName.endsWith(SPEED_CMD_CAPABILITY)) {
-                        speedCmdTopic = topicName;
-                    }
-                    if (topicName.endsWith(ENABLE_ROBOTIC_CAPABILITY)) {
-                        roboticEnableTopic = topicName;
-                    }
-                }
-            }
-
-            if (speedCmdTopic != null && roboticEnableTopic != null) {
-                // Open the publication channel to the driver and start sending it commands
-                log.info("CONTROLS", "GuidanceCommands connecting to " + speedCmdTopic + " and " + roboticEnableTopic);
-
-                speedAccelPublisher = pubSubService.getPublisherForTopic(speedCmdTopic, SpeedAccel._TYPE);
-
-                try {
-                    enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
-                } catch (TopicNotFoundException tnfe) {
-                    exceptionHandler.handleException("GuidanceCommands unable to locate control/enable_robotic service", tnfe);
-                }
-            } else {
-                exceptionHandler.handleException("GuidanceCommands unable to find suitable controller driver!", new RosRuntimeException("No controller drivers."));
-            }
-            currentState.set(GuidanceState.DRIVERS_READY);
-        }
-    }
-    
-    protected class RouteActive implements Runnable {
-
-        @Override
-        public void run() {
-            SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
-            enableReq.setSet((byte) 1);
-
-            // TODO: Implement no-response call method
-            enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
-                @Override
-                public void onSuccess(SetEnableRoboticResponse resp) {
-                    // NO-OP
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    exceptionHandler.handleException("Unable to call enable robotic service", e);
-                }
-            });
-            currentState.set(GuidanceState.ACTIVE);
+        } else {
+            exceptionHandler.handleException("GuidanceCommands unable to find suitable controller driver!", new RosRuntimeException("No controller drivers."));
         }
         
+        currentState.set(GuidanceState.DRIVERS_READY);
     }
     
-    protected class Engage implements Runnable {
-        @Override
-        public void run() {
-            currentState.set(GuidanceState.ENGAGED);
-        }
+    @Override
+    public void onRouteActive() {
+        SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
+        enableReq.setSet((byte) 1);
+
+        // TODO: Implement no-response call method
+        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+            @Override
+            public void onSuccess(SetEnableRoboticResponse resp) {
+                // NO-OP
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                exceptionHandler.handleException("Unable to call enable robotic service", e);
+            }
+        });
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onEngaged() {
+        currentState.set(GuidanceState.ENGAGED);
     }
 
-    protected class CleanRestart implements Runnable {
-
-        @Override
-        public void run() {
-            
-            currentState.set(GuidanceState.DRIVERS_READY);
-            
-            //Reset member variables
-            speedCommand.set(0.0);
-            maxAccel.set(0.0);
-            lastTimestep = -1;
-            
-            SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
-            enableReq.setSet((byte) 0);
-
-            // TODO: Implement no-response call method
-            enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
-                @Override
-                public void onSuccess(SetEnableRoboticResponse resp) {
-                    // NO-OP
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    exceptionHandler.handleException("Unable to call disable robotic service", e);
-                }
-            });
-        }
+    @Override
+    public void onCleanRestart() {
+        currentState.set(GuidanceState.DRIVERS_READY);
         
+        //Reset member variables
+        speedCommand.set(0.0);
+        maxAccel.set(0.0);
+        lastTimestep = -1;
+        
+        SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
+        enableReq.setSet((byte) 0);
+
+        // TODO: Implement no-response call method
+        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+            @Override
+            public void onSuccess(SetEnableRoboticResponse resp) {
+                // NO-OP
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                exceptionHandler.handleException("Unable to call disable robotic service", e);
+            }
+        });
     }
     
     /**
@@ -278,22 +264,22 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
         switch (action) {
         case INTIALIZE:
-            jobQueue.add(new SystemReady());
+            jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(new RouteActive());
+            jobQueue.add(this::onRouteActive);
             break;
         case ENGAGE:
-            jobQueue.add(new Engage());
+            jobQueue.add(this::onEngaged);
             break;
         case SHUTDOWN:
-            jobQueue.add(new Shutdown(getComponentName() + " is about to SHUTDOWN!"));
+            jobQueue.add(this::onShutdown);
             break;
         case RESTART:
-            jobQueue.add(new CleanRestart());
+            jobQueue.add(this::onCleanRestart);
             break;
         default:
-            break;
+            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
     }
 }

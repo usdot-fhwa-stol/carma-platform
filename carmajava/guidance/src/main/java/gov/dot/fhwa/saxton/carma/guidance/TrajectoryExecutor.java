@@ -25,6 +25,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallbac
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 
 /**
@@ -62,7 +63,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
         trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
         
-        jobQueue.add(new Startup());
+        jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }
 
@@ -71,78 +72,60 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         return "Guidance.TrajectoryExecutor";
     }
 
-    protected class Startup implements Runnable {
-        
-        @Override
-        public void run() {
-            operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
-            amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
-            phase = node.getParameterTree().getDouble("~trajectory_phase");
-            period = node.getParameterTree().getDouble("~trajectory_period");
-            maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
-            holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
-            useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
-            sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
+    @Override
+    public void onStartup() {
+        operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
+        amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
+        phase = node.getParameterTree().getDouble("~trajectory_phase");
+        period = node.getParameterTree().getDouble("~trajectory_period");
+        maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
+        holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
+        useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
+        sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
-            currentState.set(GuidanceState.STARTUP);
-        }
+        currentState.set(GuidanceState.STARTUP);
     }
 
-    protected class SystemReady implements Runnable {
-
-        @Override
-        public void run() {
-            currentState.set(GuidanceState.DRIVERS_READY);
-        }
-        
+    @Override
+    public void onSystemReady() {
+        currentState.set(GuidanceState.DRIVERS_READY);
     }
 
-    protected class RouteActive implements Runnable {
-
-        @Override
-        public void run() {
-            
-            routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-            routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-                @Override
-                public void onMessage(RouteState msg) {
-                    log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
-                    if (currentState.get() == GuidanceState.ENGAGED) {
-                        trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
-                    }
+    @Override
+    public void onRouteActive() {
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+            @Override
+            public void onMessage(RouteState msg) {
+                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
+                if (currentState.get() == GuidanceState.ENGAGED) {
+                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
                 }
-            });
-            currentState.set(GuidanceState.ACTIVE);
-        }
-        
+            }
+        });
+        currentState.set(GuidanceState.ACTIVE);
     }
     
-    protected class Engage implements Runnable {
-        
-        @Override
-        public void run() {
-            startTime = (long) node.getCurrentTime().toSeconds() * 1000;
-            if (currentTrajectory != null && !bufferedTrajectoryRunning) {
-                log.info("Running buffered trajectory!");
-                tracking_.addNewTrajectory(currentTrajectory);
-                trajectoryExecutorWorker.runTrajectory(currentTrajectory);
-                bufferedTrajectoryRunning = true;
-            }
+    @Override
+    public void onEngaged() {
+        startTime = (long) node.getCurrentTime().toSeconds() * 1000;
+        if (currentTrajectory != null && !bufferedTrajectoryRunning) {
+            log.info("Running buffered trajectory!");
+            tracking_.addNewTrajectory(currentTrajectory);
+            trajectoryExecutorWorker.runTrajectory(currentTrajectory);
+            bufferedTrajectoryRunning = true;
         }
-        
+        currentState.set(GuidanceState.ENGAGED);
     }
 
-    protected class CleanRestart implements Runnable {
-
-        @Override
-        public void run() {
-            currentState.set(GuidanceState.DRIVERS_READY);
-            TrajectoryExecutor.this.abortTrajectory();
-            currentTrajectory = null;
-            bufferedTrajectoryRunning = false;
-            startTime = 0;
-        }
-        
+    @Override
+    public void onCleanRestart() {
+        currentState.set(GuidanceState.DRIVERS_READY);
+        TrajectoryExecutor.this.abortTrajectory();
+        this.unregisterAllTrajectoryProgressCallback();
+        currentTrajectory = null;
+        bufferedTrajectoryRunning = false;
+        startTime = 0;
     }
     
     /**
@@ -248,6 +231,13 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         trajectoryExecutorWorker.unregisterOnTrajectoryProgressCallback(callback);
     }
 
+    /**
+     * Unregister all callbacks
+     */
+    public void unregisterAllTrajectoryProgressCallback() {
+        trajectoryExecutorWorker.unregisterAllTrajectoryProgressCallback();
+    }
+    
   /**
    * Submit the specified trajectory for execution
    * </p>
@@ -300,22 +290,22 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     public void onStateChange(GuidanceAction action) {
         switch (action) {
         case INTIALIZE:
-            jobQueue.add(new SystemReady());
+            jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(new RouteActive());
+            jobQueue.add(this::onRouteActive);
             break;
         case ENGAGE:
-            jobQueue.add(new Engage());
+            jobQueue.add(this::onEngaged);
             break;
         case SHUTDOWN:
-            jobQueue.add(new Shutdown(getComponentName() + " is about to SHUTDOWN!"));
+            jobQueue.add(this::onShutdown);
             break;
         case RESTART:
-            jobQueue.add(new CleanRestart());
+            jobQueue.add(this::onCleanRestart);
             break;
         default:
-            break;
+            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
     }
 }

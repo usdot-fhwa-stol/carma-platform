@@ -21,6 +21,5 @@ public enum GuidanceAction {
     ACTIVATE,
     ENGAGE,
     SHUTDOWN,
-    RESTART,
-    NOOP
+    RESTART
 }

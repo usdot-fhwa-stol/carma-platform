@@ -136,7 +136,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
     log.info("//////////");
 
-    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(log, stateMachine);
+    final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(stateMachine);
     log.info("Guidance exception handler initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception

@@ -21,6 +21,8 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
@@ -34,75 +36,66 @@ public class Maneuvers extends GuidanceComponent implements IStateChangeListener
     private IPublisher<NewPlan> newPlanPublisher;
     private ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber;
     private ISubscriber<Route> routeSubscriber;
+    protected long sleepDurationMillis = 30000;
+    protected short curPlanId = 0;
     
     Maneuvers(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
         super(stateMachine, iPubSubService, node);
-        jobQueue.add(new Startup());
+        jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }
 
-    @Override public String getComponentName() {
+    @Override
+    public String getComponentName() {
         return "Guidance.Maneuvers";
     }
     
-    protected class Startup implements Runnable {
+    @Override
+    public void onStartup() {
+        // Set up subscribers
+        roadwayEnvironmentSubscriber = pubSubService.getSubscriberForTopic("roadway_environment",
+                RoadwayEnvironment._TYPE);
+
+        roadwayEnvironmentSubscriber.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
+            @Override
+            public void onMessage(RoadwayEnvironment msg) {
+                log.info("Received RoadwayEnvironment:" + msg);
+            }
+        });
+
+        routeSubscriber = pubSubService.getSubscriberForTopic("route", Route._TYPE);
+
+        routeSubscriber.registerOnMessageCallback(new OnMessageCallback<Route>() {
+            @Override
+            public void onMessage(Route msg) {
+                log.info("Received Route:" + msg);
+            }
+        });
+
+        // Set up publishers
+        newPlanPublisher = pubSubService.getPublisherForTopic("new_plan", NewPlan._TYPE);
         
-        @Override
-        public void run() {
-            // Set up subscribers
-            roadwayEnvironmentSubscriber = pubSubService.getSubscriberForTopic("roadway_environment",
-                    RoadwayEnvironment._TYPE);
-
-            roadwayEnvironmentSubscriber.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
-                @Override
-                public void onMessage(RoadwayEnvironment msg) {
-                    log.info("Received RoadwayEnvironment:" + msg);
-                }
-            });
-
-            routeSubscriber = pubSubService.getSubscriberForTopic("route", Route._TYPE);
-
-            routeSubscriber.registerOnMessageCallback(new OnMessageCallback<Route>() {
-                @Override
-                public void onMessage(Route msg) {
-                    log.info("Received Route:" + msg);
-                }
-            });
-
-            // Set up publishers
-            newPlanPublisher = pubSubService.getPublisherForTopic("new_plan", NewPlan._TYPE);
-            
-            currentState.set(GuidanceState.STARTUP);
-        }
-
+        currentState.set(GuidanceState.STARTUP);
     }
 
-    protected class SystemReady implements Runnable {
-        @Override
-        public void run() {
-            currentState.set(GuidanceState.DRIVERS_READY);
-        }
-    }
-
-    protected class RouteActive implements Runnable {
-        @Override
-        public void run() {
-            currentState.set(GuidanceState.ACTIVE);
-        }
+    @Override
+    public void onSystemReady() {
+        currentState.set(GuidanceState.DRIVERS_READY);
     }
     
-    protected class Engage implements Runnable {
-        @Override
-        public void run() {
-            currentState.set(GuidanceState.ENGAGED);
-        }
+    @Override
+    public void onRouteActive() {
+        currentState.set(GuidanceState.ACTIVE);
     }
     
-    protected class CleanRestart implements Runnable {
-        @Override
-        public void run() {
-            currentState.set(GuidanceState.DRIVERS_READY);
-        }
+    @Override
+    public void onEngaged() {
+        currentState.set(GuidanceState.ENGAGED);
+    }
+    
+    @Override
+    public void onCleanRestart() {
+        currentState.set(GuidanceState.DRIVERS_READY);
     }
 
     @Override
@@ -110,22 +103,22 @@ public class Maneuvers extends GuidanceComponent implements IStateChangeListener
         log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
         switch (action) {
         case INTIALIZE:
-            jobQueue.add(new SystemReady());
+            jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(new RouteActive());
+            jobQueue.add(this::onRouteActive);
             break;
         case ENGAGE:
-            jobQueue.add(new Engage());
+            jobQueue.add(this::onEngaged);
             break;
         case SHUTDOWN:
-            jobQueue.add(new Shutdown(getComponentName() + " is about to SHUTDOWN!"));
+            jobQueue.add(this::onShutdown);
             break;
         case RESTART:
-            jobQueue.add(new CleanRestart());
+            jobQueue.add(this::onCleanRestart);
             break;
         default:
-            break;
+            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
     }
     
@@ -165,7 +158,4 @@ public class Maneuvers extends GuidanceComponent implements IStateChangeListener
             Thread.currentThread().interrupt(); // Rethrow the interrupt
         }
     }
-
-    protected long sleepDurationMillis = 30000;
-    protected short curPlanId = 0;
 }

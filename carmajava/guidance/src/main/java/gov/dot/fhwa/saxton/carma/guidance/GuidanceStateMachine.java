@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
@@ -38,7 +39,7 @@ public class GuidanceStateMachine {
     public synchronized void processEvent(GuidanceEvent guidance_event) {
         log.debug("GUIDANCE_STATE", "Guidance state machine reveiced " + guidance_event + " at state: " + guidance_state.get());
         GuidanceState old_state = guidance_state.get();
-        GuidanceAction action = GuidanceAction.NOOP;
+        GuidanceAction action = null;
         switch (old_state) {
         case STARTUP:
             if(guidance_event == GuidanceEvent.FOUND_DRIVERS) {
@@ -89,6 +90,7 @@ public class GuidanceStateMachine {
             }
             break;
         default:
+            log.warn("GUIDANCE_STATE", "Guidance state machine take NO action on event " + guidance_event + " at state " + old_state);
             break;
         }
         
@@ -96,8 +98,14 @@ public class GuidanceStateMachine {
         GuidanceState current_state = guidance_state.get(); 
         if(old_state != current_state) {
             log.debug("GUIDANCE_STATE", "Guidance transited to state " + current_state);
-            for(IStateChangeListener listener : listeners) {
-                listener.onStateChange(action);
+            if(action != null) {
+                List<IStateChangeListener> tmpListener = new ArrayList<IStateChangeListener>();
+                synchronized(listeners) {
+                    tmpListener.addAll(listeners);
+                }
+                for(IStateChangeListener listener : tmpListener) {
+                    listener.onStateChange(action);
+                }
             }
         } else {
             log.debug("GUIDANCE_STATE", "Guidance did not change state");

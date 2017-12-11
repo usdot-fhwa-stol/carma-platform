@@ -118,7 +118,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 
 	public Tracking(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
 		super(stateMachine, pubSubService, node);
-		jobQueue.add(new Startup());
+		jobQueue.add(this::onStartup);
 		stateMachine.registerStateChangeListener(this);
 	}
 
@@ -127,208 +127,184 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 		return "Guidance.Tracking";
 	}
 
-	protected class Startup implements Runnable {
+    @Override
+    public void onStartup() {
+        // Publishers
+        bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
 
-	    @Override
-        public void run() {
-	        // Publishers
-	        bsmPublisher = pubSubService.getPublisherForTopic("bsm", BSM._TYPE);
+        // Subscribers
+        navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
+        headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
+        velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
+        routeSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
 
-	        // Subscribers
-	        navSatFixSubscriber = pubSubService.getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
-	        headingStampedSubscriber = pubSubService.getSubscriberForTopic("heading", HeadingStamped._TYPE);
-	        velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
-	        routeSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-	        
-	        // TODO: acceleration set is not available from SF
-	        accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
-	        
-	        if(bsmPublisher == null || navSatFixSubscriber == null 
-	                || headingStampedSubscriber == null || velocitySubscriber == null 
-	                || accelerationSubscriber == null || routeSubscriber == null) {
-	            log.warn("Cannot initialize pubs and subs");
-	        }
-	        
-	        velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
-	            @Override
-	            public void onMessage(TwistStamped msg) {
-	                current_speed.set(msg.getTwist().getLinear().getX());
-	                if(!velocity_ready.get()) {
-	                    velocity_ready.set(true);
-	                }
-	            }
-	        });
-	        currentState.set(GuidanceState.STARTUP);
-        }
-	    
-	}
+        // TODO: acceleration set is not available from SF
+        accelerationSubscriber = pubSubService.getSubscriberForTopic("acceleration", AccelerationSet4Way._TYPE);
 
-    protected class SystemReady implements Runnable {
-
-        @Override
-        public void run() {
-            // Make service call to get drivers
-            log.debug("Trying to get get_drivers_with_capabilities service...");
-            try {
-                getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                        GetDriversWithCapabilities._TYPE);
-            } catch (TopicNotFoundException tnfe) {
-                exceptionHandler.handleException("get_drivers_with_capabilities service cannot be found", tnfe);
-            }
-            if (getDriversWithCapabilitiesClient == null) {
-                log.warn("get_drivers_with_capabilities service can not be found");
-                exceptionHandler.handleException("get_drivers_with_capabilities service cannot be found", new TopicNotFoundException());
-            }
-
-            GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
-            driver_request_wrapper.setCapabilities(req_drivers);
-            
-            final GetDriversWithCapabilitiesResponse[] response = new GetDriversWithCapabilitiesResponse[1];
-            
-            getDriversWithCapabilitiesClient.callSync(driver_request_wrapper,
-                    new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-
-                        @Override
-                        public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                            response[0] = msg;
-                            log.debug("Tracking: service call is successful: " + response[0].getDriverData());
-                        }
-
-                        @Override
-                        public void onFailure(Exception e) {
-                            exceptionHandler.handleException("getDriversWithCapabilities service call failed", e);
-                        }
-
-                    });
-
-            if(response[0] == null || response[0].getDriverData().size() == 0) {
-                exceptionHandler.handleException("cannot find suitable CAN driver", new RosRuntimeException("No CAN driver is found"));
-            }
-            
-            for (String driver_url : response[0].getDriverData()) {
-                if (driver_url.endsWith("/can/steering_wheel_angle")) {
-                    steeringWheelSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
-                    continue;
-                }
-                if (driver_url.endsWith("/can/brake_position")) {
-                    brakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
-                    continue;
-                }
-                if (driver_url.endsWith("/can/transmission_state")) {
-                    transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url,
-                            TransmissionState._TYPE);
-                    continue;
-                }
-                if (driver_url.endsWith("/can/traction_ctrl_active")) {
-                    tractionActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                    continue;
-                }
-                if (driver_url.endsWith("/can/traction_ctrl_enabled")) {
-                    tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url,
-                            std_msgs.Bool._TYPE);
-                    continue;
-                }
-                if (driver_url.endsWith("/can/antilock_brakes_active")) {
-                    antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                    continue;
-                }
-                if (driver_url.endsWith("/can/stability_ctrl_active")) {
-                    stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url,
-                            std_msgs.Bool._TYPE);
-                    continue;
-                }
-                if (driver_url.endsWith("/can/stability_ctrl_enabled")) {
-                    stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url,
-                            std_msgs.Bool._TYPE);
-                    continue;
-                }
-                if (driver_url.endsWith("/can/parking_brake")) {
-                    parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                }
-            }
-
-            if (steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null
-                    || tractionActiveSubscriber == null || tractionEnabledSubscriber == null
-                    || antilockBrakeSubscriber == null || stabilityActiveSubscriber == null
-                    || stabilityEnabledSubscriber == null || parkingBrakeSubscriber == null) {
-                log.warn("Tracking: initialize subs failed");
-            }
-
-            try {
-                ParameterTree param = node.getParameterTree();
-                vehicleLength = (float) param.getDouble("vehicle_length");
-                vehicleWidth = (float) param.getDouble("vehicle_width");
-                speed_error_limit = param.getDouble("~max_speed_error");
-                downtrack_error_limit = param.getDouble("~max_downtrack_error");
-            } catch (ParameterNotFoundException e1) {
-                exceptionHandler.handleException("Cannot found all parameters", e1);
-            } catch (ParameterClassCastException e2) {
-                exceptionHandler.handleException("Cannot cast on the parameter type", e2);
-            }
-            
-            currentState.set(GuidanceState.DRIVERS_READY);
+        if (bsmPublisher == null || navSatFixSubscriber == null || headingStampedSubscriber == null
+                || velocitySubscriber == null || accelerationSubscriber == null || routeSubscriber == null) {
+            log.warn("Cannot initialize pubs and subs");
         }
 
+        velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
+            @Override
+            public void onMessage(TwistStamped msg) {
+                current_speed.set(msg.getTwist().getLinear().getX());
+                if (!velocity_ready.get()) {
+                    velocity_ready.set(true);
+                }
+            }
+        });
+        currentState.set(GuidanceState.STARTUP);
     }
 
-    protected class RouteActive implements Runnable {
+    @Override
+    public void onSystemReady() {
+        // Make service call to get drivers
+        log.debug("Trying to get get_drivers_with_capabilities service...");
+        try {
+            getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
+                    GetDriversWithCapabilities._TYPE);
+        } catch (TopicNotFoundException tnfe) {
+            exceptionHandler.handleException("get_drivers_with_capabilities service cannot be found", tnfe);
+        }
+        if (getDriversWithCapabilitiesClient == null) {
+            log.warn("get_drivers_with_capabilities service can not be found");
+            exceptionHandler.handleException("get_drivers_with_capabilities service cannot be found",
+                    new TopicNotFoundException());
+        }
 
-        @Override
-        public void run() {
-            trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, new OnTrajectoryProgressCallback() {
+        GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
+        driver_request_wrapper.setCapabilities(req_drivers);
 
-                @Override
-                public void onProgress(double pct) {
-                    if (trajectoryQueue.size() == 0) {
-                        log.warn("Cannot track errors for current Trajectory!");
-                    } else {
-                        Trajectory currentTrajectory = trajectoryQueue.poll();
-                        trajectoryStartLocation = currentTrajectory.getStartLocation();
-                        trajectoryStartTime = System.currentTimeMillis();
-                        constructSpeedTimeTree(currentTrajectory.getLongitudinalManeuvers());
-                        trajectory_start.set(true);
+        final GetDriversWithCapabilitiesResponse[] response = new GetDriversWithCapabilitiesResponse[1];
+
+        getDriversWithCapabilitiesClient.callSync(driver_request_wrapper,
+                new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+
+                    @Override
+                    public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                        response[0] = msg;
+                        log.debug("Tracking: service call is successful: " + response[0].getDriverData());
                     }
-                }
-            });
 
-            trajectoryExecutor.registerOnTrajectoryProgressCallback(0.95, new OnTrajectoryProgressCallback() {
+                    @Override
+                    public void onFailure(Exception e) {
+                        exceptionHandler.handleException("getDriversWithCapabilities service call failed", e);
+                    }
 
-                @Override
-                public void onProgress(double pct) {
-                    trajectory_start.set(false);
-                    speedTimeTree.clear();
-                }
-            });
+                });
 
-            currentState.set(GuidanceState.ACTIVE);
+        if (response[0] == null || response[0].getDriverData().size() == 0) {
+            exceptionHandler.handleException("cannot find suitable CAN driver",
+                    new RosRuntimeException("No CAN driver is found"));
         }
 
+        for (String driver_url : response[0].getDriverData()) {
+            if (driver_url.endsWith("/can/steering_wheel_angle")) {
+                steeringWheelSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
+                continue;
+            }
+            if (driver_url.endsWith("/can/brake_position")) {
+                brakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
+                continue;
+            }
+            if (driver_url.endsWith("/can/transmission_state")) {
+                transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url, TransmissionState._TYPE);
+                continue;
+            }
+            if (driver_url.endsWith("/can/traction_ctrl_active")) {
+                tractionActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+                continue;
+            }
+            if (driver_url.endsWith("/can/traction_ctrl_enabled")) {
+                tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+                continue;
+            }
+            if (driver_url.endsWith("/can/antilock_brakes_active")) {
+                antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+                continue;
+            }
+            if (driver_url.endsWith("/can/stability_ctrl_active")) {
+                stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+                continue;
+            }
+            if (driver_url.endsWith("/can/stability_ctrl_enabled")) {
+                stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+                continue;
+            }
+            if (driver_url.endsWith("/can/parking_brake")) {
+                parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
+            }
+        }
+
+        if (steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null
+                || tractionActiveSubscriber == null || tractionEnabledSubscriber == null
+                || antilockBrakeSubscriber == null || stabilityActiveSubscriber == null
+                || stabilityEnabledSubscriber == null || parkingBrakeSubscriber == null) {
+            log.warn("Tracking: initialize subs failed");
+        }
+
+        try {
+            ParameterTree param = node.getParameterTree();
+            vehicleLength = (float) param.getDouble("vehicle_length");
+            vehicleWidth = (float) param.getDouble("vehicle_width");
+            speed_error_limit = param.getDouble("~max_speed_error");
+            downtrack_error_limit = param.getDouble("~max_downtrack_error");
+        } catch (ParameterNotFoundException e1) {
+            exceptionHandler.handleException("Cannot found all parameters", e1);
+        } catch (ParameterClassCastException e2) {
+            exceptionHandler.handleException("Cannot cast on the parameter type", e2);
+        }
+
+        currentState.set(GuidanceState.DRIVERS_READY);
     }
 
-    protected class Engage implements Runnable {
+    @Override
+    public void onRouteActive() {
+        trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, new OnTrajectoryProgressCallback() {
 
-        @Override
-        public void run() {
-            currentState.set(GuidanceState.ENGAGED);
-        }
+            @Override
+            public void onProgress(double pct) {
+                if (trajectoryQueue.size() == 0) {
+                    log.warn("Cannot track errors for current Trajectory!");
+                } else {
+                    Trajectory currentTrajectory = trajectoryQueue.poll();
+                    trajectoryStartLocation = currentTrajectory.getStartLocation();
+                    trajectoryStartTime = System.currentTimeMillis();
+                    constructSpeedTimeTree(currentTrajectory.getLongitudinalManeuvers());
+                    trajectory_start.set(true);
+                }
+            }
+        });
 
+        trajectoryExecutor.registerOnTrajectoryProgressCallback(0.95, new OnTrajectoryProgressCallback() {
+
+            @Override
+            public void onProgress(double pct) {
+                trajectory_start.set(false);
+                speedTimeTree.clear();
+            }
+        });
+
+        currentState.set(GuidanceState.ACTIVE);
     }
 
-	protected class CleanRestart implements Runnable {
+    @Override
+    public void onEngaged() {
+        currentState.set(GuidanceState.ENGAGED);
+    }
 
-        @Override
-        public void run() {
-            
-            currentState.set(GuidanceState.DRIVERS_READY);
-            
-            //Reset member variables
-            trajectoryQueue.clear();
-            speedTimeTree.clear();
-            trajectoryStartLocation = 0;
-            trajectoryStartTime = 0;
-            trajectory_start.set(false);
-        }
-        
+    @Override
+    public void onCleanRestart() {
+        currentState.set(GuidanceState.DRIVERS_READY);
+
+        // Reset member variables
+        trajectoryQueue.clear();
+        speedTimeTree.clear();
+        trajectoryStartLocation = 0;
+        trajectoryStartTime = 0;
+        trajectory_start.set(false);
     }
 	
 	@Override
@@ -649,22 +625,22 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
         log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
         switch (action) {
         case INTIALIZE:
-            jobQueue.add(new SystemReady());
+            jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(new RouteActive());
+            jobQueue.add(this::onRouteActive);
             break;
         case ENGAGE:
-            jobQueue.add(new Engage());
+            jobQueue.add(this::onEngaged);
             break;
         case SHUTDOWN:
-            jobQueue.add(new Shutdown(getComponentName() + " is about to SHUTDOWN!"));
+            jobQueue.add(this::onShutdown);
             break;
         case RESTART:
-            jobQueue.add(new CleanRestart());
+            jobQueue.add(this::onCleanRestart);
             break;
         default:
-            break;
+            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
     }
 }

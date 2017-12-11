@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 /**
  * Provides facilities to handle caught/uncaught exception signal a guidance-wide PANIC event in
@@ -24,11 +25,10 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
  */
 public class GuidanceExceptionHandler {
     
-    private ILogger log;
+    private ILogger log = LoggerManager.getLogger();
     private GuidanceStateMachine stateMachine;
     
-    public GuidanceExceptionHandler(ILogger log, GuidanceStateMachine stateMachine) {
-        this.log = log;
+    public GuidanceExceptionHandler(GuidanceStateMachine stateMachine) {
         this.stateMachine = stateMachine;
     }
 
