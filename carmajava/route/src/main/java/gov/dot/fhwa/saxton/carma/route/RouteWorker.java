@@ -76,7 +76,7 @@ public class RouteWorker {
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
   protected int routeStateSeq = 0;
-  protected int requiredLeftRouteCount = 3;
+  protected final int requiredLeftRouteCount;
   protected int recievedLeftRouteEvents = 0;
 
   /**
