@@ -26,7 +26,7 @@ TransformServer::TransformServer(int argc, char **argv) : tfListener_(tfBuffer_)
 
 bool TransformServer::get_transform_cb(cav_srvs::GetTransform::Request  &req, cav_srvs::GetTransform::Response &res) {
   try{
-    res.transform = tfBuffer_.lookupTransform(req.parent_frame, req.child_frame, ros::Time(0));
+    res.transform = tfBuffer_.lookupTransform(req.parent_frame, req.child_frame, req.stamp);
     res.errorStatus = res.NO_ERROR;
   }
   catch (tf2::TransformException &ex) {
