@@ -383,6 +383,8 @@ public class RouteWorker {
       if (recievedLeftRouteEvents >= requiredLeftRouteCount) {
         handleEvent(WorkerEvent.LEFT_ROUTE);
       }
+    } else {
+      recievedLeftRouteEvents = 0; // reset count to 0 if we are back on the route
     }
 
     // Publish updated route information
