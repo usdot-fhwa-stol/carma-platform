@@ -135,7 +135,7 @@ public class EnvironmentWorker {
     // Check if base_link->position_sensor tf is available. If not look it up
     if (baseToPositionSensor == null) {
       // This transform should be static. No need to look up more than once
-      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame);
+      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame, Time.fromMillis(0));
       if (baseToPositionSensor == null) {
         return; // If the request for this transform failed wait for another position update to request it
       }
@@ -192,7 +192,7 @@ public class EnvironmentWorker {
     // Check if base_link->position_sensor tf is available. If not look it up
     if (baseToPositionSensor == null) {
       // This transform should be static. No need to look up more than once
-      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame);
+      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame, odometry.getHeader().getStamp());
       if (baseToPositionSensor == null) {
         return; // If the request for this transform failed wait for another odometry update to request it
       }

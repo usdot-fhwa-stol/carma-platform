@@ -76,7 +76,7 @@ class TestTransformServer(unittest.TestCase):
         # Lookup regular transform using service
         try:
             get_transform = rospy.ServiceProxy('get_transform', GetTransform)
-            response = get_transform("base_link", "host_vehicle")
+            response = get_transform("base_link", "host_vehicle", rospy.Time())
             if response.errorStatus != 0:
                 self.fail("Response returned with error %s" % response.errorStatus)
             self.assertTrue(self.are_equal_transforms(response.transform, tf_stamped), "Returned transform is not equal")

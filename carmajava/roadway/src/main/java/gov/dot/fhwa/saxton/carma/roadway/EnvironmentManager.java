@@ -211,10 +211,11 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     }
   }
 
-  @Override public Transform getTransform(String parentFrame, String childFrame) {
+  @Override public Transform getTransform(String parentFrame, String childFrame, Time stamp) {
     final GetTransformRequest req = getTransformClient.newMessage();
     req.setParentFrame(parentFrame);
     req.setChildFrame(childFrame);
+    req.setStamp(stamp);
     final ResultHolder<Transform> rh = new ResultHolder<>();
     try {
       RosServiceSynchronizer.callSync(getTransformClient, req,
