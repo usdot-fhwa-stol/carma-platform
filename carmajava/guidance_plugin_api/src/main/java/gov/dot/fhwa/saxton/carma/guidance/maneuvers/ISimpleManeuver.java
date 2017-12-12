@@ -84,5 +84,12 @@ public interface ISimpleManeuver extends IManeuver {
      * @throws UnsupportedOperationException if called on a lateral maneuver
      */
     boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException;
+    
+    /**
+     * Specifies the maximum acceleration allowed in the maneuver. Note that this value will apply to both speeding
+     * up and slowing down (symmetrical).
+     * @param limit - max (absolute value) allowed, m/s^2
+     */
+    void setMaxAccel(double limit);
 }
 

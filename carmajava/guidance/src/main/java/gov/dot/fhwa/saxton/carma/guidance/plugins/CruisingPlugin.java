@@ -18,7 +18,9 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
@@ -92,6 +94,7 @@ public class CruisingPlugin extends AbstractPlugin {
     return Math.abs(a - b) < epsilon;
   }
 
+  @Deprecated
   protected List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed, double trajEndSpeed) {
     List<LongitudinalManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
@@ -161,52 +164,33 @@ public class CruisingPlugin extends AbstractPlugin {
    */
   protected double planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
     ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
+    SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory();
     log.info(String.format("Trying to plan maneuver {start=%.2f,end=%.2f,startSpeed=%.2f,endSpeed=%.2f}", startDist, endDist, startSpeed, endSpeed));
     double maneuverEnd = startDist;
     double adjustedEndSpeed = startSpeed;
-    if(startSpeed < endSpeed) {
-      // Generate a speed-up maneuver
-      SpeedUp speedUp = new SpeedUp();
-      speedUp.setSpeeds(startSpeed, endSpeed);
-      speedUp.setMaxAccel(maxAccel_);
-      if(planner.canPlan(speedUp, startDist, endDist)) {
-        planner.planManeuver(speedUp, startDist);
-        if(speedUp.getEndDistance() > endDist) {
+    ISimpleManeuver maneuver = maneuverFactory.createManeuver(startSpeed, endSpeed);
+    maneuver.setSpeeds(startSpeed, endSpeed);
+    maneuver.setMaxAccel(maxAccel_);
+    if(planner.canPlan(maneuver, startDist, endDist)) {
+        planner.planManeuver(maneuver, startDist);
+        if(maneuver.getEndDistance() > endDist) {
             maneuverEnd = endDist;
-            adjustedEndSpeed = planner.planManeuver(speedUp, startDist, endDist);
+            adjustedEndSpeed = planner.planManeuver(maneuver, startDist, endDist);
         } else {
-            maneuverEnd = speedUp.getEndDistance();
+            maneuverEnd = maneuver.getEndDistance();
             adjustedEndSpeed = endSpeed;
         }
-        t.addManeuver(speedUp);
-        log.info(String.format("Planned SPEED-UP maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, endSpeed, startDist, endDist));
-      }
-    } else if(startSpeed > endSpeed) {
-      // Generate a slow-down maneuver
-      SlowDown slowDown = new SlowDown();
-      slowDown.setSpeeds(startSpeed, endSpeed);
-      slowDown.setMaxAccel(maxAccel_);
-      if(planner.canPlan(slowDown, startDist, endDist)) {
-        planner.planManeuver(slowDown, startDist);
-        if(slowDown.getEndDistance() > endDist) {
-            maneuverEnd = endDist;
-            adjustedEndSpeed = planner.planManeuver(slowDown, startDist, endDist);
-        } else {
-            maneuverEnd = slowDown.getEndDistance();
-            adjustedEndSpeed = endSpeed;
-        }
-        t.addManeuver(slowDown);
-        log.info(String.format("Planned SLOW-DOWN maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, endSpeed, startDist, endDist));
-      }
+        t.addManeuver(maneuver);
+        log.info(String.format("Planned maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, endSpeed, startDist, endDist));
     }
     
     // Insert a steady speed maneuver to fill whatever's left
     if(maneuverEnd < endDist) {
-        SteadySpeed steady = new SteadySpeed();
+        ISimpleManeuver steady = maneuverFactory.createManeuver(adjustedEndSpeed, adjustedEndSpeed);
         steady.setSpeeds(adjustedEndSpeed, adjustedEndSpeed);
         steady.setMaxAccel(maxAccel_);
         planner.planManeuver(steady, maneuverEnd);
-        steady.overrideEndDistance(endDist);
+        ((SteadySpeed) steady).overrideEndDistance(endDist);
         t.addManeuver(steady);
         log.info(String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", adjustedEndSpeed, adjustedEndSpeed, endDist));
     }
