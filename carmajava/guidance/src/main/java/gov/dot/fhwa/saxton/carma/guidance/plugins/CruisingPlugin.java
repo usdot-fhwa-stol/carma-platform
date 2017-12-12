@@ -21,8 +21,6 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
@@ -173,15 +171,17 @@ public class CruisingPlugin extends AbstractPlugin {
     maneuver.setMaxAccel(maxAccel_);
     if(planner.canPlan(maneuver, startDist, endDist)) {
         planner.planManeuver(maneuver, startDist);
+        if(maneuver instanceof SteadySpeed) {
+            ((SteadySpeed) maneuver).overrideEndDistance(endDist);
+        }
         if(maneuver.getEndDistance() > endDist) {
-            maneuverEnd = endDist;
             adjustedEndSpeed = planner.planManeuver(maneuver, startDist, endDist);
         } else {
-            maneuverEnd = maneuver.getEndDistance();
-            adjustedEndSpeed = endSpeed;
+            adjustedEndSpeed = maneuver.getTargetSpeed();
         }
+        maneuverEnd = maneuver.getEndDistance();
         t.addManeuver(maneuver);
-        log.info(String.format("Planned maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, endSpeed, startDist, endDist));
+        log.info(String.format("Planned maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, adjustedEndSpeed, startDist, maneuverEnd));
     }
     
     // Insert a steady speed maneuver to fill whatever's left
