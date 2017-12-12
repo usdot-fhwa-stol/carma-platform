@@ -94,7 +94,7 @@ public class CruisingPlugin extends AbstractPlugin {
     return Math.abs(a - b) < epsilon;
   }
 
-  @Deprecated
+  //TODO: Maybe we should remove this method since no one is using it
   protected List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed, double trajEndSpeed) {
     List<LongitudinalManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     longitudinalManeuvers.sort(new Comparator<IManeuver>() {
@@ -192,7 +192,7 @@ public class CruisingPlugin extends AbstractPlugin {
         planner.planManeuver(steady, maneuverEnd);
         ((SteadySpeed) steady).overrideEndDistance(endDist);
         t.addManeuver(steady);
-        log.info(String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", adjustedEndSpeed, adjustedEndSpeed, endDist));
+        log.info(String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", adjustedEndSpeed, maneuverEnd, endDist));
     }
     
     return adjustedEndSpeed;
