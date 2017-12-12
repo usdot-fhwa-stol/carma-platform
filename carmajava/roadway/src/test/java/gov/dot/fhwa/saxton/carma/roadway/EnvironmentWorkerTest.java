@@ -287,7 +287,7 @@ public class EnvironmentWorkerTest {
     navMsg.setAltitude(0);
     envWkr.handleNavSatFixMsg(navMsg);
 
-    assertTrue(envWkr.nabSatFixReceived);
+    assertTrue(envWkr.navSatFixReceived);
     assertTrue(envWkr.hostVehicleLocation.almostEqual(new Location(0,0,0), 0.00001, 0.0000001));
 
     // First time calling nav sat fix so check earth to map transform (should be an NED frame at starting location)
