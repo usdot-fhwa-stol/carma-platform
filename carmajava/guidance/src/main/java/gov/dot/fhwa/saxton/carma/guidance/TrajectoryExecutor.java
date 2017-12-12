@@ -19,15 +19,14 @@ package gov.dot.fhwa.saxton.carma.guidance;
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package TrajectoryExecutor component
@@ -36,11 +35,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * maneuvers in a Trajectory planned by the Arbitrator and the Guidance package's
  * currently configured plugins.
  */
-public class TrajectoryExecutor extends GuidanceComponent {
+public class TrajectoryExecutor extends GuidanceComponent implements IStateChangeListener {
     // Member variables
     protected ISubscriber<RouteState> routeStateSubscriber;
     protected GuidanceCommands commands;
-    protected AtomicReference<GuidanceState> state;
     protected TrajectoryExecutorWorker trajectoryExecutorWorker;
     protected Trajectory currentTrajectory;
     protected Tracking tracking_;
@@ -56,16 +54,17 @@ public class TrajectoryExecutor extends GuidanceComponent {
     protected double maxAccel;
     protected long sleepDurationMillis = 100;
 
-    public TrajectoryExecutor(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
+    public TrajectoryExecutor(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node,
             GuidanceCommands commands, Tracking tracking) {
-        super(state, iPubSubService, node);
-        this.state = state;
+        super(stateMachine, iPubSubService, node);
         this.commands = commands;
         this.tracking_ = tracking;
 
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
-
         trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
+        
+        jobQueue.add(this::onStartup);
+        stateMachine.registerStateChangeListener(this);
     }
 
     @Override
@@ -74,18 +73,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
     }
 
     @Override
-    public void onGuidanceStartup() {
-        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-            @Override
-            public void onMessage(RouteState msg) {
-                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
-                if (state.get() == GuidanceState.ENGAGED) {
-                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
-                }
-            }
-        });
-
+    public void onStartup() {
         operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
         amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
         phase = node.getParameterTree().getDouble("~trajectory_phase");
@@ -94,25 +82,52 @@ public class TrajectoryExecutor extends GuidanceComponent {
         holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
         useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
         sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
+
+        currentState.set(GuidanceState.STARTUP);
     }
 
     @Override
     public void onSystemReady() {
-        // NO-OP
+        currentState.set(GuidanceState.DRIVERS_READY);
     }
 
     @Override
-    public void onGuidanceEnable() {
+    public void onRouteActive() {
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+            @Override
+            public void onMessage(RouteState msg) {
+                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
+                if (currentState.get() == GuidanceState.ENGAGED) {
+                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
+                }
+            }
+        });
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onEngaged() {
         startTime = (long) node.getCurrentTime().toSeconds() * 1000;
-
         if (currentTrajectory != null && !bufferedTrajectoryRunning) {
             log.info("Running buffered trajectory!");
-            trajectoryExecutorWorker.runTrajectory(currentTrajectory);
             tracking_.addNewTrajectory(currentTrajectory);
+            trajectoryExecutorWorker.runTrajectory(currentTrajectory);
             bufferedTrajectoryRunning = true;
         }
+        currentState.set(GuidanceState.ENGAGED);
     }
 
+    @Override
+    public void onCleanRestart() {
+        currentState.set(GuidanceState.DRIVERS_READY);
+        TrajectoryExecutor.this.abortTrajectory();
+        this.unregisterAllTrajectoryProgressCallback();
+        currentTrajectory = null;
+        bufferedTrajectoryRunning = false;
+        startTime = 0;
+    }
+    
     /**
      * Compute the sinusoidal part of the trajectory
      * 
@@ -131,9 +146,9 @@ public class TrajectoryExecutor extends GuidanceComponent {
     }
 
     @Override
-    public void loop() throws InterruptedException {
+    public void timingLoop() throws InterruptedException {
         // Generate a simple sin(t) speed command
-        if (state.get() == GuidanceState.ENGAGED && useSinTrajectory) {
+        if (currentState.get() == GuidanceState.ENGAGED && useSinTrajectory) {
             if ((node.getCurrentTime().toSeconds() * 1000) - startTime < holdTimeMs) {
                 commands.setCommand(operatingSpeed, maxAccel);
             } else {
@@ -216,6 +231,13 @@ public class TrajectoryExecutor extends GuidanceComponent {
         trajectoryExecutorWorker.unregisterOnTrajectoryProgressCallback(callback);
     }
 
+    /**
+     * Unregister all callbacks
+     */
+    public void unregisterAllTrajectoryProgressCallback() {
+        trajectoryExecutorWorker.unregisterAllTrajectoryProgressCallback();
+    }
+    
   /**
    * Submit the specified trajectory for execution
    * </p>
@@ -241,7 +263,7 @@ public class TrajectoryExecutor extends GuidanceComponent {
             idx++;
         }
 
-        if (state.get() == GuidanceState.ENGAGED) {
+        if (currentState.get() == GuidanceState.ENGAGED) {
             log.info("TrajectoryExecutor running trajectory!");
             tracking_.addNewTrajectory(traj);
             trajectoryExecutorWorker.runTrajectory(traj);
@@ -258,5 +280,32 @@ public class TrajectoryExecutor extends GuidanceComponent {
      */
     public Trajectory getCurrentTrajectory() {
         return trajectoryExecutorWorker.getCurrentTrajectory();
+    }
+    
+    /*
+     * This method add the right job in the jobQueue base on the oldstate and newState of Guidance
+     * The actual changing of GuidanceState copy is happened after each job is finished
+     */
+    @Override
+    public void onStateChange(GuidanceAction action) {
+        switch (action) {
+        case INTIALIZE:
+            jobQueue.add(this::onSystemReady);
+            break;
+        case ACTIVATE:
+            jobQueue.add(this::onRouteActive);
+            break;
+        case ENGAGE:
+            jobQueue.add(this::onEngaged);
+            break;
+        case SHUTDOWN:
+            jobQueue.add(this::onShutdown);
+            break;
+        case RESTART:
+            jobQueue.add(this::onCleanRestart);
+            break;
+        default:
+            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+        }
     }
 }

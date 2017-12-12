@@ -16,38 +16,31 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-import java.util.concurrent.atomic.*;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 /**
- * Top level exception handling logic for Guidance.
- * </p>
- * Should be invoked where uncaught exceptions are involved in GuidanceComponent execution and in
- * the Guidance framework writ-large. Provides facilities to signal a system-wide PANIC state in
+ * Provides facilities to handle caught/uncaught exception signal a guidance-wide PANIC event in
  * the event of unrecoverable conditions arising.
  */
 public class GuidanceExceptionHandler {
-    protected final ILogger log = LoggerManager.getLogger();
-    protected AtomicReference<GuidanceState> state;
-
-    GuidanceExceptionHandler(AtomicReference<GuidanceState> state) {
-        this.state = state;
+    
+    private ILogger log = LoggerManager.getLogger();
+    private GuidanceStateMachine stateMachine;
+    
+    public GuidanceExceptionHandler(GuidanceStateMachine stateMachine) {
+        this.stateMachine = stateMachine;
     }
 
-    /**
-     * Handle an exception that hasn't been caught anywhere else.
-     * Will result in guidance shutdown.
-     */
+    // Handle an uncaught exception, which will result in guidance shutdown.
     public void handleException(Throwable e) {
-        // This code feels redundant with GuidanceComponent#panic() but I'm not sure how to handle that
-        // GuidanceComponent#panic() is an intentional recognition that the scenario is beyond our control
-        // And this is that some unexpected uncontrollable event has occurred. I like differentiating b/w
-        // these cases but it leads to redundant code like this. Maybe a refactor is in order?
-        log.error("Global guidance exception handler caught exception from thread: " + Thread.currentThread().getName(),
-                e);
-
-        state.set(GuidanceState.SHUTDOWN);
+        log.error("Global guidance exception handler caught an uncaught exception from thread: " + Thread.currentThread().getName(), e);
+        stateMachine.processEvent(GuidanceEvent.PANIC);
     }
 
+    // 
+    public void handleException(String s, Throwable e) {
+        log.error(s, e);
+        stateMachine.processEvent(GuidanceEvent.PANIC);
+    }
 }

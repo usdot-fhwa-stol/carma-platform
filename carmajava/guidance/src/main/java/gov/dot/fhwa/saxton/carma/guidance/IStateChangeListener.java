@@ -14,17 +14,16 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.arbitrator;
+package gov.dot.fhwa.saxton.carma.guidance;
 
 /**
- * Events that the {@link ArbitratorStateMachine} is capable of responding to
+ * Listener to receive notification of changes in the state machine
  */
-public enum ArbitratorEvent {
-  INITIALIZE,
-  FINISHED_TRAJECTORY_PLANNING,
-  EXECUTING_COMPLEX_TRAJECTORY,
-  TRAJECTORY_COMPLETION_ALERT,
-  TRAJECTORY_FAILED_EXECUTION,
-  COMPLEX_TRAJECTORY_COMPLETION_ALERT,
-  CLEAN_RESTART
+public interface IStateChangeListener {
+    
+    /*
+     * Called when the state has changed after an event has been processed
+     */
+    public void onStateChange(GuidanceAction action);
+    
 }

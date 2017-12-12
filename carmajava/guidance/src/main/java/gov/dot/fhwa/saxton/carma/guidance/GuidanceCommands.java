@@ -23,15 +23,15 @@ import cav_srvs.GetDriversWithCapabilitiesResponse;
 import cav_srvs.SetEnableRobotic;
 import cav_srvs.SetEnableRoboticRequest;
 import cav_srvs.SetEnableRoboticResponse;
-import gov.dot.fhwa.saxton.carma.rosutils.*;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.*;
 
 /**
 * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.*;
 * and it's Maneuver instances and latching on those commands until a new one is received. This will output
 * the most recently latched value at a fixed frequency.
 */
-public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands {
+public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands, IStateChangeListener {
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
@@ -49,16 +49,16 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
     private long lastTimestep = -1;
-    private AtomicBoolean engaged = new AtomicBoolean(false);
-    private boolean driverConnected = false;
     private double vehicleAccelLimit = 2.5;
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
 
-    GuidanceCommands(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
-        super(state, iPubSubService, node);
+    GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
+        super(stateMachine, iPubSubService, node);
+        this.jobQueue.add(this::onStartup);
+        stateMachine.registerStateChangeListener(this);
     }
 
     @Override
@@ -67,66 +67,19 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
 
     @Override
-    public void onGuidanceStartup() {
-        vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
-        log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
-    }
-
-    @Override
-    public void onGuidanceEnable() {
-        SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
-        enableReq.setSet((byte) 1);
-
-        // TODO: Implement no-response call method
-        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
-            @Override
-            public void onSuccess(SetEnableRoboticResponse resp) {
-                // NO-OP
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                // NO-OP
-            }
-        });
-
-        engaged.set(true);
-    }
-
-    /**
-    * Change the current output of the GuidanceCommands thread.
-    *
-    * GuidanceCommands will output the specified speed and accel commands at the configured
-    * frequency until new values are set. This function is thread safe through usage of
-    * {@link AtomicDouble} functionality
-    *
-    * @param speed The speed to output
-    * @param accel The maximum allowable acceleration in attaining and maintaining that speed
-    */
-    @Override
-    public void setCommand(double speed, double accel) {
-        if (speed > MAX_SPEED_CMD_M_S) {
-            log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
-                    + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
-            speed = MAX_SPEED_CMD_M_S;
-        } else if (speed < 0.0) {
-            log.warn("GuidanceCommands received negative command from maneuver, clamping to 0.0");
-            speed = 0.0;
-        }
-
-        speedCommand.set(speed);
-        maxAccel.set(Math.min(Math.abs(accel), Math.abs(vehicleAccelLimit)));
-        log.info("CONTROLS", "Speed command set to " + speedCommand.get() + "m/s and " + maxAccel.get() + "m/s/s");
+    public void onStartup() {
+            vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
+            log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
+            currentState.set(GuidanceState.STARTUP);
     }
 
     @Override
     public void onSystemReady() {
         // Register with the interface manager's service
         try {
-            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                    GetDriversWithCapabilities._TYPE);
+            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
         } catch (TopicNotFoundException tnfe) {
-            panic("Interface manager not found.");
+            exceptionHandler.handleException("Interface manager not found.", tnfe);
         }
 
         // Build our request message
@@ -146,9 +99,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
             @Override
             public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                log.info("Received GetDriversWithCapabilitiesResponse");
+                log.debug("Received GetDriversWithCapabilitiesResponse");
                 for (String driverName : msg.getDriverData()) {
-                    log.info("GuidanceCommands discovered driver: " + driverName);
+                    log.debug("GuidanceCommands discovered driver: " + driverName);
                 }
 
                 drivers[0] = msg;
@@ -156,7 +109,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
             @Override
             public void onFailure(Exception e) {
-                panic("InterfaceManager failed to return a control/cmd_speed capable driver!!!");
+                exceptionHandler.handleException("InterfaceManager failed to return a control/cmd_speed capable driver!!!", e);
             }
         });
 
@@ -185,21 +138,99 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
             try {
                 enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
-                driverConnected = true;
             } catch (TopicNotFoundException tnfe) {
-                panic("GuidanceCommands unable to locate control/enable_robotic service for " + roboticEnableTopic);
+                exceptionHandler.handleException("GuidanceCommands unable to locate control/enable_robotic service", tnfe);
             }
         } else {
-            panic("GuidanceCommands unable to find suitable controller driver!");
+            exceptionHandler.handleException("GuidanceCommands unable to find suitable controller driver!", new RosRuntimeException("No controller drivers."));
         }
+        
+        currentState.set(GuidanceState.DRIVERS_READY);
+    }
+    
+    @Override
+    public void onRouteActive() {
+        SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
+        enableReq.setSet((byte) 1);
+
+        // TODO: Implement no-response call method
+        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+            @Override
+            public void onSuccess(SetEnableRoboticResponse resp) {
+                // NO-OP
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                exceptionHandler.handleException("Unable to call enable robotic service", e);
+            }
+        });
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onEngaged() {
+        currentState.set(GuidanceState.ENGAGED);
     }
 
     @Override
-    public void loop() throws InterruptedException {
+    public void onCleanRestart() {
+        currentState.set(GuidanceState.DRIVERS_READY);
+        
+        //Reset member variables
+        speedCommand.set(0.0);
+        maxAccel.set(0.0);
+        lastTimestep = -1;
+        
+        SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
+        enableReq.setSet((byte) 0);
+
+        // TODO: Implement no-response call method
+        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+            @Override
+            public void onSuccess(SetEnableRoboticResponse resp) {
+                // NO-OP
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                exceptionHandler.handleException("Unable to call disable robotic service", e);
+            }
+        });
+    }
+    
+    /**
+    * Change the current output of the GuidanceCommands thread.
+    *
+    * GuidanceCommands will output the specified speed and accel commands at the configured
+    * frequency until new values are set. This function is thread safe through usage of
+    * {@link AtomicDouble} functionality
+    *
+    * @param speed The speed to output
+    * @param accel The maximum allowable acceleration in attaining and maintaining that speed
+    */
+    @Override
+    public void setCommand(double speed, double accel) {
+        if (speed > MAX_SPEED_CMD_M_S) {
+            log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
+                    + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
+            speed = MAX_SPEED_CMD_M_S;
+        } else if (speed < 0.0) {
+            log.warn("GuidanceCommands received negative command from maneuver, clamping to 0.0");
+            speed = 0.0;
+        }
+
+        speedCommand.set(speed);
+        maxAccel.set(Math.min(Math.abs(accel), Math.abs(vehicleAccelLimit)));
+        log.info("CONTROLS", "Speed command set to " + speedCommand.get() + "m/s and " + maxAccel.get() + "m/s/s");
+    }
+    
+    @Override
+    public void timingLoop() throws InterruptedException {
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
 
-        if (engaged.get() && driverConnected) {
+        if (currentState.get() == GuidanceState.ENGAGED) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             msg.setSpeed(speedCommand.get());
             msg.setMaxAccel(maxAccel.get());
@@ -210,7 +241,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         long iterEndTime = System.currentTimeMillis();
 
         // Not our first timestep, check timestep spacings
-        if (engaged.get() && driverConnected && lastTimestep > -1) {
+        if (currentState.get() == GuidanceState.ENGAGED && lastTimestep > -1) {
             if (iterEndTime - lastTimestep > CONTROLLER_TIMEOUT_PERIOD_MS) {
                 log.error(
                         "!!!!! GUIDANCE COMMANDS LOOP EXCEEDED CONTROLLER TIMEOUT AFTER " 
@@ -222,5 +253,33 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         lastTimestep = iterEndTime;
 
         Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
+    }
+
+    /*
+     * This method add the right job in the jobQueue base on the instruction given by GuidanceStateMachine
+     * The actual changing of GuidanceState local copy is happened when each job is performed
+     */
+    @Override
+    public void onStateChange(GuidanceAction action) {
+        log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+        switch (action) {
+        case INTIALIZE:
+            jobQueue.add(this::onSystemReady);
+            break;
+        case ACTIVATE:
+            jobQueue.add(this::onRouteActive);
+            break;
+        case ENGAGE:
+            jobQueue.add(this::onEngaged);
+            break;
+        case SHUTDOWN:
+            jobQueue.add(this::onShutdown);
+            break;
+        case RESTART:
+            jobQueue.add(this::onCleanRestart);
+            break;
+        default:
+            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+        }
     }
 }
