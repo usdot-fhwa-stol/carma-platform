@@ -2,6 +2,9 @@
 # Defines the ros parameters which are required by the Route package
 
 # String: The path to the database containing any route files for use in testing and demonstration.
-# Still trying to determine how to make this work with relative paths
 # If the path starts with a "/" then it is treated as absolute otherwise it should be relative to the package path
 default_database_path: 'route/src/test/resources/routefiles/'
+
+# Integer: The number of left route alerts which must be handled before
+# the RouteManager node will notify the rest of the platform via a system alert
+required_left_route_count: 3
