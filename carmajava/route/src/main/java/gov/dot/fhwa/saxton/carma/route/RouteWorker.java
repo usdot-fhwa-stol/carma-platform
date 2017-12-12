@@ -54,11 +54,11 @@ public class RouteWorker {
     /*STATES: LoadingRoutes(0), RouteSelection(1), WaitingToStart(2), FollowingRoute(3) */
     /*          EVENTS           */
     { 1, 1, 2, 3 }, /*FILES_LOADED    */
-    { 0, 2, 2, 3 }, /*ROUTE_SELECTED  */
-    { 0, 1, 2, 1 }, /*ROUTE_COMPLETED */
-    { 0, 1, 2, 2 }, /*LEFT_ROUTE      */
-    { 0, 1, 2, 2 }, /*SYSTEM_FAILURE  */
-    { 0, 1, 2, 2 }, /*SYSTEM_NOT_READY*/
+    { 0, 2, 2, 2 }, /*ROUTE_SELECTED  */
+    { 0, 1, 1, 1 }, /*ROUTE_COMPLETED */
+    { 0, 1, 1, 1 }, /*LEFT_ROUTE      */
+    { 0, 1, 1, 1 }, /*SYSTEM_FAILURE  */
+    { 0, 1, 1, 1 }, /*SYSTEM_NOT_READY*/
     { 0, 1, 3, 3 }, /*ROUTE_STARTED   */
     { 0, 1, 1, 1 }, /*ROUTE_ABORTED   */ };
 
@@ -121,6 +121,20 @@ public class RouteWorker {
       }
     }
     // At this point the current state should be WaitingForRouteSelection
+  }
+
+  /**
+   * Helper method which resets all the variables which maintain the route following state to their default values
+   */
+  protected void resetRouteStateVariables() {
+    activeRoute = null;
+    currentSegment = null;
+    currentSegmentIndex = 0;
+    currentWaypointIndex = 0;
+    downtrackDistance = 0;
+    crossTrackDistance = 0;
+    routeStateSeq = 0;
+    recievedLeftRouteEvents = 0;
   }
 
   /**
@@ -228,6 +242,7 @@ public class RouteWorker {
     if (route == null) {
       return SetActiveRouteResponse.NO_ROUTE;
     } else {
+      resetRouteStateVariables(); // Reset all route state variables when a new route is selected
       activeRoute = route;
 
       handleEvent(WorkerEvent.ROUTE_SELECTED);
