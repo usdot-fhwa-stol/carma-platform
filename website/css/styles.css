@@ -184,7 +184,16 @@ input:disabled + label { /* Disabled format */
     background-color: gray;
 }
 
-
+#btnOk
+{
+    height: 80px;
+    width: 220px;
+    background-color:#336699;
+    color: white;
+    font-size: 25px;
+    position: relative;
+    left: 0px;
+}
 /*** Message Box ***/
 div.message_box {
     display: block;

@@ -21,68 +21,109 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance sub-component responsible for the execution of maneuvers and generation of maneuver plans
  */
-public class Maneuvers extends GuidanceComponent {
-    Maneuvers(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
-        super(state, iPubSubService, node);
-    }
-
-    @Override public String getComponentName() {
-        return "Guidance.Maneuvers";
-    }
-
+public class Maneuvers extends GuidanceComponent implements IStateChangeListener {
+    
     private IPublisher<NewPlan> newPlanPublisher;
     private ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber;
     private ISubscriber<Route> routeSubscriber;
+    protected long sleepDurationMillis = 30000;
+    protected short curPlanId = 0;
+    
+    Maneuvers(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
+        super(stateMachine, iPubSubService, node);
+        jobQueue.add(this::onStartup);
+        stateMachine.registerStateChangeListener(this);
+    }
 
-    @Override public void onGuidanceStartup() {
+    @Override
+    public String getComponentName() {
+        return "Guidance.Maneuvers";
+    }
+    
+    @Override
+    public void onStartup() {
         // Set up subscribers
-        roadwayEnvironmentSubscriber =
-            pubSubService.getSubscriberForTopic("roadway_environment",
+        roadwayEnvironmentSubscriber = pubSubService.getSubscriberForTopic("roadway_environment",
                 RoadwayEnvironment._TYPE);
 
-        roadwayEnvironmentSubscriber.registerOnMessageCallback(
-                new OnMessageCallback<RoadwayEnvironment>() {
-            @Override public void onMessage(RoadwayEnvironment msg) {
+        roadwayEnvironmentSubscriber.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
+            @Override
+            public void onMessage(RoadwayEnvironment msg) {
                 log.info("Received RoadwayEnvironment:" + msg);
             }
         });
 
-        routeSubscriber = pubSubService.getSubscriberForTopic("route",
-            Route._TYPE);
+        routeSubscriber = pubSubService.getSubscriberForTopic("route", Route._TYPE);
 
         routeSubscriber.registerOnMessageCallback(new OnMessageCallback<Route>() {
-            @Override public void onMessage(Route msg) {
+            @Override
+            public void onMessage(Route msg) {
                 log.info("Received Route:" + msg);
             }
         });
 
         // Set up publishers
-        newPlanPublisher = pubSubService
-            .getPublisherForTopic("new_plan", NewPlan._TYPE);
+        newPlanPublisher = pubSubService.getPublisherForTopic("new_plan", NewPlan._TYPE);
+        
+        currentState.set(GuidanceState.STARTUP);
+    }
 
-        while (!Thread.currentThread().isInterrupted()) {
+    @Override
+    public void onSystemReady() {
+        currentState.set(GuidanceState.DRIVERS_READY);
+    }
+    
+    @Override
+    public void onRouteActive() {
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onEngaged() {
+        currentState.set(GuidanceState.ENGAGED);
+    }
+    
+    @Override
+    public void onCleanRestart() {
+        currentState.set(GuidanceState.DRIVERS_READY);
+    }
+
+    @Override
+    public void onStateChange(GuidanceAction action) {
+        log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+        switch (action) {
+        case INTIALIZE:
+            jobQueue.add(this::onSystemReady);
+            break;
+        case ACTIVATE:
+            jobQueue.add(this::onRouteActive);
+            break;
+        case ENGAGE:
+            jobQueue.add(this::onEngaged);
+            break;
+        case SHUTDOWN:
+            jobQueue.add(this::onShutdown);
+            break;
+        case RESTART:
+            jobQueue.add(this::onCleanRestart);
+            break;
+        default:
+            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
     }
-
-    @Override public void onSystemReady() {
-
-    }
-
-    @Override public void onGuidanceEnable() {
-
-    }
-
-    @Override public void loop() {
-        if (getState() == GuidanceState.ENGAGED) {
+    
+    @Override public void timingLoop() {
+        if (currentState.get() == GuidanceState.ENGAGED) {
             NewPlan newPlan = newPlanPublisher.newMessage();
             newPlan.setExpiration(node.getCurrentTime());
             newPlan.getHeader().setChecksum((short) 0);
@@ -117,7 +158,4 @@ public class Maneuvers extends GuidanceComponent {
             Thread.currentThread().interrupt(); // Rethrow the interrupt
         }
     }
-
-    protected long sleepDurationMillis = 30000;
-    protected short curPlanId = 0;
 }

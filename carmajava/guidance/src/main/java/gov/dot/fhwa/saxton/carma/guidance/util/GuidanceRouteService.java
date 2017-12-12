@@ -130,7 +130,7 @@ public class GuidanceRouteService implements RouteService {
   @Override
   public SpeedLimit getSpeedLimitAtLocation(double location) {
     for (SpeedLimit limit : limits) {
-      if (limit.getLocation() > location) {
+      if (limit.getLocation() >= location) {
         return limit;
       }
     }
@@ -141,7 +141,7 @@ public class GuidanceRouteService implements RouteService {
   @Override
   public AlgorithmFlags getAlgorithmFlagsAtLocation(double location) {
     for (AlgorithmFlags flags : disabledAlgorithms) {
-      if (flags.getLocation() > location) {
+      if (flags.getLocation() >= location) {
         return flags;
       }
     }

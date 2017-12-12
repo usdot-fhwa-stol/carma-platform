@@ -17,14 +17,16 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import cav_msgs.Plugin;
-import cav_msgs.RouteState;
 import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
@@ -33,6 +35,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import org.reflections.Reflections;
+import org.ros.exception.RosRuntimeException;
 import org.ros.exception.ServiceException;
 import org.ros.message.MessageFactory;
 import org.ros.node.ConnectedNode;
@@ -42,12 +45,10 @@ import org.ros.node.service.ServiceServer;
 import std_msgs.Header;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Guidance package PluginManager component
@@ -55,7 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Responsible for instantiating, running, owning, and runtime management of
  * all plugins installed in the software's operating environment.
  */
-public class PluginManager extends GuidanceComponent implements AvailabilityListener {
+public class PluginManager extends GuidanceComponent implements AvailabilityListener, IStateChangeListener {
     protected final long sleepDurationMillis = 30000;
     protected int sequenceNumber = 0;
 
@@ -83,9 +84,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected int registeredPluginsSeqNum = 0;
     protected int activePluginsSeqNum = 0;
 
-    public PluginManager(AtomicReference<GuidanceState> state, IPubSubService pubSubManager, 
+    public PluginManager(GuidanceStateMachine stateMachine, IPubSubService pubSubManager, 
     IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService, ConnectedNode node) {
-        super(state, pubSubManager, node);
+        super(stateMachine, pubSubManager, node);
         this.executor = new PluginExecutor();
 
         pluginServiceLocator = new PluginServiceLocator(
@@ -110,6 +111,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pluginServiceLocator.getParameterSource(), 
                 pluginServiceLocator.getManeuverPlanner(), 
                 pluginServiceLocator.getRouteService());
+        jobQueue.add(this::onStartup);
+        stateMachine.registerStateChangeListener(this);
     }
 
     /**
@@ -192,11 +195,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     }
 
     @Override
-    public void onGuidanceStartup() {
+    public void onStartup() {
         // Instantiate the plugins and register them
         ignoredPluginClassNames = (List<String>) node.getParameterTree().getList("~ignored_plugins", new ArrayList<>());
-        requiredPluginClassNames = (List<String>) node.getParameterTree().getList("~required_plugins",
-                new ArrayList<>());
+        requiredPluginClassNames = (List<String>) node.getParameterTree().getList("~required_plugins", new ArrayList<>());
 
         log.info("STARTUP", "Ignoring plugins: " + ignoredPluginClassNames.toString());
         log.info("STARTUP", "Requiring plugins: " + requiredPluginClassNames.toString());
@@ -204,9 +206,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
         registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
         for (IPlugin p : getRegisteredPlugins()) {
-        	ComponentVersion v = p.getVersionInfo();
+            ComponentVersion v = p.getVersionInfo();
             executor.submitPlugin(p);
-            executor.initializePlugin(v.componentName(), v.revisionString()); //could provide all info in one arg with v.toString()
+            executor.initializePlugin(v.componentName(), v.revisionString()); // could provide all info in one arg
+                                                                              // with v.toString()
 
             try {
                 Thread.sleep(1000);
@@ -223,27 +226,36 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         messageFactory = nodeConfig.getTopicMessageFactory();
         pluginPublisher = pubSubService.getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
                 cav_msgs.PluginList._TYPE);
+        
+        currentState.set(GuidanceState.STARTUP);
     }
 
     @Override
     public void onSystemReady() {
+        currentState.set(GuidanceState.DRIVERS_READY);
     }
 
     @Override
-    public void onGuidanceEnable() {
+    public void onRouteActive() {
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onEngaged() {
         for (IPlugin p : getRegisteredPlugins()) {
             ComponentVersion v = p.getVersionInfo();
             if (p.getActivation()) {
                 executor.resumePlugin(v.componentName(), v.revisionString());
             }
         }
+        
+        currentState.set(GuidanceState.ENGAGED);
     }
 
     @Override
-    public void onGuidanceShutdown() {
-        // If we're shutting down, properly handle graceful plugin shutdown as well
+    public void onCleanRestart() {
         for (IPlugin p : getRegisteredPlugins()) {
-        	ComponentVersion v = p.getVersionInfo();
+            ComponentVersion v = p.getVersionInfo();
             p.setActivation(false);
             executor.suspendPlugin(v.componentName(), v.revisionString());
         }
@@ -255,9 +267,64 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         }
 
         for (IPlugin p : getRegisteredPlugins()) {
-        	ComponentVersion v = p.getVersionInfo();
+            ComponentVersion v = p.getVersionInfo();
             executor.terminatePlugin(v.componentName(), v.revisionString());
         }
+        
+        List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
+
+        registeredPlugins = instantiatePluginsFromClasses(pluginClasses, pluginServiceLocator);
+        for (IPlugin p : getRegisteredPlugins()) {
+            ComponentVersion v = p.getVersionInfo();
+            executor.submitPlugin(p);
+            executor.initializePlugin(v.componentName(), v.revisionString());
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        currentState.set(GuidanceState.DRIVERS_READY);
+    }
+    
+    @Override
+    public void onShutdown() {
+        log.fatal(getComponentName() + " is about to SHUTDOWN!");
+        
+        // If we're shutting down, properly handle graceful plugin shutdown as well
+        for (IPlugin p : getRegisteredPlugins()) {
+            ComponentVersion v = p.getVersionInfo();
+            p.setActivation(false);
+            executor.suspendPlugin(v.componentName(), v.revisionString());
+        }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (IPlugin p : getRegisteredPlugins()) {
+            ComponentVersion v = p.getVersionInfo();
+            executor.terminatePlugin(v.componentName(), v.revisionString());
+        }
+        
+        currentState.set(GuidanceState.SHUTDOWN);
+
+        // Log the fatal error
+        log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
+
+        // Alert the other ROS nodes to the FATAL condition
+        IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
+        SystemAlert fatalBroadcast = pub.newMessage();
+        fatalBroadcast.setDescription(getComponentName() + " has triggered a Guidance PANIC");
+        fatalBroadcast.setType(SystemAlert.FATAL);
+        pub.publish(fatalBroadcast);
+
+        // Cancel the loop
+        timingLoopThread.interrupt();
+        loopThread.interrupt();
     }
 
     /**
@@ -378,7 +445,6 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                     public void build(PluginActivationRequest pluginActivationRequest,
                             PluginActivationResponse pluginActivationResponse) throws ServiceException {
                         // Walk the plugin list and see which one matches the name and version
-                        boolean pluginFound = false;
                         for (IPlugin p : registeredPlugins) {
                         	ComponentVersion v = p.getVersionInfo();
                             if (pluginActivationRequest.getPluginName().equals(v.componentName())
@@ -397,4 +463,29 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                     }
                 });
     }
+
+    @Override
+    public void onStateChange(GuidanceAction action) {
+        log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+        switch (action) {
+        case INTIALIZE:
+            jobQueue.add(this::onSystemReady);
+            break;
+        case ACTIVATE:
+            jobQueue.add(this::onRouteActive);
+            break;
+        case ENGAGE:
+            jobQueue.add(this::onEngaged);
+            break;
+        case SHUTDOWN:
+            jobQueue.add(this::onShutdown);
+            break;
+        case RESTART:
+            jobQueue.add(this::onCleanRestart);
+            break;
+        default:
+            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+        }
+    }
+    
 }
