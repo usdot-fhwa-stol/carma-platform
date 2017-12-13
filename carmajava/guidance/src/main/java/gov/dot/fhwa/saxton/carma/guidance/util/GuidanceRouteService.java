@@ -25,6 +25,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+
 /**
  * Concrete implementation of RouteService responsible for handling processing of
  * Route data for consumption by plugins and other Guidance classes/components.
@@ -129,7 +130,7 @@ public class GuidanceRouteService implements RouteService {
   @Override
   public SpeedLimit getSpeedLimitAtLocation(double location) {
     for (SpeedLimit limit : limits) {
-      if (limit.getLocation() > location) {
+      if (limit.getLocation() >= location) {
         return limit;
       }
     }
@@ -140,7 +141,7 @@ public class GuidanceRouteService implements RouteService {
   @Override
   public AlgorithmFlags getAlgorithmFlagsAtLocation(double location) {
     for (AlgorithmFlags flags : disabledAlgorithms) {
-      if (flags.getLocation() > location) {
+      if (flags.getLocation() >= location) {
         return flags;
       }
     }

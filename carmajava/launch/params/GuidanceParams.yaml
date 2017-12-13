@@ -66,8 +66,8 @@ arbitrator_lateral_plugin: NoOp Plugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's longitudinal trajectory
 arbitrator_longitudinal_plugins: 
-  - Cruising Plugin
   - Speed Harmonization Plugin
+  - Cruising Plugin
 
 # Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
 use_sin_trajectory: false
@@ -106,11 +106,11 @@ vehicle_acceleration_limit: 2.5
 
 # Double: Time headway to control to with ACC
 # Units: seconds
-desired_acc_timegap: 1.0
+desired_acc_timegap: 0.0
 
 # Double: Minimum distance between vehicle and front vehicle at any point
 # Units: m
-min_acc_standoff_distance: 5.0
+min_acc_standoff_distance: 0.0
 
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
@@ -121,8 +121,8 @@ shutdown_wait_time: 5000
 post_complex_trajectory_steadying_period: 2.0
 # Double: Maximum speed error between cmd_speed and actual vehicle speed
 # Units: m
-max_speed_error: 5.0
+max_speed_error: 100.0
 
 # Double: Maximum downtrack error between planned location and current location
 # Units: m
-max_downtrack_error: 5.0
+max_downtrack_error: 100.0

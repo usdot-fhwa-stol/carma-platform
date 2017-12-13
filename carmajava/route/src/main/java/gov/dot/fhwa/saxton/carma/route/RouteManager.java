@@ -101,7 +101,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
       finalDatabasePath = packagePath + "/" + databasePath;
     }
 
-    routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath);
+    int requiredLeftRouteCount = params.getInteger("~required_left_route_count", 3);
+
+    routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath, requiredLeftRouteCount);
 
     // Subscribers
     //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages

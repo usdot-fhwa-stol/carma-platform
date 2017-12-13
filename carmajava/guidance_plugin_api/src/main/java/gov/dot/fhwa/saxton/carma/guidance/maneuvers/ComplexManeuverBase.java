@@ -168,7 +168,7 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
    */
   protected void validateBoundsFeasibility() throws IllegalArgumentException {
     // Check distances bounds are valid
-    if (startDist_ > endDist_ || startDist_ < -0.0 || endDist_ < -0.0) {
+    if (startDist_ > endDist_ || startDist_ < -0.0 || endDist_ < -0.0 || startDist_ == endDist_) {
       throw new IllegalArgumentException(
         "Attempted to construct ComplexManeuver with invalid start and end points." + toString());
     }

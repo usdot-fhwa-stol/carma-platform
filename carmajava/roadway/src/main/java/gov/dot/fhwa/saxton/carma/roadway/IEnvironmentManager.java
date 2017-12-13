@@ -38,7 +38,7 @@ public interface IEnvironmentManager {
   /**
    * Gets the transform of between the requested frames
    */
-  Transform getTransform(String parentFrame, String childFrame);
+  Transform getTransform(String parentFrame, String childFrame, Time stamp);
 
   /**
    * Gets the current time

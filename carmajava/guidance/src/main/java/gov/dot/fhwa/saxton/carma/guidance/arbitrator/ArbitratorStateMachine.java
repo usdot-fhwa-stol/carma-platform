@@ -42,11 +42,15 @@ public class ArbitratorStateMachine {
       case INIT:
         if (event == ArbitratorEvent.INITIALIZE) {
           state = ArbitratorState.INITIAL_PLANNING;
+        } else if(event == ArbitratorEvent.CLEAN_RESTART) {
+          state = ArbitratorState.INIT;
         }
         break;
       case INITIAL_PLANNING:
         if (event == ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING) {
           state = ArbitratorState.AWAITING_REPLAN;
+        } else if(event == ArbitratorEvent.CLEAN_RESTART) {
+          state = ArbitratorState.INIT;
         }
         break;
       case AWAITING_REPLAN:
@@ -56,21 +60,29 @@ public class ArbitratorStateMachine {
           state = ArbitratorState.REPLAN_AFTER_COMPLEX_TRAJECTORY;
         } else if (event == ArbitratorEvent.TRAJECTORY_FAILED_EXECUTION) {
           state = ArbitratorState.REPLAN_DUE_TO_FAILED_TRAJECTORY;
+        } else if(event == ArbitratorEvent.CLEAN_RESTART) {
+          state = ArbitratorState.INIT;
         }
         break;
       case NORMAL_REPLANNING:
         if (event == ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING) {
           state = ArbitratorState.AWAITING_REPLAN;
+        } else if(event == ArbitratorEvent.CLEAN_RESTART) {
+           state = ArbitratorState.INIT;
         }
         break;
       case REPLAN_AFTER_COMPLEX_TRAJECTORY:
         if (event == ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING) {
           state = ArbitratorState.AWAITING_REPLAN;
+        } else if(event == ArbitratorEvent.CLEAN_RESTART) {
+          state = ArbitratorState.INIT;
         }
         break;
       case REPLAN_DUE_TO_FAILED_TRAJECTORY:
         if (event == ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING) {
           state = ArbitratorState.AWAITING_REPLAN;
+        } else if(event == ArbitratorEvent.CLEAN_RESTART) {
+          state = ArbitratorState.INIT;
         }
         break;
       default:

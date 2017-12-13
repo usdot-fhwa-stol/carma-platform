@@ -12,6 +12,9 @@
 string parent_frame
 # The child frame of the transform
 string child_frame
+# The timestamp which the returned transform should correspond to
+# A time of 0 such as ros::Time(0) can be used to get the most recent transform
+time stamp
 ---
 geometry_msgs/TransformStamped transform
 # An enumeration representing the validity of the returned transform
