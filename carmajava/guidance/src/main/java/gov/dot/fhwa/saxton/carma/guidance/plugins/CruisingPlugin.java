@@ -52,6 +52,9 @@ public class CruisingPlugin extends AbstractPlugin {
 
   public CruisingPlugin(PluginServiceLocator psl) {
     super(psl);
+    // !!!!!!!!!!
+    // Any modification on this plugin should result in a change on its version ID.
+    // !!!!!!!!!!
     version.setName("Cruising Plugin");
     version.setMajorRevision(1);
     version.setIntermediateRevision(0);

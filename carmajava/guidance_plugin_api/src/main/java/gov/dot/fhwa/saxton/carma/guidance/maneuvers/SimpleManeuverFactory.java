@@ -17,13 +17,13 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 public class SimpleManeuverFactory {
-
-    protected static final double SPEED_EPSILON = 0.05;
     
     public ISimpleManeuver createManeuver(double start_speed, double end_speed) {
-        if(end_speed - start_speed > SPEED_EPSILON) {
+        
+        double speedEpsilon = SteadySpeed.SPEED_EPSILON;
+        if(end_speed - start_speed > speedEpsilon) {
             return new SpeedUp();
-        } else if(start_speed - end_speed > SPEED_EPSILON) {
+        } else if(start_speed - end_speed > speedEpsilon) {
             return new SlowDown();
         } else {
             return new SteadySpeed();
