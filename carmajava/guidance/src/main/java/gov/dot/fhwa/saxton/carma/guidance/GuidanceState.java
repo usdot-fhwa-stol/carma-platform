@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+// Any change on this enum should result in changes on GuidanceState ROS message as well
 public enum GuidanceState {
     STARTUP,
     DRIVERS_READY,

@@ -129,13 +129,12 @@ public class GuidanceMain extends SaxtonBaseNode {
   public void onSaxtonStart(final ConnectedNode connectedNode) {
     initLogger(connectedNode.getLog());
     final ILogger log = LoggerManager.getLogger();
-
-    final GuidanceStateMachine stateMachine = new GuidanceStateMachine();
     
     log.info("//////////");
     log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
     log.info("//////////");
 
+    final GuidanceStateMachine stateMachine = new GuidanceStateMachine();
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(stateMachine);
     log.info("Guidance exception handler initialized");
 
@@ -152,7 +151,9 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     initPubSubManager(connectedNode, guidanceExceptionHandler);
     log.info("Guidance main PubSubManager initialized");
-
+    
+    stateMachine.initSubPub(pubSubService);
+    
     initExecutor(stateMachine, connectedNode);
     log.info("Guidance main executor initialized");
 
