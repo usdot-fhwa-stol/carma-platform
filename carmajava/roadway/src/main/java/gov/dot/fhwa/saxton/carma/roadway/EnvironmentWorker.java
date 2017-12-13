@@ -131,6 +131,12 @@ public class EnvironmentWorker {
     hostVehicleLocation =
       new Location(navSatFix.getLatitude(), navSatFix.getLongitude(), navSatFix.getAltitude());
     navSatFixReceived = true;
+    String frameId = navSatFix.getHeader().getFrameId();
+    if (!frameId.equals(globalPositionSensorFrame)) {
+      String msg = "NavSatFix message with unsupported frame received. Frame: " + frameId;
+      log.fatal("TRANSFORM", msg);
+      throw new IllegalArgumentException(msg);
+    }
     updateMapAndOdomTFs();
   }
 
