@@ -126,7 +126,6 @@ public class EnvironmentWorker {
    * @param navSatFix The nav sat fix message
    */
   public void handleNavSatFixMsg(sensor_msgs.NavSatFix navSatFix) {
-    log.info("Nav Sat Received");
     // Assign the new host vehicle location
     hostVehicleLocation =
       new Location(navSatFix.getLatitude(), navSatFix.getLongitude(), navSatFix.getAltitude());
