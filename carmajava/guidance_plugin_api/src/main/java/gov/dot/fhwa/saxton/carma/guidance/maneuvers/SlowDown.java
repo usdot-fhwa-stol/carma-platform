@@ -104,7 +104,7 @@ public class SlowDown extends LongitudinalManeuver {
         //compute command based on linear interpolation on time
         //Note that commands will begin changing immediately, although the actual speed will not change much until
         // the response lag has passed. Thus, we will hit the target speed command sooner than we pass the end distance.
-        double currentTime = System.currentTimeMillis();
+        long currentTime = System.currentTimeMillis();
         double factor = 0.001 * (double)(currentTime - startTime_) / deltaT_;
         if (factor < 0.0) {
             log_.error("SlowDown.executeTimeStep computed illegal factor of = " + factor + ". Throwing exception");

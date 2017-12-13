@@ -28,6 +28,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
 
@@ -52,9 +53,9 @@ public class CruisingPlugin extends AbstractPlugin {
   public CruisingPlugin(PluginServiceLocator psl) {
     super(psl);
     version.setName("Cruising Plugin");
-    version.setMajorRevision(0);
+    version.setMajorRevision(1);
     version.setIntermediateRevision(0);
-    version.setMinorRevision(1);
+    version.setMinorRevision(0);
   }
 
   @Override
@@ -207,10 +208,27 @@ public class CruisingPlugin extends AbstractPlugin {
     SortedSet<SpeedLimit> trajLimits = routeService.getSpeedLimitsInRange(traj.getStartLocation(), endLocation);
     trajLimits.add(routeService.getSpeedLimitAtLocation(endLocation));
     
+    // Merge segments with same speed limits
+    List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();
+    SpeedLimit limit_buffer = null;
+    for(SpeedLimit limit : trajLimits) {
+        if(limit_buffer == null) {
+            limit_buffer = limit;
+        } else {
+            if(limit_buffer.getLimit() == limit.getLimit()) {
+                limit_buffer.setLocation(limit.getLocation());
+            } else {
+                mergedLimits.add(limit_buffer);
+                limit_buffer = limit;
+            }
+        }
+    }
+    mergedLimits.add(limit_buffer);
+    
     // Plan trajectory to follow all speed limits
     double newManeuverStartSpeed = expectedEntrySpeed;
     double newManeuverStartLocation = traj.getStartLocation();
-    for(SpeedLimit limit : trajLimits) {
+    for(SpeedLimit limit : mergedLimits) {
         newManeuverStartSpeed = planManeuvers(traj, newManeuverStartLocation, limit.getLocation(), newManeuverStartSpeed, limit.getLimit());
         newManeuverStartLocation = limit.getLocation();
     }
