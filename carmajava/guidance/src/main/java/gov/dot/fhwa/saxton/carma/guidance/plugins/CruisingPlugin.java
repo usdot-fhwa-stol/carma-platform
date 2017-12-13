@@ -226,6 +226,7 @@ public class CruisingPlugin extends AbstractPlugin {
             }
         }
     }
+    limit_buffer.setLocation(traj.getEndLocation());
     mergedLimits.add(limit_buffer);
     
     // Plan trajectory to follow all speed limits
