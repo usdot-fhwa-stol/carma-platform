@@ -350,14 +350,14 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
             if (resp.getProposedTrajectoryEnd().isPresent()) {
               double proposedEndDistance = resp.getProposedTrajectoryEnd().get();
               trajectoryEnd = Math.max(proposedEndDistance, trajectoryEnd);
-              log.info("Candidate trajectory #" + (failures + 1) + "Plugin: " + p.getVersionInfo().componentName()
+              log.info("Candidate trajectory #" + (failures + 1) + " Plugin: " + p.getVersionInfo().componentName()
                   + " requested extended trajectory to " + trajectoryEnd);
             }
 
             // Sleep for replan delay if requested
             final int numFails = failures; // Copy into final var so lambda can read it
             resp.getProposedReplanDelay().ifPresent((delay) -> {
-              log.info("Candidate trajectory #" + (numFails + 1) + "Plugin: " + p.getVersionInfo().componentName()
+              log.info("Candidate trajectory #" + (numFails + 1) + " Plugin: " + p.getVersionInfo().componentName()
                   + " requested to delay planning for " + delay + " ms");
 
               try {
@@ -369,7 +369,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
 
             // Promote the plugin to the top of the line for the next iteration
             if (resp.higherPriorityRequested()) {
-              log.info("Candidate trajectory #" + (failures + 1) + "Plugin: " + p.getVersionInfo().componentName()
+              log.info("Candidate trajectory #" + (failures + 1) + " Plugin: " + p.getVersionInfo().componentName()
                   + " requested higher priority");
               longitudinalPlugins.remove(p);
               longitudinalPlugins.add(0, p);
