@@ -312,6 +312,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
   }
 
   protected Trajectory planTrajectory(double trajectoryStart, double trajectoryEnd) {
+    long planningStart = System.currentTimeMillis();
     log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryEnd + ")");
 
     if (trajectoryEnd - trajectoryStart < TRAJ_SIZE_WARNING) {
@@ -354,7 +355,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
             }
 
             // Sleep for replan delay if requested
-            final int numFails = failures;
+            final int numFails = failures; // Copy into final var so lambda can read it
             resp.getProposedReplanDelay().ifPresent((delay) -> {
               log.info("Candidate trajectory #" + (numFails + 1) + "Plugin: " + p.getVersionInfo().componentName()
                   + " requested to delay planning for " + delay + " ms");
@@ -391,6 +392,9 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     if (out == null) {
       panic("Arbitrator unable to plan valid trajectory after " + numAcceptableFailures + " attempts!");
     }
+
+    long planningEnd = System.currentTimeMillis();
+    log.info("New trajectory planned in " +  (planningEnd - planningStart) + " ms. Planning finished at " + trajectoryExecutor.getTrajectoryCompletionPct() + "%");
 
     return out;
   }
