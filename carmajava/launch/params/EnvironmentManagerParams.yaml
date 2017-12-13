@@ -1,0 +1,22 @@
+# RouteParams.yaml
+# Defines the ros parameters which are required by the Route package
+
+# String: The id of the frame which represents an Earth Centered Earth Fixed (ECEF) frame
+earth_frame_id: 'earth'
+
+# String: The id of the frame which represents the base map which is positioned in the earth frame
+map_frame_id: 'map'
+
+# String: The id of the frame which represents the local planning frame.
+odom_frame_id: 'odom'
+
+# String: The id of the frame which represents host vehicle
+base_link_frame_id: 'base_link'
+
+# String: The id of the frame which represents the global position sensor (GPS, GLONASS, etc.)
+# The global position sensor must provide locations in the WGS-84 standard.
+global_position_sensor_frame_id: 'pinpoint'
+
+# String: The id of the frame which represents the local position sensor (odometry from IMU or similar)
+local_position_sensor_frame_id: 'pinpoint'
+

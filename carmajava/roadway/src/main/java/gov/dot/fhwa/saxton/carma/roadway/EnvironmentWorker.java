@@ -51,53 +51,67 @@ public class EnvironmentWorker {
   protected boolean headingReceived = false;
   protected boolean navSatFixReceived = false;
   protected Location hostVehicleLocation = null;
-  protected double hostVehicleHeading; // The heading of the vehicle in degrees east of north in an NED frame.
+  protected double hostVehicleHeading;
+    // The heading of the vehicle in degrees east of north in an NED frame.
   // Frame ids
-  protected final String earthFrame = "earth";
-  protected final String mapFrame = "map";
-  protected final String odomFrame = "odom";
-  protected final String baseLinkFrame = "base_link";
-  protected final String positionSensorFrame = "pinpoint"; //TODO set this name via ros param
+  protected final String earthFrame;
+  protected final String mapFrame;
+  protected final String odomFrame;
+  protected final String baseLinkFrame;
+  protected final String globalPositionSensorFrame;
+  protected final String localPositionSensorFrame;
+
   // Transforms
   protected Transform mapToOdom = Transform.identity();
   protected Transform earthToMap = null;
-  protected Transform baseToPositionSensor = null;
-  protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
+  protected Transform baseToLocalPositionSensor = null;
+  protected Transform baseToGlobalPositionSensor = null;
+  protected Transform odomToBaseLink = Transform.identity();// The odom frame will start in the same orientation as the base_link frame on startup
   // Transform Update parameters
   protected Time prevMapTime = null;
-  protected Duration MAP_UPDATE_PERIOD = new Duration(5); // Time in seconds between updating the map frame location
+  protected Duration MAP_UPDATE_PERIOD = new Duration(5); // TODO Time in seconds between updating the map frame location
   protected int tfSequenceCount = 0;
 
   /**
    * Constructor
+   *
    * @param envMgr EnvironmentWorker used to publish data and get stored transforms
-   * @param log Logging object
+   * @param log    Logging object
    */
-  public EnvironmentWorker(IEnvironmentManager envMgr, Log log) {
+  public EnvironmentWorker(IEnvironmentManager envMgr, Log log, String earthFrame, String mapFrame,
+    String odomFrame, String baseLinkFrame, String globalPositionSensorFrame, String localPositionSensorFrame) {
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.envMgr = envMgr;
+    this.earthFrame = earthFrame;
+    this.mapFrame = mapFrame;
+    this.odomFrame = odomFrame;
+    this.baseLinkFrame = baseLinkFrame;
+    this.globalPositionSensorFrame = globalPositionSensorFrame;
+    this.localPositionSensorFrame = localPositionSensorFrame;
   }
 
   /**
    * Handle for new route segments.
    * This will help define lane geometries
+   *
    * @param currentSeg The current route segment
    */
   public void handleCurrentSegmentMsg(cav_msgs.RouteSegment currentSeg) {
     //TODO update lane geometry here. For now we will need to assume linear interpolation
-//    RouteWaypoint wp = RouteWaypoint.fromMessage(currentSeg.getWaypoint());
-//    LaneEdgeType leftEdge = wp.getLeftMostLaneMarking();
-//    LaneEdgeType interiorEdges = wp.getInteriorLaneMarkings();
-//    LaneEdgeType rightEdge = wp.getRightMostLaneMarking();
-//    int laneCount = wp.getLaneCount();
-//    Location downTrackLoc = wp.getLocation();
-//    Location uptrackLoc = RouteWaypoint.fromMessage(currentSeg.getPrevWaypoint()).getLocation();
+    //    RouteWaypoint wp = RouteWaypoint.fromMessage(currentSeg.getWaypoint());
+    //    LaneEdgeType leftEdge = wp.getLeftMostLaneMarking();
+    //    LaneEdgeType interiorEdges = wp.getInteriorLaneMarkings();
+    //    LaneEdgeType rightEdge = wp.getRightMostLaneMarking();
+    //    int laneCount = wp.getLaneCount();
+    //    Location downTrackLoc = wp.getLocation();
+    //    Location uptrackLoc = RouteWaypoint.fromMessage(currentSeg.getPrevWaypoint()).getLocation();
   }
 
   /**
    * Handler for new vehicle heading messages
    * Headings should be specified as degrees east of north
    * TODO if base_link frame is not an +X forward frame this will need a transform as well.
+   *
    * @param heading The heading message
    */
   public void handleHeadingMsg(cav_msgs.HeadingStamped heading) {
@@ -108,9 +122,11 @@ public class EnvironmentWorker {
   /**
    * NavSatFix Handler
    * Updates the host vehicle's location and updates the earth->map and map->odom transforms
+   *
    * @param navSatFix The nav sat fix message
    */
   public void handleNavSatFixMsg(sensor_msgs.NavSatFix navSatFix) {
+    log.info("Nav Sat Received");
     // Assign the new host vehicle location
     hostVehicleLocation =
       new Location(navSatFix.getLatitude(), navSatFix.getLongitude(), navSatFix.getAltitude());
@@ -125,18 +141,15 @@ public class EnvironmentWorker {
    * Additionally, a transform from base_link to position_sensor needs to be available
    */
   protected void updateMapAndOdomTFs() {
-    if (true)
-    {
-      return;
-    }
     if (!navSatFixReceived || !headingReceived) {
       return; // If we don't have a heading and a nav sat fix the map->odom transform cannot be calculated
     }
     // Check if base_link->position_sensor tf is available. If not look it up
-    if (baseToPositionSensor == null) {
+    if (baseToGlobalPositionSensor == null) {
       // This transform should be static. No need to look up more than once
-      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame, Time.fromMillis(0));
-      if (baseToPositionSensor == null) {
+      baseToGlobalPositionSensor =
+        envMgr.getTransform(baseLinkFrame, globalPositionSensorFrame, Time.fromMillis(0));
+      if (baseToGlobalPositionSensor == null) {
         return; // If the request for this transform failed wait for another position update to request it
       }
     }
@@ -145,40 +158,38 @@ public class EnvironmentWorker {
 
     List<geometry_msgs.TransformStamped> tfStampedMsgs = new LinkedList<>();
 
-    // Update map location on start and every MAP_UPDATE_PERIOD after that
-    if (prevMapTime == null || 0 < envMgr.getTime().subtract(prevMapTime).compareTo(MAP_UPDATE_PERIOD)) {
+    // Update map location on start
+    if (prevMapTime == null) { // TODO Determine earth->map update method || 0 < envMgr.getTime().subtract(prevMapTime).compareTo(MAP_UPDATE_PERIOD)) {
       // Map will be an NED frame on the current vehicle location
       earthToMap = gcc.ecefToNEDFromLocaton(hostVehicleLocation);
       tfStampedMsgs.add(buildTFStamped(earthToMap, earthFrame, mapFrame));
       prevMapTime = envMgr.getTime();
     }
 
-    // Calculate map->odom transform
-    Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
+    // Calculate map->global_position_sensor transform
+    Point3D globalSensorInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
 
     // T_x_y = transform describing location of y with respect to x
     // m = map frame
-    // p = position sensor frame (from odometry)
-    // r = position sensor frame (from nav sat fix)
+    // b = baselink frame (from odometry)
+    // B = baselink frame (from nav sat fix)
     // o = odom frame
-    // b = baselink frame (as has been calculated by odometry up to this point)
-    // We want to find T_p_r. This tells us how much to move odom to correct for drift in odometry
-    // T_p_r = inv((inv(T_m_r) * T_m_o * T_o_b * T_b_p); This is equivalent to the difference between where odom should be and where it is
-    Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
+    // p = global position sensor frame
+    // We want to find T_m_o. This is the new transform from map to odom.
+    // T_m_o = T_m_B * inv(T_o_b)  since b and B are both odom.
+    Vector3 nTranslation = new Vector3(globalSensorInMap.getX(), globalSensorInMap.getY(), globalSensorInMap.getZ());
     // The vehicle heading is relative to NED so over short distances heading in NED = heading in map
-    Vector3 zAxis = new Vector3(0,0,1);
-    Quaternion hostRotInMap =  Quaternion.fromAxisAngle(zAxis, Math.toRadians(hostVehicleHeading));
-    hostRotInMap = hostRotInMap.normalize();
+    Vector3 zAxis = new Vector3(0, 0, 1);
+    Quaternion globalSensorRotInMap = Quaternion.fromAxisAngle(zAxis, Math.toRadians(hostVehicleHeading));
+    globalSensorRotInMap = globalSensorRotInMap.normalize();
 
-    Transform T_m_r = new Transform(nTranslation, hostRotInMap);
-    Transform T_m_o = mapToOdom;
+    Transform T_m_p = new Transform(nTranslation, globalSensorRotInMap);
+    Transform T_B_p = baseToGlobalPositionSensor;
+    Transform T_m_B = T_m_p.multiply(T_B_p.invert());
     Transform T_o_b = odomToBaseLink;
-    Transform T_b_p = baseToPositionSensor;
-
-    Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
 
     // Modify map to odom with the difference from the expected and real sensor positions
-    mapToOdom = mapToOdom.multiply(T_p_r);
+    mapToOdom = T_m_B.multiply(T_o_b.invert());
     // Publish newly calculated transforms
     tfStampedMsgs.add(buildTFStamped(mapToOdom, mapFrame, odomFrame));
     publishTF(tfStampedMsgs);
@@ -186,40 +197,55 @@ public class EnvironmentWorker {
 
   /**
    * Odometry message handler
+   *
    * @param odometry Odometry message
    */
   public void handleOdometryMsg(nav_msgs.Odometry odometry) {
     // Check if base_link->position_sensor tf is available. If not look it up
-    if (baseToPositionSensor == null) {
+    if (baseToLocalPositionSensor == null) {
       // This transform should be static. No need to look up more than once
-      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame, odometry.getHeader().getStamp());
-      if (baseToPositionSensor == null) {
+      baseToLocalPositionSensor =
+        envMgr.getTransform(baseLinkFrame, localPositionSensorFrame, Time.fromMillis(0));
+      if (baseToLocalPositionSensor == null) {
         return; // If the request for this transform failed wait for another odometry update to request it
       }
     }
-    if (odometry.getChildFrameId().equals(baseLinkFrame)) { // If the odometry is already in the base_link frame TODO make this check more robust
+
+    String parentFrameId = odometry.getHeader().getFrameId();
+    String childFrameId = odometry.getChildFrameId();
+    // If the odometry is already in the base_link frame
+    if (parentFrameId.equals(odomFrame) && childFrameId.equals(baseLinkFrame)) {
       odomToBaseLink = Transform.fromPoseMessage(odometry.getPose().getPose());
       publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
-      return;
+
+    } else if (parentFrameId.equals(odomFrame) && childFrameId.equals(localPositionSensorFrame)) {
+      // Extract the location of the position sensor relative to the odom frame
+      // Covariance is ignored as filtering was already done by sensor fusion
+      // Calculate odom->base_link
+      // T_x_y = transform describing location of y with respect to x
+      // p = position sensor frame (from odometry)
+      // o = odom frame
+      // b = baselink frame (as has been calculated by odometry up to this point)
+      // T_o_b = T_o_p * inv(T_b_p)
+      Transform T_o_p = Transform.fromPoseMessage(odometry.getPose().getPose());
+      Transform T_b_p = baseToLocalPositionSensor;
+      Transform T_o_b = T_o_p.multiply(T_b_p.invert());
+      odomToBaseLink = T_o_b;
+      // Publish updated transform
+      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
+
+    } else {
+      String msg =
+        "Odometry message with unsupported frames received. ParentFrame: " + parentFrameId
+          + " ChildFrame: " + childFrameId;
+      log.fatal("TRANSFORM", msg);
+      throw new IllegalArgumentException(msg);
     }
-    // Extract the location of the position sensor relative to the odom frame
-    // Covariance is ignored as filtering was already done by sensor fusion
-    // Calculate odom->base_link
-    // T_x_y = transform describing location of y with respect to x
-    // p = position sensor frame (from odometry)
-    // o = odom frame
-    // b = baselink frame (as has been calculated by odometry up to this point)
-    // T_o_b = T_o_p * inv(T_b_p)
-    Transform T_o_p = Transform.fromPoseMessage(odometry.getPose().getPose());
-    Transform T_b_p = baseToPositionSensor;
-    Transform T_o_b = T_o_p.multiply(T_b_p.invert());
-    odomToBaseLink = T_o_b;
-    // Publish updated transform
-    publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
   }
 
   /**
    * External object message handler
+   *
    * @param externalObjects External object list. Should be relative to base_link frame
    */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
@@ -228,6 +254,7 @@ public class EnvironmentWorker {
 
   /**
    * Velocity message handler
+   *
    * @param velocity host vehicle velocity
    */
   public void handleVelocityMsg(geometry_msgs.TwistStamped velocity) {
@@ -237,6 +264,7 @@ public class EnvironmentWorker {
   /**
    * SystemAlert message handler.
    * Will shutdown this node on receipt of FATAL or SHUTDOWN
+   *
    * @param alert alert message
    */
   public void handleSystemAlertMsg(cav_msgs.SystemAlert alert) {
@@ -260,12 +288,15 @@ public class EnvironmentWorker {
 
   /**
    * Helper function builds a tf2 message for the given transform between parent and child frames
-   * @param tf The transform to publish. Describes the position of the child frame in the parent frame
+   *
+   * @param tf          The transform to publish. Describes the position of the child frame in the parent frame
    * @param parentFrame The name of the parent frame
-   * @param childFrame The name of the child frame
+   * @param childFrame  The name of the child frame
    */
-  protected geometry_msgs.TransformStamped buildTFStamped(Transform tf, String parentFrame, String childFrame) {
-    geometry_msgs.TransformStamped tfStampedMsg = messageFactory.newFromType(geometry_msgs.TransformStamped._TYPE);
+  protected geometry_msgs.TransformStamped buildTFStamped(Transform tf, String parentFrame,
+    String childFrame) {
+    geometry_msgs.TransformStamped tfStampedMsg =
+      messageFactory.newFromType(geometry_msgs.TransformStamped._TYPE);
     Header hdr = tfStampedMsg.getHeader();
     hdr.setFrameId(parentFrame);
     hdr.setStamp(envMgr.getTime());
@@ -277,6 +308,7 @@ public class EnvironmentWorker {
 
   /**
    * Publishes a list of transforms in a single tf2 TFMessage
+   *
    * @param tfList List of transforms
    */
   protected void publishTF(List<TransformStamped> tfList) {
