@@ -165,7 +165,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 exceptionHandler.handleException("Unable to call enable robotic service", e);
             }
         });
-        currentState.set(GuidanceState.ACTIVE);
+        currentState.set(GuidanceState.INACTIVE);
     }
     
     @Override

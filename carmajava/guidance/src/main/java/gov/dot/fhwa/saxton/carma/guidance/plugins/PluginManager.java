@@ -237,7 +237,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
     @Override
     public void onRouteActive() {
-        currentState.set(GuidanceState.ACTIVE);
+        currentState.set(GuidanceState.INACTIVE);
     }
     
     @Override

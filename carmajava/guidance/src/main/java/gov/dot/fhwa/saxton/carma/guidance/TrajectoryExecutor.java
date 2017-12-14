@@ -103,7 +103,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
                 }
             }
         });
-        currentState.set(GuidanceState.ACTIVE);
+        currentState.set(GuidanceState.INACTIVE);
     }
     
     @Override

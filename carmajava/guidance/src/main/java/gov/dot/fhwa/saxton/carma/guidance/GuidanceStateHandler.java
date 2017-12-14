@@ -125,7 +125,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
                             SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
                         if (setGuidanceEngagedRequest.getGuidanceEngage() && currentState.get() == GuidanceState.DRIVERS_READY) {
                             stateMachine.processEvent(GuidanceEvent.ACTIVATE_ROUTE);
-                            setGuidanceEngagedResponse.setGuidanceStatus(stateMachine.getState() == GuidanceState.ACTIVE);
+                            setGuidanceEngagedResponse.setGuidanceStatus(stateMachine.getState() == GuidanceState.INACTIVE);
                         } else if (!setGuidanceEngagedRequest.getGuidanceEngage()) {
                             stateMachine.processEvent(GuidanceEvent.DISENGAGE);
                             setGuidanceEngagedResponse.setGuidanceStatus(false);
@@ -208,7 +208,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
 
     @Override
     public void onRouteActive() { 
-        currentState.set(GuidanceState.ACTIVE);
+        currentState.set(GuidanceState.INACTIVE);
     }
     
     @Override

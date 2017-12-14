@@ -248,7 +248,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
 
         log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + pluginList + "]");
         
-        currentState.set(GuidanceState.ACTIVE);
+        currentState.set(GuidanceState.INACTIVE);
     }
     
     @Override

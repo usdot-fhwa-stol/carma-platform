@@ -287,7 +287,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             }
         });
 
-        currentState.set(GuidanceState.ACTIVE);
+        currentState.set(GuidanceState.INACTIVE);
     }
 
     @Override

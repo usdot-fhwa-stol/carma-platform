@@ -62,14 +62,14 @@ public class GuidanceStateMachine {
             break;
         case DRIVERS_READY:
             if(guidance_event == GuidanceEvent.ACTIVATE_ROUTE) {
-                guidance_state.set(GuidanceState.ACTIVE);
+                guidance_state.set(GuidanceState.INACTIVE);
                 action = GuidanceAction.ACTIVATE;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
                 action = GuidanceAction.SHUTDOWN;
             }
             break;
-        case ACTIVE:
+        case INACTIVE:
             if(guidance_event == GuidanceEvent.START_ROUTE) {
                 guidance_state.set(GuidanceState.ENGAGED);
                 action = GuidanceAction.ENGAGE;
@@ -168,7 +168,7 @@ public class GuidanceStateMachine {
     public void loop() throws InterruptedException {
         cav_msgs.GuidanceState state = statePub.newMessage();
         switch (guidance_state.get()) {
-        case ACTIVE:
+        case INACTIVE:
             state.setState(cav_msgs.GuidanceState.ACTIVE);
             break;
         case DRIVERS_READY:

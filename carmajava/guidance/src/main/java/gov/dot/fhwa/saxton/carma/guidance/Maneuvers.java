@@ -85,7 +85,7 @@ public class Maneuvers extends GuidanceComponent implements IStateChangeListener
     
     @Override
     public void onRouteActive() {
-        currentState.set(GuidanceState.ACTIVE);
+        currentState.set(GuidanceState.INACTIVE);
     }
     
     @Override
