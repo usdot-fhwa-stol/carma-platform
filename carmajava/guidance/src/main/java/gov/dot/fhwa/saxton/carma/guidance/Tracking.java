@@ -17,11 +17,12 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.*;
-import cav_srvs.GetDriversWithCapabilities;
-import cav_srvs.GetDriversWithCapabilitiesRequest;
-import cav_srvs.GetDriversWithCapabilitiesResponse;
+import cav_srvs.*;
 import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
@@ -39,8 +40,10 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.ParameterClassCastException;
 import org.ros.exception.ParameterNotFoundException;
 import org.ros.exception.RosRuntimeException;
+import org.ros.message.Time;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
+import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import com.google.common.util.concurrent.AtomicDouble;
@@ -105,6 +108,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 			"steering_wheel_angle", "brake_position", "transmission_state",
 			"traction_ctrl_active", "traction_ctrl_enabled", "antilock_brakes_active",
 			"stability_ctrl_active", "stability_ctrl_enabled", "parking_brake");
+	protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
 	protected double speed_error_limit = 5; //speed error in meters
 	protected double downtrack_error_limit = 5; //downtrack error in meters
 	protected TrajectoryExecutor trajectoryExecutor = null;
@@ -256,6 +260,12 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
         } catch (ParameterClassCastException e2) {
             exceptionHandler.handleException("Cannot cast on the parameter type", e2);
         }
+
+		    try {
+			    getTransformClient = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
+		    } catch (TopicNotFoundException tnfe) {
+			    exceptionHandler.handleException("get_transform service cannot be found", tnfe);
+		    }
 
         currentState.set(GuidanceState.DRIVERS_READY);
     }
@@ -421,10 +431,25 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 		coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 		coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
 		if(navSatFixSubscriber != null && navSatFixSubscriber.getLastMessage() != null) {
+			double lat, Lon;
+			float elev;
 			NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
-			double lat = gps_msg.getLatitude();
-			double Lon = gps_msg.getLongitude();
-			float elev = (float) gps_msg.getAltitude();
+			Transform earthToHostVehicle = getTransform("earth", "host_vehicle", gps_msg.getHeader().getStamp());
+
+			if (earthToHostVehicle == null) {
+				lat = gps_msg.getLatitude();
+				Lon = gps_msg.getLongitude();
+				elev = (float) gps_msg.getAltitude();
+				log.info("TRANSFORM", "Could not get transform for BSM");
+
+			} else {
+				GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+				Location loc = gcc.cartesian2Geodesic(new Point3D(0,0,0), earthToHostVehicle);
+				lat = loc.getLatitude();
+				Lon = loc.getLongitude();
+				elev = (float) loc.getAltitude();
+			}
+
 			//TODO: need to have transformation from baselink frame to vehicle frame
 			if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
 				coreData.setLatitude(lat);
@@ -642,5 +667,43 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
         default:
             throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
+    }
+
+    private Transform getTransform(String parentFrame, String childFrame, Time stamp) {
+	    GetTransformRequest request = getTransformClient.newMessage();
+	    request.setParentFrame(parentFrame);
+	    request.setChildFrame(childFrame);
+	    request.setStamp(stamp);
+
+	    final GetTransformResponse[] response = new GetTransformResponse[1];
+	    final boolean[] gotTransform = {false};
+
+	    getTransformClient.callSync(request,
+		    new OnServiceResponseCallback<GetTransformResponse>() {
+
+			    @Override
+			    public void onSuccess(GetTransformResponse msg) {
+			    	if (msg.getErrorStatus() == GetTransformResponse.NO_ERROR
+					    || msg.getErrorStatus() == GetTransformResponse.COULD_NOT_EXTRAPOLATE) {
+					    response[0] = msg;
+					    gotTransform[0] = true;
+				    } else {
+			    		log.warn("TRANSFORM", "Request for transform ParentFrame: " + request.getParentFrame() +
+						    " ChildFrame: " + request.getChildFrame() + " returned ErrorCode: " + msg.getErrorStatus());
+				    }
+			    }
+
+			    @Override
+			    public void onFailure(Exception e) {
+				    exceptionHandler.handleException("get_transform service call failed", e);
+			    }
+
+		    });
+
+	    if(gotTransform[0]) {
+	    	return Transform.fromTransformMessage(response[0].getTransform().getTransform());
+	    } else {
+	    	return null;
+	    }
     }
 }
