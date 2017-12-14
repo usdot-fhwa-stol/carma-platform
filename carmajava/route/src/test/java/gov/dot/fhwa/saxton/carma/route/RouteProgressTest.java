@@ -192,6 +192,6 @@ public class RouteProgressTest {
 
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
     assertTrue(routeWorker.leftRouteVicinity());
-    assertTrue(routeWorker.getCurrentState() == WorkerState.WAITING_TO_START);
+    assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
   }
 }
