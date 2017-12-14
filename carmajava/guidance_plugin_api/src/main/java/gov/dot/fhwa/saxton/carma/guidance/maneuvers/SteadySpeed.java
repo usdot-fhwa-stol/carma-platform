@@ -25,7 +25,9 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
  * current actual speed.
  */
 public class SteadySpeed extends LongitudinalManeuver {
-
+ 
+    protected static final double SPEED_EPSILON = 0.05;
+    
     /**
      * Since steady speed is intended to continue the current speed, the required distance to complete the maneuver
      * is zero.  Therefore, the end distance will be set to the start distance, and the caller will have the option
@@ -36,7 +38,7 @@ public class SteadySpeed extends LongitudinalManeuver {
         super.plan(inputs, commands, startDist);
 
         //check that both the beginning and end speeds are the same
-        if (Math.abs(startSpeed_ - endSpeed_) > 0.05) {
+        if (Math.abs(startSpeed_ - endSpeed_) > SPEED_EPSILON) {
             throw new IllegalStateException("SteadySpeed maneuver being planned with start speed = " + startSpeed_
                                             + ", target speed = " + endSpeed_);
         }
@@ -48,17 +50,18 @@ public class SteadySpeed extends LongitudinalManeuver {
 
 
     @Override
-    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
+    public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
         super.planToTargetDistance(inputs, commands, startDist, endDist);
 
         //check that both the beginning and end speeds are the same
-        if (Math.abs(startSpeed_ - endSpeed_) > 0.05) {
+        if (Math.abs(startSpeed_ - endSpeed_) > SPEED_EPSILON) {
             throw new IllegalStateException("SteadySpeed maneuver being planned with start speed = " + startSpeed_
                                             + ", target speed = " + endSpeed_);
         }
 
         //set end distance to start distance
         endDist_ = endDist;
+        return endSpeed_;
     }
 
 
@@ -81,5 +84,11 @@ public class SteadySpeed extends LongitudinalManeuver {
         }
 
         return endSpeed_;
+    }
+
+
+    @Override
+    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException {
+        return true;
     }
 }

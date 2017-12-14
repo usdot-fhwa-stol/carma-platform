@@ -50,9 +50,9 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     }
 
     @Override
-    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
+    public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
             double endDist) throws IllegalStateException, ArithmeticException {
-        super.planToTargetDistance(inputs, commands, startDist, endDist);
+        return super.planToTargetDistance(inputs, commands, startDist, endDist);
     }
 
     @Override
@@ -121,6 +121,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
      * up and slowing down (symmetrical).
      * @param limit - max (absolute value) allowed, m/s^2
      */
+    @Override
     public void setMaxAccel(double limit) {
         if (limit > 0.0) { //can't be equal to zero
             maxAccel_ = limit;
