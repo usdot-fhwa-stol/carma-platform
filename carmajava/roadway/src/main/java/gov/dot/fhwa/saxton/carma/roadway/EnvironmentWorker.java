@@ -77,6 +77,12 @@ public class EnvironmentWorker {
    *
    * @param envMgr EnvironmentWorker used to publish data and get stored transforms
    * @param log    Logging object
+   * @param earthFrame The frame id used to identify the ECEF frame
+   * @param mapFrame The frame id used to identify the global map frame
+   * @param odomFrame The frame id used to identify the local planning frame
+   * @param baseLinkFrame The frame id used to identify the host vehicle frame
+   * @param globalPositionSensorFrame The frame id used to identify the frame of a global position sensor
+   * @param localPositionSensorFrame The frame id used to identify a local odometry position sensor frame
    */
   public EnvironmentWorker(IEnvironmentManager envMgr, Log log, String earthFrame, String mapFrame,
     String odomFrame, String baseLinkFrame, String globalPositionSensorFrame, String localPositionSensorFrame) {
