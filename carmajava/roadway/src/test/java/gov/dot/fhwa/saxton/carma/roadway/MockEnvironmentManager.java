@@ -43,7 +43,7 @@ public class MockEnvironmentManager implements IEnvironmentManager {
     // Nothing to do
   }
 
-  @Override public Transform getTransform(String parentFrame, String childFrame) {
+  @Override public Transform getTransform(String parentFrame, String childFrame, Time stamp) {
     return tfTree.transform(childFrame, parentFrame).getTransform();
   }
 
