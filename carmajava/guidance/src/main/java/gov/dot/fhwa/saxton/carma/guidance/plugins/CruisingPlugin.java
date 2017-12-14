@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
@@ -204,7 +205,7 @@ public class CruisingPlugin extends AbstractPlugin {
 
   // It can only plan trajectory without preplanned longitudinal maneuvers.
   @Override
-  public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+  public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
     // Use RouteService to find all necessary speed limits
     RouteService routeService = pluginServiceLocator.getRouteService();
     double endLocation = traj.getComplexManeuver() == null ? traj.getEndLocation() : traj.getComplexManeuver().getStartDistance();
@@ -236,5 +237,7 @@ public class CruisingPlugin extends AbstractPlugin {
         newManeuverStartSpeed = planManeuvers(traj, newManeuverStartLocation, limit.getLocation(), newManeuverStartSpeed, limit.getLimit());
         newManeuverStartLocation = limit.getLocation();
     }
+
+    return new TrajectoryPlanningResponse();
   }
 }

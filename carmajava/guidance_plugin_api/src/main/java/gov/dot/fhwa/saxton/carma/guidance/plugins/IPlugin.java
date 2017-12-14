@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.utils.Versionable;
 
@@ -93,7 +94,7 @@ public interface IPlugin extends Versionable {
      * @param traj The current partially planned Trajectory, which cannot be modified
      * @param expectedEntrySpeed The speed (in m/s) the vehicle is expected to have upon the start of the new trajectory
      */
-    void planTrajectory(Trajectory traj, double expectedEntrySpeed);
+    TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
 
     /**
      * Callback method to handle negotiation requests received from external or internal sources

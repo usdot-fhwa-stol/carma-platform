@@ -169,7 +169,7 @@ public class GuidanceStateMachine {
         cav_msgs.GuidanceState state = statePub.newMessage();
         switch (guidance_state.get()) {
         case INACTIVE:
-            state.setState(cav_msgs.GuidanceState.ACTIVE);
+            state.setState(cav_msgs.GuidanceState.INACTIVE);
             break;
         case DRIVERS_READY:
             state.setState(cav_msgs.GuidanceState.DRIVERS_READY);

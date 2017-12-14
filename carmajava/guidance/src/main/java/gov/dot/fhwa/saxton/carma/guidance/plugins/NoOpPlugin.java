@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 /**
@@ -62,7 +63,7 @@ public class NoOpPlugin extends AbstractPlugin {
   }
 
   @Override
-  public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-    // NO OP
+  public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+    return new TrajectoryPlanningResponse();
   }
 }
