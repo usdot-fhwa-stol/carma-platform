@@ -33,6 +33,7 @@ import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
+import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
@@ -76,6 +77,15 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
     this.connectedNode = connectedNode;
 
+    // Parameters
+    ParameterTree params = connectedNode.getParameterTree();
+    String earthFrameId = params.getString("earth_frame_id", "earth");
+    String mapFrameId = params.getString("map_frame_id", "map");
+    String odomFrameId = params.getString("odom_frame_id", "odom");
+    String baseLinkFrameId = params.getString("base_link_frame_id", "base_link");
+    String globalPositionSensorFrameId = params.getString("position_sensor_frame_id", "pinpoint");
+    String localPositionSensorFrameId = params.getString("local_position_sensor_frame_id", "pinpoint");
+
     // Topics Initialization
     // Publishers
     tfPub = connectedNode.newPublisher("/tf", tf2_msgs.TFMessage._TYPE);
@@ -85,7 +95,8 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
     // Safer to initialize EnvironmentWorker after publishers and before subscribers
     // This means any future modifications which attempt to publish data shortly after initialization will be valid
-    environmentWorker = new EnvironmentWorker(this, connectedNode.getLog());
+    environmentWorker = new EnvironmentWorker(this, connectedNode.getLog(), earthFrameId,
+      mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId);
 
     // Used Services
     // Must be called before message subscribers
