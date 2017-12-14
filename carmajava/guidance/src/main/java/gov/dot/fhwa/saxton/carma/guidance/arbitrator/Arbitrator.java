@@ -137,12 +137,10 @@ public class Arbitrator extends GuidanceComponent
   public void onStartup() {
     log.info("STARTUP", "Arbitrator running!");
     routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-    routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-      @Override
-      public void onMessage(RouteState msg) {
+    routeStateSubscriber.registerOnMessageCallback((msg) -> {
         log.info("Received RouteState:" + msg);
         downtrackDistance.set(msg.getDownTrack());
-      }
+        receivedDtdUpdate.set(true);
     });
 
     ParameterTree ptree = node.getParameterTree();
@@ -199,12 +197,8 @@ public class Arbitrator extends GuidanceComponent
     }
 
     twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
-    twistSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
-      @Override
-      public void onMessage(TwistStamped msg) {
+    twistSubscriber.registerOnMessageCallback((msg) -> {
         currentSpeed.set(msg.getTwist().getLinear().getX());
-        receivedDtdUpdate.set(true);
-      }
     });
 
     currentState.set(GuidanceState.STARTUP);
