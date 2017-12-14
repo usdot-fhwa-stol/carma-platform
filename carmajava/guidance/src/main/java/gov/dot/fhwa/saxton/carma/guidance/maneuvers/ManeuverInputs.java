@@ -134,7 +134,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
     @Override
     public void onRouteActive() {
-        currentState.set(GuidanceState.ACTIVE);
+        currentState.set(GuidanceState.INACTIVE);
     }
     
     @Override
