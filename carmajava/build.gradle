@@ -100,8 +100,8 @@ subprojects {
 defaultTasks 'tasks'
 
 ext.gitVersioner = [
-    defaultBranch           : "develop",
-    stableBranches          : ["master"],
+    defaultBranch           : "master",
+    /* stableBranches          : ["master"], */
     yearFactor              : 1000,
     snapshotEnabled         : true,
     localChangesCountEnabled: true,
