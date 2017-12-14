@@ -93,7 +93,7 @@ public class GuidanceRouteService implements RouteService {
    for (RouteSegment segment : currentRoute.getSegments()) {
      dtdAccum += segment.getLength();
 
-     if (dtdAccum > downtrackDistance) {
+     if (dtdAccum > location) {
        out = segment;
        break;
      }

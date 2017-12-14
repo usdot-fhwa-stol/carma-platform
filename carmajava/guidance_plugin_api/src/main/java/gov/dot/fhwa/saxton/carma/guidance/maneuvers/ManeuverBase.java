@@ -48,12 +48,18 @@ public abstract class ManeuverBase implements ISimpleManeuver {
      * will need to provide their own plan() methods to fill in the details and execute this one first.
      */
     @Override
-    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
+    public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
         inputs_ = inputs;
         commands_ = commands;
         startDist_ = startDist;
+        return Double.NaN;
     }
 
+    @Override
+    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+    
     public abstract boolean executeTimeStep() throws IllegalStateException;
 
 

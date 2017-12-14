@@ -41,7 +41,11 @@ public class SpeedLimit {
   public double getLimit() {
     return limit;
   }
-
+  
+  public void setLocation(double location) {
+      this.location = location;
+  }
+  
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof SpeedLimit)) {
