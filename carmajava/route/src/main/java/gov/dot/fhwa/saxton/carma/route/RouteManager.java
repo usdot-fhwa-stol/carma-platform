@@ -182,7 +182,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
           @Override
           public void build(AbortActiveRouteRequest request, AbortActiveRouteResponse response) {
             try {
-              response.setErrorStatus(routeWorker.startActiveRoute());
+              response.setErrorStatus(routeWorker.abortActiveRoute());
             } catch (Exception e) {
               handleException(e);
             }
