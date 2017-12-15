@@ -19,7 +19,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.144' // TODO: Update with proper environment IP address to 166.241.207.252
+var ip = '192.168.32.144' // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -80,9 +80,7 @@ var routeTimer;
 //Conversion from m/s to MPH.
 var meter_to_mph = 2.23694;
 var meter_to_mile = 0.000621371;
-
 var total_dist_next_speed_limit = 0;
-
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 
 /*
@@ -939,11 +937,12 @@ function checkRouteInfo() {
         var remaining_dist = total_dist_next_speed_limit - message.down_track;
         var remaining_dist_miles = (remaining_dist * meter_to_mile);
         remaining_dist_miles = Math.max(0, remaining_dist_miles);
-        var divDistRemaining = document.getElementById('divDistRemaining');
-        divDistRemaining.innerHTML = 'Distance Remaining to Next Speed Limit: ' + remaining_dist_miles.toFixed(2) + ' miles';
 
-        insertNewTableRow('tblSecondA', 'Total Distance to Next Speed Limit', total_dist_next_speed_limit.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Remaining Dist to Next Speed Limit', remaining_dist.toFixed(2));
+        var divDistRemaining = document.getElementById('divDistRemaining');
+        divDistRemaining.innerHTML = 'Distance Remaining to Next Speed Limit: ' + remaining_dist_miles.toFixed(2) + ' mile(s)';
+
+        insertNewTableRow('tblSecondA', 'Total Dist to Next Speed Limit', total_dist_next_speed_limit.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Remaining Dist to Next Speed Limit (m)', remaining_dist.toFixed(2));
         insertNewTableRow('tblSecondA', 'Remaining Dist to Next Speed Limit (miles)', remaining_dist_miles.toFixed(2));
 
         //If completed, then route topic will publish something to guidance to shutdown.
@@ -970,8 +969,6 @@ function checkRouteInfo() {
 */
 function showActiveRoute() {
 
-    alert('showActiveRoute');
-
     //Get Route State
     var listenerRoute = new ROSLIB.Topic({
         ros: ros,
@@ -995,13 +992,15 @@ function showActiveRoute() {
         }
 
         //Only map the segment one time.
-        alert('routePlanCoordinates: ' + sessionStorage.getItem('routePlanCoordinates'));
+        //alert('routePlanCoordinates: ' + sessionStorage.getItem('routePlanCoordinates') );
         if (sessionStorage.getItem('routePlanCoordinates') == null) {
             message.segments.forEach(mapEachRouteSegment);
         }
 
-        alert('showActiveRoute calling calculateDistToNextSpeedLimit');
-        message.segments.forEach(calculateDistToNextSpeedLimit);
+        //alert('showActive Route: sessionStorage.getItem(routeSpeedLimitDist: ' + sessionStorage.getItem('routeSpeedLimitDist'));
+        if (sessionStorage.getItem('routeSpeedLimitDist') == null) {
+            message.segments.forEach(calculateDistToNextSpeedLimit);
+        }
     });
 }
 
@@ -1009,8 +1008,6 @@ function showActiveRoute() {
     Loop through each available plugin
 */
 function mapEachRouteSegment(segment) {
-
-    // alert('mapEachRouteSegment');
 
     var segmentLat;
     var segmentLon;
@@ -1044,8 +1041,6 @@ function mapEachRouteSegment(segment) {
 
 function calculateDistToNextSpeedLimit(segment) {
 
-    //alert('calculateDistToNextSpeedLimit');
-
     //To calculate the distance to next speed limit
     var routeSpeedLimit; //To store the total distance for each speed limit change.
     var routeSpeedLimitDist;
@@ -1055,12 +1050,7 @@ function calculateDistToNextSpeedLimit(segment) {
         routeSpeedLimitDist = [];
         routeSpeedLimitDist.push(routeSpeedLimit);
 
-        //alert('routeSpeedLimitDist.total_length:' + routeSpeedLimit.total_length
-        // + ' with speed = ' + segment.prev_waypoint.speed_limit);
-
         sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
-
-        // alert('mapEachRouteSegment: IF: routeSpeedLimitDist: ' + sessionStorage.getItem('routeSpeedLimitDist'));
     }
     else {
 
@@ -1069,28 +1059,27 @@ function calculateDistToNextSpeedLimit(segment) {
 
         var lastItem = routeSpeedLimitDist[routeSpeedLimitDist.length - 1];
 
+        //alert('lastItem: ' + lastItem.total_length);
+
         //If speed limit changes, add to list
-        if (lastItem.speed_limit != segment.waypoint.speed_limit) {
-            routeSpeedLimit = { waypoint_id: segment.waypoint.waypoint_id, total_length: segment.length, speed_limit: segment.waypoint.speed_limit };
+        if (lastItem.speed_limit != segment.waypoint.speed_limit)
+        {
+            routeSpeedLimit = { waypoint_id: segment.waypoint.waypoint_id
+                                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
+                                , speed_limit: segment.waypoint.speed_limit
+                              };
             routeSpeedLimitDist.push(routeSpeedLimit);
 
-            //alert('IF routeSpeedLimitDist.total_length:' + routeSpeedLimitDist[routeSpeedLimitDist.length-1]['total_length']
-            //+ ' with speed = ' + segment.waypoint.speed_limit);
             sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
         }
         else //Update last item's length to the total length
         {
-            // alert('ELSE total_length: ' + routeSpeedLimitDist[routeSpeedLimitDist.length-1]['total_length']
-            // + '+ segment.length: ' + segment.length);
 
-            routeSpeedLimitDist[routeSpeedLimitDist.length - 1]['total_length'] += segment.length;
-
-            //alert('= routeSpeedLimitDist.total_length:' + routeSpeedLimitDist[routeSpeedLimitDist.length-1]['total_length']
-            //+ ' with speed = ' + segment.waypoint.speed_limit);
+            lastItem.waypoint_id = segment.waypoint.waypoint_id;
+            lastItem.total_length += segment.length;
 
             sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
 
-            //alert('mapEachRouteSegment: ELSE : routeSpeedLimitDist: ' + sessionStorage.getItem('routeSpeedLimitDist'));
         }
     }
 }
@@ -1118,6 +1107,7 @@ function showNavSatFix() {
         if (hostmarker != null) {
             moveMarkerWithTimeout(hostmarker, message.latitude, message.longitude, 0);
         }
+
         //listenerNavSatFix.unsubscribe();
     });
 
@@ -1161,8 +1151,6 @@ function showCurrentSegmentInfo() {
         messageType: 'cav_msgs/RouteSegment'
     });
 
-    //alert('showCurrentSegmentInfo 1');
-
     listenerCurrentSegment.subscribe(function (message) {
 
         insertNewTableRow('tblSecondA', 'Current Segment ID', message.waypoint.waypoint_id);
@@ -1170,37 +1158,25 @@ function showCurrentSegmentInfo() {
         if (message.waypoint.speed_limit != null && message.waypoint.speed_limit != 'undefined')
             document.getElementById('divSpeedLimitValue').innerHTML = message.waypoint.speed_limit;
 
+
         //Determine the remaining distance to current speed limit
-        if (sessionStorage.getItem('routeSpeedLimitDist') != null) {
+        if (sessionStorage.getItem('routeSpeedLimitDist') != null)
+        {
             var routeSpeedLimitDist = sessionStorage.getItem('routeSpeedLimitDist');
             routeSpeedLimitDist = JSON.parse(routeSpeedLimitDist);
-            total_dist_next_speed_limit = routeSpeedLimitDist[0]['total_length'];
-            //alert('showCurrentSegmentInfo1: total_dist_next_speed_limit: ' + total_dist_next_speed_limit);
 
-            //alert('showCurrentSegmentInfo 2: routeSpeedLimitDist: ' + sessionStorage.getItem('routeSpeedLimitDist'));
-            //Loop thru to see if the next waypoint is met
-            routeSpeedLimitDist.forEach(
+            //Loop thru to find the correct totaldistance
+            for (i = 0; i < routeSpeedLimitDist.length; i++)
+            {
+                if (   message.waypoint.waypoint_id <= routeSpeedLimitDist[i].waypoint_id)
+                {
+                    total_dist_next_speed_limit = routeSpeedLimitDist[i].total_length;
+                    break;
+                }
+            }
 
-                function (item) {
-                    //                        alert('item.waypoint_id= ' + item.waypoint_id
-                    //                        + ', item.speed_limit: ' + item.speed_limit
-                    //                        + ', item.total_length: ' + item.total_length
-                    //                        + ', message.waypoint.waypoint_id=' + message.waypoint.waypoint_id)
-                    //                        ;
+            //insertNewTableRow('tblSecondA', 'total_dist_next_speed_limit', total_dist_next_speed_limit);
 
-                    if (item.waypoint_id == message.waypoint.waypoint_id) {
-
-                        alert('item.waypoint_id= ' + item.waypoint_id
-                            + ', item.speed_limit: ' + item.speed_limit
-                            + ', item.total_length: ' + item.total_length
-                            + ', message.waypoint.waypoint_id=' + message.waypoint.waypoint_id)
-                            ;
-
-                        //reset the calculation
-                        total_dist_next_speed_limit = item.total_length;
-                        alert('showCurrentSegmentInfo2: total_dist_next_speed_limit: ' + total_dist_next_speed_limit);
-                    }
-                })
         }
     });
 }
