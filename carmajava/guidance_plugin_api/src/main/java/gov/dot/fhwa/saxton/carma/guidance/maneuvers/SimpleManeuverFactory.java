@@ -14,13 +14,20 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance;
+package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-// Any change on this enum should result in changes on GuidanceState ROS message as well
-public enum GuidanceState {
-    STARTUP,
-    DRIVERS_READY,
-    INACTIVE,
-    ENGAGED,
-    SHUTDOWN
+public class SimpleManeuverFactory {
+    
+    public ISimpleManeuver createManeuver(double start_speed, double end_speed) {
+        
+        double speedEpsilon = SteadySpeed.SPEED_EPSILON;
+        if(end_speed - start_speed > speedEpsilon) {
+            return new SpeedUp();
+        } else if(start_speed - end_speed > speedEpsilon) {
+            return new SlowDown();
+        } else {
+            return new SteadySpeed();
+        }
+    }
+    
 }

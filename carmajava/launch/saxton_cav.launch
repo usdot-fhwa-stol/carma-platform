@@ -222,6 +222,8 @@
 
         <env if="$(arg debug_environment_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
+        <rosparam command="load" file="$(arg PARAM_DIR)/EnvironmentManagerParams.yaml"/>
+
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="map"
@@ -390,9 +392,6 @@
         <remap from="route"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
-        <!-- Plugin Cruising Thread-->
-        <remap from="get_available_routes"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
       </node>
     </group>
 

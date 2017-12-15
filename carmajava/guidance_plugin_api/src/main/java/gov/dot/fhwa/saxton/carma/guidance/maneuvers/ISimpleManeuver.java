@@ -34,14 +34,15 @@ public interface ISimpleManeuver extends IManeuver {
 
     /**
      * Plans the maneuver to a target end distance and makes it ready for execution
-     *
+     * with the vehicle maxAccel constraints by adjusting the target speed
      * @param inputs - the object that provides necessary input data about the route
      * @param commands - the object that will take output commands
      * @param startDist - distance from beginning of route at which this maneuver is to begin, m
      * @param endDist - the distance from the beginning of route at which this maneuver is to end, m
+     * @return adjusted target speed
      * @throws IllegalStateException if required target quantity is not defined prior to this call
      */
-    void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException;
+    double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException;
 
     /**
      * Stores the beginning and target speed of the maneuver, to be used for longitudinal maneuvers only.
@@ -73,5 +74,22 @@ public interface ISimpleManeuver extends IManeuver {
      * @throws UnsupportedOperationException if called on a lateral maneuver object
      */
     double getTargetSpeed() throws UnsupportedOperationException;
+    
+    /**
+     * Return if the maneuver can be planned with vehicle lag constraint
+     * @param inputs - the object that provides necessary input data about the route
+     * @param startDist - distance from beginning of route at which this maneuver is to begin, m
+     * @param endDist - the distance from the beginning of route at which this maneuver is to end, m
+     * @return boolean
+     * @throws UnsupportedOperationException if called on a lateral maneuver
+     */
+    boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException;
+    
+    /**
+     * Specifies the maximum acceleration allowed in the maneuver. Note that this value will apply to both speeding
+     * up and slowing down (symmetrical).
+     * @param limit - max (absolute value) allowed, m/s^2
+     */
+    void setMaxAccel(double limit);
 }
 

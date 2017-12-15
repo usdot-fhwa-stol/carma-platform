@@ -54,11 +54,11 @@ public class RouteWorker {
     /*STATES: LoadingRoutes(0), RouteSelection(1), WaitingToStart(2), FollowingRoute(3) */
     /*          EVENTS           */
     { 1, 1, 2, 3 }, /*FILES_LOADED    */
-    { 0, 2, 2, 3 }, /*ROUTE_SELECTED  */
-    { 0, 1, 2, 1 }, /*ROUTE_COMPLETED */
-    { 0, 1, 2, 2 }, /*LEFT_ROUTE      */
-    { 0, 1, 2, 2 }, /*SYSTEM_FAILURE  */
-    { 0, 1, 2, 2 }, /*SYSTEM_NOT_READY*/
+    { 0, 2, 2, 2 }, /*ROUTE_SELECTED  */
+    { 0, 1, 1, 1 }, /*ROUTE_COMPLETED */
+    { 0, 1, 1, 1 }, /*LEFT_ROUTE      */
+    { 0, 1, 1, 1 }, /*SYSTEM_FAILURE  */
+    { 0, 1, 1, 1 }, /*SYSTEM_NOT_READY*/
     { 0, 1, 3, 3 }, /*ROUTE_STARTED   */
     { 0, 1, 1, 1 }, /*ROUTE_ABORTED   */ };
 
@@ -76,15 +76,18 @@ public class RouteWorker {
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
   protected int routeStateSeq = 0;
+  protected final int requiredLeftRouteCount;
+  protected int recievedLeftRouteEvents = 0;
 
   /**
    * Constructor initializes a route worker object with the provided logging tool
    *
    * @param log The logger to be used
    */
-  public RouteWorker(IRouteManager manager, Log log) {
+  public RouteWorker(IRouteManager manager, Log log, int requiredLeftRouteCount) {
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.routeManager = manager;
+    this.requiredLeftRouteCount = requiredLeftRouteCount;
   }
 
   /**
@@ -93,9 +96,10 @@ public class RouteWorker {
    * @param manager negotiation manager which is used to publish data
    * @param log     the logger
    */
-  public RouteWorker(IRouteManager manager, Log log, String database_path) {
+  public RouteWorker(IRouteManager manager, Log log, String database_path, int requiredLeftRouteCount) {
     this.routeManager = manager;
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
+    this.requiredLeftRouteCount = requiredLeftRouteCount;
     // Load route files from database
     log.info("RouteDatabasePath: " + database_path);
     File folder = new File(database_path);
@@ -117,6 +121,20 @@ public class RouteWorker {
       }
     }
     // At this point the current state should be WaitingForRouteSelection
+  }
+
+  /**
+   * Helper method which resets all the variables which maintain the route following state to their default values
+   */
+  protected void resetRouteStateVariables() {
+    activeRoute = null;
+    currentSegment = null;
+    currentSegmentIndex = 0;
+    currentWaypointIndex = 0;
+    downtrackDistance = 0;
+    crossTrackDistance = 0;
+    routeStateSeq = 0;
+    recievedLeftRouteEvents = 0;
   }
 
   /**
@@ -146,6 +164,7 @@ public class RouteWorker {
       case ROUTE_COMPLETED:
         break;
       case LEFT_ROUTE:
+        recievedLeftRouteEvents = 0; // Reset the left route count before transitioning to a new state
         break;
       case SYSTEM_FAILURE:
         routeManager.shutdown();
@@ -223,6 +242,7 @@ public class RouteWorker {
     if (route == null) {
       return SetActiveRouteResponse.NO_ROUTE;
     } else {
+      resetRouteStateVariables(); // Reset all route state variables when a new route is selected
       activeRoute = route;
 
       handleEvent(WorkerEvent.ROUTE_SELECTED);
@@ -374,7 +394,12 @@ public class RouteWorker {
     log.debug("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
-      handleEvent(WorkerEvent.LEFT_ROUTE);
+      recievedLeftRouteEvents++;
+      if (recievedLeftRouteEvents >= requiredLeftRouteCount) {
+        handleEvent(WorkerEvent.LEFT_ROUTE);
+      }
+    } else {
+      recievedLeftRouteEvents = 0; // reset count to 0 if we are back on the route
     }
 
     // Publish updated route information

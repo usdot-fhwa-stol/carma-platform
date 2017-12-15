@@ -22,10 +22,14 @@ import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.TrajectoryExecutor;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse.PlanningRequest;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
@@ -41,13 +45,13 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallbac
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryValidationConstraint;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryValidator;
+
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,8 +61,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * Runs inside the GuidanceMain class's executor and prompts the Guidance.Plugins
  * to plan trajectories for the vehicle to execute.
  */
-public class Arbitrator extends GuidanceComponent implements ArbitratorService, ArbitratorStateChangeListener {
-  protected ArbitratorStateMachine stateMachine = new ArbitratorStateMachine();
+public class Arbitrator extends GuidanceComponent
+    implements ArbitratorService, IStateChangeListener, ArbitratorStateChangeListener {
+  protected ArbitratorStateMachine arbitratorStateMachine = new ArbitratorStateMachine();
   protected ISubscriber<RouteState> routeStateSubscriber;
   protected ISubscriber<TwistStamped> twistSubscriber;
   protected AtomicReference<GuidanceState> state;
@@ -87,18 +92,19 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
   protected AtomicDouble routeLength = new AtomicDouble(-1.0);
   protected AtomicReference<Route> currentRoute = new AtomicReference<>();
   protected AtomicBoolean routeRecvd = new AtomicBoolean(false);
-  protected BlockingQueue<Runnable> jobQueue = new LinkedBlockingQueue<>();
   protected static final long SLEEP_DURATION_MILLIS = 100;
   protected static final double TRAJ_SIZE_WARNING = 50.0;
 
-  public Arbitrator(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node,
+  public Arbitrator(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node,
       PluginManager pluginManager, TrajectoryExecutor trajectoryExecutor) {
-    super(state, iPubSubService, node);
-    this.state = state;
+    super(stateMachine, iPubSubService, node);
     this.pluginManager = pluginManager;
     this.trajectoryValidator = new TrajectoryValidator();
     this.trajectoryExecutor = trajectoryExecutor;
+    jobQueue.add(this::onStartup);
+    arbitratorStateMachine.registerStateChangeListener(this);
     stateMachine.registerStateChangeListener(this);
+
   }
 
   /**
@@ -128,15 +134,13 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
   }
 
   @Override
-  public void onGuidanceStartup() {
+  public void onStartup() {
     log.info("STARTUP", "Arbitrator running!");
     routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-    routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-      @Override
-      public void onMessage(RouteState msg) {
+    routeStateSubscriber.registerOnMessageCallback((msg) -> {
         log.info("Received RouteState:" + msg);
         downtrackDistance.set(msg.getDownTrack());
-      }
+        receivedDtdUpdate.set(true);
     });
 
     ParameterTree ptree = node.getParameterTree();
@@ -171,7 +175,8 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
       }
     });
 
-    // Instantiate the configured constraints and register them with the TrajectoryValidator
+    // Instantiate the configured constraints and register them with the
+    // TrajectoryValidator
     List<String> constraintNames = (List<String>) ptree.getList("~trajectory_constraints");
     List<Class<? extends TrajectoryValidationConstraint>> constraintClasses = new ArrayList<>();
     for (String className : constraintNames) {
@@ -192,39 +197,20 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     }
 
     twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
-    twistSubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
-      @Override
-      public void onMessage(TwistStamped msg) {
+    twistSubscriber.registerOnMessageCallback((msg) -> {
         currentSpeed.set(msg.getTwist().getLinear().getX());
-        receivedDtdUpdate.set(true);
-      }
     });
-  }
 
-  @Override
-  public String getComponentName() {
-    return "Guidance.Arbitrator";
+    currentState.set(GuidanceState.STARTUP);
   }
 
   @Override
   public void onSystemReady() {
-    // NO-OP
-  }
-
-  protected void setLateralPlugin(IPlugin plugin) {
-    lateralPlugin = plugin;
-  }
-
-  protected void setLongitudinalPlugin(IPlugin plugin) {
-    longitudinalPlugins.add(plugin);
-  }
-
-  protected void setCruisingPlugin(CruisingPlugin plugin) {
-    cruisingPlugin = plugin;
+    currentState.set(GuidanceState.DRIVERS_READY);
   }
 
   @Override
-  public void onGuidanceEnable() {
+  public void onRouteActive() {
     // For now, find the configured lateral and longitudinal plugins
     for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
       if (plugin.getVersionInfo().componentName().equals(lateralPluginName)) {
@@ -245,7 +231,8 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     }
 
     if (lateralPlugin == null || longitudinalPlugins.isEmpty()) {
-      panic("Arbitrator unable to locate the configured and required plugins!");
+      exceptionHandler.handleException("Arbitrator unable to locate the configured and required plugins!",
+          new RosRuntimeException("No plugins"));
     }
 
     String pluginList = "";
@@ -254,7 +241,43 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     }
 
     log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + pluginList + "]");
-    stateMachine.processEvent(ArbitratorEvent.INITIALIZE);
+
+    currentState.set(GuidanceState.INACTIVE);
+  }
+
+  @Override
+  public void onEngaged() {
+    arbitratorStateMachine.processEvent(ArbitratorEvent.INITIALIZE);
+    currentState.set(GuidanceState.ENGAGED);
+  }
+
+  @Override
+  public void onCleanRestart() {
+    arbitratorStateMachine.processEvent(ArbitratorEvent.CLEAN_RESTART);
+    // Reset member variables
+    lateralPlugin = null;
+    cruisingPlugin = null;
+    longitudinalPlugins.clear();
+    trajectory = null;
+    planningWindow = node.getParameterTree().getDouble("~initial_planning_window", 10.0);
+    currentState.set(GuidanceState.DRIVERS_READY);
+  }
+
+  @Override
+  public String getComponentName() {
+    return "Guidance.Arbitrator";
+  }
+
+  protected void setLateralPlugin(IPlugin plugin) {
+    lateralPlugin = plugin;
+  }
+
+  protected void setLongitudinalPlugin(IPlugin plugin) {
+    longitudinalPlugins.add(plugin);
+  }
+
+  protected void setCruisingPlugin(CruisingPlugin plugin) {
+    cruisingPlugin = plugin;
   }
 
   /**
@@ -291,16 +314,6 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     return trajectoryEnd;
   }
 
-  @Override
-  public void loop() throws InterruptedException {
-    // Simple job-queue loop with jobs being added based on state machine transitions
-    log.info("Arbitrator polling job queue...");
-    Runnable job = jobQueue.take();
-
-    log.info("Arbitrator found job of type: " + job.getClass().getSimpleName() + "! Executing...");
-    job.run();
-  }
-
   protected void increasePlanningWindow() {
     planningWindow *= planningWindowGrowthFactor;
   }
@@ -311,6 +324,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
   }
 
   protected Trajectory planTrajectory(double trajectoryStart, double trajectoryEnd) {
+    long planningStart = System.currentTimeMillis();
     log.info("Arbitrator planning new trajectory spanning [" + trajectoryStart + ", " + trajectoryEnd + ")");
 
     if (trajectoryEnd - trajectoryStart < TRAJ_SIZE_WARNING) {
@@ -318,7 +332,7 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     }
 
     Trajectory out = null;
-    for (int failures = 0; failures < numAcceptableFailures; failures++) {
+    planningLoop: for (int failures = 0; failures < numAcceptableFailures; failures++) {
       Trajectory traj = new Trajectory(trajectoryStart, trajectoryEnd);
       double expectedEntrySpeed = 0.0;
       if (trajectory != null) {
@@ -335,10 +349,48 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
 
       lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
 
-      for (IPlugin p : longitudinalPlugins) {
+      // Use temp list to allow for modification
+      List<IPlugin> tmpPlugins = new ArrayList<>(longitudinalPlugins);
+      for (IPlugin p : tmpPlugins) {
         if (p.getActivation() && p.getAvailability()) {
           log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
-          p.planTrajectory(traj, expectedEntrySpeed);
+          TrajectoryPlanningResponse resp = p.planTrajectory(traj, expectedEntrySpeed);
+
+          // Process the plugin's requests
+          if (!resp.getRequests().isEmpty()) {
+            // Update downtrack end of trajectory if requested
+            if (resp.getProposedTrajectoryEnd().isPresent()) {
+              double proposedEndDistance = resp.getProposedTrajectoryEnd().get();
+              trajectoryEnd = Math.max(proposedEndDistance, trajectoryEnd);
+              log.info("Candidate trajectory #" + (failures + 1) + " Plugin: " + p.getVersionInfo().componentName()
+                  + " requested extended trajectory to " + trajectoryEnd);
+            }
+
+            // Sleep for replan delay if requested
+            final int numFails = failures; // Copy into final var so lambda can read it
+            resp.getProposedReplanDelay().ifPresent((delay) -> {
+              log.info("Candidate trajectory #" + (numFails + 1) + " Plugin: " + p.getVersionInfo().componentName()
+                  + " requested to delay planning for " + delay + " ms");
+
+              try {
+                Thread.sleep(delay);
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+              }
+            });
+
+            // Promote the plugin to the top of the line for the next iteration
+            if (resp.higherPriorityRequested()) {
+              log.info("Candidate trajectory #" + (failures + 1) + " Plugin: " + p.getVersionInfo().componentName()
+                  + " requested higher priority");
+              longitudinalPlugins.remove(p);
+              longitudinalPlugins.add(0, p);
+            }
+
+            // Increment planning failures and skip to next iteration of outer loop
+            failures++;
+            continue planningLoop; // Jump back to loop labled "planningLoop"
+          }
         }
       }
 
@@ -350,8 +402,14 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
     }
 
     if (out == null) {
-      panic("Arbitrator unable to plan valid trajectory after " + numAcceptableFailures + " attempts!");
+      exceptionHandler.handleException(
+          "Arbitrator unable to plan valid trajectory after " + numAcceptableFailures + " attempts!",
+          new RosRuntimeException("Unable to plan trajectory"));
     }
+
+    long planningEnd = System.currentTimeMillis();
+    log.info("New trajectory planned in " + (planningEnd - planningStart) + " ms. Planning finished at "
+        + trajectoryExecutor.getTrajectoryCompletionPct() + "%");
 
     return out;
   }
@@ -359,75 +417,65 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
   /**
    * Job queue task for performing the planning of the first Trajectory
    */
-  private class InitialPlanningTask implements Runnable {
-
-    @Override
-    public void run() {
-      log.info("Arbitrator performing initial trajectory planning");
-      // Wait until we've received a downtrack distance update to try to plan our first trajectory
-      if (!receivedDtdUpdate.get()) {
-        log.info("Arbitrator waiting for DTD update from Route...");
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-        }
+  private void initialPlan() {
+    log.info("Arbitrator performing initial trajectory planning");
+    // Wait until we've received a downtrack distance update to try to plan our first trajectory
+    if (!receivedDtdUpdate.get()) {
+      log.info("Arbitrator waiting for DTD update from Route...");
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
       }
-
-      double trajectoryStart = downtrackDistance.get();
-      trajectory = planTrajectory(downtrackDistance.get(), getNextTrajectoryEndpoint(trajectoryStart));
-      trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, (pct) -> {
-        if (trajectoryExecutor.getCurrentTrajectory() != null
-            && trajectoryExecutor.getCurrentTrajectory().getComplexManeuver() != null) {
-          OnTrajectoryProgressCallback complexReplanCallback = new OnTrajectoryProgressCallback() {
-            @Override
-            public void onProgress(double pct) {
-              // Ensure we're only called once
-              trajectoryExecutor.unregisterOnTrajectoryProgressCallback(this);
-
-              // Trigger the replan
-              stateMachine.processEvent(ArbitratorEvent.COMPLEX_TRAJECTORY_COMPLETION_ALERT);
-            }
-          };
-
-          // Schedule this to execute closer to the end of the complex trajectory
-          trajectoryExecutor.registerOnTrajectoryProgressCallback(complexTrajectoryReplanTriggerPercent,
-              complexReplanCallback);
-        } else {
-          stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_COMPLETION_ALERT);
-        }
-      });
-
-      trajectoryExecutor.runTrajectory(trajectory);
-      stateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
     }
 
+    double trajectoryStart = downtrackDistance.get();
+    trajectory = planTrajectory(downtrackDistance.get(), getNextTrajectoryEndpoint(trajectoryStart));
+    trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, (pct) -> {
+      if (trajectoryExecutor.getCurrentTrajectory() != null
+          && trajectoryExecutor.getCurrentTrajectory().getComplexManeuver() != null) {
+        OnTrajectoryProgressCallback complexReplanCallback = new OnTrajectoryProgressCallback() {
+          @Override
+          public void onProgress(double pct) {
+            // Ensure we're only called once
+            trajectoryExecutor.unregisterOnTrajectoryProgressCallback(this);
+
+            // Trigger the replan
+            arbitratorStateMachine.processEvent(ArbitratorEvent.COMPLEX_TRAJECTORY_COMPLETION_ALERT);
+          }
+        };
+
+        // Schedule this to execute closer to the end of the complex trajectory
+        trajectoryExecutor.registerOnTrajectoryProgressCallback(complexTrajectoryReplanTriggerPercent,
+            complexReplanCallback);
+      } else {
+        arbitratorStateMachine.processEvent(ArbitratorEvent.TRAJECTORY_COMPLETION_ALERT);
+      }
+    });
+
+    trajectoryExecutor.runTrajectory(trajectory);
+    arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
   }
 
   /**
    * Job queue task for performing replanning after successful completion of the
    * previous trajectory
    */
-  private class NormalReplanningTask implements Runnable {
+  private void normalReplan() {
+    log.info("Arbitrator running normal replanning process");
+    if (downtrackDistance.get() < routeLength.get()) {
+      increasePlanningWindow();
 
-    @Override
-    public void run() {
-      log.info("Arbitrator running normal replanning process");
-      if (downtrackDistance.get() < routeLength.get()) {
-        increasePlanningWindow();
+      Trajectory currentTrajectory = trajectoryExecutor.getCurrentTrajectory();
 
-        Trajectory currentTrajectory = trajectoryExecutor.getCurrentTrajectory();
+      double trajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
+      double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
 
-        double trajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
-        double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
-
-        trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
-        trajectoryExecutor.runTrajectory(trajectory);
-        stateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
-      } else {
-        log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
-      }
+      trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
+      trajectoryExecutor.runTrajectory(trajectory);
+      arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
+    } else {
+      log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
     }
-
   }
 
   /**
@@ -435,31 +483,25 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
    * <p>
    * Plans temporary steadying trajectory for a configured duration then replans as usual
    */
-  private class ComplexTrajectoryReplanTask implements Runnable {
+  private void complexTrajectoryReplan() {
+    log.info("Arbitrator replanning trajectory after complex maneuver execution");
+    if (downtrackDistance.get() < routeLength.get()) {
+      increasePlanningWindow();
 
-    @Override
-    public void run() {
-      log.info("Arbitrator replanning trajectory after complex maneuver execution");
-      if (downtrackDistance.get() < routeLength.get()) {
-        increasePlanningWindow();
+      Trajectory currentTrajectory = trajectoryExecutor.getCurrentTrajectory();
 
-        Trajectory currentTrajectory = trajectoryExecutor.getCurrentTrajectory();
+      double steadyingTrajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
+      double steadyingTrajectoryEnd = steadyingTrajectoryStart + (postComplexSteadyingDuration * currentSpeed.get());
+      Trajectory steadyingTrajectory = new Trajectory(steadyingTrajectoryStart, steadyingTrajectoryEnd);
 
-        double steadyingTrajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
-        double steadyingTrajectoryEnd = steadyingTrajectoryStart + (postComplexSteadyingDuration * currentSpeed.get());
-        Trajectory steadyingTrajectory = new Trajectory(steadyingTrajectoryStart, steadyingTrajectoryEnd);
+      cruisingPlugin.planTrajectory(steadyingTrajectory, currentSpeed.get());
+      trajectoryExecutor.runTrajectory(steadyingTrajectory);
+      trajectory = steadyingTrajectory;
 
-        cruisingPlugin.planTrajectory(steadyingTrajectory, currentSpeed.get());
-        trajectoryExecutor.runTrajectory(steadyingTrajectory);
-        trajectory = steadyingTrajectory;
-
-        // Begin normal trajectory replanning immediately
-        NormalReplanningTask normalReplanningTask = new NormalReplanningTask();
-        normalReplanningTask.run();
-      } else {
-        log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
-      }
-
+      // Begin normal trajectory replanning immediately
+      normalReplan();
+    } else {
+      log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
     }
 
   }
@@ -468,53 +510,75 @@ public class Arbitrator extends GuidanceComponent implements ArbitratorService, 
    * Job queue task for replanning after the Tracking component has notified us of
    * trajectory failure.
    */
-  private class FailedTrajectoryReplanTask implements Runnable {
+  private void failedTrajectoryReplan() {
+    log.info("Arbitrator replanning trajectory because of failed execution!");
+    if (downtrackDistance.get() < routeLength.get()) {
+      decreasePlanningWindow();
 
-    @Override
-    public void run() {
-      log.info("Arbitrator replanning trajectory because of failed execution!");
-      if (downtrackDistance.get() < routeLength.get()) {
-        decreasePlanningWindow();
+      double trajectoryStart = downtrackDistance.get();
+      double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
 
-        double trajectoryStart = downtrackDistance.get();
-        double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
-
-        trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
-        trajectoryExecutor.abortTrajectory();
-        trajectoryExecutor.runTrajectory(trajectory);
-        stateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
-      } else {
-        log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
-      }
+      trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
+      trajectoryExecutor.abortTrajectory();
+      trajectoryExecutor.runTrajectory(trajectory);
+      arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
+    } else {
+      log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
     }
-
   }
 
   @Override
   public void notifyTrajectoryFailure() {
-    stateMachine.processEvent(ArbitratorEvent.TRAJECTORY_FAILED_EXECUTION);
+    arbitratorStateMachine.processEvent(ArbitratorEvent.TRAJECTORY_FAILED_EXECUTION);
   }
 
   @Override
   public void onStateChange(ArbitratorState newState) {
     switch (newState) {
     case INITIAL_PLANNING:
-      jobQueue.add(new InitialPlanningTask());
+      jobQueue.add(this::initialPlan);
       break;
     case AWAITING_REPLAN:
       // Don't submit anything to the job queue
       break;
     case NORMAL_REPLANNING:
-      jobQueue.add(new NormalReplanningTask());
+      jobQueue.add(this::normalReplan);
       break;
     case REPLAN_AFTER_COMPLEX_TRAJECTORY:
-      jobQueue.add(new ComplexTrajectoryReplanTask());
+      jobQueue.add(this::complexTrajectoryReplan);
       break;
     case REPLAN_DUE_TO_FAILED_TRAJECTORY:
-      jobQueue.add(new FailedTrajectoryReplanTask());
+      jobQueue.add(this::failedTrajectoryReplan);
+      break;
+    case INIT:
+      // Dont submit anything to the job queue
       break;
     default:
       throw new IllegalStateException("Unrecognized arbitrator state detected!");
+    }
+  }
+
+  @Override
+  public void onStateChange(GuidanceAction action) {
+    log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+    switch (action) {
+    case INTIALIZE:
+      jobQueue.add(this::onSystemReady);
+      break;
+    case ACTIVATE:
+      jobQueue.add(this::onRouteActive);
+      break;
+    case ENGAGE:
+      jobQueue.add(this::onEngaged);
+      break;
+    case SHUTDOWN:
+      jobQueue.add(this::onShutdown);
+      break;
+    case RESTART:
+      jobQueue.add(this::onCleanRestart);
+      break;
+    default:
+      throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
     }
   }
 

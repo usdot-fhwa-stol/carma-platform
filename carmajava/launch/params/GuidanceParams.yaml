@@ -23,7 +23,7 @@ max_deceleration_capability: 1.0
 arbitrator_replan_threshold: 0.75
 
 # Integer: Number of times to attempt to replan a Trajectory if validation fails
-trajectory_planning_max_attempts: 3
+trajectory_planning_max_attempts: 5
 
 # Double: Minimum length of a trajectory that will be planned under any normal scenario
 # Units: m

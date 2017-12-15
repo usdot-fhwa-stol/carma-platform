@@ -16,11 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-// Any change on this enum should result in changes on GuidanceState ROS message as well
-public enum GuidanceState {
-    STARTUP,
-    DRIVERS_READY,
-    INACTIVE,
-    ENGAGED,
-    SHUTDOWN
+public enum GuidanceEvent {
+    FOUND_DRIVERS,
+    ACTIVATE_ROUTE,
+    START_ROUTE,
+    FINISH_ROUTE,
+    LEFT_ROUTE,
+    DISENGAGE,
+    PANIC
 }

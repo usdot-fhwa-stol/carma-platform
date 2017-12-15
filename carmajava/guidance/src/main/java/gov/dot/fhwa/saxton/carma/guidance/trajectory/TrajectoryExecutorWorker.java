@@ -437,6 +437,16 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   }
 
   /**
+   * Unregister all callbacks
+   */
+  public void unregisterAllTrajectoryProgressCallback() {
+    // Ensure that we don't get any weirdness when trying other operations simultaneously
+    synchronized (callbacks) {
+      callbacks.clear();
+    }
+  }  
+  
+  /**
    * Get the current downtrack distance and then call any callbacks that have been triggered
    */
   private void invokeCallbacks() {

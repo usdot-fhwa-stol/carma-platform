@@ -17,8 +17,6 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.ManeuverFinishedListener;
-import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
-import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 /**
  * Runnable to handle execution of Maneuvers on regular timestep intervals

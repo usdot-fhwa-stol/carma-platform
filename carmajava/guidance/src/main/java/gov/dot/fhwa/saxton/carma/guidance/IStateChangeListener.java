@@ -16,11 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
-// Any change on this enum should result in changes on GuidanceState ROS message as well
-public enum GuidanceState {
-    STARTUP,
-    DRIVERS_READY,
-    INACTIVE,
-    ENGAGED,
-    SHUTDOWN
+/**
+ * Listener to receive notification of changes in the state machine
+ */
+public interface IStateChangeListener {
+    
+    /*
+     * Called when the state has changed after an event has been processed
+     */
+    public void onStateChange(GuidanceAction action);
+    
 }
