@@ -458,6 +458,17 @@ div.message_box {
     text-align: center;
 }
 
+/* Remaining Distance to Next Speed Limit */
+#divDistRemaining{
+ position: relative;
+ top: 50%;
+ color: black;
+ font-size: 25px;
+ font-weight: bold;
+ text-align: center;
+}
+
+
 /* Black Rounded Border Sign */
 #divSpeedCmd {
     position: absolute;
