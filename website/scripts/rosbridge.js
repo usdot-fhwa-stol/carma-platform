@@ -939,11 +939,11 @@ function checkRouteInfo() {
         remaining_dist_miles = Math.max(0, remaining_dist_miles);
 
         var divDistRemaining = document.getElementById('divDistRemaining');
-        divDistRemaining.innerHTML = 'Distance Remaining to Next Speed Limit: ' + remaining_dist_miles.toFixed(2) + ' mile(s)';
+        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' miles';
 
-        insertNewTableRow('tblSecondA', 'Total Dist to Next Speed Limit', total_dist_next_speed_limit.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Remaining Dist to Next Speed Limit (m)', remaining_dist.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Remaining Dist to Next Speed Limit (miles)', remaining_dist_miles.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Speed Limit Change In (m)', remaining_dist.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi)', remaining_dist_miles.toFixed(2));
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
