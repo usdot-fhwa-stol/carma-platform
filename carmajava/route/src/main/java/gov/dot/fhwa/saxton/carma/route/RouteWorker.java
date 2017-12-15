@@ -172,6 +172,7 @@ public class RouteWorker {
       case SYSTEM_NOT_READY:
         break;
       case ROUTE_ABORTED:
+        resetRouteStateVariables();
         break;
       case ROUTE_STARTED:
         break;
@@ -336,6 +337,21 @@ public class RouteWorker {
 
     handleEvent(WorkerEvent.ROUTE_STARTED);
   }
+
+  /**
+   * Aborts the currently active route and returns a byte (unit8) indicating the success of the abort request
+   *
+   * @return The error code (See cav_srvs.AbortActiveRoute for possible options)
+   */
+  public byte abortActiveRoute() {
+    if (activeRoute == null) {
+      return cav_srvs.AbortActiveRouteResponse.NO_ACTIVE_ROUTE;
+    }
+    log.info("Aborting current route by request");
+    handleEvent(WorkerEvent.ROUTE_ABORTED);
+    return cav_srvs.AbortActiveRouteResponse.NO_ERROR;
+  }
+
 
   /**
    * Function to be used as a callback for the arrival of NavSatFix messages
