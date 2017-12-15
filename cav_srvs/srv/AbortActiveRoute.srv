@@ -11,7 +11,7 @@
 ---
 # Response
 # An enumeration representing a service execution error as defined in the route design document.
-uint8 errorStatus
+uint8 error_status
 
 # enumeration values for errorStatus:
 uint8 NO_ERROR=0

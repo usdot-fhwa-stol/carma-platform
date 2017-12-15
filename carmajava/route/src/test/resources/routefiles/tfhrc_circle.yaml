@@ -1,15 +1,15 @@
 # Route file which describes the colonial farm road leaving from saxton garage at TFHRC
 !gov.dot.fhwa.saxton.carma.route.Route # Type indicator for loading with YAMLBeans
 routeName: TFHRC Circle # Name of this route (should be unique in CARMA version 1)
-maxJoinDistance: 100.0 # The maximum distance in meters a CARMA vehicle can be from a route and still start it
+maxJoinDistance: 10.0 # The maximum distance in meters a CARMA vehicle can be from a route and still start it
 waypoints: # The list of waypoints in the route
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint # Type indicator for loading with YAMLBeans
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location # Type indicator for loading with YAMLBeans
       latitude: 38.95647 # The latitude in degrees of this waypoint according to WGS-84
       longitude: -77.15031 # The longitude in degrees of this waypoint according to WGS-84
       altitude: 0.0 # The altitude in meters of this waypoint according to WGS-84
-    minCrossTrack: -100.0 # The minimum cross track distance in meters of a vehicle relative to the route
-    maxCrossTrack: 100.0 # The maximum cross track distance in meters of a vehicle relative to the route
+    minCrossTrack: -10.0 # The minimum cross track distance in meters of a vehicle relative to the route
+    maxCrossTrack: 10.0 # The maximum cross track distance in meters of a vehicle relative to the route
     lowerSpeedLimit: 0 # The lower speed limit in miles per hour
     upperSpeedLimit: 10 # The upper speed limit in miles per hour
     laneCount: 1 # The number of lanes
@@ -22,8 +22,8 @@ waypoints: # The list of waypoints in the route
       latitude: 38.95631
       longitude: -77.15041
       altitude: 0.0
-    minCrossTrack: -100.0
-    maxCrossTrack: 100.0
+    minCrossTrack: -10.0
+    maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
     laneCount: 1
@@ -36,8 +36,8 @@ waypoints: # The list of waypoints in the route
       latitude: 38.95628
       longitude: -77.15047
       altitude: 0.0
-    minCrossTrack: -100.0
-    maxCrossTrack: 100.0
+    minCrossTrack: -10.0
+    maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
     laneCount: 1
