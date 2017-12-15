@@ -71,6 +71,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     getAvailableRouteService;
   protected ServiceServer<StartActiveRouteRequest, StartActiveRouteResponse>
     startActiveRouteService;
+  protected ServiceServer<AbortActiveRouteRequest, AbortActiveRouteResponse>
+    abortActiveRouteService;
   protected RouteWorker routeWorker;
 
   @Override public GraphName getDefaultNodeName() {
@@ -166,6 +168,19 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
         new ServiceResponseBuilder<StartActiveRouteRequest, StartActiveRouteResponse>() {
           @Override
           public void build(StartActiveRouteRequest request, StartActiveRouteResponse response) {
+            try {
+              response.setErrorStatus(routeWorker.startActiveRoute());
+            } catch (Exception e) {
+              handleException(e);
+            }
+          }
+        });
+
+    abortActiveRouteService = connectedNode
+      .newServiceServer("abort_active_route", AbortActiveRoute._TYPE,
+        new ServiceResponseBuilder<AbortActiveRouteRequest, AbortActiveRouteResponse>() {
+          @Override
+          public void build(AbortActiveRouteRequest request, AbortActiveRouteResponse response) {
             try {
               response.setErrorStatus(routeWorker.startActiveRoute());
             } catch (Exception e) {
