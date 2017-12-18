@@ -133,7 +133,7 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
       </node>
 
-      <!-- SRX CAN Driver Node -->
+      <!-- SRX  Driver Node -->
       <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
         <arg name="srx_can_can_device" value="can2" />
       </include>
@@ -165,7 +165,7 @@
 
       <!-- SRX Radar Driver Node -->
       <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
-        <arg name="srx_objects_can_device" value="can3"/>
+        <arg name="srx_objects_can_device" value="can0"/>
       </include>
       <!-- Simulated Radar Driver Node -->
       <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
@@ -420,6 +420,8 @@
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
+      <remap from="state"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/state"/>               
       <remap from="ui_platoon_vehicle_info"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_platoon_vehicle_info"/>
       <remap from="plugins/available_plugins"

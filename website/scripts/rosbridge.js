@@ -19,7 +19,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.144' // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
+var ip = '192.168.88.10' // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -759,7 +759,7 @@ function checkGuidanceState() {
             case 2: //DRIVERS_READY
                 messageTypeFullDescription = 'Guidance have the drivers ready. ';
                 break;
-            //case 3: //ACTIVE //TODO: Further discussion with Kyle based on email. 
+            //case 3: //ACTIVE //TODO: Further discussion with Kyle based on email.
             //   enableGuidance();
             //    break;
             case 3: //INACTIVE
