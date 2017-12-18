@@ -202,8 +202,11 @@ function setSpeedometer(speed)
 /*
  Open the modal popup.
  TODO: Update to allow caution and warning message scenarios. Currently only handles fatal and guidance dis-engage which redirects to logout page.
+ showWarning = true : Shows the warning icon in red.
+ showWarning = false: Succesful completion.
+ restart = true: return to main screen.
 */
-function showModal(showWarning, modalMessage) {
+function showModal(showWarning, modalMessage, restart) {
 
     //IF modal is already open, do not show another alert.
     if (isModalPopupShowing == true)
@@ -211,11 +214,27 @@ function showModal(showWarning, modalMessage) {
 
     var modal = document.getElementById('myModal');
     var span_modal = document.getElementsByClassName('close')[0];
+    var btnModal = document.getElementById('btnModal');
 
-    // When the user clicks on <span> (x), close the modal
-    span_modal.onclick = function () {
-        closeModal();
-        return;
+    if (restart == true)
+    {
+        btnModal.onclick='closeModal("RESTART");';
+
+        // When the user clicks on <span> (x), close the modal
+        span_modal.onclick = function () {
+            closeModal('RESTART');
+            return;
+        }
+    }
+    else
+    {
+        btnModal.onclick='closeModal("LOGOUT");';
+
+        // When the user clicks on <span> (x), close the modal
+        span_modal.onclick = function () {
+            closeModal('LOGOUT');
+            return;
+        }
     }
 
     //stop the timer when alert occurs;
@@ -248,6 +267,8 @@ function showModal(showWarning, modalMessage) {
     modalBody.innerHTML = '<p>' + modalMessage + '</p>';
 
     isModalPopupShowing = true; //flag that modal popup for an alert is currently being shown to the user.
+
+
 }
 
 /*
@@ -296,7 +317,7 @@ function pad(num, size) {
 /*
     Close the modal popup.
 */
-function closeModal() {
+function closeModal(action) {
     var modal = document.getElementById('myModal');
     modal.style.display = 'none';
 
@@ -306,7 +327,34 @@ function closeModal() {
     document.getElementById('audioAlert2').pause();
     document.getElementById('audioAlert3').pause();
 
-    window.location.assign('logout.html');
+    switch (action) {
+
+        case 'RESTART':
+            //Clear session variables except SystemReady (assumes interface manager still have driver's ready)
+            sessionStorage.removeItem('isGuidanceEngaged');
+            sessionStorage.removeItem('routeName');
+            sessionStorage.removeItem('routePlanCoordinates');
+            sessionStorage.removeItem('routeSpeedLimitDist');
+            sessionStorage.removeItem('startDateTime');
+
+            //Clear global variables
+            route_name = '';
+            guidance_engaged = true;
+
+            //Evaluate next step
+            evaluateNextStep();
+            break;
+
+        case 'LOGOUT':
+            sessionStorage.clear();
+            window.location.assign('logout.html');
+            break;
+
+        default:
+            //no action
+            break;
+    }
+
 
 }
 
