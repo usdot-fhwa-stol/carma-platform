@@ -22,5 +22,6 @@ public enum GuidanceAction {
     ACTIVATE,
     ENGAGE,
     SHUTDOWN,
+    PANIC_SHUTDOWN,
     RESTART
 }

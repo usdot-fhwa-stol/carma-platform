@@ -239,8 +239,26 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
             log.error("SHUTDOWN", "Guidance shutdown handler interrupted while waiting, cleanup may not have finished!", e);
         }
         log.info("SHUTDOWN", "Guidance state handler killing Guidance node.");
-        node.shutdown();
         loopThread.interrupt();
+        node.shutdown();
+    }
+
+    @Override
+    public void onPanic() {
+        currentState.set(GuidanceState.SHUTDOWN);
+        log.info("SHUTDOWN",
+                "GuidanceStateHandler detected Guidance PANIC");
+        log.fatal("Publishing FATAL system_alert shutdown to ensure whole system shutdown");
+        SystemAlert alert = systemAlertPub.newMessage();
+        alert.setDescription("GuidanceStateHandler detected Guidance PANIC! See log files for source.");
+        alert.setType(SystemAlert.FATAL);
+        systemAlertPub.publish(alert);
+
+        timingLoopThread.interrupt();
+
+        log.fatal("SHUTDOWN", "Guidance state handler killing Guidance node.");
+        loopThread.interrupt();
+        node.shutdown();
     }
 
     /*
@@ -266,8 +284,11 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
         case RESTART:
             jobQueue.add(this::onCleanRestart);
             break;
+        case PANIC_SHUTDOWN:
+            jobQueue.add(this::onPanic);
+            break;
         default:
-            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+            throw new RosRuntimeException(getComponentName() + " received unknown instruction from guidance state machine.");
         }
     }
     

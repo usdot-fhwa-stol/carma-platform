@@ -301,6 +301,9 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         case SHUTDOWN:
             jobQueue.add(this::onShutdown);
             break;
+        case PANIC_SHUTDOWN:
+            jobQueue.add(this::onPanic);
+            break;
         case RESTART:
             jobQueue.add(this::onCleanRestart);
             break;

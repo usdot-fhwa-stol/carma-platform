@@ -22,5 +22,6 @@ public enum GuidanceState {
     DRIVERS_READY,
     INACTIVE,
     ENGAGED,
+    PANIC,
     SHUTDOWN
 }
