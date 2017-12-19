@@ -133,7 +133,7 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
       </node>
 
-      <!-- SRX  Driver Node -->
+      <!-- SRX CAN Driver Node -->
       <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
         <arg name="srx_can_can_device" value="can2" />
       </include>
