@@ -2,10 +2,11 @@ package gov.dot.fhwa.saxton.carma.rosutils;
 
 /**
  * Singleton class which holds the path of the log file to be used by the CARMA platform
+ * This class should be thread-safe
  */
 public class FilePathHolder {
-  private static FilePathHolder instance = null;
-
+  private static volatile FilePathHolder instance = null;
+  private static final Object mutex = new Object();
   private String filePath_;
 
   /**
@@ -22,11 +23,20 @@ public class FilePathHolder {
    * @return The singleton instance
    */
   public static FilePathHolder getInstance(String defaultFilePath) {
-   if (instance == null) {
-     instance = new FilePathHolder(defaultFilePath);
+    FilePathHolder result = instance; // Copy volatile variable before check
+   if (result == null) { // See if instance has been created
+     // Synchronize access.
+     // Inside if-statement for efficiency. Once the instance is created there is no need to synchronize
+     synchronized (mutex) {
+      result = instance; // Ensure no other thread has modified the instance yet
+      if (result == null) { // Check if instance has been created
+        result = new FilePathHolder(defaultFilePath);
+        instance = result; // Assign instance
+      }
+     }
    }
 
-   return instance;
+   return result;
   }
 
   /**
