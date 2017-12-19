@@ -245,17 +245,25 @@ function showRouteOptions() {
 
         divCapabilitiesMessage.innerHTML = 'Please select a route.';
 
+        //Reset and Hide the Capabilities section
+        var divSubCapabilities = document.getElementById('divSubCapabilities');
+        divSubCapabilities.style.display = 'none';
+        divSubCapabilities.innerHTML = '';
+
+        //Dispay the Route selection.
         var myRoutes = result.availableRoutes;
         var divRoutes = document.getElementById('divRoutes');
+        divRoutes.innerHTML = '';
+        divRoutes.style.display = 'block'; //Show the route section
 
         for (i = 0; i < myRoutes.length; i++) {
             createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes');
-
         }
 
         if (myRoutes.length == 0) {
             divCapabilitiesMessage.innerHTML = 'Sorry, there are no available routes, and cannot proceed without one. <br/> Please contact your System Admin.';
         }
+
     });
 }
 
@@ -763,9 +771,9 @@ function checkGuidanceState() {
             //   enableGuidance();
             //    break;
             case 3: //INACTIVE
-		enableGuidance();
-		if (guidance_engaged = true)
-                	setCAVButtonState('INACTIVE');
+                enableGuidance();
+                if (guidance_engaged = true)
+                    setCAVButtonState('INACTIVE');
                 break;
             case 4: //ENGAGED
                 //Set based on returned status, regardless if succesful or not.
@@ -1121,12 +1129,12 @@ function calculateDistToNextSpeedLimit(segment) {
         //alert('lastItem: ' + lastItem.total_length);
 
         //If speed limit changes, add to list
-        if (lastItem.speed_limit != segment.waypoint.speed_limit)
-        {
-            routeSpeedLimit = { waypoint_id: segment.waypoint.waypoint_id
-                                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
-                                , speed_limit: segment.waypoint.speed_limit
-                              };
+        if (lastItem.speed_limit != segment.waypoint.speed_limit) {
+            routeSpeedLimit = {
+                waypoint_id: segment.waypoint.waypoint_id
+                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
+                , speed_limit: segment.waypoint.speed_limit
+            };
             routeSpeedLimitDist.push(routeSpeedLimit);
 
             sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
@@ -1219,16 +1227,13 @@ function showCurrentSegmentInfo() {
 
 
         //Determine the remaining distance to current speed limit
-        if (sessionStorage.getItem('routeSpeedLimitDist') != null)
-        {
+        if (sessionStorage.getItem('routeSpeedLimitDist') != null) {
             var routeSpeedLimitDist = sessionStorage.getItem('routeSpeedLimitDist');
             routeSpeedLimitDist = JSON.parse(routeSpeedLimitDist);
 
             //Loop thru to find the correct totaldistance
-            for (i = 0; i < routeSpeedLimitDist.length; i++)
-            {
-                if (   message.waypoint.waypoint_id <= routeSpeedLimitDist[i].waypoint_id)
-                {
+            for (i = 0; i < routeSpeedLimitDist.length; i++) {
+                if (message.waypoint.waypoint_id <= routeSpeedLimitDist[i].waypoint_id) {
                     total_dist_next_speed_limit = routeSpeedLimitDist[i].total_length;
                     break;
                 }
@@ -1404,44 +1409,38 @@ function waitForSystemReady() {
 */
 function evaluateNextStep() {
 
-    //Scenario 1: Initial Load or Route hasn't been selected yet.
-    //if ((system_ready == null || system_ready == false) ||
-    //    (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected')) {
-    //    waitForSystemReady();
-    //    return;
-    //}
-
-    if (system_ready == null || system_ready == false)
-    {
+    if (system_ready == null || system_ready == false) {
         waitForSystemReady();
         return;
     }
 
-    if (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected')
-    {
+    if (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected') {
+        //clear route timer
+        var divRouteInfo = document.getElementById('divRouteInfo');
+        divRouteInfo.innerHTML = 'No Route Selected : 00h 00m 00s';
+
         showRouteOptions();
         showStatusandLogs();
         enableGuidance();
     }
-    else
-    {
-    //ELSE route has been selected and so show plugin page.
+    else {
+        //ELSE route has been selected and so show plugin page.
 
-         //Show Plugin
-         showSubCapabilitiesView2();
+        //Show Plugin
+        showSubCapabilitiesView2();
 
-         //Subscribe to active route to map the segments
-         showActiveRoute();
+        //Subscribe to active route to map the segments
+        showActiveRoute();
 
-         //Display the System Status and Logs.
-         showStatusandLogs();
+        //Display the System Status and Logs.
+        showStatusandLogs();
 
-         //Enable the CAV Guidance button regardless plugins are selected
-         enableGuidance();
+        //Enable the CAV Guidance button regardless plugins are selected
+        enableGuidance();
 
-         if (guidance_engaged == true) {
-             showGuidanceEngaged();
-         }
+        if (guidance_engaged == true) {
+            showGuidanceEngaged();
+        }
     }
 
 }//evaluateNextStep
