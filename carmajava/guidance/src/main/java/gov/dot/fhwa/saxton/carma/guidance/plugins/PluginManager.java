@@ -22,6 +22,7 @@ import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginLifecycleHandler.PluginState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
@@ -294,9 +295,12 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         
         // If we're shutting down, properly handle graceful plugin shutdown as well
         for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            p.setActivation(false);
-            executor.suspendPlugin(v.componentName(), v.revisionString());
+            PluginState pState = executor.getPluginState(p.getVersionInfo().componentName(), p.getVersionInfo().revisionString());
+            if (pState == PluginState.RESUMED || pState == PluginState.LOOPING) {
+                ComponentVersion v = p.getVersionInfo();
+                p.setActivation(false);
+                executor.suspendPlugin(v.componentName(), v.revisionString());
+            }
         }
 
         try {
@@ -306,8 +310,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         }
 
         for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            executor.terminatePlugin(v.componentName(), v.revisionString());
+            PluginState pState = executor.getPluginState(p.getVersionInfo().componentName(), p.getVersionInfo().revisionString());
+            if (pState != PluginState.UNINITIALIZED) {
+                ComponentVersion v = p.getVersionInfo();
+                executor.terminatePlugin(v.componentName(), v.revisionString());
+            }
         }
         
         currentState.set(GuidanceState.SHUTDOWN);
