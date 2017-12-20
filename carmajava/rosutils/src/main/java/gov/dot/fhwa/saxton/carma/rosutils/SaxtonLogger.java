@@ -71,7 +71,6 @@ public class SaxtonLogger {
     this.saxtonLog = connectedNodeLog;
     this.source = className;
 
-    this.saxtonLog.fatal("PATH: " + fileName);
     try {
       //Initial setup requires performing 2 commands on the terminal.
       //1) sudo mkdir -p /opt/carma/logs and
