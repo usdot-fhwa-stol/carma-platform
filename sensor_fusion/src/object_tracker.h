@@ -68,7 +68,7 @@ struct TrackedObject {
         pv_Orientation = 1 << 3,
         pv_LinearVelocity = 1 << 4,
         pv_AngularVelocity = 1 << 5,
-        pv_Confidence = 1 << 5,
+        pv_Confidence = 1 << 6,
     };
 
     TrackedObject() : object_life(0),
