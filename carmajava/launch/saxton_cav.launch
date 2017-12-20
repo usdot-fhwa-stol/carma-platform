@@ -97,7 +97,7 @@
     <!-- TF2 Setup Initial Static Transforms -->
     <!-- Vehicle Transforms -->
     <param name="robot_description" textfile="$(arg URDF_FILE)"/>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
     <!-- Drivers Package -->
     <group ns="$(arg DRIVER_NS)">
@@ -109,7 +109,7 @@
       <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
       <!-- Simulated DSRC Driver Node -->
       <node if="$(arg mock_dsrc)" pkg="carma" type="mock_drivers" name="dsrc"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode" >
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_dsrc)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -124,7 +124,7 @@
       </node>
       <!-- Simulated PinPoint Driver Node -->
       <node if="$(arg mock_pinpoint)" pkg="carma" type="mock_drivers" name="pin_point_application"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode" >
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_pinpoint)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -139,7 +139,7 @@
       </include>
       <!-- Simulated CAN Driver Node -->
       <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode" >
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_can)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -154,7 +154,7 @@
       </include>
       <!-- Simulated SRX Controller Driver Node -->
       <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_controller"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode" >
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_srx_controller)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -169,7 +169,7 @@
       </include>
       <!-- Simulated Radar Driver Node -->
       <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode" >
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_radar)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -184,7 +184,7 @@
 
       <!-- Interface Manager Node -->
       <node pkg="carma" type="interfacemgr" name="interface_mgr"
-            args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" >
+            args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr">
 
         <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -201,7 +201,7 @@
     <group ns="$(arg SF_NS)">
 
       <!-- Sensor Fusion Node -->
-      <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion" >
+      <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
         <remap from="~filtered"
                to="filtered"/>
         <remap from="system_alert"
@@ -218,7 +218,7 @@
 
       <!-- Environment Manager Node -->
       <node pkg="carma" type="roadway" name="environment_manager"
-            args="gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager" >
+            args="gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager">
 
         <env if="$(arg debug_environment_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -247,7 +247,7 @@
       </node>
 
       <!-- Transform Server Node -->
-      <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server" >
+      <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
 
         <env if="$(arg debug_transform_svr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -261,7 +261,7 @@
 
       <!-- Route Manager Node -->
       <node pkg="carma" type="route" name="route_manager"
-            args="gov.dot.fhwa.saxton.carma.route.RouteManager" >
+            args="gov.dot.fhwa.saxton.carma.route.RouteManager">
 
         <env if="$(arg debug_route)" name="ROUTE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -283,7 +283,7 @@
 
       <!-- Message Consumer Node -->
       <node pkg="carma" type="message" name="message_consumer"
-            args="gov.dot.fhwa.saxton.carma.message.MessageConsumer" >
+            args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
 
         <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -311,7 +311,7 @@
 
       <!-- Negotiator Node -->
       <node pkg="carma" type="negotiator" name="negotiator_mgr"
-            args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr" >
+            args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr">
 
         <env if="$(arg debug_negotiator)" name="NEGOTIATOR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
@@ -336,7 +336,7 @@
     <group ns="$(arg GUIDE_NS)">
       <!-- Guidance Main Node -->
       <node pkg="carma" type="guidance" name="guidance_main"
-            args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain" >
+            args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
 
         <env if="$(arg debug_guidance)" name="GUIDANCE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
