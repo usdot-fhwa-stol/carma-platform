@@ -431,34 +431,27 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 		coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
 		coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
 		if(navSatFixSubscriber != null && navSatFixSubscriber.getLastMessage() != null) {
-			double lat, Lon;
-			float elev;
 			NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
 			Transform earthToHostVehicle = getTransform("earth", "host_vehicle", gps_msg.getHeader().getStamp());
 
 			if (earthToHostVehicle == null) {
-				lat = gps_msg.getLatitude();
-				Lon = gps_msg.getLongitude();
-				elev = (float) gps_msg.getAltitude();
+				// No transform so leave the lat/lon/elev marked as unavailable
 				log.info("TRANSFORM", "Could not get transform for BSM");
-
 			} else {
 				GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 				Location loc = gcc.cartesian2Geodesic(new Point3D(0,0,0), earthToHostVehicle);
-				lat = loc.getLatitude();
-				Lon = loc.getLongitude();
-				elev = (float) loc.getAltitude();
-			}
-
-			//TODO: need to have transformation from baselink frame to vehicle frame
-			if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
-				coreData.setLatitude(lat);
-			}
-			if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
-				coreData.setLongitude(Lon);
-			}
-			if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
-				coreData.setElev(elev);
+				double lat = loc.getLatitude();
+				double Lon = loc.getLongitude();
+				float elev = (float) loc.getAltitude();
+				if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
+					coreData.setLatitude(lat);
+				}
+				if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
+					coreData.setLongitude(Lon);
+				}
+				if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
+					coreData.setElev(elev);
+				}
 			}
 			
 			double semi_major_square = gps_msg.getPositionCovariance()[0];
