@@ -255,22 +255,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
     @Override
     public void onCleanRestart() {
-        for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            p.setActivation(false);
-            executor.suspendPlugin(v.componentName(), v.revisionString());
-        }
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            executor.terminatePlugin(v.componentName(), v.revisionString());
-        }
+        shutdownPlugins();
         
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
 
@@ -288,11 +273,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         
         currentState.set(GuidanceState.DRIVERS_READY);
     }
-    
-    @Override
-    public void onShutdown() {
-        log.fatal(getComponentName() + " is about to SHUTDOWN!");
-        
+
+    /**
+     * Cleanly shutdown all plugins that were started
+     */
+    private void shutdownPlugins() {
         // If we're shutting down, properly handle graceful plugin shutdown as well
         for (IPlugin p : getRegisteredPlugins()) {
             PluginState pState = executor.getPluginState(p.getVersionInfo().componentName(), p.getVersionInfo().revisionString());
@@ -316,9 +301,16 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 executor.terminatePlugin(v.componentName(), v.revisionString());
             }
         }
+    }
+    
+    @Override
+    public void onShutdown() {
+        log.fatal(getComponentName() + " is about to SHUTDOWN!");
         
         currentState.set(GuidanceState.SHUTDOWN);
 
+        shutdownPlugins();
+        
         // Log the fatal error
         log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
 
