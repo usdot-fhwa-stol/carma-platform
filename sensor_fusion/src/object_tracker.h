@@ -438,18 +438,6 @@ private:
             obj.orientation.setIdentity();
         }
 
-
-    enum PresenceVector
-    {
-        pv_ID = 1 << 0,
-        pv_Position = 1 << 1,
-        pv_Dimensions = 1 << 2,
-        pv_Orientation = 1 << 3,
-        pv_LinearVelocity = 1 << 4,
-        pv_AngularVelocity = 1 << 5,
-        pv_Confidence = 1 << 5,
-    };
-
         obj.presence_vector = TrackedObject::pv_ID | TrackedObject::pv_Position 
                               | pv_Orientation | pv_LinearVelocity 
                               | pv_AngularVelocity | pv_Confidence;
