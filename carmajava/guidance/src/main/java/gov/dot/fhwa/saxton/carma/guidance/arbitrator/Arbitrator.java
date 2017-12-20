@@ -242,9 +242,14 @@ public class Arbitrator extends GuidanceComponent
 
     log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + pluginList + "]");
 
-    currentState.set(GuidanceState.INACTIVE);
+    currentState.set(GuidanceState.ACTIVE);
   }
 
+  @Override
+  public void onDeactivate() {
+      currentState.set(GuidanceState.INACTIVE);
+  }
+  
   @Override
   public void onEngaged() {
     arbitratorStateMachine.processEvent(ArbitratorEvent.INITIALIZE);
@@ -567,6 +572,9 @@ public class Arbitrator extends GuidanceComponent
       break;
     case ACTIVATE:
       jobQueue.add(this::onRouteActive);
+      break;
+    case DEACTIVATE:
+      jobQueue.add(this::onDeactivate);
       break;
     case ENGAGE:
       jobQueue.add(this::onEngaged);

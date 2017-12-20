@@ -23,5 +23,6 @@ public enum GuidanceEvent {
     FINISH_ROUTE,
     LEFT_ROUTE,
     DISENGAGE,
+    ROBOT_DISABLED,
     PANIC
 }

@@ -53,6 +53,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
     protected final String ROBOTIC_STATUS = "control/robot_status";
     
     protected long shutdownDelayMs = 5000;
+    protected boolean robotStatus = false;
     
     protected ISubscriber<RouteState> routeStateSub;
     protected ISubscriber<SystemAlert> systemAlertSub;
@@ -125,7 +126,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
                             SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
                         if (setGuidanceEngagedRequest.getGuidanceEngage() && currentState.get() == GuidanceState.DRIVERS_READY) {
                             stateMachine.processEvent(GuidanceEvent.ACTIVATE_ROUTE);
-                            setGuidanceEngagedResponse.setGuidanceStatus(stateMachine.getState() == GuidanceState.INACTIVE);
+                            setGuidanceEngagedResponse.setGuidanceStatus(stateMachine.getState() == GuidanceState.ACTIVE);
                         } else if (!setGuidanceEngagedRequest.getGuidanceEngage()) {
                             stateMachine.processEvent(GuidanceEvent.DISENGAGE);
                             setGuidanceEngagedResponse.setGuidanceStatus(false);
@@ -194,9 +195,14 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
                 robotStatusSub.registerOnMessageCallback(new OnMessageCallback<RobotEnabled>() {
                     @Override
                     public void onMessage(RobotEnabled msg) {
-                        if(msg.getRobotActive()) {
+                        if(!robotStatus && msg.getRobotActive()) {
                             stateMachine.processEvent(GuidanceEvent.START_ROUTE);
                             log.info("GUIDANCE_STATE", "Guidance StateMachine received START_ROUTE event");
+                            robotStatus = true;
+                        } else if(robotStatus && !msg.getRobotActive()) {
+                            stateMachine.processEvent(GuidanceEvent.ROBOT_DISABLED);
+                            log.info("GUIDANCE_STATE", "Guidance StateMachine received ROBOT_DISABLED event");
+                            robotStatus = false;
                         }
                     }
                 });
@@ -208,6 +214,11 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
 
     @Override
     public void onRouteActive() { 
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onDeactivate() {
         currentState.set(GuidanceState.INACTIVE);
     }
     
@@ -256,6 +267,9 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
             break;
         case ACTIVATE:
             jobQueue.add(this::onRouteActive);
+            break;
+        case DEACTIVATE:
+            jobQueue.add(this::onDeactivate);
             break;
         case ENGAGE:
             jobQueue.add(this::onEngaged);

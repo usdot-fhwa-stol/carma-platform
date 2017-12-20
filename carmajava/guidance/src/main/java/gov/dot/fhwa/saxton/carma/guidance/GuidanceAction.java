@@ -21,6 +21,7 @@ public enum GuidanceAction {
     INTIALIZE,
     ACTIVATE,
     ENGAGE,
+    DEACTIVATE,
     SHUTDOWN,
     RESTART
 }
