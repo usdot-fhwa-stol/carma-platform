@@ -186,7 +186,7 @@ function insertNewTableRow(tableName, rowTitle, rowValue) {
 */
 function clearTable(tableName) {
 
-    var myTable = document.getElementById("tableName");
+    var myTable = document.getElementById(tableName);
     var noOfRows = myTable.rows.length - 1;
     //alert(noOfRows);
 
