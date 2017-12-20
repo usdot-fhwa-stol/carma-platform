@@ -82,6 +82,9 @@ public class GuidanceStateMachine {
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
                 action = GuidanceAction.RESTART;
+            } else if(guidance_event == GuidanceEvent.FINISH_ROUTE) {
+                guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
             }
             break;
         case INACTIVE:
