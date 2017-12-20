@@ -439,8 +439,8 @@ private:
         }
 
         obj.presence_vector = TrackedObject::pv_ID | TrackedObject::pv_Position 
-                              | pv_Orientation | pv_LinearVelocity 
-                              | pv_AngularVelocity | pv_Confidence;
+                              | TrackedObject::pv_Orientation | TrackedObject::pv_LinearVelocity 
+                              | TrackedObject::pv_AngularVelocity | TrackedObject::pv_Confidence;
 
         return obj;
 
