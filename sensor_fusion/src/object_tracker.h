@@ -60,6 +60,17 @@ namespace torc
  * @brief This class represents a tracked object.
  */
 struct TrackedObject {
+    enum PresenceVector
+    {
+        pv_ID = 1 << 0,
+        pv_Position = 1 << 1,
+        pv_Dimensions = 1 << 2,
+        pv_Orientation = 1 << 3,
+        pv_LinearVelocity = 1 << 4,
+        pv_AngularVelocity = 1 << 5,
+        pv_Confidence = 1 << 5,
+    };
+
     TrackedObject() : object_life(0),
                       presence_vector(0),
                       id(0),
@@ -182,13 +193,13 @@ private:
         track.position += position_error * alpha;
 
         //Use velocity if the sensor gives it to us
-        if (measurement.presence_vector & (0x10)) {
+        if (measurement.presence_vector & TrackedObject::pv_LinearVelocity) {
             track.linear_velocity = measurement.linear_velocity;
         } else {
             track.linear_velocity += (beta*position_error) / dt;
         }
 
-        if (measurement.presence_vector & (0x04)) {
+        if (measurement.presence_vector & TrackedObject::pv_Dimensions) {
             track.dimensions = measurement.dimensions;
         }
 
@@ -207,7 +218,7 @@ private:
         }
 
         //angular velocity
-        if (measurement.presence_vector & (0x20))
+        if (measurement.presence_vector & TrackedObject::pv_AngularVelocity)
         {
             track.angular_velocity = measurement.angular_velocity;
         }
@@ -427,7 +438,21 @@ private:
             obj.orientation.setIdentity();
         }
 
-        obj.presence_vector = 0x7B;
+
+    enum PresenceVector
+    {
+        pv_ID = 1 << 0,
+        pv_Position = 1 << 1,
+        pv_Dimensions = 1 << 2,
+        pv_Orientation = 1 << 3,
+        pv_LinearVelocity = 1 << 4,
+        pv_AngularVelocity = 1 << 5,
+        pv_Confidence = 1 << 5,
+    };
+
+        obj.presence_vector = TrackedObject::pv_ID | TrackedObject::pv_Position 
+                              | pv_Orientation | pv_LinearVelocity 
+                              | pv_AngularVelocity | pv_Confidence;
 
         return obj;
 
