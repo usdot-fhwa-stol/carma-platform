@@ -76,7 +76,6 @@ public class SaxtonLogger {
       //Initial setup requires performing 2 commands on the terminal.
       //1) sudo mkdir -p /opt/carma/logs and
       //2) sudo chmod -R ugo+rw /opt/carma
-      //file = new File(FilePathHolder.getInstance("/opt/carma/logs/" + fileName).getFilePath());
       file = new File("/opt/carma/logs/" + fileName); //TODO: Will see later if needed to be stored in param.
       file.getParentFile().mkdirs();
 
