@@ -19,7 +19,7 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.144' // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
+var ip = '192.168.88.10' // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
 
 // Topics
 var t_system_alert = 'system_alert';
@@ -37,6 +37,7 @@ var t_diagnostics = '/diagnostics';
 var t_acc_engaged = 'acc_engaged';
 var t_can_engine_speed = 'engine_speed';
 var t_can_speed = 'speed';
+var t_guidance_state = 'state';
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -165,7 +166,7 @@ function checkSystemAlerts() {
                 messageTypeFullDescription = 'System received a FATAL message. Please wait for system to shut down. <br/><br/>' + message.description;
                 messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
                 listenerSystemAlert.unsubscribe();
-                showModal(true, messageTypeFullDescription);
+                showModal(true, messageTypeFullDescription, false);
                 break;
             case 4:
                 system_ready = false;
@@ -183,11 +184,11 @@ function checkSystemAlerts() {
                 //Added additional logic here, since the system_alert sometimes get published before the route_state.
                 if (message.description.indexOf('LEFT_ROUTE') > 0) {
                     messageTypeFullDescription = 'You have LEFT THE ROUTE. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                    showModal(true, messageTypeFullDescription);
+                    showModal(true, messageTypeFullDescription, true);
                 }
                 else if (message.description.indexOf('ROUTE_COMPLETED') > 0) {
                     messageTypeFullDescription = 'ROUTE COMPLETED. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                    showModal(false, messageTypeFullDescription);
+                    showModal(false, messageTypeFullDescription, true);
                 }
                 else {
                     messageTypeFullDescription = 'System is SHUTTING DOWN. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE. <br/>' + message.description;
@@ -244,17 +245,25 @@ function showRouteOptions() {
 
         divCapabilitiesMessage.innerHTML = 'Please select a route.';
 
+        //Reset and Hide the Capabilities section
+        var divSubCapabilities = document.getElementById('divSubCapabilities');
+        divSubCapabilities.style.display = 'none';
+        divSubCapabilities.innerHTML = '';
+
+        //Dispay the Route selection.
         var myRoutes = result.availableRoutes;
         var divRoutes = document.getElementById('divRoutes');
+        divRoutes.innerHTML = '';
+        divRoutes.style.display = 'block'; //Show the route section
 
         for (i = 0; i < myRoutes.length; i++) {
             createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes');
-
         }
 
         if (myRoutes.length == 0) {
             divCapabilitiesMessage.innerHTML = 'Sorry, there are no available routes, and cannot proceed without one. <br/> Please contact your System Admin.';
         }
+
     });
 }
 
@@ -639,7 +648,7 @@ function showGuidanceEngaged() {
         //AFTER dis-engaging, redirect to a page. Guidance is sending all the nodes to stop.
         //Currently, only way to re-engage would be to re-run the roslaunch file.
         //Discussed that UI DOES NOT need to wait to disconnect and redirect to show any shutdown errors from Guidance.
-        showModal(true, 'You are disengaging guidance. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.');
+        showModal(true, 'You are disengaging guidance. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
     }
 }
 
@@ -732,6 +741,64 @@ function setCAVButtonState(state) {
         default:
             break;
     }
+}
+
+/**
+* Check Guidance State
+**/
+function checkGuidanceState() {
+
+    // Subscribing to a Topic
+    listenerGuidanceState = new ROSLIB.Topic({
+        ros: ros,
+        name: t_guidance_state,
+        messageType: 'cav_msgs/GuidanceState'
+    });
+
+    // Then we add a callback to be called every time a message is published on this topic.
+    listenerGuidanceState.subscribe(function (message) {
+
+        var messageTypeFullDescription = '';
+
+        switch (message.state) {
+            case 1: //STARTUP
+                messageTypeFullDescription = 'Guidance is starting up.';
+                break;
+            case 2: //DRIVERS_READY
+                messageTypeFullDescription = 'Guidance have the drivers ready. ';
+                break;
+            //case 3: //ACTIVE //TODO: Further discussion with Kyle based on email.
+            //   enableGuidance();
+            //    break;
+            case 3: //INACTIVE
+                enableGuidance();
+                if (guidance_engaged = true)
+                    setCAVButtonState('INACTIVE');
+                break;
+            case 4: //ENGAGED
+                //Set based on returned status, regardless if succesful or not.
+                guidance_engaged = true;
+
+                //start the route timer - skipped since it may be already restarted
+                ////startRouteTimer();
+
+                //Update Guidance button and checkAvailability.
+                showGuidanceEngaged();
+                break;
+            case 0: //SHUTDOWN
+                //Show modal popup for Shutdown alerts from Guidance, which is equivalent to Fatal since it cannot restart with this state.
+                //system_ready = false;
+                messageTypeFullDescription = 'System received a Guidance Shutdown. <br/><br/>' + message.description;
+                messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
+                listenerSystemAlert.unsubscribe();
+                showModal(true, messageTypeFullDescription, false);
+                break;
+            default:
+                messageTypeFullDescription = 'System alert type is unknown. Assuming system it not yet ready.  ' + message.description;
+        }
+
+        divCapabilitiesMessage.innerHTML = messageTypeFullDescription;
+    });
 }
 
 /*
@@ -950,13 +1017,13 @@ function checkRouteInfo() {
         if (message.event == 3) //ROUTE_COMPLETED=3
         {
             listenerSystemAlert.unsubscribe();
-            showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.');
+            showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
 
         if (message.event == 4)//LEFT_ROUTE=4
         {
             listenerSystemAlert.unsubscribe();
-            showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.');
+            showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
 
     });
@@ -1062,12 +1129,12 @@ function calculateDistToNextSpeedLimit(segment) {
         //alert('lastItem: ' + lastItem.total_length);
 
         //If speed limit changes, add to list
-        if (lastItem.speed_limit != segment.waypoint.speed_limit)
-        {
-            routeSpeedLimit = { waypoint_id: segment.waypoint.waypoint_id
-                                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
-                                , speed_limit: segment.waypoint.speed_limit
-                              };
+        if (lastItem.speed_limit != segment.waypoint.speed_limit) {
+            routeSpeedLimit = {
+                waypoint_id: segment.waypoint.waypoint_id
+                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
+                , speed_limit: segment.waypoint.speed_limit
+            };
             routeSpeedLimitDist.push(routeSpeedLimit);
 
             sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
@@ -1160,16 +1227,13 @@ function showCurrentSegmentInfo() {
 
 
         //Determine the remaining distance to current speed limit
-        if (sessionStorage.getItem('routeSpeedLimitDist') != null)
-        {
+        if (sessionStorage.getItem('routeSpeedLimitDist') != null) {
             var routeSpeedLimitDist = sessionStorage.getItem('routeSpeedLimitDist');
             routeSpeedLimitDist = JSON.parse(routeSpeedLimitDist);
 
             //Loop thru to find the correct totaldistance
-            for (i = 0; i < routeSpeedLimitDist.length; i++)
-            {
-                if (   message.waypoint.waypoint_id <= routeSpeedLimitDist[i].waypoint_id)
-                {
+            for (i = 0; i < routeSpeedLimitDist.length; i++) {
+                if (message.waypoint.waypoint_id <= routeSpeedLimitDist[i].waypoint_id) {
                     total_dist_next_speed_limit = routeSpeedLimitDist[i].total_length;
                     break;
                 }
@@ -1345,30 +1409,39 @@ function waitForSystemReady() {
 */
 function evaluateNextStep() {
 
-    //Scenario 1: Initial Load or Route hasn't been selected yet.
-    if ((system_ready == null || system_ready == false) ||
-        (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected')) {
+    if (system_ready == null || system_ready == false) {
         waitForSystemReady();
         return;
     }
 
-    //Show Plugin
-    showSubCapabilitiesView2();
+    if (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected') {
+        //clear route timer
+        var divRouteInfo = document.getElementById('divRouteInfo');
+        divRouteInfo.innerHTML = 'No Route Selected : 00h 00m 00s';
 
-    //Subscribe to active route to map the segments
-    showActiveRoute();
-
-    //Display the System Status and Logs.
-    showStatusandLogs();
-
-    //Enable the CAV Guidance button regardless plugins are selected
-    enableGuidance();
-
-    if (guidance_engaged == true) {
-        showGuidanceEngaged();
+        showRouteOptions();
+        showStatusandLogs();
+        enableGuidance();
     }
+    else {
+        //ELSE route has been selected and so show plugin page.
 
-    return;
+        //Show Plugin
+        showSubCapabilitiesView2();
+
+        //Subscribe to active route to map the segments
+        showActiveRoute();
+
+        //Display the System Status and Logs.
+        showStatusandLogs();
+
+        //Enable the CAV Guidance button regardless plugins are selected
+        enableGuidance();
+
+        if (guidance_engaged == true) {
+            showGuidanceEngaged();
+        }
+    }
 
 }//evaluateNextStep
 
