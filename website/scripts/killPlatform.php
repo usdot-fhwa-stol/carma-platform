@@ -4,9 +4,11 @@
    header("Location: ../main.html"); // Move back main.html
    exit;
   }
-  // Kill roslaunch
+  // Get roslaunch pid
   $launch_pid = shell_exec("cat " . $PID_FILE_PATH);
-  exec("kill -INT " . $launch_pid);
+  echo("Launch PID: " . $launch_pid);
+  // Kill roslaunch
+  $bash_pid = shell_exec("sudo -u mcconnelms /var/www/html/scripts/kill.bash " . $launch_pid . "> /dev/null 2>&1 & echo $!");
+  // Move to logout page
   header("Location: ../logout.html"); // Move onto main.html
-  exit;
 ?>

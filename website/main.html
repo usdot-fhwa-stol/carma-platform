@@ -60,6 +60,9 @@
     </div>
 </div>
 <div id="divDriverView" class="tabcontent">
+    <form action="scripts/killPlatform.php">
+        <input id="btnOk" type="submit" value="Shutdown" width="48" height="48"/>
+    </form>
     <div id="divRouteInfo">No Route Selected : 00h 00m 00s</div>
     <div class="divSpeedometer">
         <div class="gauge-a"></div>
@@ -191,7 +194,4 @@
     <p class="copyright">© LEIDOS 2017</p>
     <p class="systemversion">&nbsp;</p>
 </footer>
-<form action="scripts/killPlatform.php">
-    <input id="btnKill" type="submit" value="Shutdown">
-</form>
 </html>
