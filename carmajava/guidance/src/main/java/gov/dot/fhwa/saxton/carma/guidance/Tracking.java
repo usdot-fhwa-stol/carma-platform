@@ -297,6 +297,11 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             }
         });
 
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onDeactivate() {
         currentState.set(GuidanceState.INACTIVE);
     }
 
@@ -647,6 +652,9 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             break;
         case ACTIVATE:
             jobQueue.add(this::onRouteActive);
+            break;
+        case DEACTIVATE:
+            jobQueue.add(this::onDeactivate);
             break;
         case ENGAGE:
             jobQueue.add(this::onEngaged);
