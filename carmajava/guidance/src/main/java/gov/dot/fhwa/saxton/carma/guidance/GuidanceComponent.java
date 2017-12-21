@@ -92,7 +92,14 @@ public abstract class GuidanceComponent implements Runnable {
     public abstract void onCleanRestart();
     
     /**
-     * Generic normal shutdown procedure handler. Just quietly shut down.
+     * Get called once guidance component found controller timeout when guidance is engaged
+     */
+    public abstract void onDeactivate();
+    
+    /**
+     * Job queue task for performing the shutting down process
+     * Will log the fatal condition, alert the other ROS nodes in the CAV network to begin
+     * shutdown procedures and then trigger GuidanceComponent activities to cease as well.
      */
     public void onShutdown() {
         currentState.set(GuidanceState.SHUTDOWN);

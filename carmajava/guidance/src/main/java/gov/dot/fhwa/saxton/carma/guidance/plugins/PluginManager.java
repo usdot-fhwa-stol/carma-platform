@@ -22,6 +22,7 @@ import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginLifecycleHandler.PluginState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
@@ -237,6 +238,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
     @Override
     public void onRouteActive() {
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onDeactivate() {
         currentState.set(GuidanceState.INACTIVE);
     }
     
@@ -254,22 +260,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
     @Override
     public void onCleanRestart() {
-        for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            p.setActivation(false);
-            executor.suspendPlugin(v.componentName(), v.revisionString());
-        }
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            executor.terminatePlugin(v.componentName(), v.revisionString());
-        }
+        shutdownPlugins();
         
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
 
@@ -287,16 +278,19 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         
         currentState.set(GuidanceState.DRIVERS_READY);
     }
-    
-    @Override
-    public void onShutdown() {
-        log.fatal(getComponentName() + " is about to SHUTDOWN!");
-        
+
+    /**
+     * Cleanly shutdown all plugins that were started
+     */
+    private void shutdownPlugins() {
         // If we're shutting down, properly handle graceful plugin shutdown as well
         for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            p.setActivation(false);
-            executor.suspendPlugin(v.componentName(), v.revisionString());
+            PluginState pState = executor.getPluginState(p.getVersionInfo().componentName(), p.getVersionInfo().revisionString());
+            if (pState == PluginState.RESUMED || pState == PluginState.LOOPING) {
+                ComponentVersion v = p.getVersionInfo();
+                p.setActivation(false);
+                executor.suspendPlugin(v.componentName(), v.revisionString());
+            }
         }
 
         try {
@@ -306,12 +300,22 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         }
 
         for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            executor.terminatePlugin(v.componentName(), v.revisionString());
+            PluginState pState = executor.getPluginState(p.getVersionInfo().componentName(), p.getVersionInfo().revisionString());
+            if (pState != PluginState.UNINITIALIZED) {
+                ComponentVersion v = p.getVersionInfo();
+                executor.terminatePlugin(v.componentName(), v.revisionString());
+            }
         }
+    }
+    
+    @Override
+    public void onShutdown() {
+        log.fatal(getComponentName() + " is about to SHUTDOWN!");
         
         currentState.set(GuidanceState.SHUTDOWN);
 
+        shutdownPlugins();
+        
         // Log the fatal error
         log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
 
@@ -473,6 +477,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             break;
         case ACTIVATE:
             jobQueue.add(this::onRouteActive);
+            break;
+        case DEACTIVATE:
+            jobQueue.add(this::onDeactivate);
             break;
         case ENGAGE:
             jobQueue.add(this::onEngaged);

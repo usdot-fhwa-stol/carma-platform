@@ -33,11 +33,9 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-
-
-
-#include <cav_srvs/GetDriversWithCapabilities.h>
-#include <cav_srvs/Bind.h>
+#include "object_tracker.h"
+#include "twist_history_buffer.h"
+#include <sensor_fusion/SensorFusionConfig.h>
 
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/NavSatFix.h>
@@ -45,7 +43,9 @@
 #include <cav_msgs/HeadingStamped.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include <cav_msgs/BSM.h>
-
+#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <boost/bind.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -54,14 +54,17 @@
 
 #include <bondcpp/bond.h>
 
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+
+#include <dynamic_reconfigure/server.h>
+
 #include <ros/ros.h>
 
 #include <string>
-#include <sstream>
 #include <unordered_map>
-#include <unordered_set>
 #include <memory>
-#include <queue>
+
 
 
 
@@ -81,9 +84,10 @@ public:
      * @param argv Command line arguments
      * @param name Name of the node
      */
-    SensorFusionApplication(int argc, char** argv, std::string name="sensor_fusion") : uuid_(boost::uuids::random_generator()())
+    SensorFusionApplication(int argc, char** argv, std::string name="sensor_fusion") : twist_history_buffer_(ros::Duration(2.0))
     {
         ros::init(argc, argv, name);
+        dyn_cfg_server_.reset(new dynamic_reconfigure::Server<sensor_fusion::SensorFusionConfig>());
     }
 
 
@@ -95,10 +99,17 @@ public:
 
 private:
 
-    std::unique_ptr<ros::NodeHandle> nh_;
-    const boost::uuids::uuid uuid_;
-    std::unordered_map<std::string, std::unique_ptr<bond::Bond>> bond_map_;
+    std::unique_ptr<dynamic_reconfigure::Server<sensor_fusion::SensorFusionConfig>> dyn_cfg_server_;
+    sensor_fusion::SensorFusionConfig config_;
+    torc::ObjectTracker tracker_;
+    tf2_ros::Buffer tf2_buffer_;
+    std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+    cav::TwistHistoryBuffer twist_history_buffer_;
 
+    std::unique_ptr<ros::NodeHandle> nh_, pnh_;
+    std::unordered_map<std::string, std::unique_ptr<bond::Bond>> bond_map_;
+    bool use_interface_mgr_;
+    std::string inertial_frame_name_, body_frame_name_, ned_frame_name_;
     /**
      * @brief This function is the bond call back for on_broken event    *
      * @param node_name name of the node this callback is firing for
@@ -123,6 +134,14 @@ private:
     }
 
 
+    /**
+     * @brief Callback for dynamic_reconfigure. This is called by the dynamic_reconfigure server.
+     *
+     * @param cfg
+     * @param level
+     */
+    void dyn_recfg_cb(sensor_fusion::SensorFusionConfig &cfg, uint32_t level);
+
 
     /**
      * @brief Handles the call to the interface manager to receive api of the given node
@@ -144,6 +163,7 @@ private:
      * This should be called periodically to maintain updates
      */
     void update_subscribed_services();
+
 
     ros::Publisher odom_pub_, navsatfix_pub_, heading_pub_, velocity_pub_, objects_pub_, vehicles_pub_;
 
@@ -167,43 +187,20 @@ private:
      */
 
     std::unordered_map<std::string, nav_msgs::OdometryConstPtr> odom_map_;
-    void odom_cb(const ros::MessageEvent<nav_msgs::Odometry const>& event)
-    {
-        std::string name = event.getPublisherName();
-        odom_map_[name] = event.getMessage();
-    }
+    void odom_cb(const ros::MessageEvent<nav_msgs::Odometry>& event);
 
     std::unordered_map<std::string, sensor_msgs::NavSatFixConstPtr> navsatfix_map_;
-    void navsatfix_cb(const ros::MessageEvent<sensor_msgs::NavSatFix const>& event)
-    {
-        std::string name = event.getPublisherName();
-        navsatfix_map_[name] = event.getMessage();
-    }
+    void navsatfix_cb(const ros::MessageEvent<sensor_msgs::NavSatFix>& event);
 
     std::unordered_map<std::string, cav_msgs::HeadingStampedConstPtr> heading_map_;
-    void heading_cb(const ros::MessageEvent<cav_msgs::HeadingStamped>& event)
-    {
-        std::string name = event.getPublisherName();
-        heading_map_[name] = event.getMessage();
-    }
+    void heading_cb(const ros::MessageEvent<cav_msgs::HeadingStamped>& event);
 
     std::unordered_map<std::string, geometry_msgs::TwistStampedConstPtr> velocity_map_;
-    void velocity_cb(const ros::MessageEvent<geometry_msgs::TwistStamped>& event)
-    {
-        std::string name = event.getPublisherName();
-        velocity_map_[name] = event.getMessage();
-    }
+    void velocity_cb(const ros::MessageEvent<geometry_msgs::TwistStamped>& event);
 
-    std::unordered_map<std::string, cav_msgs::ExternalObjectListConstPtr> objects_map_;
-    void trackedobjects_cb(const ros::MessageEvent<cav_msgs::ExternalObjectList>& event)
-    {
-        std::string name = event.getPublisherName();
-        objects_map_[name] = event.getMessage();
-    }
+    std::deque<std::pair<std::string, cav_msgs::ExternalObjectListConstPtr>> objects_cb_q_;
+    void objects_cb(const cav_msgs::ExternalObjectListConstPtr &objList,const std::string&);
 
-    std::queue<cav_msgs::BSMConstPtr> bsm_q_;
-    void bsm_cb(const cav_msgs::BSMConstPtr& msg)
-    {
-        bsm_q_.push(msg);
-    }
+    void bsm_cb(const cav_msgs::BSMConstPtr& msg);
 };
+

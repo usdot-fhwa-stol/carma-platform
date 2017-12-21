@@ -173,9 +173,10 @@ public class EnvironmentWorker {
     if (prevMapTime == null) { // TODO Determine earth->map update method || 0 < envMgr.getTime().subtract(prevMapTime).compareTo(MAP_UPDATE_PERIOD)) {
       // Map will be an NED frame on the current vehicle location
       earthToMap = gcc.ecefToNEDFromLocaton(hostVehicleLocation);
-      tfStampedMsgs.add(buildTFStamped(earthToMap, earthFrame, mapFrame));
       prevMapTime = envMgr.getTime();
     }
+    // Keep publishing transform to maintain timestamp
+    tfStampedMsgs.add(buildTFStamped(earthToMap, earthFrame, mapFrame, envMgr.getTime()));
 
     // Calculate map->global_position_sensor transform
     Point3D globalSensorInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
@@ -202,7 +203,7 @@ public class EnvironmentWorker {
     // Modify map to odom with the difference from the expected and real sensor positions
     mapToOdom = T_m_B.multiply(T_o_b.invert());
     // Publish newly calculated transforms
-    tfStampedMsgs.add(buildTFStamped(mapToOdom, mapFrame, odomFrame));
+    tfStampedMsgs.add(buildTFStamped(mapToOdom, mapFrame, odomFrame, envMgr.getTime()));
     publishTF(tfStampedMsgs);
   }
 
@@ -227,7 +228,7 @@ public class EnvironmentWorker {
     // If the odometry is already in the base_link frame
     if (parentFrameId.equals(odomFrame) && childFrameId.equals(baseLinkFrame)) {
       odomToBaseLink = Transform.fromPoseMessage(odometry.getPose().getPose());
-      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
+      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame, envMgr.getTime())));
 
     } else if (parentFrameId.equals(odomFrame) && childFrameId.equals(localPositionSensorFrame)) {
       // Extract the location of the position sensor relative to the odom frame
@@ -243,7 +244,7 @@ public class EnvironmentWorker {
       Transform T_o_b = T_o_p.multiply(T_b_p.invert());
       odomToBaseLink = T_o_b;
       // Publish updated transform
-      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
+      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame, envMgr.getTime())));
 
     } else {
       String msg =
@@ -303,15 +304,17 @@ public class EnvironmentWorker {
    * @param tf          The transform to publish. Describes the position of the child frame in the parent frame
    * @param parentFrame The name of the parent frame
    * @param childFrame  The name of the child frame
+   * @param stamp The timestamp of this transform
    */
   protected geometry_msgs.TransformStamped buildTFStamped(Transform tf, String parentFrame,
-    String childFrame) {
+    String childFrame, Time stamp) {
     geometry_msgs.TransformStamped tfStampedMsg =
       messageFactory.newFromType(geometry_msgs.TransformStamped._TYPE);
     Header hdr = tfStampedMsg.getHeader();
     hdr.setFrameId(parentFrame);
     hdr.setStamp(envMgr.getTime());
     hdr.setSeq(tfSequenceCount);
+    hdr.setStamp(stamp);
     tfStampedMsg.setChildFrameId(childFrame);
     tfStampedMsg.setTransform(tf.toTransformMessage(tfStampedMsg.getTransform()));
     return tfStampedMsg;

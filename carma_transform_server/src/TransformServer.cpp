@@ -27,10 +27,20 @@ TransformServer::TransformServer(int argc, char **argv) : tfListener_(tfBuffer_)
 bool TransformServer::get_transform_cb(cav_srvs::GetTransform::Request  &req, cav_srvs::GetTransform::Response &res) {
   try{
     res.transform = tfBuffer_.lookupTransform(req.parent_frame, req.child_frame, req.stamp);
-    res.errorStatus = res.NO_ERROR;
-  }
-  catch (tf2::TransformException &ex) {
-    res.errorStatus = res.NO_TRANSFORM_EXISTS;
+    res.error_status = res.NO_ERROR;
+  } catch (tf2::ExtrapolationException& ex) {
+    ROS_WARN("| Transform Server | TRANSFORM | transform_server could not extrapolate requested transform. Using latest transform available%s", ex.what());
+
+    try {
+      res.transform = tfBuffer_.lookupTransform(req.parent_frame, req.child_frame, ros::Time(0));
+      res.error_status = res.COULD_NOT_EXTRAPOLATE;
+    } catch (tf2::TransformException &ex) {
+      res.error_status = res.NO_TRANSFORM_EXISTS;
+      ROS_WARN("| Transform Server | TRANSFORM | Invalid transform request made to transform_server: %s", ex.what());
+    }
+
+  } catch (tf2::TransformException &ex) {
+    res.error_status = res.NO_TRANSFORM_EXISTS;
     ROS_WARN("| Transform Server | TRANSFORM | Invalid transform request made to transform_server: %s", ex.what());
   }
 

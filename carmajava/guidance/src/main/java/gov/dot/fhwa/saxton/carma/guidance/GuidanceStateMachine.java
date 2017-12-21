@@ -62,14 +62,14 @@ public class GuidanceStateMachine {
             break;
         case DRIVERS_READY:
             if(guidance_event == GuidanceEvent.ACTIVATE_ROUTE) {
-                guidance_state.set(GuidanceState.INACTIVE);
+                guidance_state.set(GuidanceState.ACTIVE);
                 action = GuidanceAction.ACTIVATE;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
                 action = GuidanceAction.PANIC_SHUTDOWN;
             }
             break;
-        case INACTIVE:
+        case ACTIVE:
             if(guidance_event == GuidanceEvent.START_ROUTE) {
                 guidance_state.set(GuidanceState.ENGAGED);
                 action = GuidanceAction.ENGAGE;
@@ -80,6 +80,27 @@ public class GuidanceStateMachine {
                 guidance_state.set(GuidanceState.SHUTDOWN);
                 action = GuidanceAction.PANIC_SHUTDOWN;
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
+                guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
+            } else if(guidance_event == GuidanceEvent.FINISH_ROUTE) {
+                guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
+            }
+            break;
+        case INACTIVE:
+            if(guidance_event == GuidanceEvent.LEFT_ROUTE) {
+                guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
+            } else if(guidance_event == GuidanceEvent.PANIC) {
+                guidance_state.set(GuidanceState.SHUTDOWN);
+                action = GuidanceAction.SHUTDOWN;
+            } else if(guidance_event == GuidanceEvent.DISENGAGE) {
+                guidance_state.set(GuidanceState.DRIVERS_READY);
+                action = GuidanceAction.RESTART;
+            } else if(guidance_event == GuidanceEvent.START_ROUTE) {
+                guidance_state.set(GuidanceState.ENGAGED);
+                action = GuidanceAction.ENGAGE;
+            } else if(guidance_event == GuidanceEvent.FINISH_ROUTE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
                 action = GuidanceAction.RESTART;
             }
@@ -97,6 +118,9 @@ public class GuidanceStateMachine {
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
                 action = GuidanceAction.RESTART;
+            } else if(guidance_event == GuidanceEvent.ROBOT_DISABLED) {
+                guidance_state.set(GuidanceState.INACTIVE);
+                action = GuidanceAction.DEACTIVATE;
             }
             break;
         default:
@@ -113,6 +137,9 @@ public class GuidanceStateMachine {
                 switch (action) {
                 case ACTIVATE:
                     actionMsg.setAction(cav_msgs.GuidanceAction.ACTIVATE);
+                    break;
+                case DEACTIVATE:
+                    actionMsg.setAction(cav_msgs.GuidanceAction.DEACTIVATE);
                     break;
                 case ENGAGE:
                     actionMsg.setAction(cav_msgs.GuidanceAction.ENGAGE);
@@ -171,6 +198,9 @@ public class GuidanceStateMachine {
     public void loop() throws InterruptedException {
         cav_msgs.GuidanceState state = statePub.newMessage();
         switch (guidance_state.get()) {
+        case ACTIVE:
+            state.setState(cav_msgs.GuidanceState.ACTIVE);
+            break;
         case INACTIVE:
             state.setState(cav_msgs.GuidanceState.INACTIVE);
             break;

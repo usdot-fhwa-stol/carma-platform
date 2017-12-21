@@ -233,12 +233,16 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
         new ServiceResponseListener<GetTransformResponse>() {
           @Override
           public void onSuccess(GetTransformResponse response) {
-            if (response.getErrorStatus() != GetTransformResponse.NO_ERROR) {
+            if (response.getErrorStatus() == GetTransformResponse.NO_ERROR
+              || response.getErrorStatus() == GetTransformResponse.COULD_NOT_EXTRAPOLATE) {
+
+              rh.setResult(Transform.fromTransformMessage(response.getTransform().getTransform()));
+
+            } else {
               log.warn("TRANSFORM", "Attempt to get transform failed with error code: " + response.getErrorStatus());
               rh.setResult(null);
               return;
             }
-            rh.setResult(Transform.fromTransformMessage(response.getTransform().getTransform()));
           }
 
           @Override

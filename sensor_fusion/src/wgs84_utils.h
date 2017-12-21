@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Software License Agreement (BSD License)
  *
@@ -31,12 +32,31 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+#include <eigen3/Eigen/Geometry>
 
-#include "sensor_fusion.h"
-
-int main(int argc, char** argv)
+namespace wgs84_utils
 {
-    SensorFusionApplication app(argc,argv);
-    return app.run();
-}
+    constexpr double pi = 3.14159265358979323846;
+    constexpr double EARTH_RADIUS_METERS = 6378137.0;
+    constexpr double DEG2RAD = pi/180.0;
+    constexpr double RAD2DEG = 180.0/pi;
 
+    struct wgs84_coordinate
+    {
+        double lat, lon, heading, elevation;
+    };
+
+    double calcMetersPerRadLat(const wgs84_coordinate& tie_point);
+
+    double calcMetersPerRadLon(const wgs84_coordinate& tie_point);
+
+    void convertToOdom(const wgs84_coordinate& src,
+                       const wgs84_coordinate& wgs84_ref,
+                       const Eigen::Vector3d& odom_pose_ref,
+                       const Eigen::Quaternion<double>& odom_rot_ref,
+                       const Eigen::Transform<double,3,Eigen::Affine>& ned_odom_tf,
+                       Eigen::Vector3d& out_pose,
+                       Eigen::Quaternion<double>& out_rot
+    );
+
+}
