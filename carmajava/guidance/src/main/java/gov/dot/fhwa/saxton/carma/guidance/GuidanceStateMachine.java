@@ -56,7 +56,7 @@ public class GuidanceStateMachine {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
                 action = GuidanceAction.INTIALIZE;
             } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.PANIC);
+                guidance_state.set(GuidanceState.SHUTDOWN);
                 action = GuidanceAction.PANIC_SHUTDOWN;
             }
             break;
@@ -65,7 +65,7 @@ public class GuidanceStateMachine {
                 guidance_state.set(GuidanceState.INACTIVE);
                 action = GuidanceAction.ACTIVATE;
             } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.PANIC);
+                guidance_state.set(GuidanceState.SHUTDOWN);
                 action = GuidanceAction.PANIC_SHUTDOWN;
             }
             break;
@@ -77,7 +77,7 @@ public class GuidanceStateMachine {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
                 action = GuidanceAction.RESTART;
             } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.PANIC);
+                guidance_state.set(GuidanceState.SHUTDOWN);
                 action = GuidanceAction.PANIC_SHUTDOWN;
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
@@ -92,7 +92,7 @@ public class GuidanceStateMachine {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
                 action = GuidanceAction.RESTART;
             } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.PANIC);
+                guidance_state.set(GuidanceState.SHUTDOWN);
                 action = GuidanceAction.PANIC_SHUTDOWN;
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
@@ -185,9 +185,6 @@ public class GuidanceStateMachine {
             break;
         case STARTUP:
             state.setState(cav_msgs.GuidanceState.STARTUP);
-            break;
-        case PANIC:
-            state.setState(cav_msgs.GuidanceState.PANIC);
             break;
         default:
             break;
