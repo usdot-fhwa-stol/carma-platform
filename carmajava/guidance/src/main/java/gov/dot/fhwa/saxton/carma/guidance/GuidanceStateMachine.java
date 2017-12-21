@@ -57,7 +57,7 @@ public class GuidanceStateMachine {
                 action = GuidanceAction.INTIALIZE;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.SHUTDOWN;
+                action = GuidanceAction.PANIC_SHUTDOWN;
             }
             break;
         case DRIVERS_READY:
@@ -66,7 +66,7 @@ public class GuidanceStateMachine {
                 action = GuidanceAction.ACTIVATE;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.SHUTDOWN;
+                action = GuidanceAction.PANIC_SHUTDOWN;
             }
             break;
         case ACTIVE:
@@ -78,7 +78,7 @@ public class GuidanceStateMachine {
                 action = GuidanceAction.RESTART;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.SHUTDOWN;
+                action = GuidanceAction.PANIC_SHUTDOWN;
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
                 action = GuidanceAction.RESTART;
@@ -114,7 +114,7 @@ public class GuidanceStateMachine {
                 action = GuidanceAction.RESTART;
             } else if(guidance_event == GuidanceEvent.PANIC) {
                 guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.SHUTDOWN;
+                action = GuidanceAction.PANIC_SHUTDOWN;
             } else if(guidance_event == GuidanceEvent.DISENGAGE) {
                 guidance_state.set(GuidanceState.DRIVERS_READY);
                 action = GuidanceAction.RESTART;
@@ -149,6 +149,9 @@ public class GuidanceStateMachine {
                     break;
                 case RESTART:
                     actionMsg.setAction(cav_msgs.GuidanceAction.RESTART);
+                    break;
+                case PANIC_SHUTDOWN:
+                    actionMsg.setAction(cav_msgs.GuidanceAction.PANIC_SHUTDOWN);
                     break;
                 case SHUTDOWN:
                     actionMsg.setAction(cav_msgs.GuidanceAction.SHUTDOWN);

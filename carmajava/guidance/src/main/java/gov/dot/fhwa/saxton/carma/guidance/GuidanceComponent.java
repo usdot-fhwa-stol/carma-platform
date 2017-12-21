@@ -103,16 +103,22 @@ public abstract class GuidanceComponent implements Runnable {
      */
     public void onShutdown() {
         currentState.set(GuidanceState.SHUTDOWN);
+
+        log.info(getComponentName() + " shutting down normally.");
+        
+        // Cancel the loop
+        timingLoopThread.interrupt();
+        loopThread.interrupt();
+    }
+
+    /**
+     * Generic handler for panic conditions, just immediately shutdown and log this
+     */
+    public void onPanic() {
+        currentState.set(GuidanceState.SHUTDOWN);
         
         // Log the fatal error
-        log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
-        
-        // Alert the other ROS nodes to the FATAL condition
-        IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
-        SystemAlert fatalBroadcast = pub.newMessage();
-        fatalBroadcast.setDescription(getComponentName() + " is requested to SHUTDOWN!");
-        fatalBroadcast.setType(SystemAlert.FATAL);
-        pub.publish(fatalBroadcast);
+        log.fatal(getComponentName() + " has activated panic procedures. Shutting down immediately.");
         
         // Cancel the loop
         timingLoopThread.interrupt();
