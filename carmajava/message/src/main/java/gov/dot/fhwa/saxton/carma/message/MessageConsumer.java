@@ -153,13 +153,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 		//Make service calls and validate drivers information
 		GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient_.newMessage();
 		request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
-		final List<GetDriversWithCapabilitiesResponse> driver_response = new ArrayList<>(1);
+		final List<GetDriversWithCapabilitiesResponse> driver_response = new ArrayList<>();
 		try {
             RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient_, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
             	
             	@Override
             	public void onSuccess(GetDriversWithCapabilitiesResponse response) {
-            	    driver_response.set(0, response);
+            	    driver_response.add(response);
             		log_.info("GetDriversWithCapabilitiesResponse: " + driver_response.get(0).getDriverData());
             	}
             	

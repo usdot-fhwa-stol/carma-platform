@@ -84,7 +84,7 @@ public class BSMFactory implements IMessageFactory<BSM> {
 	
 	@Override
     public MessageContainer<ByteArray> encode(Object plainMessage) {
-        HelperBSM helper_bsm = new HelperBSM(((BSM) plainMessage).getCoreData());
+        HelperBSM helper_bsm = new HelperBSM(((MessageContainer<BSM>) plainMessage).getMessage().getCoreData());
         int[] brakes_status = {
                 helper_bsm.getWheel_brakes(), helper_bsm.getTraction(), helper_bsm.getAbs(),
                 helper_bsm.getScs(), helper_bsm.getBba(), helper_bsm.getAux()};
