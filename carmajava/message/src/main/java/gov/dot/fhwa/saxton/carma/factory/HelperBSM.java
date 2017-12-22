@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.carma.message;
+package gov.dot.fhwa.saxton.carma.factory;
 
 import java.util.Arrays;
 
