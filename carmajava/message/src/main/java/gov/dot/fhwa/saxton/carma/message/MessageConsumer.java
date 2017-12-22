@@ -85,9 +85,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 
 	// Used Services
 	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient_;
-	//private 
-	//private String J2735_inbound_binary_msg = null;
-	//private String J2735_outbound_binary_msg = null;
 	
 	//Log for this node
     protected SaxtonLogger log_ = null;
