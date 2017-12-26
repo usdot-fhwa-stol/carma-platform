@@ -26,6 +26,7 @@ import org.ros.node.ConnectedNode;
 
 import cav_msgs.BSM;
 import cav_msgs.ByteArray;
+import gov.dot.fhwa.saxton.carma.helper.HelperBSM;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 public class BSMFactory implements IMessageFactory<BSM> {
@@ -52,16 +53,16 @@ public class BSMFactory implements IMessageFactory<BSM> {
 
 	/**
 	 * This is the declaration for native method. It will take data from BSM message
-	 * object and return an byte array with encoded information. Because of the
-	 * efficiency of JNI method call, it takes fields directly instead of a
-	 * single BSM object.
-	 *
+     * object and return an byte array with encoded information. Because of the
+     * efficiency of JNI method call, it takes fields directly instead of a
+     * single BSM object.
+     * 
 	 * @return encoded BSM message
 	 */
 	private native byte[] encode_BSM(
 			int msgCnt, int[] id, int secMark, int lat, int lon, int elev, int[] accuracy,
 			int transmission, int speed, int heading, int angle, int[] acceleration,
-			int[] wheel_brakes, int[] vehicle_siz);
+			int[] wheel_brakes, int[] vehicle_size);
 
 	/**
 	 * This is the declaration for native method. It will take encoded BSM byte array
@@ -83,8 +84,8 @@ public class BSMFactory implements IMessageFactory<BSM> {
 			Object transmission, Object accelset, byte[] brakeStatus, Object size);
 	
 	@Override
-    public MessageContainer<ByteArray> encode(Object plainMessage) {
-        HelperBSM helper_bsm = new HelperBSM(((MessageContainer<BSM>) plainMessage).getMessage().getCoreData());
+    public MessageContainer encode(Object plainMessage) {
+        HelperBSM helper_bsm = new HelperBSM(((BSM) plainMessage).getCoreData());
         int[] brakes_status = {
                 helper_bsm.getWheel_brakes(), helper_bsm.getTraction(), helper_bsm.getAbs(),
                 helper_bsm.getScs(), helper_bsm.getBba(), helper_bsm.getAux()};
@@ -96,7 +97,8 @@ public class BSMFactory implements IMessageFactory<BSM> {
                 brakes_status, helper_bsm.getVehicle_size()
                 );
         if(encode_msg == null) {
-            return null;
+            log_.error("BSM", "BSMFactory cannot encode bsm message.");
+            return new MessageContainer("ByteArray", null);
         }
         ByteArray binary_msg = messageFactory_.newFromType(ByteArray._TYPE);
         ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
@@ -104,11 +106,11 @@ public class BSMFactory implements IMessageFactory<BSM> {
         binary_msg.setMessageType("BSM");
         binary_msg.getHeader().setFrameId("MessageConsumer");
         binary_msg.getHeader().setStamp(node_.getCurrentTime());
-        return new MessageContainer<ByteArray>("ByteArray", binary_msg);
+        return new MessageContainer("ByteArray", binary_msg);
     }
 
     @Override
-    public MessageContainer<BSM> decode(ByteArray binaryMessage) {
+    public MessageContainer decode(ByteArray binaryMessage) {
         ChannelBuffer channelBuffer = binaryMessage.getContent();
         byte[] encoded_bsm = new byte[channelBuffer.capacity()];
         for(int i = 0; i < channelBuffer.capacity(); i++) {
@@ -126,7 +128,8 @@ public class BSMFactory implements IMessageFactory<BSM> {
                 brakeStatus, msg_object.getCoreData().getSize()
                 );
         if(result == -1) {
-            return null;
+            log_.error("BSM", "BSMFactory cannot decode bsm message");
+            return new MessageContainer("BSM", null);
         }
         ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, temp_ID);
         msg_object.getCoreData().setId(buffer);
@@ -139,6 +142,6 @@ public class BSMFactory implements IMessageFactory<BSM> {
         msg_object.getCoreData().getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(brakeStatus[5]);
         msg_object.getHeader().setFrameId("MessageConsumer");
         msg_object.getHeader().setStamp(node_.getCurrentTime());
-        return new MessageContainer<BSM>("BSM", msg_object);
+        return new MessageContainer("BSM", msg_object);
     }
 }

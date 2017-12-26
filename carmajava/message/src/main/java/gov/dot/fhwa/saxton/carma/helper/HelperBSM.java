@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.factory;
+package gov.dot.fhwa.saxton.carma.helper;
 
 import java.util.Arrays;
 
@@ -126,13 +126,13 @@ public class HelperBSM {
 		this.setVehicle_size(bsm_core.getSize().getVehicleWidth(), bsm_core.getSize().getVehicleLength());
 	}
 
-	protected void setMsgCnt(byte msgCnt_input) {
+	public void setMsgCnt(byte msgCnt_input) {
 		if(msgCnt_input >= MSG_COUNT_MIN && msgCnt_input <= MSG_COUNT_MAX) {
 			this.msgCnt = msgCnt_input;
 		}
 	}
 
-	protected void setId(byte[] id_input) {
+	public void setId(byte[] id_input) {
 		for(int i = 0; i < this.id.length; i++) {
 			int temp_id;
 			if(id_input[i] < 0) {
@@ -146,13 +146,13 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setSecMark(int secMark_input) {
+	public void setSecMark(int secMark_input) {
 		if(secMark_input >= DSECOND_MIN && secMark_input <= DSECOND_MAX) {
 			this.secMark = secMark_input;
 		}
 	}
 
-	protected void setLat(double lat_input) {
+	public void setLat(double lat_input) {
 		if(lat_input == BSMCoreData.LATITUDE_UNAVAILABLE) {
 			return;
 		}
@@ -162,7 +162,7 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setLon(double lon_input) {
+	public void setLon(double lon_input) {
 		if(lon_input == BSMCoreData.LONGITUDE_UNAVAILABLE) {
 			return;
 		}
@@ -173,7 +173,7 @@ public class HelperBSM {
 		
 	}
 
-	protected void setElev(float elev_input) {
+	public void setElev(float elev_input) {
 		if(elev_input == BSMCoreData.ELEVATION_UNAVAILABLE) {
 			return;
 		}
@@ -183,7 +183,7 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setAccuracy(float semimajor_input, float semiminor_input, double orientation_input) {
+	public void setAccuracy(float semimajor_input, float semiminor_input, double orientation_input) {
 		if(semimajor_input != PositionalAccuracy.ACCURACY_UNAVAILABLE) {
 			int integer_semimajor_input = (int) (semimajor_input * 20);
 			if(integer_semimajor_input >= ACCURACY_MAX) {
@@ -208,11 +208,11 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setTransmission(byte transmission_input) {
+	public void setTransmission(byte transmission_input) {
 		this.transmission = transmission_input;
 	}
 
-	protected void setSpeed(float speed_input) {
+	public void setSpeed(float speed_input) {
 		if(speed_input == BSMCoreData.SPEED_UNAVAILABLE) {
 			return;
 		}
@@ -222,7 +222,7 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setHeading(float heading_input) {
+	public void setHeading(float heading_input) {
 		if(heading_input == BSMCoreData.HEADING_UNAVAILABLE) {
 			return;
 		}
@@ -232,7 +232,7 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setAngle(float angle_input) {
+	public void setAngle(float angle_input) {
 		if(angle_input == BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE) {
 			return;
 		}
@@ -246,7 +246,7 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setAcceleration(float acceleration_lat_input, float acceleration_lon_input, float acceleration_vert_input, float yaw_rate_input) {
+	public void setAcceleration(float acceleration_lat_input, float acceleration_lon_input, float acceleration_vert_input, float yaw_rate_input) {
 		if(acceleration_lat_input != AccelerationSet4Way.ACCELERATION_UNAVAILABLE) {
 			int integer_acceleration_lat_input = (int) (acceleration_lat_input * 100);
 			if(integer_acceleration_lat_input >= ACCELERATION_MAX) {
@@ -285,7 +285,7 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setWheel_brakes(byte wheel_brakes_input) {
+	public void setWheel_brakes(byte wheel_brakes_input) {
 		if(wheel_brakes_input == (BRAKES_APPLIED >> 3)) {
 			this.wheel_brakes = BRAKES_APPLIED;
 		} else if(wheel_brakes_input == BRAKES_NOT_APPLIED) {
@@ -293,27 +293,27 @@ public class HelperBSM {
 		}
 	}
 
-	protected void setTraction(byte traction_input) {
+	public void setTraction(byte traction_input) {
 		this.traction = traction_input;
 	}
 
-	protected void setAbs(byte abs_input) {
+	public void setAbs(byte abs_input) {
 		this.abs = abs_input;
 	}
 
-	protected void setScs(byte scs_input) {
+	public void setScs(byte scs_input) {
 		this.scs = scs_input;
 	}
 
-	protected void setBba(byte bba_input) {
+	public void setBba(byte bba_input) {
 		this.bba = bba_input;
 	}
 
-	protected void setAux(byte aux_input) {
+	public void setAux(byte aux_input) {
 		this.aux = aux_input;
 	}
 
-	protected void setVehicle_size(float vehicle_width_input, float vehicle_length_input) {
+	public void setVehicle_size(float vehicle_width_input, float vehicle_length_input) {
 		if(vehicle_width_input != VehicleSize.VEHICLE_WIDTH_UNAVAILABLE) {
 			int integer_vehicle_width_input = (int) (vehicle_width_input * 100);
 			if(integer_vehicle_width_input >= VEHICLE_SIZE_MIN && integer_vehicle_width_input <= VEHICLE_WIDTH_MAX) {
@@ -328,79 +328,79 @@ public class HelperBSM {
 		}
 	}
 	
-	protected int getMsgCnt() {
+	public int getMsgCnt() {
 		return msgCnt;
 	}
 
-	protected int[] getId() {
+	public int[] getId() {
 		return id;
 	}
 
-	protected int getSecMark() {
+	public int getSecMark() {
 		return secMark;
 	}
 
-	protected int getLat() {
+	public int getLat() {
 		return lat;
 	}
 
-	protected int getLon() {
+	public int getLon() {
 		return lon;
 	}
 
-	protected int getElev() {
+	public int getElev() {
 		return elev;
 	}
 
-	protected int[] getAccuracy() {
+	public int[] getAccuracy() {
 		return accuracy;
 	}
 
-	protected int getTransmission() {
+	public int getTransmission() {
 		return transmission;
 	}
 
-	protected int getSpeed() {
+	public int getSpeed() {
 		return speed;
 	}
 
-	protected int getHeading() {
+	public int getHeading() {
 		return heading;
 	}
 
-	protected int getAngle() {
+	public int getAngle() {
 		return angle;
 	}
 
-	protected int[] getAcceleration() {
+	public int[] getAcceleration() {
 		return acceleration;
 	}
 
-	protected int getWheel_brakes() {
+	public int getWheel_brakes() {
 		return wheel_brakes;
 	}
 
-	protected int getTraction() {
+	public int getTraction() {
 		return traction;
 	}
 
-	protected int getAbs() {
+	public int getAbs() {
 		return abs;
 	}
 
-	protected int getScs() {
+	public int getScs() {
 		return scs;
 	}
 
-	protected int getBba() {
+	public int getBba() {
 		return bba;
 	}
 
-	protected int getAux() {
+	public int getAux() {
 		return aux;
 	}
 
-	protected int[] getVehicle_size() {
+	public int[] getVehicle_size() {
 		return vehicle_size;
 	}
 

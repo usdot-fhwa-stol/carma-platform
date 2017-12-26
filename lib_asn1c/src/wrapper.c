@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <sys/types.h>
-#include "gov_dot_fhwa_saxton_carma_message_BSMFactory.h"
+#include "gov_dot_fhwa_saxton_carma_factory_BSMFactory.h"
 #include "MessageFrame.h"
 
 /**

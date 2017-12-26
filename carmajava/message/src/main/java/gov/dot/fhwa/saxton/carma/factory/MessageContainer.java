@@ -16,12 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.factory;
 
-public class MessageContainer<T> {
+public class MessageContainer {
     
     String type;
-    T message;
+    Object message;
     
-    public MessageContainer(String type, T message) {
+    public MessageContainer(String type, Object message) {
         this.type = type;
         this.message = message;
     }
@@ -30,7 +30,7 @@ public class MessageContainer<T> {
         return type;
     }
 
-    public T getMessage() {
+    public Object getMessage() {
         return message;
     }
 
