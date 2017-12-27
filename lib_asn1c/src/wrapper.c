@@ -11,7 +11,7 @@
  * because making the natives to reach for many individual fields
  * from objects passed to them leads to poor performance.
  */
-JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_encode_1BSM
+JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_factory_BSMFactory_encode_1BSM
 		(JNIEnv *env, jclass cls, jint msgCount, jintArray bsm_id, jint secMark,
 		  jint lat, jint lon, jint elev, jintArray accuracy_set, jint transmission,
 		  jint speed, jint heading, jint angle, jintArray accel_set, jintArray brakes_set, jintArray size_set) {
@@ -120,7 +120,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_e
  * When an error happened, this function will return without any mapping.
  * Return -1 mains an error is happened; return 0 mains decoding succeed.
  */
-JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_BSMFactory_decode_1BSM
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_factory_BSMFactory_decode_1BSM
   (JNIEnv *env, jclass cls, jbyteArray encoded_bsm,
    jobject plain_bsm, jbyteArray bsm_id, jobject accuracy,
    jobject transmission, jobject accelset, jbyteArray brakeStatus, jobject size) {
