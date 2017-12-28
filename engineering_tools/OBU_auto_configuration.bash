@@ -1,7 +1,7 @@
 #!/bin/bash
-# This script configures OBU to support BSM messages and Mobility messages
-# Make sure the OBU is in START mode by run: /opt/cohda/application/rc.local restart
-# After running this script, make sure to restart OBU by run: /opt/cohda/application/rc.local start
+# This script configures a Cohda OBU to support BSM messages and Mobility messages
+# Make sure the OBU is in START mode by running this commands in OBU: /opt/cohda/application/rc.local restart
+# After running this script, make sure to restart OBU by running this commands in OBU: /opt/cohda/application/rc.local start
 # The above commands are not in this script because remote calling those two functions results in OBU application shutdown for some reasons
 
 # Set IP address and username of target OBU
@@ -13,10 +13,14 @@ OBU=192.168.88.40
 HOST=FE800000000000009AB08974D16F34D8
 
 # Set effective date and expiration date (YYYYMMDDHHMM in hex)
+# For example: 2017 10 01 00 00
+#                 |  |  |  |  |
+#              07e1 0a 01 00 00
 STARTDATE=07e10a010000
 ENDDATE=07e20a010000
 
 # SSH into OBU and execute commands
+# See "OBU Installation Manual.docx" for explanations
 ssh -o StrictHostKeyChecking=no ${USERNAME}@${OBU} << EOF
 sudo /opt/cohda/application/rc.local standby
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.2.1 x 0020
