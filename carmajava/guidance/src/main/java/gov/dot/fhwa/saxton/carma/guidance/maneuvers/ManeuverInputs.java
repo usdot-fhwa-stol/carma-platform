@@ -62,8 +62,9 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double vehicleResponseLag = node.getParameterTree().getDouble("~vehicle_response_lag", 1.4);
         double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
         double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
+        double exitDistanceFactor = node.getParameterTree().getDouble("~acc_exit_distance_factor", 1.5);
         BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel,
-                vehicleResponseLag, minStandoffDistance);
+                vehicleResponseLag, minStandoffDistance, exitDistanceFactor);
         AccStrategyManager.setAccStrategyFactory(accFactory);
 
         // subscribers
