@@ -27,11 +27,21 @@ public class Signal<T> {
     private double timestamp;
 
     /**
-     * Construct a signal holding the data and it's associated 
+     * Construct a signal holding the data and it's associated timestamp
+     * in some arbitrary reference frame
      */
     public Signal(T data, double timestamp) {
         this.data = data;
         this.timestamp = timestamp;
+    }
+
+    /**
+     * Construct a signal holding the data and it's associated timestamp
+     * in ms resolution Unix time, using the current system time.
+     */
+    public Signal(T data) {
+        this.data = data;
+        this.timestamp = (double) System.currentTimeMillis();
     }
 
     /**

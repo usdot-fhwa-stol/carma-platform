@@ -24,17 +24,19 @@ public class BasicAccStrategyFactory implements IAccStrategyFactory {
   protected double desiredTimeGap;
   protected double maxAccel;
   protected double minStandoffDistance;
+  protected double exitDistanceFactor;
 
-  public BasicAccStrategyFactory(double desiredTimeGap, double maxAccel, double vehicleResponseDelay, double minStandoffDistance) {
+  public BasicAccStrategyFactory(double desiredTimeGap, double maxAccel, double vehicleResponseDelay, double minStandoffDistance, double exitDistanceFactor) {
     this.vehicleResponseDelay = vehicleResponseDelay;
     this.desiredTimeGap = desiredTimeGap;
     this.maxAccel = maxAccel;
     this.minStandoffDistance = minStandoffDistance;
+    this.exitDistanceFactor = exitDistanceFactor;
   }
 
 	@Override
 	public IAccStrategy newAccStrategy() {
-    BasicAccStrategy strat = new BasicAccStrategy(minStandoffDistance);
+    BasicAccStrategy strat = new BasicAccStrategy(minStandoffDistance, exitDistanceFactor);
     strat.setDesiredTimeGap(desiredTimeGap);
     strat.setVehicleResponseDelay(vehicleResponseDelay);
     strat.setMaxAccel(maxAccel);
