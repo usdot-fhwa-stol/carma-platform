@@ -207,7 +207,8 @@ int SensorFusionApplication::run() {
     {
         ROS_INFO_STREAM("Waiting for Interface Manager");
         ros::service::waitForService("get_drivers_with_capabilities");
-        ros::Timer timer = nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent& ev){ update_subscribed_services(); },false, true);
+        update_services_timer_ = nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent& ev){ update_subscribed_services(); },false, true);
+        ROS_INFO_STREAM("Interface Manager available");
     }
 
     ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSM>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
@@ -251,6 +252,7 @@ int SensorFusionApplication::run() {
 }
 
 void SensorFusionApplication::update_subscribed_services() {
+    ROS_INFO_STREAM("Updating subscribed services");
     //odometry
     std::vector<std::string> ret = get_api("position/odometry");
     for(const std::string& it : ret)
