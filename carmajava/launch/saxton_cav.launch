@@ -202,6 +202,9 @@
 
       <!-- Sensor Fusion Node -->
       <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/SensorFusion.yaml"/>
+
         <remap from="~filtered"
                to="filtered"/>
         <remap from="system_alert"

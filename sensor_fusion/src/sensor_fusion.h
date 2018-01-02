@@ -103,6 +103,7 @@ private:
     sensor_fusion::SensorFusionConfig config_;
     torc::ObjectTracker tracker_;
     tf2_ros::Buffer tf2_buffer_;
+    ros::Timer update_services_timer_;
     std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
     cav::TwistHistoryBuffer twist_history_buffer_;
 
