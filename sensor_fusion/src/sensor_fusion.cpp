@@ -252,7 +252,7 @@ int SensorFusionApplication::run() {
 }
 
 void SensorFusionApplication::update_subscribed_services() {
-    ROS_INFO_STREAM("Updating subscribed services");
+    ROS_DEBUG_STREAM("Updating subscribed services");
     //odometry
     std::vector<std::string> ret = get_api("position/odometry");
     for(const std::string& it : ret)
@@ -303,10 +303,12 @@ std::vector<std::string> SensorFusionApplication::get_api(const std::string &nam
     cav_srvs::GetDriversWithCapabilities srv;
     srv.request.capabilities.push_back(name);
 
+    ROS_DEBUG_STREAM("Sending request to get_drivers_with_capabilities: " << srv.request);
     std::vector<std::string> ret;
     if(client.exists() && client.call(srv))
     {
 
+	ROS_DEBUG_STREAM("get_drivers_with_capabilities returned: " << srv.response);
         //The service returns a list of drivers that have the api we provided
         for(std::string fqn : srv.response.driver_data)
         {
