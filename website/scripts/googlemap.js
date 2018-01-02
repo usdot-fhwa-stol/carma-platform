@@ -31,7 +31,8 @@ function initMap() {
         mapTypeId: 'hybrid'
     });
 
-    markers =  sessionStorage.getItem('mapMarkers');
+    if (sessionStorage.getItem('mapMarkers') != null)
+        markers =  sessionStorage.getItem('mapMarkers');
 
     //Display the route on the map.
     setRouteMap(map);
@@ -84,11 +85,8 @@ function setHostMarker() {
         zIndex: 1
     });
 
-    if (markers == null)
-        markers = new Array();
-
-    markers.push(marker); // only other vehicles
     hostmarker = marker;  //store instance of the host marker
+    map.setCenter(hostmarker.getPosition());
 }
 
 /*
@@ -113,7 +111,7 @@ function setOtherVehicleMarkers(id, latitude, longitude) {
 
     if (markers == null || markers == 'undefined')
     {
-         addMarkerForOtherVehicleWithTimeout(id, latitude, longitude, 0);
+         addMarkerForOtherVehicleWithTimeout(id, latitude, longitude, 3000);
          return;
     }
 
@@ -121,17 +119,17 @@ function setOtherVehicleMarkers(id, latitude, longitude) {
     if  (targetMarker == null || targetMarker == 'undefined')
     {
         //Vehicle ID is not on the list of markers. Add to the map.
-        addMarkerForOtherVehicleWithTimeout(id, latitude, longitude, 0);
+        addMarkerForOtherVehicleWithTimeout(id, latitude, longitude, 3000);
         return;
     }
     else{
         //Vehicle ID has been found. Update the location of the marker.
-        moveMarkerWithTimeout(targetMarker, latitude, longitude, 0);
+        moveMarkerWithTimeout(targetMarker, latitude, longitude, 3000);
         return;
     }
 
     //update markers
-    sessionStorage.setItem("mapMarkers", JSON.stringify(markers));
+    sessionStorage.setItem('mapMarkers', JSON.stringify(markers));
 }
 
 /*
@@ -191,6 +189,10 @@ function findMarker(allMarkers, idToFind)
 function addMarkerForOtherVehicleWithTimeout(newId, newLat, newLong, timeout) {
 
     window.setTimeout(function() {
+
+      if (markers == null)
+        markers = new Array();
+
       markers.push(new google.maps.Marker({
         id: newId,
         position: new google.maps.LatLng(newLat, newLong),
@@ -230,7 +232,7 @@ function deleteMarker(allMarkers, idToFind)
 /*
     Delete a marker by ID and removing from array
 */
-function DeleteMarker(id) {
+function deleteMarker(id) {
 
     //Find and remove the marker from the Array
     for (var i = 0; i < markers.length; i++) {
