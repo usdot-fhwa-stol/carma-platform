@@ -39,6 +39,7 @@ var t_can_engine_speed = 'engine_speed';
 var t_can_speed = 'speed';
 var t_guidance_state = 'state';
 var t_incoming_bsm = 'bsm';
+var t_driver_discovery = 'driver_discovery';
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -942,12 +943,60 @@ function showDiagnostics() {
                     function (myValues) {
                         if (myValues.key == 'Primed') {
                             insertNewTableRow('tblFirstB', myValues.key, myValues.value);
+                            var imgACCPrimed = document.getElementById('imgACCPrimed');
+
+                            if (myValues.value == 'true')
+                                imgACCPrimed.style.backgroundColor = '#4CAF50'; //Green
+                            else
+                                imgACCPrimed.style.backgroundColor = '#b32400'; //Red
                         }
                         // Commented out since Diagnostics key/value pair can be many and can change. Only subscribe to specific ones.
                         // insertNewTableRow('tblFirstA', myValues.key, myValues.value);
                     }); //foreach
             }
         );//foreach
+    });
+}
+
+/*
+    Show Drivers Status for PinPoint. 
+*/
+function showDriverStatus() {
+
+    var listenerDriverDiscovery = new ROSLIB.Topic({
+        ros: ros,
+        name: t_driver_discovery,
+        messageType: 'cav_msgs/DriverStatus'
+    });
+
+    listenerDriverDiscovery.subscribe(function (message) {
+
+        var targetImg;
+
+        //Get PinPoint status for now. 
+        if (message.position == true) {
+            targetImg = document.getElementById('imgPinPoint');
+        }
+
+        if (targetImg == null || targetImg == 'undefined')
+            return;
+
+        switch (message.status) {
+            case 0: //OFF
+                targetImg.style.color = '';
+                break;
+            case 1: //OPERATIONAL
+                targetImg.style.color = '#4CAF50'; //Green
+                break;
+            case 2: //DEGRADED
+                targetImg.style.color = '#ff6600'; //Orange
+                break;
+            case 3: //FAULT
+                targetImg.style.color = '#b32400'; //Red
+                break;
+            default:
+                break;
+        }
     });
 }
 
@@ -1309,7 +1358,7 @@ function showVehicleInfo(itemName, index) {
     Subscribe to topic and add each vehicle as a marker on the map.
     If already exist, update the marker with latest long and lat.
 */
-function mapOtherVehicles(){
+function mapOtherVehicles() {
 
     //alert('In mapOtherVehicles');
 
@@ -1326,8 +1375,8 @@ function mapOtherVehicles(){
         insertNewTableRow('tblSecondB', 'BSM Latitude - ' + message.core_data.id + ': ', message.core_data.latitude.toFixed(6));
         insertNewTableRow('tblSecondB', 'BSM Longitude - ' + message.core_data.id + ': ', message.core_data.longitude.toFixed(6));
 
-        setOtherVehicleMarkers( message.core_data.id, message.core_data.latitude.toFixed(6), message.core_data.longitude.toFixed(6));
-     });
+        setOtherVehicleMarkers(message.core_data.id, message.core_data.latitude.toFixed(6), message.core_data.longitude.toFixed(6));
+    });
 }
 
 /*
@@ -1360,6 +1409,7 @@ function showStatusandLogs() {
     showCurrentSegmentInfo();
     showCANSpeeds();
     showDiagnostics();
+    showDriverStatus();
 
     mapOtherVehicles();
 }
