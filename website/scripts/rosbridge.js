@@ -38,6 +38,7 @@ var t_acc_engaged = 'acc_engaged';
 var t_can_engine_speed = 'engine_speed';
 var t_can_speed = 'speed';
 var t_guidance_state = 'state';
+var t_incoming_bsm = 'bsm';
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -1179,6 +1180,7 @@ function showNavSatFix() {
     });
 
 }
+
 /*
     Display the close loop control of speed
 */
@@ -1304,6 +1306,31 @@ function showVehicleInfo(itemName, index) {
 }
 
 /*
+    Subscribe to topic and add each vehicle as a marker on the map.
+    If already exist, update the marker with latest long and lat.
+*/
+function mapOtherVehicles(){
+
+    //alert('In mapOtherVehicles');
+
+    //Subscribe to Topic
+    var listenerClient = new ROSLIB.Topic({
+        ros: ros,
+        name: t_incoming_bsm,
+        messageType: 'cav_msgs/BSM'
+    });
+
+
+    listenerClient.subscribe(function (message) {
+        insertNewTableRow('tblSecondB', 'BSM Temp ID - ' + message.core_data.id + ': ', message.core_data.id);
+        insertNewTableRow('tblSecondB', 'BSM Latitude - ' + message.core_data.id + ': ', message.core_data.latitude.toFixed(6));
+        insertNewTableRow('tblSecondB', 'BSM Longitude - ' + message.core_data.id + ': ', message.core_data.longitude.toFixed(6));
+
+        setOtherVehicleMarkers( message.core_data.id, message.core_data.latitude.toFixed(6), message.core_data.longitude.toFixed(6));
+     });
+}
+
+/*
  Changes the string into Camel Case.
 */
 function toCamelCase(str) {
@@ -1333,6 +1360,8 @@ function showStatusandLogs() {
     showCurrentSegmentInfo();
     showCANSpeeds();
     showDiagnostics();
+
+    mapOtherVehicles();
 }
 
 /*
@@ -1459,7 +1488,6 @@ window.onload = function () {
         var isSystemReady = sessionStorage.getItem('isSystemReady');
         var routeName = sessionStorage.getItem('routeName');
         var isGuidanceEngaged = sessionStorage.getItem('isGuidanceEngaged');
-
 
         //Re-Set Global variables ONLY if already connected.
         if (isSystemReady != 'undefined' && isSystemReady != null)
