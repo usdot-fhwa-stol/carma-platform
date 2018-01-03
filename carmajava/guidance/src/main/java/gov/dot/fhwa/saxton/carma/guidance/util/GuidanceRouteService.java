@@ -180,4 +180,13 @@ public class GuidanceRouteService implements RouteService {
 
     return out;
   }
+
+  @Override
+  public double[] getWindowWhenPluginEnabledInRange(double start, double end, String flag) {
+      SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRange(start, end);
+      AlgorithmFlags flagsAtEnd = this.getAlgorithmFlagsAtLocation(end);
+      
+      return null;
+  }
+  
 }
