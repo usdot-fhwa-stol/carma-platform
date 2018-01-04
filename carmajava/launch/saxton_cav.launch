@@ -177,16 +177,16 @@
         <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
       </node>
-    </group>
 
       <!--Lateral Controller Driver Node-->
       <node pkg="carma" type="lateralcontroldriver" name="lateral_controller"
-            args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
+        args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
 
         <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
         <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
       </node>
+    </group>
 
     <!-- Interface Manager Package -->
     <group ns="$(arg INTR_NS)">
