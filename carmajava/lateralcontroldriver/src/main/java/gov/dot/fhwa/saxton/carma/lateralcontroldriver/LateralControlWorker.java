@@ -53,17 +53,17 @@ public class LateralControlWorker {
      * The UI will then be notified. 
      */
     public void handleLateralControlMsg(cav_msgs.LateralControl msg) {
-        if (msg.getAxelAngle() < -angleThreshold_) { // left turn
+        if (msg.getAxelAngle() < -angleThreshold_) { // left lane change
           cav_msgs.UIInstructions uiMsg = messageFactory.newFromType(cav_msgs.UIInstructions._TYPE);
-          uiMsg.setMsg("LEFT_TURN");
+          uiMsg.setMsg("LEFT_LANE_CHANGE");
           uiMsg.setType(cav_msgs.UIInstructions.NO_ACK_REQUIRED);
           uiMsg.setStamp(driver_.getTime());
           driver_.publishUIMessage(uiMsg);
           log_.info("Left turn requested with axis angle of " + msg.getAxelAngle());
 
-        } else if (msg.getAxelAngle() > angleThreshold_) { // right turn
+        } else if (msg.getAxelAngle() > angleThreshold_) { // right lane change
           cav_msgs.UIInstructions uiMsg = messageFactory.newFromType(cav_msgs.UIInstructions._TYPE);
-          uiMsg.setMsg("RIGHT_TURN");
+          uiMsg.setMsg("RIGHT_LANE_CHANGE");
           driver_.publishUIMessage(uiMsg);
           uiMsg.setType(cav_msgs.UIInstructions.NO_ACK_REQUIRED);
           uiMsg.setStamp(driver_.getTime());

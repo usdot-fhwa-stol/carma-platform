@@ -1,6 +1,6 @@
 # LateralControllerParams.yaml
 # Defines the ros parameters which are required by the Lateral Controller
 
-# Double: Angle threshold over which an axes angle command is considered a turn.
+# Double: Angle threshold over which an axes angle command is considered a lane change.
 # Radians
 angle_threshold: 0.0349066 # 2 deg

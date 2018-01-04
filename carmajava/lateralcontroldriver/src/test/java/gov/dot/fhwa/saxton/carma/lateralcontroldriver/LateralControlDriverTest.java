@@ -50,29 +50,29 @@ public class LateralControlDriverTest {
         cav_msgs.LateralControl msg = messageFactory.newFromType(cav_msgs.LateralControl._TYPE);
         msg.setAxelAngle(0.0);
         w_.handleLateralControlMsg(msg);
-        assertFalse(driver_.getRightTurnMsgReceived());
-        assertFalse(driver_.getLeftTurnMsgReceived());
+        assertFalse(driver_.getRightLaneChangeMsgReceived());
+        assertFalse(driver_.getLeftLaneChangeMsgReceived());
 
         msg.setAxelAngle(0.0349066);
         w_.handleLateralControlMsg(msg);
-        assertFalse(driver_.getRightTurnMsgReceived());
-        assertFalse(driver_.getLeftTurnMsgReceived());
+        assertFalse(driver_.getRightLaneChangeMsgReceived());
+        assertFalse(driver_.getLeftLaneChangeMsgReceived());
 
         msg.setAxelAngle(-0.0349066);
         w_.handleLateralControlMsg(msg);
-        assertFalse(driver_.getRightTurnMsgReceived());
-        assertFalse(driver_.getLeftTurnMsgReceived());
+        assertFalse(driver_.getRightLaneChangeMsgReceived());
+        assertFalse(driver_.getLeftLaneChangeMsgReceived());
 
         msg.setAxelAngle(-0.036);
         w_.handleLateralControlMsg(msg);
-        assertFalse(driver_.getRightTurnMsgReceived());
-        assertTrue(driver_.getLeftTurnMsgReceived());
+        assertFalse(driver_.getRightLaneChangeMsgReceived());
+        assertTrue(driver_.getLeftLaneChangeMsgReceived());
 
         driver_.resetFlags();
 
         msg.setAxelAngle(0.036);
         w_.handleLateralControlMsg(msg);
-        assertTrue(driver_.getRightTurnMsgReceived());
-        assertFalse(driver_.getLeftTurnMsgReceived());
+        assertTrue(driver_.getRightLaneChangeMsgReceived());
+        assertFalse(driver_.getLeftLaneChangeMsgReceived());
     }
 }

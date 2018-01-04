@@ -20,27 +20,27 @@ import org.ros.message.Time;
 
 public class FakeLateralControlDriver implements ILateralControlDriver{
 
-  private boolean leftTurnMsgReceived = false;
+  private boolean leftLaneChangeMsgReceived = false;
   private boolean rightTurnMsgReceived = false;
 
   @Override public void publishUIMessage(cav_msgs.UIInstructions msg) {
-    if (msg.getMsg().contains("LEFT_TURN")) {
-      leftTurnMsgReceived = true;
-    } else if (msg.getMsg().contains("RIGHT_TURN")) {
+    if (msg.getMsg().contains("LEFT_LANE_CHANGE")) {
+      leftLaneChangeMsgReceived = true;
+    } else if (msg.getMsg().contains("RIGHT_LANE_CHANGE")) {
       rightTurnMsgReceived = true;
     }
   }
 
-  public boolean getRightTurnMsgReceived() {
+  public boolean getRightLaneChangeMsgReceived() {
     return rightTurnMsgReceived;
   }
 
-  public boolean getLeftTurnMsgReceived() {
-    return leftTurnMsgReceived;
+  public boolean getLeftLaneChangeMsgReceived() {
+    return leftLaneChangeMsgReceived;
   }
 
   public void resetFlags() {
-    leftTurnMsgReceived = false;
+    leftLaneChangeMsgReceived = false;
     rightTurnMsgReceived = false;
   }
 
