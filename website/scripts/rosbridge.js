@@ -614,6 +614,10 @@ function engageGuidance() {
 
         //Update Guidance button and checkAvailability.
         showGuidanceEngaged();
+
+        //Open to DriveView tab after engaging
+        if (result.guidance_status == 'true')
+            openTab(event, 'divDriverView');
     });
 }
 
