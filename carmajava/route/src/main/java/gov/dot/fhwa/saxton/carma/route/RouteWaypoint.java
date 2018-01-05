@@ -47,6 +47,7 @@ public class RouteWaypoint {
   protected double minCrossTrack = -10.0; // Units: m
   protected double maxCrossTrack = 10.0; // Units: m
   protected int requiredLaneIndex = -1;
+  protected int waypointLaneIndex = 0;
   protected RoadType roadType = RoadType.FREEWAY;
   protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.SOLID_WHITE;
   protected LaneEdgeType leftMostLaneMarking = LaneEdgeType.SOLID_YELLOW;
@@ -97,6 +98,7 @@ public class RouteWaypoint {
     minCrossTrack = wp.minCrossTrack;
     maxCrossTrack = wp.maxCrossTrack;
     requiredLaneIndex = wp.requiredLaneIndex;
+    waypointLaneIndex = wp.waypointLaneIndex;
     roadType = wp.roadType;
     interiorLaneMarkings = wp.interiorLaneMarkings;
     leftMostLaneMarking = wp.leftMostLaneMarking;
@@ -143,6 +145,7 @@ public class RouteWaypoint {
     roadTypeMsg.setType((byte) roadType.ordinal());
     routeWPMsg.setRoadType(roadTypeMsg);
     routeWPMsg.setRequiredLaneIndex((byte) requiredLaneIndex);
+    routeWPMsg.setWaypointLaneIndex((byte) waypointLaneIndex);
     routeWPMsg.setNearestMileMarker((byte) nearestMileMarker);
     routeWPMsg.setLongitude(location.getLongitude());
     routeWPMsg.setLatitude(location.getLatitude());
@@ -409,6 +412,24 @@ public class RouteWaypoint {
   }
 
   /**
+   * Sets the index of the lane which this waypoint is in
+   *
+   * @param waypointLaneIndex lane index
+   */
+  public void setWaypointLaneIndex(int waypointLaneIndex) {
+    this.waypointLaneIndex = waypointLaneIndex;
+  }
+
+  /**
+   * Gets the index of the lane which this waypoint is in
+   *
+   * @return the waypoint lane index
+   */
+  public int getWaypointLaneIndex() {
+    return waypointLaneIndex;
+  }
+
+  /**
    * Gets the type of lane marking which separates interior lanes on this segment
    * @return the interior lane marking type
    */
@@ -467,5 +488,9 @@ public class RouteWaypoint {
    */
   public void setNeededManeuvers(List<cav_msgs.Maneuver> neededManeuvers) {
     this.neededManeuvers = neededManeuvers;
+  }
+
+  @Override public String toString() {
+    return "Waypoint{ " + location.toString() + " LaneIndex: " + waypointLaneIndex + " }";
   }
 }

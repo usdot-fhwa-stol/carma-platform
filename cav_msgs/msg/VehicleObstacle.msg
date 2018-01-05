@@ -11,4 +11,4 @@
 cav_msgs/ExternalObject object
 
 # Enum describing the type of communication this vehicle is capable of
-cav_msgs/CommunicationClass communication_class
+cav_msgs/ConnectedVehicleType connected_vehicle_type

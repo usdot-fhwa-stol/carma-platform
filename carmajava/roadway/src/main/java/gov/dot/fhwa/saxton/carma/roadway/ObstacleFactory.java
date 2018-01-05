@@ -21,5 +21,5 @@ package gov.dot.fhwa.saxton.carma.roadway;
  * TODO: Decide if this class is really needed
  */
 public class ObstacleFactory {
-  IObstacle makeObstacle(String type){return new Obstacle();} //TODO
+  //IObstacle makeObstacle(String type){return new Obstacle();} //TODO
 }

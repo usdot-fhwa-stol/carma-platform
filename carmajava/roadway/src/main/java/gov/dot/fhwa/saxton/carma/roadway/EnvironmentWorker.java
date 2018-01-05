@@ -16,12 +16,18 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
+import cav_msgs.RouteState;
 import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+import gov.dot.fhwa.saxton.carma.route.Route;
+import gov.dot.fhwa.saxton.carma.route.RouteSegment;
+import gov.dot.fhwa.saxton.carma.route.WorkerState;
+
 import org.apache.commons.logging.Log;
 import org.ros.message.Duration;
 import org.ros.message.MessageFactory;
@@ -52,7 +58,7 @@ public class EnvironmentWorker {
   protected boolean navSatFixReceived = false;
   protected Location hostVehicleLocation = null;
   protected double hostVehicleHeading;
-    // The heading of the vehicle in degrees east of north in an NED frame.
+  // The heading of the vehicle in degrees east of north in an NED frame.
   // Frame ids
   protected final String earthFrame;
   protected final String mapFrame;
@@ -71,6 +77,11 @@ public class EnvironmentWorker {
   protected Time prevMapTime = null;
   protected Duration MAP_UPDATE_PERIOD = new Duration(5); // TODO Time in seconds between updating the map frame location
   protected int tfSequenceCount = 0;
+
+  //Route
+  protected Route activeRoute;
+  protected RouteSegment currentSegment;
+  protected RouteState routeState;
 
   /**
    * Constructor
@@ -96,21 +107,31 @@ public class EnvironmentWorker {
     this.localPositionSensorFrame = localPositionSensorFrame;
   }
 
+ /**
+   * Route message handle
+   *
+   * @param route The route message
+   */
+  public void handleRouteMsg(cav_msgs.Route route) {
+    activeRoute = Route.fromMessage(route);
+  }
+
+  /**
+   * RouteState message handle
+   *
+   * @param route The route state message
+   */
+  public void handleRouteStateMsg(cav_msgs.RouteState routeState) {
+    this.routeState = routeState;
+  }
+
   /**
    * Handle for new route segments.
-   * This will help define lane geometries
    *
    * @param currentSeg The current route segment
    */
   public void handleCurrentSegmentMsg(cav_msgs.RouteSegment currentSeg) {
-    //TODO update lane geometry here. For now we will need to assume linear interpolation
-    //    RouteWaypoint wp = RouteWaypoint.fromMessage(currentSeg.getWaypoint());
-    //    LaneEdgeType leftEdge = wp.getLeftMostLaneMarking();
-    //    LaneEdgeType interiorEdges = wp.getInteriorLaneMarkings();
-    //    LaneEdgeType rightEdge = wp.getRightMostLaneMarking();
-    //    int laneCount = wp.getLaneCount();
-    //    Location downTrackLoc = wp.getLocation();
-    //    Location uptrackLoc = RouteWaypoint.fromMessage(currentSeg.getPrevWaypoint()).getLocation();
+    currentSegment = RouteSegment.fromMessage(currentSeg);
   }
 
   /**
@@ -261,7 +282,24 @@ public class EnvironmentWorker {
    * @param externalObjects External object list. Should be relative to base_link frame
    */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
-    //TODO implement
+    List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
+    List<Obstacle> roadwayObstacles = new LinkedList<>();
+    for (cav_msgs.ExternalObject obj: objects) {
+      roadwayObstacles.add(buildObstacleFromMsg(obj));
+    }
+    // publish roadwayObstacles as new Envrionment Message
+  }
+
+  protected Obstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj) {
+    int id = obj.getId();
+    double downtrackDistance = 0;
+    double crosstrackDistance = 0;
+    Vector3D velocity = new Vector3D(0, 0, 0);
+    Vector3D acceleration = new Vector3D(0, 0, 0);
+    Vector3D size = new Vector3D(0, 0, 0);
+    int primaryLane = 0;
+    Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocity, acceleration, size, primaryLane);
+    return newObstacle;
   }
 
   /**

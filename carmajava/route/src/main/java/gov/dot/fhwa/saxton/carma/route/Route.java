@@ -140,12 +140,12 @@ public class Route {
       segments.remove(index-1);
       segments.add(index-1, new RouteSegment(waypoints.get(index - 1), waypoint));
       segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
-    } else if (index == waypoints.size()) {
+    } else if (index == waypoints.size() && waypoint.getWaypointLaneIndex() == waypoints.get(index-1).getWaypointLaneIndex()) {
       segments.add(new RouteSegment(waypoints.get(index-1), waypoint));
-    } else if (index == 0){
+    } else if (index == 0 && waypoint.getWaypointLaneIndex() == waypoints.get(index-1).getWaypointLaneIndex()){
       segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
     } else {
-      throw new IndexOutOfBoundsException("Attempted to add waypoint to invalid index " + index);
+      throw new IndexOutOfBoundsException("Failed to add " + waypoint + " at index: " + index);
     }
 
     // Insert the waypoint into the list of waypoints
@@ -222,13 +222,11 @@ public class Route {
     boolean firstWaypoint = true;
     RouteWaypoint prevWaypoint = null;
     // Build segments from waypoints
-    if (segments == null) {
-      segments = new LinkedList<>();
-    }
+    segments = new LinkedList<>(); // Clear currnet waypoints
 
     for(RouteWaypoint waypoint: waypointList){
 
-      if (!firstWaypoint){
+      if (!firstWaypoint && prevWaypoint.getWaypointLaneIndex() == waypoint.getWaypointLaneIndex()){
         segments.add(new RouteSegment(prevWaypoint, waypoint));
       }
       prevWaypoint = waypoint;
