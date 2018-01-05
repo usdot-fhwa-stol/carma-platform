@@ -14,16 +14,22 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
-include 'speedharm'
-include 'lateral_control_driver'
+package gov.dot.fhwa.saxton.carma.lateralcontroldriver;
+
+import org.ros.message.Time;
+
+public interface ILateralControlDriver {
+
+  /**
+  * Sends an instructions message to the UI
+  * @param msg - the message that is to be sent to notify the ui
+  */
+  void publishUIMessage(cav_msgs.UIInstructions msg);
+
+  /**
+   * Gets the current time
+   *
+   * @return The time
+   */
+  Time getTime();
+}
