@@ -247,8 +247,11 @@ void DelphiESRApplication::initialize() {
     objects_pub_=pnh_->advertise<cav_msgs::ExternalObjectList>("sensor/objects",10);
     api_.push_back(objects_pub_.getTopic());
 
+
+    std::string can_device_name;
+    pnh_->param<std::string>("device_name", can_device_name, "can0");
     //setup DelphiESRCANClient
-    std::shared_ptr<cav::SocketCANInterface> device = std::make_shared<cav::SocketCANInterface>("dbw_ifc");
+    std::shared_ptr<cav::SocketCANInterface> device = std::make_shared<cav::SocketCANInterface>(can_device_name);
     client_.reset(new DelphiESRCANClient<cav::SocketCANInterface>(device));
     client_->init();
 
