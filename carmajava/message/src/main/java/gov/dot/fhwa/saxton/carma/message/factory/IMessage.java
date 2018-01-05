@@ -14,17 +14,19 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.factory;
+package gov.dot.fhwa.saxton.carma.message.factory;
+
+import org.ros.internal.message.Message;
 
 import cav_msgs.ByteArray;
 
-public interface IMessageFactory<T> {
+public interface IMessage<T> {
     /**
      * This method will take a ROS message and encode it into a binary ByteArray in message container
      * @param plain ROS message the message to be encoded
      * @return null means there is an error
      */
-    public MessageContainer encode(Object plainMessage);
+    public MessageContainer encode(Message plainMessage);
     
     /**
      * This method will take a ROS byteArray and decode it to a plain message in message container

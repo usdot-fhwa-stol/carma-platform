@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.helper;
+package gov.dot.fhwa.saxton.carma.message.helper;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -23,6 +23,10 @@ import org.ros.node.ConnectedNode;
 
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
+/**
+ * This class is for recording the frequency of outgoing DSRC messages
+ * and recording the number of incoming DSRC messages in a period of time.
+ */
 public class MessageStatistic {
 
     private class MessageCounter {

@@ -14,19 +14,20 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.factory;
+package gov.dot.fhwa.saxton.carma.message.factory;
 
 import org.ros.message.MessageFactory;
 import org.ros.node.ConnectedNode;
 
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
-public class FactoryManager {
-    public static IMessageFactory<?> getMessageFactory(String messageType, ConnectedNode node, SaxtonLogger log, MessageFactory factory) {
+public class DSRCMessageFactory {
+    public static IMessage<?> getMessageFactory(String messageType, ConnectedNode node, SaxtonLogger log, MessageFactory factory) {
         switch(messageType) {
         case "BSM":
-            return new BSMFactory(node, log, factory);
+            return new BSMMessage(node, log, factory);
+        default:
+            return null;
         }
-        return null;
     }
 }

@@ -14,28 +14,29 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.factory;
+package gov.dot.fhwa.saxton.carma.message.factory;
 
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.ros.internal.message.Message;
 import org.ros.message.MessageFactory;
 import org.ros.node.ConnectedNode;
 
 import cav_msgs.BSM;
 import cav_msgs.ByteArray;
-import gov.dot.fhwa.saxton.carma.helper.HelperBSM;
+import gov.dot.fhwa.saxton.carma.message.helper.BSMMessageHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
-public class BSMFactory implements IMessageFactory<BSM> {
+public class BSMMessage implements IMessage<BSM> {
 
     protected ConnectedNode node_;
     protected SaxtonLogger log_;
     protected MessageFactory messageFactory_;
 
-    public BSMFactory(ConnectedNode node, SaxtonLogger log, MessageFactory messageFactory) {
+    public BSMMessage(ConnectedNode node, SaxtonLogger log, MessageFactory messageFactory) {
         this.node_ = node;
         this.log_ = log;
         this.messageFactory_ = messageFactory;
@@ -84,8 +85,8 @@ public class BSMFactory implements IMessageFactory<BSM> {
 			Object transmission, Object accelset, byte[] brakeStatus, Object size);
 	
 	@Override
-    public MessageContainer encode(Object plainMessage) {
-        HelperBSM helper_bsm = new HelperBSM(((BSM) plainMessage).getCoreData());
+    public MessageContainer encode(Message plainMessage) {
+        BSMMessageHelper helper_bsm = new BSMMessageHelper(((BSM) plainMessage).getCoreData());
         int[] brakes_status = {
                 helper_bsm.getWheel_brakes(), helper_bsm.getTraction(), helper_bsm.getAbs(),
                 helper_bsm.getScs(), helper_bsm.getBba(), helper_bsm.getAux()};

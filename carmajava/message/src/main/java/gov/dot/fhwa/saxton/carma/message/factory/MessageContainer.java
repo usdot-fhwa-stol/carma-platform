@@ -14,14 +14,16 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.factory;
+package gov.dot.fhwa.saxton.carma.message.factory;
+
+import org.ros.internal.message.Message;
 
 public class MessageContainer {
     
     String type;
-    Object message;
+    Message message;
     
-    public MessageContainer(String type, Object message) {
+    public MessageContainer(String type, Message message) {
         this.type = type;
         this.message = message;
     }
@@ -30,7 +32,7 @@ public class MessageContainer {
         return type;
     }
 
-    public Object getMessage() {
+    public Message getMessage() {
         return message;
     }
 

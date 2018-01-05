@@ -18,10 +18,10 @@ package gov.dot.fhwa.saxton.carma.message;
 
 import cav_msgs.*;
 import cav_srvs.*;
-import gov.dot.fhwa.saxton.carma.factory.FactoryManager;
-import gov.dot.fhwa.saxton.carma.factory.IMessageFactory;
-import gov.dot.fhwa.saxton.carma.factory.MessageContainer;
-import gov.dot.fhwa.saxton.carma.helper.MessageStatistic;
+import gov.dot.fhwa.saxton.carma.message.factory.DSRCMessageFactory;
+import gov.dot.fhwa.saxton.carma.message.factory.IMessage;
+import gov.dot.fhwa.saxton.carma.message.factory.MessageContainer;
+import gov.dot.fhwa.saxton.carma.message.helper.MessageStatistic;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
@@ -206,7 +206,7 @@ public class MessageConsumer extends SaxtonBaseNode {
         });
 		inboundSub_.addMessageListener((msg) -> {
 		    messageCounters.onMessageReceiving(msg.getMessageType());
-		    IMessageFactory<?> factory = FactoryManager.getMessageFactory(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
+		    IMessage<?> factory = DSRCMessageFactory.getMessageFactory(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
 		    MessageContainer decodedMessage = factory.decode(msg);
 		    if(decodedMessage.getMessage() != null) {
 		        switch (decodedMessage.getType()) {
@@ -224,7 +224,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 			@Override
 			protected void loop() throws InterruptedException {
 			    MessageContainer outgoingMessage = dsrcMessageQueue.take();
-				IMessageFactory<?> factory = FactoryManager.getMessageFactory(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
+				IMessage<?> factory = DSRCMessageFactory.getMessageFactory(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
 				MessageContainer encodedMessage = factory.encode(outgoingMessage.getMessage());
 				if(encodedMessage.getMessage() != null) {
 				    messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
