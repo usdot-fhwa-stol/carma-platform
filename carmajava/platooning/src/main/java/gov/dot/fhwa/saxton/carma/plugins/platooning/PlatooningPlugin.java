@@ -16,14 +16,15 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 public class PlatooningPlugin extends AbstractPlugin {
 
-    private static final String PLATOONING_FLAG = "PLATOONING";
-    
-    private double availabilityStart = 0.0, availabilityEnd = 0.0;
+    protected final String PLATOONING_FLAG = "PLATOONING";
+    protected PlatooningState state = new StandbyState();
     
     public PlatooningPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -57,5 +58,20 @@ public class PlatooningPlugin extends AbstractPlugin {
     @Override
     public void onTerminate() {
         // NO-OP
+    }
+
+    protected void setState(PlatooningState state) {
+        log.info(this.getClass().getSimpleName() + "is changing from " + this.state.toString() + " to " + state.toString());
+        this.state = state;
+    }
+    
+    @Override
+    public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+        return this.state.planTrajectory(this, log, pluginServiceLocator, traj, expectedEntrySpeed);
+    }
+    
+    @Override
+    public void onReceiveNegotiationRequest(String strategy) {
+        this.state.onReceiveNegotiationRequest(this, log, pluginServiceLocator, strategy);
     }
 }
