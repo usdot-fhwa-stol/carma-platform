@@ -206,8 +206,8 @@ public class MessageConsumer extends SaxtonBaseNode {
         });
 		inboundSub_.addMessageListener((msg) -> {
 		    messageCounters.onMessageReceiving(msg.getMessageType());
-		    IMessage<?> factory = DSRCMessageFactory.getMessageFactory(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
-		    MessageContainer decodedMessage = factory.decode(msg);
+		    IMessage<?> message = DSRCMessageFactory.getMessage(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
+		    MessageContainer decodedMessage = message.decode(msg);
 		    if(decodedMessage.getMessage() != null) {
 		        switch (decodedMessage.getType()) {
 	            case "BSM":
@@ -224,8 +224,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 			@Override
 			protected void loop() throws InterruptedException {
 			    MessageContainer outgoingMessage = dsrcMessageQueue.take();
-				IMessage<?> factory = DSRCMessageFactory.getMessageFactory(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
-				MessageContainer encodedMessage = factory.encode(outgoingMessage.getMessage());
+				IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
+				MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
 				if(encodedMessage.getMessage() != null) {
 				    messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
 	                outboundPub_.publish((ByteArray) encodedMessage.getMessage());

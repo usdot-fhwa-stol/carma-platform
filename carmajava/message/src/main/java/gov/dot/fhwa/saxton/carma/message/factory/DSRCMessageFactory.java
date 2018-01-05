@@ -22,7 +22,7 @@ import org.ros.node.ConnectedNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 public class DSRCMessageFactory {
-    public static IMessage<?> getMessageFactory(String messageType, ConnectedNode node, SaxtonLogger log, MessageFactory factory) {
+    public static IMessage<?> getMessage(String messageType, ConnectedNode node, SaxtonLogger log, MessageFactory factory) {
         switch(messageType) {
         case "BSM":
             return new BSMMessage(node, log, factory);
