@@ -145,7 +145,7 @@ public class RouteWaypoint {
     roadTypeMsg.setType((byte) roadType.ordinal());
     routeWPMsg.setRoadType(roadTypeMsg);
     routeWPMsg.setRequiredLaneIndex((byte) requiredLaneIndex);
-    routeWPMsg.setWaypointLaneIndex((byte) waypointLaneIndex);
+    //TODOrouteWPMsg.setWaypointLaneIndex((byte) waypointLaneIndex);
     routeWPMsg.setNearestMileMarker((byte) nearestMileMarker);
     routeWPMsg.setLongitude(location.getLongitude());
     routeWPMsg.setLatitude(location.getLatitude());

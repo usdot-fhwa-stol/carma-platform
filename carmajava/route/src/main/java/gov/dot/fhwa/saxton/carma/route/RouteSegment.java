@@ -64,6 +64,16 @@ public class RouteSegment {
   }
 
   /**
+   * Calculates location of a external point projected onto the segment
+   *
+   * @param loc The location whose projection is being calculated
+   * @return The projected location
+   */
+  public Location projectOntoSegment(Location location) {
+    return this.earthSegment.projectOntoSegment(location);
+  }
+
+  /**
    * Returns the length of this segment in meters
    * @return The length of the segment in meters
    */

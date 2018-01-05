@@ -18,6 +18,9 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
+
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -221,6 +224,8 @@ public class Route {
     waypoints = waypointList;
     boolean firstWaypoint = true;
     RouteWaypoint prevWaypoint = null;
+    RouteWaypoint prevPrevWaypoint = null;
+    boolean updatePreviousWP = false;
     // Build segments from waypoints
     segments = new LinkedList<>(); // Clear currnet waypoints
 
@@ -228,7 +233,16 @@ public class Route {
 
       if (!firstWaypoint && prevWaypoint.getWaypointLaneIndex() == waypoint.getWaypointLaneIndex()){
         segments.add(new RouteSegment(prevWaypoint, waypoint));
+        int endIndex = segments.size() - 1;
+        if (updatePreviousWP) { // Move next waypoint to line up with previous segment end before making next segment
+          prevWaypoint.setLocation(segments.get(endIndex).projectOntoSegment(prevPrevWaypoint.location)); 
+          segments.set(endIndex , new RouteSegment(prevWaypoint, waypoint)); // Need a new route segment as the location object has changed
+          updatePreviousWP = false;
+        }
+      } else if (!firstWaypoint && prevWaypoint.getWaypointLaneIndex() != waypoint.getWaypointLaneIndex()) {
+        updatePreviousWP = true;
       }
+      prevPrevWaypoint = prevWaypoint;
       prevWaypoint = waypoint;
       firstWaypoint = false;
     }
