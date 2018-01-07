@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -24,7 +27,13 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 public class PlatooningPlugin extends AbstractPlugin {
 
     protected final String PLATOONING_FLAG = "PLATOONING";
-    protected PlatooningState state = new StandbyState();
+    
+    protected IPlatooningState state = new StandbyState();
+    protected PlatoonManager manager = new PlatoonManager(this);
+    protected List<PlatoonMember> platoon = new LinkedList<>();
+    
+    protected CommandGenerator commandGenerator = null;
+    protected Thread commandGeneratorThread = null;
     
     public PlatooningPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -41,18 +50,28 @@ public class PlatooningPlugin extends AbstractPlugin {
 
     @Override
     public void onResume() {
+        if(commandGenerator == null && commandGeneratorThread == null) {
+            commandGenerator = new CommandGenerator(this);
+            commandGeneratorThread = new Thread(commandGenerator);
+            commandGeneratorThread.setName("Platooning Command Generator");
+            commandGeneratorThread.start();
+        }
         this.setAvailability(true);
     }
 
     @Override
     public void loop() throws InterruptedException {
         // TODO Auto-generated method stub
-        
     }
 
     @Override
     public void onSuspend() {
-        this.setAvailability(true);
+        this.setAvailability(false);
+        if(commandGenerator != null && commandGeneratorThread != null) {
+            commandGeneratorThread.interrupt();
+            commandGenerator = null;
+            commandGeneratorThread = null;
+        }
     }
 
     @Override
@@ -60,7 +79,7 @@ public class PlatooningPlugin extends AbstractPlugin {
         // NO-OP
     }
 
-    protected void setState(PlatooningState state) {
+    protected void setState(IPlatooningState state) {
         log.info(this.getClass().getSimpleName() + "is changing from " + this.state.toString() + " to " + state.toString());
         this.state = state;
     }

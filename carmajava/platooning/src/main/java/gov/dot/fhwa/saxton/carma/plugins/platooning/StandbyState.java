@@ -26,11 +26,11 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
- * The StandbyState is the state of platooning plugin when the platooning algorithm is disabled on the route.
- * It will transit to LeaderState when the algorithm is enabled.
- * It will ignore all negotiation message in current state.
+ * The StandbyState is a state when the platooning algorithm is current disabled on the route.
+ * It will transit to LeaderState when it knows the algorithm will be enabled in the next trajectory.
+ * In this state, the pulgin will not insert any maneuvers into a trajectory and ignore all negotiation messages.
  */
-public class StandbyState implements PlatooningState {
+public class StandbyState implements IPlatooningState {
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(PlatooningPlugin plugin, ILogger log,

@@ -21,7 +21,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
-public interface PlatooningState {
+public interface IPlatooningState {
     
     /**
      * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if

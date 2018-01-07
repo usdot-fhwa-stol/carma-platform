@@ -25,8 +25,15 @@ import gov.dot.fhwa.saxton.carma.guidance.util.AlgorithmFlags;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
-public class LeaderState implements PlatooningState {
-
+/**
+ * The LeaderState is a state when the platooning algorithm is enabled and the host vehicle is acting as the leader for zero or many vehicles.
+ * It will transit to StandbyState when the algorithm is disabled in the next trajectory.
+ * It will transit to FollowerState when it decide to join another platoon after negotiation. 
+ * In this state, the pulgin will not insert any maneuvers into a trajectory,
+ * but it will try to join another platoon by negotiation and handle handle all vehicles who try to join its platoon.
+ */
+public class LeaderState implements IPlatooningState {
+    
     @Override
     public TrajectoryPlanningResponse planTrajectory(PlatooningPlugin plugin, ILogger log,
             PluginServiceLocator pluginServiceLocator, Trajectory traj, double expectedEntrySpeed) {
@@ -39,18 +46,19 @@ public class LeaderState implements PlatooningState {
                 break;
             }
             if(i == flagArray.length - 1) {
+                plugin.manager.disablePlatooning();
                 plugin.setState(new StandbyState());
                 return plugin.planTrajectory(traj, expectedEntrySpeed);
             }
         }
+        //TODO insert a new platooning maneuver
         return new TrajectoryPlanningResponse();
     }
 
     @Override
     public void onReceiveNegotiationRequest(PlatooningPlugin plugin, ILogger log,
             PluginServiceLocator pluginServiceLocator, String plan) {
-        // TODO Auto-generated method stub
-        
+        // TODO 
     }
     
     @Override

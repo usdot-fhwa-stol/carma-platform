@@ -21,7 +21,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
-public class FollowerState implements PlatooningState {
+public class FollowerState implements IPlatooningState {
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(PlatooningPlugin plugin, ILogger log,
