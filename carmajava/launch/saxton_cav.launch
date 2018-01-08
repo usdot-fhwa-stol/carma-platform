@@ -185,6 +185,9 @@
         <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
         <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
+
+        <remap from="ui_instructions"
+               to="/$(arg TOP_NS)/ui_instructions"/>
       </node>
     </group>
 
