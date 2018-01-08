@@ -460,7 +460,11 @@
       <remap from="speed"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/speed"/>
       <remap from="driver_discovery"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>       
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+      <remap from="cmd_lateral"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
+      <remap from="ui_instructions"
+             to="/$(arg TOP_NS)/ui_instructions"/>
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>

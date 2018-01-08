@@ -255,6 +255,29 @@ function setSpeedometer(speed) {
 
 }
 
+
+/* Open the modal UIInstructions when there's no acknowledgement needed. */
+function showModalNoAck(icon) {
+
+    //IF modal is already open, skip;
+    if (isModalPopupShowing == true)
+        return;
+
+    //show modal
+    var modalUIInstructions = document.getElementById('modalUIInstructions');
+    var modalUIInstructionsContent = document.getElementById('modalUIInstructionsContent');
+    modalUIInstructionsContent.innerHTML = icon;
+    modalUIInstructions.style.display = 'block';
+    isModalPopupShowing = true;
+
+    //hide after 3 seconds.
+   setTimeout(function(){
+        modalUIInstructions.style.display = '';
+        modalUIInstructionsContent.innerHTML = '';
+        isModalPopupShowing = false;
+   }, 3000);
+}
+
 /*
  Open the modal popup.
  TODO: Update to allow caution and warning message scenarios. Currently only handles fatal and guidance dis-engage which redirects to logout page.
@@ -268,7 +291,7 @@ function showModal(showWarning, modalMessage, restart) {
     if (isModalPopupShowing == true)
         return;
 
-    var modal = document.getElementById('myModal');
+    var modal = document.getElementById('modalMessageBox');
     var span_modal = document.getElementsByClassName('close')[0];
     var btnModal = document.getElementById('btnModal');
 
@@ -378,7 +401,7 @@ function pad(num, size) {
 */
 function closeModal(action) {
 
-    var modal = document.getElementById('myModal');
+    var modal = document.getElementById('modalMessageBox');
     modal.style.display = 'none';
 
     isModalPopupShowing = false; //flag that modal popup has been closed.
