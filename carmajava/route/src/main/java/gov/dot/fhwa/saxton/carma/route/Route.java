@@ -129,34 +129,36 @@ public class Route {
    * Inserting a waypoint will result in an additional route segment being created.
    * To insert at the end of the list use an index = waypoints.size()
    * To insert at the front of the list use 0.
-   * Out of bound indexes will be truncated to 0 or waypoints.size() usable values
+   * Invalid waypoints or indexes will result in IllegalArgumentExceptions
+   * 
+   * Note: Currently does not support inserting waypoints at a route discontenuity (lane change) as the desired behavior is not defined
    *
    * @param waypoint The RouteWaypoint to be inserted. Must be able to connect to previous and next waypoints
    * @param index    The index at which to insert the RouteWaypoint. Inserting at a non-existent index will result in an exception.
-   * @return Returns true if the waypoint was inserted successfully. False otherwise.
    */
-  public boolean insertWaypoint(RouteWaypoint waypoint, int index) throws IndexOutOfBoundsException{
+  public void insertWaypoint(RouteWaypoint waypoint, int index) throws IllegalArgumentException{
     //TODO perform validation check on waypoint usability
     // Remove the segment at that location and replace it with two segments connected to the new waypoint
     // If waypoint not inserted at the front or end of the list the existing segments must be modified
-    if (index != 0 && index < waypoints.size()) {
+    int wpLaneIndex = waypoint.getWaypointLaneIndex();
+    if (index != 0 && index < waypoints.size() 
+        && wpLaneIndex == waypoints.get(index-1).getWaypointLaneIndex() 
+        && wpLaneIndex == waypoints.get(index).getWaypointLaneIndex()) {
       segments.remove(index-1);
       segments.add(index-1, new RouteSegment(waypoints.get(index - 1), waypoint));
       segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
-    } else if (index == waypoints.size() && waypoint.getWaypointLaneIndex() == waypoints.get(index-1).getWaypointLaneIndex()) {
+    } else if (index == waypoints.size() && wpLaneIndex == waypoints.get(index-1).getWaypointLaneIndex()) {
       segments.add(new RouteSegment(waypoints.get(index-1), waypoint));
-    } else if (index == 0 && waypoint.getWaypointLaneIndex() == waypoints.get(index-1).getWaypointLaneIndex()){
+    } else if (index == 0 && wpLaneIndex == waypoints.get(index).getWaypointLaneIndex()){
       segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
     } else {
-      throw new IndexOutOfBoundsException("Failed to add " + waypoint + " at index: " + index);
+      throw new IllegalArgumentException("Failed to add " + waypoint + " at index: " + index);
     }
 
     // Insert the waypoint into the list of waypoints
     waypoints.add(index,waypoint);
 
     calculateLength();
-    return true;
-    //return false;
   }
 
   /**

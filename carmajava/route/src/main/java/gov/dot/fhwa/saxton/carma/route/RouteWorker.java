@@ -269,9 +269,12 @@ public class RouteWorker {
     if (startingIndex == -1) {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
-      startRouteAtIndex(startingIndex);
-      routeManager.publishActiveRoute(getActiveRouteTopicMsg());
-      return StartActiveRouteResponse.NO_ERROR;
+      if (startRouteAtIndex(startingIndex)) {
+        routeManager.publishActiveRoute(getActiveRouteTopicMsg());
+        return StartActiveRouteResponse.NO_ERROR;
+      } else {
+        return StartActiveRouteResponse.INTERNAL_ERROR;
+      }
     }
   }
 
@@ -308,25 +311,21 @@ public class RouteWorker {
    *
    * @param index the index of the first waypoint to start from.
    *              An additional segment will be added from the vehicle to this starting point
+   * @return true if able to start route at the specified index
    */
-  protected void startRouteAtIndex(int index) {
+  protected boolean startRouteAtIndex(int index) {
     // Insert a starting waypoint at the current vehicle location which is connected to the route
     RouteWaypoint downtrackWP = activeRoute.getWaypoints().get(index);
     RouteWaypoint startingWP = new RouteWaypoint(downtrackWP); // Deep copy of downtrack waypoint
     startingWP.setLocation(new Location(hostVehicleLocation)); // Don't want waypoint and vehicle to reference same location object
 
-    boolean ableToConnectToRoute = false;
     try {
-      ableToConnectToRoute = activeRoute.insertWaypoint(startingWP, index);
+      activeRoute.insertWaypoint(startingWP, index);
     } catch (Exception e) {
-      ableToConnectToRoute = false;
       log.info("Exception caught when inserting route starting waypoint Exception = " + e);
-    }
-
-    // If we can't join the route return
-    if (!ableToConnectToRoute) {
       log.info("Could not join the route from the current location");
-      return;
+      // If we can't join the route return
+      return false;
     }
 
     currentSegment = activeRoute.getSegments().get(index);
@@ -336,6 +335,7 @@ public class RouteWorker {
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
     handleEvent(WorkerEvent.ROUTE_STARTED);
+    return true;
   }
 
   /**

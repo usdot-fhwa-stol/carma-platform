@@ -49,7 +49,7 @@ float64 min_cross_track
 float64 max_cross_track
 
 # The index of the lane that this waypoint is located in
-uint8 required_waypoint_lane_index
+uint8 lane_index
 
 # A bit flag describing which of the following fields are set. 1 = set, 0 = not set
 uint16 set_fields
