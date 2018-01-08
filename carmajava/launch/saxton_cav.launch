@@ -179,7 +179,7 @@
       </node>
 
       <!--Lateral Controller Driver Node-->
-      <node pkg="carma" type="lateralcontroldriver" name="lateral_controller"
+      <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
         args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
 
         <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
