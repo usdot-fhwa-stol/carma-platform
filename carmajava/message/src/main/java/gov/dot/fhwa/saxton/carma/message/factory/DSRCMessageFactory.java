@@ -14,17 +14,20 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
-include 'speedharm'
-include 'lateral_control_driver'
-include 'platooning'
+package gov.dot.fhwa.saxton.carma.message.factory;
+
+import org.ros.message.MessageFactory;
+import org.ros.node.ConnectedNode;
+
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+
+public class DSRCMessageFactory {
+    public static IMessage<?> getMessage(String messageType, ConnectedNode node, SaxtonLogger log, MessageFactory factory) {
+        switch(messageType) {
+        case "BSM":
+            return new BSMMessage(node, log, factory);
+        default:
+            return null;
+        }
+    }
+}

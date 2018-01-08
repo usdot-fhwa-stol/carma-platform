@@ -27,6 +27,13 @@ function openTab(evt, name) {
     tabcontent = document.getElementsByClassName('tabcontent');
     for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = 'none';
+
+        //If DriverView, collapse left navigation bar.
+        if (name != 'divCapabilities')
+            tabcontent[i].style.width = '88%';
+        else
+            tabcontent[i].style.width = '82%';
+
     }
     tablinks = document.getElementsByClassName('tablinks');
     for (i = 0; i < tablinks.length; i++) {
@@ -38,6 +45,41 @@ function openTab(evt, name) {
     //Initialize the map.
     if (name == 'divMap')
         initMap();
+
+    //If DriverView, collapse left navigation bar.
+    var tabname = document.getElementsByClassName('tabName');
+
+    for (i = 0; i < tabname.length; i++) {
+
+        //If DriverView, collapse left navigation bar.
+        if (name != 'divCapabilities')
+            tabname[i].style.display = 'none';
+        else
+            tabname[i].style.display = '';
+    }
+
+    var tab = document.getElementsByClassName('tab');
+
+    for (i = 0; i < tab.length; i++) {
+
+        //If DriverView, collapse left navigation bar.
+        if (name != 'divCapabilities')
+            tab[i].style.width = '6%';
+        else
+            tab[i].style.width = '12%';
+    }
+
+    var tabheader = document.getElementsByClassName('tabheader');
+
+    for (i = 0; i < tabheader.length; i++) {
+
+        //If DriverView, collapse left navigation bar.
+        if (name != 'divCapabilities')
+            tabheader[i].style.width = '88%';
+        else
+            tabheader[i].style.width = '82%';
+    }
+
 }
 
 // Get the element with id="defaultOpen" and click on it

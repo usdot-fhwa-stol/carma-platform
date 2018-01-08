@@ -71,7 +71,7 @@
   <arg name="debug_mock_can"        default="false" doc="Set true to enable debugging on the Mock CAN Driver"/>
   <arg name="debug_mock_dsrc"      default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
   <arg name="debug_mock_radar"      default="false" doc="Set true to enable debugging on the Mock Radar Driver"/>
-
+  <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
 
   <!-- ROS Namespaces -->
   <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
@@ -176,6 +176,15 @@
         <param name="simulated_driver" type="string" value="radar"/>
         <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
+      </node>
+
+      <!--Lateral Controller Driver Node-->
+      <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
+        args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
+
+        <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
       </node>
     </group>
 
@@ -448,6 +457,8 @@
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/engine_speed"/>
       <remap from="speed"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/speed"/>
+      <remap from="driver_discovery"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>       
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>

@@ -14,17 +14,26 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
-include 'speedharm'
-include 'lateral_control_driver'
-include 'platooning'
+package gov.dot.fhwa.saxton.carma.message.factory;
+
+import org.ros.internal.message.Message;
+
+public class MessageContainer {
+    
+    String type;
+    Message message;
+    
+    public MessageContainer(String type, Message message) {
+        this.type = type;
+        this.message = message;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public Message getMessage() {
+        return message;
+    }
+
+}
