@@ -36,6 +36,7 @@ import java.util.List;
  * Lane indices will run right to left. Such that the right most lane will be lane 0.
  */
 public class RouteWaypoint {
+  protected int waypointId; // The waypoint id is only set when a waypoint is published. It corresponds to the waypoint index. It is not used internally
   protected List<String> disabledGuidanceAlgorithms = new LinkedList<>();
   protected List<Integer> laneClosures = new ArrayList<>();
   protected int laneCount = 1;
@@ -103,6 +104,22 @@ public class RouteWaypoint {
     interiorLaneMarkings = wp.interiorLaneMarkings;
     leftMostLaneMarking = wp.leftMostLaneMarking;
     rightMostLaneMarking = wp.rightMostLaneMarking;
+  }
+
+  /**
+   * Gets the waypoint id
+   * @return waypoint id
+   */
+  public int getWaypointId() {
+    return this.waypointId;
+  }
+
+  /**
+   * Sets the waypoint id
+   * @param waypointId the waypoint id
+   */
+  public void setWaypointId(int waypointId) {
+    this.waypointId = waypointId;
   }
 
   /**
@@ -183,7 +200,7 @@ public class RouteWaypoint {
     RouteWaypoint wp = new RouteWaypoint(
       new Location(waypointMsg.getLatitude(), waypointMsg.getLongitude(),
         waypointMsg.getAltitude()));
-
+    wp.setWaypointId(waypointMsg.getWaypointId());
     wp.setLaneCount(waypointMsg.getLaneCount());
     wp.setLowerSpeedLimit(waypointMsg.getLowerSpeedLimit());
     wp.setUpperSpeedLimit(waypointMsg.getSpeedLimit());

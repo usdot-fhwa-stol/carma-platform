@@ -72,7 +72,7 @@ public class HaversineStrategy implements IDistanceStrategy{
     Vector3D xPrime = Vector3D.fromVector(vec2ExternalPoint.subtract(vec2EndPoint));
 
     double determinateOfPlane = Vector3D.get3by3Determinate(bPrime, cPrime, xPrime);
-    double sign = determinateOfPlane < 0 ? 1.0 : -1.0; // if det is less than 0 location is on the left.
+    double sign = determinateOfPlane < 0 ? 1.0 : -1.0; // if det is less than 0 location is on the right.
 
     // Get angle between both vectors
     double interiorAngle = startToExternalVec.getAngleBetweenVectors(startToEndVec);
