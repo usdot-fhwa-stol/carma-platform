@@ -21,22 +21,24 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
  */
 public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     
-    protected PlatooningPlugin plugin;
-    protected long timestep;
-    protected volatile double speedCmd = 0.0;
+    protected PlatooningPlugin plugin_;
+    protected long timestep_;
+    protected volatile double speedCmd_ = 0.0;
     
     public CommandGenerator(PlatooningPlugin plugin) {
-        this.plugin = plugin;
-        timestep = plugin.getTimestep();
+        this.plugin_ = plugin;
+        timestep_ = plugin.getTimestep();
     }
 
     @Override
     public void run() {
         while(true) {
             long tsStart = System.currentTimeMillis();
-            // TODO Update speed commands and its timestamp based on the list of platoon members
+            if(!plugin_.platoon.isEmpty()) {
+                // TODO Update speed commands and its timestamp based on the list of platoon members
+            }
             long tsEnd = System.currentTimeMillis();
-            long sleepDuration = Math.max(timestep - (tsEnd - tsStart), 0);
+            long sleepDuration = Math.max(timestep_ - (tsEnd - tsStart), 0);
             try {
                 Thread.sleep(sleepDuration);
             } catch (InterruptedException e) {
@@ -47,17 +49,17 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     
     @Override
     public double getLastSpeedCommand() {
-        return speedCmd;
+        return speedCmd_;
     }
     
     @Override
     public double getMaxAccelLimit() {
-        return plugin.getMaxAccel();
+        return plugin_.getMaxAccel();
     }
 
     @Override
     public boolean isTimeout() {
-        return plugin.manager.getTimeSinceLastUpdate() > plugin.getCommandTimeout();
+        return plugin_.manager.getTimeSinceLastUpdate() > plugin_.getCommandTimeout();
     }
     
 }

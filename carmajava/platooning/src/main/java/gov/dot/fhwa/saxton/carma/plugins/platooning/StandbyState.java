@@ -40,7 +40,7 @@ public class StandbyState implements IPlatooningState {
     
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        if(pluginServiceLocator_.getRouteService().hasFlagInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+        if(pluginServiceLocator_.getRouteService().isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
             //TODO it may need to send out some mobility messages when the transition happened
             plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
             return plugin_.planTrajectory(traj, expectedEntrySpeed);

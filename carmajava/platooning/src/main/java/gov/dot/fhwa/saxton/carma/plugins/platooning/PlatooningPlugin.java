@@ -105,6 +105,7 @@ public class PlatooningPlugin extends AbstractPlugin {
     
     @Override
     public void onReceiveNegotiationRequest(String message) {
+        log.info("Receive negotiation message: " + message);
         if(message == null) {
             return;
         }

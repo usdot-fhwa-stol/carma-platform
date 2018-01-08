@@ -27,6 +27,7 @@ public enum PlatooningRequests {
     DELEGATE,
     UPDATE;
     
+    // This method returns the name of each enum without its class name 
     @Override
     public String toString() {
         return name().split(".")[1];

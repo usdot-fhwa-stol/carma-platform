@@ -43,7 +43,8 @@ public class LeaderState implements IPlatooningState {
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        if(!pluginServiceLocator_.getRouteService().hasFlagInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+        // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
+        if(!pluginServiceLocator_.getRouteService().isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
             //TODO it may need to send out some mobility messages when the transition happened
             plugin_.manager.disablePlatooning();
             plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));

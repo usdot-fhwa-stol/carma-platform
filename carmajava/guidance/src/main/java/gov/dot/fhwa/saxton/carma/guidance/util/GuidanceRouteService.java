@@ -182,12 +182,12 @@ public class GuidanceRouteService implements RouteService {
   }
 
   @Override
-  public double[] getPluginEnabledWindowInRange(double start, double end, String flag) {
+  public double[] getAlgorithmEnabledWindowInRange(double start, double end, String algorithm) {
       SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRangeIncludingEnd(start, end);
       // Find the start of earliest window
       double earliestLegalWindow = start;
       for(AlgorithmFlags flagset : flags) {
-          if(flagset.getDisabledAlgorithms().contains(flag)) {
+          if(flagset.getDisabledAlgorithms().contains(algorithm)) {
               earliestLegalWindow = flagset.getLocation();
           } else {
               break;
@@ -197,7 +197,7 @@ public class GuidanceRouteService implements RouteService {
       double endOfWindow = earliestLegalWindow;
       for(AlgorithmFlags flagset : flags) {
           if(flagset.getLocation() > earliestLegalWindow) {
-              if(!flagset.getDisabledAlgorithms().contains(flag)) {
+              if(!flagset.getDisabledAlgorithms().contains(algorithm)) {
                   endOfWindow = flagset.getLocation();
               } else {
                   break;
@@ -212,10 +212,10 @@ public class GuidanceRouteService implements RouteService {
   }
 
   @Override
-  public boolean hasFlagInRange(double start, double end, String targetFlag) {
+  public boolean isAlgorithmEnabledInRange(double start, double end, String algorithm) {
       SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRangeIncludingEnd(start, end);
       for(AlgorithmFlags flag : flags) {
-          if(!flag.getDisabledAlgorithms().contains(targetFlag)) {
+          if(!flag.getDisabledAlgorithms().contains(algorithm)) {
               return true;
           }
       }

@@ -46,8 +46,9 @@ public class FollowerState implements IPlatooningState {
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        if(!pluginServiceLocator_.getRouteService().hasFlagInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
-            //TODO it may need to send out some mobility messages when the transition happened
+        // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
+        if(!pluginServiceLocator_.getRouteService().isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+            // TODO it may need to send out some mobility messages when the transition happened
             plugin_.manager.disablePlatooning();
             plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
             return plugin_.planTrajectory(traj, expectedEntrySpeed);
@@ -58,9 +59,11 @@ public class FollowerState implements IPlatooningState {
         if(!maneuvers.isEmpty()) {
             complexManeuverStartLocation = maneuvers.get(maneuvers.size() - 1).getEndDistance(); 
         }
-        double[] window = pluginServiceLocator_.getRouteService().getPluginEnabledWindowInRange(complexManeuverStartLocation, traj.getEndLocation(), plugin_.PLATOONING_FLAG);
+        double[] window = pluginServiceLocator_.getRouteService().getAlgorithmEnabledWindowInRange(complexManeuverStartLocation, traj.getEndLocation(), plugin_.PLATOONING_FLAG);
         if(window == null || Math.abs(window[1] - window[0]) < plugin_.getMinimumManeuverLength()) {
             log_.warn("Cannot find a legal window to plan a platooning complex maneuver");
+            // TODO it may need to use arbitrator service to replan
+            return new TrajectoryPlanningResponse();
         }
         PlatooningManeuver maneuver = new PlatooningManeuver(
                 plugin_.commandGenerator,
@@ -68,9 +71,9 @@ public class FollowerState implements IPlatooningState {
                 pluginServiceLocator_.getManeuverPlanner().getGuidanceCommands(),
                 AccStrategyManager.newAccStrategy(),
                 window[0], window[1],
-                1.0, 100.0);
+                1.0, 100.0); //the last two are dummy variables
         boolean accepted = traj.setComplexManeuver(maneuver);
-        log_.info("Trajectory response to complex maneuver = " + accepted);
+        log_.info("Trajectory response to complex maneuver = " + accepted + " in the window [" + window[0] + ", " + window[0] + "]");
         return new TrajectoryPlanningResponse();
     }
 

@@ -24,6 +24,6 @@ public interface IPlatooningCommandInputs {
     // Get the corresponding max accel limit
     public double getMaxAccelLimit();
     
-    // Check if the status are time out
+    // Check if the vehicle status are time out
     public boolean isTimeout();
 }

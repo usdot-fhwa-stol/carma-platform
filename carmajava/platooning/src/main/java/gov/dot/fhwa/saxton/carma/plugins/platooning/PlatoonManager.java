@@ -38,7 +38,7 @@ public class PlatoonManager {
         SortedSet<PlatoonMember> platoon = this.plugin.platoon;
         for(PlatoonMember member : platoon) {
             if(member.getStaticId().equals(staticId)) {
-                return member.getMemberId(); 
+                return member.getMemberId();
             }
         }
         return -1;
@@ -72,6 +72,7 @@ public class PlatoonManager {
     }
     
     public void updateMemberStatus(List<PlatoonMember> status) {
+        // TODO update member status based on STATUS messages
         updateTimestamp = LocalDateTime.now();
     }
     

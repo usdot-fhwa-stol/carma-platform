@@ -22,8 +22,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 public interface IPlatooningState {
     
     /**
-     * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if
-     * possible.
+     * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if possible.
      * @param traj The current partially planned Trajectory, which cannot be modified
      * @param expectedEntrySpeed The speed (in m/s) the vehicle is expected to have upon the start of the new trajectory
      * @return Trajectory planning response
@@ -31,7 +30,7 @@ public interface IPlatooningState {
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
     
     /**
-     * Callback method to handle negotiation requests
+     * Callback method to handle negotiation requests which may result in state changing
      * @param plan the detailed negotiation proposal from another vehicle
      */
     public void onReceiveNegotiationRequest(String plan);
