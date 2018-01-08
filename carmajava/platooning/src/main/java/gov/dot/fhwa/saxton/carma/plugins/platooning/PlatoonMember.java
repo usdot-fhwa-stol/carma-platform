@@ -25,6 +25,7 @@ public class PlatoonMember {
     private double vehiclePosition;
 
     public PlatoonMember(int memberId, String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition) {
+        // Member ID indicates where the vehicle is in the platoon. When its ID is 0, it means it is the leader.
         this.memberId = memberId;
         this.staticId = staticId;
         this.commandSpeed = commandSpeed;

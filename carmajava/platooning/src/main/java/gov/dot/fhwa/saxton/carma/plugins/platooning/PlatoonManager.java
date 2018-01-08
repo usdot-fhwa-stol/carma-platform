@@ -16,25 +16,42 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.LinkedList;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
+/**
+ * This class manages the changing of platoon list.
+ */
 public class PlatoonManager {
     
     protected PlatooningPlugin plugin;
+    protected volatile LocalDateTime updateTimestamp = LocalDateTime.now();
 
     public PlatoonManager(PlatooningPlugin plugin) {
         this.plugin = plugin;
     }
     
     public int findMemberId(String staticId) {
-        List<PlatoonMember> platoon = this.plugin.platoon;
-        for(int i = 0; i < platoon.size(); i++) {
-            if(platoon.get(i).getStaticId().equals(staticId)) {
-                return i;
+        SortedSet<PlatoonMember> platoon = this.plugin.platoon;
+        for(PlatoonMember member : platoon) {
+            if(member.getStaticId().equals(staticId)) {
+                return member.getMemberId(); 
             }
         }
         return -1;
+    }
+    
+    public PlatoonMember findMember(String staticId) {
+        SortedSet<PlatoonMember> platoon = this.plugin.platoon;
+        for(PlatoonMember member : platoon) {
+            if(member.getStaticId().equals(staticId)) {
+                return member; 
+            }
+        }
+        return null;
     }
     
     public void addNewMember(PlatoonMember member) {
@@ -44,13 +61,23 @@ public class PlatoonManager {
     }
     
     public void deleteMember(String staticId) {
-        int deleteCandidate = findMemberId(staticId);
-        if(deleteCandidate >= 0) {
+        PlatoonMember deleteCandidate = findMember(staticId);
+        if(deleteCandidate != null) {
             this.plugin.platoon.remove(deleteCandidate);
         }
     }
     
     public void disablePlatooning() {
-        this.plugin.platoon = new LinkedList<PlatoonMember>();
+        this.plugin.platoon = new TreeSet<PlatoonMember>();
+    }
+    
+    public void updateMemberStatus(List<PlatoonMember> status) {
+        updateTimestamp = LocalDateTime.now();
+    }
+    
+    public long getTimeSinceLastUpdate() {
+        LocalDateTime now = LocalDateTime.now();
+        long timeElapsed = Duration.between(updateTimestamp, now).toMillis();
+        return timeElapsed;
     }
 }

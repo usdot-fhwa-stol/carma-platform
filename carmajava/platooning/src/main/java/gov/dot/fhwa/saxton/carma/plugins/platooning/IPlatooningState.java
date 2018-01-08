@@ -17,30 +17,22 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
-import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 public interface IPlatooningState {
     
     /**
      * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if
      * possible.
-     * @param plugin
-     * @param log
-     * @param pluginServiceLocator
      * @param traj The current partially planned Trajectory, which cannot be modified
      * @param expectedEntrySpeed The speed (in m/s) the vehicle is expected to have upon the start of the new trajectory
      * @return Trajectory planning response
      */
-    public TrajectoryPlanningResponse planTrajectory(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, Trajectory traj, double expectedEntrySpeed);
+    public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
     
     /**
-     * Callback method to handle negotiation requests received from external or internal sources
-     * @param plugin
-     * @param log
-     * @param pluginServiceLocator
+     * Callback method to handle negotiation requests
      * @param plan the detailed negotiation proposal from another vehicle
      */
-    public void onReceiveNegotiationRequest(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, String plan);
+    public void onReceiveNegotiationRequest(String plan);
 }

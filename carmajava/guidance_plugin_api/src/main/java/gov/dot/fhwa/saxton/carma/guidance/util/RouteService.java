@@ -95,7 +95,15 @@ public interface RouteService {
    * @param start The location of the start of the range (exclusive) in linear downtrack distance
    * @param end The location of the end of the range (inclusive) in linear downtrack distance
    * @param flag The enabled algorithm flag
-   * @return the window in array [startpoint, endpoint]
+   * @return the earliest window (startpoint, endpoint]. If not found, return null 
    */
-  double[] getWindowWhenPluginEnabledInRange(double start, double end, String flag);
+  double[] getPluginEnabledWindowInRange(double start, double end, String flag);
+  
+  /**
+   * Return true if there is a specific flag in the range (start, end]
+   * @param start The location of the start of the range (exclusive) in linear downtrack distance
+   * @param end The location of the end of the range (inclusive) in linear downtrack distance
+   * @param flag The enabled algorithm flag
+   */
+  boolean hasFlagInRange(double start, double end, String flag);
 }

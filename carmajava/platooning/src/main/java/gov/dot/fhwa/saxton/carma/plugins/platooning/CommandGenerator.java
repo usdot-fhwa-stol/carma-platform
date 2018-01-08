@@ -16,35 +16,48 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-
 /**
- * This class generate speed commands based on the latest information of platoon member list.
+ * This class generates speed commands based on the latest information from plugin platoon list.
  */
-public class CommandGenerator implements Runnable {
+public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     
     protected PlatooningPlugin plugin;
+    protected long timestep;
     protected volatile double speedCmd = 0.0;
-    protected volatile LocalDateTime speedCmdTimestamp = LocalDateTime.now();
     
     public CommandGenerator(PlatooningPlugin plugin) {
         this.plugin = plugin;
+        timestep = plugin.getTimestep();
     }
 
     @Override
     public void run() {
-        // TODO Update speed commands and its timestamp based on the list of platoon members 
+        while(true) {
+            long tsStart = System.currentTimeMillis();
+            // TODO Update speed commands and its timestamp based on the list of platoon members
+            long tsEnd = System.currentTimeMillis();
+            long sleepDuration = Math.max(timestep - (tsEnd - tsStart), 0);
+            try {
+                Thread.sleep(sleepDuration);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
     
+    @Override
     public double getLastSpeedCommand() {
         return speedCmd;
     }
     
-    // return the time duration from last speed command update
-    public long getTimeSinceLastUpdate() {
-        LocalDateTime now = LocalDateTime.now();
-        long millis = Duration.between(speedCmdTimestamp, now).toMillis();
-        return millis;
+    @Override
+    public double getMaxAccelLimit() {
+        return plugin.getMaxAccel();
     }
+
+    @Override
+    public boolean isTimeout() {
+        return plugin.manager.getTimeSinceLastUpdate() > plugin.getCommandTimeout();
+    }
+    
 }

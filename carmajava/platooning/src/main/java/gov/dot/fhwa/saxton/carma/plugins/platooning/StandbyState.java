@@ -16,14 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.SortedSet;
-
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.carma.guidance.util.AlgorithmFlags;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
-import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
  * The StandbyState is a state when the platooning algorithm is current disabled on the route.
@@ -32,24 +28,28 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  */
 public class StandbyState implements IPlatooningState {
 
+    protected PlatooningPlugin plugin_;
+    protected ILogger log_;
+    protected PluginServiceLocator pluginServiceLocator_;
+    
+    public StandbyState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
+        plugin_ = plugin;
+        log_ = log;
+        pluginServiceLocator_ = pluginServiceLocator;
+    }
+    
     @Override
-    public TrajectoryPlanningResponse planTrajectory(PlatooningPlugin plugin, ILogger log,
-            PluginServiceLocator pluginServiceLocator, Trajectory traj, double expectedEntrySpeed) {
-        RouteService routeService = pluginServiceLocator.getRouteService();
-        SortedSet<AlgorithmFlags> flags = routeService.getAlgorithmFlagsInRange(traj.getStartLocation(), traj.getEndLocation());
-        flags.add(routeService.getAlgorithmFlagsAtLocation(traj.getEndLocation()));
-        for(AlgorithmFlags flag : flags) {
-            if(!flag.getDisabledAlgorithms().contains(plugin.PLATOONING_FLAG)) {
-                plugin.setState(new LeaderState());
-                return plugin.planTrajectory(traj, expectedEntrySpeed);
-            }
+    public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+        if(pluginServiceLocator_.getRouteService().hasFlagInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+            //TODO it may need to send out some mobility messages when the transition happened
+            plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
+            return plugin_.planTrajectory(traj, expectedEntrySpeed);
         }
         return new TrajectoryPlanningResponse();
     }
 
     @Override
-    public void onReceiveNegotiationRequest(PlatooningPlugin plugin, ILogger log,
-            PluginServiceLocator pluginServiceLocator, String plan) {
+    public void onReceiveNegotiationRequest(String plan) {
         // NO-OP
     }
 

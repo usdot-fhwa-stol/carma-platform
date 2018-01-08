@@ -17,7 +17,9 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Queue;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
@@ -28,9 +30,14 @@ public class PlatooningPlugin extends AbstractPlugin {
 
     protected final String PLATOONING_FLAG = "PLATOONING";
     
-    protected IPlatooningState state = new StandbyState();
+    protected IPlatooningState state;
     protected PlatoonManager manager = new PlatoonManager(this);
-    protected List<PlatoonMember> platoon = new LinkedList<>();
+    protected SortedSet<PlatoonMember> platoon = new TreeSet<>();
+    protected Queue<String> statusQueue = new LinkedList<>(); 
+    protected double maxAccel = 2.5;
+    protected long timestep = 100;
+    protected double minimumManeuverLength = 5.0;
+    protected long commandTimeout = 3000;
     
     protected CommandGenerator commandGenerator = null;
     protected Thread commandGeneratorThread = null;
@@ -46,6 +53,11 @@ public class PlatooningPlugin extends AbstractPlugin {
     @Override
     public void onInitialize() {
         log.info("CACC platooning pulgin is initializing...");
+        platoon = new TreeSet<>((a, b) -> Double.compare(a.getMemberId(), b.getMemberId()));
+        maxAccel = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
+        timestep = (long) pluginServiceLocator.getParameterSource().getInteger("~platooning_command_timestep", 100);
+        minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 5.0);
+        commandTimeout = pluginServiceLocator.getParameterSource().getInteger("~platooning_command_timeout", 3000);
     }
 
     @Override
@@ -61,7 +73,8 @@ public class PlatooningPlugin extends AbstractPlugin {
 
     @Override
     public void loop() throws InterruptedException {
-        // TODO Auto-generated method stub
+        // TODO add logic to handle STATUS messages in statusQueue
+        Thread.sleep(10000);
     }
 
     @Override
@@ -80,17 +93,42 @@ public class PlatooningPlugin extends AbstractPlugin {
     }
 
     protected void setState(IPlatooningState state) {
-        log.info(this.getClass().getSimpleName() + "is changing from " + this.state.toString() + " to " + state.toString());
+        log.info("Change from " + this.state.toString() + " to " + state.toString());
         this.state = state;
     }
     
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        return this.state.planTrajectory(this, log, pluginServiceLocator, traj, expectedEntrySpeed);
+        log.info("Plan Trajectory from " + traj.getStartLocation() + " to " + traj.getEndLocation() + " in state " + state.toString());
+        return this.state.planTrajectory(traj, expectedEntrySpeed);
     }
     
     @Override
-    public void onReceiveNegotiationRequest(String strategy) {
-        this.state.onReceiveNegotiationRequest(this, log, pluginServiceLocator, strategy);
+    public void onReceiveNegotiationRequest(String message) {
+        if(message == null) {
+            return;
+        }
+        if(message.startsWith(PlatooningRequests.UPDATE.toString())) {
+            statusQueue.add(message);
+        } else {
+            this.state.onReceiveNegotiationRequest(message);
+        }
     }
+
+    public double getMaxAccel() {
+        return maxAccel;
+    }
+
+    public long getTimestep() {
+        return timestep;
+    }
+
+    public double getMinimumManeuverLength() {
+        return minimumManeuverLength;
+    }
+
+    public long getCommandTimeout() {
+        return commandTimeout;
+    }
+
 }
