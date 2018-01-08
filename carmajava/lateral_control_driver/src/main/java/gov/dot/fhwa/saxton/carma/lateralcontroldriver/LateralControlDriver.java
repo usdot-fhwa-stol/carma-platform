@@ -59,7 +59,7 @@ public class LateralControlDriver extends SaxtonBaseNode implements ILateralCont
   protected ServiceServer<GetDriverStatusRequest, GetDriverStatusResponse> getStatusService;
 
   private String uiInstuctionsTopic = "ui_instructions";
-  private String lateralControlTopic = "control/cmd_lateral";
+  private String lateralControlTopic = "~control/cmd_lateral";
 
   private SaxtonLogger log_;
   private ParameterTree params_;
