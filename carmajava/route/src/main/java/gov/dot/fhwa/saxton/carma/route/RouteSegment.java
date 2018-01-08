@@ -16,9 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
-import gov.dot.fhwa.saxton.carma.geometry.geodesic.GreatCircleSegment;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.LineSegment3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.ros.message.MessageFactory;
+import org.ros.rosjava_geometry.Transform;
 
 /**
  * The building block of a route. Each segment is comprised of two waypoints forming a directed “vector”.
@@ -28,8 +31,9 @@ import org.ros.message.MessageFactory;
 public class RouteSegment {
   final protected RouteWaypoint uptrackWP;
   final protected RouteWaypoint downtrackWP;
-  final protected GreatCircleSegment earthSegment;
+  final protected LineSegment3D lineSegment;
   final protected double length;
+  final protected GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
   /**
    * Constructor intializes this segment with the given waypoints.
@@ -39,38 +43,77 @@ public class RouteSegment {
   public RouteSegment(RouteWaypoint uptrackWP, RouteWaypoint downtrackWP){
     this.uptrackWP = uptrackWP;
     this.downtrackWP = downtrackWP;
-    this.earthSegment = new GreatCircleSegment(this.uptrackWP.getLocation(), this.downtrackWP.getLocation());
-    this.length = this.earthSegment.getLength();
+    this.lineSegment = new LineSegment3D(this.uptrackWP.getECEFPoint(), this.downtrackWP.getECEFPoint());
+    this.length = this.lineSegment.length();
   }
 
   /**
    * Calculates the crosstrack distance from the provided GPS location to this route segment
-   *
+   * Uses flat earth model
+   * 
    * @param location The gps location to be compared
    * @return The calculated cross track distance in meters
    */
   public double crossTrackDistance(Location location) {
-    return this.earthSegment.crossTrackDistance(location);
+    Point3D ecefPoint = gcc.geodesic2Cartesian(location, Transform.identity());
+    return crossTrackDistance(ecefPoint);
   }
 
   /**
    * Calculates the downtrack distance from the provided GPS location to this route segment start
+   * Uses flat earth model
    *
    * @param location The gps location to be compared
    * @return The calculated down track distance in meters
    */
   public double downTrackDistance(Location location) {
-    return this.earthSegment.downtrackDistance(location);
+    Point3D ecefPoint = gcc.geodesic2Cartesian(location, Transform.identity());
+    return downTrackDistance(ecefPoint);
   }
 
   /**
    * Calculates location of a external point projected onto the segment
+   * Uses flat earth model
    *
    * @param loc The location whose projection is being calculated
    * @return The projected location
    */
   public Location projectOntoSegment(Location location) {
-    return this.earthSegment.projectOntoSegment(location);
+    Point3D ecefPoint = gcc.geodesic2Cartesian(location, Transform.identity());
+    return gcc.cartesian2Geodesic(projectOntoSegment(ecefPoint), Transform.identity());
+  }
+
+    /**
+   * Calculates the crosstrack distance from the provided GPS location to this route segment
+   * Uses flat earth model
+   *
+   * @param point The gps location to be compared
+   * @return The calculated cross track distance in meters
+   */
+  public double crossTrackDistance(Point3D point) {
+    return this.lineSegment.crossTrackDistance(point);
+  }
+
+  /**
+   * Calculates the downtrack distance from the provided GPS location to this route segment start
+   * Uses flat earth model
+   *
+   * @param point The gps location to be compared
+   * @return The calculated down track distance in meters
+   */
+  public double downTrackDistance(Point3D point) {
+    return this.lineSegment.downtrackDistance(point);
+  }
+
+  /**
+   * Calculates location of a external point projected onto the segment
+   * Uses flat earth model
+   *
+   * @param point The location whose projection is being calculated
+   * @return The projected location
+   */
+  public Point3D projectOntoSegment(Point3D point) {
+    return this.lineSegment.projectOntoSegment(point);
   }
 
   /**

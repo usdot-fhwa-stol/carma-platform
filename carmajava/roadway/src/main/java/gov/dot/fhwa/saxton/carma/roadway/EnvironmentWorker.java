@@ -285,33 +285,35 @@ public class EnvironmentWorker {
     List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
     List<Obstacle> roadwayObstacles = new LinkedList<>();
     for (cav_msgs.ExternalObject obj: objects) {
-      roadwayObstacles.add(buildObstacleFromMsg(obj));
+      //roadwayObstacles.add(buildObstacleFromMsg(obj));
     }
     // publish roadwayObstacles as new Envrionment Message
   }
 
-  protected Obstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj) {
-    int id = obj.getId();
-    RouteSegment correspondingSegment = routeSegmentOfObject(obj);
-    double downtrackDistance = 0;//= calculateObstacleDownTrack;
-    double crosstrackDistance = 0 ;//= calculateObstacleCrossTrack();
-    Vector3D velocity = new Vector3D(0, 0, 0);
-    Vector3D acceleration = new Vector3D(0, 0, 0);
-    Vector3D size = new Vector3D(0, 0, 0);
-    int primaryLane = 0;
-    //Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocity, acceleration, size, primaryLane);
-    return null;
-  }
-//
-//  protected calculateMaxCrossTrackForSegment
+  // protected Obstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj) {
+  //   int id = obj.getId();
+  //   RouteSegment correspondingSegment = routeSegmentOfObject(obj);
+  //   double downtrackDistance = calculateObstacleDownTrack;
+  //   double crosstrackDistance = calculateObstacleCrossTrack();
+  //   Vector3D velocity = new Vector3D(0, 0, 0);
+  //   Vector3D acceleration = new Vector3D(0, 0, 0);
+  //   Vector3D size = new Vector3D(0, 0, 0);
+  //   int primaryLane = 0;
+  //   Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocity, acceleration, size, primaryLane);
+  //   return newObstacle;
+  // }
 
-  protected RouteSegment routeSegmentOfObject(cav_msgs.ExternalObject obj) {
-    int segmentIndex = currentSegment.getDowntrackWaypoint().getWaypointId();
-    int range = 10;
-    int lowerBound = Math.max(segmentIndex - range, 0);
-    int upperBound = Math.min(segmentIndex + range, activeRoute.getSegments().size());
-    return null;
-  }
+  // protected calculateMaxCrossTrackForSegment
+
+  // protected RouteSegment routeSegmentOfObject(cav_msgs.ExternalObject obj) {
+  //   int segmentIndex = currentSegment.getDowntrackWaypoint().getWaypointId();
+  //   int range = 10;
+  //   int lowerBound = Math.max(segmentIndex - range, 0);
+  //   int upperBound = Math.min(segmentIndex + range, activeRoute.getSegments().size());
+
+  //   for ()
+  //   return null;
+  // }
 
   /**
    * Velocity message handler

@@ -18,9 +18,6 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
-
-import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
-
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;

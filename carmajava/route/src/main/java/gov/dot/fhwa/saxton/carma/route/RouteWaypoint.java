@@ -23,11 +23,15 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
+import org.ros.rosjava_geometry.Transform;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
  * Waypoints are representations of sequential regions along a route.
@@ -49,10 +53,12 @@ public class RouteWaypoint {
   protected double maxCrossTrack = 10.0; // Units: m
   protected int requiredLaneIndex = -1;
   protected int laneIndex = 0;
+  protected Point3D ecefPoint;
   protected RoadType roadType = RoadType.FREEWAY;
   protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.SOLID_WHITE;
   protected LaneEdgeType leftMostLaneMarking = LaneEdgeType.SOLID_YELLOW;
   protected LaneEdgeType rightMostLaneMarking = LaneEdgeType.SOLID_WHITE;
+  protected GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
   /**
    * Default constructor
@@ -65,7 +71,7 @@ public class RouteWaypoint {
    * @param loc The gps location of this waypoint.
    */
   public RouteWaypoint(Location loc) {
-    this.location = loc;
+    setLocation(loc);
     this.lowerSpeedLimit = 0;
     this.upperSpeedLimit = 5;
   }
@@ -92,7 +98,7 @@ public class RouteWaypoint {
     }
     // Copy remaining fields
     laneCount = wp.laneCount;
-    location = new Location(wp.location);
+    this.setLocation(wp.getLocation());
     lowerSpeedLimit = wp.lowerSpeedLimit;
     upperSpeedLimit = wp.upperSpeedLimit;
     nearestMileMarker = wp.nearestMileMarker;
@@ -260,6 +266,7 @@ public class RouteWaypoint {
    */
   public void setLocation(Location location) {
     this.location = location;
+    this.ecefPoint = gcc.geodesic2Cartesian(location, Transform.identity());
   }
 
   /**
@@ -506,6 +513,14 @@ public class RouteWaypoint {
    */
   public void setNeededManeuvers(List<cav_msgs.Maneuver> neededManeuvers) {
     this.neededManeuvers = neededManeuvers;
+  }
+
+  /**
+   * Gets the point of this waypoint in an ECEF frame
+   * @return point
+   */
+  public Point3D getECEFPoint() {
+    return ecefPoint;
   }
 
   @Override public String toString() {
