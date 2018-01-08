@@ -138,7 +138,7 @@ public class LateralControlDriver extends SaxtonBaseNode implements ILateralCont
    * @return a list of fully qualified topic names
    */
   public List<String> getDriverApi() {
-    return new LinkedList<>(Arrays.asList(lateralControlSub_.getTopicName()));
+    return new LinkedList<String>(Arrays.asList(lateralControlSub_.getTopicName().toString()));
   }
 
   @Override public void publishUIMessage(cav_msgs.UIInstructions msg) {
