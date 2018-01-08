@@ -49,25 +49,25 @@ public class LateralControlWorker {
 
     /**
      * Handles control messages. 
-     * If the requested axelAngle is greater than the axelThreshold then it will be considered a request for a turn.
+     * If the requested axleAngle is greater than the angleThreshold then it will be considered a request for a turn.
      * The UI will then be notified. 
      */
     public void handleLateralControlMsg(cav_msgs.LateralControl msg) {
-        if (msg.getAxelAngle() < -angleThreshold_) { // left lane change
+        if (msg.getAxleAngle() < -angleThreshold_) { // left lane change
           cav_msgs.UIInstructions uiMsg = messageFactory.newFromType(cav_msgs.UIInstructions._TYPE);
           uiMsg.setMsg("LEFT_LANE_CHANGE");
           uiMsg.setType(cav_msgs.UIInstructions.NO_ACK_REQUIRED);
           uiMsg.setStamp(driver_.getTime());
           driver_.publishUIMessage(uiMsg);
-          log_.info("Left turn requested with axis angle of " + msg.getAxelAngle());
+          log_.info("Left turn requested with axis angle of " + msg.getAxleAngle());
 
-        } else if (msg.getAxelAngle() > angleThreshold_) { // right lane change
+        } else if (msg.getAxleAngle() > angleThreshold_) { // right lane change
           cav_msgs.UIInstructions uiMsg = messageFactory.newFromType(cav_msgs.UIInstructions._TYPE);
           uiMsg.setMsg("RIGHT_LANE_CHANGE");
           driver_.publishUIMessage(uiMsg);
           uiMsg.setType(cav_msgs.UIInstructions.NO_ACK_REQUIRED);
           uiMsg.setStamp(driver_.getTime());
-          log_.info("Right turn requested with axis angle of " + msg.getAxelAngle());
+          log_.info("Right turn requested with axis angle of " + msg.getAxleAngle());
         }
     }
 
