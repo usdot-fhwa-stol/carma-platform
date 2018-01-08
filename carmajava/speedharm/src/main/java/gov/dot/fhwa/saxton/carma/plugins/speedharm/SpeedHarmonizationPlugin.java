@@ -28,13 +28,10 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.carma.guidance.util.AlgorithmFlags;
-import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate.AutomatedControlStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
 
 /**
  * Plugin implementing integration withe STOL I TO 22 Infrastructure Server
@@ -199,7 +196,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     }
 
     // Find the earliest window after the start location at which speedharm is enabled
-    double[] planWindow = pluginServiceLocator.getRouteService().getPluginEnabledWindowInRange(
+    double[] planWindow = pluginServiceLocator.getRouteService().getAlgorithmEnabledWindowInRange(
             complexManeuverStartLocation, traj.getEndLocation(), SPEED_HARM_FLAG);
     if (planWindow == null) {
       log.info("Couldn't find plan window at start: " + complexManeuverStartLocation + " endOfWindow: " + traj.getEndLocation());
