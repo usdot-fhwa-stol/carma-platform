@@ -145,7 +145,7 @@ public class RouteWaypoint {
     roadTypeMsg.setType((byte) roadType.ordinal());
     routeWPMsg.setRoadType(roadTypeMsg);
     routeWPMsg.setRequiredLaneIndex((byte) requiredLaneIndex);
-    routeWPMsg.setlaneIndex((byte) laneIndex);
+    routeWPMsg.setLaneIndex((byte) laneIndex);
     routeWPMsg.setNearestMileMarker((byte) nearestMileMarker);
     routeWPMsg.setLongitude(location.getLongitude());
     routeWPMsg.setLatitude(location.getLatitude());
@@ -417,8 +417,8 @@ public class RouteWaypoint {
    *
    * @param laneIndex lane index
    */
-  public void setlaneIndex(int waypointLaneIndex) {
-    this.laneIndex = waypointLaneIndex;
+  public void setLaneIndex(int laneIndex) {
+    this.laneIndex = laneIndex;
   }
 
   /**
@@ -426,7 +426,7 @@ public class RouteWaypoint {
    *
    * @return the waypoint lane index
    */
-  public int getlaneIndex() {
+  public int getLaneIndex() {
     return laneIndex;
   }
 
