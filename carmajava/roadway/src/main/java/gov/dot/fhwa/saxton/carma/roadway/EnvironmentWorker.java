@@ -21,6 +21,7 @@ import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.QuaternionUtils;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
@@ -191,13 +192,29 @@ public class EnvironmentWorker {
     geometry_msgs.Vector3 size = obj.getSize();
     Vector3 minPoint = new Vector3(-size.getX(), -size.getY(), -size.getZ());
     Vector3 maxPoint = new Vector3(size.getX(), size.getY(), size.getZ());
+    // bounding box conversion based off http://dev.theomader.com/transform-bounding-boxes/
+    double[][] rotMat = QuaternionUtils.quaternionToMat(earthToObj.getRotationAndScale());
+    Vector3D col1 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
+    Vector3D col2 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
+    Vector3D col3 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
 
+    Vector3D xa = (Vector3D) col1.scalarMultiply(-size.getX());
+    Vector3D xb = (Vector3D) col1.scalarMultiply(size.getX());
+ 
+    Vector3D ya = (Vector3D) col2.scalarMultiply(-size.getY());
+    Vector3D yb = (Vector3D) col2.scalarMultiply(size.getY());
+ 
+    Vector3D za = (Vector3D) col3.scalarMultiply(-size.getZ());
+    Vector3D zb = (Vector3D) col3.scalarMultiply(size.getZ());;
+ 
+    Vector3D translation = Vector3D.fromVector(earthToObj.getTranslation());
+
+    Vector3D minBounds = (Vector3D) Vector3D.min(xa, xb).add(Vector3D.min(ya, yb)).add(Vector3D.min(za, zb)).add(translation);
+    Vector3D maxBounds = (Vector3D) Vector3D.max(xa, xb).add(Vector3D.max(ya, yb)).add(Vector3D.max(za, zb)).add(translation);
+    // TODO check bounds against crosstrack distance
     return null;
   }
 
-  protected double[][] quatToMat(Quaternion quat) {
-    
-  }
 
   /**
    * SystemAlert message handler.
