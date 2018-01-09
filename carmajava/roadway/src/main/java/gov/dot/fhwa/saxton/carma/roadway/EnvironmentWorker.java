@@ -26,6 +26,7 @@ import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
+import gov.dot.fhwa.saxton.carma.route.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.route.WorkerState;
 
 import org.apache.commons.logging.Log;
@@ -132,30 +133,62 @@ public class EnvironmentWorker {
     // publish roadwayObstacles as new Envrionment Message
   }
 
-  // protected Obstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj) {
-  //   int id = obj.getId();
-  //   RouteSegment correspondingSegment = routeSegmentOfObject(obj);
-  //   double downtrackDistance = calculateObstacleDownTrack;
-  //   double crosstrackDistance = calculateObstacleCrossTrack();
-  //   Vector3D velocity = new Vector3D(0, 0, 0);
-  //   Vector3D acceleration = new Vector3D(0, 0, 0);
-  //   Vector3D size = new Vector3D(0, 0, 0);
-  //   int primaryLane = 0;
-  //   Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocity, acceleration, size, primaryLane);
-  //   return newObstacle;
-  // }
+  protected Obstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj, Transform earthToOdom) {
+    int id = obj.getId();    
+    Transform objInOdom = Transform.fromPoseMessage(obj.getPose().getPose());
+    Transform objInECEF = earthToOdom.multiply(objInOdom);
+    Vector3 objVec = objInECEF.getTranslation();
+    Point3D objPosition = new Point3D(objVec.getX(), objVec.getY(), objVec.getZ());
+    
+    RouteSegment bestSegment = routeSegmentOfPoint(objPosition);
+    int segmentIndex = bestSegment.getDowntrackWaypoint().getWaypointId();
+    // TODO speed up downtrack distance count with somesort of accumulator
+    double downtrackDistance = activeRoute.lengthOfSegments(0, segmentIndex) + bestSegment.downTrackDistance(objPosition);
+    double crosstrackDistance = bestSegment.crossTrackDistance(objPosition);
+    int primaryLane = determinePrimaryLane(bestSegment, crosstrackDistance);
+    List<Integer>  secondaryLanes = determineSecondaryLanes(bestSegment, obj);
+    Vector3D velocity = new Vector3D(0, 0, 0);
+    Vector3D acceleration = new Vector3D(0, 0, 0);
+    Vector3D size = new Vector3D(0, 0, 0);
+    Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocity, acceleration, size, primaryLane);
+    return newObstacle;
+  }
 
-  // protected calculateMaxCrossTrackForSegment
+  protected RouteSegment routeSegmentOfPoint(Point3D point) {
+    int segmentIndex = currentSegment.getDowntrackWaypoint().getWaypointId();
+    int range = 10; // TODO Make this configurable based on distance (run along segments front and back from vehicle)
+    int lowerBound = Math.max(segmentIndex - range, 0);
+    int upperBound = Math.min(segmentIndex + range, activeRoute.getSegments().size());
 
-  // protected RouteSegment routeSegmentOfObject(cav_msgs.ExternalObject obj) {
-  //   int segmentIndex = currentSegment.getDowntrackWaypoint().getWaypointId();
-  //   int range = 10;
-  //   int lowerBound = Math.max(segmentIndex - range, 0);
-  //   int upperBound = Math.min(segmentIndex + range, activeRoute.getSegments().size());
+    RouteSegment bestSegment = activeRoute.getSegments().get(lowerBound);
+    for (int i = lowerBound; i < upperBound; i++) {
+      RouteSegment seg = activeRoute.getSegments().get(i);
+      RouteWaypoint wp = seg.getDowntrackWaypoint();
+      double crossTrack = seg.crossTrackDistance(point);
+      double downTrack = seg.downTrackDistance(point);
 
-  //   for ()
-  //   return null;
-  // }
+      if (-0.0 < downTrack && downTrack < seg.length()) { 
+        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack()) {
+          return seg;
+        }
+        bestSegment = seg;
+      } else if (i == upperBound - 1 && downTrack > seg.length()) {
+        bestSegment = seg;
+      }
+    }
+    return bestSegment;
+  }
+
+  // Non existant lanes will be added based on the 
+  protected int determinePrimaryLane(RouteSegment seg, double crossTrack) {
+    int segLane = seg.getDowntrackWaypoint().getLaneIndex();
+    double laneWidth = seg.getDowntrackWaypoint().getLaneWidth();
+    return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
+  }
+
+  protected List<Integer> determineSecondaryLanes() {
+    //TODO
+  }
 
   /**
    * SystemAlert message handler.
