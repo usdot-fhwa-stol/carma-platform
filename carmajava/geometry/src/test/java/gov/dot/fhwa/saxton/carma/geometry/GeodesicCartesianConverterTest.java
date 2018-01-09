@@ -207,9 +207,6 @@ public class GeodesicCartesianConverterTest {
     solRotAxis = new Vector3(0,1,0);
     solutionRot = Quaternion.fromAxisAngle(solRotAxis, Math.toRadians(225));
     assertTrue(trans.almostEquals(solutionTrans, 1.0));// Check accuracy to within 1m
-    log.info("/n/n/n ROT= " + rot + "/n/n/n");
-    log.info("/n/n/n Solution= " + solutionRot + "/n/n/n");
-
     assertTrue(rot.almostEquals(solutionRot, 0.0001)); // Check accuracy to within ~0.01 deg
 
   }
