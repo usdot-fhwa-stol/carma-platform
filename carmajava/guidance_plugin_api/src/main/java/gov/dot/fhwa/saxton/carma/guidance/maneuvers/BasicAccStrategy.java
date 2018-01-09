@@ -29,8 +29,8 @@ import java.util.Optional;
 public class BasicAccStrategy extends AbstractAccStrategy {
   protected double standoffDistance = 5.0;
   private static final double Kp = 1.0;
-  private static final double Ki = 0.01;
-  private static final double Kd = 0.0;
+  private static final double Ki = 0.0;
+  private static final double Kd = 0.01;
   private static final double DEFAULT_TIMEGAP = 1.0;
   private PidController timeGapController = new PidController(Kp, Ki, Kd, DEFAULT_TIMEGAP);
   private double exitDistanceFactor = 2.0;
@@ -43,11 +43,10 @@ public class BasicAccStrategy extends AbstractAccStrategy {
   }
 
   private double computeActualTimeGap(double distToFrontVehicle, double currentSpeed, double frontVehicleSpeed) {
-    if (currentSpeed <= frontVehicleSpeed) {
+    if (currentSpeed <= 0) {
       return Double.POSITIVE_INFINITY;
-    } else {
-      return distToFrontVehicle / (currentSpeed - frontVehicleSpeed);
     }
+    return distToFrontVehicle / currentSpeed;
   }
 
   @Override
@@ -59,8 +58,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
   @Override
   public boolean evaluateAccTriggerConditions(double distToFrontVehicle, double currentSpeed,
       double frontVehicleSpeed) {
-    return computeActualTimeGap(distToFrontVehicle, currentSpeed, frontVehicleSpeed) < desiredTimeGap
-        && currentSpeed > frontVehicleSpeed;
+    return computeActualTimeGap(distToFrontVehicle, currentSpeed, frontVehicleSpeed) < desiredTimeGap;
   }
 
   protected double computeAccIdealSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
@@ -93,7 +91,6 @@ public class BasicAccStrategy extends AbstractAccStrategy {
       Optional<Signal<Double>> speedCmdSignal = timeGapController
           .apply(new Signal<>(computeActualTimeGap(distToFrontVehicle, currentSpeed, frontVehicleSpeed)));
       speedCmd = applyAccelLimit(speedCmdSignal.get().getData(), currentSpeed, maxAccel);
-      speedCmd = Math.min(speedCmd, frontVehicleSpeed);
       speedCmd = Math.min(speedCmd, desiredSpeedCommand);
     }
 
