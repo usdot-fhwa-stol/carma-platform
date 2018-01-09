@@ -186,8 +186,17 @@ public class EnvironmentWorker {
     return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
   }
 
-  protected List<Integer> determineSecondaryLanes() {
+  protected List<Integer> determineSecondaryLanes(cav_msgs.ExternalObject obj, Transform earthToObj) {
     //TODO
+    geometry_msgs.Vector3 size = obj.getSize();
+    Vector3 minPoint = new Vector3(-size.getX(), -size.getY(), -size.getZ());
+    Vector3 maxPoint = new Vector3(size.getX(), size.getY(), size.getZ());
+
+    return null;
+  }
+
+  protected double[][] quatToMat(Quaternion quat) {
+    
   }
 
   /**
