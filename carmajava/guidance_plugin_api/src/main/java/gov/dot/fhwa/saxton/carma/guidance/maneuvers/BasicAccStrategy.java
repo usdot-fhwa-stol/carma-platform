@@ -61,6 +61,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
     return computeActualTimeGap(distToFrontVehicle, currentSpeed, frontVehicleSpeed) < desiredTimeGap;
   }
 
+  //@Deprecated
   protected double computeAccIdealSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
       double desiredSpeedCommand) {
     // Linearly interpolate the speed blend between our speed and front vehicle speed
@@ -80,6 +81,8 @@ public class BasicAccStrategy extends AbstractAccStrategy {
     // Check PID control state
     if (!pidActive && evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
       pidActive = true;
+      // If PID becomes inactive we should reset the controller before it is reactivated
+      timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
     }
     if (pidActive && computeActualTimeGap(distToFrontVehicle, currentSpeed, frontVehicleSpeed) > exitDistanceFactor
         * desiredTimeGap) {
@@ -97,7 +100,8 @@ public class BasicAccStrategy extends AbstractAccStrategy {
     return speedCmd;
   }
 
-  @Override
+  //@Deprecated
+  @Override 
   public double computeDesiredHeadway(double currentSpeed) {
     return currentSpeed * desiredTimeGap;
   }
