@@ -69,7 +69,7 @@ public class PidController implements Filter<Double> {
      * @return An Optional always containing the control response value
      */
     public Optional<Signal<Double>> apply(Signal<Double> signal) {
-        double error = signal.getData() - setpoint;
+        double error = setpoint - signal.getData();
         double output = Kp * error;
 
         // If this isn't our first timestep, handle the I and D terms
