@@ -59,7 +59,7 @@ public class LateralControlDriver extends SaxtonBaseNode implements ILateralCont
   protected ServiceServer<GetDriverStatusRequest, GetDriverStatusResponse> getStatusService;
 
   private String uiInstuctionsTopic = "ui_instructions";
-  private String lateralControlTopic = "control/cmd_lateral";
+  private String lateralControlTopic = "~control/cmd_lateral";
 
   private SaxtonLogger log_;
   private ParameterTree params_;
@@ -138,12 +138,7 @@ public class LateralControlDriver extends SaxtonBaseNode implements ILateralCont
    * @return a list of fully qualified topic names
    */
   public List<String> getDriverApi() {
-    List<String> baseNames = new LinkedList<>(Arrays.asList(lateralControlTopic, uiInstuctionsTopic));
-    List<String> FQNs = new LinkedList<>();
-    for (String apiElement: baseNames) {
-      FQNs.add(connectedNode_.getName() + "/" + apiElement);
-    }
-    return FQNs;
+    return new LinkedList<String>(Arrays.asList(lateralControlSub_.getTopicName().toString()));
   }
 
   @Override public void publishUIMessage(cav_msgs.UIInstructions msg) {

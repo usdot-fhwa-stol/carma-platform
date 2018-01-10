@@ -286,6 +286,33 @@ div.message_box {
     background-color: #ff6600; /*orange*/
 }
 
+/*** UI Instructions ***/
+#modalUIInstructions {
+    display: none; /*Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0); /* Fully transparent */
+    text-align: center;
+    vertical-align:middle;
+}
+
+#modalUIInstructionsContent {
+    position: relative;
+    background-color: #fefefe;
+    background-color: rgba(0,0,0,0); /* Fully transparent */
+    margin: auto;
+    padding: 0;
+    width: 50%;
+    font-size: 550px;
+    color: cornflowerblue; /* #ff6600; orange */
+}
+
+
 /*** MODAL ***/
 
 /* The Modal (background) */

@@ -40,6 +40,8 @@ var t_can_speed = 'speed';
 var t_guidance_state = 'state';
 var t_incoming_bsm = 'bsm';
 var t_driver_discovery = 'driver_discovery';
+var t_lateral_control_driver = 'cmd_lateral';
+var t_ui_instructions = 'ui_instructions';
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -1005,22 +1007,81 @@ function showDriverStatus() {
 }
 
 /*
+    Show the Lateral Control Driver message
+*/
+function checkLateralControlDriver() {
+    var listenerLateralControl = new ROSLIB.Topic({
+        ros: ros,
+        name: t_lateral_control_driver,
+        messageType: 'cav_msgs/LateralControl'
+    });
+
+    listenerLateralControl.subscribe(function (message) {
+        insertNewTableRow('tblFirstB', 'Lateral Axle Angle', message.axle_angle);
+        insertNewTableRow('tblFirstB', 'Lateral Max Axle Angle Rate', message.max_axle_angle_rate);
+        insertNewTableRow('tblFirstB', 'Lateral Max Accel', message.max_accel);
+    });
+}
+
+/*
+    Show UI instructions
+*/
+function showUIInstructions() {
+
+    var UIInstructionsType = {
+        INFO: { value: 0, text: 'INFO' }, //Notification of status or state change
+        ACK_REQUIRED: { value: 1, text: 'ACK_REQUIRED' }, //A command requiring driver acknowledgement
+        NO_ACK_REQUIRED: { value: 2, text: 'NO_ACK_REQUIRED' }, //A command that does not require driver acknowledgement
+    };
+
+    // List out the expected commands to handle.
+    var UIExpectedCommands = {
+        LEFT_LANE_CHANGE: { value: 0, text: 'LEFT_LANE_CHANGE' }, //From lateral controller driver
+        RIGHT_LANE_CHANGE: { value: 1, text: 'RIGHT_LANE_CHANGE' }, //From lateral controller driver
+        //Add new ones here.
+    };
+
+    var listenerUiInstructions = new ROSLIB.Topic({
+        ros: ros,
+        name: t_ui_instructions,
+        messageType: 'cav_msgs/UIInstructions'
+    });
+
+    listenerUiInstructions.subscribe(function (message) {
+
+        if (message.type == UIInstructionsType.INFO.value) {
+            divCapabilitiesMessage.innerHTML = message.msg;
+        }
+        else {
+            var icon = '';
+
+            switch (message.msg) {
+                case UIExpectedCommands.LEFT_LANE_CHANGE.text:
+                    icon = '<i class="fa fa-angle-left faa-flash animated faa-slow" aria-hidden="true" ></i>';
+                    break;
+                case UIExpectedCommands.RIGHT_LANE_CHANGE.text:
+                    icon = '<i class="fa fa-angle-right faa-flash animated faa-slow" aria-hidden="true" ></i>';
+                    break;
+                default:
+                    modalUIInstructionsContent.innerHTML = '';
+                    break;
+            }
+
+            if (message.type == UIInstructionsType.NO_ACK_REQUIRED.value)
+                showModalNoAck(icon); // Show the icon for 3 seconds.
+
+            //TODO: Implement ACK_REQUIRED logic to call specific service.
+            // var response_service = message.response_service;
+        }
+    });
+
+}
+
+/*
     Subscribe to future topics below:
     TODO: For future iterations.
 */
 function getFutureTopics() {
-
-    //TODO: Not yet published by Guidance.
-    var listenerUiInstructions = new ROSLIB.Topic({
-        ros: ros,
-        name: t_guidance_instructions,
-        messageType: 'std_msgs/String'
-    });
-
-    listenerUiInstructions.subscribe(function (message) {
-        document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerUiInstructions.name + ': ' + message.data;
-        //listenerUiInstructions.unsubscribe();
-    });
 
     //TODO: Not yet published by Guidance.
     var listenerUiPlatoonInfo = new ROSLIB.Topic({
@@ -1414,6 +1475,8 @@ function showStatusandLogs() {
     showCANSpeeds();
     showDiagnostics();
     showDriverStatus();
+    checkLateralControlDriver();
+    showUIInstructions();
 
     mapOtherVehicles();
 }
@@ -1571,7 +1634,7 @@ window.onload = function () {
 //TODO: Enable this later when lateral controls are implemented. Currently only FATAL, SHUTDOWN and ROUTE COMPLETED are modal popups that requires users acknowledgement to be routed to logout page.
 //TODO: Need to queue and hide modal when user has not acknowledged, when new messages come in that are not fatal, shutdown, route completed, or require user acknowlegement.
 window.onclick = function (event) {
-    var modal = document.getElementById('myModal');
+    var modal = document.getElementById('modalMessageBox');
 
     if (event.target == modal) {
         modal.style.display = 'none';
