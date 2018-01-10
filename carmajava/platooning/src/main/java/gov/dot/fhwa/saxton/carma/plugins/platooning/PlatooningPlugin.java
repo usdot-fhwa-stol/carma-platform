@@ -103,6 +103,7 @@ public class PlatooningPlugin extends AbstractPlugin {
         return this.state.planTrajectory(traj, expectedEntrySpeed);
     }
     
+    // TODO change the input type from String to maybe a plan object 
     @Override
     public void onReceiveNegotiationRequest(String message) {
         log.info("Receive negotiation message: " + message);

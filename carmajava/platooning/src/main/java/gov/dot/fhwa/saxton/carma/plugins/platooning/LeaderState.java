@@ -48,7 +48,7 @@ public class LeaderState implements IPlatooningState {
             //TODO it may need to send out some mobility messages when the transition happened
             plugin_.manager.disablePlatooning();
             plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
-            return plugin_.planTrajectory(traj, expectedEntrySpeed);
+            return new TrajectoryPlanningResponse();
         }
         return new TrajectoryPlanningResponse();
     }

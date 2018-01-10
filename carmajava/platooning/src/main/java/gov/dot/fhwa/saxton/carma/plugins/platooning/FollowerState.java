@@ -26,7 +26,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 /**
- * The LeaderState is a state when the platooning algorithm is enabled and the host vehicle is not the leader.
+ * The FollowerState is a state when the platooning algorithm is enabled and the host vehicle is not the leader.
  * It will transit to StandbyState when the algorithm is disabled in the next trajectory.
  * It will transit to LeaderState when either it cannot maintain the gap with the front vehicle
  * or its leader sends a negotiation message to assign it as the new leader.
@@ -51,7 +51,7 @@ public class FollowerState implements IPlatooningState {
             // TODO it may need to send out some mobility messages when the transition happened
             plugin_.manager.disablePlatooning();
             plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
-            return plugin_.planTrajectory(traj, expectedEntrySpeed);
+            return new TrajectoryPlanningResponse();
         }
         // Insert a PlatooningManeuver in the earliest legal window if it is in follower state
         double complexManeuverStartLocation = traj.getStartLocation();
@@ -62,8 +62,9 @@ public class FollowerState implements IPlatooningState {
         double[] window = pluginServiceLocator_.getRouteService().getAlgorithmEnabledWindowInRange(complexManeuverStartLocation, traj.getEndLocation(), plugin_.PLATOONING_FLAG);
         if(window == null || Math.abs(window[1] - window[0]) < plugin_.getMinimumManeuverLength()) {
             log_.warn("Cannot find a legal window to plan a platooning complex maneuver");
-            // TODO it may need to use arbitrator service to replan
-            return new TrajectoryPlanningResponse();
+            // TODO it may need to use arbitrator service to replan or request a longer trajectory
+            TrajectoryPlanningResponse response = new TrajectoryPlanningResponse();
+            return response;
         }
         PlatooningManeuver maneuver = new PlatooningManeuver(
                 plugin_.commandGenerator,
@@ -71,7 +72,7 @@ public class FollowerState implements IPlatooningState {
                 pluginServiceLocator_.getManeuverPlanner().getGuidanceCommands(),
                 AccStrategyManager.newAccStrategy(),
                 window[0], window[1],
-                1.0, 100.0); //the last two are dummy variables
+                1.0, 100.0); // TODO the last two are dummy variables, replace them later if possible
         boolean accepted = traj.setComplexManeuver(maneuver);
         log_.info("Trajectory response to complex maneuver = " + accepted + " in the window [" + window[0] + ", " + window[0] + "]");
         return new TrajectoryPlanningResponse();

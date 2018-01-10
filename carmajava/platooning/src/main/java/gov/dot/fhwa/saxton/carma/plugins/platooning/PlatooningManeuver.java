@@ -15,34 +15,34 @@ public class PlatooningManeuver extends ComplexManeuverBase {
      * Constructor where provides all relevant inputs
      *
      * @param commandInputs Input which provides the current desired commands from the platooning speed control logic
-     * @param inputs Input which provides the current state of the vehicle
-     * @param commands The target for calculated commands
+     * @param currentState Input which provides the current state of the vehicle
+     * @param commandsOutputs The target for calculated commands
      * @param startDist The distance along the route to the maneuver starting point
      * @param endDist The distance along the route which marks the maneuver end point
      * @param minCompletionTime The minimum anticipated execution time
      * @param maxCompletionTime The maximum anticipated execution time
-     * @param minExpectedSpeed The minimum expected speed
-     * @param maxExpectedSpeed The maximum expected speed
+     * @param minExpectedSpeed The minimum expected speed at the end of maneuver
+     * @param maxExpectedSpeed The maximum expected speed at the end of maneuver
      */
-    protected PlatooningManeuver(IPlatooningCommandInputs commandInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+    protected PlatooningManeuver(IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
             IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
             double minExpectedSpeed, double maxExpectedSpeed) {
-        super(inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime, minExpectedSpeed,
+        super(currentState, commandsOutputs, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime, minExpectedSpeed,
                 maxExpectedSpeed);
         commandInputs_ = commandInputs;
     }
 
-    protected PlatooningManeuver(IPlatooningCommandInputs commandInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+    protected PlatooningManeuver(IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
             IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime,
             Time maxCompletionTime) {
-        super(inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
+        super(currentState, commandsOutputs, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
         commandInputs_ = commandInputs;
     }
 
-    protected PlatooningManeuver(IPlatooningCommandInputs commandInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+    protected PlatooningManeuver(IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
             IAccStrategy accStrategy, double startDist, double endDist, double minExpectedSpeed,
             double maxExpectedSpeed) {
-        super(inputs, commands, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
+        super(currentState, commandsOutputs, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
         commandInputs_ = commandInputs;
     }
     
