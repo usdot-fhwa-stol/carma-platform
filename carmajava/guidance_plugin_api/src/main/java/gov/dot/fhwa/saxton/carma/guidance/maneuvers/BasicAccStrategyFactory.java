@@ -44,7 +44,7 @@ public class BasicAccStrategyFactory implements IAccStrategyFactory {
       return strat;
     }
     // Create ACC instance
-    BasicAccStrategyFactory.strat = new BasicAccStrategy(minStandoffDistance, exitDistanceFactor);
+    BasicAccStrategyFactory.strat = new BasicAccStrategy(minStandoffDistance, exitDistanceFactor, );
     strat.setDesiredTimeGap(desiredTimeGap);
     strat.setVehicleResponseDelay(vehicleResponseDelay);
     strat.setMaxAccel(maxAccel);
