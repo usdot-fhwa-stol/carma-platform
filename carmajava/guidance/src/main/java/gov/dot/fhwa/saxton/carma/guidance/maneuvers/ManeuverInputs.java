@@ -32,6 +32,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
 import gov.dot.fhwa.saxton.carma.guidance.signals.LowPassFilter;
+import gov.dot.fhwa.saxton.carma.guidance.signals.MovingAverageFilter;
 import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import org.ros.exception.RosRuntimeException;
@@ -70,13 +71,14 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double Ki = node.getParameterTree().getDouble("~Ki", 0.0);
         double Kd = node.getParameterTree().getDouble("~Kd", 0.0);
         double deadband = node.getParameterTree().getDouble("~pid_deadband");
-        double cuttoffFreq = node.getParameterTree().getDouble("~low_pass_filter_cutoff_freq");
+        double numSamples = node.getParameterTree().getDouble("~number_of_averaging_samples");
+        double cuttoffFreq = node.getParameterTree().getDouble("~num");
 
         PidController timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
-        LowPassFilter lowPassFilter = new LowPassFilter(Kp, Ki, Kd, desiredTimeGap);
+        MovingAverageFilter movingAverageFilter = new MovingAverageFilter(numSamples);
         Deadband deadbandFilter = new Deadband(desiredTimeGap, deadband);
 
-        Pipeline<Double> accFilterPipeline = new Pipeline<>(deadbandFilter, timeGapController, lowPassFilter);
+        Pipeline<Double> accFilterPipeline = new Pipeline<>(deadbandFilter, timeGapController, movingAverageFilter);
         BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel,
                 vehicleResponseLag, minStandoffDistance, exitDistanceFactor, accFilterPipeline);
         AccStrategyManager.setAccStrategyFactory(accFactory);
