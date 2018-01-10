@@ -16,15 +16,30 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.signals;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.LinkedList;
 
 /**
  * Structure to enable the composition of Filters which, itself, may
  * be treated as an instance of Filter.
  */
 public class Pipeline<T> implements Filter<T> {
-    private List<Filter<T>> filters;
+    private List<Filter<T>> filters = new LinkedList<>();
+
+    /**
+     * Default constructor
+     */
+    public Pipeline (){};
+
+    /**
+     * Constructor
+     * @param filters a list of filters to applied in the provided order
+     */
+    public Pipeline (Filter<T>... filters) {
+        this.filters = new LinkedList<>(Arrays.asList(filters));
+    }
 
 	@Override
 	public Optional<Signal<T>> apply(Signal<T> signal) {
@@ -59,5 +74,14 @@ public class Pipeline<T> implements Filter<T> {
      */
     public void compose(Filter<T> filter) {
         filters.add(filter);
+    }
+    
+    /**
+     * Calls reset() on all filters to removed maintained state but not parameters
+     */
+    public void reset() {
+        for (Filter<T> filter: filters) {
+            filter.reset();
+        }
     }
 }

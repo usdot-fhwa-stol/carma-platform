@@ -69,7 +69,7 @@ public class PidController implements Filter<Double> {
      * @return An Optional always containing the control response value
      */
     public Optional<Signal<Double>> apply(Signal<Double> signal) {
-        double error = setpoint - signal.getData();
+        double error = signal.getData() - setpoint;
         double output = Kp * error;
 
         // If this isn't our first timestep, handle the I and D terms
@@ -89,5 +89,10 @@ public class PidController implements Filter<Double> {
         lastError = Optional.of(new Signal<>(error, signal.getTimestamp()));
 
         return Optional.of(new Signal<>(output, signal.getTimestamp()));
+    }
+
+    @Override public void reset() {
+        integrator = 0;
+        lastError = Optional.empty();
     }
 }

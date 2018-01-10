@@ -31,4 +31,12 @@ public interface Filter<T> {
      * @return An optional containing the new value, if one was emitted by the filter.
      */
     Optional<Signal<T>> apply(Signal<T> signal);
+    
+    /**
+     * Removes all maintained state from a filter and resets it to default values
+     * Note: This DOES NOT reset configured filter parameters
+     * 
+     * Example: A PID controller would have its integrator reset but not its setpoint
+     */
+    void reset();
 }

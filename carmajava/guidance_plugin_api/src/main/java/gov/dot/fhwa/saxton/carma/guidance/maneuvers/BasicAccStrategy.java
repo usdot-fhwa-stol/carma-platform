@@ -16,7 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
+import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
+import gov.dot.fhwa.saxton.carma.guidance.signals.LowPassFilter;
 import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
+import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Signal;
 import java.util.Optional;
 
@@ -28,18 +31,15 @@ import java.util.Optional;
  */
 public class BasicAccStrategy extends AbstractAccStrategy {
   protected double standoffDistance = 5.0;
-  private static final double Kp = 1.0;
-  private static final double Ki = 0.0;
-  private static final double Kd = 0.01;
-  private static final double DEFAULT_TIMEGAP = 1.0;
-  private PidController timeGapController = new PidController(Kp, Ki, Kd, DEFAULT_TIMEGAP);
+  private Pipeline<Double> speedCmdPipeline;
   private double exitDistanceFactor = 2.0;
   private boolean pidActive = false;
 
-  public BasicAccStrategy(double minStandoffDistance, double exitDistanceFactor) {
+  public BasicAccStrategy(double minStandoffDistance, double exitDistanceFactor, Pipeline<Double> speedCmdPipeline) {
     super();
     this.standoffDistance = minStandoffDistance;
     this.exitDistanceFactor = exitDistanceFactor;
+    this.speedCmdPipeline = speedCmdPipeline;
   }
 
   private double computeActualTimeGap(double distToFrontVehicle, double currentSpeed, double frontVehicleSpeed) {
@@ -52,7 +52,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
   @Override
   public void setDesiredTimeGap(double timeGap) {
     super.setDesiredTimeGap(timeGap);
-    timeGapController = new PidController(Kp, Ki, Kd, timeGap);
+    speedCmdPipeline.reset();
   }
 
   @Override
@@ -82,7 +82,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
     if (!pidActive && evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
       pidActive = true;
       // If PID becomes inactive we should reset the controller before it is reactivated
-      timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
+      speedCmdPipeline.reset();
     }
     if (pidActive && computeActualTimeGap(distToFrontVehicle, currentSpeed, frontVehicleSpeed) > exitDistanceFactor
         * desiredTimeGap) {
@@ -91,9 +91,10 @@ public class BasicAccStrategy extends AbstractAccStrategy {
 
     double speedCmd = desiredSpeedCommand;
     if (pidActive) {
-      Optional<Signal<Double>> speedCmdSignal = timeGapController
+      Optional<Signal<Double>> speedCmdSignal = speedCmdPipeline
           .apply(new Signal<>(computeActualTimeGap(distToFrontVehicle, currentSpeed, frontVehicleSpeed)));
-      speedCmd = applyAccelLimit(speedCmdSignal.get().getData(), currentSpeed, maxAccel);
+      speedCmd = speedCmdSignal.get().getData() + desiredSpeedCommand;
+      speedCmd = applyAccelLimit(speedCmd, currentSpeed, maxAccel);
       speedCmd = Math.min(speedCmd, desiredSpeedCommand);
     }
 

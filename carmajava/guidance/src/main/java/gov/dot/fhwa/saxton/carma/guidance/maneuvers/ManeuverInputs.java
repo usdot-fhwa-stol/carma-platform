@@ -30,7 +30,10 @@ import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
-
+import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
+import gov.dot.fhwa.saxton.carma.guidance.signals.LowPassFilter;
+import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
+import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 
@@ -63,6 +66,17 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
         double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
         double exitDistanceFactor = node.getParameterTree().getDouble("~acc_exit_distance_factor", 1.5);
+        double Kp = node.getParameterTree().getDouble("~Kp", 1.0);
+        double Ki = node.getParameterTree().getDouble("~Ki", 0.0);
+        double Kd = node.getParameterTree().getDouble("~Kd", 0.0);
+        double deadband = node.getParameterTree().getDouble("~pid_deadband");
+        double cuttoffFreq = node.getParameterTree().getDouble("~low_pass_filter_cutoff_freq");
+
+        PidController timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
+        LowPassFilter lowPassFilter = new LowPassFilter(Kp, Ki, Kd, desiredTimeGap);
+        Deadband deadbandFilter = new Deadband(desiredTimeGap, deadband);
+
+        Pipeline<Double> accFilterPipeline = new Pipeline<>(deadbandFilter, timeGapController, lowPassFilter);
         BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel,
                 vehicleResponseLag, minStandoffDistance, exitDistanceFactor);
         AccStrategyManager.setAccStrategyFactory(accFactory);
