@@ -78,7 +78,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
         Pipeline<Double> accFilterPipeline = new Pipeline<>(deadbandFilter, timeGapController, lowPassFilter);
         BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel,
-                vehicleResponseLag, minStandoffDistance, exitDistanceFactor);
+                vehicleResponseLag, minStandoffDistance, exitDistanceFactor, accFilterPipeline);
         AccStrategyManager.setAccStrategyFactory(accFactory);
 
         // subscribers

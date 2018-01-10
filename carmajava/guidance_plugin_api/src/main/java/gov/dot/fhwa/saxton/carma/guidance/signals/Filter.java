@@ -39,4 +39,13 @@ public interface Filter<T> {
      * Example: A PID controller would have its integrator reset but not its setpoint
      */
     void reset();
+
+    /**
+     * Updates the setpoint of this filter
+     * Note: Filters are not required to have setpoints and this function should do nothing in that case. 
+     * 
+     * Example: A PID controller would have its setpoint changed
+     * @param setpoint The value to provide as the setpoint
+     */
+    void changeSetpoint(T setpoint);
 }

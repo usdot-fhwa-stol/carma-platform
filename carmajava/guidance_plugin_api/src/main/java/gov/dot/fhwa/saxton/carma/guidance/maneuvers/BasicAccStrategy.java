@@ -21,6 +21,9 @@ import gov.dot.fhwa.saxton.carma.guidance.signals.LowPassFilter;
 import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Signal;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -31,7 +34,7 @@ import java.util.Optional;
  */
 public class BasicAccStrategy extends AbstractAccStrategy {
   protected double standoffDistance = 5.0;
-  private Pipeline<Double> speedCmdPipeline;
+  private Pipeline<Double> speedCmdPipeline; // Pipeline is assumed to include a pid controller
   private double exitDistanceFactor = 2.0;
   private boolean pidActive = false;
 
@@ -53,6 +56,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
   public void setDesiredTimeGap(double timeGap) {
     super.setDesiredTimeGap(timeGap);
     speedCmdPipeline.reset();
+    speedCmdPipeline.changeSetpoint(timeGap);
   }
 
   @Override
@@ -63,7 +67,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
 
   //@Deprecated
   protected double computeAccIdealSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
-      double desiredSpeedCommand) {
+    double desiredSpeedCommand) {
     // Linearly interpolate the speed blend between our speed and front vehicle speed
     double desiredHeadway = computeDesiredHeadway(currentSpeed);
     // Clamp distance - adjusted to ensure at least minimum standoff distance - into the range of [0, desiredHeadway]

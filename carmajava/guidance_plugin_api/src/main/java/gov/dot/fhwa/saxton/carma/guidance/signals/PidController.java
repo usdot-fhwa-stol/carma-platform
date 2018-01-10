@@ -54,7 +54,8 @@ public class PidController implements Filter<Double> {
      * 
      * @param setpoint The setpoint to try to attain
      */
-    public void adjustSetPoint(double setpoint) {
+    @Override
+    public void changeSetpoint(Double setpoint) {
         this.setpoint = setpoint;
     }
 

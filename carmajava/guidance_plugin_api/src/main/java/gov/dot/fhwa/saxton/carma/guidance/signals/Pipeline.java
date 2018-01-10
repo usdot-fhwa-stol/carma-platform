@@ -84,4 +84,52 @@ public class Pipeline<T> implements Filter<T> {
             filter.reset();
         }
     }
+
+    /**
+     * Updates the setpoints of this pipeline
+     * Setpoints assigned in order.
+     * If the sizes of the pipeline and setpoint list do not match, 
+     * the indexes that do match will still be assigned. (Function supports mismatched list lendth)
+     * 
+     * Note: Filters are not required to have setpoints. 
+     * 
+     * Example: A PID controller would have its setpoint changed
+     * @param setpoints The list of setpoints to assign
+     */
+    public void changeSetpoints(List<T> setpoints) {
+        if (setpoints.size() == 0  || filters.size() == 0) {
+            return;
+        }
+        int size = setpoints.size();
+        if (setpoints.size() > filters.size()) {
+            size = filters.size();
+        }
+        for (int i = 0; i < size; i++) {
+            filters.get(i).changeSetpoint(setpoints.get(i));
+        }
+    }
+
+    /**
+     * Updates the setpoints of this pipeline
+     * All filters provided the same setpoint
+     * 
+     * Note: Filters are not required to have setpoints. 
+     * 
+     * Example: A PID controller would have its setpoint changed
+     * @param setpoints The list of setpoints to assign
+     */
+    public void changeSetpoint(T setpoint) {
+        for (int i = 0; i < filters.size(); i++) {
+            filters.get(i).changeSetpoint(setpoint);
+        }
+    }
+
+    /**
+     * Returns the number of filters in the pipeline
+     * 
+     * @return number of filters
+     */
+    public int getNumFilters() {
+        return filters.size();
+    }
 }
