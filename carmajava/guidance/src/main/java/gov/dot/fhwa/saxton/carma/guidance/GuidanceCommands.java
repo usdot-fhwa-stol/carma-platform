@@ -45,13 +45,18 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
+    private IPublisher<LateralControl> lateralControlPublisher;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
+    private AtomicDouble steeringCommand = new AtomicDouble(0.0);
+    private AtomicDouble lateralAccel = new AtomicDouble(0.0);
+    private AtomicDouble yawRate = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
     private long lastTimestep = -1;
     private double vehicleAccelLimit = 2.5;
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
+    private static final String LATERAL_CONTROL_CAPABILITY =  "control/cmd_lateral";
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
 
@@ -82,7 +87,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             exceptionHandler.handleException("Interface manager not found.", tnfe);
         }
 
-        // Build our request message
+        // Build our request message for longitudinal control drivers
         GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
 
         List<String> reqdCapabilities = new ArrayList<>();
@@ -113,9 +118,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             }
         });
 
-        // No message for LanePosition.msg to be published on "guidance/control/lane_position"
-        // TODO: Add message type for lateral control from guidance
-
         // Verify that the message returned drivers that we can use
         String speedCmdTopic = null;
         String roboticEnableTopic = null;
@@ -143,6 +145,41 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             }
         } else {
             exceptionHandler.handleException("GuidanceCommands unable to find suitable controller driver!", new RosRuntimeException("No controller drivers."));
+        }
+
+        // Repeat the above process for lateral control drivers
+        GetDriversWithCapabilitiesRequest lateralReq = driverCapabilityService.newMessage();
+        List<String> lateralCapabilities = new ArrayList<>();
+        reqdCapabilities.add(LATERAL_CONTROL_CAPABILITY);
+        req.setCapabilities(reqdCapabilities);
+        final GetDriversWithCapabilitiesResponse[] lateralDrivers = new GetDriversWithCapabilitiesResponse[1];
+        lateralDrivers[0] = null;
+        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+            @Override
+            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                log.debug("Received GetDriversWithCapabilitiesResponse");
+                for (String driverName : msg.getDriverData()) {
+                    log.debug("GuidanceCommands discovered driver: " + driverName);
+                }
+
+                drivers[0] = msg;
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                exceptionHandler.handleException("InterfaceManager failed to return a control/cmd_speed capable driver!!!", e);
+            }
+        });
+        String lateralControlTopic = null;
+        if (lateralDrivers[0] != null) {
+            for (String topicName : drivers[0].getDriverData()) {
+                if (topicName.endsWith(LATERAL_CONTROL_CAPABILITY)) {
+                    lateralControlTopic = topicName;
+                }
+            }
+        }
+        if (lateralControlTopic != null) {
+
         }
         
         currentState.set(GuidanceState.DRIVERS_READY);
@@ -215,7 +252,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     * @param accel The maximum allowable acceleration in attaining and maintaining that speed
     */
     @Override
-    public void setCommand(double speed, double accel) {
+    public void setSpeedCommand(double speed, double accel) {
         if (speed > MAX_SPEED_CMD_M_S) {
             log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
                     + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
@@ -228,6 +265,20 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         speedCommand.set(speed);
         maxAccel.set(Math.min(Math.abs(accel), Math.abs(vehicleAccelLimit)));
         log.info("CONTROLS", "Speed command set to " + speedCommand.get() + "m/s and " + maxAccel.get() + "m/s/s");
+    }
+
+    @Override
+    public void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
+        axleAngle = Math.max(axleAngle, -90.0);
+        axleAngle = Math.min(axleAngle, 90.0);
+
+        steeringCommand.set(axleAngle);
+        this.lateralAccel.set(lateralAccel);
+        this.yawRate.set(yawRate);
+
+        log.info("CONTROLS", "Steering command set to " + axleAngle + " degrees axle angle," 
+        + lateralAccel + " m/s/s lateral accel, and " 
+        + yawRate + " deg/s yaw rate.");
     }
     
     @Override
