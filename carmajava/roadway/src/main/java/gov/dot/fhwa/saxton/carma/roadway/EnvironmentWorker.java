@@ -138,20 +138,22 @@ public class EnvironmentWorker {
     int id = obj.getId();    
     Transform objInOdom = Transform.fromPoseMessage(obj.getPose().getPose());
     Transform objInECEF = earthToOdom.multiply(objInOdom);
-    Vector3 objVec = objInECEF.getTranslation();
-    Point3D objPosition = new Point3D(objVec.getX(), objVec.getY(), objVec.getZ());
+    Vector3 objVecECEF = objInECEF.getTranslation();
+    Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
     
-    RouteSegment bestSegment = routeSegmentOfPoint(objPosition);
+    RouteSegment bestSegment = routeSegmentOfPoint(objPositionECEF);
     int segmentIndex = bestSegment.getDowntrackWaypoint().getWaypointId();
+    Transform objInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(objInECEF); // Find the transform from the segment to this object
+    Vector3 objVec = objInSegment.getTranslation();
+    Point3D objPosition = new Point3D(objVec.getX(), objVec.getY(), objVec.getZ());
     // TODO speed up downtrack distance count with somesort of accumulator
-    double downtrackDistance = activeRoute.lengthOfSegments(0, segmentIndex) + bestSegment.downTrackDistance(objPosition);
-    double crosstrackDistance = bestSegment.crossTrackDistance(objPosition);
+    double downtrackDistance = activeRoute.lengthOfSegments(0, segmentIndex) + objPosition.getX(); //activeRoute.lengthOfSegments(0, segmentIndex) + bestSegment.downTrackDistance(objPosition);
+    double crosstrackDistance = objPosition.getY(); //bestSegment.crossTrackDistance(objPosition);
     int primaryLane = determinePrimaryLane(bestSegment, crosstrackDistance);
-    List<Integer>  secondaryLanes = determineSecondaryLanes(bestSegment, obj);
-    Vector3D velocity = new Vector3D(0, 0, 0);
-    Vector3D acceleration = new Vector3D(0, 0, 0);
+    List<Integer>  secondaryLanes = determineSecondaryLanes(obj, objInSegment, primaryLane, bestSegment);
+    Vector3D velocityLinear = Vector3D.fromVector(objInSegment.apply(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear())));
     Vector3D size = new Vector3D(0, 0, 0);
-    Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocity, acceleration, size, primaryLane);
+    Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocityLinear, acceleration, size, primaryLane);
     return newObstacle;
   }
 
@@ -181,19 +183,19 @@ public class EnvironmentWorker {
   }
 
   // Non existant lanes will be added based on the 
+  // TODO support relative lanes in external object description
   protected int determinePrimaryLane(RouteSegment seg, double crossTrack) {
     int segLane = seg.getDowntrackWaypoint().getLaneIndex();
     double laneWidth = seg.getDowntrackWaypoint().getLaneWidth();
     return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
   }
 
-  protected List<Integer> determineSecondaryLanes(cav_msgs.ExternalObject obj, Transform earthToObj) {
-    //TODO
+  protected List<Integer> determineSecondaryLanes(cav_msgs.ExternalObject obj, Transform segmentToObj, int primaryLane, RouteSegment seg) {
     geometry_msgs.Vector3 size = obj.getSize();
     Vector3 minPoint = new Vector3(-size.getX(), -size.getY(), -size.getZ());
     Vector3 maxPoint = new Vector3(size.getX(), size.getY(), size.getZ());
     // bounding box conversion based off http://dev.theomader.com/transform-bounding-boxes/
-    double[][] rotMat = QuaternionUtils.quaternionToMat(earthToObj.getRotationAndScale());
+    double[][] rotMat = QuaternionUtils.quaternionToMat(segmentToObj.getRotationAndScale());
     Vector3D col1 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
     Vector3D col2 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
     Vector3D col3 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
@@ -205,16 +207,24 @@ public class EnvironmentWorker {
     Vector3D yb = (Vector3D) col2.scalarMultiply(size.getY());
  
     Vector3D za = (Vector3D) col3.scalarMultiply(-size.getZ());
-    Vector3D zb = (Vector3D) col3.scalarMultiply(size.getZ());;
+    Vector3D zb = (Vector3D) col3.scalarMultiply(size.getZ());
  
-    Vector3D translation = Vector3D.fromVector(earthToObj.getTranslation());
+    Vector3D translation = Vector3D.fromVector(segmentToObj.getTranslation());
 
+    // Could reduce the number of calculations here since only y values are needed
     Vector3D minBounds = (Vector3D) Vector3D.min(xa, xb).add(Vector3D.min(ya, yb)).add(Vector3D.min(za, zb)).add(translation);
     Vector3D maxBounds = (Vector3D) Vector3D.max(xa, xb).add(Vector3D.max(ya, yb)).add(Vector3D.max(za, zb)).add(translation);
-    // TODO check bounds against crosstrack distance
-    return null;
-  }
+    
+    int minLane = determinePrimaryLane(seg, minBounds.getY());
+    int maxLane = determinePrimaryLane(seg, maxBounds.getY());
 
+    List<Integer> secondaryLanes = new LinkedList<>();
+    for (int i = minLane; i <= maxLane; i++) {
+      if (i != primaryLane)
+        secondaryLanes.add(i);
+    }
+    return secondaryLanes;
+  }
 
   /**
    * SystemAlert message handler.
