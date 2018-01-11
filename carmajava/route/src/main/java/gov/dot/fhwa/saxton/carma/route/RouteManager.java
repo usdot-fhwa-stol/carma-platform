@@ -88,7 +88,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
     /// Topics
     // Publishers
-    segmentPub = connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
@@ -108,7 +107,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath, requiredLeftRouteCount);
 
     // Subscribers
-    //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
+    // Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
     gpsSub.addMessageListener(new MessageListener<NavSatFix>() {
       @Override public void onNewMessage(NavSatFix navSatFix) {
@@ -195,10 +194,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
     publishSystemAlert(AlertSeverity.FATAL, msg, e);
     connectedNode.shutdown();
-  }
-
-  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
-    segmentPub.publish(routeSegment);
   }
 
   @Override public void publishActiveRoute(cav_msgs.Route route) {
