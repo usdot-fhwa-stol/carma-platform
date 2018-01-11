@@ -58,7 +58,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   protected SaxtonLogger log;
   // Topics
   // Publishers
-  Publisher<cav_msgs.RouteSegment> segmentPub;
   Publisher<cav_msgs.Route> routePub;
   Publisher<cav_msgs.RouteState> routeStatePub;
   // Subscribers
