@@ -95,26 +95,26 @@ public class EnvironmentWorkerTest {
   public void testHandleSystemAlert() {
 
     // Check FATAL message
-    MockEnvironmentManager envMgr = new MockEnvironmentManager();
-    EnvironmentWorker envWkr = new EnvironmentWorker(envMgr, log, "earth", "map", "odom",
+    MockRoadwayManager roadwayMgr = new MockRoadwayManager();
+    EnvironmentWorker envWkr = new EnvironmentWorker(roadwayMgr, log, "earth", "map", "odom",
       "base_link", "pinpoint", "pinpoint");
     SystemAlert alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
     alertMsg.setType(SystemAlert.FATAL);
 
-    assertTrue(!envMgr.isShutdown());
+    assertTrue(!roadwayMgr.isShutdown());
     envWkr.handleSystemAlertMsg(alertMsg);
-    assertTrue(envMgr.isShutdown());
+    assertTrue(roadwayMgr.isShutdown());
 
     // Check SHUTDOWN message
-    envMgr = new MockEnvironmentManager();
-    envWkr = new EnvironmentWorker(envMgr, log, "earth", "map", "odom",
+    roadwayMgr = new MockRoadwayManager();
+    envWkr = new EnvironmentWorker(roadwayMgr, log, "earth", "map", "odom",
       "base_link", "pinpoint", "pinpoint");
     alertMsg = messageFactory.newFromType(SystemAlert._TYPE);
     alertMsg.setType(SystemAlert.SHUTDOWN);
 
-    assertTrue(!envMgr.isShutdown());
+    assertTrue(!roadwayMgr.isShutdown());
     envWkr.handleSystemAlertMsg(alertMsg);
-    assertTrue(envMgr.isShutdown());
+    assertTrue(roadwayMgr.isShutdown());
   }
 
   /**
@@ -123,8 +123,8 @@ public class EnvironmentWorkerTest {
    */
   @Test
   public void testHandleHeadingMsg() throws Exception {
-    MockEnvironmentManager envMgr = new MockEnvironmentManager();
-    EnvironmentWorker envWkr = new EnvironmentWorker(envMgr, log, "earth", "map", "odom",
+    MockRoadwayManager roadwayMgr = new MockRoadwayManager();
+    EnvironmentWorker envWkr = new EnvironmentWorker(roadwayMgr, log, "earth", "map", "odom",
       "base_link", "pinpoint", "pinpoint");
 
     assertTrue(!envWkr.headingReceived);
@@ -142,8 +142,8 @@ public class EnvironmentWorkerTest {
    */
   @Test
   public void testhandleOdometryMsg() throws Exception {
-    MockEnvironmentManager envMgr = new MockEnvironmentManager();
-    EnvironmentWorker envWkr = new EnvironmentWorker(envMgr, log, "earth", "map", "odom",
+    MockRoadwayManager roadwayMgr = new MockRoadwayManager();
+    EnvironmentWorker envWkr = new EnvironmentWorker(roadwayMgr, log, "earth", "map", "odom",
       "base_link", "pinpoint", "pinpoint");
     // Publish the transform from base_link to position sensor
     Transform baseToPositionSensor = Transform.identity();
@@ -155,7 +155,7 @@ public class EnvironmentWorkerTest {
     tfStamped.getHeader().setFrameId(envWkr.baseLinkFrame);
     tfStamped.setTransform(baseToPositionSensorMsg);
     tfMsg.setTransforms(Arrays.asList(tfStamped));
-    envMgr.publishTF(tfMsg);
+    roadwayMgr.publishTF(tfMsg);
     // Build odometry message
     Odometry odometryMsg = messageFactory.newFromType(Odometry._TYPE);
     PoseWithCovariance pose = odometryMsg.getPose();
@@ -173,8 +173,8 @@ public class EnvironmentWorkerTest {
     odometryMsg.setChildFrameId(envWkr.localPositionSensorFrame);
     // Call function
     envWkr.handleOdometryMsg(odometryMsg);
-    // Request transform from envMgr. It should be the same as what was passed in the odometry message
-    Transform resultFromTF = envMgr.getTransform(envWkr.odomFrame, envWkr.baseLinkFrame,
+    // Request transform from roadwayMgr. It should be the same as what was passed in the odometry message
+    Transform resultFromTF = roadwayMgr.getTransform(envWkr.odomFrame, envWkr.baseLinkFrame,
       Time.fromMillis(0));
     Vector3 resultFromTFTrans = resultFromTF.getTranslation();
     Quaternion resultFromTFRot = resultFromTF.getRotationAndScale();
@@ -183,8 +183,8 @@ public class EnvironmentWorkerTest {
     assertTrue(resultFromTFRot.almostEquals(quat, 0.0001));
 
     // Try with non-identity base->position_sensor
-    envMgr = new MockEnvironmentManager();
-    envWkr = new EnvironmentWorker(envMgr, log, "earth", "map", "odom",
+    roadwayMgr = new MockRoadwayManager();
+    envWkr = new EnvironmentWorker(roadwayMgr, log, "earth", "map", "odom",
       "base_link", "pinpoint", "pinpoint");
     // Publish the transform from base_link to position sensor
     baseToPositionSensor = new Transform(new Vector3(0,0,1), Quaternion.identity());
@@ -196,7 +196,7 @@ public class EnvironmentWorkerTest {
     tfStamped.getHeader().setFrameId(envWkr.baseLinkFrame);
     tfStamped.setTransform(baseToPositionSensorMsg);
     tfMsg.setTransforms(Arrays.asList(tfStamped));
-    envMgr.publishTF(tfMsg);
+    roadwayMgr.publishTF(tfMsg);
     // Build odometry message
     odometryMsg = messageFactory.newFromType(Odometry._TYPE);
     pose = odometryMsg.getPose();
@@ -214,8 +214,8 @@ public class EnvironmentWorkerTest {
     odometryMsg.setChildFrameId(envWkr.localPositionSensorFrame);
     // Call function
     envWkr.handleOdometryMsg(odometryMsg);
-    // Request transform from envMgr. It should be different from what was passed in the odometry message
-    resultFromTF = envMgr.getTransform(envWkr.odomFrame, envWkr.baseLinkFrame, Time.fromMillis(0));
+    // Request transform from roadwayMgr. It should be different from what was passed in the odometry message
+    resultFromTF = roadwayMgr.getTransform(envWkr.odomFrame, envWkr.baseLinkFrame, Time.fromMillis(0));
     resultFromTFTrans = resultFromTF.getTranslation();
     resultFromTFRot = resultFromTF.getRotationAndScale();
 
@@ -223,8 +223,8 @@ public class EnvironmentWorkerTest {
     assertTrue(resultFromTFRot.almostEquals(quat, 0.0001));
 
     // Try with non-identity base->position_sensor, but assuming that the position sensor already converts to base_link
-    envMgr = new MockEnvironmentManager();
-    envWkr = new EnvironmentWorker(envMgr, log, "earth", "map", "odom",
+    roadwayMgr = new MockRoadwayManager();
+    envWkr = new EnvironmentWorker(roadwayMgr, log, "earth", "map", "odom",
       "base_link", "pinpoint", "pinpoint");
     // Publish the transform from base_link to position sensor
     baseToPositionSensor = new Transform(new Vector3(0,0,1), Quaternion.identity());
@@ -236,7 +236,7 @@ public class EnvironmentWorkerTest {
     tfStamped.getHeader().setFrameId(envWkr.baseLinkFrame);
     tfStamped.setTransform(baseToPositionSensorMsg);
     tfMsg.setTransforms(Arrays.asList(tfStamped));
-    envMgr.publishTF(tfMsg);
+    roadwayMgr.publishTF(tfMsg);
     // Build odometry message
     odometryMsg = messageFactory.newFromType(Odometry._TYPE);
     pose = odometryMsg.getPose();
@@ -254,8 +254,8 @@ public class EnvironmentWorkerTest {
     odometryMsg.setPose(pose);
     // Call function
     envWkr.handleOdometryMsg(odometryMsg);
-    // Request transform from envMgr. It should be the same as what was passed in the odometry message
-    resultFromTF = envMgr.getTransform(envWkr.odomFrame, envWkr.baseLinkFrame, Time.fromMillis(0));
+    // Request transform from roadwayMgr. It should be the same as what was passed in the odometry message
+    resultFromTF = roadwayMgr.getTransform(envWkr.odomFrame, envWkr.baseLinkFrame, Time.fromMillis(0));
     resultFromTFTrans = resultFromTF.getTranslation();
     resultFromTFRot = resultFromTF.getRotationAndScale();
 
@@ -271,8 +271,8 @@ public class EnvironmentWorkerTest {
    */
   @Test
   public void testHandleNavSatFix() throws Exception {
-    MockEnvironmentManager envMgr = new MockEnvironmentManager();
-    EnvironmentWorker envWkr = new EnvironmentWorker(envMgr, log, "earth", "map", "odom",
+    MockRoadwayManager roadwayMgr = new MockRoadwayManager();
+    EnvironmentWorker envWkr = new EnvironmentWorker(roadwayMgr, log, "earth", "map", "odom",
       "base_link", "pinpoint", "pinpoint");
 
     // Publish the transform from base_link to position sensor
@@ -285,7 +285,7 @@ public class EnvironmentWorkerTest {
     tfStamped.getHeader().setFrameId(envWkr.baseLinkFrame);
     tfStamped.setTransform(baseToPositionSensorMsg);
     tfMsg.setTransforms(Arrays.asList(tfStamped));
-    envMgr.publishTF(tfMsg);
+    roadwayMgr.publishTF(tfMsg);
 
     // Initial heading message
     HeadingStamped headingMsg = messageFactory.newFromType(HeadingStamped._TYPE);

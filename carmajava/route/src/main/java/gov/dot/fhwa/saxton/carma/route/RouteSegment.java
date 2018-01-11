@@ -20,8 +20,12 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.LineSegment3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
+import gov.dot.fhwa.saxton.carma.geometry.QuaternionUtils;
 import org.ros.message.MessageFactory;
 import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
+import org.ros.rosjava_geometry.Quaternion;
 
 /**
  * The building block of a route. Each segment is comprised of two waypoints forming a directed “vector”.
@@ -34,6 +38,7 @@ public class RouteSegment {
   final protected LineSegment3D lineSegment;
   final protected double length;
   final protected GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+  final protected Transform ecefToUptrackWP;
 
   /**
    * Constructor intializes this segment with the given waypoints.
@@ -45,6 +50,7 @@ public class RouteSegment {
     this.downtrackWP = downtrackWP;
     this.lineSegment = new LineSegment3D(this.uptrackWP.getECEFPoint(), this.downtrackWP.getECEFPoint());
     this.length = this.lineSegment.length();
+    this.ecefToUptrackWP = getSegmentAllignedFRDFrame();
   }
 
   /**
@@ -138,6 +144,48 @@ public class RouteSegment {
    */
   public RouteWaypoint getDowntrackWaypoint(){
     return downtrackWP;
+  }
+
+  /**
+   * Gets a deep copy of the line segment which connects the two waypoints.
+   * @return The line segment
+   */
+  public LineSegment3D getLineSegment() {
+    return new LineSegment3D(this.lineSegment);
+  }
+
+  /**
+   * Gets the transform between an ECEF frame and a FRD frame located on the uptrack waypoint of this segment
+   * X-Axis: Along segment
+   * Y-Axis: Right of segment
+   * Z-Axis: Into ground (not nessisarily toward earch center if there is a change in elevation)
+   */
+  public Transform getECEFToSegmentTransform() {
+    return this.ecefToUptrackWP;
+  }
+
+  /**
+   * Helper function which calculates a FRD frame located on the uptrack waypoint of a segment.
+   * X-Axis: Along segment
+   * Y-Axis: Right of segment
+   * Z-Axis: Into ground (not nessisarily toward earch center if there is a change in elevation)
+   */
+  private Transform getSegmentAllignedFRDFrame() {
+    Vector3D earthToUptrack = new Vector3D(this.getUptrackWaypoint().getECEFPoint());
+    Vector3D earthToDowntrack = new Vector3D(this.getDowntrackWaypoint().getECEFPoint());
+    Vector3D newXAxis = (Vector3D) this.getLineSegment().getVector().getUnitVector(); // Vector along segment
+    Vector3D newYAxis = (Vector3D) earthToDowntrack.cross(earthToUptrack).getUnitVector(); // This will always point to the right according to the right hand rule. I think
+    Vector3D newZAxis = (Vector3D) newXAxis.cross(newYAxis).getUnitVector(); 
+
+    double[][] rotMat = {
+      {newXAxis.getX(), newYAxis.getX(), newZAxis.getX()},
+      {newXAxis.getY(), newYAxis.getY(), newZAxis.getY()},
+      {newXAxis.getZ(), newYAxis.getZ(), newZAxis.getZ()}
+    };
+
+    Quaternion rotation = QuaternionUtils.matToQuaternion(rotMat);
+    Vector3 translation = new Vector3(earthToUptrack.getX(), earthToUptrack.getY(), earthToUptrack.getZ());
+    return new Transform(translation, rotation);
   }
 
   /**

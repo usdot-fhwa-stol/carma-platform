@@ -30,7 +30,6 @@ public class Obstacle {
   protected double downtrackDistance;
   protected double crosstrackDistance;
   protected Vector3D velocity;
-  protected Vector3D acceleration;
   protected Vector3D size;
   protected Integer primaryLane;
   protected List<Integer> secondaryLanes;
@@ -39,13 +38,12 @@ public class Obstacle {
    * Constructor
    */
   public Obstacle(int id, double downtrackDistance, double crosstrackDistance, Vector3D velocity,
-   Vector3D acceleration, Vector3D size, Integer primaryLane) {
+    Vector3D size, Integer primaryLane) {
     
     this.id = id;
     this.downtrackDistance = downtrackDistance;
     this.crosstrackDistance = crosstrackDistance;
     this.velocity = velocity;
-    this.acceleration = acceleration;
     this.size = size;
     this.primaryLane = primaryLane;
   }
@@ -74,7 +72,6 @@ public class Obstacle {
   }
 
   /**
-   * TODO THINK ABOUT THIS
    * Get the velocity of the obstacle in m/s
    * Velocity reported in a FRD coordinate frame located at the 
    * X-axis is tangential along route
@@ -86,14 +83,6 @@ public class Obstacle {
     return velocity;
   }
 
-  /**
-   * Get the acceleration of the obstacle in m/s^2
-   * TODO THINK ABOUT THIS
-   * @return acceleration
-   */
-  public Vector3D getAcceleration() {
-    return acceleration;
-  }
 
   /**
    * Gets the dimensions of the obstacle reported as an axis aligned bounding box.
