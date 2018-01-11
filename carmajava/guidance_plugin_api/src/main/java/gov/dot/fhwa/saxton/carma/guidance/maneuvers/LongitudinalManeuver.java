@@ -88,9 +88,9 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     public boolean executeSpeedCommand(double executeSpeedCommand, boolean overrideActive) {
         //send the command to the vehicle
         if (overrideActive) {
-            commands_.setCommand(executeSpeedCommand, accStrategy.getMaxAccel());
+            commands_.setSpeedCommand(executeSpeedCommand, accStrategy.getMaxAccel());
         } else {
-            commands_.setCommand(executeSpeedCommand, workingAccel_);
+            commands_.setSpeedCommand(executeSpeedCommand, workingAccel_);
         }
         return completed;
     }
