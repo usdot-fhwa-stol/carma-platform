@@ -18,6 +18,10 @@ package gov.dot.fhwa.saxton.carma.message;
 
 import cav_msgs.*;
 import cav_srvs.*;
+import gov.dot.fhwa.saxton.carma.message.factory.DSRCMessageFactory;
+import gov.dot.fhwa.saxton.carma.message.factory.IMessage;
+import gov.dot.fhwa.saxton.carma.message.factory.MessageContainer;
+import gov.dot.fhwa.saxton.carma.message.helper.MessageStatistic;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
@@ -26,6 +30,8 @@ import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
@@ -54,11 +60,11 @@ import org.ros.exception.ServiceNotFoundException;
 
 public class MessageConsumer extends SaxtonBaseNode {
 
-	private boolean driversReady = false;
+	protected boolean driversReady = false;
 
 	// Publishers
-	protected Publisher<ByteArray> outboundPub; //outgoing byte array, after encode
-	protected Publisher<BSM> bsmPub; //incoming BSM, after decoded
+	protected Publisher<ByteArray> outboundPub_; //outgoing byte array, after encode
+	protected Publisher<BSM> bsmPub_; //incoming BSM, after decoded
 	// protected Publisher<cav_msgs.MobilityAck> mobilityAckPub;
 	// protected Publisher<cav_msgs.MobilityGreeting> mobilityGreetingPub;
 	// protected Publisher<cav_msgs.MobilityIntro> mobilityIntroPub;
@@ -69,9 +75,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// protected Publisher<cav_msgs.Tim> timPub;
 
 	// Subscribers
-	protected Subscriber<SystemAlert> alertSub;
-	protected Subscriber<ByteArray> inboundSub; //incoming byte array, need to decode
-	protected Subscriber<BSM> bsmSub; //outgoing BSM, need to encode
+	protected Subscriber<SystemAlert> alertSub_;
+	protected Subscriber<ByteArray> inboundSub_; //incoming byte array, need to decode
+	protected Subscriber<BSM> bsmSub_; //outgoing BSM, need to encode
 	// protected Subscriber<cav_msgs.MobilityAck> mobilityAckOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityGreeting> mobilityGreetingOutboundSub;
 	// protected Subscriber<cav_msgs.MobilityIntro> mobilityIntroOutboundSub;
@@ -79,23 +85,19 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// protected Subscriber<cav_msgs.MobilityPlan> mobilityPlanOutboundSub;
 
 	// Used Services
-	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
-	private List<String> drivers_data = new ArrayList<>();
-	private String J2735_inbound_binary_msg = null;
-	private String J2735_outbound_binary_msg = null;
-
-	//Log for this node
-	protected SaxtonLogger log = null;
+	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient_;
 	
-	//Connected Node
+	// Log for this node
+    protected SaxtonLogger log_ = null;
+	
+	// Connected Node
 	protected ConnectedNode connectedNode_ = null;
 	
-	//For recoding message frequency
-	protected final int sample_window = 5;
-	protected double last_outgoing_sample_time = 0;
-	protected int outgoing_bsm_counter = 0;
-	protected double last_incoming_sample_time = 0;
-	protected int incoming_bsm_counter = 0;
+	// Recoding message frequency
+	protected MessageStatistic messageCounters = null;
+	
+	// Messages to be encoded
+	protected BlockingQueue<MessageContainer> dsrcMessageQueue = new LinkedBlockingQueue<>();
 	
 	@Override
 	public GraphName getDefaultNodeName() {
@@ -107,194 +109,131 @@ public class MessageConsumer extends SaxtonBaseNode {
 		
 		//initialize connectedNode and log
 		this.connectedNode_ = connectedNode;
-		this.log = new SaxtonLogger(MessageConsumer.class.getSimpleName(), connectedNode.getLog());
+		this.log_ = new SaxtonLogger(MessageConsumer.class.getSimpleName(), this.connectedNode_.getLog());
+		
+		//initialize message statistic
+		messageCounters = new MessageStatistic(connectedNode_, log_);
 		
 		//initialize alert sub, pub
-		alertSub = this.connectedNode_.newSubscriber("system_alert", SystemAlert._TYPE);
-		alertSub.addMessageListener(new MessageListener<SystemAlert>() {
-			@Override
-			public void onNewMessage(SystemAlert message) {
-				try {
-					if(message.getType() == SystemAlert.FATAL || message.getType() == SystemAlert.SHUTDOWN) {
-						connectedNode_.shutdown();
-					}
-					else if(message.getType() == SystemAlert.DRIVERS_READY) {
-						driversReady = true;
-					}
-				} catch (Exception e) {
-					handleException(e);
-				}
-			}
-		});
-		
-		try {
-			if(alertSub == null) {
-				log.warn("Cannot initialize alert Pubs and Subs.");
-			}
-		} catch (RosRuntimeException e) {
-			handleException(e);
+		alertSub_ = this.connectedNode_.newSubscriber("system_alert", SystemAlert._TYPE);
+		if(alertSub_ != null) {
+		    alertSub_.addMessageListener(new MessageListener<SystemAlert>() {
+                @Override
+                public void onNewMessage(SystemAlert message) {
+                    if(message.getType() == SystemAlert.FATAL || message.getType() == SystemAlert.SHUTDOWN) {
+                        connectedNode_.shutdown();
+                    } else if(message.getType() == SystemAlert.DRIVERS_READY) {
+                        driversReady = true;
+                    }
+                }
+            });
+		} else {
+		    log_.error("Cannot initialize system_alert subscriber!");
+		    handleException(new RosRuntimeException("MessageConsumer cannot initialize system_alert sub"));
 		}
 		
+		//wait for driversReady
+        while(!driversReady) {
+            try {
+                Thread.sleep(1000);
+            } catch(InterruptedException e) {
+                log_.warn("Wait for driversReady has been interrupted.");
+                Thread.interrupted();
+            }
+        }
+		
 		//Use cav_srvs.GetDriversWithCapabilities and wait for driversReady signal
-		try {
-			getDriversWithCapabilitiesClient = this.waitForService("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 10000);
-			if(getDriversWithCapabilitiesClient == null) {
-				log.warn("Node could not find service get_drivers_with_capabilities");
-				throw new ServiceNotFoundException("get_drivers_with_capabilities is not found!");
-			}
-		} catch (Exception e) {
-			handleException(e);
+		getDriversWithCapabilitiesClient_ = this.waitForService("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 10000);
+		if(getDriversWithCapabilitiesClient_ == null) {
+			log_.error("Cannot find service get_drivers_with_capabilities");
+            handleException(new ServiceNotFoundException("get_drivers_with_capabilities is not found!"));
 		}
 		
 		//Make service calls and validate drivers information
-		while(true) {
-			if(driversReady) {
-				try {
-					GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient.newMessage();
-					request.setCapabilities(Arrays.asList("inbound_binary_msg", "outbound_binary_msg"));
-					int counter = 0;
-					while(drivers_data.size() == 0 && counter++ < 10) {
-						RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {
-							
-							@Override
-							public void onSuccess(GetDriversWithCapabilitiesResponse response) {
-								drivers_data = response.getDriverData();
-								log.info("GetDriversWithCapabilitiesResponse: " + drivers_data);
-							}
-							
-							@Override
-							public void onFailure(RemoteException e) {
-								throw new RosRuntimeException(e);
-							}
-							
-						});
-					}
-					
-					if(counter == 10 && drivers_data.size() == 0) {
-						throw new RosRuntimeException("Cannot find drivers.");
-					}
-					
-					for(String s : drivers_data) {
-						if(s.endsWith("/arada_application/comms/inbound_binary_msg") || s.endsWith("/dsrc/comms/inbound_binary_msg")) {
-							J2735_inbound_binary_msg = s;
-						}
-						else if(s.endsWith("/arada_application/comms/outbound_binary_msg") || s.endsWith("/dsrc/comms/outbound_binary_msg")) {
-							J2735_outbound_binary_msg = s;
-						}
-					}
-					
-					if(J2735_inbound_binary_msg == null || J2735_outbound_binary_msg == null) {
-						log.error("Unable to find suitable dsrc driver!");
-						throw new RosRuntimeException("Unable to find suitable dsrc driver!");
-					}
-					
-				} catch(Exception e) {
-					handleException(e);
-				}
-				break;
+		GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient_.newMessage();
+		List<String> capabilities = Arrays.asList("inbound_binary_msg", "outbound_binary_msg");
+		request.setCapabilities(capabilities);
+		final List<GetDriversWithCapabilitiesResponse> driver_response = new ArrayList<>();
+		try {
+            RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient_, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {         	
+            	@Override
+            	public void onSuccess(GetDriversWithCapabilitiesResponse response) {
+            	    driver_response.add(response);
+            		log_.info("GetDriversWithCapabilitiesResponse: " + driver_response.get(0).getDriverData());
+            	}
+            	@Override
+            	public void onFailure(RemoteException e) {
+            		throw new RosRuntimeException(e);
+            	}
+            });
+        } catch (Exception e1) {
+            log_.error("GetDriversWithCapabilities call failed.");
+            handleException(e1);
+        }
+		String J2735_inbound_binary_msg = null, J2735_outbound_binary_msg = null;
+		for(String s : driver_response.get(0).getDriverData()) {
+			if(s.endsWith("/dsrc/comms/inbound_binary_msg")) {
+				J2735_inbound_binary_msg = s;
+			} else if(s.endsWith("/dsrc/comms/outbound_binary_msg")) {
+				J2735_outbound_binary_msg = s;
 			}
-			try {
-				Thread.sleep(1000);
-				log.debug("Checking if driver_ready is true.");
-			} catch (InterruptedException e) {
-				log.debug("InterruptedException occured during thread.sleep().");;
-			}
+		}
+		if(J2735_inbound_binary_msg == null || J2735_outbound_binary_msg == null) {
+			log_.error("Unable to find suitable dsrc drivers!");
+            handleException(new RosRuntimeException("Cannot find suitable DSRC drivers."));
 		}
 		
 		//initialize Pubs
-		bsmPub = connectedNode_.newPublisher("incoming_bsm", BSM._TYPE);
-		outboundPub = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
-		
-		//test Pubs
-		if(bsmPub == null || outboundPub == null) {
-			publishSystemAlert(AlertSeverity.WARNING, "Cannot setup topic publishers.", null);
+		bsmPub_ = connectedNode_.newPublisher("incoming_bsm", BSM._TYPE);
+		outboundPub_ = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
+		if(bsmPub_ == null || outboundPub_ == null) {
+		    log_.error("Cannot initialize necessary publishers.");
+		    handleException(new RosRuntimeException("Cannot initialize necessary publishers."));
 		}
+		
+		//register new message counters
+		messageCounters.registerEntry("BSM");
 		
 		//initialize Subs
-		try {
-			bsmSub = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);
-			bsmSub.addMessageListener(new MessageListener<BSM>() {
-				@Override
-				public void onNewMessage(BSM bsm) {
-					try {
-						ByteArray byteArray = outboundPub.newMessage();
-						int result = BSMFactory.encode(bsm, byteArray, connectedNode_);
-						if(result == -1) {
-							log.warn("BSM", "Outgoing BSM cannot be encoded. The message seq is: " + bsm.getHeader().getSeq());
-						} else {
-							if(last_outgoing_sample_time == 0) {
-								last_outgoing_sample_time = connectedNode_.getCurrentTime().toSeconds();
-							}
-							outgoing_bsm_counter++;
-							if(connectedNode_.getCurrentTime().toSeconds() - last_outgoing_sample_time >= sample_window) {
-								double freq = outgoing_bsm_counter / sample_window;
-								log.info("BSM", String.format("Outgoing BSM is encoded and published in %.02f Hz", freq));
-								outgoing_bsm_counter = 0;
-								last_outgoing_sample_time = connectedNode_.getCurrentTime().toSeconds();
-							}
-							
-							outboundPub.publish(byteArray);
-						}
-					} catch (Exception e) {
-						handleException(e);
-					}
-				}
-			});
-
-			inboundSub = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
-			inboundSub.addMessageListener(new MessageListener<ByteArray>() {
-
-				@Override
-				public void onNewMessage(ByteArray msg) {
-					try {
-						BSM decodedBSM = bsmPub.newMessage();
-						int result = BSMFactory.decode(msg, decodedBSM, connectedNode_);
-						if(result == -1) {
-							log.warn("BSM", "Incoming BSM cannot be decoded.");
-						} else {
-							if(last_incoming_sample_time == 0) {
-								last_incoming_sample_time = connectedNode_.getCurrentTime().toSeconds();
-							}
-							incoming_bsm_counter++;
-							if(connectedNode_.getCurrentTime().toSeconds() - last_incoming_sample_time >= sample_window) {
-								log.info("BSM", "There are " +  incoming_bsm_counter + " incoming BSMs decoded in past " + sample_window + " seconds");
-								incoming_bsm_counter = 0;
-								last_incoming_sample_time = connectedNode_.getCurrentTime().toSeconds(); 
-							}
-							
-							bsmPub.publish(decodedBSM);
-						}
-					} catch (Exception e) {
-						handleException(e);
-					}
-				}
-				
-			});
-		} catch (Exception ex) {
-			handleException(ex);
+		bsmSub_ = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);
+		inboundSub_ = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
+		if(bsmSub_ == null || inboundSub_ == null) {
+		    log_.error("Cannot initialize necessary subscribers.");
+            handleException(new RosRuntimeException("Cannot initialize necessary subscribers."));
 		}
-		
+	    bsmSub_.addMessageListener((bsm)-> {
+            dsrcMessageQueue.add(new MessageContainer("BSM", bsm));
+        });
+		inboundSub_.addMessageListener((msg) -> {
+		    messageCounters.onMessageReceiving(msg.getMessageType());
+		    IMessage<?> message = DSRCMessageFactory.getMessage(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
+		    MessageContainer decodedMessage = message.decode(msg);
+		    if(decodedMessage.getMessage() != null) {
+		        switch (decodedMessage.getType()) {
+	            case "BSM":
+	                bsmPub_.publish((BSM) decodedMessage.getMessage());
+	                break;
+	            default:
+	                log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
+	            }
+		    }
+		});
 		
 		// This CancellableLoop will be canceled automatically when the node shuts down.
 		connectedNode_.executeCancellableLoop(new CancellableLoop() {
-			private int sequenceNumber;
-			@Override
-			protected void setup() {
-				sequenceNumber = 0;
-			}
 			@Override
 			protected void loop() throws InterruptedException {
-				sequenceNumber++;
-				Thread.sleep(1000);
+			    MessageContainer outgoingMessage = dsrcMessageQueue.take();
+				IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
+				MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
+				if(encodedMessage.getMessage() != null) {
+				    messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
+	                outboundPub_.publish((ByteArray) encodedMessage.getMessage());
+				}
 			}
 		});
-
 	}
-
-	/***
-	 * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.
-	 * @param e The exception to handle
-	 */
+	
 	@Override
 	protected void handleException(Throwable e) {
 		String msg = "Uncaught exception in " + connectedNode_.getName() + " caught by handleException";

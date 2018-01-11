@@ -57,7 +57,6 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
   // Subscribers
   protected Subscriber<cav_msgs.Route> routeSub;
   protected Subscriber<cav_msgs.RouteState> routeStateSub;
-  protected Subscriber<cav_msgs.RouteSegment> routeSegmentSub;
   protected Subscriber<cav_msgs.HeadingStamped> headingSub;
   protected Subscriber<sensor_msgs.NavSatFix> gpsSub;
   protected Subscriber<nav_msgs.Odometry> odometrySub;
@@ -126,16 +125,6 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     routeStateSub.addMessageListener((cav_msgs.RouteState message) -> {
         try {
           environmentWorker.handleRouteStateMsg(message);
-        } catch (Throwable e) {
-          handleException(e);
-        }
-      });//MessageListener
-
-    routeSegmentSub =
-    connectedNode.newSubscriber("route_current_segment", cav_msgs.RouteSegment._TYPE);
-    routeSegmentSub.addMessageListener((cav_msgs.RouteSegment message) -> {
-        try {
-          environmentWorker.handleCurrentSegmentMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }

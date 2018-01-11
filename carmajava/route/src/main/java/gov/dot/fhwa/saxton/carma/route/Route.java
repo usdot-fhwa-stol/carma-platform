@@ -216,6 +216,13 @@ public class Route {
 
   /**
    * Sets the list of waypoints
+   * Waypoints should be located near the middles of a lane 
+   * When wapoints change lanes they will not be connected by a segment
+   * The segment in the new lane will have it's uptrack waypoint moved
+   * back to be inline with the end of the previous segment.
+   * 
+   * The first two waypoints should always be in the same lane
+   * There should never be only one waypoint in a lane (At least one segment in any lane the route is located in)
    *
    * @param waypointList The list of waypoints which will be assigned
    */

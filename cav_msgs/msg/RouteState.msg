@@ -38,3 +38,9 @@ float64 cross_track
 
 # Down-track distance of vehicle along route
 float64 down_track
+
+# Down-track distance of vehicle along the current segment
+float64 segment_down_track
+
+# The route segment which the host vehicle is currently on
+cav_msgs/RouteSegment current_segment

@@ -155,9 +155,9 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         // Generate a simple sin(t) speed command
         if (currentState.get() == GuidanceState.ENGAGED && useSinTrajectory) {
             if ((node.getCurrentTime().toSeconds() * 1000) - startTime < holdTimeMs) {
-                commands.setCommand(operatingSpeed, maxAccel);
+                commands.setSpeedCommand(operatingSpeed, maxAccel);
             } else {
-                commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase),
+                commands.setSpeedCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase),
                         maxAccel);
             }
         }

@@ -41,7 +41,7 @@ public class LineSegment3D extends LineSegment {
 
   /**
    * Calculates the cross-track distance between a line and a point in 3D space.
-   * This is 3D specific because it depends on the 3x3 determinate to sign the distance.
+   * This is 3D specific because it depends on the 3x3 determinant to sign the distance.
    *
    * @param loc The point
    * @return The distance in meters
@@ -65,14 +65,14 @@ public class LineSegment3D extends LineSegment {
     // With points A (end point) B(start point) and C (point along normal vector)
     // Point X is the external point
     // B' = B-A  :  C' = C-A   : X' = X-A
-    // The sign of the 3x3 determinate of the matrix [B' C' X'] determines the sign of the crosstrack distance
+    // The sign of the 3x3 determinant of the matrix [B' C' X'] determines the sign of the crosstrack distance
     // Calculate B' C' X'
     Vector3D bPrime = startToEndVec;
     Vector3D cPrime = Vector3D.fromVector(normalVec.subtract(vec2EndPoint));
     Vector3D xPrime = Vector3D.fromVector(vec2ExternalPoint.subtract(vec2EndPoint));
 
-    double determinateOfPlane = Vector3D.get3by3Determinate(bPrime, cPrime, xPrime);
-    double sign = determinateOfPlane < 0 ? 1.0 : -1.0; // if det is less than 0 location is on the right.
+    double determinantOfPlane = Vector3D.get3by3Determinant(bPrime, cPrime, xPrime);
+    double sign = determinantOfPlane < 0 ? 1.0 : -1.0; // if det is less than 0 location is on the right.
 
     // Get angle between both vectors
     double interiorAngle = startToExternalVec.getAngleBetweenVectors(startToEndVec);

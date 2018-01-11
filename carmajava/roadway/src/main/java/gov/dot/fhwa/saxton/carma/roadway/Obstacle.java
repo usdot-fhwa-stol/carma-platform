@@ -21,7 +21,8 @@ import java.util.List;
 import org.ros.rosjava_geometry.Transform;
 
 /**
- * An implementation of IObstacle with no special attributes.
+ * A basic obstacle in the road.
+ * Obstacles are described in a parametric frame relative to the route
  */
 public class Obstacle {
 

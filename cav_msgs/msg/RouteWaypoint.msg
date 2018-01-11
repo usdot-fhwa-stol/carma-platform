@@ -49,6 +49,7 @@ float64 min_cross_track
 float64 max_cross_track
 
 # The index of the lane that this waypoint is located in
+# Lanes are 0 indexed from right to left
 uint8 lane_index
 
 # The width of an individual lane in m

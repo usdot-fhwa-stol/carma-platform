@@ -185,6 +185,9 @@
         <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
         <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
+
+        <remap from="ui_instructions"
+               to="/$(arg TOP_NS)/ui_instructions"/>
       </node>
     </group>
 
@@ -240,8 +243,6 @@
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="map"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/map"/>
-        <remap from="route_current_segment"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
@@ -355,6 +356,7 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SpeedHarmParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/PlatooningParams.yaml"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
@@ -392,8 +394,6 @@
         <!-- Trajectory Thread-->
         <remap from="get_drivers_with_capabilities"
                to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-        <remap from="current_segment"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
 
         <!-- Trajectory and Arbitrator -->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
@@ -418,8 +418,6 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
       <remap from="nav_sat_fix"
              to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-      <remap from="current_segment"
-             to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
       <remap from="get_available_routes"
              to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
       <remap from="set_active_route"
@@ -431,7 +429,7 @@
       <remap from="route"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="bsm"
-                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+             to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="state"
@@ -457,7 +455,11 @@
       <remap from="speed"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/speed"/>
       <remap from="driver_discovery"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>       
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+      <remap from="cmd_lateral"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
+      <remap from="ui_instructions"
+             to="/$(arg TOP_NS)/ui_instructions"/>
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>

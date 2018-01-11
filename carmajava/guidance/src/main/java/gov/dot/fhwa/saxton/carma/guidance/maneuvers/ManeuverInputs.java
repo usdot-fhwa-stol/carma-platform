@@ -30,7 +30,10 @@ import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
-
+import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
+import gov.dot.fhwa.saxton.carma.guidance.signals.MovingAverageFilter;
+import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
+import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 
@@ -62,8 +65,20 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double vehicleResponseLag = node.getParameterTree().getDouble("~vehicle_response_lag", 1.4);
         double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
         double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
+        double exitDistanceFactor = node.getParameterTree().getDouble("~acc_exit_distance_factor", 1.5);
+        double Kp = node.getParameterTree().getDouble("~acc_Kp", 1.0);
+        double Ki = node.getParameterTree().getDouble("~acc_Ki", 0.0);
+        double Kd = node.getParameterTree().getDouble("~acc_Kd", 0.0);
+        double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
+        int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
+
+        PidController timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
+        MovingAverageFilter movingAverageFilter = new MovingAverageFilter(numSamples);
+        Deadband deadbandFilter = new Deadband(desiredTimeGap, deadband);
+
+        Pipeline<Double> accFilterPipeline = new Pipeline<>(deadbandFilter, timeGapController, movingAverageFilter);
         BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel,
-                vehicleResponseLag, minStandoffDistance);
+                vehicleResponseLag, minStandoffDistance, exitDistanceFactor, accFilterPipeline);
         AccStrategyManager.setAccStrategyFactory(accFactory);
 
         // subscribers
