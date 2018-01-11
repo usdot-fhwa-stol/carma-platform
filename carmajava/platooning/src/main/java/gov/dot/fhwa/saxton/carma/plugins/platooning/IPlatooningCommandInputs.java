@@ -14,17 +14,16 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
-include 'speedharm'
-include 'lateral_control_driver'
-include 'platooning'
+package gov.dot.fhwa.saxton.carma.plugins.platooning;
+
+public interface IPlatooningCommandInputs {
+
+    // Get the latest generated speed command
+    public double getLastSpeedCommand();
+    
+    // Get the corresponding max accel limit
+    public double getMaxAccelLimit();
+    
+    // Check if the vehicle status are time out
+    public boolean isTimeout();
+}

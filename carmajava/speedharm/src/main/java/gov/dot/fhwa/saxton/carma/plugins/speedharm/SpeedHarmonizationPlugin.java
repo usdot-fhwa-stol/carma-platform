@@ -28,13 +28,10 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.carma.guidance.util.AlgorithmFlags;
-import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate.AutomatedControlStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
 
 /**
  * Plugin implementing integration withe STOL I TO 22 Infrastructure Server
@@ -199,52 +196,15 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     }
 
     // Find the earliest window after the start location at which speedharm is enabled
-    SortedSet<AlgorithmFlags> flags = pluginServiceLocator.getRouteService()
-        .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
-    AlgorithmFlags flagsAtEnd = pluginServiceLocator.getRouteService()
-        .getAlgorithmFlagsAtLocation(traj.getEndLocation());
-    if (flagsAtEnd != null) {
-      flags.add(flagsAtEnd); // Since its a set if this is a duplicate it goes away
-      log.info("planTrajectory(): flagsAtEnd = " + flagsAtEnd);
-    }
-
-    double earliestLegalWindow = complexManeuverStartLocation;
-    for (AlgorithmFlags flagset : flags) {
-      if (flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
-        earliestLegalWindow = flagset.getLocation();
-        log.info("planTrajectory(): earliestLegalWindow = " + earliestLegalWindow);
-      } else {
-        log.info("planTrajectory(): earliestLegalWindow = BREAK");
-        break;
-      }
-    }
-
-    // Find the end of that same window
-    double endOfWindow = earliestLegalWindow;
-    for (AlgorithmFlags flagset : flags) {
-      if (flagset.getLocation() > earliestLegalWindow)
-        if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
-          endOfWindow = flagset.getLocation();
-          log.info("planTrajectory(): endOfWindow = " + endOfWindow);
-        } else {
-          log.info("planTrajectory(): endOfWindow = BREAK");
-          break;
-        }
-    }
-
-    // Clamp to end of trajectory window
-    endOfWindow = Math.min(endOfWindow, traj.getEndLocation());
-    log.info("planTrajectory(): endOfWindow : traj.getEndLocation()= " + traj.getEndLocation());
-    log.info(String.format("Planning SpeedHarmonization complex maneuver @ [%.02f, %.02f)", earliestLegalWindow,
-        endOfWindow));
-
-    if (earliestLegalWindow >= endOfWindow) {
-      log.info("Couldn't plan maneuver earliestWindow: " + earliestLegalWindow + " endOfWindow: " + endOfWindow);
+    double[] planWindow = pluginServiceLocator.getRouteService().getAlgorithmEnabledWindowInRange(
+            complexManeuverStartLocation, traj.getEndLocation(), SPEED_HARM_FLAG);
+    if (planWindow == null) {
+      log.info("Couldn't find plan window at start: " + complexManeuverStartLocation + " endOfWindow: " + traj.getEndLocation());
       return new TrajectoryPlanningResponse();
     }
 
-    if (Math.abs(endOfWindow - earliestLegalWindow) > minimumManeuverLength) {
-      planComplexManeuver(traj, earliestLegalWindow, endOfWindow);
+    if (Math.abs(planWindow[1] - planWindow[0]) > minimumManeuverLength) {
+      planComplexManeuver(traj, planWindow[0], planWindow[1]);
     } else {
       log.warn("Unable to find sufficient window to plan Speed Harmonization maneuver");
     }

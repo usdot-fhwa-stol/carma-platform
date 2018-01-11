@@ -14,17 +14,22 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
-include 'speedharm'
-include 'lateral_control_driver'
-include 'platooning'
+package gov.dot.fhwa.saxton.carma.plugins.platooning;
+
+/**
+ * In Mobility plan message, the first word in strategy string indicates the request type.
+ * TODO This enum is not a comprehensive list. It will expand based on usage.  
+ */
+public enum PlatooningRequests {
+    
+    JOIN,
+    LEAVE,
+    DELEGATE,
+    UPDATE;
+    
+    // This method returns the name of each enum without its class name 
+    @Override
+    public String toString() {
+        return name().split(".")[1];
+    }
+}
