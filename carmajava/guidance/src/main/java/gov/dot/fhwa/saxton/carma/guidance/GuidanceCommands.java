@@ -269,16 +269,16 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
     @Override
     public void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
-        axleAngle = Math.max(axleAngle, -90.0);
-        axleAngle = Math.min(axleAngle, 90.0);
+        axleAngle = Math.max(axleAngle, -Math.PI/2.0);
+        axleAngle = Math.min(axleAngle, Math.PI/2.0);
 
         steeringCommand.set(axleAngle);
         this.lateralAccel.set(lateralAccel);
         this.yawRate.set(yawRate);
 
-        log.info("CONTROLS", "Steering command set to " + axleAngle + " degrees axle angle," 
+        log.info("CONTROLS", "Steering command set to " + axleAngle + " rad axle angle," 
         + lateralAccel + " m/s/s lateral accel, and " 
-        + yawRate + " deg/s yaw rate.");
+        + yawRate + " rad/s yaw rate.");
     }
     
     @Override

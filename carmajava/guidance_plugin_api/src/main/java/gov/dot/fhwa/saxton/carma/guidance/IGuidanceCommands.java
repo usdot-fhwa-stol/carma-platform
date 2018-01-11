@@ -35,9 +35,9 @@ public interface IGuidanceCommands {
      * Positive angles are interpreted as a command to steer to the right and negative ones as a command to steer
      * to the left.
      * 
-     * @param axleAngle The angle in the range [-90.0, 90.0] to command for steering
+     * @param axleAngle The angle in the range [-pi/2, pi/2] to command for steering
      * @param lateralAccel The maximum lateral acceleration of the vehicle, in m/s/s
-     * @param yawRate The rate of change of the vehicle's heading, in deg/s
+     * @param yawRate The rate of change of the vehicle's heading, in rad/s
      */
     void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate);
 }
