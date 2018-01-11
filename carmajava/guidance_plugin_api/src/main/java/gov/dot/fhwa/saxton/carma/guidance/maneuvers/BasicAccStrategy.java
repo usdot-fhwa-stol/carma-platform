@@ -16,14 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
-import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
-import gov.dot.fhwa.saxton.carma.guidance.signals.LowPassFilter;
-import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Signal;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Optional;
 
 /**
