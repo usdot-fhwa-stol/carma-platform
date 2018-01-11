@@ -291,7 +291,13 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             msg.setSpeed(speedCommand.get());
             msg.setMaxAccel(maxAccel.get());
             speedAccelPublisher.publish(msg);
-            log.trace("Published cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
+
+            cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+            lateralMsg.setAxleAngle(steeringCommand.get());
+            lateralMsg.setMaxAccel(lateralAccel.get());
+            lateralMsg.setMaxAxleAngleRate(yawRate.get());
+            lateralControlPublisher.publish(lateralMsg);
+            log.trace("Published longitudinal & lateral cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
         }
 
         long iterEndTime = System.currentTimeMillis();
