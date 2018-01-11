@@ -64,9 +64,9 @@ public class LateralControlWorker {
         } else if (msg.getAxleAngle() > angleThreshold_) { // right lane change
           cav_msgs.UIInstructions uiMsg = messageFactory.newFromType(cav_msgs.UIInstructions._TYPE);
           uiMsg.setMsg("RIGHT_LANE_CHANGE");
-          driver_.publishUIMessage(uiMsg);
           uiMsg.setType(cav_msgs.UIInstructions.NO_ACK_REQUIRED);
           uiMsg.setStamp(driver_.getTime());
+          driver_.publishUIMessage(uiMsg);
           log_.info("Right turn requested with axis angle of " + msg.getAxleAngle());
         }
     }

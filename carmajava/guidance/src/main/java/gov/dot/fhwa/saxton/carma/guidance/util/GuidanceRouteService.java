@@ -180,4 +180,55 @@ public class GuidanceRouteService implements RouteService {
 
     return out;
   }
+
+  @Override
+  public double[] getAlgorithmEnabledWindowInRange(double start, double end, String algorithm) {
+      SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRangeIncludingEnd(start, end);
+      // Find the start of earliest window
+      double earliestLegalWindow = start;
+      for(AlgorithmFlags flagset : flags) {
+          if(flagset.getDisabledAlgorithms().contains(algorithm)) {
+              earliestLegalWindow = flagset.getLocation();
+          } else {
+              break;
+          }
+      }
+      // Find the end of that same window
+      double endOfWindow = earliestLegalWindow;
+      for(AlgorithmFlags flagset : flags) {
+          if(flagset.getLocation() > earliestLegalWindow) {
+              if(!flagset.getDisabledAlgorithms().contains(algorithm)) {
+                  endOfWindow = flagset.getLocation();
+              } else {
+                  break;
+              }
+          }
+      }
+      endOfWindow = Math.min(endOfWindow, end);
+      if(endOfWindow > earliestLegalWindow) {
+          return new double[] {earliestLegalWindow, endOfWindow};
+      }
+      return null;
+  }
+
+  @Override
+  public boolean isAlgorithmEnabledInRange(double start, double end, String algorithm) {
+      SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRangeIncludingEnd(start, end);
+      for(AlgorithmFlags flag : flags) {
+          if(!flag.getDisabledAlgorithms().contains(algorithm)) {
+              return true;
+          }
+      }
+      return false;
+  }
+  
+  private SortedSet<AlgorithmFlags> getAlgorithmFlagsInRangeIncludingEnd(double start, double end) {
+      SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRange(start, end);
+      AlgorithmFlags flagsAtEnd = this.getAlgorithmFlagsAtLocation(end);
+      if(flagsAtEnd != null) {
+          flags.add(flagsAtEnd);
+      }
+      return flags;
+  }
+  
 }

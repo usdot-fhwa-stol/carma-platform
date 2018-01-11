@@ -26,7 +26,7 @@ public class FakeGuidanceCommands implements IGuidanceCommands {
 
 
     @Override
-    public void setCommand(double speed, double accel) {
+    public void setSpeedCommand(double speed, double accel) {
         speedCmd_ = speed;
         accelCmd_ = accel;
     }

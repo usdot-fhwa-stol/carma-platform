@@ -70,7 +70,7 @@ public abstract class AbstractPlugin implements IPlugin {
         throw new UnsupportedOperationException();
     }
 
-    @Override public void onReceiveNegotiationRequest() {
+    @Override public void onReceiveNegotiationRequest(String strategy) {
         throw new UnsupportedOperationException();
     }
 

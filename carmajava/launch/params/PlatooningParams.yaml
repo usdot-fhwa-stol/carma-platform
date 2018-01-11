@@ -1,0 +1,15 @@
+# Double: Maximum acceleration for platooning plugin
+# Units: m/s^2
+platooning_max_accel: 2.5;
+
+# Integer: Timestep for platooning plugin to generate new speed command
+# Units: ms
+platooning_command_timestep: 100
+
+# Double: The minimum length of platooning complex maneuver length
+# Units: m
+platooning_min_maneuver_length: 15.0
+
+# Integer: The time duration for a command speed to timeout
+# Units: ms
+platooning_command_timeout: 3000
