@@ -307,32 +307,33 @@ public class Route {
    * 
    * @param startingIndex The index of the route segment which will be the starting point for the search. 
    *                      This segment will always be included in the returned list
+   * @param segmentDowntrack The distance along the specified segment to start the calculation from
    * @param distBackward The distance in m uptrack of the starting segment which will be included
    * @param distForward The distance in m downtrack of the starting segment which will be included
    */
-  public List<RouteSegment> findRouteSubsection(int startingIndex, double distBackward, double distForward) {
+  public List<RouteSegment> findRouteSubsection(int startingIndex, double segmentDowntrack, double distBackward, double distForward) {
     List<RouteSegment> subList = new LinkedList<>();
     subList.add(segments.get(startingIndex));
 
     // Process segments behind host vehicle
-    double downtrack = 0.0;
-    for (int i = startingIndex - 1; i >= 0; i++) {
-      downtrack += segments.get(i).length();
-      if (downtrack > distBackward) {
+    double distance = segmentDowntrack;
+    for (int i = startingIndex - 1; i >= 0; i--) {
+      if (distance > distBackward) {
         break;
       }
+      distance += segments.get(i).length();
       subList.add(segments.get(i));
     }
 
     Collections.reverse(subList);
 
     // Process segments infront of host vehicle
-    downtrack = 0.0;
+    distance = segments.get(startingIndex).length - segmentDowntrack;
     for (int i = startingIndex + 1; i < segments.size(); i++) {
-      downtrack += segments.get(i).length();
-      if (downtrack > distForward) {
+      if (distance > distBackward) {
         break;
       }
+      distance += segments.get(i).length();
       subList.add(segments.get(i));
     }
 

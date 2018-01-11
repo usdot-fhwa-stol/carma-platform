@@ -78,12 +78,14 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
 
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
-    String earthFrameId = params.getString("earth_frame_id", "earth");
-    String mapFrameId = params.getString("map_frame_id", "map");
-    String odomFrameId = params.getString("odom_frame_id", "odom");
-    String baseLinkFrameId = params.getString("base_link_frame_id", "base_link");
-    String globalPositionSensorFrameId = params.getString("position_sensor_frame_id", "pinpoint");
-    String localPositionSensorFrameId = params.getString("local_position_sensor_frame_id", "pinpoint");
+    String earthFrameId = params.getString("~earth_frame_id", "earth");
+    String mapFrameId = params.getString("~map_frame_id", "map");
+    String odomFrameId = params.getString("~odom_frame_id", "odom");
+    String baseLinkFrameId = params.getString("~base_link_frame_id", "base_link");
+    String globalPositionSensorFrameId = params.getString("~position_sensor_frame_id", "pinpoint");
+    String localPositionSensorFrameId = params.getString("~local_position_sensor_frame_id", "pinpoint");
+    double distBackward = params.getDouble("~distance_behind_vehicle", 100.0);
+    double distForward = params.getDouble("~distance_infront_of_vehicle", 200.0);
 
     // Topics Initialization
     // Publishers
@@ -95,7 +97,8 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     // Safer to initialize EnvironmentWorker after publishers and before subscribers
     // This means any future modifications which attempt to publish data shortly after initialization will be valid
     environmentWorker = new EnvironmentWorker(this, connectedNode.getLog(), earthFrameId,
-      mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId);
+      mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId,
+       distBackward, distForward);
     transformMaintainer = new TransformMaintainer(this, connectedNode.getLog(), earthFrameId,
       mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId);
 

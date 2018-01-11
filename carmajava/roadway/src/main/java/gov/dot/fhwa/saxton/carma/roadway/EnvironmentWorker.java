@@ -68,6 +68,8 @@ public class EnvironmentWorker {
   protected Route activeRoute;
   protected RouteSegment currentSegment;
   protected RouteState routeState;
+  protected double distBackward;
+  protected double distForward;
 
   /**
    * Constructor
@@ -80,9 +82,12 @@ public class EnvironmentWorker {
    * @param baseLinkFrame The frame id used to identify the host vehicle frame
    * @param globalPositionSensorFrame The frame id used to identify the frame of a global position sensor
    * @param localPositionSensorFrame The frame id used to identify a local odometry position sensor frame
+   * @param distBackward The distance in m uptrack of the host vehicles segment which will be included
+   * @param distForward The distance in m downtrack of the host vehicles segment which will be included
    */
   public EnvironmentWorker(IRoadwayManager roadwayMgr, Log log, String earthFrame, String mapFrame,
-    String odomFrame, String baseLinkFrame, String globalPositionSensorFrame, String localPositionSensorFrame) {
+    String odomFrame, String baseLinkFrame, String globalPositionSensorFrame, String localPositionSensorFrame,
+    double distBackward, double distForward) {
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.roadwayMgr = roadwayMgr;
     this.earthFrame = earthFrame;
@@ -91,6 +96,8 @@ public class EnvironmentWorker {
     this.baseLinkFrame = baseLinkFrame;
     this.globalPositionSensorFrame = globalPositionSensorFrame;
     this.localPositionSensorFrame = localPositionSensorFrame;
+    this.distBackward = distBackward;
+    this.distForward = distForward;
   }
 
  /**
@@ -142,9 +149,9 @@ public class EnvironmentWorker {
     Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
     
     int currentSegIndex = currentSegment.getUptrackWaypoint().getWaypointId();
-    List<RouteSegment> segmentsToSearch = findCurrentRouteSubsection(minDist, maxDist);
+    List<RouteSegment> segmentsToSearch = activeRoute.findRouteSubsection(currentSegIndex, distBackward, distForward);
 
-    RouteSegment bestSegment = routeSegmentOfPoint(objPositionECEF);
+    RouteSegment bestSegment = routeSegmentOfPoint(objPositionECEF, segmentsToSearch);
     int segmentIndex = bestSegment.getUptrackWaypoint().getWaypointId();
     Transform objInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(objInECEF); // Find the transform from the segment to this object
     Vector3 objVec = objInSegment.getTranslation();
