@@ -31,7 +31,6 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
-import gov.dot.fhwa.saxton.carma.guidance.signals.LowPassFilter;
 import gov.dot.fhwa.saxton.carma.guidance.signals.MovingAverageFilter;
 import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
@@ -67,12 +66,11 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
         double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
         double exitDistanceFactor = node.getParameterTree().getDouble("~acc_exit_distance_factor", 1.5);
-        double Kp = node.getParameterTree().getDouble("~Kp", 1.0);
-        double Ki = node.getParameterTree().getDouble("~Ki", 0.0);
-        double Kd = node.getParameterTree().getDouble("~Kd", 0.0);
-        double deadband = node.getParameterTree().getDouble("~pid_deadband");
-        double numSamples = node.getParameterTree().getDouble("~number_of_averaging_samples");
-        double cuttoffFreq = node.getParameterTree().getDouble("~num");
+        double Kp = node.getParameterTree().getDouble("~acc_Kp", 1.0);
+        double Ki = node.getParameterTree().getDouble("~acc_Ki", 0.0);
+        double Kd = node.getParameterTree().getDouble("~acc_Kd", 0.0);
+        double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
+        int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
 
         PidController timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
         MovingAverageFilter movingAverageFilter = new MovingAverageFilter(numSamples);

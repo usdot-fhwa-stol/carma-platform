@@ -74,4 +74,9 @@ public class Deadband implements Filter<Double> {
     @Override public void reset() {
         // No maintained state to reset
     }
+
+    @Override
+    public void changeSetpoint(Double setpoint) {
+        // No setpoint in this filter
+    }
 }
