@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            height: 400px;
+            padding: 0;
+            margin: 0;
+        }
+
+        div {
+            width: 50%;
+            height: 100%; /*size of the tabcontent that fits the tablet*/
+            float: left;
+            /*padding: 5em;*/
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+        }
+
+            div iframe {
+                position: relative;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+        #divRegionLeft {
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: orange;
+        }
+
+        #divRegionRight {
+            top: 0;
+            left: 50%;
+            height: 100%;
+            background: blue;
+        }
+    </style>
+</head>
+<body>
+    <div id="divRegionLeft">
+        <iframe src="../../widgets/jqWidgetsMobileDemo/widget.html"></iframe>
+    </div>
+    <div id="divRegionRight">
+        <iframe src="../../widgets/jqWidgetsMobileDemo/widget.html"></iframe>
+    </div>
+</body>
+</html>

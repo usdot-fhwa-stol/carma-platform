@@ -1,0 +1,663 @@
+/*
+ * Copyright (C) 2017 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    font-family: "Segoe UI",Arial,sans-serif;
+}
+footer {
+    padding: 1px 1px 1px 1px;
+    color: white;
+    background-color: gray;
+    clear: left;
+}
+p.copyright {
+    float: right;
+    text-align: right;
+    font-size: 20px;
+    font-bold: true;
+}
+p.systemversion{
+        float: center;
+        text-align: center;
+        font-size: 20px;
+        font-bold: true;
+}
+
+/*** Left Navigation Style ***/
+/* Style the tab */
+
+div.tabindicators {
+    float: left;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+    width: 6%;
+    height: 675px;
+    padding: 5px 5px 5px 5px;
+    text-align: center;
+}
+    div.tabindicators button {
+        display: block;
+        border: none;
+        background-color: inherit;
+        color: black;
+        padding: 10px 10px;
+        width: 80%;
+        border-bottom: 1px solid #ccc;
+        outline: none;
+        text-align: left;
+        cursor: pointer;
+        transition: 0.3s;
+        font-size: 20px;
+        font-family: "Segoe UI";
+        overflow: hidden;
+    }
+
+        /* Change background color of buttons on hover */
+        div.tabindicators button:hover {
+            background-color: #ddd;
+        }
+
+div.tab {
+    float: left;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+    width: 12%;
+    height: 675px;
+}
+
+    /* Style the buttons inside the tab */
+    div.tab button {
+        display: block;
+        background-color: inherit;
+        color: black;
+        padding: 20px 10px;
+        width: 100%;
+        border-bottom: 1px solid #ccc;
+        outline: none;
+        text-align: left;
+        cursor: pointer;
+        transition: 0.3s;
+        font-size: 27px;
+        font-bold: true;
+        font-family: "Segoe UI";
+        overflow: auto;
+    }
+
+        /* Change background color of buttons on hover */
+        div.tab button:hover {
+            background-color: #ddd;
+        }
+
+        /* Create an active/current "tab button" class */
+        div.tab button.active {
+            background-color: #00ace6;
+        }
+
+
+/* Style the tab header */
+.tabheader {
+    float: left;
+    padding: 0px 12px;
+    border-top: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    width: 82%;
+    height: 100px;
+}
+
+/* Style the tab content */
+.tabcontent {
+    float: left;
+    padding: 0px 12px;
+    border-bottom: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    width: 82%;
+    border-left: 1px solid #ccc;
+    height: 575px;
+    overflow: auto;
+}
+
+/*** Log Text Box content Style ****/
+.logStatus {
+    height: 400px;
+    width: 98%;
+    overflow: auto;
+    background-color: #336699;
+    color: white;
+    scrollbar-base-color: gold;
+    font-family: sans-serif;
+    padding: 10px;
+}
+
+/*** Checkbox and Radiobutton Style ****/
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+
+.container {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+input {
+    position: absolute;
+    left: -9999px;
+}
+
+label {
+    display: block;
+    position: relative;
+    margin: 20px;
+    padding: 15px 15px 15px 15px;
+    border-radius: 100px;
+    color: #fff;
+    background-color: gray;
+    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color .2s, box-shadow .2s;
+    font-size: 27px;
+    font-bold: true;
+    width: 85%;
+}
+
+    label::before { /*button format */
+        content: '';
+        display: block;
+        position: absolute;
+        top: 10px;
+        bottom: 10px;
+        left: 10px;
+        width: 32px;
+        border: none;
+        border-radius: 100px;
+        transition: background-color .2s;
+    }
+
+    label:first-of-type {
+        transform: translateX(0px);
+    }
+
+    label:last-of-type {
+        transform: translateX(0px);
+    }
+
+    label:hover, input:focus + label { /* Hover format */
+        box-shadow: 10px 10px 5px rgba(0, 0, 0, .6);
+    }
+
+input:checked + label { /* Checked format */
+    background-color: cornflowerblue;
+    box-shadow: 10px 10px 5px #99ccff;
+}
+
+input:disabled + label { /* Disabled format */
+    background-color: gray;
+}
+
+#btnOk
+{
+    height: 80px;
+    width: 220px;
+    background-color:#336699;
+    color: white;
+    font-size: 25px;
+    position: relative;
+    left: 0px;
+}
+/*** Message Box ***/
+div.message_box {
+    display: block;
+    position: relative;
+    align: center;
+    vertical-align: middle;
+    text-align: center;
+    margin: 10px;
+    padding: 35px 35px 15px 30px;
+    height: 150px;
+    color: #404040;
+    background-color: #ffffb3;/*  #e6e600; Yellow; */
+    font-size: 27px;
+    font-bold: true;
+    overflow: auto;
+}
+
+/*** Button ***/
+.button_cav {
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 40px;
+    font-bold: true;
+    margin: 4px 2px;
+    cursor: pointer;
+    width: 100%;
+    height: 75px;
+    border-radius: 100px;
+    transition: background-color .2s;
+    border-radius: 100px;
+    box-shadow: 10px 10px 5px rgba(0, 0, 0, .2);
+}
+
+.button_disabled {
+    background-color: gray;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.button_enabled {
+    background-color: cornflowerblue;
+}
+
+.button_engaged {
+    background-color: #4CAF50; /* Green; */
+}
+
+.button_disengaged {
+    background-color: #b32400; /* Red; */
+}
+
+.button_inactive {
+    background-color: #ff6600; /*orange*/
+}
+
+/*** UI Instructions ***/
+#modalUIInstructions {
+    display: none; /*Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0); /* Fully transparent */
+    text-align: center;
+    vertical-align:middle;
+}
+
+#modalUIInstructionsContent {
+    position: relative;
+    background-color: #fefefe;
+    background-color: rgba(0,0,0,0); /* Fully transparent */
+    margin: auto;
+    padding: 0;
+    width: 50%;
+    font-size: 550px;
+    color: cornflowerblue; /* #ff6600; orange */
+}
+
+
+/*** MODAL ***/
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    text-align: center;
+}
+
+/* Modal Popup */
+.modal-header {
+    padding: 2px 16px;
+    background-color: #ffcc00; /* yellow */
+    color: black;
+    align: center;
+    text-align: middle;
+}
+
+.modal-content { /* header text */
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0;
+    border: 1px solid #888;
+    width: 50%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s;
+    font-size: 20px;
+    font-bold: true;
+}
+
+.modal-body {
+    padding: 2px 20px;
+    width: 100%;
+    font-size: 28px;
+    font-bold: true;
+}
+
+.modal-footer {
+    padding: 10px 16px 10px 10px;
+    background-color: #ffcc00;
+    color: black;
+}
+
+/* Modal Button */
+#btnModal{
+    height: 50px;
+    width: 110px;
+    background-color:#336699;
+    color: white;
+    border-radius: 15px;
+    font-size: 20px;
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {
+        top: -300px;
+        opacity: 0
+    }
+
+    to {
+        top: 0;
+        opacity: 1
+    }
+}
+
+@keyframes animatetop {
+    from {
+        top: -300px;
+        opacity: 0
+    }
+
+    to {
+        top: 0;
+        opacity: 1
+    }
+}
+
+/* The Close Button */
+.close {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+    .close:hover,
+    .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+/* System Status Table */
+.table-style1 {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.col-style1 {
+    vertical-align: top;
+    width: 30%;
+    max-width: 200px;
+    overflow-wrap: normal;
+}
+
+.section1 {
+    color: #FFFFFF;
+    background-color: #999999;
+    vertical-align: top;
+}
+
+.col-title {
+    width: 15%;
+    font-weight: bold;
+    background-color: #DCDCDC;
+}
+
+.col-style2a {
+    width: 15%;
+    font-weight: bold;
+}
+
+.col-style2b {
+    width: 15%;
+}
+
+.hyphenate {
+ -ms-word-break: break-all;
+     word-break: break-all;
+
+     // Non standard for webkit
+     word-break: break-word;
+
+-webkit-hyphens: auto;
+   -moz-hyphens: auto;
+        hyphens: auto;
+}
+/* Map *
+ * Always set the map height explicitly to define the size of the div
+ * element that contains the map.
+ */
+#map {
+    height: 550px;
+}
+
+/* Bottom left text */
+ .bottom-left {
+    position: absolute;
+    bottom: 8px;
+    left: 16px;
+}
+
+/* Top left text */
+.top-left {
+    position: absolute;
+    top: 8px;
+    left: 16px;
+}
+
+/* Top right text */
+.top-right {
+    position: absolute;
+    top: 8px;
+    right: 16px;
+}
+
+/* Bottom right text */
+ .bottom-right {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+}
+
+/* Centered text */
+.centered {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* RouteInfo in Driver View */
+#divRouteInfo {
+    position: relative;
+    top: 0%;
+    color: black;
+    font-size: 45px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Remaining Distance to Next Speed Limit */
+#divDistRemaining{
+ position: relative;
+ top: 50%;
+ color: black;
+ font-size: 25px;
+ font-weight: bold;
+ text-align: center;
+}
+
+
+/* Black Rounded Border Sign */
+#divSpeedCmd {
+    position: absolute;
+    top: 25%;
+    left: 20%;
+}
+
+#divSpeedLimit {
+    position: absolute;
+    top: 25%;
+    left: 75%;
+}
+
+.sign-black-border-outer {
+    width:200px;
+    height:225px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border:1px solid #000000;
+    background:rgba(227,162,11,0.0);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.sign-black-border-inner {
+    width:95%;
+    height:95%;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border: 5px solid #000000;
+    background-color: FFFFFF;
+    text-align:center;
+   position: relative;
+}
+
+.sign-black-border-title {
+    position: relative;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 45px;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.sign-black-border-value {
+    /* position: absolute;
+    top: 75%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 110px;
+    font-weight: bold; */
+    font-family: sans-serif;
+
+    position: relative;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 75px;
+    font-weight: bold;
+}
+
+/* Speedometer */
+.divSpeedometer {
+    width: 400px;
+    height: 200px;
+    position: absolute;
+    top: 40%;
+    left: 55%;
+    overflow: hidden;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+
+.gauge-a {
+    z-index: 1;
+    position: absolute;
+    background-color: rgba(136, 185, 195, .2);
+    width: 400px;
+    height: 200px;
+    top: 0%;
+    border-radius: 250px 250px 0px 0px;
+}
+
+.gauge-b {
+    z-index: 3;
+    position: absolute;
+    background-color: #1858cd;
+    width: 250px;
+    height: 125px;
+    top: 75px;
+    margin-left: 75px;
+    margin-right: auto;
+    border-radius: 250px 250px 0px 0px;
+}
+
+.gauge-c {
+    z-index: 2;
+    position: absolute;
+    background-color: cornflowerblue;
+    width: 400px;
+    height: 200px;
+    top: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 0px 0px 200px 200px;
+    transform-origin: center top;
+    transition: all 1.3s ease-in-out;
+}
+
+.gauge-data {
+    z-index: 4;
+    color: white;
+    font-size: 35px;
+    line-height: 25px;
+    position: absolute;
+    width: 400px;
+    height: 200px;
+    top: 90px;
+    margin-left: auto;
+    margin-right: auto;
+    transition: all 1s ease-out;
+}

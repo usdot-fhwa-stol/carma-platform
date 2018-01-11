@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title id='Description'>jQWidgets Gauge - Desktop</title>
+    <title id='Description'>jQWidgets Gauge - Desktop</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1 maximum-scale=1 minimum-scale=1" />
+
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/jqxcore.js"></script>
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/jqxdraw.js"></script>
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/jqxgauge.js"></script>
+    <link rel="stylesheet" href="../../widgets/jqWidgetsMobileDemo/widget.css" type="text/css" />
+    <link rel="stylesheet" href="../../thirdparty/jqwidgets/styles/jqx.base.css" type="text/css" />
+    <link rel="stylesheet" href="../../thirdparty/jqwidgets/styles/jqx.windowsphone.css" type="text/css" />
+    <link rel="stylesheet" href="../../thirdparty/jqwidgets/styles/jqx.blackberry.css" type="text/css" />
+    <link rel="stylesheet" href="../../thirdparty/jqwidgets/styles/jqx.android.css" type="text/css" />
+    <link rel="stylesheet" href="../../thirdparty/jqwidgets/styles/jqx.mobile.css" type="text/css" />
+
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/jqxcore.js"></script>
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/jqxdata.js"></script>
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/scripts/simulator.js"></script>
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/jqxchart.js"></script>
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/jqxbuttons.js"></script>
+
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/jqxtooltip.js"></script>
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/scripts/demos.js"></script>
+
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/scripts/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="../../thirdparty/jqwidgets/scripts/jquery-1.12.4.min.js"></script>
+    <style type="text/css">
+        #gaugeValue {
+	        background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #fafafa), color-stop(100%, #f3f3f3));
+	        background-image: -webkit-linear-gradient(#fafafa, #f3f3f3);
+	        background-image: -moz-linear-gradient(#fafafa, #f3f3f3);
+	        background-image: -o-linear-gradient(#fafafa, #f3f3f3);
+	        background-image: -ms-linear-gradient(#fafafa, #f3f3f3);
+	        background-image: linear-gradient(#fafafa, #f3f3f3);
+	        -webkit-border-radius: 3px;
+	        -moz-border-radius: 3px;
+	        -ms-border-radius: 3px;
+	        -o-border-radius: 3px;
+	        border-radius: 3px;
+	        -webkit-box-shadow: 0 0 50px rgba(0, 0, 0, 0.2);
+	        -moz-box-shadow: 0 0 50px rgba(0, 0, 0, 0.2);
+	        box-shadow: 0 0 50px rgba(0, 0, 0, 0.2);
+	        padding: 10px;
+	    }
+    </style>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#gaugeContainer').jqxGauge({
+                ranges: [{ startValue: 0, endValue: 55, style: { fill: '#4bb648', stroke: '#4bb648' }, endWidth: 5, startWidth: 1 },
+                         { startValue: 55, endValue: 110, style: { fill: '#fbd109', stroke: '#fbd109' }, endWidth: 10, startWidth: 5 },
+                         { startValue: 110, endValue: 165, style: { fill: '#ff8000', stroke: '#ff8000' }, endWidth: 13, startWidth: 10 },
+                         { startValue: 165, endValue: 220, style: { fill: '#e02629', stroke: '#e02629' }, endWidth: 16, startWidth: 13 }],
+                ticksMinor: { interval: 5, size: '5%' },
+                ticksMajor: { interval: 10, size: '9%' },
+                value: 0,
+                colorScheme: 'scheme05',
+                animationDuration: 1200
+            });
+
+            $('#gaugeContainer').on('valueChanging', function (e) {
+                $('#gaugeValue').text(Math.round(e.args.value) + ' kph');
+            });
+
+            $('#gaugeContainer').jqxGauge('value', 140);
+
+            $('#linearGauge').jqxLinearGauge({
+                orientation: 'vertical',
+                width: 100,
+                height: 350,
+                ticksMajor: { size: '10%', interval: 10 },
+                ticksMinor: { size: '5%', interval: 2.5, style: { 'stroke-width': 1, stroke: '#aaaaaa'} },
+                max: 60,
+                pointer: { size: '5%' },
+                colorScheme: 'scheme05',
+                labels: { interval: 20, formatValue: function (value, position) {
+                    if (position === 'far') {
+                        value = (9 / 5) * value + 32;
+                        if (value === -76) {
+                            return '°F';
+                        }
+                        return value + '°';
+                    }
+                    if (value === -60) {
+                        return '°C';
+                    }
+                    return value + '°';
+                }
+                },
+                ranges: [
+                { startValue: -10, endValue: 10, style: { fill: '#FFF157', stroke: '#FFF157'} },
+                { startValue: 10, endValue: 35, style: { fill: '#FFA200', stroke: '#FFA200'} },
+                { startValue: 35, endValue: 60, style: { fill: '#FF4800', stroke: '#FF4800'}}],
+                animationDuration: 1500
+            });
+            $('#linearGauge').jqxLinearGauge('value', 40);
+
+
+            $("#bulletChart").jqxBulletChart({
+                width: getWidth('bulletChart'),
+                height: 80,
+                barSize: "40%",
+                title: "Revenue 2017 YTD",
+                description: "(U.S. $ in thousands)",
+                ranges: [
+                    { startValue: 0, endValue: 200, color: "#CC0000", opacity: 1 },
+                    { startValue: 200, endValue: 250, color: "#FFD633", opacity: 1 },
+                    { startValue: 250, endValue: 300, color: "#00CC00", opacity: 1 }
+                ],
+                pointer: { value: 270, label: "Revenue 2018 YTD", size: "25%", color: "" },
+                target: { value: 260, label: "Revenue 2017 YTD", size: 4, color: "" },
+                ticks: { position: "far", interval: 50, size: 10 },
+                labelsFormat: "c",
+                showTooltip: true
+            });
+        });
+    </script>
+
+</head>
+<body style="background:white;">
+    <div id="demoWidget" style="position: relative; ">
+	    <div style="float: left;" id="gaugeContainer"></div>
+        <div id="gaugeValue" style="position: absolute;  font-family: Sans-Serif; text-align: center; font-size: 17px; "></div>
+        <div style=" float: left;" id="linearGauge"></div>
+        <div id="bulletChart">
+        </div>
+    </div>
+</body>
+</html>
