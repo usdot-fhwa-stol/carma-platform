@@ -243,8 +243,6 @@
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="map"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/map"/>
-        <remap from="route_current_segment"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
@@ -396,8 +394,6 @@
         <!-- Trajectory Thread-->
         <remap from="get_drivers_with_capabilities"
                to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-        <remap from="current_segment"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
 
         <!-- Trajectory and Arbitrator -->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
@@ -422,8 +418,6 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
       <remap from="nav_sat_fix"
              to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-      <remap from="current_segment"
-             to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
       <remap from="get_available_routes"
              to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
       <remap from="set_active_route"
@@ -435,7 +429,7 @@
       <remap from="route"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="bsm"
-                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+             to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="state"

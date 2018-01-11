@@ -31,13 +31,6 @@ import java.util.PriorityQueue;
 public interface IRouteManager {
 
   /**
-   * Publishes a ros message corresponding to the current route segment
-   *
-   * @param routeSegment The current route segment message
-   */
-  void publishCurrentRouteSegment(cav_msgs.RouteSegment routeSegment);
-
-  /**
    * Publishes the active route in the form of a ros message
    *
    * @param route The active route message

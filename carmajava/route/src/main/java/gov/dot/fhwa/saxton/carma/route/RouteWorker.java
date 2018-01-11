@@ -78,6 +78,7 @@ public class RouteWorker {
   protected int routeStateSeq = 0;
   protected final int requiredLeftRouteCount;
   protected int recievedLeftRouteEvents = 0;
+  protected double currentSegmentDowntrack = 0;
 
   /**
    * Constructor initializes a route worker object with the provided logging tool
@@ -135,6 +136,7 @@ public class RouteWorker {
     crossTrackDistance = 0;
     routeStateSeq = 0;
     recievedLeftRouteEvents = 0;
+    currentSegmentDowntrack = 0;
   }
 
   /**
@@ -400,8 +402,8 @@ public class RouteWorker {
     }
 
     // Update downtrack distance
-    downtrackDistance = Math.max(0.0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment
-      .downTrackDistance(hostVehicleLocation));
+    currentSegmentDowntrack = currentSegment.downTrackDistance(hostVehicleLocation);
+    downtrackDistance = Math.max(0.0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegmentDowntrack);
 
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
@@ -420,7 +422,6 @@ public class RouteWorker {
 
     // Publish updated route information
     routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), WorkerEvent.NONE));
-    routeManager.publishCurrentRouteSegment(getCurrentRouteSegmentTopicMsg());
   }
 
   /**
@@ -455,19 +456,6 @@ public class RouteWorker {
         //TODO: Handle this variant maybe throw exception?
         log.warn("System alert message received with unknown type: " + msg.getType());
     }
-  }
-
-  /**
-   * Returns a message to be published on the current route segment topic
-   *
-   * @return route segment message
-   */
-  protected cav_msgs.RouteSegment getCurrentRouteSegmentTopicMsg() {
-    if (currentSegment == null) {
-      log.warn("Request for current segment message when current segment is null");
-      return messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
-    }
-    return currentSegment.toMessage(messageFactory, currentWaypointIndex);
   }
 
   /**
@@ -538,6 +526,10 @@ public class RouteWorker {
       routeState.setCrossTrack(crossTrackDistance);
       routeState.setRouteID(activeRoute.getRouteID());
       routeState.setDownTrack(downtrackDistance);
+      if (currentSegment != null) {
+        routeState.setSegmentDownTrack(currentSegmentDowntrack);
+        routeState.setCurrentSegment(currentSegment.toMessage(messageFactory, currentWaypointIndex));
+      }
     }
 
     std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);

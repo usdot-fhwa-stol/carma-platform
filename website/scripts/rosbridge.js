@@ -25,13 +25,11 @@ var ip = '192.168.88.10' // TODO: Update with proper environment IP address to 1
 var t_system_alert = 'system_alert';
 var t_available_plugins = 'plugins/available_plugins';
 var t_nav_sat_fix = 'nav_sat_fix';
-var t_current_segment = 'current_segment';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = 'route_state';
 var t_active_route = 'route';
 var t_cmd_speed = 'cmd_speed';
-var t_current_segment = 'current_segment';
 var t_robot_status = 'robot_status';
 var t_diagnostics = '/diagnostics';
 var t_acc_engaged = 'acc_engaged';
@@ -1141,6 +1139,29 @@ function checkRouteInfo() {
             showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
 
+        insertNewTableRow('tblSecondA', 'Current Segment ID', message.current_segment.waypoint.waypoint_id);
+        insertNewTableRow('tblSecondA', 'Current Segment Max Speed', message.current_segment.waypoint.speed_limit);
+        if (message.current_segment.waypoint.speed_limit != null && message.current_segment.waypoint.speed_limit != 'undefined')
+            document.getElementById('divSpeedLimitValue').innerHTML = message.current_segment.waypoint.speed_limit;
+
+
+        //Determine the remaining distance to current speed limit
+        if (sessionStorage.getItem('routeSpeedLimitDist') != null) {
+            var routeSpeedLimitDist = sessionStorage.getItem('routeSpeedLimitDist');
+            routeSpeedLimitDist = JSON.parse(routeSpeedLimitDist);
+
+            //Loop thru to find the correct totaldistance
+            for (i = 0; i < routeSpeedLimitDist.length; i++) {
+                if (message.current_segment.waypoint.waypoint_id <= routeSpeedLimitDist[i].waypoint_id) {
+                    total_dist_next_speed_limit = routeSpeedLimitDist[i].total_length;
+                    break;
+                }
+            }
+
+            //insertNewTableRow('tblSecondA', 'total_dist_next_speed_limit', total_dist_next_speed_limit);
+
+        }
+
     });
 }
 
@@ -1323,45 +1344,6 @@ function showSpeedAccelInfo() {
 }
 
 /*
-    Display the close loop control of speed
-*/
-function showCurrentSegmentInfo() {
-
-    //Get Speed Accell Info
-    var listenerCurrentSegment = new ROSLIB.Topic({
-        ros: ros,
-        name: t_current_segment,
-        messageType: 'cav_msgs/RouteSegment'
-    });
-
-    listenerCurrentSegment.subscribe(function (message) {
-
-        insertNewTableRow('tblSecondA', 'Current Segment ID', message.waypoint.waypoint_id);
-        insertNewTableRow('tblSecondA', 'Current Segment Max Speed', message.waypoint.speed_limit);
-        if (message.waypoint.speed_limit != null && message.waypoint.speed_limit != 'undefined')
-            document.getElementById('divSpeedLimitValue').innerHTML = message.waypoint.speed_limit;
-
-
-        //Determine the remaining distance to current speed limit
-        if (sessionStorage.getItem('routeSpeedLimitDist') != null) {
-            var routeSpeedLimitDist = sessionStorage.getItem('routeSpeedLimitDist');
-            routeSpeedLimitDist = JSON.parse(routeSpeedLimitDist);
-
-            //Loop thru to find the correct totaldistance
-            for (i = 0; i < routeSpeedLimitDist.length; i++) {
-                if (message.waypoint.waypoint_id <= routeSpeedLimitDist[i].waypoint_id) {
-                    total_dist_next_speed_limit = routeSpeedLimitDist[i].total_length;
-                    break;
-                }
-            }
-
-            //insertNewTableRow('tblSecondA', 'total_dist_next_speed_limit', total_dist_next_speed_limit);
-
-        }
-    });
-}
-
-/*
     Display the CAN speeds
 */
 function showCANSpeeds() {
@@ -1471,7 +1453,6 @@ function showStatusandLogs() {
     showSystemVersion();
     showNavSatFix();
     showSpeedAccelInfo();
-    showCurrentSegmentInfo();
     showCANSpeeds();
     showDiagnostics();
     showDriverStatus();

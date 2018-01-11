@@ -58,7 +58,6 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
   protected Publisher<tf2_msgs.TFMessage> tfPub;
   protected Publisher<cav_msgs.RoadwayEnvironment> roadwayEnvPub;
   // Subscribers
-  protected Subscriber<cav_msgs.RouteSegment> routeSegmentSub;
   protected Subscriber<cav_msgs.HeadingStamped> headingSub;
   protected Subscriber<sensor_msgs.NavSatFix> gpsSub;
   protected Subscriber<nav_msgs.Odometry> odometrySub;
@@ -108,17 +107,6 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
     // Subscribers
     //Subscriber<cav_msgs.Map> mapSub = connectedNode.newSubscriber("map", cav_msgs.Map._TYPE);//TODO: Include once Map.msg is created
-    routeSegmentSub =
-      connectedNode.newSubscriber("route_current_segment", cav_msgs.RouteSegment._TYPE);
-    routeSegmentSub.addMessageListener(new MessageListener<cav_msgs.RouteSegment>() {
-      @Override public void onNewMessage(cav_msgs.RouteSegment message) {
-        try {
-          environmentWorker.handleCurrentSegmentMsg(message);
-        } catch (Throwable e) {
-          handleException(e);
-        }
-      }//onNewMessage
-    });//MessageListener
 
     headingSub = connectedNode.newSubscriber("heading", cav_msgs.HeadingStamped._TYPE);
     headingSub.addMessageListener(new MessageListener<cav_msgs.HeadingStamped>() {
