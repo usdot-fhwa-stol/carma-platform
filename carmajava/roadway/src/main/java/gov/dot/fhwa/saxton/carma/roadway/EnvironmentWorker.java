@@ -141,6 +141,9 @@ public class EnvironmentWorker {
     Vector3 objVecECEF = objInECEF.getTranslation();
     Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
     
+    int currentSegIndex = currentSegment.getDowntrackWaypoint().getWaypointId();
+    List<RouteSegment> segmentsToSearch = findCurrentRouteSubsection(minDist, maxDist);
+
     RouteSegment bestSegment = routeSegmentOfPoint(objPositionECEF);
     int segmentIndex = bestSegment.getDowntrackWaypoint().getWaypointId();
     Transform objInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(objInECEF); // Find the transform from the segment to this object
@@ -157,30 +160,28 @@ public class EnvironmentWorker {
     return newObstacle;
   }
 
-  protected RouteSegment routeSegmentOfPoint(Point3D point) {
-    int segmentIndex = currentSegment.getDowntrackWaypoint().getWaypointId();
-    int range = 10; // TODO Make this configurable based on distance (run along segments front and back from vehicle)
-    int lowerBound = Math.max(segmentIndex - range, 0);
-    int upperBound = Math.min(segmentIndex + range, activeRoute.getSegments().size());
-
-    RouteSegment bestSegment = activeRoute.getSegments().get(lowerBound);
-    for (int i = lowerBound; i < upperBound; i++) {
-      RouteSegment seg = activeRoute.getSegments().get(i);
+  protected RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
+    int count = 0;
+    RouteSegment bestSegment = segments.get(0);
+    for (RouteSegment seg: segments) {      
       RouteWaypoint wp = seg.getDowntrackWaypoint();
       double crossTrack = seg.crossTrackDistance(point);
       double downTrack = seg.downTrackDistance(point);
 
       if (-0.0 < downTrack && downTrack < seg.length()) { 
-        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack()) {
+        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
           return seg;
-        }
+        
         bestSegment = seg;
-      } else if (i == upperBound - 1 && downTrack > seg.length()) {
+      } else if (count == segments.size() - 1 && downTrack > seg.length()) {
         bestSegment = seg;
       }
+      count++;
     }
     return bestSegment;
   }
+
+  protected RouteSegment findCurrentRouteSubsection(int startingIndex, double minDist, double maxDist);
 
   // Non existant lanes will be added based on the 
   // TODO support relative lanes in external object description
