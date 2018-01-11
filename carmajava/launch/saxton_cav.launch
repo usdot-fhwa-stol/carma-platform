@@ -428,7 +428,7 @@
       <remap from="route"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="bsm"
-                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+             to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="state"
