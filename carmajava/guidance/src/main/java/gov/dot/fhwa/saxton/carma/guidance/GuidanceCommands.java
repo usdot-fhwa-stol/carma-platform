@@ -178,7 +178,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 }
             }
         }
-        if (lateralControlTopic != null) {
+        if (lateralControlTopic == null) {
             exceptionHandler.handleException("GuidanceCommands unable to find suitable lateral controller driver!", new RosRuntimeException("No lateral controller drivers."));
         }
         
