@@ -162,7 +162,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                     log.debug("GuidanceCommands discovered driver: " + driverName);
                 }
 
-                drivers[0] = msg;
+                lateralDrivers[0] = msg;
             }
 
             @Override
@@ -172,7 +172,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         });
         String lateralControlTopic = null;
         if (lateralDrivers[0] != null) {
-            for (String topicName : drivers[0].getDriverData()) {
+            for (String topicName : lateralDrivers[0].getDriverData()) {
                 if (topicName.endsWith(LATERAL_CONTROL_CAPABILITY)) {
                     lateralControlTopic = topicName;
                 }
