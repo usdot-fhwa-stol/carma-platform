@@ -41,11 +41,6 @@ public class MovingAverageFilter implements Filter<Double> {
         this.numSamples = numSamples;
     }
 
-    /**
-     * Change the setpoint of this PID controller
-     * 
-     * @param setpoint The setpoint to try to attain
-     */
     @Override
     public void changeSetpoint(Double setpoint) {
         // No setpoint in this filter
