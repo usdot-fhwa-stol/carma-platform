@@ -19,4 +19,5 @@ uint8 NO_ERROR=0
 uint8 NO_ACTIVE_ROUTE=1
 uint8 INVALID_STARTING_LOCATION=2
 uint8 ALREADY_FOLLOWING_ROUTE=3
+uint8 INTERNAL_ERROR=255
 #					<other values reserved for future expansion>

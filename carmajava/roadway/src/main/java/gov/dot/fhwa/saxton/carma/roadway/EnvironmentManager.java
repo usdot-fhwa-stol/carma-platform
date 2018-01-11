@@ -58,6 +58,8 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
   protected Publisher<tf2_msgs.TFMessage> tfPub;
   protected Publisher<cav_msgs.RoadwayEnvironment> roadwayEnvPub;
   // Subscribers
+  protected Subscriber<cav_msgs.Route> routeSub;
+  protected Subscriber<cav_msgs.RouteState> routeStateSub;
   protected Subscriber<cav_msgs.HeadingStamped> headingSub;
   protected Subscriber<sensor_msgs.NavSatFix> gpsSub;
   protected Subscriber<nav_msgs.Odometry> odometrySub;
@@ -107,72 +109,78 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
     // Subscribers
     //Subscriber<cav_msgs.Map> mapSub = connectedNode.newSubscriber("map", cav_msgs.Map._TYPE);//TODO: Include once Map.msg is created
+    routeSub = connectedNode.newSubscriber("route", cav_msgs.Route._TYPE);
+      routeSub.addMessageListener((cav_msgs.Route message) -> {
+        try {
+          environmentWorker.handleRouteMsg(message);
+        } catch (Throwable e) {
+          handleException(e);
+        }
+      });//MessageListener
+
+    routeStateSub =
+    connectedNode.newSubscriber("route_state", cav_msgs.RouteState._TYPE);
+    routeStateSub.addMessageListener((cav_msgs.RouteState message) -> {
+        try {
+          environmentWorker.handleRouteStateMsg(message);
+        } catch (Throwable e) {
+          handleException(e);
+        }
+      });//MessageListener
 
     headingSub = connectedNode.newSubscriber("heading", cav_msgs.HeadingStamped._TYPE);
-    headingSub.addMessageListener(new MessageListener<cav_msgs.HeadingStamped>() {
-      @Override public void onNewMessage(cav_msgs.HeadingStamped message) {
+    headingSub.addMessageListener((cav_msgs.HeadingStamped message) -> {
         try {
           environmentWorker.handleHeadingMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
-      }//onNewMessage
-    });//MessageListener
+      });//MessageListener
 
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
-    gpsSub.addMessageListener(new MessageListener<sensor_msgs.NavSatFix>() {
-      @Override public void onNewMessage(sensor_msgs.NavSatFix message) {
+    gpsSub.addMessageListener((sensor_msgs.NavSatFix message) -> {
         try {
           environmentWorker.handleNavSatFixMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
-      }//onNewMessage
-    });//MessageListener
+      });//MessageListener
 
     odometrySub = connectedNode.newSubscriber("odometry", nav_msgs.Odometry._TYPE);
-    odometrySub.addMessageListener(new MessageListener<nav_msgs.Odometry>() {
-      @Override public void onNewMessage(nav_msgs.Odometry message) {
+    odometrySub.addMessageListener((nav_msgs.Odometry message) -> {
         try {
           environmentWorker.handleOdometryMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
-      }//onNewMessage
-    });//MessageListener
+      });//MessageListener
 
     objectsSub = connectedNode.newSubscriber("objects", cav_msgs.ExternalObjectList._TYPE);
-    objectsSub.addMessageListener(new MessageListener<cav_msgs.ExternalObjectList>() {
-      @Override public void onNewMessage(cav_msgs.ExternalObjectList message) {
+    objectsSub.addMessageListener((cav_msgs.ExternalObjectList message) -> {
         try {
           environmentWorker.handleExternalObjectsMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
-      }//onNewMessage
-    });//MessageListener
+      });//MessageListener
 
     velocitySub = connectedNode.newSubscriber("velocity", geometry_msgs.TwistStamped._TYPE);
-    velocitySub.addMessageListener(new MessageListener<geometry_msgs.TwistStamped>() {
-      @Override public void onNewMessage(geometry_msgs.TwistStamped message) {
+    velocitySub.addMessageListener((geometry_msgs.TwistStamped message) -> {
         try {
           environmentWorker.handleVelocityMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
-      }//onNewMessage
-    });//MessageListener
+      });//MessageListener
 
     systemAlertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
-    systemAlertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
-      @Override public void onNewMessage(cav_msgs.SystemAlert message) {
+    systemAlertSub.addMessageListener((cav_msgs.SystemAlert message) -> {
         try {
           environmentWorker.handleSystemAlertMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
-      }
-    });//onNewMessage
+      });//onNewMessage
   }
 
   /***

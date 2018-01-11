@@ -147,4 +147,48 @@ public class HaversineStrategyTest {
     solution = 991.4;
     assertTrue(Math.abs(haversineStrategy.downtrackDistance(loc2, seg) - solution) < solution * 0.005); // Check accuracy to within .5% of haversine result
   }
+
+  /**
+   * Tests the projectOntoSegment function
+   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
+   * @throws Exception
+   */
+  @Test
+  public void testProjectOntoSegment() throws Exception {
+
+    log.info("// Entering projectOntoSegment test");
+    HaversineStrategy haversineStrategy = new HaversineStrategy();
+
+    // Test point on segment start
+    Location loc1 = new Location(38.95605, -77.15073, 0);
+    Location loc2 = new Location(38.95602, -77.15073, 0);
+    GreatCircleSegment seg = new GreatCircleSegment(loc1, loc2);
+    Location solution = loc1;
+    Location result = haversineStrategy.projectOntoSegment(loc1, seg);
+    assertTrue(result.almostEqual(solution, 0.0001, 1.0));
+
+    // Test point on segment end
+    seg = new GreatCircleSegment(loc1, loc2);
+    solution = loc2;
+    result = haversineStrategy.projectOntoSegment(loc2, seg);
+    assertTrue(result.almostEqual(solution, 0.0001, 1.0));
+    
+    // Test point on before segment start
+    Location externalPoint = new Location(38.95607, -77.15072, 0);
+    solution = new Location(38.95607, -77.15073, 0);
+    result = haversineStrategy.projectOntoSegment(externalPoint, seg);
+    assertTrue(result.almostEqual(solution, 0.0001, 1.0));  
+
+    // Test point in middle of segment
+    externalPoint = new Location(38.95604, -77.15072, 0);
+    solution = new Location(38.95604, -77.15074, 0);
+    result = haversineStrategy.projectOntoSegment(externalPoint, seg);
+    assertTrue(result.almostEqual(solution, 0.0001, 1.0));
+    
+    // Test point past end of segment
+    externalPoint = new Location(38.95601, -77.15075, 0);
+    solution = new Location(38.95601, -77.15073, 0);
+    result = haversineStrategy.projectOntoSegment(externalPoint, seg);
+    assertTrue(result.almostEqual(solution, 0.0001, 1.0)); 
+  } 
 }

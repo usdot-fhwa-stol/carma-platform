@@ -126,34 +126,36 @@ public class Route {
    * Inserting a waypoint will result in an additional route segment being created.
    * To insert at the end of the list use an index = waypoints.size()
    * To insert at the front of the list use 0.
-   * Out of bound indexes will be truncated to 0 or waypoints.size() usable values
+   * Invalid waypoints or indexes will result in IllegalArgumentExceptions
+   * 
+   * Note: Currently does not support inserting waypoints at a route discontenuity (lane change) as the desired behavior is not defined
    *
    * @param waypoint The RouteWaypoint to be inserted. Must be able to connect to previous and next waypoints
    * @param index    The index at which to insert the RouteWaypoint. Inserting at a non-existent index will result in an exception.
-   * @return Returns true if the waypoint was inserted successfully. False otherwise.
    */
-  public boolean insertWaypoint(RouteWaypoint waypoint, int index) throws IndexOutOfBoundsException{
+  public void insertWaypoint(RouteWaypoint waypoint, int index) throws IllegalArgumentException{
     //TODO perform validation check on waypoint usability
     // Remove the segment at that location and replace it with two segments connected to the new waypoint
     // If waypoint not inserted at the front or end of the list the existing segments must be modified
-    if (index != 0 && index < waypoints.size()) {
+    int wpLaneIndex = waypoint.getLaneIndex();
+    if (index != 0 && index < waypoints.size() 
+        && wpLaneIndex == waypoints.get(index-1).getLaneIndex() 
+        && wpLaneIndex == waypoints.get(index).getLaneIndex()) {
       segments.remove(index-1);
       segments.add(index-1, new RouteSegment(waypoints.get(index - 1), waypoint));
       segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
-    } else if (index == waypoints.size()) {
+    } else if (index == waypoints.size() && wpLaneIndex == waypoints.get(index-1).getLaneIndex()) {
       segments.add(new RouteSegment(waypoints.get(index-1), waypoint));
-    } else if (index == 0){
+    } else if (index == 0 && wpLaneIndex == waypoints.get(index).getLaneIndex()){
       segments.add(index, new RouteSegment(waypoint, waypoints.get(index)));
     } else {
-      throw new IndexOutOfBoundsException("Attempted to add waypoint to invalid index " + index);
+      throw new IllegalArgumentException("Failed to add " + waypoint + " at index: " + index);
     }
 
     // Insert the waypoint into the list of waypoints
     waypoints.add(index,waypoint);
 
     calculateLength();
-    return true;
-    //return false;
   }
 
   /**
@@ -214,6 +216,13 @@ public class Route {
 
   /**
    * Sets the list of waypoints
+   * Waypoints should be located near the middles of a lane 
+   * When wapoints change lanes they will not be connected by a segment
+   * The segment in the new lane will have it's uptrack waypoint moved
+   * back to be inline with the end of the previous segment.
+   * 
+   * The first two waypoints should always be in the same lane
+   * There should never be only one waypoint in a lane (At least one segment in any lane the route is located in)
    *
    * @param waypointList The list of waypoints which will be assigned
    */
@@ -221,16 +230,25 @@ public class Route {
     waypoints = waypointList;
     boolean firstWaypoint = true;
     RouteWaypoint prevWaypoint = null;
+    RouteWaypoint prevPrevWaypoint = null;
+    boolean updatePreviousWP = false;
     // Build segments from waypoints
-    if (segments == null) {
-      segments = new LinkedList<>();
-    }
+    segments = new LinkedList<>(); // Clear currnet waypoints
 
     for(RouteWaypoint waypoint: waypointList){
 
-      if (!firstWaypoint){
+      if (!firstWaypoint && prevWaypoint.getLaneIndex() == waypoint.getLaneIndex()){
         segments.add(new RouteSegment(prevWaypoint, waypoint));
+        int endIndex = segments.size() - 1;
+        if (updatePreviousWP) { // Move next waypoint to line up with previous segment end before making next segment
+          prevWaypoint.setLocation(segments.get(endIndex).projectOntoSegment(prevPrevWaypoint.location)); 
+          segments.set(endIndex , new RouteSegment(prevWaypoint, waypoint)); // Need a new route segment as the location object has changed
+          updatePreviousWP = false;
+        }
+      } else if (!firstWaypoint && prevWaypoint.getLaneIndex() != waypoint.getLaneIndex()) {
+        updatePreviousWP = true;
       }
+      prevPrevWaypoint = prevWaypoint;
       prevWaypoint = waypoint;
       firstWaypoint = false;
     }

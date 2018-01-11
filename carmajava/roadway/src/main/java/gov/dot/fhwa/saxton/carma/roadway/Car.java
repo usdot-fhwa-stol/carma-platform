@@ -16,10 +16,18 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
+
 /**
- * Factory for creating obstacles based on an input string
- * TODO: Decide if this class is really needed
+ * Class representing a Car on a roadway can be connected or have no communication.
  */
-public class ObstacleFactory {
-  //IObstacle makeObstacle(String type){return new Obstacle();} //TODO
+public class Car extends Vehicle {
+
+  /**
+   * Constructor
+   */
+  public Car(int id, double downtrackDistance, double crosstrackDistance, Vector3D velocity,
+    Vector3D acceleration, Vector3D size, Integer primaryLane) {
+    super(id, downtrackDistance, crosstrackDistance, velocity, acceleration, size, primaryLane);
+  }
 }

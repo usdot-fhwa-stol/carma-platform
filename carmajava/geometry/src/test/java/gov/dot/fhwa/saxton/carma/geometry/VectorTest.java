@@ -299,14 +299,14 @@ public class VectorTest {
   }
 
   /**
-   * Tests the 3x3 determinate funcation
+   * Tests the 3x3 determinant funcation
    * @throws Exception
    */
   @Test
-  public void test3by3Determinate() throws Exception {
+  public void test3by3Determinant() throws Exception {
     Vector3D v1 = new Vector3D(6,4,2); //Each vector is a col of the matrix
     Vector3D v2 = new Vector3D(1,-2,8);
     Vector3D v3 = new Vector3D(1,5,7);
-    assertEquals(-306.0, Vector3D.get3by3Determinate(v1,v2,v3), 0.0000001);
+    assertEquals(-306.0, Vector3D.get3by3Determinant(v1,v2,v3), 0.0000001);
   }
 }
