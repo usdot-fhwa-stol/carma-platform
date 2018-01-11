@@ -299,4 +299,43 @@ public class Route {
   public void setMaxJoinDistance(double maxJoinDistance) {
     this.maxJoinDistance = maxJoinDistance;
   }
+
+  /**
+   * Returns a list of route segments which span the provided distances infront and behind of the 
+   * segment at the specified index.
+   * The returned list is in order from back to front.
+   * 
+   * @param startingIndex The index of the route segment which will be the starting point for the search. 
+   *                      This segment will always be included in the returned list
+   * @param distBackward The distance in m uptrack of the starting segment which will be included
+   * @param distForward The distance in m downtrack of the starting segment which will be included
+   */
+  public List<RouteSegment> findRouteSubsection(int startingIndex, double distBackward, double distForward) {
+    List<RouteSegment> subList = new LinkedList<>();
+    subList.add(segments.get(startingIndex));
+
+    // Process segments behind host vehicle
+    double downtrack = 0.0;
+    for (int i = startingIndex - 1; i >= 0; i++) {
+      downtrack += segments.get(i).length();
+      if (downtrack > distBackward) {
+        break;
+      }
+      subList.add(segments.get(i));
+    }
+
+    Collections.reverse(subList);
+
+    // Process segments infront of host vehicle
+    downtrack = 0.0;
+    for (int i = startingIndex + 1; i < segments.size(); i++) {
+      downtrack += segments.get(i).length();
+      if (downtrack > distForward) {
+        break;
+      }
+      subList.add(segments.get(i));
+    }
+
+    return subList;
+  }
 }

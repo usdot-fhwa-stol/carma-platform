@@ -141,11 +141,11 @@ public class EnvironmentWorker {
     Vector3 objVecECEF = objInECEF.getTranslation();
     Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
     
-    int currentSegIndex = currentSegment.getDowntrackWaypoint().getWaypointId();
+    int currentSegIndex = currentSegment.getUptrackWaypoint().getWaypointId();
     List<RouteSegment> segmentsToSearch = findCurrentRouteSubsection(minDist, maxDist);
 
     RouteSegment bestSegment = routeSegmentOfPoint(objPositionECEF);
-    int segmentIndex = bestSegment.getDowntrackWaypoint().getWaypointId();
+    int segmentIndex = bestSegment.getUptrackWaypoint().getWaypointId();
     Transform objInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(objInECEF); // Find the transform from the segment to this object
     Vector3 objVec = objInSegment.getTranslation();
     Point3D objPosition = new Point3D(objVec.getX(), objVec.getY(), objVec.getZ());
@@ -180,8 +180,6 @@ public class EnvironmentWorker {
     }
     return bestSegment;
   }
-
-  protected RouteSegment findCurrentRouteSubsection(int startingIndex, double minDist, double maxDist);
 
   // Non existant lanes will be added based on the 
   // TODO support relative lanes in external object description
