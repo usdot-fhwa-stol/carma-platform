@@ -45,7 +45,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
-    private IPublisher<LateralControl> lateralControlPublisher;
+    private IPublisher<cav_msgs.LateralControl> lateralControlPublisher;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private AtomicDouble steeringCommand = new AtomicDouble(0.0);
@@ -144,7 +144,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 exceptionHandler.handleException("GuidanceCommands unable to locate control/enable_robotic service", tnfe);
             }
         } else {
-            exceptionHandler.handleException("GuidanceCommands unable to find suitable controller driver!", new RosRuntimeException("No controller drivers."));
+            exceptionHandler.handleException("GuidanceCommands unable to find suitable longitudinal controller driver!", new RosRuntimeException("No longitudinal controller drivers."));
         }
 
         // Repeat the above process for lateral control drivers
@@ -179,7 +179,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             }
         }
         if (lateralControlTopic != null) {
-
+            exceptionHandler.handleException("GuidanceCommands unable to find suitable lateral controller driver!", new RosRuntimeException("No lateral controller drivers."));
         }
         
         currentState.set(GuidanceState.DRIVERS_READY);
