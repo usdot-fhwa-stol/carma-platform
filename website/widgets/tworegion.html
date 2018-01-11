@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <style>
@@ -17,6 +17,7 @@
             -moz-box-sizing: border-box;
             -webkit-box-sizing: border-box;
         }
+
             div iframe {
                 position: relative;
                 top: 0;
@@ -25,43 +26,27 @@
                 height: 100%;
             }
 
-        #divRegionTopLeft {
+        #divRegionLeft {
             top: 0;
             left: 0;
+            height: 100%;
             background: orange;
         }
 
-        #divRegionTopRight {
+        #divRegionRight {
             top: 0;
             left: 50%;
+            height: 100%;
             background: blue;
-        }
-
-        #divRegionBottomLeft {
-            top: 50%;
-            left: 0;
-            background: green;
-        }
-
-        #divRegionBottomRight {
-            top: 50%;
-            left: 50%;
-            background: red;
         }
     </style>
 </head>
 <body>
-    <div id="divRegionTopLeft">
-        <iframe src="../../widgets/jqWidgetsMobileDemo/widget.html"></iframe>
+    <div id="divRegionLeft">
+        <iframe src="../widgets/jqWidgetsMobileDemo/widget.html"></iframe>
     </div>
-    <div id="divRegionTopRight">
-        <iframe src="../../widgets/jqWidgetsMobileDemo/widget.html"></iframe>
-    </div>
-    <div id="divRegionBottomLeft">
-        <iframe src="../../widgets/jqWidgetsMobileDemo/widget.html"></iframe>
-    </div>
-    <div id="divRegionBottomRight">
-        <iframe src="../../widgets/jqWidgetsMobileDemo/widget.html"></iframe>
+    <div id="divRegionRight">
+        <iframe src="../widgets/jqWidgetsMobileDemo/widget.html"></iframe>
     </div>
 </body>
 </html>
