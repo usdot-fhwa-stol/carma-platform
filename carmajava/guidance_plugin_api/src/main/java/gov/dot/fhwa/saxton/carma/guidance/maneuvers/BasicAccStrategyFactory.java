@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
+import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
+
 /**
  * Factory-pattern class to produce BasicAccStrategy instances
  */
@@ -24,21 +26,37 @@ public class BasicAccStrategyFactory implements IAccStrategyFactory {
   protected double desiredTimeGap;
   protected double maxAccel;
   protected double minStandoffDistance;
+  protected double exitDistanceFactor;
+  protected Pipeline<Double> filterPipeline;
+  protected static BasicAccStrategy strat;
 
-  public BasicAccStrategyFactory(double desiredTimeGap, double maxAccel, double vehicleResponseDelay, double minStandoffDistance) {
+  public BasicAccStrategyFactory(double desiredTimeGap, double maxAccel, double vehicleResponseDelay, double minStandoffDistance, double exitDistanceFactor, Pipeline<Double> filterPipeline) {
     this.vehicleResponseDelay = vehicleResponseDelay;
     this.desiredTimeGap = desiredTimeGap;
     this.maxAccel = maxAccel;
     this.minStandoffDistance = minStandoffDistance;
+    this.exitDistanceFactor = exitDistanceFactor;
+    this.filterPipeline = filterPipeline;
   }
 
-	@Override
+  @Override
+  /**
+   * Note this returns a singleton instance of the ACC Strategy
+   */
 	public IAccStrategy newAccStrategy() {
-    BasicAccStrategy strat = new BasicAccStrategy(minStandoffDistance);
-    strat.setDesiredTimeGap(desiredTimeGap);
-    strat.setVehicleResponseDelay(vehicleResponseDelay);
-    strat.setMaxAccel(maxAccel);
-
-    return strat;
+    if (strat != null) {
+      return strat;
+    }
+    synchronized(BasicAccStrategy.class) {
+      if (strat != null) {
+          return strat;
+      }
+      // Create ACC instance
+      BasicAccStrategyFactory.strat = new BasicAccStrategy(minStandoffDistance, exitDistanceFactor, filterPipeline);
+      strat.setDesiredTimeGap(desiredTimeGap);
+      strat.setVehicleResponseDelay(vehicleResponseDelay);
+      strat.setMaxAccel(maxAccel);
+      return strat;
+    }
 	}
 }

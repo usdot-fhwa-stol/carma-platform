@@ -126,3 +126,21 @@ max_speed_error: 100.0
 # Double: Maximum downtrack error between planned location and current location
 # Units: m
 max_downtrack_error: 100.0
+
+# Double: The factor to multiply by the desired ACC headway to determine when we should exit ACC
+acc_exit_distance_factor: 1.5
+
+# Double: The poportional term in the acc PID controller
+acc_Kp: 1.0
+
+# Double: The integral term in the acc PID controller
+acc_Ki: 0.0
+
+# Double: The derivative term in the acc PID controller
+acc_Kd: 0.0
+
+# Double: The dize of the deadband to apply to the PID controller
+acc_pid_deadband: 0.0
+
+# Integer: The number of samples to use in a moving average filter for the output of acc
+acc_number_of_averaging_samples: 1
