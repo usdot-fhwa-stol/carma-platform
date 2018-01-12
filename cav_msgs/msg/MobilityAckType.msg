@@ -6,7 +6,7 @@
 # Variable which can be used to store a specific agreement type value.
 uint8 type
 
-unit8 UNKNOWN = 0
+uint8 UNKNOWN = 0
 uint8 ACCEPT_WITH_PROPOSAL_COMING = 1
 uint8 ACCEPT_WITH_EXECUTE = 2
 uint8 EXECUTION_COMPLETE = 3
