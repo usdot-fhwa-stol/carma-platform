@@ -95,25 +95,32 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         return completed;
     }
 
-    @Override
-    public void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException {
+    /**
+     * Stores the beginning and target speed of the maneuver, to be used for longitudinal maneuvers only.
+     * Since maneuvers will generally be chained together during planning, this is the only way that a maneuver
+     * can know what speed the vehicle will have after completing its predecessor maneuver.
+     * @param startSpeed - the expected speed at the beginning of the maneuver, m/s
+     * @param targetSpeed - target speed at end of maneuver, m/s
+     */
+    public void setSpeeds(double startSpeed, double targetSpeed) {
         startSpeed_ = startSpeed;
         endSpeed_ = targetSpeed;
     }
 
-    @Override
+    /**
+     * Returns the specified starting speed for the maneuver.  To be used for longitudinal maneuvers only.
+     * @return m/s
+     */
     public double getStartSpeed() {
         return startSpeed_;
     }
 
-    @Override
+    /**
+     * Returns the specified target speed for the end of the maneuver.  To be used for longitudinal maneuvers only.
+     * @return m/s
+     */
     public double getTargetSpeed() {
         return endSpeed_;
-    }
-
-    @Override
-    public void setTargetLane(int targetLane) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Attempting to use setTargetLane on a longitudinal maneuver.");
     }
 
     /**
@@ -121,7 +128,6 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
      * up and slowing down (symmetrical).
      * @param limit - max (absolute value) allowed, m/s^2
      */
-    @Override
     public void setMaxAccel(double limit) {
         if (limit > 0.0) { //can't be equal to zero
             maxAccel_ = limit;
