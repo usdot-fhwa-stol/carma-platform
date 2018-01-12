@@ -7,9 +7,11 @@
 uint8 type
 
 # enumeration values for plan type:
+uint8       UNKNOWN = 0
 uint8       CHANGE_LANE_LEFT = 1
 uint8       CHANGE_LANE_RIGHT = 2
-uint8       FORM_PLATOON = 3
+uint8       JOIN_PLATOON = 3
+# the rest is not defined in J2735 specification
 uint8       SEARCHING_FOR_PLATOON = 4
 uint8       JOIN_PLATOON_REAR = 5
 uint8       DEPART_PLATOON = 6
