@@ -62,13 +62,6 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     
     public abstract boolean executeTimeStep() throws IllegalStateException;
 
-
-    public abstract void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException;
-
-
-    public abstract void setTargetLane(int targetLane) throws UnsupportedOperationException;
-
-
     @Override
     public double getStartDistance() {
         return startDist_;

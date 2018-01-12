@@ -43,37 +43,6 @@ public interface ISimpleManeuver extends IManeuver {
      * @throws IllegalStateException if required target quantity is not defined prior to this call
      */
     double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException;
-
-    /**
-     * Stores the beginning and target speed of the maneuver, to be used for longitudinal maneuvers only.
-     * Since maneuvers will generally be chained together during planning, this is the only way that a maneuver
-     * can know what speed the vehicle will have after completing its predecessor maneuver.
-     * @param startSpeed - the expected speed at the beginning of the maneuver, m/s
-     * @param targetSpeed - target speed at end of maneuver, m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
-     */
-    void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException;
-
-    /**
-     * Stores the target lane ID, to be used for lateral maneuvers only.
-     * @param targetLane - target lane number at end of maneuver
-     * @throws UnsupportedOperationException if called on a longitudinal maneuver object
-     */
-    void setTargetLane(int targetLane) throws UnsupportedOperationException;
-
-    /**
-     * Returns the specified starting speed for the maneuver.  To be used for longitudinal maneuvers only.
-     * @return m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
-     */
-    double getStartSpeed() throws UnsupportedOperationException;
-
-    /**
-     * Returns the specified target speed for the end of the maneuver.  To be used for longitudinal maneuvers only.
-     * @return m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
-     */
-    double getTargetSpeed() throws UnsupportedOperationException;
     
     /**
      * Return if the maneuver can be planned with vehicle lag constraint
@@ -84,12 +53,18 @@ public interface ISimpleManeuver extends IManeuver {
      * @throws UnsupportedOperationException if called on a lateral maneuver
      */
     boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException;
-    
+
     /**
-     * Specifies the maximum acceleration allowed in the maneuver. Note that this value will apply to both speeding
-     * up and slowing down (symmetrical).
-     * @param limit - max (absolute value) allowed, m/s^2
+     * Returns the starting distance of the maneuver
+     * @return double
      */
-    void setMaxAccel(double limit);
+    public double getStartDistance();
+
+
+    /**
+     * Returns the ending distance of the maneuver
+     * @return double
+     */
+    public double getEndDistance();
 }
 
