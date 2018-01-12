@@ -54,7 +54,7 @@ public abstract class LateralManeuver extends ManeuverBase {
         if (startTime_ == 0) {
             startTime_ = System.currentTimeMillis();
         }
-        //TODO
+        //TODO detemine if more is needed here
         commands_.setSteeringCommand(axleAngle_, lateralAccel_, yawRate_);
         return true;
     }
@@ -62,7 +62,6 @@ public abstract class LateralManeuver extends ManeuverBase {
     /**
      * Stores the target lane ID, to be used for lateral maneuvers only.
      * @param targetLane - target lane number at end of maneuver
-     * @throws UnsupportedOperationException if called on a longitudinal maneuver object
      */
     public void setTargetLane(int targetLane) {
         targetLane_ = targetLane;
