@@ -25,6 +25,8 @@ public abstract class LateralManeuver extends ManeuverBase {
 
     protected boolean completed = false;
     protected long startTime_ = 0;
+    protected double startSpeed_ = -1.0; // m/s
+    protected double endSpeed_ = -1.0; // m/s
     protected double maxAxleAngleRate = 0.0; 
     protected double maxAccel_ = 0.0;
     protected int targetLane_ = 0;
@@ -39,6 +41,8 @@ public abstract class LateralManeuver extends ManeuverBase {
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
             throws IllegalStateException {
         super.plan(inputs, commands, startDist);
+
+        double currentSpeed = inputs_.getTimeToPerformLaneChange();
         
     }
 

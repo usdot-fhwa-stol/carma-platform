@@ -57,4 +57,10 @@ public interface IManeuverInputs {
      * @return the index of the vehicles current lane
      */
     double getCurrentLane();
+
+    /**
+     * Gets the amount of time it will take to perform a lane change
+     * @return the time in seconds
+     */
+    double getTimeToPerformLaneChange();
 }
