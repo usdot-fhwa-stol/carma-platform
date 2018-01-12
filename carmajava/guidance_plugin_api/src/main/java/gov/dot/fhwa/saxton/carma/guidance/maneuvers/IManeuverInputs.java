@@ -51,4 +51,10 @@ public interface IManeuverInputs {
      * @return speed, m/s, {@link IAccStrategy.NO_FRONT_VEHICLE_SPEED} if no such vehicle
      */
     double getFrontVehicleSpeed();
+
+    /**
+     * Get current vehicle lane index
+     * @return the index of the vehicles current lane
+     */
+    double getCurrentLane();
 }
