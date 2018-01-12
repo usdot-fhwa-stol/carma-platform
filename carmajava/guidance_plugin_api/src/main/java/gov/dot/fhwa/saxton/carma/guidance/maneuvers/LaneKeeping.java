@@ -19,9 +19,10 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 /**
- * Base class for all lateral maneuvers.
+ * A lane keeping maneuver.
+ * Tries to keep the vehicle in its current lane
  */
-public abstract class LateralManeuver extends ManeuverBase {
+public abstract class LaneKeeping extends LateralManeuver {
 
     protected boolean completed = false;
     protected long startTime_ = 0;
@@ -31,15 +32,12 @@ public abstract class LateralManeuver extends ManeuverBase {
     protected double axleAngle_ = 0.0; // rad: Angle in radians to turn the wheels. Positive is left, Negative is right
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
     protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity
-
-    public LateralManeuver() {
-    }
+    protected double DEFAULT_AXEL_ANGLE = 0.0;
 
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
             throws IllegalStateException {
         super.plan(inputs, commands, startDist);
-        
     }
 
     @Override
@@ -49,40 +47,8 @@ public abstract class LateralManeuver extends ManeuverBase {
     }
 
     @Override
-    public boolean executeTimeStep() {
-        verifyLocation();
-
-        if (startTime_ == 0) {
-            startTime_ = System.currentTimeMillis();
-        }
-
-        //TODO Decide if more functionality or validation is needed here
-        axleAngle_ = getAxleAngleCmd();
-        commands_.setSteeringCommand(axleAngle_, lateralAccel_, yawRate_);
-        return true;
-    }
-
-    /**
-     * Returns the axle angle cmd to execute for the next timestep
-     */
-    protected abstract double getAxleAngleCmd();
-
-    /**
-     * Stores the target lane ID, to be used for lateral maneuvers only.
-     * @param targetLane - target lane number at end of maneuver
-     */
-    public void setTargetLane(int targetLane) {
-        targetLane_ = targetLane;
-    }
-
-    /**
-     * Sets the acceleration constraints for this maneuver 
-     *
-     * @param yawRate Max axel angle velocity (How fast the wheel can turn)
-     * @param lateralAccel Max acceleration which can be caused by a turn
-     */
-    public void setDynamicLimits(double yawRate, double lateralAccel) {
-        yawRate_ = yawRate;
-        lateralAccel_ = lateralAccel;
+    protected double getAxleAngleCmd() {
+        // TODO provide a real implementation of this
+        return DEFAULT_AXEL_ANGLE;
     }
 }
