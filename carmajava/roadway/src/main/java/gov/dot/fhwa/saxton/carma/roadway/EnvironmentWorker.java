@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
+import cav_msgs.RoadwayObstacle;
 import cav_msgs.RouteState;
 import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
@@ -126,7 +127,7 @@ public class EnvironmentWorker {
    */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
     List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
-    List<Obstacle> roadwayObstacles = new LinkedList<>();
+    List<RoadwayObstacle> roadwayObstacles = new LinkedList<>();
     Transform earthToOdom = roadwayMgr.getTransform(earthFrame, odomFrame, externalObjects.getHeader().getStamp());
     for (cav_msgs.ExternalObject obj: objects) {
       roadwayObstacles.add(buildObstacleFromMsg(obj, earthToOdom));
@@ -134,7 +135,7 @@ public class EnvironmentWorker {
     // publish roadwayObstacles as new Envrionment Message
   }
 
-  protected Obstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj, Transform earthToOdom) {
+  protected RoadwayObstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj, Transform earthToOdom) {
     //Get Id
     int id = obj.getId();  
     // Convert object to ECEF frame  
@@ -171,6 +172,7 @@ public class EnvironmentWorker {
     Vector3D size = new Vector3D(sizeX, sizeY, sizeZ);
 
     // Construct new roadway obstacle
+    RoadwayObstacle newObstacle = messageFactory.newFromType(RoadwayObstacle._TYPE);
     Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocityLinear, size, primaryLane);
     newObstacle.setSecondaryLanes(secondaryLanes);
     

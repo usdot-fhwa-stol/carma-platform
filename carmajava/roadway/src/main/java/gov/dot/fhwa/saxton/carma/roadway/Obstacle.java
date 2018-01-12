@@ -33,6 +33,8 @@ public class Obstacle {
   protected Vector3D size;
   protected Integer primaryLane;
   protected List<Integer> secondaryLanes;
+  protected ConnectedVehicleType connectedVehicleType;
+  protected byte[] bsmId = {}; // The temporary bsm id. This variable is only set if the obstacle is a connected vehicle
 
   /**
    * Constructor
@@ -118,6 +120,48 @@ public class Obstacle {
    */
   public List<Integer> getSecondaryLanes() {
     return secondaryLanes;
+  }
+
+
+  /**
+   * Sets the connected vehicle type
+   * @param type the connected vehicle type
+   */
+  public void setConnectedVehicleType(ConnectedVehicleType type) {
+    this.connectedVehicleType = type;
+  }
+
+  /**
+   * Gets the connected vehicle type
+   * @return the connected vehicle type
+   */
+  public ConnectedVehicleType getConnectedVehicleType() {
+   return connectedVehicleType;
+  }
+
+  /**
+   * Returns true if the bsm id has been set
+   * @return true if a valid bsm id has been set
+   */
+  public boolean hasBSMId() {
+    return bsmId.length == 4;
+  }
+
+  /**
+   * Sets the temporary bsm id of this vehicle
+   * @param the bsm id
+   */
+  public void setBSMId(byte[] bsmId) {
+    this.bsmId = bsmId;
+  }
+
+  /**
+   * Gets the temporary bsm id which corresponds to this vehicle
+   * Note: bsmId will be empty array if no id is available
+   * @return the bsm id
+   */
+  public byte[] getBSMId() {
+    return bsmId;
   }
 
   // /**

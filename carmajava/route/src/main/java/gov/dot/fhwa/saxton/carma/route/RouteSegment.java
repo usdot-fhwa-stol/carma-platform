@@ -21,7 +21,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
-import gov.dot.fhwa.saxton.carma.geometry.QuaternionUtils;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.QuaternionUtils;
 import org.ros.message.MessageFactory;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
