@@ -30,7 +30,7 @@ public interface ISimpleManeuver extends IManeuver {
      * @param startDist - distance from beginning of route at which this maneuver is to begin, m
      * @throws IllegalStateException if required target quantity is not defined prior to this call
      */
-    void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, UnsupportedOperationException;
+    void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException;
 
     /**
      * Plans the maneuver to a target end distance and makes it ready for execution
@@ -50,21 +50,7 @@ public interface ISimpleManeuver extends IManeuver {
      * @param startDist - distance from beginning of route at which this maneuver is to begin, m
      * @param endDist - the distance from the beginning of route at which this maneuver is to end, m
      * @return boolean
-     * @throws UnsupportedOperationException if called on a lateral maneuver
      */
-    boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException;
-
-    /**
-     * Returns the starting distance of the maneuver
-     * @return double
-     */
-    public double getStartDistance();
-
-
-    /**
-     * Returns the ending distance of the maneuver
-     * @return double
-     */
-    public double getEndDistance();
+    boolean canPlan(IManeuverInputs inputs, double startDist, double endDist);
 }
 

@@ -88,7 +88,7 @@ public class SteadySpeed extends LongitudinalManeuver {
 
 
     @Override
-    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException {
+    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) {
         return true;
     }
 }

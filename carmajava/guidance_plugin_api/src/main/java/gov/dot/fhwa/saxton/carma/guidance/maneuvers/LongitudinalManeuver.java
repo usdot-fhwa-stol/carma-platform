@@ -103,7 +103,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
      * @param targetSpeed - target speed at end of maneuver, m/s
      * @throws UnsupportedOperationException if called on a lateral maneuver object
      */
-    public void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException {
+    public void setSpeeds(double startSpeed, double targetSpeed) {
         startSpeed_ = startSpeed;
         endSpeed_ = targetSpeed;
     }
