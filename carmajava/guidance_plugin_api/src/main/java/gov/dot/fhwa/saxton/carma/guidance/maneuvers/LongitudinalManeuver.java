@@ -101,7 +101,6 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
      * can know what speed the vehicle will have after completing its predecessor maneuver.
      * @param startSpeed - the expected speed at the beginning of the maneuver, m/s
      * @param targetSpeed - target speed at end of maneuver, m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
      */
     public void setSpeeds(double startSpeed, double targetSpeed) {
         startSpeed_ = startSpeed;
@@ -111,7 +110,6 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     /**
      * Returns the specified starting speed for the maneuver.  To be used for longitudinal maneuvers only.
      * @return m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
      */
     public double getStartSpeed() {
         return startSpeed_;
@@ -120,7 +118,6 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     /**
      * Returns the specified target speed for the end of the maneuver.  To be used for longitudinal maneuvers only.
      * @return m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
      */
     public double getTargetSpeed() {
         return endSpeed_;

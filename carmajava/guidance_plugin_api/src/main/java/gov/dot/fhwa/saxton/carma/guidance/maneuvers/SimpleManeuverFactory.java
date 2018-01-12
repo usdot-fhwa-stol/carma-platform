@@ -18,7 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 public class SimpleManeuverFactory {
     
-    public ISimpleManeuver createManeuver(double start_speed, double end_speed) {
+    public LongitudinalManeuver createManeuver(double start_speed, double end_speed) {
         
         double speedEpsilon = SteadySpeed.SPEED_EPSILON;
         if(end_speed - start_speed > speedEpsilon) {
