@@ -1,6 +1,6 @@
 # Maneuver.msg
 #
-# Helper message for NewPlan.msg describes the details of a given type of maneuver,
+# Helper message for MobilityPlan.msg describes the details of a given type of maneuver,
 # specifically to be used in definition of a new plan for future coordinated movement.
 #
 
@@ -21,7 +21,7 @@ uint8       TURN_CORNER_RIGHT = 5
 
 # Bitflags indicating which participants in the plan are performing this maneuver
 # (possibly multiple vehicles are performing the same maneuver simultaneously).
-# Bit 0 (LSb) is plan originator, bit positions 1-31 represent index to NewPlan
+# Bit 0 (LSb) is plan originator, bit positions 1-31 represent index to MobilityPlan
 # participant_ids array.
 uint8[]      performers
 
