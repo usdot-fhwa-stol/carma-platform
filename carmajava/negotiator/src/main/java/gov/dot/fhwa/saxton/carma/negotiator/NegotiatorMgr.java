@@ -47,7 +47,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
 
   protected ConnectedNode connectedNode;
   protected boolean systemReady = false;
-  protected NewPlan lastNewPlanMsg = null;
+  protected MobilityPlan lastNewPlanMsg = null;
   protected SaxtonLogger log;
 
   // Topics
@@ -55,19 +55,13 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   protected Publisher<cav_msgs.MobilityAck> mobAckOutPub;
   protected Publisher<cav_msgs.MobilityGreeting> mobGreetOutPub;
   protected Publisher<cav_msgs.MobilityIntro> mobIntroOutPub;
-  protected Publisher<cav_msgs.MobilityNack> mobNackOutPub;
   protected Publisher<cav_msgs.MobilityPlan> mobPlanOutPub;
-  protected Publisher<cav_msgs.NewPlan> newPlanInPub;
-  protected Publisher<cav_msgs.PlanStatus> planStatusPub;
 
   // Subscribers
-  protected Subscriber<cav_msgs.NewPlan> newPlanOutSub;
   protected Subscriber<cav_msgs.MobilityAck> mobAckInSub;
   protected Subscriber<cav_msgs.MobilityGreeting> mobGreetInSub;
   protected Subscriber<cav_msgs.MobilityIntro> mobIntroInSub;
-  protected Subscriber<cav_msgs.MobilityNack> mobNackInSub;
   protected Subscriber<cav_msgs.MobilityPlan> mobPlanInSub;
-  protected Subscriber<cav_msgs.PlanStatus> planStatusSub;
   protected Subscriber<cav_msgs.SystemAlert> alertSub;
 
   @Override public GraphName getDefaultNodeName() {
@@ -82,19 +76,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     mobAckOutPub = connectedNode.newPublisher("mobility_ack_outbound", cav_msgs.MobilityAck._TYPE);
     mobGreetOutPub = connectedNode.newPublisher("mobility_greeting_outbound", cav_msgs.MobilityGreeting._TYPE);
     mobIntroOutPub = connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
-    mobNackOutPub = connectedNode.newPublisher("mobility_nack_outbound", cav_msgs.MobilityNack._TYPE);
     mobPlanOutPub = connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
-    newPlanInPub = connectedNode.newPublisher("new_plan_inbound", cav_msgs.NewPlan._TYPE);
-    planStatusPub = connectedNode.newPublisher("plan_status", cav_msgs.PlanStatus._TYPE);
-
-    // Subscribers
-    newPlanOutSub = connectedNode.newSubscriber("new_plan_outbound", cav_msgs.NewPlan._TYPE);
-    newPlanOutSub.addMessageListener(new MessageListener<cav_msgs.NewPlan>() {
-      @Override public void onNewMessage(cav_msgs.NewPlan message) {
-        log.info("V2V", "Negotiator received new PlanMessage");
-        lastNewPlanMsg = message;
-      }//onNewMessage
-    });//addMessageListener
 
     mobAckInSub = connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
     mobAckInSub.addMessageListener(new MessageListener<cav_msgs.MobilityAck>() {
@@ -117,24 +99,10 @@ public class NegotiatorMgr extends SaxtonBaseNode{
       }//onNewMessage
     });//addMessageListener
 
-    mobNackInSub = connectedNode.newSubscriber("mobility_nack_inbound", cav_msgs.MobilityNack._TYPE);
-    mobNackInSub.addMessageListener(new MessageListener<cav_msgs.MobilityNack>() {
-      @Override public void onNewMessage(cav_msgs.MobilityNack message) {
-        log.info("V2V", "Negotiator received new MobilityNack");
-      }//onNewMessage
-    });//addMessageListener
-
     mobPlanInSub = connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
     mobPlanInSub.addMessageListener(new MessageListener<cav_msgs.MobilityPlan>() {
       @Override public void onNewMessage(cav_msgs.MobilityPlan message) {
         log.info("V2V", "Negotiator received new MobilityPlan");
-      }//onNewMessage
-    });//addMessageListener
-
-    planStatusSub = connectedNode.newSubscriber("plan_progress", cav_msgs.PlanStatus._TYPE);
-    planStatusSub.addMessageListener(new MessageListener<cav_msgs.PlanStatus>() {
-      @Override public void onNewMessage(cav_msgs.PlanStatus message) {
-        log.info("V2V", "Negotiator received new PlanProgress");
       }//onNewMessage
     });//addMessageListener
 
@@ -158,10 +126,6 @@ public class NegotiatorMgr extends SaxtonBaseNode{
         if (systemReady) {
           if (lastNewPlanMsg != null) {
             MobilityIntro introMsg = mobIntroOutPub.newMessage();
-            introMsg.getHeader().setSenderId("Host Vehicle 1");
-            introMsg.getHeader().setPlanId((short)1);
-            introMsg.setPlanType(lastNewPlanMsg.getPlanType());
-            introMsg.getMyEntityType().setType(MobilityEntityType.VEHICLE);
             mobIntroOutPub.publish(introMsg);
           }
         }

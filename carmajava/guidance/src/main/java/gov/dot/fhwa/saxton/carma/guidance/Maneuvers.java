@@ -18,22 +18,16 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Guidance sub-component responsible for the execution of maneuvers and generation of maneuver plans
  */
 public class Maneuvers extends GuidanceComponent implements IStateChangeListener {
     
-    private IPublisher<NewPlan> newPlanPublisher;
     private ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber;
     private ISubscriber<Route> routeSubscriber;
     protected long sleepDurationMillis = 30000;
@@ -71,9 +65,6 @@ public class Maneuvers extends GuidanceComponent implements IStateChangeListener
                 log.info("Received Route:" + msg);
             }
         });
-
-        // Set up publishers
-        newPlanPublisher = pubSubService.getPublisherForTopic("new_plan", NewPlan._TYPE);
         
         currentState.set(GuidanceState.STARTUP);
     }
@@ -135,31 +126,7 @@ public class Maneuvers extends GuidanceComponent implements IStateChangeListener
     
     @Override public void timingLoop() {
         if (currentState.get() == GuidanceState.ENGAGED) {
-            NewPlan newPlan = newPlanPublisher.newMessage();
-            newPlan.setExpiration(node.getCurrentTime());
-            newPlan.getHeader().setChecksum((short) 0);
-            newPlan.getHeader().setPlanId(curPlanId++);
-            newPlan.getHeader().setSenderId("test-cav1");
-            newPlan.getHeader().setRecipientId("test-cav2");
-            newPlan.getPlanType().setType(PlanType.JOIN_PLATOON_REAR);
-
-            List<String> participantIds = new ArrayList<>();
-            participantIds.add("test-cav1");
-            participantIds.add("test-cav2");
-            newPlan.setParticipantIds(participantIds);
-
-            List<cav_msgs.Maneuver> maneuvers = new ArrayList<>();
-            Maneuver m = node.getTopicMessageFactory().newFromType(Maneuver._TYPE);
-            m.setLength(10);
-            m.setPerformers(2);
-            m.setStartRoadwayLaneId((byte) 0);
-            m.setStartRoadwayLink("link1");
-            m.setStartRoadwayOriginatorPosition(0);
-            m.setType((byte) 8);
-            maneuvers.add(m);
-            newPlan.setManeuvers(maneuvers);
-
-            newPlanPublisher.publish(newPlan);
+            
         }
 
         try {
