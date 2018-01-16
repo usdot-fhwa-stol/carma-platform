@@ -6,8 +6,8 @@
 # for identification of those who are interested.
 #
 
-# MsgCRC ::= OCTET STRING (SIZE(2)) -- created with the CRC-CCITT polynomial
-uint8[]  checksum
+# MobilityChecksum ::= INTEGER (0..65535)
+uint16  checksum
 
 # the standard header for all mobility messages
 cav_msgs/MobilityHeader  header
