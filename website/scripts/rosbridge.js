@@ -778,7 +778,7 @@ function checkGuidanceState() {
             //    break;
             case 3: //INACTIVE
                 enableGuidance();
-                if (guidance_engaged = true)
+                if (guidance_engaged)
                     setCAVButtonState('INACTIVE');
                 break;
             case 4: //ENGAGED
