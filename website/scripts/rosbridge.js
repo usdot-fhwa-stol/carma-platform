@@ -76,6 +76,7 @@ var host_instructions = '';
 var listenerPluginAvailability;
 var listenerSystemAlert;
 var isModalPopupShowing = false;
+var waitingForGuidanceStartup = false;
 
 // For Route Timer
 var routeTimer;
@@ -85,6 +86,14 @@ var meter_to_mph = 2.23694;
 var meter_to_mile = 0.000621371;
 var total_dist_next_speed_limit = 0;
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
+
+/*
+* Custom sleep used in enabling guidance
+*/
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 /*
 * Connection to ROS
@@ -577,7 +586,7 @@ function enableGuidance() {
 /*
  Engage and Disengage Guidance.
 */
-function engageGuidance() {
+async function engageGuidance() {
 
     //audio-fix needs to be on an actual button click event on the tablet.
     loadAudioElements();
@@ -608,6 +617,11 @@ function engageGuidance() {
 
         //Set based on returned status, regardless if succesful or not.
         guidance_engaged = Boolean(result.guidance_status);
+        
+        //this flag prevents looking at robot_active status while guidance first starts up and begins sending commands to the robot
+        waitingForGuidanceStartup = true;
+        await sleep(1000);
+        waitingForGuidanceStartup = false;
 
         //start the route timer
         startRouteTimer();
@@ -902,13 +916,17 @@ function checkRobotEnabled() {
         insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
         insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
 
-        //Update the button when Guidance is engaged.
-        if (message.robot_active == false) {
-            setCAVButtonState('INACTIVE');
-        }
-        else {
-            //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
-            setCAVButtonState('ENGAGED');
+        //if guidance is just starting up then we don't do anything
+        if (!waitingForGuidanceStartup) {
+            
+            //Update the button when Guidance is engaged.
+            if (message.robot_active == false) {
+                setCAVButtonState('INACTIVE');
+            }
+            else {
+                //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
+                setCAVButtonState('ENGAGED');
+            }
         }
     });
 }
