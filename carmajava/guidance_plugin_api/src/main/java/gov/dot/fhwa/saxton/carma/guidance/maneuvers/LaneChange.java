@@ -19,7 +19,7 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 
 /**
- * Base class for all lateral maneuvers.
+ * Lane change maneuver. Moves the vehicle from the current lane to the target lane
  */
 public abstract class LaneChange extends LateralManeuver {
 
