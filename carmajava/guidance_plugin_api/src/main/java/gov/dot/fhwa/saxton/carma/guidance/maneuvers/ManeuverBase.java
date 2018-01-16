@@ -25,8 +25,10 @@ import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
  */
 public abstract class ManeuverBase implements ISimpleManeuver {
 
-    protected double                            startDist_ = -1.0;
-    protected double                            endDist_ = -1.0;
+    protected double                            startDist_ = -1.0; // m
+    protected double                            endDist_ = -1.0;// m
+    protected double                            startSpeed_ = -1.0; // m/s
+    protected double                            endSpeed_ = -1.0; // m/s
     protected IManeuverInputs                   inputs_;
     protected IGuidanceCommands                 commands_;
     protected ILogger                           log_ = LoggerManager.getLogger();
@@ -69,6 +71,34 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     @Override
     public double getEndDistance() {
         return endDist_;
+    }
+
+    /**
+     * Stores the beginning and target speed of the maneuver.
+     * Since maneuvers will generally be chained together during planning, this is the only way that a maneuver
+     * can know what speed the vehicle will have after completing its predecessor maneuver.
+     * @param startSpeed - the expected speed at the beginning of the maneuver, m/s
+     * @param targetSpeed - target speed at end of maneuver, m/s
+     */
+    public void setSpeeds(double startSpeed, double targetSpeed) {
+        startSpeed_ = startSpeed;
+        endSpeed_ = targetSpeed;
+    }
+
+    /**
+     * Returns the specified starting speed for the maneuver.  To be used for longitudinal maneuvers only.
+     * @return m/s
+     */
+    public double getStartSpeed() {
+        return startSpeed_;
+    }
+
+    /**
+     * Returns the specified target speed for the end of the maneuver.  To be used for longitudinal maneuvers only.
+     * @return m/s
+     */
+    public double getTargetSpeed() {
+        return endSpeed_;
     }
 
 

@@ -29,7 +29,6 @@ public abstract class LateralManeuver extends ManeuverBase {
     protected double endSpeed_ = -1.0; // m/s
     protected double maxAxleAngleRate = 0.0; 
     protected double maxAccel_ = 0.0;
-    protected int targetLane_ = 0;
     protected double axleAngle_ = 0.0; // rad: Angle in radians to turn the wheels. Positive is left, Negative is right
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
     protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity
@@ -42,13 +41,21 @@ public abstract class LateralManeuver extends ManeuverBase {
             throws IllegalStateException {
         super.plan(inputs, commands, startDist);
 
-        double currentSpeed = inputs_.getTimeToPerformLaneChange();
+        //check that speeds have been defined
+        if (startSpeed_ < -0.5 || endSpeed_ < -0.5) {
+            throw new IllegalStateException(
+                    "Lateral maneuver plan attempted without previously defining the start/end speeds.");
+        }
         
     }
 
     @Override
     public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
             double endDist) throws IllegalStateException, ArithmeticException {
+        if (endDist <= startDist) {
+            log_.error("planToTargetDistance entered with startDist = " + startDist + ", endDist = " + endDist + ". Throwing exception.");
+            throw new ArithmeticException("Lateral maneuver being planned with startDist = " + startDist + ", endDist = " + endDist);
+        }
         return super.planToTargetDistance(inputs, commands, startDist, endDist);
     }
 
@@ -70,14 +77,6 @@ public abstract class LateralManeuver extends ManeuverBase {
      * Returns the axle angle cmd to execute for the next timestep
      */
     protected abstract double getAxleAngleCmd();
-
-    /**
-     * Stores the target lane ID, to be used for lateral maneuvers only.
-     * @param targetLane - target lane number at end of maneuver
-     */
-    public void setTargetLane(int targetLane) {
-        targetLane_ = targetLane;
-    }
 
     /**
      * Sets the acceleration constraints for this maneuver 

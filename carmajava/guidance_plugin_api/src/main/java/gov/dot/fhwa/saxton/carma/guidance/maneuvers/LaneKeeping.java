@@ -38,6 +38,7 @@ public abstract class LaneKeeping extends LateralManeuver {
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
             throws IllegalStateException {
         super.plan(inputs, commands, startDist);
+        throw new IllegalStateException("Cannot plan a lane keeping maneuver without specifying end distance");
     }
 
     @Override
