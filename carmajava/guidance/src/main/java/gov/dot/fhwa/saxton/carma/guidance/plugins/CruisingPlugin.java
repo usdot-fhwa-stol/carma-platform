@@ -171,7 +171,7 @@ public class CruisingPlugin extends AbstractPlugin {
     log.info(String.format("Trying to plan maneuver {start=%.2f,end=%.2f,startSpeed=%.2f,endSpeed=%.2f}", startDist, endDist, startSpeed, endSpeed));
     double maneuverEnd = startDist;
     double adjustedEndSpeed = startSpeed;
-    ISimpleManeuver maneuver = maneuverFactory.createManeuver(startSpeed, endSpeed);
+    LongitudinalManeuver maneuver = maneuverFactory.createManeuver(startSpeed, endSpeed);
     maneuver.setSpeeds(startSpeed, endSpeed);
     maneuver.setMaxAccel(maxAccel_);
     if(planner.canPlan(maneuver, startDist, endDist)) {
@@ -191,7 +191,7 @@ public class CruisingPlugin extends AbstractPlugin {
     
     // Insert a steady speed maneuver to fill whatever's left
     if(maneuverEnd < endDist) {
-        ISimpleManeuver steady = maneuverFactory.createManeuver(adjustedEndSpeed, adjustedEndSpeed);
+      LongitudinalManeuver steady = maneuverFactory.createManeuver(adjustedEndSpeed, adjustedEndSpeed);
         steady.setSpeeds(adjustedEndSpeed, adjustedEndSpeed);
         steady.setMaxAccel(maxAccel_);
         planner.planManeuver(steady, maneuverEnd);

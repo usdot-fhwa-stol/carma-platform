@@ -1,13 +1,13 @@
 # MobilityAgreementType.msg
 #
-# Enumeration values for the types of agreement or acknowledgement
+# Enumeration values for the types of agreement
 #
 
 # Variable which can be used to store a specific agreement type value.
 uint8 type
 
-uint8       ACCEPT = 1
-uint8       INTERESTED_MUST_POSTPONE = 2
-uint8       ACK_SESSION_VERIFICATION = 3
-uint8       REJECT_COUNTER_PROPOSAL_COMING = 4
-uint8       REJECT_TERMINATE_RELATIONSHIP = 255
+uint8       TENTATIVE = 0
+uint8       WILLING_TO_PARTICIPATE = 1
+uint8       UNABLE_TO_PARTICIPATE = 2
+uint8       ALREADY_ENGAGED = 3
+uint8       ADVISE_TO_ABORT_WITH_SAFETY_CONCERN = 4

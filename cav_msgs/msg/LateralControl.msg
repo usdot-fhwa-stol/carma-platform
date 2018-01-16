@@ -6,7 +6,7 @@
 # Angle in radians to turn the wheels. Positive is left, Negative is right
 float64 axle_angle
 
-# Max axel_angle accerleration
+# Max axel_angle velocity
 float64 max_axle_angle_rate
 
 # Max accerleration allowed to be caused by a turn

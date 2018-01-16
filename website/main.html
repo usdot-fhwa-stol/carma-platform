@@ -19,17 +19,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <script src="scripts/eventemitter2.min.js"></script>
-    <script src="scripts/roslib.js"></script>
+    <script src="thirdparty/ros/eventemitter2.min.js"></script>
+    <script src="thirdparty/ros/roslib.js"></script>
     <script src="scripts/control.js" defer></script>
     <script src="scripts/rosbridge.js" defer></script>
     <script src="scripts/googlemap.js"></script>
     <script async defer
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMzV4biqVN0pf3l1lYVWQ4KSWLyoG6OV0&callback=initMap">
     </script>
-    <link rel="stylesheet" type="text/css" href="css/styles.css" />
-    <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css" />
-    <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome-animation.min.css"/>
+    <link rel="stylesheet" type="text/css" href="styles/styles.css" />
+    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome-animation.min.css"/>
     <!--
     Setup:
     1) Move files command: sudo cp -R -r /home/mfromm/catkin_ws/src/CarmaPlatform/website/* /var/www/html/
@@ -50,9 +50,9 @@
     </div>
     <div class="tabindicators">
         <button id="btnACCPrimed" disabled><img id="imgACCPrimed" src="images/acc_primed.png" style="width: 40px; height: 40px;" /></button>
-        <button id="btnPinPoint" disabled><i id="imgPinPoint" class="fa fa-map-pin fa-2x" aria-hidden="true"></i></button>
-        <button id="btnWIFI" class="" onclick="alert('To be implemented');" disabled><i class="fa fa-wifi fa-2x" aria-hidden="true" style="color:gray;"></i></button>
-        <button id="btnConnected" class="" onclick="alert('To be implemented');" disabled><i class="fa fa-handshake-o fa-2x" aria-hidden="true" style="color:gray;"></i></button>
+        <button id="btnPinPoint" disabled ><i id="imgPinPoint" class="fa fa-map-pin" aria-hidden="true" style="font-size: 38px;"></i></button>
+        <button id="btnWIFI" disabled onclick="alert('To be implemented');" ><i class="fa fa-wifi" aria-hidden="true" style="color:gray; font-size: 38px;"></i></button>
+        <button id="btnConnected" disabled onclick="alert('To be implemented');" ><i class="fa fa-handshake-o" aria-hidden="true" style="color:gray; font-size: 35px;"></i></button>
     </div>
     <div class="tabheader">
         <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>

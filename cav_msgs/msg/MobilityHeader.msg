@@ -5,13 +5,13 @@
 #
 
 # sender's static GUID (represents that vehicle throughout the current relationship)
-string      sender_id
+uint8[]      sender_id
 
 # intended recipient's static GUID (constant throughout current relationship)
-string      recipient_id
+uint8[]      recipient_id
 
 # a random value that identifies this particular plan for future reference
-uint16      plan_id
+uint8[]      plan_id
 
-# a simple 2s complement checksum of all fields in the message except the checksum itself
-uint16      checksum
+# the date and time when this message is created
+cav_msgs/DateTime      timestamp
