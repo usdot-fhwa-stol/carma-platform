@@ -22,7 +22,9 @@ import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
+import org.ros.rosjava_geometry.Quaternion;
+import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -158,5 +160,61 @@ public class CartesianObjectTest {
     assertTrue(new Point(2.5, 1.5, 7.0, 6.0, 4.0).almostEquals(obj.getCentroidOfBounds(), 0.00000001));
   }
 
+  /**
+   * Test bounding box transform
+   * @throws Exception
+   */
+  @Test
+  public void testTransform() {
+
+    // Test transform with no rotation
+    List<Point3D> points = new LinkedList<>();
+    points.add(new Point3D(-1, -1, -1));
+    points.add(new Point3D(1, -1, -1));
+    points.add(new Point3D(1, 1, -1));
+    points.add(new Point3D(-1, 1, -1));
+    points.add(new Point3D(-1, -1, 1));
+    points.add(new Point3D(1, -1, 1));
+    points.add(new Point3D(1, 1, 1));
+    points.add(new Point3D(-1, 1, 1));
+    
+    CartesianObject cartObj = new CartesianObject(points);
+
+    Transform frameToObj = new Transform(new Vector3(2, 2, 0), Quaternion.identity());
+
+    CartesianObject resultObj = cartObj.transform(frameToObj);
+    double[][] bounds = resultObj.getBounds();
+    assertEquals(bounds[0][CartesianObject.MIN_BOUND_IDX], 1.0, 0.0000001);
+    assertEquals(bounds[1][CartesianObject.MIN_BOUND_IDX], 1.0, 0.0000001);
+    assertEquals(bounds[2][CartesianObject.MIN_BOUND_IDX], -1.0, 0.0000001);
+
+    assertEquals(bounds[0][CartesianObject.MAX_BOUND_IDX], 3.0, 0.0000001);
+    assertEquals(bounds[1][CartesianObject.MAX_BOUND_IDX], 3.0, 0.0000001);
+    assertEquals(bounds[2][CartesianObject.MAX_BOUND_IDX], 1.0, 0.0000001);
+
+    points = new LinkedList<>();
+    points.add(new Point3D(-1, -1, -1));
+    points.add(new Point3D(1, -1, -1));
+    points.add(new Point3D(1, 1, -1));
+    points.add(new Point3D(-1, 1, -1));
+    points.add(new Point3D(-1, -1, 1));
+    points.add(new Point3D(1, -1, 1));
+    points.add(new Point3D(1, 1, 1));
+    points.add(new Point3D(-1, 1, 1));
+
+    // Test transform with 90 deg rotation around Z axis
+    frameToObj = new Transform(new Vector3(2, 2, 0), Quaternion.fromAxisAngle(new Vector3(0, 0, 1), Math.toRadians(90)));
+
+    resultObj = cartObj.transform(frameToObj);
+    bounds = resultObj.getBounds();
+    assertEquals(bounds[0][CartesianObject.MIN_BOUND_IDX], 1.0, 0.0000001);
+    assertEquals(bounds[1][CartesianObject.MIN_BOUND_IDX], 1.0, 0.0000001);
+    assertEquals(bounds[2][CartesianObject.MIN_BOUND_IDX], -1.0, 0.0000001);
+
+
+    assertEquals(bounds[1][CartesianObject.MAX_BOUND_IDX], 3.0, 0.0000001);
+    assertEquals(bounds[1][CartesianObject.MAX_BOUND_IDX], 3.0, 0.0000001);
+    assertEquals(bounds[2][CartesianObject.MAX_BOUND_IDX], 1.0, 0.0000001);
+  }
 
 }

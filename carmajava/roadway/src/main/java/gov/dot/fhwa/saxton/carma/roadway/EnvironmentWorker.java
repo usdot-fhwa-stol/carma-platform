@@ -213,7 +213,7 @@ public class EnvironmentWorker {
     double[][] bounds = cartObjInSegment.getBounds();
     byte[]  secondaryLanes = determineSecondaryLanes(bounds[0][1], bounds[1][1], primaryLane, bestSegment);
     
-    // Convert AABB to size
+    // Convert AABB to size TODO DOOO THISS FIX!!!
     double sizeX = (bounds[1][0] - bounds[0][0]) / 2.0;
     double sizeY = (bounds[1][1] - bounds[0][0]) / 2.0;
     double sizeZ = (bounds[1][1] - bounds[0][0]) / 2.0;
@@ -293,44 +293,6 @@ public class EnvironmentWorker {
       double remainingHostSegDist = activeRoute.getSegments().get(hostSegmentIndex).length() - hostSegDowntrack;
       return hostDowntrack + remainingHostSegDist + intermediateDist + objSegDowntrack; 
     }
-  }
-
-  /**
-   * Returns the Axis-Aligned Bounding Box which surrounds the provided object 
-   * 
-   * @param obj The object to find the AABB of
-   * @param frameToObj The transform from the frame which the AABB corresponds to and the object
-   * 
-   * @return a 2 element Vector3D array of which the first element is the min vector and the second element is the max vector
-   */
-  protected Vector3D[] getAABB(cav_msgs.ExternalObject obj, Transform frameToObj) {
-    geometry_msgs.Vector3 size = obj.getSize();
-    // bounding box conversion based off http://dev.theomader.com/transform-bounding-boxes/
-    double[][] rotMat = QuaternionUtils.quaternionToMat(frameToObj.getRotationAndScale());
-    Vector3D col1 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
-    Vector3D col2 = new Vector3D(rotMat[0][1], rotMat[1][1], rotMat[2][1]);
-    Vector3D col3 = new Vector3D(rotMat[0][2], rotMat[1][2], rotMat[2][2]);
-
-    Vector xa = col1.scalarMultiply(-size.getX());
-    Vector xb = col1.scalarMultiply(size.getX());
- 
-    Vector ya = col2.scalarMultiply(-size.getY());
-    Vector yb = col2.scalarMultiply(size.getY());
- 
-    Vector za = col3.scalarMultiply(-size.getZ());
-    Vector zb = col3.scalarMultiply(size.getZ());
- 
-    Vector3D translation = Vector3D.fromVector(frameToObj.getTranslation());
-
-    // Could reduce the number of calculations here since only y values are needed
-    Vector minBounds = Vector.min(xa, xb).add(Vector3D.min(ya, yb)).add(Vector3D.min(za, zb)).add(translation);
-    Vector maxBounds = Vector.max(xa, xb).add(Vector3D.max(ya, yb)).add(Vector3D.max(za, zb)).add(translation);
-
-    Vector3D[] bounds = new Vector3D[] {
-      new Vector3D(minBounds.getDim(0), minBounds.getDim(1), minBounds.getDim(2)),
-      new Vector3D(maxBounds.getDim(0), maxBounds.getDim(1), maxBounds.getDim(2))
-    };
-    return bounds;
   }
 
   /**

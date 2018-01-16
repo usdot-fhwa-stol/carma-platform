@@ -28,8 +28,8 @@ import org.ros.rosjava_geometry.Vector3;
  */
 public class CartesianObject implements CartesianElement {
 
-  protected final int MIN_BOUND_IDX = 0;
-  protected final int MAX_BOUND_IDX = 1;
+  public static final int MIN_BOUND_IDX = 0;
+  public static final int MAX_BOUND_IDX = 1;
   protected double[][] bounds; // 2 cols as every dim has a min and max value
   protected Point centroidOfBounds;
   protected Point centroidOfCloud;

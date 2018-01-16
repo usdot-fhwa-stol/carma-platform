@@ -95,44 +95,4 @@ public class EnvironmentWorkerTest {
     envWkr.handleSystemAlertMsg(alertMsg);
     assertTrue(roadwayMgr.isShutdown());
   }
-
-  /**
-   * Test bounding box conversion
-   * @throws Exception
-   */
-  @Test
-  public void testGetAABB() {
-
-    // Test transform with no rotation
-    MockRoadwayManager roadwayMgr = new MockRoadwayManager();
-    EnvironmentWorker envWkr = new EnvironmentWorker(roadwayMgr, log, "earth", "map", "odom",
-      "base_link", "pinpoint", "pinpoint", 200, 100);
-    ExternalObject obj = messageFactory.newFromType(ExternalObject._TYPE);
-    obj.getSize().setX(1);
-    obj.getSize().setY(1);
-    obj.getSize().setZ(0);
-    Transform frameToObj = new Transform(new Vector3(2, 2, 0), Quaternion.identity());
-
-    Vector3D[] bounds = envWkr.getAABB(obj, frameToObj);
-    assertEquals(bounds[0].getX(), 1.0, 0.0000001);
-    assertEquals(bounds[0].getY(), 1.0, 0.0000001);
-    assertEquals(bounds[0].getZ(), 0.0, 0.0000001);
-
-    assertEquals(bounds[1].getX(), 3.0, 0.0000001);
-    assertEquals(bounds[1].getY(), 3.0, 0.0000001);
-    assertEquals(bounds[1].getZ(), 0.0, 0.0000001);
-
-    // Test transform with 90 deg rotation around Z axis
-    frameToObj = new Transform(new Vector3(2, 2, 0), Quaternion.fromAxisAngle(new Vector3(0, 0, 1), 90));
-
-    bounds = envWkr.getAABB(obj, frameToObj);
-    assertEquals(bounds[0].getX(), 1.0, 0.0000001);
-    assertEquals(bounds[0].getY(), 1.0, 0.0000001);
-    assertEquals(bounds[0].getZ(), 0.0, 0.0000001);
-
-    assertEquals(bounds[1].getX(), 3.0, 0.0000001);
-    assertEquals(bounds[1].getY(), 3.0, 0.0000001);
-    assertEquals(bounds[1].getZ(), 0.0, 0.0000001);
-
-  }
 }
