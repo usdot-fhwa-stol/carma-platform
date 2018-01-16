@@ -133,6 +133,10 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         	
         	@Override
         	public void onNewMessage(cav_msgs.SystemAlert msg) {
+        	    if (msg == null) {
+        	        log_.warn("SHUTDOWN", "InterfaceMgr received a NULL system alert. Ignoring.");
+        	        return;
+                }
         		try {
         		
 	        		//if the alert is a FATAL or SHUTDOWN, then proceed to shut down this node
