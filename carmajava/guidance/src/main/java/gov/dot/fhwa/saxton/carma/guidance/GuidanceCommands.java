@@ -23,6 +23,9 @@ import cav_srvs.GetDriversWithCapabilitiesResponse;
 import cav_srvs.SetEnableRobotic;
 import cav_srvs.SetEnableRoboticRequest;
 import cav_srvs.SetEnableRoboticResponse;
+import cav_srvs.SetLights;
+import cav_srvs.SetLightsRequest;
+import cav_srvs.SetLightsResponse;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
@@ -46,6 +49,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
     private IPublisher<cav_msgs.LateralControl> lateralControlPublisher;
+    private IService<SetLightsRequest, SetLightsResponse> setLightsService;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private AtomicDouble steeringCommand = new AtomicDouble(0.0);
@@ -57,6 +61,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
     private static final String LATERAL_CONTROL_CAPABILITY =  "control/cmd_lateral";
+    private static final String LIGHT_CONTROL_CAPABILITY =  "control/set_lights";
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
 
@@ -150,11 +155,11 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         // Repeat the above process for lateral control drivers
         GetDriversWithCapabilitiesRequest lateralReq = driverCapabilityService.newMessage();
         List<String> lateralCapabilities = new ArrayList<>();
-        reqdCapabilities.add(LATERAL_CONTROL_CAPABILITY);
-        req.setCapabilities(reqdCapabilities);
+        lateralCapabilities.add(LATERAL_CONTROL_CAPABILITY);
+        lateralReq.setCapabilities(lateralCapabilities);
         final GetDriversWithCapabilitiesResponse[] lateralDrivers = new GetDriversWithCapabilitiesResponse[1];
         lateralDrivers[0] = null;
-        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+        driverCapabilityService.callSync(lateralReq, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
             @Override
             public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
                 log.debug("Received GetDriversWithCapabilitiesResponse");
@@ -167,7 +172,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
             @Override
             public void onFailure(Exception e) {
-                exceptionHandler.handleException("InterfaceManager failed to return a control/cmd_speed capable driver!!!", e);
+                exceptionHandler.handleException("InterfaceManager failed to return a control/cmd_lateral capable driver!!!", e);
             }
         });
         String lateralControlTopic = null;
