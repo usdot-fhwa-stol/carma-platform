@@ -16,7 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
+import java.util.LinkedList;
 import java.util.List;
+import org.ros.rosjava_geometry.Transform;
+
+import org.ros.rosjava_geometry.Vector3;
 
 /**
  * An object in n-dimensional cartesian space defined by a point cloud.
@@ -41,10 +45,7 @@ public class CartesianObject implements CartesianElement {
   public CartesianObject(List<? extends Point> pointCloud) throws IllegalArgumentException {
     this.validateInput(pointCloud);
     this.numDimensions = pointCloud.get(0).getNumDimensions();
-    this.calculateBounds(pointCloud);
-    this.calculateCentroidOfBounds();
     this.pointCloud = pointCloud;
-    this.calculateCentroidOfCloud();
   }
 
   /**
@@ -151,6 +152,9 @@ public class CartesianObject implements CartesianElement {
    * @return A 2d array where the rows are the dimension and the columns are the min/max values
    */
   public double[][] getBounds() {
+    if (bounds == null) {
+      calculateBounds(pointCloud);
+    }
     return bounds;
   }
 
@@ -159,6 +163,9 @@ public class CartesianObject implements CartesianElement {
    * @return the bounds centroid
    */
   public Point getCentroidOfBounds() {
+    if (centroidOfBounds == null) {
+      calculateCentroidOfBounds();
+    }
     return centroidOfBounds;
   }
 
@@ -167,7 +174,31 @@ public class CartesianObject implements CartesianElement {
    * @return the point cloud centroid
    */
   public Point getCentroidOfCloud() {
+    if (centroidOfCloud == null) {
+      calculateCentroidOfCloud();
+    }
     return centroidOfCloud;
+  }
+
+  /**
+   * Transforms this object into a new frame by applying the provided transform to all points
+   * This transform only works on 3D objects
+   * 
+   * @param transform The transform to apply
+   * 
+   * @return a new CartesianObject with the transform applied
+   */
+  public CartesianObject transform(Transform transform) throws IllegalArgumentException {
+    if (numDimensions != 3) {
+      throw new IllegalArgumentException("Cannot transform a non 3D object");
+    }
+    List<Point3D> newPoints = new LinkedList<>();
+    for (Point p: pointCloud) {
+      Vector3 vec = transform.apply(new Vector3(p.getDim(0), p.getDim(1), p.getDim(2)));
+      newPoints.add(new Point3D(vec.getX(), vec.getY(), vec.getZ()));
+    }
+
+    return new CartesianObject(newPoints);
   }
 
   @Override public int getNumDimensions() {

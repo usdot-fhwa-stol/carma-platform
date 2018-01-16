@@ -21,8 +21,10 @@ import cav_msgs.RouteState;
 import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.CartesianObject;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.QuaternionUtils;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
@@ -195,17 +197,30 @@ public class EnvironmentWorker {
       primaryLane = expectedLane;
     }
     // Determine secondary lanes
-    Vector3D[] bounds = getAABB(obj, objInSegment);
-    byte[]  secondaryLanes = determineSecondaryLanes(bounds[0], bounds[1], primaryLane, bestSegment);
+    List<Point3D> objPoints = new LinkedList<>();
+    geometry_msgs.Vector3 size = obj.getSize();
+    objPoints.add(new Point3D(size.getX(), size.getY(), size.getZ()));
+    objPoints.add(new Point3D(size.getX(), size.getY(),-size.getZ()));
+    objPoints.add(new Point3D(size.getX(), -size.getY(), size.getZ()));
+    objPoints.add(new Point3D(size.getX(), -size.getY(), -size.getZ()));
+    objPoints.add(new Point3D(-size.getX(), size.getY(), size.getZ()));
+    objPoints.add(new Point3D(-size.getX(), size.getY(), -size.getZ()));
+    objPoints.add(new Point3D(-size.getX(), -size.getY(), size.getZ()));
+    objPoints.add(new Point3D(-size.getX(), -size.getY(), -size.getZ()));
+
+    CartesianObject cartObj = new CartesianObject(objPoints);
+    CartesianObject cartObjInSegment = cartObj.transform(objInSegment);
+    double[][] bounds = cartObjInSegment.getBounds();
+    byte[]  secondaryLanes = determineSecondaryLanes(bounds[0][1], bounds[1][1], primaryLane, bestSegment);
     
     // Convert AABB to size
-    double sizeX = (bounds[1].getX() - bounds[0].getX()) / 2.0;
-    double sizeY = (bounds[1].getY() - bounds[0].getY()) / 2.0;
-    double sizeZ = (bounds[1].getZ() - bounds[0].getZ()) / 2.0;
-    geometry_msgs.Vector3 size = messageFactory.newFromType(geometry_msgs.Vector3._TYPE);
-    size.setX(sizeX);
-    size.setY(sizeY);
-    size.setZ(sizeZ);
+    double sizeX = (bounds[1][0] - bounds[0][0]) / 2.0;
+    double sizeY = (bounds[1][1] - bounds[0][0]) / 2.0;
+    double sizeZ = (bounds[1][1] - bounds[0][0]) / 2.0;
+    geometry_msgs.Vector3 sizeMsg = messageFactory.newFromType(geometry_msgs.Vector3._TYPE);
+    sizeMsg.setX(sizeX);
+    sizeMsg.setY(sizeY);
+    sizeMsg.setZ(sizeZ);
 
     // Construct new roadway obstacle
 
@@ -233,7 +248,7 @@ public class EnvironmentWorker {
     newObj.getPose().getPose().setOrientation(Quaternion.identity().toQuaternionMessage(newObj.getPose().getPose().getOrientation()));
    
     newObj.setRelativeLane(obj.getRelativeLane());
-    newObj.setSize(size);
+    newObj.setSize(sizeMsg);
     
     newObj.getVelocity().setCovariance(obj.getVelocity().getCovariance());
     newObj.getVelocity().getTwist().setLinear(velocityLinear.toVector3Message(newObj.getVelocity().getTwist().getLinear()));
@@ -293,26 +308,27 @@ public class EnvironmentWorker {
     // bounding box conversion based off http://dev.theomader.com/transform-bounding-boxes/
     double[][] rotMat = QuaternionUtils.quaternionToMat(frameToObj.getRotationAndScale());
     Vector3D col1 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
-    Vector3D col2 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
-    Vector3D col3 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
+    Vector3D col2 = new Vector3D(rotMat[0][1], rotMat[1][1], rotMat[2][1]);
+    Vector3D col3 = new Vector3D(rotMat[0][2], rotMat[1][2], rotMat[2][2]);
 
-    Vector3D xa = (Vector3D) col1.scalarMultiply(-size.getX());
-    Vector3D xb = (Vector3D) col1.scalarMultiply(size.getX());
+    Vector xa = col1.scalarMultiply(-size.getX());
+    Vector xb = col1.scalarMultiply(size.getX());
  
-    Vector3D ya = (Vector3D) col2.scalarMultiply(-size.getY());
-    Vector3D yb = (Vector3D) col2.scalarMultiply(size.getY());
+    Vector ya = col2.scalarMultiply(-size.getY());
+    Vector yb = col2.scalarMultiply(size.getY());
  
-    Vector3D za = (Vector3D) col3.scalarMultiply(-size.getZ());
-    Vector3D zb = (Vector3D) col3.scalarMultiply(size.getZ());
+    Vector za = col3.scalarMultiply(-size.getZ());
+    Vector zb = col3.scalarMultiply(size.getZ());
  
     Vector3D translation = Vector3D.fromVector(frameToObj.getTranslation());
 
     // Could reduce the number of calculations here since only y values are needed
-    Vector3D minBounds = (Vector3D) Vector3D.min(xa, xb).add(Vector3D.min(ya, yb)).add(Vector3D.min(za, zb)).add(translation);
-    Vector3D maxBounds = (Vector3D) Vector3D.max(xa, xb).add(Vector3D.max(ya, yb)).add(Vector3D.max(za, zb)).add(translation);
+    Vector minBounds = Vector.min(xa, xb).add(Vector3D.min(ya, yb)).add(Vector3D.min(za, zb)).add(translation);
+    Vector maxBounds = Vector.max(xa, xb).add(Vector3D.max(ya, yb)).add(Vector3D.max(za, zb)).add(translation);
 
     Vector3D[] bounds = new Vector3D[] {
-      minBounds, maxBounds
+      new Vector3D(minBounds.getDim(0), minBounds.getDim(1), minBounds.getDim(2)),
+      new Vector3D(maxBounds.getDim(0), maxBounds.getDim(1), maxBounds.getDim(2))
     };
     return bounds;
   }
@@ -321,16 +337,16 @@ public class EnvironmentWorker {
    * Returns a list of lanes which are intersected by the provided bounds on the current segment
    * The returned list does not include the provided primary lane
    * 
-   * @param minBounds the minimum bounds (minX, minY, minZ)
-   * @param maxBounds the maximum bounds (maxX, maxY, maxZ)
+   * @param minY the minimum y bound in segment frame
+   * @param maxY the maximum y bound in segment frame
    * @param primaryLane the lane index which will not be included
    * @param seg The route segment which defines the number of lanes
    * 
    * @return A byte array of lane indices
    */
-  protected byte[] determineSecondaryLanes(Vector3D minBounds, Vector3D maxBounds, int primaryLane, RouteSegment seg) {
-    int minLane = seg.determinePrimaryLane(minBounds.getY());
-    int maxLane = seg.determinePrimaryLane(maxBounds.getY());
+  protected byte[] determineSecondaryLanes(double minY, double maxY, int primaryLane, RouteSegment seg) {
+    int minLane = seg.determinePrimaryLane(minY);
+    int maxLane = seg.determinePrimaryLane(maxY);
 
     List<Byte> secondaryLanes = new LinkedList<>();
     for (int i = minLane; i <= maxLane; i++) {
