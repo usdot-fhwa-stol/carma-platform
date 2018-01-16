@@ -141,7 +141,7 @@ public class EnvironmentWorker {
   /**
    * Helper function constructs a RoadwayObstacle from an ExternalObject 
    * 
-   * @param obj The external object to convert (Should be degined relative to odom frame)
+   * @param obj The external object to convert (Should be defined relative to odom frame)
    * @param earthToOdom The corresponding transform from the earth to the odom frame
    * 
    * @return A fully constructed RoadwayObstacle object
@@ -238,7 +238,7 @@ public class EnvironmentWorker {
   /**
    * Calculates the downtrack value of an object based on its segment downtrack
    * 
-   * @param objSegmentIndex The idex of this objects current segment in the route
+   * @param objSegmentIndex The index of this objects current segment in the route
    * @param hostSegmentIndex the index of the host vehicle's current segment in the route
    * @param objSegDowntrack the downtrack of the object along its current segment
    * @param hostSegmentDowntrack the downtrack of the host vehicle along its current segment
