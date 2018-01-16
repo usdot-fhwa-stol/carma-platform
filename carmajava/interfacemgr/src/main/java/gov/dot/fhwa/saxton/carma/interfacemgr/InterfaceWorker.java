@@ -111,6 +111,13 @@ public class InterfaceWorker {
 
                     //reset the wait timer
                     startedWaiting_ = System.currentTimeMillis();
+
+                //else if it is a position driver in a degraded state, allow it
+                }else if(newDriver.getState() == DriverState.DEGRADED  &&  newDriver.isPosition()) {
+                    drivers_.add(newDriver);
+                    mgr_.bindWithDriver(name);
+                    positionReady_ = true;
+                    startedWaiting_ = System.currentTimeMillis();
                 }
 
                 log_.info("STARTUP", "InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
