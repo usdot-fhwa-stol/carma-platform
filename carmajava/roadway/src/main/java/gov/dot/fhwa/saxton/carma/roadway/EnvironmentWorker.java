@@ -178,6 +178,23 @@ public class EnvironmentWorker {
 
     // Calculate obj lanes
     int primaryLane = bestSegment.determinePrimaryLane(crosstrackDistance);
+    // If the relative lane field is defined use that instead of calculated lane
+    if ((short) (obj.getPresenceVector() & cav_msgs.ExternalObject.RELATIVE_LANE_PRESENCE_VECTOR) != 0) {
+      int expectedLane = primaryLane;
+      switch(obj.getRelativeLane()) {
+        case cav_msgs.ExternalObject.HOST_LANE:
+          expectedLane = routeState.getLaneIndex();
+          break;
+        case cav_msgs.ExternalObject.RIGHT_LANE:
+          expectedLane = routeState.getLaneIndex() - 1;
+          break;
+        case cav_msgs.ExternalObject.LEFT_LANE:
+          expectedLane = routeState.getLaneIndex() + 1;
+          break;
+      }
+      primaryLane = expectedLane;
+    }
+    // Determine secondary lanes
     Vector3D[] bounds = getAABB(obj, objInSegment);
     byte[]  secondaryLanes = determineSecondaryLanes(bounds[0], bounds[1], primaryLane, bestSegment);
     

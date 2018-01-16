@@ -59,7 +59,7 @@
   <!-- JVM Debug arguments -->
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
   <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_environment_mgr" default="false" doc="Set true to enable debugging on the Environment Manager node"/>
+  <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
   <arg name="debug_transform_svr"   default="false" doc="Set true to enable debugging on the Transform Server node"/>
   <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
   <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
@@ -231,13 +231,13 @@
     <!-- Roadway Package -->
     <group ns="$(arg RD_NS)">
 
-      <!-- Environment Manager Node -->
-      <node pkg="carma" type="roadway" name="environment_manager"
-            args="gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager">
+      <!-- Roadway Manager Node -->
+      <node pkg="carma" type="roadway" name="roadway_manager"
+            args="gov.dot.fhwa.saxton.carma.roadway.RoadwayManager">
 
-        <env if="$(arg debug_environment_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <env if="$(arg debug_roadway_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-        <rosparam command="load" file="$(arg PARAM_DIR)/EnvironmentManagerParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/RoadwayManagerParams.yaml"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>

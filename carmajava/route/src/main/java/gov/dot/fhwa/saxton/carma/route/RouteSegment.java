@@ -22,6 +22,7 @@ import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.QuaternionUtils;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
 import org.ros.message.MessageFactory;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
@@ -41,7 +42,7 @@ public class RouteSegment {
   final protected Transform ecefToUptrackWP;
 
   /**
-   * Constructor intializes this segment with the given waypoints.
+   * Constructor initializes this segment with the given waypoints.
    * @param uptrackWP The uptrack waypoint for the segment to be built.
    * @param downtrackWP The downtrack waypoint for the segment to be built.
    */
@@ -158,7 +159,7 @@ public class RouteSegment {
    * Gets the transform between an ECEF frame and a FRD frame located on the uptrack waypoint of this segment
    * X-Axis: Along segment
    * Y-Axis: Right of segment
-   * Z-Axis: Into ground (not nessisarily toward earch center if there is a change in elevation)
+   * Z-Axis: Into ground (not necessarily toward earth center if there is a change in elevation)
    */
   public Transform getECEFToSegmentTransform() {
     return this.ecefToUptrackWP;
@@ -168,19 +169,24 @@ public class RouteSegment {
    * Helper function which calculates a FRD frame located on the uptrack waypoint of a segment.
    * X-Axis: Along segment
    * Y-Axis: Right of segment
-   * Z-Axis: Into ground (not nessisarily toward earch center if there is a change in elevation)
+   * Z-Axis: Into ground (not necessarily toward earth center if there is a change in elevation)
    */
   private Transform getSegmentAllignedFRDFrame() {
     Vector3D earthToUptrack = new Vector3D(this.getUptrackWaypoint().getECEFPoint());
     Vector3D earthToDowntrack = new Vector3D(this.getDowntrackWaypoint().getECEFPoint());
-    Vector3D newXAxis = (Vector3D) this.getLineSegment().getVector().getUnitVector(); // Vector along segment
-    Vector3D newYAxis = (Vector3D) earthToDowntrack.cross(earthToUptrack).getUnitVector(); // This will always point to the right according to the right hand rule. I think
-    Vector3D newZAxis = (Vector3D) newXAxis.cross(newYAxis).getUnitVector(); 
+    Vector lineVec = this.getLineSegment().getVector(); // Vector along segment
+    Vector3D newXAxis = new Vector3D(new Vector3D(lineVec.getDim(0), lineVec.getDim(1), lineVec.getDim(2)));
+    Vector3D newYAxis = earthToDowntrack.cross(earthToUptrack); // This will always point to the right according to the right hand rule. I think
+    Vector3D newZAxis = newXAxis.cross(newYAxis); 
+    
+    Vector unitXAxis = newXAxis.getUnitVector(); // Vector along segment
+    Vector unitYAxis = newYAxis.getUnitVector(); // This will always point to the right according to the right hand rule. I think
+    Vector unitZAxis = newZAxis.getUnitVector();
 
     double[][] rotMat = {
-      {newXAxis.getX(), newYAxis.getX(), newZAxis.getX()},
-      {newXAxis.getY(), newYAxis.getY(), newZAxis.getY()},
-      {newXAxis.getZ(), newYAxis.getZ(), newZAxis.getZ()}
+      {unitXAxis.getDim(0), unitYAxis.getDim(0), unitZAxis.getDim(0)},
+      {unitXAxis.getDim(1), unitYAxis.getDim(1), unitZAxis.getDim(1)},
+      {unitXAxis.getDim(2), unitYAxis.getDim(2), unitZAxis.getDim(2)}
     };
 
     Quaternion rotation = QuaternionUtils.matToQuaternion(rotMat);
