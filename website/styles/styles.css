@@ -58,14 +58,12 @@ div.tabindicators {
         background-color: inherit;
         color: black;
         padding: 10px 10px;
-        width: 80%;
+        width: 95%;
         border-bottom: 1px solid #ccc;
         outline: none;
-        text-align: left;
+        text-align: center;
         cursor: pointer;
         transition: 0.3s;
-        font-size: 20px;
-        font-family: "Segoe UI";
         overflow: hidden;
     }
 
@@ -309,7 +307,7 @@ div.message_box {
     padding: 0;
     width: 50%;
     font-size: 550px;
-    color: cornflowerblue; /* #ff6600; orange */
+    color: #ff6600; /*orange*/
 }
 
 
