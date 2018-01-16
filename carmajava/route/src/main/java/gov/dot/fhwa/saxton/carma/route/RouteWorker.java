@@ -292,6 +292,8 @@ public class RouteWorker {
       double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
       double downTrack = seg.downTrackDistance(hostVehicleLocation);
 
+      log.info("crosstrack to waypoint " + count + " = " + crossTrack);
+
       if (Math.abs(crossTrack) < maxJoinDistance) {
         if (count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) {
           return 0;
