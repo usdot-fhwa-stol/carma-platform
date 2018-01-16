@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -345,5 +346,34 @@ public class Route {
     }
 
     return subList;
+  }
+
+  /**
+   * Get the route segment in the list which most closely corresponds to the provided point
+   * 
+   * @param point The 3d point to match with a segment
+   * @param segments The subsection of a route which will be searched against
+   * 
+   * @return The matching route segment
+   */
+  public RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
+    int count = 0;
+    RouteSegment bestSegment = segments.get(0);
+    for (RouteSegment seg: segments) {      
+      RouteWaypoint wp = seg.getDowntrackWaypoint();
+      double crossTrack = seg.crossTrackDistance(point);
+      double downTrack = seg.downTrackDistance(point);
+
+      if (-0.0 < downTrack && downTrack < seg.length()) { 
+        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
+          return seg;
+        
+        bestSegment = seg;
+      } else if (count == segments.size() - 1 && downTrack > seg.length()) {
+        bestSegment = seg;
+      }
+      count++;
+    }
+    return bestSegment;
   }
 }

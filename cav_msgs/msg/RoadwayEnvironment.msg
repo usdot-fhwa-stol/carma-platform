@@ -8,7 +8,4 @@
 #
 
 # A list of other vehicle obstacles on the roadway
-#cav_msgs/RoadwayObstacle[] roadway_obstacles
-
-# A description of the host vehicle geometry
-#cav_msgs/RoadwayObstacle hostVehicle
+cav_msgs/RoadwayObstacle[] roadway_obstacles

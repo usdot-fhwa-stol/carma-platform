@@ -189,6 +189,19 @@ public class RouteSegment {
   }
 
   /**
+   * Returns the primary lane index which matches the provided crosstrack for this segment
+   * 
+   * @param crossTrack the crossTrack value to match with a lane
+   * 
+   * @return The lane index
+   */
+  public int determinePrimaryLane(double crossTrack) {
+    int segLane = this.getDowntrackWaypoint().getLaneIndex();
+    double laneWidth = this.getDowntrackWaypoint().getLaneWidth();
+    return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
+  }
+
+  /**
    * Constructs a fully initialized ros message from this route segment
    * @param factory The message factory which will be used to get a ros message object
    * @return The ros message

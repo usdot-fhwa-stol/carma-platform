@@ -28,3 +28,7 @@ uint8 primary_lane
 
 # A list of secondary lanes which this obstacle's bounding box intersects
 uint8[] secondary_lanes
+
+# The id of the waypoint this obstacle is approaching
+# The route segment idex will by waypoint_id - 1
+uint32 waypoint_id

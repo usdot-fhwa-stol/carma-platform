@@ -30,8 +30,9 @@ import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 import gov.dot.fhwa.saxton.carma.route.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.route.WorkerState;
-
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.Duration;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -41,7 +42,7 @@ import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 import std_msgs.Header;
 import tf2_msgs.TFMessage;
-
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -132,12 +133,27 @@ public class EnvironmentWorker {
     for (cav_msgs.ExternalObject obj: objects) {
       roadwayObstacles.add(buildObstacleFromMsg(obj, earthToOdom));
     }
-    // publish roadwayObstacles as new Envrionment Message
+    cav_msgs.RoadwayEnvironment roadwayMsg = messageFactory.newFromType(RoadwayObstacle._TYPE);
+    roadwayMsg.setRoadwayObstacles(roadwayObstacles);
+    roadwayMgr.publishRoadwayEnvironment(roadwayMsg);
   }
 
+  /**
+   * Helper function constructs a RoadwayObstacle from an ExternalObject 
+   * 
+   * @param obj The external object to convert (Should be degined relative to odom frame)
+   * @param earthToOdom The corresponding transform from the earth to the odom frame
+   * 
+   * @return A fully constructed RoadwayObstacle object
+   */
   protected RoadwayObstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj, Transform earthToOdom) {
     //Get Id
     int id = obj.getId();  
+    // Get connected vehicle type
+    ConnectedVehicleType connectedVehicleType = ConnectedVehicleType.NOT_CONNECTED;
+    if ((short) (obj.getPresenceVector() & cav_msgs.ExternalObject.BSM_ID_PRESENCE_VECTOR) != 0) {
+      connectedVehicleType = ConnectedVehicleType.CONNECTED;
+    }
     // Convert object to ECEF frame  
     Transform objInOdom = Transform.fromPoseMessage(obj.getPose().getPose());
     Transform objInECEF = earthToOdom.multiply(objInOdom);
@@ -147,7 +163,7 @@ public class EnvironmentWorker {
     // Find the route segment which this route segment is on
     int currentSegIndex = currentSegment.getUptrackWaypoint().getWaypointId();
     List<RouteSegment> segmentsToSearch = activeRoute.findRouteSubsection(currentSegIndex, distBackward, distForward, routeState.getSegmentDownTrack());
-    RouteSegment bestSegment = routeSegmentOfPoint(objPositionECEF, segmentsToSearch);
+    RouteSegment bestSegment = activeRoute.routeSegmentOfPoint(objPositionECEF, segmentsToSearch);
     int segmentIndex = bestSegment.getUptrackWaypoint().getWaypointId();
    
     // Convert object to segment frame
@@ -158,29 +174,81 @@ public class EnvironmentWorker {
     double crosstrackDistance = objPosition.getY(); //bestSegment.crossTrackDistance(objPosition);
     
     // Convert velocities
-    Vector3D velocityLinear = Vector3D.fromVector(objInSegment.apply(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear())));
+    Vector3 velocityLinear = objInSegment.apply(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear()));
 
     // Calculate obj lanes
-    int primaryLane = determinePrimaryLane(bestSegment, crosstrackDistance);
+    int primaryLane = bestSegment.determinePrimaryLane(crosstrackDistance);
     Vector3D[] bounds = getAABB(obj, objInSegment);
-    List<Integer>  secondaryLanes = determineSecondaryLanes(bounds[0], bounds[1], primaryLane, bestSegment);
+    byte[]  secondaryLanes = determineSecondaryLanes(bounds[0], bounds[1], primaryLane, bestSegment);
     
     // Convert AABB to size
     double sizeX = (bounds[1].getX() - bounds[0].getX()) / 2.0;
     double sizeY = (bounds[1].getY() - bounds[0].getY()) / 2.0;
     double sizeZ = (bounds[1].getZ() - bounds[0].getZ()) / 2.0;
-    Vector3D size = new Vector3D(sizeX, sizeY, sizeZ);
+    geometry_msgs.Vector3 size = messageFactory.newFromType(geometry_msgs.Vector3._TYPE);
+    size.setX(sizeX);
+    size.setY(sizeY);
+    size.setZ(sizeZ);
 
     // Construct new roadway obstacle
+
     RoadwayObstacle newObstacle = messageFactory.newFromType(RoadwayObstacle._TYPE);
-    Obstacle newObstacle = new Obstacle(id, downtrackDistance, crosstrackDistance, velocityLinear, size, primaryLane);
-    newObstacle.setSecondaryLanes(secondaryLanes);
+    newObstacle.setConnectedVehicleType(connectedVehicleType.toMessage());
+    newObstacle.setCrossTrack(crosstrackDistance);
+    newObstacle.setDownTrack(downtrackDistance);
+    newObstacle.setPrimaryLane((byte)primaryLane);
+    newObstacle.setSecondaryLanes(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, secondaryLanes));
+    newObstacle.setWaypointId(bestSegment.getDowntrackWaypoint().getWaypointId());
+
+    cav_msgs.ExternalObject newObj = newObstacle.getObject();
+    newObj.setBsmId(obj.getBsmId());
+    newObj.setConfidence(obj.getConfidence());
+    newObj.setHeader(obj.getHeader());
+    newObj.getHeader().setFrameId("0"); // Uses a route segment specific frame id which is not on the frame transform tree
+    newObj.setId(id);
+    
+    newObj.setObjectType(obj.getObjectType());
+
+    newObj.getPose().setCovariance(obj.getPose().getCovariance());
+    newObj.getPose().getPose().getPosition().setX(objPosition.getX());
+    newObj.getPose().getPose().getPosition().setY(objPosition.getY());
+    newObj.getPose().getPose().getPosition().setZ(objPosition.getZ());
+    newObj.getPose().getPose().setOrientation(Quaternion.identity().toQuaternionMessage(newObj.getPose().getPose().getOrientation()));
+   
+    newObj.setRelativeLane(obj.getRelativeLane());
+    newObj.setSize(size);
+    
+    newObj.getVelocity().setCovariance(obj.getVelocity().getCovariance());
+    newObj.getVelocity().getTwist().setLinear(velocityLinear.toVector3Message(newObj.getVelocity().getTwist().getLinear()));
+    
+    // Remove the object parameters which will not be passed on
+    newObj.setPresenceVector(
+      (short) 
+      (obj.getPresenceVector()
+      & ~cav_msgs.ExternalObject.AZIMUTH_RATE_PRESENCE_VECTOR
+      & ~cav_msgs.ExternalObject.RANGE_RATE_PRESENCE_VECTOR
+      & ~cav_msgs.ExternalObject.VELOCITY_INST_PRESENCE_VECTOR)
+    );
+
+    newObstacle.setObject(newObj);
     
     return newObstacle;
   }
 
+  /**
+   * Calculates the downtrack value of an object based on its segment downtrack
+   * 
+   * @param objSegmentIndex The idex of this objects current segment in the route
+   * @param hostSegmentIndex the index of the host vehicle's current segment in the route
+   * @param objSegDowntrack the downtrack of the object along its current segment
+   * @param hostSegmentDowntrack the downtrack of the host vehicle along its current segment
+   * @param hostDowntrack the downtrack of the host vehicle along the route
+   * 
+   * @return The object's downtrack distance along the entire route
+   */
   protected double objDowntrack(int objSegmentIndex, int hostSegmentIndex, double objSegDowntrack, double hostSegDowntrack, double hostDowntrack) {
     if (objSegmentIndex == hostSegmentIndex) {
+      
       return hostDowntrack + (objSegDowntrack - hostSegDowntrack);
     } else if (objSegmentIndex < hostSegmentIndex) {
 
@@ -195,39 +263,18 @@ public class EnvironmentWorker {
     }
   }
 
-  protected RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
-    int count = 0;
-    RouteSegment bestSegment = segments.get(0);
-    for (RouteSegment seg: segments) {      
-      RouteWaypoint wp = seg.getDowntrackWaypoint();
-      double crossTrack = seg.crossTrackDistance(point);
-      double downTrack = seg.downTrackDistance(point);
-
-      if (-0.0 < downTrack && downTrack < seg.length()) { 
-        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
-          return seg;
-        
-        bestSegment = seg;
-      } else if (count == segments.size() - 1 && downTrack > seg.length()) {
-        bestSegment = seg;
-      }
-      count++;
-    }
-    return bestSegment;
-  }
-
-  // Non existant lanes will be added based on the 
-  // TODO support relative lanes in external object description
-  protected int determinePrimaryLane(RouteSegment seg, double crossTrack) {
-    int segLane = seg.getDowntrackWaypoint().getLaneIndex();
-    double laneWidth = seg.getDowntrackWaypoint().getLaneWidth();
-    return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
-  }
-
-  protected Vector3D[] getAABB(cav_msgs.ExternalObject obj, Transform segmentToObj) {
+  /**
+   * Returns the Axis-Aligned Bounding Box which surrounds the provided object 
+   * 
+   * @param obj The object to find the AABB of
+   * @param frameToObj The transform from the frame which the AABB corresponds to and the object
+   * 
+   * @return a 2 element Vector3D array of which the first element is the min vector and the second element is the max vector
+   */
+  protected Vector3D[] getAABB(cav_msgs.ExternalObject obj, Transform frameToObj) {
     geometry_msgs.Vector3 size = obj.getSize();
     // bounding box conversion based off http://dev.theomader.com/transform-bounding-boxes/
-    double[][] rotMat = QuaternionUtils.quaternionToMat(segmentToObj.getRotationAndScale());
+    double[][] rotMat = QuaternionUtils.quaternionToMat(frameToObj.getRotationAndScale());
     Vector3D col1 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
     Vector3D col2 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
     Vector3D col3 = new Vector3D(rotMat[0][0], rotMat[1][0], rotMat[2][0]);
@@ -241,7 +288,7 @@ public class EnvironmentWorker {
     Vector3D za = (Vector3D) col3.scalarMultiply(-size.getZ());
     Vector3D zb = (Vector3D) col3.scalarMultiply(size.getZ());
  
-    Vector3D translation = Vector3D.fromVector(segmentToObj.getTranslation());
+    Vector3D translation = Vector3D.fromVector(frameToObj.getTranslation());
 
     // Could reduce the number of calculations here since only y values are needed
     Vector3D minBounds = (Vector3D) Vector3D.min(xa, xb).add(Vector3D.min(ya, yb)).add(Vector3D.min(za, zb)).add(translation);
@@ -253,16 +300,28 @@ public class EnvironmentWorker {
     return bounds;
   }
 
-  protected List<Integer> determineSecondaryLanes(Vector3D minBounds, Vector3D maxBounds, int primaryLane, RouteSegment seg) {
-    int minLane = determinePrimaryLane(seg, minBounds.getY());
-    int maxLane = determinePrimaryLane(seg, maxBounds.getY());
+  /**
+   * Returns a list of lanes which are intersected by the provided bounds on the current segment
+   * The returned list does not include the provided primary lane
+   * 
+   * @param minBounds the minimum bounds (minX, minY, minZ)
+   * @param maxBounds the maximum bounds (maxX, maxY, maxZ)
+   * @param primaryLane the lane index which will not be included
+   * @param seg The route segment which defines the number of lanes
+   * 
+   * @return A byte array of lane indices
+   */
+  protected byte[] determineSecondaryLanes(Vector3D minBounds, Vector3D maxBounds, int primaryLane, RouteSegment seg) {
+    int minLane = seg.determinePrimaryLane(minBounds.getY());
+    int maxLane = seg.determinePrimaryLane(maxBounds.getY());
 
-    List<Integer> secondaryLanes = new LinkedList<>();
+    List<Byte> secondaryLanes = new LinkedList<>();
     for (int i = minLane; i <= maxLane; i++) {
       if (i != primaryLane)
-        secondaryLanes.add(i);
+        secondaryLanes.add((byte)i);
     }
-    return secondaryLanes;
+    Byte[] byteObjArray = secondaryLanes.toArray(new Byte[0]);
+    return ArrayUtils.toPrimitive(byteObjArray);
   }
 
   /**
