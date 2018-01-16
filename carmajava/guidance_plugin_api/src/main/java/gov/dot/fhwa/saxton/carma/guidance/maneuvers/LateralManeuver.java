@@ -28,7 +28,6 @@ public abstract class LateralManeuver extends ManeuverBase {
     protected double startSpeed_ = -1.0; // m/s
     protected double endSpeed_ = -1.0; // m/s
     protected double maxAxleAngleRate = 0.0; 
-    protected double maxAccel_ = 0.0;
     protected double axleAngle_ = 0.0; // rad: Angle in radians to turn the wheels. Positive is left, Negative is right
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
     protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity

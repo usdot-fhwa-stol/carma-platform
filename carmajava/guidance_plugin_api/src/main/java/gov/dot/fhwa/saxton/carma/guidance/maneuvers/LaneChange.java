@@ -23,15 +23,8 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
  */
 public abstract class LaneChange extends LateralManeuver {
 
-    protected boolean completed = false;
-    protected long startTime_ = 0;
-    protected double maxAxleAngleRate = 0.0; 
-    protected double maxAccel_ = 0.0;
     protected int targetLane_ = 0; // 0 indexed from right to left
     protected int startingLane_ = 0;
-    protected double axleAngle_ = 0.0; // rad: Angle in radians to turn the wheels. Positive is left, Negative is right
-    protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
-    protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity
     protected double RIGHT_LANE_CHANGE = 1.0;
     protected double LEFT_LANE_CHANGE = -1.0;
     protected double KEEP_LANE = 0.0;
