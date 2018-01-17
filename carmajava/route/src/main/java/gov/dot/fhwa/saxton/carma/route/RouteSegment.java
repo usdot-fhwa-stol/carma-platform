@@ -196,15 +196,42 @@ public class RouteSegment {
 
   /**
    * Returns the primary lane index which matches the provided crosstrack for this segment
+   * TODO: Algorithm feels overly complex and could probably be improved
    * 
    * @param crossTrack the crossTrack value to match with a lane
    * 
    * @return The lane index
    */
   public int determinePrimaryLane(double crossTrack) {
-    int segLane = this.getDowntrackWaypoint().getLaneIndex();
-    double laneWidth = this.getDowntrackWaypoint().getLaneWidth();
-    return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
+    // TODO develop a standard for this
+    // Code for route going through lane center
+    // int segLane = this.getDowntrackWaypoint().getLaneIndex();
+    // double laneWidth = this.getDowntrackWaypoint().getLaneWidth();
+    // return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
+    //int segLane = this.getDowntrackWaypoint().getLaneIndex();
+
+    // Code for route going through road centerline
+    RouteWaypoint wp = this.getDowntrackWaypoint();
+    int segLane;
+    double laneWidth = wp.getLaneWidth();
+    int numLanesCrossed;
+    if (wp.getLaneCount() % 2 == 0) { // Even lane count
+      segLane = crossTrack >= -0.0 ? wp.getLaneCount() / 2 - 1 : wp.getLaneCount() / 2;
+      numLanesCrossed = (int) Math.floor((Math.abs(crossTrack)) / laneWidth);
+    } else { // Odd lane count
+      double edgeOffset = laneWidth / 2.0;
+      segLane = wp.getLaneCount() / 2;
+      if (Math.abs(crossTrack) < Math.abs(edgeOffset)) {
+        return segLane;
+      }
+      numLanesCrossed = (int) Math.ceil((Math.abs(crossTrack) - edgeOffset) / laneWidth);
+    }
+
+    if (crossTrack >= -0.0) {
+      return segLane - numLanesCrossed;
+    } else {
+      return segLane + numLanesCrossed;
+    }
   }
 
   /**

@@ -40,7 +40,7 @@ public class MockRouteManager implements IRouteManager {
     return alert;
   }
 
-  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
+  public void publishCurrentRouteSegment(RouteSegment routeSegment) {
 
   }
 
