@@ -13,7 +13,7 @@
  * from objects passed to them leads to poor performance.
  */
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage_encode_1BSM
-		(JNIEnv *env, jclass cls, jint msgCount, jintArray bsm_id, jint secMark,
+		(JNIEnv *env, jobject cls, jint msgCount, jintArray bsm_id, jint secMark,
 		  jint lat, jint lon, jint elev, jintArray accuracy_set, jint transmission,
 		  jint speed, jint heading, jint angle, jintArray accel_set, jintArray brakes_set, jintArray size_set) {
 
@@ -29,7 +29,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMM
 
 	//set default fields of BSM
 	message -> messageId = 20;
-	message -> value.present = value_PR_BasicSafetyMessage;
+	message -> value.present = MessageFrame__value_PR_BasicSafetyMessage;
 
 	//Set fields
 	message -> value.choice.BasicSafetyMessage.coreData.msgCnt = msgCount;
@@ -101,7 +101,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMM
 	message -> value.choice.BasicSafetyMessage.coreData.size.length = size[1];
 	(*env) -> ReleaseIntArrayElements(env, size_set, size, 0);
 
-	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, message, buffer, buffer_size);
+	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, 0, message, buffer, buffer_size);
 	if(ec.encoded == -1) {
 		return NULL;
 	}
@@ -122,7 +122,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMM
  * Return -1 mains an error is happened; return 0 mains decoding succeed.
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage_decode_1BSM
-  (JNIEnv *env, jclass cls, jbyteArray encoded_bsm,
+  (JNIEnv *env, jobject cls, jbyteArray encoded_bsm,
    jobject plain_bsm, jbyteArray bsm_id, jobject accuracy,
    jobject transmission, jobject accelset, jbyteArray brakeStatus, jobject size) {
 
@@ -253,7 +253,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 
 	//set default value of testmessage00
 	message -> messageId = 240;
-	message -> value.present = value_PR_TestMessage00;
+	message -> value.present = MessageFrame__value_PR_TestMessage00;
 
 	//set senderId in header
 	jint *sender_id = (*env) -> GetIntArrayElements(env, senderId, 0);
@@ -323,7 +323,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	if (roadway_id == NULL) {
 		return NULL;
 	}
-	uint8_t roadway_id_content[roadway_id_size] = { 0 };
+	uint8_t roadway_id_content[roadway_id_size];
 	for (int i = 0; i < roadway_id_size; i++) {
 		roadway_id_content[i] = (char) roadway_id[i];
 	}
@@ -353,7 +353,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	for (int i = 0; i < 64; i++) {
 		public_key_content[i] = (char) public_key[i];
 	}
-	message->value.choice.TestMessage00.body.publicKey = public_key_content;
+	message->value.choice.TestMessage00.body.publicKey.buf = public_key_content;
 	message->value.choice.TestMessage00.body.publicKey.size = 64;
 	(*env)->ReleaseIntArrayElements(env, publicKey, public_key, 0);
 
@@ -383,7 +383,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	if (capabilities_string == NULL) {
 		return NULL;
 	}
-	uint8_t capabilities_string_content[capabilities_string_size] = { 0 };
+	uint8_t capabilities_string_content[capabilities_string_size];
 	for (int i = 0; i < capabilities_string_size; i++) {
 		capabilities_string_content[i] = (char) capabilities_string[i];
 	}
@@ -392,7 +392,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	(*env) -> ReleaseIntArrayElements(env, capabilities, capabilities_string, 0);
 
 	//encode message
-	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, message, buffer, buffer_size);
+	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, 0, message, buffer, buffer_size);
 	if(ec.encoded == -1) {
 		return NULL;
 	}
@@ -424,7 +424,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIn
 
 	int len = (*env) -> GetArrayLength(env, encodedIntro); /* Number of bytes in encoded_bsm */
 	jbyte *inCArray = (*env) -> GetByteArrayElements(env, encodedIntro, 0); /* Get Java byte array content */
-	char buf[len] = { 0 }; /* Buffer for decoder function */
+	char buf[len]; /* Buffer for decoder function */
 	for (int i = 0; i < len; i++) {
 		buf[i] = inCArray[i];
 	} /* Copy into buffer */

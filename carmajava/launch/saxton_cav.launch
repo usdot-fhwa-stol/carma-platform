@@ -309,7 +309,7 @@
         <remap from="mobility_greeting_outbound"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_greeting"/>
         <remap from="mobility_intro_outbound"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro"/>
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
         <remap from="mobility_nack_outbound"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_nack"/>
         <remap from="mobility_plan_outbound"

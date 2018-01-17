@@ -36,6 +36,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * A class which can be used to simulate an Arada comms driver for the CarmaPlatform.
@@ -115,8 +116,6 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // String rawByteString = elements[RAW_BYTES_IDX];
       // Set to static data for test
       
-
-      
       String[] rawByteString = {
     		  "00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0",
     		  "00 14 25 03 fa 2f 24 8e 1c 51 a6 6e 8c 2a 1e a6 bd 3b 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0",
@@ -124,6 +123,12 @@ public class MockDSRCDriver extends AbstractMockDriver {
       };
       
       String currentByteString = rawByteString[current_vehicle++ % rawByteString.length];
+      
+    //publish mobility intro message some time
+      if(ThreadLocalRandom.current().nextBoolean()) {
+          recvMsg.setMessageType("MobilityIntro");
+          currentByteString = "00 f0 80 a4 00 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 80 80 80 80 80 80 80 80 80 80 80 80 80 80 bf 80 00 84 00 00 00 21 c0 a2 2a 65 e7 d1 05 2d f8 72 00 04 02 00 a1 00 c8 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 fc 00 18 20 00 00 01 0e 13 87 87 96 dc 34 36 61 e9 9b 7f 2d a8 3b 32 5c c9 73 30";
+      }
       
       boolean publish_control = false;
       if(currentByteString.equals("00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0")) {

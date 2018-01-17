@@ -20,19 +20,17 @@ import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import org.apache.commons.logging.Log;
+
+import java.nio.ByteOrder;
+import java.util.Arrays;
+
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageListener;
-import org.ros.message.MessageFactory;
-import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
-import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
-import org.ros.node.parameter.ParameterTree;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
-import org.ros.namespace.NameResolver;
 
 /**
  * The Negotiator package responsibility is to manage the details of negotiating tactical and strategic
@@ -124,12 +122,45 @@ public class NegotiatorMgr extends SaxtonBaseNode{
       }
       @Override protected void loop() throws InterruptedException {
         if (systemReady) {
-          if (lastNewPlanMsg != null) {
+            //This is a test for Mobility Introduction message
             MobilityIntro introMsg = mobIntroOutPub.newMessage();
+            byte[] hostId = new byte[16];
+            Arrays.fill(hostId, (byte) 1);
+            introMsg.getHeader().setSenderId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, hostId));
+            byte[] targetId = new byte[16];
+            Arrays.fill(targetId, (byte) 0);
+            introMsg.getHeader().setRecipientId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, targetId));
+            byte[] planId = new byte[16];
+            Arrays.fill(planId, (byte) 2);
+            introMsg.getHeader().setPlanId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, planId));
+            introMsg.getHeader().getTimestamp().setYear((short) 2018);
+            introMsg.getHeader().getTimestamp().setMonth((byte) 1);
+            introMsg.getHeader().getTimestamp().setDay((byte) 1);
+            introMsg.getHeader().getTimestamp().setHour((byte) 0);
+            introMsg.getHeader().getTimestamp().setMinute((byte) 0);
+            introMsg.getHeader().getTimestamp().setSecond(0);
+            introMsg.getHeader().getTimestamp().setOffset((short) -300);
+            introMsg.getMyEntityType().setType((BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE));
+            introMsg.setMyRoadwayLink("Test Road");
+            introMsg.setMyRoadwayLinkPosition((short) 2);
+            introMsg.setMyLaneId((byte) 1);
+            introMsg.setForwardSpeed((float) 0.2);
+            introMsg.getPlanType().setType(PlanType.UNKNOWN);
+            introMsg.setProposalParam((short) 100);
+            byte[] publicKey = new byte[64];
+            Arrays.fill(publicKey, (byte) 0);
+            introMsg.setMyPublicKey(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, publicKey));
+            introMsg.getExpiration().setYear((short) 2018);
+            introMsg.getExpiration().setMonth((byte) 6);
+            introMsg.getExpiration().setDay((byte) 1);
+            introMsg.getExpiration().setHour((byte) 0);
+            introMsg.getExpiration().setMinute((byte) 0);
+            introMsg.getExpiration().setSecond(0);
+            introMsg.getExpiration().setOffset((short) -300);
+            introMsg.setCapabilities("CarmaPlatform v2.2.3");
             mobIntroOutPub.publish(introMsg);
-          }
         }
-        Thread.sleep(30000);
+        Thread.sleep(5000);
       }
     });
   }//onStart
