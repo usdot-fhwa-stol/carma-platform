@@ -26,7 +26,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
  * does not take any inputs. Exists to satisfy the minimal arbitrator as a lateral
  * plugin.
  */
-public class NoOpPlugin extends AbstractPlugin {
+public class NoOpPlugin extends AbstractPlugin implements IStrategicPlugin {
   private static final long SLEEP_DURATION = 10000;
 
   public NoOpPlugin(PluginServiceLocator psl)  {

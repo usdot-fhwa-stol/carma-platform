@@ -26,6 +26,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
@@ -40,7 +41,7 @@ import java.util.List;
  * state and receive speed commands as may relate to whatever algorithm the server
  * is configured to run with.
  */
-public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHarmInputs {
+public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHarmInputs, IStrategicPlugin {
   protected String vehicleId = "";
   protected String serverUrl = "";
   protected boolean endSessionOnSuspend = true;
