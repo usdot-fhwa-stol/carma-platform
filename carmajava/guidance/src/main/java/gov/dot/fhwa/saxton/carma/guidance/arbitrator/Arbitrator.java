@@ -70,7 +70,7 @@ public class Arbitrator extends GuidanceComponent
   protected AtomicReference<GuidanceState> state;
   protected PluginManager pluginManager;
   protected IStrategicPlugin lateralPlugin;
-  protected List<IPlugin> longitudinalPlugins = new ArrayList<>();
+  protected List<IStrategicPlugin> longitudinalPlugins = new ArrayList<>();
   protected CruisingPlugin cruisingPlugin;
   protected AtomicBoolean receivedDtdUpdate = new AtomicBoolean(false);
   protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
@@ -229,8 +229,8 @@ public class Arbitrator extends GuidanceComponent
 
     for (String name : longitudinalPluginNames) {
       for (IPlugin p : pluginManager.getRegisteredPlugins()) {
-        if (p.getVersionInfo().componentName().equals(name)) {
-          setLongitudinalPlugin(p);
+        if (p.getVersionInfo().componentName().equals(name) && p instanceof IStrategicPlugin) {
+          setLongitudinalPlugin((IStrategicPlugin) p);
         }
       }
     }
@@ -282,7 +282,7 @@ public class Arbitrator extends GuidanceComponent
     lateralPlugin = plugin;
   }
 
-  protected void setLongitudinalPlugin(IPlugin plugin) {
+  protected void setLongitudinalPlugin(IStrategicPlugin plugin) {
     longitudinalPlugins.add(plugin);
   }
 
@@ -360,9 +360,9 @@ public class Arbitrator extends GuidanceComponent
       lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
 
       // Use temp list to allow for modification
-      List<IPlugin> tmpPlugins = new ArrayList<>(longitudinalPlugins);
-      for (IPlugin p : tmpPlugins) {
-        if (p.getActivation() && p.getAvailability() && p instanceof IStrategicPlugin) {
+      List<IStrategicPlugin> tmpPlugins = new ArrayList<>(longitudinalPlugins);
+      for (IStrategicPlugin p : tmpPlugins) {
+        if (p.getActivation() && p.getAvailability()) {
           log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
           TrajectoryPlanningResponse resp = ((IStrategicPlugin) p).planTrajectory(traj, expectedEntrySpeed);
 
