@@ -210,13 +210,18 @@ public class EnvironmentWorker {
 
     CartesianObject cartObj = new CartesianObject(objPoints);
     CartesianObject cartObjInSegment = cartObj.transform(objInSegment);
+    final int minIdx = CartesianObject.MIN_BOUND_IDX;
+    final int maxIdx = CartesianObject.MAX_BOUND_IDX;
+    final int xIdx = 0;
+    final int yIdx = 1;
+    final int zIdx = 2;
     double[][] bounds = cartObjInSegment.getBounds();
-    byte[]  secondaryLanes = determineSecondaryLanes(bounds[0][1], bounds[1][1], primaryLane, bestSegment);
+    byte[]  secondaryLanes = determineSecondaryLanes(bounds[yIdx][minIdx], bounds[yIdx][maxIdx], primaryLane, bestSegment);
     
-    // Convert AABB to size TODO DOOO THISS FIX!!!
-    double sizeX = (bounds[1][0] - bounds[0][0]) / 2.0;
-    double sizeY = (bounds[1][1] - bounds[0][0]) / 2.0;
-    double sizeZ = (bounds[1][1] - bounds[0][0]) / 2.0;
+    // Convert AABB to size
+    double sizeX = (bounds[xIdx][maxIdx] - bounds[xIdx][minIdx]) / 2.0;
+    double sizeY = (bounds[yIdx][maxIdx] - bounds[yIdx][minIdx]) / 2.0;
+    double sizeZ = (bounds[zIdx][maxIdx] - bounds[zIdx][minIdx]) / 2.0;
     geometry_msgs.Vector3 sizeMsg = messageFactory.newFromType(geometry_msgs.Vector3._TYPE);
     sizeMsg.setX(sizeX);
     sizeMsg.setY(sizeY);
