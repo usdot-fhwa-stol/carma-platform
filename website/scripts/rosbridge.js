@@ -586,7 +586,7 @@ function enableGuidance() {
 /*
  Engage and Disengage Guidance.
 */
-async function engageGuidance() {
+function engageGuidance() {
 
     //audio-fix needs to be on an actual button click event on the tablet.
     loadAudioElements();
@@ -607,7 +607,7 @@ async function engageGuidance() {
     });
 
     // Call the service and get back the results in the callback.
-    setGuidanceClient.callService(request, function (result) {
+    setGuidanceClient.callService(request, async function (result) {
 
         if (result.guidance_status != newStatus) //NOT SUCCESSFUL.
         {
@@ -725,7 +725,7 @@ function setCAVButtonState(state) {
             break;
 
         case 'DISENGAGED':
-            guidance_engaged == false;
+            guidance_engaged = false;
 
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_disabled';
