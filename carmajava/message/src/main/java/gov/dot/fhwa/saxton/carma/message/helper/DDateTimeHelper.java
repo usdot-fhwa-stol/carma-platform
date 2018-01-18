@@ -25,7 +25,7 @@ import cav_msgs.DateTime;
 public class DDateTimeHelper {
     
     protected static final int DYEAR_UNKNOW = 0;
-    protected static final int DYEAR_MAX = 0;
+    protected static final int DYEAR_MAX = 4095;
     protected static final int DMONTH_UNKNOW = 0;
     protected static final int DMONTH_MAX = 12;
     protected static final int DDAY_UNKNOW = 0;

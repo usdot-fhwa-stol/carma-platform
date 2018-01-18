@@ -150,7 +150,8 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         introObject.getHeader().getTimestamp().setOffset((short) creationDateTime[6]);
         StringBuffer roadwayIdBuffer = new StringBuffer();
         for(byte ch : roadwayId) {
-            if(ch >= 32 && ch < 127) {
+            // only allow A-Z, a-z, SPACE and period
+            if(ch == 32 || ch == 46 || (ch >= 48 && ch <= 57) || (ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)) {
                 roadwayIdBuffer.append((char) ch);
             }
         }
@@ -166,7 +167,8 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         introObject.getExpiration().setOffset((short) expirationDateTime[6]);
         StringBuffer capabilitiesBuffer = new StringBuffer();
         for(byte ch : capabilities) {
-            if(ch >= 32 && ch < 127) {
+            // only allow A-Z, a-z, SPACE and period
+            if(ch == 32 || ch == 46 || (ch >= 48 && ch <= 57) || (ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)) {
                 capabilitiesBuffer.append((char) ch);
             }
         }

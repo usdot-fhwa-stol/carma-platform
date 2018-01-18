@@ -63,7 +63,8 @@ public class MessageStatistic {
     public void onMessageSending(String messageType) {
         MessageCounter counter = findMessageCounter(messageType);
         if(counter == null) {
-            log_.warn("Cannot find the right message counter based on given type.");
+            //TODO: comment this out since we do not need to record mobility message freq for now
+            //log_.warn("Cannot find the right message counter based on given type.");
         } else {
             if(counter.last_outgoing_sample_time == 0) {
                 counter.last_outgoing_sample_time = node_.getCurrentTime().toSeconds();
