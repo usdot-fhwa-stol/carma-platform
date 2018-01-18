@@ -129,9 +129,16 @@ public class EnvironmentWorker {
    * @param externalObjects External object list. Should be relative to odom frame
    */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
+    if (currentSegment == null || routeState == null || activeRoute == null) {
+      log.info("Roadway ignoring object message as no route is selected");
+      return;
+    }
     List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
     List<RoadwayObstacle> roadwayObstacles = new LinkedList<>();
     Transform earthToOdom = roadwayMgr.getTransform(earthFrame, odomFrame, externalObjects.getHeader().getStamp());
+    if (earthToOdom == null) {
+      log.warn("Roadway could not process object message as earth to odom transform was null");
+    }
     for (cav_msgs.ExternalObject obj: objects) {
       roadwayObstacles.add(buildObstacleFromMsg(obj, earthToOdom));
     }
