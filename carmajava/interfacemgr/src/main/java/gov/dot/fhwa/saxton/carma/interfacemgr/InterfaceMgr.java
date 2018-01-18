@@ -195,7 +195,11 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	        				}catch (Exception e) {
 	        				}
 	        				robotEnabled_ = true;
+	        				log_.info("DRIVER", "InterfaceMgr.robotListener sensed robot enabled command.");
 	        			}
+
+	        			log_.debug("DRIVER", "InterfaceMgr.robotListener received robot_enabled msg: enabled = "
+                                    + msg.getRobotEnabled() + ", active = " + msg.getRobotActive());
 	        			
 	        			
 	        		}catch (Exception e) {
