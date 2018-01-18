@@ -34,8 +34,8 @@ public class InterfaceWorker {
     protected long                          startedWaiting_;
     protected long							systemReadyTime_;
     protected AtomicBoolean                 systemOperational_ = new AtomicBoolean(false);
-    protected AtomicBoolean                 controllerReady_ = AtomicBoolean(false);
-    protected AtomicBoolean                 positionReady_ = AtomicBoolean(false);
+    protected AtomicBoolean                 controllerReady_ = new AtomicBoolean(false);
+    protected AtomicBoolean                 positionReady_ = new AtomicBoolean(false);
 
     InterfaceWorker(IInterfaceMgr mgr, SaxtonLogger log) {
         mgr_ = mgr;
