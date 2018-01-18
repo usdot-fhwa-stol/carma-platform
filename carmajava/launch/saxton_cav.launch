@@ -257,6 +257,10 @@
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
         <remap from="get_transform"
                to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
+        <remap from="route_state"
+              to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="route"
+              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       </node>
 
       <!-- Transform Server Node -->
