@@ -790,7 +790,7 @@ function checkGuidanceState() {
             //case 3: //ACTIVE //TODO: Further discussion with Kyle based on email.
             //   enableGuidance();
             //    break;
-            case 3: //INACTIVE
+            case 5: //INACTIVE
                 enableGuidance();
                 if (guidance_engaged)
                     setCAVButtonState('INACTIVE');
@@ -967,7 +967,7 @@ function showDiagnostics() {
                             insertNewTableRow('tblFirstB', myValues.key, myValues.value);
                             var imgACCPrimed = document.getElementById('imgACCPrimed');
 
-                            if (myValues.value == 'true')
+                            if (myValues.value == 'True')
                                 imgACCPrimed.style.backgroundColor = '#4CAF50'; //Green
                             else
                                 imgACCPrimed.style.backgroundColor = '#b32400'; //Red
