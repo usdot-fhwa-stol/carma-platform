@@ -23,10 +23,11 @@ import java.util.TreeSet;
 
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-public class PlatooningPlugin extends AbstractPlugin {
+public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin {
 
     protected final String PLATOONING_FLAG = "PLATOONING";
     

@@ -66,10 +66,6 @@ public abstract class AbstractPlugin implements IPlugin {
         return availability.get();
     }
 
-    @Override public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        throw new UnsupportedOperationException();
-    }
-
     @Override public void onReceiveNegotiationRequest(String strategy) {
         throw new UnsupportedOperationException();
     }

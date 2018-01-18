@@ -39,7 +39,7 @@ import java.util.SortedSet;
  * Implements the basic behavior of commanding the speed limit (as specified by RouteManager)
  * at each route segment.
  */
-public class CruisingPlugin extends AbstractPlugin {
+public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     
   protected double maxAccel_;
   protected static final double DISTANCE_EPSILON = 0.0001;

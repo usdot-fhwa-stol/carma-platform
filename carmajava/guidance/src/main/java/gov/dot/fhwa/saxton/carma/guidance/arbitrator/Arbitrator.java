@@ -35,6 +35,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
@@ -68,8 +69,8 @@ public class Arbitrator extends GuidanceComponent
   protected ISubscriber<TwistStamped> twistSubscriber;
   protected AtomicReference<GuidanceState> state;
   protected PluginManager pluginManager;
-  protected IPlugin lateralPlugin;
-  protected List<IPlugin> longitudinalPlugins = new ArrayList<>();
+  protected IStrategicPlugin lateralPlugin;
+  protected List<IStrategicPlugin> longitudinalPlugins = new ArrayList<>();
   protected CruisingPlugin cruisingPlugin;
   protected AtomicBoolean receivedDtdUpdate = new AtomicBoolean(false);
   protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
@@ -214,7 +215,11 @@ public class Arbitrator extends GuidanceComponent
     // For now, find the configured lateral and longitudinal plugins
     for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
       if (plugin.getVersionInfo().componentName().equals(lateralPluginName)) {
-        setLateralPlugin(plugin);
+        if (plugin instanceof IStrategicPlugin) {
+          setLateralPlugin((IStrategicPlugin) plugin);
+        } else {
+          log.error("Selected lateral plugin: " + lateralPluginName + " is not a strategic plugin!");
+        }
       }
 
       if (plugin instanceof CruisingPlugin) {
@@ -224,8 +229,8 @@ public class Arbitrator extends GuidanceComponent
 
     for (String name : longitudinalPluginNames) {
       for (IPlugin p : pluginManager.getRegisteredPlugins()) {
-        if (p.getVersionInfo().componentName().equals(name)) {
-          setLongitudinalPlugin(p);
+        if (p.getVersionInfo().componentName().equals(name) && p instanceof IStrategicPlugin) {
+          setLongitudinalPlugin((IStrategicPlugin) p);
         }
       }
     }
@@ -273,11 +278,11 @@ public class Arbitrator extends GuidanceComponent
     return "Guidance.Arbitrator";
   }
 
-  protected void setLateralPlugin(IPlugin plugin) {
+  protected void setLateralPlugin(IStrategicPlugin plugin) {
     lateralPlugin = plugin;
   }
 
-  protected void setLongitudinalPlugin(IPlugin plugin) {
+  protected void setLongitudinalPlugin(IStrategicPlugin plugin) {
     longitudinalPlugins.add(plugin);
   }
 
@@ -355,11 +360,11 @@ public class Arbitrator extends GuidanceComponent
       lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
 
       // Use temp list to allow for modification
-      List<IPlugin> tmpPlugins = new ArrayList<>(longitudinalPlugins);
-      for (IPlugin p : tmpPlugins) {
+      List<IStrategicPlugin> tmpPlugins = new ArrayList<>(longitudinalPlugins);
+      for (IStrategicPlugin p : tmpPlugins) {
         if (p.getActivation() && p.getAvailability()) {
           log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
-          TrajectoryPlanningResponse resp = p.planTrajectory(traj, expectedEntrySpeed);
+          TrajectoryPlanningResponse resp = ((IStrategicPlugin) p).planTrajectory(traj, expectedEntrySpeed);
 
           // Process the plugin's requests
           if (!resp.getRequests().isEmpty()) {
