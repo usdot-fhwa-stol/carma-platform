@@ -135,7 +135,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMM
  * BSM Decoder:
  * This function can decode a byte array in J2735 standards to a messageFrame structure and map to a Java BSMCore object.
  * When an error happened, this function will return without any mapping.
- * Return -1 mains an error is happened; return 0 mains decoding succeed.
+ * Return -1 means an error has happened; return 0 means decoding succeed.
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage_decode_1BSM
   (JNIEnv *env, jobject cls, jbyteArray encoded_bsm,
@@ -427,7 +427,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
  * Mobility Intro Decoder:
  * This function can decode a byte array in J2735 standards to
  * a messageFrame structure and map to a ROS MobilityIntro object.
- * Return -1 mains an error is happened; return 0 mains decoding succeed.
+ * Return -1 means an error has happened; return 0 means decoding succeed.
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage_decode_1MobilityIntro
   (JNIEnv *env, jobject cls, jbyteArray encodedIntro, jobject introMsg,
@@ -526,7 +526,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIn
 		int capabilities_size = message -> value.choice.TestMessage00.body.capabilities.size;
 		(*env) -> SetByteArrayRegion(env, capabilities, 0, capabilities_size, capabilities_content);
 	} else {
-		return -1; /* decode fails */
+		return -1; /* decoding fails */
 	}
 
 	return 0;

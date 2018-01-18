@@ -141,7 +141,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             introMsg.getHeader().getTimestamp().setSecond(0);
             introMsg.getHeader().getTimestamp().setOffset((short) -300);
             introMsg.getMyEntityType().setType((BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE));
-            introMsg.setMyRoadwayLink("Test Road");
+            introMsg.setMyRoadwayLink("[Test Road]");
             introMsg.setMyRoadwayLinkPosition((short) 2);
             introMsg.setMyLaneId((byte) 1);
             introMsg.setForwardSpeed((float) 0.2);
@@ -157,7 +157,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             introMsg.getExpiration().setMinute((byte) 0);
             introMsg.getExpiration().setSecond(0);
             introMsg.getExpiration().setOffset((short) -300);
-            introMsg.setCapabilities("CarmaPlatform v2.2.3");
+            introMsg.setCapabilities("[CarmaPlatform v2.2.3]");
             mobIntroOutPub.publish(introMsg);
         }
         Thread.sleep(5000);

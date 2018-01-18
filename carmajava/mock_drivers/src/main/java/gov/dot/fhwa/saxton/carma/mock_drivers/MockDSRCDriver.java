@@ -17,14 +17,11 @@
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import cav_msgs.ByteArray;
-import cav_srvs.GetLightsRequest;
-import cav_srvs.GetLightsResponse;
 import cav_srvs.SendMessageRequest;
 import cav_srvs.SendMessageResponse;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.ServiceException;
 import org.ros.message.MessageListener;
-import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
@@ -127,7 +124,7 @@ public class MockDSRCDriver extends AbstractMockDriver {
     //publish mobility intro message some time
       if(ThreadLocalRandom.current().nextBoolean()) {
           recvMsg.setMessageType("MobilityIntro");
-          currentByteString = "00 f0 80 a4 00 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 80 80 80 80 80 80 80 80 80 80 80 80 80 80 bf 80 00 84 00 00 00 21 c0 a2 2a 65 e7 d1 05 2d f8 72 00 04 02 00 a1 00 c8 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 fc 00 18 20 00 00 01 0e 13 87 87 96 dc 34 36 61 e9 9b 7f 2d a8 3b 32 5c c9 73 30";
+          currentByteString = "00 f0 80 a7 00 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 80 80 80 80 80 80 80 80 80 80 80 80 80 80 bf bf 10 84 00 00 00 21 c0 a2 ad d4 cb cf a2 0a 5b f0 e4 ba 00 10 08 02 84 03 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 f7 e2 60 80 00 00 04 38 56 dc 3c 3c b6 e1 a1 b3 0f 4c db f9 6d 41 d9 92 e6 4b 99 dd";
       }
       
       boolean publish_control = false;

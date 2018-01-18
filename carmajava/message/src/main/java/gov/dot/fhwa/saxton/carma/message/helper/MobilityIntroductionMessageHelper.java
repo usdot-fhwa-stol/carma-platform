@@ -103,6 +103,7 @@ public class MobilityIntroductionMessageHelper {
     }
     
     public void setSpeed(float speed) {
+        // the LBS in J2735 for speed is 0.02 m/s, which means 1 represents 0.02 m/s
         int integer_speed_input = (int) (speed * 50);
         if(integer_speed_input >= BSMMessageHelper.SPEED_MIN && integer_speed_input <= BSMMessageHelper.SPEED_MAX) {
             this.speed = integer_speed_input;

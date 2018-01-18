@@ -63,15 +63,15 @@ public class MessageConsumer extends SaxtonBaseNode {
 	protected boolean driversReady = false;
 
 	// Publishers
-	protected Publisher<ByteArray> outboundPub_; //outgoing byte array, after encode
-	protected Publisher<BSM> bsmPub_; //incoming BSM, after decoded
-	protected Publisher<MobilityIntro> mobilityIntroPub_;
+	protected Publisher<ByteArray> outboundPub_; //outgoing byte array after encode
+	protected Publisher<BSM> bsmPub_; //incoming BSM after decoded
+	protected Publisher<MobilityIntro> mobilityIntroPub_; //incoming mobility introduction message after decoded
 
 	// Subscribers
 	protected Subscriber<SystemAlert> alertSub_;
 	protected Subscriber<ByteArray> inboundSub_; //incoming byte array, need to decode
 	protected Subscriber<BSM> bsmSub_; //outgoing BSM, need to encode
-	protected Subscriber<MobilityIntro> mobilityIntroSub_; //outgoing Intro message, need to encode
+	protected Subscriber<MobilityIntro> mobilityIntroSub_; //outgoing mobility introduction message, need to encode
 
 	// Used Services
 	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient_;
@@ -190,11 +190,11 @@ public class MessageConsumer extends SaxtonBaseNode {
 		mobilityIntroSub_ = connectedNode_.newSubscriber("mobility_intro_outbound", MobilityIntro._TYPE);
 		if(bsmSub_ == null || inboundSub_ == null || mobilityIntroSub_ == null) {
 		    log_.error("Cannot initialize necessary subscribers.");
-            handleException(new RosRuntimeException("Cannot initialize necessary subscribers."));
+		    handleException(new RosRuntimeException("Cannot initialize necessary subscribers."));
 		}
-	    bsmSub_.addMessageListener((bsm) -> dsrcMessageQueue.add(new MessageContainer("BSM", bsm)));
-	    mobilityIntroSub_.addMessageListener((intro) -> dsrcMessageQueue.add(new MessageContainer("MobilityIntro", intro)));
-		inboundSub_.addMessageListener((msg) -> {
+        bsmSub_.addMessageListener((bsm) -> dsrcMessageQueue.add(new MessageContainer("BSM", bsm)));
+        mobilityIntroSub_.addMessageListener((intro) -> dsrcMessageQueue.add(new MessageContainer("MobilityIntro", intro)));
+        inboundSub_.addMessageListener((msg) -> {
 		    messageCounters.onMessageReceiving(msg.getMessageType());
 		    IMessage<?> message = DSRCMessageFactory.getMessage(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
 		    MessageContainer decodedMessage = message.decode(msg);

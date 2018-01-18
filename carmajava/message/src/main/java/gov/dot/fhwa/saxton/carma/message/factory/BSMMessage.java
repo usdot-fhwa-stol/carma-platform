@@ -109,7 +109,7 @@ public class BSMMessage implements IMessage<BSM> {
         ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
         binary_msg.setContent(buffer);
         binary_msg.setMessageType("BSM");
-        binary_msg.getHeader().setFrameId("MessageConsumer");
+        binary_msg.getHeader().setFrameId("0");
         binary_msg.getHeader().setStamp(node_.getCurrentTime());
         return new MessageContainer("ByteArray", binary_msg);
     }

@@ -58,7 +58,7 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
     
     /**
      * This is the declaration for native method. It will take data from MobilityIntro message
-     * object and return an byte array with encoded information. Because of the
+     * object and return a byte array with encoded information. Because of the
      * efficiency of JNI method call, it takes fields directly instead of a single MobilityIntro object.
      * 
      * @return encoded Mobility Intro Message 
@@ -98,7 +98,7 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
         binary_msg.setContent(buffer);
         binary_msg.setMessageType("MobilityIntro");
-        binary_msg.getHeader().setFrameId("MessageConsumer");
+        binary_msg.getHeader().setFrameId("0");
         binary_msg.getHeader().setStamp(node_.getCurrentTime());
         return new MessageContainer("MobilityIntro", binary_msg);
     }
@@ -149,9 +149,17 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         introObject.getHeader().getTimestamp().setSecond(creationDateTime[5]);
         introObject.getHeader().getTimestamp().setOffset((short) creationDateTime[6]);
         StringBuffer roadwayIdBuffer = new StringBuffer();
+        boolean read = false;
         for(byte ch : roadwayId) {
-            // only allow A-Z, a-z, SPACE and period
-            if(ch == 32 || ch == 46 || (ch >= 48 && ch <= 57) || (ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)) {
+            // because of the defect on asn1c compiler, we force to only use string between [ and ]
+            if(read) {
+                roadwayIdBuffer.append((char) ch);
+                if(ch == 93) {
+                    read = false;
+                    break;
+                }
+            } else if(ch == 91) {
+                read = true;
                 roadwayIdBuffer.append((char) ch);
             }
         }
@@ -167,8 +175,15 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         introObject.getExpiration().setOffset((short) expirationDateTime[6]);
         StringBuffer capabilitiesBuffer = new StringBuffer();
         for(byte ch : capabilities) {
-            // only allow A-Z, a-z, SPACE and period
-            if(ch == 32 || ch == 46 || (ch >= 48 && ch <= 57) || (ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)) {
+            // because of the defect on asn1c compiler, we force to only use string between [ and ]
+            if(read) {
+                capabilitiesBuffer.append((char) ch);
+                if(ch == 93) {
+                    read = false;
+                    break;
+                }
+            } else if(ch == 91) {
+                read = true;
                 capabilitiesBuffer.append((char) ch);
             }
         }

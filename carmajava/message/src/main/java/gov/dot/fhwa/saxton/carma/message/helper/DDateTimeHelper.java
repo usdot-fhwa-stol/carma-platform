@@ -36,7 +36,7 @@ public class DDateTimeHelper {
     protected static final int DMINUTE_UNKNOW = 60;
     protected static final int DMINUTE_MIN = 0;
     protected static final int DMINUTE_MAX = 59;
-    protected static final int DSECOND_MAX = 65535;
+    protected static final int DSECOND_MAX = 65535; // second is in milliseconds
     protected static final int DSECOND_MIN = 0;
     protected static final int DOFFSET_UNKNOW = 0;
     protected static final int DOFFSET_MIN = -840;
