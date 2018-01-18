@@ -36,7 +36,7 @@ cd /var/www/html
 sudo rm -r *
 sudo cp -R -r /opt/carma/src/CarmaPlatform/website/* /var/www/html/
 
-chmod 777 /opt/carma/*
+chmod -R 777 /opt/carma/*
 
 echo 'Compiling carma and sourcing. ...'
 cd /opt/carma
