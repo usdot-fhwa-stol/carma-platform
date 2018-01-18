@@ -119,7 +119,7 @@ public class FutureManeuver implements IManeuver {
 
 
 
-        
+
 
         return false; //TODO - bogus
     }
