@@ -241,7 +241,9 @@ public class EnvironmentWorker {
     newObstacle.setCrossTrack(crosstrackDistance);
     newObstacle.setDownTrack(downtrackDistance);
     newObstacle.setPrimaryLane((byte)primaryLane);
-    newObstacle.setSecondaryLanes(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, secondaryLanes));
+    if (secondaryLanes.length > 0) { // Ensure we only try to set if secondary lanes are present
+      newObstacle.setSecondaryLanes(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, secondaryLanes));
+    }
     newObstacle.setWaypointId(bestSegment.getDowntrackWaypoint().getWaypointId());
 
     cav_msgs.ExternalObject newObj = newObstacle.getObject();
