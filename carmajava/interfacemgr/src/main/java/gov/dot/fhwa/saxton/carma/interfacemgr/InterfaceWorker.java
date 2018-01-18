@@ -74,6 +74,7 @@ public class InterfaceWorker {
 
             //if its info has changed then
             if (!newDriver.equalCategoryAndState(drivers_.get(index))) {
+                log_.debug("DRIVER", "InterfaceWorker.handleNewDriverStatus: status changed for " + name);
                 //record the updates. Will need to fetch new driver api as well
                 newDriver.setCapabilities(mgr_.getDriverApi(name));
                 drivers_.set(index, newDriver);
@@ -82,7 +83,6 @@ public class InterfaceWorker {
                   || newDriver.getState() == DriverState.OFF)) {
                     mgr_.errorShutdown("FAULT detected in critical driver: " + newDriver.getName());
                 }
-                log_.debug("DRIVER", "InterfaceWorker.handleNewDriverStatus: status changed for " + name);
             }
         //else it's a newly discovered driver
         }else {
@@ -121,7 +121,7 @@ public class InterfaceWorker {
                 }
 
                 log_.info("STARTUP", "InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
-                  " with " + cap.size() + " capabilities.");
+                  " with " + cap.size() + " capabilities and state = " + newDriver.getState());
             }
         }
     }
