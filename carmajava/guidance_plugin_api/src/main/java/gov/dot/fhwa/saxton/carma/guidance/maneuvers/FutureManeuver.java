@@ -22,7 +22,7 @@ public class FutureManeuver implements IManeuver {
     protected double                            latEnd_;
     protected List<? extends ISimpleManeuver>   longMvrs_ = null;
     protected List<? extends ISimpleManeuver>   latMvrs_ = null;
-    protected final double                      CONCATENATION_TOLERANCE = 0.1; // meeter
+    protected final double                      CONCATENATION_TOLERANCE = 0.001; // meeter
 
 
     public FutureManeuver(double startDist, double startSpeed, double endDist, double endSpeed) {
