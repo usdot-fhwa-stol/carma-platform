@@ -60,5 +60,10 @@ public class RequiredLane {
   public int hashCode() {
     return 13 * Double.hashCode(location)  + 17 * Double.hashCode(laneId);
   }
+
+  @Override
+  public String toString() {
+    return String.format("RequiredLane{location=%.02f, laneId=%.02f}", location, laneId);
+  }
 }
 
