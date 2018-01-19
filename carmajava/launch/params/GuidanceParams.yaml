@@ -59,13 +59,12 @@ ignored_plugins: []
 # Class names of plugins required to always be activated
 required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.NoOpPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.routefollowing.RouteFollowingPlugin
 
-# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's lateral trajectory
-arbitrator_lateral_plugin: NoOp Plugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's longitudinal trajectory
-arbitrator_longitudinal_plugins: 
+arbitrator_plugins: 
+  - Route Following Plugin
   - Speed Harmonization Plugin
   - Cruising Plugin
 

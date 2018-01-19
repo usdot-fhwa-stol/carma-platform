@@ -60,6 +60,10 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
     public RouteFollowingPlugin(PluginServiceLocator psl) {
         super(psl);
+        version.setName("Route Following Plugin");
+        version.setMajorRevision(1);
+        version.setIntermediateRevision(0);
+        version.setMinorRevision(0);
     }
 
     @Override
@@ -130,7 +134,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
                 double speedLimit = routeService.getSpeedLimitAtLocation(laneChangeAtTrajEnd.getLocation()).getLimit();
                 double distanceRequiredForLaneChange = speedLimit * LANE_CHANGE_DELAY_FACTOR
                         + speedLimit * LANE_CHANGE_RATE_FACTOR + speedLimit * LANE_CHANGE_SAFETY_FACTOR;
-                
+
                 double distanceAvailableForLaneChange = laneChangeAtTrajEnd.getLocation() - traj.getEndLocation();
 
                 if (distanceAvailableForLaneChange < distanceRequiredForLaneChange) {
@@ -157,7 +161,8 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             }
 
             // Check to see if we're done with the previous lane change
-            IManeuver lateralManeuverAtStartLocation = traj.getManeuverAt(laneChangeStartLocation, ManeuverType.LATERAL);
+            IManeuver lateralManeuverAtStartLocation = traj.getManeuverAt(laneChangeStartLocation,
+                    ManeuverType.LATERAL);
             if (lateralManeuverAtStartLocation != null) {
                 // Plan our new maneuver right after that one, giving a best effort attempt
                 laneChangeStartLocation = lateralManeuverAtStartLocation.getEndDistance();
@@ -169,8 +174,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             double startSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeStartLocation).getLimit();
             double endSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeEndLocation).getLimit();
             setLaneChangeParameters(targetLane.getLaneId(), startSpeedLimit, endSpeedLimit);
-            laneChangePlugin.planSubtrajectory(traj, laneChangeStartLocation,
-                    laneChangeEndLocation);
+            laneChangePlugin.planSubtrajectory(traj, laneChangeStartLocation, laneChangeEndLocation);
         }
 
         // Now that all lane changes have been planned, backfill with lane keeping

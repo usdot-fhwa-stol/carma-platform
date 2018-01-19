@@ -67,6 +67,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     super(psl);
     version.setName("Speed Harmonization Plugin");
     version.setMajorRevision(1);
+    version.setIntermediateRevision(0);
+    version.setMinorRevision(0);
 
     restClient = new RestTemplate();
   }
