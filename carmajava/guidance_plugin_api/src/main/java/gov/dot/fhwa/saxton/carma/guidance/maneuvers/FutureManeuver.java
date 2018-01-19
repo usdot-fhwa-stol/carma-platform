@@ -66,6 +66,27 @@ public class FutureManeuver implements IManeuver {
 
 
     /**
+     * Adds a list of sequential longitudinal maneuvers to the container. If any were previously defined they will be
+     * overwritten in the process.
+     * @param mvrs - the list of maneuvers to be added
+     * @return the location of the end of the last existing longitudinal maneuver, in meters downtrack of route beginning
+     * @throws IllegalStateException if the list of maneuvers doesn't fit into the space available, or if any of them is
+     *          not derived from LongitudinalManeuver
+     */
+    public double addLongitudinalManeuvers(List<ISimpleManeuver> mvrs) throws IllegalStateException {
+
+
+
+
+        //TODO:  fill this in
+
+
+
+        return longEnd_;
+    }
+
+
+    /**
      * Adds the given maneuver as the next lateral maneuver in the sequence.
      * @param mvr - the maneuver to be added
      * @return the location of the end of the last existing lateral maneuver, in meters downtrack of route beginning
@@ -87,6 +108,28 @@ public class FutureManeuver implements IManeuver {
 
         latMvrs_.add(mvr);
         latEnd_ = mvr.getEndDistance();
+
+        return latEnd_;
+    }
+
+
+    /**
+     * Adds a list of sequential lateral maneuvers to the container. If any were previously defined they will be
+     * overwritten in the process.
+     * @param mvrs - the list of maneuvers to be added
+     * @return the location of the end of the last existing lateral maneuver, in meters downtrack of route beginning
+     * @throws IllegalStateException if the list of maneuvers doesn't fit into the space available, or if any of them is
+     *          not derived from LateralManeuver
+     */
+    public double addLateralManeuvers(List<ISimpleManeuver> mvrs) throws IllegalStateException {
+
+
+
+
+
+        //TODO:  fill this in
+
+
 
         return latEnd_;
     }
