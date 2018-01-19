@@ -50,11 +50,11 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
     private ITacticalPlugin laneChangePlugin;
     private RouteService routeService;
+    private double laneChangeRateFactor = 0.75;
+    private double laneChangeDelayFactor = 1.5;
+    private double laneChangeSafetyFactor = 1.5;
 
     private static final String LANE_CHANGE_PLUGIN_NAME = "LaneChangePlugin";
-    private static final double LANE_CHANGE_RATE_FACTOR = 0.75;
-    private static final double LANE_CHANGE_DELAY_FACTOR = 1.5;
-    private static final double LANE_CHANGE_SAFETY_FACTOR = 1.5;
     private static final long LONG_SLEEP = 10000;
     private static final double EPSILON = 0.001;
 
@@ -68,6 +68,9 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
     @Override
     public void onInitialize() {
+        laneChangeRateFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_rate_factor", 0.75);
+        laneChangeDelayFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_delay_factor", 1.5);
+        laneChangeSafetyFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_safety_factor", 1.5);
     }
 
     @Override
@@ -132,8 +135,8 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             if (laneChangeAtTrajEnd.getLocation() > traj.getEndLocation()) {
                 double distanceToNextLaneChangeAfterTraj = laneChangeAtTrajEnd.getLocation() - traj.getEndLocation();
                 double speedLimit = routeService.getSpeedLimitAtLocation(laneChangeAtTrajEnd.getLocation()).getLimit();
-                double distanceRequiredForLaneChange = speedLimit * LANE_CHANGE_DELAY_FACTOR
-                        + speedLimit * LANE_CHANGE_RATE_FACTOR + speedLimit * LANE_CHANGE_SAFETY_FACTOR;
+                double distanceRequiredForLaneChange = speedLimit * laneChangeDelayFactor
+                        + speedLimit * laneChangeRateFactor + speedLimit * laneChangeSafetyFactor;
 
                 double distanceAvailableForLaneChange = laneChangeAtTrajEnd.getLocation() - traj.getEndLocation();
 
@@ -150,8 +153,8 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         // Walk the lane changes required by route and plan maneuvers for each of them.
         for (RequiredLane targetLane : requiredLaneChanges) {
             double speedLimit = routeService.getSpeedLimitAtLocation(targetLane.getLocation()).getLimit();
-            double distanceForLaneChange = speedLimit * LANE_CHANGE_DELAY_FACTOR + speedLimit * LANE_CHANGE_RATE_FACTOR
-                    + speedLimit * LANE_CHANGE_SAFETY_FACTOR;
+            double distanceForLaneChange = speedLimit * laneChangeDelayFactor + speedLimit * laneChangeRateFactor
+                    + speedLimit * laneChangeSafetyFactor;
 
             double laneChangeStartLocation = targetLane.getLocation() - distanceForLaneChange;
 
