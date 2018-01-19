@@ -28,6 +28,8 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     protected final IAccStrategy accStrategy;
     protected boolean completed = false;
     protected long startTime_ = 0;
+    protected double startSpeed_ = -1.0; // m/s
+    protected double endSpeed_ = -1.0; // m/s
     protected double workingAccel_; // m/s^2 that we will actually use
     protected static final double SPEED_EPSILON = 0.0001;
 
@@ -91,6 +93,34 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
             commands_.setSpeedCommand(executeSpeedCommand, workingAccel_);
         }
         return completed;
+    }
+
+        /**
+     * Stores the beginning and target speed of the maneuver.
+     * Since maneuvers will generally be chained together during planning, this is the only way that a maneuver
+     * can know what speed the vehicle will have after completing its predecessor maneuver.
+     * @param startSpeed - the expected speed at the beginning of the maneuver, m/s
+     * @param targetSpeed - target speed at end of maneuver, m/s
+     */
+    public void setSpeeds(double startSpeed, double targetSpeed) {
+        startSpeed_ = startSpeed;
+        endSpeed_ = targetSpeed;
+    }
+
+    /**
+     * Returns the specified starting speed for the maneuver.  To be used for longitudinal maneuvers only.
+     * @return m/s
+     */
+    public double getStartSpeed() {
+        return startSpeed_;
+    }
+
+    /**
+     * Returns the specified target speed for the end of the maneuver.  To be used for longitudinal maneuvers only.
+     * @return m/s
+     */
+    public double getTargetSpeed() {
+        return endSpeed_;
     }
 
     /**

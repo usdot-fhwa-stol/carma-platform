@@ -22,7 +22,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
  * A lane keeping maneuver.
  * Tries to keep the vehicle in its current lane
  */
-public abstract class LaneKeeping extends LateralManeuver {
+public class LaneKeeping extends LateralManeuver {
 
     protected double DEFAULT_AXEL_ANGLE = 0.0;
 
@@ -43,5 +43,14 @@ public abstract class LaneKeeping extends LateralManeuver {
     protected double getAxleAngleCmd() {
         // TODO provide a real implementation of this
         return DEFAULT_AXEL_ANGLE;
+    }
+
+    /**
+     * Returns true if a lane change maneuver can be planned over this distance
+     * TODO determine better check of validity
+     */
+    @Override
+    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) {
+        return startDist < endDist;
     }
 }

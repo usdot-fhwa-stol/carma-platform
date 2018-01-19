@@ -21,31 +21,24 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 /**
  * Lane change maneuver. Moves the vehicle from the current lane to the target lane
  */
-public abstract class LaneChange extends LateralManeuver {
+public class LaneChange extends LateralManeuver {
 
     protected int targetLane_ = 0; // 0 indexed from right to left
-    protected int startingLane_ = 0;
     protected double RIGHT_LANE_CHANGE = 1.0;
     protected double LEFT_LANE_CHANGE = -1.0;
     protected double KEEP_LANE = 0.0;
-    protected double timePerLaneChange_ = 4.0; //s
-
 
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
             throws IllegalStateException {
         super.plan(inputs, commands, startDist);
-
-        double deltaV = endSpeed_ - startSpeed_;
-        double numberOfLanes = Math.abs(targetLane_ - startingLane_);
-        double deltaT = timePerLaneChange_ * numberOfLanes;
-        endDist_ = deltaT * ((deltaV / 2.0) + startSpeed_) + startDist;
+        throw new IllegalStateException("Cannot plan a lane change maneuver without specifying start and end distance");
     }
 
     @Override
     public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
             double endDist) throws IllegalStateException, ArithmeticException {
-        throw new IllegalStateException("Cannot plan a lane change maneuver without specifying start and end speeds");
+        return super.planToTargetDistance(inputs, commands, startDist, endDist);
     }
 
     @Override
@@ -69,18 +62,11 @@ public abstract class LaneChange extends LateralManeuver {
     }
 
     /**
-     * Stores the starting lane ID, to be used for lateral maneuvers only.
-     * @param startingLane - lane number at the start
+     * Returns true if a lane change maneuver can be planned over this distance
+     * TODO determine better check of validity
      */
-    public void setStartingLane(int startingLane) {
-        startingLane_ = startingLane;
-    }
-
-    /**
-     * Stores the starting lane ID, to be used for lateral maneuvers only.
-     * @param timePerLaneChange - The amount of time in sec that it takes to perform one lane change
-     */
-    public void setTimePerLaneChange(int timePerLaneChange) {
-        timePerLaneChange_ = timePerLaneChange;
+    @Override
+    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) {
+        return startDist < endDist;
     }
 }

@@ -25,8 +25,6 @@ public abstract class LateralManeuver extends ManeuverBase {
 
     protected boolean completed = false;
     protected long startTime_ = 0;
-    protected double startSpeed_ = -1.0; // m/s
-    protected double endSpeed_ = -1.0; // m/s
     protected double maxAxleAngleRate = 0.0; 
     protected double axleAngle_ = 0.0; // rad: Angle in radians to turn the wheels. Positive is left, Negative is right
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
@@ -38,14 +36,7 @@ public abstract class LateralManeuver extends ManeuverBase {
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
             throws IllegalStateException {
-        super.plan(inputs, commands, startDist);
-
-        //check that speeds have been defined
-        if (startSpeed_ < -0.5 || endSpeed_ < -0.5) {
-            throw new IllegalStateException(
-                    "Lateral maneuver plan attempted without previously defining the start/end speeds.");
-        }
-        
+        super.plan(inputs, commands, startDist);  
     }
 
     @Override
@@ -76,6 +67,9 @@ public abstract class LateralManeuver extends ManeuverBase {
      * Returns the axle angle cmd to execute for the next timestep
      */
     protected abstract double getAxleAngleCmd();
+
+    @Override
+    public abstract boolean canPlan(IManeuverInputs inputs, double startDist, double endDist);
 
     /**
      * Sets the acceleration constraints for this maneuver 
