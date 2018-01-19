@@ -159,6 +159,20 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             introMsg.getExpiration().setOffset((short) -300);
             introMsg.setCapabilities("[CarmaPlatform v2.2.3]");
             mobIntroOutPub.publish(introMsg);
+            MobilityAck ackMsg = mobAckOutPub.newMessage();
+            ackMsg.getHeader().setSenderId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, hostId));
+            ackMsg.getHeader().setRecipientId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, targetId));
+            ackMsg.getHeader().setPlanId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, planId));
+            ackMsg.getHeader().getTimestamp().setYear((short) 2018);
+            ackMsg.getHeader().getTimestamp().setMonth((byte) 1);
+            ackMsg.getHeader().getTimestamp().setDay((byte) 1);
+            ackMsg.getHeader().getTimestamp().setHour((byte) 0);
+            ackMsg.getHeader().getTimestamp().setMinute((byte) 0);
+            ackMsg.getHeader().getTimestamp().setSecond(0);
+            ackMsg.getHeader().getTimestamp().setOffset((short) -300);
+            ackMsg.getAgreement().setType(MobilityAckType.ACCEPT_WITH_EXECUTE);
+            ackMsg.setVerificationCode("");
+            mobAckOutPub.publish(ackMsg);
         }
         Thread.sleep(5000);
       }
