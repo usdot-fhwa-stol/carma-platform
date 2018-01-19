@@ -172,6 +172,13 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             }
 
             double laneChangeEndLocation = laneChangeStartLocation + distanceForLaneChange;
+            if (laneChangeEndLocation > traj.getEndLocation()) {
+                // If we don't have enough room in the trajectory to execute our "best effort" attempt, request a longer trajectory
+                TrajectoryPlanningResponse requestForLongerTrajectory = new TrajectoryPlanningResponse();
+                // Request enough space to execute the maneuver plus a little bit of breathing room
+                requestForLongerTrajectory.requestLongerTrajectory(laneChangeEndLocation + speedLimit * 0.5);
+                return requestForLongerTrajectory;
+            }
 
             // Compute the distance required and command the lane change plugin to plan
             double startSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeStartLocation).getLimit();
