@@ -21,6 +21,8 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 
 public class InterfaceWorker {
@@ -31,9 +33,9 @@ public class InterfaceWorker {
     protected SaxtonLogger                  log_;
     protected long                          startedWaiting_;
     protected long							systemReadyTime_;
-    protected boolean                       systemOperational_ = false;
-    protected boolean                       controllerReady_ = false;
-    protected boolean                       positionReady_ = false;
+    protected AtomicBoolean                 systemOperational_ = new AtomicBoolean(false);
+    protected AtomicBoolean                 controllerReady_ = new AtomicBoolean(false);
+    protected AtomicBoolean                 positionReady_ = new AtomicBoolean(false);
 
     InterfaceWorker(IInterfaceMgr mgr, SaxtonLogger log) {
         mgr_ = mgr;
@@ -74,6 +76,7 @@ public class InterfaceWorker {
 
             //if its info has changed then
             if (!newDriver.equalCategoryAndState(drivers_.get(index))) {
+                log_.debug("DRIVER", "InterfaceWorker.handleNewDriverStatus: status changed for " + name);
                 //record the updates. Will need to fetch new driver api as well
                 newDriver.setCapabilities(mgr_.getDriverApi(name));
                 drivers_.set(index, newDriver);
@@ -82,7 +85,6 @@ public class InterfaceWorker {
                   || newDriver.getState() == DriverState.OFF)) {
                     mgr_.errorShutdown("FAULT detected in critical driver: " + newDriver.getName());
                 }
-                log_.debug("DRIVER", "InterfaceWorker.handleNewDriverStatus: status changed for " + name);
             }
         //else it's a newly discovered driver
         }else {
@@ -104,9 +106,9 @@ public class InterfaceWorker {
 
                     //indicate if this is one of the critical drivers
                     if (newDriver.isPosition()) {
-                        positionReady_ = true;
+                        positionReady_.set(true);
                     }else if (newDriver.isController()) {
-                        controllerReady_ = true;
+                        controllerReady_ .set(true);
                     }
 
                     //reset the wait timer
@@ -116,12 +118,12 @@ public class InterfaceWorker {
                 }else if(newDriver.getState() == DriverState.DEGRADED  &&  newDriver.isPosition()) {
                     drivers_.add(newDriver);
                     mgr_.bindWithDriver(name);
-                    positionReady_ = true;
+                    positionReady_.set(true);
                     startedWaiting_ = System.currentTimeMillis();
                 }
 
                 log_.info("STARTUP", "InterfaceWorker.handleNewDriverStatus: discovered new driver " + name +
-                  " with " + cap.size() + " capabilities.");
+                  " with " + cap.size() + " capabilities and state = " + newDriver.getState());
             }
         }
     }
@@ -161,7 +163,7 @@ public class InterfaceWorker {
         }
 
         //if the system is OPERATIONAL and the new state of this driver is not "fully operational" then
-        if (systemOperational_  &&  state != DriverState.OPERATIONAL) {
+        if (systemOperational_.get()  &&  state != DriverState.OPERATIONAL) {
 
             //formulate an alert message at the appropriate level depending on the type of driver that is reporting
             // (sendSystemAlert)
@@ -216,7 +218,7 @@ public class InterfaceWorker {
         List<String> result = new ArrayList<String>();
 
         //if the system is ready for operation then
-        if (systemOperational_) {
+        if (systemOperational_.get()) {
 
             //loop through all known drivers
             for (int driverIndex = 0;  driverIndex < drivers_.size();  ++driverIndex) {
@@ -277,17 +279,17 @@ public class InterfaceWorker {
     public boolean isSystemReady() {
 
         //if system is not yet OPERATIONAL then
-        if (!systemOperational_) {
+        if (!systemOperational_.get()) {
 
             //if wait timer has expired then
             long elapsed = System.currentTimeMillis() - startedWaiting_;
             if (elapsed > 1000*waitTime_) {
 
                 //if we have the essential drivers registered then
-                if (controllerReady_  &&  positionReady_) {
+                if (controllerReady_.get()  &&  positionReady_.get()) {
 
                     //indicate that it is now OPERATIONAL
-                    systemOperational_ = true;
+                    systemOperational_.set(true);
                     //log the time required to get to this point
                     log_.info("STARTUP", "///// InterfaceWorker says all known drivers are initialized -- after "
                                 + elapsed/1000 + " sec");
@@ -303,7 +305,7 @@ public class InterfaceWorker {
             }
         }
 
-        return systemOperational_;
+        return systemOperational_.get();
     }
     
     
