@@ -88,6 +88,17 @@ public class GuidanceRouteService implements RouteService {
       RequiredLane requiredLane = new RequiredLane(dtdAccum, seg.getWaypoint().getRequiredLaneIndex());
       requiredLanes.add(requiredLane);
     }
+
+    // Remove duplicates to find out where lane changes must occur
+    SortedSet<RequiredLane> requiredLaneChanges = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+    RequiredLane prev = null;
+    for (RequiredLane lane : requiredLanes) {
+      if (prev != null && prev.getLaneId() != lane.getLaneId()) {
+        requiredLanes.add(lane);
+      }
+
+      prev = lane;
+    }
   }
 
   @Override

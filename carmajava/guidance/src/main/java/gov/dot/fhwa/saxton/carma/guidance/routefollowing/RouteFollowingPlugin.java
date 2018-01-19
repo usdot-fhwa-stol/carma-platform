@@ -111,7 +111,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
     }
 
     private void planLaneKeepingManeuver(double startDist, double endDist) {
-        log.info(String.format("Delegating lane change maneuver planning between: [%.02f, %.02f)", startDist, endDist));
+        log.info(String.format("Planning lane keeping maneuver planning between: [%.02f, %.02f)", startDist, endDist));
         // STUB
     }
 
@@ -123,27 +123,16 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
                 traj.getEndLocation());
         requiredLanes.add(routeService.getRequiredLaneAtLocation(traj.getEndLocation())); // Handle the end point of the trajectory
 
-        // Remove duplicates to find out where lane changes must occur
-        List<RequiredLane> requiredLaneChanges = new ArrayList<RequiredLane>();
-        RequiredLane prev = null;
-        for (RequiredLane lane : requiredLanes) {
-            if (prev != null && prev.getLaneId() != lane.getLaneId()) {
-                requiredLanes.add(lane);
-            }
-
-            prev = lane;
-        }
-
-        log.info(String.format("Identified %d lane changes in trajectory", requiredLaneChanges.size()));
+        log.info(String.format("Identified %d lane changes in trajectory", requiredLanes.size()));
         String changes = "";
-        for (RequiredLane lane : requiredLaneChanges) {
+        for (RequiredLane lane : requiredLanes) {
             changes += lane.toString() + ",";
         }
         log.info("Changes: " + changes);
 
         // Ensure that we have enough space after the current trajectory to complete the NEXT lane change
-        if (!requiredLaneChanges.isEmpty()) {
-            RequiredLane laneChangeAtTrajEnd = requiredLaneChanges.get(requiredLaneChanges.size() - 1);
+        if (!requiredLanes.isEmpty()) {
+            RequiredLane laneChangeAtTrajEnd = (RequiredLane) requiredLanes.toArray()[requiredLanes.size() - 1];
 
             if (laneChangeAtTrajEnd.getLocation() > traj.getEndLocation()) {
                 double speedLimit = routeService.getSpeedLimitAtLocation(laneChangeAtTrajEnd.getLocation()).getLimit();
@@ -164,7 +153,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         }
 
         // Walk the lane changes required by route and plan maneuvers for each of them.
-        for (RequiredLane targetLane : requiredLaneChanges) {
+        for (RequiredLane targetLane : requiredLanes) {
             double speedLimit = routeService.getSpeedLimitAtLocation(targetLane.getLocation()).getLimit();
             double distanceForLaneChange = speedLimit * laneChangeDelayFactor + speedLimit * laneChangeRateFactor
                     + speedLimit * laneChangeSafetyFactor;
