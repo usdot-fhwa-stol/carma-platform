@@ -56,6 +56,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
     private static final double LANE_CHANGE_DELAY_FACTOR = 1.5;
     private static final double LANE_CHANGE_SAFETY_FACTOR = 1.5;
     private static final long LONG_SLEEP = 10000;
+    private static final double EPSILON = 0.001;
 
     public RouteFollowingPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -95,6 +96,10 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
     }
 
     private void setLaneChangeParameters(int targetLane, double startSpeedLimit, double endSpeedLimit) {
+        // STUB
+    }
+
+    private void planLaneKeepingManeuver(double startDist, double endDist) {
         // STUB
     }
 
@@ -166,6 +171,17 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             setLaneChangeParameters(targetLane.getLaneId(), startSpeedLimit, endSpeedLimit);
             laneChangePlugin.planSubtrajectory(traj, laneChangeStartLocation,
                     laneChangeEndLocation);
+        }
+
+        // Now that all lane changes have been planned, backfill with lane keeping
+        double windowStart = traj.findEarliestLateralWindowOfSize(EPSILON);
+        while (windowStart != -1) {
+            IManeuver m = traj.getNextManeuverAfter(windowStart, ManeuverType.LATERAL);
+            double windowEnd = (m != null ? m.getStartDistance() : traj.getEndLocation());
+
+            planLaneKeepingManeuver(windowStart, windowEnd);
+
+            windowStart = traj.findEarliestLateralWindowOfSize(EPSILON);
         }
 
         return new TrajectoryPlanningResponse(); // Success!
