@@ -23,6 +23,10 @@ public class RequiredLane {
   private double location;
   private int laneId;
 
+  /**
+   * Create a required lane object that indicates the vehicle must be in the lane with laneId by location.
+   * Uses the downtrack waypoint on the route to determine the location.
+   */
   public RequiredLane(double location, int laneId) {
     this.location = location;
     this.laneId = laneId;

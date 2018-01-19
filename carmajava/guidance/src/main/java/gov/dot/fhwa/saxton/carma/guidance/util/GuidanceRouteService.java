@@ -68,7 +68,7 @@ public class GuidanceRouteService implements RouteService {
   /**
    * Process the new route data to extract the limits and algorithm data
    */
-  private void processRoute(Route newRoute) {
+  public void processRoute(Route newRoute) {
     currentRoute = newRoute;
 
     limits = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
