@@ -25,10 +25,18 @@ mkdir src
 cd src
 git clone https://github.com/fhwa-saxton/CarmaPlatform --branch $branchvar
 
+echo 'Updating routes folder'
+if [ ! -d "routes" ]; then # if routes folder does not exist then make it
+  mkdir /opt/carma/routes
+fi
+sudo cp -R /opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/* /opt/carma/routes/
+
 echo 'Deleting files from html folder and copying new files ...'
 cd /var/www/html
 sudo rm -r *
 sudo cp -R -r /opt/carma/src/CarmaPlatform/website/* /var/www/html/
+
+sudo chmod -R 777 /opt/carma/*
 
 echo 'Compiling carma and sourcing. ...'
 cd /opt/carma

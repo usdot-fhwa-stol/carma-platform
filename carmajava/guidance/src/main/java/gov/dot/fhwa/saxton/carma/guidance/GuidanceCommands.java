@@ -297,11 +297,23 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             msg.setMaxAccel(maxAccel.get());
             speedAccelPublisher.publish(msg);
 
-            cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
-            lateralMsg.setAxleAngle(steeringCommand.get());
-            lateralMsg.setMaxAccel(lateralAccel.get());
-            lateralMsg.setMaxAxleAngleRate(yawRate.get());
-            lateralControlPublisher.publish(lateralMsg);
+            //cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+            //lateralMsg.setAxleAngle(steeringCommand.get());
+            //lateralMsg.setMaxAccel(lateralAccel.get());
+            //lateralMsg.setMaxAxleAngleRate(yawRate.get());
+            //lateralControlPublisher.publish(lateralMsg);
+            log.trace("Published longitudinal & lateral cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
+        } else if (currentState.get() == GuidanceState.ACTIVE) {
+            SpeedAccel msg = speedAccelPublisher.newMessage();
+            msg.setSpeed(0.0);
+            msg.setMaxAccel(1.0);
+            speedAccelPublisher.publish(msg);
+
+            //cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+            //lateralMsg.setAxleAngle(0.0);
+            //lateralMsg.setMaxAccel(0.0);
+            //lateralMsg.setMaxAxleAngleRate(0.0);
+            //lateralControlPublisher.publish(lateralMsg);
             log.trace("Published longitudinal & lateral cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
         }
 

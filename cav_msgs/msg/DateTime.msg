@@ -8,20 +8,20 @@
 uint16  year
 
 # a integer value, representing the month within a year
-uint8  month
+uint8   month
 
 # a integer value, representing the dates within a month
-uint8 day
+uint8   day
 
 # a integer value, representing the hours within a day
-uint8 hour
+uint8   hour
 
 # a integer value, representing the minutes within a hour
-uint8 minute
+uint8   minute
 
 # a integer value, representing the milliseconds within a minut
-uint32 second
+uint32  second
 
 # a signed integer values, representing an hour and minute value set
 # from -14:00 to 14:00, representing all the world's local time zones in units of minutes
-int16 offset
+int16   offset
