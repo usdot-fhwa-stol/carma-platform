@@ -230,4 +230,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
     }
+
+    @Override public int getCurrentLane() {
+        return 0; // TODO implement using data from roadway
+    }
 }

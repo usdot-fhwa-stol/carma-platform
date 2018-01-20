@@ -25,8 +25,8 @@ import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
  */
 public abstract class ManeuverBase implements ISimpleManeuver {
 
-    protected double                            startDist_ = -1.0;
-    protected double                            endDist_ = -1.0;
+    protected double                            startDist_ = -1.0; // m
+    protected double                            endDist_ = -1.0;// m
     protected IManeuverInputs                   inputs_;
     protected IGuidanceCommands                 commands_;
     protected ILogger                           log_ = LoggerManager.getLogger();
@@ -70,7 +70,6 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     public double getEndDistance() {
         return endDist_;
     }
-
 
     /**
      * Verifies that the vehicle is between the specified start & end locations for this maneuver
