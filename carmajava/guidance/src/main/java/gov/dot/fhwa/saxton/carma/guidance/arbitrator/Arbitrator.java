@@ -30,10 +30,10 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse.PlanningRequest;
+import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
-import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
@@ -69,8 +69,7 @@ public class Arbitrator extends GuidanceComponent
   protected ISubscriber<TwistStamped> twistSubscriber;
   protected AtomicReference<GuidanceState> state;
   protected PluginManager pluginManager;
-  protected IStrategicPlugin lateralPlugin;
-  protected List<IStrategicPlugin> longitudinalPlugins = new ArrayList<>();
+  protected List<IStrategicPlugin> plugins = new ArrayList<>();
   protected CruisingPlugin cruisingPlugin;
   protected AtomicBoolean receivedDtdUpdate = new AtomicBoolean(false);
   protected AtomicDouble downtrackDistance = new AtomicDouble(0.0);
@@ -87,8 +86,7 @@ public class Arbitrator extends GuidanceComponent
   protected Trajectory trajectory = null;
   protected TrajectoryValidator trajectoryValidator;
   protected TrajectoryExecutor trajectoryExecutor;
-  protected String lateralPluginName = "NoOp Plugin";
-  protected List<String> longitudinalPluginNames = new ArrayList<>();
+  protected List<String> pluginNames = new ArrayList<>();
   protected ISubscriber<Route> routeSub;
   protected AtomicDouble routeLength = new AtomicDouble(-1.0);
   protected AtomicReference<Route> currentRoute = new AtomicReference<>();
@@ -150,8 +148,7 @@ public class Arbitrator extends GuidanceComponent
     planningWindowGrowthFactor = ptree.getDouble("~planning_window_growth_factor", 1.0);
     planningWindowShrinkFactor = ptree.getDouble("~planning_window_shrink_factor", 1.0);
     numAcceptableFailures = ptree.getInteger("~trajectory_planning_max_attempts", 3);
-    longitudinalPluginNames = (List<String>) ptree.getList("~arbitrator_longitudinal_plugins");
-    lateralPluginName = ptree.getString("~arbitrator_lateral_plugin");
+    pluginNames = (List<String>) ptree.getList("~arbitrator_plugins");
     planningWindowSnapThreshold = ptree.getDouble("~planning_window_snap_threshold", 20.0);
     postComplexSteadyingDuration = ptree.getDouble("~post_complex_trajectory_steadying_period", 2.0);
     double configuredSpeedLimit = ptree.getDouble("~trajectory_speed_limit", GuidanceCommands.MAX_SPEED_CMD_M_S);
@@ -214,38 +211,30 @@ public class Arbitrator extends GuidanceComponent
   public void onRouteActive() {
     // For now, find the configured lateral and longitudinal plugins
     for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
-      if (plugin.getVersionInfo().componentName().equals(lateralPluginName)) {
-        if (plugin instanceof IStrategicPlugin) {
-          setLateralPlugin((IStrategicPlugin) plugin);
-        } else {
-          log.error("Selected lateral plugin: " + lateralPluginName + " is not a strategic plugin!");
-        }
-      }
-
       if (plugin instanceof CruisingPlugin) {
         setCruisingPlugin((CruisingPlugin) plugin);
       }
     }
 
-    for (String name : longitudinalPluginNames) {
+    for (String name : pluginNames) {
       for (IPlugin p : pluginManager.getRegisteredPlugins()) {
         if (p.getVersionInfo().componentName().equals(name) && p instanceof IStrategicPlugin) {
-          setLongitudinalPlugin((IStrategicPlugin) p);
+          addStrategicPlugin((IStrategicPlugin) p);
         }
       }
     }
 
-    if (lateralPlugin == null || longitudinalPlugins.isEmpty()) {
-      exceptionHandler.handleException("Arbitrator unable to locate the configured and required plugins!",
+    if (plugins.isEmpty()) {
+      exceptionHandler.handleException("Arbitrator unable to locate any plugins!",
           new RosRuntimeException("No plugins"));
     }
 
     String pluginList = "";
-    for (IPlugin p : longitudinalPlugins) {
+    for (IPlugin p : plugins) {
       pluginList += ", " + p.getVersionInfo().componentName();
     }
 
-    log.info("PLUGIN", "Arbitrator using plugins: [" + lateralPluginName + pluginList + "]");
+    log.info("PLUGIN", "Arbitrator using plugins: [" + pluginList + "]");
 
     currentState.set(GuidanceState.ACTIVE);
   }
@@ -265,9 +254,8 @@ public class Arbitrator extends GuidanceComponent
   public void onCleanRestart() {
     arbitratorStateMachine.processEvent(ArbitratorEvent.CLEAN_RESTART);
     // Reset member variables
-    lateralPlugin = null;
     cruisingPlugin = null;
-    longitudinalPlugins.clear();
+    plugins.clear();
     trajectory = null;
     planningWindow = node.getParameterTree().getDouble("~initial_planning_window", 10.0);
     currentState.set(GuidanceState.DRIVERS_READY);
@@ -278,12 +266,8 @@ public class Arbitrator extends GuidanceComponent
     return "Guidance.Arbitrator";
   }
 
-  protected void setLateralPlugin(IStrategicPlugin plugin) {
-    lateralPlugin = plugin;
-  }
-
-  protected void setLongitudinalPlugin(IStrategicPlugin plugin) {
-    longitudinalPlugins.add(plugin);
+  protected void addStrategicPlugin(IStrategicPlugin plugin) {
+    plugins.add(plugin);
   }
 
   protected void setCruisingPlugin(CruisingPlugin plugin) {
@@ -357,10 +341,8 @@ public class Arbitrator extends GuidanceComponent
         expectedEntrySpeed = currentSpeed.get();
       }
 
-      lateralPlugin.planTrajectory(traj, expectedEntrySpeed);
-
       // Use temp list to allow for modification
-      List<IStrategicPlugin> tmpPlugins = new ArrayList<>(longitudinalPlugins);
+      List<IStrategicPlugin> tmpPlugins = new ArrayList<>(plugins);
       for (IStrategicPlugin p : tmpPlugins) {
         if (p.getActivation() && p.getAvailability()) {
           log.info("Allowing plugin: " + p.getVersionInfo().componentName() + " to plan trajectory.");
@@ -393,8 +375,8 @@ public class Arbitrator extends GuidanceComponent
             if (resp.higherPriorityRequested()) {
               log.info("Candidate trajectory #" + (failures + 1) + " Plugin: " + p.getVersionInfo().componentName()
                   + " requested higher priority");
-              longitudinalPlugins.remove(p);
-              longitudinalPlugins.add(0, p);
+              plugins.remove(p);
+              plugins.add(0, p);
             }
 
             // Increment planning failures and skip to next iteration of outer loop

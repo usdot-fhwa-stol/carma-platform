@@ -228,8 +228,40 @@ public class Trajectory {
       maneuvers.add(complexManeuver);
     }
 
-    if (maneuvers.size() == 0) {
-      return -1;
+    if (maneuvers.isEmpty()) {
+      return getStartLocation();
+    }
+
+    maneuvers.sort((IManeuver m1, IManeuver m2) -> 
+      Double.compare(m1.getStartDistance(), m2.getStartDistance()));
+
+    double lastEnd = startLocation;
+    for (IManeuver m : maneuvers) {
+      if (m.getStartDistance() - lastEnd >= size)  {
+        return lastEnd;
+      }
+
+      lastEnd = m.getEndDistance();
+    }
+
+    return -1;
+  }
+
+  /**
+   * Find the earliest available space in the lateral domain of the current trajectory for 
+   * which a maneuver of the specified size might fit.
+   * 
+   * @returns The distance location of the start of the window if found, -1 otherwise
+   */
+  public double findEarliestLateralWindowOfSize(double size) {
+    List<IManeuver> maneuvers = new ArrayList<>();
+    maneuvers.addAll(lateralManeuvers);
+    if (complexManeuver != null) {
+      maneuvers.add(complexManeuver);
+    }
+
+    if (maneuvers.isEmpty()) {
+      return getStartLocation();
     }
 
     maneuvers.sort((IManeuver m1, IManeuver m2) -> 

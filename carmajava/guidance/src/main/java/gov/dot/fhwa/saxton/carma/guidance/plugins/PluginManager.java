@@ -57,7 +57,7 @@ import java.util.Set;
  * Responsible for instantiating, running, owning, and runtime management of
  * all plugins installed in the software's operating environment.
  */
-public class PluginManager extends GuidanceComponent implements AvailabilityListener, IStateChangeListener {
+public class PluginManager extends GuidanceComponent implements AvailabilityListener, IStateChangeListener, PluginManagementService {
     protected final long sleepDurationMillis = 30000;
     protected int sequenceNumber = 0;
 
@@ -92,7 +92,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
         pluginServiceLocator = new PluginServiceLocator(
                 null, // Need to call setArbitrator service to resolve circular dependency
-                new PluginManagementService(),
+                this,
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
@@ -497,5 +497,16 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
     }
+
+	@Override
+	public ITacticalPlugin getTacticalPluginByName(String pluginName) {
+        for (IPlugin p : registeredPlugins) {
+            if (p instanceof ITacticalPlugin && p.getVersionInfo().componentName().equals(pluginName)) {
+                return (ITacticalPlugin) p;
+            }
+        }
+
+        return null;
+	}
     
 }

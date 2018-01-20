@@ -58,14 +58,13 @@ ignored_plugins: []
 
 # Class names of plugins required to always be activated
 required_plugins:
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.NoOpPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.routefollowing.RouteFollowingPlugin
 
-# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's lateral trajectory
-arbitrator_lateral_plugin: NoOp Plugin
 
-# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's longitudinal trajectory
-arbitrator_longitudinal_plugins: 
+# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
+arbitrator_plugins: 
+  - Route Following Plugin
   - Speed Harmonization Plugin
   - Cruising Plugin
 
@@ -144,3 +143,16 @@ acc_pid_deadband: 0.0
 
 # Integer: The number of samples to use in a moving average filter for the output of acc
 acc_number_of_averaging_samples: 1
+
+# Double: The scaling factor to apply to current speed when accounting for distance traveled during a lane change
+lane_change_rate_factor: 0.75
+
+# Double: The amount of delay to account for driver response to a lane change operation, used for estimating distance
+# traveled during a lane change
+# Units: seconds
+lane_change_delay_factor: 1.5
+
+# Double: The amount of time after a lane change operation to allow for safety reasons, used for estimating distance
+# traveled during a lane change
+# Units: seconds
+lane_change_safety_factor: 1.5
