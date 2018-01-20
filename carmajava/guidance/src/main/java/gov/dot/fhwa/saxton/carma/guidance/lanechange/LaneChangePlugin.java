@@ -35,6 +35,8 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin {
 
+    private final int               SLEEP_TIME = 100; //ms
+
     public LaneChangePlugin(PluginServiceLocator psl) {
         super(psl);
         version.setName("Lane Change Plugin");
@@ -48,6 +50,10 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
     public void onInitialize() {
         //create the negotiation manager
 
+        //set up a publisher of mpbility introduction messages
+        //set up subscriber for mobility acks
+        //set up publisher of status messages for the UI
+        pubSubService.getSubscriberForTopic()
     }
 
 
@@ -60,14 +66,16 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
     @Override
     public void loop() throws InterruptedException {
-        //since always available, don't need to do anything here
 
+        //loop through all outstanding negotiations and process them
+
+        //sleep a while
     }
 
 
     @Override
     public void onSuspend() {
-        //indicate not available
+        //indicate not available - any in-progress negotiations at this time are subject to timing out
 
         //TODO - what to do about in-work negotiations?
     }
@@ -98,29 +106,14 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
     @Override
     public boolean planSubtrajectory(Trajectory traj, double startDistance, double endDistance) {
 
-        //verify that the input parameters have been defined already
+        //attempt to plan the lane change
 
-        //create an empty container (future compound maneuver) for the TBD maneuvers to be inserted into
+        //if it completed then
+            //insert the maneuver into the trajectory
+        //retrieve the plan announcement and give it to the Negotiator
+        //add the plan to the list of in-work negotiations for monitoring
 
-        //check for expected neighbor vehicles in our target area (target area is the target lane for the whole length
-        // of the compound maneuver, since we could begin moving into that lane at any point along that length)
-
-        //if no vehicles are expected to be in the way then
-            //insert a simple lane change maneuver into the container
-
-            //formulate an announcement for Negotiator to broadcast our intentions, just in case someone is there that
-            // we don't know about (but we'll move out with our plan assuming we understand the environment correctly)
-
-        //else (at least one vehicle has a chance of being in our way)
-            //formulate a plan for coordinated maneuvering
-
-
-        //spawn a separate thread that will initiate and deal with negotiation results whenever they come back and finalize
-        // the future maneuver at that time
-        //NOTE: if negotiations fail then the FutureManeuver simply will not get populated, and trajectory execution
-        //      will fail, so we don't explicitly need to do anything to indicate a failure situation
-
-        return false; //TODO - should this return true even if I have to spawn some additional planning?
+        return false; //TODO - bogus
     }
 
 

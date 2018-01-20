@@ -13,7 +13,7 @@ import static gov.dot.fhwa.saxton.carma.guidance.lanechange.NegotiationMgr.State
  * and handling the results of that negotiation.  This only manages negotiations for a single plan, but it may
  * involve multiple neighbor vehicles.
  */
-public class NegotiationMgr implements Runnable {
+public class NegotiationMgr {
 
     enum State {
         NEW,
@@ -36,18 +36,18 @@ public class NegotiationMgr implements Runnable {
 
 
     public NegotiationMgr(FutureManeuver container, IPubSubService pubSubService) { //TODO also need List<vehicles>, plan
-        //set up a publisher of mpbility introduction messages
-        //set up subscriber for mobility acks
-        //set up publisher of status messages for the UI
-        pubSubService.getSubscriberForTopic()
 
         //initialize our state to new
 
 
     }
 
-    @Override
-    public void run() {
+
+    /**
+     * Handles whatever processing is dictated by the current state and updated inputs from Negotiator.  This will be
+     * called periodically from the plugin's loop() method.
+     */
+    public void process() {
         switch (state) {
             case NEW:
                 //formulate an introduction message and send it to the negotiator
@@ -57,6 +57,7 @@ public class NegotiationMgr implements Runnable {
                 //if a new response has been received then
                     //if it is a rejection of the plan then
                         //inform other host nodes that our plan has been rejected
+                        //notify arbitrator that our trajectory planning has failed [notifyTrajectoryFailure]
                         //indicate that we are complete
 
                     //else if plan was accepted then
@@ -73,8 +74,6 @@ public class NegotiationMgr implements Runnable {
                 //log that this plan is concluded
                 //return
         }
-
-        //sleep a while
 
     }
 
