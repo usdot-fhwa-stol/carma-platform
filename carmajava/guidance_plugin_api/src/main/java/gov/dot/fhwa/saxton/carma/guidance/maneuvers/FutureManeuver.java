@@ -46,7 +46,7 @@ public class FutureManeuver implements IManeuver {
      */
     public double  addLongitudinalManeuver(ISimpleManeuver mvr) throws IllegalStateException {
 
-        if (!(mvr extends LongitudinalManeuver)) {
+        if (!(mvr instanceof LongitudinalManeuver)) {
             throw new IllegalStateException("Attempted to add " + mvr.getClass() + " as a longitudinal maneuver in FutureManeuver.");
         }
 
@@ -94,7 +94,7 @@ public class FutureManeuver implements IManeuver {
      */
     public double  addLateralManeuver(ISimpleManeuver mvr) throws IllegalStateException {
 
-        if (!(mvr extends LateralManeuver)) {
+        if (!(mvr instanceof LateralManeuver)) {
             throw new IllegalStateException("Attempted to add " + mvr.getClass() + " as a lateral maneuver in FutureManeuver.");
         }
 
