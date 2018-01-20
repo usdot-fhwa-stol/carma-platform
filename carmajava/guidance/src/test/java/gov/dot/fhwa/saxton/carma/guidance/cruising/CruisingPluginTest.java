@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.plugins;
+package gov.dot.fhwa.saxton.carma.guidance.cruising;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,18 +35,22 @@ import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin.TrajectorySegment;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.NoOpAccStrategyFactory;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
-import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.SpeedLimit;
-import gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin.TrajectorySegment;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManagementService;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
 public class CruisingPluginTest {
 
@@ -63,9 +67,11 @@ public class CruisingPluginTest {
     NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
     AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
 
+    routeService = mock(GuidanceRouteService.class);
+
     PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
         mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)));
+        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService);
     cruise = new CruisingPlugin(psl);
   }
 
@@ -115,21 +121,6 @@ public class CruisingPluginTest {
     return route;
   }
 
-  @Test
-  public void testProcessSpeedLimits() {
-    List<Double> speeds = new ArrayList<>();
-    speeds.add(1.0);
-    speeds.add(2.0);
-    speeds.add(3.0);
-
-    Route route = generateRouteWithSpeedLimits(speeds, 1.0);
-
-    List<SpeedLimit> limits = cruise.processSpeedLimits(route);
-    for (int i = 0; i < limits.size(); i++) {
-      assertEquals(speeds.get(i), limits.get(i).speedLimit, 0.5);
-    }
-  }
-
   // We'll only have the CrusingPlugin generating longitudinal maneuvers, so the whole
   // longitudinal trajectory will always be open for now.
   @Test
@@ -163,38 +154,19 @@ public class CruisingPluginTest {
   }
 
   @Test
-  public void testGetSpeedLimits() {
-    List<Double> speeds = new ArrayList<>();
-    speeds.add(1.0);
-    speeds.add(2.0);
-    speeds.add(3.0);
-    speeds.add(4.0);
-    speeds.add(5.0);
-
-    Route route = generateRouteWithSpeedLimits(speeds, 5.0);
-
-    List<SpeedLimit> limits = cruise.processSpeedLimits(route);
-    List<SpeedLimit> filteredLimits = cruise.getSpeedLimits(limits, 5.5, 15.5);
-
-    assertEquals(2, filteredLimits.size());
-    assertEquals(2.0, filteredLimits.get(0).speedLimit, 0.5);
-    assertEquals(3.0, filteredLimits.get(1).speedLimit, 0.5);
-    assertEquals(10.0, filteredLimits.get(0).location, 0.01);
-    assertEquals(15.0, filteredLimits.get(1).location, 0.01);
-  }
-
-  @Test
   public void testManeuverGeneration() {
     List<Double> speeds = new ArrayList<>();
     speeds.add(5.0);
 
     Route route = generateRouteWithSpeedLimits(speeds, 5.0);
 
-    cruise.setSpeedLimits(cruise.processSpeedLimits(route));
+
+    routeService.processRoute(route);
     Trajectory traj = new Trajectory(0.0, 10.0);
 
     cruise.planTrajectory(traj, 0.0);
   }
 
   private CruisingPlugin cruise;
+  private GuidanceRouteService routeService;
 }
