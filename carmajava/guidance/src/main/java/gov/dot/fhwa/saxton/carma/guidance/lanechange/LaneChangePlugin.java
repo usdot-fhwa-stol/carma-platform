@@ -6,7 +6,9 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 /**
- * This is a mandatory plugin for the Carma platform that manages all lane change activity within a given sub-trajectory.
+ * This is a mandatory plugin for the Carma platform that manages all lane change activity within a given sub-trajectory,
+ * with the intent of changing from the current lane into one of the adjacent lanes only (no multi-lane hopping).
+ *
  * It will create a FutureManeuver place holder for both lateral and longitudinal dimensions, which allows the parent
  * strategic plugin to continue planning the remainder of the trajectory around this space. In parallel to that activity,
  * this plugin will plan the details of the lane change, inserting one or more maneuvers into the FutureManeuver space
@@ -18,6 +20,18 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
  * this resultant FutureManeuver needs to be executed. At that time, if its planning is incomplete an exception will te
  * thrown and that trajectory will be aborted by the parent.
  */
+
+    //TODO - this plugin was written in a very limited amount of time, so has made a lot of assumptions and simplifications.
+    //       Below are some of the major things known now that should be refactored (not necessarily a complete list):
+    //
+    //  - As soon as negotiations fail, we should let arbitrator know so that it has a chance to abort & replace the
+    //  current trajectory in an orderly way; otherwise the only way arbitrator will know is when the trajectory fails
+    //  ugly because it attempts to execute an empty FutureManeuver.
+    //
+    //  - We have a very simplistic model for what our neighbor situation will look like at the time of maneuver
+    //  execution. This could be beefed up in many ways.
+    //
+    //  - There are several complementary simplifications built into the Negotiator node as well.
 
 public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin {
 
@@ -32,38 +46,81 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
     @Override
     public void onInitialize() {
-        //TODO - fill in
+        //create the negotiation manager
+
     }
 
 
     @Override
     public void onResume() {
-        //TODO - fill in
+        //indicate always available
+
     }
 
 
     @Override
     public void loop() throws InterruptedException {
-        //TODO - fill in
+        //since always available, don't need to do anything here
+
     }
 
 
     @Override
     public void onSuspend() {
-        //TODO - fill in
+        //indicate not available
+
+        //TODO - what to do about in-work negotiations?
     }
 
 
     @Override
     public void onTerminate() {
-        //TODO - fill in
+        //nothing to do
+    }
+
+
+    /**
+     * Takes in the necessary inputs to define the boundary constraints for the lane change. This must be called prior
+     * to calling planSubtrajectory.
+     * Caution: it assumes that lane IDs will not change between the time it is called and the time that the maneuver
+     * needs to be completed.
+     * @param targetLane - ID of the lane we are moving into (could be to the right or left of current lane)
+     * @param startSpeed - vehicle speed at beginning of the maneuver, m/s
+     * @param endSpeed - vehicle speed at end of the maneuver, m/s
+     */
+    public void setLaneChangeParameters(int targetLane, double startSpeed, double endSpeed) {
+        //store them
+
+
     }
 
 
     @Override
     public boolean planSubtrajectory(Trajectory traj, double startDistance, double endDistance) {
-        //TODO - fill in
-        return false;
+
+        //verify that the input parameters have been defined already
+
+        //create an empty container (future compound maneuver) for the TBD maneuvers to be inserted into
+
+        //check for expected neighbor vehicles in our target area (target area is the target lane for the whole length
+        // of the compound maneuver, since we could begin moving into that lane at any point along that length)
+
+        //if no vehicles are expected to be in the way then
+            //insert a simple lane change maneuver into the container
+
+            //formulate an announcement for Negotiator to broadcast our intentions, just in case someone is there that
+            // we don't know about (but we'll move out with our plan assuming we understand the environment correctly)
+
+        //else (at least one vehicle has a chance of being in our way)
+            //formulate a plan for coordinated maneuvering
+
+
+        //spawn a separate thread that will initiate and deal with negotiation results whenever they come back and finalize
+        // the future maneuver at that time
+        //NOTE: if negotiations fail then the FutureManeuver simply will not get populated, and trajectory execution
+        //      will fail, so we don't explicitly need to do anything to indicate a failure situation
+
+        return false; //TODO - should this return true even if I have to spawn some additional planning?
     }
 
 
