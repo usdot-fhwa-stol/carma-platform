@@ -402,6 +402,9 @@
         <remap from="route"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
+        <!-- Negotiation Receiver Plugin -->
+        <remap from="new_plan"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
       </node>
     </group>
 

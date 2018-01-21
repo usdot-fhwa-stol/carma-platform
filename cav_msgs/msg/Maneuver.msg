@@ -43,4 +43,5 @@ uint8       start_roadway_lane_id
 uint16      length
 
 # maneuver parameters which may indicate target speed, lane ID, etc
+# the format should be <startDistance>:<endDistance>:<startSpeed>:<endSpeed>
 string      parameters
