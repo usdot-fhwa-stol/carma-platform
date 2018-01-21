@@ -27,17 +27,16 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
  */
 public interface ITacticalPlugin extends IPlugin {
     /**
-     * Execute the plugin's planning algorithm on a subset of the specified trajectory
+     * Execute the plugin's planning algorithm on a subset of the specified trajectory, inserting a FutureManeuver
+     * into the trajectory between the indicated locations.
      * 
      * @param traj The trajectory to plan inside
-     * @param targetLane The lane ID at the end of the trajectory
      * @param startDistance The distance the maneuver generation should start, m
-     * @param startSpeed The speed at the beginning of the trajectory, m/s
      * @param endDistance The distance the maneuver generation should end, m
-     * @param endSpeed The speed to be achieved at the end of the trajectory, m/s
-     * 
-     * @return true if the planning was successful, false otherwise.
+     *
+     * @return true if the planning was successful, false otherwise.  Note that a return of false may indicate
+     * that a future maneuver is being negotiated, or it may indicate a planning failure so that the trajectory
+     * is not modified at all.
      */
-    boolean planSubtrajectory(Trajectory traj, int targetLane, double startDistance, double startSpeed,
-                              double endDistance, double endSpeed);
+    boolean planSubtrajectory(Trajectory traj, double startDistance, double endDistance);
 }

@@ -4,6 +4,7 @@ import cav_msgs.LaneChangeStatus;
 import cav_msgs.MobilityAck;
 import cav_msgs.MobilityAckType;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 import java.util.ArrayList;
@@ -61,10 +62,10 @@ public class Negotiation {
     private ILogger             log_;
 
 
-    public Negotiation(LaneChangePlugin lcp, ILogger log) {
+    public Negotiation(LaneChangePlugin lcp) {
         lcp_ = lcp;
-        log_ = log;
         state_ = NEW;
+        log_ = LoggerManager.getLogger();
         log_.info("V2V", "New Negotiation object created in the LaneMergePlugin");
     }
 
@@ -108,16 +109,22 @@ public class Negotiation {
                                     ||  ack == AckType.REJECT_WITH_COUNTERPROPOSAL_COMING  ||  ack == AckType.REJECT) {
 
 
-                                //inform other host nodes that our plan has been rejected
-                                stat.setStatus(LaneChangeStatus.REJECTION_RECEIVED);
-                                lcp_.sendStatusUpdate(stat);
+                                //TODO: replace 0 with index of desired vehicle in as-yet-undefined list of vehicles
+                                //if it was from the vehicle of interest then
+                                if (determineSender(m) == 0) {
 
-                                //notify arbitrator that our trajectory planning has failed [notifyTrajectoryFailure]
-                                //TODO: future enhancement to avoid arbitrator having to do a panic replan when execution fails
+                                    //inform other host nodes that our plan has been rejected
+                                    stat.setStatus(LaneChangeStatus.REJECTION_RECEIVED);
+                                    lcp_.sendStatusUpdate(stat);
 
-                                //indicate that we are complete
-                                state_ = COMPLETE;
-                                log_.warn("V2V", "Lane change plan has been rejected by remote vehicle.");
+                                    //notify arbitrator that our trajectory planning has failed [notifyTrajectoryFailure]
+                                    //TODO: future enhancement to avoid arbitrator having to do a panic replan when execution fails
+
+                                    //indicate that we are complete
+                                    state_ = COMPLETE;
+                                    log_.warn("V2V", "Lane change plan has been rejected by remote vehicle.");
+                                    break;
+                                }
 
                             //else if plan was accepted then
                             }else if (ack == AckType.ACCEPT_WITH_EXECUTE) {
@@ -134,6 +141,7 @@ public class Negotiation {
                                     success = true;
                                     state_ = COMPLETE;
                                     log_.info("V2V", "Lane change plan has been accepted by remote vehicle.");
+                                    break; //break out of loop since don't care of others have rejected the plan
                                 }
 
                             }else {
@@ -202,7 +210,8 @@ public class Negotiation {
             //indicate that we have found it
         //else
             //indicate we don't know where this message came from
-            return -1;
+
+        return 0; //TODO - bogus but makes above code work for now
     }
 
 }
