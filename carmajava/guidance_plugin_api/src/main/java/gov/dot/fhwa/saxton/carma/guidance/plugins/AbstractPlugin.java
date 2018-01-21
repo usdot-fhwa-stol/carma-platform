@@ -66,10 +66,6 @@ public abstract class AbstractPlugin implements IPlugin {
         return availability.get();
     }
 
-    @Override public void onReceiveNegotiationRequest(String strategy) {
-        throw new UnsupportedOperationException();
-    }
-
     @Override
     public final void registerAvailabilityListener(AvailabilityListener availabilityListener) {
         availabilityListeners.add(availabilityListener);

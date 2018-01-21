@@ -1,7 +1,9 @@
 package gov.dot.fhwa.saxton.carma.guidance.lanechange;
 
+import cav_msgs.LaneChangeStatus;
 import cav_msgs.MobilityAck;
 import cav_msgs.MobilityAckType;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 import java.util.ArrayList;
@@ -56,13 +58,14 @@ public class Negotiation {
     private State               state_;
     private List<MobilityAck>   newMessages_ = new ArrayList<>();
     private LaneChangePlugin    lcp_;
-    private SaxtonLogger        log_;
+    private ILogger             log_;
 
 
-    public Negotiation(LaneChangePlugin lcp, SaxtonLogger log) {
+    public Negotiation(LaneChangePlugin lcp, ILogger log) {
         lcp_ = lcp;
         log_ = log;
         state_ = NEW;
+        log_.info("V2V", "New Negotiation object created in the LaneMergePlugin");
     }
 
 
@@ -76,8 +79,7 @@ public class Negotiation {
      * called periodically from the plugin's loop() method.
      * @return true if the plan was accepted by the remote vehicle; false if it is rejected or timed out
      */
-    public boolean process() {
-        LaneChangeStatus stat = new LaneChangeStatus();
+    public boolean process(LaneChangeStatus stat) {
         boolean success = false;
 
         switch (state_) {
@@ -190,6 +192,8 @@ public class Negotiation {
      * @return index of the sender in the list of known vehicles; -1 if unable to determine
      */
     private int determineSender(MobilityAck ack) {
+        //TODO - this will be fleshed out in a future work item
+
         //loop through known vehicles
             //compute distance between its known location and location in the ack message
             //if it's the smallest so far, store it as candidate

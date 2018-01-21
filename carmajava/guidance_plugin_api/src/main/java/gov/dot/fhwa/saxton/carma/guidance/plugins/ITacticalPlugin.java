@@ -30,10 +30,14 @@ public interface ITacticalPlugin extends IPlugin {
      * Execute the plugin's planning algorithm on a subset of the specified trajectory
      * 
      * @param traj The trajectory to plan inside
-     * @param startDistance The distance the maneuver generation should start
-     * @param endDistance The distance the maneuver generation should end
+     * @param targetLane The lane ID at the end of the trajectory
+     * @param startDistance The distance the maneuver generation should start, m
+     * @param startSpeed The speed at the beginning of the trajectory, m/s
+     * @param endDistance The distance the maneuver generation should end, m
+     * @param endSpeed The speed to be achieved at the end of the trajectory, m/s
      * 
      * @return true if the planning was successful, false otherwise.
      */
-    boolean planSubtrajectory(Trajectory traj, double startDistance, double endDistance);
+    boolean planSubtrajectory(Trajectory traj, int targetLane, double startDistance, double startSpeed,
+                              double endDistance, double endSpeed);
 }
