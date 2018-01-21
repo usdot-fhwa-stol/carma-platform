@@ -34,12 +34,13 @@
 
 #include "sensor_fusion.h"
 #include "wgs84_utils.h"
-
+#include "timer.h"
 #include <cav_msgs/ConnectedVehicleList.h>
 
 #include <cav_srvs/GetDriversWithCapabilities.h>
 #include <cav_srvs/Bind.h>
 
+#include <rosgraph_msgs/Clock.h>
 
 namespace tf2
 {
@@ -71,7 +72,12 @@ inline void doTransform(const cav_msgs::ExternalObject& in, cav_msgs::ExternalOb
 
 namespace torc
 {
-
+class SimTimer : public cav::Timer
+{
+    virtual boost::posix_time::ptime getTime() override {
+        return ros::Time::now().toBoost();
+    }
+};
 /**
  * @brief Simple merging of sizes.
  * @param tgt
@@ -187,13 +193,37 @@ TrackedObject toTrackedObject(const cav_msgs::ExternalObject& obj)
 int SensorFusionApplication::run() {
     nh_.reset(new ros::NodeHandle());
     pnh_.reset(new ros::NodeHandle("~"));
-    ros::NodeHandle pnh("~filtered");
+    ros::NodeHandle pnh("filtered");
     tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
 
     pnh_->param<std::string>("inertial_frame_name",inertial_frame_name_,"odom");
     pnh_->param<std::string>("body_frame_name",body_frame_name_,"base_link");
     pnh_->param<std::string>("ned_frame_name",ned_frame_name_,"ned");
     pnh_->param<bool>("use_interface_mgr",use_interface_mgr_,false);
+
+    bool use_sim_time;
+    nh_->param<bool>("/use_sim_time", use_sim_time, false);
+
+    if(use_sim_time)
+    {
+        ROS_INFO_STREAM("Using Sim Time");
+        tracker_.reset(new torc::ObjectTracker(std::make_shared<torc::SimTimer>()));
+        sub_map_["/clock"] = nh_->subscribe<rosgraph_msgs::Clock>("/clock", 10, [this](const rosgraph_msgs::ClockConstPtr& msg)
+        {
+            static ros::Time time = msg->clock;
+            if(msg->clock < time)
+            {
+                ROS_INFO_STREAM("Detected an early clock, resetting tracker");
+                tracker_->reset();
+            }
+
+            time = msg->clock;
+        });
+    }else
+    {
+        tracker_.reset(new torc::ObjectTracker());
+    }
+
 
     //setup dyn_recfg_server
     {
@@ -215,15 +245,66 @@ int SensorFusionApplication::run() {
 
     if(!use_interface_mgr_)
     {
-        sub_map_["/pinpoint/position/odometry"] =nh_->subscribe<nav_msgs::Odometry>("/pinpoint/position/odometry",10,[this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg);});
-        sub_map_["/pinpoint/position/velocity"] = nh_->subscribe<geometry_msgs::TwistStamped>("/pinpoint/position/velocity",10,[this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg);});
-        sub_map_["/pinpoint/position/nav_sat_fix"] = nh_->subscribe<sensor_msgs::NavSatFix>("/pinpoint/position/nav_sat_fix",10,[this](const ros::MessageEvent<sensor_msgs::NavSatFix>& msg){ navsatfix_cb(msg);});
-        sub_map_["/pinpoint/position/heading"] = nh_->subscribe<cav_msgs::HeadingStamped>("/pinpoint/position/heading",10,[this](const ros::MessageEvent<cav_msgs::HeadingStamped>& msg){ heading_cb(msg);});
-        sub_map_["/srx_objects/f_lrr/sensor/objects"] = nh_->subscribe<cav_msgs::ExternalObjectList>("/srx_objects/f_lrr/sensor/objects",10,[this](const cav_msgs::ExternalObjectListConstPtr& msg){objects_cb_q_.push_back(std::make_pair("/srx_objects/f_lrr/sensor/objects", msg));});
-        sub_map_["/srx_objects/rf_srr/sensor/objects"] = nh_->subscribe<cav_msgs::ExternalObjectList>("/srx_objects/rf_srr/sensor/objects",10,[this](const cav_msgs::ExternalObjectListConstPtr& msg){objects_cb_q_.push_back(std::make_pair("/srx_objects/rf_srr/sensor/objects", msg));});
-        sub_map_["/srx_objects/lf_srr/sensor/objects"] = nh_->subscribe<cav_msgs::ExternalObjectList>("/srx_objects/lf_srr/sensor/objects",10,[this](const cav_msgs::ExternalObjectListConstPtr& msg){objects_cb_q_.push_back(std::make_pair("/srx_objects/lf_srr/sensor/objects", msg));});
-        sub_map_["/srx_objects/r_srr/sensor/objects"] = nh_->subscribe<cav_msgs::ExternalObjectList>("/srx_objects/r_srr/sensor/objects",10,[this](const cav_msgs::ExternalObjectListConstPtr& msg){objects_cb_q_.push_back(std::make_pair("/srx_objects/r_srr/sensor/objects", msg));});
-        sub_map_["/srx_objects/vision/sensor/objects"] = nh_->subscribe<cav_msgs::ExternalObjectList>("/srx_objects/vision/sensor/objects",10,[this](const cav_msgs::ExternalObjectListConstPtr& msg){objects_cb_q_.push_back(std::make_pair("/srx_objects/vision/sensor/objects", msg));});
+        //odometry
+        {
+            ROS_INFO_STREAM("Odometry Topics");
+            XmlRpc::XmlRpcValue v;
+            pnh_->param("odometry_topics",v,v);
+            for(int i = 0; i < v.size(); i++)
+            {
+                ROS_INFO_STREAM("Subscribing to "<< v[i]);
+                sub_map_[v[i]] = nh_->subscribe<nav_msgs::Odometry>(v[i],10,[this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg);});
+            }
+        }
+
+        //velocity
+        {
+
+            ROS_INFO_STREAM("Velocity Topics");
+            XmlRpc::XmlRpcValue v;
+            pnh_->param("velocity_topics",v,v);
+            for(int i = 0; i < v.size(); i++)
+            {
+                ROS_INFO_STREAM("Subscribing to "<< v[i]);
+                sub_map_[v[i]] = nh_->subscribe<geometry_msgs::TwistStamped>(v[i],10,[this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg);});
+            }
+        }
+
+        //navsatfix
+        {
+            ROS_INFO_STREAM("NavSatFix Topics");
+            XmlRpc::XmlRpcValue v;
+            pnh_->param("navsatfix_topics",v,v);
+            for(int i = 0; i < v.size(); i++)
+            {
+                ROS_INFO_STREAM("Subscribing to "<< v[i]);
+                sub_map_[v[i]] = nh_->subscribe<sensor_msgs::NavSatFix>(v[i],10,[this](const ros::MessageEvent<sensor_msgs::NavSatFix>& msg){ navsatfix_cb(msg);});
+            }
+        }
+
+        //heading
+        {
+            ROS_INFO_STREAM("Heading Topics");
+            XmlRpc::XmlRpcValue v;
+            pnh_->param("heading_topics",v,v);
+            for(int i = 0; i < v.size(); i++)
+            {
+                ROS_INFO_STREAM("Subscribing to "<< v[i]);
+                sub_map_[v[i]] = nh_->subscribe<cav_msgs::HeadingStamped>(v[i],10,[this](const ros::MessageEvent<cav_msgs::HeadingStamped>& msg){ heading_cb(msg);});
+            }
+        }
+
+        //objects
+        {
+            ROS_INFO_STREAM("Objects Topics");
+            XmlRpc::XmlRpcValue v;
+            pnh_->param("objects_topics",v,v);
+            for(int i = 0; i < v.size(); i++)
+            {
+                ROS_INFO_STREAM("Subscribing to "<< v[i]);
+                sub_map_[v[i]] =  nh_->subscribe<cav_msgs::ExternalObjectList>(v[i],10,[this,&v,i](const cav_msgs::ExternalObjectListConstPtr& msg){objects_cb_q_.push_back(std::make_pair(v[i], msg));});
+            }
+        }
     }
 
     odom_pub_       = pnh.advertise<nav_msgs::Odometry>("odometry",100);
@@ -381,26 +462,25 @@ void SensorFusionApplication::publish_updates() {
 
     vehicles_pub_.publish(msg);
 
-
-    if(tracker_.process() > 0 && !tracker_.tracked_sensor.objects.empty())
+    if(tracker_->process() > 0 && !tracker_->tracked_sensor->objects.empty())
     {
         cav_msgs::ExternalObjectList list;
-        list.header.stamp.fromBoost(tracker_.tracked_sensor.time_stamp);
+        list.header.stamp.fromBoost(tracker_->tracked_sensor->time_stamp);
         list.header.frame_id = inertial_frame_name_;
-        for (auto& it : tracker_.tracked_sensor.objects)
+        for (auto& it : tracker_->tracked_sensor->objects)
         {
             cav_msgs::ExternalObject obj = toExternalObject(it);
             obj.header = list.header;
             list.objects.push_back(obj);
         }
 
-        static uint64_t objects_published = 0.0;
+        static uint64_t objects_published = 0;
         objects_published += list.objects.size();
         ROS_INFO_STREAM_THROTTLE(5.0, "Published " << objects_published << " so far");
         ROS_DEBUG_STREAM("Publish objects: " << list.objects.size());
         objects_pub_.publish(list);
     }
-    else 
+    else
         ROS_DEBUG_STREAM_THROTTLE(1.0,"No tracked_objects");
 
 }
@@ -473,7 +553,7 @@ void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConst
     }
 
 
-    tracker_.addObjects(transformed_list.begin(),transformed_list.end(),hash,transformStamped.header.stamp.toBoost());
+    tracker_->addObjects(transformed_list.begin(),transformed_list.end(),hash,transformStamped.header.stamp.toBoost());
 }
 
 void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
@@ -580,7 +660,7 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     memcpy(back.src_data[src_id].get(),&serial_size,sizeof(uint32_t));
     ros::serialization::OStream stream(back.src_data[src_id].get()+sizeof(uint32_t),serial_size);
     ros::serialization::serialize(stream,obj);
-    tracker_.addObjects(objects.begin(),objects.end(),src_id,msg->header.stamp.toBoost());
+    tracker_->addObjects(objects.begin(),objects.end(),src_id,msg->header.stamp.toBoost());
 }
 
 void SensorFusionApplication::velocity_cb(const ros::MessageEvent<geometry_msgs::TwistStamped> &event) {
@@ -617,10 +697,10 @@ void SensorFusionApplication::dyn_recfg_cb(sensor_fusion::SensorFusionConfig &cf
 
     config_ = cfg;
 
-    tracker_.config.life_time_decay = config_.tracker_lifetime_decay;
-    tracker_.config.max_velocity = config_.tracker_max_velocity;
-    tracker_.config.score_threshold = config_.tracker_score_threshold;
-    tracker_.config.minimum_tracker_score = config_.tracker_minimum_track_score;
+    tracker_->config.life_time_decay = config_.tracker_lifetime_decay;
+    tracker_->config.max_velocity = config_.tracker_max_velocity;
+    tracker_->config.score_threshold = config_.tracker_score_threshold;
+    tracker_->config.minimum_tracker_score = config_.tracker_minimum_track_score;
 
     init = true;
 }

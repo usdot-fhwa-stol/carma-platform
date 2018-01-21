@@ -32,11 +32,10 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+#include "timer.h"
+
 #include <eigen3/Eigen/Geometry>
 
-#include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/date_time/posix_time/posix_time_duration.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/range/algorithm_ext/push_back.hpp>
@@ -113,7 +112,6 @@ private:
  */
 class ObjectTracker {
     static constexpr double pi = boost::math::constants::pi<double>();
-
 public:
     typedef boost::posix_time::ptime TimeStampType;
 
@@ -153,6 +151,7 @@ private:
     uint16_t last_id_ = 1;
     std::vector<ObjectTrackerSensorObjects> process_q_;
     std::map<size_t, ObjectTrackerSensorObjects> internal_tracks_;
+    std::shared_ptr<cav::Timer> timer_;
 
     /**
      * @brief Updates the tracked object by forwarding its position
@@ -520,10 +519,16 @@ private:
     }
 
 public:
-    ObjectTrackerSensorObjects tracked_sensor;
 
-    ObjectTracker() {
-        tracked_sensor.time_stamp = boost::posix_time::microsec_clock::local_time();
+    std::unique_ptr<ObjectTrackerSensorObjects> tracked_sensor;
+    explicit ObjectTracker(std::shared_ptr<cav::Timer> timer = std::make_shared<cav::Timer>()) : timer_(timer),config(),tracked_sensor(new ObjectTrackerSensorObjects()) {
+        tracked_sensor->time_stamp = timer_->getTime();
+    }
+
+    void reset()
+    {
+        tracked_sensor.reset(new ObjectTrackerSensorObjects());
+        tracked_sensor->time_stamp = timer_->getTime();
     }
 
     virtual~ObjectTracker() {}
@@ -532,13 +537,13 @@ public:
     void addObjects(InputIterator begin,
                     InputIterator end,
                     size_t src_id,
-                    TimeStampType time_stamp = boost::posix_time::microsec_clock::local_time())
+                    TimeStampType time_stamp)
     {
         ObjectTrackerSensorObjects objs;
         objs.src_id = src_id;
         objs.time_stamp = time_stamp;
         objs.objects.insert(objs.objects.begin(),begin,end);
-
+        std::for_each(objs.objects.begin(),objs.objects.end(),[src_id](TrackedObject&obj){obj.src_id=src_id;});
         process_q_.emplace_back(std::move(objs));
     }
 
@@ -576,17 +581,17 @@ public:
         process_q_.clear();
         ObjectTrackerSensorObjects merged_measurement = mergeTracks();
         //We want the tracked_score to be 0 so we get ID association but dont do any "real" tracking
-        if(tracked_sensor.objects.empty())
+        if(tracked_sensor->objects.empty())
         {
-            tracked_sensor.src_id = merged_measurement.src_id;
-            tracked_sensor.time_stamp = merged_measurement.time_stamp;
+            tracked_sensor->src_id = merged_measurement.src_id;
+            tracked_sensor->time_stamp = merged_measurement.time_stamp;
         }
         else
         {
-            std::for_each(tracked_sensor.objects.begin(),tracked_sensor.objects.end(),[](TrackedObject& obj){obj.tracked_score = 0.0;});
+            std::for_each(tracked_sensor->objects.begin(),tracked_sensor->objects.end(),[](TrackedObject& obj){obj.tracked_score = 0.0;});
         }
 
-        processObjects(merged_measurement,tracked_sensor);
+        processObjects(merged_measurement,*tracked_sensor);
         return size;
 
     }
