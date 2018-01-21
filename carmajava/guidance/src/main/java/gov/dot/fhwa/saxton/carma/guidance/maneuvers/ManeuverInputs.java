@@ -227,7 +227,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             jobQueue.add(this::onCleanRestart);
             break;
         default:
-            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+            throw new RosRuntimeException(getComponentName() + "received unknown instruction from guidance state machine.");
         }
     }
 

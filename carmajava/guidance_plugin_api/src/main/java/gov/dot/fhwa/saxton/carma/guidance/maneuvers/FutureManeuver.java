@@ -20,8 +20,8 @@ public class FutureManeuver implements IManeuver {
     protected double                            endSpeed_;
     protected double                            longEnd_;
     protected double                            latEnd_;
-    protected List<? extends ISimpleManeuver>   longMvrs_ = null;
-    protected List<? extends ISimpleManeuver>   latMvrs_ = null;
+    protected List<ISimpleManeuver>             longMvrs_ = null;
+    protected List<ISimpleManeuver>             latMvrs_ = null;
     protected final double                      CONCATENATION_TOLERANCE = 0.001; // meeter
 
 
