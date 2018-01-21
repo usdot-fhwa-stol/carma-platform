@@ -124,7 +124,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     if (commandReceiverThread == null && commandReceiver == null) {
       commandReceiver = new CommandReceiver(serverUrl, sessionManager.getServerSessionId(), restClient);
       commandReceiverThread = new Thread(commandReceiver);
-      statusUpdaterThread.setName("SpeedHarm Command Receiver");
+      commandReceiverThread.setName("SpeedHarm Command Receiver");
       commandReceiverThread.start();
     }
   }

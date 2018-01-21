@@ -41,6 +41,11 @@ import org.ros.namespace.GraphName;
  * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
  * rostopic pub /new_plan_outbound cav_msgs/NewPlan '{header: {sender_id: a, plan_id: 44, checksum: 0}}'
  */
+
+    //TODO - this is a minimalist implementation to get us through simplistic, "happy path" lane change maneuvers only.
+    //       The structure, data flows, and even message structures, need to be refactored for more general uses.
+
+
 public class NegotiatorMgr extends SaxtonBaseNode{
 
   protected ConnectedNode connectedNode;

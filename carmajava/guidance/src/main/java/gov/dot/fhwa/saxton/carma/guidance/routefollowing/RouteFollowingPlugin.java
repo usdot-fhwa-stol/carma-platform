@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.routefollowing;
 
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.lanechange.LaneChangePlugin;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
@@ -105,11 +106,6 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         log.info("Route Following plugin terminated");
     }
 
-    private void setLaneChangeParameters(int targetLane, double startSpeedLimit, double endSpeedLimit) {
-        log.info(String.format("Planning change to lane %d at speeds [%.02f, %.02f]", targetLane, startSpeedLimit, endSpeedLimit));
-        // STUB
-    }
-
     private void planLaneKeepingManeuver(double startDist, double endDist) {
         log.info(String.format("Planning lane keeping maneuver planning between: [%.02f, %.02f)", startDist, endDist));
         // STUB
@@ -187,7 +183,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             // Compute the distance required and command the lane change plugin to plan
             double startSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeStartLocation).getLimit();
             double endSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeEndLocation).getLimit();
-            setLaneChangeParameters(targetLane.getLaneId(), startSpeedLimit, endSpeedLimit);
+            ((LaneChangePlugin)laneChangePlugin).setLaneChangeParameters(targetLane.getLaneId(), startSpeedLimit, endSpeedLimit);
             laneChangePlugin.planSubtrajectory(traj, laneChangeStartLocation, laneChangeEndLocation);
         }
 

@@ -86,12 +86,6 @@ public interface IPlugin extends Versionable {
     // Activity methods
 
     /**
-     * Callback method to handle negotiation requests received from external or internal sources
-     * @param plan the detailed negotiation proposal from another vehicle
-     */
-    void onReceiveNegotiationRequest(String plan);
-
-    /**
      * Register an event listener to be called when the availability status of the IPlugin changes
      * @param availabilityListener
      */

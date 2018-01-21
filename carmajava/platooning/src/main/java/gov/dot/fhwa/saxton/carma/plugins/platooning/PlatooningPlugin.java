@@ -104,7 +104,8 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         return this.state.planTrajectory(traj, expectedEntrySpeed);
     }
     
-    // TODO change the input type from String to maybe a plan object 
+    // TODO change the input type from String to maybe a plan object
+    /******* this has been removed from the interface...probably needs to be removed from here in lieu of the new negotiation receiver plugin
     @Override
     public void onReceiveNegotiationRequest(String message) {
         log.info("Receive negotiation message: " + message);
@@ -117,6 +118,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
             this.state.onReceiveNegotiationRequest(message);
         }
     }
+    *****/
 
     public double getMaxAccel() {
         return maxAccel;

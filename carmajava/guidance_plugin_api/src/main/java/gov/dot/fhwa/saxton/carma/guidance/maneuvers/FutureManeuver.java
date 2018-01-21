@@ -1,5 +1,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +14,7 @@ import java.util.List;
  * must be added contiguously, front to back, in each dimension, so as not to leave any unfilled gaps (unlike planning
  * a Trajectory, which can have individual maneuvers placed anywhere at any time, with any amount of gap between).
  */
-public class FutureManeuver implements IManeuver {
+public class FutureManeuver implements ISimpleManeuver {
 
     protected double                            startDist_;
     protected double                            endDist_;
@@ -20,8 +22,8 @@ public class FutureManeuver implements IManeuver {
     protected double                            endSpeed_;
     protected double                            longEnd_;
     protected double                            latEnd_;
-    protected List<? extends ISimpleManeuver>   longMvrs_ = null;
-    protected List<? extends ISimpleManeuver>   latMvrs_ = null;
+    protected List<ISimpleManeuver>             longMvrs_ = null;
+    protected List<ISimpleManeuver>             latMvrs_ = null;
     protected final double                      CONCATENATION_TOLERANCE = 0.001; // meeter
 
 
@@ -35,6 +37,26 @@ public class FutureManeuver implements IManeuver {
 
         longMvrs_ = new ArrayList<>();
         latMvrs_ = new ArrayList<>();
+    }
+
+
+    //the next three methods exist only to satisfy the ISimpleManeuver interface, but are not used for this type of
+    // maneuver collector, as each of its constituent maneuvers will be planned individually before being assembled.
+
+    @Override
+    public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException {
+        throw new IllegalStateException("FutureManeuver.plan is not implemented - should not be called.");
+    }
+
+    @Override
+    public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist)
+                                        throws IllegalStateException {
+        throw new IllegalStateException("FutureManeuver.planToTargetDistance is not implemented - should not be called.");
+    }
+
+    @Override
+    public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) {
+        throw new IllegalStateException("FutureManeuver.canPlan is not implemented - should not be called.");
     }
 
 
@@ -151,6 +173,11 @@ public class FutureManeuver implements IManeuver {
     public boolean isFullLateral() {
         return latEnd_ > endDist_ - CONCATENATION_TOLERANCE;
     }
+
+
+    public double getLastLongitudinalDistance() { return longEnd_; }
+
+    public double getLastLateralDistance() { return latEnd_; }
 
 
     @Override

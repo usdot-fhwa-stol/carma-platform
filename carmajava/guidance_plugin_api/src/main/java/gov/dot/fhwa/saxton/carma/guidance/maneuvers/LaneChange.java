@@ -63,10 +63,13 @@ public class LaneChange extends LateralManeuver {
 
     /**
      * Returns true if a lane change maneuver can be planned over this distance
-     * TODO determine better check of validity
      */
     @Override
     public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) {
-        return startDist < endDist;
+
+        //assume we will be going the current speed
+        //typical lane change takes about 4 seconds
+        double distRequired = 4.0 * inputs.getCurrentSpeed();
+        return (endDist - startDist) >= distRequired;
     }
 }
