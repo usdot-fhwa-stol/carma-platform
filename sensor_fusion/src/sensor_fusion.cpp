@@ -629,18 +629,21 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     obj.pose.pose.orientation.z = out_rot.z();
     obj.pose.pose.orientation.w = out_rot.w();
 
-    Eigen::Vector3d velocity_vector;
-    velocity_vector[0] = msg->core_data.speed;
-    velocity_vector[1] = 0.0;
-    velocity_vector[2] = 0.0;
-
-    velocity_vector = out_rot.inverse().toRotationMatrix()*velocity_vector;
-
-    obj.presence_vector |= cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR;
-    obj.velocity.twist.linear.x = velocity_vector[0];
-    obj.velocity.twist.linear.y = velocity_vector[1];
-    obj.velocity.twist.linear.z = velocity_vector[2];
-
+    if(msg->core_data.speed < cav_msgs::BSMCoreData::SPEED_UNAVAILABLE)
+    {
+    
+      Eigen::Vector3d velocity_vector;
+      velocity_vector[0] = msg->core_data.speed;
+      velocity_vector[1] = 0.0;
+      velocity_vector[2] = 0.0;
+      
+      velocity_vector = out_rot.inverse().toRotationMatrix()*velocity_vector;
+      
+      obj.presence_vector |= cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR;
+      obj.velocity.twist.linear.x = velocity_vector[0];
+      obj.velocity.twist.linear.y = velocity_vector[1];
+      obj.velocity.twist.linear.z = velocity_vector[2];
+    }
 
     obj.presence_vector |= cav_msgs::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
     obj.confidence = 1.0;
