@@ -66,12 +66,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 	protected Publisher<ByteArray> outboundPub_; //outgoing byte array after encode
 	protected Publisher<BSM> bsmPub_; //incoming BSM after decoded
 	protected Publisher<MobilityIntro> mobilityIntroPub_; //incoming mobility introduction message after decoded
+	protected Publisher<MobilityAck> mobilityAckPub_; //incoming mobility ack message after decoded
 
 	// Subscribers
 	protected Subscriber<SystemAlert> alertSub_;
 	protected Subscriber<ByteArray> inboundSub_; //incoming byte array, need to decode
 	protected Subscriber<BSM> bsmSub_; //outgoing BSM, need to encode
 	protected Subscriber<MobilityIntro> mobilityIntroSub_; //outgoing mobility introduction message, need to encode
+	protected Subscriber<MobilityAck> mobilityAckSub_; //outgoing mobility ack message, need to encode
 
 	// Used Services
 	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient_;
@@ -176,7 +178,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 		bsmPub_ = connectedNode_.newPublisher("incoming_bsm", BSM._TYPE);
 		outboundPub_ = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
 		mobilityIntroPub_ = connectedNode_.newPublisher("incoming_intro", MobilityIntro._TYPE);
-		if(bsmPub_ == null || outboundPub_ == null || mobilityIntroPub_ == null) {
+		mobilityAckPub_ = connectedNode_.newPublisher("incoming_ack", MobilityAck._TYPE);
+		if(bsmPub_ == null || outboundPub_ == null || mobilityIntroPub_ == null || mobilityAckPub_ == null) {
 		    log_.error("Cannot initialize necessary publishers.");
 		    handleException(new RosRuntimeException("Cannot initialize necessary publishers."));
 		}
@@ -188,12 +191,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 		bsmSub_ = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);
 		inboundSub_ = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
 		mobilityIntroSub_ = connectedNode_.newSubscriber("mobility_intro_outbound", MobilityIntro._TYPE);
-		if(bsmSub_ == null || inboundSub_ == null || mobilityIntroSub_ == null) {
+		mobilityAckSub_ = connectedNode_.newSubscriber("mobility_ack_outbound", MobilityAck._TYPE);
+		if(bsmSub_ == null || inboundSub_ == null || mobilityIntroSub_ == null || mobilityAckSub_ == null) {
 		    log_.error("Cannot initialize necessary subscribers.");
 		    handleException(new RosRuntimeException("Cannot initialize necessary subscribers."));
 		}
         bsmSub_.addMessageListener((bsm) -> dsrcMessageQueue.add(new MessageContainer("BSM", bsm)));
         mobilityIntroSub_.addMessageListener((intro) -> dsrcMessageQueue.add(new MessageContainer("MobilityIntro", intro)));
+        mobilityAckSub_.addMessageListener((ack) -> dsrcMessageQueue.add(new MessageContainer("MobilityAck", ack)));
         inboundSub_.addMessageListener((msg) -> {
 		    messageCounters.onMessageReceiving(msg.getMessageType());
 		    IMessage<?> message = DSRCMessageFactory.getMessage(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
@@ -206,6 +211,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 	            case "MobilityIntro":
 	                mobilityIntroPub_.publish((MobilityIntro) decodedMessage.getMessage());
 	                break;
+	            case "MobilityAck":
+	                mobilityAckPub_.publish((MobilityAck) decodedMessage.getMessage());
 	            default:
 	                log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	            }
@@ -220,6 +227,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 				IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
 				MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
 				if(encodedMessage.getMessage() != null) {
+				    log_.info("We encode " + encodedMessage.getType());
 				    messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
 	                outboundPub_.publish((ByteArray) encodedMessage.getMessage());
 				}

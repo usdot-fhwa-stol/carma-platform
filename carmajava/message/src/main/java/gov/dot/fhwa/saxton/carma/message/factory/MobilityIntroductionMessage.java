@@ -70,7 +70,7 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
     
     /**
      * This is the declaration for native method. It will take encoded MobilityIntro byte array
-     * and a empty Mobility object as input. It will decode the message and set all fields in MobilityIntro.
+     * and a empty MobilityIntro object as input. It will decode the message and set all fields in MobilityIntro.
      * Because of the efficiency of JNI method call, it takes different parts of MobilityIntro as parameters
      * instead of a single MobilityIntro object.
      * @return -1 means decode failed; 0 means decode is successful
@@ -91,7 +91,7 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
                 helper.getExpiration().getTimestamp(), helper.getCapabilities()
                 );
         if(encode_msg == null) {
-            log_.info("MobilityIntro", "MobilityIntroMessage cannot encode message.");
+            log_.warn("MobilityIntro", "MobilityIntroMessage cannot encode message.");
             return new MessageContainer("ByteArray", null);
         }
         ByteArray binary_msg = messageFactory_.newFromType(ByteArray._TYPE);
@@ -132,7 +132,7 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
                 creationDateTime, introObject.getMyEntityType(), roadwayId,
                 introObject.getPlanType(), publicKey, expirationDateTime, capabilities);
         if(result == -1) {
-            log_.error("MobilityIntro", "MobilityIntroMessage cannot decode message");
+            log_.warn("MobilityIntro", "MobilityIntroMessage cannot decode message");
             return new MessageContainer("MobilityIntro", null);
         }
         ChannelBuffer senderIdBuffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, sendId);

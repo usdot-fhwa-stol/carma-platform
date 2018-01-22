@@ -69,6 +69,7 @@ public class MockDSRCDriver extends AbstractMockDriver {
   int current_vehicle = 0; // Do not change it.
   int pulishDelay = 1000; // Set to 1 second length between each BSM from the same vehicle
   int vehicle_number = 3; //Need to match the length of binary data array
+  int message_counter = 0; // Let driver send different inbound binary bytes
 
   public MockDSRCDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -121,11 +122,16 @@ public class MockDSRCDriver extends AbstractMockDriver {
       
       String currentByteString = rawByteString[current_vehicle++ % rawByteString.length];
       
-    //publish mobility intro message some time
-      if(ThreadLocalRandom.current().nextBoolean()) {
+      //publish mobility intro message some time
+      message_counter++; 
+      if(message_counter % 3 == 0) {
           recvMsg.setMessageType("MobilityIntro");
           currentByteString = "00 f0 80 a7 00 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 80 80 80 80 80 80 80 80 80 80 80 80 80 80 bf bf 10 84 00 00 00 21 c0 a2 ad d4 cb cf a2 0a 5b f0 e4 ba 00 10 08 02 84 03 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 f7 e2 60 80 00 00 04 38 56 dc 3c 3c b6 e1 a1 b3 0f 4c db f9 6d 41 d9 92 e6 4b 99 dd";
+      } else if(message_counter % 3 == 1) {
+          recvMsg.setMessageType("MobilityAck");
+          currentByteString = "00 f2 3a 00 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 80 80 80 80 80 80 80 80 80 80 80 80 80 80 bf bf 10 84 00 00 00 21 c1 00";
       }
+      
       
       boolean publish_control = false;
       if(currentByteString.equals("00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0")) {
