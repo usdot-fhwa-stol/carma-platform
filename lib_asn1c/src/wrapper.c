@@ -697,12 +697,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityAc
 		jbyte type = message -> value.choice.TestMessage02.body.ackType;
 		(*env) -> CallVoidMethod(env, ackType, mid_setAckType, type);
 
-		//set capabilities string
-		int verification_size = message -> value.choice.TestMessage02.body.verification->size;
-		if(verification_size != 0) {
-			uint8_t *verification_content = message -> value.choice.TestMessage02.body.verification->buf;
-			(*env) -> SetByteArrayRegion(env, verification, 0, 8, verification_content);
-		}
+		//TODO add verification string later
 	} else {
 		return -1;
 	}
