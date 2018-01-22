@@ -247,7 +247,7 @@ public class EnvironmentWorker {
     newObstacle.setWaypointId(bestSegment.getDowntrackWaypoint().getWaypointId());
 
     cav_msgs.ExternalObject newObj = newObstacle.getObject();
-    if (obj.getBsmId().hasArray()) {
+    if (obj.getBsmId().hasArray() && obj.getBsmId().readable() && obj.getBsmId().array().length > 0) {
       newObj.setBsmId(obj.getBsmId());
     }
     newObj.setConfidence(obj.getConfidence());
