@@ -7,30 +7,37 @@
     "priority" :  "6"
   },
   {
-	"name" : "TIM",
+    "name" : "TIM",
     "psid" : "0083",
     "dsrc_id" : "31",
     "channel" : "CCH",
     "priority" : "3"
   },
   {
-	"name" : "MAP",
+    "name" : "MAP",
     "psid" : "0082",
     "dsrc_id" : "18",
     "channel" : "CCH",
     "priority" : "3"
   },
   {
-	"name" : "SPAT",
+    "name" : "SPAT",
     "psid" : "0082",
     "dsrc_id" : "19",
     "channel" : "CCH",
     "priority" : "3"
   },
   {
-	"name" : "Mobility",
-    "psid" : "00FF",
-    "dsrc_id" : "255",
+    "name" : "MobilityIntro",
+    "psid" : "0240",
+    "dsrc_id" : "240",
+    "channel" : "172",
+    "priority" : "6"
+  },
+  {
+    "name" : "MobilityAck",
+    "psid" : "0242",
+    "dsrc_id" : "242",
     "channel" : "172",
     "priority" : "6"
   }
