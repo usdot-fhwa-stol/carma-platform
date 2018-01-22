@@ -32,6 +32,10 @@ import cav_msgs.MobilityIntro;
 import gov.dot.fhwa.saxton.carma.message.helper.MobilityHeaderHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
+/**
+ * This class is the actual worker for encoding and decoding Mobility Ack message
+ * by using J2735 compiler shared library.
+ */
 public class MobilityAckMessage implements IMessage<MobilityIntro>{
 
     protected ConnectedNode node_;
