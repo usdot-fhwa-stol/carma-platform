@@ -4,6 +4,8 @@
 # Describes the location and geometry of an obstacle or vehicle in the roadway
 # Obstacles are defined relative to the route with downtrack and crosstrack distances, and lane numbers
 # The obstacle's size and velocity are described in a frame located on it's current route segment
+# The frame is a FRD frame located on the uptrack waypoint of a segment. 
+# With +x pointing along the segment and +y pointing to the right
 #
 # @author Michael McConnell
 # @version 0.1
