@@ -19,15 +19,15 @@ import java.util.List;
  * This is a mandatory plugin for the Carma platform that manages all lane change activity within a given sub-trajectory,
  * with the intent of changing from the current lane into one of the adjacent lanes only (no multi-lane hopping).
  *
- * It will create a FutureManeuver place holder for both lateral and longitudinal dimensions, which allows the parent
+ * It will create a FutureLongitudinalManeuver place holder for both lateral and longitudinal dimensions, which allows the parent
  * strategic plugin to continue planning the remainder of the trajectory around this space. In parallel to that activity,
- * this plugin will plan the details of the lane change, inserting one or more maneuvers into the FutureManeuver space
+ * this plugin will plan the details of the lane change, inserting one or more maneuvers into the FutureLongitudinalManeuver space
  * as necessary to accomplish the mission. This process will involve determining if neighbor vehicles are in the
  * desired target lane space, and, if so, negotiating a coordinated movement with one or more of them to ensure that
  * enough space is opened up in the target lane. Because this negotiation could take significant time, it will be
  * allowed to run in parallel with the planning of the rest of the trajectory (by the parent plugin), and, in fact,
  * can proceed even during execution of the early part of that trajectory, right up to the point that the contents of
- * this resultant FutureManeuver needs to be executed. At that time, if its planning is incomplete an exception will be
+ * this resultant FutureLongitudinalManeuver needs to be executed. At that time, if its planning is incomplete an exception will be
  * thrown and that trajectory will be aborted by the parent.
  */
 
@@ -36,7 +36,7 @@ import java.util.List;
     //
     //  - As soon as negotiations fail, we should let arbitrator know so that it has a chance to abort & replace the
     //  current trajectory in an orderly way; otherwise the only way arbitrator will know is when the trajectory fails
-    //  ugly because it attempts to execute an empty FutureManeuver.
+    //  ugly because it attempts to execute an empty FutureLongitudinalManeuver.
     //
     //  - We have a very simplistic model for what our neighbor situation will look like at the time of maneuver
     //  execution. This could be beefed up in many ways.
@@ -57,7 +57,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
     private MobilityIntro                   plan_ = null;           //TODO: type this as MobilityPlan once that type is implemented
     private List<Negotiation>               negotiations_ = new ArrayList<>();
     private ExtrapolatedEnvironment         env_ = new ExtrapolatedEnvironment();
-    private FutureManeuver                  futureMvr_ = null;
+    private FutureLongitudinalManeuverOLD futureLonMvr_ = null;
+    private FutureLateralManeuver           futureLatMvr_ = null;
     private LaneChange                      laneChangeMvr_ = null;
     private IPublisher<MobilityIntro>       mobilityIntroPublisher_;
     private IPublisher<LaneChangeStatus>    laneChangeStatusPublisher_;
@@ -157,11 +158,6 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         //verify that the input parameters have been defined already
         if (targetLane_ > -1) {
 
-            //create an empty container (future compound maneuver) for the TBD maneuvers to be inserted into
-            ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
-            IManeuverInputs inputs = planner.getManeuverInputs();
-            futureMvr_ = new FutureManeuver(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
-
             //attempt to plan the lane change [plan]
             try {
                 planningComplete = plan(startDistance, endDistance, targetLane_, startSpeed_, endSpeed_);
@@ -171,8 +167,14 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
                 return false;
             }
 
-            //insert this container into the trajectory
-            if (!traj.addManeuver(futureMvr_)) {
+            //create empty containers (future compound maneuvers) for the TBD maneuvers to be inserted into
+            ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
+            IManeuverInputs inputs = planner.getManeuverInputs();
+            futureLatMvr_ = new FutureLateralManeuver(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
+            futureLonMvr_ = new FutureLongitudinalManeuverOLD(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
+
+            //insert these containers into the trajectory
+            if (!traj.addManeuver(futureLatMvr_)  ||  !traj.addManeuver(futureLonMvr_)) {
                 return false;
             }
 
@@ -317,7 +319,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         // the right gap in front of us, since they presumably did) while they speed up again to their original
         // cruising speed to fall in behind us.  Their ACC will be a handy feature here!
         //
-        // So that we can start our lane change immediately upon crossing the threshold of the new FutureManeuver space,
+        // So that we can start our lane change immediately upon crossing the threshold of the new FutureLongitudinalManeuver space,
         // we need them to have already slowed to open the gap for us.  For now, assume the gap is 1 sec, so they need
         // to double that (vehicle length is negligible if we have ACC working).  That means adding 1 sec over, say, 5
         // sec to make it smooth, or operating at 80% of their current speed for 5 sec.  To get to that lower speed,
