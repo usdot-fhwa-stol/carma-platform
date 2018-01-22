@@ -97,7 +97,7 @@ var currentlaneid = 0;
 * Custom sleep used in enabling guidance
 */
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /*
@@ -908,7 +908,7 @@ function printParam(itemName, index) {
 
 /*
     Check for Robot State
-    TODO: If no longer active, show the Guidance as Yellow. If active, show Guidance as green.
+    If no longer active, show the Guidance as Yellow. If active, show Guidance as green.
 */
 function checkRobotEnabled() {
     var listenerRobotStatus = new ROSLIB.Topic({
@@ -1167,23 +1167,22 @@ function checkRouteInfo() {
         if (message.current_segment.waypoint.speed_limit != null && message.current_segment.waypoint.speed_limit != 'undefined')
             document.getElementById('divSpeedLimitValue').innerHTML = message.current_segment.waypoint.speed_limit;
 
-        if (message.lane_index != null && message.lane_index != 'undefined')
-        {
-           insertNewTableRow('tblSecondA', 'Lane Index', message.lane_index);
-           currentlaneid = parseInt(message.lane_index);
+        if (message.lane_index != null && message.lane_index != 'undefined') {
+            insertNewTableRow('tblSecondA', 'Lane Index', message.lane_index);
+            currentlaneid = parseInt(message.lane_index);
         }
 
-        if ( message.current_segment.waypoint.lane_count != null
-            && message.current_segment.waypoint.lane_count != 'undefined')
-        {
+        if (message.current_segment.waypoint.lane_count != null
+            && message.current_segment.waypoint.lane_count != 'undefined') {
             insertNewTableRow('tblSecondA', 'Current Segment Lane Count', message.current_segment.waypoint.lane_count);
             insertNewTableRow('tblSecondA', 'Current Segment Req Lane', message.current_segment.waypoint.required_lane_index);
 
             totallanes = parseInt(message.current_segment.waypoint.lane_count);
             targetlane = parseInt(message.current_segment.waypoint.required_lane_index);
 
-            if (targetlane != 255)
-               drawLanes(false, true);
+            //When targetlane = 255, it is unavailable. 
+            if (targetlane != 255) 
+                drawLanes(false, true);
         }
 
         //Determine the remaining distance to current speed limit
@@ -1283,6 +1282,9 @@ function mapEachRouteSegment(segment) {
 
 }
 
+/*
+    Calculate the next distance to next speed limit. 
+*/
 function calculateDistToNextSpeedLimit(segment) {
 
     //To calculate the distance to next speed limit
@@ -1621,8 +1623,8 @@ window.onload = function () {
     //Check if localStorage/sessionStorage is available.
     if (typeof (Storage) !== 'undefined') {
 
-		if (!SVG.supported) {
-		    alert('SVG not supported. Some images will not be displayed.');
+        if (!SVG.supported) {
+            alert('SVG not supported. Some images will not be displayed.');
         }
 
         // Store CurrentPage.
