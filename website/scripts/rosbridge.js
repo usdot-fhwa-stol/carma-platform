@@ -87,13 +87,18 @@ var meter_to_mile = 0.000621371;
 var total_dist_next_speed_limit = 0;
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 
+// For Lane change
+var rect_index = 0;
+var totallanes = 0;
+var targetlane = 0;
+var currentlaneid = 0;
+
 /*
 * Custom sleep used in enabling guidance
 */
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
 
 /*
 * Connection to ROS
@@ -617,7 +622,7 @@ function engageGuidance() {
 
         //Set based on returned status, regardless if succesful or not.
         guidance_engaged = Boolean(result.guidance_status);
-        
+
         //this flag prevents looking at robot_active status while guidance first starts up and begins sending commands to the robot
         waitingForGuidanceStartup = true;
         await sleep(1000);
@@ -918,7 +923,7 @@ function checkRobotEnabled() {
 
         //if guidance is just starting up then we don't do anything
         if (!waitingForGuidanceStartup) {
-            
+
             //Update the button when Guidance is engaged.
             if (message.robot_active == false) {
                 setCAVButtonState('INACTIVE');
@@ -981,7 +986,7 @@ function showDiagnostics() {
 }
 
 /*
-    Show Drivers Status for PinPoint. 
+    Show Drivers Status for PinPoint.
 */
 function showDriverStatus() {
 
@@ -995,7 +1000,7 @@ function showDriverStatus() {
 
         var targetImg;
 
-        //Get PinPoint status for now. 
+        //Get PinPoint status for now.
         if (message.position == true) {
             targetImg = document.getElementById('imgPinPoint');
         }
@@ -1162,6 +1167,23 @@ function checkRouteInfo() {
         if (message.current_segment.waypoint.speed_limit != null && message.current_segment.waypoint.speed_limit != 'undefined')
             document.getElementById('divSpeedLimitValue').innerHTML = message.current_segment.waypoint.speed_limit;
 
+        if (message.lane_index != null && message.lane_index != 'undefined')
+        {
+           insertNewTableRow('tblSecondA', 'Lane Index', message.lane_index);
+           currentlaneid = parseInt(message.lane_index);
+        }
+
+        if ( message.current_segment.waypoint.lane_count != null
+            && message.current_segment.waypoint.lane_count != 'undefined')
+        {
+            insertNewTableRow('tblSecondA', 'Current Segment Lane Count', message.current_segment.waypoint.lane_count);
+            insertNewTableRow('tblSecondA', 'Current Segment Lane Count', message.current_segment.waypoint.required_lane_index);
+
+            totallanes = parseInt(message.current_segment.waypoint.lane_count);
+            targetlane = parseInt(message.current_segment.waypoint.required_lane_index);
+
+            drawLanes(false, true);
+        }
 
         //Determine the remaining distance to current speed limit
         if (sessionStorage.getItem('routeSpeedLimitDist') != null) {
@@ -1597,6 +1619,11 @@ window.onload = function () {
 
     //Check if localStorage/sessionStorage is available.
     if (typeof (Storage) !== 'undefined') {
+
+		if (!SVG.supported) {
+		    alert('SVG not supported. Some images will not be displayed.');
+        }
+
         // Store CurrentPage.
         sessionStorage.setItem('currentpage', 'main');
 
