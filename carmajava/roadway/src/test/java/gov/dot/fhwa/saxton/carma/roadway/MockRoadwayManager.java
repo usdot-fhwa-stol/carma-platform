@@ -28,7 +28,7 @@ import tf2_msgs.TFMessage;
 /**
  * ROS Agnostic implementation of IEnvironmentManager for use in unit testing the roadway package
  */
-public class MockEnvironmentManager implements IEnvironmentManager {
+public class MockRoadwayManager implements IRoadwayManager {
   private final FrameTransformTree tfTree = new FrameTransformTree();
   private boolean shutdown = false;
 

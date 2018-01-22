@@ -1,5 +1,5 @@
-# RouteParams.yaml
-# Defines the ros parameters which are required by the Route package
+# EnvironmentManagerParams.yaml
+# Defines the ros parameters which are required by the RoadwayPackage
 
 # String: The id of the frame which represents an Earth Centered Earth Fixed (ECEF) frame
 earth_frame_id: 'earth'
@@ -20,3 +20,12 @@ global_position_sensor_frame_id: 'pinpoint'
 # String: The id of the frame which represents the local position sensor (odometry from IMU or similar)
 local_position_sensor_frame_id: 'pinpoint'
 
+# Double: The distance in m uptrack of the host vehicles segment which will be included in roadway description
+# This value should always be at least as large as sensor range
+# Units: m
+distance_behind_vehicle: 100.0
+
+# Double: The distance in m downtrack of the host vehicles segment which will be included in roadway description
+# This value should always be at least as large as sensor range
+# Units: m
+distance_infront_of_vehicle: 200.0

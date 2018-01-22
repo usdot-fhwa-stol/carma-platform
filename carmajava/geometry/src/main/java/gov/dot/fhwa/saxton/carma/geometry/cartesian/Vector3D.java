@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
+import org.ros.rosjava_geometry.Vector3;
+
 /**
  * A representation of a vector in 3-dimensional space.
  * While a vector can be calculated form a head and tail point,
@@ -128,5 +130,14 @@ public class Vector3D extends Vector {
     }
 
     return new Vector3D(p);
+  }
+
+  /**
+   * Helper function to convert a rosjava Vector3 to a 3D vector.
+   * @param v The vector to convert to a Vector3D
+   * @return A new vector 3d
+   */
+  public static Vector3D fromVector(Vector3 v) {
+    return new Vector3D(new Point3D(v.getX(),v.getY(),v.getZ()));
   }
 }

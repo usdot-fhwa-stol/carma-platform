@@ -23,7 +23,7 @@ import tf2_msgs.TFMessage;
 /**
  * Interface defines the needed functions of a route manager
  */
-public interface IEnvironmentManager {
+public interface IRoadwayManager {
 
   /**
    * Publishes a tf2 transform ros message

@@ -53,6 +53,7 @@ public class RouteWaypoint {
   protected double maxCrossTrack = 10.0; // Units: m
   protected int requiredLaneIndex = -1;
   protected int laneIndex = 0;
+  protected double laneWidth = 3.7; // Units: m
   protected Point3D ecefPoint;
   protected RoadType roadType = RoadType.FREEWAY;
   protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.SOLID_WHITE;
@@ -106,6 +107,7 @@ public class RouteWaypoint {
     maxCrossTrack = wp.maxCrossTrack;
     requiredLaneIndex = wp.requiredLaneIndex;
     laneIndex = wp.laneIndex;
+    laneWidth = wp.laneWidth;
     roadType = wp.roadType;
     interiorLaneMarkings = wp.interiorLaneMarkings;
     leftMostLaneMarking = wp.leftMostLaneMarking;
@@ -181,6 +183,7 @@ public class RouteWaypoint {
     routeWPMsg.setInteriorLaneMarkings(interiorLaneMarkings.toMessage());
     routeWPMsg.setLeftMostLaneMarking(leftMostLaneMarking.toMessage());
     routeWPMsg.setRightMostLaneMarking(rightMostLaneMarking.toMessage());
+    routeWPMsg.setLaneWidth((float) laneWidth);
 
     byte[] laneClosuresAsBytes = new byte[laneClosures.size()];
     for (int i = 0; i < laneClosures.size(); i++) {
@@ -216,6 +219,7 @@ public class RouteWaypoint {
     wp.setMinCrossTrack(waypointMsg.getMinCrossTrack());
     wp.setMaxCrossTrack(waypointMsg.getMaxCrossTrack());
     wp.laneIndex = waypointMsg.getLaneIndex();
+    wp.laneWidth = waypointMsg.getLaneWidth();
 
     // Set member variables according to set fields bit mask
     int bitMask = waypointMsg.getSetFields();
@@ -452,6 +456,24 @@ public class RouteWaypoint {
    */
   public int getLaneIndex() {
     return laneIndex;
+  }
+
+  /**
+   * Sets the width of the lane which this waypoint is in
+   *
+   * @param laneIndex lane width in m
+   */
+  public void setLaneWidth(double laneWidth) {
+    this.laneWidth = laneWidth;
+  }
+
+  /**
+   * Gets the lane width in m at this waypoint
+   *
+   * @return the waypoint lane width in m
+   */
+  public double getLaneWidth() {
+    return laneWidth;
   }
 
   /**

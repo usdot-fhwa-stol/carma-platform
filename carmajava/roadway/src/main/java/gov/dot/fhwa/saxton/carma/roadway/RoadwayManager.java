@@ -17,18 +17,14 @@
 package gov.dot.fhwa.saxton.carma.roadway;
 
 import cav_msgs.*;
-import cav_srvs.GetDriverApiResponse;
 import cav_srvs.GetTransformRequest;
 import cav_srvs.GetTransformResponse;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import org.apache.commons.logging.Log;
 import org.ros.exception.RemoteException;
 import org.ros.message.MessageFactory;
-import org.ros.message.MessageListener;
-import org.ros.concurrent.CancellableLoop;
 import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -44,14 +40,15 @@ import tf2_msgs.TFMessage;
 /**
  * ROS Node which maintains a description of the roadway geometry and obstacles while the STOL CARMA platform is in operation
  * <p>
- * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager
+ * Command line test: rosrun carma roadway gov.dot.fhwa.saxton.carma.roadway.RoadwayManager
  **/
-public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentManager{
+public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
 
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   protected ConnectedNode connectedNode;
   protected EnvironmentWorker environmentWorker;
+  protected TransformMaintainer transformMaintainer;
   protected SaxtonLogger log;
 
   // Publishers
@@ -80,12 +77,14 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
 
     // Parameters
     ParameterTree params = connectedNode.getParameterTree();
-    String earthFrameId = params.getString("earth_frame_id", "earth");
-    String mapFrameId = params.getString("map_frame_id", "map");
-    String odomFrameId = params.getString("odom_frame_id", "odom");
-    String baseLinkFrameId = params.getString("base_link_frame_id", "base_link");
-    String globalPositionSensorFrameId = params.getString("position_sensor_frame_id", "pinpoint");
-    String localPositionSensorFrameId = params.getString("local_position_sensor_frame_id", "pinpoint");
+    String earthFrameId = params.getString("~earth_frame_id", "earth");
+    String mapFrameId = params.getString("~map_frame_id", "map");
+    String odomFrameId = params.getString("~odom_frame_id", "odom");
+    String baseLinkFrameId = params.getString("~base_link_frame_id", "base_link");
+    String globalPositionSensorFrameId = params.getString("~position_sensor_frame_id", "pinpoint");
+    String localPositionSensorFrameId = params.getString("~local_position_sensor_frame_id", "pinpoint");
+    double distBackward = params.getDouble("~distance_behind_vehicle", 100.0);
+    double distForward = params.getDouble("~distance_infront_of_vehicle", 200.0);
 
     // Topics Initialization
     // Publishers
@@ -97,6 +96,9 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     // Safer to initialize EnvironmentWorker after publishers and before subscribers
     // This means any future modifications which attempt to publish data shortly after initialization will be valid
     environmentWorker = new EnvironmentWorker(this, connectedNode.getLog(), earthFrameId,
+      mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId,
+       distBackward, distForward);
+    transformMaintainer = new TransformMaintainer(this, connectedNode.getLog(), earthFrameId,
       mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId);
 
     // Used Services
@@ -131,7 +133,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     headingSub = connectedNode.newSubscriber("heading", cav_msgs.HeadingStamped._TYPE);
     headingSub.addMessageListener((cav_msgs.HeadingStamped message) -> {
         try {
-          environmentWorker.handleHeadingMsg(message);
+          transformMaintainer.handleHeadingMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
@@ -140,7 +142,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
     gpsSub.addMessageListener((sensor_msgs.NavSatFix message) -> {
         try {
-          environmentWorker.handleNavSatFixMsg(message);
+          transformMaintainer.handleNavSatFixMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
@@ -149,7 +151,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     odometrySub = connectedNode.newSubscriber("odometry", nav_msgs.Odometry._TYPE);
     odometrySub.addMessageListener((nav_msgs.Odometry message) -> {
         try {
-          environmentWorker.handleOdometryMsg(message);
+          transformMaintainer.handleOdometryMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
@@ -167,7 +169,7 @@ public class EnvironmentManager extends SaxtonBaseNode implements IEnvironmentMa
     velocitySub = connectedNode.newSubscriber("velocity", geometry_msgs.TwistStamped._TYPE);
     velocitySub.addMessageListener((geometry_msgs.TwistStamped message) -> {
         try {
-          environmentWorker.handleVelocityMsg(message);
+          transformMaintainer.handleVelocityMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
