@@ -247,7 +247,9 @@ public class EnvironmentWorker {
     newObstacle.setWaypointId(bestSegment.getDowntrackWaypoint().getWaypointId());
 
     cav_msgs.ExternalObject newObj = newObstacle.getObject();
-    newObj.setBsmId(obj.getBsmId());
+    if (obj.getBsmId().hasArray()) {
+      newObj.setBsmId(obj.getBsmId());
+    }
     newObj.setConfidence(obj.getConfidence());
     newObj.setHeader(obj.getHeader());
     newObj.getHeader().setFrameId("0"); // Uses a route segment specific frame id which is not on the frame transform tree
