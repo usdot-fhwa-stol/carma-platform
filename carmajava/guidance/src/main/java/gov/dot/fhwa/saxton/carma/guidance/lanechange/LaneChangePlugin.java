@@ -158,7 +158,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         if (targetLane_ > -1) {
 
             //create an empty container (future compound maneuver) for the TBD maneuvers to be inserted into
-            futureMvr_ = new FutureManeuver(startDistance, startSpeed_, endDistance, endSpeed_);
+            ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
+            IManeuverInputs inputs = planner.getManeuverInputs();
+            futureMvr_ = new FutureManeuver(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
 
             //attempt to plan the lane change [plan]
             try {
@@ -184,10 +186,14 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             // occupy the same message type for the time being)
             Negotiation neg = new Negotiation(this);
             negotiations_.add(neg);
-        }
 
-        //if we've reached this point, a future maneuver is at least possible, so parent can continue planning
-        return true;
+            //if we've reached this point, a future maneuver is at least possible, so parent can continue planning
+            return true;
+
+        }else {
+            log.warn("V2V", "planSubtrajectory aborted because lane change parameters have not been defined.");
+            return false;
+        }
     }
 
 
