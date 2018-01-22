@@ -168,8 +168,8 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 maneuver.setMaxAccel(maxAccel_);
                 planner_.planManeuver(maneuver, paramsInDouble[0], paramsInDouble[1]);
                 // check the adjusted target speed to see if it can plan without huge adjustment
-                // if not it will show a negative status on PlanStatus mesage and ignore this planId in future
-                if(Math.abs(maneuver.getTargetSpeed() - paramsInDouble[1]) > TARGET_SPEED_EPSILON) {
+                // if not it will show a negative status on PlanStatus message and ignore this planId in future
+                if(Math.abs(maneuver.getTargetSpeed() - paramsInDouble[3]) > TARGET_SPEED_EPSILON) {
                     log.warn("Cannot plan the proposed maneuvers within accel_max limits");
                     PlanStatus status = statusPub_.newMessage();
                     status.getHeader().setFrameId("0");
