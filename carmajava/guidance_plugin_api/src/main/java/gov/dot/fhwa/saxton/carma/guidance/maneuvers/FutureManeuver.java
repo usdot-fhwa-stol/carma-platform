@@ -24,10 +24,14 @@ public class FutureManeuver implements ISimpleManeuver {
     protected double                            latEnd_;
     protected List<ISimpleManeuver>             longMvrs_ = null;
     protected List<ISimpleManeuver>             latMvrs_ = null;
+    protected IManeuverInputs                   inputs_;
+    protected int                               executingLatIdx_ = 0;
+    protected int                               executingLonIdx_ = 0;
     protected final double                      CONCATENATION_TOLERANCE = 0.001; // meeter
 
 
-    public FutureManeuver(double startDist, double startSpeed, double endDist, double endSpeed) {
+    public FutureManeuver(IManeuverInputs inputs, double startDist, double startSpeed, double endDist, double endSpeed) {
+        inputs_ = inputs;
         startDist_ = startDist;
         startSpeed_ = startSpeed;
         endDist_ = endDist;
@@ -97,12 +101,12 @@ public class FutureManeuver implements ISimpleManeuver {
      */
     public double addLongitudinalManeuvers(List<ISimpleManeuver> mvrs) throws IllegalStateException {
 
+        longMvrs_.clear();
+        longEnd_ = startDist_;
 
-
-
-        //TODO:  fill this in
-
-
+        for (ISimpleManeuver m : mvrs) {
+            addLongitudinalManeuver(m);
+        }
 
         return longEnd_;
     }
@@ -145,13 +149,12 @@ public class FutureManeuver implements ISimpleManeuver {
      */
     public double addLateralManeuvers(List<ISimpleManeuver> mvrs) throws IllegalStateException {
 
+        latMvrs_.clear();
+        latEnd_ = startDist_;
 
-
-
-
-        //TODO:  fill this in
-
-
+        for (ISimpleManeuver m : mvrs) {
+            addLateralManeuver(m);
+        }
 
         return latEnd_;
     }
@@ -182,16 +185,23 @@ public class FutureManeuver implements ISimpleManeuver {
 
     @Override
     public boolean executeTimeStep() throws IllegalStateException {
+        double currentLoc = inputs_.getDistanceFromRouteStart();
 
+        //if the vehicle has crossed the start location then
+        if (currentLoc >= startDist_) {
 
+            //if we are past the end distance of the whole future maneuver then
+            if (currentLoc >= endDist_) {
+                //bail out
+                return true;
+            }
 
+            //execute the current maneuvers
+            executeTimeStep(longMvrs_, executingLonIdx_);
+            executeTimeStep(latMvrs_, executingLatIdx_);
+        }
 
-
-
-
-
-
-        return false; //TODO - bogus
+        return false;
     }
 
 
@@ -204,5 +214,28 @@ public class FutureManeuver implements ISimpleManeuver {
     @Override
     public double getEndDistance() {
         return endDist_;
+    }
+
+
+    /**
+     * Executes a time step on the current maneuver in the given list of maneuvers. Increments its current index
+     * if necessary to always point to the current maneuver.
+     * @param mvrs - the list of maneuvers to be executed
+     * @param index - current index into mvrs
+     * @throws IllegalStateException if the vehicle's current location is beyond the end of the last maneuver in the list
+     */
+    protected void executeTimeStep(List<ISimpleManeuver> mvrs, int index) throws IllegalStateException {
+        double currentLoc = inputs_.getDistanceFromRouteStart();
+
+        //if we are past the end distance of the current maneuver then
+        if (currentLoc > mvrs.get(index).getEndDistance()) {
+            //increment the index and make sure we have another maneuver there
+            if (++index >= mvrs.size()) {
+                throw new IllegalStateException("Attempting to execute a non-existent maneuver in FutureManeuver.");
+            }
+        }
+
+        //execute the maneuver
+        mvrs.get(index).executeTimeStep();
     }
 }
