@@ -373,7 +373,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             //fill the whole longitudinal space with a constant speed
             SteadySpeed ss = new SteadySpeed();
             planner.planManeuver(ss, futureMvr_.getStartDistance(), endDist);
-            futureMvr_.addLongitudinalManeuver(ss);
+            futureMvr_.addManeuver(ss);
 
         }catch (IllegalStateException ise) {
             //log it to clarify the call sequence
