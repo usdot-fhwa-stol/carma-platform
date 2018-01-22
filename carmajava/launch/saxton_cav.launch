@@ -250,9 +250,7 @@
         <remap from="odometry"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/odometry"/>
         <remap from="objects"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/objects"/>
-        <remap from="tracked_vehicles"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/tracked_objects"/>
         <remap from="velocity"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
         <remap from="get_transform"
