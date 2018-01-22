@@ -510,8 +510,10 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 		coreData.setSpeed(BSMCoreData.SPEED_UNAVAILABLE);
 		if(velocity_ready.get()) {
 			float speed = (float) current_speed.get();
-			if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
-				coreData.setSpeed(speed);
+                        if(speed < BSMCoreData.SPEED_MIN) {
+                            coreData.setSpeed(0);
+                        } else if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
+			    coreData.setSpeed(speed);
 			}
 		}
 		
