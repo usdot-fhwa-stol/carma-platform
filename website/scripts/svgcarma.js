@@ -27,19 +27,21 @@ function drawLanes(addNew, clear) {
 
     var draw;
 
-    if (addNew == true) {
-        //Check if SVG is supported
-        draw = SVG('divLaneTracking').size(600, 190).viewbox(0, 0, 600, 190).attr({
-            preserveAspectRatio: 'xMidYMid meet'
-            , id: 'svgEditorBackground'
-        }); //static to fit available space.
+
+    if (addNew == true || SVG.get('svgEditorBackground') == null) {
+          //Check if SVG is supported
+          draw = SVG('divLaneTracking').size(600, 190).viewbox(0, 0, 600, 190).attr({
+              preserveAspectRatio: 'xMidYMid meet'
+             ,id: 'svgEditorBackground'
+         }); //static to fit available space.
     }
     else {
         draw = SVG.get('svgEditorBackground');
+    }
 
-        if (draw == null) {
-            document.getElementById('divLog').innerHTML += '<br/> Draw is null.'
-        }
+    if (draw == null) {
+         document.getElementById('divLog').innerHTML += '<br/> Draw is null.';
+         return;
     }
 
     if (clear == true || addNew == false) {

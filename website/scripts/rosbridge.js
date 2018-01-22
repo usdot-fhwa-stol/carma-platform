@@ -1177,12 +1177,13 @@ function checkRouteInfo() {
             && message.current_segment.waypoint.lane_count != 'undefined')
         {
             insertNewTableRow('tblSecondA', 'Current Segment Lane Count', message.current_segment.waypoint.lane_count);
-            insertNewTableRow('tblSecondA', 'Current Segment Lane Count', message.current_segment.waypoint.required_lane_index);
+            insertNewTableRow('tblSecondA', 'Current Segment Req Lane', message.current_segment.waypoint.required_lane_index);
 
             totallanes = parseInt(message.current_segment.waypoint.lane_count);
             targetlane = parseInt(message.current_segment.waypoint.required_lane_index);
 
-            drawLanes(false, true);
+            if (targetlane != 255)
+               drawLanes(false, true);
         }
 
         //Determine the remaining distance to current speed limit
