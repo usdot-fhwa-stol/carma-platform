@@ -20,9 +20,12 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.LineSegment3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import java.util.LinkedList;
+import java.util.List;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.QuaternionUtils;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
+import org.apache.commons.lang.ArrayUtils;
 import org.ros.message.MessageFactory;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
@@ -232,6 +235,29 @@ public class RouteSegment {
     } else {
       return segLane + numLanesCrossed;
     }
+  }
+
+  /**
+   * Returns a list of lanes which are intersected by the provided bounds on the current segment
+   * The returned list does not include the provided primary lane
+   * 
+   * @param minY the minimum y bound in segment frame
+   * @param maxY the maximum y bound in segment frame
+   * @param primaryLane the lane index which will not be included
+   * 
+   * @return A byte array of lane indices
+   */
+  public byte[] determineSecondaryLanes(double minY, double maxY, int primaryLane) {
+    int minLane = this.determinePrimaryLane(minY);
+    int maxLane = this.determinePrimaryLane(maxY);
+
+    List<Byte> secondaryLanes = new LinkedList<>();
+    for (int i = minLane; i <= maxLane; i++) {
+      if (i != primaryLane)
+        secondaryLanes.add((byte)i);
+    }
+    Byte[] byteObjArray = secondaryLanes.toArray(new Byte[0]);
+    return ArrayUtils.toPrimitive(byteObjArray);
   }
 
   /**

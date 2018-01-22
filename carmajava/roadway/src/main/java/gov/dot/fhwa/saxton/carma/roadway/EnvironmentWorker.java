@@ -223,7 +223,7 @@ public class EnvironmentWorker {
     final int yIdx = 1;
     final int zIdx = 2;
     double[][] bounds = cartObjInSegment.getBounds();
-    byte[]  secondaryLanes = determineSecondaryLanes(bounds[yIdx][minIdx], bounds[yIdx][maxIdx], primaryLane, bestSegment);
+    byte[]  secondaryLanes = bestSegment.determineSecondaryLanes(bounds[yIdx][minIdx], bounds[yIdx][maxIdx], primaryLane);
     
     // Convert AABB to size
     double sizeX = (bounds[xIdx][maxIdx] - bounds[xIdx][minIdx]) / 2.0;
@@ -307,30 +307,6 @@ public class EnvironmentWorker {
       double remainingHostSegDist = activeRoute.getSegments().get(hostSegmentIndex).length() - hostSegDowntrack;
       return hostDowntrack + remainingHostSegDist + intermediateDist + objSegDowntrack; 
     }
-  }
-
-  /**
-   * Returns a list of lanes which are intersected by the provided bounds on the current segment
-   * The returned list does not include the provided primary lane
-   * 
-   * @param minY the minimum y bound in segment frame
-   * @param maxY the maximum y bound in segment frame
-   * @param primaryLane the lane index which will not be included
-   * @param seg The route segment which defines the number of lanes
-   * 
-   * @return A byte array of lane indices
-   */
-  protected byte[] determineSecondaryLanes(double minY, double maxY, int primaryLane, RouteSegment seg) {
-    int minLane = seg.determinePrimaryLane(minY);
-    int maxLane = seg.determinePrimaryLane(maxY);
-
-    List<Byte> secondaryLanes = new LinkedList<>();
-    for (int i = minLane; i <= maxLane; i++) {
-      if (i != primaryLane)
-        secondaryLanes.add((byte)i);
-    }
-    Byte[] byteObjArray = secondaryLanes.toArray(new Byte[0]);
-    return ArrayUtils.toPrimitive(byteObjArray);
   }
 
   /**

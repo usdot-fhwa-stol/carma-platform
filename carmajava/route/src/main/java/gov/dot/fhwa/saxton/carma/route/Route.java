@@ -338,7 +338,7 @@ public class Route {
     // Process segments infront of host vehicle
     distance = segments.get(startingIndex).length - segmentDowntrack;
     for (int i = startingIndex + 1; i < segments.size(); i++) {
-      if (distance > distBackward) {
+      if (distance > distForward) {
         break;
       }
       distance += segments.get(i).length();
@@ -349,7 +349,9 @@ public class Route {
   }
 
   /**
-   * Get the route segment in the list which most closely corresponds to the provided point
+   * Get the route segment in the list which the provided point should be considered in
+   * If the point cannot be matched with any segments in the provided subsection,
+   * it will be assigned to the first or last segment based on location.
    * 
    * @param point The 3d point to match with a segment
    * @param segments The subsection of a route which will be searched against
