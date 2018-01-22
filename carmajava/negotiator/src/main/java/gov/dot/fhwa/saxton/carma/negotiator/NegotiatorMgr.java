@@ -138,7 +138,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             byte[] planId = new byte[16];
             Arrays.fill(planId, (byte) 2);
             introMsg.getHeader().setPlanId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, planId));
-            introMsg.getHeader().getTimestamp().setYear((short) 2018);
+            introMsg.getHeader().getTimestamp().setYear((short) 2010);
             introMsg.getHeader().getTimestamp().setMonth((byte) 2);
             introMsg.getHeader().getTimestamp().setDay((byte) 1);
             introMsg.getHeader().getTimestamp().setHour((byte) 0);
