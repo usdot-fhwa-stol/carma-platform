@@ -11,7 +11,7 @@
 # standard ROS message header
 std_msgs/Header header
 
-# a random value that identifies this particular plan for future reference
+# a value from MobilityMessage which identifies this particular plan for future reference
 uint8[]         plan_id
 
 # the status of indicated plan

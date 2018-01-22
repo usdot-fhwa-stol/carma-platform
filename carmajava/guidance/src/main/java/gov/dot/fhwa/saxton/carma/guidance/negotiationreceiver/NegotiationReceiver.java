@@ -33,10 +33,17 @@ import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.util.*;
 
-
+/**
+ * Negotiation Receiver Plugin subscribes to NewPlan message for any new plans proposed by negotiator
+ * and it all calls ArbitratorService to replan a trajectory such that it can insert its new planed
+ * maneuvers into the new trajectory. For plans with different planIds, the plugin inserts new plans
+ * into the trajectory according to the timing of receiving. For now, it will let arbitrator to replan
+ * everytime when it received a new plan message.
+ */
 public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlugin {
 
     protected static final long SLEEP_DURATION = 50;
+    protected static final double TARGET_SPEED_EPSILON = 0.1;
 
     protected ISubscriber<NewPlan> planSub_;
     protected IPublisher<PlanStatus> statusPub_;
@@ -50,9 +57,9 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     public NegotiationReceiver(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
         version.setName("Negotiation Receiver Plugin");
-        version.setMajorRevision(0);
+        version.setMajorRevision(1);
         version.setIntermediateRevision(0);
-        version.setMinorRevision(1);
+        version.setMinorRevision(0);
     }
 
     @Override
@@ -76,6 +83,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
         if((!replanQueue.isEmpty()) && currentPlanId == null) {
             currentPlanId = replanQueue.poll();
             log.info("Find a new plan id " + currentPlanId + " . Calling arbitrator to replan.");
+            // TODO before we start to replan we need to add some checks
             // start replan
             pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
         } else {
@@ -145,8 +153,10 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
             planId.append(" " + plan.getPlanId().getByte(i));
         }
         String id = planId.substring(1);
+        //TODO also need to consider the expiration time for a plan
         if(!planMap.containsKey(id)) {
             log.info("Received new plan with planId: " + id);
+            // TODO this maneuvers list may need to include lateral maneuvers in the future
             List<LongitudinalManeuver> maneuvers = new LinkedList<>();
             for(Maneuver m : plan.getManeuvers()) {
                 String[] params = m.getParameters().split(":");
@@ -157,6 +167,18 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 maneuver.setSpeeds(paramsInDouble[2], paramsInDouble[3]);
                 maneuver.setMaxAccel(maxAccel_);
                 planner_.planManeuver(maneuver, paramsInDouble[0], paramsInDouble[1]);
+                // check the adjusted target speed to see if it can plan without huge adjustment
+                // if not it will show a negative status on PlanStatus mesage and ignore this planId in future
+                if(Math.abs(maneuver.getTargetSpeed() - paramsInDouble[1]) > TARGET_SPEED_EPSILON) {
+                    log.warn("Cannot plan the proposed maneuvers within accel_max limits");
+                    PlanStatus status = statusPub_.newMessage();
+                    status.getHeader().setFrameId("0");
+                    status.setPlanId(plan.getPlanId());
+                    status.setAccepted(false);
+                    statusPub_.publish(status);
+                    planMap.put(id, new LinkedList<>());
+                    return;
+                }
                 maneuvers.add(maneuver);
             }
             planMap.put(id, maneuvers);

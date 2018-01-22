@@ -66,8 +66,8 @@ required_plugins:
 arbitrator_plugins: 
   - Route Following Plugin
   - Speed Harmonization Plugin
-  - Cruising Plugin
   - Negotiation Receiver Plugin
+  - Cruising Plugin
 
 # Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
 use_sin_trajectory: false

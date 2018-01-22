@@ -11,8 +11,10 @@
 # standard ROS message header
 std_msgs/Header     header
 
-# a random value that identifies this particular plan for future reference
+# a value from MobilityMessage which identifies this particular plan for future reference
 uint8[]             plan_id
 
-# a list of proposed maneuvers
+# a list of proposed maneuvers which we need to add into our trajectory
 cav_msgs/Maneuver[] maneuvers
+
+# TODO: add plan expiration time
