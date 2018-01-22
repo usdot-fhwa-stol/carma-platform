@@ -57,7 +57,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
     private MobilityIntro                   plan_ = null;           //TODO: type this as MobilityPlan once that type is implemented
     private List<Negotiation>               negotiations_ = new ArrayList<>();
     private ExtrapolatedEnvironment         env_ = new ExtrapolatedEnvironment();
-    private FutureLongitudinalManeuverOLD futureLonMvr_ = null;
+    private FutureLongitudinalManeuver      futureLonMvr_ = null;
     private FutureLateralManeuver           futureLatMvr_ = null;
     private LaneChange                      laneChangeMvr_ = null;
     private IPublisher<MobilityIntro>       mobilityIntroPublisher_;
@@ -171,7 +171,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
             IManeuverInputs inputs = planner.getManeuverInputs();
             futureLatMvr_ = new FutureLateralManeuver(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
-            futureLonMvr_ = new FutureLongitudinalManeuverOLD(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
+            futureLonMvr_ = new FutureLongitudinalManeuver(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
 
             //insert these containers into the trajectory
             if (!traj.addManeuver(futureLatMvr_)  ||  !traj.addManeuver(futureLonMvr_)) {
@@ -363,19 +363,19 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
         try {
             //start the lane change immediately
-            futureMvr_.addLateralManeuver(laneChangeMvr_);
+            futureLatMvr_.addManeuver(laneChangeMvr_);
 
             //fill the remainder with a constant lane
             LaneKeeping lk = new LaneKeeping();
-            double startDist = futureMvr_.getLastLateralDistance();
-            double endDist = futureMvr_.getEndDistance();
+            double startDist = futureLatMvr_.getLastDistance();
+            double endDist = futureLatMvr_.getEndDistance();
             lk.planToTargetDistance(inputs,commands, startDist, endDist);
-            futureMvr_.addLateralManeuver(lk);
+            futureLatMvr_.addManeuver(lk);
 
             //fill the whole longitudinal space with a constant speed
             SteadySpeed ss = new SteadySpeed();
-            planner.planManeuver(ss, futureMvr_.getStartDistance(), endDist);
-            futureMvr_.addManeuver(ss);
+            planner.planManeuver(ss, futureLonMvr_.getStartDistance(), endDist);
+            futureLonMvr_.addManeuver(ss);
 
         }catch (IllegalStateException ise) {
             //log it to clarify the call sequence
