@@ -85,6 +85,8 @@ var routeTimer;
 var meter_to_mph = 2.23694;
 var meter_to_mile = 0.000621371;
 var total_dist_next_speed_limit = 0;
+var total_dist_next_lane_change = 0;
+
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 
 // For Lane change
@@ -1132,33 +1134,43 @@ function checkRouteInfo() {
 
     listenerRouteState.subscribe(function (message) {
         insertNewTableRow('tblSecondA', 'Route ID', message.routeID);
-        insertNewTableRow('tblSecondA', 'Route State', message.state);
-        insertNewTableRow('tblSecondA', 'Route Event', message.event);
-        insertNewTableRow('tblSecondA', 'Cross Track', message.cross_track.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Down Track', message.down_track.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Route State / Event', message.state + ' / ' + message.event);
+        insertNewTableRow('tblSecondA', 'Cross Track / Down Track', message.cross_track.toFixed(2) + ' / ' + message.down_track.toFixed(2));
 
+        //Calculate and show next speed limit distance
         var remaining_dist = total_dist_next_speed_limit - message.down_track;
         var remaining_dist_miles = (remaining_dist * meter_to_mile);
         remaining_dist_miles = Math.max(0, remaining_dist_miles);
 
         var divDistRemaining = document.getElementById('divDistRemaining');
-        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' miles';
+        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(2) + ' m';
 
         insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Speed Limit Change In (m)', remaining_dist.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi)', remaining_dist_miles.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi/m)', remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(2) + ' m');
+
+        //Calculate and show next lane change distance
+        var lane_remaining_dist = total_dist_next_lane_change - message.down_track;
+        var lane_remaining_dist_miles = (lane_remaining_dist * meter_to_mile);
+        lane_remaining_dist_miles = Math.max(0, lane_remaining_dist_miles);
+
+        //var divDistRemaining = document.getElementById('divDistRemaining');
+        divDistRemaining.innerHTML += '<br/> Lane Change In: ' + lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(2) + ' m';
+
+        insertNewTableRow('tblSecondA', 'Lane Change Total Dist (m)', total_dist_next_lane_change.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Lane Change In (mi/m)', lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(2) + ' m');
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
         if (message.event == 3) //ROUTE_COMPLETED=3
         {
-            listenerSystemAlert.unsubscribe();
+            //if (listenerSystemAlert != 'undefined')
+            //    listenerSystemAlert.unsubscribe();
             showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
 
         if (message.event == 4)//LEFT_ROUTE=4
         {
-            listenerSystemAlert.unsubscribe();
+            //listenerSystemAlert.unsubscribe();
             showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
 
@@ -1197,9 +1209,22 @@ function checkRouteInfo() {
                     break;
                 }
             }
-
             //insertNewTableRow('tblSecondA', 'total_dist_next_speed_limit', total_dist_next_speed_limit);
+        }
 
+        //Determine the remaining distance to current lane
+        if (sessionStorage.getItem('routeLaneChangeDist') != null) {
+            var routeLaneChangeDist = sessionStorage.getItem('routeLaneChangeDist');
+            routeLaneChangeDist = JSON.parse(routeLaneChangeDist);
+
+            //Loop thru to find the correct totaldistance
+            for (i = 0; i < routeLaneChangeDist.length; i++) {
+                if (message.current_segment.waypoint.waypoint_id <= routeLaneChangeDist[i].waypoint_id) {
+                    total_dist_next_lane_change = routeLaneChangeDist[i].total_length;
+                    break;
+                }
+            }
+            //insertNewTableRow('tblSecondA', 'total_dist_next_lane_change', total_dist_next_lane_change);
         }
 
     });
@@ -1243,6 +1268,11 @@ function showActiveRoute() {
         //alert('showActive Route: sessionStorage.getItem(routeSpeedLimitDist: ' + sessionStorage.getItem('routeSpeedLimitDist'));
         if (sessionStorage.getItem('routeSpeedLimitDist') == null) {
             message.segments.forEach(calculateDistToNextSpeedLimit);
+        }
+
+        //alert('showActive Route: sessionStorage.getItem(routeLaneChangeDist: ' + sessionStorage.getItem('routeLaneChangeDist'));
+        if (sessionStorage.getItem('routeLaneChangeDist') == null) {
+            message.segments.forEach(calculateDistToNextLaneChange);
         }
     });
 }
@@ -1329,6 +1359,53 @@ function calculateDistToNextSpeedLimit(segment) {
         }
     }
 }
+
+/*
+    Calculate the distance to next lane change. 
+*/
+function calculateDistToNextLaneChange(segment) {
+
+    //To calculate the distance to next next lane change. 
+    var routeLaneChange; //To store the total distance for each lane change.
+    var routeLaneChangeDist;
+
+    if (sessionStorage.getItem('routeLaneChangeDist') == null) {
+        routeLaneChange = { waypoint_id: segment.prev_waypoint.waypoint_id, total_length: segment.length, required_lane_index: segment.prev_waypoint.required_lane_index };
+        routeLaneChangeDist = [];
+        routeLaneChangeDist.push(routeLaneChange);
+
+        sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+    }
+    else {
+
+        routeLaneChangeDist = sessionStorage.getItem('routeLaneChangeDist');
+        routeLaneChangeDist = JSON.parse(routeLaneChangeDist);
+
+        var lastItem = routeLaneChangeDist[routeLaneChangeDist.length - 1];
+
+        //alert('lastItem: ' + lastItem.total_length);
+
+        //If lane changes, add to list
+        if (lastItem.required_lane_index != segment.waypoint.required_lane_index) {
+            routeLaneChange = {
+                waypoint_id: segment.waypoint.waypoint_id
+                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
+                , required_lane_index: segment.waypoint.required_lane_index
+            };
+            routeLaneChangeDist.push(routeLaneChange);
+
+            sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+        }
+        else //Update last item's length to the total length
+        {
+            lastItem.waypoint_id = segment.waypoint.waypoint_id;
+            lastItem.total_length += segment.length;
+
+            sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+        }
+    }
+}
+
 /*
     Update the host marker based on the latest NavSatFix position.
 */
