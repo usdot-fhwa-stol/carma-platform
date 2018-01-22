@@ -142,7 +142,7 @@ public class EnvironmentWorker {
     for (cav_msgs.ExternalObject obj: objects) {
       roadwayObstacles.add(buildObstacleFromMsg(obj, earthToOdom));
     }
-    cav_msgs.RoadwayEnvironment roadwayMsg = messageFactory.newFromType(RoadwayObstacle._TYPE);
+    cav_msgs.RoadwayEnvironment roadwayMsg = messageFactory.newFromType(cav_msgs.RoadwayEnvironment._TYPE);
     roadwayMsg.setRoadwayObstacles(roadwayObstacles);
     roadwayMgr.publishRoadwayEnvironment(roadwayMsg);
   }
