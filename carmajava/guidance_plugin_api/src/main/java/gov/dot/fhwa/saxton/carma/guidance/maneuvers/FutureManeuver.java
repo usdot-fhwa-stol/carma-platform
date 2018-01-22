@@ -223,6 +223,9 @@ public class FutureManeuver implements ISimpleManeuver {
      * @param mvrs - the list of maneuvers to be executed
      * @param index - current index into mvrs
      * @throws IllegalStateException if the vehicle's current location is beyond the end of the last maneuver in the list
+     *
+     * Assumes we are still within the bounds of the FutureManeuver container and that it is full to the end with
+     * subordinate ISimpleManeuvers in both dimensions.
      */
     protected void executeTimeStep(List<ISimpleManeuver> mvrs, int index) throws IllegalStateException {
         double currentLoc = inputs_.getDistanceFromRouteStart();
@@ -235,7 +238,7 @@ public class FutureManeuver implements ISimpleManeuver {
             }
         }
 
-        //execute the maneuver
+        //execute the maneuver (if location is beyond the end distance of the maneuver, it will throw an IllegalStateException
         mvrs.get(index).executeTimeStep();
     }
 }
