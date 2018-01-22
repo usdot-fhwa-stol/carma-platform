@@ -303,7 +303,7 @@ public class EnvironmentWorker {
       return hostDowntrack - remainingObjSegDist - intermediateDist - hostSegDowntrack; 
     } else { // objSegmentIndex > hostSegmentIndex
 
-      double intermediateDist = activeRoute.lengthOfSegments(objSegmentIndex + 1, hostSegmentIndex - 1);
+      double intermediateDist = activeRoute.lengthOfSegments(hostSegmentIndex + 1, objSegmentIndex - 1);
       double remainingHostSegDist = activeRoute.getSegments().get(hostSegmentIndex).length() - hostSegDowntrack;
       return hostDowntrack + remainingHostSegDist + intermediateDist + objSegDowntrack; 
     }
