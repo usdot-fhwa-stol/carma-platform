@@ -204,6 +204,10 @@ int SensorFusionApplication::run() {
     bool use_sim_time;
     nh_->param<bool>("/use_sim_time", use_sim_time, false);
 
+		//This use sim time fix was added to support rosbag playback. The issue is that the tracker is time based
+		//and if a measurement comes in with an earlier time we assume it is old. So to support looping play back 
+		//we need to reset the tracker and also use a special SimTimer to read time from the ROS timer rather than
+		//the default timer.
     if(use_sim_time)
     {
         ROS_INFO_STREAM("Using Sim Time");
@@ -232,6 +236,7 @@ int SensorFusionApplication::run() {
         dyn_cfg_server_->setCallback(f);
     }
 
+    ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSM>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
 
     if(use_interface_mgr_)
     {
@@ -240,11 +245,11 @@ int SensorFusionApplication::run() {
         update_services_timer_ = nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent& ev){ update_subscribed_services(); },false, true);
         ROS_INFO_STREAM("Interface Manager available");
     }
-
-    ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSM>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
-
-    if(!use_interface_mgr_)
+		else
     {
+		    //This allows us to manually set the topics to listen, rather than querying the interface manager. Topics
+				//can be set through a xaml list in the launch file
+				
         //odometry
         {
             ROS_INFO_STREAM("Odometry Topics");
