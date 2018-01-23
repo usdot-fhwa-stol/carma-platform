@@ -15,7 +15,7 @@ def convertKMLToWaypoints(filename):
     root = xml.getroot()
 
     for coord in root.findall(".//{http://www.opengis.net/kml/2.2}coordinates"):
-        (lat, lon, _) = coord.text.split(",")
+        (lon, lat, _) = coord.text.split(",")
 	out.append((lat.strip(), lon.strip()))
 
     return out
