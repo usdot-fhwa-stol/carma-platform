@@ -93,7 +93,6 @@ public class Arbitrator extends GuidanceComponent
   protected AtomicBoolean routeRecvd = new AtomicBoolean(false);
   protected static final long SLEEP_DURATION_MILLIS = 100;
   protected static final double TRAJ_SIZE_WARNING = 50.0;
-  protected static final double DISTANCE_EPSILON = 0.0001;
 
   public Arbitrator(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node,
       PluginManager pluginManager, TrajectoryExecutor trajectoryExecutor) {
@@ -138,9 +137,9 @@ public class Arbitrator extends GuidanceComponent
     log.info("STARTUP", "Arbitrator running!");
     routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
     routeStateSubscriber.registerOnMessageCallback((msg) -> {
-      log.info("Received RouteState:" + msg);
-      downtrackDistance.set(msg.getDownTrack());
-      receivedDtdUpdate.set(true);
+        log.info("Received RouteState:" + msg);
+        downtrackDistance.set(msg.getDownTrack());
+        receivedDtdUpdate.set(true);
     });
 
     ParameterTree ptree = node.getParameterTree();
@@ -197,7 +196,7 @@ public class Arbitrator extends GuidanceComponent
 
     twistSubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
     twistSubscriber.registerOnMessageCallback((msg) -> {
-      currentSpeed.set(msg.getTwist().getLinear().getX());
+        currentSpeed.set(msg.getTwist().getLinear().getX());
     });
 
     currentState.set(GuidanceState.STARTUP);
@@ -242,9 +241,9 @@ public class Arbitrator extends GuidanceComponent
 
   @Override
   public void onDeactivate() {
-    currentState.set(GuidanceState.INACTIVE);
+      currentState.set(GuidanceState.INACTIVE);
   }
-
+  
   @Override
   public void onEngaged() {
     arbitratorStateMachine.processEvent(ArbitratorEvent.INITIALIZE);
@@ -422,14 +421,6 @@ public class Arbitrator extends GuidanceComponent
     }
 
     double trajectoryStart = downtrackDistance.get();
-
-    if (Math.abs(trajectoryStart - routeLength.get()) < DISTANCE_EPSILON) {
-      // Trajectory would start after route ends just don't do anything
-      // This case REALLLY should never happen, but just for completeness...
-      arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
-      return;
-    }
-
     trajectory = planTrajectory(downtrackDistance.get(), getNextTrajectoryEndpoint(trajectoryStart));
     trajectoryExecutor.registerOnTrajectoryProgressCallback(replanTriggerPercent, (pct) -> {
       if (trajectoryExecutor.getCurrentTrajectory() != null
@@ -471,12 +462,6 @@ public class Arbitrator extends GuidanceComponent
       double trajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
       double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
 
-      if (Math.abs(trajectoryStart - routeLength.get()) < DISTANCE_EPSILON) {
-        // Trajectory would start after route ends just don't do anything
-        arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
-        return;
-      }
-
       trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
       trajectoryExecutor.runTrajectory(trajectory);
       arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
@@ -498,13 +483,6 @@ public class Arbitrator extends GuidanceComponent
       Trajectory currentTrajectory = trajectoryExecutor.getCurrentTrajectory();
 
       double steadyingTrajectoryStart = Math.max(downtrackDistance.get(), currentTrajectory.getEndLocation());
-
-      if (Math.abs(steadyingTrajectoryStart - routeLength.get()) < DISTANCE_EPSILON) {
-        // Trajectory would start after route ends just don't do anything
-        arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
-        return;
-      }
-
       double steadyingTrajectoryEnd = steadyingTrajectoryStart + (postComplexSteadyingDuration * currentSpeed.get());
       Trajectory steadyingTrajectory = new Trajectory(steadyingTrajectoryStart, steadyingTrajectoryEnd);
 
