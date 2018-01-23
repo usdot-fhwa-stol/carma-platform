@@ -49,23 +49,23 @@ import org.ros.namespace.GraphName;
 public class NegotiatorMgr extends SaxtonBaseNode{
 
   protected ConnectedNode connectedNode;
-  protected boolean systemReady = false;
-  protected MobilityPlan lastNewPlanMsg = null;
-  protected SaxtonLogger log;
-
+  protected boolean       systemReady    = false;
+  protected MobilityPlan  lastNewPlanMsg = null;
+  protected SaxtonLogger  log;
+ 
   // Topics
   // Publishers
-  protected Publisher<cav_msgs.MobilityAck> mobAckOutPub;
+  protected Publisher<cav_msgs.MobilityAck>      mobAckOutPub;
   protected Publisher<cav_msgs.MobilityGreeting> mobGreetOutPub;
-  protected Publisher<cav_msgs.MobilityIntro> mobIntroOutPub;
-  protected Publisher<cav_msgs.MobilityPlan> mobPlanOutPub;
+  protected Publisher<cav_msgs.MobilityIntro>    mobIntroOutPub;
+  protected Publisher<cav_msgs.MobilityPlan>     mobPlanOutPub;
 
   // Subscribers
-  protected Subscriber<cav_msgs.MobilityAck> mobAckInSub;
+  protected Subscriber<cav_msgs.MobilityAck>      mobAckInSub;
   protected Subscriber<cav_msgs.MobilityGreeting> mobGreetInSub;
-  protected Subscriber<cav_msgs.MobilityIntro> mobIntroInSub;
-  protected Subscriber<cav_msgs.MobilityPlan> mobPlanInSub;
-  protected Subscriber<cav_msgs.SystemAlert> alertSub;
+  protected Subscriber<cav_msgs.MobilityIntro>    mobIntroInSub;
+  protected Subscriber<cav_msgs.MobilityPlan>     mobPlanInSub;
+  protected Subscriber<cav_msgs.SystemAlert>      alertSub;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("negotiator_mgr");
@@ -76,10 +76,11 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     log = new SaxtonLogger(NegotiatorMgr.class.getSimpleName(), connectedNode.getLog());
     // Topics
     // Publishers
-    mobAckOutPub = connectedNode.newPublisher("mobility_ack_outbound", cav_msgs.MobilityAck._TYPE);
-    mobGreetOutPub = connectedNode.newPublisher("mobility_greeting_outbound", cav_msgs.MobilityGreeting._TYPE);
-    mobIntroOutPub = connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
-    mobPlanOutPub = connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
+    mobAckOutPub   = connectedNode.newPublisher("mobility_ack_outbound",     cav_msgs.MobilityAck._TYPE);
+    mobGreetOutPub = connectedNode.newPublisher("mobility_greeting_outbound",cav_msgs.MobilityGreeting._TYPE);
+    mobIntroOutPub = connectedNode.newPublisher("mobility_intro_outbound",   cav_msgs.MobilityIntro._TYPE);
+    mobPlanOutPub  = connectedNode.newPublisher("mobility_plan_outbound",    cav_msgs.MobilityPlan._TYPE);
+    int timeDelay  = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
 
     mobAckInSub = connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
     mobAckInSub.addMessageListener(new MessageListener<cav_msgs.MobilityAck>() {
@@ -144,7 +145,6 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             introMsg.getHeader().getTimestamp().setHour((byte) 0);
             introMsg.getHeader().getTimestamp().setMinute((byte) 0);
             introMsg.getHeader().getTimestamp().setSecond(0);
-            introMsg.getHeader().getTimestamp().setOffset((short) -300);
             introMsg.getMyEntityType().setType((BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE));
             introMsg.setMyRoadwayLink("[Test Road]");
             introMsg.setMyRoadwayLinkPosition((short) 2);
@@ -179,7 +179,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             ackMsg.setVerificationCode("");
             mobAckOutPub.publish(ackMsg);
         }
-        Thread.sleep(5000);
+        Thread.sleep(timeDelay);
       }
     });
   }//onStart
