@@ -20,8 +20,6 @@ import java.util.List;
  */
 public class FutureLongitudinalManeuver extends LongitudinalManeuver {
 
-    protected double                            startSpeed_;
-    protected double                            endSpeed_;
     protected double                            maneuversEnd_;
     protected List<ISimpleManeuver>             mvrs_ = null;
     protected int                               executingIdx_ = 0;
