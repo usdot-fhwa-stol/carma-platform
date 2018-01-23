@@ -50,7 +50,7 @@ public class MobilityIntroductionMessageHelper {
     private int planType = PLAN_TYPE_UNKNOWN;
     private int planParam = PLAN_PARAM_UNKNOWN;
     private int[] publicKey = new int[64];
-    private long expiration = 0;
+    private char[] expiration = MobilityHeaderHelper.TIMESTAMP_DEFAULT;
     private char[] capabilities = "[UNKNOWN]".toCharArray();
     
     public MobilityIntroductionMessageHelper(MobilityIntro intro) {
@@ -130,9 +130,12 @@ public class MobilityIntroductionMessageHelper {
     }
     
     public void setExpiration(long expiration) {
-        if(expiration >= 0) {
-            this.expiration = expiration;
+        String number = Long.toString(expiration);
+        int numberOfZero = number.length() - MobilityHeaderHelper.TIMESTAMP_LENGTH;
+        for(int i = 0; i < numberOfZero; i++) {
+            number = "0" + number;
         }
+        this.expiration = number.toCharArray();
     }
     
     public void setCapabilities(String capabilities) {
@@ -177,7 +180,7 @@ public class MobilityIntroductionMessageHelper {
         return publicKey;
     }
 
-    public long getExpiration() {
+    public char[] getExpiration() {
         return expiration;
     }
 

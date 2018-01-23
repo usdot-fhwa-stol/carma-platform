@@ -25,12 +25,14 @@ import cav_msgs.MobilityHeader;
 public class MobilityHeaderHelper {
 
     protected static final char[] GUID_DEFAULT = "00000000-0000-0000-0000-000000000000".toCharArray();
+    protected static final char[] TIMESTAMP_DEFAULT = "0000000000000000000".toCharArray();
+    protected static final int TIMESTAMP_LENGTH = TIMESTAMP_DEFAULT.length; 
     protected static final int GUID_LENGTH = GUID_DEFAULT.length;
     
     protected char[] senderId = GUID_DEFAULT;
     protected char[] targetId = GUID_DEFAULT;
     protected char[] planId = GUID_DEFAULT;
-    protected long timestamp = 0;
+    protected char[] timestamp = TIMESTAMP_DEFAULT;
     
     public MobilityHeaderHelper() {
         
@@ -73,14 +75,17 @@ public class MobilityHeaderHelper {
         }
     }
 
-    public long getTimestamp() {
+    public char[] getTimestamp() {
         return timestamp;
     }
 
     public void setTimestamp(long timestamp) {
-        if(timestamp >= 0) {
-            this.timestamp = timestamp;
+        String number = Long.toString(timestamp);
+        int numberOfZero = number.length() - TIMESTAMP_LENGTH;
+        for(int i = 0; i < numberOfZero; i++) {
+            number = "0" + number;
         }
+        this.timestamp = number.toCharArray();
     }
     
 }

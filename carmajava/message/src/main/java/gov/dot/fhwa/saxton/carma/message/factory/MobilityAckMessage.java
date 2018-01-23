@@ -67,7 +67,7 @@ public class MobilityAckMessage implements IMessage<MobilityIntro>{
      */
     private native byte[] encode_MobilityAck(
             char[] senderId, char[] targetId, char[] planId,
-            long timestamp, int ackType, char[] verification);
+            char[] timestamp, int ackType, char[] verification);
     
     /**
      * This is the declaration for native method. It will take encoded MobilityAck byte array
@@ -75,7 +75,7 @@ public class MobilityAckMessage implements IMessage<MobilityIntro>{
      * @return
      */
     private native int decode_MobilityAck(
-            byte[] encoded_array, Object ackHeader, char[] senderId, char[] targetId,
+            byte[] encoded_array, char[] timestamp, char[] senderId, char[] targetId,
             char[] planId, Object ackType, char[] verification);
     
     @Override
@@ -108,6 +108,7 @@ public class MobilityAckMessage implements IMessage<MobilityIntro>{
         char[] sendId = new char[36];
         char[] targetId = new char[36];
         char[] planId = new char[36];
+        char[] timestamp = new char[19];
         char[] verification = new char[8];
         Arrays.fill(sendId, (char) 0);
         Arrays.fill(targetId, (char) 0);
@@ -116,7 +117,7 @@ public class MobilityAckMessage implements IMessage<MobilityIntro>{
         MobilityAck ackObject = messageFactory_.newFromType(MobilityAck._TYPE);
         MobilityAckType type = ackObject.getAgreement();
         int result = decode_MobilityAck(
-                encoded_mobilityAck, ackObject.getHeader(), sendId,
+                encoded_mobilityAck, timestamp, sendId,
                 targetId, planId, type, verification);
         if(result == -1) {
             log_.warn("MobilityAck", "MobilityAckMessage cannot decode message");
@@ -125,6 +126,7 @@ public class MobilityAckMessage implements IMessage<MobilityIntro>{
         ackObject.getHeader().setSenderId(new String(sendId));
         ackObject.getHeader().setRecipientId(new String(targetId));
         ackObject.getHeader().setPlanId(new String(planId));
+        ackObject.getHeader().setTimestamp(Long.parseLong(new String(timestamp)));
         //TODO add verification string
         return new MessageContainer("MobilityAck", ackObject);
     }

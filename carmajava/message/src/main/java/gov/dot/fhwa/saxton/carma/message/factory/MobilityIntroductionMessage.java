@@ -64,9 +64,9 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
      * @return encoded Mobility Intro Message 
      */
     private native byte[] encode_MobilityIntro(
-            char[] senderId, char[] targetId, char[] planId, long timestamp, int vehicleType,
+            char[] senderId, char[] targetId, char[] planId, char[] timestamp, int vehicleType,
             char[] roadwayId, int position, int laneId, int speed, int planType,
-            int planParam, int[] publicKey, long expiration, char[] capabilities);
+            int planParam, int[] publicKey, char[] expiration, char[] capabilities);
     
     /**
      * This is the declaration for native method. It will take encoded MobilityIntro byte array
@@ -76,9 +76,9 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
      * @return -1 means decode failed; 0 means decode is successful
      */
     private native int decode_MobilityIntro(
-            byte[] encoded_array, Object plain_msg, Object msg_header, char[] senderId, char[] targetId,
+            byte[] encoded_array, Object plain_msg, char[] timestamp, char[] senderId, char[] targetId,
             char[] planId, Object vehicleType, char[] roadId,
-            Object planType, byte[] publicKey, char[] capabilities);
+            Object planType, byte[] publicKey, char[] expiration, char[] capabilities);
     
     @Override
     public MessageContainer encode(Message plainMessage) {
@@ -113,8 +113,10 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         char[] senderId = new char[36];
         char[] targetId = new char[36];
         char[] planId = new char[36];
+        char[] timestamp = new char[19];
         char[] roadwayId = new char[50];
         byte[] publicKey = new byte[64];
+        char[] expiration = new char[19];
         char[] capabilities = new char[100];
         Arrays.fill(senderId, (char) 0);
         Arrays.fill(targetId, (char) 0);
@@ -124,9 +126,9 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         Arrays.fill(capabilities, (char) 0);
         MobilityIntro introObject = messageFactory_.newFromType(MobilityIntro._TYPE);
         int result = decode_MobilityIntro(
-                encoded_mobilityIntro, introObject, introObject.getHeader(),
+                encoded_mobilityIntro, introObject, timestamp,
                 senderId, targetId, planId, introObject.getMyEntityType(), roadwayId,
-                introObject.getPlanType(), publicKey, capabilities);
+                introObject.getPlanType(), publicKey, expiration, capabilities);
         if(result == -1) {
             log_.warn("MobilityIntro", "MobilityIntroMessage cannot decode message");
             return new MessageContainer("MobilityIntro", null);
@@ -134,6 +136,7 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         introObject.getHeader().setSenderId(new String(senderId));
         introObject.getHeader().setRecipientId(new String(targetId));
         introObject.getHeader().setPlanId(new String(planId));
+        introObject.getHeader().setTimestamp(Long.parseLong(new String(timestamp)));
         StringBuffer roadwayIdBuffer = new StringBuffer();
         boolean read = false;
         for(char ch : roadwayId) {
@@ -166,6 +169,7 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
                 capabilitiesBuffer.append(ch);
             }
         }
+        introObject.setExpiration(Long.parseLong(new String(expiration)));
         introObject.setCapabilities(capabilitiesBuffer.toString());
         return new MessageContainer("MobilityIntro", introObject);
     }
