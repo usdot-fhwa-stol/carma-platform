@@ -43,7 +43,7 @@ float64 down_track
 float64 segment_down_track
 
 # Current host vehicle lane index
-uint32 lane_index
+int8 lane_index
 
 # The route segment which the host vehicle is currently on
 cav_msgs/RouteSegment current_segment

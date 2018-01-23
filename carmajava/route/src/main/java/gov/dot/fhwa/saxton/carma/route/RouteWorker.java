@@ -526,7 +526,7 @@ public class RouteWorker {
       if (currentSegment != null) {
         routeState.setSegmentDownTrack(currentSegmentDowntrack);
         routeState.setCurrentSegment(currentSegment.toMessage(messageFactory, currentWaypointIndex));
-        routeState.setLaneIndex(currentSegment.determinePrimaryLane(crossTrackDistance));
+        routeState.setLaneIndex((byte) currentSegment.determinePrimaryLane(crossTrackDistance));
       }
     }
 

@@ -26,11 +26,11 @@ float64 down_track
 # The lane this obstacle occupies
 # Lanes are numbered according to the route file standards
 # To be in a lane the obstacle's center of bounds must be in that lane
-uint8 primary_lane
+int8 primary_lane
 
 # A list of secondary lanes which this obstacle's bounding box intersects
-uint8[] secondary_lanes
+int8[] secondary_lanes
 
 # The id of the waypoint this obstacle is approaching
-# The route segment idex will by waypoint_id - 1
+# The route segment index will by waypoint_id - 1
 uint32 waypoint_id
