@@ -1192,8 +1192,8 @@ function checkRouteInfo() {
             totallanes = parseInt(message.current_segment.waypoint.lane_count);
             targetlane = parseInt(message.current_segment.waypoint.required_lane_index);
 
-            //When targetlane = 255, it is unavailable. 
-            if (targetlane != 255) 
+            //When targetlane = -1, it is unavailable. 
+            if (targetlane < 0) 
                 drawLanes(false, true);
         }
 
