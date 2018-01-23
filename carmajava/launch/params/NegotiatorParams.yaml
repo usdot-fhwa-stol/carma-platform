@@ -1,1 +1,17 @@
+# Filename: NegotiatorParams.yaml
+# Creator:  Barry Reich (Barry.Reich@Leidos.com)
+# Created:  2018-01-23
+# Purpose:  Provide a YAML file (effectively a config file) to be associated
+#           with NegotiatorMgr.java, where configuration values may be changed
+#           without the need to recompile any code.
+
+# This is currently the amount of time the Negotiator sleeps (in milliseconds)
+# in between sending messages.  For now we ignore the overhead time of
+# constructing messages (very minimal, and the time "in the air" where the
+# message is being sent and then received from other vehicles not physically
+# connected (potentially not insignificant).  We may want to subtract the air
+# time from the number of milliseconds slept.
+#
 sleep_duration: 5000
+
+### END File NegotiatorParams.yaml ###
