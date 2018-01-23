@@ -20,15 +20,11 @@ import java.util.List;
  */
 public class FutureLongitudinalManeuver extends LongitudinalManeuver {
 
-    protected double                            startDist_;
-    protected double                            endDist_;
     protected double                            startSpeed_;
     protected double                            endSpeed_;
     protected double                            maneuversEnd_;
     protected List<ISimpleManeuver>             mvrs_ = null;
-    protected IManeuverInputs                   inputs_;
     protected int                               executingIdx_ = 0;
-    protected ILogger                           log_;
     protected final double                      CONCATENATION_TOLERANCE = 0.001; // meter
 
 
