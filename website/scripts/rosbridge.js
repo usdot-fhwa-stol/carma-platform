@@ -1193,7 +1193,7 @@ function checkRouteInfo() {
             targetlane = parseInt(message.current_segment.waypoint.required_lane_index);
 
             //When targetlane = -1, it is unavailable. 
-            if (targetlane > 0) 
+            if (targetlane >= 0) 
                 drawLanes(false, true);
         }
 
