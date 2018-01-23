@@ -37,4 +37,4 @@ uint8[] participant_5
 cav_msgs/Maneuver[]  maneuvers
 
 # the expiration time of the current plan
-cav_msgs/DateTime    expiration
+uint64    expiration

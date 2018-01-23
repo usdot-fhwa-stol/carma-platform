@@ -64,9 +64,9 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
      * @return encoded Mobility Intro Message 
      */
     private native byte[] encode_MobilityIntro(
-            int[] senderId, int[] targetId, int[] planId, int[] timestamp, int vehicleType,
-            int[] roadwayId, int position, int laneId, int speed, int planType,
-            int planParam, int[] publicKey, int[] expiration, int[] capabilities);
+            char[] senderId, char[] targetId, char[] planId, long timestamp, int vehicleType,
+            char[] roadwayId, int position, int laneId, int speed, int planType,
+            int planParam, int[] publicKey, long expiration, char[] capabilities);
     
     /**
      * This is the declaration for native method. It will take encoded MobilityIntro byte array
@@ -76,19 +76,19 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
      * @return -1 means decode failed; 0 means decode is successful
      */
     private native int decode_MobilityIntro(
-            byte[] encoded_array, Object plain_msg, byte[] senderId, byte[] targetId,
-            byte[] planId, int[] dateTime, Object vehicleType, byte[] roadId,
-            Object planType, byte[] publicKey, int[] expiration, byte[] capabilities);
+            byte[] encoded_array, Object plain_msg, Object msg_header, char[] senderId, char[] targetId,
+            char[] planId, Object vehicleType, char[] roadId,
+            Object planType, byte[] publicKey, char[] capabilities);
     
     @Override
     public MessageContainer encode(Message plainMessage) {
         MobilityIntroductionMessageHelper helper = new MobilityIntroductionMessageHelper((MobilityIntro) plainMessage);
         byte[] encode_msg = encode_MobilityIntro(
                 helper.getHeaderHelper().getSenderId(), helper.getHeaderHelper().getTargetId(),
-                helper.getHeaderHelper().getPlanId(), helper.getHeaderHelper().getTimestamp().getTimestamp(),
+                helper.getHeaderHelper().getPlanId(), helper.getHeaderHelper().getTimestamp(),
                 helper.getVehicleType(), helper.getRoadwayId(), helper.getPosition(), helper.getLaneId(),
                 helper.getSpeed(), helper.getPlanType(), helper.getPlanParam(), helper.getPublicKey(),
-                helper.getExpiration().getTimestamp(), helper.getCapabilities()
+                helper.getExpiration(), helper.getCapabilities()
                 );
         if(encode_msg == null) {
             log_.warn("MobilityIntro", "MobilityIntroMessage cannot encode message.");
@@ -110,81 +110,60 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         for(int i = 0; i < channelBuffer.capacity(); i++) {
             encoded_mobilityIntro[i] = channelBuffer.getByte(i);
         }
-        byte[] sendId = new byte[16];
-        byte[] targetId = new byte[16];
-        byte[] planId = new byte[16];
-        int[] creationDateTime = new int[7];
-        byte[] roadwayId = new byte[50];
+        char[] senderId = new char[36];
+        char[] targetId = new char[36];
+        char[] planId = new char[36];
+        char[] roadwayId = new char[50];
         byte[] publicKey = new byte[64];
-        int[] expirationDateTime = new int[7];
-        byte[] capabilities = new byte[100];
-        Arrays.fill(sendId, (byte) 0);
-        Arrays.fill(targetId, (byte) 0);
-        Arrays.fill(planId, (byte) 0);
-        Arrays.fill(creationDateTime, 0);
-        Arrays.fill(roadwayId, (byte) 0);
+        char[] capabilities = new char[100];
+        Arrays.fill(senderId, (char) 0);
+        Arrays.fill(targetId, (char) 0);
+        Arrays.fill(planId, (char) 0);
+        Arrays.fill(roadwayId, (char) 0);
         Arrays.fill(publicKey, (byte) 0);
-        Arrays.fill(expirationDateTime, 0);
-        Arrays.fill(capabilities, (byte) 0);
+        Arrays.fill(capabilities, (char) 0);
         MobilityIntro introObject = messageFactory_.newFromType(MobilityIntro._TYPE);
         int result = decode_MobilityIntro(
-                encoded_mobilityIntro, introObject, sendId, targetId, planId,
-                creationDateTime, introObject.getMyEntityType(), roadwayId,
-                introObject.getPlanType(), publicKey, expirationDateTime, capabilities);
+                encoded_mobilityIntro, introObject, introObject.getHeader(),
+                senderId, targetId, planId, introObject.getMyEntityType(), roadwayId,
+                introObject.getPlanType(), publicKey, capabilities);
         if(result == -1) {
             log_.warn("MobilityIntro", "MobilityIntroMessage cannot decode message");
             return new MessageContainer("MobilityIntro", null);
         }
-        ChannelBuffer senderIdBuffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, sendId);
-        introObject.getHeader().setSenderId(senderIdBuffer);
-        ChannelBuffer targetIdBuffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, targetId);
-        introObject.getHeader().setRecipientId(targetIdBuffer);
-        ChannelBuffer planIdBuffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, planId);
-        introObject.getHeader().setPlanId(planIdBuffer);
-        introObject.getHeader().getTimestamp().setYear((short) creationDateTime[0]);
-        introObject.getHeader().getTimestamp().setMonth((byte) creationDateTime[1]);
-        introObject.getHeader().getTimestamp().setDay((byte) creationDateTime[2]);
-        introObject.getHeader().getTimestamp().setHour((byte) creationDateTime[3]);
-        introObject.getHeader().getTimestamp().setMinute((byte) creationDateTime[4]);
-        introObject.getHeader().getTimestamp().setSecond(creationDateTime[5]);
-        introObject.getHeader().getTimestamp().setOffset((short) creationDateTime[6]);
+        introObject.getHeader().setSenderId(new String(senderId));
+        introObject.getHeader().setRecipientId(new String(targetId));
+        introObject.getHeader().setPlanId(new String(planId));
         StringBuffer roadwayIdBuffer = new StringBuffer();
         boolean read = false;
-        for(byte ch : roadwayId) {
+        for(char ch : roadwayId) {
             // because of the defect on asn1c compiler, we force to only use string between [ and ]
             if(read) {
-                roadwayIdBuffer.append((char) ch);
+                roadwayIdBuffer.append(ch);
                 if(ch == 93) {
                     read = false;
                     break;
                 }
             } else if(ch == 91) {
                 read = true;
-                roadwayIdBuffer.append((char) ch);
+                roadwayIdBuffer.append(ch);
             }
         }
         introObject.setMyRoadwayLink(roadwayIdBuffer.toString());
         ChannelBuffer keyBuffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, publicKey);
         introObject.setMyPublicKey(keyBuffer);
-        introObject.getExpiration().setYear((short) expirationDateTime[0]);
-        introObject.getExpiration().setMonth((byte) expirationDateTime[1]);
-        introObject.getExpiration().setDay((byte) expirationDateTime[2]);
-        introObject.getExpiration().setHour((byte) expirationDateTime[3]);
-        introObject.getExpiration().setMinute((byte) expirationDateTime[4]);
-        introObject.getExpiration().setSecond(expirationDateTime[5]);
-        introObject.getExpiration().setOffset((short) expirationDateTime[6]);
         StringBuffer capabilitiesBuffer = new StringBuffer();
-        for(byte ch : capabilities) {
+        for(char ch : capabilities) {
             // because of the defect on asn1c compiler, we force to only use string between [ and ]
             if(read) {
-                capabilitiesBuffer.append((char) ch);
+                capabilitiesBuffer.append(ch);
                 if(ch == 93) {
                     read = false;
                     break;
                 }
             } else if(ch == 91) {
                 read = true;
-                capabilitiesBuffer.append((char) ch);
+                capabilitiesBuffer.append(ch);
             }
         }
         introObject.setCapabilities(capabilitiesBuffer.toString());

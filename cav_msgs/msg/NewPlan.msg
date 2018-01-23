@@ -12,9 +12,10 @@
 std_msgs/Header     header
 
 # a value from MobilityMessage which identifies this particular plan for future reference
-uint8[]             plan_id
+string              plan_id
 
 # a list of proposed maneuvers which we need to add into our trajectory
 cav_msgs/Maneuver[] maneuvers
 
-# TODO: add plan expiration time
+# plan expiration time in local clock
+uint64                expiration

@@ -16,11 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.message.helper;
 
-import java.util.Arrays;
-
-import org.jboss.netty.buffer.ChannelBuffer;
-
-import cav_msgs.DateTime;
 import cav_msgs.MobilityHeader;
 
 /**
@@ -29,71 +24,63 @@ import cav_msgs.MobilityHeader;
  */
 public class MobilityHeaderHelper {
 
-    protected static final int GUI_BYTE_MIN = 0;
-    protected static final int GUI_BYTE_MAX = 255;
+    protected static final char[] GUID_DEFAULT = "00000000-0000-0000-0000-000000000000".toCharArray();
+    protected static final int GUID_LENGTH = GUID_DEFAULT.length;
     
-    private int[] senderId = new int[16];
-    private int[] targetId = new int[16];
-    private int[] planId = new int[16];
-    private DDateTimeHelper timestamp = null;
+    protected char[] senderId = GUID_DEFAULT;
+    protected char[] targetId = GUID_DEFAULT;
+    protected char[] planId = GUID_DEFAULT;
+    protected long timestamp = 0;
+    
+    public MobilityHeaderHelper() {
+        
+    }
     
     public MobilityHeaderHelper(MobilityHeader header) {
-        Arrays.fill(senderId, GUI_BYTE_MIN);
-        Arrays.fill(targetId, GUI_BYTE_MIN);
-        Arrays.fill(planId, GUI_BYTE_MIN);
-        ChannelBuffer senderIdBuffer = header.getSenderId();
-        byte[] sendIdInput = new byte[senderIdBuffer.capacity()];
-        for(int i = 0; i < senderIdBuffer.capacity(); i++) {
-            sendIdInput[i] = senderIdBuffer.getByte(i);
-        }
-        this.setId(sendIdInput, this.senderId);
-        ChannelBuffer targetIdBuffer = header.getRecipientId();
-        byte[] targetIdInput = new byte[targetIdBuffer.capacity()];
-        for(int i = 0; i < targetIdBuffer.capacity(); i++) {
-            targetIdInput[i] = targetIdBuffer.getByte(i);
-        }
-        this.setId(targetIdInput, targetId);
-        ChannelBuffer planIdBuffer = header.getPlanId();
-        byte[] planIdInput = new byte[planIdBuffer.capacity()];
-        for(int i = 0; i < planIdBuffer.capacity(); i++) {
-            planIdInput[i] = planIdBuffer.getByte(i);
-        }
-        this.setId(planIdInput, planId);
-        this.timestamp = new DDateTimeHelper(header.getTimestamp());
-    }
-
-    public void setId(byte[] inputId, int[] fieldId) {
-        for(int i = 0; i < fieldId.length; i++) {
-            int temp;
-            if(inputId[i] < 0) {
-                temp = 1 + GUI_BYTE_MAX + inputId[i];
-            } else {
-                temp = inputId[i];
-            }
-            if(temp >= GUI_BYTE_MIN && temp <= GUI_BYTE_MAX) {
-                fieldId[i] = temp;
-            }
-        }
+        this.setSenderId(header.getSenderId());
+        this.setTargetId(header.getRecipientId());
+        this.setPlanId(header.getPlanId());
+        this.setTimestamp(header.getTimestamp());
     }
     
-    public void setTimestamp(DateTime timestamp) {
-        this.timestamp = new DDateTimeHelper(timestamp);
-    }
-    
-    public int[] getSenderId() {
+    public char[] getSenderId() {
         return senderId;
     }
-    
-    public int[] getTargetId() {
+
+    public void setSenderId(String senderId) {
+        if(senderId.length() == GUID_LENGTH) {
+            this.senderId = senderId.toCharArray();
+        }
+    }
+
+    public char[] getTargetId() {
         return targetId;
     }
 
-    public int[] getPlanId() {
+    public void setTargetId(String targetId) {
+        if(targetId.length() == GUID_LENGTH) {
+            this.targetId = targetId.toCharArray();
+        }
+    }
+
+    public char[] getPlanId() {
         return planId;
     }
 
-    public DDateTimeHelper getTimestamp() {
-        return this.timestamp;
+    public void setPlanId(String planId) {
+        if(planId.length() == GUID_LENGTH) {
+            this.planId = planId.toCharArray();
+        }
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        if(timestamp >= 0) {
+            this.timestamp = timestamp;
+        }
     }
     
 }
