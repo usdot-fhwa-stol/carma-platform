@@ -1,3 +1,5 @@
+# To run this script, it must be executable. 
+# To do so, run this command: chmod +x VehicleInstallScript.sh
 read -p 'WARNING this script deletes all the files under opt/carma/src and var/www/html/, are you sure you want to continue? <y/n> ' prompt
 if [[ $prompt == 'n' || $prompt == 'N' || $prompt == 'no' || $prompt == 'No' ]]
 then
