@@ -51,6 +51,7 @@ import java.util.UUID;
 
 public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin {
 
+    private final int                       EXPIRATION_TIME = 2000;
     private final int                       SLEEP_TIME = 50; //ms
     private int                             targetLane_ = -1;
     private double                          startSpeed_ = 0.0;
@@ -295,12 +296,12 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         plan_.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
         plan_.getHeader().setPlanId(UUID.randomUUID().toString());
         plan_.getHeader().setTimestamp(System.currentTimeMillis());
-        
+        log.info("MobilityIntro has been built with planId" + plan_.getHeader().getPlanId());
         float speed = (float)inputs.getCurrentSpeed();
         byte lane = (byte)inputs.getCurrentLane();
         String link = "[Test track]"; //TODO - placeholder for testing
         short linkPos = (short)inputs.getDistanceFromRouteStart(); //TODO - for now assume a single link in the route
-        long expiration = System.currentTimeMillis() + 10000; //TODO - not in use for now
+        long expiration = System.currentTimeMillis() + EXPIRATION_TIME; //TODO - not in use for now
         
         plan_.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE); //TODO - move to negotiator node
         plan_.setForwardSpeed(speed);
