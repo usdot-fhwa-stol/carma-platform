@@ -259,6 +259,7 @@ public class Arbitrator extends GuidanceComponent
     plugins.clear();
     trajectory = null;
     planningWindow = node.getParameterTree().getDouble("~initial_planning_window", 10.0);
+    receivedDtdUpdate.set(false);
     currentState.set(GuidanceState.DRIVERS_READY);
   }
 

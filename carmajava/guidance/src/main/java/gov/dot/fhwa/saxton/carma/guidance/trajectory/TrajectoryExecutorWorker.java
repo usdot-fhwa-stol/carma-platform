@@ -472,8 +472,6 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    */
   public void cleanRestart() {
     downtrackDistance = 0.0;
-    currentLateralManeuver = null;
-    currentLongitudinalManeuver = null;
     currentTrajectory = null;
     nextTrajectory = null;
     currentLateralManeuver = null;
