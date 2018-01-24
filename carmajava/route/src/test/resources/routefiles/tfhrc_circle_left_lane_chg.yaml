@@ -83,7 +83,7 @@ waypoints: # The list of waypoints in the route
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
     laneCount: 2
-    requriedLaneIndex:0
+    requiredLaneIndex:0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -98,7 +98,7 @@ waypoints: # The list of waypoints in the route
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
     laneCount: 2
-    requriedLaneIndex:0
+    requiredLaneIndex:0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -113,7 +113,7 @@ waypoints: # The list of waypoints in the route
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
     laneCount: 2
-    requriedLaneIndex:1
+    requiredLaneIndex:1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
