@@ -28,19 +28,6 @@ public class Negotiation {
         COMPLETE
     }
 
-    enum StatusReport {
-        //Caution: enum values must match those defined in cav_msgs/LaneChangeStatus.msg
-        PLAN_SENT(1),
-        ACCEPTANCE_RECEIVED(2),
-        REJECTION_RECEIVED(3),
-        OTHER_RECEIVED(4),
-        PLANNING_SUCCESS(5),
-        TIMED_OUT(6);
-
-        StatusReport(int val) { val_ = val; }
-        private int val_;
-    }
-
     enum AckType {
         //Caution: these values are set to match those defined in MobilityAckType.msg
         UNKNOWN(0),
