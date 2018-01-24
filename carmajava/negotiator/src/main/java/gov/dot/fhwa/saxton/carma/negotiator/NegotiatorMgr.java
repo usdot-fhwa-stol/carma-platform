@@ -129,7 +129,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
         if (systemReady) {
             //This is a test for Mobility Introduction message
             MobilityIntro introMsg = mobIntroOutPub.newMessage();
-            introMsg.getHeader().setSenderId("00000001-0000-0000-0000-000000000000");
+            introMsg.getHeader().setSenderId("00000000-0000-0000-0000-000000000000");
             introMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
             introMsg.getHeader().setPlanId("00000000-0000-0000-0000-000000000000");
             introMsg.getHeader().setTimestamp(System.currentTimeMillis());
@@ -147,7 +147,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             introMsg.setCapabilities("[CarmaPlatform v2.2.3]");
             mobIntroOutPub.publish(introMsg);
             MobilityAck ackMsg = mobAckOutPub.newMessage();
-            ackMsg.getHeader().setSenderId("00000001-0000-0000-0000-000000000000");
+            ackMsg.getHeader().setSenderId("00000000-0000-0000-0000-000000000000");
             ackMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
             ackMsg.getHeader().setPlanId("00000000-0000-0000-0000-000000000000");
             ackMsg.getHeader().setTimestamp(System.currentTimeMillis());

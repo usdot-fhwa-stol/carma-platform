@@ -10,18 +10,18 @@ extern "C" {
 /*
  * Class:     gov_dot_fhwa_saxton_carma_message_factory_MobilityAckMessage
  * Method:    encode_MobilityAck
- * Signature: ([C[C[C[CI[C)[B
+ * Signature: ([B[B[B[BI[B)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityAckMessage_encode_1MobilityAck
-  (JNIEnv *, jobject, jcharArray, jcharArray, jcharArray, jcharArray, jint, jcharArray);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jint, jbyteArray);
 
 /*
  * Class:     gov_dot_fhwa_saxton_carma_message_factory_MobilityAckMessage
  * Method:    decode_MobilityAck
- * Signature: ([B[C[C[C[CLjava/lang/Object;[C)I
+ * Signature: ([B[B[B[B[BLjava/lang/Object;[B)I
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityAckMessage_decode_1MobilityAck
-  (JNIEnv *, jobject, jbyteArray, jcharArray, jcharArray, jcharArray, jcharArray, jobject, jcharArray);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jobject, jbyteArray);
 
 #ifdef __cplusplus
 }

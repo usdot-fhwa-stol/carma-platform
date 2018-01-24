@@ -64,9 +64,9 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
      * @return encoded Mobility Intro Message 
      */
     private native byte[] encode_MobilityIntro(
-            char[] senderId, char[] targetId, char[] planId, char[] timestamp, int vehicleType,
-            char[] roadwayId, int position, int laneId, int speed, int planType,
-            int planParam, int[] publicKey, char[] expiration, char[] capabilities);
+            byte[] senderId, byte[] targetId, byte[] planId, byte[] timestamp, int vehicleType,
+            byte[] roadwayId, int position, int laneId, int speed, int planType,
+            int planParam, int[] publicKey, byte[] expiration, byte[] capabilities);
     
     /**
      * This is the declaration for native method. It will take encoded MobilityIntro byte array
@@ -76,9 +76,9 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
      * @return -1 means decode failed; 0 means decode is successful
      */
     private native int decode_MobilityIntro(
-            byte[] encoded_array, Object plain_msg, char[] timestamp, char[] senderId, char[] targetId,
-            char[] planId, Object vehicleType, char[] roadId,
-            Object planType, byte[] publicKey, char[] expiration, char[] capabilities);
+            byte[] encoded_array, Object plain_msg, byte[] senderId, byte[] targetId,
+            byte[] planId, byte[] timestamp, Object vehicleType, byte[] roadId,
+            Object planType, byte[] publicKey, byte[] expiration, byte[] capabilities);
     
     @Override
     public MessageContainer encode(Message plainMessage) {
@@ -110,24 +110,24 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         for(int i = 0; i < channelBuffer.capacity(); i++) {
             encoded_mobilityIntro[i] = channelBuffer.getByte(i);
         }
-        char[] senderId = new char[36];
-        char[] targetId = new char[36];
-        char[] planId = new char[36];
-        char[] timestamp = new char[19];
-        char[] roadwayId = new char[50];
+        byte[] senderId = new byte[36];
+        byte[] targetId = new byte[36];
+        byte[] planId = new byte[36];
+        byte[] timestamp = new byte[19];
+        byte[] roadwayId = new byte[50];
         byte[] publicKey = new byte[64];
-        char[] expiration = new char[19];
-        char[] capabilities = new char[100];
-        Arrays.fill(senderId, (char) 0);
-        Arrays.fill(targetId, (char) 0);
-        Arrays.fill(planId, (char) 0);
-        Arrays.fill(roadwayId, (char) 0);
+        byte[] expiration = new byte[19];
+        byte[] capabilities = new byte[100];
+        Arrays.fill(senderId, (byte) 0);
+        Arrays.fill(targetId, (byte) 0);
+        Arrays.fill(planId, (byte) 0);
+        Arrays.fill(roadwayId, (byte) 0);
         Arrays.fill(publicKey, (byte) 0);
-        Arrays.fill(capabilities, (char) 0);
+        Arrays.fill(capabilities, (byte) 0);
         MobilityIntro introObject = messageFactory_.newFromType(MobilityIntro._TYPE);
         int result = decode_MobilityIntro(
-                encoded_mobilityIntro, introObject, timestamp,
-                senderId, targetId, planId, introObject.getMyEntityType(), roadwayId,
+                encoded_mobilityIntro, introObject, senderId, targetId, planId,
+                timestamp, introObject.getMyEntityType(), roadwayId,
                 introObject.getPlanType(), publicKey, expiration, capabilities);
         if(result == -1) {
             log_.warn("MobilityIntro", "MobilityIntroMessage cannot decode message");
@@ -139,34 +139,34 @@ public class MobilityIntroductionMessage implements IMessage<MobilityIntro>{
         introObject.getHeader().setTimestamp(Long.parseLong(new String(timestamp)));
         StringBuffer roadwayIdBuffer = new StringBuffer();
         boolean read = false;
-        for(char ch : roadwayId) {
+        for(byte ch : roadwayId) {
             // because of the defect on asn1c compiler, we force to only use string between [ and ]
             if(read) {
-                roadwayIdBuffer.append(ch);
+                roadwayIdBuffer.append((char) ch);
                 if(ch == 93) {
                     read = false;
                     break;
                 }
             } else if(ch == 91) {
                 read = true;
-                roadwayIdBuffer.append(ch);
+                roadwayIdBuffer.append((char) ch);
             }
         }
         introObject.setMyRoadwayLink(roadwayIdBuffer.toString());
         ChannelBuffer keyBuffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, publicKey);
         introObject.setMyPublicKey(keyBuffer);
         StringBuffer capabilitiesBuffer = new StringBuffer();
-        for(char ch : capabilities) {
+        for(byte ch : capabilities) {
             // because of the defect on asn1c compiler, we force to only use string between [ and ]
             if(read) {
-                capabilitiesBuffer.append(ch);
+                capabilitiesBuffer.append((char) ch);
                 if(ch == 93) {
                     read = false;
                     break;
                 }
             } else if(ch == 91) {
                 read = true;
-                capabilitiesBuffer.append(ch);
+                capabilitiesBuffer.append((char) ch);
             }
         }
         introObject.setExpiration(Long.parseLong(new String(expiration)));

@@ -66,8 +66,8 @@ public class MobilityAckMessage implements IMessage<MobilityIntro>{
      * @return the encoded MobilityAck message
      */
     private native byte[] encode_MobilityAck(
-            char[] senderId, char[] targetId, char[] planId,
-            char[] timestamp, int ackType, char[] verification);
+            byte[] senderId, byte[] targetId, byte[] planId,
+            byte[] timestamp, int ackType, byte[] verification);
     
     /**
      * This is the declaration for native method. It will take encoded MobilityAck byte array
@@ -75,13 +75,17 @@ public class MobilityAckMessage implements IMessage<MobilityIntro>{
      * @return
      */
     private native int decode_MobilityAck(
-            byte[] encoded_array, char[] timestamp, char[] senderId, char[] targetId,
-            char[] planId, Object ackType, char[] verification);
+            byte[] encoded_array, byte[] senderId, byte[] targetId,
+            byte[] planId, byte[] timestamp, Object ackType, byte[] verification);
     
     @Override
     public MessageContainer encode(Message plainMessage) {
         MobilityHeaderHelper helper = new MobilityHeaderHelper(((MobilityAck) plainMessage).getHeader());
-        char[] verification_input = ((MobilityAck) plainMessage).getVerificationCode().toCharArray(); 
+        char[] verification_input_tmp = ((MobilityAck) plainMessage).getVerificationCode().toCharArray();
+        byte[] verification_input = new byte[verification_input_tmp.length];
+        for(int i = 0; i < verification_input.length; i++) {
+            verification_input[i] = (byte) verification_input_tmp[i];
+        }
         byte[] encode_msg = encode_MobilityAck(
                 helper.getSenderId(), helper.getTargetId(), helper.getPlanId(), helper.getTimestamp(),
                 ((MobilityAck) plainMessage).getAgreement().getType(), verification_input);
@@ -105,20 +109,18 @@ public class MobilityAckMessage implements IMessage<MobilityIntro>{
         for(int i = 0; i < buffer.capacity(); i++) {
             encoded_mobilityAck[i] = buffer.getByte(i);
         }
-        char[] sendId = new char[36];
-        char[] targetId = new char[36];
-        char[] planId = new char[36];
-        char[] timestamp = new char[19];
-        char[] verification = new char[8];
-        Arrays.fill(sendId, (char) 0);
-        Arrays.fill(targetId, (char) 0);
-        Arrays.fill(planId, (char) 0);
-        Arrays.fill(verification, (char) 0);
+        byte[] sendId = new byte[36];
+        byte[] targetId = new byte[36];
+        byte[] planId = new byte[36];
+        byte[] timestamp = new byte[19];
+        byte[] verification = new byte[8];
+        Arrays.fill(sendId, (byte) 0);
+        Arrays.fill(targetId, (byte) 0);
+        Arrays.fill(planId, (byte) 0);
+        Arrays.fill(verification, (byte) 0);
         MobilityAck ackObject = messageFactory_.newFromType(MobilityAck._TYPE);
         MobilityAckType type = ackObject.getAgreement();
-        int result = decode_MobilityAck(
-                encoded_mobilityAck, timestamp, sendId,
-                targetId, planId, type, verification);
+        int result = decode_MobilityAck(encoded_mobilityAck, sendId, targetId, planId, timestamp, type, verification);
         if(result == -1) {
             log_.warn("MobilityAck", "MobilityAckMessage cannot decode message");
             return new MessageContainer("MobilityAck", null);

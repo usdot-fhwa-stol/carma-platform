@@ -253,10 +253,10 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage
  * a byte array in J2735 standards. When an error happened, this function will return NULL.
  */
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage_encode_1MobilityIntro
-  (JNIEnv *env, jobject cls, jcharArray senderId, jcharArray targetId,
-   jcharArray planId, jcharArray timestamp, jint vehicleType, jcharArray roadwayId,
+  (JNIEnv *env, jobject cls, jbyteArray senderId, jbyteArray targetId,
+   jbyteArray planId, jbyteArray timestamp, jint vehicleType, jbyteArray roadwayId,
    jint position, jint laneId, jint speed, jint planType, jint planParam,
-   jintArray publicKey, jcharArray expiration, jcharArray capabilities) {
+   jintArray publicKey, jbyteArray expiration, jbyteArray capabilities) {
 
 	uint8_t buffer[256];
 	size_t buffer_size = sizeof(buffer);
@@ -273,7 +273,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	message -> value.present = MessageFrame__value_PR_TestMessage00;
 
 	//set senderId in header
-	jchar *sender_id = (*env) -> GetCharArrayElements(env, senderId, 0);
+	jbyte *sender_id = (*env) -> GetByteArrayElements(env, senderId, 0);
 	if(sender_id == NULL) {
 		return NULL;
 	}
@@ -283,10 +283,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message -> value.choice.TestMessage00.header.hostStaticId.buf = sender_id_content;
 	message -> value.choice.TestMessage00.header.hostStaticId.size = 36;
-	(*env) -> ReleaseCharArrayElements(env, senderId, sender_id, 0);
+	(*env) -> ReleaseByteArrayElements(env, senderId, sender_id, 0);
 
 	//set targetId in header
-	jchar *target_id = (*env) -> GetCharArrayElements(env, targetId, 0);
+	jbyte *target_id = (*env) -> GetByteArrayElements(env, targetId, 0);
 	if (target_id == NULL) {
 		return NULL;
 	}
@@ -296,10 +296,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message -> value.choice.TestMessage00.header.targetStaticId.buf = target_id_content;
 	message -> value.choice.TestMessage00.header.targetStaticId.size = 36;
-	(*env) -> ReleaseCharArrayElements(env, targetId, target_id, 0);
+	(*env) -> ReleaseByteArrayElements(env, targetId, target_id, 0);
 
 	//set planId in header
-	jchar *plan_id = (*env) -> GetCharArrayElements(env, planId, 0);
+	jbyte *plan_id = (*env) -> GetByteArrayElements(env, planId, 0);
 	if (plan_id == NULL) {
 		return NULL;
 	}
@@ -309,10 +309,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message -> value.choice.TestMessage00.header.planId.buf = plan_id_content;
 	message -> value.choice.TestMessage00.header.planId.size = 36;
-	(*env) -> ReleaseCharArrayElements(env, planId, plan_id, 0);
+	(*env) -> ReleaseByteArrayElements(env, planId, plan_id, 0);
 
 	//set timestamp
-	jchar *time = (*env) -> GetCharArrayElements(env, timestamp, 0);
+	jbyte *time = (*env) -> GetByteArrayElements(env, timestamp, 0);
 	if (time == NULL) {
 		return NULL;
 	}
@@ -322,14 +322,14 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message -> value.choice.TestMessage00.header.timestamp.buf = time_content;
 	message -> value.choice.TestMessage00.header.timestamp.size = 19;
-	(*env) -> ReleaseCharArrayElements(env, timestamp, time, 0);
+	(*env) -> ReleaseByteArrayElements(env, timestamp, time, 0);
 
 	//set entity type
 	message -> value.choice.TestMessage00.body.vehicleType = vehicleType;
 
 	//set roadway link ID
 	int roadway_id_size = (*env) -> GetArrayLength(env, roadwayId);
-	jchar *roadway_id = (*env) -> GetCharArrayElements(env, roadwayId, 0);
+	jbyte *roadway_id = (*env) -> GetByteArrayElements(env, roadwayId, 0);
 	if (roadway_id == NULL) {
 		return NULL;
 	}
@@ -339,7 +339,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message -> value.choice.TestMessage00.body.roadwayId.buf = roadway_id_content;
 	message -> value.choice.TestMessage00.body.roadwayId.size = roadway_id_size;
-	(*env) -> ReleaseCharArrayElements(env, roadwayId, roadway_id, 0);
+	(*env) -> ReleaseByteArrayElements(env, roadwayId, roadway_id, 0);
 
 	//set roadway position
 	message -> value.choice.TestMessage00.body.roadwayPosition = position;
@@ -368,7 +368,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	(*env)->ReleaseIntArrayElements(env, publicKey, public_key, 0);
 
 	//set expiration date & time
-	jchar *expiration_time = (*env) -> GetCharArrayElements(env, expiration, 0);
+	jbyte *expiration_time = (*env) -> GetByteArrayElements(env, expiration, 0);
 	if (expiration_time == NULL) {
 		return NULL;
 	}
@@ -376,13 +376,13 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	for (int i = 0; i < 19; i++) {
 		expiration_content[i] = expiration_time[i];
 	}
-	message -> value.choice.TestMessage00.header.timestamp.buf = expiration_content;
-	message -> value.choice.TestMessage00.header.timestamp.size = 19;
-	(*env) -> ReleaseCharArrayElements(env, expiration, expiration_time, 0);
+	message -> value.choice.TestMessage00.body.expiration.buf = expiration_content;
+	message -> value.choice.TestMessage00.body.expiration.size = 19;
+	(*env) -> ReleaseByteArrayElements(env, expiration, expiration_time, 0);
 
 	//set capabilities string
 	int capabilities_string_size = (*env) -> GetArrayLength(env, capabilities);
-	jchar *capabilities_string = (*env)->GetCharArrayElements(env, capabilities, 0);
+	jbyte *capabilities_string = (*env)->GetByteArrayElements(env, capabilities, 0);
 	if (capabilities_string == NULL) {
 		return NULL;
 	}
@@ -392,7 +392,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message -> value.choice.TestMessage00.body.capabilities.buf = capabilities_string_content;
 	message -> value.choice.TestMessage00.body.capabilities.size = capabilities_string_size;
-	(*env) -> ReleaseCharArrayElements(env, capabilities, capabilities_string, 0);
+	(*env) -> ReleaseByteArrayElements(env, capabilities, capabilities_string, 0);
 
 	//encode message
 	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, 0, message, buffer, buffer_size);
@@ -417,10 +417,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
  * Return -1 means an error has happened; return 0 means decoding succeed.
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage_decode_1MobilityIntro
-  (JNIEnv *env, jobject cls, jbyteArray encodedIntro, jobject introMsg, jcharArray timestamp,
-   jcharArray senderId, jcharArray targetId, jcharArray planId,
-   jobject vehicleType, jcharArray roadwayId, jobject planType,
-   jbyteArray publicKey, jcharArray expiration, jcharArray capabilities) {
+  (JNIEnv *env, jobject cls, jbyteArray encodedIntro, jobject introMsg,
+   jbyteArray senderId, jbyteArray targetId, jbyteArray planId, jbyteArray timestamp,
+   jobject vehicleType, jbyteArray roadwayId, jobject planType,
+   jbyteArray publicKey, jbyteArray expiration, jbyteArray capabilities) {
 
 	asn_dec_rval_t rval; /* Decoder return value */
 	MessageFrame_t *message = 0; /* Type to decode */
@@ -439,17 +439,15 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIn
 		jclass vehicle_type_class = (*env) -> GetObjectClass(env, vehicleType);
 		jclass plan_type_class = (*env) -> GetObjectClass(env, planType);
 
-		//set senderId, targetId and planId array
+		//set senderId, targetId, planId and creation dateTime
 		uint8_t *sender_id_content = message -> value.choice.TestMessage00.header.hostStaticId.buf;
-		(*env) -> SetCharArrayRegion(env, senderId, 0, 36, sender_id_content);
+		(*env) -> SetByteArrayRegion(env, senderId, 0, 36, sender_id_content);
 		uint8_t *target_id_content = message -> value.choice.TestMessage00.header.targetStaticId.buf;
-		(*env) -> SetCharArrayRegion(env, targetId, 0, 36, target_id_content);
+		(*env) -> SetByteArrayRegion(env, targetId, 0, 36, target_id_content);
 		uint8_t *plan_id_content = message -> value.choice.TestMessage00.header.planId.buf;
-		(*env) -> SetCharArrayRegion(env, planId, 0, 36, plan_id_content);
-
-		//set message creation dateTime
+		(*env) -> SetByteArrayRegion(env, planId, 0, 36, plan_id_content);
 		uint8_t *creation_time_content = message -> value.choice.TestMessage00.header.timestamp.buf;
-		(*env) -> SetCharArrayRegion(env, timestamp, 0, 19, creation_time_content);
+		(*env) -> SetByteArrayRegion(env, timestamp, 0, 19, creation_time_content);
 
 		//set vehicle type
 		jmethodID mid_setType = (*env) -> GetMethodID(env, vehicle_type_class, "setType", "(B)V");
@@ -459,7 +457,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIn
 		//set roadway link id
 		uint8_t *roadway_id_content = message -> value.choice.TestMessage00.body.roadwayId.buf;
 		int roadway_id_size = message -> value.choice.TestMessage00.body.roadwayId.size;
-		(*env) -> SetCharArrayRegion(env, roadwayId, 0, roadway_id_size, roadway_id_content);
+		(*env) -> SetByteArrayRegion(env, roadwayId, 0, roadway_id_size, roadway_id_content);
 
 		//set roadway link position
 		jmethodID mid_setPosition = (*env) -> GetMethodID(env, mobility_class, "setMyRoadwayLinkPosition", "(S)V");
@@ -492,12 +490,12 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIn
 
 		//set expiration
 		uint8_t *expiration_time_content = message -> value.choice.TestMessage00.body.expiration.buf;
-		(*env) -> SetCharArrayRegion(env, expiration, 0, 19, expiration_time_content);
+		(*env) -> SetByteArrayRegion(env, expiration, 0, 19, expiration_time_content);
 
 		//set capabilities string
 		uint8_t *capabilities_content = message -> value.choice.TestMessage00.body.capabilities.buf;
 		int capabilities_size = message -> value.choice.TestMessage00.body.capabilities.size;
-		(*env) -> SetCharArrayRegion(env, capabilities, 0, capabilities_size, capabilities_content);
+		(*env) -> SetByteArrayRegion(env, capabilities, 0, capabilities_size, capabilities_content);
 	} else {
 		return -1; /* decoding fails */
 	}
@@ -510,8 +508,8 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIn
  * a byte array in J2735 standards. When an error happened, this function will return NULL.
  */
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityAckMessage_encode_1MobilityAck
-  (JNIEnv *env, jobject cls, jcharArray senderId, jcharArray targetId,
-   jcharArray planId, jcharArray timestamp, jint ackType, jcharArray verification) {
+  (JNIEnv *env, jobject cls, jbyteArray senderId, jbyteArray targetId,
+   jbyteArray planId, jbyteArray timestamp, jint ackType, jbyteArray verification) {
 
 	uint8_t buffer[256];
 	size_t buffer_size = sizeof(buffer);
@@ -528,7 +526,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	message->value.present = MessageFrame__value_PR_TestMessage02;
 
 	//set senderId in header
-	jchar *sender_id = (*env)->GetCharArrayElements(env, senderId, 0);
+	jbyte *sender_id = (*env)->GetByteArrayElements(env, senderId, 0);
 	if (sender_id == NULL) {
 		return NULL;
 	}
@@ -538,10 +536,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message->value.choice.TestMessage02.header.hostStaticId.buf = sender_id_content;
 	message->value.choice.TestMessage02.header.hostStaticId.size = 36;
-	(*env)->ReleaseCharArrayElements(env, senderId, sender_id, 0);
+	(*env)->ReleaseByteArrayElements(env, senderId, sender_id, 0);
 
 	//set targetId in header
-	jchar *target_id = (*env)->GetCharArrayElements(env, targetId, 0);
+	jbyte *target_id = (*env)->GetByteArrayElements(env, targetId, 0);
 	if (target_id == NULL) {
 		return NULL;
 	}
@@ -551,10 +549,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message->value.choice.TestMessage02.header.targetStaticId.buf = target_id_content;
 	message->value.choice.TestMessage02.header.targetStaticId.size = 36;
-	(*env)->ReleaseCharArrayElements(env, targetId, target_id, 0);
+	(*env)->ReleaseByteArrayElements(env, targetId, target_id, 0);
 
 	//set planId in header
-	jchar *plan_id = (*env)->GetCharArrayElements(env, planId, 0);
+	jbyte *plan_id = (*env)->GetByteArrayElements(env, planId, 0);
 	if (plan_id == NULL) {
 		return NULL;
 	}
@@ -564,10 +562,10 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message->value.choice.TestMessage02.header.planId.buf = plan_id_content;
 	message->value.choice.TestMessage02.header.planId.size = 36;
-	(*env)->ReleaseCharArrayElements(env, planId, plan_id, 0);
+	(*env)->ReleaseByteArrayElements(env, planId, plan_id, 0);
 
 	//set timestamp
-	jchar *time_stamp = (*env)->GetCharArrayElements(env, timestamp, 0);
+	jbyte *time_stamp = (*env)->GetByteArrayElements(env, timestamp, 0);
 	if (time_stamp == NULL) {
 		return NULL;
 	}
@@ -577,7 +575,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message->value.choice.TestMessage02.header.timestamp.buf = time_stamp_content;
 	message->value.choice.TestMessage02.header.timestamp.size = 19;
-	(*env)->ReleaseCharArrayElements(env, timestamp, time_stamp, 0);
+	(*env)->ReleaseByteArrayElements(env, timestamp, time_stamp, 0);
 
 	//set ack type
 	message->value.choice.TestMessage02.body.ackType = ackType;
@@ -607,8 +605,8 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
  * Return -1 means an error has happened; return 0 means decoding succeed.
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityAckMessage_decode_1MobilityAck
-  (JNIEnv *env, jobject cls, jbyteArray encodedAck, jcharArray timestamp, jcharArray senderId,
-   jcharArray targetId, jcharArray planId, jobject ackType, jcharArray verification) {
+  (JNIEnv *env, jobject cls, jbyteArray encodedAck, jbyteArray senderId,
+   jbyteArray targetId, jbyteArray planId, jbyteArray timestamp, jobject ackType, jbyteArray verification) {
 
 	asn_dec_rval_t rval; /* Decoder return value */
 	MessageFrame_t *message = 0; /* Type to decode */
@@ -628,15 +626,15 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityAc
 
 		//set senderId, targetId and planId array
 		uint8_t *sender_id_content = message -> value.choice.TestMessage02.header.hostStaticId.buf;
-		(*env) -> SetCharArrayRegion(env, senderId, 0, 36, sender_id_content);
+		(*env) -> SetByteArrayRegion(env, senderId, 0, 36, sender_id_content);
 		uint8_t *target_id_content = message -> value.choice.TestMessage02.header.targetStaticId.buf;
-		(*env) -> SetCharArrayRegion(env, targetId, 0, 36, target_id_content);
+		(*env) -> SetByteArrayRegion(env, targetId, 0, 36, target_id_content);
 		uint8_t *plan_id_content = message -> value.choice.TestMessage02.header.planId.buf;
-		(*env) -> SetCharArrayRegion(env, planId, 0, 36, plan_id_content);
+		(*env) -> SetByteArrayRegion(env, planId, 0, 36, plan_id_content);
 
 		//set message creation dateTime timestamp
 		uint8_t *time_content = message -> value.choice.TestMessage02.header.timestamp.buf;
-		(*env) -> SetCharArrayRegion(env, timestamp, 0, 19, time_content);
+		(*env) -> SetByteArrayRegion(env, timestamp, 0, 19, time_content);
 
 		jmethodID mid_setAckType = (*env) -> GetMethodID(env, ackType_class, "setType", "(B)V");
 		jbyte type = message -> value.choice.TestMessage02.body.ackType;

@@ -227,9 +227,11 @@ public class MessageConsumer extends SaxtonBaseNode {
 				IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
 				MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
 				if(encodedMessage.getMessage() != null) {
-				    log_.info("We encode " + encodedMessage.getType());
+				    log_.info("We encode " + outgoingMessage.getType());
 				    messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
 	                outboundPub_.publish((ByteArray) encodedMessage.getMessage());
+				} else {
+				    log_.warn("We failed to encode " + outgoingMessage.getType());
 				}
 			}
 		});

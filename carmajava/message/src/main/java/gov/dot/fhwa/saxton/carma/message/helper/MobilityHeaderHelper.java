@@ -24,18 +24,21 @@ import cav_msgs.MobilityHeader;
  */
 public class MobilityHeaderHelper {
 
-    protected static final char[] GUID_DEFAULT = "00000000-0000-0000-0000-000000000000".toCharArray();
-    protected static final char[] TIMESTAMP_DEFAULT = "0000000000000000000".toCharArray();
-    protected static final int TIMESTAMP_LENGTH = TIMESTAMP_DEFAULT.length; 
-    protected static final int GUID_LENGTH = GUID_DEFAULT.length;
+    protected static final String GUID_DEFAULT = "00000000-0000-0000-0000-000000000000";
+    protected static final long TIMESTAMP_DEFAULT = 0;
+    protected static final int TIMESTAMP_LENGTH = Long.toString(Long.MAX_VALUE).length(); 
+    protected static final int GUID_LENGTH = GUID_DEFAULT.length();
     
-    protected char[] senderId = GUID_DEFAULT;
-    protected char[] targetId = GUID_DEFAULT;
-    protected char[] planId = GUID_DEFAULT;
-    protected char[] timestamp = TIMESTAMP_DEFAULT;
+    protected byte[] senderId = new byte[GUID_LENGTH];
+    protected byte[] targetId = new byte[GUID_LENGTH];
+    protected byte[] planId = new byte[GUID_LENGTH];
+    protected byte[] timestamp = new byte[TIMESTAMP_LENGTH];
     
     public MobilityHeaderHelper() {
-        
+        this.setSenderId(GUID_DEFAULT);
+        this.setTargetId(GUID_DEFAULT);
+        this.setPlanId(GUID_DEFAULT);
+        this.setTimestamp(TIMESTAMP_DEFAULT);
     }
     
     public MobilityHeaderHelper(MobilityHeader header) {
@@ -45,47 +48,59 @@ public class MobilityHeaderHelper {
         this.setTimestamp(header.getTimestamp());
     }
     
-    public char[] getSenderId() {
+    public byte[] getSenderId() {
         return senderId;
     }
 
     public void setSenderId(String senderId) {
         if(senderId.length() == GUID_LENGTH) {
-            this.senderId = senderId.toCharArray();
+            char[] tmp = senderId.toCharArray();
+            for(int i = 0; i < tmp.length; i++) {
+                this.senderId[i] = (byte) tmp[i];
+            }
         }
     }
 
-    public char[] getTargetId() {
+    public byte[] getTargetId() {
         return targetId;
     }
 
     public void setTargetId(String targetId) {
         if(targetId.length() == GUID_LENGTH) {
-            this.targetId = targetId.toCharArray();
+            char[] tmp = targetId.toCharArray();
+            for(int i = 0; i < tmp.length; i++) {
+                this.targetId[i] = (byte) tmp[i];
+            }
         }
     }
 
-    public char[] getPlanId() {
+    public byte[] getPlanId() {
         return planId;
     }
 
     public void setPlanId(String planId) {
         if(planId.length() == GUID_LENGTH) {
-            this.planId = planId.toCharArray();
+            char[] tmp = planId.toCharArray();
+            for(int i = 0; i < tmp.length; i++) {
+                this.planId[i] = (byte) tmp[i];
+            }
         }
     }
 
-    public char[] getTimestamp() {
+    public byte[] getTimestamp() {
         return timestamp;
     }
 
     public void setTimestamp(long timestamp) {
         String number = Long.toString(timestamp);
-        int numberOfZero = number.length() - TIMESTAMP_LENGTH;
+        int numberOfZero = TIMESTAMP_LENGTH - number.length();
         for(int i = 0; i < numberOfZero; i++) {
             number = "0" + number;
         }
-        this.timestamp = number.toCharArray();
+        char[] tmp = number.toCharArray();
+        for(int i = 0; i < tmp.length; i++) {
+            this.timestamp[i] = (byte) tmp[i];
+        }
     }
     
 }

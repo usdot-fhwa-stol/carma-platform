@@ -10,18 +10,18 @@ extern "C" {
 /*
  * Class:     gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage
  * Method:    encode_MobilityIntro
- * Signature: ([C[C[C[CI[CIIIII[I[C[C)[B
+ * Signature: ([B[B[B[BI[BIIIII[I[B[B)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage_encode_1MobilityIntro
-  (JNIEnv *, jobject, jcharArray, jcharArray, jcharArray, jcharArray, jint, jcharArray, jint, jint, jint, jint, jint, jintArray, jcharArray, jcharArray);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jint, jbyteArray, jint, jint, jint, jint, jint, jintArray, jbyteArray, jbyteArray);
 
 /*
  * Class:     gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage
  * Method:    decode_MobilityIntro
- * Signature: ([BLjava/lang/Object;[C[C[C[CLjava/lang/Object;[CLjava/lang/Object;[B[C[C)I
+ * Signature: ([BLjava/lang/Object;[B[B[B[BLjava/lang/Object;[BLjava/lang/Object;[B[B[B)I
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage_decode_1MobilityIntro
-  (JNIEnv *, jobject, jbyteArray, jobject, jcharArray, jcharArray, jcharArray, jcharArray, jobject, jcharArray, jobject, jbyteArray, jcharArray, jcharArray);
+  (JNIEnv *, jobject, jbyteArray, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jobject, jbyteArray, jobject, jbyteArray, jbyteArray, jbyteArray);
 
 #ifdef __cplusplus
 }

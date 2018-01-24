@@ -40,18 +40,19 @@ public class MobilityIntroductionMessageHelper {
     protected static final int PLAN_PARAM_MAX = 32767;
     protected static final int CAPABILITIES_SIZE_MIN = 1;
     protected static final int CAPABILITIES_SIZE_MAX = 100;
+    protected static final String STRING_DEFAULT = "[UNKNOWN]"; 
     
     private MobilityHeaderHelper headerHelper = new MobilityHeaderHelper();
     private int vehicleType = UNKNOWN_VEHICLE_TYPE;
-    private char[] roadwayId = "[UNKNOWN]".toCharArray();
+    private byte[] roadwayId;
     private int position = POSITION_UNKNOWN;
     private int laneId = LANE_UNKNOWN;
     private int speed = BSMMessageHelper.SPEED_UNAVAILABLE;
     private int planType = PLAN_TYPE_UNKNOWN;
     private int planParam = PLAN_PARAM_UNKNOWN;
     private int[] publicKey = new int[64];
-    private char[] expiration = MobilityHeaderHelper.TIMESTAMP_DEFAULT;
-    private char[] capabilities = "[UNKNOWN]".toCharArray();
+    private byte[] expiration = new byte[19];
+    private byte[] capabilities;
     
     public MobilityIntroductionMessageHelper(MobilityIntro intro) {
         this.setHeaderHelper(intro.getHeader());
@@ -80,8 +81,15 @@ public class MobilityIntroductionMessageHelper {
     }
     
     public void setRoadwayId(String roadwayId) {
+        char[] tmpId;
         if(roadwayId.length() <= ROADWAY_ID_SIZE_MAX && roadwayId.length() >= ROADWAY_ID_SIZE_MIN) {
-            this.roadwayId = roadwayId.toCharArray();
+            tmpId = roadwayId.toCharArray();
+        } else {
+            tmpId = STRING_DEFAULT.toCharArray();
+        }
+        this.roadwayId = new byte[tmpId.length];
+        for(int i = 0; i < this.roadwayId.length; i++) {
+            this.roadwayId[i] = (byte) tmpId[i];
         }
     }
     
@@ -131,16 +139,27 @@ public class MobilityIntroductionMessageHelper {
     
     public void setExpiration(long expiration) {
         String number = Long.toString(expiration);
-        int numberOfZero = number.length() - MobilityHeaderHelper.TIMESTAMP_LENGTH;
+        int numberOfZero = MobilityHeaderHelper.TIMESTAMP_LENGTH - number.length();
         for(int i = 0; i < numberOfZero; i++) {
             number = "0" + number;
         }
-        this.expiration = number.toCharArray();
+        char[] tmpNum = number.toCharArray();
+        this.expiration = new byte[tmpNum.length];
+        for(int i = 0; i < tmpNum.length; i++) {
+            this.expiration[i] = (byte) tmpNum[i];
+        }
     }
     
     public void setCapabilities(String capabilities) {
+        char[] tmpCap;
         if(capabilities.length() >= CAPABILITIES_SIZE_MIN && capabilities.length() <= CAPABILITIES_SIZE_MAX) {
-            this.capabilities = capabilities.toCharArray();
+            tmpCap = capabilities.toCharArray();
+        } else {
+            tmpCap = STRING_DEFAULT.toCharArray();
+        }
+        this.capabilities = new byte[tmpCap.length];
+        for(int i = 0; i < tmpCap.length; i++) {
+            this.capabilities[i] = (byte) tmpCap[i];
         }
     }
     
@@ -152,7 +171,7 @@ public class MobilityIntroductionMessageHelper {
         return vehicleType;
     }
 
-    public char[] getRoadwayId() {
+    public byte[] getRoadwayId() {
         return roadwayId;
     }
 
@@ -180,11 +199,11 @@ public class MobilityIntroductionMessageHelper {
         return publicKey;
     }
 
-    public char[] getExpiration() {
+    public byte[] getExpiration() {
         return expiration;
     }
 
-    public char[] getCapabilities() {
+    public byte[] getCapabilities() {
         return capabilities;
     }
     
