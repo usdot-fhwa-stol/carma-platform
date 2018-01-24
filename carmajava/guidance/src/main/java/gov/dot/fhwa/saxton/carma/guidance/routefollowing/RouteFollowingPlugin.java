@@ -55,7 +55,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
     private double laneChangeDelayFactor = 1.5;
     private double laneChangeSafetyFactor = 1.5;
 
-    private static final String LANE_CHANGE_PLUGIN_NAME = "LaneChangePlugin";
+    private static final String LANE_CHANGE_PLUGIN_NAME = "Lane Change Plugin";
     private static final long LONG_SLEEP = 10000;
     private static final double EPSILON = 0.001;
 
