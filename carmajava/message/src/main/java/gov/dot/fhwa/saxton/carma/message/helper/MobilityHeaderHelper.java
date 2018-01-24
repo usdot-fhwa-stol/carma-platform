@@ -35,16 +35,16 @@ public class MobilityHeaderHelper {
     protected byte[] timestamp = new byte[TIMESTAMP_LENGTH];
     
     public MobilityHeaderHelper() {
-        this.setSenderId(GUID_DEFAULT);
-        this.setTargetId(GUID_DEFAULT);
-        this.setPlanId(GUID_DEFAULT);
+        this.setId(GUID_DEFAULT, this.senderId);
+        this.setId(GUID_DEFAULT, this.targetId);
+        this.setId(GUID_DEFAULT, this.planId);
         this.setTimestamp(TIMESTAMP_DEFAULT);
     }
     
     public MobilityHeaderHelper(MobilityHeader header) {
-        this.setSenderId(header.getSenderId());
-        this.setTargetId(header.getRecipientId());
-        this.setPlanId(header.getPlanId());
+        this.setId(header.getSenderId(), this.senderId);
+        this.setId(header.getRecipientId(), this.targetId);
+        this.setId(header.getPlanId(), this.planId);
         this.setTimestamp(header.getTimestamp());
     }
     
@@ -52,11 +52,11 @@ public class MobilityHeaderHelper {
         return senderId;
     }
 
-    public void setSenderId(String senderId) {
-        if(senderId.length() == GUID_LENGTH) {
-            char[] tmp = senderId.toCharArray();
+    public void setId(String inputId, byte[] field) {
+        if(inputId.length() == GUID_LENGTH) {
+            char[] tmp = inputId.toCharArray();
             for(int i = 0; i < tmp.length; i++) {
-                this.senderId[i] = (byte) tmp[i];
+                field[i] = (byte) tmp[i];
             }
         }
     }
@@ -65,26 +65,8 @@ public class MobilityHeaderHelper {
         return targetId;
     }
 
-    public void setTargetId(String targetId) {
-        if(targetId.length() == GUID_LENGTH) {
-            char[] tmp = targetId.toCharArray();
-            for(int i = 0; i < tmp.length; i++) {
-                this.targetId[i] = (byte) tmp[i];
-            }
-        }
-    }
-
     public byte[] getPlanId() {
         return planId;
-    }
-
-    public void setPlanId(String planId) {
-        if(planId.length() == GUID_LENGTH) {
-            char[] tmp = planId.toCharArray();
-            for(int i = 0; i < tmp.length; i++) {
-                this.planId[i] = (byte) tmp[i];
-            }
-        }
     }
 
     public byte[] getTimestamp() {

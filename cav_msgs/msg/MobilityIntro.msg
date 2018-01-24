@@ -39,6 +39,7 @@ uint16   proposal_param
 uint8[]  my_public_key
 
 # absolute time that this proposed plan will expire and become meaningless
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
 uint64     expiration
 
 # a string which show system brand/version, list of strategies it can perform
