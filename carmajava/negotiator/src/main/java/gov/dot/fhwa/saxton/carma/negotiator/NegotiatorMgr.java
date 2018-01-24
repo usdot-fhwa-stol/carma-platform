@@ -59,6 +59,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   protected Publisher<cav_msgs.MobilityGreeting> mobGreetOutPub;
   protected Publisher<cav_msgs.MobilityIntro> mobIntroOutPub;
   protected Publisher<cav_msgs.MobilityPlan> mobPlanOutPub;
+  protected Publisher<cav_msgs.NewPlan> newPlanPub;
 
   // Subscribers
   protected Subscriber<cav_msgs.MobilityAck> mobAckInSub;
@@ -66,6 +67,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   protected Subscriber<cav_msgs.MobilityIntro> mobIntroInSub;
   protected Subscriber<cav_msgs.MobilityPlan> mobPlanInSub;
   protected Subscriber<cav_msgs.SystemAlert> alertSub;
+  protected Subscriber<cav_msgs.PlanStatus> planStatusSub;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("negotiator_mgr");
@@ -80,6 +82,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     mobGreetOutPub = connectedNode.newPublisher("mobility_greeting_outbound", cav_msgs.MobilityGreeting._TYPE);
     mobIntroOutPub = connectedNode.newPublisher("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
     mobPlanOutPub = connectedNode.newPublisher("mobility_plan_outbound", cav_msgs.MobilityPlan._TYPE);
+    newPlanPub = connectedNode.newPublisher("new_plan", cav_msgs.NewPlan._TYPE);
 
     mobAckInSub = connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
     mobAckInSub.addMessageListener(new MessageListener<cav_msgs.MobilityAck>() {
@@ -96,12 +99,18 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     });//addMessageListener
 
     mobIntroInSub = connectedNode.newSubscriber("mobility_intro_inbound", cav_msgs.MobilityIntro._TYPE);
-    mobIntroInSub.addMessageListener(new MessageListener<cav_msgs.MobilityIntro>() {
-      @Override public void onNewMessage(cav_msgs.MobilityIntro message) {
+    mobIntroInSub.addMessageListener((msg) -> {
         log.info("V2V", "Negotiator received new MobilityIntro");
-      }//onNewMessage
-    });//addMessageListener
-
+        NewPlan plan = newPlanPub.newMessage();
+        plan.getHeader().setFrameId("0");
+        plan.setPlanId(msg.getHeader().getPlanId());
+        plan.setType(msg.getPlanType());
+        String mobInputs = msg.getCapabilities();
+        // get rid of square bracket on both sides 
+        plan.setInputs(mobInputs.substring(1, mobInputs.length() - 1));
+        newPlanPub.publish(plan);
+    });
+    
     mobPlanInSub = connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
     mobPlanInSub.addMessageListener(new MessageListener<cav_msgs.MobilityPlan>() {
       @Override public void onNewMessage(cav_msgs.MobilityPlan message) {
@@ -121,6 +130,19 @@ public class NegotiatorMgr extends SaxtonBaseNode{
       }//onNewMessage
     });//addMessageListener
 
+    planStatusSub = connectedNode.newSubscriber("plan_status", cav_msgs.SystemAlert._TYPE);
+    planStatusSub.addMessageListener((msg) -> {
+        MobilityAck ackMsg = mobAckOutPub.newMessage();
+        //TODO decide how to handle host vehicle static id
+        ackMsg.getHeader().setSenderId("00000000-0000-0000-0000-000000000000");
+        ackMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
+        ackMsg.getHeader().setPlanId(msg.getPlanId());
+        ackMsg.getHeader().setTimestamp(System.currentTimeMillis());
+        ackMsg.getAgreement().setType((msg.getAccepted() ? MobilityAckType.ACCEPT_WITH_EXECUTE : MobilityAckType.REJECT));
+        mobAckOutPub.publish(ackMsg);
+    });
+    
+    
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       @Override protected void setup() {
 
