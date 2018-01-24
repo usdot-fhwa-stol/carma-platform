@@ -103,11 +103,6 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	protected ISubscriber<std_msgs.Bool> stabilityActiveSubscriber;
 	protected ISubscriber<std_msgs.Bool> stabilityEnabledSubscriber;
 	protected ISubscriber<std_msgs.Bool> parkingBrakeSubscriber;
-	protected IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
-	protected List<String> req_drivers = Arrays.asList(
-			"steering_wheel_angle", "brake_position", "transmission_state",
-			"traction_ctrl_active", "traction_ctrl_enabled", "antilock_brakes_active",
-			"stability_ctrl_active", "stability_ctrl_enabled", "parking_brake");
 	protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
 	protected double speed_error_limit = 5; //speed error in meters
 	protected double downtrack_error_limit = 5; //downtrack error in meters
@@ -118,6 +113,17 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	protected TreeMap<Long, double[]> speedTimeTree = new TreeMap<Long, double[]>((a, b) -> Long.compare(a, b));
 	protected double trajectoryStartLocation = 0;
 	protected long trajectoryStartTime = 0;
+	private static final String DRIVER_BASE_PATH = "/saxton_cav/drivers";
+	private static final String CAN_DRIVER_BASE_PATH = "/srx_can/can/";
+	private static final String STEERING_WHEEL_CAPABILITY = "steering_wheel_angle";
+	private static final String BRAKE_POSITION_CAPABILITY = "brake_position";
+	private static final String TRANSMISSION_STATE_CAPABILITY = "transmission_state";
+	private static final String TRACTION_CTRL_ACTIVE_CAPABILITY = "traction_ctrl_active";
+	private static final String TRACTION_CTRL_ENABLED_CAPABILITY = "traction_ctrl_enabled";
+	private static final String ANTILOCK_BRAKES_ACTIVE_CAPABILITY = "antilock_brakes_active";
+	private static final String STABILITY_CTRL_ACTIVE_CAPABILITY = "stability_ctrl_active";
+	private static final String STABILITY_CTRL_ENABLED_CAPABILITY = "stability_ctrl_enabled";
+	private static final String PARKING_BRAKE_CAPABILITY = "parking_brake";
 	
 
 	public Tracking(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
@@ -166,81 +172,16 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
     public void onSystemReady() {
         // Make service call to get drivers
         log.debug("Trying to get get_drivers_with_capabilities service...");
-        try {
-            getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                    GetDriversWithCapabilities._TYPE);
-        } catch (TopicNotFoundException tnfe) {
-            exceptionHandler.handleException("get_drivers_with_capabilities service cannot be found", tnfe);
-        }
-        if (getDriversWithCapabilitiesClient == null) {
-            log.warn("get_drivers_with_capabilities service can not be found");
-            exceptionHandler.handleException("get_drivers_with_capabilities service cannot be found",
-                    new TopicNotFoundException());
-        }
 
-        GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
-        driver_request_wrapper.setCapabilities(req_drivers);
-
-        final GetDriversWithCapabilitiesResponse[] response = new GetDriversWithCapabilitiesResponse[1];
-
-        getDriversWithCapabilitiesClient.callSync(driver_request_wrapper,
-                new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-
-                    @Override
-                    public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                        response[0] = msg;
-                        log.debug("Tracking: service call is successful: " + response[0].getDriverData());
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        exceptionHandler.handleException("getDriversWithCapabilities service call failed", e);
-                    }
-
-                });
-
-        if (response[0] == null || response[0].getDriverData().size() == 0) {
-            exceptionHandler.handleException("cannot find suitable CAN driver",
-                    new RosRuntimeException("No CAN driver is found"));
-        }
-
-        for (String driver_url : response[0].getDriverData()) {
-            if (driver_url.endsWith("/can/steering_wheel_angle")) {
-                steeringWheelSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/brake_position")) {
-                brakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/transmission_state")) {
-                transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url, TransmissionState._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/traction_ctrl_active")) {
-                tractionActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/traction_ctrl_enabled")) {
-                tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/antilock_brakes_active")) {
-                antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/stability_ctrl_active")) {
-                stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/stability_ctrl_enabled")) {
-                stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/parking_brake")) {
-                parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-            }
-        }
+        steeringWheelSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STEERING_WHEEL_CAPABILITY, Float64._TYPE);
+        brakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + BRAKE_POSITION_CAPABILITY, Float64._TYPE);
+        transmissionSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRANSMISSION_STATE_CAPABILITY, TransmissionState._TYPE);
+        tractionActiveSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
+        antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + ANTILOCK_BRAKES_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STABILITY_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STABILITY_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
+        parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + PARKING_BRAKE_CAPABILITY, std_msgs.Bool._TYPE);
 
         if (steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null
                 || tractionActiveSubscriber == null || tractionEnabledSubscriber == null
@@ -325,14 +266,12 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	@Override
 	public void onShutdown() {
 		super.onShutdown();
-		getDriversWithCapabilitiesClient.close();
 		getTransformClient.close();
 	}
 
 	@Override
 	public void onPanic() {
 		super.onPanic();
-		getDriversWithCapabilitiesClient.close();
 		getTransformClient.close();
 	}
 	
