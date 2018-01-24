@@ -407,6 +407,13 @@
         <!-- Negotiation Receiver Plugin -->
         <remap from="new_plan"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
+               
+        <!-- Lane Change Plugin -->
+        <remap from="mobility_intro_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
+        <remap from="mobility_ack_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+               
       </node>
     </group>
 

@@ -14,6 +14,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * This is a mandatory plugin for the Carma platform that manages all lane change activity within a given sub-trajectory,
@@ -50,6 +51,7 @@ import java.util.List;
 
 public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin {
 
+    private final int                       EXPIRATION_TIME = 2000;
     private final int                       SLEEP_TIME = 50; //ms
     private int                             targetLane_ = -1;
     private double                          startSpeed_ = 0.0;
@@ -63,6 +65,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
     private IPublisher<MobilityIntro>       mobilityIntroPublisher_;
     private IPublisher<LaneChangeStatus>    laneChangeStatusPublisher_;
     private ISubscriber<MobilityAck>        mobilityAckSubscriber_;
+    private final String                    STATIC_ID;
 
 
     public LaneChangePlugin(PluginServiceLocator psl) {
@@ -71,19 +74,21 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         version.setMajorRevision(1);
         version.setIntermediateRevision(0);
         version.setMinorRevision(0);
+        STATIC_ID = UUID.randomUUID().toString();
     }
 
 
     @Override
     public void onInitialize() {
 
-        //set up a publisher of mobility introduction messages
-        mobilityIntroPublisher_ = pubSubService.getPublisherForTopic("~/mobility_intro", cav_msgs.MobilityIntro._TYPE);
+        //set up a publisher of mobility introduction & ack messages
+        mobilityIntroPublisher_ = pubSubService.getPublisherForTopic("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
+        
         //set up publisher of status messages for the UI
         laneChangeStatusPublisher_ = pubSubService.getPublisherForTopic( "~/lane_change_status", cav_msgs.LaneChangeStatus._TYPE);
 
         //set up subscriber for mobility acks
-        mobilityAckSubscriber_ = pubSubService.getSubscriberForTopic( "~/mobility_ack", cav_msgs.MobilityAck._TYPE);
+        mobilityAckSubscriber_ = pubSubService.getSubscriberForTopic( "mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
         mobilityAckSubscriber_.registerOnMessageCallback(new OnMessageCallback<MobilityAck>() {
             @Override
             public void onMessage(MobilityAck msg) {
@@ -111,6 +116,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
         //loop through all outstanding negotiations and process them
         if (negotiations_.size() > 0) {
+            List<Negotiation> toBeRemoved = new ArrayList<>();
             for (Negotiation n : negotiations_) {
                 LaneChangeStatus stat = laneChangeStatusPublisher_.newMessage();
 
@@ -119,8 +125,12 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
                     //populate the future placeholder
                     populateFutureManeuver();
                     //remove the negotiation from the list of outstanding negotiations
-                    negotiations_.remove(n);
+                    toBeRemoved.add(n);
                 }
+            }
+            // avoid current modification exceptions
+            for(Negotiation n : toBeRemoved) {
+                negotiations_.remove(n);
             }
         }
 
@@ -281,17 +291,24 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
     private void buildAnnouncement(IManeuverInputs inputs, int targetLane) {
         plan_ = mobilityIntroPublisher_.newMessage();
 
-        //let the Negotiator fill in header info and other fields not defined here
-
+        //TODO let the Negotiator fill in header info and other fields not defined here
+        plan_.getHeader().setSenderId(this.STATIC_ID);
+        plan_.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
+        plan_.getHeader().setPlanId(UUID.randomUUID().toString());
+        plan_.getHeader().setTimestamp(System.currentTimeMillis());
+        log.info("MobilityIntro has been built with planId" + plan_.getHeader().getPlanId());
         float speed = (float)inputs.getCurrentSpeed();
         byte lane = (byte)inputs.getCurrentLane();
-        String link = "Test track"; //TODO - placeholder for testing
+        String link = "[Test track]"; //TODO - placeholder for testing
         short linkPos = (short)inputs.getDistanceFromRouteStart(); //TODO - for now assume a single link in the route
-
+        long expiration = System.currentTimeMillis() + EXPIRATION_TIME; //TODO - not in use for now
+        
+        plan_.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE); //TODO - move to negotiator node
         plan_.setForwardSpeed(speed);
         plan_.setMyLaneId(lane);
         plan_.setMyRoadwayLink(link);
         plan_.setMyRoadwayLinkPosition(linkPos);
+        plan_.setExpiration(expiration);
         if (targetLane > inputs.getCurrentLane()) {
             plan_.getPlanType().setType(PlanType.CHANGE_LANE_LEFT);
         }else if (targetLane < inputs.getCurrentLane()) {
@@ -310,47 +327,10 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         //TODO - have this build a real plan message
         buildAnnouncement(inputs, targetLane);
 
-        //use the capabilities string field to insert the specifics of what we want the other vehicle to do
-        // (a slowdown maneuver) -
-
-        //Assume the neighbor vehicle is travelling exactly beside us at the same speed when this mvr begins.
-        // They first need to slow down fairly quickly while we wait (continue to cruise).
-        // Once the gap opens enough, then we change lanes (assume already have
-        // the right gap in front of us, since they presumably did) while they speed up again to their original
-        // cruising speed to fall in behind us.  Their ACC will be a handy feature here!
-        //
-        // So that we can start our lane change immediately upon crossing the threshold of the new FutureLongitudinalManeuver space,
-        // we need them to have already slowed to open the gap for us.  For now, assume the gap is 1 sec, so they need
-        // to double that (vehicle length is negligible if we have ACC working).  That means adding 1 sec over, say, 5
-        // sec to make it smooth, or operating at 80% of their current speed for 5 sec.  To get to that lower speed,
-        // we assume they can decel at 2 m/s^2. At 10 m/s the slowdown can be achieved in 1 sec. At 35 m/s it will take
-        // 3.5 sec to reach the lower speed.  Since this decel time will be widening the gap somewhat, we can probably
-        // live with constant speed for only 4 sec, then accel back to the beginning speed.
-        double distAtCurSpeed = inputs.getResponseLag() * startSpeed; //time to respond to slowdown cmd
-        double distAtLowerSpeed = 0.8 * startSpeed * 4.0;
-        double distToDecel = 0.9 * startSpeed * (0.1*startSpeed); //avg of start speed & the 80% speed for 1 sec for every 10 m/s
-        double totalDist = 2.0*distToDecel + distAtCurSpeed + distAtLowerSpeed; //2x to account for accel at end
-        log.debug("V2V", "buildPlanMessage distAtCurSpeed = " + distAtCurSpeed + ", distAtLowerSpeed = "
-                    + distAtLowerSpeed + ", distToDecel = " + distToDecel + ", totalDist = " + totalDist);
-
-        double startLocation = startDist - totalDist;
-        log.debug("V2V", "buildPlanMessage startLocation = " + startLocation);
-        if (startLocation < inputs.getDistanceFromRouteStart()) {
-            log.warn("V2V", "buildPlanMessage - insufficient distance for other vehicle to slow down. We are "
-                        + (inputs.getDistanceFromRouteStart() - startLocation) + " m late. Proceeding anyway.");
-        }
-
-        //build the command for the other vehicle; we don't want to account for lag distance in these instructions
-        double endSlowdown = startLocation + distToDecel;
-        double slowSpeed = 0.8*startSpeed;
-        double endConstant = endSlowdown + 4.0*slowSpeed;
-        double endSpeedup = endSlowdown + distToDecel;
-
-        String capabilities = String.format("SLOW:%.1f:%.1f:%.1f:%.1f CONST:%.1f:%.1f:%.1f:%.1f SPEEDUP:%.1f:%.1f:%.1f:%.1f",
-                startLocation, endSlowdown, startSpeed, slowSpeed,
-                endSlowdown, endConstant, slowSpeed, slowSpeed,
-                endConstant, endSpeedup, slowSpeed, startSpeed);
+        //use the capabilities string field to insert the specifics of what we will do
+        String capabilities = String.format("[STARTDIST:%.1f, STARTSPEED:%.1f]", startDist, startSpeed);
         plan_.setCapabilities(capabilities);
+
     }
 
     /**

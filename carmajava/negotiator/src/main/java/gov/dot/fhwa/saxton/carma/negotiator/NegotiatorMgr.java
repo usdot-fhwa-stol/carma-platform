@@ -133,8 +133,8 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             introMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
             introMsg.getHeader().setPlanId("00000000-0000-0000-0000-000000000000");
             introMsg.getHeader().setTimestamp(System.currentTimeMillis());
-            introMsg.getMyEntityType().setType((BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE));
-            introMsg.setMyRoadwayLink("[Test Road]");
+            introMsg.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE);
+            introMsg.setMyRoadwayLink("[Test track]");
             introMsg.setMyRoadwayLinkPosition((short) 2);
             introMsg.setMyLaneId((byte) 1);
             introMsg.setForwardSpeed((float) 0.2);
@@ -146,14 +146,6 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             introMsg.setExpiration(Long.MAX_VALUE);
             introMsg.setCapabilities("[CarmaPlatform v2.2.3]");
             mobIntroOutPub.publish(introMsg);
-            MobilityAck ackMsg = mobAckOutPub.newMessage();
-            ackMsg.getHeader().setSenderId("00000000-0000-0000-0000-000000000000");
-            ackMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
-            ackMsg.getHeader().setPlanId("00000000-0000-0000-0000-000000000000");
-            ackMsg.getHeader().setTimestamp(System.currentTimeMillis());
-            ackMsg.getAgreement().setType(MobilityAckType.UNKNOWN);
-            ackMsg.setVerificationCode("");
-            mobAckOutPub.publish(ackMsg);
         }
         Thread.sleep(5000);
       }

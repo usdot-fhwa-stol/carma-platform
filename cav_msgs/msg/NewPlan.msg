@@ -9,13 +9,16 @@
 #
 
 # standard ROS message header
-std_msgs/Header     header
+std_msgs/Header   header
 
 # a value from MobilityMessage which identifies this particular plan for future reference
-string              plan_id
+string            plan_id
 
-# a list of proposed maneuvers which we need to add into our trajectory
-cav_msgs/Maneuver[] maneuvers
+# the intention of this plan
+cav_msgs/PlanType type
+
+# a string of inputs from other vehicle
+string            inputs
 
 # plan expiration time in local clock
-uint64                expiration
+uint64            expiration
