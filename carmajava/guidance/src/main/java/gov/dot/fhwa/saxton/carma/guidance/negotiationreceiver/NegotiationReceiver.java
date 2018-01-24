@@ -152,8 +152,8 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
             String inputs = plan.getInputs();
             if(plan.getType().getType() == PlanType.CHANGE_LANE_LEFT || plan.getType().getType() == PlanType.CHANGE_LANE_RIGHT) {
                 String[] splitInput = inputs.split(", ");
-                double startDist = Double.parseDouble(splitInput[0].split(":")[1]);
-                double startSpeed = Double.parseDouble(splitInput[1].split(":")[1]);
+                double proposedLaneChangeStartDist = Double.parseDouble(splitInput[0].split(":")[1]);
+                double proposedLaneChangeStartSpeed = Double.parseDouble(splitInput[1].split(":")[1]);
                 // Assume the neighbor vehicle is travelling exactly beside us at the same speed when following mvrs begin.
                 // We first need to slow down fairly quickly while the neighbor vehicle wait (continue to cruise).
                 // Once the gap opens enough, then the neighbor vehicle changes lanes (assume already have
@@ -168,30 +168,35 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 // 3.5 sec to reach the lower speed.  Since this decel time will be widening the gap somewhat, they can probably
                 // live with constant speed for only 4 sec, we accel back to the beginning speed.
                 IManeuverInputs mInputs = planner_.getManeuverInputs();
-                double distAtCurSpeed = mInputs.getResponseLag() * startSpeed; //time to respond to slowdown cmd
-                double distAtLowerSpeed = 0.8 * startSpeed * 4.0;
-                double distToDecel = 0.9 * startSpeed * (0.1*startSpeed); //avg of start speed & the 80% speed for 1 sec for every 10 m/s
+                double distAtCurSpeed = mInputs.getResponseLag() * proposedLaneChangeStartSpeed; //time to respond to slowdown cmd
+                double distAtLowerSpeed = 0.8 * proposedLaneChangeStartSpeed * 4.0;
+                double distToDecel = 0.9 * proposedLaneChangeStartSpeed * (0.1*proposedLaneChangeStartSpeed); //avg of start speed & the 80% speed for 1 sec for every 10 m/s
                 double totalDist = 2.0*distToDecel + distAtCurSpeed + distAtLowerSpeed; //2x to account for accel at end
                 log.debug("V2V", "calculated distAtCurSpeed = " + distAtCurSpeed + ", distAtLowerSpeed = "
                             + distAtLowerSpeed + ", distToDecel = " + distToDecel + ", totalDist = " + totalDist);
 
-                double startLocation = startDist - totalDist;
+                double startLocation = proposedLaneChangeStartDist - totalDist;
                 log.debug("V2V", "calculated startLocation = " + startLocation);
                 if (startLocation < mInputs.getDistanceFromRouteStart()) {
                     log.warn("V2V", "calculated - insufficient distance for us to slow down. They are "
-                                + (mInputs.getDistanceFromRouteStart() - startLocation) + " m late. Proceeding anyway.");
+                                + (mInputs.getDistanceFromRouteStart() - startLocation) + " m late. Sending NACK.");
+                    // reject this plan
+                    // TODO now it rejects a plan forever, need allow back and forth in future
+                    statusPub_.publish(this.buildPlanStatus(id, false));
+                    planMap.put(id, new LinkedList<>());
+                    return;
                 }
 
-                //build the command for the other vehicle; we don't want to account for lag distance in these instructions
+                //build maneuvers for this vehicle; we don't want to account for lag distance in these instructions
                 double endSlowdown = startLocation + distToDecel;
-                double slowSpeed = 0.8*startSpeed;
+                double slowSpeed = 0.8*proposedLaneChangeStartSpeed;
                 double endConstant = endSlowdown + 4.0*slowSpeed;
                 double endSpeedup = endSlowdown + distToDecel;
                 //create a list of maneuvers that we should execute
                 List<String> maneuversString = new ArrayList<>();
-                maneuversString.add(startLocation + ":" + endSlowdown + ":" + startSpeed + ":" + slowSpeed);
+                maneuversString.add(startLocation + ":" + endSlowdown + ":" + proposedLaneChangeStartSpeed + ":" + slowSpeed);
                 maneuversString.add(endSlowdown + ":" + endConstant + ":" + slowSpeed + ":" + slowSpeed);
-                maneuversString.add(endConstant + ":" + endSpeedup + ":" + slowSpeed + ":" + startSpeed);
+                maneuversString.add(endConstant + ":" + endSpeedup + ":" + slowSpeed + ":" + proposedLaneChangeStartSpeed);
                 for(String m : maneuversString) {
                     String[] params = m.split(":");
                     //the params format is <startDistance>:<endDistance>:<startSpeed>:<endSpeed>
@@ -205,11 +210,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                     // if not it will show a negative status on PlanStatus message and ignore this planId in future
                     if(Math.abs(maneuver.getTargetSpeed() - paramsInDouble[3]) > TARGET_SPEED_EPSILON) {
                         log.warn("Cannot plan the proposed maneuvers within accel_max limits");
-                        PlanStatus status = statusPub_.newMessage();
-                        status.getHeader().setFrameId("0");
-                        status.setPlanId(plan.getPlanId());
-                        status.setAccepted(false);
-                        statusPub_.publish(status);
+                        statusPub_.publish(this.buildPlanStatus(id, false));
                         planMap.put(id, new LinkedList<>());
                         return;
                     }
@@ -225,4 +226,13 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
         //NO-OP callback for NewPlan when this plugin is suspended or terminated
     }
 
+    // build a PlanStatus message with inputs
+    private PlanStatus buildPlanStatus(String planId, boolean accepted) {
+        PlanStatus status = statusPub_.newMessage();
+        status.getHeader().setFrameId("0");
+        status.setPlanId(planId);
+        status.setAccepted(accepted);
+        return status;
+    }
+    
 }
