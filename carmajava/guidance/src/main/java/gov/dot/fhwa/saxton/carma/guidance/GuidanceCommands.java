@@ -245,6 +245,22 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             }
         });
     }
+
+    @Override
+    public void onShutdown() {
+        super.onShutdown();
+        enableRoboticService.close();
+        driverCapabilityService.close();
+        setLightsService.close();
+    }
+
+    @Override
+    public void onPanic() {
+        super.onPanic();
+        enableRoboticService.close();
+        driverCapabilityService.close();
+        setLightsService.close();
+    }
     
     /**
     * Change the current output of the GuidanceCommands thread.

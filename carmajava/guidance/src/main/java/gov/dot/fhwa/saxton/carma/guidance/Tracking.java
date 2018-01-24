@@ -319,8 +319,22 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
         speedTimeTree.clear();
         trajectoryStartLocation = 0;
         trajectoryStartTime = 0;
-        trajectory_start.set(false);
-    }
+		trajectory_start.set(false);
+	}
+	
+	@Override
+	public void onShutdown() {
+		super.onShutdown();
+		getDriversWithCapabilitiesClient.close();
+		getTransformClient.close();
+	}
+
+	@Override
+	public void onPanic() {
+		super.onPanic();
+		getDriversWithCapabilitiesClient.close();
+		getTransformClient.close();
+	}
 	
 	@Override
 	public void timingLoop() throws InterruptedException {
