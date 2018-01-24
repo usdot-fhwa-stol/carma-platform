@@ -40,6 +40,7 @@ string capabilities
 uint8[]      session_key
 
 # absolute time of expiration of the session_key
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
 uint64         expiration
 
 # a random string of 8 printable chars - this is used to verify correct receipt & use of

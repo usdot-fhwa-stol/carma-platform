@@ -14,4 +14,5 @@ string      recipient_id
 string      plan_id
 
 # the date and time when this message is created
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
 uint64        timestamp

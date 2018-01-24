@@ -37,4 +37,5 @@ uint8[] participant_5
 cav_msgs/Maneuver[]  maneuvers
 
 # the expiration time of the current plan
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
 uint64    expiration
