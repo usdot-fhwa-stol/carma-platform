@@ -112,50 +112,64 @@ function drawLanes(addNew, clear) {
             line.attr({ style: 'stroke: white; fill: none; stroke-width: 5px; stroke-dasharray:15px, 15px;' });
         }
 
-        currentline = currentline + lanewidth;
+        currentline = currentline + lanewidth;        
     }
 
     /*** Color Target Lane
         <rect x="190" y="0" width="109" height="217" style="fill:lime;fill-opacity:0.22;" id="rect_current_lane" />
     */
-    if (targetlane >= 0) {
-
+    if (targetlane >= 0)
+    {
         var lineid = 'r' + rect_index + 'e' + (targetlane + 1) + '_line';
         var targetline = SVG.get(lineid);
-        var line_x = targetline.attr('x1');
+        //console.log('TARGET: lineid: ' + lineid +  '; x1: ' + targetline.attr('x1'));
 
-        //alert(lineid);
-        //alert('targetlane: ' + line_x);
+        if (targetline != null)
+        {
+            var line_x = targetline.attr('x1');
+            //console.log('TARGET: targetline.x1:' + line_x);
 
-        //static width 109 and heigh 217
-        var rect_target = draw.rect(109, 217).attr({
-            id: 'rect_target_lane'
-            , x: line_x
-            , y: 0
-            , style: 'fill:red;fill-opacity:0.22;'
-        });
+            //static width 109 and heigh 217
+            var rect_target = draw.rect(109, 217).attr({
+                id: 'rect_target_lane'
+                , x: line_x
+                , y: 0
+                , style: 'fill:red;fill-opacity:0.22;'
+            });
+        }
+        else {
+            console.log('TARGET: targetline is null!');
+        }
     }
 
     /*** Current Lane
     */
-    if (currentlaneid >= 0) {
-        var targetline = SVG.get('r' + rect_index + 'e' + (currentlaneid + 1) + '_line');
-        var line_x = targetline.attr('x1');
+    if (currentlaneid >= 0)
+    {
+        var lineid = 'r' + rect_index + 'e' + (currentlaneid + 1) + '_line';
+        var targetline = SVG.get(lineid);
+        //console.log('CURRENT: lineid: ' + lineid + '; x1: ' + targetline.attr('x1'));
 
-        //alert('targetline for current lane:' + currentlaneid);
+        if (targetline != null)
+        {
+            var line_x = targetline.attr('x1');
+            //console.log('CURRENT: targetline.x1:' + line_x);
 
-        //To calculate image x position = e#_line.x1 - 19px
-        //TODO: Convert to svg to change colors.
-        var image = draw.image('../images/SUV.png', 145.136, 157.036);
-        image.attr({
-            id: 'r' + rect_index + '_image'
-            , x: line_x - 19
-            , y: 19.6868
-            , visibility: 'visible'
-        });
+            //To calculate image x position = e#_line.x1 - 19px
+            //TODO: Convert to svg to change colors.
+            var image = draw.image('../images/SUV.png', 145.136, 157.036);
+            image.attr({
+                id: 'r' + rect_index + '_image'
+                , x: line_x - 19
+                , y: 19.6868
+                , visibility: 'visible'
+            });
+        }
+        else {
+            console.log('CURRENT: targetline is null!');
+        }
     }
 
     //increment rect at the end
     rect_index++;
-
 }
