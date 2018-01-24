@@ -83,16 +83,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
         sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
-        currentState.set(GuidanceState.STARTUP);
-    }
-
-    @Override
-    public void onSystemReady() {
-        currentState.set(GuidanceState.DRIVERS_READY);
-    }
-
-    @Override
-    public void onRouteActive() {
         routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
         routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
             @Override
@@ -103,6 +93,17 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
                 }
             }
         });
+
+        currentState.set(GuidanceState.STARTUP);
+    }
+
+    @Override
+    public void onSystemReady() {
+        currentState.set(GuidanceState.DRIVERS_READY);
+    }
+
+    @Override
+    public void onRouteActive() {
         currentState.set(GuidanceState.ACTIVE);
     }
     
