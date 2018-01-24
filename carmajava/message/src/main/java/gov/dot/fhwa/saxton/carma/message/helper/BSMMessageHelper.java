@@ -31,6 +31,8 @@ public class BSMMessageHelper {
 	protected static final int MSG_COUNT_MIN = 0;
 	protected static final int ID_MAX = 255;
 	protected static final int ID_MIN = 0;
+	protected static final int DSECOND_MIN = 0;
+	protected static final int DSECOND_MAX = 65535;
 	protected static final int LATITUDE_UNAVAILABLE = 900000001;
 	protected static final int LATITUDE_MAX = 900000000;
 	protected static final int LATITUDE_MIN = -900000000;
@@ -75,7 +77,7 @@ public class BSMMessageHelper {
 	
 	private int msgCnt = MSG_COUNT_MIN;
 	private int[] id = {ID_MIN, ID_MIN, ID_MIN, ID_MIN};
-	private int secMark = DDateTimeHelper.DSECOND_MIN;
+	private int secMark = DSECOND_MIN;
 	private int lat = LATITUDE_UNAVAILABLE;
 	private int lon = LONGITUDE_UNAVAILABLE;
 	private int elev = ELEVATION_UNAVAILABLE;
@@ -145,7 +147,7 @@ public class BSMMessageHelper {
 	}
 
 	public void setSecMark(int secMark_input) {
-		if(secMark_input >= DDateTimeHelper.DSECOND_MIN && secMark_input <= DDateTimeHelper.DSECOND_MAX) {
+		if(secMark_input >= DSECOND_MIN && secMark_input <= DSECOND_MAX) {
 			this.secMark = secMark_input;
 		}
 	}

@@ -29,7 +29,6 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.util.*;
 
@@ -134,12 +133,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
             // publish plan status
             PlanStatus status = statusPub_.newMessage();
             status.getHeader().setFrameId("0");
-            String[] planId = currentPlanId.split(" ");
-            byte[] planIdInByte = new byte[planId.length];
-            for(int i = 0; i < planId.length; i++) {
-                planIdInByte[i] = Byte.parseByte(planId[i]);
-            }
-            status.setPlanId(ChannelBuffers.copiedBuffer(planIdInByte));
+            status.setPlanId(currentPlanId);
             status.setAccepted(true);
             statusPub_.publish(status);
             currentPlanId = null;
@@ -148,11 +142,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     }
 
     private void onPlanReceived(NewPlan plan) {
-        StringBuffer planId = new StringBuffer();
-        for(int i = 0; i < plan.getPlanId().capacity(); i++) {
-            planId.append(" " + plan.getPlanId().getByte(i));
-        }
-        String id = planId.substring(1);
+        String id = plan.getPlanId();
         //TODO also need to consider the expiration time for a plan
         if(!planMap.containsKey(id)) {
             log.info("Received new plan with planId: " + id);

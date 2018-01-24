@@ -5,7 +5,7 @@
 #
 
 # MsgCRC ::= OCTET STRING (SIZE(2)) -- created with the CRC-CCITT polynomial
-uint8[]  checksum
+uint8[]     checksum
 
 # the standard header for all mobility messages
 cav_msgs/MobilityHeader header
@@ -40,7 +40,8 @@ string capabilities
 uint8[]      session_key
 
 # absolute time of expiration of the session_key
-cav_msgs/DateTime      expiration
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
+uint64         expiration
 
 # a random string of 8 printable chars - this is used to verify correct receipt & use of
 # the session key

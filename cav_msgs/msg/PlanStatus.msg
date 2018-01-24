@@ -12,7 +12,7 @@
 std_msgs/Header header
 
 # a value from MobilityMessage which identifies this particular plan for future reference
-uint8[]         plan_id
+string          plan_id
 
 # the status of indicated plan
-bool         accepted
+bool            accepted
