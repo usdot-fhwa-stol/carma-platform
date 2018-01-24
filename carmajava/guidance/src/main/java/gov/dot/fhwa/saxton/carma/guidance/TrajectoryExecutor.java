@@ -127,6 +127,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     public void onCleanRestart() {
         currentState.set(GuidanceState.DRIVERS_READY);
         TrajectoryExecutor.this.abortTrajectory();
+        trajectoryExecutorWorker.cleanRestart();
         this.unregisterAllTrajectoryProgressCallback();
         currentTrajectory = null;
         bufferedTrajectoryRunning = false;
