@@ -239,6 +239,13 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     @Override
     public void onRouteActive() {
         currentState.set(GuidanceState.ACTIVE);
+
+        for (IPlugin p : getRegisteredPlugins()) {
+            ComponentVersion v = p.getVersionInfo();
+            if (p.getActivation()) {
+                executor.resumePlugin(v.componentName(), v.revisionString());
+            }
+        }
     }
     
     @Override
@@ -248,13 +255,6 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     
     @Override
     public void onEngaged() {
-        for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            if (p.getActivation()) {
-                executor.resumePlugin(v.componentName(), v.revisionString());
-            }
-        }
-        
         currentState.set(GuidanceState.ENGAGED);
     }
 
