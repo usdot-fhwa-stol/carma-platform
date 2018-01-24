@@ -88,9 +88,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
             @Override
             public void onMessage(RouteState msg) {
                 log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
-                if (currentState.get() == GuidanceState.ENGAGED) {
-                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
-                }
+                trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
             }
         });
 
