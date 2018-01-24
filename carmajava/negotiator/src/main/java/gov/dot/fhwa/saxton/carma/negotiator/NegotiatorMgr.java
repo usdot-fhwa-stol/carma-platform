@@ -133,8 +133,8 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             introMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
             introMsg.getHeader().setPlanId("00000000-0000-0000-0000-000000000000");
             introMsg.getHeader().setTimestamp(System.currentTimeMillis());
-            introMsg.getMyEntityType().setType((BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE));
-            introMsg.setMyRoadwayLink("[Test Road]");
+            introMsg.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE);
+            introMsg.setMyRoadwayLink("[Test track]");
             introMsg.setMyRoadwayLinkPosition((short) 2);
             introMsg.setMyLaneId((byte) 1);
             introMsg.setForwardSpeed((float) 0.2);
