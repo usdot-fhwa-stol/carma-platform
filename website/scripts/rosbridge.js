@@ -76,7 +76,9 @@ var host_instructions = '';
 var listenerPluginAvailability;
 var listenerSystemAlert;
 var isModalPopupShowing = false;
+
 var waitingForGuidanceStartup = false;
+var waitingForRouteStateSegmentStartup = false;
 
 // For Route Timer
 var routeTimer;
@@ -141,6 +143,12 @@ function connectToROS() {
             document.getElementById('connecting').style.display = 'none';
             document.getElementById('connected').style.display = 'none';
             document.getElementById('closed').style.display = 'inline';
+
+            //Show modal popup for when ROS connection has been abruptly closed.
+            var messageTypeFullDescription = 'ROS Connection Closed.<br/><br/>';
+            messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
+            showModal(true, messageTypeFullDescription, false);
+            
         });
 
         // Create a connection to the rosbridge WebSocket server.
@@ -433,9 +441,20 @@ function showSubCapabilitiesView2() {
     var divSubCapabilities = document.getElementById('divSubCapabilities');
     divSubCapabilities.style.display = 'block';
 
-    checkRouteInfo();
-    showPluginOptions();
+    if (waitingForRouteStateSegmentStartup == false) {
+        //Need to wait for route current segment to publish to not get negative total lengths. 
+        setTimeout(function () {
+            checkRouteInfo();
+            console.log('Wait call for checkRouteInfo.');
+            waitingForRouteStateSegmentStartup = true;
+        }, 5000);
+    }
+    else {
+        checkRouteInfo();
+    }
 
+    console.log('showPluginOptions called.');
+    showPluginOptions();
 }
 /*
  Show user the registered plugins.
@@ -1133,6 +1152,7 @@ function checkRouteInfo() {
     });
 
     listenerRouteState.subscribe(function (message) {
+
         insertNewTableRow('tblSecondA', 'Route ID', message.routeID);
         insertNewTableRow('tblSecondA', 'Route State / Event', message.state + ' / ' + message.event);
         insertNewTableRow('tblSecondA', 'Cross Track / Down Track', message.cross_track.toFixed(2) + ' / ' + message.down_track.toFixed(2));
@@ -1317,6 +1337,18 @@ function mapEachRouteSegment(segment) {
 */
 function calculateDistToNextSpeedLimit(segment) {
 
+    if (segment == null)
+    {
+        console.log('**** calculateDistToNextSpeedLimit: segment is null.');
+        return;
+    }
+        
+    if (segment.length <= 0 || segment.length == null || segment.length == 'undefined')
+    {
+        console.log('**** calculateDistToNextSpeedLimit: segment is null.');
+        return;
+    }
+        
     //To calculate the distance to next speed limit
     var routeSpeedLimit; //To store the total distance for each speed limit change.
     var routeSpeedLimitDist;
