@@ -52,6 +52,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   protected boolean       systemReady    = false;
   protected MobilityPlan  lastNewPlanMsg = null;
   protected SaxtonLogger  log;
+  protected int           timeDelay = 5000;
  
   // Topics
   // Publishers
@@ -80,7 +81,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     mobGreetOutPub = connectedNode.newPublisher("mobility_greeting_outbound",cav_msgs.MobilityGreeting._TYPE);
     mobIntroOutPub = connectedNode.newPublisher("mobility_intro_outbound",   cav_msgs.MobilityIntro._TYPE);
     mobPlanOutPub  = connectedNode.newPublisher("mobility_plan_outbound",    cav_msgs.MobilityPlan._TYPE);
-    int timeDelay  = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
+    timeDelay  = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
 
     mobAckInSub = connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
     mobAckInSub.addMessageListener(new MessageListener<cav_msgs.MobilityAck>() {
