@@ -41,6 +41,7 @@ public class FileStrategy implements IRouteLoadStrategy{
 
   @Override public Route load() {
     try {
+      log.info("Trying to loading route: " + filePath);
       FileReader fr = new FileReader(filePath);
       YamlReader reader = new YamlReader(fr);
       return reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
