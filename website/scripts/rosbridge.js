@@ -1338,11 +1338,17 @@ function mapEachRouteSegment(segment) {
 function calculateDistToNextSpeedLimit(segment) {
 
     if (segment == null)
+    {
         console.log('**** calculateDistToNextSpeedLimit: segment is null.');
-
+        return;
+    }
+        
     if (segment.length <= 0 || segment.length == null || segment.length == 'undefined')
+    {
         console.log('**** calculateDistToNextSpeedLimit: segment is null.');
-
+        return;
+    }
+        
     //To calculate the distance to next speed limit
     var routeSpeedLimit; //To store the total distance for each speed limit change.
     var routeSpeedLimitDist;
