@@ -330,18 +330,17 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/NegotiatorParams.yaml"/>
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="host_bsm"
-               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
         <remap from="mobility_ack_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
         <remap from="mobility_greeting_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_greeting"/>
         <remap from="mobility_intro_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_intro"/>
-        <remap from="mobility_nack_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_nack"/>
         <remap from="mobility_plan_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_plan"/>
+        <remap from="plan_status"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plan_status"/>
+               
       </node>
     </group>
 
