@@ -102,9 +102,10 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     mobIntroInSub.addMessageListener((msg) -> {
         log.info("V2V", "Negotiator received new MobilityIntro");
         // only generate NewPlan messages when the mobility message contains some plan detail
-        // Once we have MobilityPlan message, we should remove this logic, TODO
+        // TODO Once we have MobilityPlan message, we should remove this logic
         // because NewPlan message should only related to MobilityPlan message
-        if(msg.getPlanType().getType() != PlanType.UNKNOWN) {
+        // This default of string length is 2 because "[]" means empty string
+        if(msg.getPlanType().getType() != PlanType.UNKNOWN && msg.getCapabilities().length() > 2) {
             NewPlan plan = newPlanPub.newMessage();
             plan.getHeader().setFrameId("0");
             plan.setPlanId(msg.getHeader().getPlanId());
@@ -171,7 +172,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             Arrays.fill(publicKey, (byte) 0);
             introMsg.setMyPublicKey(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, publicKey));
             introMsg.setExpiration(Long.MAX_VALUE);
-            introMsg.setCapabilities("[CarmaPlatform v2.2.3]");
+            introMsg.setCapabilities("[]");
             mobIntroOutPub.publish(introMsg);
         }
         Thread.sleep(5000);
