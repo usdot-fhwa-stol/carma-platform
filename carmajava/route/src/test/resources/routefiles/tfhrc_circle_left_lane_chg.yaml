@@ -1,6 +1,6 @@
 # Route file which describes the colonial farm road leaving from saxton garage at TFHRC
 !gov.dot.fhwa.saxton.carma.route.Route # Type indicator for loading with YAMLBeans
-routeName: TFHRC Circle # Name of this route (should be unique in CARMA version 1)
+routeName: TFHRC Circle Lane Change Left # Name of this route (should be unique in CARMA version 1)
 maxJoinDistance: 20.0 # The maximum distance in meters a CARMA vehicle can be from a route and still start it
 waypoints: # The list of waypoints in the route
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint # Type indicator for loading with YAMLBeans
