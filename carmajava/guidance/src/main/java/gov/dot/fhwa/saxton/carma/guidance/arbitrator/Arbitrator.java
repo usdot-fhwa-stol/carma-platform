@@ -259,6 +259,29 @@ public class Arbitrator extends GuidanceComponent
     plugins.clear();
     trajectory = null;
     planningWindow = node.getParameterTree().getDouble("~initial_planning_window", 10.0);
+    receivedDtdUpdate.set(false);
+
+    ParameterTree ptree = node.getParameterTree();
+    List<String> constraintNames = (List<String>) ptree.getList("~trajectory_constraints");
+    List<Class<? extends TrajectoryValidationConstraint>> constraintClasses = new ArrayList<>();
+    for (String className : constraintNames) {
+      try {
+        constraintClasses.add((Class<? extends TrajectoryValidationConstraint>) Class.forName(className));
+      } catch (Exception e) {
+        log.warn("STARTUP", "Unable to get Class object for name: " + className);
+      }
+    }
+    List<TrajectoryValidationConstraint> constraints = instantiateConstraints(constraintClasses);
+    double configuredSpeedLimit = ptree.getDouble("~trajectory_speed_limit", GuidanceCommands.MAX_SPEED_CMD_M_S);
+    constraints.add(new GlobalSpeedLimitConstraint(configuredSpeedLimit));
+    log.info("Arbitrator using GlobalSpeedLimitConstraint with limit: " + configuredSpeedLimit + " m/s");
+
+    trajectoryValidator = new TrajectoryValidator();
+    for (TrajectoryValidationConstraint tvc : constraints) {
+      trajectoryValidator.addValidationConstraint(tvc);
+      log.info("Aribtrator using TrajectoryValidationConstraint: " + tvc.getClass().getSimpleName());
+    }
+    routeRecvd.set(false);
     currentState.set(GuidanceState.DRIVERS_READY);
   }
 
