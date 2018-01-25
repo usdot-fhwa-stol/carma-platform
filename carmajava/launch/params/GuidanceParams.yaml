@@ -60,6 +60,7 @@ ignored_plugins: []
 required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin
   - gov.dot.fhwa.saxton.carma.guidance.routefollowing.RouteFollowingPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.lanechange.LaneChangePlugin
 
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
