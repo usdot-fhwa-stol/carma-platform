@@ -1157,8 +1157,10 @@ function checkRouteInfo() {
         insertNewTableRow('tblSecondA', 'Route State / Event', message.state + ' / ' + message.event);
         insertNewTableRow('tblSecondA', 'Cross Track / Down Track', message.cross_track.toFixed(2) + ' / ' + message.down_track.toFixed(2));
 
-        //Calculate and show next speed limit distance
+        //Calculate and show next speed limit remaining distance
+        //Show 0 if negative
         var remaining_dist = total_dist_next_speed_limit - message.down_track;
+        remaining_dist = Math.max(0, remaining_dist);
         var remaining_dist_miles = (remaining_dist * meter_to_mile);
         remaining_dist_miles = Math.max(0, remaining_dist_miles);
 
@@ -1168,8 +1170,10 @@ function checkRouteInfo() {
         insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
         insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi/m)', remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(2) + ' m');
 
-        //Calculate and show next lane change distance
+        //Calculate and show next lane change remaining distance
+        //Show 0 if negative
         var lane_remaining_dist = total_dist_next_lane_change - message.down_track;
+        lane_remaining_dist = Math.max(0, lane_remaining_dist);
         var lane_remaining_dist_miles = (lane_remaining_dist * meter_to_mile);
         lane_remaining_dist_miles = Math.max(0, lane_remaining_dist_miles);
 
