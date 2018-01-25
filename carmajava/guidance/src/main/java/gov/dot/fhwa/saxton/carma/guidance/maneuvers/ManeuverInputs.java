@@ -34,6 +34,8 @@ import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
 import gov.dot.fhwa.saxton.carma.guidance.signals.MovingAverageFilter;
 import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 
