@@ -327,7 +327,7 @@
             args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr">
 
         <env if="$(arg debug_negotiator)" name="NEGOTIATOR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
+        <rosparam command="load" file="$(arg PARAM_DIR)/NegotiatorParams.yaml"/>
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="host_bsm"
