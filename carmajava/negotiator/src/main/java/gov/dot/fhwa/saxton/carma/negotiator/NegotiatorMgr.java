@@ -101,14 +101,19 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     mobIntroInSub = connectedNode.newSubscriber("mobility_intro_inbound", cav_msgs.MobilityIntro._TYPE);
     mobIntroInSub.addMessageListener((msg) -> {
         log.info("V2V", "Negotiator received new MobilityIntro");
-        NewPlan plan = newPlanPub.newMessage();
-        plan.getHeader().setFrameId("0");
-        plan.setPlanId(msg.getHeader().getPlanId());
-        plan.setType(msg.getPlanType());
-        String mobInputs = msg.getCapabilities();
-        // get rid of square bracket on both sides 
-        plan.setInputs(mobInputs.substring(1, mobInputs.length() - 1));
-        newPlanPub.publish(plan);
+        // only generate NewPlan messages when the mobility message contains some plan detail
+        // Once we have MobilityPlan message, we should remove this logic, TODO
+        // because NewPlan message should only related to MobilityPlan message
+        if(msg.getPlanType().getType() != PlanType.UNKNOWN) {
+            NewPlan plan = newPlanPub.newMessage();
+            plan.getHeader().setFrameId("0");
+            plan.setPlanId(msg.getHeader().getPlanId());
+            plan.setType(msg.getPlanType());
+            String mobInputs = msg.getCapabilities();
+            // get rid of square bracket on both sides 
+            plan.setInputs(mobInputs.substring(1, mobInputs.length() - 1));
+            newPlanPub.publish(plan);
+        }
     });
     
     mobPlanInSub = connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
