@@ -69,6 +69,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double Kp = node.getParameterTree().getDouble("~acc_Kp", 1.0);
         double Ki = node.getParameterTree().getDouble("~acc_Ki", 0.0);
         double Kd = node.getParameterTree().getDouble("~acc_Kd", 0.0);
+        log.info("ACC params Kp=%.02f, Ki=%.02f, Kd= %.02f, gap=%.02f, standoff=%.02f, exit_factor=%.02f", Kp, Ki, Kd,
+                desiredTimeGap, minStandoffDistance, exitDistanceFactor);
         double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
         int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
 
@@ -77,8 +79,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         Deadband deadbandFilter = new Deadband(desiredTimeGap, deadband);
 
         Pipeline<Double> accFilterPipeline = new Pipeline<>(deadbandFilter, timeGapController, movingAverageFilter);
-        BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel,
-                vehicleResponseLag, minStandoffDistance, exitDistanceFactor, accFilterPipeline);
+        BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel, vehicleResponseLag,
+                minStandoffDistance, exitDistanceFactor, accFilterPipeline);
         AccStrategyManager.setAccStrategyFactory(accFactory);
 
         // subscribers
@@ -138,7 +140,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         // parameters
         RosParameterSource params = new RosParameterSource(node.getParameterTree());
         responseLag_ = params.getDouble("~vehicle_response_lag");
-        
+
         currentState.set(GuidanceState.STARTUP);
     }
 
@@ -151,12 +153,12 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     public void onRouteActive() {
         currentState.set(GuidanceState.ACTIVE);
     }
-    
+
     @Override
     public void onDeactivate() {
         currentState.set(GuidanceState.INACTIVE);
     }
-    
+
     @Override
     public void onEngaged() {
         currentState.set(GuidanceState.ENGAGED);
@@ -170,7 +172,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
         frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
     }
-    
+
     @Override
     public String getComponentName() {
         return "Guidance.Maneuvers.ManeuverInputs";
@@ -200,7 +202,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     public double getFrontVehicleSpeed() {
         return frontVehicleSpeed.get();
     }
-    
+
     @Override
     public void onStateChange(GuidanceAction action) {
         log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
@@ -227,11 +229,13 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             jobQueue.add(this::onCleanRestart);
             break;
         default:
-            throw new RosRuntimeException(getComponentName() + "received unknown instruction from guidance state machine.");
+            throw new RosRuntimeException(
+                    getComponentName() + "received unknown instruction from guidance state machine.");
         }
     }
 
-    @Override public int getCurrentLane() {
+    @Override
+    public int getCurrentLane() {
         return 0; // TODO implement using data from roadway
     }
 }
