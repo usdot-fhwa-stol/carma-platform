@@ -23,7 +23,7 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
  * about the algorithmic logic.
  */
 public abstract class AbstractAccStrategy implements IAccStrategy {
-  protected static double TIMESTEP_DURATION_S = 0.01;
+  protected static double TIMESTEP_DURATION_S = 0.1;
   protected double vehicleResponseDelay;
   protected double desiredTimeGap;
   protected double maxAccel;
