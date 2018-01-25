@@ -11,7 +11,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -26,7 +26,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -41,7 +41,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -56,7 +56,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -71,7 +71,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -86,7 +86,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -101,7 +101,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -116,7 +116,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -131,7 +131,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -146,7 +146,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -161,7 +161,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -176,7 +176,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -191,7 +191,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -206,7 +206,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -221,7 +221,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -236,7 +236,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -251,7 +251,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -266,7 +266,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -281,7 +281,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -296,7 +296,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -311,7 +311,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -326,7 +326,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -341,7 +341,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -356,7 +356,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -371,7 +371,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -386,7 +386,7 @@ waypoints:
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 15
-    laneCount: 1
+    laneCount: 2
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
