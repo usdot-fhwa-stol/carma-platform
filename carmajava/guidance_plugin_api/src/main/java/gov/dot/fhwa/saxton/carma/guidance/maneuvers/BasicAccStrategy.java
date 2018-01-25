@@ -91,7 +91,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
     if (pidActive) {
       Optional<Signal<Double>> speedCmdSignal = speedCmdPipeline
           .apply(new Signal<>(computeActualTimeGap(distToFrontVehicle, currentSpeed, frontVehicleSpeed)));
-      speedCmd = speedCmdSignal.get().getData() + desiredSpeedCommand;
+      speedCmd = speedCmdSignal.get().getData() + currentSpeed;
       speedCmd = applyAccelLimit(speedCmd, currentSpeed, maxAccel);
       speedCmd = Math.min(speedCmd, desiredSpeedCommand);
     }

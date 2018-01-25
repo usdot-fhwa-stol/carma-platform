@@ -198,6 +198,10 @@ public class RouteWorker {
    */
   protected void loadAdditionalRoute(IRouteLoadStrategy loadStrategy) {
     Route route = loadStrategy.load();
+    if (route == null) {
+      log.warn("Failed to load a route");
+      return;
+    }
     route
       .setRouteID(route.getRouteName()); //TODO come up with better method of defining the route id
     availableRoutes.put(route.getRouteID(), route);
@@ -288,6 +292,7 @@ public class RouteWorker {
     }
     int count = 0;
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
+    log.debug("getValidStartingWPIndex: lat = " + hostVehicleLocation.getLatitude() + ", lon = " + hostVehicleLocation.getLongitude());
     for (RouteSegment seg : activeRoute.getSegments()) {
       double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
       double downTrack = seg.downTrackDistance(hostVehicleLocation);
