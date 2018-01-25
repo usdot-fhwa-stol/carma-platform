@@ -288,6 +288,7 @@ public class RouteWorker {
     }
     int count = 0;
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
+    log.debug("getValidStartingWPIndex: lat = " + hostVehicleLocation.getLatitude() + ", lon = " + hostVehicleLocation.getLongitude());
     for (RouteSegment seg : activeRoute.getSegments()) {
       double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
       double downTrack = seg.downTrackDistance(hostVehicleLocation);
