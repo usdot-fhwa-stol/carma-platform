@@ -288,9 +288,12 @@ public class RouteWorker {
     }
     int count = 0;
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
+    log.debug("getValidStartingWPIndex: lat = " + hostVehicleLocation.getLatitude() + ", lon = " + hostVehicleLocation.getLongitude());
     for (RouteSegment seg : activeRoute.getSegments()) {
       double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
       double downTrack = seg.downTrackDistance(hostVehicleLocation);
+
+      log.info("crosstrack to waypoint " + count + " = " + crossTrack);
 
       if (Math.abs(crossTrack) < maxJoinDistance) {
         if (count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) {
@@ -526,6 +529,7 @@ public class RouteWorker {
       if (currentSegment != null) {
         routeState.setSegmentDownTrack(currentSegmentDowntrack);
         routeState.setCurrentSegment(currentSegment.toMessage(messageFactory, currentWaypointIndex));
+        routeState.setLaneIndex((byte) currentSegment.determinePrimaryLane(crossTrackDistance));
       }
     }
 

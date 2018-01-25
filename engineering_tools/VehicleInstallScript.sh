@@ -1,3 +1,5 @@
+# To run this script, it must be executable. 
+# To do so, run this command: chmod +x VehicleInstallScript.sh
 read -p 'WARNING this script deletes all the files under opt/carma/src and var/www/html/, are you sure you want to continue? <y/n> ' prompt
 if [[ $prompt == 'n' || $prompt == 'N' || $prompt == 'no' || $prompt == 'No' ]]
 then
@@ -26,17 +28,17 @@ cd src
 git clone https://github.com/fhwa-saxton/CarmaPlatform --branch $branchvar
 
 echo 'Updating routes folder'
-if [ ! -d "routes" ]; then # if routes folder does not exist then make it
-  mkdir /opt/carma/routes
-fi
-sudo cp -R /opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/* /opt/carma/routes/
+# if [ ! -d "routes" ]; then # if routes folder does not exist then make it
+#   mkdir /opt/carma/routes
+# fi
+sudo cp -R -r /opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/* /opt/carma/routes/
 
 echo 'Deleting files from html folder and copying new files ...'
 cd /var/www/html
 sudo rm -r *
 sudo cp -R -r /opt/carma/src/CarmaPlatform/website/* /var/www/html/
 
-sudo chmod -R 777 /opt/carma/*
+# sudo chmod -R 777 /opt/carma/*
 
 echo 'Compiling carma and sourcing. ...'
 cd /opt/carma

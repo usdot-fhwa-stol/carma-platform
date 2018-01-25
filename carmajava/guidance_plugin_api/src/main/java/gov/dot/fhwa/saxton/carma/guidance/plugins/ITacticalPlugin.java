@@ -27,7 +27,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
  */
 public interface ITacticalPlugin extends IPlugin {
     /**
-     * Execute the plugin's planning algorithm on a subset of the specified trajectory, inserting a FutureManeuver
+     * Execute the plugin's planning algorithm on a subset of the specified trajectory, inserting a FutureLongitudinalManeuver
      * into the trajectory between the indicated locations.
      * 
      * @param traj The trajectory to plan inside

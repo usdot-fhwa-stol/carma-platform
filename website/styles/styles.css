@@ -519,24 +519,36 @@ div.message_box {
 /* Remaining Distance to Next Speed Limit */
 #divDistRemaining{
  position: relative;
- top: 50%;
+ top: 42%;
  color: black;
  font-size: 25px;
  font-weight: bold;
  text-align: center;
 }
 
+/* Lane */
+#divLaneTracking {
+    position: relative;
+    top: 44%;
+    width: 100%;
+    height: 200px;
+    /*border: 5px solid blue; */
+    font-size: 25px;
+    font-weight: bold;
+    text-align: center;
+    justify-content: center;
+}
 
 /* Black Rounded Border Sign */
 #divSpeedCmd {
     position: absolute;
-    top: 25%;
+    top: 23%;
     left: 20%;
 }
 
 #divSpeedLimit {
     position: absolute;
-    top: 25%;
+    top: 23%;
     left: 75%;
 }
 
@@ -569,7 +581,7 @@ div.message_box {
 
 .sign-black-border-title {
     position: relative;
-    top: 30%;
+    top: 28%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: black;
@@ -589,7 +601,7 @@ div.message_box {
     font-family: sans-serif;
 
     position: relative;
-    top: 25%;
+    top: 23%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: black;
@@ -602,13 +614,12 @@ div.message_box {
     width: 400px;
     height: 200px;
     position: absolute;
-    top: 40%;
+    top: 38%;
     left: 55%;
     overflow: hidden;
     text-align: center;
     transform: translate(-50%, -50%);
 }
-
 
 .gauge-a {
     z-index: 1;

@@ -83,6 +83,15 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
         sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+            @Override
+            public void onMessage(RouteState msg) {
+                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
+                trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
+            }
+        });
+
         currentState.set(GuidanceState.STARTUP);
     }
 
@@ -93,16 +102,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
 
     @Override
     public void onRouteActive() {
-        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-            @Override
-            public void onMessage(RouteState msg) {
-                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
-                if (currentState.get() == GuidanceState.ENGAGED) {
-                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
-                }
-            }
-        });
         currentState.set(GuidanceState.ACTIVE);
     }
     
@@ -127,6 +126,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     public void onCleanRestart() {
         currentState.set(GuidanceState.DRIVERS_READY);
         TrajectoryExecutor.this.abortTrajectory();
+        trajectoryExecutorWorker.cleanRestart();
         this.unregisterAllTrajectoryProgressCallback();
         currentTrajectory = null;
         bufferedTrajectoryRunning = false;

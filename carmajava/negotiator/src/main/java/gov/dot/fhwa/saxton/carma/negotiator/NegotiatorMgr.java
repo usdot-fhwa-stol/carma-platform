@@ -81,7 +81,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     mobGreetOutPub = connectedNode.newPublisher("mobility_greeting_outbound",cav_msgs.MobilityGreeting._TYPE);
     mobIntroOutPub = connectedNode.newPublisher("mobility_intro_outbound",   cav_msgs.MobilityIntro._TYPE);
     mobPlanOutPub  = connectedNode.newPublisher("mobility_plan_outbound",    cav_msgs.MobilityPlan._TYPE);
-    timeDelay  = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
+    timeDelay      = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
 
     mobAckInSub = connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
     mobAckInSub.addMessageListener(new MessageListener<cav_msgs.MobilityAck>() {
@@ -131,23 +131,12 @@ public class NegotiatorMgr extends SaxtonBaseNode{
         if (systemReady) {
             //This is a test for Mobility Introduction message
             MobilityIntro introMsg = mobIntroOutPub.newMessage();
-            byte[] hostId = new byte[16];
-            Arrays.fill(hostId, (byte) 1);
-            introMsg.getHeader().setSenderId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, hostId));
-            byte[] targetId = new byte[16];
-            Arrays.fill(targetId, (byte) 0);
-            introMsg.getHeader().setRecipientId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, targetId));
-            byte[] planId = new byte[16];
-            Arrays.fill(planId, (byte) 2);
-            introMsg.getHeader().setPlanId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, planId));
-            introMsg.getHeader().getTimestamp().setYear((short) 2010);
-            introMsg.getHeader().getTimestamp().setMonth((byte) 2);
-            introMsg.getHeader().getTimestamp().setDay((byte) 1);
-            introMsg.getHeader().getTimestamp().setHour((byte) 0);
-            introMsg.getHeader().getTimestamp().setMinute((byte) 0);
-            introMsg.getHeader().getTimestamp().setSecond(0);
-            introMsg.getMyEntityType().setType((BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE));
-            introMsg.setMyRoadwayLink("[Test Road]");
+            introMsg.getHeader().setSenderId("00000000-0000-0000-0000-000000000000");
+            introMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
+            introMsg.getHeader().setPlanId("00000000-0000-0000-0000-000000000000");
+            introMsg.getHeader().setTimestamp(System.currentTimeMillis());
+            introMsg.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE);
+            introMsg.setMyRoadwayLink("[Test track]");
             introMsg.setMyRoadwayLinkPosition((short) 2);
             introMsg.setMyLaneId((byte) 1);
             introMsg.setForwardSpeed((float) 0.2);
@@ -156,29 +145,9 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             byte[] publicKey = new byte[64];
             Arrays.fill(publicKey, (byte) 0);
             introMsg.setMyPublicKey(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, publicKey));
-            introMsg.getExpiration().setYear((short) 2018);
-            introMsg.getExpiration().setMonth((byte) 6);
-            introMsg.getExpiration().setDay((byte) 1);
-            introMsg.getExpiration().setHour((byte) 0);
-            introMsg.getExpiration().setMinute((byte) 0);
-            introMsg.getExpiration().setSecond(0);
-            introMsg.getExpiration().setOffset((short) -300);
+            introMsg.setExpiration(Long.MAX_VALUE);
             introMsg.setCapabilities("[CarmaPlatform v2.2.3]");
             mobIntroOutPub.publish(introMsg);
-            MobilityAck ackMsg = mobAckOutPub.newMessage();
-            ackMsg.getHeader().setSenderId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, hostId));
-            ackMsg.getHeader().setRecipientId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, targetId));
-            ackMsg.getHeader().setPlanId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, planId));
-            ackMsg.getHeader().getTimestamp().setYear((short) 2018);
-            ackMsg.getHeader().getTimestamp().setMonth((byte) 1);
-            ackMsg.getHeader().getTimestamp().setDay((byte) 1);
-            ackMsg.getHeader().getTimestamp().setHour((byte) 0);
-            ackMsg.getHeader().getTimestamp().setMinute((byte) 0);
-            ackMsg.getHeader().getTimestamp().setSecond(0);
-            ackMsg.getHeader().getTimestamp().setOffset((short) -300);
-            ackMsg.getAgreement().setType(MobilityAckType.ACCEPT_WITH_EXECUTE);
-            ackMsg.setVerificationCode("");
-            mobAckOutPub.publish(ackMsg);
         }
         Thread.sleep(timeDelay);
       }

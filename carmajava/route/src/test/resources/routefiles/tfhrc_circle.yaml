@@ -16,7 +16,8 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE # The type of lane markings found in interior lanes
     leftMostLaneMarking: SOLID_YELLOW # The type of lane marking found on the left side of the left most lane
     rightMostLaneMarking: SOLID_WHITE # The type of lane marking foun on the right side of the right most lane
-
+    requiredLaneIndex: 0
+    
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95631
@@ -30,6 +31,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -44,6 +46,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -58,6 +61,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -72,6 +76,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -86,6 +91,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -100,6 +106,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -114,6 +121,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -128,6 +136,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -142,6 +151,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -156,6 +166,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -170,6 +181,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -184,6 +196,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -198,6 +211,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -212,6 +226,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -226,6 +241,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -240,6 +256,7 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -254,3 +271,4 @@ waypoints: # The list of waypoints in the route
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+    requiredLaneIndex: 0

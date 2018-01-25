@@ -5,13 +5,14 @@
 #
 
 # sender's static GUID (represents that vehicle throughout the current relationship)
-uint8[]      sender_id
+string      sender_id
 
 # intended recipient's static GUID (constant throughout current relationship)
-uint8[]      recipient_id
+string      recipient_id
 
 # a random value that identifies this particular plan for future reference
-uint8[]      plan_id
+string      plan_id
 
 # the date and time when this message is created
-cav_msgs/DateTime      timestamp
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
+uint64        timestamp

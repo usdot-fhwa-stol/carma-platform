@@ -101,7 +101,7 @@ private:
 
     std::unique_ptr<dynamic_reconfigure::Server<sensor_fusion::SensorFusionConfig>> dyn_cfg_server_;
     sensor_fusion::SensorFusionConfig config_;
-    torc::ObjectTracker tracker_;
+    std::unique_ptr<torc::ObjectTracker> tracker_;
     tf2_ros::Buffer tf2_buffer_;
     ros::Timer update_services_timer_;
     std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;

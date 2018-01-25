@@ -45,7 +45,6 @@ import java.util.List;
 * the most recently latched value at a fixed frequency.
 */
 public class GuidanceCommands extends GuidanceComponent implements IGuidanceCommands, IStateChangeListener {
-    private IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
     private IPublisher<cav_msgs.LateralControl> lateralControlPublisher;
@@ -58,6 +57,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private long sleepDurationMillis = 100;
     private long lastTimestep = -1;
     private double vehicleAccelLimit = 2.5;
+    private static final String DRIVER_BASE_PATH = "/saxton_cav/drivers";
+    private static final String SRX_CONTROLLER_PATH = "/srx_controller/";
+    private static final String LATERAL_CONTROLLER_PATH = "/lateral_controller/";
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
     private static final String LATERAL_CONTROL_CAPABILITY =  "control/cmd_lateral";
@@ -85,57 +87,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
     @Override
     public void onSystemReady() {
-        // Register with the interface manager's service
-        try {
-            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
-        } catch (TopicNotFoundException tnfe) {
-            exceptionHandler.handleException("Interface manager not found.", tnfe);
-        }
-
-        // Build our request message for longitudinal control drivers
-        GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
-
-        List<String> reqdCapabilities = new ArrayList<>();
-        reqdCapabilities.add(SPEED_CMD_CAPABILITY);
-        reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY);
-        req.setCapabilities(reqdCapabilities);
-
-        // Work around to pass a final object into our anonymous inner class so we can get the
-        // response
-        final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
-        drivers[0] = null;
-
-        // Call the InterfaceManager to see if we have a driver that matches our requirements
-        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-            @Override
-            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                log.debug("Received GetDriversWithCapabilitiesResponse");
-                for (String driverName : msg.getDriverData()) {
-                    log.debug("GuidanceCommands discovered driver: " + driverName);
-                }
-
-                drivers[0] = msg;
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                exceptionHandler.handleException("InterfaceManager failed to return a control/cmd_speed capable driver!!!", e);
-            }
-        });
-
-        // Verify that the message returned drivers that we can use
-        String speedCmdTopic = null;
-        String roboticEnableTopic = null;
-        if (drivers[0] != null) {
-            for (String topicName : drivers[0].getDriverData()) {
-                if (topicName.endsWith(SPEED_CMD_CAPABILITY)) {
-                    speedCmdTopic = topicName;
-                }
-                if (topicName.endsWith(ENABLE_ROBOTIC_CAPABILITY)) {
-                    roboticEnableTopic = topicName;
-                }
-            }
-        }
+        String speedCmdTopic = DRIVER_BASE_PATH + SRX_CONTROLLER_PATH + SPEED_CMD_CAPABILITY;
+        String roboticEnableTopic = DRIVER_BASE_PATH + SRX_CONTROLLER_PATH + ENABLE_ROBOTIC_CAPABILITY;
 
         if (speedCmdTopic != null && roboticEnableTopic != null) {
             // Open the publication channel to the driver and start sending it commands
@@ -152,37 +105,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             exceptionHandler.handleException("GuidanceCommands unable to find suitable longitudinal controller driver!", new RosRuntimeException("No longitudinal controller drivers."));
         }
 
-        // Repeat the above process for lateral control drivers
-        GetDriversWithCapabilitiesRequest lateralReq = driverCapabilityService.newMessage();
-        List<String> lateralCapabilities = new ArrayList<>();
-        lateralCapabilities.add(LATERAL_CONTROL_CAPABILITY);
-        lateralReq.setCapabilities(lateralCapabilities);
-        final GetDriversWithCapabilitiesResponse[] lateralDrivers = new GetDriversWithCapabilitiesResponse[1];
-        lateralDrivers[0] = null;
-        driverCapabilityService.callSync(lateralReq, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-            @Override
-            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                log.debug("Received GetDriversWithCapabilitiesResponse");
-                for (String driverName : msg.getDriverData()) {
-                    log.debug("GuidanceCommands discovered driver: " + driverName);
-                }
-
-                lateralDrivers[0] = msg;
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                exceptionHandler.handleException("InterfaceManager failed to return a control/cmd_lateral capable driver!!!", e);
-            }
-        });
-        String lateralControlTopic = null;
-        if (lateralDrivers[0] != null) {
-            for (String topicName : lateralDrivers[0].getDriverData()) {
-                if (topicName.endsWith(LATERAL_CONTROL_CAPABILITY)) {
-                    lateralControlTopic = topicName;
-                }
-            }
-        }
+        String lateralControlTopic = DRIVER_BASE_PATH + LATERAL_CONTROLLER_PATH + LATERAL_CONTROL_CAPABILITY;
         if (lateralControlTopic == null) {
             exceptionHandler.handleException("GuidanceCommands unable to find suitable lateral controller driver!", new RosRuntimeException("No lateral controller drivers."));
         }
@@ -244,6 +167,20 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 exceptionHandler.handleException("Unable to call disable robotic service", e);
             }
         });
+    }
+
+    @Override
+    public void onShutdown() {
+        super.onShutdown();
+        enableRoboticService.close();
+        setLightsService.close();
+    }
+
+    @Override
+    public void onPanic() {
+        super.onPanic();
+        enableRoboticService.close();
+        setLightsService.close();
     }
     
     /**

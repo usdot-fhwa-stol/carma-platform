@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -305,5 +306,76 @@ public class Route {
    */
   public void setMaxJoinDistance(double maxJoinDistance) {
     this.maxJoinDistance = maxJoinDistance;
+  }
+
+  /**
+   * Returns a list of route segments which span the provided distances infront and behind of the 
+   * segment at the specified index.
+   * The returned list is in order from back to front.
+   * 
+   * @param startingIndex The index of the route segment which will be the starting point for the search. 
+   *                      This segment will always be included in the returned list
+   * @param segmentDowntrack The distance along the specified segment to start the calculation from
+   * @param distBackward The distance in m uptrack of the starting segment which will be included
+   * @param distForward The distance in m downtrack of the starting segment which will be included
+   */
+  public List<RouteSegment> findRouteSubsection(int startingIndex, double segmentDowntrack, double distBackward, double distForward) {
+    List<RouteSegment> subList = new LinkedList<>();
+    subList.add(segments.get(startingIndex));
+
+    // Process segments behind host vehicle
+    double distance = segmentDowntrack;
+    for (int i = startingIndex - 1; i >= 0; i--) {
+      if (distance > distBackward) {
+        break;
+      }
+      distance += segments.get(i).length();
+      subList.add(segments.get(i));
+    }
+
+    Collections.reverse(subList);
+
+    // Process segments infront of host vehicle
+    distance = segments.get(startingIndex).length - segmentDowntrack;
+    for (int i = startingIndex + 1; i < segments.size(); i++) {
+      if (distance > distForward) {
+        break;
+      }
+      distance += segments.get(i).length();
+      subList.add(segments.get(i));
+    }
+
+    return subList;
+  }
+
+  /**
+   * Get the route segment in the list which the provided point should be considered in
+   * If the point cannot be matched with any segments in the provided subsection,
+   * it will be assigned to the first or last segment based on location.
+   * 
+   * @param point The 3d point to match with a segment
+   * @param segments The subsection of a route which will be searched against
+   * 
+   * @return The matching route segment
+   */
+  public RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
+    int count = 0;
+    RouteSegment bestSegment = segments.get(0);
+    for (RouteSegment seg: segments) {      
+      RouteWaypoint wp = seg.getDowntrackWaypoint();
+      double crossTrack = seg.crossTrackDistance(point);
+      double downTrack = seg.downTrackDistance(point);
+
+      if (-0.0 < downTrack && downTrack < seg.length()) { 
+        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
+          return seg;
+        
+        bestSegment = seg;
+      } else if (count == segments.size() - 1 && downTrack > seg.length()) {
+        bestSegment = seg;
+      }
+      count++;
+    }
+    return bestSegment;
   }
 }

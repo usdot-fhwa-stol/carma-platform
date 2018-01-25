@@ -27,6 +27,9 @@
     <script async defer
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMzV4biqVN0pf3l1lYVWQ4KSWLyoG6OV0&callback=initMap">
     </script>
+    <script src="thirdparty/svg/svg.min.js" defer></script>
+    <script src="scripts/svgcarma.js" defer></script>
+
     <link rel="stylesheet" type="text/css" href="styles/styles.css" />
     <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome.min.css" />
     <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome-animation.min.css"/>
@@ -83,7 +86,8 @@
                 <div id="divSpeedLimitValue" class="sign-black-border-value">0</div>
             </div>
         </div>
-        <div id="divDistRemaining">Distance Remaining to Next Speed Limit: 0 miles</div>
+        <div id="divDistRemaining"></div>
+        <div id="divLaneTracking"></div>
     </div>
     <div id="divMap" class="tabcontent">
         <div id="map"></div>

@@ -16,11 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.message.helper;
 
-import java.util.Arrays;
-
-import org.jboss.netty.buffer.ChannelBuffer;
-
-import cav_msgs.DateTime;
 import cav_msgs.MobilityHeader;
 
 /**
@@ -29,71 +24,65 @@ import cav_msgs.MobilityHeader;
  */
 public class MobilityHeaderHelper {
 
-    protected static final int GUI_BYTE_MIN = 0;
-    protected static final int GUI_BYTE_MAX = 255;
+    protected static final String GUID_DEFAULT = "00000000-0000-0000-0000-000000000000";
+    protected static final long TIMESTAMP_DEFAULT = 0;
+    protected static final int TIMESTAMP_LENGTH = Long.toString(Long.MAX_VALUE).length(); 
+    protected static final int GUID_LENGTH = GUID_DEFAULT.length();
     
-    private int[] senderId = new int[16];
-    private int[] targetId = new int[16];
-    private int[] planId = new int[16];
-    private DDateTimeHelper timestamp = null;
+    protected byte[] senderId = new byte[GUID_LENGTH];
+    protected byte[] targetId = new byte[GUID_LENGTH];
+    protected byte[] planId = new byte[GUID_LENGTH];
+    protected byte[] timestamp = new byte[TIMESTAMP_LENGTH];
+    
+    public MobilityHeaderHelper() {
+        this.setId(GUID_DEFAULT, this.senderId);
+        this.setId(GUID_DEFAULT, this.targetId);
+        this.setId(GUID_DEFAULT, this.planId);
+        this.setTimestamp(TIMESTAMP_DEFAULT);
+    }
     
     public MobilityHeaderHelper(MobilityHeader header) {
-        Arrays.fill(senderId, GUI_BYTE_MIN);
-        Arrays.fill(targetId, GUI_BYTE_MIN);
-        Arrays.fill(planId, GUI_BYTE_MIN);
-        ChannelBuffer senderIdBuffer = header.getSenderId();
-        byte[] sendIdInput = new byte[senderIdBuffer.capacity()];
-        for(int i = 0; i < senderIdBuffer.capacity(); i++) {
-            sendIdInput[i] = senderIdBuffer.getByte(i);
-        }
-        this.setId(sendIdInput, this.senderId);
-        ChannelBuffer targetIdBuffer = header.getRecipientId();
-        byte[] targetIdInput = new byte[targetIdBuffer.capacity()];
-        for(int i = 0; i < targetIdBuffer.capacity(); i++) {
-            targetIdInput[i] = targetIdBuffer.getByte(i);
-        }
-        this.setId(targetIdInput, targetId);
-        ChannelBuffer planIdBuffer = header.getPlanId();
-        byte[] planIdInput = new byte[planIdBuffer.capacity()];
-        for(int i = 0; i < planIdBuffer.capacity(); i++) {
-            planIdInput[i] = planIdBuffer.getByte(i);
-        }
-        this.setId(planIdInput, planId);
-        this.timestamp = new DDateTimeHelper(header.getTimestamp());
-    }
-
-    public void setId(byte[] inputId, int[] fieldId) {
-        for(int i = 0; i < fieldId.length; i++) {
-            int temp;
-            if(inputId[i] < 0) {
-                temp = 1 + GUI_BYTE_MAX + inputId[i];
-            } else {
-                temp = inputId[i];
-            }
-            if(temp >= GUI_BYTE_MIN && temp <= GUI_BYTE_MAX) {
-                fieldId[i] = temp;
-            }
-        }
+        this.setId(header.getSenderId(), this.senderId);
+        this.setId(header.getRecipientId(), this.targetId);
+        this.setId(header.getPlanId(), this.planId);
+        this.setTimestamp(header.getTimestamp());
     }
     
-    public void setTimestamp(DateTime timestamp) {
-        this.timestamp = new DDateTimeHelper(timestamp);
-    }
-    
-    public int[] getSenderId() {
+    public byte[] getSenderId() {
         return senderId;
     }
-    
-    public int[] getTargetId() {
+
+    public void setId(String inputId, byte[] field) {
+        if(inputId.length() == GUID_LENGTH) {
+            char[] tmp = inputId.toCharArray();
+            for(int i = 0; i < tmp.length; i++) {
+                field[i] = (byte) tmp[i];
+            }
+        }
+    }
+
+    public byte[] getTargetId() {
         return targetId;
     }
 
-    public int[] getPlanId() {
+    public byte[] getPlanId() {
         return planId;
     }
 
-    public DDateTimeHelper getTimestamp() {
-        return this.timestamp;
+    public byte[] getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        String number = Long.toString(timestamp);
+        int numberOfZero = TIMESTAMP_LENGTH - number.length();
+        for(int i = 0; i < numberOfZero; i++) {
+            number = "0" + number;
+        }
+        char[] tmp = number.toCharArray();
+        for(int i = 0; i < tmp.length; i++) {
+            this.timestamp[i] = (byte) tmp[i];
+        }
     }
     
 }

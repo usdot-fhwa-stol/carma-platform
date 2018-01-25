@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.message.helper;
 
-import cav_msgs.DateTime;
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityIntro;
 
@@ -35,23 +34,25 @@ public class MobilityIntroductionMessageHelper {
     protected static final int POSITION_MAX = 10000;
     protected static final int LANE_UNKNOWN = 0;
     protected static final int LANE_MAX = 255;
+    protected static final int PLAN_TYPE_UNKNOWN = 0;
     protected static final int PLAN_PARAM_UNKNOWN = -32768;
     protected static final int PLAN_PARAM_MIN = -32767;
     protected static final int PLAN_PARAM_MAX = 32767;
     protected static final int CAPABILITIES_SIZE_MIN = 1;
     protected static final int CAPABILITIES_SIZE_MAX = 100;
+    protected static final String STRING_DEFAULT = "[UNKNOWN]"; 
     
-    private MobilityHeaderHelper headerHelper = null;
+    private MobilityHeaderHelper headerHelper = new MobilityHeaderHelper();
     private int vehicleType = UNKNOWN_VEHICLE_TYPE;
-    private int[] roadwayId = {0};
+    private byte[] roadwayId;
     private int position = POSITION_UNKNOWN;
     private int laneId = LANE_UNKNOWN;
     private int speed = BSMMessageHelper.SPEED_UNAVAILABLE;
-    private int planType = 0;
+    private int planType = PLAN_TYPE_UNKNOWN;
     private int planParam = PLAN_PARAM_UNKNOWN;
     private int[] publicKey = new int[64];
-    private DDateTimeHelper expiration = null;
-    private int[] capabilities = {0};
+    private byte[] expiration = new byte[19];
+    private byte[] capabilities;
     
     public MobilityIntroductionMessageHelper(MobilityIntro intro) {
         this.setHeaderHelper(intro.getHeader());
@@ -80,13 +81,15 @@ public class MobilityIntroductionMessageHelper {
     }
     
     public void setRoadwayId(String roadwayId) {
-        if(roadwayId.length() == 0) {
-            return;
+        char[] tmpId;
+        if(roadwayId.length() <= ROADWAY_ID_SIZE_MAX && roadwayId.length() >= ROADWAY_ID_SIZE_MIN) {
+            tmpId = roadwayId.toCharArray();
+        } else {
+            tmpId = STRING_DEFAULT.toCharArray();
         }
-        int size = roadwayId.length() <= ROADWAY_ID_SIZE_MAX ? roadwayId.length() : ROADWAY_ID_SIZE_MAX;
-        this.roadwayId = new int[size];
+        this.roadwayId = new byte[tmpId.length];
         for(int i = 0; i < this.roadwayId.length; i++) {
-            this.roadwayId[i] = roadwayId.charAt(i);
+            this.roadwayId[i] = (byte) tmpId[i];
         }
     }
     
@@ -134,18 +137,29 @@ public class MobilityIntroductionMessageHelper {
         }
     }
     
-    public void setExpiration(DateTime expiration) {
-        this.expiration = new DDateTimeHelper(expiration);
+    public void setExpiration(long expiration) {
+        String number = Long.toString(expiration);
+        int numberOfZero = MobilityHeaderHelper.TIMESTAMP_LENGTH - number.length();
+        for(int i = 0; i < numberOfZero; i++) {
+            number = "0" + number;
+        }
+        char[] tmpNum = number.toCharArray();
+        this.expiration = new byte[tmpNum.length];
+        for(int i = 0; i < tmpNum.length; i++) {
+            this.expiration[i] = (byte) tmpNum[i];
+        }
     }
     
     public void setCapabilities(String capabilities) {
-        if(capabilities.length() < CAPABILITIES_SIZE_MIN) {
-            return;
+        char[] tmpCap;
+        if(capabilities.length() >= CAPABILITIES_SIZE_MIN && capabilities.length() <= CAPABILITIES_SIZE_MAX) {
+            tmpCap = capabilities.toCharArray();
+        } else {
+            tmpCap = STRING_DEFAULT.toCharArray();
         }
-        int size = capabilities.length() <= CAPABILITIES_SIZE_MAX ? capabilities.length() : CAPABILITIES_SIZE_MAX;
-        this.capabilities = new int[size];
-        for(int i = 0; i < this.capabilities.length; i++) {
-            this.capabilities[i] = capabilities.charAt(i);
+        this.capabilities = new byte[tmpCap.length];
+        for(int i = 0; i < tmpCap.length; i++) {
+            this.capabilities[i] = (byte) tmpCap[i];
         }
     }
     
@@ -157,7 +171,7 @@ public class MobilityIntroductionMessageHelper {
         return vehicleType;
     }
 
-    public int[] getRoadwayId() {
+    public byte[] getRoadwayId() {
         return roadwayId;
     }
 
@@ -185,11 +199,11 @@ public class MobilityIntroductionMessageHelper {
         return publicKey;
     }
 
-    public DDateTimeHelper getExpiration() {
+    public byte[] getExpiration() {
         return expiration;
     }
 
-    public int[] getCapabilities() {
+    public byte[] getCapabilities() {
         return capabilities;
     }
     
