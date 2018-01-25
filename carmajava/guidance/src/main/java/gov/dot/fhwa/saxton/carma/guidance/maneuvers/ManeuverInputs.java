@@ -51,11 +51,13 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected double responseLag_ = 0.0; // sec
     protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
     protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
+    protected ILogger log;
 
     public ManeuverInputs(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
         super(stateMachine, iPubSubService, node);
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
+        log = LoggerManager.getLogger();
     }
 
     @Override
@@ -69,8 +71,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double Kp = node.getParameterTree().getDouble("~acc_Kp", 1.0);
         double Ki = node.getParameterTree().getDouble("~acc_Ki", 0.0);
         double Kd = node.getParameterTree().getDouble("~acc_Kd", 0.0);
-        log.info("ACC params Kp=%.02f, Ki=%.02f, Kd= %.02f, gap=%.02f, standoff=%.02f, exit_factor=%.02f", Kp, Ki, Kd,
-                desiredTimeGap, minStandoffDistance, exitDistanceFactor);
+        log.info(String.format("ACC params Kp=%.02f, Ki=%.02f, Kd= %.02f, gap=%.02f, standoff=%.02f, exit_factor=%.02f", Kp, Ki, Kd,
+                desiredTimeGap, minStandoffDistance, exitDistanceFactor));
         double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
         int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
 
