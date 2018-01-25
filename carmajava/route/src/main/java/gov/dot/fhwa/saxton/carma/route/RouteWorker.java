@@ -198,6 +198,10 @@ public class RouteWorker {
    */
   protected void loadAdditionalRoute(IRouteLoadStrategy loadStrategy) {
     Route route = loadStrategy.load();
+    if (route == null) {
+      log.warn("Failed to load a route");
+      return;
+    }
     route
       .setRouteID(route.getRouteName()); //TODO come up with better method of defining the route id
     availableRoutes.put(route.getRouteID(), route);

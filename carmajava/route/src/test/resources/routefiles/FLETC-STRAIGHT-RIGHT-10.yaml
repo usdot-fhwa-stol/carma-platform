@@ -1,5 +1,5 @@
 !gov.dot.fhwa.saxton.carma.route.Route
-routeName: FLETC-STRAIGHT-LEFT-10
+routeName: FLETC-STRAIGHT-RIGHT-10
 maxJoinDistance: 40.0
 waypoints:
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
