@@ -104,7 +104,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
    * Helper function adjusts the perceived distance to the front vehicle
    * Adds the standoff distance to the front vehicle distance
    */
-  private double distGap(double distToFrontVehicle) {
+  private final double distGap(double distToFrontVehicle) {
     return standoffDistance + distToFrontVehicle;
   }
 }
