@@ -155,6 +155,10 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
         // Walk the lane changes required by route and plan maneuvers for each of them.
         for (RequiredLane targetLane : requiredLanes) {
+            if (targetLane.getLocation() > traj.getEndLocation()) {
+                log.info("Ignoring lane change " + targetLane + " for now, since it's not on the trajectory.");
+                continue;
+            }
             double speedLimit = routeService.getSpeedLimitAtLocation(targetLane.getLocation()).getLimit();
             double distanceForLaneChange = speedLimit * laneChangeDelayFactor + speedLimit * laneChangeRateFactor
                     + speedLimit * laneChangeSafetyFactor;
