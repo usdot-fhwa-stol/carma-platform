@@ -122,7 +122,11 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         // TODO: Implement planning logic to handle planning around other lateral maneuvers that may already be planned!
         SortedSet<RequiredLane> requiredLanes = routeService.getRequiredLanesInRange(traj.getStartLocation(),
                 traj.getEndLocation());
-        requiredLanes.add(routeService.getRequiredLaneAtLocation(traj.getEndLocation())); // Handle the end point of the trajectory
+        
+        RequiredLane laneChangeAfterTraj = routeService.getRequiredLaneAtLocation(traj.getEndLocation());
+        if (laneChangeAfterTraj != null) {
+            requiredLanes.add(laneChangeAfterTraj); // Handle the end point of the trajectory
+        }
 
         log.info(String.format("Identified %d lane changes in trajectory", requiredLanes.size()));
         String changes = "";
