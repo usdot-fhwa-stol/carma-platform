@@ -19,7 +19,6 @@ package gov.dot.fhwa.saxton.carma.guidance.cruising;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
@@ -209,6 +208,12 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
   // It can only plan trajectory without preplanned longitudinal maneuvers.
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+    // Since LCP will insert a FutureManeuver from the start distance to the end distance, we do not need to plan again
+    if(traj.getLongitudinalManeuvers().size() != 0) {
+        log.warn("Found pre-planned longitudinal maneuvers in trajectory [" + traj.getStartLocation() + ", " + traj.getEndLocation() + "]");
+        log.warn("Cruising Plugin gave up planning this trajectory.");
+        return new TrajectoryPlanningResponse();
+    }
     // Use RouteService to find all necessary speed limits
     RouteService routeService = pluginServiceLocator.getRouteService();
     double endLocation = traj.getComplexManeuver() == null ? traj.getEndLocation() : traj.getComplexManeuver().getStartDistance();
