@@ -25,6 +25,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LaneKeeping;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.ITacticalPlugin;
@@ -107,9 +108,12 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         log.info("Route Following plugin terminated");
     }
 
-    private void planLaneKeepingManeuver(double startDist, double endDist) {
+    private void planLaneKeepingManeuver(Trajectory traj, double startDist, double endDist) {
         log.info(String.format("Planning lane keeping maneuver planning between: [%.02f, %.02f)", startDist, endDist));
-        // STUB
+        LaneKeeping laneKeepingManeuver = new LaneKeeping();
+        laneKeepingManeuver.planToTargetDistance(pluginServiceLocator.getManeuverPlanner().getManeuverInputs(), 
+        pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), startDist, endDist);
+        traj.addManeuver(laneKeepingManeuver);
     }
 
     @Override
@@ -194,7 +198,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             IManeuver m = traj.getNextManeuverAfter(windowStart, ManeuverType.LATERAL);
             double windowEnd = (m != null ? m.getStartDistance() : traj.getEndLocation());
 
-            planLaneKeepingManeuver(windowStart, windowEnd);
+            planLaneKeepingManeuver(traj, windowStart, windowEnd);
 
             windowStart = traj.findEarliestLateralWindowOfSize(EPSILON);
         }
