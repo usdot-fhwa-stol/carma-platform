@@ -196,6 +196,8 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             // Compute the distance required and command the lane change plugin to plan
             double startSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeStartLocation).getLimit();
             double endSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeEndLocation).getLimit();
+            log.info(String.format("Delegating to Lane Change Plugin with params = {laneId=%d,startLimit=%.02f,endLimit=%.02f,start=%.02f,end=%.02f}",
+            targetLane.getLaneId(), startSpeedLimit, endSpeedLimit, laneChangeStartLocation, laneChangeEndLocation));
             ((LaneChangePlugin)laneChangePlugin).setLaneChangeParameters(targetLane.getLaneId(), startSpeedLimit, endSpeedLimit);
             laneChangePlugin.planSubtrajectory(traj, laneChangeStartLocation, laneChangeEndLocation);
         }
