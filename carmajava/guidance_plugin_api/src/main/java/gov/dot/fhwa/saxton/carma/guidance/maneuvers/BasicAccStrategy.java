@@ -44,11 +44,11 @@ public class BasicAccStrategy extends AbstractAccStrategy {
     log = LoggerManager.getLogger();
   }
 
-  private double computeActualTimeGap(double distToFrontVehicle, double currentSpeed, double frontVehicleSpeed) {
+  private double computeActualTimeGap(double distGap, double currentSpeed, double frontVehicleSpeed) {
     if (currentSpeed <= 0) {
       return Double.POSITIVE_INFINITY;
     }
-    return distGap(distToFrontVehicle) / currentSpeed;
+    return distGap / currentSpeed;
   }
 
   @Override
@@ -105,6 +105,6 @@ public class BasicAccStrategy extends AbstractAccStrategy {
    * Adds the standoff distance to the front vehicle distance
    */
   private final double distGap(double distToFrontVehicle) {
-    return standoffDistance + distToFrontVehicle;
+    return Math.max(0, distToFrontVehicle - standoffDistance);
   }
 }
