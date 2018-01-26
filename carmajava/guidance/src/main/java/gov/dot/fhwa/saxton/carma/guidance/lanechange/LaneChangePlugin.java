@@ -269,7 +269,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             if (laneChangeMvr_ != null) {
 
                 //formulate an announcement for Negotiator to broadcast our intentions, just in case someone is there that
-                // we don't know about (but we'll move out with our plan assuming we understand the environment correctly)\
+                // we don't know about (but we'll move out with our plan assuming we understand the environment correctly)
                 // TODO change it to an intro message when ExtrapolatedEnviroment logic is finished
                 buildPlanMessage(inputs, targetLane, startDist, startSpeed);
                 planAvailable = true;
