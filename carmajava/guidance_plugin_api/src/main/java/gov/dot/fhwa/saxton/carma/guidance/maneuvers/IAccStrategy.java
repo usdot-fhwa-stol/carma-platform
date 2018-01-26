@@ -77,11 +77,6 @@ public interface IAccStrategy {
   double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed, double desiredSpeedCommand);
 
   /**
-   * Compute the desired headway (in meters) at currentSpeed
-   */
-  double computeDesiredHeadway(double currentSpeed);
-
-  /**
    * Get the maximum acceleration value this ACC strategy is authorized to command, in m/s/s
    */
   double getMaxAccel();

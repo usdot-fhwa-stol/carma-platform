@@ -32,9 +32,4 @@ public class NoOpAccStrategy extends AbstractAccStrategy {
 			double desiredSpeedCommand) {
       return desiredSpeedCommand;
 	}
-
-	@Override
-	public double computeDesiredHeadway(double currentSpeed) {
-    return 0.0;
-	}
 }

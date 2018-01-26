@@ -63,9 +63,6 @@ public abstract class AbstractAccStrategy implements IAccStrategy {
   @Override
 	public abstract double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
 			double desiredSpeedCommand);
-
-  @Override
-  public abstract double computeDesiredHeadway(double currentSpeed);
   
   protected double applyAccelLimit(double overrideCommand, double currentSpeed, double maxAccel) {
     if (Math.abs(overrideCommand - currentSpeed) / TIMESTEP_DURATION_S > maxAccel) {
