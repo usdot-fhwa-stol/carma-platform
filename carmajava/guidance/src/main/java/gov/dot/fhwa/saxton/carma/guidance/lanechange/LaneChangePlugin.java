@@ -163,6 +163,13 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
     @Override
     public boolean planSubtrajectory(Trajectory traj, double startDistance, double endDistance) {
+        log.info(String.format("In planSubtrajectory with params = {laneId=%d,startLimit=%.02f,endLimit=%.02f,start=%.02f,end=%.02f}",
+            targetLane_,
+            startSpeed_,
+            endSpeed_,
+            startDistance,
+            endDistance));
+
         boolean planningComplete;
 
         //verify that the input parameters have been defined already
@@ -170,7 +177,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
             //attempt to plan the lane change [plan]
             try {
-                planningComplete = plan(traj, startDistance, endDistance, targetLane_, startSpeed_, endSpeed_);
+                planningComplete = plan(startDistance, endDistance, targetLane_, startSpeed_, endSpeed_);
+                log.info("Plan returned " + planningComplete);
             }catch (IllegalStateException e) {
                 //if we can't fit the maneuver in the space available, no point in starting negotiations to do so;
                 // abort the whole subtrajectory, with no future maneuver inserted
@@ -185,6 +193,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
             //insert these containers into the trajectory
             if (!traj.addManeuver(futureLatMvr_)  ||  !traj.addManeuver(futureLonMvr_)) {
+                log.warn("Unable to add lane change future maneuvers to trajectory");
                 return false;
             }
 
@@ -237,7 +246,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
      * @return true if a completed plan is immediately available; false if we need to wait on a negotiation
      * @throws IllegalStateException if the lane change is geometrically infeasible
      */
-    private boolean plan(Trajectory traj, double startDist, double endDist, int targetLane, double startSpeed, double endSpeed)
+    private boolean plan(double startDist, double endDist, int targetLane, double startSpeed, double endSpeed)
                         throws IllegalStateException {
         boolean planAvailable = false;
         ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
@@ -248,14 +257,15 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         //check for expected neighbor vehicles in our target area (target area is the target lane for the whole length
         // of the compound maneuver, since we could begin moving into that lane at any point along that length)
         long futureTime = System.currentTimeMillis() + (long)(1000.0*2.0*(startDist - curDist)/(startSpeed + curSpeed));
+        log.info("Expected arrival time at lane change area = " + futureTime);
         List<Object> vehicles = env_.getVehiclesInTargetArea(targetLane, startDist, endDist, futureTime);
+        log.info("Num vehicles @ target area: " + vehicles.size());
 
         //construct our proposed simple lane change maneuver
         laneChangeMvr_ = new LaneChange();
         laneChangeMvr_.setTargetLane(targetLane);
         if (planner.canPlan(laneChangeMvr_, startDist, endDist)) {
             planner.planManeuver(laneChangeMvr_, startDist);
-            traj.addManeuver(laneChangeMvr_);
             log.debug("V2V", "plan: simple lane change maneuver is built.");
         }else {
             //TODO - would be nice to have some logic here to diagnose the problem and try again
