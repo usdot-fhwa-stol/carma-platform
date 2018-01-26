@@ -360,11 +360,13 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             futureLatMvr_.addManeuver(laneChangeMvr_);
 
             //fill the remainder with a constant lane
-            LaneKeeping lk = new LaneKeeping();
             double startDist = futureLatMvr_.getLastDistance();
             double endDist = futureLatMvr_.getEndDistance();
-            lk.planToTargetDistance(inputs,commands, startDist, endDist);
-            futureLatMvr_.addManeuver(lk);
+            if (endDist - startDist > 0) {
+                LaneKeeping lk = new LaneKeeping();
+                lk.planToTargetDistance(inputs,commands, startDist, endDist);
+                futureLatMvr_.addManeuver(lk);
+            }
 
             //fill the whole longitudinal space with a constant speed
             SteadySpeed ss = new SteadySpeed();
