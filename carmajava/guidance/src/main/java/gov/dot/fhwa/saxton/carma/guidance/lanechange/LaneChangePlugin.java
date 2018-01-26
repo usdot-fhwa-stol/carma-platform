@@ -182,6 +182,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             }catch (IllegalStateException e) {
                 //if we can't fit the maneuver in the space available, no point in starting negotiations to do so;
                 // abort the whole subtrajectory, with no future maneuver inserted
+                log.warn("Plan returned false!");
                 return false;
             }
 
@@ -262,11 +263,13 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         log.info("Num vehicles @ target area: " + vehicles.size());
 
         //construct our proposed simple lane change maneuver
+        log.info("Creating lane change maneuver");
         laneChangeMvr_ = new LaneChange();
         laneChangeMvr_.setTargetLane(targetLane);
         if (planner.canPlan(laneChangeMvr_, startDist, endDist)) {
-            planner.planManeuver(laneChangeMvr_, startDist);
-            log.debug("V2V", "plan: simple lane change maneuver is built.");
+            log.info("Planning lane change maneuver...");
+            planner.planManeuver(laneChangeMvr_, startDist, endDist);
+            log.info("V2V", "plan: simple lane change maneuver is built.");
         }else {
             //TODO - would be nice to have some logic here to diagnose the problem and try again
             laneChangeMvr_ = null;
