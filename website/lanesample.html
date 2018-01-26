@@ -7,17 +7,17 @@
 
 </head>
 <body>
-Total Lanes: <input id="totallanes" type="text" value="5" placeholder="Total # of Lanes">
-Target Lane: <input id="targetlane" type="text" value="2" placeholder="Target Lane">
-Current Lane ID: <input id="currentlaneid" type="text" value="2" placeholder="Current Lane ID">
-<br />
-<!--Add new and Clear (not working): <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(true, true);">-->
-Add: <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(true, false);">
-Update: <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(false, true);">
-<div id="divLaneTracking">
-</div>
+    Total Lanes: <input id="totallanes" type="text" value="5" placeholder="Total # of Lanes">
+    Target Lane: <input id="targetlane" type="text" value="2" placeholder="Target Lane">
+    Current Lane ID: <input id="currentlaneid" type="text" value="2" placeholder="Current Lane ID">
+    <br />
+    <!--Add new and Clear (not working): <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(true, true);">-->
+    Add: <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(true, false);">
+    Update: <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(false, true);">
+    <div id="divLaneTracking">
+    </div>
 
-<script>
+    <script>
         if (!SVG.supported) {
             alert('SVG not supported. Some images will not be displayed.');
         }
@@ -34,7 +34,7 @@ Update: <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(fa
                 //Check if SVG is supported
                 draw = SVG('divLaneTracking').size(600, 190).viewbox(0, 0, 600, 190).attr({
                     preserveAspectRatio: 'xMidYMid meet'
-                    ,id: 'svgEditorBackground'
+                    , id: 'svgEditorBackground'
                 }); //static to fit available space.
             }
             else {
@@ -66,12 +66,12 @@ Update: <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(fa
             /*<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
                width = "600px" height= "190px" viewBox= "0 0 600 190" preserveAspectRatio= "xMidYMid meet" onload= "" >
             */
-
             var y1 = 0; //static height;
             var y2 = 189;//static height;
             var lanewidth = 109; //static lane width
             var firstline_x = 0; //default
 
+            //START HERE for svgcarma.js
             //e1_line.x1 = Starting point (currently hardcoded, cannot find the proper calc or pattern)
             //alert(totallanes);
             switch (totallanes) {
@@ -91,6 +91,8 @@ Update: <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(fa
                     firstline_x = 34;
                     break;
                 default:
+                    console.log('UI cannot handle more than 5 lanes at this time.')
+                    return; // cannot handle more than 5 lanes.
             }
 
             //x = e1_line.x1 - 10px (which is 10 px on each side); 81-71 = 10px
@@ -132,40 +134,72 @@ Update: <input id="currentlaneid" type="button" value="GO" onclick="drawLanes(fa
                 <rect x="190" y="0" width="109" height="217" style="fill:lime;fill-opacity:0.22;" id="rect_current_lane" />
             */
             if (targetlane >= 0) {
-
-                var lineid = 'r' + rect_index + 'e' + (targetlane+1) + '_line';
+                var lineid = 'r' + rect_index + 'e' + (targetlane + 1) + '_line';
                 var targetline = SVG.get(lineid);
-                var line_x = targetline.attr('x1');
+                //console.log('TARGET: lineid: ' + lineid +  '; x1: ' + targetline.attr('x1'));
 
-                //alert(lineid);
-                //alert('targetlane: ' + line_x);
+                if (targetline != null) {
+                    var line_x = targetline.attr('x1');
+                    //console.log('TARGET: targetline.x1:' + line_x);
 
-                //static width 109 and heigh 217
-                var rect_target = draw.rect(109, 217).attr({
-                    id: 'rect_target_lane'
-                    , x: line_x
-                    , y: 0
-                    , style: 'fill:red;fill-opacity:0.22;'
-                });
+                    var targetlanestyle;
+                    if (currentlaneid == targetlane)
+                        targetlanestyle = 'fill:#4CAF50; fill-opacity:0.22;'; //Green
+                    else
+                        targetlanestyle = 'fill:cornflowerblue; fill-opacity:0.22;';
+
+                    //static width 109 and heigh 217
+                    var rect_target = draw.rect(109, 217).attr({
+                        id: 'rect_target_lane'
+                        , x: line_x
+                        , y: 0
+                        , style: targetlanestyle
+                    });
+                }
+                else {
+                    console.log('TARGET: targetline is null!');
+                }
             }
 
             /*** Current Lane
             */
             if (currentlaneid >= 0) {
-                var targetline = SVG.get('r' + rect_index + 'e' + (currentlaneid+1) + '_line');
-                var line_x = targetline.attr('x1');
 
-                //alert('targetline for current lane:' + currentlaneid);
+                var lineid = 'r' + rect_index + 'e' + (currentlaneid + 1) + '_line';
+                var targetline = SVG.get(lineid);
+                //console.log('CURRENT: lineid: ' + lineid + '; x1: ' + targetline.attr('x1'));
 
-                //To calculate image x position = e#_line.x1 - 19px
-                //TODO: Convert to svg to change colors.
-                var image = draw.image('images/SUV.png', 145.136, 157.036);
-                image.attr({
-                    id: 'r' + rect_index + '_image'
-                    , x: line_x - 19
-                    , y: 19.6868
-                    , visibility: 'visible'
+                if (targetline != null) {
+                    var line_x = targetline.attr('x1');
+                    //console.log('CURRENT: targetline.x1:' + line_x);
+
+                    //To calculate image x position = e#_line.x1 - 19px
+                    //TODO: Convert to svg to change colors.
+                    var image = draw.image('../images/SUV.png', 145.136, 157.036);
+                    image.attr({
+                        id: 'r' + rect_index + '_image'
+                        , x: line_x - 19
+                        , y: 19.6868
+                        , visibility: 'visible'
+                    });
+                }
+                else {
+                    console.log('CURRENT: targetline is null!');
+                }
+            }
+
+            //Display OFF ROAD when less than 0 or >= totallanes
+            //currentlaneid is 0 based.
+            if (currentlaneid < 0 || currentlaneid >= totallanes) {
+                var text = draw.text(function (add) {
+                    add.tspan('OFF ROAD').fill('#b32400').style('font-weight:bold;font-size:20px;') /* red font */
                 });
+
+                //center accordingly to # of lanes.
+                if (totallanes == 3 || totallanes == 1)
+                    text.center(290, 95);
+                else
+                    text.center(305, 95);
             }
 
             //increment rect at the end
