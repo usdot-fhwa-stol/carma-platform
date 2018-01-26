@@ -89,6 +89,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
         routeService = pluginServiceLocator.getRouteService();
         log.info("Route Following plugin resumed");
+        setAvailability(true);
     }
 
     @Override
