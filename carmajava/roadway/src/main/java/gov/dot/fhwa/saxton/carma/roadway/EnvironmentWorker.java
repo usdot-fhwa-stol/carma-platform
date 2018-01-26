@@ -171,7 +171,7 @@ public class EnvironmentWorker {
 
     // Find the route segment which this route segment is on
     int currentSegIndex = currentSegment.getUptrackWaypoint().getWaypointId();
-    List<RouteSegment> segmentsToSearch = activeRoute.findRouteSubsection(currentSegIndex, distBackward, distForward, routeState.getSegmentDownTrack());
+    List<RouteSegment> segmentsToSearch = activeRoute.findRouteSubsection(currentSegIndex, routeState.getSegmentDownTrack(), distBackward, distForward);
     RouteSegment bestSegment = activeRoute.routeSegmentOfPoint(objPositionECEF, segmentsToSearch);
     int segmentIndex = bestSegment.getUptrackWaypoint().getWaypointId();
    

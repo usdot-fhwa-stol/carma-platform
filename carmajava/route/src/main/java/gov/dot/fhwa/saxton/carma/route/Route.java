@@ -366,7 +366,7 @@ public class Route {
       double crossTrack = seg.crossTrackDistance(point);
       double downTrack = seg.downTrackDistance(point);
 
-      if (-0.0 < downTrack && downTrack < seg.length()) { 
+      if (-0.0 < downTrack && downTrack <= seg.length()) { 
         if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
           return seg;
         
