@@ -67,7 +67,7 @@ public class RequiredLane {
 
   @Override
   public String toString() {
-    return String.format("RequiredLane{location=%.02f, laneId=%.02f}", location, laneId);
+    return String.format("RequiredLane{location=%.02f, laneId=%d}", location, laneId);
   }
 }
 

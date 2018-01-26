@@ -94,11 +94,13 @@ public class GuidanceRouteService implements RouteService {
     RequiredLane prev = null;
     for (RequiredLane lane : requiredLanes) {
       if (prev != null && prev.getLaneId() != lane.getLaneId()) {
-        requiredLanes.add(lane);
+        requiredLaneChanges.add(lane);
       }
 
       prev = lane;
     }
+
+    requiredLanes = requiredLaneChanges;
   }
 
   @Override

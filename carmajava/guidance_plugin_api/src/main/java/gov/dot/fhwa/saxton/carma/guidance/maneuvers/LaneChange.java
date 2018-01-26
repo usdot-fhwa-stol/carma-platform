@@ -38,6 +38,7 @@ public class LaneChange extends LateralManeuver {
     @Override
     public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
             double endDist) throws IllegalStateException, ArithmeticException {
+        endDist_ = endDist;
         return super.planToTargetDistance(inputs, commands, startDist, endDist);
     }
 

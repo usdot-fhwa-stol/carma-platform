@@ -152,9 +152,9 @@ lane_change_rate_factor: 0.75
 # Double: The amount of delay to account for driver response to a lane change operation, used for estimating distance
 # traveled during a lane change
 # Units: seconds
-lane_change_delay_factor: 1.5
+lane_change_delay_factor: 2.0
 
 # Double: The amount of time after a lane change operation to allow for safety reasons, used for estimating distance
 # traveled during a lane change
 # Units: seconds
-lane_change_safety_factor: 1.5
+lane_change_safety_factor: 2.0

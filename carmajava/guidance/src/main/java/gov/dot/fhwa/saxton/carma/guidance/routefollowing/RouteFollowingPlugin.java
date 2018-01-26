@@ -25,6 +25,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LaneKeeping;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.ITacticalPlugin;
@@ -89,6 +90,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
         routeService = pluginServiceLocator.getRouteService();
         log.info("Route Following plugin resumed");
+        setAvailability(true);
     }
 
     @Override
@@ -106,9 +108,12 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         log.info("Route Following plugin terminated");
     }
 
-    private void planLaneKeepingManeuver(double startDist, double endDist) {
+    private void planLaneKeepingManeuver(Trajectory traj, double startDist, double endDist) {
         log.info(String.format("Planning lane keeping maneuver planning between: [%.02f, %.02f)", startDist, endDist));
-        // STUB
+        LaneKeeping laneKeepingManeuver = new LaneKeeping();
+        laneKeepingManeuver.planToTargetDistance(pluginServiceLocator.getManeuverPlanner().getManeuverInputs(), 
+        pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), startDist, endDist);
+        traj.addManeuver(laneKeepingManeuver);
     }
 
     @Override
@@ -117,7 +122,11 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         // TODO: Implement planning logic to handle planning around other lateral maneuvers that may already be planned!
         SortedSet<RequiredLane> requiredLanes = routeService.getRequiredLanesInRange(traj.getStartLocation(),
                 traj.getEndLocation());
-        requiredLanes.add(routeService.getRequiredLaneAtLocation(traj.getEndLocation())); // Handle the end point of the trajectory
+        
+        RequiredLane laneChangeAfterTraj = routeService.getRequiredLaneAtLocation(traj.getEndLocation());
+        if (laneChangeAfterTraj != null) {
+            requiredLanes.add(laneChangeAfterTraj); // Handle the end point of the trajectory
+        }
 
         log.info(String.format("Identified %d lane changes in trajectory", requiredLanes.size()));
         String changes = "";
@@ -150,6 +159,10 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
         // Walk the lane changes required by route and plan maneuvers for each of them.
         for (RequiredLane targetLane : requiredLanes) {
+            if (targetLane.getLocation() > traj.getEndLocation()) {
+                log.info("Ignoring lane change " + targetLane + " for now, since it's not on the trajectory.");
+                continue;
+            }
             double speedLimit = routeService.getSpeedLimitAtLocation(targetLane.getLocation()).getLimit();
             double distanceForLaneChange = speedLimit * laneChangeDelayFactor + speedLimit * laneChangeRateFactor
                     + speedLimit * laneChangeSafetyFactor;
@@ -183,6 +196,8 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             // Compute the distance required and command the lane change plugin to plan
             double startSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeStartLocation).getLimit();
             double endSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeEndLocation).getLimit();
+            log.info(String.format("Delegating to Lane Change Plugin with params = {laneId=%d,startLimit=%.02f,endLimit=%.02f,start=%.02f,end=%.02f}",
+            targetLane.getLaneId(), startSpeedLimit, endSpeedLimit, laneChangeStartLocation, laneChangeEndLocation));
             ((LaneChangePlugin)laneChangePlugin).setLaneChangeParameters(targetLane.getLaneId(), startSpeedLimit, endSpeedLimit);
             laneChangePlugin.planSubtrajectory(traj, laneChangeStartLocation, laneChangeEndLocation);
         }
@@ -193,7 +208,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             IManeuver m = traj.getNextManeuverAfter(windowStart, ManeuverType.LATERAL);
             double windowEnd = (m != null ? m.getStartDistance() : traj.getEndLocation());
 
-            planLaneKeepingManeuver(windowStart, windowEnd);
+            planLaneKeepingManeuver(traj, windowStart, windowEnd);
 
             windowStart = traj.findEarliestLateralWindowOfSize(EPSILON);
         }
