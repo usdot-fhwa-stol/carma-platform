@@ -122,8 +122,10 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
                 //if this one indicates our plan was accepted then
                 if (n.process(stat)) {
-                    //populate the future placeholder
-                    populateFutureManeuver();
+                    //populate the future placeholder when no FutureManeuver is populated
+                    if(!(futureLatMvr_.isFull() || futureLonMvr_.isFull())) {
+                        populateFutureManeuver();
+                    }
                     //remove the negotiation from the list of outstanding negotiations
                     toBeRemoved.add(n);
                 }
