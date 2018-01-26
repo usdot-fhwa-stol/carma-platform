@@ -58,7 +58,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     version.setName("Cruising Plugin");
     version.setMajorRevision(1);
     version.setIntermediateRevision(0);
-    version.setMinorRevision(0);
+    version.setMinorRevision(1);
   }
 
   @Override
@@ -96,6 +96,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     return Math.abs(a - b) < epsilon;
   }
 
+  //TODO this method is currently looking for gaps in longitudinal maneuvers but it needs to expand to lateral in the future
   protected List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed) {
     // Get the end location of this trajectory excluded complex maneuver  
     double endLocation = traj.getComplexManeuver() == null ? traj.getEndLocation() : traj.getComplexManeuver().getStartDistance();
@@ -107,19 +108,17 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     double lastManeuverEndLocation = traj.getStartLocation();
     double lastManeuverEndSpeed = trajStartSpeed;
     for(LongitudinalManeuver lm : longitudinalManeuvers) {
-        if(lm.getStartDistance() < endLocation) {
-            if(fpEquals(lastManeuverEndLocation, lm.getStartDistance(), DISTANCE_EPSILON)) {
-                lastManeuverEndLocation = lm.getEndDistance();
-            } else {
-                // create trajectory seg and update last maneuver end location/speed
-                TrajectorySegment seg = new TrajectorySegment();
-                seg.start = lastManeuverEndLocation;
-                seg.end = lm.getStartDistance();
-                seg.startSpeed = lastManeuverEndSpeed;
-                gaps.add(seg);
-                lastManeuverEndLocation = lm.getEndDistance();
-                lastManeuverEndSpeed = lm.getTargetSpeed();
-            }
+        if (fpEquals(lastManeuverEndLocation, lm.getStartDistance(), DISTANCE_EPSILON)) {
+            lastManeuverEndLocation = lm.getEndDistance();
+        } else {
+            // create trajectory seg and update last maneuver end location/speed
+            TrajectorySegment seg = new TrajectorySegment();
+            seg.start = lastManeuverEndLocation;
+            seg.end = lm.getStartDistance();
+            seg.startSpeed = lastManeuverEndSpeed;
+            gaps.add(seg);
+            lastManeuverEndLocation = lm.getEndDistance();
+            lastManeuverEndSpeed = lm.getTargetSpeed();
         }
     }
     //add trajectory gap from lastManeuverEndLocation to the end of trajectory
@@ -176,7 +175,6 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     return adjustedEndSpeed;
   }
 
-  // It can only plan trajectory without preplanned longitudinal maneuvers.
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
     for(TrajectorySegment ts : findTrajectoryGaps(traj, expectedEntrySpeed)) {
