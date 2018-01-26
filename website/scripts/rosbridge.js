@@ -145,7 +145,7 @@ function connectToROS() {
             document.getElementById('closed').style.display = 'inline';
 
             //Show modal popup for when ROS connection has been abruptly closed.
-            var messageTypeFullDescription = 'ROS Connection Closed.<br/><br/>';
+            var messageTypeFullDescription = 'ROS Connection Closed.';
             messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
             showModal(true, messageTypeFullDescription, false);
             
@@ -1165,10 +1165,10 @@ function checkRouteInfo() {
         remaining_dist_miles = Math.max(0, remaining_dist_miles);
 
         var divDistRemaining = document.getElementById('divDistRemaining');
-        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(2) + ' m';
+        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(0) + ' m';
 
         insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi/m)', remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(2) + ' m');
+        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi/m)', remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(0) + ' m');
 
         //Calculate and show next lane change remaining distance
         //Show 0 if negative
@@ -1178,10 +1178,10 @@ function checkRouteInfo() {
         lane_remaining_dist_miles = Math.max(0, lane_remaining_dist_miles);
 
         //var divDistRemaining = document.getElementById('divDistRemaining');
-        divDistRemaining.innerHTML += '<br/> Lane Change In: ' + lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(2) + ' m';
+        divDistRemaining.innerHTML += '<br/> Lane Change In: ' + lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m';
 
         insertNewTableRow('tblSecondA', 'Lane Change Total Dist (m)', total_dist_next_lane_change.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Lane Change In (mi/m)', lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(2) + ' m');
+        insertNewTableRow('tblSecondA', 'Lane Change In (mi/m)', lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m');
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
@@ -1759,6 +1759,11 @@ window.onload = function () {
         if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '') {
             guidance_engaged = (isGuidanceEngaged == 'true');
         }
+
+        // Adding Copyright based on current year
+        var elemCopyright = document.getElementsByClassName('copyright');
+        elemCopyright[0].innerHTML = '&copy LEIDOS ' + new Date().getFullYear();
+
         //Refresh requires connection to ROS.
         connectToROS();
 

@@ -29,19 +29,19 @@ function drawLanes(addNew, clear) {
 
 
     if (addNew == true || SVG.get('svgEditorBackground') == null) {
-          //Check if SVG is supported
-          draw = SVG('divLaneTracking').size(600, 190).viewbox(0, 0, 600, 190).attr({
-              preserveAspectRatio: 'xMidYMid meet'
-             ,id: 'svgEditorBackground'
-         }); //static to fit available space.
+        //Check if SVG is supported
+        draw = SVG('divLaneTracking').size(600, 190).viewbox(0, 0, 600, 190).attr({
+            preserveAspectRatio: 'xMidYMid meet'
+            , id: 'svgEditorBackground'
+        }); //static to fit available space.
     }
     else {
         draw = SVG.get('svgEditorBackground');
     }
 
     if (draw == null) {
-         document.getElementById('divLog').innerHTML += '<br/> Draw is null.';
-         return;
+        document.getElementById('divLog').innerHTML += '<br/> Draw is null.';
+        return;
     }
 
     if (clear == true || addNew == false) {
@@ -57,7 +57,6 @@ function drawLanes(addNew, clear) {
     var y2 = 189;//static height;
     var lanewidth = 109; //static lane width
     var firstline_x = 0; //default
-
 
     //e1_line.x1 = Starting point (currently hardcoded, cannot find the proper calc or pattern)
     //alert(totallanes);
@@ -78,6 +77,8 @@ function drawLanes(addNew, clear) {
             firstline_x = 34;
             break;
         default:
+            console.log('UI cannot handle more than 5 lanes at this time.')
+            return; // cannot handle more than 5 lanes.
     }
 
     //x = e1_line.x1 - 10px (which is 10 px on each side); 81-71 = 10px
@@ -112,29 +113,33 @@ function drawLanes(addNew, clear) {
             line.attr({ style: 'stroke: white; fill: none; stroke-width: 5px; stroke-dasharray:15px, 15px;' });
         }
 
-        currentline = currentline + lanewidth;        
+        currentline = currentline + lanewidth;
     }
 
     /*** Color Target Lane
         <rect x="190" y="0" width="109" height="217" style="fill:lime;fill-opacity:0.22;" id="rect_current_lane" />
     */
-    if (targetlane >= 0)
-    {
+    if (targetlane >= 0) {
         var lineid = 'r' + rect_index + 'e' + (targetlane + 1) + '_line';
         var targetline = SVG.get(lineid);
         //console.log('TARGET: lineid: ' + lineid +  '; x1: ' + targetline.attr('x1'));
 
-        if (targetline != null)
-        {
+        if (targetline != null) {
             var line_x = targetline.attr('x1');
             //console.log('TARGET: targetline.x1:' + line_x);
+
+            var targetlanestyle;
+            if (currentlaneid == targetlane)
+                targetlanestyle = 'fill:#4CAF50; fill-opacity:0.22;'; //Green
+            else
+                targetlanestyle = 'fill:cornflowerblue; fill-opacity:0.22;';
 
             //static width 109 and heigh 217
             var rect_target = draw.rect(109, 217).attr({
                 id: 'rect_target_lane'
                 , x: line_x
                 , y: 0
-                , style: 'fill:red;fill-opacity:0.22;'
+                , style: targetlanestyle
             });
         }
         else {
@@ -144,14 +149,13 @@ function drawLanes(addNew, clear) {
 
     /*** Current Lane
     */
-    if (currentlaneid >= 0)
-    {
+    if (currentlaneid >= 0) {
+
         var lineid = 'r' + rect_index + 'e' + (currentlaneid + 1) + '_line';
         var targetline = SVG.get(lineid);
         //console.log('CURRENT: lineid: ' + lineid + '; x1: ' + targetline.attr('x1'));
 
-        if (targetline != null)
-        {
+        if (targetline != null) {
             var line_x = targetline.attr('x1');
             //console.log('CURRENT: targetline.x1:' + line_x);
 
@@ -168,6 +172,19 @@ function drawLanes(addNew, clear) {
         else {
             console.log('CURRENT: targetline is null!');
         }
+    }
+
+    //Display OFF ROAD when less than 0 or > totallanes
+    if (currentlaneid < 0 || currentlaneid > totallanes) {
+        var text = draw.text(function (add) {
+            add.tspan('OFF ROAD').fill('#b32400').style('font-weight:bold;font-size:20px;') /* red font */
+        });
+
+        //center accordingly to # of lanes.
+        if (totallanes == 3 || totallanes == 1)
+            text.center(290, 95);
+        else
+            text.center(305, 95);
     }
 
     //increment rect at the end
