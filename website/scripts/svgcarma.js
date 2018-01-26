@@ -174,8 +174,9 @@ function drawLanes(addNew, clear) {
         }
     }
 
-    //Display OFF ROAD when less than 0 or > totallanes
-    if (currentlaneid < 0 || currentlaneid > totallanes) {
+    //Display OFF ROAD when less than 0 or >= totallanes
+    //currentlaneid is 0 based.
+    if (currentlaneid < 0 || currentlaneid >= totallanes) {
         var text = draw.text(function (add) {
             add.tspan('OFF ROAD').fill('#b32400').style('font-weight:bold;font-size:20px;') /* red font */
         });
