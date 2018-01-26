@@ -107,11 +107,11 @@ vehicle_acceleration_limit: 2.5
 
 # Double: Time headway to control to with ACC
 # Units: seconds
-desired_acc_timegap: 0.0
+desired_acc_timegap: 2.0
 
 # Double: Minimum distance between vehicle and front vehicle at any point
 # Units: m
-min_acc_standoff_distance: 0.0
+min_acc_standoff_distance: 5.0
 
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
@@ -132,13 +132,13 @@ max_downtrack_error: 100.0
 acc_exit_distance_factor: 1.5
 
 # Double: The poportional term in the acc PID controller
-acc_Kp: 1.0
+acc_Kp: 1.75
 
 # Double: The integral term in the acc PID controller
 acc_Ki: 0.0
 
 # Double: The derivative term in the acc PID controller
-acc_Kd: 0.0
+acc_Kd: 0.1
 
 # Double: The dize of the deadband to apply to the PID controller
 acc_pid_deadband: 0.0
