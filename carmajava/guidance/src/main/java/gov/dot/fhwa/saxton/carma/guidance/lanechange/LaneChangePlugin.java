@@ -122,8 +122,10 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
                 //if this one indicates our plan was accepted then
                 if (n.process(stat)) {
-                    //populate the future placeholder
-                    populateFutureManeuver();
+                    //populate the future placeholder when no FutureManeuver is populated
+                    if(!(futureLatMvr_.isFull() || futureLonMvr_.isFull())) {
+                        populateFutureManeuver();
+                    }
                     //remove the negotiation from the list of outstanding negotiations
                     toBeRemoved.add(n);
                 }
@@ -270,14 +272,16 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
                 //formulate an announcement for Negotiator to broadcast our intentions, just in case someone is there that
                 // we don't know about (but we'll move out with our plan assuming we understand the environment correctly)
-                buildAnnouncement(inputs, targetLane);
+                // TODO change it to an intro message when ExtrapolatedEnviroment logic is finished
+                buildPlanMessage(inputs, targetLane, startDist, startSpeed);
                 planAvailable = true;
             }
         }
 
         //if we can't do it outright then
         if (!planAvailable){
-            //formulate a plan for coordinated maneuvering
+            // formulate a plan for coordinated maneuvering
+            // we will not go into this case before ExtrapolatedEnviroment is ready
             buildPlanMessage(inputs, targetLane, startDist, startSpeed);
         }
 
