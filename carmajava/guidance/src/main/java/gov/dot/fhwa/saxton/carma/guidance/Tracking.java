@@ -52,7 +52,6 @@ import sensor_msgs.NavSatFix;
 import std_msgs.Float64;
 
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -280,7 +279,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 		
 		long loop_start = System.currentTimeMillis();
 		
-		if(currentState.get() == GuidanceState.DRIVERS_READY) {
+		if(currentState.get() != GuidanceState.STARTUP && currentState.get() != GuidanceState.SHUTDOWN) {
 			
 			//publish content for a new BSM
 			bsmPublisher.publish(composeBSMData());
