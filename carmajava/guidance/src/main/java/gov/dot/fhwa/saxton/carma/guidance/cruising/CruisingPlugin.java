@@ -18,8 +18,6 @@ package gov.dot.fhwa.saxton.carma.guidance.cruising;
 
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
@@ -31,7 +29,6 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
@@ -51,7 +48,6 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     double start;
     double end;
     double startSpeed;
-    double endSpeed;
   }
 
   public CruisingPlugin(PluginServiceLocator psl) {
@@ -62,7 +58,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     version.setName("Cruising Plugin");
     version.setMajorRevision(1);
     version.setIntermediateRevision(0);
-    version.setMinorRevision(0);
+    version.setMinorRevision(1);
   }
 
   @Override
@@ -100,67 +96,40 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     return Math.abs(a - b) < epsilon;
   }
 
-  //TODO: Maybe we should remove this method since no one is using it
-  protected List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed, double trajEndSpeed) {
+  //TODO this method is currently looking for gaps in longitudinal maneuvers but it needs to expand to lateral in the future
+  protected List<TrajectorySegment> findTrajectoryGaps(Trajectory traj, double trajStartSpeed) {
+    // Get the end location of this trajectory excluded complex maneuver  
+    double endLocation = traj.getComplexManeuver() == null ? traj.getEndLocation() : traj.getComplexManeuver().getStartDistance();
+    // Get the list of sorted longitudinal maneuvers to calculate longitudinal plan gaps
     List<LongitudinalManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
-    longitudinalManeuvers.sort(new Comparator<IManeuver>() {
-      @Override
-      public int compare(IManeuver o1, IManeuver o2) {
-        return Double.compare(o1.getStartDistance(), o2.getStartDistance());
-      }
-    });
+    longitudinalManeuvers.sort((o1, o2) -> Double.compare(o1.getStartDistance(), o2.getStartDistance()));
 
     List<TrajectorySegment> gaps = new ArrayList<>();
-
-    // Will be the only case to be handled for now, nothing else should be generating longitudinal maneuvers
-    if (longitudinalManeuvers.isEmpty()) {
-      TrajectorySegment seg = new TrajectorySegment();
-      seg.start = traj.getStartLocation();
-      seg.end = traj.getEndLocation();
-      seg.startSpeed = trajStartSpeed;
-      seg.endSpeed = trajEndSpeed;
-
-      gaps.add(seg);
-
-      return gaps;
-    }
-
-    // Find the gaps between
-    if (!fpEquals(longitudinalManeuvers.get(0).getStartDistance(), traj.getStartLocation(), DISTANCE_EPSILON)) {
-      TrajectorySegment seg = new TrajectorySegment();
-      seg.start = traj.getStartLocation();
-      seg.end = longitudinalManeuvers.get(0).getStartDistance();
-      seg.startSpeed = trajStartSpeed;
-      seg.endSpeed = longitudinalManeuvers.get(0).getStartSpeed();
-
-      gaps.add(seg);
-    }
-
-    LongitudinalManeuver prev = null;
-    for (LongitudinalManeuver maneuver : longitudinalManeuvers) {
-      if (prev != null) {
-        if (!fpEquals(prev.getEndDistance(), maneuver.getStartDistance(), DISTANCE_EPSILON)) {
-          TrajectorySegment seg = new TrajectorySegment();
-          seg.start = prev.getEndDistance();
-          seg.end = maneuver.getStartDistance();
-          seg.startSpeed = prev.getTargetSpeed();
-          seg.endSpeed = maneuver.getTargetSpeed();
-          gaps.add(seg);
+    double lastManeuverEndLocation = traj.getStartLocation();
+    double lastManeuverEndSpeed = trajStartSpeed;
+    for(LongitudinalManeuver lm : longitudinalManeuvers) {
+        if (fpEquals(lastManeuverEndLocation, lm.getStartDistance(), DISTANCE_EPSILON)) {
+            lastManeuverEndLocation = lm.getEndDistance();
+        } else {
+            // create trajectory seg and update last maneuver end location/speed
+            TrajectorySegment seg = new TrajectorySegment();
+            seg.start = lastManeuverEndLocation;
+            seg.end = lm.getStartDistance();
+            seg.startSpeed = lastManeuverEndSpeed;
+            gaps.add(seg);
+            lastManeuverEndLocation = lm.getEndDistance();
+            lastManeuverEndSpeed = lm.getTargetSpeed();
         }
-      }
-
-      prev = maneuver;
     }
-
-    if (!fpEquals(prev.getEndDistance(), traj.getEndLocation(), DISTANCE_EPSILON)) {
-      TrajectorySegment seg = new TrajectorySegment();
-      seg.start = prev.getEndDistance();
-      seg.end = traj.getEndLocation();
-      seg.startSpeed = prev.getTargetSpeed();
-      seg.endSpeed = trajEndSpeed;
-      gaps.add(seg);
+    //add trajectory gap from lastManeuverEndLocation to the end of trajectory
+    if(!fpEquals(lastManeuverEndLocation, endLocation, DISTANCE_EPSILON)) {
+        TrajectorySegment seg = new TrajectorySegment();
+        seg.start = lastManeuverEndLocation;
+        seg.end = endLocation;
+        seg.start = lastManeuverEndSpeed;
+        gaps.add(seg);
     }
-
+    
     return gaps;
   }
 
@@ -206,41 +175,44 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     return adjustedEndSpeed;
   }
 
-  // It can only plan trajectory without preplanned longitudinal maneuvers.
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-    // Use RouteService to find all necessary speed limits
-    RouteService routeService = pluginServiceLocator.getRouteService();
-    double endLocation = traj.getComplexManeuver() == null ? traj.getEndLocation() : traj.getComplexManeuver().getStartDistance();
-    SortedSet<SpeedLimit> trajLimits = routeService.getSpeedLimitsInRange(traj.getStartLocation(), endLocation);
-    trajLimits.add(routeService.getSpeedLimitAtLocation(endLocation));
-    
-    // Merge segments with same speed limits
-    List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();
-    SpeedLimit limit_buffer = null;
-    for(SpeedLimit limit : trajLimits) {
-        if(limit_buffer == null) {
-            limit_buffer = limit;
-        } else {
-            if(limit_buffer.getLimit() == limit.getLimit()) {
-                limit_buffer.setLocation(limit.getLocation());
-            } else {
-                mergedLimits.add(limit_buffer);
-                limit_buffer = limit;
-            }
-        }
+    for(TrajectorySegment ts : findTrajectoryGaps(traj, expectedEntrySpeed)) {
+        planTrajectoryGap(ts, traj);
     }
-    limit_buffer.setLocation(traj.getEndLocation());
-    mergedLimits.add(limit_buffer);
-    
-    // Plan trajectory to follow all speed limits
-    double newManeuverStartSpeed = expectedEntrySpeed;
-    double newManeuverStartLocation = traj.getStartLocation();
-    for(SpeedLimit limit : mergedLimits) {
-        newManeuverStartSpeed = planManeuvers(traj, newManeuverStartLocation, limit.getLocation(), newManeuverStartSpeed, limit.getLimit());
-        newManeuverStartLocation = limit.getLocation();
-    }
-
     return new TrajectoryPlanningResponse();
+  }
+  
+  private void planTrajectoryGap(TrajectorySegment trajSeg, Trajectory traj) {
+      // Use RouteService to find all necessary speed limits in this trajectory segment
+      RouteService routeService = pluginServiceLocator.getRouteService();
+      SortedSet<SpeedLimit> trajLimits = routeService.getSpeedLimitsInRange(trajSeg.start, trajSeg.end);
+      trajLimits.add(routeService.getSpeedLimitAtLocation(trajSeg.end));
+
+      // Merge segments with same speed limits
+      List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();
+      SpeedLimit limit_buffer = null;
+      for(SpeedLimit limit : trajLimits) {
+          if(limit_buffer == null) {
+              limit_buffer = limit;
+          } else {
+              if(limit_buffer.getLimit() == limit.getLimit()) {
+                  limit_buffer.setLocation(limit.getLocation());
+              } else {
+                  mergedLimits.add(limit_buffer);
+                  limit_buffer = limit;
+              }
+          }
+      }
+      limit_buffer.setLocation(trajSeg.end);
+      mergedLimits.add(limit_buffer);
+      
+      // Plan trajectory to follow all speed limits in this trajectory segment
+      double newManeuverStartSpeed = trajSeg.startSpeed;
+      double newManeuverStartLocation = trajSeg.start;
+      for(SpeedLimit limit : mergedLimits) {
+          newManeuverStartSpeed = planManeuvers(traj, newManeuverStartLocation, limit.getLocation(), newManeuverStartSpeed, limit.getLimit());
+          newManeuverStartLocation = limit.getLocation();
+      }
   }
 }
