@@ -51,6 +51,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected double distanceDowntrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
+    protected int currentLane_ = 0;
     protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
     protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
     protected ILogger log;
@@ -93,6 +94,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             @Override
             public void onMessage(RouteState msg) {
                 distanceDowntrack_ = msg.getDownTrack();
+                currentLane_ = msg.getLaneIndex();
             }
         });
 
@@ -240,6 +242,6 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
     @Override
     public int getCurrentLane() {
-        return 0; // TODO implement using data from roadway
+        return currentLane_;
     }
 }
