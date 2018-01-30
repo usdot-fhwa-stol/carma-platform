@@ -118,12 +118,12 @@ public class MessageConsumer extends SaxtonBaseNode {
             publishOutboundMobilityGreeting_ = param.getBoolean("~/publish_outbound_mobility_greeting");
             publishOutboundMobilityAck_ = param.getBoolean("~/publish_outbound_mobility_ack");
             publishOutboundMobilityPlan_ = param.getBoolean("~/publish_outbound_mobility_plan");
-            log_.info("Read params to publish outbound: BSM = " + publishOutboundBsm_ + ", Mob intro = " + publishOutboundMobilityIntro_
-                    + ", Mob greeting = " + publishOutboundMobilityGreeting_ + ", Mob ack = " + publishOutboundMobilityAck_
-                    + ", Mob plan = " + publishOutboundMobilityPlan_);
         }catch (Exception e) {
             log_.warn("STARTUP", "Error reading Message parameters. Using defaults.");
         }
+        log_.info("Read params to publish outbound: BSM = " + publishOutboundBsm_ + ", Mob intro = " + publishOutboundMobilityIntro_
+                + ", Mob greeting = " + publishOutboundMobilityGreeting_ + ", Mob ack = " + publishOutboundMobilityAck_
+                + ", Mob plan = " + publishOutboundMobilityPlan_);
 
         //initialize message statistic
 		messageCounters = new MessageStatistic(connectedNode_, log_);
