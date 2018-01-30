@@ -119,7 +119,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          */
 
         // TODO: Should there be a timestamp check to synchronize host downtrack and obstacle downtrack?
-        roadwayEnvironmentSubscriber_ = pubSubService.getSubscriberForTopic("roadway_obstacles", RoadwayEnvironment._TYPE);
+        roadwayEnvironmentSubscriber_ = pubSubService.getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
         roadwayEnvironmentSubscriber_.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
             @Override
             public void onMessage(RoadwayEnvironment msg) {
