@@ -26,6 +26,10 @@ public class LaneKeeping extends LateralManeuver {
 
     protected double DEFAULT_AXEL_ANGLE = 0.0;
 
+    public LaneKeeping(String plannerName) {
+        super(plannerName);
+    }
+
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
             throws IllegalStateException {

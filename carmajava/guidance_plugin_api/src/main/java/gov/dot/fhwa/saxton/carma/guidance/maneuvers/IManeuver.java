@@ -45,4 +45,10 @@ public interface IManeuver {
      * @return distance from beginning of the route at which the maneuver is to complete, m
      */
     double getEndDistance();
+
+    /**
+     * Returns the name of the component or plugin which was responsible for planning this maneuver
+     * @return the name of the component or plugin
+     */
+    String getPlannerName();
 }

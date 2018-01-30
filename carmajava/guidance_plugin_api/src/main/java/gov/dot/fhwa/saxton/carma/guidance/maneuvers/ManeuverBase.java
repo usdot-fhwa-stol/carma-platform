@@ -30,7 +30,15 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     protected IManeuverInputs                   inputs_;
     protected IGuidanceCommands                 commands_;
     protected ILogger                           log_ = LoggerManager.getLogger();
+    protected final String                      plannerName_;
 
+    /**
+     * Constructs a Maneuver and sets the planner's name
+     * @param plannerName the name of the component or plugin which planned this maneuver
+     */
+    public ManeuverBase(String plannerName) {
+        this.plannerName_ = plannerName;
+    }
 
     /**
      * Provides the common planning capability that all maneuvers will need. Concrete maneuver classes
@@ -69,6 +77,11 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     @Override
     public double getEndDistance() {
         return endDist_;
+    }
+    
+    @Override
+    public String getPlannerName() {
+        return plannerName_;
     }
 
     /**

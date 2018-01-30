@@ -45,11 +45,11 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
    * @param minExpectedSpeed The minimum expected speed
    * @param maxExpectedSpeed The maximum expected speed
    */
-  public SpeedHarmonizationManeuver(ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+  public SpeedHarmonizationManeuver(String plannerName, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
     IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
     double minExpectedSpeed, double maxExpectedSpeed) {
 
-    super(inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime,
+    super(plannerName, inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime,
       minExpectedSpeed, maxExpectedSpeed);
     speedHarmInputs_ = speedHarmInputs;
   }
@@ -57,20 +57,20 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
   /**
    * Constructor where the expected speeds are calculated
    */
-  public SpeedHarmonizationManeuver(ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+  public SpeedHarmonizationManeuver(String plannerName, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
     IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
 
-    super(inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
+    super(plannerName, inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
     speedHarmInputs_ = speedHarmInputs;
   }
 
   /**
    * Constructor where the expected speeds are calculated
    */
-  public SpeedHarmonizationManeuver(ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+  public SpeedHarmonizationManeuver(String plannerName, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
     IAccStrategy accStrategy, double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
 
-    super(inputs, commands, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
+    super(plannerName, inputs, commands, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
     speedHarmInputs_ = speedHarmInputs;
   }
 

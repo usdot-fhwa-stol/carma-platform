@@ -33,7 +33,8 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     protected double workingAccel_; // m/s^2 that we will actually use
     protected static final double SPEED_EPSILON = 0.0001;
 
-    public LongitudinalManeuver() {
+    public LongitudinalManeuver(String plannerName) {
+        super(plannerName);
         this.accStrategy = AccStrategyManager.newAccStrategy();
     }
 

@@ -24,6 +24,10 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 public class SpeedUp extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
 
+    public SpeedUp(String plannerName) {
+        super(plannerName);
+    }
+
     /**
      * ASSUMES that the target speed has been specified such that it does not exceed and infrastructure speed limit.
      */

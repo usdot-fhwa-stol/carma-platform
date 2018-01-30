@@ -139,7 +139,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
    */
   protected double planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
     ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
-    SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory();
+    SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory(version.componentName());
     log.info(String.format("Trying to plan maneuver {start=%.2f,end=%.2f,startSpeed=%.2f,endSpeed=%.2f}", startDist, endDist, startSpeed, endSpeed));
     double maneuverEnd = startDist;
     double adjustedEndSpeed = startSpeed;

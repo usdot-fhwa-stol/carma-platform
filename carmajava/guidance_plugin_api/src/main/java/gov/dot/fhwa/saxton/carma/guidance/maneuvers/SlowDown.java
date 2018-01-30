@@ -24,6 +24,10 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 public class SlowDown extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
 
+    public SlowDown(String plannerName) {
+        super(plannerName);
+    }
+    
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
         super.plan(inputs, commands, startDist);

@@ -64,7 +64,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   private void execute(IManeuver maneuver) {
     log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", "
-        + maneuver.getEndDistance() + ")");
+        + maneuver.getEndDistance() + ") Planned by: " + maneuver.getPlannerName());
     if (maneuver instanceof LongitudinalManeuver) {
       if (longitudinalManeuverThread != null) {
         longitudinalManeuverThread.interrupt();

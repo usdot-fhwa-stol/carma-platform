@@ -30,7 +30,8 @@ public abstract class LateralManeuver extends ManeuverBase {
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
     protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity
 
-    public LateralManeuver() {
+    public LateralManeuver(String plannerName) {
+        super(plannerName);
     }
 
     @Override

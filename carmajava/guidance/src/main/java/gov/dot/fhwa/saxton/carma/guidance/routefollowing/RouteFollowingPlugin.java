@@ -110,7 +110,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
     private void planLaneKeepingManeuver(Trajectory traj, double startDist, double endDist) {
         log.info(String.format("Planning lane keeping maneuver planning between: [%.02f, %.02f)", startDist, endDist));
-        LaneKeeping laneKeepingManeuver = new LaneKeeping();
+        LaneKeeping laneKeepingManeuver = new LaneKeeping(version.componentName());
         laneKeepingManeuver.planToTargetDistance(pluginServiceLocator.getManeuverPlanner().getManeuverInputs(), 
         pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), startDist, endDist);
         traj.addManeuver(laneKeepingManeuver);

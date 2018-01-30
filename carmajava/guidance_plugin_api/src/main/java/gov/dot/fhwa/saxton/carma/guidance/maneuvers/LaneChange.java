@@ -28,6 +28,10 @@ public class LaneChange extends LateralManeuver {
     protected double LEFT_LANE_CHANGE = -1.0;
     protected double KEEP_LANE = 0.0;
 
+    public LaneChange(String plannerName) {
+        super(plannerName);
+    }
+
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
             throws IllegalStateException {

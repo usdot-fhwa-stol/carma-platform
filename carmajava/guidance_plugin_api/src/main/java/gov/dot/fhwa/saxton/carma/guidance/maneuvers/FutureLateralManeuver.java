@@ -27,8 +27,8 @@ public class FutureLateralManeuver extends LateralManeuver {
     protected final double                      CONCATENATION_TOLERANCE = 0.001; // meter
 
 
-    public FutureLateralManeuver(IManeuverInputs inputs, double startDist, double startSpeed, double endDist, double endSpeed) {
-        super();
+    public FutureLateralManeuver(String plannerName, IManeuverInputs inputs, double startDist, double startSpeed, double endDist, double endSpeed) {
+        super(plannerName);
         inputs_ = inputs;
         startDist_ = startDist;
         startSpeed_ = startSpeed;

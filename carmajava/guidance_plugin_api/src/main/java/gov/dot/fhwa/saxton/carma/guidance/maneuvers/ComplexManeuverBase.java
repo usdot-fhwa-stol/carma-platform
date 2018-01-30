@@ -36,10 +36,12 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   protected double minExpectedSpeed_;
   protected double maxExpectedSpeed_;
   protected double maxAccel_ = 0.999;     // m/s^2 absolute value; default is a conservative value
+  protected final String plannerName_;
 
   /**
    * Constructor where user provides all relevant inputs
    *
+   * @param plannerName       The name of the component or plugin which planned this maneuver
    * @param inputs            Input which provides the current state of the vehicle
    * @param commands          The target for calculated commands
    * @param startDist         The distance along the route to the maneuver starting point
@@ -49,9 +51,10 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
    * @param minExpectedSpeed  The minimum expected speed
    * @param maxExpectedSpeed  The maximum expected speed
    */
-  protected ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
+  protected ComplexManeuverBase(String plannerName, IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
     double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
     double minExpectedSpeed, double maxExpectedSpeed) {
+    plannerName_ = plannerName;
     startDist_ = startDist;
     endDist_ = endDist;
     minCompletionTime_ = minCompletionTime;
@@ -67,8 +70,9 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   /**
    * Constructor where the expected speeds are calculated
    */
-  public ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
+  public ComplexManeuverBase(String plannerName, IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
     double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
+    plannerName_ = plannerName;
     inputs_ = inputs;
     commands_ = commands;
     accStrategy_ = accStrategy;
@@ -84,8 +88,9 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   /**
    * Constructor where the completion times are calculated
    */
-  public ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
+  public ComplexManeuverBase(String plannerName, IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
     double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
+    plannerName_ = plannerName;
     inputs_ = inputs;
     commands_ = commands;
     accStrategy_ = accStrategy;
@@ -216,6 +221,11 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
     if (limit > 0.0) { //can't be equal to zero
       maxAccel_ = limit;
     }
+  }
+
+  @Override
+  public String getPlannerName() {
+      return plannerName_;
   }
 
   @Override public String toString() {
