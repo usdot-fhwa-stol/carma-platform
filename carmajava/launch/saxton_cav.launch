@@ -45,7 +45,6 @@
   <arg name="mock_srx_controller" default="false" doc="True if using a simulated srx controller driver"/>
   <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
   <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
-  <arg name="mock_cellular"       default="false" doc="True if using a simulated cellular driver"/>
 
   <!-- Data Files -->
   <arg name="can_data_file"            default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
@@ -60,7 +59,6 @@
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
-  <arg name="debug_transform_svr"   default="false" doc="Set true to enable debugging on the Transform Server node"/>
   <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
   <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
   <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
@@ -263,9 +261,6 @@
 
       <!-- Transform Server Node -->
       <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
-
-        <env if="$(arg debug_transform_svr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
       </node>
