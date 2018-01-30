@@ -18,6 +18,8 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import cav_msgs.ExternalObject;
 import cav_msgs.ExternalObjectList;
+import cav_msgs.RoadwayEnvironment;
+import cav_msgs.RoadwayObstacle;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
@@ -47,7 +49,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
     protected ISubscriber<RouteState> routeStateSubscriber_;
     protected ISubscriber<TwistStamped> twistSubscriber_;
-    protected ISubscriber<ExternalObjectList> externalObjectListSubscriber_;
+    protected ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber_;
     protected double distanceDowntrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
@@ -115,15 +117,20 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          */
 
         // TODO: Update to use actual topic provided by sensor fusion
-        externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
-        externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
+        // TODO: Should there be a timestamp check to synchronize host downtrack and obstacle downtrack?
+        roadwayEnvironmentSubscriber_ = pubSubService.getSubscriberForTopic("roadway_obstacles", RoadwayEnvironment._TYPE);
+        roadwayEnvironmentSubscriber_.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
             @Override
-            public void onMessage(ExternalObjectList msg) {
+            public void onMessage(RoadwayEnvironment msg) {
                 double closestDistance = Double.POSITIVE_INFINITY;
-                ExternalObject frontVehicle = null;
-                for (ExternalObject eo : msg.getObjects()) {
+                RoadwayObstacle frontVehicle = null;
+                for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
+
+                    double frontObstacleDist = obs.getDownTrack() - distanceDowntrack_;
+
                     // TODO: When sensor fusion publishes relative lane data, ensure object is in HOST_LANE
-                    if (eo.getPose().getPose().getPosition().getX() < closestDistance) {
+                    if ( obs.getPrimaryLane() != 
+                        frontObstacleDist < closestDistance && frontObstacleDist > -0.0) {
                         // If its close than our previous best candidate, update our candidate
                         frontVehicle = eo;
                         closestDistance = eo.getPose().getPose().getPosition().getX();
