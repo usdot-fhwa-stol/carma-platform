@@ -19,24 +19,27 @@
 ****/
 
 // Deployment variables
-var ip = '192.168.32.143' // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
+var ip = '192.168.88.10' // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
 
 // Topics
 var t_system_alert = 'system_alert';
 var t_available_plugins = 'plugins/available_plugins';
 var t_nav_sat_fix = 'nav_sat_fix';
-var t_current_segment = 'current_segment';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = 'route_state';
 var t_active_route = 'route';
 var t_cmd_speed = 'cmd_speed';
-var t_current_segment = 'current_segment';
 var t_robot_status = 'robot_status';
 var t_diagnostics = '/diagnostics';
 var t_acc_engaged = 'acc_engaged';
 var t_can_engine_speed = 'engine_speed';
 var t_can_speed = 'speed';
+var t_guidance_state = 'state';
+var t_incoming_bsm = 'bsm';
+var t_driver_discovery = 'driver_discovery';
+var t_lateral_control_driver = 'cmd_lateral';
+var t_ui_instructions = 'ui_instructions';
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -74,13 +77,32 @@ var listenerPluginAvailability;
 var listenerSystemAlert;
 var isModalPopupShowing = false;
 
+var waitingForGuidanceStartup = false;
+var waitingForRouteStateSegmentStartup = false;
+
 // For Route Timer
 var routeTimer;
 
 //Conversion from m/s to MPH.
 var meter_to_mph = 2.23694;
+var meter_to_mile = 0.000621371;
+var total_dist_next_speed_limit = 0;
+var total_dist_next_lane_change = 0;
 
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
+
+// For Lane change
+var rect_index = 0;
+var totallanes = 0;
+var targetlane = 0;
+var currentlaneid = 0;
+
+/*
+* Custom sleep used in enabling guidance
+*/
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /*
 * Connection to ROS
@@ -121,6 +143,12 @@ function connectToROS() {
             document.getElementById('connecting').style.display = 'none';
             document.getElementById('connected').style.display = 'none';
             document.getElementById('closed').style.display = 'inline';
+
+            //Show modal popup for when ROS connection has been abruptly closed.
+            var messageTypeFullDescription = 'ROS Connection Closed.';
+            messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
+            showModal(true, messageTypeFullDescription, false);
+            
         });
 
         // Create a connection to the rosbridge WebSocket server.
@@ -164,7 +192,7 @@ function checkSystemAlerts() {
                 messageTypeFullDescription = 'System received a FATAL message. Please wait for system to shut down. <br/><br/>' + message.description;
                 messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
                 listenerSystemAlert.unsubscribe();
-                showModal(true, messageTypeFullDescription);
+                showModal(true, messageTypeFullDescription, false);
                 break;
             case 4:
                 system_ready = false;
@@ -180,18 +208,15 @@ function checkSystemAlerts() {
                 system_ready = false;
                 sessionStorage.setItem('isSystemReady', false);
                 //Added additional logic here, since the system_alert sometimes get published before the route_state.
-                if (message.description.indexOf('LEFT_ROUTE')>0)
-                {
+                if (message.description.indexOf('LEFT_ROUTE') > 0) {
                     messageTypeFullDescription = 'You have LEFT THE ROUTE. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                    showModal(true, messageTypeFullDescription);
+                    showModal(true, messageTypeFullDescription, true);
                 }
-                else if (message.description.indexOf('ROUTE_COMPLETED')>0)
-                {
+                else if (message.description.indexOf('ROUTE_COMPLETED') > 0) {
                     messageTypeFullDescription = 'ROUTE COMPLETED. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                    showModal(false, messageTypeFullDescription);
+                    showModal(false, messageTypeFullDescription, true);
                 }
-                else
-                {
+                else {
                     messageTypeFullDescription = 'System is SHUTTING DOWN. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE. <br/>' + message.description;
                 }
 
@@ -246,17 +271,25 @@ function showRouteOptions() {
 
         divCapabilitiesMessage.innerHTML = 'Please select a route.';
 
+        //Reset and Hide the Capabilities section
+        var divSubCapabilities = document.getElementById('divSubCapabilities');
+        divSubCapabilities.style.display = 'none';
+        divSubCapabilities.innerHTML = '';
+
+        //Dispay the Route selection.
         var myRoutes = result.availableRoutes;
         var divRoutes = document.getElementById('divRoutes');
+        divRoutes.innerHTML = '';
+        divRoutes.style.display = 'block'; //Show the route section
 
         for (i = 0; i < myRoutes.length; i++) {
             createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes');
-
         }
 
         if (myRoutes.length == 0) {
             divCapabilitiesMessage.innerHTML = 'Sorry, there are no available routes, and cannot proceed without one. <br/> Please contact your System Admin.';
         }
+
     });
 }
 
@@ -273,7 +306,7 @@ function setRoute(id) {
     });
 
     //TODO: Remove this when Route Manager has updated the RouteID to not have spaces. For now have to do this.
-    var selectedRouteid = id.toString().replace('rb', '').replace( /_/g,' ');
+    var selectedRouteid = id.toString().replace('rb', '').replace(/_/g, ' ');
 
     // Then we create a Service Request.
     // replace rb with empty string and underscore with space to go back to original ID from topic.
@@ -285,14 +318,13 @@ function setRoute(id) {
     var rbRoute = document.getElementById(id.toString());
 
     var ErrorStatus = {
-        NO_ERROR: {value: 0, text: 'NO_ERROR'},
-        NO_ROUTE: {value: 1, text: 'NO_ROUTE'},
+        NO_ERROR: { value: 0, text: 'NO_ERROR' },
+        NO_ROUTE: { value: 1, text: 'NO_ROUTE' },
     };
 
     // Call the service and get back the results in the callback.
     setActiveRouteClient.callService(request, function (result) {
-        if (result.errorStatus == ErrorStatus.NO_ROUTE.value)
-        {
+        if (result.errorStatus == ErrorStatus.NO_ROUTE.value) {
             divCapabilitiesMessage.innerHTML = 'Setting the active route failed (' + ErrorStatus.NO_ROUTE.text + '). <br/> Please try again.';
             insertNewTableRow('tblSecondA', 'Error Code', result.ErrorStatus.NO_ROUTE.text);
 
@@ -320,10 +352,10 @@ Start Active Route
 function startActiveRoute(id) {
 
     var ErrorStatus = {
-        NO_ERROR: {value: 0, text: 'NO_ERROR'},
-        NO_ACTIVE_ROUTE: {value: 1, text: 'NO_ACTIVE_ROUTE'},
-        INVALID_STARTING_LOCATION: {value: 2, text: 'INVALID_STARTING_LOCATION'},
-        ALREADY_FOLLOWING_ROUTE: {value: 3, text: 'ALREADY_FOLLOWING_ROUTE'},
+        NO_ERROR: { value: 0, text: 'NO_ERROR' },
+        NO_ACTIVE_ROUTE: { value: 1, text: 'NO_ACTIVE_ROUTE' },
+        INVALID_STARTING_LOCATION: { value: 2, text: 'INVALID_STARTING_LOCATION' },
+        ALREADY_FOLLOWING_ROUTE: { value: 3, text: 'ALREADY_FOLLOWING_ROUTE' },
     };
 
     // Calling setActiveRoute service
@@ -345,14 +377,14 @@ function startActiveRoute(id) {
         switch (result.errorStatus) {
             case ErrorStatus.NO_ERROR.value:
             case ErrorStatus.ALREADY_FOLLOWING_ROUTE.value:
-                 showSubCapabilitiesView(id);
-                 break;
+                showSubCapabilitiesView(id);
+                break;
             case ErrorStatus.NO_ACTIVE_ROUTE.value:
-                 errorDescription = ErrorStatus.ALREADY_FOLLOWING_ROUTE.text;
-                 break;
+                errorDescription = ErrorStatus.ALREADY_FOLLOWING_ROUTE.text;
+                break;
             case ErrorStatus.INVALID_STARTING_LOCATION.value:
-                 errorDescription = ErrorStatus.INVALID_STARTING_LOCATION.text;
-                 break;
+                errorDescription = ErrorStatus.INVALID_STARTING_LOCATION.text;
+                break;
             default: //unexpected value or error
                 errorDescription = result.errorStatus; //print the number;
                 break;
@@ -409,9 +441,20 @@ function showSubCapabilitiesView2() {
     var divSubCapabilities = document.getElementById('divSubCapabilities');
     divSubCapabilities.style.display = 'block';
 
-    checkRouteInfo();
-    showPluginOptions();
+    if (waitingForRouteStateSegmentStartup == false) {
+        //Need to wait for route current segment to publish to not get negative total lengths. 
+        setTimeout(function () {
+            checkRouteInfo();
+            console.log('Wait call for checkRouteInfo.');
+            waitingForRouteStateSegmentStartup = true;
+        }, 5000);
+    }
+    else {
+        checkRouteInfo();
+    }
 
+    console.log('showPluginOptions called.');
+    showPluginOptions();
 }
 /*
  Show user the registered plugins.
@@ -470,8 +513,7 @@ function activatePlugin(id) {
 
     //If the plugin is required to be on all times, it cannot be deactivated by the user, so need to notify users with a specific message.
     //Regardless, the call to activate plugin will fail.
-    if (newStatus == false && lblCapabilities.innerHTML.indexOf('*') > 0 )
-    {
+    if (newStatus == false && lblCapabilities.innerHTML.indexOf('*') > 0) {
         divCapabilitiesMessage.innerHTML = 'Sorry, this capability is required. It cannot be deactivated.';
         //Need to set it back to original value.
         cbCapabilities.checked = !newStatus;
@@ -572,7 +614,7 @@ function enableGuidance() {
 */
 function engageGuidance() {
 
-	//audio-fix needs to be on an actual button click event on the tablet.
+    //audio-fix needs to be on an actual button click event on the tablet.
     loadAudioElements();
 
     //Sets the new status OPPOSITE to the current value.
@@ -591,7 +633,7 @@ function engageGuidance() {
     });
 
     // Call the service and get back the results in the callback.
-    setGuidanceClient.callService(request, function (result) {
+    setGuidanceClient.callService(request, async function (result) {
 
         if (result.guidance_status != newStatus) //NOT SUCCESSFUL.
         {
@@ -602,11 +644,20 @@ function engageGuidance() {
         //Set based on returned status, regardless if succesful or not.
         guidance_engaged = Boolean(result.guidance_status);
 
+        //this flag prevents looking at robot_active status while guidance first starts up and begins sending commands to the robot
+        waitingForGuidanceStartup = true;
+        await sleep(1000);
+        waitingForGuidanceStartup = false;
+
         //start the route timer
         startRouteTimer();
 
         //Update Guidance button and checkAvailability.
         showGuidanceEngaged();
+
+        //Open to DriveView tab after engaging
+        if (result.guidance_status == 'true')
+            openTab(event, 'divDriverView');
     });
 }
 
@@ -643,100 +694,157 @@ function showGuidanceEngaged() {
         //AFTER dis-engaging, redirect to a page. Guidance is sending all the nodes to stop.
         //Currently, only way to re-engage would be to re-run the roslaunch file.
         //Discussed that UI DOES NOT need to wait to disconnect and redirect to show any shutdown errors from Guidance.
-        showModal(true, 'You are disengaging guidance. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.');
+        showModal(true, 'You are disengaging guidance. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
     }
 }
 
 /*
     Change status and format the CAV button
 */
-function setCAVButtonState (state){
+function setCAVButtonState(state) {
 
     var btnCAVGuidance = document.getElementById('btnCAVGuidance');
 
     switch (state) {
 
-    case 'ENABLED': // equivalent READY after user has made their selection.
-        btnCAVGuidance.disabled = false;
-        btnCAVGuidance.className = 'button_cav button_enabled'; //color to blue
+        case 'ENABLED': // equivalent READY after user has made their selection.
+            btnCAVGuidance.disabled = false;
+            btnCAVGuidance.className = 'button_cav button_enabled'; //color to blue
 
-        //Update the button title
-        btnCAVGuidance.title = 'Start CAV Guidance';
-        btnCAVGuidance.innerHTML = 'CAV Guidance - READY <i class="fa fa-thumbs-o-up"></i>';
+            //Update the button title
+            btnCAVGuidance.title = 'Start CAV Guidance';
+            btnCAVGuidance.innerHTML = 'CAV Guidance - READY <i class="fa fa-thumbs-o-up"></i>';
 
-        //divCapabilitiesMessage.innerHTML = ''; // leave as is
+            //divCapabilitiesMessage.innerHTML = ''; // leave as is
 
-        sessionStorage.setItem('isGuidanceEngaged', false);
-        break;
+            sessionStorage.setItem('isGuidanceEngaged', false);
+            break;
 
-    case 'DISABLED': // equivalent NOT READY awaiting user selection.
-        btnCAVGuidance.disabled = true;
-        btnCAVGuidance.className = 'button_cav button_disabled'; //color to blue
+        case 'DISABLED': // equivalent NOT READY awaiting user selection.
+            btnCAVGuidance.disabled = true;
+            btnCAVGuidance.className = 'button_cav button_disabled'; //color to blue
 
-        //Update the button title
-        btnCAVGuidance.title = 'CAV Guidance';
-        btnCAVGuidance.innerHTML = 'CAV Guidance';
+            //Update the button title
+            btnCAVGuidance.title = 'CAV Guidance';
+            btnCAVGuidance.innerHTML = 'CAV Guidance';
 
-        //divCapabilitiesMessage.innerHTML = ''; // leave as is
+            //divCapabilitiesMessage.innerHTML = ''; // leave as is
 
-        sessionStorage.setItem('isGuidanceEngaged', false);
-        break;
+            sessionStorage.setItem('isGuidanceEngaged', false);
+            break;
 
-    case 'ENGAGED':
-         btnCAVGuidance.disabled = false;
-         btnCAVGuidance.className = 'button_cav button_engaged'; // color to green.
+        case 'ENGAGED':
+            btnCAVGuidance.disabled = false;
+            btnCAVGuidance.className = 'button_cav button_engaged'; // color to green.
 
-         btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
-         btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
+            btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
+            btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
 
-        divCapabilitiesMessage.innerHTML = 'CAV Guidance is engaged.';
+            divCapabilitiesMessage.innerHTML = 'CAV Guidance is engaged.';
 
-         //Set session for when user refreshes
-        sessionStorage.setItem('isGuidanceEngaged', true);
+            //Set session for when user refreshes
+            sessionStorage.setItem('isGuidanceEngaged', true);
 
-        //reset to replay inactive sound if it comes back again.
-        sound_played_once = false;
+            //reset to replay inactive sound if it comes back again.
+            sound_played_once = false;
 
-        break;
+            break;
 
-    case 'DISENGAGED':
-        guidance_engaged == false;
+        case 'DISENGAGED':
+            guidance_engaged = false;
 
-        btnCAVGuidance.disabled = false;
-        btnCAVGuidance.className = 'button_cav button_disabled';
+            btnCAVGuidance.disabled = false;
+            btnCAVGuidance.className = 'button_cav button_disabled';
 
-        //Update the button title
-        btnCAVGuidance.title = 'Start CAV Guidance';
-        btnCAVGuidance.innerHTML = 'CAV Guidance - DISENGAGED <i class="fa fa-stop-circle-o"></i>';
+            //Update the button title
+            btnCAVGuidance.title = 'Start CAV Guidance';
+            btnCAVGuidance.innerHTML = 'CAV Guidance - DISENGAGED <i class="fa fa-stop-circle-o"></i>';
 
-        sessionStorage.setItem('isGuidanceEngaged', false);
-        break;
+            sessionStorage.setItem('isGuidanceEngaged', false);
+            break;
 
-    case 'INACTIVE':  //robot_active is inactive
+        case 'INACTIVE':  //robot_active is inactive
 
-        if (guidance_engaged == false) //do not override with INACTIVE status if guidance is already disengaged.
-            return;
+            if (guidance_engaged == false) //do not override with INACTIVE status if guidance is already disengaged.
+                return;
 
-        btnCAVGuidance.disabled = false;
-        btnCAVGuidance.className = 'button_cav button_inactive'; // color to orange
-        btnCAVGuidance.title = 'CAV Guidance status is inactive.';
-        btnCAVGuidance.innerHTML = 'CAV Guidance - INACTIVE <i class="fa fa-times-circle-o"></i>';
-        //leave isGuidanceEngaged as-is
+            btnCAVGuidance.disabled = false;
+            btnCAVGuidance.className = 'button_cav button_inactive'; // color to orange
+            btnCAVGuidance.title = 'CAV Guidance status is inactive.';
+            btnCAVGuidance.innerHTML = 'CAV Guidance - INACTIVE <i class="fa fa-times-circle-o"></i>';
+            //leave isGuidanceEngaged as-is
 
-        divCapabilitiesMessage.innerHTML = 'CAV Guidance has been de-activated. <br/> To re-engage, double tap the ACC switch downward on the steering wheel.';
+            divCapabilitiesMessage.innerHTML = 'CAV Guidance has been de-activated. <br/> To re-engage, double tap the ACC switch downward on the steering wheel.';
 
-        //This check to make sure inactive sound is only played once even when it's been published multiple times in a row.
-        //It will get reset when status changes back to engage.
-        if (sound_played_once == false)
-        {
-            playSound('audioAlert3', false);
-            sound_played_once = true; //sound has already been played once.
-        }
-        break;
+            //This check to make sure inactive sound is only played once even when it's been published multiple times in a row.
+            //It will get reset when status changes back to engage.
+            if (sound_played_once == false) {
+                playSound('audioAlert3', false);
+                sound_played_once = true; //sound has already been played once.
+            }
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
+}
+
+/**
+* Check Guidance State
+**/
+function checkGuidanceState() {
+
+    // Subscribing to a Topic
+    listenerGuidanceState = new ROSLIB.Topic({
+        ros: ros,
+        name: t_guidance_state,
+        messageType: 'cav_msgs/GuidanceState'
+    });
+
+    // Then we add a callback to be called every time a message is published on this topic.
+    listenerGuidanceState.subscribe(function (message) {
+
+        var messageTypeFullDescription = '';
+
+        switch (message.state) {
+            case 1: //STARTUP
+                messageTypeFullDescription = 'Guidance is starting up.';
+                break;
+            case 2: //DRIVERS_READY
+                messageTypeFullDescription = 'Guidance have the drivers ready. ';
+                break;
+            //case 3: //ACTIVE //TODO: Further discussion with Kyle based on email.
+            //   enableGuidance();
+            //    break;
+            case 5: //INACTIVE
+                enableGuidance();
+                if (guidance_engaged)
+                    setCAVButtonState('INACTIVE');
+                break;
+            case 4: //ENGAGED
+                //Set based on returned status, regardless if succesful or not.
+                guidance_engaged = true;
+
+                //start the route timer - skipped since it may be already restarted
+                ////startRouteTimer();
+
+                //Update Guidance button and checkAvailability.
+                showGuidanceEngaged();
+                break;
+            case 0: //SHUTDOWN
+                //Show modal popup for Shutdown alerts from Guidance, which is equivalent to Fatal since it cannot restart with this state.
+                //system_ready = false;
+                messageTypeFullDescription = 'System received a Guidance Shutdown. <br/><br/>' + message.description;
+                messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
+                listenerSystemAlert.unsubscribe();
+                showModal(true, messageTypeFullDescription, false);
+                break;
+            default:
+                messageTypeFullDescription = 'System alert type is unknown. Assuming system it not yet ready.  ' + message.description;
+        }
+
+        divCapabilitiesMessage.innerHTML = messageTypeFullDescription;
+    });
 }
 
 /*
@@ -821,28 +929,32 @@ function printParam(itemName, index) {
 
 /*
     Check for Robot State
-    TODO: If no longer active, show the Guidance as Yellow. If active, show Guidance as green.
+    If no longer active, show the Guidance as Yellow. If active, show Guidance as green.
 */
 function checkRobotEnabled() {
-        var listenerRobotStatus = new ROSLIB.Topic({
-            ros: ros,
-            name: t_robot_status,
-            messageType: 'cav_msgs/RobotEnabled'
-        });
+    var listenerRobotStatus = new ROSLIB.Topic({
+        ros: ros,
+        name: t_robot_status,
+        messageType: 'cav_msgs/RobotEnabled'
+    });
 
-        listenerRobotStatus.subscribe(function (message) {
-            insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
-            insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
+    listenerRobotStatus.subscribe(function (message) {
+        insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
+        insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
+
+        //if guidance is just starting up then we don't do anything
+        if (!waitingForGuidanceStartup) {
 
             //Update the button when Guidance is engaged.
-            if (message.robot_active == false){
-                setCAVButtonState ('INACTIVE');
+            if (message.robot_active == false) {
+                setCAVButtonState('INACTIVE');
             }
-            else{
+            else {
                 //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
-                setCAVButtonState ('ENGAGED');
+                setCAVButtonState('ENGAGED');
             }
-        });
+        }
+    });
 }
 
 /*
@@ -869,23 +981,142 @@ function showDiagnostics() {
 
     listenerDiagnostics.subscribe(function (messageList) {
 
-     messageList.status.forEach(
-       function (myStatus){
-            insertNewTableRow('tblFirstA', 'Diagnostic Name', myStatus.name);
-            insertNewTableRow('tblFirstA', 'Diagnostic Message', myStatus.message);
-            insertNewTableRow('tblFirstA', 'Diagnostic Hardware ID', myStatus.hardware_id);
+        messageList.status.forEach(
+            function (myStatus) {
+                insertNewTableRow('tblFirstA', 'Diagnostic Name', myStatus.name);
+                insertNewTableRow('tblFirstA', 'Diagnostic Message', myStatus.message);
+                insertNewTableRow('tblFirstA', 'Diagnostic Hardware ID', myStatus.hardware_id);
 
-             myStatus.values.forEach(
-                   function (myValues){
-                        if (myValues.key=='Primed'){
+                myStatus.values.forEach(
+                    function (myValues) {
+                        if (myValues.key == 'Primed') {
                             insertNewTableRow('tblFirstB', myValues.key, myValues.value);
+                            var imgACCPrimed = document.getElementById('imgACCPrimed');
+
+                            if (myValues.value == 'True')
+                                imgACCPrimed.style.backgroundColor = '#4CAF50'; //Green
+                            else
+                                imgACCPrimed.style.backgroundColor = '#b32400'; //Red
                         }
                         // Commented out since Diagnostics key/value pair can be many and can change. Only subscribe to specific ones.
                         // insertNewTableRow('tblFirstA', myValues.key, myValues.value);
-                   }); //foreach
+                    }); //foreach
             }
         );//foreach
     });
+}
+
+/*
+    Show Drivers Status for PinPoint.
+*/
+function showDriverStatus() {
+
+    var listenerDriverDiscovery = new ROSLIB.Topic({
+        ros: ros,
+        name: t_driver_discovery,
+        messageType: 'cav_msgs/DriverStatus'
+    });
+
+    listenerDriverDiscovery.subscribe(function (message) {
+
+        var targetImg;
+
+        //Get PinPoint status for now.
+        if (message.position == true) {
+            targetImg = document.getElementById('imgPinPoint');
+        }
+
+        if (targetImg == null || targetImg == 'undefined')
+            return;
+
+        switch (message.status) {
+            case 0: //OFF
+                targetImg.style.color = '';
+                break;
+            case 1: //OPERATIONAL
+                targetImg.style.color = '#4CAF50'; //Green
+                break;
+            case 2: //DEGRADED
+                targetImg.style.color = '#ff6600'; //Orange
+                break;
+            case 3: //FAULT
+                targetImg.style.color = '#b32400'; //Red
+                break;
+            default:
+                break;
+        }
+    });
+}
+
+/*
+    Show the Lateral Control Driver message
+*/
+function checkLateralControlDriver() {
+    var listenerLateralControl = new ROSLIB.Topic({
+        ros: ros,
+        name: t_lateral_control_driver,
+        messageType: 'cav_msgs/LateralControl'
+    });
+
+    listenerLateralControl.subscribe(function (message) {
+        insertNewTableRow('tblFirstB', 'Lateral Axle Angle', message.axle_angle);
+        insertNewTableRow('tblFirstB', 'Lateral Max Axle Angle Rate', message.max_axle_angle_rate);
+        insertNewTableRow('tblFirstB', 'Lateral Max Accel', message.max_accel);
+    });
+}
+
+/*
+    Show UI instructions
+*/
+function showUIInstructions() {
+
+    var UIInstructionsType = {
+        INFO: { value: 0, text: 'INFO' }, //Notification of status or state change
+        ACK_REQUIRED: { value: 1, text: 'ACK_REQUIRED' }, //A command requiring driver acknowledgement
+        NO_ACK_REQUIRED: { value: 2, text: 'NO_ACK_REQUIRED' }, //A command that does not require driver acknowledgement
+    };
+
+    // List out the expected commands to handle.
+    var UIExpectedCommands = {
+        LEFT_LANE_CHANGE: { value: 0, text: 'LEFT_LANE_CHANGE' }, //From lateral controller driver
+        RIGHT_LANE_CHANGE: { value: 1, text: 'RIGHT_LANE_CHANGE' }, //From lateral controller driver
+        //Add new ones here.
+    };
+
+    var listenerUiInstructions = new ROSLIB.Topic({
+        ros: ros,
+        name: t_ui_instructions,
+        messageType: 'cav_msgs/UIInstructions'
+    });
+
+    listenerUiInstructions.subscribe(function (message) {
+
+        if (message.type == UIInstructionsType.INFO.value) {
+            divCapabilitiesMessage.innerHTML = message.msg;
+        }
+        else {
+            var icon = '';
+
+            switch (message.msg) {
+                case UIExpectedCommands.LEFT_LANE_CHANGE.text:
+                    icon = '<i class="fa fa-angle-left faa-flash animated faa-slow" aria-hidden="true" ></i>';
+                    break;
+                case UIExpectedCommands.RIGHT_LANE_CHANGE.text:
+                    icon = '<i class="fa fa-angle-right faa-flash animated faa-slow" aria-hidden="true" ></i>';
+                    break;
+                default:
+                    modalUIInstructionsContent.innerHTML = '';
+                    break;
+            }
+
+            if (message.type == UIInstructionsType.NO_ACK_REQUIRED.value)
+                showModalNoAck(icon); // Show the icon for 3 seconds.
+
+            //TODO: Implement ACK_REQUIRED logic to call specific service.
+            // var response_service = message.response_service;
+        }
+    });
+
 }
 
 /*
@@ -893,18 +1124,6 @@ function showDiagnostics() {
     TODO: For future iterations.
 */
 function getFutureTopics() {
-
-    //TODO: Not yet published by Guidance.
-    var listenerUiInstructions = new ROSLIB.Topic({
-        ros: ros,
-        name: t_guidance_instructions,
-        messageType: 'std_msgs/String'
-    });
-
-    listenerUiInstructions.subscribe(function (message) {
-        document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerUiInstructions.name + ': ' + message.data;
-        //listenerUiInstructions.unsubscribe();
-    });
 
     //TODO: Not yet published by Guidance.
     var listenerUiPlatoonInfo = new ROSLIB.Topic({
@@ -933,24 +1152,103 @@ function checkRouteInfo() {
     });
 
     listenerRouteState.subscribe(function (message) {
+
         insertNewTableRow('tblSecondA', 'Route ID', message.routeID);
-        insertNewTableRow('tblSecondA', 'Route State', message.state);
-        insertNewTableRow('tblSecondA', 'Route Event', message.event);
-        insertNewTableRow('tblSecondA', 'Cross Track', message.cross_track.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Down Track', message.down_track.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Route State / Event', message.state + ' / ' + message.event);
+        insertNewTableRow('tblSecondA', 'Cross Track / Down Track', message.cross_track.toFixed(2) + ' / ' + message.down_track.toFixed(2));
+
+        //Calculate and show next speed limit remaining distance
+        //Show 0 if negative
+        var remaining_dist = total_dist_next_speed_limit - message.down_track;
+        remaining_dist = Math.max(0, remaining_dist);
+        var remaining_dist_miles = (remaining_dist * meter_to_mile);
+        remaining_dist_miles = Math.max(0, remaining_dist_miles);
+
+        var divDistRemaining = document.getElementById('divDistRemaining');
+        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(0) + ' m';
+
+        insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi/m)', remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(0) + ' m');
+
+        //Calculate and show next lane change remaining distance
+        //Show 0 if negative
+        var lane_remaining_dist = total_dist_next_lane_change - message.down_track;
+        lane_remaining_dist = Math.max(0, lane_remaining_dist);
+        var lane_remaining_dist_miles = (lane_remaining_dist * meter_to_mile);
+        lane_remaining_dist_miles = Math.max(0, lane_remaining_dist_miles);
+
+        //var divDistRemaining = document.getElementById('divDistRemaining');
+        divDistRemaining.innerHTML += '<br/> Lane Change In: ' + lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m';
+
+        insertNewTableRow('tblSecondA', 'Lane Change Total Dist (m)', total_dist_next_lane_change.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Lane Change In (mi/m)', lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m');
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
         if (message.event == 3) //ROUTE_COMPLETED=3
         {
-            listenerSystemAlert.unsubscribe();
-            showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.');
+            //if (listenerSystemAlert != 'undefined')
+            //    listenerSystemAlert.unsubscribe();
+            showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
 
         if (message.event == 4)//LEFT_ROUTE=4
         {
-            listenerSystemAlert.unsubscribe();
-            showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.');
+            //listenerSystemAlert.unsubscribe();
+            showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
+        }
+
+        insertNewTableRow('tblSecondA', 'Current Segment ID', message.current_segment.waypoint.waypoint_id);
+        insertNewTableRow('tblSecondA', 'Current Segment Max Speed', message.current_segment.waypoint.speed_limit);
+        if (message.current_segment.waypoint.speed_limit != null && message.current_segment.waypoint.speed_limit != 'undefined')
+            document.getElementById('divSpeedLimitValue').innerHTML = message.current_segment.waypoint.speed_limit;
+
+        if (message.lane_index != null && message.lane_index != 'undefined') {
+            insertNewTableRow('tblSecondA', 'Lane Index', message.lane_index);
+            currentlaneid = parseInt(message.lane_index);
+        }
+
+        if (message.current_segment.waypoint.lane_count != null
+            && message.current_segment.waypoint.lane_count != 'undefined') {
+            insertNewTableRow('tblSecondA', 'Current Segment Lane Count', message.current_segment.waypoint.lane_count);
+            insertNewTableRow('tblSecondA', 'Current Segment Req Lane', message.current_segment.waypoint.required_lane_index);
+
+            totallanes = parseInt(message.current_segment.waypoint.lane_count);
+            targetlane = parseInt(message.current_segment.waypoint.required_lane_index);
+
+            //When targetlane = -1, it is unavailable. 
+            if (targetlane >= 0) 
+                drawLanes(false, true);
+        }
+
+        //Determine the remaining distance to current speed limit
+        if (sessionStorage.getItem('routeSpeedLimitDist') != null) {
+            var routeSpeedLimitDist = sessionStorage.getItem('routeSpeedLimitDist');
+            routeSpeedLimitDist = JSON.parse(routeSpeedLimitDist);
+
+            //Loop thru to find the correct totaldistance
+            for (i = 0; i < routeSpeedLimitDist.length; i++) {
+                if (message.current_segment.waypoint.waypoint_id <= routeSpeedLimitDist[i].waypoint_id) {
+                    total_dist_next_speed_limit = routeSpeedLimitDist[i].total_length;
+                    break;
+                }
+            }
+            //insertNewTableRow('tblSecondA', 'total_dist_next_speed_limit', total_dist_next_speed_limit);
+        }
+
+        //Determine the remaining distance to current lane
+        if (sessionStorage.getItem('routeLaneChangeDist') != null) {
+            var routeLaneChangeDist = sessionStorage.getItem('routeLaneChangeDist');
+            routeLaneChangeDist = JSON.parse(routeLaneChangeDist);
+
+            //Loop thru to find the correct totaldistance
+            for (i = 0; i < routeLaneChangeDist.length; i++) {
+                if (message.current_segment.waypoint.waypoint_id <= routeLaneChangeDist[i].waypoint_id) {
+                    total_dist_next_lane_change = routeLaneChangeDist[i].total_length;
+                    break;
+                }
+            }
+            //insertNewTableRow('tblSecondA', 'total_dist_next_lane_change', total_dist_next_lane_change);
         }
 
     });
@@ -986,9 +1284,20 @@ function showActiveRoute() {
         }
 
         //Only map the segment one time.
-        if (sessionStorage.getItem('routePlanCoordinates') == null)
+        //alert('routePlanCoordinates: ' + sessionStorage.getItem('routePlanCoordinates') );
+        if (sessionStorage.getItem('routePlanCoordinates') == null) {
             message.segments.forEach(mapEachRouteSegment);
+        }
 
+        //alert('showActive Route: sessionStorage.getItem(routeSpeedLimitDist: ' + sessionStorage.getItem('routeSpeedLimitDist'));
+        if (sessionStorage.getItem('routeSpeedLimitDist') == null) {
+            message.segments.forEach(calculateDistToNextSpeedLimit);
+        }
+
+        //alert('showActive Route: sessionStorage.getItem(routeLaneChangeDist: ' + sessionStorage.getItem('routeLaneChangeDist'));
+        if (sessionStorage.getItem('routeLaneChangeDist') == null) {
+            message.segments.forEach(calculateDistToNextLaneChange);
+        }
     });
 }
 
@@ -1000,14 +1309,14 @@ function mapEachRouteSegment(segment) {
     var segmentLat;
     var segmentLon;
     var position;
-    var routeCoordinates;
+    var routeCoordinates; //To map the entire route
 
-    //create new list
-    if (sessionStorage.getItem('routePlanCoordinates') == null)
-    {
+    //1) To map the route
+    //create new list for the mapping of the route
+    if (sessionStorage.getItem('routePlanCoordinates') == null) {
         segmentLat = segment.prev_waypoint.latitude;
         segmentLon = segment.prev_waypoint.longitude;
-        position = new google.maps.LatLng( segmentLat, segmentLon);
+        position = new google.maps.LatLng(segmentLat, segmentLon);
 
         routeCoordinates = [];
         routeCoordinates.push(position);
@@ -1017,12 +1326,119 @@ function mapEachRouteSegment(segment) {
     {
         segmentLat = segment.waypoint.latitude;
         segmentLon = segment.waypoint.longitude;
-        position = new google.maps.LatLng( segmentLat, segmentLon);
+        position = new google.maps.LatLng(segmentLat, segmentLon);
 
         routeCoordinates = sessionStorage.getItem('routePlanCoordinates');
         routeCoordinates = JSON.parse(routeCoordinates);
         routeCoordinates.push(position);
         sessionStorage.setItem('routePlanCoordinates', JSON.stringify(routeCoordinates));
+    }
+
+}
+
+/*
+    Calculate the next distance to next speed limit. 
+*/
+function calculateDistToNextSpeedLimit(segment) {
+
+    if (segment == null)
+    {
+        console.log('**** calculateDistToNextSpeedLimit: segment is null.');
+        return;
+    }
+        
+    if (segment.length <= 0 || segment.length == null || segment.length == 'undefined')
+    {
+        console.log('**** calculateDistToNextSpeedLimit: segment is null.');
+        return;
+    }
+        
+    //To calculate the distance to next speed limit
+    var routeSpeedLimit; //To store the total distance for each speed limit change.
+    var routeSpeedLimitDist;
+
+    if (sessionStorage.getItem('routeSpeedLimitDist') == null) {
+        routeSpeedLimit = { waypoint_id: segment.prev_waypoint.waypoint_id, total_length: segment.length, speed_limit: segment.prev_waypoint.speed_limit };
+        routeSpeedLimitDist = [];
+        routeSpeedLimitDist.push(routeSpeedLimit);
+
+        sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
+    }
+    else {
+
+        routeSpeedLimitDist = sessionStorage.getItem('routeSpeedLimitDist');
+        routeSpeedLimitDist = JSON.parse(routeSpeedLimitDist);
+
+        var lastItem = routeSpeedLimitDist[routeSpeedLimitDist.length - 1];
+
+        //alert('lastItem: ' + lastItem.total_length);
+
+        //If speed limit changes, add to list
+        if (lastItem.speed_limit != segment.waypoint.speed_limit) {
+            routeSpeedLimit = {
+                waypoint_id: segment.waypoint.waypoint_id
+                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
+                , speed_limit: segment.waypoint.speed_limit
+            };
+            routeSpeedLimitDist.push(routeSpeedLimit);
+
+            sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
+        }
+        else //Update last item's length to the total length
+        {
+
+            lastItem.waypoint_id = segment.waypoint.waypoint_id;
+            lastItem.total_length += segment.length;
+
+            sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
+
+        }
+    }
+}
+
+/*
+    Calculate the distance to next lane change. 
+*/
+function calculateDistToNextLaneChange(segment) {
+
+    //To calculate the distance to next next lane change. 
+    var routeLaneChange; //To store the total distance for each lane change.
+    var routeLaneChangeDist;
+
+    if (sessionStorage.getItem('routeLaneChangeDist') == null) {
+        routeLaneChange = { waypoint_id: segment.prev_waypoint.waypoint_id, total_length: segment.length, required_lane_index: segment.prev_waypoint.required_lane_index };
+        routeLaneChangeDist = [];
+        routeLaneChangeDist.push(routeLaneChange);
+
+        sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+    }
+    else {
+
+        routeLaneChangeDist = sessionStorage.getItem('routeLaneChangeDist');
+        routeLaneChangeDist = JSON.parse(routeLaneChangeDist);
+
+        var lastItem = routeLaneChangeDist[routeLaneChangeDist.length - 1];
+
+        //alert('lastItem: ' + lastItem.total_length);
+
+        //If lane changes, add to list
+        if (lastItem.required_lane_index != segment.waypoint.required_lane_index) {
+            routeLaneChange = {
+                waypoint_id: segment.waypoint.waypoint_id
+                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
+                , required_lane_index: segment.waypoint.required_lane_index
+            };
+            routeLaneChangeDist.push(routeLaneChange);
+
+            sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+        }
+        else //Update last item's length to the total length
+        {
+            lastItem.waypoint_id = segment.waypoint.waypoint_id;
+            lastItem.total_length += segment.length;
+
+            sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+        }
     }
 }
 
@@ -1038,21 +1454,24 @@ function showNavSatFix() {
     });
 
     listenerNavSatFix.subscribe(function (message) {
+
         if (message.latitude == null || message.longitude == null)
             return;
 
-        if (hostmarker != null)
-        {
+        insertNewTableRow('tblFirstA', 'NavSatStatus', message.status.status);
+        insertNewTableRow('tblFirstA', 'Latitude', message.latitude.toFixed(6));
+        insertNewTableRow('tblFirstA', 'Longitude', message.longitude.toFixed(6));
+        insertNewTableRow('tblFirstA', 'Altitude', message.altitude.toFixed(6));
+
+        if (hostmarker != null) {
             moveMarkerWithTimeout(hostmarker, message.latitude, message.longitude, 0);
-            insertNewTableRow('tblFirstA', 'NavSatStatus', message.status.status);
-            insertNewTableRow('tblFirstA', 'Latitude', message.latitude.toFixed(6));
-            insertNewTableRow('tblFirstA', 'Longitude', message.longitude.toFixed(6));
-            insertNewTableRow('tblFirstA', 'Altitude', message.altitude.toFixed(6));
         }
+
         //listenerNavSatFix.unsubscribe();
     });
 
 }
+
 /*
     Display the close loop control of speed
 */
@@ -1081,30 +1500,9 @@ function showSpeedAccelInfo() {
 }
 
 /*
-    Display the close loop control of speed
-*/
-function showCurrentSegmentInfo() {
-
-    //Get Speed Accell Info
-    var listenerCurrentSegment = new ROSLIB.Topic({
-        ros: ros,
-        name: t_current_segment,
-        messageType: 'cav_msgs/RouteSegment'
-    });
-
-    listenerCurrentSegment.subscribe(function (message) {
-
-        insertNewTableRow('tblSecondA', 'Current Segment ID', message.waypoint.waypoint_id);
-        insertNewTableRow('tblSecondA', 'Current Segment Max Speed', message.waypoint.speed_limit);
-        if (message.waypoint.speed_limit != null && message.waypoint.speed_limit != 'undefined')
-            document.getElementById('divSpeedLimitValue').innerHTML = message.waypoint.speed_limit;
-    });
-}
-
-/*
     Display the CAN speeds
 */
-function showCANSpeeds(){
+function showCANSpeeds() {
 
     var listenerCANEngineSpeed = new ROSLIB.Topic({
         ros: ros,
@@ -1160,6 +1558,31 @@ function showVehicleInfo(itemName, index) {
 }
 
 /*
+    Subscribe to topic and add each vehicle as a marker on the map.
+    If already exist, update the marker with latest long and lat.
+*/
+function mapOtherVehicles() {
+
+    //alert('In mapOtherVehicles');
+
+    //Subscribe to Topic
+    var listenerClient = new ROSLIB.Topic({
+        ros: ros,
+        name: t_incoming_bsm,
+        messageType: 'cav_msgs/BSM'
+    });
+
+
+    listenerClient.subscribe(function (message) {
+        insertNewTableRow('tblSecondB', 'BSM Temp ID - ' + message.core_data.id + ': ', message.core_data.id);
+        insertNewTableRow('tblSecondB', 'BSM Latitude - ' + message.core_data.id + ': ', message.core_data.latitude.toFixed(6));
+        insertNewTableRow('tblSecondB', 'BSM Longitude - ' + message.core_data.id + ': ', message.core_data.longitude.toFixed(6));
+
+        setOtherVehicleMarkers(message.core_data.id, message.core_data.latitude.toFixed(6), message.core_data.longitude.toFixed(6));
+    });
+}
+
+/*
  Changes the string into Camel Case.
 */
 function toCamelCase(str) {
@@ -1179,24 +1602,26 @@ function toCamelCase(str) {
     //.replace( / /g, '' );
 }
 
-function showStatusandLogs()
-{
+function showStatusandLogs() {
     getParams();
     getVehicleInfo();
 
     showSystemVersion();
     showNavSatFix();
     showSpeedAccelInfo();
-    showCurrentSegmentInfo();
     showCANSpeeds();
     showDiagnostics();
+    showDriverStatus();
+    checkLateralControlDriver();
+    showUIInstructions();
+
+    mapOtherVehicles();
 }
 
 /*
     Show the system name and version on the footer.
 */
-function showSystemVersion()
-{
+function showSystemVersion() {
 
     // Calling service
     var serviceClient = new ROSLIB.Service({
@@ -1212,19 +1637,17 @@ function showSystemVersion()
     // Call the service and get back the results in the callback.
     serviceClient.callService(request, function (result) {
 
-         var elemSystemVersion = document.getElementsByClassName('systemversion');
-         elemSystemVersion[0].innerHTML = result.system_name + ' ' + result.revision;
+        var elemSystemVersion = document.getElementsByClassName('systemversion');
+        elemSystemVersion[0].innerHTML = result.system_name + ' ' + result.revision;
     });
 }
 
 /*
     Start route timer after engaging Guidance.
 */
-function startRouteTimer()
-{
+function startRouteTimer() {
     // Set the date we're counting down to and save to session.
-    if  (sessionStorage.getItem('startDateTime') == null)
-    {
+    if (sessionStorage.getItem('startDateTime') == null) {
         var startDateTime = new Date().getTime();
         sessionStorage.setItem('startDateTime', startDateTime);
     }
@@ -1269,32 +1692,39 @@ function waitForSystemReady() {
 */
 function evaluateNextStep() {
 
-    //Scenario 1: Initial Load or Route hasn't been selected yet.
-    if ((system_ready == null || system_ready == false) ||
-        (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected'))
-    {
+    if (system_ready == null || system_ready == false) {
         waitForSystemReady();
         return;
     }
 
-    //Show Plugin
-    showSubCapabilitiesView2();
+    if (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected') {
+        //clear route timer
+        var divRouteInfo = document.getElementById('divRouteInfo');
+        divRouteInfo.innerHTML = 'No Route Selected : 00h 00m 00s';
 
-    //Subscribe to active route to map the segments
-    showActiveRoute();
-
-    //Display the System Status and Logs.
-    showStatusandLogs();
-
-    //Enable the CAV Guidance button regardless plugins are selected
-    enableGuidance();
-
-    if (guidance_engaged == true)
-    {
-        showGuidanceEngaged();
+        showRouteOptions();
+        showStatusandLogs();
+        enableGuidance();
     }
+    else {
+        //ELSE route has been selected and so show plugin page.
 
-    return;
+        //Show Plugin
+        showSubCapabilitiesView2();
+
+        //Subscribe to active route to map the segments
+        showActiveRoute();
+
+        //Display the System Status and Logs.
+        showStatusandLogs();
+
+        //Enable the CAV Guidance button regardless plugins are selected
+        enableGuidance();
+
+        if (guidance_engaged == true) {
+            showGuidanceEngaged();
+        }
+    }
 
 }//evaluateNextStep
 
@@ -1305,6 +1735,11 @@ window.onload = function () {
 
     //Check if localStorage/sessionStorage is available.
     if (typeof (Storage) !== 'undefined') {
+
+        if (!SVG.supported) {
+            alert('SVG not supported. Some images will not be displayed.');
+        }
+
         // Store CurrentPage.
         sessionStorage.setItem('currentpage', 'main');
 
@@ -1313,20 +1748,22 @@ window.onload = function () {
         var routeName = sessionStorage.getItem('routeName');
         var isGuidanceEngaged = sessionStorage.getItem('isGuidanceEngaged');
 
-
         //Re-Set Global variables ONLY if already connected.
         if (isSystemReady != 'undefined' && isSystemReady != null)
             system_ready = Boolean(isSystemReady);
 
-        if (routeName != 'undefined' && routeName != null)
-        {
+        if (routeName != 'undefined' && routeName != null) {
             route_name = routeName;
         }
 
-        if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '')
-        {
+        if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '') {
             guidance_engaged = (isGuidanceEngaged == 'true');
         }
+
+        // Adding Copyright based on current year
+        var elemCopyright = document.getElementsByClassName('copyright');
+        elemCopyright[0].innerHTML = '&copy LEIDOS ' + new Date().getFullYear();
+
         //Refresh requires connection to ROS.
         connectToROS();
 
@@ -1344,7 +1781,7 @@ window.onload = function () {
 //TODO: Enable this later when lateral controls are implemented. Currently only FATAL, SHUTDOWN and ROUTE COMPLETED are modal popups that requires users acknowledgement to be routed to logout page.
 //TODO: Need to queue and hide modal when user has not acknowledged, when new messages come in that are not fatal, shutdown, route completed, or require user acknowlegement.
 window.onclick = function (event) {
-    var modal = document.getElementById('myModal');
+    var modal = document.getElementById('modalMessageBox');
 
     if (event.target == modal) {
         modal.style.display = 'none';

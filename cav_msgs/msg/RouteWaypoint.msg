@@ -48,6 +48,13 @@ float64 min_cross_track
 # Units: Meters
 float64 max_cross_track
 
+# The index of the lane that this waypoint is located in
+# Lanes are 0 indexed from right to left
+uint8 lane_index
+
+# The width of an individual lane in m
+float32 lane_width
+
 # A bit flag describing which of the following fields are set. 1 = set, 0 = not set
 uint16 set_fields
 

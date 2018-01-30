@@ -58,6 +58,16 @@ public class GreatCircleSegment {
   }
 
   /**
+   * Calculates location of a external point projected onto the segment
+   *
+   * @param loc The location whose projection is being calculated
+   * @return The projected location
+   */
+  public Location projectOntoSegment(Location location) {
+    return distanceStrategy.projectOntoSegment(location, this);
+  }
+
+  /**
    * Sets the distance strategy which will be used for calculations in this segment and update the length accordingly
    * @param distanceStrategy the new default distance strategy
    */

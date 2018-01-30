@@ -40,11 +40,11 @@ In Workspace, make changes on wrapper.c.
 
 To generate the x64 shared library, run:
 
-gcc -DASN_DISABLE_OER_SUPPORT -DPDU=MessageFrame -shared -o libasn1c_x64.so -I./include/ -I/usr/lib/jvm/default-java/include -I/usr/lib/jvm/default-java/include/linux/ ./src/*.c -fPIC
+gcc -DPDU=MessageFrame -shared -o libasn1c_x64.so -I./include/ -I/usr/lib/jvm/default-java/include -I/usr/lib/jvm/default-java/include/linux/ ./src/*.c -fPIC
 
 To generate the x86 shared library, run:
 
-gcc -m32 -DASN_DISABLE_OER_SUPPORT -DPDU=MessageFrame -shared -o libasn1c_x86.so -I./include/ -I/usr/lib/jvm/default-java/include -I/usr/lib/jvm/default-java/include/linux/ ./src/*.c -fPIC
+gcc -m32 -DPDU=MessageFrame -shared -o libasn1c_x86.so -I./include/ -I/usr/lib/jvm/default-java/include -I/usr/lib/jvm/default-java/include/linux/ ./src/*.c -fPIC
 
 Note: In order to use m32 flag, you should have the package libc6-dev-i386 ready.
 

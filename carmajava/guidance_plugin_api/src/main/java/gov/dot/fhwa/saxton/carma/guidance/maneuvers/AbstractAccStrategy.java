@@ -23,7 +23,7 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
  * about the algorithmic logic.
  */
 public abstract class AbstractAccStrategy implements IAccStrategy {
-  protected static double TIMESTEP_DURATION_S = 0.01;
+  protected static double TIMESTEP_DURATION_S = 0.1;
   protected double vehicleResponseDelay;
   protected double desiredTimeGap;
   protected double maxAccel;
@@ -63,9 +63,6 @@ public abstract class AbstractAccStrategy implements IAccStrategy {
   @Override
 	public abstract double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
 			double desiredSpeedCommand);
-
-  @Override
-  public abstract double computeDesiredHeadway(double currentSpeed);
   
   protected double applyAccelLimit(double overrideCommand, double currentSpeed, double maxAccel) {
     if (Math.abs(overrideCommand - currentSpeed) / TIMESTEP_DURATION_S > maxAccel) {

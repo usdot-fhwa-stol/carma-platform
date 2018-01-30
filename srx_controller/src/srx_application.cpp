@@ -67,6 +67,8 @@ void SRXApplication::initialize() {
     light_set_.LeftArrowOn = false;
     light_set_.RightArrowOn = false;
     light_set_.TakeDownOn = false;
+    light_set_.GreenFlashOn = false;
+    light_set_.GreenSolidOn = false;
 
     //we assume these are correct until we get an update from the controller
     front_lights_status_ = light_set_;
@@ -399,6 +401,8 @@ bool SRXApplication::get_lights_cb(cav_srvs::GetLightsRequest&, cav_srvs::GetLig
     resp.status.takedown    = light_set_.TakeDownOn     ? ON : OFF;
     resp.status.left_arrow  = light_set_.LeftArrowOn    ? ON : OFF;
     resp.status.right_arrow = light_set_.RightArrowOn   ? ON : OFF;
+    resp.status.green_solid = light_set_.GreenSolidOn ? ON : OFF;
+    resp.status.green_flash = light_set_.GreenFlashOn ? ON : OFF;
 
     return true;
 }
@@ -410,6 +414,8 @@ bool SRXApplication::set_lights_cb(cav_srvs::SetLightsRequest &req, cav_srvs::Se
     light_set_.LeftArrowOn  = req.set_state.left_arrow  == LightBarStatus::ON;
     light_set_.FlashOn      = req.set_state.flash       == LightBarStatus::ON;
     light_set_.TakeDownOn   = req.set_state.takedown    == LightBarStatus::ON;
+    light_set_.GreenFlashOn = req.set_state.green_flash == LightBarStatus::ON;
+    light_set_.GreenSolidOn = req.set_state.green_solid == LightBarStatus::ON;
 
     return true;
 }

@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.geometry;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.QuaternionUtils;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.ros.rosjava_geometry.Quaternion;
@@ -136,14 +137,8 @@ public class GeodesicCartesianConverter {
       { -sinLat * sinLon,  cosLon,  -cosLat * sinLon },
       {           cosLat,       0,           -sinLat }
     };
-    // Convert rotation matrix into quaternion
-    double qw = Math.sqrt(1.0 + R[0][0] + R[1][1] + R[2][2]) / 2.0;
-    double qw4 = 4.0 * qw;
-    double qx = (R[2][1] - R[1][2]) / qw4;
-    double qy = (R[0][2] - R[2][0]) / qw4;
-    double qz = (R[1][0] - R[0][1]) / qw4;
-    Quaternion quat = new Quaternion(qx, qy, qz, qw).normalize();
 
+    Quaternion quat = QuaternionUtils.matToQuaternion(R);
     return new Transform(trans, quat);
   }
 }

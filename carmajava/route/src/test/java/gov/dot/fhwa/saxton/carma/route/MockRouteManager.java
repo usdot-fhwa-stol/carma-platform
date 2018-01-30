@@ -19,19 +19,28 @@ package gov.dot.fhwa.saxton.carma.route;
 import cav_msgs.*;
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
+import org.ros.message.MessageFactory;
 import org.ros.message.Time;
+import org.ros.node.NodeConfiguration;
 
 /**
  * Fake route manager for use in unit testing
  */
 public class MockRouteManager implements IRouteManager {
-  public boolean routeStateRouteCompleteSent = false;
+  private boolean routeStateRouteCompleteSent = false;
 
-  @Override public void publishSystemAlert(SystemAlert systemAlert) {
+  public static SystemAlert buildSystemAlert(byte systemAlertType, String msg) {
+    NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+    MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
+    SystemAlert alert = messageFactory.newFromType(SystemAlert._TYPE);
+    alert.setType(systemAlertType);
+    alert.setDescription(msg);
+
+    return alert;
   }
 
-  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
+  public void publishCurrentRouteSegment(RouteSegment routeSegment) {
 
   }
 

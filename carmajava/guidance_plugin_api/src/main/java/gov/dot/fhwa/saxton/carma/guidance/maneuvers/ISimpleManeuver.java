@@ -30,48 +30,27 @@ public interface ISimpleManeuver extends IManeuver {
      * @param startDist - distance from beginning of route at which this maneuver is to begin, m
      * @throws IllegalStateException if required target quantity is not defined prior to this call
      */
-    void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, UnsupportedOperationException;
+    void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException;
 
     /**
      * Plans the maneuver to a target end distance and makes it ready for execution
-     *
+     * with the vehicle maxAccel constraints by adjusting the target speed
      * @param inputs - the object that provides necessary input data about the route
      * @param commands - the object that will take output commands
      * @param startDist - distance from beginning of route at which this maneuver is to begin, m
      * @param endDist - the distance from the beginning of route at which this maneuver is to end, m
+     * @return adjusted target speed
      * @throws IllegalStateException if required target quantity is not defined prior to this call
      */
-    void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException;
-
+    double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException;
+    
     /**
-     * Stores the beginning and target speed of the maneuver, to be used for longitudinal maneuvers only.
-     * Since maneuvers will generally be chained together during planning, this is the only way that a maneuver
-     * can know what speed the vehicle will have after completing its predecessor maneuver.
-     * @param startSpeed - the expected speed at the beginning of the maneuver, m/s
-     * @param targetSpeed - target speed at end of maneuver, m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
+     * Return if the maneuver can be planned with vehicle lag constraint
+     * @param inputs - the object that provides necessary input data about the route
+     * @param startDist - distance from beginning of route at which this maneuver is to begin, m
+     * @param endDist - the distance from the beginning of route at which this maneuver is to end, m
+     * @return boolean
      */
-    void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException;
-
-    /**
-     * Stores the target lane ID, to be used for lateral maneuvers only.
-     * @param targetLane - target lane number at end of maneuver
-     * @throws UnsupportedOperationException if called on a longitudinal maneuver object
-     */
-    void setTargetLane(int targetLane) throws UnsupportedOperationException;
-
-    /**
-     * Returns the specified starting speed for the maneuver.  To be used for longitudinal maneuvers only.
-     * @return m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
-     */
-    double getStartSpeed() throws UnsupportedOperationException;
-
-    /**
-     * Returns the specified target speed for the end of the maneuver.  To be used for longitudinal maneuvers only.
-     * @return m/s
-     * @throws UnsupportedOperationException if called on a lateral maneuver object
-     */
-    double getTargetSpeed() throws UnsupportedOperationException;
+    boolean canPlan(IManeuverInputs inputs, double startDist, double endDist);
 }
 

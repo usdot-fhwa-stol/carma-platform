@@ -202,4 +202,34 @@ public class Vector implements CartesianElement {
   public double getDim(int dim){
     return headPoint_.getDim(dim);
   }
+
+  /**
+   * Returns a new vector composed of the minimums of the two vectors
+   */
+  public static Vector min(Vector vec1, Vector vec2) throws IllegalArgumentException {
+    if (vec1.getNumDimensions() != vec2.getNumDimensions()) {
+      throw new IllegalArgumentException("Cannot compare vectors of unequal dimensions");
+    }
+
+    double[] mins = new double[vec1.getNumDimensions()];
+    for (int i = 0; i < mins.length; i++) {
+      mins[i] = Math.min(vec1.getDim(i), vec2.getDim(i));
+    }
+    return new Vector(new Point(mins));
+  }
+
+  /**
+   * Returns a new vector composed of the minimums of the two vectors
+   */
+  public static Vector max(Vector vec1, Vector vec2) throws IllegalArgumentException {
+    if (vec1.getNumDimensions() != vec2.getNumDimensions()) {
+      throw new IllegalArgumentException("Cannot compare vectors of unequal dimensions");
+    }
+
+    double[] max = new double[vec1.getNumDimensions()];
+    for (int i = 0; i < max.length; i++) {
+      max[i] = Math.max(vec1.getDim(i), vec2.getDim(i));
+    }
+    return new Vector(new Point(max));
+  }
 }

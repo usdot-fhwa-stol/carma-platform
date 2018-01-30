@@ -21,21 +21,29 @@ import cav_msgs.ExternalObjectList;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
+import gov.dot.fhwa.saxton.carma.guidance.signals.MovingAverageFilter;
+import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
+import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Interacts with the ROS network to provide the necessary input data to the Maneuver classes, allowing the rest
  * of the classes in this package to remain ignorant of ROS.
  */
-public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs {
+public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs, IStateChangeListener {
 
     protected ISubscriber<RouteState> routeStateSubscriber_;
     protected ISubscriber<TwistStamped> twistSubscriber_;
@@ -43,31 +51,50 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected double distanceDowntrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
-    protected int timeStep_ = 0; // ms
+    protected int currentLane_ = 0;
     protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
     protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
+    protected ILogger log;
 
-    public ManeuverInputs(AtomicReference<GuidanceState> state, IPubSubService iPubSubService, ConnectedNode node) {
-        super(state, iPubSubService, node);
+    public ManeuverInputs(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
+        super(stateMachine, iPubSubService, node);
+        jobQueue.add(this::onStartup);
+        stateMachine.registerStateChangeListener(this);
+        log = LoggerManager.getLogger();
     }
 
     @Override
-    public void onGuidanceStartup() {
+    public void onStartup() {
         // Setup the ACC Strategy factory for use by maneuvers
         double maxAccel = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
         double vehicleResponseLag = node.getParameterTree().getDouble("~vehicle_response_lag", 1.4);
         double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
         double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
+        double exitDistanceFactor = node.getParameterTree().getDouble("~acc_exit_distance_factor", 1.5);
+        double Kp = node.getParameterTree().getDouble("~acc_Kp", 1.0);
+        double Ki = node.getParameterTree().getDouble("~acc_Ki", 0.0);
+        double Kd = node.getParameterTree().getDouble("~acc_Kd", 0.0);
+        log.info(String.format("ACC params Kp=%.02f, Ki=%.02f, Kd= %.02f, gap=%.02f, standoff=%.02f, exit_factor=%.02f", Kp, Ki, Kd,
+                desiredTimeGap, minStandoffDistance, exitDistanceFactor));
+        double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
+        int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
+
+        PidController timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
+        MovingAverageFilter movingAverageFilter = new MovingAverageFilter(numSamples);
+        Deadband deadbandFilter = new Deadband(desiredTimeGap, deadband);
+
+        Pipeline<Double> accFilterPipeline = new Pipeline<>(deadbandFilter, timeGapController, movingAverageFilter);
         BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel, vehicleResponseLag,
-                minStandoffDistance);
+                minStandoffDistance, exitDistanceFactor, accFilterPipeline);
         AccStrategyManager.setAccStrategyFactory(accFactory);
 
-        //subscribers
+        // subscribers
         routeStateSubscriber_ = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
         routeStateSubscriber_.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
             @Override
             public void onMessage(RouteState msg) {
                 distanceDowntrack_ = msg.getDownTrack();
+                currentLane_ = msg.getLaneIndex();
             }
         });
 
@@ -80,11 +107,13 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         });
 
         /*
-         * Presently this subscriber will be mapped by saxton_cav.launch directly to the front long range object topic
-         * provided by the Radar Driver, bypassing sensor fusion and the interface manager. This subscriber depends on
-         * sensor frame data (rather than odom frame data) to accurately derive distance values to nearby vehicles.
-         * Pending full implementation of Sensor Fusion and Roadway modules it is recommended to change this to depend
-         * on whatever vehicle frame data is available in those data publications.
+         * Presently this subscriber will be mapped by saxton_cav.launch directly to the
+         * front long range object topic provided by the Radar Driver, bypassing sensor
+         * fusion and the interface manager. This subscriber depends on sensor frame
+         * data (rather than odom frame data) to accurately derive distance values to
+         * nearby vehicles. Pending full implementation of Sensor Fusion and Roadway
+         * modules it is recommended to change this to depend on whatever vehicle frame
+         * data is available in those data publications.
          */
 
         // TODO: Update to use actual topic provided by sensor fusion
@@ -96,7 +125,6 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 ExternalObject frontVehicle = null;
                 for (ExternalObject eo : msg.getObjects()) {
                     // TODO: When sensor fusion publishes relative lane data, ensure object is in HOST_LANE
-                    // We found an object in our lane
                     if (eo.getPose().getPose().getPosition().getX() < closestDistance) {
                         // If its close than our previous best candidate, update our candidate
                         frontVehicle = eo;
@@ -115,17 +143,40 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             }
         });
 
-        //parameters
+        // parameters
         RosParameterSource params = new RosParameterSource(node.getParameterTree());
         responseLag_ = params.getDouble("~vehicle_response_lag");
+
+        currentState.set(GuidanceState.STARTUP);
     }
 
     @Override
     public void onSystemReady() {
+        currentState.set(GuidanceState.DRIVERS_READY);
     }
 
     @Override
-    public void onGuidanceEnable() {
+    public void onRouteActive() {
+        currentState.set(GuidanceState.ACTIVE);
+    }
+
+    @Override
+    public void onDeactivate() {
+        currentState.set(GuidanceState.INACTIVE);
+    }
+
+    @Override
+    public void onEngaged() {
+        currentState.set(GuidanceState.ENGAGED);
+    }
+
+    @Override
+    public void onCleanRestart() {
+        currentState.set(GuidanceState.DRIVERS_READY);
+        distanceDowntrack_ = 0.0;
+        currentSpeed_ = 0.0;
+        frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
+        frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
     }
 
     @Override
@@ -156,5 +207,41 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     @Override
     public double getFrontVehicleSpeed() {
         return frontVehicleSpeed.get();
+    }
+
+    @Override
+    public void onStateChange(GuidanceAction action) {
+        log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+        switch (action) {
+        case INTIALIZE:
+            jobQueue.add(this::onSystemReady);
+            break;
+        case ACTIVATE:
+            jobQueue.add(this::onRouteActive);
+            break;
+        case DEACTIVATE:
+            jobQueue.add(this::onDeactivate);
+            break;
+        case ENGAGE:
+            jobQueue.add(this::onEngaged);
+            break;
+        case SHUTDOWN:
+            jobQueue.add(this::onShutdown);
+            break;
+        case PANIC_SHUTDOWN:
+            jobQueue.add(this::onPanic);
+            break;
+        case RESTART:
+            jobQueue.add(this::onCleanRestart);
+            break;
+        default:
+            throw new RosRuntimeException(
+                    getComponentName() + "received unknown instruction from guidance state machine.");
+        }
+    }
+
+    @Override
+    public int getCurrentLane() {
+        return currentLane_;
     }
 }

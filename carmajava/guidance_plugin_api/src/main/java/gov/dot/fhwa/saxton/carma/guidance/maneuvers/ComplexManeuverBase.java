@@ -126,7 +126,7 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
       speedCmd = accStrategy_.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
     }
 
-    commands_.setCommand(speedCmd, maxAccelCmd);
+    commands_.setSpeedCommand(speedCmd, maxAccelCmd);
     return false;
   }
 

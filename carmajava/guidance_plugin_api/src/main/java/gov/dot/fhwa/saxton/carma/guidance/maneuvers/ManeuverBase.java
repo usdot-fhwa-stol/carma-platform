@@ -25,8 +25,8 @@ import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
  */
 public abstract class ManeuverBase implements ISimpleManeuver {
 
-    protected double                            startDist_ = -1.0;
-    protected double                            endDist_ = -1.0;
+    protected double                            startDist_ = -1.0; // m
+    protected double                            endDist_ = -1.0;// m
     protected IManeuverInputs                   inputs_;
     protected IGuidanceCommands                 commands_;
     protected ILogger                           log_ = LoggerManager.getLogger();
@@ -48,20 +48,17 @@ public abstract class ManeuverBase implements ISimpleManeuver {
      * will need to provide their own plan() methods to fill in the details and execute this one first.
      */
     @Override
-    public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
+    public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
         inputs_ = inputs;
         commands_ = commands;
         startDist_ = startDist;
+        return Double.NaN;
     }
 
+    @Override
+    public abstract boolean canPlan(IManeuverInputs inputs, double startDist, double endDist);
+    
     public abstract boolean executeTimeStep() throws IllegalStateException;
-
-
-    public abstract void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException;
-
-
-    public abstract void setTargetLane(int targetLane) throws UnsupportedOperationException;
-
 
     @Override
     public double getStartDistance() {
@@ -73,7 +70,6 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     public double getEndDistance() {
         return endDist_;
     }
-
 
     /**
      * Verifies that the vehicle is between the specified start & end locations for this maneuver

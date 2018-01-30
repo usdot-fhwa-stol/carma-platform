@@ -20,9 +20,9 @@
 
 // Global variables
 var map;
+var bounds;
 var markers=[];
 var hostmarker;
-var bounds;
 
 function initMap() {
     map= new google.maps.Map(document.getElementById('map'), {
@@ -31,18 +31,15 @@ function initMap() {
         mapTypeId: 'hybrid'
     });
 
-    //Initialize bounds.
-    bounds = new google.maps.LatLngBounds();
+    if (sessionStorage.getItem('mapMarkers') != null)
+        markers =  sessionStorage.getItem('mapMarkers');
 
     //Display the route on the map.
     setRouteMap(map);
 
     //Set the markers for the vehicle(s).
     setHostMarker();
-    setOtherVehicleMarkers();
 
-    //TODO: Fit the map to the newly inclusive bounds of the route initial load.
-    //map.fitBounds(bounds);
 }
 
 
@@ -88,43 +85,69 @@ function setHostMarker() {
         zIndex: 1
     });
 
-    markers.push(marker);
     hostmarker = marker;  //store instance of the host marker
-
-    ////extend the bounds to include each marker's position
-    //bounds.extend(marker.position);
+    map.setCenter(hostmarker.getPosition());
 }
 
 /*
-    Maps other DUMMY vehicles on the map.
+    To paint the pin a particular color.
 */
-function setOtherVehicleMarkers() {
+function pinSymbol(color) {
+  return {
+    path: 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z',
+    fillColor: color,
+    fillOpacity: 1,
+    strokeColor: '#000',
+    strokeWeight: 2,
+    scale: 1
+  };
+}
 
-    // Data for the markers consisting of a name, a LatLng and a zIndex for the
-    // order in which these markers should display on top of each other.
-    var vehicles = [
-        ['mVehicle2', 'Vehicle 2', 38.955117, -77.147111, 2, 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',],
-        ['mVehicle3', 'Vehicle 3',38.955133, -77.147050, 3, 'http://maps.google.com/mapfiles/ms/icons/purple-dot.png'],
-        ['mVehicle4', 'Vehicle 4',38.955164, -77.146971, 4, 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'],
-        ['mVehicle5', 'Vehicle 5',38.955213, -77.146906, 5, 'http://maps.google.com/mapfiles/ms/icons/green-dot.png']
-    ];
 
-    // Adds markers to the map.
-    for (var i = 0; i < vehicles.length; i++) {
-        var vehicle = vehicles[i];
+/*
+    Maps other CAV vehicles on the map.
+*/
+function setOtherVehicleMarkers(id, latitude, longitude) {
 
-        var marker = new google.maps.Marker({
-            id: vehicle[0],
-            position: { lat: vehicle[2], lng: vehicle[3] },
-            map: map,
-            icon: vehicle[5],
-            title: vehicle[1],
-            zIndex: vehicle[4]
-        });
-
-        ////extend the bounds to include each marker's position
-        //bounds.extend(marker.position);
+    if (markers == null || markers == 'undefined')
+    {
+         addMarkerForOtherVehicleWithTimeout(id, latitude, longitude, 3000);
+         return;
     }
+
+    var targetMarker = findMarker(markers, id);
+    if  (targetMarker == null || targetMarker == 'undefined')
+    {
+        //Vehicle ID is not on the list of markers. Add to the map.
+        addMarkerForOtherVehicleWithTimeout(id, latitude, longitude, 3000);
+        return;
+    }
+    else{
+        //Vehicle ID has been found. Update the location of the marker.
+        moveMarkerWithTimeout(targetMarker, latitude, longitude, 3000);
+        return;
+    }
+
+    //update markers
+    sessionStorage.setItem('mapMarkers', JSON.stringify(markers));
+}
+
+/*
+    Find and remove the marker from the Array greater than 3 seconds old.
+*/
+function removeExpiredMarkers(){
+    setTimeout(function () {
+        var dateNow = new Date();
+        for (var i = 0; i < markers.length; i++) {
+            if ( ((dateNow.getTime() - markers[i].dateTimeCreated.getTime())/1000) > 3) {
+                //Remove the marker from Map
+                markers[i].setMap(null);
+                //Remove the marker from array.
+                markers.splice(i, 1);
+                return;
+            }
+        }
+  }, 3000)//  ..  setTimeout()
 }
 
 /*
@@ -136,10 +159,11 @@ function moveMarkerWithTimeout( myMarker, newLat, newLong, timeout) {
 
         myMarker.setPosition(new google.maps.LatLng(newLat, newLong));
 
-        //Center map based on the marker that's moving, for now it's the host vehicle.
-        map.setCenter(myMarker.getPosition());
-        //OR map.panTo(marker.getPosition());
-
+        if (myMarker.id == 'mHostVehicle')
+        {
+            //Center map based on the marker that's moving, for now it's the host vehicle.
+            map.setCenter(myMarker.getPosition());
+        }
     }, timeout); //END setTimeout
 }
 
@@ -149,8 +173,11 @@ function moveMarkerWithTimeout( myMarker, newLat, newLong, timeout) {
 */
 function findMarker(allMarkers, idToFind)
 {
-  for(var i=0; i<allMarkers.length; i++){
-        if(allMarkers[i].id === idToFind){
+  if (allMarkers == null)
+    return;
+
+  for(var i=0; i < allMarkers.length; i++){
+        if(allMarkers[i].id == idToFind){
             return allMarkers[i];
         }
    }
@@ -159,12 +186,32 @@ function findMarker(allMarkers, idToFind)
 /*
     Add a marker.
 */
+function addMarkerForOtherVehicleWithTimeout(newId, newLat, newLong, timeout) {
+
+    window.setTimeout(function() {
+
+      if (markers == null)
+        markers = new Array();
+
+      markers.push(new google.maps.Marker({
+        id: newId,
+        position: new google.maps.LatLng(newLat, newLong),
+        map: map,
+        title: newId,
+        dateTimeCreated: new Date(),
+      }));
+
+    }, timeout);
+}
+
+/*
+    Add a plain marker.
+*/
 function addMarkerWithTimeout(position, timeout) {
     window.setTimeout(function() {
       markers.push(new google.maps.Marker({
         position: position,
         map: map,
-        //animation: google.maps.Animation.DROP
       }));
     }, timeout);
 }
@@ -181,3 +228,25 @@ function deleteMarker(allMarkers, idToFind)
         }
    }
 }
+
+/*
+    Delete a marker by ID and removing from array
+*/
+function deleteMarker(id) {
+
+    //Find and remove the marker from the Array
+    for (var i = 0; i < markers.length; i++) {
+
+        if (markers[i].id == id) {
+
+            //Remove the marker from Map
+            markers[i].setMap(null);
+
+            //Remove the marker from array.
+            markers.splice(i, 1);
+            return;
+        }
+
+    }
+
+};

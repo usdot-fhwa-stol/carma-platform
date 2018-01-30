@@ -17,21 +17,22 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="mobile-web-app-capable" content="yes"/>
-    <script src="scripts/eventemitter2.min.js"></script>
-    <script src="scripts/roslib.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <script src="thirdparty/ros/eventemitter2.min.js"></script>
+    <script src="thirdparty/ros/roslib.js"></script>
     <script src="scripts/control.js" defer></script>
-
     <script src="scripts/rosbridge.js" defer></script>
     <script src="scripts/googlemap.js"></script>
-
     <script async defer
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMzV4biqVN0pf3l1lYVWQ4KSWLyoG6OV0&callback=initMap">
     </script>
-    <link rel="stylesheet" type="text/css" href="css/styles.css"/>
-    <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css"/>
+    <script src="thirdparty/svg/svg.min.js" defer></script>
+    <script src="scripts/svgcarma.js" defer></script>
 
+    <link rel="stylesheet" type="text/css" href="styles/styles.css" />
+    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome-animation.min.css"/>
     <!--
     Setup:
     1) Move files command: sudo cp -R -r /home/mfromm/catkin_ws/src/CarmaPlatform/website/* /var/www/html/
@@ -43,151 +44,163 @@
     -->
 </head>
 <body>
-<div class="tab">
-    <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">TASKS</button>
-    <button class="tablinks" onclick="openTab(event, 'divDriverView')">VIEW</button>
-    <button class="tablinks" onclick="openTab(event, 'divMap')">MAP</button>
-    <button class="tablinks" onclick="openTab(event, 'divSystemStatus')">STATUS</button>
-    <button class="tablinks" onclick="openTab(event, 'divSystemLogs')">LOGS</button>
-</div>
-<div class="tabheader">
-    <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
-</div>
-<div id="divCapabilities" class="tabcontent">
-    <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
-    <div id="divRoutes" align="center"></div>
-    <div id="divSubCapabilities" hidden="true" align="center">
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'divCapabilities')" id="defaultOpen"><i class="fa fa-tasks" aria-hidden="false"></i><span class="tabName">&nbsp;Tasks</span></button>
+        <button class="tablinks" onclick="openTab(event, 'divDriverView')"><i class="fa fa-qrcode" aria-hidden="true"></i><span class="tabName">&nbsp;Views</span></button>
+        <button class="tablinks" onclick="openTab(event, 'divMap')"><i class="fa fa-map" aria-hidden="true"></i><span class="tabName">&nbsp;Map</span></button>
+        <button class="tablinks" onclick="openTab(event, 'divSystemStatus')"><i class="fa fa-info-circle" aria-hidden="true"></i><span class="tabName">&nbsp;Status</span></button>
+        <button class="tablinks" onclick="openTab(event, 'divSystemLogs')"><i class="fa fa-file-text" aria-hidden="true"></i><span class="tabName">&nbsp;Logs</span></button>
     </div>
-</div>
-<div id="divDriverView" class="tabcontent">
-    <div id="divRouteInfo">No Route Selected : 00h 00m 00s</div>
-    <div class="divSpeedometer">
-        <div class="gauge-a"></div>
-        <div class="gauge-b"></div>
-        <div class="gauge-c"></div>
-        <div class="gauge-data"><h1 id="percent">0</h1><br>MPH</div>
+    <div class="tabindicators">
+        <button id="btnACCPrimed" disabled><img id="imgACCPrimed" src="images/acc_primed.png" style="width: 40px; height: 40px;" /></button>
+        <button id="btnPinPoint" disabled ><i id="imgPinPoint" class="fa fa-map-pin" aria-hidden="true" style="font-size: 38px;"></i></button>
+        <button id="btnWIFI" disabled onclick="alert('To be implemented');" ><i class="fa fa-wifi" aria-hidden="true" style="color:gray; font-size: 38px;"></i></button>
+        <button id="btnConnected" disabled onclick="alert('To be implemented');" ><i class="fa fa-handshake-o" aria-hidden="true" style="color:gray; font-size: 35px;"></i></button>
     </div>
-    <div id="divSpeedCmd" class="sign-black-border-outer">
-        <div class="sign-black-border-inner">
-            <div class="sign-black-border-title">SPEED CMD</div>
-            <div id="divSpeedCmdValue" class="sign-black-border-value">0</div>
+    <div class="tabheader">
+        <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
+    </div>
+    <div id="divCapabilities" class="tabcontent">
+        <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
+        <div id="divRoutes" align="center"></div>
+        <div id="divSubCapabilities" hidden align="center">
         </div>
     </div>
-    <div id="divSpeedLimit" class="sign-black-border-outer">
-        <div class="sign-black-border-inner">
-            <div class="sign-black-border-title">SPEED LIMIT</div>
-            <div id="divSpeedLimitValue" class="sign-black-border-value">0</div>
+    <div id="divDriverView" class="tabcontent">
+        <div id="divRouteInfo">No Route Selected : 00h 00m 00s</div>
+        <div class="divSpeedometer">
+            <div class="gauge-a"></div>
+            <div class="gauge-b"></div>
+            <div class="gauge-c"></div>
+            <div class="gauge-data"><h1 id="percent">0</h1><br>MPH</div>
+        </div>
+        <div id="divSpeedCmd" class="sign-black-border-outer">
+            <div class="sign-black-border-inner">
+                <div class="sign-black-border-title">SPEED CMD</div>
+                <div id="divSpeedCmdValue" class="sign-black-border-value">0</div>
+            </div>
+        </div>
+        <div id="divSpeedLimit" class="sign-black-border-outer">
+            <div class="sign-black-border-inner">
+                <div class="sign-black-border-title">SPEED LIMIT</div>
+                <div id="divSpeedLimitValue" class="sign-black-border-value">0</div>
+            </div>
+        </div>
+        <div id="divDistRemaining"></div>
+        <div id="divLaneTracking"></div>
+    </div>
+    <div id="divMap" class="tabcontent">
+        <div id="map"></div>
+    </div>
+    <div id="divSystemStatus" class="tabcontent">
+        <table id="tblSystemStatus" class="table-style1">
+            <tr>
+                <td class="col-style1">
+                    <table id="tblFirstA" class="table-style1">
+                        <tr>
+                            <td class="section1" colspan="2">
+                                <strong>Important Vehicle Info</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="col-title">Title</td>
+                            <td class="col-title">Value</td>
+                        </tr>
+                    </table>
+                    <table id="tblFirstB" class="table-style1">
+                        <tr>
+                            <td class="section1" colspan="2">
+                                <strong>Guidance Related Info</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="col-title">Title</td>
+                            <td class="col-title">Value</td>
+                        </tr>
+                    </table>
+                </td>
+                <td class="col-style1">
+                    <table id="tblSecondA" class="table-style1">
+                        <tr>
+                            <td class="section1" colspan="2">
+                                <strong>Route Info</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="col-title">Title</td>
+                            <td class="col-title">Value</td>
+                        </tr>
+                    </table>
+                    <table id="tblSecondB" class="table-style1">
+                        <tr>
+                            <td class="section1" colspan="2">
+                                <strong>Host Vehicle Info</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="col-title">Title</td>
+                            <td class="col-title">Value</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="divSystemLogs" class="tabcontent">
+        <h3>System Logs</h3>
+        <div id="statusIndicator">
+            <p id="connecting">
+                Connecting to ROSbridge...
+            </p>
+            <p id="connected" style="color:#00D600; display:none">
+                Connected to ROSBridge.
+            </p>
+            <p id="error" style="color:#FF0000; display:none">
+                ROSBridge unable to connect.
+            </p>
+            <p id="closed" style="display:none">
+                ROSBridge connection closed.
+            </p>
+        </div>
+        <p />
+        <div id="divLog" class="logStatus">
         </div>
     </div>
-</div>
-<div id="divMap" class="tabcontent">
-    <div id="map"></div>
-</div>
-<div id="divSystemStatus" class="tabcontent">
-    <table id="tblSystemStatus" class="table-style1">
-        <tr>
-            <td class="col-style1">
-                <table id="tblFirstA" class="table-style1">
-                    <tr>
-                        <td class="section1" colspan="2">
-                            <strong>Important Vehicle Info</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="col-title">Title</td>
-                        <td class="col-title">Value</td>
-                    </tr>
-                </table>
-                <table id="tblFirstB" class="table-style1">
-                    <tr>
-                        <td class="section1" colspan="2">
-                            <strong>Guidance Related Info</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="col-title">Title</td>
-                        <td class="col-title">Value</td>
-                    </tr>
-                </table>
-            </td>
-            <td class="col-style1">
-                <table id="tblSecondA" class="table-style1">
-                    <tr>
-                        <td class="section1" colspan="2">
-                            <strong>Route Info</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="col-title">Title</td>
-                        <td class="col-title">Value</td>
-                    </tr>
-                </table>
-                <table id="tblSecondB" class="table-style1">
-                    <tr>
-                        <td class="section1" colspan="2">
-                            <strong>Host Vehicle Info</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="col-title">Title</td>
-                        <td class="col-title">Value</td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</div>
-<div id="divSystemLogs" class="tabcontent">
-    <h3>System Logs</h3>
-    <div id="statusIndicator">
-        <p id="connecting">
-            Connecting to ROSbridge...
-        </p>
-        <p id="connected" style="color:#00D600; display:none">
-            Connected to ROSBridge.
-        </p>
-        <p id="error" style="color:#FF0000; display:none">
-            ROSBridge unable to connect.
-        </p>
-        <p id="closed" style="display:none">
-            ROSBridge connection closed.
-        </p>
-    </div>
-    <p />
-    <div id="divLog" class="logStatus">
-    </div>
-</div>
-<!-- The Modal -->
-<div id="myModal" class="modal">
-    <!-- Modal content -->
-    <div class="modal-content">
-        <div class="modal-header">
-            <span class="close">&times;</span>
-            <h2>SYSTEM ALERT<i class="fa fa-exclamation-triangle" style="font-size:40px;color:red;"></i></h2>
-        </div>
-        <div class="modal-body">
-            <p>Some text in the Modal Body.</p>
-        </div>
-        <div class="modal-footer">
-            <button id="btnModal" onclick="closeModal();" title="CAV Guidance">OK</button>
+    <!-- The Modal -->
+    <div id="modalMessageBox" class="modal">
+        <!-- Modal content -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <h2>SYSTEM ALERT<i class="fa fa-exclamation-triangle" style="font-size:40px;color:red;"></i></h2>
+            </div>
+            <div class="modal-body">
+                <p>Some text in the Modal Body.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="btnModal" title="CAV Guidance">OK</button>
+            </div>
         </div>
     </div>
-</div>
-<audio id="audioAlert1" preload="auto">
-    <source src="sound/not-kiddin.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
-</audio>
-<audio id="audioAlert2" preload="auto">
-    <source src="sound/sunny.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
-</audio>
-<audio id="audioAlert3" preload="auto">
-    <source src="sound/hurry.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
-</audio>
+    <div id="modalUIInstructions">
+        <div id="modalUIInstructionsContent">
+        </div>
+    </div>
+    <audio id="audioAlert1" preload="auto">
+        <source src="sound/not-kiddin.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="audioAlert2" preload="auto">
+        <source src="sound/sunny.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="audioAlert3" preload="auto">
+        <source src="sound/hurry.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 </body>
 <footer>
-    <p class="copyright">© LEIDOS 2017</p>
+    <p class="copyright"></p>
     <p class="systemversion">&nbsp;</p>
 </footer>
 </html>

@@ -12,13 +12,19 @@
 string parent_frame
 # The child frame of the transform
 string child_frame
+# The timestamp which the returned transform should correspond to
+# A time of 0 such as ros::Time(0) can be used to get the most recent transform
+time stamp
 ---
 geometry_msgs/TransformStamped transform
 # An enumeration representing the validity of the returned transform
-uint8 errorStatus
+uint8 error_status
 
 # The enumeration of an error status.
 # No error occured
 uint8 NO_ERROR=0
 # The requested transform could not be computed (likely one of the frames is not in the tf tree)
 uint8 NO_TRANSFORM_EXISTS=1
+# The requested transform could not be extrapolated for the requested time. The returned transform is the most recent.
+uint8 COULD_NOT_EXTRAPOLATE=2
+

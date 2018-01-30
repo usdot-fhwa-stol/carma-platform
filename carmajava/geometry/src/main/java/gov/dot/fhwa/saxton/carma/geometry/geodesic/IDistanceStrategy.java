@@ -47,4 +47,13 @@ public interface IDistanceStrategy {
    * @return The distance in meters
    */
   double downtrackDistance(Location loc, GreatCircleSegment seg);
+
+  /**
+   * Calculates location of a external point projected onto a greate circle segment
+   *
+   * @param loc The location whose projection is being calculated
+   * @param seg The great circle segment which defines the track
+   * @return The projected location
+   */
+  Location projectOntoSegment(Location loc, GreatCircleSegment seg);
 }

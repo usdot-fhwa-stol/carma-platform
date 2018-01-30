@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.geometry.geodesic;
 
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import org.ros.rosjava_geometry.Transform;
@@ -70,8 +71,8 @@ public class HaversineStrategy implements IDistanceStrategy{
     Vector3D cPrime = Vector3D.fromVector(normalVec.subtract(vec2EndPoint));
     Vector3D xPrime = Vector3D.fromVector(vec2ExternalPoint.subtract(vec2EndPoint));
 
-    double determinateOfPlane = Vector3D.get3by3Determinate(bPrime, cPrime, xPrime);
-    double sign = determinateOfPlane < 0 ? 1.0 : -1.0; // if det is less than 0 location is on the left.
+    double determinantOfPlane = Vector3D.get3by3Determinant(bPrime, cPrime, xPrime);
+    double sign = determinantOfPlane < 0 ? 1.0 : -1.0; // if det is less than 0 location is on the right.
 
     // Get angle between both vectors
     double interiorAngle = startToExternalVec.getAngleBetweenVectors(startToEndVec);
@@ -96,5 +97,38 @@ public class HaversineStrategy implements IDistanceStrategy{
     double interiorAngle = startToExternalVec.getAngleBetweenVectors(startToEndVec);
 
     return startToExternalVec.magnitude() * Math.cos(interiorAngle);
+  }
+
+  @Override public Location projectOntoSegment(Location loc, GreatCircleSegment seg) {
+    // Get vectors from earth center to path and external location
+    GeodesicCartesianConverter gCC = new GeodesicCartesianConverter();
+    Vector vec2StartPoint = new Vector(gCC.geodesic2Cartesian(seg.getLoc1(), Transform.identity()));
+    Vector vec2EndPoint = new Vector(gCC.geodesic2Cartesian(seg.getLoc2(), Transform.identity()));
+    Vector vec2ExternalPoint = new Vector(gCC.geodesic2Cartesian(loc, Transform.identity()));
+
+    // Get vector from start to external point
+    Vector startToExternalVec = vec2ExternalPoint.subtract(vec2StartPoint);
+
+    // Get vector from start to end point
+    Vector startToEndVec = vec2EndPoint.subtract(vec2StartPoint);
+
+    // Get angle between both vectors
+    double interiorAngle = startToExternalVec.getAngleBetweenVectors(startToEndVec);
+    
+    // Calculate downtrack distance
+    double downtrackDistance = startToExternalVec.magnitude() * Math.cos(interiorAngle);
+
+    // Find unit vector along segment from start to projection
+    Vector invertedSegUnitVector = startToEndVec.getUnitVector().scalarMultiply(-1.0);
+
+    // Find vector from start to projection
+    Vector startToProjection = invertedSegUnitVector.scalarMultiply(downtrackDistance);
+
+    // Find vector from earth to projected point
+    Vector vec2Projection = vec2StartPoint.subtract(startToProjection);
+
+    // Fine location of projected point
+    Point3D projectionInECEF = new Point3D(vec2Projection.getDim(0), vec2Projection.getDim(1), vec2Projection.getDim(2));
+    return gCC.cartesian2Geodesic(projectionInECEF, Transform.identity());
   }
 }

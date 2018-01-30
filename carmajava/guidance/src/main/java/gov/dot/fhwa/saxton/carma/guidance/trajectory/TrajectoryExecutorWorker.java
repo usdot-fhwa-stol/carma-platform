@@ -53,8 +53,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     OnTrajectoryProgressCallback callback;
 
     PctCallback(double pct, OnTrajectoryProgressCallback callback) {
-      this.pct = pct;
-      this.callback = callback;
+      this.pct = pct; this.callback = callback;
     }
   }
 
@@ -375,6 +374,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   public void runTrajectory(Trajectory traj) {
     if (currentTrajectory == null) {
       this.currentTrajectory = traj;
+
       this.currentLateralManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       this.currentLongitudinalManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
       this.currentComplexManeuver = (IComplexManeuver) traj.getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
@@ -400,6 +400,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       } else {
         log.info("No complex maneuver started yet.");
       }
+
       resetCallbacks();
     } else {
       // Hold onto this trajectory for double buffering, flip to it when we finish trajectory
@@ -437,6 +438,16 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   }
 
   /**
+   * Unregister all callbacks
+   */
+  public void unregisterAllTrajectoryProgressCallback() {
+    // Ensure that we don't get any weirdness when trying other operations simultaneously
+    synchronized (callbacks) {
+      callbacks.clear();
+    }
+  }  
+  
+  /**
    * Get the current downtrack distance and then call any callbacks that have been triggered
    */
   private void invokeCallbacks() {
@@ -454,6 +465,21 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
         callback.called = true;
       }
     }
+  }
+
+  /**
+   * Force a clean restart operation on this worker componet
+   */
+  public void cleanRestart() {
+    downtrackDistance = 0.0;
+    currentTrajectory = null;
+    nextTrajectory = null;
+    currentLateralManeuver = null;
+    currentLongitudinalManeuver = null;
+    currentComplexManeuver = null;
+    lateralManeuverThread = new Thread();
+    longitudinalManeuverThread = new Thread();
+    complexManeuverThread = new Thread();
   }
 
   /**

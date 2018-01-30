@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600px" height="190px" viewBox="0 0 600 190" preserveAspectRatio="xMidYMid meet" onload="" >
+  <rect id="svgEditorBackground" x="118" y="0" width="347" height="189" style="fill:gray; stroke: none;"/>
+  <line id="e1_line" x1="128" y1="0" x2="128"  y2="189" style="stroke: white; fill: none; stroke-width: 5px;"/>
+  <line id="e2_line" x1="237" y1="0" x2="237"  y2="189" style="stroke: white; fill: none; stroke-width: 5px;stroke-dasharray:15px, 15px;"/>
+  <line id="e3_line" x1="346" y1="0" x2="346"  y2="189" style="stroke: white; fill: none; stroke-width: 5px;stroke-dasharray:15px, 15px;"/>
+  <line id="e4_line" x1="455" y1="0" x2="455"  y2="189" style="stroke: white; fill: none; stroke-width: 5px;"/>
+</svg>

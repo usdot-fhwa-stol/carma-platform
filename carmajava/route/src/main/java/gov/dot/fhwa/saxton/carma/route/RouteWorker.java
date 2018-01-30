@@ -19,11 +19,8 @@ package gov.dot.fhwa.saxton.carma.route;
 import cav_msgs.*;
 import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
-import gov.dot.fhwa.saxton.carma.geometry.geodesic.HaversineStrategy;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
-import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -54,11 +51,11 @@ public class RouteWorker {
     /*STATES: LoadingRoutes(0), RouteSelection(1), WaitingToStart(2), FollowingRoute(3) */
     /*          EVENTS           */
     { 1, 1, 2, 3 }, /*FILES_LOADED    */
-    { 0, 2, 2, 3 }, /*ROUTE_SELECTED  */
-    { 0, 1, 2, 1 }, /*ROUTE_COMPLETED */
-    { 0, 1, 2, 2 }, /*LEFT_ROUTE      */
-    { 0, 1, 2, 2 }, /*SYSTEM_FAILURE  */
-    { 0, 1, 2, 2 }, /*SYSTEM_NOT_READY*/
+    { 0, 2, 2, 2 }, /*ROUTE_SELECTED  */
+    { 0, 1, 1, 1 }, /*ROUTE_COMPLETED */
+    { 0, 1, 1, 1 }, /*LEFT_ROUTE      */
+    { 0, 1, 1, 1 }, /*SYSTEM_FAILURE  */
+    { 0, 1, 1, 1 }, /*SYSTEM_NOT_READY*/
     { 0, 1, 3, 3 }, /*ROUTE_STARTED   */
     { 0, 1, 1, 1 }, /*ROUTE_ABORTED   */ };
 
@@ -76,15 +73,19 @@ public class RouteWorker {
   protected double crossTrackDistance = 0;
   protected boolean systemOkay = false;
   protected int routeStateSeq = 0;
+  protected final int requiredLeftRouteCount;
+  protected int recievedLeftRouteEvents = 0;
+  protected double currentSegmentDowntrack = 0;
 
   /**
    * Constructor initializes a route worker object with the provided logging tool
    *
    * @param log The logger to be used
    */
-  public RouteWorker(IRouteManager manager, Log log) {
+  public RouteWorker(IRouteManager manager, Log log, int requiredLeftRouteCount) {
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.routeManager = manager;
+    this.requiredLeftRouteCount = requiredLeftRouteCount;
   }
 
   /**
@@ -93,9 +94,10 @@ public class RouteWorker {
    * @param manager negotiation manager which is used to publish data
    * @param log     the logger
    */
-  public RouteWorker(IRouteManager manager, Log log, String database_path) {
+  public RouteWorker(IRouteManager manager, Log log, String database_path, int requiredLeftRouteCount) {
     this.routeManager = manager;
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
+    this.requiredLeftRouteCount = requiredLeftRouteCount;
     // Load route files from database
     log.info("RouteDatabasePath: " + database_path);
     File folder = new File(database_path);
@@ -117,6 +119,21 @@ public class RouteWorker {
       }
     }
     // At this point the current state should be WaitingForRouteSelection
+  }
+
+  /**
+   * Helper method which resets all the variables which maintain the route following state to their default values
+   */
+  protected void resetRouteStateVariables() {
+    activeRoute = null;
+    currentSegment = null;
+    currentSegmentIndex = 0;
+    currentWaypointIndex = 0;
+    downtrackDistance = 0;
+    crossTrackDistance = 0;
+    routeStateSeq = 0;
+    recievedLeftRouteEvents = 0;
+    currentSegmentDowntrack = 0;
   }
 
   /**
@@ -146,6 +163,7 @@ public class RouteWorker {
       case ROUTE_COMPLETED:
         break;
       case LEFT_ROUTE:
+        recievedLeftRouteEvents = 0; // Reset the left route count before transitioning to a new state
         break;
       case SYSTEM_FAILURE:
         routeManager.shutdown();
@@ -153,6 +171,7 @@ public class RouteWorker {
       case SYSTEM_NOT_READY:
         break;
       case ROUTE_ABORTED:
+        resetRouteStateVariables();
         break;
       case ROUTE_STARTED:
         break;
@@ -179,6 +198,10 @@ public class RouteWorker {
    */
   protected void loadAdditionalRoute(IRouteLoadStrategy loadStrategy) {
     Route route = loadStrategy.load();
+    if (route == null) {
+      log.warn("Failed to load a route");
+      return;
+    }
     route
       .setRouteID(route.getRouteName()); //TODO come up with better method of defining the route id
     availableRoutes.put(route.getRouteID(), route);
@@ -223,6 +246,7 @@ public class RouteWorker {
     if (route == null) {
       return SetActiveRouteResponse.NO_ROUTE;
     } else {
+      resetRouteStateVariables(); // Reset all route state variables when a new route is selected
       activeRoute = route;
 
       handleEvent(WorkerEvent.ROUTE_SELECTED);
@@ -248,9 +272,12 @@ public class RouteWorker {
     if (startingIndex == -1) {
       return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
     } else {
-      startRouteAtIndex(startingIndex);
-      routeManager.publishActiveRoute(getActiveRouteTopicMsg());
-      return StartActiveRouteResponse.NO_ERROR;
+      if (startRouteAtIndex(startingIndex)) {
+        routeManager.publishActiveRoute(getActiveRouteTopicMsg());
+        return StartActiveRouteResponse.NO_ERROR;
+      } else {
+        return StartActiveRouteResponse.INTERNAL_ERROR;
+      }
     }
   }
 
@@ -265,9 +292,12 @@ public class RouteWorker {
     }
     int count = 0;
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
+    log.debug("getValidStartingWPIndex: lat = " + hostVehicleLocation.getLatitude() + ", lon = " + hostVehicleLocation.getLongitude());
     for (RouteSegment seg : activeRoute.getSegments()) {
       double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
       double downTrack = seg.downTrackDistance(hostVehicleLocation);
+
+      log.info("crosstrack to waypoint " + count + " = " + crossTrack);
 
       if (Math.abs(crossTrack) < maxJoinDistance) {
         if (count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) {
@@ -287,25 +317,21 @@ public class RouteWorker {
    *
    * @param index the index of the first waypoint to start from.
    *              An additional segment will be added from the vehicle to this starting point
+   * @return true if able to start route at the specified index
    */
-  protected void startRouteAtIndex(int index) {
+  protected boolean startRouteAtIndex(int index) {
     // Insert a starting waypoint at the current vehicle location which is connected to the route
     RouteWaypoint downtrackWP = activeRoute.getWaypoints().get(index);
     RouteWaypoint startingWP = new RouteWaypoint(downtrackWP); // Deep copy of downtrack waypoint
     startingWP.setLocation(new Location(hostVehicleLocation)); // Don't want waypoint and vehicle to reference same location object
 
-    boolean ableToConnectToRoute = false;
     try {
-      ableToConnectToRoute = activeRoute.insertWaypoint(startingWP, index);
+      activeRoute.insertWaypoint(startingWP, index);
     } catch (Exception e) {
-      ableToConnectToRoute = false;
       log.info("Exception caught when inserting route starting waypoint Exception = " + e);
-    }
-
-    // If we can't join the route return
-    if (!ableToConnectToRoute) {
       log.info("Could not join the route from the current location");
-      return;
+      // If we can't join the route return
+      return false;
     }
 
     currentSegment = activeRoute.getSegments().get(index);
@@ -315,7 +341,23 @@ public class RouteWorker {
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
     handleEvent(WorkerEvent.ROUTE_STARTED);
+    return true;
   }
+
+  /**
+   * Aborts the currently active route and returns a byte (unit8) indicating the success of the abort request
+   *
+   * @return The error code (See cav_srvs.AbortActiveRoute for possible options)
+   */
+  public byte abortActiveRoute() {
+    if (activeRoute == null) {
+      return cav_srvs.AbortActiveRouteResponse.NO_ACTIVE_ROUTE;
+    }
+    log.info("Aborting current route by request");
+    handleEvent(WorkerEvent.ROUTE_ABORTED);
+    return cav_srvs.AbortActiveRouteResponse.NO_ERROR;
+  }
+
 
   /**
    * Function to be used as a callback for the arrival of NavSatFix messages
@@ -364,8 +406,8 @@ public class RouteWorker {
     }
 
     // Update downtrack distance
-    downtrackDistance = Math.max(0.0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment
-      .downTrackDistance(hostVehicleLocation));
+    currentSegmentDowntrack = currentSegment.downTrackDistance(hostVehicleLocation);
+    downtrackDistance = Math.max(0.0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegmentDowntrack);
 
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
@@ -374,12 +416,16 @@ public class RouteWorker {
     log.debug("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
-      handleEvent(WorkerEvent.LEFT_ROUTE);
+      recievedLeftRouteEvents++;
+      if (recievedLeftRouteEvents >= requiredLeftRouteCount) {
+        handleEvent(WorkerEvent.LEFT_ROUTE);
+      }
+    } else {
+      recievedLeftRouteEvents = 0; // reset count to 0 if we are back on the route
     }
 
     // Publish updated route information
     routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), WorkerEvent.NONE));
-    routeManager.publishCurrentRouteSegment(getCurrentRouteSegmentTopicMsg());
   }
 
   /**
@@ -414,19 +460,6 @@ public class RouteWorker {
         //TODO: Handle this variant maybe throw exception?
         log.warn("System alert message received with unknown type: " + msg.getType());
     }
-  }
-
-  /**
-   * Returns a message to be published on the current route segment topic
-   *
-   * @return route segment message
-   */
-  protected cav_msgs.RouteSegment getCurrentRouteSegmentTopicMsg() {
-    if (currentSegment == null) {
-      log.warn("Request for current segment message when current segment is null");
-      return messageFactory.newFromType(cav_msgs.RouteSegment._TYPE);
-    }
-    return currentSegment.toMessage(messageFactory, currentWaypointIndex);
   }
 
   /**
@@ -497,6 +530,11 @@ public class RouteWorker {
       routeState.setCrossTrack(crossTrackDistance);
       routeState.setRouteID(activeRoute.getRouteID());
       routeState.setDownTrack(downtrackDistance);
+      if (currentSegment != null) {
+        routeState.setSegmentDownTrack(currentSegmentDowntrack);
+        routeState.setCurrentSegment(currentSegment.toMessage(messageFactory, currentWaypointIndex));
+        routeState.setLaneIndex((byte) currentSegment.determinePrimaryLane(crossTrackDistance));
+      }
     }
 
     std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);

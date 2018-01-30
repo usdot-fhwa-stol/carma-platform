@@ -35,7 +35,7 @@
 #include <cav_srvs/GetDriversWithCapabilities.h>
 
 #include <ros/ros.h>
-
+#include <unordered_map>
 /**
  * @brief Just a test application to use with the sensor_fusion_node
  *
@@ -49,16 +49,21 @@
 bool getDriversWithCapabilities(cav_srvs::GetDriversWithCapabilitiesRequest& req,
                                 cav_srvs::GetDriversWithCapabilitiesResponse& res)
 {
-    //if(req.category != cav_srvs::GetDriversWithCapabilitiesRequest::POSITION)
-    //{
-    //    res.driver_names.clear();
-    //    return true;
-    //}
 
+    std::unordered_map<std::string,std::string> map;
+    map["position/odometry"] = "/pinpoint/position/odometry";
+    map["position/heading"] = "/pinpoint/position/heading";
+    map["position/nav_sat_fix"] = "/pinpoint/position/nav_sat_fix";
+    map["position/velocity"] = "/pinpoint/position/velocity";
+    map["sensor/objects"] = "/srx_objects/f_lrr/sensor/objects";    
     for(auto it : req.capabilities)
-    {        
-        res.driver_data.push_back("/pinpoint/" + it);
+    {
+        ROS_INFO_STREAM("Received request for: " << it);     
+        if(map.find(it) != map.end())   
+            res.driver_data.push_back(map[it]);
     }
+
+    return true;
 
 
 }

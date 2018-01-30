@@ -43,6 +43,7 @@
 #include <ros/spinner.h>
 
 #include <boost/signals2/signal.hpp>
+#include <boost/endian/conversion.hpp>
 
 #include <thread>
 #include <queue>
@@ -147,6 +148,8 @@ public:
      */
     struct LightParams_t
     {
+        bool GreenFlashOn;
+        bool GreenSolidOn;
         bool LeftArrowOn;
         bool RightArrowOn;
         bool TakeDownOn;
@@ -257,6 +260,7 @@ private:
     std::shared_ptr<ros::AsyncSpinner> spinner_;
     std::shared_ptr<ros::NodeHandle> async_nh_;
     ros::CallbackQueue async_q_;
+    ros::Timer version_timer_;
 
 
     // Process input members
@@ -268,6 +272,8 @@ private:
 
     // Control message is maintains the state of the previous message sent
     ControlMessage_t ctrl_msg_;
+
+    uint8_t firmware_revision_;
 
 
 
@@ -326,6 +332,11 @@ public:
      * @param params - PID params to send
      */
     void setPID(PIDParams_t &params);
+
+    /**
+     * @brief Sends a request to the controller to send firmware version
+     */
+    void sendFirmwareVersionRequest();
 
     /**
      * @brief Signals that the SRXDBWController is connected to topics and processing inputs
@@ -455,7 +466,7 @@ private:
      * @param out
      * @return true if succesfully unpacked, false otherwise
      */
-    static bool unpackPIDMessage(const std::vector<uint8_t> &msg, PIDParams_t &out);
+    static bool unpackPIDMessage(const std::vector<uint8_t> &msg, PIDParams_t &out, const boost::endian::order& order);
 
 
     /**

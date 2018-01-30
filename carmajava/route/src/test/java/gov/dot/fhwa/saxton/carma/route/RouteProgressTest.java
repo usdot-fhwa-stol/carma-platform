@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.SystemAlert;
+import cav_srvs.AbortActiveRouteResponse;
 import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
@@ -58,9 +59,9 @@ public class RouteProgressTest {
   @Test
   public void testRouteProgress() throws Exception {
     MockRouteManager routeMgr = new MockRouteManager();
-    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routefiles/");
+    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routefiles/", 3);
 
-    routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.DRIVERS_READY, ""));
+    routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
@@ -132,9 +133,9 @@ public class RouteProgressTest {
    */
   @Test
   public void testLeavingRouteVicinity() throws Exception {
-    RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "src/test/resources/routefiles/");
+    RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "src/test/resources/routefiles/", 3);
 
-    routeWorker.handleSystemAlertMsg(routeWorker.buildSystemAlertMsg(SystemAlert.DRIVERS_READY, ""));
+    routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
@@ -171,6 +172,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed inside the garage (off the route)
+    // 3 off route nav sat msgs are required to consider vehicle off the route
     navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
     navMsg.setLatitude(38.95633);
     navMsg.setLongitude(-77.15011);
@@ -179,6 +181,62 @@ public class RouteProgressTest {
 
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
     assertTrue(routeWorker.leftRouteVicinity());
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
+
+    routeWorker.handleNavSatFixMsg(navMsg);
+
+    assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
+    assertTrue(routeWorker.leftRouteVicinity());
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
+
+    routeWorker.handleNavSatFixMsg(navMsg);
+
+    assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
+    assertTrue(routeWorker.leftRouteVicinity());
+    assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
+  }
+
+  /**
+   * Tests route abort
+   * @throws Exception
+   */
+  @Test
+  public void testRouteAbort() throws Exception {
+    RouteWorker routeWorker =
+      new RouteWorker(new MockRouteManager(), log, "src/test/resources/routefiles/", 3);
+
+    routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
+    assertTrue(routeWorker.systemOkay == true);
+
+    // Test vehicle has been placed just before start of route
+    NavSatFix navMsg = messageFactory.newFromType(NavSatFix._TYPE);
+    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
+    navMsg.setLatitude(38.95649);
+    navMsg.setLongitude(-77.15028);
+    navMsg.setAltitude(0);
+    routeWorker.handleNavSatFixMsg(navMsg);
+
+    assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
+
+    byte response = routeWorker.setActiveRoute("Colonial Farm Rd. Outbound");
+    assertTrue(response == SetActiveRouteResponse.NO_ERROR);
     assertTrue(routeWorker.getCurrentState() == WorkerState.WAITING_TO_START);
+
+    response = routeWorker.startActiveRoute();
+    assertTrue(response == StartActiveRouteResponse.NO_ERROR);
+
+    assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
+
+    assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation()
+      .almostEqual(new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+    assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
+
+    // Route has been joined time to abort
+    assertTrue(routeWorker.abortActiveRoute() == AbortActiveRouteResponse.NO_ERROR);
+    assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
+
+    // With no active route try call again
+    assertTrue(routeWorker.abortActiveRoute() == AbortActiveRouteResponse.NO_ACTIVE_ROUTE);
+    assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
   }
 }

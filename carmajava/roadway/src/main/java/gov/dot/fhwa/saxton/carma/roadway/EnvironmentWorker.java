@@ -16,13 +16,25 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
+import cav_msgs.RoadwayObstacle;
+import cav_msgs.RouteState;
 import cav_msgs.SystemAlert;
 import geometry_msgs.TransformStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.CartesianObject;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.QuaternionUtils;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+import gov.dot.fhwa.saxton.carma.route.Route;
+import gov.dot.fhwa.saxton.carma.route.RouteSegment;
+import gov.dot.fhwa.saxton.carma.route.RouteWaypoint;
+import gov.dot.fhwa.saxton.carma.route.WorkerState;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.Duration;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -32,7 +44,7 @@ import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 import std_msgs.Header;
 import tf2_msgs.TFMessage;
-
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,199 +56,265 @@ import java.util.List;
 public class EnvironmentWorker {
   // Messaging and logging
   protected SaxtonLogger log;
-  protected IEnvironmentManager envMgr;
+  protected IRoadwayManager roadwayMgr;
   protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
 
-  // Host vehicle state variables
-  protected boolean headingReceived = false;
-  protected boolean navSatFixReceived = false;
-  protected Location hostVehicleLocation = null;
-  protected double hostVehicleHeading; // The heading of the vehicle in degrees east of north in an NED frame.
+  // The heading of the vehicle in degrees east of north in an NED frame.
   // Frame ids
-  protected final String earthFrame = "earth";
-  protected final String mapFrame = "map";
-  protected final String odomFrame = "odom";
-  protected final String baseLinkFrame = "base_link";
-  protected final String positionSensorFrame = "pinpoint"; //TODO set this name via ros param
-  // Transforms
-  protected Transform mapToOdom = Transform.identity();
-  protected Transform earthToMap = null;
-  protected Transform baseToPositionSensor = null;
-  protected Transform odomToBaseLink = Transform.identity(); // The odom frame will start in the same orientation as the base_link frame on startup
-  // Transform Update parameters
-  protected Time prevMapTime = null;
-  protected Duration MAP_UPDATE_PERIOD = new Duration(5); // Time in seconds between updating the map frame location
-  protected int tfSequenceCount = 0;
+  protected final String earthFrame;
+  protected final String mapFrame;
+  protected final String odomFrame;
+  protected final String baseLinkFrame;
+  protected final String globalPositionSensorFrame;
+  protected final String localPositionSensorFrame;
+
+  //Route
+  protected Route activeRoute;
+  protected RouteSegment currentSegment;
+  protected RouteState routeState;
+  protected double distBackward;
+  protected double distForward;
 
   /**
    * Constructor
-   * @param envMgr EnvironmentWorker used to publish data and get stored transforms
-   * @param log Logging object
+   *
+   * @param roadwayMgr EnvironmentWorker used to publish data and get stored transforms
+   * @param log    Logging object
+   * @param earthFrame The frame id used to identify the ECEF frame
+   * @param mapFrame The frame id used to identify the global map frame
+   * @param odomFrame The frame id used to identify the local planning frame
+   * @param baseLinkFrame The frame id used to identify the host vehicle frame
+   * @param globalPositionSensorFrame The frame id used to identify the frame of a global position sensor
+   * @param localPositionSensorFrame The frame id used to identify a local odometry position sensor frame
+   * @param distBackward The distance in m uptrack of the host vehicles segment which will be included
+   * @param distForward The distance in m downtrack of the host vehicles segment which will be included
    */
-  public EnvironmentWorker(IEnvironmentManager envMgr, Log log) {
+  public EnvironmentWorker(IRoadwayManager roadwayMgr, Log log, String earthFrame, String mapFrame,
+    String odomFrame, String baseLinkFrame, String globalPositionSensorFrame, String localPositionSensorFrame,
+    double distBackward, double distForward) {
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
-    this.envMgr = envMgr;
+    this.roadwayMgr = roadwayMgr;
+    this.earthFrame = earthFrame;
+    this.mapFrame = mapFrame;
+    this.odomFrame = odomFrame;
+    this.baseLinkFrame = baseLinkFrame;
+    this.globalPositionSensorFrame = globalPositionSensorFrame;
+    this.localPositionSensorFrame = localPositionSensorFrame;
+    this.distBackward = distBackward;
+    this.distForward = distForward;
+  }
+
+ /**
+   * Route message handle
+   *
+   * @param route The route message
+   */
+  public void handleRouteMsg(cav_msgs.Route route) {
+    activeRoute = Route.fromMessage(route);
   }
 
   /**
-   * Handle for new route segments.
-   * This will help define lane geometries
-   * @param currentSeg The current route segment
+   * RouteState message handle
+   *
+   * @param route The route state message
    */
-  public void handleCurrentSegmentMsg(cav_msgs.RouteSegment currentSeg) {
-    //TODO update lane geometry here. For now we will need to assume linear interpolation
-//    RouteWaypoint wp = RouteWaypoint.fromMessage(currentSeg.getWaypoint());
-//    LaneEdgeType leftEdge = wp.getLeftMostLaneMarking();
-//    LaneEdgeType interiorEdges = wp.getInteriorLaneMarkings();
-//    LaneEdgeType rightEdge = wp.getRightMostLaneMarking();
-//    int laneCount = wp.getLaneCount();
-//    Location downTrackLoc = wp.getLocation();
-//    Location uptrackLoc = RouteWaypoint.fromMessage(currentSeg.getPrevWaypoint()).getLocation();
-  }
-
-  /**
-   * Handler for new vehicle heading messages
-   * Headings should be specified as degrees east of north
-   * TODO if base_link frame is not an +X forward frame this will need a transform as well.
-   * @param heading The heading message
-   */
-  public void handleHeadingMsg(cav_msgs.HeadingStamped heading) {
-    hostVehicleHeading = heading.getHeading();
-    headingReceived = true;
-  }
-
-  /**
-   * NavSatFix Handler
-   * Updates the host vehicle's location and updates the earth->map and map->odom transforms
-   * @param navSatFix The nav sat fix message
-   */
-  public void handleNavSatFixMsg(sensor_msgs.NavSatFix navSatFix) {
-    // Assign the new host vehicle location
-    hostVehicleLocation =
-      new Location(navSatFix.getLatitude(), navSatFix.getLongitude(), navSatFix.getAltitude());
-    navSatFixReceived = true;
-    updateMapAndOdomTFs();
-  }
-
-  /**
-   * Helper function for use in handleNavSatFix
-   * Updates the earth->map and map->odom transforms based on the current vehicle odometry, lat/lon, and heading.
-   * For full functionality at least one nav sat fix and heading message needs to have been received.
-   * Additionally, a transform from base_link to position_sensor needs to be available
-   */
-  protected void updateMapAndOdomTFs() {
-    if (true)
-    {
-      return;
-    }
-    if (!navSatFixReceived || !headingReceived) {
-      return; // If we don't have a heading and a nav sat fix the map->odom transform cannot be calculated
-    }
-    // Check if base_link->position_sensor tf is available. If not look it up
-    if (baseToPositionSensor == null) {
-      // This transform should be static. No need to look up more than once
-      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame);
-      if (baseToPositionSensor == null) {
-        return; // If the request for this transform failed wait for another position update to request it
-      }
-    }
-
-    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
-
-    List<geometry_msgs.TransformStamped> tfStampedMsgs = new LinkedList<>();
-
-    // Update map location on start and every MAP_UPDATE_PERIOD after that
-    if (prevMapTime == null || 0 < envMgr.getTime().subtract(prevMapTime).compareTo(MAP_UPDATE_PERIOD)) {
-      // Map will be an NED frame on the current vehicle location
-      earthToMap = gcc.ecefToNEDFromLocaton(hostVehicleLocation);
-      tfStampedMsgs.add(buildTFStamped(earthToMap, earthFrame, mapFrame));
-      prevMapTime = envMgr.getTime();
-    }
-
-    // Calculate map->odom transform
-    Point3D hostInMap = gcc.geodesic2Cartesian(hostVehicleLocation, earthToMap.invert());
-
-    // T_x_y = transform describing location of y with respect to x
-    // m = map frame
-    // p = position sensor frame (from odometry)
-    // r = position sensor frame (from nav sat fix)
-    // o = odom frame
-    // b = baselink frame (as has been calculated by odometry up to this point)
-    // We want to find T_p_r. This tells us how much to move odom to correct for drift in odometry
-    // T_p_r = inv((inv(T_m_r) * T_m_o * T_o_b * T_b_p); This is equivalent to the difference between where odom should be and where it is
-    Vector3 nTranslation = new Vector3(hostInMap.getX(), hostInMap.getY(), hostInMap.getZ());
-    // The vehicle heading is relative to NED so over short distances heading in NED = heading in map
-    Vector3 zAxis = new Vector3(0,0,1);
-    Quaternion hostRotInMap =  Quaternion.fromAxisAngle(zAxis, Math.toRadians(hostVehicleHeading));
-    hostRotInMap = hostRotInMap.normalize();
-
-    Transform T_m_r = new Transform(nTranslation, hostRotInMap);
-    Transform T_m_o = mapToOdom;
-    Transform T_o_b = odomToBaseLink;
-    Transform T_b_p = baseToPositionSensor;
-
-    Transform T_p_r = (T_m_r.invert().multiply(T_m_o.multiply(T_o_b.multiply(T_b_p)))).invert();
-
-    // Modify map to odom with the difference from the expected and real sensor positions
-    mapToOdom = mapToOdom.multiply(T_p_r);
-    // Publish newly calculated transforms
-    tfStampedMsgs.add(buildTFStamped(mapToOdom, mapFrame, odomFrame));
-    publishTF(tfStampedMsgs);
-  }
-
-  /**
-   * Odometry message handler
-   * @param odometry Odometry message
-   */
-  public void handleOdometryMsg(nav_msgs.Odometry odometry) {
-    // Check if base_link->position_sensor tf is available. If not look it up
-    if (baseToPositionSensor == null) {
-      // This transform should be static. No need to look up more than once
-      baseToPositionSensor = envMgr.getTransform(baseLinkFrame, positionSensorFrame);
-      if (baseToPositionSensor == null) {
-        return; // If the request for this transform failed wait for another odometry update to request it
-      }
-    }
-    if (odometry.getChildFrameId().equals(baseLinkFrame)) { // If the odometry is already in the base_link frame TODO make this check more robust
-      odomToBaseLink = Transform.fromPoseMessage(odometry.getPose().getPose());
-      publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
-      return;
-    }
-    // Extract the location of the position sensor relative to the odom frame
-    // Covariance is ignored as filtering was already done by sensor fusion
-    // Calculate odom->base_link
-    // T_x_y = transform describing location of y with respect to x
-    // p = position sensor frame (from odometry)
-    // o = odom frame
-    // b = baselink frame (as has been calculated by odometry up to this point)
-    // T_o_b = T_o_p * inv(T_b_p)
-    Transform T_o_p = Transform.fromPoseMessage(odometry.getPose().getPose());
-    Transform T_b_p = baseToPositionSensor;
-    Transform T_o_b = T_o_p.multiply(T_b_p.invert());
-    odomToBaseLink = T_o_b;
-    // Publish updated transform
-    publishTF(Arrays.asList(buildTFStamped(odomToBaseLink, odomFrame, baseLinkFrame)));
+  public void handleRouteStateMsg(cav_msgs.RouteState routeState) {
+    this.routeState = routeState;
+    this.currentSegment = RouteSegment.fromMessage(routeState.getCurrentSegment());
   }
 
   /**
    * External object message handler
-   * @param externalObjects External object list. Should be relative to base_link frame
+   *
+   * @param externalObjects External object list. Should be relative to odom frame
    */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
-    //TODO implement
+    if (currentSegment == null || routeState == null || activeRoute == null) {
+      log.info("Roadway ignoring object message as no route is selected");
+      return;
+    }
+    List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
+    List<RoadwayObstacle> roadwayObstacles = new LinkedList<>();
+    Transform earthToOdom = roadwayMgr.getTransform(earthFrame, odomFrame, externalObjects.getHeader().getStamp());
+    if (earthToOdom == null) {
+      log.warn("Roadway could not process object message as earth to odom transform was null");
+    }
+    for (cav_msgs.ExternalObject obj: objects) {
+      roadwayObstacles.add(buildObstacleFromMsg(obj, earthToOdom));
+    }
+    cav_msgs.RoadwayEnvironment roadwayMsg = messageFactory.newFromType(cav_msgs.RoadwayEnvironment._TYPE);
+    roadwayMsg.setRoadwayObstacles(roadwayObstacles);
+    roadwayMgr.publishRoadwayEnvironment(roadwayMsg);
   }
 
   /**
-   * Velocity message handler
-   * @param velocity host vehicle velocity
+   * Helper function constructs a RoadwayObstacle from an ExternalObject 
+   * 
+   * @param obj The external object to convert (Should be defined relative to odom frame)
+   * @param earthToOdom The corresponding transform from the earth to the odom frame
+   * 
+   * @return A fully constructed RoadwayObstacle object
    */
-  public void handleVelocityMsg(geometry_msgs.TwistStamped velocity) {
-    //TODO update host vehicle specification
+  protected RoadwayObstacle buildObstacleFromMsg(cav_msgs.ExternalObject obj, Transform earthToOdom) {
+    //Get Id
+    int id = obj.getId();  
+    // Get connected vehicle type
+    ConnectedVehicleType connectedVehicleType = ConnectedVehicleType.NOT_CONNECTED;
+    if ((short) (obj.getPresenceVector() & cav_msgs.ExternalObject.BSM_ID_PRESENCE_VECTOR) != 0) {
+      connectedVehicleType = ConnectedVehicleType.CONNECTED;
+    }
+    // Convert object to ECEF frame  
+    Transform objInOdom = Transform.fromPoseMessage(obj.getPose().getPose());
+    Transform objInECEF = earthToOdom.multiply(objInOdom);
+    Vector3 objVecECEF = objInECEF.getTranslation();
+    Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
+
+    // Find the route segment which this route segment is on
+    int currentSegIndex = currentSegment.getUptrackWaypoint().getWaypointId();
+    List<RouteSegment> segmentsToSearch = activeRoute.findRouteSubsection(currentSegIndex, routeState.getSegmentDownTrack(), distBackward, distForward);
+    RouteSegment bestSegment = activeRoute.routeSegmentOfPoint(objPositionECEF, segmentsToSearch);
+    int segmentIndex = bestSegment.getUptrackWaypoint().getWaypointId();
+   
+    // Convert object to segment frame
+    Transform objInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(objInECEF); // Find the transform from the segment to this object
+    Vector3 objVec = objInSegment.getTranslation();
+    Point3D objPosition = new Point3D(objVec.getX(), objVec.getY(), objVec.getZ());
+    double downtrackDistance = objDowntrack(segmentIndex, currentSegIndex, objPosition.getX(), routeState.getSegmentDownTrack(), routeState.getDownTrack());
+    double crosstrackDistance = objPosition.getY(); //bestSegment.crossTrackDistance(objPosition);
+    
+    // Convert velocities
+    Vector3 velocityLinear = objInSegment.apply(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear()));
+
+    // Calculate obj lanes
+    int primaryLane = bestSegment.determinePrimaryLane(crosstrackDistance);
+    // If the relative lane field is defined use that instead of calculated lane
+    if ((short) (obj.getPresenceVector() & cav_msgs.ExternalObject.RELATIVE_LANE_PRESENCE_VECTOR) != 0) {
+      int expectedLane = primaryLane;
+      switch(obj.getRelativeLane()) {
+        case cav_msgs.ExternalObject.HOST_LANE:
+          expectedLane = routeState.getLaneIndex();
+          break;
+        case cav_msgs.ExternalObject.RIGHT_LANE:
+          expectedLane = routeState.getLaneIndex() - 1;
+          break;
+        case cav_msgs.ExternalObject.LEFT_LANE:
+          expectedLane = routeState.getLaneIndex() + 1;
+          break;
+      }
+      primaryLane = expectedLane;
+    }
+    // Determine secondary lanes
+    List<Point3D> objPoints = new LinkedList<>();
+    geometry_msgs.Vector3 size = obj.getSize();
+    objPoints.add(new Point3D(size.getX(), size.getY(), size.getZ()));
+    objPoints.add(new Point3D(size.getX(), size.getY(),-size.getZ()));
+    objPoints.add(new Point3D(size.getX(), -size.getY(), size.getZ()));
+    objPoints.add(new Point3D(size.getX(), -size.getY(), -size.getZ()));
+    objPoints.add(new Point3D(-size.getX(), size.getY(), size.getZ()));
+    objPoints.add(new Point3D(-size.getX(), size.getY(), -size.getZ()));
+    objPoints.add(new Point3D(-size.getX(), -size.getY(), size.getZ()));
+    objPoints.add(new Point3D(-size.getX(), -size.getY(), -size.getZ()));
+
+    CartesianObject cartObj = new CartesianObject(objPoints);
+    CartesianObject cartObjInSegment = cartObj.transform(objInSegment);
+    final int minIdx = CartesianObject.MIN_BOUND_IDX;
+    final int maxIdx = CartesianObject.MAX_BOUND_IDX;
+    final int xIdx = 0;
+    final int yIdx = 1;
+    final int zIdx = 2;
+    double[][] bounds = cartObjInSegment.getBounds();
+    byte[]  secondaryLanes = bestSegment.determineSecondaryLanes(bounds[yIdx][minIdx], bounds[yIdx][maxIdx], primaryLane);
+    
+    // Convert AABB to size
+    double sizeX = (bounds[xIdx][maxIdx] - bounds[xIdx][minIdx]) / 2.0;
+    double sizeY = (bounds[yIdx][maxIdx] - bounds[yIdx][minIdx]) / 2.0;
+    double sizeZ = (bounds[zIdx][maxIdx] - bounds[zIdx][minIdx]) / 2.0;
+    geometry_msgs.Vector3 sizeMsg = messageFactory.newFromType(geometry_msgs.Vector3._TYPE);
+    sizeMsg.setX(sizeX);
+    sizeMsg.setY(sizeY);
+    sizeMsg.setZ(sizeZ);
+
+    // Construct new roadway obstacle
+
+    RoadwayObstacle newObstacle = messageFactory.newFromType(RoadwayObstacle._TYPE);
+    newObstacle.setConnectedVehicleType(connectedVehicleType.toMessage());
+    newObstacle.setCrossTrack(crosstrackDistance);
+    newObstacle.setDownTrack(downtrackDistance);
+    newObstacle.setPrimaryLane((byte)primaryLane);
+    if (secondaryLanes.length > 0) { // Ensure we only try to set if secondary lanes are present
+      newObstacle.setSecondaryLanes(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, secondaryLanes));
+    }
+    newObstacle.setWaypointId(bestSegment.getDowntrackWaypoint().getWaypointId());
+
+    cav_msgs.ExternalObject newObj = newObstacle.getObject();
+    if (obj.getBsmId().hasArray() && obj.getBsmId().readable() && obj.getBsmId().array().length > 0) {
+      newObj.setBsmId(obj.getBsmId());
+    }
+    newObj.setConfidence(obj.getConfidence());
+    newObj.setHeader(obj.getHeader());
+    newObj.getHeader().setFrameId("0"); // Uses a route segment specific frame id which is not on the frame transform tree
+    newObj.setId(id);
+    
+    newObj.setObjectType(obj.getObjectType());
+
+    newObj.getPose().setCovariance(obj.getPose().getCovariance());
+    newObj.getPose().getPose().getPosition().setX(objPosition.getX());
+    newObj.getPose().getPose().getPosition().setY(objPosition.getY());
+    newObj.getPose().getPose().getPosition().setZ(objPosition.getZ());
+    newObj.getPose().getPose().setOrientation(Quaternion.identity().toQuaternionMessage(newObj.getPose().getPose().getOrientation()));
+   
+    newObj.setRelativeLane(obj.getRelativeLane());
+    newObj.setSize(sizeMsg);
+    
+    newObj.getVelocity().setCovariance(obj.getVelocity().getCovariance());
+    newObj.getVelocity().getTwist().setLinear(velocityLinear.toVector3Message(newObj.getVelocity().getTwist().getLinear()));
+    
+    // Remove the object parameters which will not be passed on
+    newObj.setPresenceVector(
+      (short) 
+      (obj.getPresenceVector()
+      & ~cav_msgs.ExternalObject.AZIMUTH_RATE_PRESENCE_VECTOR
+      & ~cav_msgs.ExternalObject.RANGE_RATE_PRESENCE_VECTOR
+      & ~cav_msgs.ExternalObject.VELOCITY_INST_PRESENCE_VECTOR)
+    );
+
+    newObstacle.setObject(newObj);
+    
+    return newObstacle;
+  }
+
+  /**
+   * Calculates the downtrack value of an object based on its segment downtrack
+   * 
+   * @param objSegmentIndex The index of this objects current segment in the route
+   * @param hostSegmentIndex the index of the host vehicle's current segment in the route
+   * @param objSegDowntrack the downtrack of the object along its current segment
+   * @param hostSegmentDowntrack the downtrack of the host vehicle along its current segment
+   * @param hostDowntrack the downtrack of the host vehicle along the route
+   * 
+   * @return The object's downtrack distance along the entire route
+   */
+  protected double objDowntrack(int objSegmentIndex, int hostSegmentIndex, double objSegDowntrack, double hostSegDowntrack, double hostDowntrack) {
+    if (objSegmentIndex == hostSegmentIndex) {
+      
+      return hostDowntrack + (objSegDowntrack - hostSegDowntrack);
+    } else if (objSegmentIndex < hostSegmentIndex) {
+
+      double intermediateDist = activeRoute.lengthOfSegments(objSegmentIndex + 1, hostSegmentIndex - 1);
+      double remainingObjSegDist = activeRoute.getSegments().get(objSegmentIndex).length() - objSegDowntrack;
+      return hostDowntrack - remainingObjSegDist - intermediateDist - hostSegDowntrack; 
+    } else { // objSegmentIndex > hostSegmentIndex
+
+      double intermediateDist = activeRoute.lengthOfSegments(hostSegmentIndex + 1, objSegmentIndex - 1);
+      double remainingHostSegDist = activeRoute.getSegments().get(hostSegmentIndex).length() - hostSegDowntrack;
+      return hostDowntrack + remainingHostSegDist + intermediateDist + objSegDowntrack; 
+    }
   }
 
   /**
    * SystemAlert message handler.
    * Will shutdown this node on receipt of FATAL or SHUTDOWN
+   *
    * @param alert alert message
    */
   public void handleSystemAlertMsg(cav_msgs.SystemAlert alert) {
@@ -247,42 +325,14 @@ public class EnvironmentWorker {
         break;
       case SystemAlert.SHUTDOWN:
         log.info("SHUTDOWN", "Received SHUTDOWN on system_alert");
-        envMgr.shutdown();
+        roadwayMgr.shutdown();
         break;
       case SystemAlert.FATAL:
         log.info("SHUTDOWN", "Received FATAL on system_alert");
-        envMgr.shutdown();
+        roadwayMgr.shutdown();
         break;
       default:
         // No need to handle other types of alert
     }
-  }
-
-  /**
-   * Helper function builds a tf2 message for the given transform between parent and child frames
-   * @param tf The transform to publish. Describes the position of the child frame in the parent frame
-   * @param parentFrame The name of the parent frame
-   * @param childFrame The name of the child frame
-   */
-  protected geometry_msgs.TransformStamped buildTFStamped(Transform tf, String parentFrame, String childFrame) {
-    geometry_msgs.TransformStamped tfStampedMsg = messageFactory.newFromType(geometry_msgs.TransformStamped._TYPE);
-    Header hdr = tfStampedMsg.getHeader();
-    hdr.setFrameId(parentFrame);
-    hdr.setStamp(envMgr.getTime());
-    hdr.setSeq(tfSequenceCount);
-    tfStampedMsg.setChildFrameId(childFrame);
-    tfStampedMsg.setTransform(tf.toTransformMessage(tfStampedMsg.getTransform()));
-    return tfStampedMsg;
-  }
-
-  /**
-   * Publishes a list of transforms in a single tf2 TFMessage
-   * @param tfList List of transforms
-   */
-  protected void publishTF(List<TransformStamped> tfList) {
-    TFMessage tfMsg = messageFactory.newFromType(TFMessage._TYPE);
-    tfMsg.setTransforms(tfList);
-    tfSequenceCount++;
-    envMgr.publishTF(tfMsg);
   }
 }

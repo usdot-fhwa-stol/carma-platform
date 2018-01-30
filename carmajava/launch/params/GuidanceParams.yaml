@@ -23,7 +23,7 @@ max_deceleration_capability: 1.0
 arbitrator_replan_threshold: 0.75
 
 # Integer: Number of times to attempt to replan a Trajectory if validation fails
-trajectory_planning_max_attempts: 3
+trajectory_planning_max_attempts: 5
 
 # Double: Minimum length of a trajectory that will be planned under any normal scenario
 # Units: m
@@ -58,15 +58,16 @@ ignored_plugins: []
 
 # Class names of plugins required to always be activated
 required_plugins:
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.CruisingPlugin
-  - gov.dot.fhwa.saxton.carma.guidance.plugins.NoOpPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.routefollowing.RouteFollowingPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.lanechange.LaneChangePlugin
 
-# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's lateral trajectory
-arbitrator_lateral_plugin: NoOp Plugin
 
-# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's longitudinal trajectory
-arbitrator_longitudinal_plugins: 
+# Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
+arbitrator_plugins: 
+  - Route Following Plugin
   - Speed Harmonization Plugin
+  - Negotiation Receiver Plugin
   - Cruising Plugin
 
 # Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
@@ -106,11 +107,11 @@ vehicle_acceleration_limit: 2.5
 
 # Double: Time headway to control to with ACC
 # Units: seconds
-desired_acc_timegap: 0.0
+desired_acc_timegap: 2.0
 
 # Double: Minimum distance between vehicle and front vehicle at any point
 # Units: m
-min_acc_standoff_distance: 0.0
+min_acc_standoff_distance: 5.0
 
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
@@ -126,3 +127,34 @@ max_speed_error: 100.0
 # Double: Maximum downtrack error between planned location and current location
 # Units: m
 max_downtrack_error: 100.0
+
+# Double: The factor to multiply by the desired ACC headway to determine when we should exit ACC
+acc_exit_distance_factor: 1.5
+
+# Double: The poportional term in the acc PID controller
+acc_Kp: 1.75
+
+# Double: The integral term in the acc PID controller
+acc_Ki: 0.0
+
+# Double: The derivative term in the acc PID controller
+acc_Kd: 0.1
+
+# Double: The dize of the deadband to apply to the PID controller
+acc_pid_deadband: 0.0
+
+# Integer: The number of samples to use in a moving average filter for the output of acc
+acc_number_of_averaging_samples: 1
+
+# Double: The scaling factor to apply to current speed when accounting for distance traveled during a lane change
+lane_change_rate_factor: 0.75
+
+# Double: The amount of delay to account for driver response to a lane change operation, used for estimating distance
+# traveled during a lane change
+# Units: seconds
+lane_change_delay_factor: 2.0
+
+# Double: The amount of time after a lane change operation to allow for safety reasons, used for estimating distance
+# traveled during a lane change
+# Units: seconds
+lane_change_safety_factor: 2.0

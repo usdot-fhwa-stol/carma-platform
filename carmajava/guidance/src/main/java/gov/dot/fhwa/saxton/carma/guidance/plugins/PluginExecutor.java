@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginLifecycleHandler.PluginState;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import java.util.HashMap;
@@ -107,5 +108,20 @@ public class PluginExecutor {
     public void terminatePlugin(String pluginName, String pluginVersion) {
         lifecycleHandlers.get(pluginName + pluginVersion).terminate();
         lifecycleHandlers.remove(pluginName + pluginVersion);
+    }
+
+    /**
+     * Get the current state of the specified plugin from its corresponding handler.
+     * 
+     * If the plugin is not initialized for any reason UNINITIALIZED will be returned
+     * 
+     * @param pluginName    The string plugin name as reported by {@link IPlugin#getName()}
+     * @param pluginVersion The string plugin version as reported by {@link IPlugin#getVersionId()}
+     * @return The plugin state as a PluginState value
+     */
+    public PluginState getPluginState(String pluginName, String pluginVersion) {
+        PluginLifecycleHandler handler = null;
+        handler = lifecycleHandlers.get(pluginName + pluginVersion);
+        return (handler != null ? handler.getState() : PluginState.UNINITIALIZED);
     }
 }

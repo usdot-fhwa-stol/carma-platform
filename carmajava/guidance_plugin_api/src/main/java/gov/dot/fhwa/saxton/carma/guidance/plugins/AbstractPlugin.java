@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -63,14 +64,6 @@ public abstract class AbstractPlugin implements IPlugin {
 
     @Override public final boolean getAvailability() {
         return availability.get();
-    }
-
-    @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override public void onReceiveNegotiationRequest() {
-        throw new UnsupportedOperationException();
     }
 
     @Override

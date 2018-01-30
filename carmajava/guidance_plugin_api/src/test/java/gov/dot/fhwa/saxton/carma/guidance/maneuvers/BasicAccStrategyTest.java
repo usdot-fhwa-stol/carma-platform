@@ -66,7 +66,7 @@ public class BasicAccStrategyTest {
 
   @Before
   public void setUp() {
-    bas = new BasicAccStrategy(5.0);
+    bas = new BasicAccStrategy(5.0, 2.0);
     bas.setDesiredTimeGap(1.0);
     bas.setMaxAccel(2.0);
     bas.setVehicleResponseDelay(0.0);

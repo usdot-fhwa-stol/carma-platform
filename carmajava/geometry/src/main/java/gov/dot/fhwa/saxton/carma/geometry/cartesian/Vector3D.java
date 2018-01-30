@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
+import org.ros.rosjava_geometry.Vector3;
+
 /**
  * A representation of a vector in 3-dimensional space.
  * While a vector can be calculated form a head and tail point,
@@ -73,13 +75,13 @@ public class Vector3D extends Vector {
   }
 
   /**
-   * Calculates the determinate of a 3x3 square matrix defined by 3 col vectors
+   * Calculates the determinant of a 3x3 square matrix defined by 3 col vectors
    * @param c1 First column vector
    * @param c2 Second column vector
    * @param c3 Third column vector
-   * @return The determinate
+   * @return The determinant
    */
-  public static double get3by3Determinate(Vector3D c1, Vector3D c2, Vector3D c3) {
+  public static double get3by3Determinant(Vector3D c1, Vector3D c2, Vector3D c3) {
     final double det1 = c2.getY()*c3.getZ() - c3.getY()*c2.getZ();
     final double det2 = c1.getY()*c3.getZ() - c3.getY()*c1.getZ();
     final double det3 = c1.getY()*c2.getZ() - c2.getY()*c1.getZ();
@@ -128,5 +130,14 @@ public class Vector3D extends Vector {
     }
 
     return new Vector3D(p);
+  }
+
+  /**
+   * Helper function to convert a rosjava Vector3 to a 3D vector.
+   * @param v The vector to convert to a Vector3D
+   * @return A new vector 3d
+   */
+  public static Vector3D fromVector(Vector3 v) {
+    return new Vector3D(new Point3D(v.getX(),v.getY(),v.getZ()));
   }
 }

@@ -25,6 +25,8 @@ import org.ros.node.ConnectedNode;
 
 import cav_msgs.SystemAlert;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -34,21 +36,29 @@ import java.util.concurrent.atomic.AtomicReference;
  * due to driver initialization and user command.
  */
 public abstract class GuidanceComponent implements Runnable {
+    
+    protected final long DEFAULT_LOOP_SLEEP_MS = 10000;
+    
     protected ConnectedNode node;
     protected IPubSubService pubSubService;
     protected ILogger log;
+    protected BlockingQueue<Runnable> jobQueue;
+    protected GuidanceStateMachine stateMachine;
     protected Thread loopThread;
+    protected Thread timingLoopThread;
+    protected AtomicReference<GuidanceState> currentState;
+    protected GuidanceExceptionHandler exceptionHandler;
+    
 
-    private final long WAIT_DURATION_MS = 200;
-    private final long DEFAULT_LOOP_SLEEP_MS = 5000;
-
-    private AtomicReference<GuidanceState> state;
-
-    public GuidanceComponent(AtomicReference<GuidanceState> state, IPubSubService pubSubService, ConnectedNode node) {
-        this.state = state;
+    public GuidanceComponent(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
+        // In GuidanceComponent, we only use stateMachine for get current state and process PANIC event
+        this.stateMachine = stateMachine;
         this.node = node;
         this.pubSubService = pubSubService;
         this.log = LoggerManager.getLogger(this.getClass().getCanonicalName());
+        this.jobQueue = new LinkedBlockingQueue<>();
+        this.currentState = new AtomicReference<GuidanceState>(GuidanceState.STARTUP);
+        this.exceptionHandler = new GuidanceExceptionHandler(stateMachine);
     }
 
     /**
@@ -57,159 +67,104 @@ public abstract class GuidanceComponent implements Runnable {
     public abstract String getComponentName();
 
     /**
-     * An event callback called once when Guidance is first started up. Do not loop in this handler.
+     * Get called once a component is initialized
      */
-    public abstract void onGuidanceStartup();
-
+    public abstract void onStartup();
+    
     /**
-     * An event callback called once when the CAV platform drivers are initialized. Do not loop in
-     * this handler.
+     * Get called once a component is received a system ready alert
      */
     public abstract void onSystemReady();
+    
+    /**
+     * Get called once route is selected and active
+     */
+    public abstract void onRouteActive();
+    
+    /**
+     * Get called once vehicle ACC is engaged
+     */
+    public abstract void onEngaged();
+    
+    /**
+     * Get called once guidance component received a request to restart
+     */
+    public abstract void onCleanRestart();
+    
+    /**
+     * Get called once guidance component found controller timeout when guidance is engaged
+     */
+    public abstract void onDeactivate();
+    
+    /**
+     * Job queue task for performing the shutting down process
+     * Will log the fatal condition, alert the other ROS nodes in the CAV network to begin
+     * shutdown procedures and then trigger GuidanceComponent activities to cease as well.
+     */
+    public void onShutdown() {
+        currentState.set(GuidanceState.SHUTDOWN);
+
+        log.info(getComponentName() + " shutting down normally.");
+        
+        // Cancel the loop
+        timingLoopThread.interrupt();
+        loopThread.interrupt();
+    }
 
     /**
-     * An event callback called once when the user activates the Guidance module via the user
-     * interface. Do not loop in this handler.
+     * Generic handler for panic conditions, just immediately shutdown and log this
      */
-    public abstract void onGuidanceEnable();
-
+    public void onPanic() {
+        currentState.set(GuidanceState.SHUTDOWN);
+        
+        // Log the fatal error
+        log.fatal(getComponentName() + " has activated panic procedures. Shutting down immediately.");
+        
+        // Cancel the loop
+        timingLoopThread.interrupt();
+        loopThread.interrupt();
+    }
+    
     /**
-     * Primary execution loop for this Guidance component. Execution will be interrupted when a state
-     * change occurs. This method is called within a tight while loop which will not exit until
-     * interrupted. This method will be called after each event handler has ended. Timing of this
-     * loop is the sub-classers responsibility.
-     *
-     * Default behavior if not overridden is to sleep for 5s.
+     * Simple job-queue loop with jobs being added based on state machine transitions
      */
-    public void loop() throws InterruptedException {
+    public final void runJobQueue() throws InterruptedException {
+        log.debug(this.getComponentName() + " is polling job queue.");
+        Runnable job = jobQueue.take();
+        log.debug(this.getComponentName() + " found job of type: " + job.getClass().getSimpleName() + ". Executing!");
+        job.run();
+    }
+
+    public void timingLoop() throws InterruptedException {
         try {
             Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
         }
     }
-
+    
+    @Override
     public final void run() {
         Thread.currentThread().setName(getComponentName() + "Runner");
-        log.info("STARTUP", getComponentName() + " starting up.");
-        onGuidanceStartup();
+        log.info("STARTUP", getComponentName() + " is starting up.");
         CancellableLoop loop = new CancellableLoop() {
             @Override
             protected void loop() throws InterruptedException {
-                GuidanceComponent.this.loop();
+                GuidanceComponent.this.runJobQueue();
             }
         };
-        loopThread = new Thread(loop);
-        loopThread.setName(getComponentName() + "Looper");
-        loopThread.start();
-
-        // Wait for DRIVERS_READY
-        while (state.get() == GuidanceState.STARTUP) {
-            try {
-                Thread.sleep(WAIT_DURATION_MS);
-            } catch (InterruptedException e) {
-            }
-        }
-        log.info(getComponentName() + " transitioning to DRIVERS_READY state.");
-        cancelAndWaitForLoop(loop);
-
-        onSystemReady();
-        loop = new CancellableLoop() {
+        CancellableLoop timingLoop = new CancellableLoop() {
             @Override
             protected void loop() throws InterruptedException {
-                GuidanceComponent.this.loop();
+                GuidanceComponent.this.timingLoop();
             }
         };
         loopThread = new Thread(loop);
         loopThread.setName(getComponentName() + "Looper");
+        timingLoopThread = new Thread(timingLoop);
+        timingLoopThread.setName(getComponentName() + "TimingLooper");
         loopThread.start();
-
-        // Wait for GUIDANCE_ENGAGED
-        while (!(state.get() == GuidanceState.ENGAGED)) {
-            try {
-                Thread.sleep(WAIT_DURATION_MS);
-            } catch (InterruptedException e) {
-            }
-        }
-        cancelAndWaitForLoop(loop);
-
-        log.info(getComponentName() + " transitioning to ENGAGED state.");
-        onGuidanceEnable();
-        loop = new CancellableLoop() {
-            @Override
-            protected void loop() throws InterruptedException {
-                GuidanceComponent.this.loop();
-            }
-        };
-        loopThread = new Thread(loop);
-        loopThread.setName(getComponentName() + "Looper");
-        loopThread.start();
-
-        // Wait for Guidance to shutdown
-        while (!(state.get() == GuidanceState.SHUTDOWN)) {
-            try {
-                Thread.sleep(WAIT_DURATION_MS);
-            } catch (InterruptedException e) {
-            }
-        }
-        cancelAndWaitForLoop(loop);
-
-        log.info("SHUTDOWN", getComponentName() + " shutting down.");
-        onGuidanceShutdown();
-        log.info("SHUTDOWN", getComponentName() + " shut down.");
+        timingLoopThread.start();
     }
-
-    /**
-     * Optionally overridable method to hook when the Guidance node is gracefuly shutting down
-     * or has received a SystemAlert.FATAL message
-     *
-     * Default implementation does nothing.
-     */
-    public void onGuidanceShutdown() {
-        // NO-OP
-    }
-
-    /**
-     * Get the Guidance component's current state value
-     */
-    protected final GuidanceState getState() {
-        return state.get();
-    }
-
-    /**
-     * Cancel the loop and sleep until it actually exits. Functionally kill it and then join
-     * @param loop The loop to be canceled
-     */
-    private void cancelAndWaitForLoop(CancellableLoop loop) {
-        loop.cancel();
-        while (loop.isRunning()) {
-            try {
-                Thread.sleep(WAIT_DURATION_MS);
-            } catch (InterruptedException e) {
-            }
-        }
-    }
-
-    /**
-     * Signal a panic in a Guidance component that necessitates full system shutdown
-     * 
-     * Will log the fatal condition, alert the other ROS nodes in the CAV network to begin
-     * shutdown procedures and then trigger all other Guidance activity to cease as well.
-     */
-    protected final void panic(String message) {
-        // Log the fatal error
-        log.fatal("!!!!! Guidance component " + getComponentName()
-                + " has entered a PANIC state !!!!!\nCause of panic: " + message);
-        log.fatal("Publishing cav_msgs/SystemAlert.FATAL");
-
-        // Alert the other ROS nodes to the FATAL condition
-        IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
-        SystemAlert fatalBroadcast = pub.newMessage();
-        fatalBroadcast.setDescription(getComponentName() + " has triggered a Guidance PANIC: " + message);
-        fatalBroadcast.setType(SystemAlert.FATAL);
-        pub.publish(fatalBroadcast);
-
-        // Signal the other guidance components to shutdown as well
-        state.set(GuidanceState.SHUTDOWN);
-    }
-
 }

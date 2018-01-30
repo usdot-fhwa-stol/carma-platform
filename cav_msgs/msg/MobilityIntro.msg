@@ -6,31 +6,41 @@
 # for identification of those who are interested.
 #
 
+# MobilityChecksum ::= INTEGER (0..65535)
+uint16  checksum
+
 # the standard header for all mobility messages
-cav_msgs/MobilityHeader header
+cav_msgs/MobilityHeader  header
 
 # the host's entity type
-cav_msgs/MobilityEntityType my_entity_type
+cav_msgs/BasicVehicleClass  my_entity_type
 
 # unique ID of the roadway link that host vehicle is currently on
-string      my_roadway_link
+string  my_roadway_link
 
 # Host's current location on the link, according to the linear reference model (typically
 # centerline distance from one end of the link)
-float32     my_roadway_link_position
+uint16  my_roadway_link_position
 
 # ID of the lane that host currently occupies
-uint8       my_lane_id
+uint8  my_lane_id
+
+# Host's current forward speed in m/s
+float32  forward_speed
 
 # type of the proposal being suggested to neighbors - refers to activity the host would
 # like to perform
-cav_msgs/PlanType    plan_type
+cav_msgs/PlanType  plan_type
 
 # a generic variable whose use is dependent upon the plan_type
-uint16      proposal_param
+uint16   proposal_param
 
 # a hex string representing the PKI public key of the host
-string      my_public_key
+uint8[]  my_public_key
 
 # absolute time that this proposed plan will expire and become meaningless
-time        expiration
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
+uint64     expiration
+
+# a string which show system brand/version, list of strategies it can perform
+string   capabilities
