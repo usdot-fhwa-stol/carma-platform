@@ -118,7 +118,6 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          * data is available in those data publications.
          */
 
-        // TODO: Update to use actual topic provided by sensor fusion
         // TODO: Should there be a timestamp check to synchronize host downtrack and obstacle downtrack?
         roadwayEnvironmentSubscriber_ = pubSubService.getSubscriberForTopic("roadway_obstacles", RoadwayEnvironment._TYPE);
         roadwayEnvironmentSubscriber_.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
@@ -128,21 +127,27 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 RoadwayObstacle frontVehicle = null;
                 for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
 
-                    double frontObstacleDist = obs.getDownTrack() - distanceDowntrack_;
-
-                    // TODO: When sensor fusion publishes relative lane data, ensure object is in HOST_LANE
-                    if ( obs.getPrimaryLane() != 
-                        frontObstacleDist < closestDistance && frontObstacleDist > -0.0) {
-                        // If its close than our previous best candidate, update our candidate
-                        frontVehicle = eo;
-                        closestDistance = eo.getPose().getPose().getPosition().getX();
+                    double frontVehicleDist = obs.getDownTrack() - distanceDowntrack_;
+                    boolean inLane = obs.getPrimaryLane() == currentLane_;
+                    byte[] secondaryLanes = obs.getSecondaryLanes().array();
+                    // Check secondary lanes
+                    for(int i = 0; i < secondaryLanes.length; i++) {
+                        if (inLane)
+                            break;
+                        inLane = secondaryLanes[i] == currentLane_;
+                    }
+                    
+                    if (inLane && frontVehicleDist < closestDistance && frontVehicleDist > -0.0) {
+                        // If it's closer than our previous best candidate, update our candidate
+                        frontVehicle = obs;
+                        closestDistance = frontVehicleDist;
                     }
                 }
 
                 // Store our results
                 if (frontVehicle != null) {
-                    frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
-                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
+                    frontVehicleDistance.set(closestDistance);
+                    frontVehicleSpeed.set(frontVehicle.getObject().getVelocity().getTwist().getLinear().getX()); // Tangential speed to route
                 } else {
                     frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
                     frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
