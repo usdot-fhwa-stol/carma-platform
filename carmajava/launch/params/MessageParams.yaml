@@ -1,4 +1,4 @@
-# InterfaceMgrParams.yaml
+# MessageParams.yaml
 # Defines the ros parameters that are required by the Message node
 
 # Booleans:  allow normal publishing of the indicated message types to their outbound topics (to be received by dsrc driver)
