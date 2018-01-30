@@ -89,6 +89,9 @@
     <!-- Set package path for use with relative file paths -->
     <param name="package_path" value="$(arg CARMA_DIR)"/>
 
+    <!-- Generate log name configuration file -->
+    <param name="log_name" type="str" command="$(arg CARMA_DIR)/../engineering_tools/generate_log_name.sh"/>
+
     <!-- Load Vehicle Characteristics -->
     <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
 
