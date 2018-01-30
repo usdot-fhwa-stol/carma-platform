@@ -302,8 +302,6 @@
 
         <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-        <rosparam command="load" file="$(arg PARAM_DIR)/MessageParams.yaml"/>
-
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="outgoing_bsm"

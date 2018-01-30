@@ -34,7 +34,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.ros.message.MessageListener;
-import org.ros.node.parameter.ParameterTree;
 import org.ros.node.topic.Subscriber;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
@@ -90,13 +89,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 	
 	// Messages to be encoded
 	protected BlockingQueue<MessageContainer> dsrcMessageQueue = new LinkedBlockingQueue<>();
-
-	// Config parameters
-    protected boolean publishOutboundBsm_ = true;
-    protected boolean publishOutboundMobilityIntro_ = true;
-    protected boolean publishOutboundMobilityAck_ = true;
-    protected boolean publishOutboundMobilityGreeting_ = true;
-    protected boolean publishOutboundMobilityPlan_ = true;
 	
 	@Override
 	public GraphName getDefaultNodeName() {
@@ -109,23 +101,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 		//initialize connectedNode and log
 		this.connectedNode_ = connectedNode;
 		this.log_ = new SaxtonLogger(MessageConsumer.class.getSimpleName(), this.connectedNode_.getLog());
-
-		//get config params
-        try {
-            ParameterTree param = connectedNode.getParameterTree();
-            publishOutboundBsm_ = param.getBoolean("~/publish_outbound_bsm");
-            publishOutboundMobilityIntro_ = param.getBoolean("~/publish_outbound_mobility_intro");
-            publishOutboundMobilityGreeting_ = param.getBoolean("~/publish_outbound_mobility_greeting");
-            publishOutboundMobilityAck_ = param.getBoolean("~/publish_outbound_mobility_ack");
-            publishOutboundMobilityPlan_ = param.getBoolean("~/publish_outbound_mobility_plan");
-        }catch (Exception e) {
-            log_.warn("STARTUP", "Error reading Message parameters. Using defaults.");
-        }
-        log_.info("Read params to publish outbound: BSM = " + publishOutboundBsm_ + ", Mob intro = " + publishOutboundMobilityIntro_
-                + ", Mob greeting = " + publishOutboundMobilityGreeting_ + ", Mob ack = " + publishOutboundMobilityAck_
-                + ", Mob plan = " + publishOutboundMobilityPlan_);
-
-        //initialize message statistic
+		
+		//initialize message statistic
 		messageCounters = new MessageStatistic(connectedNode_, log_);
 		
 		//initialize alert sub, pub
@@ -229,19 +206,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 		    if(decodedMessage.getMessage() != null) {
 		        switch (decodedMessage.getType()) {
 	            case "BSM":
-	                if (publishOutboundBsm_) {
-                        bsmPub_.publish((BSM) decodedMessage.getMessage());
-                    }
+	                bsmPub_.publish((BSM) decodedMessage.getMessage());
 	                break;
 	            case "MobilityIntro":
-	                if (publishOutboundMobilityIntro_) {
-                        mobilityIntroPub_.publish((MobilityIntro) decodedMessage.getMessage());
-                    }
+	                mobilityIntroPub_.publish((MobilityIntro) decodedMessage.getMessage());
 	                break;
 	            case "MobilityAck":
-	                if (publishOutboundMobilityAck_) {
-                        mobilityAckPub_.publish((MobilityAck) decodedMessage.getMessage());
-                    }
+	                mobilityAckPub_.publish((MobilityAck) decodedMessage.getMessage());
 	            default:
 	                log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	            }
