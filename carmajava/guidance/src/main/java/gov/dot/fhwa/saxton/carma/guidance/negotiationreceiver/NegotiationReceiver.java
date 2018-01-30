@@ -75,6 +75,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onResume() {
         planSub_.registerOnMessageCallback(this::onPlanReceived);
+        setAvailability(true);
         log.info("Negotiation Receiver plugin resumed");
     }
 
@@ -99,6 +100,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onSuspend() {
         planSub_.registerOnMessageCallback(this::noAction);
+        setAvailability(false);
         log.info("Negotiation Receiver plugin suspended");
     }
 
