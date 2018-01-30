@@ -229,19 +229,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 		    if(decodedMessage.getMessage() != null) {
 		        switch (decodedMessage.getType()) {
 	            case "BSM":
-	                if (publishOutboundBsm_) {
-                        bsmPub_.publish((BSM) decodedMessage.getMessage());
-                    }
+                    bsmPub_.publish((BSM) decodedMessage.getMessage());
 	                break;
 	            case "MobilityIntro":
-	                if (publishOutboundMobilityIntro_) {
-                        mobilityIntroPub_.publish((MobilityIntro) decodedMessage.getMessage());
-                    }
+                    mobilityIntroPub_.publish((MobilityIntro) decodedMessage.getMessage());
 	                break;
 	            case "MobilityAck":
-	                if (publishOutboundMobilityAck_) {
-                        mobilityAckPub_.publish((MobilityAck) decodedMessage.getMessage());
-                    }
+                    mobilityAckPub_.publish((MobilityAck) decodedMessage.getMessage());
 	            default:
 	                log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	            }
@@ -253,15 +247,22 @@ public class MessageConsumer extends SaxtonBaseNode {
 			@Override
 			protected void loop() throws InterruptedException {
 			    MessageContainer outgoingMessage = dsrcMessageQueue.take();
-				IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
-				MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
-				if(encodedMessage.getMessage() != null) {
-				    log_.info("We encode " + outgoingMessage.getType());
-				    messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
-	                outboundPub_.publish((ByteArray) encodedMessage.getMessage());
-				} else {
-				    log_.warn("We failed to encode " + outgoingMessage.getType());
-				}
+			    String mtype = outgoingMessage.getType();
+			    if (    (mtype.equals("BSM")               &&  publishOutboundBsm_)  ||
+                        (mtype.equals("MobilityIntro")     &&  publishOutboundMobilityIntro_)  ||
+                        (mtype.equals("MobilityGreeting")  &&  publishOutboundMobilityGreeting_)  ||
+                        (mtype.equals("MobilityAck")       &&  publishOutboundMobilityAck_)  ||
+                        (mtype.equals("MobilityPlan")      &&  publishOutboundMobilityPlan_)) {
+                    IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
+                    MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
+                    if(encodedMessage.getMessage() != null) {
+                        log_.info("We encode " + outgoingMessage.getType());
+                        messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
+                        outboundPub_.publish((ByteArray) encodedMessage.getMessage());
+                    } else {
+                        log_.warn("We failed to encode " + outgoingMessage.getType());
+                    }
+                }
 			}
 		});
 	}
