@@ -127,7 +127,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 RoadwayObstacle frontVehicle = null;
                 for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
 
-                    double frontVehicleDist = obs.getDownTrack() - distanceDowntrack_;
+                    double frontVehicleDist = obs.getDownTrack() - obs.getObject().getSize().getX() - distanceDowntrack_;
                     boolean inLane = obs.getPrimaryLane() == currentLane_;
                     byte[] secondaryLanes = obs.getSecondaryLanes().array();
                     // Check secondary lanes
