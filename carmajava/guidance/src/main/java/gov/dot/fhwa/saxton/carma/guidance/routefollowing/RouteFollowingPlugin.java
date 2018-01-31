@@ -210,7 +210,11 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
             // Ensure we don't try to plan over a complex maneuver at the end of a trajectory
             if (traj.getComplexManeuver() != null) {
-                windowEnd = Math.min(windowEnd, traj.getComplexManeuver().getStartDistance());
+                if (windowEnd > traj.getComplexManeuver().getStartDistance()) {
+                    // Cap it to the end of the complex maneuver and then finish planning
+                    planLaneKeepingManeuver(traj, windowStart, traj.getComplexManeuver().getStartDistance());
+                    break;
+                }
             }
 
             planLaneKeepingManeuver(traj, windowStart, windowEnd);
