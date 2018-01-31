@@ -60,7 +60,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         this.commands = commands;
         this.tracking_ = tracking;
 
-        IPublisher<std_msgs.String> controllingPluginPub = pubSubService.getPublisherForTopic("controlling_plugin", std_msgs.String._TYPE);
+        IPublisher<std_msgs.String> controllingPluginPub = pubSubService.getPublisherForTopic("plugins/controlling_plugin", std_msgs.String._TYPE);
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
         trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, controllingPluginPub);
         
