@@ -35,6 +35,7 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
   /**
    * Constructor where user provides all relevant inputs
    *
+   * @param plannerName The name of the component or plugin responsible for this maneuver
    * @param speedHarmInputs Input which provides the current desired commands from a speed harm trajectory source
    * @param inputs Input which provides the current state of the vehicle
    * @param commands The target for calculated commands
