@@ -181,7 +181,7 @@ inline geometry_msgs::TwistStamped lerp<geometry_msgs::TwistStamped>(const geome
     double delta_t = dt.total_microseconds()/1000000UL;
     geometry_msgs::TwistStamped ret;
     ret.header.frame_id = t0.header.frame_id;
-    ret.header.stamp.fromBoost(t0.header.stamp.toBoost()+dt);
+    ret.header.stamp = ros::Time::fromBoost(t0.header.stamp.toBoost()+dt);
 
 
     {
