@@ -36,6 +36,7 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   protected double minExpectedSpeed_;
   protected double maxExpectedSpeed_;
   protected double maxAccel_ = 0.999;     // m/s^2 absolute value; default is a conservative value
+  protected static final double SPEED_EPSILON = 0.001;
 
   /**
    * Constructor where user provides all relevant inputs
@@ -122,11 +123,16 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
     double currentSpeed = inputs_.getCurrentSpeed();
     double frontVehicleSpeed = inputs_.getFrontVehicleSpeed();
 
-    if (accStrategy_.evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
-      speedCmd = accStrategy_.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
+    double speedCmdOverride = accStrategy_.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
+    boolean overrideActive = Math.abs(speedCmd - speedCmdOverride) > SPEED_EPSILON;
+
+    // If acc is active, give maximum control authority
+    if (overrideActive) {
+      commands_.setSpeedCommand(speedCmdOverride, accStrategy_.getMaxAccel());
+    } else {
+      commands_.setSpeedCommand(speedCmdOverride, maxAccelCmd);
     }
 
-    commands_.setSpeedCommand(speedCmd, maxAccelCmd);
     return false;
   }
 
