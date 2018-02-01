@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import cav_msgs.MobilityAck;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
@@ -32,6 +33,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  */
 public class LeaderState implements IPlatooningState {
     
+    protected static final long DEFAULT_LOOP_SLEEP_MS = 1000;
     protected PlatooningPlugin plugin_;
     protected ILogger log_;
     protected PluginServiceLocator pluginServiceLocator_;
@@ -45,21 +47,40 @@ public class LeaderState implements IPlatooningState {
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
         RouteService rs = pluginServiceLocator_.getRouteService();
+        TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
-            return new TrajectoryPlanningResponse();
+            //TODO maybe we need to check the length of the window and require a longer trajectory
+            return tpr;
         } else {
             // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
-            // But we need to let platooning plugin finish this complex maneuver
-            //TODO it may need to send out some mobility messages when the transition happened
-            plugin_.manager.disablePlatooning();
+            // TODO it need to send out some mobility messages to delegate its job
             plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
         }
-        return new TrajectoryPlanningResponse();
+        return tpr;
     }
 
     @Override
     public boolean onReceiveNegotiationRequest(String plan) {
-        // TODO handle JOIN message from other vehicle on its rear
+        //handle Join and Leave messages and update with platoon manager accordingly
+        return false;
+    }
+    
+    @Override
+    public void loop() throws InterruptedException {
+        // constantly send Join message if this leader has no member
+        // constantly send Update message if this leader has members
+        try {
+            Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
+        }
+    }
+    
+    @Override
+    public void onReceivePlanResponse(MobilityAck ack) {
+        // If we received a positive response for our Join message
+        // we change to Follower state and notify arbitrator to replan
     }
     
     @Override
