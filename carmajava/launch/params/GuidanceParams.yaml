@@ -65,8 +65,8 @@ required_plugins:
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins: 
-  - Route Following Plugin
   - Speed Harmonization Plugin
+  - Route Following Plugin
   - Negotiation Receiver Plugin
   - Cruising Plugin
 
