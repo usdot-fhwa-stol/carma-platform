@@ -30,6 +30,8 @@
   roslaunch carma saxton_cav.launch mock_can:=true can_data_file:=/path/to/file.csv
 -->
 <launch>
+  <!-- Environment Variables -->
+  <env name="ROS_IP" value="192.168.88.10"/>
   <!-- Constants -->
   <!-- Directory of Parameter Files -->
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
