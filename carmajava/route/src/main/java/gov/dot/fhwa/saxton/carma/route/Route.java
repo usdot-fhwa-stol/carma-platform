@@ -52,6 +52,9 @@ public class Route {
   public Route(List<RouteWaypoint> waypoints, String routeID, String routeName) {
     this.routeID = routeID;
     this.routeName = routeName;
+    if (routeID==null) {
+      routeID=routeName;
+    }
     this.setWaypoints(waypoints);
   }
 
@@ -83,10 +86,12 @@ public class Route {
   public static Route fromMessage(cav_msgs.Route routeMsg){
     List<RouteWaypoint> waypoints = new LinkedList<>();
 
-    for (cav_msgs.RouteSegment segmentMsg: routeMsg.getSegments()){
-      RouteSegment segment = RouteSegment.fromMessage(segmentMsg);
-      waypoints.add(segment.getUptrackWaypoint());
-      waypoints.add(segment.getDowntrackWaypoint());
+    List<cav_msgs.RouteSegment> segmentMsgs = routeMsg.getSegments();
+    if (segmentMsgs.size() > 0) {
+      waypoints.add(RouteWaypoint.fromMessage(segmentMsgs.get(0).getPrevWaypoint())); // Add the first waypoint
+      for (cav_msgs.RouteSegment segmentMsg: routeMsg.getSegments()){
+        waypoints.add(RouteWaypoint.fromMessage(segmentMsg.getWaypoint())); // Add remaining waypoints
+      }
     }
     return new Route(waypoints, routeMsg.getRouteID(), routeMsg.getRouteName());
   }
@@ -202,6 +207,9 @@ public class Route {
    * @param routeName The name which will be used for this route
    */
   public void setRouteName(String routeName) {
+    if (routeID==null) {
+      routeID=routeName;
+    }
     this.routeName = routeName;
   }
 
@@ -255,6 +263,7 @@ public class Route {
     }
     calculateLength();
   }
+
 
   /**
    * Gets the expected time of arrival for a vehicle on this route
@@ -324,27 +333,30 @@ public class Route {
     subList.add(segments.get(startingIndex));
 
     // Process segments behind host vehicle
+    System.out.println("\n\n");
     double distance = segmentDowntrack;
     for (int i = startingIndex - 1; i >= 0; i--) {
       if (distance > distBackward) {
         break;
       }
+      System.out.println("distance: " + distance + " i: " + i + " length: " + segments.get(i).length());
       distance += segments.get(i).length();
       subList.add(segments.get(i));
     }
 
     Collections.reverse(subList);
-
+    System.out.println("Collection has length " + subList.size());
     // Process segments infront of host vehicle
     distance = segments.get(startingIndex).length - segmentDowntrack;
     for (int i = startingIndex + 1; i < segments.size(); i++) {
       if (distance > distForward) {
         break;
       }
+      System.out.println("distance: " + distance + " i: " + i);
       distance += segments.get(i).length();
       subList.add(segments.get(i));
     }
-
+    System.out.println("\n\n");
     return subList;
   }
 
