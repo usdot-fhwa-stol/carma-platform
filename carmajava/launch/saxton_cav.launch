@@ -333,13 +333,13 @@
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="mobility_ack_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_ack"/>
         <remap from="mobility_greeting_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_greeting"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_greeting"/>
         <remap from="mobility_intro_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_intro"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_intro"/>
         <remap from="mobility_plan_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_plan"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_plan"/>
         <remap from="plan_status"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plan_status"/>
                
