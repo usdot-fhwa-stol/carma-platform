@@ -333,30 +333,25 @@ public class Route {
     subList.add(segments.get(startingIndex));
 
     // Process segments behind host vehicle
-    System.out.println("\n\n");
     double distance = segmentDowntrack;
     for (int i = startingIndex - 1; i >= 0; i--) {
       if (distance > distBackward) {
         break;
       }
-      System.out.println("distance: " + distance + " i: " + i + " length: " + segments.get(i).length());
       distance += segments.get(i).length();
       subList.add(segments.get(i));
     }
 
     Collections.reverse(subList);
-    System.out.println("Collection has length " + subList.size());
     // Process segments infront of host vehicle
     distance = segments.get(startingIndex).length - segmentDowntrack;
     for (int i = startingIndex + 1; i < segments.size(); i++) {
       if (distance > distForward) {
         break;
       }
-      System.out.println("distance: " + distance + " i: " + i);
       distance += segments.get(i).length();
       subList.add(segments.get(i));
     }
-    System.out.println("\n\n");
     return subList;
   }
 
