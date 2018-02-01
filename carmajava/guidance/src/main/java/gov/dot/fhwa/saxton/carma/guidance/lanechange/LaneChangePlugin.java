@@ -226,7 +226,12 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
      */
     public void sendPlan() {
         if (plan_ != null) {
-            log.debug("Sending MobilityIntro to Message node: " + plan_.toString());
+            log.debug("V2V", "Sending MobilityIntro to Message node: ");
+            log.debug("V2V", "    Plan ID = " + plan_.getHeader().getPlanId());
+            log.debug("V2V", "    PlayType = " + plan_.getPlanType());
+            log.debug("V2V", "    My lane ID = " + plan_.getMyLaneId());
+            log.debug("V2V", "    Forward speed = " + plan_.getForwardSpeed());
+            log.debug("V2V", "    Capabilities = " + plan_.getCapabilities());
             mobilityIntroPublisher_.publish(plan_);
         }
     }
