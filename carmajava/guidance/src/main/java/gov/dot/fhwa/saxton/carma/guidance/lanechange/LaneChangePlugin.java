@@ -226,6 +226,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
      */
     public void sendPlan() {
         if (plan_ != null) {
+            log.debug("Sending MobilityIntro to Message node: " + plan_.toString());
             mobilityIntroPublisher_.publish(plan_);
         }
     }
@@ -314,7 +315,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         plan_.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
         plan_.getHeader().setPlanId(UUID.randomUUID().toString());
         plan_.getHeader().setTimestamp(System.currentTimeMillis());
-        log.info("MobilityIntro has been built with planId" + plan_.getHeader().getPlanId());
+        log.info("V2V", "MobilityIntro has been built with planId = " + plan_.getHeader().getPlanId());
         float speed = (float)inputs.getCurrentSpeed();
         byte lane = (byte)inputs.getCurrentLane();
         String link = "[Test track]"; //TODO - placeholder for testing
