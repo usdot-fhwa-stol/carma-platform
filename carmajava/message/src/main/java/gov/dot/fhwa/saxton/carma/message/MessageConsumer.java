@@ -200,8 +200,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 		//initialize Pubs
 		bsmPub_ = connectedNode_.newPublisher("incoming_bsm", BSM._TYPE);
 		outboundPub_ = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
-		mobilityIntroPub_ = connectedNode_.newPublisher("incoming_intro", MobilityIntro._TYPE);
-		mobilityAckPub_ = connectedNode_.newPublisher("incoming_ack", MobilityAck._TYPE);
+		mobilityIntroPub_ = connectedNode_.newPublisher("incoming_mobility_intro", MobilityIntro._TYPE);
+		mobilityAckPub_ = connectedNode_.newPublisher("incoming_mobility_ack", MobilityAck._TYPE);
 		if(bsmPub_ == null || outboundPub_ == null || mobilityIntroPub_ == null || mobilityAckPub_ == null) {
 		    log_.error("Cannot initialize necessary publishers.");
 		    handleException(new RosRuntimeException("Cannot initialize necessary publishers."));
@@ -233,9 +233,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 	                break;
 	            case "MobilityIntro":
                     mobilityIntroPub_.publish((MobilityIntro) decodedMessage.getMessage());
+                    log_.debug("V2V", "Received & forwarding MobilityIntro, plan ID = " +
+                                ((MobilityIntro) decodedMessage.getMessage()).getHeader().getPlanId());
 	                break;
 	            case "MobilityAck":
                     mobilityAckPub_.publish((MobilityAck) decodedMessage.getMessage());
+                    log_.debug("V2V", "Received & forwarding MobilityAck, plan ID = " +
+                                ((MobilityAck)decodedMessage.getMessage()).getHeader().getPlanId());
 	            default:
 	                log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	            }
