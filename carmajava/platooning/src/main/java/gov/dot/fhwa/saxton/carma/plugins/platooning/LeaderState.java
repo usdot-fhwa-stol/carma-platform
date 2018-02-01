@@ -20,6 +20,7 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
  * The LeaderState is a state when the platooning algorithm is enabled and the host vehicle is acting as the leader for zero or many vehicles.
@@ -43,18 +44,21 @@ public class LeaderState implements IPlatooningState {
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
-        if(!pluginServiceLocator_.getRouteService().isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+        RouteService rs = pluginServiceLocator_.getRouteService();
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+            return new TrajectoryPlanningResponse();
+        } else {
+            // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
+            // But we need to let platooning plugin finish this complex maneuver
             //TODO it may need to send out some mobility messages when the transition happened
             plugin_.manager.disablePlatooning();
             plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
-            return new TrajectoryPlanningResponse();
         }
         return new TrajectoryPlanningResponse();
     }
 
     @Override
-    public void onReceiveNegotiationRequest(String plan) {
+    public boolean onReceiveNegotiationRequest(String plan) {
         // TODO handle JOIN message from other vehicle on its rear
     }
     
