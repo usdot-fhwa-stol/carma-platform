@@ -241,7 +241,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             lateralMsg.setMaxAxleAngleRate(yawRate.get());
             lateralControlPublisher.publish(lateralMsg);
             log.trace("Published longitudinal & lateral cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
-        } else if (currentState.get() == GuidanceState.ACTIVE) {
+        } else if (currentState.get() == GuidanceState.ACTIVE || currentState.get() == GuidanceState.INACTIVE) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             msg.setSpeed(0.0);
             msg.setMaxAccel(1.0);
