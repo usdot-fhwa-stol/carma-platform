@@ -542,6 +542,9 @@ public class RouteWaypoint {
    * @return point
    */
   public Point3D getECEFPoint() {
+    if (ecefPoint == null) {
+      ecefPoint = gcc.geodesic2Cartesian(location, Transform.identity());
+    }
     return ecefPoint;
   }
 

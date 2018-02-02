@@ -151,11 +151,11 @@ public class RouteSegment {
   }
 
   /**
-   * Gets a deep copy of the line segment which connects the two waypoints.
+   * Gets the line segment which connects the two waypoints.
    * @return The line segment
    */
   public LineSegment3D getLineSegment() {
-    return new LineSegment3D(this.lineSegment);
+    return this.lineSegment;
   }
 
   /**
@@ -248,8 +248,8 @@ public class RouteSegment {
    * @return A byte array of lane indices
    */
   public byte[] determineSecondaryLanes(double minY, double maxY, int primaryLane) {
-    int minLane = this.determinePrimaryLane(minY);
-    int maxLane = this.determinePrimaryLane(maxY);
+    int minLane = this.determinePrimaryLane(maxY); // cross track is positive to right and negative to left
+    int maxLane = this.determinePrimaryLane(minY);
 
     List<Byte> secondaryLanes = new LinkedList<>();
     for (int i = minLane; i <= maxLane; i++) {
