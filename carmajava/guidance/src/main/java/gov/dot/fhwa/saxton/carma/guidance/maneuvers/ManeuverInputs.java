@@ -54,6 +54,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
     protected int currentLane_ = 0;
+    protected double vehicleLength_ = 3.0; // m
     protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
     protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
     protected ILogger log;
@@ -80,6 +81,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 desiredTimeGap, minStandoffDistance, exitDistanceFactor));
         double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
         int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
+        vehicleLength_ = node.getParameterTree().getDouble("/saxton_cav/vehicle_length", vehicleLength_);
 
         PidController timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
         MovingAverageFilter movingAverageFilter = new MovingAverageFilter(numSamples);
@@ -127,7 +129,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 RoadwayObstacle frontVehicle = null;
                 for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
 
-                    double frontVehicleDist = obs.getDownTrack() - obs.getObject().getSize().getX() - distanceDowntrack_;
+                    // TODO This modification to downtrack values calculation should really be based on transforms. 
+                    double frontVehicleDist = 0.5 * vehicleLength_ + obs.getDownTrack() - obs.getObject().getSize().getX() - distanceDowntrack_;
                     boolean inLane = obs.getPrimaryLane() == currentLane_;
                     byte[] secondaryLanes = obs.getSecondaryLanes().array();
                     // Check secondary lanes
