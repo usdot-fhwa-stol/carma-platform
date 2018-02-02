@@ -27,15 +27,13 @@ import cav_srvs.SetEnableRoboticResponse;
 import cav_srvs.SetLights;
 import cav_srvs.SetLightsRequest;
 import cav_srvs.SetLightsResponse;
+import geometry_msgs.TwistStamped;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
 * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
@@ -50,11 +48,13 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
     private IPublisher<cav_msgs.LateralControl> lateralControlPublisher;
     private IService<SetLightsRequest, SetLightsResponse> setLightsService;
+    private ISubscriber<TwistStamped> velocitySubscriber;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private AtomicDouble steeringCommand = new AtomicDouble(0.0);
     private AtomicDouble lateralAccel = new AtomicDouble(0.0);
     private AtomicDouble yawRate = new AtomicDouble(0.0);
+    private AtomicDouble current_speed = new AtomicDouble(0);
     private long sleepDurationMillis = 100;
     private long lastTimestep = -1;
     private double vehicleAccelLimit = 2.5;
@@ -83,6 +83,13 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     public void onStartup() {
             vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
             log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
+            
+            velocitySubscriber.registerOnMessageCallback(new OnMessageCallback<TwistStamped>() {
+                @Override
+                public void onMessage(TwistStamped msg) {
+                    current_speed.set(msg.getTwist().getLinear().getX());
+                }
+            });
             currentState.set(GuidanceState.STARTUP);
     }
 
@@ -243,7 +250,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             log.trace("Published longitudinal & lateral cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
         } else if (currentState.get() == GuidanceState.ACTIVE || currentState.get() == GuidanceState.INACTIVE) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
-            msg.setSpeed(0.0);
+            msg.setSpeed(current_speed.get());
+            //TODO maybe need to change maxAccel and commands in lateralMsgs
             msg.setMaxAccel(1.0);
             speedAccelPublisher.publish(msg);
 
