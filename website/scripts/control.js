@@ -440,6 +440,9 @@ function closeModal(action) {
             // This needs to be outside a funtion to work.
             document.getElementById('defaultOpen').click();
 
+            //Update CAV buttons state back to Gray
+            setCAVButtonState('DISABLED');
+
             //Evaluate next step
             evaluateNextStep();
             break;

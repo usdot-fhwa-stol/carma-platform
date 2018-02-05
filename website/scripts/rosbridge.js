@@ -591,11 +591,13 @@ function activatePlugin(id) {
 
 /*
     Enable the Guidance if at least 1 capability is selected.
+    NOTE: This should only be called after route has been selected. 
 */
 function enableGuidance() {
 
     var cntSelected = getCheckboxesSelected();
 
+    //If more than on plugin is selected, enable button.
     if (cntSelected > 0) {
         //If guidance is engage, leave as green.
         //Else if not engaged, set to blue.
@@ -604,7 +606,7 @@ function enableGuidance() {
             divCapabilitiesMessage.innerHTML += '<br/>' + host_instructions;
         }
     }
-    else {
+    else {//else if no plugins have been selected, disable button.
         setCAVButtonState('DISABLED');
     }
 }
@@ -740,7 +742,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
 
-            divCapabilitiesMessage.innerHTML = 'CAV Guidance is engaged.';
+            divCapabilitiesMessage.innerHTML = 'CAV Guidance is ENGAGED.';
 
             //Set session for when user refreshes
             sessionStorage.setItem('isGuidanceEngaged', true);
@@ -802,6 +804,14 @@ function checkGuidanceState() {
     });
 
     // Then we add a callback to be called every time a message is published on this topic.
+    /*
+    uint8 STARTUP = 1
+    uint8 DRIVERS_READY = 2
+    uint8 ACTIVE = 3
+    uint8 ENGAGED = 4
+    uint8 INACTIVE = 5
+    uint8 SHUTDOWN = 0
+    */
     listenerGuidanceState.subscribe(function (message) {
 
         var messageTypeFullDescription = '';
@@ -811,15 +821,10 @@ function checkGuidanceState() {
                 messageTypeFullDescription = 'Guidance is starting up.';
                 break;
             case 2: //DRIVERS_READY
-                messageTypeFullDescription = 'Guidance have the drivers ready. ';
+                messageTypeFullDescription = 'Guidance received DRIVERS_READY. ';
                 break;
-            //case 3: //ACTIVE //TODO: Further discussion with Kyle based on email.
-            //   enableGuidance();
-            //    break;
-            case 5: //INACTIVE
-                enableGuidance();
-                if (guidance_engaged)
-                    setCAVButtonState('INACTIVE');
+            case 3: //ACTIVE 
+                messageTypeFullDescription = 'Guidance is now ACTIVE.';
                 break;
             case 4: //ENGAGED
                 //Set based on returned status, regardless if succesful or not.
@@ -830,6 +835,11 @@ function checkGuidanceState() {
 
                 //Update Guidance button and checkAvailability.
                 showGuidanceEngaged();
+                break;
+            case 5: //INACTIVE
+                enableGuidance();
+                if (guidance_engaged)
+                    setCAVButtonState('INACTIVE');
                 break;
             case 0: //SHUTDOWN
                 //Show modal popup for Shutdown alerts from Guidance, which is equivalent to Fatal since it cannot restart with this state.
@@ -945,14 +955,18 @@ function checkRobotEnabled() {
         //if guidance is just starting up then we don't do anything
         if (!waitingForGuidanceStartup) {
 
-            //Update the button when Guidance is engaged.
+            // Originally Guidance was not handling robot_status = false and now it is. 
+            // This is just an extra catch/check in case Guidance is not handling this state accordingly. 
             if (message.robot_active == false) {
                 setCAVButtonState('INACTIVE');
             }
-            else {
-                //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
-                setCAVButtonState('ENGAGED');
-            }
+            // As for setting it back to engaged, commenting this out based on new GuidanceStateHandler. 
+            // After INACTIVE, guidance_state changes to DRIVERS_READY, ACTIVE and then eventually to ENGAGE. 
+            // Guidance button will be set when guidance_state says so. 
+            //else {
+            //    //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
+            //    setCAVButtonState('ENGAGED');
+            //}
         }
     });
 }
@@ -1704,7 +1718,8 @@ function evaluateNextStep() {
 
         showRouteOptions();
         showStatusandLogs();
-        enableGuidance();
+        //enableGuidance(); Should not enable guidance as route has not been selected.
+
     }
     else {
         //ELSE route has been selected and so show plugin page.
