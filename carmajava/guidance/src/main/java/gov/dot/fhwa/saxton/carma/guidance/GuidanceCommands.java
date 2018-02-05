@@ -243,11 +243,16 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             log.trace("Published longitudinal & lateral cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
         } else if (currentState.get() == GuidanceState.ACTIVE || currentState.get() == GuidanceState.INACTIVE) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
+            double current_speed = 0.0;
             if(velocitySubscriber.getLastMessage() != null) {
-                msg.setSpeed(velocitySubscriber.getLastMessage().getTwist().getLinear().getX());
-            } else {
-                msg.setSpeed(0.0);
+                current_speed = velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
+                if(current_speed < 0) {
+                    current_speed = 0.0;
+                } else {
+                    current_speed = Math.min(current_speed, MAX_SPEED_CMD_M_S);
+                }
             }
+            msg.setSpeed(current_speed);
             //TODO maybe need to change maxAccel and commands in lateralMsgs
             msg.setMaxAccel(1.0);
             speedAccelPublisher.publish(msg);
