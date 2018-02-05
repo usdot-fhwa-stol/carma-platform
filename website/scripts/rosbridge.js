@@ -277,17 +277,16 @@ function showRouteOptions() {
         divSubCapabilities.innerHTML = '';
 
         //Dispay the Route selection.
-        var routeNames = result.route_names;
-        var routeIds = result.route_ids; // TODO save this when route ids are set as something other than route name
+        var myRoutes = result.availableRoutes;
         var divRoutes = document.getElementById('divRoutes');
         divRoutes.innerHTML = '';
         divRoutes.style.display = 'block'; //Show the route section
 
-        for (i = 0; i < routeNames.length; i++) {
-            createRadioElement(divRoutes, routeNames[i], routeNames[i], routeNames.length, 'groupRoutes');
+        for (i = 0; i < myRoutes.length; i++) {
+            createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes');
         }
 
-        if (routeNames.length == 0) {
+        if (myRoutes.length == 0) {
             divCapabilitiesMessage.innerHTML = 'Sorry, there are no available routes, and cannot proceed without one. <br/> Please contact your System Admin.';
         }
 

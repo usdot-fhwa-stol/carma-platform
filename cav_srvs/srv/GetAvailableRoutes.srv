@@ -12,8 +12,7 @@
 ---
 # Response
 
-# A list of available route ids
-string[] route_ids
+# A list of available routes
+# For efficiency the routes provided in this list contain only a list of empty segments
+cav_msgs/Route[] availableRoutes
 
-# A list of available route names which map to ids (route_ids[x] <-> route_names[x])
-string[] route_names
