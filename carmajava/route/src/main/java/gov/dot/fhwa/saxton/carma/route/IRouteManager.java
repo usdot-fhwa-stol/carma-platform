@@ -17,13 +17,7 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.*;
-import cav_msgs.Route;
-import cav_srvs.GetAvailableRoutesResponse;
-import cav_srvs.SetActiveRouteRequest;
-import cav_srvs.SetActiveRouteResponse;
 import org.ros.message.Time;
-
-import java.util.PriorityQueue;
 
 /**
  * Interface defines the needed functions of a route worker
@@ -35,7 +29,7 @@ public interface IRouteManager {
    *
    * @param route The active route message
    */
-  void publishActiveRoute(Route route);
+  void publishActiveRoute(cav_msgs.Route route);
 
   /**
    * Publishes the current route following state in the form of a ros message
@@ -44,6 +38,13 @@ public interface IRouteManager {
    */
   void publishRouteState(RouteState routeState);
 
+  /**
+   * Publishes the latest route event in the form of a ros message
+   * 
+   * @param routeEvent The latest route event
+   */
+  void publishRouteEvent(RouteEvent routeEvent);
+  
   /**
    * Gets the current time
    *

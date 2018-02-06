@@ -145,7 +145,8 @@ public class RouteWorker {
     currentStateIndex = transition[event.ordinal()][currentStateIndex];
     log.info("Route State = " + getCurrentState());
     // Publish the new route state
-    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), event));
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime()));
+    routeManager.publishRouteEvent(getRouteEventTopicMsg(event));
   }
 
   /**
@@ -425,7 +426,7 @@ public class RouteWorker {
     }
 
     // Publish updated route information
-    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime(), WorkerEvent.NONE));
+    routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime()));
   }
 
   /**
@@ -483,7 +484,7 @@ public class RouteWorker {
    * @param event A worker event which is this message will serve as a notification for
    * @return route state message
    */
-  protected RouteState getRouteStateTopicMsg(int seq, Time time, WorkerEvent event) {
+  protected RouteState getRouteStateTopicMsg(int seq, Time time) {
     RouteState routeState = messageFactory.newFromType(RouteState._TYPE);
     // Set the state of route following
     switch (getCurrentState()) {
@@ -505,27 +506,6 @@ public class RouteWorker {
         break;
     }
 
-    // Set a recent event which this message serves as a notification of
-    switch (event) {
-      case ROUTE_SELECTED:
-        routeState.setEvent(RouteState.ROUTE_SELECTED);
-        break;
-      case ROUTE_STARTED:
-        routeState.setEvent(RouteState.ROUTE_STARTED);
-        break;
-      case ROUTE_COMPLETED:
-        routeState.setEvent(RouteState.ROUTE_COMPLETED);
-        break;
-      case LEFT_ROUTE:
-        routeState.setEvent(RouteState.LEFT_ROUTE);
-        break;
-      case ROUTE_ABORTED:
-        routeState.setEvent(RouteState.ROUTE_ABORTED);
-        break;
-      default:
-        routeState.setEvent(RouteState.NONE);
-    }
-
     if (activeRoute != null) {
       routeState.setCrossTrack(crossTrackDistance);
       routeState.setRouteID(activeRoute.getRouteID());
@@ -544,6 +524,32 @@ public class RouteWorker {
     return routeState;
   }
 
+  protected RouteEvent getRouteEventTopicMsg(WorkerEvent event) {
+      RouteEvent routeEvent = messageFactory.newFromType(RouteEvent._TYPE);
+      // Set a recent event which this message serves as a notification of
+      switch (event) {
+      case ROUTE_SELECTED:
+          routeEvent.setEvent(RouteEvent.ROUTE_SELECTED);
+          break;
+      case ROUTE_STARTED:
+          routeEvent.setEvent(RouteEvent.ROUTE_STARTED);
+          break;
+      case ROUTE_COMPLETED:
+          routeEvent.setEvent(RouteEvent.ROUTE_COMPLETED);
+          break;
+      case LEFT_ROUTE:
+          routeEvent.setEvent(RouteEvent.LEFT_ROUTE);
+          break;
+      case ROUTE_ABORTED:
+          routeEvent.setEvent(RouteEvent.ROUTE_ABORTED);
+          break;
+      default:
+          routeEvent.setEvent(RouteEvent.NONE);
+      }
+      
+      return routeEvent;
+  }
+  
   //  /**  TODO: Add once we have tim messages
   //   * Function for used in Tim topic callback. Used to update waypoints on a route
   //   * @param msg The tim message

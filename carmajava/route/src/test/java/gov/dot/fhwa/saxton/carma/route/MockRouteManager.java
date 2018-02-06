@@ -49,11 +49,15 @@ public class MockRouteManager implements IRouteManager {
   }
 
   @Override public void publishRouteState(RouteState routeState) {
-    if (routeState.getEvent() == RouteState.ROUTE_COMPLETED) {
+
+  }
+
+  @Override public void publishRouteEvent(RouteEvent routeEvent) {
+    if (routeEvent.getEvent() == RouteEvent.ROUTE_COMPLETED) {
       routeStateRouteCompleteSent = true;
     }
   }
-
+  
   @Override public Time getTime() {
     return Time.fromMillis(System.currentTimeMillis());
   }

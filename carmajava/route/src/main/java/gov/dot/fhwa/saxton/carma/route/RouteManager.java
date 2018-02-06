@@ -17,12 +17,10 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.RouteSegment;
-import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
@@ -60,6 +58,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   // Publishers
   Publisher<cav_msgs.Route> routePub;
   Publisher<cav_msgs.RouteState> routeStatePub;
+  Publisher<cav_msgs.RouteEvent> routeEventPub;
   // Subscribers
   Subscriber<sensor_msgs.NavSatFix> gpsSub;
   Subscriber<cav_msgs.SystemAlert> alertSub;
@@ -90,6 +89,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
+    routeEventPub = connectedNode.newPublisher("route_event", cav_msgs.RouteEvent._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
     String packagePath = params.getString("package_path");
@@ -205,6 +205,10 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routeStatePub.publish(routeState);
   }
 
+  @Override public void publishRouteEvent(cav_msgs.RouteEvent routeEvent) {
+      routeEventPub.publish(routeEvent);
+  }
+  
   @Override public Time getTime() {
     if (connectedNode == null) {
       return new Time();
