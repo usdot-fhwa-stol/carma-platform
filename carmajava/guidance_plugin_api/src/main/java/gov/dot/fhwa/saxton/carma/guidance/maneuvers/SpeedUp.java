@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Represents a longitudinal maneuver in which the vehicle steadily increases its speed.
@@ -24,8 +25,8 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 public class SpeedUp extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
 
-    public SpeedUp(String plannerName) {
-        super(plannerName);
+    public SpeedUp(IPlugin planner) {
+        super(planner);
     }
 
     /**

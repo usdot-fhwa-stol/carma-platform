@@ -6,6 +6,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ComplexManeuverBase;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IAccStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 public class PlatooningManeuver extends ComplexManeuverBase {
 
@@ -14,7 +15,7 @@ public class PlatooningManeuver extends ComplexManeuverBase {
     /**
      * Constructor where provides all relevant inputs
      *
-     * @param plannerName The name of the component or plugin responsible for this maneuver
+     * @param planner The plugin responsible for this maneuver
      * @param commandInputs Input which provides the current desired commands from the platooning speed control logic
      * @param currentState Input which provides the current state of the vehicle
      * @param commandsOutputs The target for calculated commands
@@ -25,25 +26,25 @@ public class PlatooningManeuver extends ComplexManeuverBase {
      * @param minExpectedSpeed The minimum expected speed at the end of maneuver
      * @param maxExpectedSpeed The maximum expected speed at the end of maneuver
      */
-    protected PlatooningManeuver(String plannerName, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
+    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
             IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
             double minExpectedSpeed, double maxExpectedSpeed) {
-        super(plannerName, currentState, commandsOutputs, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime, minExpectedSpeed,
+        super(planner, currentState, commandsOutputs, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime, minExpectedSpeed,
                 maxExpectedSpeed);
         commandInputs_ = commandInputs;
     }
 
-    protected PlatooningManeuver(String plannerName, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
+    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
             IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime,
             Time maxCompletionTime) {
-        super(plannerName, currentState, commandsOutputs, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
+        super(planner, currentState, commandsOutputs, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
         commandInputs_ = commandInputs;
     }
 
-    protected PlatooningManeuver(String plannerName, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
+    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
             IAccStrategy accStrategy, double startDist, double endDist, double minExpectedSpeed,
             double maxExpectedSpeed) {
-        super(plannerName, currentState, commandsOutputs, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
+        super(planner, currentState, commandsOutputs, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
         commandInputs_ = commandInputs;
     }
     

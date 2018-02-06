@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * A lane keeping maneuver.
@@ -26,8 +27,8 @@ public class LaneKeeping extends LateralManeuver {
 
     protected double DEFAULT_AXEL_ANGLE = 0.0;
 
-    public LaneKeeping(String plannerName) {
-        super(plannerName);
+    public LaneKeeping(IPlugin planner) {
+        super(planner);
     }
 
     @Override

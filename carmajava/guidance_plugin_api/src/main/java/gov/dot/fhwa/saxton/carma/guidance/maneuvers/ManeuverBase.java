@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
@@ -30,14 +31,14 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     protected IManeuverInputs                   inputs_;
     protected IGuidanceCommands                 commands_;
     protected ILogger                           log_ = LoggerManager.getLogger();
-    protected final String                      plannerName_;
+    protected final IPlugin                     planner_;
 
     /**
      * Constructs a Maneuver and sets the planner's name
-     * @param plannerName the name of the component or plugin which planned this maneuver
+     * @param planner the plugin which planned this maneuver
      */
-    public ManeuverBase(String plannerName) {
-        this.plannerName_ = plannerName;
+    public ManeuverBase(IPlugin planner) {
+        this.planner_ = planner;
     }
 
     /**
@@ -80,8 +81,8 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     }
     
     @Override
-    public String getPlannerName() {
-        return plannerName_;
+    public IPlugin getPlanner() {
+        return planner_;
     }
 
     /**

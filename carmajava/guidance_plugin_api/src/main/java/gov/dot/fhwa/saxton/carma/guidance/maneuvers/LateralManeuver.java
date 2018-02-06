@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Base class for all lateral maneuvers.
@@ -30,8 +31,8 @@ public abstract class LateralManeuver extends ManeuverBase {
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
     protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity
 
-    public LateralManeuver(String plannerName) {
-        super(plannerName);
+    public LateralManeuver(IPlugin planner) {
+        super(planner);
     }
 
     @Override

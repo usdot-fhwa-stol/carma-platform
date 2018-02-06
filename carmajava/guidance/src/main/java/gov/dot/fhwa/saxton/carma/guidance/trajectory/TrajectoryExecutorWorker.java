@@ -67,7 +67,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   private void execute(IManeuver maneuver) {
     log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", "
-        + maneuver.getEndDistance() + ") Planned by: " + maneuver.getPlannerName());
+        + maneuver.getEndDistance() + ") Planned by: " + maneuver.getPlanner().getVersionInfo().componentName());
     if (maneuver instanceof LongitudinalManeuver) {
       if (longitudinalManeuverThread != null) {
         longitudinalManeuverThread.interrupt();
@@ -100,7 +100,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     }
     // Notify ui of plugin in charge of current maneuver
     std_msgs.String controllingPluginMsg = controllingPluginPublisher.newMessage();
-    controllingPluginMsg.setData(maneuver.getPlannerName());
+    controllingPluginMsg.setData(maneuver.getPlanner().getVersionInfo().componentName());
     controllingPluginPublisher.publish(controllingPluginMsg);
   }
 

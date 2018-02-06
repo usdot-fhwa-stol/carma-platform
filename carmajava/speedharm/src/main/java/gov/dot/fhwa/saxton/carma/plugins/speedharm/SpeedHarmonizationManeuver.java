@@ -20,6 +20,8 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ComplexManeuverBase;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IAccStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
+
 import org.ros.message.Duration;
 import org.ros.message.Time;
 
@@ -35,7 +37,7 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
   /**
    * Constructor where user provides all relevant inputs
    *
-   * @param plannerName The name of the component or plugin responsible for this maneuver
+   * @param planner The name of the plugin responsible for this maneuver
    * @param speedHarmInputs Input which provides the current desired commands from a speed harm trajectory source
    * @param inputs Input which provides the current state of the vehicle
    * @param commands The target for calculated commands
@@ -46,11 +48,11 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
    * @param minExpectedSpeed The minimum expected speed
    * @param maxExpectedSpeed The maximum expected speed
    */
-  public SpeedHarmonizationManeuver(String plannerName, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+  public SpeedHarmonizationManeuver(IPlugin planner, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
     IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
     double minExpectedSpeed, double maxExpectedSpeed) {
 
-    super(plannerName, inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime,
+    super(planner, inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime,
       minExpectedSpeed, maxExpectedSpeed);
     speedHarmInputs_ = speedHarmInputs;
   }
@@ -58,20 +60,20 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
   /**
    * Constructor where the expected speeds are calculated
    */
-  public SpeedHarmonizationManeuver(String plannerName, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+  public SpeedHarmonizationManeuver(IPlugin planner, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
     IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
 
-    super(plannerName, inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
+    super(planner, inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
     speedHarmInputs_ = speedHarmInputs;
   }
 
   /**
    * Constructor where the expected speeds are calculated
    */
-  public SpeedHarmonizationManeuver(String plannerName, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
+  public SpeedHarmonizationManeuver(IPlugin planner, ISpeedHarmInputs speedHarmInputs, IManeuverInputs inputs, IGuidanceCommands commands,
     IAccStrategy accStrategy, double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
 
-    super(plannerName, inputs, commands, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
+    super(planner, inputs, commands, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
     speedHarmInputs_ = speedHarmInputs;
   }
 

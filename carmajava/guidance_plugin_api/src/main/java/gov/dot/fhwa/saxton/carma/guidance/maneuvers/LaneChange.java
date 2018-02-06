@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Lane change maneuver. Moves the vehicle from the current lane to the target lane
@@ -28,8 +29,8 @@ public class LaneChange extends LateralManeuver {
     protected double LEFT_LANE_CHANGE = -1.0;
     protected double KEEP_LANE = 0.0;
 
-    public LaneChange(String plannerName) {
-        super(plannerName);
+    public LaneChange(IPlugin planner) {
+        super(planner);
     }
 
     @Override

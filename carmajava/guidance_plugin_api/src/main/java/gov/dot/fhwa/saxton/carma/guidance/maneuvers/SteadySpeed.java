@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Represents a steady-speed longitudinal maneuver.
@@ -28,8 +29,8 @@ public class SteadySpeed extends LongitudinalManeuver {
  
     protected static final double SPEED_EPSILON = 0.05;
     
-    public SteadySpeed(String plannerName) {
-        super(plannerName);
+    public SteadySpeed(IPlugin planner) {
+        super(planner);
     }
 
     /**
