@@ -19,6 +19,8 @@ package gov.dot.fhwa.saxton.carma.route;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +37,7 @@ public class Route {
   protected double maxJoinDistance = 20.0;
   protected List<RouteSegment> segments;
   protected List<RouteWaypoint> waypoints;
+  protected boolean valid = false;
 
   /**
    * Default constructor does nothing.
@@ -68,6 +71,7 @@ public class Route {
     cav_msgs.Route routeMsg = factory.newFromType(cav_msgs.Route._TYPE);
     routeMsg.setRouteID(routeID);
     routeMsg.setRouteName(routeName);
+    routeMsg.setValid(valid);
 
     List<cav_msgs.RouteSegment> routeSegmentMsgs = new LinkedList<>();
     for (int i = 0; i < segments.size(); i++) {
@@ -162,6 +166,43 @@ public class Route {
     waypoints.add(index,waypoint);
 
     calculateLength();
+  }
+
+  /**
+   * Helper function determines if this is a valid route
+   */
+  private void validate() {
+    RouteSegment prevSegment = null;
+    boolean validRoute = false;
+    for (RouteSegment seg: segments) {
+      // Validate segment
+      validRoute = seg.isValid();
+
+      if (prevSegment != null) {
+        // Validate angle between adjacent segments is always less than 90 degrees
+        Vector segVec = seg.getLineSegment().getVector();
+        Vector prevVec = prevSegment.getLineSegment().getVector();
+        double angle = segVec.getAngleBetweenVectors(prevVec);
+        validRoute = validRoute && Math.abs(angle) < Math.PI / 2.0;
+      }
+
+      if (!validRoute) {
+        this.valid = false;
+        return;
+      }
+      
+      prevSegment = seg;
+    }
+
+    this.valid = true;
+  }
+
+  /**
+   * Returns true if this route can be considered valid for use in host vehicle operation
+   * @return boolean valid status
+   */
+  public boolean isValid() {
+    return this.valid;
   }
 
   /**
@@ -262,6 +303,7 @@ public class Route {
       firstWaypoint = false;
     }
     calculateLength();
+    validate();
   }
 
 

@@ -548,6 +548,26 @@ public class RouteWaypoint {
     return ecefPoint;
   }
 
+  /**
+   * Returns true if this waypoint can be considered valid for use in a route
+   * @return boolean valid status
+   */
+  public boolean isValid() {
+    return 
+      laneCount > 0 &&
+      laneWidth > 2.0 && // Highway lane standard is 3.7m, but might be smaller on side roads
+      lowerSpeedLimit < upperSpeedLimit &&
+      lowerSpeedLimit >= -0.0 && 
+      minCrossTrack < maxCrossTrack &&
+      minCrossTrack <= -laneWidth / 2.0 && // Divide by 2 for single lane roads
+      maxCrossTrack >= laneWidth / 2.0 && 
+      requiredLaneIndex >= 0 &&
+      location.getAltitude() > -500.0 && // Lowest exposed land on earth is -413 m. Lowest tunnel is around -300 m
+      location.getAltitude() < 5500.0 && // Highest road in the world is < 5500 m
+      Math.abs(location.getLatitude()) < 180.0 &&
+      Math.abs(location.getLongitude()) < 180.0;
+  }
+
   @Override public String toString() {
     return "Waypoint{ " + location.toString() + " LaneIndex: " + laneIndex + " }";
   }

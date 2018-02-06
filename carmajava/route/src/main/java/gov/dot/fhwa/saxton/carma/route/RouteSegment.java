@@ -260,6 +260,17 @@ public class RouteSegment {
     return ArrayUtils.toPrimitive(byteObjArray);
   }
 
+    /**
+   * Returns true if this waypoint can be considered valid for use in a route
+   * @return boolean valid status
+   */
+  public boolean isValid() {
+    return
+      1.0 < length && length < 1000.0 && // Segment is more than 1m in size and less than 1km long
+      uptrackWP.isValid() && // Validate waypoints
+      downtrackWP.isValid();
+  }
+
   /**
    * Constructs a fully initialized ros message from this route segment
    * @param factory The message factory which will be used to get a ros message object
