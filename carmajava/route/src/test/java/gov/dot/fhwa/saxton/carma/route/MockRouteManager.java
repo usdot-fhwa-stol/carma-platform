@@ -53,7 +53,9 @@ public class MockRouteManager implements IRouteManager {
   }
 
   @Override public void publishRouteEvent(RouteEvent routeEvent) {
-      
+    if (routeEvent.getEvent() == RouteEvent.ROUTE_COMPLETED) {
+      routeStateRouteCompleteSent = true;
+    }
   }
   
   @Override public Time getTime() {
