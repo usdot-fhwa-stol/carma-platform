@@ -266,7 +266,7 @@ public class RouteSegment {
    */
   public boolean isValid() {
     return
-      1.0 < length && length < 1000.0 && // Segment is more than 1m in size and less than 1km long
+      1.0 <= length && length <= 1000.0 && // Segment is more than 1m in size and less than 1km long
       uptrackWP.isValid() && // Validate waypoints
       downtrackWP.isValid();
   }

@@ -555,7 +555,7 @@ public class RouteWaypoint {
   public boolean isValid() {
     return 
       laneCount > 0 &&
-      laneWidth > 2.0 && // Highway lane standard is 3.7m, but might be smaller on side roads
+      laneWidth >= 2.0 && // Highway lane standard is 3.7m, but might be smaller on side roads
       lowerSpeedLimit < upperSpeedLimit &&
       lowerSpeedLimit >= -0.0 && 
       minCrossTrack < maxCrossTrack &&

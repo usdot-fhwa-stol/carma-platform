@@ -41,19 +41,20 @@ public class FileStrategy implements IRouteLoadStrategy{
 
   @Override public Route load() {
     try {
-      log.info("Trying to loading route: " + filePath);
+      log.info("Trying to load route: " + filePath);
       FileReader fr = new FileReader(filePath);
       YamlReader reader = new YamlReader(fr);
       Route route = reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
       if (!route.isValid()) {
         log.warn("An invalid route was loaded from file: " + filePath);
       }
+      return route;
     } catch (FileNotFoundException e) {
-      log.warn("FileNotFoundException in FileStrategy route load", e);
+      log.warn("FileNotFoundException in FileStrategy route load for file: " + filePath, e);
     } catch (YamlException e) {
-      log.warn("YamlException in FileStrategy route load", e);
+      log.warn("YamlException in FileStrategy route for file: " + filePath, e);
     } catch (Exception e) {
-      log.warn("Exception in FileStrategy route load", e);
+      log.warn("Exception in FileStrategy route for file: " + filePath, e);
     }
     return null;
   }
