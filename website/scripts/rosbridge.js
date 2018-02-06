@@ -28,6 +28,7 @@ var t_nav_sat_fix = 'nav_sat_fix';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = 'route_state';
+var t_route_event = 'route_event';
 var t_active_route = 'route';
 var t_cmd_speed = 'cmd_speed';
 var t_robot_status = 'robot_status';
@@ -1144,6 +1145,33 @@ function getFutureTopics() {
     Route state are only set and can be shown after Route has been selected.
 */
 function checkRouteInfo() {
+
+    //Get Route Event
+    var listenerRouteEvent = new ROSLIB.Topic({
+        ros: ros,
+        name: t_route_event,
+        messageType: 'cav_msgs/RouteEvent'
+    });
+
+    listenerRouteEvent.subscribe(function (message) {
+        insertNewTableRow('tblSecondA', 'Route Event', message.event);
+
+        //If completed, then route topic will publish something to guidance to shutdown.
+        //For UI purpose, only need to notify the USER and show them that route has completed.
+        if (message.event == 3) //ROUTE_COMPLETED=3
+        {
+            //if (listenerSystemAlert != 'undefined')
+            //    listenerSystemAlert.unsubscribe();
+            showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
+        }
+
+        if (message.event == 4)//LEFT_ROUTE=4
+        {
+            //listenerSystemAlert.unsubscribe();
+            showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
+        }
+    });
+            
     //Get Route State
     var listenerRouteState = new ROSLIB.Topic({
         ros: ros,
@@ -1154,7 +1182,7 @@ function checkRouteInfo() {
     listenerRouteState.subscribe(function (message) {
 
         insertNewTableRow('tblSecondA', 'Route ID', message.routeID);
-        insertNewTableRow('tblSecondA', 'Route State / Event', message.state + ' / ' + message.event);
+        insertNewTableRow('tblSecondA', 'Route State', message.state);
         insertNewTableRow('tblSecondA', 'Cross Track / Down Track', message.cross_track.toFixed(2) + ' / ' + message.down_track.toFixed(2));
 
         //Calculate and show next speed limit remaining distance
@@ -1182,21 +1210,6 @@ function checkRouteInfo() {
 
         insertNewTableRow('tblSecondA', 'Lane Change Total Dist (m)', total_dist_next_lane_change.toFixed(2));
         insertNewTableRow('tblSecondA', 'Lane Change In (mi/m)', lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m');
-
-        //If completed, then route topic will publish something to guidance to shutdown.
-        //For UI purpose, only need to notify the USER and show them that route has completed.
-        if (message.event == 3) //ROUTE_COMPLETED=3
-        {
-            //if (listenerSystemAlert != 'undefined')
-            //    listenerSystemAlert.unsubscribe();
-            showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
-        }
-
-        if (message.event == 4)//LEFT_ROUTE=4
-        {
-            //listenerSystemAlert.unsubscribe();
-            showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
-        }
 
         insertNewTableRow('tblSecondA', 'Current Segment ID', message.current_segment.waypoint.waypoint_id);
         insertNewTableRow('tblSecondA', 'Current Segment Max Speed', message.current_segment.waypoint.speed_limit);
