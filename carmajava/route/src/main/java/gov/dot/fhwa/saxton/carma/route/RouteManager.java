@@ -90,7 +90,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
     routeEventPub = connectedNode.newPublisher("route_event", cav_msgs.RouteEvent._TYPE);
-    routeEventPub.setLatchMode(true);
 
     // Worker must be initialized after publishers but before subscribers
     String packagePath = params.getString("package_path");

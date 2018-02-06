@@ -427,7 +427,6 @@ public class RouteWorker {
 
     // Publish updated route information
     routeManager.publishRouteState(getRouteStateTopicMsg(routeStateSeq, routeManager.getTime()));
-    routeManager.publishRouteEvent(getRouteEventTopicMsg(WorkerEvent.NONE));
   }
 
   /**
