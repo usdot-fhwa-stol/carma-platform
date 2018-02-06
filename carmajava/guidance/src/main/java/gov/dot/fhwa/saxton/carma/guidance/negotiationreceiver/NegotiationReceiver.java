@@ -65,7 +65,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onInitialize() {
         maxAccel_ = pluginServiceLocator.getParameterSource().getDouble("~vehicle_acceleration_limit", 2.5);
-        maneuverFactory_ = new SimpleManeuverFactory();
+        maneuverFactory_ = new SimpleManeuverFactory(this);
         planner_ = pluginServiceLocator.getManeuverPlanner();
         planSub_ = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
         statusPub_ = pubSubService.getPublisherForTopic("plan_status", PlanStatus._TYPE);

@@ -16,17 +16,29 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
+
 public class SimpleManeuverFactory {
+
+    private final IPlugin planner_;
+
+    /**
+     * Constructor
+     * @param plannerName The name of the component or plugin which will use this factory to plan maneuvers
+     */
+    public SimpleManeuverFactory(IPlugin planner) {
+        planner_ = planner;
+    }
     
     public LongitudinalManeuver createManeuver(double start_speed, double end_speed) {
         
         double speedEpsilon = SteadySpeed.SPEED_EPSILON;
         if(end_speed - start_speed > speedEpsilon) {
-            return new SpeedUp();
+            return new SpeedUp(planner_);
         } else if(start_speed - end_speed > speedEpsilon) {
-            return new SlowDown();
+            return new SlowDown(planner_);
         } else {
-            return new SteadySpeed();
+            return new SteadySpeed(planner_);
         }
     }
     

@@ -67,12 +67,13 @@ public class FollowerState implements IPlatooningState {
             return response;
         }
         PlatooningManeuver maneuver = new PlatooningManeuver(
-                plugin_.commandGenerator,
-                pluginServiceLocator_.getManeuverPlanner().getManeuverInputs(),
-                pluginServiceLocator_.getManeuverPlanner().getGuidanceCommands(),
-                AccStrategyManager.newAccStrategy(),
-                window[0], window[1],
-                1.0, 100.0); // TODO the last two are dummy variables, replace them later if possible
+            plugin_,
+            plugin_.commandGenerator,
+            pluginServiceLocator_.getManeuverPlanner().getManeuverInputs(),
+            pluginServiceLocator_.getManeuverPlanner().getGuidanceCommands(),
+            AccStrategyManager.newAccStrategy(),
+            window[0], window[1],
+            1.0, 100.0); // TODO the last two are dummy variables, replace them later if possible
         boolean accepted = traj.setComplexManeuver(maneuver);
         log_.info("Trajectory response to complex maneuver = " + accepted + " in the window [" + window[0] + ", " + window[0] + "]");
         return new TrajectoryPlanningResponse();

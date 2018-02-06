@@ -17,12 +17,17 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Represents a longitudinal maneuver in which the vehicle steadily increases its speed.
  */
 public class SpeedUp extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
+
+    public SpeedUp(IPlugin planner) {
+        super(planner);
+    }
 
     /**
      * ASSUMES that the target speed has been specified such that it does not exceed and infrastructure speed limit.
