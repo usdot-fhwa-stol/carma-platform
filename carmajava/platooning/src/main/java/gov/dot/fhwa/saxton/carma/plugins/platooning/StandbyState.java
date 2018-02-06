@@ -57,16 +57,6 @@ public class StandbyState implements IPlatooningState {
         log_.info("Platooning", "Reject new plan because the plugin is current in standby state");
         return false;
     }
-
-    @Override
-    public void loop() throws InterruptedException {
-        try {
-            Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
-        }
-    }
     
     @Override
     public void onReceivePlanResponse(MobilityAck ack) {

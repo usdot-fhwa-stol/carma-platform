@@ -97,16 +97,6 @@ public class FollowerState implements IPlatooningState {
         // TODO Wait for the UPDATE messages from the members in this platoon
         return false;
     }
-
-    @Override
-    public void loop() throws InterruptedException {
-        try {
-            Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
-        }
-    }
     
     @Override
     public void onReceivePlanResponse(MobilityAck ack) {

@@ -39,7 +39,14 @@ public interface IPlatooningState {
     /**
      * Infinite loop method for different platooning state  
      */
-    public void loop() throws InterruptedException;
+    public default void loop() throws InterruptedException {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
+        }
+    };
     
     /**
      * Callback method when we received a response on host vehicle plan
