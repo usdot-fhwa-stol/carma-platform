@@ -445,6 +445,8 @@
              to="/$(arg TOP_NS)/$(arg RT_NS)/start_active_route"/>
       <remap from="route_state"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+      <remap from="route_event"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
       <remap from="route"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="bsm"
