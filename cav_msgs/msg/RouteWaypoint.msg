@@ -58,6 +58,14 @@ float32 lane_width
 # A bit flag describing which of the following fields are set. 1 = set, 0 = not set
 uint16 set_fields
 
+# Bit flags which can be set in the set_fields
+uint16 DISABLED_GUIDANCE_ALGORITHMS=1
+uint16 LANE_CLOSURES=2
+uint16 NEAREST_MILE_MARKER=4
+uint16 NEEDED_MANEUVERS=8
+uint16 REQUIRED_LANE_INDEX=16
+uint16 ROAD_TYPE=32
+
 # Each variable below corresponds to the bit in set_fields moving from MSB->LSM as you read down the list
 # Example disabled_guidance_algorithms is the MSB (0x8000) and lane_closures is (0x4000)
 
