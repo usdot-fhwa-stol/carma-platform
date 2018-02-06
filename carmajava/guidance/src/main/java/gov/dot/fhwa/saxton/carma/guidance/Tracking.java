@@ -83,7 +83,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	protected int last_id_changed = 0;
 	protected float vehicleWidth = 0;
 	protected float vehicleLength = 0;
-	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);;
+	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);
 	protected AtomicDouble current_speed = new AtomicDouble(0);
 	protected Random randomIdGenerator = new Random();
 	protected byte[] random_id = new byte[4];

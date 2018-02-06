@@ -151,11 +151,11 @@ public class RouteSegment {
   }
 
   /**
-   * Gets a deep copy of the line segment which connects the two waypoints.
+   * Gets the line segment which connects the two waypoints.
    * @return The line segment
    */
   public LineSegment3D getLineSegment() {
-    return new LineSegment3D(this.lineSegment);
+    return this.lineSegment;
   }
 
   /**

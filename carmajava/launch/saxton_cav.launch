@@ -82,6 +82,10 @@
   <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
   <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
   <arg name="UI_NS"   default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+  
+  <!-- Environment Variables -->
+  <arg name="local_env"    default="false" doc="Prevents the launch file from setting ROS environment variables"/>
+  <env unless="$(arg local_env)" name="ROS_IP" value="192.168.88.10"/>
 
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
@@ -300,6 +304,8 @@
 
         <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
+        <rosparam command="load" file="$(arg PARAM_DIR)/MessageParams.yaml"/>
+
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="outgoing_bsm"
@@ -329,13 +335,13 @@
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="mobility_ack_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_ack"/>
         <remap from="mobility_greeting_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_greeting"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_greeting"/>
         <remap from="mobility_intro_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_intro"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_intro"/>
         <remap from="mobility_plan_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_plan"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_plan"/>
         <remap from="plan_status"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plan_status"/>
                
