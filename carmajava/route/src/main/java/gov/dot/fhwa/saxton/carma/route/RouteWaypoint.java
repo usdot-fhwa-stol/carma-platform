@@ -564,8 +564,8 @@ public class RouteWaypoint {
       maxCrossTrack >= laneWidth / 2.0 && 
       location.getAltitude() > -500.0 && // Lowest exposed land on earth is -413 m. Lowest tunnel is around -300 m
       location.getAltitude() < 5500.0 && // Highest road in the world is < 5500 m
-      Math.abs(location.getLatitude()) < 180.0 &&
-      Math.abs(location.getLongitude()) < 180.0;
+      Math.abs(location.getLatitude()) <= 180.0 &&
+      Math.abs(location.getLongitude()) <= 180.0;
     
     // Validate optional fields
     boolean validOptionalFields = true;
