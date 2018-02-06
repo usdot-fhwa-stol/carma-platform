@@ -18,8 +18,6 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import cav_msgs.ExternalObject;
 import cav_msgs.ExternalObjectList;
-import cav_msgs.RoadwayEnvironment;
-import cav_msgs.RoadwayObstacle;
 import cav_msgs.RouteState;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
@@ -49,7 +47,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
     protected ISubscriber<RouteState> routeStateSubscriber_;
     protected ISubscriber<TwistStamped> twistSubscriber_;
-    protected ISubscriber<RoadwayEnvironment> roadwayEnvironmentSubscriber_;
+    protected ISubscriber<ExternalObjectList> externalObjectListSubscriber_;
     protected double distanceDowntrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
@@ -120,11 +118,11 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          * data is available in those data publications.
          */
 
-        // TODO: Should there be a timestamp check to synchronize host downtrack and obstacle downtrack?
-        roadwayEnvironmentSubscriber_ = pubSubService.getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
-        roadwayEnvironmentSubscriber_.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
+        // TODO: Update to use actual topic provided by sensor fusion
+        externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
+        externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
             @Override
-            public void onMessage(RoadwayEnvironment msg) {
+            public void onMessage(ExternalObjectList msg) {
                 double closestDistance = Double.POSITIVE_INFINITY;
                 RoadwayObstacle frontVehicle = null;
                 for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
@@ -149,8 +147,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
                 // Store our results
                 if (frontVehicle != null) {
-                    frontVehicleDistance.set(closestDistance);
-                    frontVehicleSpeed.set(frontVehicle.getObject().getVelocity().getTwist().getLinear().getX()); // Tangential speed to route
+                    frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
+                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
                 } else {
                     frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
                     frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
