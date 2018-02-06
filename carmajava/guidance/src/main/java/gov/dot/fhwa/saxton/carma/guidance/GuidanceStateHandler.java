@@ -34,7 +34,7 @@ import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 
 import cav_msgs.RobotEnabled;
-import cav_msgs.RouteState;
+import cav_msgs.RouteEvent;
 import cav_msgs.SystemAlert;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
@@ -57,7 +57,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
     protected long shutdownDelayMs = 5000;
     protected boolean robotStatus = false;
     
-    protected ISubscriber<RouteState> routeStateSub;
+    protected ISubscriber<RouteEvent> routeEventSub;
     protected ISubscriber<SystemAlert> systemAlertSub;
     protected ISubscriber<RobotEnabled> robotStatusSub;
     protected IPublisher<SystemAlert> systemAlertPub;
@@ -97,27 +97,22 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
         });
         systemAlertPub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
         
-        routeStateSub = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSub.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-
-            @Override
-            public void onMessage(RouteState msg) {
-                if(msg.getEvent() == RouteState.LEFT_ROUTE) {
-                    log.info("GUIDANCE_STATE", getComponentName() + " recieved LEFT_ROUTE");
-                    SystemAlert alert = systemAlertPub.newMessage();
-                    alert.setDescription("Guidance detected LEFT_ROUTE state!");
-                    alert.setType(SystemAlert.CAUTION);
-                    systemAlertPub.publish(alert);
-                    stateMachine.processEvent(GuidanceEvent.LEFT_ROUTE);
-                } else if (msg.getEvent() == RouteState.ROUTE_COMPLETED
-                        || msg.getEvent() == RouteState.ROUTE_ABORTED) {
-                    log.info("GUIDANCE_STATE", getComponentName() + " recieved ROUTE_COMPLETED or ROUTE_ABORTED");
-                    SystemAlert alert = systemAlertPub.newMessage();
-                    alert.setDescription("Guidance detected ROUTE_COMPLETED or ROUTE_ABORTED state.");
-                    alert.setType(SystemAlert.CAUTION);
-                    systemAlertPub.publish(alert);
-                    stateMachine.processEvent(GuidanceEvent.FINISH_ROUTE);
-                }
+        routeEventSub = pubSubService.getSubscriberForTopic("route_event", RouteEvent._TYPE);
+        routeEventSub.registerOnMessageCallback((msg) -> {
+            if (msg.getEvent() == RouteEvent.LEFT_ROUTE) {
+                log.info("GUIDANCE_STATE", getComponentName() + " recieved LEFT_ROUTE");
+                SystemAlert alert = systemAlertPub.newMessage();
+                alert.setDescription("Guidance detected LEFT_ROUTE state!");
+                alert.setType(SystemAlert.CAUTION);
+                systemAlertPub.publish(alert);
+                stateMachine.processEvent(GuidanceEvent.LEFT_ROUTE);
+            } else if (msg.getEvent() == RouteEvent.ROUTE_COMPLETED || msg.getEvent() == RouteEvent.ROUTE_ABORTED) {
+                log.info("GUIDANCE_STATE", getComponentName() + " recieved ROUTE_COMPLETED or ROUTE_ABORTED");
+                SystemAlert alert = systemAlertPub.newMessage();
+                alert.setDescription("Guidance detected ROUTE_COMPLETED or ROUTE_ABORTED state.");
+                alert.setType(SystemAlert.CAUTION);
+                systemAlertPub.publish(alert);
+                stateMachine.processEvent(GuidanceEvent.FINISH_ROUTE);
             }
         });
 
