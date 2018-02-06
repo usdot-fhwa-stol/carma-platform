@@ -269,6 +269,8 @@ function showModalNoAck(icon) {
     modalUIInstructionsContent.innerHTML = icon;
     modalUIInstructions.style.display = 'block';
     isModalPopupShowing = true;
+    
+    playSound('audioAlert4', false); 
 
     //hide after 3 seconds.
    setTimeout(function(){
@@ -409,6 +411,7 @@ function closeModal(action) {
     document.getElementById('audioAlert1').pause();
     document.getElementById('audioAlert2').pause();
     document.getElementById('audioAlert3').pause();
+    document.getElementById('audioAlert4').pause();
 
     //alert('modal action:' + action);
 

@@ -139,17 +139,17 @@ public class RouteWaypoint {
   public short getSetFields() {
     int bitMask = 0x0000;
     if (!disabledGuidanceAlgorithms.isEmpty())
-      bitMask = bitMask | 0x8000; //1000 0000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.DISABLED_GUIDANCE_ALGORITHMS;
     if (!laneClosures.isEmpty())
-      bitMask = bitMask | 0x4000; //0100 0000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.LANE_CLOSURES;
     if (nearestMileMarker != -1)
-      bitMask = bitMask | 0x2000; //0010 0000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.NEAREST_MILE_MARKER;
     if (!neededManeuvers.isEmpty())
-      bitMask = bitMask | 0x1000; //0001 0000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.NEEDED_MANEUVERS;
     if (requiredLaneIndex != -1)
-      bitMask = bitMask | 0x0800; //0000 1000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.REQUIRED_LANE_INDEX;
     if (roadType != null)
-      bitMask = bitMask | 0x0400; //0000 0100 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.ROAD_TYPE;
 
     return (short) bitMask;
   }
@@ -223,9 +223,9 @@ public class RouteWaypoint {
 
     // Set member variables according to set fields bit mask
     int bitMask = waypointMsg.getSetFields();
-    if ((bitMask & 0x8000) != 0) //1000 0000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.DISABLED_GUIDANCE_ALGORITHMS) != 0)
       wp.setDisabledGuidanceAlgorithms(waypointMsg.getDisabledGuidanceAlgorithms());
-    if ((bitMask & 0x4000) != 0) { //0100 0000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.LANE_CLOSURES) != 0) {
       ChannelBuffer buffer = waypointMsg.getLaneClosures();
       List<Integer> laneClosures = new LinkedList<>();
       for (byte b : buffer.array()) {
@@ -233,13 +233,13 @@ public class RouteWaypoint {
       }
       wp.setLaneClosures(laneClosures);
     }
-    if ((bitMask & 0x2000) != 0) //0010 0000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.NEAREST_MILE_MARKER) != 0)
       wp.setNearestMileMarker(waypointMsg.getNearestMileMarker());
-    if ((bitMask & 0x1000) != 0) //0001 1000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.NEEDED_MANEUVERS) != 0)
       wp.setNeededManeuvers(waypointMsg.getNeededManeuvers());
-    if ((bitMask & 0x0800) != 0) //0000 1000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.REQUIRED_LANE_INDEX) != 0)
       wp.setRequiredLaneIndex(waypointMsg.getRequiredLaneIndex());
-    if ((bitMask & 0x0400) != 0) //0000 0100 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.ROAD_TYPE) != 0)
       wp.setRoadType(RoadType.fromMessage(waypointMsg.getRoadType()));
 
     return wp;
@@ -542,6 +542,9 @@ public class RouteWaypoint {
    * @return point
    */
   public Point3D getECEFPoint() {
+    if (ecefPoint == null) {
+      ecefPoint = gcc.geodesic2Cartesian(location, Transform.identity());
+    }
     return ecefPoint;
   }
 
