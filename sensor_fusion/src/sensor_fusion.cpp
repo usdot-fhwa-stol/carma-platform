@@ -470,7 +470,7 @@ void SensorFusionApplication::publish_updates() {
     if(tracker_->process() > 0 && !tracker_->tracked_sensor->objects.empty())
     {
         cav_msgs::ExternalObjectList list;
-        list.header.stamp.fromBoost(tracker_->tracked_sensor->time_stamp);
+        list.header.stamp = ros::Time::fromBoost(tracker_->tracked_sensor->time_stamp);
         list.header.frame_id = inertial_frame_name_;
         for (auto& it : tracker_->tracked_sensor->objects)
         {

@@ -140,7 +140,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
               List<cav_msgs.Route> routeMsgs = new LinkedList<>();
 
               for (Route route : routeWorker.getAvailableRoutes()) {
-                routeMsgs.add(route.toMessage(connectedNode.getTopicMessageFactory()));
+                cav_msgs.Route routeMsg = route.toMessage(connectedNode.getTopicMessageFactory());
+                routeMsg.setSegments(new LinkedList<RouteSegment>()); // Clearing segments to match service spec
+                routeMsgs.add(routeMsg);
               }
               response.setAvailableRoutes(routeMsgs);
             } catch (Exception e) {

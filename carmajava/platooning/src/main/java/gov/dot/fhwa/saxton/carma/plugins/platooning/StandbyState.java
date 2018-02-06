@@ -16,10 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import cav_msgs.MobilityAck;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
  * The StandbyState is a state when the platooning algorithm is current disabled on the route.
@@ -28,6 +30,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
  */
 public class StandbyState implements IPlatooningState {
 
+    protected static final long DEFAULT_LOOP_SLEEP_MS = 10000;
     protected PlatooningPlugin plugin_;
     protected ILogger log_;
     protected PluginServiceLocator pluginServiceLocator_;
@@ -40,19 +43,26 @@ public class StandbyState implements IPlatooningState {
     
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        if(pluginServiceLocator_.getRouteService().isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
-            //TODO it may need to send out some mobility messages when the transition happened
+        RouteService rs = pluginServiceLocator_.getRouteService(); 
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+            log_.info("Platooning", "In standby state, find an avaliable plan window and change to leader state");
             plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
-            return plugin_.planTrajectory(traj, expectedEntrySpeed);
         }
         return new TrajectoryPlanningResponse();
     }
 
     @Override
-    public void onReceiveNegotiationRequest(String plan) {
-        // NO-OP
+    public boolean onReceiveNegotiationRequest(String plan) {
+        // give negative response to any new plan in standby state
+        log_.info("Platooning", "Reject new plan because the plugin is current in standby state");
+        return false;
     }
-
+    
+    @Override
+    public void onReceivePlanResponse(MobilityAck ack) {
+        log_.info("Platooning", "Receive plan ack in standby state, ignoring");
+    }
+    
     @Override
     public String toString() {
         return "StandbyState";

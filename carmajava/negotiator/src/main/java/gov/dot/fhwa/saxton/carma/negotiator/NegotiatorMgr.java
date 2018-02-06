@@ -108,6 +108,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
         // because NewPlan message should only related to MobilityPlan message
         // This default of string length is 2 because "[]" means empty string
         if(msg.getPlanType().getType() != PlanType.UNKNOWN && msg.getCapabilities().length() > 2) {
+            log.info("V2V", "Looks like it contains a real plan, so forwarding the plan to Guidance.");
             NewPlan plan = newPlanPub.newMessage();
             plan.getHeader().setFrameId("0");
             plan.setPlanId(msg.getHeader().getPlanId());

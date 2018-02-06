@@ -75,6 +75,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onResume() {
         planSub_.registerOnMessageCallback(this::onPlanReceived);
+        setAvailability(true);
         log.info("Negotiation Receiver plugin resumed");
     }
 
@@ -82,7 +83,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     public void loop() throws InterruptedException {
         if((!replanQueue.isEmpty()) && currentPlanId == null) {
             currentPlanId = replanQueue.poll();
-            log.info("Find a new plan id " + currentPlanId + " . Calling arbitrator to replan.");
+            log.info("Loop found a new plan id " + currentPlanId + " . Calling arbitrator to replan.");
             // TODO before we start to replan we need to add some checks
             // start replan
             pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
@@ -99,6 +100,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onSuspend() {
         planSub_.registerOnMessageCallback(this::noAction);
+        setAvailability(false);
         log.info("Negotiation Receiver plugin suspended");
     }
 
@@ -217,6 +219,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                     maneuvers.add(maneuver);
                 }
             }
+            log.info("V2V", "Maneuvers defined - adding them to queue for replanning.");
             planMap.put(id, maneuvers);
             replanQueue.add(id);
         }
