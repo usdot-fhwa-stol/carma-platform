@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -83,7 +83,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	protected int last_id_changed = 0;
 	protected float vehicleWidth = 0;
 	protected float vehicleLength = 0;
-	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);;
+	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);
 	protected AtomicDouble current_speed = new AtomicDouble(0);
 	protected Random randomIdGenerator = new Random();
 	protected byte[] random_id = new byte[4];

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Represents a steady-speed longitudinal maneuver.
@@ -28,6 +29,10 @@ public class SteadySpeed extends LongitudinalManeuver {
  
     protected static final double SPEED_EPSILON = 0.05;
     
+    public SteadySpeed(IPlugin planner) {
+        super(planner);
+    }
+
     /**
      * Since steady speed is intended to continue the current speed, the required distance to complete the maneuver
      * is zero.  Therefore, the end distance will be set to the start distance, and the caller will have the option

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import cav_msgs.MobilityAck;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
@@ -33,5 +34,22 @@ public interface IPlatooningState {
      * Callback method to handle negotiation requests which may result in state changing
      * @param plan the detailed negotiation proposal from another vehicle
      */
-    public void onReceiveNegotiationRequest(String plan);
+    public boolean onReceiveNegotiationRequest(String plan);
+    
+    /**
+     * Infinite loop method for different platooning state  
+     */
+    public default void loop() throws InterruptedException {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
+        }
+    };
+    
+    /**
+     * Callback method when we received a response on host vehicle plan
+     */
+    public void onReceivePlanResponse(MobilityAck ack);
 }

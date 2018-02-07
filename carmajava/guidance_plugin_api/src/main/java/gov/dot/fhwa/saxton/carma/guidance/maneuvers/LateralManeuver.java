@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Base class for all lateral maneuvers.
@@ -30,7 +31,8 @@ public abstract class LateralManeuver extends ManeuverBase {
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
     protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity
 
-    public LateralManeuver() {
+    public LateralManeuver(IPlugin planner) {
+        super(planner);
     }
 
     @Override
