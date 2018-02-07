@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ var t_nav_sat_fix = 'nav_sat_fix';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = 'route_state';
+var t_route_event = 'route_event';
 var t_active_route = 'route';
 var t_cmd_speed = 'cmd_speed';
 var t_robot_status = 'robot_status';
@@ -145,7 +146,7 @@ function connectToROS() {
             document.getElementById('closed').style.display = 'inline';
 
             //Show modal popup for when ROS connection has been abruptly closed.
-            var messageTypeFullDescription = 'ROS Connection Closed.<br/><br/>';
+            var messageTypeFullDescription = 'ROS Connection Closed.';
             messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
             showModal(true, messageTypeFullDescription, false);
             
@@ -1144,44 +1145,16 @@ function getFutureTopics() {
     Route state are only set and can be shown after Route has been selected.
 */
 function checkRouteInfo() {
-    //Get Route State
-    var listenerRouteState = new ROSLIB.Topic({
+
+    //Get Route Event
+    var listenerRouteEvent = new ROSLIB.Topic({
         ros: ros,
-        name: t_route_state,
-        messageType: 'cav_msgs/RouteState'
+        name: t_route_event,
+        messageType: 'cav_msgs/RouteEvent'
     });
 
-    listenerRouteState.subscribe(function (message) {
-
-        insertNewTableRow('tblSecondA', 'Route ID', message.routeID);
-        insertNewTableRow('tblSecondA', 'Route State / Event', message.state + ' / ' + message.event);
-        insertNewTableRow('tblSecondA', 'Cross Track / Down Track', message.cross_track.toFixed(2) + ' / ' + message.down_track.toFixed(2));
-
-        //Calculate and show next speed limit remaining distance
-        //Show 0 if negative
-        var remaining_dist = total_dist_next_speed_limit - message.down_track;
-        remaining_dist = Math.max(0, remaining_dist);
-        var remaining_dist_miles = (remaining_dist * meter_to_mile);
-        remaining_dist_miles = Math.max(0, remaining_dist_miles);
-
-        var divDistRemaining = document.getElementById('divDistRemaining');
-        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(2) + ' m';
-
-        insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi/m)', remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(2) + ' m');
-
-        //Calculate and show next lane change remaining distance
-        //Show 0 if negative
-        var lane_remaining_dist = total_dist_next_lane_change - message.down_track;
-        lane_remaining_dist = Math.max(0, lane_remaining_dist);
-        var lane_remaining_dist_miles = (lane_remaining_dist * meter_to_mile);
-        lane_remaining_dist_miles = Math.max(0, lane_remaining_dist_miles);
-
-        //var divDistRemaining = document.getElementById('divDistRemaining');
-        divDistRemaining.innerHTML += '<br/> Lane Change In: ' + lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(2) + ' m';
-
-        insertNewTableRow('tblSecondA', 'Lane Change Total Dist (m)', total_dist_next_lane_change.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Lane Change In (mi/m)', lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(2) + ' m');
+    listenerRouteEvent.subscribe(function (message) {
+        insertNewTableRow('tblSecondA', 'Route Event', message.event);
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
@@ -1197,6 +1170,46 @@ function checkRouteInfo() {
             //listenerSystemAlert.unsubscribe();
             showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
+    });
+            
+    //Get Route State
+    var listenerRouteState = new ROSLIB.Topic({
+        ros: ros,
+        name: t_route_state,
+        messageType: 'cav_msgs/RouteState'
+    });
+
+    listenerRouteState.subscribe(function (message) {
+
+        insertNewTableRow('tblSecondA', 'Route ID', message.routeID);
+        insertNewTableRow('tblSecondA', 'Route State', message.state);
+        insertNewTableRow('tblSecondA', 'Cross Track / Down Track', message.cross_track.toFixed(2) + ' / ' + message.down_track.toFixed(2));
+
+        //Calculate and show next speed limit remaining distance
+        //Show 0 if negative
+        var remaining_dist = total_dist_next_speed_limit - message.down_track;
+        remaining_dist = Math.max(0, remaining_dist);
+        var remaining_dist_miles = (remaining_dist * meter_to_mile);
+        remaining_dist_miles = Math.max(0, remaining_dist_miles);
+
+        var divDistRemaining = document.getElementById('divDistRemaining');
+        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(0) + ' m';
+
+        insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi/m)', remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(0) + ' m');
+
+        //Calculate and show next lane change remaining distance
+        //Show 0 if negative
+        var lane_remaining_dist = total_dist_next_lane_change - message.down_track;
+        lane_remaining_dist = Math.max(0, lane_remaining_dist);
+        var lane_remaining_dist_miles = (lane_remaining_dist * meter_to_mile);
+        lane_remaining_dist_miles = Math.max(0, lane_remaining_dist_miles);
+
+        //var divDistRemaining = document.getElementById('divDistRemaining');
+        divDistRemaining.innerHTML += '<br/> Lane Change In: ' + lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m';
+
+        insertNewTableRow('tblSecondA', 'Lane Change Total Dist (m)', total_dist_next_lane_change.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Lane Change In (mi/m)', lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m');
 
         insertNewTableRow('tblSecondA', 'Current Segment ID', message.current_segment.waypoint.waypoint_id);
         insertNewTableRow('tblSecondA', 'Current Segment Max Speed', message.current_segment.waypoint.speed_limit);
@@ -1759,6 +1772,11 @@ window.onload = function () {
         if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '') {
             guidance_engaged = (isGuidanceEngaged == 'true');
         }
+
+        // Adding Copyright based on current year
+        var elemCopyright = document.getElementsByClassName('copyright');
+        elemCopyright[0].innerHTML = '&copy LEIDOS ' + new Date().getFullYear();
+
         //Refresh requires connection to ROS.
         connectToROS();
 

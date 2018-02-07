@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017 LEIDOS.
+* Copyright (C) 2018 LEIDOS.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import cav_msgs.LateralControl;
 import cav_msgs.SpeedAccel;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
@@ -26,15 +27,13 @@ import cav_srvs.SetEnableRoboticResponse;
 import cav_srvs.SetLights;
 import cav_srvs.SetLightsRequest;
 import cav_srvs.SetLightsResponse;
+import geometry_msgs.TwistStamped;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
 * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
@@ -49,6 +48,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
     private IPublisher<cav_msgs.LateralControl> lateralControlPublisher;
     private IService<SetLightsRequest, SetLightsResponse> setLightsService;
+    private ISubscriber<TwistStamped> velocitySubscriber;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
     private AtomicDouble steeringCommand = new AtomicDouble(0.0);
@@ -82,6 +82,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     public void onStartup() {
             vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
             log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
+            velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
             currentState.set(GuidanceState.STARTUP);
     }
 
@@ -106,9 +107,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         }
 
         String lateralControlTopic = DRIVER_BASE_PATH + LATERAL_CONTROLLER_PATH + LATERAL_CONTROL_CAPABILITY;
-        if (lateralControlTopic == null) {
-            exceptionHandler.handleException("GuidanceCommands unable to find suitable lateral controller driver!", new RosRuntimeException("No lateral controller drivers."));
+        if (lateralControlTopic == null) { exceptionHandler.handleException("GuidanceCommands unable to find suitable lateral controller driver!", new RosRuntimeException("No lateral controller drivers."));
         }
+        lateralControlPublisher = pubSubService.getPublisherForTopic(lateralControlTopic, LateralControl._TYPE);
         
         currentState.set(GuidanceState.DRIVERS_READY);
     }
@@ -234,23 +235,33 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             msg.setMaxAccel(maxAccel.get());
             speedAccelPublisher.publish(msg);
 
-            //cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
-            //lateralMsg.setAxleAngle(steeringCommand.get());
-            //lateralMsg.setMaxAccel(lateralAccel.get());
-            //lateralMsg.setMaxAxleAngleRate(yawRate.get());
-            //lateralControlPublisher.publish(lateralMsg);
+            cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+            lateralMsg.setAxleAngle(steeringCommand.get());
+            lateralMsg.setMaxAccel(lateralAccel.get());
+            lateralMsg.setMaxAxleAngleRate(yawRate.get());
+            lateralControlPublisher.publish(lateralMsg);
             log.trace("Published longitudinal & lateral cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
-        } else if (currentState.get() == GuidanceState.ACTIVE) {
+        } else if (currentState.get() == GuidanceState.ACTIVE || currentState.get() == GuidanceState.INACTIVE) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
-            msg.setSpeed(0.0);
+            double current_speed = 0.0;
+            if(velocitySubscriber.getLastMessage() != null) {
+                current_speed = velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
+                if(current_speed < 0) {
+                    current_speed = 0.0;
+                } else {
+                    current_speed = Math.min(current_speed, MAX_SPEED_CMD_M_S);
+                }
+            }
+            msg.setSpeed(current_speed);
+            //TODO maybe need to change maxAccel and commands in lateralMsgs
             msg.setMaxAccel(1.0);
             speedAccelPublisher.publish(msg);
 
-            //cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
-            //lateralMsg.setAxleAngle(0.0);
-            //lateralMsg.setMaxAccel(0.0);
-            //lateralMsg.setMaxAxleAngleRate(0.0);
-            //lateralControlPublisher.publish(lateralMsg);
+            cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+            lateralMsg.setAxleAngle(0.0);
+            lateralMsg.setMaxAccel(0.0);
+            lateralMsg.setMaxAxleAngleRate(0.0);
+            lateralControlPublisher.publish(lateralMsg);
             log.trace("Published longitudinal & lateral cmd message after " + (System.currentTimeMillis() - iterStartTime) + "ms.");
         }
 

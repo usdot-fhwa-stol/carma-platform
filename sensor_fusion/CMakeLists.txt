@@ -30,10 +30,12 @@ find_package(Eigen3 REQUIRED)
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
+
 # Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  cfg/sensor_fusion.cfg
+	cfg/SensorFusion.cfg
 )
+
 
 catkin_package(
 #  INCLUDE_DIRS include

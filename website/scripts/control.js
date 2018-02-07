@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -269,6 +269,8 @@ function showModalNoAck(icon) {
     modalUIInstructionsContent.innerHTML = icon;
     modalUIInstructions.style.display = 'block';
     isModalPopupShowing = true;
+    
+    playSound('audioAlert4', false); 
 
     //hide after 3 seconds.
    setTimeout(function(){
@@ -409,6 +411,7 @@ function closeModal(action) {
     document.getElementById('audioAlert1').pause();
     document.getElementById('audioAlert2').pause();
     document.getElementById('audioAlert3').pause();
+    document.getElementById('audioAlert4').pause();
 
     //alert('modal action:' + action);
 

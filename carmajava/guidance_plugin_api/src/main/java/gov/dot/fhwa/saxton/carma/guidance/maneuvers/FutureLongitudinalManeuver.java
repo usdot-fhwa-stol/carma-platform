@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
@@ -26,8 +27,8 @@ public class FutureLongitudinalManeuver extends LongitudinalManeuver {
     protected final double                      CONCATENATION_TOLERANCE = 0.001; // meter
 
 
-    public FutureLongitudinalManeuver(IManeuverInputs inputs, double startDist, double startSpeed, double endDist, double endSpeed) {
-        super();
+    public FutureLongitudinalManeuver(IPlugin planner, IManeuverInputs inputs, double startDist, double startSpeed, double endDist, double endSpeed) {
+        super(planner);
         inputs_ = inputs;
         startDist_ = startDist;
         startSpeed_ = startSpeed;

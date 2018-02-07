@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -171,7 +171,7 @@ public class EnvironmentWorker {
 
     // Find the route segment which this route segment is on
     int currentSegIndex = currentSegment.getUptrackWaypoint().getWaypointId();
-    List<RouteSegment> segmentsToSearch = activeRoute.findRouteSubsection(currentSegIndex, distBackward, distForward, routeState.getSegmentDownTrack());
+    List<RouteSegment> segmentsToSearch = activeRoute.findRouteSubsection(currentSegIndex, routeState.getSegmentDownTrack(), distBackward, distForward);
     RouteSegment bestSegment = activeRoute.routeSegmentOfPoint(objPositionECEF, segmentsToSearch);
     int segmentIndex = bestSegment.getUptrackWaypoint().getWaypointId();
    
