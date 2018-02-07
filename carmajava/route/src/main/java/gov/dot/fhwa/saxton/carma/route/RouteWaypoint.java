@@ -558,7 +558,7 @@ public class RouteWaypoint {
       laneCount > 0 &&
       laneWidth >= 2.0 && // Highway lane standard is 3.7m, but might be smaller on side roads
       lowerSpeedLimit < upperSpeedLimit &&
-      lowerSpeedLimit >= -0.0 && 
+      lowerSpeedLimit > -0.0 && 
       minCrossTrack < maxCrossTrack &&
       minCrossTrack <= -laneWidth / 2.0 && // Divide by 2 for single lane roads
       maxCrossTrack >= laneWidth / 2.0 && 
