@@ -330,6 +330,9 @@ public class Route {
    */
   public List<RouteSegment> findRouteSubsection(int startingIndex, double segmentDowntrack, double distBackward, double distForward) {
     List<RouteSegment> subList = new LinkedList<>();
+    if (startingIndex < 0 || startingIndex >= segments.size())
+      return subList;
+
     subList.add(segments.get(startingIndex));
 
     // Process segments behind host vehicle
