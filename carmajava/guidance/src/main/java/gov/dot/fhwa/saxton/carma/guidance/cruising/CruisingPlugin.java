@@ -111,18 +111,16 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         double lastManeuverEndLocation = traj.getStartLocation();
         double lastManeuverEndSpeed = trajStartSpeed;
         for (LongitudinalManeuver lm : longitudinalManeuvers) {
-            if (fpEquals(lastManeuverEndLocation, lm.getStartDistance(), DISTANCE_EPSILON)) {
-                lastManeuverEndLocation = lm.getEndDistance();
-            } else {
-                // create trajectory seg and update last maneuver end location/speed
+            if (!fpEquals(lastManeuverEndLocation, lm.getStartDistance(), DISTANCE_EPSILON)) {
+             // create trajectory seg and update last maneuver end location/speed
                 TrajectorySegment seg = new TrajectorySegment();
                 seg.startLocation = lastManeuverEndLocation;
                 seg.endLocation = lm.getStartDistance();
                 seg.startSpeed = lastManeuverEndSpeed;
                 gaps.add(seg);
-                lastManeuverEndLocation = lm.getEndDistance();
-                lastManeuverEndSpeed = lm.getTargetSpeed();
             }
+            lastManeuverEndLocation = lm.getEndDistance();
+            lastManeuverEndSpeed = lm.getTargetSpeed();
         }
 
         if (!fpEquals(lastManeuverEndLocation, endLocation, DISTANCE_EPSILON)) {

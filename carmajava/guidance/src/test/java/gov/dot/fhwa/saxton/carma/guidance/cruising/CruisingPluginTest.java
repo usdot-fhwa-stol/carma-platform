@@ -25,6 +25,8 @@ import org.ros.node.NodeConfiguration;
 import std_msgs.Header;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -37,9 +39,14 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin.TrajectorySegment;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLateralManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.NoOpAccStrategyFactory;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManagementService;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -51,6 +58,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
+import gov.dot.fhwa.saxton.carma.plugins.speedharm.SpeedHarmonizationManeuver;
 
 public class CruisingPluginTest {
 
@@ -61,6 +69,12 @@ public class CruisingPluginTest {
 
     @Before
     public void setup() {
+        
+        ILoggerFactory mockFact = mock(ILoggerFactory.class);
+        ILogger mockLogger = mock(ILogger.class);
+        when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
+        LoggerManager.setLoggerFactory(mockFact);
+        
         routeService = mock(GuidanceRouteService.class);
         PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
                 mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
@@ -70,7 +84,7 @@ public class CruisingPluginTest {
 
     //Test if CP can find the right longitudinal gap in empty trajectory
     @Test
-    public void testFindTrajectoryGapsWithLongManeuverAtTheEnd() {
+    public void testFindTrajectoryGapsWithEmptyTrajectory() {
         Trajectory t = new Trajectory(0.0, 50.0);
         List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 3.0);
         assertEquals(1, gaps.size());
@@ -79,51 +93,104 @@ public class CruisingPluginTest {
         assertEquals(3.0, gaps.get(0).startSpeed, 0.01);
     }
     
-  //Test if it can find the right gap with pre-planned longitudinal maneuver at the end
-  
-  
-  // Test if it can find the right gap with pre-planned complex maneuver  
-/*  @Test
-  public void testFindTrajectoryGapsWithComplexManeuver() {
-    Trajectory t = new Trajectory(0.0, 20.0);
-    List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 0.0, 5.0);
-
-    assertEquals(1, gaps.size());
-    assertEquals(0.0, gaps.get(0).start, 0.01);
-    assertEquals(20.0, gaps.get(0).end, 0.01);
-    assertEquals(0.0, gaps.get(0).startSpeed, 0.01);
-    assertEquals(5.0, gaps.get(0).endSpeed, 0.01);
-  }
-
-  // Test to see if a lateral maneuver breaks finding the longitudinal gap
-  @Test
-  public void testFindTrajectoryGaps2() {
-    Trajectory t = new Trajectory(0.0, 20.0);
-
-    IManeuver mockLatManeuver = mock(IManeuver.class);
-    when(mockLatManeuver.getStartDistance()).thenReturn(2.0);
-    when(mockLatManeuver.getEndDistance()).thenReturn(10.0);
-
-    List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 0.0, 5.0);
-
-    assertEquals(1, gaps.size());
-    assertEquals(0.0, gaps.get(0).start, 0.01);
-    assertEquals(20.0, gaps.get(0).end, 0.01);
-    assertEquals(0.0, gaps.get(0).startSpeed, 0.01);
-    assertEquals(5.0, gaps.get(0).endSpeed, 0.01);
-  }
-
-  @Test
-  public void testManeuverGeneration() {
-    List<Double> speeds = new ArrayList<>();
-    speeds.add(5.0);
-
-    Route route = generateRouteWithSpeedLimits(speeds, 5.0);
-
-
-    routeService.processRoute(route);
-    Trajectory traj = new Trajectory(0.0, 10.0);
-
-    cruise.planTrajectory(traj, 0.0);
-  }*/
+    //Test if CP can find the right longitudinal gap in a full trajectory
+    @Test
+    public void testFindTrajectoryGapsWithFullTrajectory() {
+        Trajectory t = new Trajectory(0.0, 5.0);
+        SteadySpeed mockLonManeuver = mock(SteadySpeed.class);
+        when(mockLonManeuver.getStartDistance()).thenReturn(0.0);
+        when(mockLonManeuver.getEndDistance()).thenReturn(5.0);
+        when(mockLonManeuver.getTargetSpeed()).thenReturn(1.0);
+        t.addManeuver(mockLonManeuver);
+        List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 1.0);
+        assertEquals(0, gaps.size());
+    }
+    
+    //Test if it can find the right gap with pre-planned longitudinal maneuvers
+    @Test
+    public void testFindTrajectoryGapsWithOnlyLonManeuvers() {
+        Trajectory t = new Trajectory(0.0, 100.0);
+        SpeedUp mockSpeedUpManeuver = mock(SpeedUp.class);
+        SteadySpeed mockSteadyManeuver = mock(SteadySpeed.class);
+        SlowDown mockSlowDownManeuver = mock(SlowDown.class);
+        when(mockSpeedUpManeuver.getStartDistance()).thenReturn(5.0);
+        when(mockSpeedUpManeuver.getEndDistance()).thenReturn(20.0);
+        when(mockSpeedUpManeuver.getTargetSpeed()).thenReturn(1.5);
+        when(mockSteadyManeuver.getStartDistance()).thenReturn(40.0);
+        when(mockSteadyManeuver.getEndDistance()).thenReturn(60.0);
+        when(mockSteadyManeuver.getTargetSpeed()).thenReturn(2.5);
+        when(mockSlowDownManeuver.getStartDistance()).thenReturn(60.0);
+        when(mockSlowDownManeuver.getEndDistance()).thenReturn(85.0);
+        when(mockSlowDownManeuver.getTargetSpeed()).thenReturn(2.0);
+        t.addManeuver(mockSpeedUpManeuver);
+        t.addManeuver(mockSteadyManeuver);
+        t.addManeuver(mockSlowDownManeuver);
+        List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 1.2);
+        assertEquals(3, gaps.size());
+        assertEquals(0.0, gaps.get(0).startLocation, 0.01);
+        assertEquals(5.0, gaps.get(0).endLocation, 0.01);
+        assertEquals(1.2, gaps.get(0).startSpeed, 0.01);
+        assertEquals(20.0, gaps.get(1).startLocation, 0.01);
+        assertEquals(40.0, gaps.get(1).endLocation, 0.01);
+        assertEquals(1.5, gaps.get(1).startSpeed, 0.01);
+        assertEquals(85, gaps.get(2).startLocation, 0.01);
+        assertEquals(100, gaps.get(2).endLocation, 0.01);
+        assertEquals(2.0, gaps.get(2).startSpeed, 0.01);
+    }
+    
+    //Test if it can find the right gap with pre-planned complex maneuver
+    @Test
+    public void testFindTrajectoryGapsOnlyComplexManeuver() {
+        Trajectory t = new Trajectory(0.0, 100.0);
+        SpeedHarmonizationManeuver mockshm = mock(SpeedHarmonizationManeuver.class);
+        when(mockshm.getStartDistance()).thenReturn(40.0);
+        t.setComplexManeuver(mockshm);
+        List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 1.0);
+        assertEquals(1, gaps.size());
+        assertEquals(0.0, gaps.get(0).startLocation, 0.01);
+        assertEquals(40.0, gaps.get(0).endLocation, 0.01);
+        assertEquals(1.0, gaps.get(0).startSpeed, 0.01);
+    }
+    
+    //Test if it can find the right gap with pre-planned future lat/lon maneuvers
+    @Test
+    public void testFindTrajectoryGapsOnlyFutureManeuver() {
+        Trajectory t = new Trajectory(0.0, 50.0);
+        FutureLateralManeuver fLatM = mock(FutureLateralManeuver.class);
+        FutureLongitudinalManeuver fLonM = mock(FutureLongitudinalManeuver.class);
+        when(fLatM.getStartDistance()).thenReturn(20.0);
+        when(fLatM.getEndDistance()).thenReturn(30.0);
+        when(fLonM.getStartDistance()).thenReturn(20.0);
+        when(fLonM.getEndDistance()).thenReturn(30.0);
+        when(fLonM.getTargetSpeed()).thenReturn(2.0);
+        t.addManeuver(fLatM);
+        t.addManeuver(fLonM);
+        List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 1.0);
+        assertEquals(2, gaps.size());
+        assertEquals(0.0, gaps.get(0).startLocation, 0.01);
+        assertEquals(20.0, gaps.get(0).endLocation, 0.01);
+        assertEquals(1.0, gaps.get(0).startSpeed, 0.01);
+        assertEquals(30.0, gaps.get(1).startLocation, 0.01);
+        assertEquals(50.0, gaps.get(1).endLocation, 0.01);
+        assertEquals(2.0, gaps.get(1).startSpeed, 0.01);
+    }
+    
+    //Test if cruising plugin can actually fill a trajectory with one future maneuver
+    //TODO can not run this test successfully, need help it throw NPE at line 189
+    @Test
+    public void testManeuverGeneration() {
+        Trajectory t = new Trajectory(0.0, 50.0);
+        FutureLongitudinalManeuver fLonM = mock(FutureLongitudinalManeuver.class);
+        when(fLonM.getStartDistance()).thenReturn(30.0);
+        when(fLonM.getEndDistance()).thenReturn(50.0);
+        when(fLonM.getTargetSpeed()).thenReturn(2.5);
+        t.addManeuver(fLonM);
+        
+        SortedSet<SpeedLimit> trajLimitsAtRange = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+        trajLimitsAtRange.add(new SpeedLimit(15, 2.5));
+        SpeedLimit trajLimitAtLocation = new SpeedLimit(30, 2.5);
+        when(routeService.getSpeedLimitsInRange(0.0, 30.0)).thenReturn(trajLimitsAtRange);
+        when(routeService.getSpeedLimitAtLocation(30.0)).thenReturn(trajLimitAtLocation);
+        cruise.planTrajectory(t, 2.0);
+    }
 }
