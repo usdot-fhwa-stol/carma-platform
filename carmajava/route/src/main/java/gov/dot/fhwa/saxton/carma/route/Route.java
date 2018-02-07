@@ -169,35 +169,6 @@ public class Route {
   }
 
   /**
-   * Helper function determines if this is a valid route
-   */
-  private void validate() {
-    RouteSegment prevSegment = null;
-    boolean validRoute = false;
-    for (RouteSegment seg: segments) {
-      // Validate segment
-      validRoute = seg.isValid();
-
-      if (prevSegment != null) {
-        // Validate angle between adjacent segments is always less than 90 degrees
-        Vector segVec = seg.getLineSegment().getVector();
-        Vector prevVec = prevSegment.getLineSegment().getVector();
-        double angle = segVec.getAngleBetweenVectors(prevVec);
-        validRoute = validRoute && Math.abs(angle) < Math.PI / 2.0;
-      }
-
-      if (!validRoute) {
-        this.valid = false;
-        return;
-      }
-      
-      prevSegment = seg;
-    }
-
-    this.valid = true;
-  }
-
-  /**
    * Returns true if this route can be considered valid for use in host vehicle operation
    * @return boolean valid status
    */
@@ -303,7 +274,6 @@ public class Route {
       firstWaypoint = false;
     }
     calculateLength();
-    validate();
   }
 
 
@@ -357,6 +327,14 @@ public class Route {
    */
   public void setMaxJoinDistance(double maxJoinDistance) {
     this.maxJoinDistance = maxJoinDistance;
+  }
+
+  /**
+   * Set the validity status of this route for use in the CARMA platform
+   * @param valid The validity status
+   */
+  public void setValid(boolean valid) {
+    this.valid = valid;
   }
 
   /**
@@ -426,5 +404,9 @@ public class Route {
       count++;
     }
     return bestSegment;
+  }
+
+  @Override public String toString() {
+    return "Route{ name: " + routeName + " id: " + routeID + " }";
   }
 }

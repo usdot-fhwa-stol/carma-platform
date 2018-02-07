@@ -282,4 +282,12 @@ public class SaxtonLogger {
 
     }
   }// end of writeToFile()
+
+  /**
+   * Returns the Log instance used for logging in this instance of SaxtonLogger
+   * This can be used to pass the logger between classes without overriding the class names
+   */
+  public Log getBaseLoggerObject() {
+    return saxtonLog;
+  }
 }

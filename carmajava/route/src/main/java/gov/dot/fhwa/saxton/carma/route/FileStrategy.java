@@ -45,6 +45,8 @@ public class FileStrategy implements IRouteLoadStrategy{
       FileReader fr = new FileReader(filePath);
       YamlReader reader = new YamlReader(fr);
       Route route = reader.read(gov.dot.fhwa.saxton.carma.route.Route.class);
+      RouteValidator validator = new RouteValidator(log.getBaseLoggerObject());
+      validator.validateRoute(route);
       if (!route.isValid()) {
         log.warn("An invalid route was loaded from file: " + filePath);
       }
