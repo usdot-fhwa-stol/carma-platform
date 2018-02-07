@@ -151,7 +151,7 @@ void DSRCOBUClient::process(const std::shared_ptr<const std::vector<uint8_t>>& d
         else if ((len_byte_1 & 0x40) == 0x00) { //we know msb = 1, check that next bit is 0
             if (i + 3 < entry.size()) {
                 size_t len_byte_2 = entry[i + 3];
-                len = (len_byte_1 << 8) | len_byte_2;
+                len = ((len_byte_1 & 0x3f) << 8) | len_byte_2;
                 len_bytes = 2;
             }
         }

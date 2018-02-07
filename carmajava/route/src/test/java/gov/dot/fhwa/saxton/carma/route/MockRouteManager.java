@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,7 @@ public class MockRouteManager implements IRouteManager {
     return alert;
   }
 
-  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
+  public void publishCurrentRouteSegment(RouteSegment routeSegment) {
 
   }
 
@@ -49,11 +49,15 @@ public class MockRouteManager implements IRouteManager {
   }
 
   @Override public void publishRouteState(RouteState routeState) {
-    if (routeState.getEvent() == RouteState.ROUTE_COMPLETED) {
+
+  }
+
+  @Override public void publishRouteEvent(RouteEvent routeEvent) {
+    if (routeEvent.getEvent() == RouteEvent.ROUTE_COMPLETED) {
       routeStateRouteCompleteSent = true;
     }
   }
-
+  
   @Override public Time getTime() {
     return Time.fromMillis(System.currentTimeMillis());
   }

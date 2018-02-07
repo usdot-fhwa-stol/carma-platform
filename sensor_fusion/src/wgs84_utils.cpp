@@ -42,7 +42,7 @@
 double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie_point) {
     double a = EARTH_RADIUS_METERS;
     double e_sq = 0.00669438;
-    double s_sq = pow(sin(tie_point.lat), 2);
+    double s_sq = pow(sin(tie_point.lat*DEG2RAD), 2);
 
     double R_m = a*(1.0-e_sq)/pow(sqrt(1.0-e_sq*s_sq), 3);
 
@@ -60,11 +60,11 @@ double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie
 double wgs84_utils::calcMetersPerRadLon(const wgs84_utils::wgs84_coordinate &tie_point) {
     double a = EARTH_RADIUS_METERS;
     double e_sq = 0.00669438;
-    double s_sq = pow(sin(tie_point.lat), 2);
+    double s_sq = pow(sin(tie_point.lat*DEG2RAD), 2);
 
     double R_n = a/(sqrt(1.0-e_sq*s_sq));
 
-    double meters_per_rad_lon = (R_n + tie_point.elevation) * cos(tie_point.lat);
+    double meters_per_rad_lon = (R_n + tie_point.elevation) * cos(tie_point.lat*DEG2RAD);
 
     return meters_per_rad_lon;
 }
@@ -94,14 +94,14 @@ void wgs84_utils::convertToOdom(const wgs84_utils::wgs84_coordinate &src,
     double delta_heading = src.heading - wgs84_ref.heading;
 
     //calculate translation
-    Eigen::Vector3d offset;
-    offset[0] = delta_lat*calcMetersPerRadLat(wgs84_ref);
-    offset[1] = delta_lon*calcMetersPerRadLon(wgs84_ref);
-    offset[2] = delta_elev;
+    Eigen::Vector3d ned_offset;
+    ned_offset[0] = delta_lat*DEG2RAD*calcMetersPerRadLat(wgs84_ref);
+    ned_offset[1] = delta_lon*DEG2RAD*calcMetersPerRadLon(wgs84_ref);
+    ned_offset[2] = -delta_elev;
 
-    offset = ned_odom_tf*offset;
-
-    out_pose = odom_pose_ref + offset;
+    auto ned_pose = ned_odom_tf.inverse()*odom_pose_ref;
+    ned_pose += ned_offset;
+    out_pose = ned_odom_tf*ned_pose;
 
     //Calculate orientation
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,8 +31,8 @@ public class BSMMessageHelper {
 	protected static final int MSG_COUNT_MIN = 0;
 	protected static final int ID_MAX = 255;
 	protected static final int ID_MIN = 0;
-	protected static final int DSECOND_MAX = 65535;
 	protected static final int DSECOND_MIN = 0;
+	protected static final int DSECOND_MAX = 65535;
 	protected static final int LATITUDE_UNAVAILABLE = 900000001;
 	protected static final int LATITUDE_MAX = 900000000;
 	protected static final int LATITUDE_MIN = -900000000;

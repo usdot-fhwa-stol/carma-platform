@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,10 @@ import cav_msgs.ByteArray;
 import gov.dot.fhwa.saxton.carma.message.helper.BSMMessageHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
+/**
+ * This class is the actual worker for encoding and decoding BSM message
+ * by using J2735 compiler shared library.
+ */
 public class BSMMessage implements IMessage<BSM> {
 
     protected ConnectedNode node_;
@@ -98,14 +102,14 @@ public class BSMMessage implements IMessage<BSM> {
                 brakes_status, helper_bsm.getVehicle_size()
                 );
         if(encode_msg == null) {
-            log_.error("BSM", "BSMFactory cannot encode bsm message.");
+            log_.error("BSM", "BSMMessage cannot encode bsm message.");
             return new MessageContainer("ByteArray", null);
         }
         ByteArray binary_msg = messageFactory_.newFromType(ByteArray._TYPE);
         ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encode_msg);
         binary_msg.setContent(buffer);
         binary_msg.setMessageType("BSM");
-        binary_msg.getHeader().setFrameId("MessageConsumer");
+        binary_msg.getHeader().setFrameId("0");
         binary_msg.getHeader().setStamp(node_.getCurrentTime());
         return new MessageContainer("ByteArray", binary_msg);
     }
@@ -129,7 +133,7 @@ public class BSMMessage implements IMessage<BSM> {
                 brakeStatus, msg_object.getCoreData().getSize()
                 );
         if(result == -1) {
-            log_.error("BSM", "BSMFactory cannot decode bsm message");
+            log_.error("BSM", "BSMMessage cannot decode bsm message");
             return new MessageContainer("BSM", null);
         }
         ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, temp_ID);

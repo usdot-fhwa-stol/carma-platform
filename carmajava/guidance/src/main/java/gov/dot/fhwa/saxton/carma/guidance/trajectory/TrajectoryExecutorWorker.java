@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of * the License at *
@@ -20,6 +20,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverRunner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import java.util.List;
 public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected GuidanceCommands commands;
   protected List<PctCallback> callbacks = new ArrayList<>();
+  protected IPublisher<std_msgs.String> controllingPluginPublisher;
   protected double downtrackDistance = 0.0;
   protected Trajectory currentTrajectory = null;
   protected Trajectory nextTrajectory = null;
@@ -53,19 +55,19 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     OnTrajectoryProgressCallback callback;
 
     PctCallback(double pct, OnTrajectoryProgressCallback callback) {
-      this.pct = pct;
-      this.callback = callback;
+      this.pct = pct; this.callback = callback;
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, IPublisher<std_msgs.String> controllingPluginPub) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
+    this.controllingPluginPublisher = controllingPluginPub;
   }
 
   private void execute(IManeuver maneuver) {
     log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", "
-        + maneuver.getEndDistance() + ")");
+        + maneuver.getEndDistance() + ") Planned by: " + maneuver.getPlanner().getVersionInfo().componentName());
     if (maneuver instanceof LongitudinalManeuver) {
       if (longitudinalManeuverThread != null) {
         longitudinalManeuverThread.interrupt();
@@ -96,6 +98,10 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       lateralManeuverThread.setName("Lateral Maneuver Runner");
       lateralManeuverThread.start();
     }
+    // Notify ui of plugin in charge of current maneuver
+    std_msgs.String controllingPluginMsg = controllingPluginPublisher.newMessage();
+    controllingPluginMsg.setData(maneuver.getPlanner().getVersionInfo().componentName());
+    controllingPluginPublisher.publish(controllingPluginMsg);
   }
 
   /**
@@ -375,6 +381,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   public void runTrajectory(Trajectory traj) {
     if (currentTrajectory == null) {
       this.currentTrajectory = traj;
+
       this.currentLateralManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       this.currentLongitudinalManeuver = traj.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
       this.currentComplexManeuver = (IComplexManeuver) traj.getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
@@ -400,6 +407,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       } else {
         log.info("No complex maneuver started yet.");
       }
+
       resetCallbacks();
     } else {
       // Hold onto this trajectory for double buffering, flip to it when we finish trajectory
@@ -464,6 +472,21 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
         callback.called = true;
       }
     }
+  }
+
+  /**
+   * Force a clean restart operation on this worker componet
+   */
+  public void cleanRestart() {
+    downtrackDistance = 0.0;
+    currentTrajectory = null;
+    nextTrajectory = null;
+    currentLateralManeuver = null;
+    currentLongitudinalManeuver = null;
+    currentComplexManeuver = null;
+    lateralManeuverThread = new Thread();
+    longitudinalManeuverThread = new Thread();
+    complexManeuverThread = new Thread();
   }
 
   /**

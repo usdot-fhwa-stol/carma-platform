@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
@@ -40,7 +41,7 @@ import java.util.List;
  * state and receive speed commands as may relate to whatever algorithm the server
  * is configured to run with.
  */
-public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHarmInputs {
+public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHarmInputs, IStrategicPlugin {
   protected String vehicleId = "";
   protected String serverUrl = "";
   protected boolean endSessionOnSuspend = true;
@@ -66,6 +67,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     super(psl);
     version.setName("Speed Harmonization Plugin");
     version.setMajorRevision(1);
+    version.setIntermediateRevision(0);
+    version.setMinorRevision(0);
 
     restClient = new RestTemplate();
   }
@@ -121,7 +124,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     if (commandReceiverThread == null && commandReceiver == null) {
       commandReceiver = new CommandReceiver(serverUrl, sessionManager.getServerSessionId(), restClient);
       commandReceiverThread = new Thread(commandReceiver);
-      statusUpdaterThread.setName("SpeedHarm Command Receiver");
+      commandReceiverThread.setName("SpeedHarm Command Receiver");
       commandReceiverThread.start();
     }
   }
@@ -171,7 +174,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   }
 
   private void planComplexManeuver(Trajectory traj, double start, double end) {
-    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(this,
+    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(this, this,
         pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
         pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), AccStrategyManager.newAccStrategy(), start,
         end, 1.0, // Dummy values for now. TODO: Replace

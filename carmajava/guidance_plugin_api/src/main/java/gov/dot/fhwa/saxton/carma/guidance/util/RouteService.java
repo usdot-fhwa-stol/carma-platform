@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,6 +50,11 @@ public interface RouteService {
    * Get the set of all speed limits on the route, sorted by location down the route
    */
   SortedSet<SpeedLimit> getSpeedLimitsOnRoute();
+
+  /**
+   * Get the set of all desired lanes on the route, sorted by location down the route
+   */
+  SortedSet<RequiredLane> getRequiredLanesOnRoute();
   
   /**
    * Get the set of all algorithm flags on the route, sorted by location down the route
@@ -63,6 +68,14 @@ public interface RouteService {
    * @param location The location in question, in terms of linear downtrack distance
    */
   SpeedLimit getSpeedLimitAtLocation(double location);
+
+  /**
+   * Get the desired lane at the input location, null if the vehicle is not on a route or the location is not on the
+   * current route.
+   * 
+   * @param location The location in question, in terms of linear downtrack distance
+   */
+  RequiredLane getRequiredLaneAtLocation(double location);
 
   /**
    * Get the algorithm flags at the input location, null if the vehicle is not on a route or the location is not on the
@@ -89,6 +102,15 @@ public interface RouteService {
    * @param end The location of the end of the range (inclusive) in linear downtrack distance
    */
   SortedSet<AlgorithmFlags> getAlgorithmFlagsInRange(double start, double end);
+
+  /**
+   * Get the set of all desired lanes with locations in the range (start, end]. Empty set if the vehicle is not on a route
+   * or there are no limits in the requested range.
+   * 
+   * @param start The location of the start of the range (exclusive) in linear downtrack distance
+   * @param end The location of the end of the range (inclusive) in linear downtrack distance
+   */
+  SortedSet<RequiredLane> getRequiredLanesInRange(double start, double end);
 
   /**
    * Get the earliest window after the start location at which certain algorithm is enabled

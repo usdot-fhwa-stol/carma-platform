@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,8 +60,9 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         this.commands = commands;
         this.tracking_ = tracking;
 
+        IPublisher<std_msgs.String> controllingPluginPub = pubSubService.getPublisherForTopic("plugins/controlling_plugin", std_msgs.String._TYPE);
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
-        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, controllingPluginPub);
         
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
@@ -83,6 +84,15 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
         sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+            @Override
+            public void onMessage(RouteState msg) {
+                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
+                trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
+            }
+        });
+
         currentState.set(GuidanceState.STARTUP);
     }
 
@@ -93,16 +103,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
 
     @Override
     public void onRouteActive() {
-        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-            @Override
-            public void onMessage(RouteState msg) {
-                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
-                if (currentState.get() == GuidanceState.ENGAGED) {
-                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
-                }
-            }
-        });
         currentState.set(GuidanceState.ACTIVE);
     }
     
@@ -127,6 +127,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     public void onCleanRestart() {
         currentState.set(GuidanceState.DRIVERS_READY);
         TrajectoryExecutor.this.abortTrajectory();
+        trajectoryExecutorWorker.cleanRestart();
         this.unregisterAllTrajectoryProgressCallback();
         currentTrajectory = null;
         bufferedTrajectoryRunning = false;

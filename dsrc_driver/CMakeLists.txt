@@ -92,8 +92,9 @@ find_package(Boost REQUIRED COMPONENTS system thread)
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
  generate_dynamic_reconfigure_options(
-         cfg/dsrc_application.cfg
+	 cfg/DSRC.cfg
  )
+
 
 ###################################
 ## catkin specific configuration ##

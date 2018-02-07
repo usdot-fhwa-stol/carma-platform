@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-
 /**
  * Concrete implementation of RouteService responsible for handling processing of
  * Route data for consumption by plugins and other Guidance classes/components.
@@ -39,6 +38,7 @@ public class GuidanceRouteService implements RouteService {
   protected ISubscriber<RouteState> routeStateSubscriber;
   protected SortedSet<SpeedLimit> limits;
   protected SortedSet<AlgorithmFlags> disabledAlgorithms;
+  protected SortedSet<RequiredLane> requiredLanes;
 
   public GuidanceRouteService(IPubSubService pubSubService) {
     this.pubSubService = pubSubService;
@@ -46,7 +46,7 @@ public class GuidanceRouteService implements RouteService {
 
   public void init() {
     limits = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
-    disabledAlgorithms= new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+    disabledAlgorithms = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
 
     routeSubscriber = pubSubService.getSubscriberForTopic("route", Route._TYPE);
     routeSubscriber.registerOnMessageCallback(this::processRoute);
@@ -68,14 +68,15 @@ public class GuidanceRouteService implements RouteService {
   /**
    * Process the new route data to extract the limits and algorithm data
    */
-  private void processRoute(Route newRoute) {
+  public void processRoute(Route newRoute) {
     currentRoute = newRoute;
 
     limits = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
-    disabledAlgorithms= new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+    disabledAlgorithms = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+    requiredLanes = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
 
     double dtdAccum = 0;
-    for (RouteSegment seg: currentRoute.getSegments()) {
+    for (RouteSegment seg : currentRoute.getSegments()) {
       dtdAccum += seg.getLength();
 
       SpeedLimit segmentLimit = new SpeedLimit(dtdAccum, convertMphToMps(seg.getWaypoint().getSpeedLimit()));
@@ -83,20 +84,36 @@ public class GuidanceRouteService implements RouteService {
 
       AlgorithmFlags segmentFlags = new AlgorithmFlags(dtdAccum, seg.getWaypoint().getDisabledGuidanceAlgorithms());
       disabledAlgorithms.add(segmentFlags);
+
+      RequiredLane requiredLane = new RequiredLane(dtdAccum, seg.getWaypoint().getRequiredLaneIndex());
+      requiredLanes.add(requiredLane);
     }
+
+    // Remove duplicates to find out where lane changes must occur
+    SortedSet<RequiredLane> requiredLaneChanges = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+    RequiredLane prev = null;
+    for (RequiredLane lane : requiredLanes) {
+      if (prev != null && prev.getLaneId() != lane.getLaneId()) {
+        requiredLaneChanges.add(lane);
+      }
+
+      prev = lane;
+    }
+
+    requiredLanes = requiredLaneChanges;
   }
 
   @Override
   public RouteSegment getRouteSegmentAtLocation(double location) {
-   double dtdAccum = 0;
-   RouteSegment out = null;
-   for (RouteSegment segment : currentRoute.getSegments()) {
-     dtdAccum += segment.getLength();
+    double dtdAccum = 0;
+    RouteSegment out = null;
+    for (RouteSegment segment : currentRoute.getSegments()) {
+      dtdAccum += segment.getLength();
 
-     if (dtdAccum > location) {
-       out = segment;
-       break;
-     }
+      if (dtdAccum > location) {
+        out = segment;
+        break;
+      }
     }
 
     return out;
@@ -183,52 +200,83 @@ public class GuidanceRouteService implements RouteService {
 
   @Override
   public double[] getAlgorithmEnabledWindowInRange(double start, double end, String algorithm) {
-      SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRangeIncludingEnd(start, end);
-      // Find the start of earliest window
-      double earliestLegalWindow = start;
-      for(AlgorithmFlags flagset : flags) {
-          if(flagset.getDisabledAlgorithms().contains(algorithm)) {
-              earliestLegalWindow = flagset.getLocation();
-          } else {
-              break;
-          }
+    SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRangeIncludingEnd(start, end);
+    // Find the start of earliest window
+    double earliestLegalWindow = start;
+    for (AlgorithmFlags flagset : flags) {
+      if (flagset.getDisabledAlgorithms().contains(algorithm)) {
+        earliestLegalWindow = flagset.getLocation();
+      } else {
+        break;
       }
-      // Find the end of that same window
-      double endOfWindow = earliestLegalWindow;
-      for(AlgorithmFlags flagset : flags) {
-          if(flagset.getLocation() > earliestLegalWindow) {
-              if(!flagset.getDisabledAlgorithms().contains(algorithm)) {
-                  endOfWindow = flagset.getLocation();
-              } else {
-                  break;
-              }
-          }
+    }
+    // Find the end of that same window
+    double endOfWindow = earliestLegalWindow;
+    for (AlgorithmFlags flagset : flags) {
+      if (flagset.getLocation() > earliestLegalWindow) {
+        if (!flagset.getDisabledAlgorithms().contains(algorithm)) {
+          endOfWindow = flagset.getLocation();
+        } else {
+          break;
+        }
       }
-      endOfWindow = Math.min(endOfWindow, end);
-      if(endOfWindow > earliestLegalWindow) {
-          return new double[] {earliestLegalWindow, endOfWindow};
-      }
-      return null;
+    }
+    endOfWindow = Math.min(endOfWindow, end);
+    if (endOfWindow > earliestLegalWindow) {
+      return new double[] { earliestLegalWindow, endOfWindow };
+    }
+    return null;
   }
 
   @Override
   public boolean isAlgorithmEnabledInRange(double start, double end, String algorithm) {
-      SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRangeIncludingEnd(start, end);
-      for(AlgorithmFlags flag : flags) {
-          if(!flag.getDisabledAlgorithms().contains(algorithm)) {
-              return true;
-          }
+    SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRangeIncludingEnd(start, end);
+    for (AlgorithmFlags flag : flags) {
+      if (!flag.getDisabledAlgorithms().contains(algorithm)) {
+        return true;
       }
-      return false;
+    }
+    return false;
   }
-  
+
   private SortedSet<AlgorithmFlags> getAlgorithmFlagsInRangeIncludingEnd(double start, double end) {
-      SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRange(start, end);
-      AlgorithmFlags flagsAtEnd = this.getAlgorithmFlagsAtLocation(end);
-      if(flagsAtEnd != null) {
-          flags.add(flagsAtEnd);
-      }
-      return flags;
+    SortedSet<AlgorithmFlags> flags = this.getAlgorithmFlagsInRange(start, end);
+    AlgorithmFlags flagsAtEnd = this.getAlgorithmFlagsAtLocation(end);
+    if (flagsAtEnd != null) {
+      flags.add(flagsAtEnd);
+    }
+    return flags;
   }
-  
+
+  @Override
+  public SortedSet<RequiredLane> getRequiredLanesOnRoute() {
+    return requiredLanes;
+  }
+
+  @Override
+  public RequiredLane getRequiredLaneAtLocation(double location) {
+    for (RequiredLane lane : requiredLanes) {
+      if (lane.getLocation() >= location) {
+        return lane;
+      }
+    }
+
+    return null;
+  }
+
+  @Override
+  public SortedSet<RequiredLane> getRequiredLanesInRange(double start, double end) {
+    SortedSet<RequiredLane> out = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+    for (RequiredLane lane : requiredLanes) {
+      if (lane.getLocation() > start && lane.getLocation() <= end) {
+        out.add(lane);
+      }
+
+      if (lane.getLocation() > end) {
+        break;
+      }
+    }
+
+    return out;
+  }
 }

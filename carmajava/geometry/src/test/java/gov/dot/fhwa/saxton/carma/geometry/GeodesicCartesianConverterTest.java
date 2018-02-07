@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -205,7 +205,7 @@ public class GeodesicCartesianConverterTest {
     Point3D locInECEF = gcc.geodesic2Cartesian(locOfNED, Transform.identity());
     solutionTrans = new Vector3(locInECEF.getX(), locInECEF.getY(), locInECEF.getZ());
     solRotAxis = new Vector3(0,1,0);
-    solutionRot = Quaternion.fromAxisAngle(solRotAxis, Math.toRadians(-135));
+    solutionRot = Quaternion.fromAxisAngle(solRotAxis, Math.toRadians(225));
     assertTrue(trans.almostEquals(solutionTrans, 1.0));// Check accuracy to within 1m
     assertTrue(rot.almostEquals(solutionRot, 0.0001)); // Check accuracy to within ~0.01 deg
 

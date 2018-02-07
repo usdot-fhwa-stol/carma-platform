@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,14 +58,12 @@ div.tabindicators {
         background-color: inherit;
         color: black;
         padding: 10px 10px;
-        width: 80%;
+        width: 95%;
         border-bottom: 1px solid #ccc;
         outline: none;
-        text-align: left;
+        text-align: center;
         cursor: pointer;
         transition: 0.3s;
-        font-size: 20px;
-        font-family: "Segoe UI";
         overflow: hidden;
     }
 
@@ -309,7 +307,7 @@ div.message_box {
     padding: 0;
     width: 50%;
     font-size: 550px;
-    color: cornflowerblue; /* #ff6600; orange */
+    color: #ff6600; /*orange*/
 }
 
 
@@ -521,24 +519,36 @@ div.message_box {
 /* Remaining Distance to Next Speed Limit */
 #divDistRemaining{
  position: relative;
- top: 50%;
+ top: 42%;
  color: black;
  font-size: 25px;
  font-weight: bold;
  text-align: center;
 }
 
+/* Lane */
+#divLaneTracking {
+    position: relative;
+    top: 44%;
+    width: 100%;
+    height: 200px;
+    /*border: 5px solid blue; */
+    font-size: 25px;
+    font-weight: bold;
+    text-align: center;
+    justify-content: center;
+}
 
 /* Black Rounded Border Sign */
 #divSpeedCmd {
     position: absolute;
-    top: 25%;
+    top: 23%;
     left: 20%;
 }
 
 #divSpeedLimit {
     position: absolute;
-    top: 25%;
+    top: 23%;
     left: 75%;
 }
 
@@ -571,7 +581,7 @@ div.message_box {
 
 .sign-black-border-title {
     position: relative;
-    top: 30%;
+    top: 28%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: black;
@@ -591,7 +601,7 @@ div.message_box {
     font-family: sans-serif;
 
     position: relative;
-    top: 25%;
+    top: 23%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: black;
@@ -604,13 +614,12 @@ div.message_box {
     width: 400px;
     height: 200px;
     position: absolute;
-    top: 40%;
+    top: 38%;
     left: 55%;
     overflow: hidden;
     text-align: center;
     transform: translate(-50%, -50%);
 }
-
 
 .gauge-a {
     z-index: 1;

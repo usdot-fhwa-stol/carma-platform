@@ -135,7 +135,7 @@ void DSRCApplication::onMessageReceivedHandler(const std::vector<uint8_t> &data,
     // Publish it
     comms_pub_.publish(msg);
 
-    ROS_DEBUG("Application received Data: %ld bytes, message: %s", data.size(), uint8_vector_to_hex_string(data).c_str());
+    ROS_DEBUG_STREAM("Application received Data: " << data.size() << " bytes, message: " << uint8_vector_to_hex_string(data));
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Base class for all lateral maneuvers.
@@ -26,24 +27,27 @@ public abstract class LateralManeuver extends ManeuverBase {
     protected boolean completed = false;
     protected long startTime_ = 0;
     protected double maxAxleAngleRate = 0.0; 
-    protected double maxAccel_ = 0.0;
-    protected int targetLane_ = 0;
     protected double axleAngle_ = 0.0; // rad: Angle in radians to turn the wheels. Positive is left, Negative is right
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
     protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity
 
-    public LateralManeuver() {
+    public LateralManeuver(IPlugin planner) {
+        super(planner);
     }
 
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
             throws IllegalStateException {
-        super.plan(inputs, commands, startDist);
+        super.plan(inputs, commands, startDist);  
     }
 
     @Override
     public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist,
             double endDist) throws IllegalStateException, ArithmeticException {
+        if (endDist <= startDist) {
+            log_.error("planToTargetDistance entered with startDist = " + startDist + ", endDist = " + endDist + ". Throwing exception.");
+            throw new ArithmeticException("Lateral maneuver being planned with startDist = " + startDist + ", endDist = " + endDist);
+        }
         return super.planToTargetDistance(inputs, commands, startDist, endDist);
     }
 
@@ -54,19 +58,20 @@ public abstract class LateralManeuver extends ManeuverBase {
         if (startTime_ == 0) {
             startTime_ = System.currentTimeMillis();
         }
-        //TODO
+
+        //TODO Decide if more functionality or validation is needed here
+        axleAngle_ = getAxleAngleCmd();
         commands_.setSteeringCommand(axleAngle_, lateralAccel_, yawRate_);
         return true;
     }
 
     /**
-     * Stores the target lane ID, to be used for lateral maneuvers only.
-     * @param targetLane - target lane number at end of maneuver
-     * @throws UnsupportedOperationException if called on a longitudinal maneuver object
+     * Returns the axle angle cmd to execute for the next timestep
      */
-    public void setTargetLane(int targetLane) {
-        targetLane_ = targetLane;
-    }
+    protected abstract double getAxleAngleCmd();
+
+    @Override
+    public abstract boolean canPlan(IManeuverInputs inputs, double startDist, double endDist);
 
     /**
      * Sets the acceleration constraints for this maneuver 

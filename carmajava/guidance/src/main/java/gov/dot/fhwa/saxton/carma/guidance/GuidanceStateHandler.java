@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,7 @@ import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 
 import cav_msgs.RobotEnabled;
-import cav_msgs.RouteState;
+import cav_msgs.RouteEvent;
 import cav_msgs.SystemAlert;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
@@ -50,12 +50,14 @@ import cav_srvs.SetGuidanceEngagedResponse;
  */
 public class GuidanceStateHandler extends GuidanceComponent implements IStateChangeListener {
     
-    protected final String ROBOTIC_STATUS = "control/robot_status";
+    private static final String DRIVER_BASE_PATH = "/saxton_cav/drivers";
+    private static final String SRX_CONTROLLER_PATH = "/srx_controller/";
+    private static final String ROBOTIC_STATUS_CAPABILITY = "control/robot_status";
     
     protected long shutdownDelayMs = 5000;
     protected boolean robotStatus = false;
     
-    protected ISubscriber<RouteState> routeStateSub;
+    protected ISubscriber<RouteEvent> routeEventSub;
     protected ISubscriber<SystemAlert> systemAlertSub;
     protected ISubscriber<RobotEnabled> robotStatusSub;
     protected IPublisher<SystemAlert> systemAlertPub;
@@ -95,27 +97,22 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
         });
         systemAlertPub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
         
-        routeStateSub = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSub.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-
-            @Override
-            public void onMessage(RouteState msg) {
-                if(msg.getEvent() == RouteState.LEFT_ROUTE) {
-                    log.info("GUIDANCE_STATE", getComponentName() + " recieved LEFT_ROUTE");
-                    SystemAlert alert = systemAlertPub.newMessage();
-                    alert.setDescription("Guidance detected LEFT_ROUTE state!");
-                    alert.setType(SystemAlert.CAUTION);
-                    systemAlertPub.publish(alert);
-                    stateMachine.processEvent(GuidanceEvent.LEFT_ROUTE);
-                } else if (msg.getEvent() == RouteState.ROUTE_COMPLETED
-                        || msg.getEvent() == RouteState.ROUTE_ABORTED) {
-                    log.info("GUIDANCE_STATE", getComponentName() + " recieved ROUTE_COMPLETED or ROUTE_ABORTED");
-                    SystemAlert alert = systemAlertPub.newMessage();
-                    alert.setDescription("Guidance detected ROUTE_COMPLETED or ROUTE_ABORTED state.");
-                    alert.setType(SystemAlert.CAUTION);
-                    systemAlertPub.publish(alert);
-                    stateMachine.processEvent(GuidanceEvent.FINISH_ROUTE);
-                }
+        routeEventSub = pubSubService.getSubscriberForTopic("route_event", RouteEvent._TYPE);
+        routeEventSub.registerOnMessageCallback((msg) -> {
+            if (msg.getEvent() == RouteEvent.LEFT_ROUTE) {
+                log.info("GUIDANCE_STATE", getComponentName() + " recieved LEFT_ROUTE");
+                SystemAlert alert = systemAlertPub.newMessage();
+                alert.setDescription("Guidance detected LEFT_ROUTE state!");
+                alert.setType(SystemAlert.CAUTION);
+                systemAlertPub.publish(alert);
+                stateMachine.processEvent(GuidanceEvent.LEFT_ROUTE);
+            } else if (msg.getEvent() == RouteEvent.ROUTE_COMPLETED || msg.getEvent() == RouteEvent.ROUTE_ABORTED) {
+                log.info("GUIDANCE_STATE", getComponentName() + " recieved ROUTE_COMPLETED or ROUTE_ABORTED");
+                SystemAlert alert = systemAlertPub.newMessage();
+                alert.setDescription("Guidance detected ROUTE_COMPLETED or ROUTE_ABORTED state.");
+                alert.setType(SystemAlert.CAUTION);
+                systemAlertPub.publish(alert);
+                stateMachine.processEvent(GuidanceEvent.FINISH_ROUTE);
             }
         });
 
@@ -141,53 +138,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
 
     @Override
     public void onSystemReady() {
-        try {
-            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                    GetDriversWithCapabilities._TYPE);
-        } catch (TopicNotFoundException tnfe) {
-            stateMachine.processEvent(GuidanceEvent.PANIC);
-            log.fatal("SHUTDOWN", "Interface manager not found.");
-        }
-        
-        // Build request message
-        GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
-
-        List<String> reqdCapabilities = new ArrayList<>();
-        reqdCapabilities.add(ROBOTIC_STATUS);
-        req.setCapabilities(reqdCapabilities);
-
-        // Work around to pass a final object into our anonymous inner class so we can get the response
-        final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
-        drivers[0] = null;
-
-        // Call the InterfaceManager to see if we have a driver that matches our requirements
-        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-            @Override
-            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                log.debug("Received GetDriversWithCapabilitiesResponse");
-                for (String driverName : msg.getDriverData()) {
-                    log.debug(getComponentName() + " discovered driver: " + driverName);
-                }
-                drivers[0] = msg;
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                stateMachine.processEvent(GuidanceEvent.PANIC);
-                log.fatal("InterfaceManager failed to return a control/robot_status capable driver!!!");
-            }
-        });
-        
-        String robotStatusTopic = null;
-        if(drivers[0] != null) {
-            for(String url : drivers[0].getDriverData()) {
-                if(url.endsWith(ROBOTIC_STATUS)) {
-                    robotStatusTopic = url;
-                    break;
-                }
-            }                
-        }
-        
+        String robotStatusTopic = DRIVER_BASE_PATH + SRX_CONTROLLER_PATH + ROBOTIC_STATUS_CAPABILITY;
         if(robotStatusTopic != null) {
             log.debug(getComponentName() + " is connecting to " + robotStatusTopic);
             robotStatusSub = pubSubService.getSubscriberForTopic(robotStatusTopic, RobotEnabled._TYPE);

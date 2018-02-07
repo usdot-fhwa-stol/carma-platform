@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -170,26 +170,20 @@ public class PluginManagerTest {
     @Test public void instantiatePluginsFromClasses() throws Exception {
       List<Class<? extends IPlugin>> pluginList = new ArrayList<>();
       pluginList.add(CruisingPlugin.class);
-      pluginList.add(NoOpPlugin.class);
 
       List<IPlugin> instances = pm.instantiatePluginsFromClasses(pluginList, psl);
 
-      assertEquals(2, instances.size());
+      assertEquals(1, instances.size());
 
       boolean foundMockCruisingPlugin = false;
-      boolean foundMockRouteFollowingPlugin = false;
 
       for (IPlugin p : instances) {
-        if (p instanceof NoOpPlugin) {
-          foundMockRouteFollowingPlugin = true;
-        }
         if (p instanceof CruisingPlugin) {
           foundMockCruisingPlugin = true;
         }
       }
 
       assertTrue(foundMockCruisingPlugin);
-      assertTrue(foundMockRouteFollowingPlugin);
     }
 
     private PluginServiceLocator psl;

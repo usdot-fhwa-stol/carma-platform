@@ -6,8 +6,8 @@
 # for identification of those who are interested.
 #
 
-# MsgCRC ::= OCTET STRING (SIZE(2)) -- created with the CRC-CCITT polynomial
-uint8[]  checksum
+# MobilityChecksum ::= INTEGER (0..65535)
+uint16  checksum
 
 # the standard header for all mobility messages
 cav_msgs/MobilityHeader  header
@@ -33,13 +33,14 @@ float32  forward_speed
 cav_msgs/PlanType  plan_type
 
 # a generic variable whose use is dependent upon the plan_type
-uint16  proposal_param
+uint16   proposal_param
 
 # a hex string representing the PKI public key of the host
 uint8[]  my_public_key
 
 # absolute time that this proposed plan will expire and become meaningless
-cav_msgs/DateTime  expiration
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
+uint64     expiration
 
 # a string which show system brand/version, list of strategies it can perform
-string capabilities
+string   capabilities

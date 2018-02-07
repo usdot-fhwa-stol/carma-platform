@@ -16,8 +16,8 @@ uint8       MAINTAIN_LANE = 4
 uint8       CHANGE_LANE_LEFT = 5
 uint8       CHANGE_LANE_RIGHT = 6
 # the rest value in not defined in J2735 specification
-uint8       TURN_CORNER_LEFT = 4
-uint8       TURN_CORNER_RIGHT = 5
+uint8       TURN_CORNER_LEFT = 7
+uint8       TURN_CORNER_RIGHT = 8
 
 # Bitflags indicating which participants in the plan are performing this maneuver
 # (possibly multiple vehicles are performing the same maneuver simultaneously).
@@ -43,4 +43,5 @@ uint8       start_roadway_lane_id
 uint16      length
 
 # maneuver parameters which may indicate target speed, lane ID, etc
+# the format should be <startDistance>:<endDistance>:<startSpeed>:<endSpeed>
 string      parameters

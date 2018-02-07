@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,10 +23,11 @@ import java.util.TreeSet;
 
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-public class PlatooningPlugin extends AbstractPlugin {
+public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin {
 
     protected final String PLATOONING_FLAG = "PLATOONING";
     
@@ -73,8 +74,7 @@ public class PlatooningPlugin extends AbstractPlugin {
 
     @Override
     public void loop() throws InterruptedException {
-        // TODO add logic to handle STATUS messages in statusQueue
-        Thread.sleep(10000);
+        state.loop();
     }
 
     @Override
@@ -103,7 +103,8 @@ public class PlatooningPlugin extends AbstractPlugin {
         return this.state.planTrajectory(traj, expectedEntrySpeed);
     }
     
-    // TODO change the input type from String to maybe a plan object 
+    // TODO change the input type from String to maybe a plan object
+    /******* this has been removed from the interface...probably needs to be removed from here in lieu of the new negotiation receiver plugin
     @Override
     public void onReceiveNegotiationRequest(String message) {
         log.info("Receive negotiation message: " + message);
@@ -116,6 +117,7 @@ public class PlatooningPlugin extends AbstractPlugin {
             this.state.onReceiveNegotiationRequest(message);
         }
     }
+    *****/
 
     public double getMaxAccel() {
         return maxAccel;

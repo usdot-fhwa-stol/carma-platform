@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ var t_nav_sat_fix = 'nav_sat_fix';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
 var t_route_state = 'route_state';
+var t_route_event = 'route_event';
 var t_active_route = 'route';
 var t_cmd_speed = 'cmd_speed';
 var t_robot_status = 'robot_status';
@@ -77,6 +78,9 @@ var listenerPluginAvailability;
 var listenerSystemAlert;
 var isModalPopupShowing = false;
 
+var waitingForGuidanceStartup = false;
+var waitingForRouteStateSegmentStartup = false;
+
 // For Route Timer
 var routeTimer;
 
@@ -84,7 +88,22 @@ var routeTimer;
 var meter_to_mph = 2.23694;
 var meter_to_mile = 0.000621371;
 var total_dist_next_speed_limit = 0;
+var total_dist_next_lane_change = 0;
+
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
+
+// For Lane change
+var rect_index = 0;
+var totallanes = 0;
+var targetlane = 0;
+var currentlaneid = 0;
+
+/*
+* Custom sleep used in enabling guidance
+*/
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /*
 * Connection to ROS
@@ -125,6 +144,12 @@ function connectToROS() {
             document.getElementById('connecting').style.display = 'none';
             document.getElementById('connected').style.display = 'none';
             document.getElementById('closed').style.display = 'inline';
+
+            //Show modal popup for when ROS connection has been abruptly closed.
+            var messageTypeFullDescription = 'ROS Connection Closed.';
+            messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
+            showModal(true, messageTypeFullDescription, false);
+            
         });
 
         // Create a connection to the rosbridge WebSocket server.
@@ -417,9 +442,20 @@ function showSubCapabilitiesView2() {
     var divSubCapabilities = document.getElementById('divSubCapabilities');
     divSubCapabilities.style.display = 'block';
 
-    checkRouteInfo();
-    showPluginOptions();
+    if (waitingForRouteStateSegmentStartup == false) {
+        //Need to wait for route current segment to publish to not get negative total lengths. 
+        setTimeout(function () {
+            checkRouteInfo();
+            console.log('Wait call for checkRouteInfo.');
+            waitingForRouteStateSegmentStartup = true;
+        }, 5000);
+    }
+    else {
+        checkRouteInfo();
+    }
 
+    console.log('showPluginOptions called.');
+    showPluginOptions();
 }
 /*
  Show user the registered plugins.
@@ -598,7 +634,7 @@ function engageGuidance() {
     });
 
     // Call the service and get back the results in the callback.
-    setGuidanceClient.callService(request, function (result) {
+    setGuidanceClient.callService(request, async function (result) {
 
         if (result.guidance_status != newStatus) //NOT SUCCESSFUL.
         {
@@ -608,6 +644,11 @@ function engageGuidance() {
 
         //Set based on returned status, regardless if succesful or not.
         guidance_engaged = Boolean(result.guidance_status);
+
+        //this flag prevents looking at robot_active status while guidance first starts up and begins sending commands to the robot
+        waitingForGuidanceStartup = true;
+        await sleep(1000);
+        waitingForGuidanceStartup = false;
 
         //start the route timer
         startRouteTimer();
@@ -711,7 +752,7 @@ function setCAVButtonState(state) {
             break;
 
         case 'DISENGAGED':
-            guidance_engaged == false;
+            guidance_engaged = false;
 
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_disabled';
@@ -776,9 +817,9 @@ function checkGuidanceState() {
             //case 3: //ACTIVE //TODO: Further discussion with Kyle based on email.
             //   enableGuidance();
             //    break;
-            case 3: //INACTIVE
+            case 5: //INACTIVE
                 enableGuidance();
-                if (guidance_engaged = true)
+                if (guidance_engaged)
                     setCAVButtonState('INACTIVE');
                 break;
             case 4: //ENGAGED
@@ -889,7 +930,7 @@ function printParam(itemName, index) {
 
 /*
     Check for Robot State
-    TODO: If no longer active, show the Guidance as Yellow. If active, show Guidance as green.
+    If no longer active, show the Guidance as Yellow. If active, show Guidance as green.
 */
 function checkRobotEnabled() {
     var listenerRobotStatus = new ROSLIB.Topic({
@@ -902,13 +943,17 @@ function checkRobotEnabled() {
         insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
         insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
 
-        //Update the button when Guidance is engaged.
-        if (message.robot_active == false) {
-            setCAVButtonState('INACTIVE');
-        }
-        else {
-            //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
-            setCAVButtonState('ENGAGED');
+        //if guidance is just starting up then we don't do anything
+        if (!waitingForGuidanceStartup) {
+
+            //Update the button when Guidance is engaged.
+            if (message.robot_active == false) {
+                setCAVButtonState('INACTIVE');
+            }
+            else {
+                //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
+                setCAVButtonState('ENGAGED');
+            }
         }
     });
 }
@@ -949,7 +994,7 @@ function showDiagnostics() {
                             insertNewTableRow('tblFirstB', myValues.key, myValues.value);
                             var imgACCPrimed = document.getElementById('imgACCPrimed');
 
-                            if (myValues.value == 'true')
+                            if (myValues.value == 'True')
                                 imgACCPrimed.style.backgroundColor = '#4CAF50'; //Green
                             else
                                 imgACCPrimed.style.backgroundColor = '#b32400'; //Red
@@ -963,7 +1008,7 @@ function showDiagnostics() {
 }
 
 /*
-    Show Drivers Status for PinPoint. 
+    Show Drivers Status for PinPoint.
 */
 function showDriverStatus() {
 
@@ -977,7 +1022,7 @@ function showDriverStatus() {
 
         var targetImg;
 
-        //Get PinPoint status for now. 
+        //Get PinPoint status for now.
         if (message.position == true) {
             targetImg = document.getElementById('imgPinPoint');
         }
@@ -1100,6 +1145,33 @@ function getFutureTopics() {
     Route state are only set and can be shown after Route has been selected.
 */
 function checkRouteInfo() {
+
+    //Get Route Event
+    var listenerRouteEvent = new ROSLIB.Topic({
+        ros: ros,
+        name: t_route_event,
+        messageType: 'cav_msgs/RouteEvent'
+    });
+
+    listenerRouteEvent.subscribe(function (message) {
+        insertNewTableRow('tblSecondA', 'Route Event', message.event);
+
+        //If completed, then route topic will publish something to guidance to shutdown.
+        //For UI purpose, only need to notify the USER and show them that route has completed.
+        if (message.event == 3) //ROUTE_COMPLETED=3
+        {
+            //if (listenerSystemAlert != 'undefined')
+            //    listenerSystemAlert.unsubscribe();
+            showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
+        }
+
+        if (message.event == 4)//LEFT_ROUTE=4
+        {
+            //listenerSystemAlert.unsubscribe();
+            showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
+        }
+    });
+            
     //Get Route State
     var listenerRouteState = new ROSLIB.Topic({
         ros: ros,
@@ -1108,42 +1180,59 @@ function checkRouteInfo() {
     });
 
     listenerRouteState.subscribe(function (message) {
+
         insertNewTableRow('tblSecondA', 'Route ID', message.routeID);
         insertNewTableRow('tblSecondA', 'Route State', message.state);
-        insertNewTableRow('tblSecondA', 'Route Event', message.event);
-        insertNewTableRow('tblSecondA', 'Cross Track', message.cross_track.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Down Track', message.down_track.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Cross Track / Down Track', message.cross_track.toFixed(2) + ' / ' + message.down_track.toFixed(2));
 
+        //Calculate and show next speed limit remaining distance
+        //Show 0 if negative
         var remaining_dist = total_dist_next_speed_limit - message.down_track;
+        remaining_dist = Math.max(0, remaining_dist);
         var remaining_dist_miles = (remaining_dist * meter_to_mile);
         remaining_dist_miles = Math.max(0, remaining_dist_miles);
 
         var divDistRemaining = document.getElementById('divDistRemaining');
-        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' miles';
+        divDistRemaining.innerHTML = 'Speed Limit Change In: ' + remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(0) + ' m';
 
         insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Speed Limit Change In (m)', remaining_dist.toFixed(2));
-        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi)', remaining_dist_miles.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Speed Limit Change In (mi/m)', remaining_dist_miles.toFixed(2) + ' mi / ' + remaining_dist.toFixed(0) + ' m');
 
-        //If completed, then route topic will publish something to guidance to shutdown.
-        //For UI purpose, only need to notify the USER and show them that route has completed.
-        if (message.event == 3) //ROUTE_COMPLETED=3
-        {
-            listenerSystemAlert.unsubscribe();
-            showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
-        }
+        //Calculate and show next lane change remaining distance
+        //Show 0 if negative
+        var lane_remaining_dist = total_dist_next_lane_change - message.down_track;
+        lane_remaining_dist = Math.max(0, lane_remaining_dist);
+        var lane_remaining_dist_miles = (lane_remaining_dist * meter_to_mile);
+        lane_remaining_dist_miles = Math.max(0, lane_remaining_dist_miles);
 
-        if (message.event == 4)//LEFT_ROUTE=4
-        {
-            listenerSystemAlert.unsubscribe();
-            showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
-        }
+        //var divDistRemaining = document.getElementById('divDistRemaining');
+        divDistRemaining.innerHTML += '<br/> Lane Change In: ' + lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m';
+
+        insertNewTableRow('tblSecondA', 'Lane Change Total Dist (m)', total_dist_next_lane_change.toFixed(2));
+        insertNewTableRow('tblSecondA', 'Lane Change In (mi/m)', lane_remaining_dist_miles.toFixed(2) + ' mi / ' + lane_remaining_dist.toFixed(0) + ' m');
 
         insertNewTableRow('tblSecondA', 'Current Segment ID', message.current_segment.waypoint.waypoint_id);
         insertNewTableRow('tblSecondA', 'Current Segment Max Speed', message.current_segment.waypoint.speed_limit);
         if (message.current_segment.waypoint.speed_limit != null && message.current_segment.waypoint.speed_limit != 'undefined')
             document.getElementById('divSpeedLimitValue').innerHTML = message.current_segment.waypoint.speed_limit;
 
+        if (message.lane_index != null && message.lane_index != 'undefined') {
+            insertNewTableRow('tblSecondA', 'Lane Index', message.lane_index);
+            currentlaneid = parseInt(message.lane_index);
+        }
+
+        if (message.current_segment.waypoint.lane_count != null
+            && message.current_segment.waypoint.lane_count != 'undefined') {
+            insertNewTableRow('tblSecondA', 'Current Segment Lane Count', message.current_segment.waypoint.lane_count);
+            insertNewTableRow('tblSecondA', 'Current Segment Req Lane', message.current_segment.waypoint.required_lane_index);
+
+            totallanes = parseInt(message.current_segment.waypoint.lane_count);
+            targetlane = parseInt(message.current_segment.waypoint.required_lane_index);
+
+            //When targetlane = -1, it is unavailable. 
+            if (targetlane >= 0) 
+                drawLanes(false, true);
+        }
 
         //Determine the remaining distance to current speed limit
         if (sessionStorage.getItem('routeSpeedLimitDist') != null) {
@@ -1157,9 +1246,22 @@ function checkRouteInfo() {
                     break;
                 }
             }
-
             //insertNewTableRow('tblSecondA', 'total_dist_next_speed_limit', total_dist_next_speed_limit);
+        }
 
+        //Determine the remaining distance to current lane
+        if (sessionStorage.getItem('routeLaneChangeDist') != null) {
+            var routeLaneChangeDist = sessionStorage.getItem('routeLaneChangeDist');
+            routeLaneChangeDist = JSON.parse(routeLaneChangeDist);
+
+            //Loop thru to find the correct totaldistance
+            for (i = 0; i < routeLaneChangeDist.length; i++) {
+                if (message.current_segment.waypoint.waypoint_id <= routeLaneChangeDist[i].waypoint_id) {
+                    total_dist_next_lane_change = routeLaneChangeDist[i].total_length;
+                    break;
+                }
+            }
+            //insertNewTableRow('tblSecondA', 'total_dist_next_lane_change', total_dist_next_lane_change);
         }
 
     });
@@ -1204,6 +1306,11 @@ function showActiveRoute() {
         if (sessionStorage.getItem('routeSpeedLimitDist') == null) {
             message.segments.forEach(calculateDistToNextSpeedLimit);
         }
+
+        //alert('showActive Route: sessionStorage.getItem(routeLaneChangeDist: ' + sessionStorage.getItem('routeLaneChangeDist'));
+        if (sessionStorage.getItem('routeLaneChangeDist') == null) {
+            message.segments.forEach(calculateDistToNextLaneChange);
+        }
     });
 }
 
@@ -1242,8 +1349,23 @@ function mapEachRouteSegment(segment) {
 
 }
 
+/*
+    Calculate the next distance to next speed limit. 
+*/
 function calculateDistToNextSpeedLimit(segment) {
 
+    if (segment == null)
+    {
+        console.log('**** calculateDistToNextSpeedLimit: segment is null.');
+        return;
+    }
+        
+    if (segment.length <= 0 || segment.length == null || segment.length == 'undefined')
+    {
+        console.log('**** calculateDistToNextSpeedLimit: segment is null.');
+        return;
+    }
+        
     //To calculate the distance to next speed limit
     var routeSpeedLimit; //To store the total distance for each speed limit change.
     var routeSpeedLimitDist;
@@ -1286,6 +1408,53 @@ function calculateDistToNextSpeedLimit(segment) {
         }
     }
 }
+
+/*
+    Calculate the distance to next lane change. 
+*/
+function calculateDistToNextLaneChange(segment) {
+
+    //To calculate the distance to next next lane change. 
+    var routeLaneChange; //To store the total distance for each lane change.
+    var routeLaneChangeDist;
+
+    if (sessionStorage.getItem('routeLaneChangeDist') == null) {
+        routeLaneChange = { waypoint_id: segment.prev_waypoint.waypoint_id, total_length: segment.length, required_lane_index: segment.prev_waypoint.required_lane_index };
+        routeLaneChangeDist = [];
+        routeLaneChangeDist.push(routeLaneChange);
+
+        sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+    }
+    else {
+
+        routeLaneChangeDist = sessionStorage.getItem('routeLaneChangeDist');
+        routeLaneChangeDist = JSON.parse(routeLaneChangeDist);
+
+        var lastItem = routeLaneChangeDist[routeLaneChangeDist.length - 1];
+
+        //alert('lastItem: ' + lastItem.total_length);
+
+        //If lane changes, add to list
+        if (lastItem.required_lane_index != segment.waypoint.required_lane_index) {
+            routeLaneChange = {
+                waypoint_id: segment.waypoint.waypoint_id
+                , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
+                , required_lane_index: segment.waypoint.required_lane_index
+            };
+            routeLaneChangeDist.push(routeLaneChange);
+
+            sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+        }
+        else //Update last item's length to the total length
+        {
+            lastItem.waypoint_id = segment.waypoint.waypoint_id;
+            lastItem.total_length += segment.length;
+
+            sessionStorage.setItem('routeLaneChangeDist', JSON.stringify(routeLaneChangeDist));
+        }
+    }
+}
+
 /*
     Update the host marker based on the latest NavSatFix position.
 */
@@ -1579,6 +1748,11 @@ window.onload = function () {
 
     //Check if localStorage/sessionStorage is available.
     if (typeof (Storage) !== 'undefined') {
+
+        if (!SVG.supported) {
+            alert('SVG not supported. Some images will not be displayed.');
+        }
+
         // Store CurrentPage.
         sessionStorage.setItem('currentpage', 'main');
 
@@ -1598,6 +1772,11 @@ window.onload = function () {
         if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '') {
             guidance_engaged = (isGuidanceEngaged == 'true');
         }
+
+        // Adding Copyright based on current year
+        var elemCopyright = document.getElementsByClassName('copyright');
+        elemCopyright[0].innerHTML = '&copy LEIDOS ' + new Date().getFullYear();
+
         //Refresh requires connection to ROS.
         connectToROS();
 
