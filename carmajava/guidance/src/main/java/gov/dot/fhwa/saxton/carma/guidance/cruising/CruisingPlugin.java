@@ -45,8 +45,8 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
   protected static final double DISTANCE_EPSILON = 0.0001;
 
   protected class TrajectorySegment {
-    double start;
-    double end;
+    double startLocation;
+    double endLocation;
     double startSpeed;
   }
 
@@ -71,7 +71,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
   @Override
   public void loop() {
     try {
-      Thread.sleep(500);
+      Thread.sleep(5000);
     } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();
     }
@@ -113,8 +113,8 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         } else {
             // create trajectory seg and update last maneuver end location/speed
             TrajectorySegment seg = new TrajectorySegment();
-            seg.start = lastManeuverEndLocation;
-            seg.end = lm.getStartDistance();
+            seg.startLocation = lastManeuverEndLocation;
+            seg.endLocation = lm.getStartDistance();
             seg.startSpeed = lastManeuverEndSpeed;
             gaps.add(seg);
             lastManeuverEndLocation = lm.getEndDistance();
@@ -124,9 +124,9 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     //add trajectory gap from lastManeuverEndLocation to the end of trajectory
     if(!fpEquals(lastManeuverEndLocation, endLocation, DISTANCE_EPSILON)) {
         TrajectorySegment seg = new TrajectorySegment();
-        seg.start = lastManeuverEndLocation;
-        seg.end = endLocation;
-        seg.start = lastManeuverEndSpeed;
+        seg.startLocation = lastManeuverEndLocation;
+        seg.endLocation = endLocation;
+        seg.startSpeed = lastManeuverEndSpeed;
         gaps.add(seg);
     }
     
@@ -186,8 +186,8 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
   private void planTrajectoryGap(TrajectorySegment trajSeg, Trajectory traj) {
       // Use RouteService to find all necessary speed limits in this trajectory segment
       RouteService routeService = pluginServiceLocator.getRouteService();
-      SortedSet<SpeedLimit> trajLimits = routeService.getSpeedLimitsInRange(trajSeg.start, trajSeg.end);
-      trajLimits.add(routeService.getSpeedLimitAtLocation(trajSeg.end));
+      SortedSet<SpeedLimit> trajLimits = routeService.getSpeedLimitsInRange(trajSeg.startLocation, trajSeg.endLocation);
+      trajLimits.add(routeService.getSpeedLimitAtLocation(trajSeg.endLocation));
 
       // Merge segments with same speed limits
       List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();
@@ -204,12 +204,12 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
               }
           }
       }
-      limit_buffer.setLocation(trajSeg.end);
+      limit_buffer.setLocation(trajSeg.endLocation);
       mergedLimits.add(limit_buffer);
       
       // Plan trajectory to follow all speed limits in this trajectory segment
       double newManeuverStartSpeed = trajSeg.startSpeed;
-      double newManeuverStartLocation = trajSeg.start;
+      double newManeuverStartLocation = trajSeg.startLocation;
       for(SpeedLimit limit : mergedLimits) {
           newManeuverStartSpeed = planManeuvers(traj, newManeuverStartLocation, limit.getLocation(), newManeuverStartSpeed, limit.getLimit());
           newManeuverStartLocation = limit.getLocation();

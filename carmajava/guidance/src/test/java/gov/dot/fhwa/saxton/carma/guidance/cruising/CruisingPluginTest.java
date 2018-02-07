@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,77 +54,37 @@ import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
 public class CruisingPluginTest {
 
-  private NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
-  private MessageFactory messageFactory = nodeConfig.getTopicMessageFactory();
+    //private NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
+    //private MessageFactory messageFactory = nodeConfig.getTopicMessageFactory();
+    private GuidanceRouteService routeService;
+    private CruisingPlugin cruise;
 
-  @Before
-  public void setup() {
-    ILoggerFactory mockFact = mock(ILoggerFactory.class);
-    ILogger mockLogger = mock(ILogger.class);
-    when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
-    LoggerManager.setLoggerFactory(mockFact);
-
-    NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
-    AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
-
-    routeService = mock(GuidanceRouteService.class);
-
-    PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
-        mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-        new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService);
-    cruise = new CruisingPlugin(psl);
-  }
-
-  private byte mpsToMph(double mps) {
-    return (byte) (mps * 2.23694);
-  }
-
-  private Route generateRouteWithSpeedLimits(List<Double> speeds, double segLength) {
-    Route route = messageFactory.newFromType(Route._TYPE);
-    Header header = messageFactory.newFromType(Header._TYPE);
-    header.setFrameId("0");
-    header.setSeq(0);
-    header.setStamp(Time.fromMillis(System.currentTimeMillis()));
-
-    route.setHeader(header);
-    route.setRouteID("test-route");
-    route.setRouteName("test-route");
-
-    List<RouteSegment> segments = new ArrayList<>();
-    List<RouteWaypoint> waypoints = new ArrayList<>();
-
-    int curId = 0;
-    RouteWaypoint initialWp = messageFactory.newFromType(RouteWaypoint._TYPE);
-    initialWp.setWaypointId(curId++);
-    initialWp.setLaneCount((byte) 1);
-    initialWp.setSpeedLimit(mpsToMph(0.0));
-    waypoints.add(initialWp);
-
-    for (Double speed : speeds) {
-      RouteWaypoint waypoint = messageFactory.newFromType(RouteWaypoint._TYPE);
-      waypoint.setWaypointId(curId++);
-      waypoint.setLaneCount((byte) 1);
-      waypoint.setSpeedLimit(mpsToMph(speed));
-      waypoints.add(waypoint);
+    @Before
+    public void setup() {
+        routeService = mock(GuidanceRouteService.class);
+        PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
+                mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
+                new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService);
+        cruise = new CruisingPlugin(psl);
     }
 
-    for (int i = 0; i < waypoints.size() - 1; i++) {
-      RouteSegment seg = messageFactory.newFromType(RouteSegment._TYPE);
-      seg.setLength(segLength);
-      seg.setPrevWaypoint(waypoints.get(i));
-      seg.setWaypoint(waypoints.get(i + 1));
-      segments.add(seg);
+    //Test if CP can find the right longitudinal gap in empty trajectory
+    @Test
+    public void testFindTrajectoryGapsWithLongManeuverAtTheEnd() {
+        Trajectory t = new Trajectory(0.0, 50.0);
+        List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 3.0);
+        assertEquals(1, gaps.size());
+        assertEquals(0.0, gaps.get(0).startLocation, 0.01);
+        assertEquals(50.0, gaps.get(0).endLocation, 0.01);
+        assertEquals(3.0, gaps.get(0).startSpeed, 0.01);
     }
-
-    route.setSegments(segments);
-
-    return route;
-  }
-
-  // We'll only have the CrusingPlugin generating longitudinal maneuvers, so the whole
-  // longitudinal trajectory will always be open for now.
-  @Test
-  public void testFindTrajectoryGaps() {
+    
+  //Test if it can find the right gap with pre-planned longitudinal maneuver at the end
+  
+  
+  // Test if it can find the right gap with pre-planned complex maneuver  
+/*  @Test
+  public void testFindTrajectoryGapsWithComplexManeuver() {
     Trajectory t = new Trajectory(0.0, 20.0);
     List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 0.0, 5.0);
 
@@ -165,8 +125,5 @@ public class CruisingPluginTest {
     Trajectory traj = new Trajectory(0.0, 10.0);
 
     cruise.planTrajectory(traj, 0.0);
-  }
-
-  private CruisingPlugin cruise;
-  private GuidanceRouteService routeService;
+  }*/
 }
