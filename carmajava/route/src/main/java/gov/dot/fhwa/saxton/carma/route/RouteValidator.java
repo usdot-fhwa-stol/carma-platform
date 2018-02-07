@@ -17,15 +17,9 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import org.apache.commons.logging.Log;
-import org.ros.message.MessageFactory;
-import org.ros.message.Time;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Class which represents the abstraction of a travel route which a vehicle will follow.
@@ -48,11 +42,9 @@ public class RouteValidator {
   private static final double MIN_MILE_MARKER = 0.0;
 
   /**
-   * Constructor which initializes a route from a provided list of waypoints
+   * Constructor
    *
-   * @param waypoints The list of waypoints which will be used to build the route
-   * @param routeID   The id to assign to the route. Should be unique
-   * @param routeName The display name of the route
+   * @param log A logger
    */
   public RouteValidator(Log log) {
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
@@ -111,7 +103,7 @@ public class RouteValidator {
     return valid && validWaypoint(seg.getUptrackWaypoint()) && validWaypoint(seg.getDowntrackWaypoint());
   }
 
-    /**
+  /**
    * Returns true if this waypoint can be considered valid for use in a route
    * @return boolean valid status
    */
@@ -166,9 +158,7 @@ public class RouteValidator {
     // Validate optional fields
     short bitMask = wp.getSetFields();
     if ((bitMask & cav_msgs.RouteWaypoint.LANE_CLOSURES) != 0) {
-      boolean validLaneClosures = true;
       for (int lane : wp.getLaneClosures()) {
-        validLaneClosures = validLaneClosures && (lane >= MIN_LANE_INDEX);
         if (lane < MIN_LANE_INDEX) {
           log.warn("Invalid lane index of " + lane + " in list of lane closures at " + wp); 
           valid = false;
