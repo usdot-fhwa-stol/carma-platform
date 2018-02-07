@@ -209,6 +209,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 		
 		//register new message counters
 		messageCounters.registerEntry("BSM");
+		messageCounters.registerEntry("MobilityIntro");
+		messageCounters.registerEntry("MobilityAck");
 		
 		//initialize Subs
 		bsmSub_ = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);

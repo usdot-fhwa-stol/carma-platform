@@ -72,14 +72,14 @@ public class Negotiation {
 
         switch (state_) {
             case NEW:
-                //send the plan to the negotiator node
+                //send the plan to the message node
                 lcp_.sendPlan();
 
                 //indicate that plan has been sent
                 stat.setStatus(LaneChangeStatus.PLAN_SENT);
                 lcp_.sendStatusUpdate(stat);
                 state_ = PLAN_SENT;
-                log_.info("V2V", "New plan has been sent to Negotiator.");
+                log_.info("V2V", "New plan has been sent to Message for forwarding to neighbor vehicles.");
                 break;
 
             case PLAN_SENT:
