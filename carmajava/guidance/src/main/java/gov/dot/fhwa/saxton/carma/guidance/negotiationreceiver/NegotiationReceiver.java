@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -65,7 +65,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onInitialize() {
         maxAccel_ = pluginServiceLocator.getParameterSource().getDouble("~vehicle_acceleration_limit", 2.5);
-        maneuverFactory_ = new SimpleManeuverFactory();
+        maneuverFactory_ = new SimpleManeuverFactory(this);
         planner_ = pluginServiceLocator.getManeuverPlanner();
         planSub_ = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
         statusPub_ = pubSubService.getPublisherForTopic("plan_status", PlanStatus._TYPE);

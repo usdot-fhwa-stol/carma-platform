@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -110,7 +110,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
     private void planLaneKeepingManeuver(Trajectory traj, double startDist, double endDist) {
         log.info(String.format("Planning lane keeping maneuver planning between: [%.02f, %.02f)", startDist, endDist));
-        LaneKeeping laneKeepingManeuver = new LaneKeeping();
+        LaneKeeping laneKeepingManeuver = new LaneKeeping(this);
         laneKeepingManeuver.planToTargetDistance(pluginServiceLocator.getManeuverPlanner().getManeuverInputs(), 
         pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), startDist, endDist);
         traj.addManeuver(laneKeepingManeuver);

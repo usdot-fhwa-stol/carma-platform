@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2017 LEIDOS.
+  Copyright (C) 2018 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,6 @@
   <arg name="mock_srx_controller" default="false" doc="True if using a simulated srx controller driver"/>
   <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
   <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
-  <arg name="mock_cellular"       default="false" doc="True if using a simulated cellular driver"/>
 
   <!-- Data Files -->
   <arg name="can_data_file"            default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
@@ -60,7 +59,6 @@
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
-  <arg name="debug_transform_svr"   default="false" doc="Set true to enable debugging on the Transform Server node"/>
   <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
   <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
   <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
@@ -94,6 +92,9 @@
 
     <!-- Set package path for use with relative file paths -->
     <param name="package_path" value="$(arg CARMA_DIR)"/>
+
+    <!-- Generate log name configuration file -->
+    <param name="log_name" type="str" command="$(arg CARMA_DIR)/../engineering_tools/generate_log_name.sh"/>
 
     <!-- Load Vehicle Characteristics -->
     <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
@@ -267,9 +268,6 @@
 
       <!-- Transform Server Node -->
       <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
-
-        <env if="$(arg debug_transform_svr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
       </node>
@@ -376,8 +374,12 @@
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
         <remap from="robot_enabled"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
-
+               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+        
+        <!-- GuidanceStateHandler Thread-->
+        <remap from="route_event"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
+        
         <!-- Tracking Thread-->
         <remap from="vehicle_length"
                to="/$(arg TOP_NS)/vehicle_length"/>
@@ -441,6 +443,8 @@
              to="/$(arg TOP_NS)/$(arg RT_NS)/start_active_route"/>
       <remap from="route_state"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+      <remap from="route_event"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
       <remap from="route"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="bsm"
@@ -475,6 +479,8 @@
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/ui_instructions"/>
+      <remap from="plugins/controlling_plugin"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugin"/>
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>
