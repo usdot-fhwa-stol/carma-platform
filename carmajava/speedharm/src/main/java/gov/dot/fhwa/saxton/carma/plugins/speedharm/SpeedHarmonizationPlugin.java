@@ -174,7 +174,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   }
 
   private void planComplexManeuver(Trajectory traj, double start, double end) {
-    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(this,
+    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(this, this,
         pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
         pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), AccStrategyManager.newAccStrategy(), start,
         end, 1.0, // Dummy values for now. TODO: Replace

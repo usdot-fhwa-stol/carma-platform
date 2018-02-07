@@ -73,6 +73,7 @@ public class FollowerState implements IPlatooningState {
                 return new TrajectoryPlanningResponse();
             }
             PlatooningManeuver maneuver = new PlatooningManeuver(
+                    plugin_,
                     plugin_.commandGenerator,
                     pluginServiceLocator_.getManeuverPlanner().getManeuverInputs(),
                     pluginServiceLocator_.getManeuverPlanner().getGuidanceCommands(),

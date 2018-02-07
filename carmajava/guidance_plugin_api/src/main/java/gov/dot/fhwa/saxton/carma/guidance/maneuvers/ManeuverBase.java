@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
@@ -30,7 +31,15 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     protected IManeuverInputs                   inputs_;
     protected IGuidanceCommands                 commands_;
     protected ILogger                           log_ = LoggerManager.getLogger();
+    protected final IPlugin                     planner_;
 
+    /**
+     * Constructs a Maneuver and sets the planner's name
+     * @param planner the plugin which planned this maneuver
+     */
+    public ManeuverBase(IPlugin planner) {
+        this.planner_ = planner;
+    }
 
     /**
      * Provides the common planning capability that all maneuvers will need. Concrete maneuver classes
@@ -69,6 +78,11 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     @Override
     public double getEndDistance() {
         return endDist_;
+    }
+    
+    @Override
+    public IPlugin getPlanner() {
+        return planner_;
     }
 
     /**

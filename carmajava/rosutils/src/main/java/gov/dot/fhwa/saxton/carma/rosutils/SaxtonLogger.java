@@ -17,10 +17,13 @@
 package gov.dot.fhwa.saxton.carma.rosutils;
 
 import org.apache.commons.logging.Log;
-import org.ros.RosCore;
+
+import com.google.common.io.Files;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
@@ -37,7 +40,7 @@ public class SaxtonLogger {
   private String source = "NONE";
   private String emptyTag = "NONE";
   private File file = null;
-  private final static String fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")) + ".txt";;
+  private String fileName;
   private final String debugLevel = "DEBUG";
   private final String infoLevel = "INFO";
   private final String warnLevel = "WARN";
@@ -75,9 +78,12 @@ public class SaxtonLogger {
       //Initial setup requires performing 2 commands on the terminal.
       //1) sudo mkdir -p /opt/carma/logs and
       //2) sudo chmod -R ugo+rw /opt/carma
+      //log file name is generated and stored in /opt/carma/configuration/logname.txt
+      BufferedReader br = new BufferedReader(new FileReader("/opt/carma/configuration/logname.txt")); 
+      fileName = br.readLine() + ".txt";
       file = new File("/opt/carma/logs/" + fileName); //TODO: Will see later if needed to be stored in param.
       file.getParentFile().mkdirs();
-
+      br.close();
     } catch (Exception e) {
 
       //Ignore but do log it.

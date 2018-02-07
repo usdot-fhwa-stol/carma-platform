@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Base class for all longitudinal maneuvers, providing the adaptive cruise control (ACC) functionality.
@@ -33,7 +34,8 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     protected double workingAccel_; // m/s^2 that we will actually use
     protected static final double SPEED_EPSILON = 0.0001;
 
-    public LongitudinalManeuver() {
+    public LongitudinalManeuver(IPlugin planner) {
+        super(planner);
         this.accStrategy = AccStrategyManager.newAccStrategy();
     }
 

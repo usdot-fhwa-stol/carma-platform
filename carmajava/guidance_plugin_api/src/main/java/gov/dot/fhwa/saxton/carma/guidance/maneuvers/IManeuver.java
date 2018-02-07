@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
+
 /**
  * Defines an interface to all Maneuver objects.
  */
@@ -45,4 +47,10 @@ public interface IManeuver {
      * @return distance from beginning of the route at which the maneuver is to complete, m
      */
     double getEndDistance();
+
+    /**
+     * Returns IPlugin which was responsible for planning this maneuver
+     * @return the plugin
+     */
+    IPlugin getPlanner();
 }
