@@ -89,7 +89,7 @@ document.getElementById('defaultOpen').click();
 /*
 * Adds a new radio button onto the container.
 */
-function createRadioElement(container, radioId, radioTitle, itemCount, groupName) {
+function createRadioElement(container, radioId, radioTitle, itemCount, groupName, isValid) {
 
     var newInput = document.createElement('input');
     newInput.type = 'radio';
@@ -105,6 +105,13 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
     newLabel.id = 'lbl' + revisedId;
     newLabel.htmlFor = newInput.id.toString();
     newLabel.innerHTML = radioTitle;
+
+    //If this field is false then the UI should mark the button and make it unselectable.
+    if (isValid == false)
+    {
+         newInput.disabled = true;
+         newLabel.innerHTML += '<i class="fas fa-ban"></i>';
+    }
 
     // Add the new elements to the container
     container.appendChild(newInput);

@@ -270,7 +270,7 @@ function showRouteOptions() {
         divRoutes.style.display = 'block'; //Show the route section
 
         for (i = 0; i < myRoutes.length; i++) {
-            createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes');
+            createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes', myRoutes[i].valid);
         }
 
         if (myRoutes.length == 0) {
