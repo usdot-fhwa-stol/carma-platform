@@ -400,6 +400,8 @@ public class RouteWorker {
       currentWaypointIndex++;
       // Check if the route has been completed
       if (currentSegmentIndex >= activeRoute.getSegments().size()) {
+        currentSegmentIndex--; // We are at the end of a route so undo the increment.
+        currentWaypointIndex--;
         handleEvent(WorkerEvent.ROUTE_COMPLETED);
         return;
       }
