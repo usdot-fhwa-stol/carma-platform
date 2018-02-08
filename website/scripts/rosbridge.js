@@ -78,7 +78,6 @@ var listenerPluginAvailability;
 var listenerSystemAlert;
 var isModalPopupShowing = false;
 
-var waitingForGuidanceStartup = false;
 var waitingForRouteStateSegmentStartup = false;
 
 // For Route Timer
@@ -208,19 +207,6 @@ function checkSystemAlerts() {
             case 6: // SHUTDOWN
                 system_ready = false;
                 sessionStorage.setItem('isSystemReady', false);
-                //Added additional logic here, since the system_alert sometimes get published before the route_state.
-                if (message.description.indexOf('LEFT_ROUTE') > 0) {
-                    messageTypeFullDescription = 'You have LEFT THE ROUTE. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                    showModal(true, messageTypeFullDescription, true);
-                }
-                else if (message.description.indexOf('ROUTE_COMPLETED') > 0) {
-                    messageTypeFullDescription = 'ROUTE COMPLETED. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                    showModal(false, messageTypeFullDescription, true);
-                }
-                else {
-                    messageTypeFullDescription = 'System is SHUTTING DOWN. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE. <br/>' + message.description;
-                }
-
                 listenerSystemAlert.unsubscribe();
                 break;
             default:
@@ -636,7 +622,7 @@ function engageGuidance() {
     });
 
     // Call the service and get back the results in the callback.
-    setGuidanceClient.callService(request, async function (result) {
+    setGuidanceClient.callService(request, function (result) {
 
         if (result.guidance_status != newStatus) //NOT SUCCESSFUL.
         {
@@ -646,11 +632,6 @@ function engageGuidance() {
 
         //Set based on returned status, regardless if succesful or not.
         guidance_engaged = Boolean(result.guidance_status);
-
-        //this flag prevents looking at robot_active status while guidance first starts up and begins sending commands to the robot
-        waitingForGuidanceStartup = true;
-        await sleep(1000);
-        waitingForGuidanceStartup = false;
 
         //start the route timer
         startRouteTimer();
@@ -710,7 +691,7 @@ function setCAVButtonState(state) {
 
     switch (state) {
 
-        case 'ENABLED': // equivalent READY after user has made their selection.
+        case 'ENABLED': // equivalent READY where user has selected 1 route and at least 1 plugin. 
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_enabled'; //color to blue
 
@@ -725,16 +706,29 @@ function setCAVButtonState(state) {
 
         case 'DISABLED': // equivalent NOT READY awaiting user selection.
             btnCAVGuidance.disabled = true;
-            btnCAVGuidance.className = 'button_cav button_disabled'; //color to blue
+            btnCAVGuidance.className = 'button_cav button_disabled'; //color to gray
 
             //Update the button title
-            btnCAVGuidance.title = 'CAV Guidance';
+            btnCAVGuidance.title = 'CAV Guidance is disabled.';
             btnCAVGuidance.innerHTML = 'CAV Guidance';
 
             //divCapabilitiesMessage.innerHTML = ''; // leave as is
 
             sessionStorage.setItem('isGuidanceEngaged', false);
             break;
+
+        case 'ACTIVE': 
+            btnCAVGuidance.disabled = false;
+            btnCAVGuidance.className = 'button_cav button_active'; //color to purple
+
+            //Update the button title
+            btnCAVGuidance.title = 'CAV Guidance is now active.';
+            btnCAVGuidance.innerHTML = 'CAV Guidance - ACTIVE <i class="fa fa-check"></i>';
+
+            //divCapabilitiesMessage.innerHTML = ''; // leave as is
+
+            sessionStorage.setItem('isGuidanceEngaged', false);
+            break;           
 
         case 'ENGAGED':
             btnCAVGuidance.disabled = false;
@@ -767,10 +761,6 @@ function setCAVButtonState(state) {
             break;
 
         case 'INACTIVE':  //robot_active is inactive
-
-            if (guidance_engaged == false) //do not override with INACTIVE status if guidance is already disengaged.
-                return;
-
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_inactive'; // color to orange
             btnCAVGuidance.title = 'CAV Guidance status is inactive.';
@@ -826,6 +816,7 @@ function checkGuidanceState() {
                 break;
             case 3: //ACTIVE 
                 messageTypeFullDescription = 'Guidance is now ACTIVE.';
+                setCAVButtonState('ACTIVE');
                 break;
             case 4: //ENGAGED
                 //Set based on returned status, regardless if succesful or not.
@@ -838,9 +829,8 @@ function checkGuidanceState() {
                 showGuidanceEngaged();
                 break;
             case 5: //INACTIVE
-                enableGuidance();
-                if (guidance_engaged)
-                    setCAVButtonState('INACTIVE');
+                //Set based on whatever guidance_state says, regardless if UI has not been engaged yet.  
+                setCAVButtonState('INACTIVE');
                 break;
             case 0: //SHUTDOWN
                 //Show modal popup for Shutdown alerts from Guidance, which is equivalent to Fatal since it cannot restart with this state.
@@ -949,28 +939,13 @@ function checkRobotEnabled() {
         messageType: 'cav_msgs/RobotEnabled'
     });
 
+    //Issue #606 - removed the dependency on UI state on robot_status. Only show on Status tab. 
     listenerRobotStatus.subscribe(function (message) {
         insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
         insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
-
-        //if guidance is just starting up then we don't do anything
-        if (!waitingForGuidanceStartup) {
-
-            // Originally Guidance was not handling robot_status = false and now it is. 
-            // This is just an extra catch/check in case Guidance is not handling this state accordingly. 
-            if (message.robot_active == false) {
-                setCAVButtonState('INACTIVE');
-            }
-            // As for setting it back to engaged, commenting this out based on new GuidanceStateHandler. 
-            // After INACTIVE, guidance_state changes to DRIVERS_READY, ACTIVE and then eventually to ENGAGE. 
-            // Guidance button will be set when guidance_state says so. 
-            //else {
-            //    //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
-            //    setCAVButtonState('ENGAGED');
-            //}
-        }
     });
 }
+
 
 /*
    Log for Diagnostics
