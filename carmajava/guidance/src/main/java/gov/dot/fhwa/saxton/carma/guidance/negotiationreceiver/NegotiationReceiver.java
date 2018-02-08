@@ -186,9 +186,10 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
 
                 double startLocation = proposedLaneChangeStartDist - totalDist;
                 log.debug("V2V", "calculated startLocation = " + startLocation);
-                if (startLocation < mInputs.getDistanceFromRouteStart()) {
+                double locAfterReplan = mInputs.getDistanceFromRouteStart() + 0.1*curSpeed; //assume new trajectory can begin executing in 100 ms
+                if (startLocation < locAfterReplan) {
                     log.warn("V2V", "calculated - insufficient distance for us to slow down. They are "
-                                + (mInputs.getDistanceFromRouteStart() - startLocation) + " m late. Sending NACK.");
+                                + (locAfterReplan - startLocation) + " m late. Sending NACK.");
                     // reject this plan
                     // TODO now it rejects a plan forever, need allow back and forth in future
                     statusPub_.publish(this.buildPlanStatus(id, false));
@@ -196,10 +197,10 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                     return;
                 }
 
-                //build maneuvers for this vehicle; we don't want to account for lag distance in these instructions
+                //build maneuvers for this vehicle
                 double endSlowdown = startLocation + distToDecel;
-                double endConstant = endSlowdown + 4.0*slowSpeed;
-                double endSpeedup = endConstant + distToDecel;
+                double endConstant = endSlowdown + distAtLowerSpeed;
+                double endSpeedup = endConstant + distToAccel;
                 log.debug("MVR", "onPlanReceived: endSlowdown = " + endSlowdown
                             + ", endConstant = " + endConstant + ", endSpeedup = " + endSpeedup);
 
