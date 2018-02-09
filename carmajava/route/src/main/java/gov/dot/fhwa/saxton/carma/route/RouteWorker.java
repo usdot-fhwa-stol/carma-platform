@@ -19,12 +19,16 @@ package gov.dot.fhwa.saxton.carma.route;
 import cav_msgs.*;
 import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.apache.commons.logging.Log;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
+import org.ros.rosjava_geometry.Transform;
+
 import sensor_msgs.NavSatFix;
 import sensor_msgs.NavSatStatus;
 import java.io.File;
@@ -291,25 +295,26 @@ public class RouteWorker {
     if (activeRoute == null) {
       return -1;
     }
-    int count = 0;
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
     log.debug("getValidStartingWPIndex: lat = " + hostVehicleLocation.getLatitude() + ", lon = " + hostVehicleLocation.getLongitude());
-    for (RouteSegment seg : activeRoute.getSegments()) {
-      double crossTrack = seg.crossTrackDistance(hostVehicleLocation);
-      double downTrack = seg.downTrackDistance(hostVehicleLocation);
+    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+    Point3D hostInECEF = gcc.geodesic2Cartesian(hostVehicleLocation, Transform.identity());
+    
+    int count = 0;
+    for (RouteSegment seg: activeRoute.getSegments()) {      
+      RouteWaypoint wp = seg.getDowntrackWaypoint();
+      double crossTrack = seg.crossTrackDistance(hostInECEF);
+      double downTrack = seg.downTrackDistance(hostInECEF);
 
-      log.info("crosstrack to waypoint " + count + " = " + crossTrack);
-
-      if (Math.abs(crossTrack) < maxJoinDistance) {
-        if (count == 0 && downTrack < -0.0 && Math.abs(downTrack) < maxJoinDistance) {
-          return 0;
-        } else if (downTrack > -0.0 && downTrack < seg.length()) {
-          return count + 1;
-        }
+      if (0.0 < downTrack && downTrack <= seg.length()
+          && wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack()) {
+          return count = count + 1; // On valid segment return the index
+      } else if (count == 0 && downTrack < 0.0 && Math.abs(downTrack) < maxJoinDistance
+                  && Math.abs(crossTrack) < maxJoinDistance) {
+        return count; // Before the first waypoint return 0 and we will add a new waypoint on the vehicle
       }
       count++;
     }
-
     return -1;
   }
 
@@ -327,7 +332,12 @@ public class RouteWorker {
     startingWP.setLocation(new Location(hostVehicleLocation)); // Don't want waypoint and vehicle to reference same location object
 
     try {
-      activeRoute.insertWaypoint(startingWP, index);
+      if (index == 0) {
+        activeRoute.insertWaypoint(startingWP, index);
+      } else if (index == -1) {
+        log.info("Could not join the route from the current location");
+        return false;
+      }
     } catch (Exception e) {
       log.info("Exception caught when inserting route starting waypoint Exception = " + e);
       log.info("Could not join the route from the current location");
@@ -338,7 +348,7 @@ public class RouteWorker {
     currentSegment = activeRoute.getSegments().get(index);
     currentSegmentIndex = index;
     currentWaypointIndex = index + 1; // The current waypoint should be the downtrack one
-    downtrackDistance = activeRoute.lengthOfSegments(0, index - 1);
+    downtrackDistance = Math.max(0, activeRoute.lengthOfSegments(0, index - 1) + currentSegment.downTrackDistance(hostVehicleLocation));
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
     handleEvent(WorkerEvent.ROUTE_STARTED);
