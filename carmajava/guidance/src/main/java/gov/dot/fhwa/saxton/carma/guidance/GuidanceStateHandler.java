@@ -118,7 +118,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
             }
         });
 
-        guidanceActiveService = node.newServiceServer("set_guidance_engaged", SetGuidanceActive._TYPE,
+        guidanceActiveService = node.newServiceServer("set_guidance_active", SetGuidanceActive._TYPE,
                 new ServiceResponseBuilder<SetGuidanceActiveRequest, SetGuidanceActiveResponse>() {
                     @Override
                     public void build(SetGuidanceActiveRequest setGuidanceActiveRequest,
@@ -127,6 +127,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
                             stateMachine.processEvent(GuidanceEvent.ACTIVATE);
                             setGuidanceActiveResponse.setGuidanceStatus(stateMachine.getState() == GuidanceState.ACTIVE);
                         } else if (!setGuidanceActiveRequest.getGuidanceActive()) {
+                            // this will trigger deactivate or disengage, here we just use the same name - DISENGAGE
                             stateMachine.processEvent(GuidanceEvent.DISENGAGE);
                             setGuidanceActiveResponse.setGuidanceStatus(false);
                         } else {
