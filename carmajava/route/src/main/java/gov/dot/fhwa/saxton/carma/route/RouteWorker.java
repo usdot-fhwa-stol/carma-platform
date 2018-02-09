@@ -306,7 +306,7 @@ public class RouteWorker {
       double crossTrack = seg.crossTrackDistance(hostInECEF);
       double downTrack = seg.downTrackDistance(hostInECEF);
 
-      if (0.0 < downTrack && downTrack <= seg.length()
+      if (0.0 <= downTrack && downTrack <= seg.length()
           && wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack()) {
           return count = count + 1; // On valid segment return the index
       } else if (count == 0 && downTrack < 0.0 && Math.abs(downTrack) < maxJoinDistance
@@ -322,19 +322,19 @@ public class RouteWorker {
    * Setup the following of a new route starting from the specified waypoint index on the route
    *
    * @param index the index of the first waypoint to start from.
-   *              An additional segment will be added from the vehicle to this starting point
+   *              An additional segment will be added from the vehicle to this starting point if before the first waypoint
    * @return true if able to start route at the specified index
    */
   protected boolean startRouteAtIndex(int index) {
-    // Insert a starting waypoint at the current vehicle location which is connected to the route
-    RouteWaypoint downtrackWP = activeRoute.getWaypoints().get(index);
-    RouteWaypoint startingWP = new RouteWaypoint(downtrackWP); // Deep copy of downtrack waypoint
-    startingWP.setLocation(new Location(hostVehicleLocation)); // Don't want waypoint and vehicle to reference same location object
-
     try {
-      if (index == 0) {
+      if (index == 0) { // If before first segment
+        // Insert a starting waypoint at the current vehicle location which is connected to the route
+        RouteWaypoint downtrackWP = activeRoute.getWaypoints().get(index);
+        RouteWaypoint startingWP = new RouteWaypoint(downtrackWP); // Deep copy of downtrack waypoint
+        startingWP.setLocation(new Location(hostVehicleLocation)); // Don't want waypoint and vehicle to reference same location object
         activeRoute.insertWaypoint(startingWP, index);
-      } else if (index == -1) {
+        index = index + 1; //Update downtrack waypoint index
+      } else if (index == -1) { // If can't join route
         log.info("Could not join the route from the current location");
         return false;
       }
@@ -345,10 +345,10 @@ public class RouteWorker {
       return false;
     }
 
-    currentSegment = activeRoute.getSegments().get(index);
-    currentSegmentIndex = index;
-    currentWaypointIndex = index + 1; // The current waypoint should be the downtrack one
-    downtrackDistance = Math.max(0, activeRoute.lengthOfSegments(0, index - 1) + currentSegment.downTrackDistance(hostVehicleLocation));
+    currentSegmentIndex = index - 1;
+    currentSegment = activeRoute.getSegments().get(currentSegmentIndex);
+    currentWaypointIndex = index; // The current waypoint should be the downtrack one
+    downtrackDistance = Math.max(0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment.downTrackDistance(hostVehicleLocation));
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
 
     handleEvent(WorkerEvent.ROUTE_STARTED);
