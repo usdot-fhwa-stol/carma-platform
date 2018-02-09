@@ -156,7 +156,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
     }
 
@@ -217,7 +217,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);

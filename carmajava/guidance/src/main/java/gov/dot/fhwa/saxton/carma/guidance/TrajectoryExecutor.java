@@ -102,7 +102,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
     }
     
@@ -299,7 +299,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);
