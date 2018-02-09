@@ -310,7 +310,7 @@ public class RouteWorker {
           && wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack()) {
           return count = count + 1; // On valid segment return the index
       } else if (count == 0 && downTrack < 0.0 && Math.abs(downTrack) < maxJoinDistance
-                  && Math.abs(crossTrack) < maxJoinDistance) {
+                 && wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack()) {
         return count; // Before the first waypoint return 0 and we will add a new waypoint on the vehicle
       }
       count++;
