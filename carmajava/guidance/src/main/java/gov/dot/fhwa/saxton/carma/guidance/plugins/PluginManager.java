@@ -237,7 +237,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
 
         for (IPlugin p : getRegisteredPlugins()) {
@@ -476,7 +476,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);
