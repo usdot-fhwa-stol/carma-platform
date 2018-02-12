@@ -31,8 +31,6 @@ import org.ros.node.topic.Subscriber;
 
 import cav_msgs.RobotEnabled;
 
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
