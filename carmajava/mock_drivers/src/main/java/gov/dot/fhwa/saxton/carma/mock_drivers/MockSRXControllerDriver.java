@@ -23,7 +23,6 @@ import cav_srvs.SetEnableRoboticResponse;
 import cav_srvs.SetLightsRequest;
 import cav_srvs.SetLightsResponse;
 import org.ros.exception.ServiceException;
-import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
@@ -32,6 +31,8 @@ import org.ros.node.topic.Subscriber;
 
 import cav_msgs.RobotEnabled;
 
+import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -128,7 +129,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
           }
         });
   }
-
+  
   @Override
   protected void publishData(List<String[]> data) throws IllegalArgumentException {
 
@@ -183,7 +184,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
 
   @Override
   protected List<String> getDriverTypesList() {
-    return new ArrayList<>(Arrays.asList("controller"));
+    return new ArrayList<>(Arrays.asList("lon_controller"));
   }
 
   @Override

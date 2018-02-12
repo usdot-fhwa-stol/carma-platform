@@ -19,7 +19,6 @@ package gov.dot.fhwa.saxton.carma.mock_drivers;
 import cav_msgs.DriverStatus;
 import cav_srvs.*;
 import org.apache.commons.logging.Log;
-import org.ros.exception.ServiceException;
 import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -206,7 +205,8 @@ public abstract class AbstractMockDriver implements IMockDriver {
     driverStatusMsg.setSensor(false);
     driverStatusMsg.setPosition(false);
     driverStatusMsg.setComms(false);
-    driverStatusMsg.setController(false);
+    driverStatusMsg.setLonController(false);
+    driverStatusMsg.setLatController(false);
 
     for (String driverType: getDriverTypesList()) {
       switch (driverType) {
@@ -222,8 +222,11 @@ public abstract class AbstractMockDriver implements IMockDriver {
         case "comms":
           driverStatusMsg.setComms(true);
           break;
-        case "controller":
-          driverStatusMsg.setController(true);
+        case "lon_controller":
+          driverStatusMsg.setLonController(true);
+          break;
+        case "lat_controller":
+          driverStatusMsg.setLatController(true);
           break;
       }
     }
