@@ -50,7 +50,7 @@ var s_get_system_version = 'get_system_version';
 
 var s_get_registered_plugins = 'plugins/get_registered_plugins';
 var s_activate_plugins = 'plugins/activate_plugin';
-var s_set_guidance_engaged = 'set_guidance_engaged';
+var s_set_guidance_active = 'set_guidance_active';
 
 // Params
 var p_host_instructions = '/saxton_cav/ui/host_instructions';
@@ -64,6 +64,7 @@ var max_log_lines = 100;
 
 var system_ready = false;
 var guidance_engaged = false;
+var guidance_active = false; 
 var route_name = 'No Route Selected';
 
 var ready_counter = 0;
@@ -599,52 +600,54 @@ function enableGuidance() {
 }
 
 /*
- Engage and Disengage Guidance.
+    To activate and de-activate guidance. 
+    NOTE:
+    1) Setting active=true is not the same as engaging. Guidance has to issue engage status based on other criteria.
+    2) Setting active=false is the same as disengaging. 
 */
-function engageGuidance() {
+function activateGuidance() {
 
     //audio-fix needs to be on an actual button click event on the tablet.
     loadAudioElements();
 
-    //Sets the new status OPPOSITE to the current value.
-    var newStatus = !guidance_engaged;
+    ////Sets the new status OPPOSITE to the current value.
+    var newStatus = !guidance_active;
 
     //Call the service to engage guidance.
     var setGuidanceClient = new ROSLIB.Service({
         ros: ros,
-        name: s_set_guidance_engaged,
-        serviceType: 'cav_srvs/SetGuidanceEngaged'
+        name: s_set_guidance_active,
+        serviceType: 'cav_srvs/SetGuidanceActive'
     });
 
     //Setup the request.
     var request = new ROSLIB.ServiceRequest({
-        guidance_engage: newStatus
+        guidance_active: newStatus
     });
 
     // Call the service and get back the results in the callback.
     setGuidanceClient.callService(request, function (result) {
 
-        if (result.guidance_status != newStatus) //NOT SUCCESSFUL.
+        if (result.guidance_active != newStatus) //NOT SUCCESSFUL.
         {
             divCapabilitiesMessage.innerHTML = 'Guidance failed to set the value, please try again.';
             return;
         }
 
         //Set based on returned status, regardless if succesful or not.
-        guidance_engaged = Boolean(result.guidance_status);
+        guidance_active = Boolean(result.guidance_status);
 
-        //start the route timer
-        startRouteTimer();
-
-        //Update Guidance button and checkAvailability.
-        showGuidanceEngaged();
-
+        //When active = false, this is equivalent to disengaging guidance. 
+        if (newStatus == false)
+        {
+            guidance_engaged = false;
+            showGuidanceEngaged();
+        }
         //Open to DriveView tab after engaging
-        if (result.guidance_status == 'true')
+        if (guidance_active == true)
             openTab(event, 'divDriverView');
     });
 }
-
 
 /*
     Update the button style when guidance is engaged/disengaged.
@@ -748,8 +751,6 @@ function setCAVButtonState(state) {
             break;
 
         case 'DISENGAGED':
-            guidance_engaged = false;
-
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_disabled';
 
@@ -823,7 +824,7 @@ function checkGuidanceState() {
                 guidance_engaged = true;
 
                 //start the route timer - skipped since it may be already restarted
-                ////startRouteTimer();
+                startRouteTimer();
 
                 //Update Guidance button and checkAvailability.
                 showGuidanceEngaged();

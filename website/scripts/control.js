@@ -433,6 +433,7 @@ function closeModal(action) {
 
             //Clear global variables
             guidance_engaged = false;
+            guidance_active = false;
             route_name = 'No Route Selected';
             ready_counter = 0;
             ready_max_trial = 10;
