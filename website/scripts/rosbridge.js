@@ -819,7 +819,6 @@ function checkGuidanceState() {
                 messageTypeFullDescription = 'Guidance is starting up.';
                 break;
             case 2: //DRIVERS_READY
-                //messageTypeFullDescription = 'Guidance received DRIVERS_READY. ';
                 break;
             case 3: //ACTIVE
                
@@ -1090,7 +1089,7 @@ function showUIInstructions() {
     listenerUiInstructions.subscribe(function (message) {
 
         if (message.type == UIInstructionsType.INFO.value) {
-            //divCapabilitiesMessage.innerHTML = message.msg;
+            divCapabilitiesMessage.innerHTML = message.msg;
         }
         else {
             var icon = '';
