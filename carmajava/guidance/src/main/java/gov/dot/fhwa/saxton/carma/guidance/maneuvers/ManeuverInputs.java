@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 import cav_msgs.ExternalObject;
 import cav_msgs.ExternalObjectList;
 import cav_msgs.RouteState;
+import cav_msgs.RoadwayObstacle;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
