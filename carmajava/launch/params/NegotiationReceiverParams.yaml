@@ -1,0 +1,5 @@
+# time that the receiving vehicle needs to spend at the slower speed to create enough gap, sec
+slow_speed_time = 1.0
+
+# should we include the acceleration distance in the total tactic length?
+include_accel_dist = false

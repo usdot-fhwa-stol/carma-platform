@@ -24,6 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
+import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -53,6 +54,8 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     protected Queue<String> replanQueue = new LinkedList<>(); //a task list for replan jobs indicated by planIds
     protected double maxAccel_ = 2.5;
     protected String currentPlanId = null; //the next planId for replan
+    protected boolean includeAccelDist_ = true;
+    protected double slowSpeedTime_ = 4.0;
 
     public NegotiationReceiver(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -64,7 +67,10 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
 
     @Override
     public void onInitialize() {
-        maxAccel_ = pluginServiceLocator.getParameterSource().getDouble("~vehicle_acceleration_limit", 2.5);
+        ParameterSource params = pluginServiceLocator.getParameterSource();
+        maxAccel_ = params.getDouble("~vehicle_acceleration_limit", 2.5);
+        includeAccelDist_ = params.getBoolean("~include_accel_dist", true);
+        slowSpeedTime_ = params.getDouble("~slow_speed_time", 4.0);
         maneuverFactory_ = new SimpleManeuverFactory();
         planner_ = pluginServiceLocator.getManeuverPlanner();
         planSub_ = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
@@ -175,12 +181,12 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 double responseLag = mInputs.getResponseLag();
                 double slowSpeed = 0.8*proposedLaneChangeStartSpeed;
                 double initialLagDist = responseLag * curSpeed; //time to respond to slowdown cmd
-                double distAtLowerSpeed = slowSpeed * 4.0;
+                double distAtLowerSpeed = slowSpeed * slowSpeedTime_;
                 //this will still work in the unlikely case that curSpeed < slowSpeed (shouldn't happen in TO 13 testing)
                 double distToDecel = initialLagDist + 0.5*(curSpeed + slowSpeed) * 0.5*Math.abs(curSpeed - slowSpeed); //2nd 0.5 is because decel = 2 m/s^2
                 double finalLagDist = responseLag * slowSpeed;
                 double distToAccel = finalLagDist + 0.5*(slowSpeed + proposedLaneChangeStartSpeed)*(0.1*proposedLaneChangeStartSpeed);
-                double totalDist = distToDecel + distAtLowerSpeed + distToAccel;
+                double totalDist = distToDecel + distAtLowerSpeed + (includeAccelDist_ ? distToAccel : 0.0);
                 log.debug("V2V", "calculated slowSpeed = " + slowSpeed + ", distAtLowerSpeed = "
                             + distAtLowerSpeed + ", distToDecel = " + distToDecel + ", distToAccel = " + distToAccel
                             + ", totalDist = " + totalDist);
