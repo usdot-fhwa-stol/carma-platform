@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import cav_msgs.ExternalObject;
 import cav_msgs.ExternalObjectList;
+import cav_msgs.RoadwayEnvironment;
 import cav_msgs.RouteState;
 import cav_msgs.RoadwayObstacle;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -48,7 +49,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
     protected ISubscriber<RouteState> routeStateSubscriber_;
     protected ISubscriber<TwistStamped> twistSubscriber_;
-    protected ISubscriber<ExternalObjectList> externalObjectListSubscriber_;
+    protected ISubscriber<RoadwayEnvironment> roadwaySubscriber_;
     protected double distanceDowntrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
@@ -120,10 +121,10 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          */
 
         // TODO: Update to use actual topic provided by sensor fusion
-        externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
-        externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
+        roadwaySubscriber_ = pubSubService.getSubscriberForTopic("objects", RoadwayEnvironment._TYPE);
+        roadwaySubscriber_.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
             @Override
-            public void onMessage(ExternalObjectList msg) {
+            public void onMessage(RoadwayEnvironment msg) {
                 double closestDistance = Double.POSITIVE_INFINITY;
                 RoadwayObstacle frontVehicle = null;
                 for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
@@ -148,8 +149,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
                 // Store our results
                 if (frontVehicle != null) {
-                    frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
-                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
+                    frontVehicleDistance.set(frontVehicle.getObject().getPose().getPose().getPosition().getX());
+                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getObject().getVelocity().getTwist().getLinear().getX());
                 } else {
                     frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
                     frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
