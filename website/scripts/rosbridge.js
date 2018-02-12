@@ -65,6 +65,7 @@ var max_log_lines = 100;
 var system_ready = false;
 var guidance_engaged = false;
 var guidance_active = false; 
+var guidance_state = 0;
 var route_name = 'No Route Selected';
 
 var ready_counter = 0;
@@ -583,6 +584,9 @@ function activatePlugin(id) {
 */
 function enableGuidance() {
 
+    //Subscribe to guidance/state.
+    checkGuidanceState();
+
     var cntSelected = getCheckboxesSelected();
 
     //If more than on plugin is selected, enable button.
@@ -627,16 +631,17 @@ function activateGuidance() {
 
     // Call the service and get back the results in the callback.
     setGuidanceClient.callService(request, function (result) {
-
-        if (result.guidance_active != newStatus) //NOT SUCCESSFUL.
+ 
+        if (result.guidance_status != newStatus) //NOT SUCCESSFUL.
         {
+            
             divCapabilitiesMessage.innerHTML = 'Guidance failed to set the value, please try again.';
             return;
         }
 
         //Set based on returned status, regardless if succesful or not.
         guidance_active = Boolean(result.guidance_status);
-
+                
         //When active = false, this is equivalent to disengaging guidance. 
         if (newStatus == false)
         {
@@ -806,16 +811,18 @@ function checkGuidanceState() {
     */
     listenerGuidanceState.subscribe(function (message) {
 
-        var messageTypeFullDescription = '';
+        var messageTypeFullDescription = divCapabilitiesMessage.innerHTML;
+        guidance_state = message.state;
 
         switch (message.state) {
             case 1: //STARTUP
                 messageTypeFullDescription = 'Guidance is starting up.';
                 break;
             case 2: //DRIVERS_READY
-                messageTypeFullDescription = 'Guidance received DRIVERS_READY. ';
+                //messageTypeFullDescription = 'Guidance received DRIVERS_READY. ';
                 break;
-            case 3: //ACTIVE 
+            case 3: //ACTIVE
+               
                 messageTypeFullDescription = 'Guidance is now ACTIVE.';
                 setCAVButtonState('ACTIVE');
                 break;
@@ -1083,7 +1090,7 @@ function showUIInstructions() {
     listenerUiInstructions.subscribe(function (message) {
 
         if (message.type == UIInstructionsType.INFO.value) {
-            divCapabilitiesMessage.innerHTML = message.msg;
+            //divCapabilitiesMessage.innerHTML = message.msg;
         }
         else {
             var icon = '';
@@ -1148,8 +1155,9 @@ function checkRouteInfo() {
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
-        if (message.event == 3) //ROUTE_COMPLETED=3
+        if (message.event == 3 && guidance_state != 2) //ROUTE_COMPLETED=3 && guidance_state != DRIVERS_READY
         {
+            //alert(guidance_state);
             //if (listenerSystemAlert != 'undefined')
             //    listenerSystemAlert.unsubscribe();
             showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
@@ -1737,11 +1745,12 @@ function evaluateNextStep() {
 */
 window.onload = function () {
 
+  
     //Check if localStorage/sessionStorage is available.
     if (typeof (Storage) !== 'undefined') {
 
         if (!SVG.supported) {
-            alert('SVG not supported. Some images will not be displayed.');
+            console.log('SVG not supported. Some images will not be displayed.');
         }
 
         // Store CurrentPage.
