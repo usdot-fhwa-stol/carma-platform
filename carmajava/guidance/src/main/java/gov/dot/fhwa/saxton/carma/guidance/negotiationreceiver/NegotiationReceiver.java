@@ -163,33 +163,48 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 double proposedLaneChangeStartDist = Double.parseDouble(splitInput[0].split(":")[1]);
                 double proposedLaneChangeStartSpeed = Double.parseDouble(splitInput[1].split(":")[1]);
 
-                // Assume the neighbor vehicle is travelling exactly beside us at the same speed when following mvrs begin.
+                // Assume the neighbor vehicle is travelling exactly beside us at the same speed and forward vehicle
+                // is also travelling at our speed when following mvrs begin.
                 // We first need to slow down fairly quickly while the neighbor vehicle waits (continues to cruise).
-                // Once the gap opens enough, then the neighbor vehicle changes lanes (assume already have
+                // Once the gap to fwd vehicle opens enough, then the neighbor vehicle changes lanes (assume already have
                 // the right gap in front of him, since we presumably did) while we speed up again to his original
                 // cruising speed to follow him. ACC will be a handy feature here!
                 //
-                // So that he can start his lane change immediately upon crossing the threshold of the new FutureLongitudinalManeuver space,
-                // because we have already slowed to open the gap for him. For now, assume the gap is 1 sec, so we need
-                // to double that (vehicle length is negligible if we have ACC working).  That means adding 1 sec over, say, 5
-                // sec to make it smooth, or operating at 80% of our current speed for 5 sec.  To get to that lower speed,
-                // we assume we can decel at 2 m/s^2. At 10 m/s the slowdown can be achieved in 1 sec. At 35 m/s we will take
-                // 3.5 sec to reach the lower speed.  Since this decel time will be widening the gap somewhat, they can probably
-                // live with constant speed for only 4 sec, we accel back to the beginning speed.
+                // So that he can start his lane change immediately upon crossing the threshold of the new
+                // FutureLongitudinalManeuver space, we need to complete our slowing & gap growth before that point.
+                // For now, assume the gap is 1 sec, so we need
+                // to double that (vehicle length is negligible if we have ACC working).  We will reduce our speed
+                // to 80% of its initial value to grow the gap.  To get to that lower speed,
+                // we assume we can decel at 2 m/s^2. .
                 IManeuverInputs mInputs = planner_.getManeuverInputs();
+                double accel = 2.0; //assumed conservatively, m/s^2
                 double curSpeed = mInputs.getCurrentSpeed();
                 double responseLag = mInputs.getResponseLag();
                 double slowSpeed = 0.8*proposedLaneChangeStartSpeed;
                 double initialLagDist = responseLag * curSpeed; //time to respond to slowdown cmd
-                double distAtLowerSpeed = slowSpeed * slowSpeedTime_;
+
                 //this will still work in the unlikely case that curSpeed < slowSpeed (shouldn't happen in TO 13 testing)
                 double distToDecel = initialLagDist + 0.5*(curSpeed + slowSpeed) * 0.5*Math.abs(curSpeed - slowSpeed); //2nd 0.5 is because decel = 2 m/s^2
                 double finalLagDist = responseLag * slowSpeed;
-                double distToAccel = finalLagDist + 0.5*(slowSpeed + proposedLaneChangeStartSpeed)*(0.1*proposedLaneChangeStartSpeed);
+                double distToAccel = finalLagDist + 0.5*(slowSpeed + proposedLaneChangeStartSpeed) *
+                                                    0.5*(proposedLaneChangeStartSpeed - slowSpeed);
+
+                double timeToDecel = responseLag + (curSpeed - slowSpeed)/accel;
+                //calculate how big the forward gap is growing while we decelerate and how much more gap we will need
+                // in order to double the gap size
+                double initialGap = 1.0*curSpeed; //assuming 1 sec time gap is reasonable
+                double gapGrowthDuringDecel = curSpeed*timeToDecel - distToDecel; //assumes fwd vehicle going same initial speed
+                double distAtLowerSpeed = 0.0;
+                if (gapGrowthDuringDecel < initialGap) {
+                    distAtLowerSpeed = initialGap - gapGrowthDuringDecel;
+                }
+
                 double totalDist = distToDecel + distAtLowerSpeed + (includeAccelDist_ ? distToAccel : 0.0);
                 log.debug("V2V", "calculated slowSpeed = " + slowSpeed + ", distAtLowerSpeed = "
                             + distAtLowerSpeed + ", distToDecel = " + distToDecel + ", distToAccel = " + distToAccel
-                            + ", totalDist = " + totalDist);
+                            + ", includeAccelDist = " + includeAccelDist_ + ", totalDist = " + totalDist);
+                log.debug("V2V", "initialGap = " + initialGap + ", gapGrowthDuringDecel = " + gapGrowthDuringDecel
+                            + ", timeToDecel = " + timeToDecel);
 
                 double startLocation = proposedLaneChangeStartDist - totalDist;
                 log.debug("V2V", "calculated startLocation = " + startLocation);
