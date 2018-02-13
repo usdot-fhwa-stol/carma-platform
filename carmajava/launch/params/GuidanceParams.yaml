@@ -158,3 +158,7 @@ lane_change_delay_factor: 2.0
 # traveled during a lane change
 # Units: seconds
 lane_change_safety_factor: 2.0
+
+# Double: The amount of time before a lane change operation to allow for other vehicles to respond
+# Units: seconds
+lane_change_notification_time: 1.0
