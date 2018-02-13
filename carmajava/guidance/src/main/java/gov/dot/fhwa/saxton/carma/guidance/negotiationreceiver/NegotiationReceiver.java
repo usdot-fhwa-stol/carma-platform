@@ -78,7 +78,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
         planSub_ = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
         statusPub_ = pubSubService.getPublisherForTopic("plan_status", PlanStatus._TYPE);
         log.info("Negotiation Receiver plugin initialized with includeAccelDist = " + includeAccelDist_ +
-                    "slowSpeedFraction = " + slowSpeedFraction_);
+                    "slowSpeedFraction = " + slowSpeedFraction_ + ", maxAccel = " + maxAccel_);
     }
 
     @Override
@@ -231,7 +231,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
 
                 //create a list of maneuvers that we should execute
                 List<String> maneuversString = new ArrayList<>();
-                maneuversString.add(startLocation + ":" + endSlowdown + ":" + proposedLaneChangeStartSpeed + ":" + slowSpeed);
+                maneuversString.add(startLocation + ":" + endSlowdown + ":" + curSpeed + ":" + slowSpeed);
                 if (distAtLowerSpeed > 0.1) {
                     maneuversString.add(endSlowdown + ":" + endConstant + ":" + slowSpeed + ":" + slowSpeed);
                 }
@@ -253,10 +253,11 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                     // if not it will show a negative status on PlanStatus message and ignore this planId in future
                     if(Math.abs(maneuver.getTargetSpeed() - paramsInDouble[3]) > TARGET_SPEED_EPSILON) {
                         log.warn("V2V", "Cannot plan the proposed maneuvers within accel_max limits. Failed maneuver #" + index
-                                    + ". Sending Ack failure message.");
-                        statusPub_.publish(this.buildPlanStatus(id, false));
-                        planMap.put(id, new LinkedList<>());
-                        return;
+                                    + ". maneuver target speed = " + maneuver.getTargetSpeed());
+                        //            + ". Sending Ack failure message.");
+                        //statusPub_.publish(this.buildPlanStatus(id, false));
+                        //planMap.put(id, new LinkedList<>());
+                        //return;
                     }
                     maneuvers.add(maneuver);
                     ++index;
