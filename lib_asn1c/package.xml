@@ -3,7 +3,7 @@
 	<name>asn1c</name>
 	<version>0.0.1</version>
 	<description>This is asn1c library for DSRC.</description>
-	<maintainer email="qiang@xxx.xxx">qswawrq</maintainer>
+	<maintainer email="carma@xxx.xxx">carma</maintainer>
 	<license>BSD</license>
 	<buildtool_depend>catkin</buildtool_depend>
 </package>

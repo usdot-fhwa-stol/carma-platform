@@ -33,9 +33,9 @@
   <!-- Constants -->
   <!-- Directory of Parameter Files -->
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
-  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/params" doc="Directory of yaml parameter files"/>
   <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
-  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
+  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
   <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
