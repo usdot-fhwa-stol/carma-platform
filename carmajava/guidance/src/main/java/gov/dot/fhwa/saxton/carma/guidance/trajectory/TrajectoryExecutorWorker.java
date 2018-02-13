@@ -47,6 +47,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected Thread complexManeuverThread = new Thread();
   protected double maneuverTickFrequencyHz = 10.0;
   protected ILogger log = LoggerManager.getLogger();
+  cav_msgs.ActiveManeuvers activeManeuversMsg = null;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -68,8 +69,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   private void execute(IManeuver maneuver) {
     log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", "
         + maneuver.getEndDistance() + ") Planned by: " + maneuver.getPlanner().getVersionInfo().componentName());
-    cav_msgs.ActiveManeuvers activeManeuversMsg = activeManeuversPub.newMessage();
     
+    if (activeManeuversMsg == null) {
+      activeManeuversMsg = activeManeuversPub.newMessage();
+    }
+
     if (maneuver instanceof LongitudinalManeuver) {
       if (longitudinalManeuverThread != null) {
         longitudinalManeuverThread.interrupt();
@@ -95,6 +99,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       complexManeuverThread.setName(((IComplexManeuver) maneuver).getManeuverName() + " Runner");
       complexManeuverThread.start();
       // Add maneuver to active maneuvers message
+      activeManeuversMsg = activeManeuversPub.newMessage(); // Clear lateral maneuvers from message
       activeManeuversMsg.setLongitudinalPlugin(maneuver.getPlanner().getVersionInfo().componentName());
       activeManeuversMsg.setLongitudinalManeuver(maneuver.getClass().getSimpleName());
       activeManeuversMsg.setLongitudinalStartDist(maneuver.getStartDistance());

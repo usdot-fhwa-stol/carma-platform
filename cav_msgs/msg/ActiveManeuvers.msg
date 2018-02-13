@@ -1,9 +1,9 @@
 # ActiveManeuvers.msg
 #
-# Lists the details of the lateral and longitudinal plugins currently in control of the vehicle
+# Lists the details of the lateral and longitudinal maneuvers currently in control of the vehicle
 #
 
-### Longitudinal Maneuver details ###
+### Longitudinal Maneuver or Complex Maneuver details ###
 # The plugin responsible for planning the active longitudinal maneuver
 string longitudinal_plugin
 
