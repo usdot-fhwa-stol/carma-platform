@@ -367,8 +367,8 @@
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
         <remap from="plan_status"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/plan_status"/>
-        <remap from="objects"
-               to="/$(arg TOP_NS)/drivers/srx_objects/f_lrr/sensor/objects"/>
+        <remap from="roadway_environment"
+               to="/$(arg TOP_NS)/$(arg RD_NS)/roadway_environment"/>
 
         <!-- Arbitrator Thread-->
         <remap from="route_state"
@@ -461,8 +461,8 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
       <remap from="plugins/activate_plugin"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
-      <remap from="set_guidance_engaged"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_engaged"/>
+      <remap from="set_guidance_active"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
       <remap from="cmd_speed"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
       <remap from="robot_status"
@@ -480,7 +480,8 @@
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/ui_instructions"/>
       <remap from="plugins/controlling_plugin"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugin"/>
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
+             
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>

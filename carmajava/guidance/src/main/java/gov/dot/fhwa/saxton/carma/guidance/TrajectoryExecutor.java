@@ -60,9 +60,9 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         this.commands = commands;
         this.tracking_ = tracking;
 
-        IPublisher<std_msgs.String> controllingPluginPub = pubSubService.getPublisherForTopic("plugins/controlling_plugin", std_msgs.String._TYPE);
+        IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub = pubSubService.getPublisherForTopic("plugins/controlling_plugins", cav_msgs.ActiveManeuvers._TYPE);
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
-        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, controllingPluginPub);
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, activeManeuversPub);
         
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
@@ -102,7 +102,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
     }
     
@@ -299,7 +299,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);

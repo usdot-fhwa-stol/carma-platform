@@ -282,4 +282,8 @@ public class RouteSegment {
   public static RouteSegment fromMessage(cav_msgs.RouteSegment segmentMsg){
     return new RouteSegment(RouteWaypoint.fromMessage(segmentMsg.getPrevWaypoint()),RouteWaypoint.fromMessage(segmentMsg.getWaypoint()));
   }
+
+  @Override public String toString() {
+    return "RouteSegment{ length: " + length + " Uptrack " + uptrackWP + " Downtrack " + downtrackWP + " }";
+  }
 }

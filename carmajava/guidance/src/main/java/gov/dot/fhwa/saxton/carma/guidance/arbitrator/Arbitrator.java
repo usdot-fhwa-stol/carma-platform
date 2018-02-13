@@ -209,7 +209,7 @@ public class Arbitrator extends GuidanceComponent
   }
 
   @Override
-  public void onRouteActive() {
+  public void onActive() {
     // For now, find the configured lateral and longitudinal plugins
     for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
       if (plugin instanceof CruisingPlugin) {
@@ -603,7 +603,7 @@ public class Arbitrator extends GuidanceComponent
       jobQueue.add(this::onSystemReady);
       break;
     case ACTIVATE:
-      jobQueue.add(this::onRouteActive);
+      jobQueue.add(this::onActive);
       break;
     case DEACTIVATE:
       jobQueue.add(this::onDeactivate);

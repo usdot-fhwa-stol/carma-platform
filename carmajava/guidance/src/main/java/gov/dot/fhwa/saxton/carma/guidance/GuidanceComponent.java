@@ -79,7 +79,7 @@ public abstract class GuidanceComponent implements Runnable {
     /**
      * Get called once route is selected and active
      */
-    public abstract void onRouteActive();
+    public abstract void onActive();
     
     /**
      * Get called once vehicle ACC is engaged

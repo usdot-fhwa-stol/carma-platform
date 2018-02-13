@@ -211,7 +211,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, new OnTrajectoryProgressCallback() {
 
             @Override
@@ -605,7 +605,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);

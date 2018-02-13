@@ -115,7 +115,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
     
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         SetEnableRoboticRequest enableReq = enableRoboticService.newMessage();
         enableReq.setSet((byte) 1);
 
@@ -294,7 +294,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);

@@ -269,19 +269,23 @@ div.message_box {
 }
 
 .button_enabled {
-    background-color: cornflowerblue;
+    background-color: cornflowerblue; /* Blue */
 }
 
 .button_engaged {
-    background-color: #4CAF50; /* Green; */
+    background-color: #4CAF50; /* Green */
 }
 
 .button_disengaged {
-    background-color: #b32400; /* Red; */
+    background-color: #b32400; /* Red */
+}
+
+.button_active {
+    background-color: #8600b3; /* Purple */
 }
 
 .button_inactive {
-    background-color: #ff6600; /*orange*/
+    background-color: #ff6600; /* Orange */
 }
 
 /*** UI Instructions ***/
