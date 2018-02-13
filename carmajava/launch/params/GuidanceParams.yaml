@@ -161,4 +161,4 @@ lane_change_safety_factor: 2.0
 
 # Double: The amount of time before a lane change operation to allow for other vehicles to respond
 # Units: seconds
-lane_change_notification_time: 3.5
+lane_change_notification_time: 4.0
