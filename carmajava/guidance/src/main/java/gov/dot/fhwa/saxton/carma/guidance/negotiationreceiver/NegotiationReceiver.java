@@ -164,7 +164,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
             if(plan.getType().getType() == PlanType.CHANGE_LANE_LEFT || plan.getType().getType() == PlanType.CHANGE_LANE_RIGHT) {
                 String[] splitInput = planInputs.split(", ");
                 double proposedLaneChangeStartDist = Double.parseDouble(splitInput[0].split(":")[1]);
-                double proposedLaneChangeStartSpeed = Double.parseDouble(splitInput[1].split(":")[1]);
+                double proposedLaneChangeStartSpeed = Double.parseDouble(splitInput[1].split(":")[1]) - TARGET_SPEED_EPSILON;
 
                 // Assume the neighbor vehicle is travelling exactly beside us at the same speed and forward vehicle
                 // is also travelling at our speed when following mvrs begin.
