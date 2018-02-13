@@ -120,7 +120,6 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          * data is available in those data publications.
          */
 
-        // TODO: Update to use actual topic provided by sensor fusion
         roadwaySubscriber_ = pubSubService.getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
         roadwaySubscriber_.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
             @Override
