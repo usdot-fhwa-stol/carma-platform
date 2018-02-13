@@ -192,7 +192,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 double initialLagDist = responseLag * initialSpeed; //time to respond to slowdown cmd
 
                 //this will still work in the unlikely case that initialSpeed < slowSpeed (shouldn't happen in TO 13 testing)
-                double distToDecel = initialLagDist + 0.5*(initialSpeed + slowSpeed) * 0.5*Math.abs(initialSpeed - slowSpeed); //2nd 0.5 is because decel = 2 m/s^2
+                double distToDecel = initialLagDist + 0.5*(initialSpeed + slowSpeed) * Math.abs(initialSpeed - slowSpeed)/accel;
                 double finalLagDist = responseLag * slowSpeed;
                 double distToAccel = finalLagDist + 0.5*(slowSpeed + proposedLaneChangeStartSpeed) *
                                                     0.5*(proposedLaneChangeStartSpeed - slowSpeed);
