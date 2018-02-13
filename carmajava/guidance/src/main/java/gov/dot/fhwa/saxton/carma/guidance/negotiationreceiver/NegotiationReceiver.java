@@ -56,6 +56,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     protected String currentPlanId = null; //the next planId for replan
     protected boolean includeAccelDist_ = true;
     protected double slowSpeedFraction_ = 0.8;
+    protected double initialTimeGap_ = 1.0;
 
     public NegotiationReceiver(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -71,6 +72,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
         maxAccel_ = params.getDouble("~vehicle_acceleration_limit", 2.5);
         includeAccelDist_ = params.getBoolean("~include_accel_dist", true);
         slowSpeedFraction_ = params.getDouble("~slow_speed_fraction", 0.8);
+        initialTimeGap_ = params.getDouble("~initial_time_gap", 1.0);
         maneuverFactory_ = new SimpleManeuverFactory();
         planner_ = pluginServiceLocator.getManeuverPlanner();
         planSub_ = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
@@ -193,11 +195,11 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 double timeToDecel = responseLag + (curSpeed - slowSpeed)/accel;
                 //calculate how big the forward gap is growing while we decelerate and how much more gap we will need
                 // in order to double the gap size
-                double initialGap = 1.0*curSpeed; //assuming 1 sec time gap is reasonable
+                double initialGap = initialTimeGap_*curSpeed;
                 double gapGrowthDuringDecel = curSpeed*timeToDecel - distToDecel; //assumes fwd vehicle going same initial speed
                 double distAtLowerSpeed = 0.0;
                 if (gapGrowthDuringDecel < initialGap) {
-                    distAtLowerSpeed = initialGap - gapGrowthDuringDecel;
+                    distAtLowerSpeed = (initialGap - gapGrowthDuringDecel)/(curSpeed - slowSpeed)*slowSpeed;
                 }
 
                 double totalDist = distToDecel + distAtLowerSpeed + (includeAccelDist_ ? distToAccel : 0.0);

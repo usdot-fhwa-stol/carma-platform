@@ -1,5 +1,0 @@
-# should we include the acceleration distance in the total tactic length?
-include_accel_dist = false
-
-# the fraction of desired speed that we will slow down to in order to grow the gap for a merge
-slow_speed_fraction = 0.8
