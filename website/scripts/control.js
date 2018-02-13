@@ -110,7 +110,7 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
     if (isValid == false)
     {
          newInput.disabled = true;
-         newLabel.innerHTML += '<i class="fas fa-ban"></i>';
+         newLabel.innerHTML += '&nbsp; <i class="fa fa-ban" style="color:#b32400";></i>';
     }
 
     // Add the new elements to the container
@@ -444,7 +444,7 @@ function closeModal(action) {
             //clear sections
             setSpeedometer(0);
             document.getElementById('divSpeedCmdValue').innerHTML = '0';
-            document.getElementById('divCapabilitiesMessage').innerHTML = '';
+            document.getElementById('divCapabilitiesMessage').innerHTML = 'Please select a route.';
             clearTable('tblSecondA');
 
             // Get the element with id="defaultOpen" and click on it

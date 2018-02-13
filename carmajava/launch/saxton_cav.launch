@@ -461,8 +461,8 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
       <remap from="plugins/activate_plugin"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
-      <remap from="set_guidance_engaged"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_engaged"/>
+      <remap from="set_guidance_active"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
       <remap from="cmd_speed"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
       <remap from="robot_status"
