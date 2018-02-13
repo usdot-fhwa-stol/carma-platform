@@ -175,31 +175,36 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 //
                 // So that he can start his lane change immediately upon crossing the threshold of the new
                 // FutureLongitudinalManeuver space, we need to complete our slowing & gap growth before that point.
-                // For now, assume the gap is 1 sec, so we need
-                // to double that (vehicle length is negligible if we have ACC working).  We will reduce our speed
-                // to 80% of its initial value to grow the gap.  To get to that lower speed,
-                // we assume we can decel at 2 m/s^2. .
+                // We need to double the time gap (vehicle length is negligible if we have ACC working).  We will reduce our speed
+                // to some fraction of its initial value to grow the gap.  To get to that lower speed,
+                // we assume we can decel at 80% of our maximum allowed acceleration.
+                //
+                // This planning may be occurring well uptrack of where the maneuver actually needs to occur, so we
+                // cannot assume that our current speed is relevant.  What we will assume is that we will be going
+                // roughly the same speed that the merging vehicle thinks it will be going at the beginning of its lane
+                // change.  This speed will be our "default" speed through that part of the route (what we would be
+                // doing if not for this slowdown interruption).
                 IManeuverInputs mInputs = planner_.getManeuverInputs();
-                double accel = 2.0; //assumed conservatively, m/s^2
-                double curSpeed = mInputs.getCurrentSpeed();
+                double accel = 0.8*maxAccel_; //assumed conservatively, m/s^2
+                double initialSpeed = 1.1*proposedLaneChangeStartSpeed; //allows extra distance for some control error
                 double responseLag = mInputs.getResponseLag();
                 double slowSpeed = slowSpeedFraction_*proposedLaneChangeStartSpeed;
-                double initialLagDist = responseLag * curSpeed; //time to respond to slowdown cmd
+                double initialLagDist = responseLag * initialSpeed; //time to respond to slowdown cmd
 
-                //this will still work in the unlikely case that curSpeed < slowSpeed (shouldn't happen in TO 13 testing)
-                double distToDecel = initialLagDist + 0.5*(curSpeed + slowSpeed) * 0.5*Math.abs(curSpeed - slowSpeed); //2nd 0.5 is because decel = 2 m/s^2
+                //this will still work in the unlikely case that initialSpeed < slowSpeed (shouldn't happen in TO 13 testing)
+                double distToDecel = initialLagDist + 0.5*(initialSpeed + slowSpeed) * 0.5*Math.abs(initialSpeed - slowSpeed); //2nd 0.5 is because decel = 2 m/s^2
                 double finalLagDist = responseLag * slowSpeed;
                 double distToAccel = finalLagDist + 0.5*(slowSpeed + proposedLaneChangeStartSpeed) *
                                                     0.5*(proposedLaneChangeStartSpeed - slowSpeed);
 
-                double timeToDecel = responseLag + (curSpeed - slowSpeed)/accel;
+                double timeToDecel = responseLag + Math.abs(initialSpeed - slowSpeed)/accel;
                 //calculate how big the forward gap is growing while we decelerate and how much more gap we will need
                 // in order to double the gap size
-                double initialGap = initialTimeGap_*curSpeed;
-                double gapGrowthDuringDecel = curSpeed*timeToDecel - distToDecel; //assumes fwd vehicle going same initial speed
+                double initialGap = initialTimeGap_*proposedLaneChangeStartSpeed;
+                double gapGrowthDuringDecel = initialSpeed*timeToDecel - distToDecel; //assumes fwd vehicle going same initial speed
                 double distAtLowerSpeed = 0.0;
                 if (gapGrowthDuringDecel < initialGap) {
-                    distAtLowerSpeed = (initialGap - gapGrowthDuringDecel)/(curSpeed - slowSpeed)*slowSpeed;
+                    distAtLowerSpeed = (initialGap - gapGrowthDuringDecel)/Math.abs(initialSpeed - slowSpeed)*slowSpeed;
                 }
 
                 double totalDist = distToDecel + distAtLowerSpeed + (includeAccelDist_ ? distToAccel : 0.0);
@@ -211,7 +216,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
 
                 double startLocation = proposedLaneChangeStartDist - totalDist;
                 log.debug("V2V", "calculated startLocation = " + startLocation);
-                double locAfterReplan = mInputs.getDistanceFromRouteStart() + 0.1*curSpeed; //assume new trajectory can begin executing in 100 ms
+                double locAfterReplan = mInputs.getDistanceFromRouteStart() + 0.1*initialSpeed; //assume new trajectory can begin executing in 100 ms
                 if (startLocation < locAfterReplan) {
                     log.warn("V2V", "calculated - insufficient distance for us to slow down. They are "
                                 + (locAfterReplan - startLocation) + " m late. Sending NACK.");
@@ -231,7 +236,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
 
                 //create a list of maneuvers that we should execute
                 List<String> maneuversString = new ArrayList<>();
-                maneuversString.add(startLocation + ":" + endSlowdown + ":" + curSpeed + ":" + slowSpeed);
+                maneuversString.add(startLocation + ":" + endSlowdown + ":" + initialSpeed + ":" + slowSpeed);
                 if (distAtLowerSpeed > 0.1) {
                     maneuversString.add(endSlowdown + ":" + endConstant + ":" + slowSpeed + ":" + slowSpeed);
                 }
