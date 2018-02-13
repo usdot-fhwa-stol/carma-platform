@@ -232,7 +232,9 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 //create a list of maneuvers that we should execute
                 List<String> maneuversString = new ArrayList<>();
                 maneuversString.add(startLocation + ":" + endSlowdown + ":" + proposedLaneChangeStartSpeed + ":" + slowSpeed);
-                maneuversString.add(endSlowdown + ":" + endConstant + ":" + slowSpeed + ":" + slowSpeed);
+                if (distAtLowerSpeed > 0.1) {
+                    maneuversString.add(endSlowdown + ":" + endConstant + ":" + slowSpeed + ":" + slowSpeed);
+                }
                 maneuversString.add(endConstant + ":" + endSpeedup + ":" + slowSpeed + ":" + proposedLaneChangeStartSpeed);
 
                 //attempt to plan each maneuver
