@@ -35,7 +35,7 @@ import java.util.List;
 public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected GuidanceCommands commands;
   protected List<PctCallback> callbacks = new ArrayList<>();
-  protected IPublisher<std_msgs.String> controllingPluginPublisher;
+  protected IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub;
   protected double downtrackDistance = 0.0;
   protected Trajectory currentTrajectory = null;
   protected Trajectory nextTrajectory = null;
@@ -47,6 +47,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected Thread complexManeuverThread = new Thread();
   protected double maneuverTickFrequencyHz = 10.0;
   protected ILogger log = LoggerManager.getLogger();
+  cav_msgs.ActiveManeuvers activeManeuversMsg = null;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -59,15 +60,20 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, IPublisher<std_msgs.String> controllingPluginPub) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
-    this.controllingPluginPublisher = controllingPluginPub;
+    this.activeManeuversPub = activeManeuversPub;
   }
 
   private void execute(IManeuver maneuver) {
     log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", "
         + maneuver.getEndDistance() + ") Planned by: " + maneuver.getPlanner().getVersionInfo().componentName());
+    
+    if (activeManeuversMsg == null) {
+      activeManeuversMsg = activeManeuversPub.newMessage();
+    }
+
     if (maneuver instanceof LongitudinalManeuver) {
       if (longitudinalManeuverThread != null) {
         longitudinalManeuverThread.interrupt();
@@ -77,6 +83,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       longitudinalManeuverThread = new Thread(runner);
       longitudinalManeuverThread.setName("Longitudinal Maneuver Runner");
       longitudinalManeuverThread.start();
+      // Add maneuver to active maneuvers message
+      activeManeuversMsg.setLongitudinalPlugin(maneuver.getPlanner().getVersionInfo().componentName());
+      activeManeuversMsg.setLongitudinalManeuver(maneuver.getClass().getSimpleName());
+      activeManeuversMsg.setLongitudinalStartDist(maneuver.getStartDistance());
+      activeManeuversMsg.setLongitudinalEndDist(maneuver.getEndDistance());
     } else if (maneuver instanceof IComplexManeuver) {
       if (complexManeuverThread != null) {
         complexManeuverThread.interrupt();
@@ -87,6 +98,12 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       complexManeuverThread = new Thread(runner);
       complexManeuverThread.setName(((IComplexManeuver) maneuver).getManeuverName() + " Runner");
       complexManeuverThread.start();
+      // Add maneuver to active maneuvers message
+      activeManeuversMsg = activeManeuversPub.newMessage(); // Clear lateral maneuvers from message
+      activeManeuversMsg.setLongitudinalPlugin(maneuver.getPlanner().getVersionInfo().componentName());
+      activeManeuversMsg.setLongitudinalManeuver(maneuver.getClass().getSimpleName());
+      activeManeuversMsg.setLongitudinalStartDist(maneuver.getStartDistance());
+      activeManeuversMsg.setLongitudinalEndDist(maneuver.getEndDistance());
     } else {
       if (lateralManeuverThread != null) {
         lateralManeuverThread.interrupt();
@@ -97,11 +114,15 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       lateralManeuverThread = new Thread(runner);
       lateralManeuverThread.setName("Lateral Maneuver Runner");
       lateralManeuverThread.start();
+      // Add maneuver to active maneuvers message
+      activeManeuversMsg.setLateralPlugin(maneuver.getPlanner().getVersionInfo().componentName());
+      activeManeuversMsg.setLateralManeuver(maneuver.getClass().getSimpleName());
+      activeManeuversMsg.setLateralStartDist(maneuver.getStartDistance());
+      activeManeuversMsg.setLateralEndDist(maneuver.getEndDistance());
     }
-    // Notify ui of plugin in charge of current maneuver
-    std_msgs.String controllingPluginMsg = controllingPluginPublisher.newMessage();
-    controllingPluginMsg.setData(maneuver.getPlanner().getVersionInfo().componentName());
-    controllingPluginPublisher.publish(controllingPluginMsg);
+
+    // Notify ui of changes to active maneuvers
+    activeManeuversPub.publish(activeManeuversMsg);
   }
 
   /**
@@ -128,6 +149,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       log.debug("TrajectoryExecutorWorker starting longitudinal maneuver");
       execute(currentLongitudinalManeuver);
     }
+
+
   }
 
   private void checkAndStartNextLateralManeuver() {
