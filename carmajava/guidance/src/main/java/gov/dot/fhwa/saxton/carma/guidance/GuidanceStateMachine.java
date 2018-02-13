@@ -53,6 +53,9 @@ public class GuidanceStateMachine {
         if(guidance_event == GuidanceEvent.PANIC) {
             guidance_state.set(GuidanceState.SHUTDOWN);
             action = GuidanceAction.PANIC_SHUTDOWN;
+        } else if(guidance_event == GuidanceEvent.SHUTDOWN) {
+            guidance_state.set(GuidanceState.SHUTDOWN);
+            action = GuidanceAction.SHUTDOWN;
         } else {
             switch (old_state) {
             case STARTUP:
@@ -62,7 +65,7 @@ public class GuidanceStateMachine {
                 }
                 break;
             case DRIVERS_READY:
-                if(guidance_event == GuidanceEvent.ACTIVATE_ROUTE) {
+                if(guidance_event == GuidanceEvent.ACTIVATE) {
                     guidance_state.set(GuidanceState.ACTIVE);
                     action = GuidanceAction.ACTIVATE;
                 }

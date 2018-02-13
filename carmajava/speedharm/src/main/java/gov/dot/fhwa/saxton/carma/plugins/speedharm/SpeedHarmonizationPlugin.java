@@ -49,6 +49,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   protected long timestepDuration = 1000;
   protected double minimumManeuverLength = 10.0;
   protected double maxAccel = 2.0;
+  protected long maneuverTimeout = 3000; //ms
 
   protected StatusUpdater statusUpdater = null;
   protected Thread statusUpdaterThread = null;
@@ -83,7 +84,14 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_min_maneuver_length",
         10.0);
     maxAccel = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_max_accel", 2.0);
+    maneuverTimeout = pluginServiceLocator.getParameterSource().getInteger("~speed_harm_maneuver_timeout", 3000);
 
+    log.info("LoadedParam: infrastructure_server_url: " + serverUrl);
+    log.info("LoadedParam: vehicle_id: " + vehicleId);
+    log.info("LoadedParam: speed_harm_min_maneuver_length: " + minimumManeuverLength);
+    log.info("LoadedParam: speed_harm_max_accel: " + maxAccel);
+    log.info("LoadedParam: speed_harm_maneuver_timeout: " + maneuverTimeout);
+    
     List<HttpMessageConverter<?>> httpMappers = new ArrayList<HttpMessageConverter<?>>();
     MappingJackson2HttpMessageConverter jsonMapper = new MappingJackson2HttpMessageConverter();
     jsonMapper.getObjectMapper().findAndRegisterModules();
@@ -179,6 +187,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
         pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), AccStrategyManager.newAccStrategy(), start,
         end, 1.0, // Dummy values for now. TODO: Replace
         100.0);
+      maneuver.setTimeout(Duration.fromMillis(maneuverTimeout));
 
     boolean accepted = traj.setComplexManeuver(maneuver);
     log.info("Trajectory response to complex maneuver = " + accepted);

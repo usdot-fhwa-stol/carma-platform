@@ -50,7 +50,7 @@ var s_get_system_version = 'get_system_version';
 
 var s_get_registered_plugins = 'plugins/get_registered_plugins';
 var s_activate_plugins = 'plugins/activate_plugin';
-var s_set_guidance_engaged = 'set_guidance_engaged';
+var s_set_guidance_active = 'set_guidance_active';
 
 // Params
 var p_host_instructions = '/saxton_cav/ui/host_instructions';
@@ -64,6 +64,7 @@ var max_log_lines = 100;
 
 var system_ready = false;
 var guidance_engaged = false;
+var guidance_active = false; 
 var route_name = 'No Route Selected';
 
 var ready_counter = 0;
@@ -78,7 +79,6 @@ var listenerPluginAvailability;
 var listenerSystemAlert;
 var isModalPopupShowing = false;
 
-var waitingForGuidanceStartup = false;
 var waitingForRouteStateSegmentStartup = false;
 
 // For Route Timer
@@ -208,19 +208,6 @@ function checkSystemAlerts() {
             case 6: // SHUTDOWN
                 system_ready = false;
                 sessionStorage.setItem('isSystemReady', false);
-                //Added additional logic here, since the system_alert sometimes get published before the route_state.
-                if (message.description.indexOf('LEFT_ROUTE') > 0) {
-                    messageTypeFullDescription = 'You have LEFT THE ROUTE. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                    showModal(true, messageTypeFullDescription, true);
-                }
-                else if (message.description.indexOf('ROUTE_COMPLETED') > 0) {
-                    messageTypeFullDescription = 'ROUTE COMPLETED. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                    showModal(false, messageTypeFullDescription, true);
-                }
-                else {
-                    messageTypeFullDescription = 'System is SHUTTING DOWN. <br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE. <br/>' + message.description;
-                }
-
                 listenerSystemAlert.unsubscribe();
                 break;
             default:
@@ -284,7 +271,7 @@ function showRouteOptions() {
         divRoutes.style.display = 'block'; //Show the route section
 
         for (i = 0; i < myRoutes.length; i++) {
-            createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes');
+            createRadioElement(divRoutes, myRoutes[i].routeID, myRoutes[i].routeName, myRoutes.length, 'groupRoutes', myRoutes[i].valid);
         }
 
         if (myRoutes.length == 0) {
@@ -592,11 +579,13 @@ function activatePlugin(id) {
 
 /*
     Enable the Guidance if at least 1 capability is selected.
+    NOTE: This should only be called after route has been selected. 
 */
 function enableGuidance() {
 
     var cntSelected = getCheckboxesSelected();
 
+    //If more than on plugin is selected, enable button.
     if (cntSelected > 0) {
         //If guidance is engage, leave as green.
         //Else if not engaged, set to blue.
@@ -605,63 +594,60 @@ function enableGuidance() {
             divCapabilitiesMessage.innerHTML += '<br/>' + host_instructions;
         }
     }
-    else {
+    else {//else if no plugins have been selected, disable button.
         setCAVButtonState('DISABLED');
     }
 }
 
 /*
- Engage and Disengage Guidance.
+    To activate and de-activate guidance. 
+    NOTE:
+    1) Setting active=true is not the same as engaging. Guidance has to issue engage status based on other criteria.
+    2) Setting active=false is the same as disengaging. 
 */
-function engageGuidance() {
+function activateGuidance() {
 
     //audio-fix needs to be on an actual button click event on the tablet.
     loadAudioElements();
 
-    //Sets the new status OPPOSITE to the current value.
-    var newStatus = !guidance_engaged;
+    ////Sets the new status OPPOSITE to the current value.
+    var newStatus = !guidance_active;
 
     //Call the service to engage guidance.
     var setGuidanceClient = new ROSLIB.Service({
         ros: ros,
-        name: s_set_guidance_engaged,
-        serviceType: 'cav_srvs/SetGuidanceEngaged'
+        name: s_set_guidance_active,
+        serviceType: 'cav_srvs/SetGuidanceActive'
     });
 
     //Setup the request.
     var request = new ROSLIB.ServiceRequest({
-        guidance_engage: newStatus
+        guidance_active: newStatus
     });
 
     // Call the service and get back the results in the callback.
-    setGuidanceClient.callService(request, async function (result) {
+    setGuidanceClient.callService(request, function (result) {
 
-        if (result.guidance_status != newStatus) //NOT SUCCESSFUL.
+        if (result.guidance_active != newStatus) //NOT SUCCESSFUL.
         {
             divCapabilitiesMessage.innerHTML = 'Guidance failed to set the value, please try again.';
             return;
         }
 
         //Set based on returned status, regardless if succesful or not.
-        guidance_engaged = Boolean(result.guidance_status);
+        guidance_active = Boolean(result.guidance_status);
 
-        //this flag prevents looking at robot_active status while guidance first starts up and begins sending commands to the robot
-        waitingForGuidanceStartup = true;
-        await sleep(1000);
-        waitingForGuidanceStartup = false;
-
-        //start the route timer
-        startRouteTimer();
-
-        //Update Guidance button and checkAvailability.
-        showGuidanceEngaged();
-
+        //When active = false, this is equivalent to disengaging guidance. 
+        if (newStatus == false)
+        {
+            guidance_engaged = false;
+            showGuidanceEngaged();
+        }
         //Open to DriveView tab after engaging
-        if (result.guidance_status == 'true')
+        if (guidance_active == true)
             openTab(event, 'divDriverView');
     });
 }
-
 
 /*
     Update the button style when guidance is engaged/disengaged.
@@ -708,7 +694,7 @@ function setCAVButtonState(state) {
 
     switch (state) {
 
-        case 'ENABLED': // equivalent READY after user has made their selection.
+        case 'ENABLED': // equivalent READY where user has selected 1 route and at least 1 plugin. 
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_enabled'; //color to blue
 
@@ -723,16 +709,29 @@ function setCAVButtonState(state) {
 
         case 'DISABLED': // equivalent NOT READY awaiting user selection.
             btnCAVGuidance.disabled = true;
-            btnCAVGuidance.className = 'button_cav button_disabled'; //color to blue
+            btnCAVGuidance.className = 'button_cav button_disabled'; //color to gray
 
             //Update the button title
-            btnCAVGuidance.title = 'CAV Guidance';
+            btnCAVGuidance.title = 'CAV Guidance is disabled.';
             btnCAVGuidance.innerHTML = 'CAV Guidance';
 
             //divCapabilitiesMessage.innerHTML = ''; // leave as is
 
             sessionStorage.setItem('isGuidanceEngaged', false);
             break;
+
+        case 'ACTIVE': 
+            btnCAVGuidance.disabled = false;
+            btnCAVGuidance.className = 'button_cav button_active'; //color to purple
+
+            //Update the button title
+            btnCAVGuidance.title = 'CAV Guidance is now active.';
+            btnCAVGuidance.innerHTML = 'CAV Guidance - ACTIVE <i class="fa fa-check"></i>';
+
+            //divCapabilitiesMessage.innerHTML = ''; // leave as is
+
+            sessionStorage.setItem('isGuidanceEngaged', false);
+            break;           
 
         case 'ENGAGED':
             btnCAVGuidance.disabled = false;
@@ -741,7 +740,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
 
-            divCapabilitiesMessage.innerHTML = 'CAV Guidance is engaged.';
+            divCapabilitiesMessage.innerHTML = 'CAV Guidance is ENGAGED.';
 
             //Set session for when user refreshes
             sessionStorage.setItem('isGuidanceEngaged', true);
@@ -752,8 +751,6 @@ function setCAVButtonState(state) {
             break;
 
         case 'DISENGAGED':
-            guidance_engaged = false;
-
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_disabled';
 
@@ -765,10 +762,6 @@ function setCAVButtonState(state) {
             break;
 
         case 'INACTIVE':  //robot_active is inactive
-
-            if (guidance_engaged == false) //do not override with INACTIVE status if guidance is already disengaged.
-                return;
-
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_inactive'; // color to orange
             btnCAVGuidance.title = 'CAV Guidance status is inactive.';
@@ -803,6 +796,14 @@ function checkGuidanceState() {
     });
 
     // Then we add a callback to be called every time a message is published on this topic.
+    /*
+    uint8 STARTUP = 1
+    uint8 DRIVERS_READY = 2
+    uint8 ACTIVE = 3
+    uint8 ENGAGED = 4
+    uint8 INACTIVE = 5
+    uint8 SHUTDOWN = 0
+    */
     listenerGuidanceState.subscribe(function (message) {
 
         var messageTypeFullDescription = '';
@@ -812,25 +813,25 @@ function checkGuidanceState() {
                 messageTypeFullDescription = 'Guidance is starting up.';
                 break;
             case 2: //DRIVERS_READY
-                messageTypeFullDescription = 'Guidance have the drivers ready. ';
+                messageTypeFullDescription = 'Guidance received DRIVERS_READY. ';
                 break;
-            //case 3: //ACTIVE //TODO: Further discussion with Kyle based on email.
-            //   enableGuidance();
-            //    break;
-            case 5: //INACTIVE
-                enableGuidance();
-                if (guidance_engaged)
-                    setCAVButtonState('INACTIVE');
+            case 3: //ACTIVE 
+                messageTypeFullDescription = 'Guidance is now ACTIVE.';
+                setCAVButtonState('ACTIVE');
                 break;
             case 4: //ENGAGED
                 //Set based on returned status, regardless if succesful or not.
                 guidance_engaged = true;
 
                 //start the route timer - skipped since it may be already restarted
-                ////startRouteTimer();
+                startRouteTimer();
 
                 //Update Guidance button and checkAvailability.
                 showGuidanceEngaged();
+                break;
+            case 5: //INACTIVE
+                //Set based on whatever guidance_state says, regardless if UI has not been engaged yet.  
+                setCAVButtonState('INACTIVE');
                 break;
             case 0: //SHUTDOWN
                 //Show modal popup for Shutdown alerts from Guidance, which is equivalent to Fatal since it cannot restart with this state.
@@ -939,24 +940,13 @@ function checkRobotEnabled() {
         messageType: 'cav_msgs/RobotEnabled'
     });
 
+    //Issue #606 - removed the dependency on UI state on robot_status. Only show on Status tab. 
     listenerRobotStatus.subscribe(function (message) {
         insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
         insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
-
-        //if guidance is just starting up then we don't do anything
-        if (!waitingForGuidanceStartup) {
-
-            //Update the button when Guidance is engaged.
-            if (message.robot_active == false) {
-                setCAVButtonState('INACTIVE');
-            }
-            else {
-                //This is when it changes from inactive back to engaged, after driver double taps the ACC to re-engage.
-                setCAVButtonState('ENGAGED');
-            }
-        }
     });
 }
+
 
 /*
    Log for Diagnostics
@@ -1717,7 +1707,8 @@ function evaluateNextStep() {
 
         showRouteOptions();
         showStatusandLogs();
-        enableGuidance();
+        //enableGuidance(); Should not enable guidance as route has not been selected.
+
     }
     else {
         //ELSE route has been selected and so show plugin page.

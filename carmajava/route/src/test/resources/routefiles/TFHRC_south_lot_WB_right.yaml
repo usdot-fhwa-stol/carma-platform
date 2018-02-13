@@ -11,9 +11,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -26,9 +26,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -42,9 +42,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -58,9 +58,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -74,8 +74,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -88,9 +89,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -104,9 +105,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -122,7 +123,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -138,7 +139,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -154,7 +155,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -170,13 +171,12 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
-# 3rd parking row; need to slow down to allow vehicle in left lane to merge in
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.9545845
@@ -187,7 +187,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -203,12 +203,13 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
+# 3rd parking row; need to slow down to allow vehicle in left lane to merge in
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.9544468
@@ -219,7 +220,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -235,7 +236,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -251,7 +252,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -265,9 +266,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -281,9 +282,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -297,9 +298,9 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW

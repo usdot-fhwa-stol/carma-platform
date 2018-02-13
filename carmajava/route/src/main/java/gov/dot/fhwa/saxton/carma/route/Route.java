@@ -19,6 +19,8 @@ package gov.dot.fhwa.saxton.carma.route;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +37,7 @@ public class Route {
   protected double maxJoinDistance = 20.0;
   protected List<RouteSegment> segments;
   protected List<RouteWaypoint> waypoints;
+  protected boolean valid = false;
 
   /**
    * Default constructor does nothing.
@@ -68,6 +71,7 @@ public class Route {
     cav_msgs.Route routeMsg = factory.newFromType(cav_msgs.Route._TYPE);
     routeMsg.setRouteID(routeID);
     routeMsg.setRouteName(routeName);
+    routeMsg.setValid(valid);
 
     List<cav_msgs.RouteSegment> routeSegmentMsgs = new LinkedList<>();
     for (int i = 0; i < segments.size(); i++) {
@@ -162,6 +166,14 @@ public class Route {
     waypoints.add(index,waypoint);
 
     calculateLength();
+  }
+
+  /**
+   * Returns true if this route can be considered valid for use in host vehicle operation
+   * @return boolean valid status
+   */
+  public boolean isValid() {
+    return this.valid;
   }
 
   /**
@@ -318,6 +330,14 @@ public class Route {
   }
 
   /**
+   * Set the validity status of this route for use in the CARMA platform
+   * @param valid The validity status
+   */
+  public void setValid(boolean valid) {
+    this.valid = valid;
+  }
+
+  /**
    * Returns a list of route segments which span the provided distances infront and behind of the 
    * segment at the specified index.
    * The returned list is in order from back to front.
@@ -387,5 +407,9 @@ public class Route {
       count++;
     }
     return bestSegment;
+  }
+
+  @Override public String toString() {
+    return "Route{ name: " + routeName + " id: " + routeID + " }";
   }
 }
