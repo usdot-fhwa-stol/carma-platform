@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,8 +39,8 @@ public class CarmaVersion {
 
         String name =       "Carma Platform";
         int major =         2;
-        int intermediate =  3;
-        int minor =         5;
+        int intermediate =  4;
+        int minor =         0;
         // Don't touch this, automatically updated
         int build = 0;
         String suffix = "";

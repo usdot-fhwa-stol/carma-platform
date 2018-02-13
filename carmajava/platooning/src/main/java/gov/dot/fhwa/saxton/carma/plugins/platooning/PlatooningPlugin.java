@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -74,8 +74,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
 
     @Override
     public void loop() throws InterruptedException {
-        // TODO add logic to handle STATUS messages in statusQueue
-        Thread.sleep(10000);
+        state.loop();
     }
 
     @Override

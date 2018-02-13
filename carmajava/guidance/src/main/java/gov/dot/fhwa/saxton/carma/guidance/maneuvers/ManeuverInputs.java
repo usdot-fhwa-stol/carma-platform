@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,9 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import cav_msgs.ExternalObject;
 import cav_msgs.ExternalObjectList;
+import cav_msgs.RoadwayEnvironment;
 import cav_msgs.RouteState;
+import cav_msgs.RoadwayObstacle;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
@@ -47,11 +49,12 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
     protected ISubscriber<RouteState> routeStateSubscriber_;
     protected ISubscriber<TwistStamped> twistSubscriber_;
-    protected ISubscriber<ExternalObjectList> externalObjectListSubscriber_;
+    protected ISubscriber<RoadwayEnvironment> roadwaySubscriber_;
     protected double distanceDowntrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
     protected int currentLane_ = 0;
+    protected double vehicleLength_ = 3.0; // m
     protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
     protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
     protected ILogger log;
@@ -78,6 +81,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 desiredTimeGap, minStandoffDistance, exitDistanceFactor));
         double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
         int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
+        vehicleLength_ = node.getParameterTree().getDouble("/saxton_cav/vehicle_length", vehicleLength_);
 
         PidController timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
         MovingAverageFilter movingAverageFilter = new MovingAverageFilter(numSamples);
@@ -116,26 +120,36 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          * data is available in those data publications.
          */
 
-        // TODO: Update to use actual topic provided by sensor fusion
-        externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
-        externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
+        roadwaySubscriber_ = pubSubService.getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
+        roadwaySubscriber_.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
             @Override
-            public void onMessage(ExternalObjectList msg) {
+            public void onMessage(RoadwayEnvironment msg) {
                 double closestDistance = Double.POSITIVE_INFINITY;
-                ExternalObject frontVehicle = null;
-                for (ExternalObject eo : msg.getObjects()) {
-                    // TODO: When sensor fusion publishes relative lane data, ensure object is in HOST_LANE
-                    if (eo.getPose().getPose().getPosition().getX() < closestDistance) {
-                        // If its close than our previous best candidate, update our candidate
-                        frontVehicle = eo;
-                        closestDistance = eo.getPose().getPose().getPosition().getX();
+                RoadwayObstacle frontVehicle = null;
+                for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
+
+                    // TODO This modification to downtrack values calculation should really be based on transforms. 
+                    double frontVehicleDist = 0.5 * vehicleLength_ + obs.getDownTrack() - obs.getObject().getSize().getX() - distanceDowntrack_;
+                    boolean inLane = obs.getPrimaryLane() == currentLane_;
+                    byte[] secondaryLanes = obs.getSecondaryLanes().array();
+                    // Check secondary lanes
+                    for(int i = 0; i < secondaryLanes.length; i++) {
+                        if (inLane)
+                            break;
+                        inLane = secondaryLanes[i] == currentLane_;
+                    }
+                    
+                    if (inLane && frontVehicleDist < closestDistance && frontVehicleDist > -0.0) {
+                        // If it's closer than our previous best candidate, update our candidate
+                        frontVehicle = obs;
+                        closestDistance = frontVehicleDist;
                     }
                 }
 
                 // Store our results
                 if (frontVehicle != null) {
-                    frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
-                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
+                    frontVehicleDistance.set(frontVehicle.getObject().getPose().getPose().getPosition().getX());
+                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getObject().getVelocity().getTwist().getLinear().getX());
                 } else {
                     frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
                     frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
@@ -156,7 +170,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
     }
 
@@ -217,7 +231,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);

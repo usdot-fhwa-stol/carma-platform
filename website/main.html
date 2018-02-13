@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <!--
-  Copyright (C) 2017 LEIDOS.
+  Copyright (C) 2018 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -58,7 +58,7 @@
         <button id="btnConnected" disabled onclick="alert('To be implemented');" ><i class="fa fa-handshake-o" aria-hidden="true" style="color:gray; font-size: 35px;"></i></button>
     </div>
     <div class="tabheader">
-        <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
+        <button id="btnCAVGuidance" onclick="activateGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
     </div>
     <div id="divCapabilities" class="tabcontent">
         <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
@@ -196,6 +196,10 @@
     </audio>
     <audio id="audioAlert3" preload="auto">
         <source src="sound/hurry.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="audioAlert4" preload="auto">
+        <source src="sound/arp.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 </body>

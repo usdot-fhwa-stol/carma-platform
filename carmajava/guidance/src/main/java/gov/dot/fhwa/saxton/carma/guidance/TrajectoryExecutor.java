@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,8 +60,9 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         this.commands = commands;
         this.tracking_ = tracking;
 
+        IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub = pubSubService.getPublisherForTopic("plugins/controlling_plugins", cav_msgs.ActiveManeuvers._TYPE);
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
-        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, activeManeuversPub);
         
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
@@ -101,7 +102,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
     }
     
@@ -298,7 +299,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);

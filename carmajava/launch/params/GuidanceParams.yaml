@@ -65,8 +65,8 @@ required_plugins:
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins: 
-  - Route Following Plugin
   - Speed Harmonization Plugin
+  - Route Following Plugin
   - Negotiation Receiver Plugin
   - Cruising Plugin
 
@@ -158,6 +158,10 @@ lane_change_delay_factor: 2.0
 # traveled during a lane change
 # Units: seconds
 lane_change_safety_factor: 2.0
+
+# Double: The amount of time before a lane change operation to allow for other vehicles to respond
+# Units: seconds
+lane_change_notification_time: 4.0
 
 ##### The following are used by the NegotiationReceiverPlugin
 

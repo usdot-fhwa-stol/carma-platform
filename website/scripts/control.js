@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,7 +89,7 @@ document.getElementById('defaultOpen').click();
 /*
 * Adds a new radio button onto the container.
 */
-function createRadioElement(container, radioId, radioTitle, itemCount, groupName) {
+function createRadioElement(container, radioId, radioTitle, itemCount, groupName, isValid) {
 
     var newInput = document.createElement('input');
     newInput.type = 'radio';
@@ -105,6 +105,13 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
     newLabel.id = 'lbl' + revisedId;
     newLabel.htmlFor = newInput.id.toString();
     newLabel.innerHTML = radioTitle;
+
+    //If this field is false then the UI should mark the button and make it unselectable.
+    if (isValid == false)
+    {
+         newInput.disabled = true;
+         newLabel.innerHTML += '&nbsp; <i class="fa fa-ban" style="color:#b32400";></i>';
+    }
 
     // Add the new elements to the container
     container.appendChild(newInput);
@@ -269,6 +276,8 @@ function showModalNoAck(icon) {
     modalUIInstructionsContent.innerHTML = icon;
     modalUIInstructions.style.display = 'block';
     isModalPopupShowing = true;
+    
+    playSound('audioAlert4', false); 
 
     //hide after 3 seconds.
    setTimeout(function(){
@@ -409,6 +418,7 @@ function closeModal(action) {
     document.getElementById('audioAlert1').pause();
     document.getElementById('audioAlert2').pause();
     document.getElementById('audioAlert3').pause();
+    document.getElementById('audioAlert4').pause();
 
     //alert('modal action:' + action);
 
@@ -423,6 +433,7 @@ function closeModal(action) {
 
             //Clear global variables
             guidance_engaged = false;
+            guidance_active = false;
             route_name = 'No Route Selected';
             ready_counter = 0;
             ready_max_trial = 10;
@@ -433,12 +444,15 @@ function closeModal(action) {
             //clear sections
             setSpeedometer(0);
             document.getElementById('divSpeedCmdValue').innerHTML = '0';
-            document.getElementById('divCapabilitiesMessage').innerHTML = '';
+            document.getElementById('divCapabilitiesMessage').innerHTML = 'Please select a route.';
             clearTable('tblSecondA');
 
             // Get the element with id="defaultOpen" and click on it
             // This needs to be outside a funtion to work.
             document.getElementById('defaultOpen').click();
+
+            //Update CAV buttons state back to Gray
+            setCAVButtonState('DISABLED');
 
             //Evaluate next step
             evaluateNextStep();

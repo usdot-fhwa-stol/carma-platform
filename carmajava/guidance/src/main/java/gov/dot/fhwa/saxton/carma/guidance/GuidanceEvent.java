@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,12 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 public enum GuidanceEvent {
     FOUND_DRIVERS,
-    ACTIVATE_ROUTE,
+    ACTIVATE,
     START_ROUTE,
     FINISH_ROUTE,
     LEFT_ROUTE,
     DISENGAGE,
     ROBOT_DISABLED,
-    PANIC
+    PANIC,
+    SHUTDOWN
 }

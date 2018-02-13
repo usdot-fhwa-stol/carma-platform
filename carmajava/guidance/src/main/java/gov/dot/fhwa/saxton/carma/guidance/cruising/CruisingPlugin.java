@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -170,7 +170,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
    */
   protected double planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
     ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
-    SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory();
+    SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory(this);
     log.info(String.format("Trying to plan maneuver {start=%.2f,end=%.2f,startSpeed=%.2f,endSpeed=%.2f}", startDist, endDist, startSpeed, endSpeed));
     double maneuverEnd = startDist;
     double adjustedEndSpeed = startSpeed;

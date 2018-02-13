@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,7 +79,7 @@ public abstract class GuidanceComponent implements Runnable {
     /**
      * Get called once route is selected and active
      */
-    public abstract void onRouteActive();
+    public abstract void onActive();
     
     /**
      * Get called once vehicle ACC is engaged

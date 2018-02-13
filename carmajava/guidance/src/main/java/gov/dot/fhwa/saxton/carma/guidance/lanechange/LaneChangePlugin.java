@@ -191,8 +191,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             //create empty containers (future compound maneuvers) for the TBD maneuvers to be inserted into
             ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
             IManeuverInputs inputs = planner.getManeuverInputs();
-            futureLatMvr_ = new FutureLateralManeuver(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
-            futureLonMvr_ = new FutureLongitudinalManeuver(inputs, startDistance, startSpeed_, endDistance, endSpeed_);
+            futureLatMvr_ = new FutureLateralManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
+            futureLonMvr_ = new FutureLongitudinalManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
 
             //insert these containers into the trajectory
             if (!traj.addManeuver(futureLatMvr_)  ||  !traj.addManeuver(futureLonMvr_)) {
@@ -272,7 +272,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
         //construct our proposed simple lane change maneuver
         log.info("Creating lane change maneuver");
-        laneChangeMvr_ = new LaneChange();
+        laneChangeMvr_ = new LaneChange(this);
         laneChangeMvr_.setTargetLane(targetLane);
         if (planner.canPlan(laneChangeMvr_, startDist, endDist)) {
             log.info("Planning lane change maneuver...");
@@ -376,13 +376,13 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             double startDist = futureLatMvr_.getLastDistance();
             double endDist = futureLatMvr_.getEndDistance();
             if (endDist - startDist > 0) {
-                LaneKeeping lk = new LaneKeeping();
+                LaneKeeping lk = new LaneKeeping(this);
                 lk.planToTargetDistance(inputs,commands, startDist, endDist);
                 futureLatMvr_.addManeuver(lk);
             }
 
             //fill the whole longitudinal space with a constant speed
-            SteadySpeed ss = new SteadySpeed();
+            SteadySpeed ss = new SteadySpeed(this);
             planner.planManeuver(ss, futureLonMvr_.getStartDistance(), endDist);
             futureLonMvr_.addManeuver(ss);
 

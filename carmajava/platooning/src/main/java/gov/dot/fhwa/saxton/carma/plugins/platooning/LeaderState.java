@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import cav_msgs.MobilityAck;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
  * The LeaderState is a state when the platooning algorithm is enabled and the host vehicle is acting as the leader for zero or many vehicles.
@@ -31,6 +33,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
  */
 public class LeaderState implements IPlatooningState {
     
+    protected static final long DEFAULT_LOOP_SLEEP_MS = 1000;
     protected PlatooningPlugin plugin_;
     protected ILogger log_;
     protected PluginServiceLocator pluginServiceLocator_;
@@ -43,19 +46,41 @@ public class LeaderState implements IPlatooningState {
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
-        if(!pluginServiceLocator_.getRouteService().isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
-            //TODO it may need to send out some mobility messages when the transition happened
-            plugin_.manager.disablePlatooning();
+        RouteService rs = pluginServiceLocator_.getRouteService();
+        TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+            //TODO maybe we need to check the length of the window and require a longer trajectory
+            return tpr;
+        } else {
+            // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
+            // TODO it need to send out some mobility messages to delegate its job
             plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
-            return new TrajectoryPlanningResponse();
         }
-        return new TrajectoryPlanningResponse();
+        return tpr;
     }
 
     @Override
-    public void onReceiveNegotiationRequest(String plan) {
-        // TODO handle JOIN message from other vehicle on its rear
+    public boolean onReceiveNegotiationRequest(String plan) {
+        //handle Join and Leave messages and update with platoon manager accordingly
+        return false;
+    }
+    
+    @Override
+    public void loop() throws InterruptedException {
+        // constantly send Join message if this leader has no member
+        // constantly send Update message if this leader has members
+        try {
+            Thread.sleep(DEFAULT_LOOP_SLEEP_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
+        }
+    }
+    
+    @Override
+    public void onReceivePlanResponse(MobilityAck ack) {
+        // If we received a positive response for our Join message
+        // we change to Follower state and notify arbitrator to replan
     }
     
     @Override

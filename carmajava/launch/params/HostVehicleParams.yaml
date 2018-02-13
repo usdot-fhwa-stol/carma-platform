@@ -13,7 +13,7 @@ vehicle_id: 'saxton_cav_1'
 
 # Double: Host vehicle length
 # Units: Meters
-vehicle_length: 3.1
+vehicle_length: 4.88
 
 # String: Host vehicle make
 vehicle_make: 'Cadillac'
