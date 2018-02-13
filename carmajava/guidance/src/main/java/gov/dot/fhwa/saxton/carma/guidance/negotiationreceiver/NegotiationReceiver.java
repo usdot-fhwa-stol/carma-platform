@@ -55,13 +55,13 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     protected double maxAccel_ = 2.5;
     protected String currentPlanId = null; //the next planId for replan
     protected boolean includeAccelDist_ = true;
-    protected double slowSpeedTime_ = 4.0;
+    protected double slowSpeedFraction_ = 0.8;
 
     public NegotiationReceiver(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
         version.setName("Negotiation Receiver Plugin");
         version.setMajorRevision(1);
-        version.setIntermediateRevision(0);
+        version.setIntermediateRevision(1);
         version.setMinorRevision(0);
     }
 
@@ -70,12 +70,13 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
         ParameterSource params = pluginServiceLocator.getParameterSource();
         maxAccel_ = params.getDouble("~vehicle_acceleration_limit", 2.5);
         includeAccelDist_ = params.getBoolean("~include_accel_dist", true);
-        slowSpeedTime_ = params.getDouble("~slow_speed_time", 4.0);
+        slowSpeedFraction_ = params.getDouble("~slow_speed_fraction", 0.8);
         maneuverFactory_ = new SimpleManeuverFactory();
         planner_ = pluginServiceLocator.getManeuverPlanner();
         planSub_ = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
         statusPub_ = pubSubService.getPublisherForTopic("plan_status", PlanStatus._TYPE);
-        log.info("Negotiation Receiver plugin initialized");
+        log.info("Negotiation Receiver plugin initialized with includeAccelDist = " + includeAccelDist_ +
+                    "slowSpeedFraction = " + slowSpeedFraction_);
     }
 
     @Override
@@ -180,7 +181,7 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                 double accel = 2.0; //assumed conservatively, m/s^2
                 double curSpeed = mInputs.getCurrentSpeed();
                 double responseLag = mInputs.getResponseLag();
-                double slowSpeed = 0.8*proposedLaneChangeStartSpeed;
+                double slowSpeed = slowSpeedFraction_*proposedLaneChangeStartSpeed;
                 double initialLagDist = responseLag * curSpeed; //time to respond to slowdown cmd
 
                 //this will still work in the unlikely case that curSpeed < slowSpeed (shouldn't happen in TO 13 testing)
