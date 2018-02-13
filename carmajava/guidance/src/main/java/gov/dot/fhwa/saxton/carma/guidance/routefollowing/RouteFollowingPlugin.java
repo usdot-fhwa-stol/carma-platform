@@ -55,7 +55,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
     private double laneChangeRateFactor = 0.75;
     private double laneChangeDelayFactor = 1.5;
     private double laneChangeSafetyFactor = 1.5;
-    private double laneChangeNotificationTime = 1.0;
+    private double laneChangeNotificationTime = 3.5;
 
     private static final String LANE_CHANGE_PLUGIN_NAME = "Lane Change Plugin";
     private static final long LONG_SLEEP = 10000;
@@ -74,7 +74,7 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         laneChangeRateFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_rate_factor", 0.75);
         laneChangeDelayFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_delay_factor", 1.5);
         laneChangeSafetyFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_safety_factor", 1.5);
-        laneChangeNotificationTime = pluginServiceLocator.getParameterSource().getDouble("~lane_change_notification_time", 1.0);
+        laneChangeNotificationTime = pluginServiceLocator.getParameterSource().getDouble("~lane_change_notification_time", 3.5);
         log.info("Route Following plugin initialized");
     }
 
@@ -143,8 +143,8 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
             if (laneChangeAtTrajEnd.getLocation() > traj.getEndLocation()) {
                 double speedLimit = routeService.getSpeedLimitAtLocation(laneChangeAtTrajEnd.getLocation()).getLimit();
-                double distanceRequiredForLaneChange = speedLimit * laneChangeDelayFactor
-                        + speedLimit * laneChangeRateFactor + speedLimit * laneChangeSafetyFactor + speedLimit * laneChangeNotificationTime;
+                double distanceRequiredForLaneChange = speedLimit * (laneChangeDelayFactor
+                        + laneChangeRateFactor + laneChangeSafetyFactor + laneChangeNotificationTime);
                 double distanceAvailableForLaneChange = laneChangeAtTrajEnd.getLocation() - traj.getEndLocation();
 
                 if (distanceAvailableForLaneChange < distanceRequiredForLaneChange) {
