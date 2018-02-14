@@ -19,8 +19,10 @@ URDF=false
 LAUNCH=false
 MOCK_DATA=false
 APP=false
+WEB=false;
+SCRIPTS=false;
 
-while getopts h:bpruelmat:c: option
+while getopts h:bpruelmawst:c: option
 do
 	case "${option}"
 	in
@@ -35,6 +37,8 @@ do
 		c) CATKIN_WS=${OPTARG};;
 		m) MOCK_DATA=true;;
 		a) APP=true;;
+		w) WEB=true;;
+		s) SCRIPTS=true;;
 	esac
 done
 
@@ -58,6 +62,8 @@ PARAMS_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/params"
 ROUTES_DIR="${LOCAL_CARMA_DIR}/carmajava/route/src/test/resources/routes"
 URDF_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/urdf"
 MOCK_DATA_DIR="${LOCAL_CARMA_DIR}/carmajava/mock_drivers/src/test/data"
+WEBSITE_DIR="${LOCAL_CARMA_DIR}/website"
+SCRIPTS_DIR="${LOCAL_CARMA_DIR}/engineering_tools"
 
 # Define paths needed on vehicle pc
 CARMA_DIR="/opt/carma"
@@ -73,6 +79,8 @@ if [ ${APP} == true ]; then
 	LAUNCH=true
 	MOCK_DATA=true
 	EXECUTABLES=true
+	WEB=true
+	SCRIPTS=true
 fi
 
 # If we want to copy the executables
@@ -152,14 +160,33 @@ fi
 if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then
 	echo "Trying to copy launch ..."
 	# Copy the launch file to the remote machine using current symlink
-	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	# Create symlink to launch file so that roslaunch will work when package is sourced
+	SYMLINK_FILE="${APP_DIR}/bin/share/carma/saxton_cav.launch"
+	SCRIPT="rm ${SYMLINK_FILE}; ln -s  ${APP_DIR}/launch/saxton_cav.launch ${SYMLINK_FILE}";
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 fi
 
 # If we want to copy mock data files
 if [ ${EVERYTHING} == true ] || [ ${MOCK_DATA} == true ]; then
 	echo "Trying to copy mock_data ..."
 	# Copy the launch file to the remote machine using current symlink
-	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${MOCK_DATA_DIR}" ${USERNAME}@${HOST}:"${APP_DIR}"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${MOCK_DATA_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/mock_data/"
 fi
+
+# If we want to copy website  files
+if [ ${EVERYTHING} == true ] || [ ${WEB} == true ]; then
+	echo "Trying to copy website ..."
+	# Copy the launch file to the remote machine using current symlink
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${WEBSITE_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/html/"
+fi
+
+# If we want to copy mock data files
+if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
+	echo "Trying to copy scripts from engineering tools ..."
+	# Copy the launch file to the remote machine using current symlink
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SCRIPTS_DIR}" ${USERNAME}@${HOST}:"${APP_DIR}"
+fi
+
 
 echo "DONE!"
