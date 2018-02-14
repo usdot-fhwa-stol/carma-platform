@@ -17,8 +17,10 @@ PARAMS=false
 ROUTES=false
 URDF=false
 LAUNCH=false
+MOCK_DATA=false
+APP=false
 
-while getopts h:bpruelt:c: option
+while getopts h:bpruelmat:c: option
 do
 	case "${option}"
 	in
@@ -31,6 +33,8 @@ do
 		l) LAUNCH=true;;
 		t) TARGET=${OPTARG};;
 		c) CATKIN_WS=${OPTARG};;
+		m) MOCK_DATA=true;;
+		a) APP=true;;
 	esac
 done
 
@@ -51,16 +55,24 @@ echo "Installing to ${HOST} as user: ${USERNAME}..."
 # Define paths for files to copy from src
 LAUNCH_FILE="${LOCAL_CARMA_DIR}/carmajava/launch/saxton_cav.launch"
 PARAMS_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/params"
-ROUTES_DIR="${LOCAL_CARMA_DIR}/carmajava/route/src/test/resources/routefiles"
+ROUTES_DIR="${LOCAL_CARMA_DIR}/carmajava/route/src/test/resources/routes"
 URDF_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/urdf"
+MOCK_DATA_DIR="${LOCAL_CARMA_DIR}/carmajava/mock_drivers/src/test/data"
 
 # Define paths needed on vehicle pc
 CARMA_DIR="/opt/carma"
 APP_DIR="${CARMA_DIR}/app"
 
 # If copy executables, params, routes, urdf, or launch is set then don't copy everything
-if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ]  || [ ${URDF} == true ] || [ ${LAUNCH} == true ]; then
+if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ] || [ ${URDF} == true ] || [ ${LAUNCH} == true ] || [ ${MOCK_DATA} == true ] || [ ${APP} == true ]; then
 	EVERYTHING=false
+fi
+
+# If want to copy all contents which will end up in APP_DIR
+if [ ${APP} == true ]; then
+	LAUNCH=true
+	MOCK_DATA=true
+	EXECUTABLES=true
 fi
 
 # If we want to copy the executables
@@ -99,7 +111,7 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 	# Extract version number file
 	jar xf ${GUIDANCE_JAR} version
 	FULL_VERSION_ID="${VERSION}-$(sed -n 1p version)-$(sed -n 2p version)"
-
+	FULL_VERSION_ID="$(echo "${FULL_VERSION_ID}" | tr \( \- | tr -d \) )" # Replace bbad ()
 	echo "Version appears to be: ${FULL_VERSION_ID}"
 
 	# Determine target folder
@@ -108,39 +120,46 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 
 	# SSH into the remote mechine and create a copy of the app_v0 directory to preserve permissions
 	# Then create symlink from app -> app_version
-	SCRIPT="cp -r ${EXAMPLE_FOLDER} ${TARGET}; ln -s ${TARGET} ${APP_DIR}"
-	ssh -o StrictHostKeyChecking=no -l ${USERNAME} ${HOST} "${SCRIPT}"
+	SCRIPT="cp -r ${EXAMPLE_FOLDER} ${TARGET}; rm ${APP_DIR}; ln -s ${TARGET} ${APP_DIR}"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 
 	# Copy the entire contents of install to the remote machine using current symlink
-	scp -r "${INSTALL_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/bin/"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INSTALL_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/bin/"
 fi
 
 # If we want to copy params
 if [ ${EVERYTHING} == true ] || [ ${PARAMS} == true ]; then
 	echo "Trying to copy params"
 	# Copy the entire folder to the remote machine
-	scp -r "${PARAMS_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${PARAMS_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 fi
 
 # If we want to copy routes
 if [ ${EVERYTHING} == true ] || [ ${ROUTES} == true ]; then
 	echo "Trying to copy routes..."
 	# Copy the entire folder to the remote machine
-	scp -r "${ROUTES_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${ROUTES_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 fi
 
 # If we want to copy urdf
 if [ ${EVERYTHING} == true ] || [ ${URDF} == true ]; then
 	echo "Trying to copy urdf..."
 	# Copy the entire folder to the remote machine
-	scp -r "${URDF_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${URDF_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 fi
 
 # If we want to copy launch file
 if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then
 	echo "Trying to copy launch ..."
 	# Copy the launch file to the remote machine using current symlink
-	scp -r "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}"
+fi
+
+# If we want to copy mock data files
+if [ ${EVERYTHING} == true ] || [ ${MOCK_DATA} == true ]; then
+	echo "Trying to copy mock_data ..."
+	# Copy the launch file to the remote machine using current symlink
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${MOCK_DATA_DIR}" ${USERNAME}@${HOST}:"${APP_DIR}"
 fi
 
 echo "DONE!"
