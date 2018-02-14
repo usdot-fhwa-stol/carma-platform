@@ -23,4 +23,5 @@ bool    can_bus
 bool    sensor
 bool    position
 bool    comms
-bool    controller
+bool    lon_controller
+bool    lat_controller

@@ -17,7 +17,6 @@
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -343,7 +342,7 @@ public class InterfaceWorkerTest {
 
     private void addControllerDriver() {
         DriverInfo controllerDriver = new DriverInfo();
-        controllerDriver.setController(true);
+        controllerDriver.setLonController(true);
         controllerDriver.setName("controller1");
         controllerDriver.setState(DriverState.OPERATIONAL);
         w_.handleNewDriverStatus(controllerDriver);
