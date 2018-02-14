@@ -137,10 +137,10 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
             gaps.add(seg);
         }
         
-        log.info("Cruising", "Found " + gaps.size() + " empty gaps in trajectory ["
+        log.info("Found " + gaps.size() + " empty gaps in trajectory ["
                  + traj.getStartLocation() + ", " + traj.getEndLocation() + "]");
         for(TrajectorySegment seg : gaps) {
-            log.info("Cruising", seg.toString());
+            log.info(seg.toString());
         }
         return gaps;
     }
@@ -152,7 +152,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
   protected double planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
     ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
     SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory(this);
-    log.info("Cruising", String.format("Trying to plan maneuver {start=%.2f,end=%.2f,startSpeed=%.2f,endSpeed=%.2f}", startDist, endDist, startSpeed, endSpeed));
+    log.info(String.format("Trying to plan maneuver {start=%.2f,end=%.2f,startSpeed=%.2f,endSpeed=%.2f}", startDist, endDist, startSpeed, endSpeed));
     double maneuverEnd = startDist;
     double adjustedEndSpeed = startSpeed;
     LongitudinalManeuver maneuver = maneuverFactory.createManeuver(startSpeed, endSpeed);
@@ -170,7 +170,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         }
         maneuverEnd = maneuver.getEndDistance();
         t.addManeuver(maneuver);
-        log.info("Cruising", String.format("Planned maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, adjustedEndSpeed, startDist, maneuverEnd));
+        log.info(String.format("Planned maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m", startSpeed, adjustedEndSpeed, startDist, maneuverEnd));
     }
     
     // Insert a steady speed maneuver to fill whatever's left
@@ -181,7 +181,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         planner.planManeuver(steady, maneuverEnd);
         ((SteadySpeed) steady).overrideEndDistance(endDist);
         t.addManeuver(steady);
-        log.info("Cruising", String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", adjustedEndSpeed, maneuverEnd, endDist));
+        log.info(String.format("Planned STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m", adjustedEndSpeed, maneuverEnd, endDist));
     }
     
     return adjustedEndSpeed;
@@ -217,9 +217,9 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         }
         limit_buffer.setLocation(trajSeg.endLocation);
         mergedLimits.add(limit_buffer);
-        log.info("Cruising", "Found" + mergedLimits.size() + "speed limits in " + trajSeg.toString());
+        log.info("Found" + mergedLimits.size() + "speed limits in " + trajSeg.toString());
         for(SpeedLimit sl : mergedLimits) {
-            log.info("Cruising", sl.toString());
+            log.info(sl.toString());
         }
         // Plan trajectory to follow all speed limits in this trajectory segment
         double newManeuverStartSpeed = trajSeg.startSpeed;
