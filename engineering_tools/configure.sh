@@ -13,6 +13,7 @@ else
 fi
 
 GUIDANCE_PARAMS=$PARAMS_DIR/GuidanceParams.yaml
+MESSAGE_PARAMS=$PARAMS_DIR/MessageParams.yaml
 
 DEFAULT_DESIRED_ACC_TIMEGAP="2.0"
 DEFAULT_MIN_ACC_STANDOFF_DISTANCE="5.0"
@@ -44,6 +45,27 @@ set_acc() {
     fi
 
     diff $GUIDANCE_PARAMS.bak $GUIDANCE_PARAMS
+}
+
+set_bsm() {
+    echo "Setting bsm_enabled status to $1 in $MESSAGE_PARAMS"
+    if [[ "$1" == "true" ]]
+    then
+        sed -i.bak "s/publish_outbound_bsm:.*/publish_outbound_bsm: true/" $MESSAGE_PARAMS
+    else
+        sed -i.bak "s/publish_outbound_bsm:.*/publish_outbound_bsm: false/" $MESSAGE_PARAMS
+    fi
+
+    diff $MESSAGE_PARAMS.bak $MESSAGE_PARAMS
+}
+
+get_bsm() {
+
+    if [[ $(grep "publish_outbound_bsm: true" $MESSAGE_PARAMS) ]]; then
+        echo "bsm_enabled: true"
+    else
+        echo "bsm_enabled: false"
+    fi
 }
 
 set_tracking() {
@@ -79,6 +101,10 @@ reset_cfg() {
     git checkout $GUIDANCE_PARAMS
 
     diff $GUIDANCE_PARAMS.bak $GUIDANCE_PARAMS
+
+    echo "Checking out $MESSAGE_PARAMS from git..."
+    mv $MESSAGE_PARAMS $MESSAGE_PARAMS.bak
+    git checkout $MESSAGE_PARAMS
 }
 
 print_help() {
@@ -96,12 +122,16 @@ for (( j=0; j<argc; j++ )); do
         summarize)
         get_acc
         get_tracking
+        get_bsm
         ;;
         acc_enabled)
         set_acc ${argv[++j]}
         ;;
         tracking_enabled)
         set_tracking ${argv[++j]}
+        ;;
+        bsm_enabled)
+        set_bsm ${argv[++j]}
         ;;
         reset)
         reset_cfg
