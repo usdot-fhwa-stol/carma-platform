@@ -98,10 +98,10 @@ for (( j=0; j<argc; j++ )); do
         get_tracking
         ;;
         acc_enabled)
-        set_acc ${argv[j+1]}
+        set_acc ${argv[++j]}
         ;;
         tracking_enabled)
-        set_tracking ${argv[j+1]}
+        set_tracking ${argv[++j]}
         ;;
         reset)
         reset_cfg
