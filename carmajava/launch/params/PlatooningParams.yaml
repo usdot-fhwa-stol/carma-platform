@@ -13,3 +13,11 @@ platooning_min_maneuver_length: 15.0
 # Integer: The time duration for a command speed to timeout
 # Units: ms
 platooning_command_timeout: 3000
+
+# Integer: The desired time interval between two platoon mobility messages from one vehicle
+# Units: ms
+platooning_status_interval: 500
+
+# Double: The factor to determine message timeout which is platooning_status_interval * platooning_status_timeout_factor
+# Units: 1
+platooning_status_timeout_factor: 1.5

@@ -18,8 +18,6 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
@@ -33,12 +31,15 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     
     protected IPlatooningState state;
     protected PlatoonManager manager = new PlatoonManager(this);
-    protected SortedSet<PlatoonMember> platoon = new TreeSet<>();
+    
     protected Queue<String> statusQueue = new LinkedList<>(); 
     protected double maxAccel = 2.5;
     protected long timestep = 100;
     protected double minimumManeuverLength = 5.0;
     protected long commandTimeout = 3000;
+    
+    protected int messageIntervalLength = 500;
+    protected int messageTimeout = 750;
     
     protected CommandGenerator commandGenerator = null;
     protected Thread commandGeneratorThread = null;
@@ -54,11 +55,13 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     @Override
     public void onInitialize() {
         log.info("CACC platooning pulgin is initializing...");
-        platoon = new TreeSet<>((a, b) -> Double.compare(a.getMemberId(), b.getMemberId()));
         maxAccel = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
         timestep = (long) pluginServiceLocator.getParameterSource().getInteger("~platooning_command_timestep", 100);
         minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 5.0);
         commandTimeout = pluginServiceLocator.getParameterSource().getInteger("~platooning_command_timeout", 3000);
+        
+        messageIntervalLength = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 500);
+        messageTimeout = (int) (messageIntervalLength * pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 1.5));
     }
 
     @Override
@@ -118,21 +121,5 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         }
     }
     *****/
-
-    public double getMaxAccel() {
-        return maxAccel;
-    }
-
-    public long getTimestep() {
-        return timestep;
-    }
-
-    public double getMinimumManeuverLength() {
-        return minimumManeuverLength;
-    }
-
-    public long getCommandTimeout() {
-        return commandTimeout;
-    }
 
 }

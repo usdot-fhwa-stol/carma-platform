@@ -17,7 +17,8 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 /**
- * This class record the latest knowledge(status and constraints) for each platoon member
+ * This class records the latest knowledge (status and constraints) for
+ * each platoon member who is in front of the subject vehicle. 
  */
 public class PlatoonMember {
     
@@ -25,20 +26,23 @@ public class PlatoonMember {
     // When its ID is 0, it means it is the leader. 1 means it is the second vehicle in the platoon
     private int memberId;
     // Static ID is permanent ID for each vehicle
-    private String staticId;
+    private final String staticId;
     // Vehicle command speed in m/s after any possible ACC override
     private double commandSpeed;
     // The actual vehicle speed in m/s
     private double vehicleSpeed;
     // The vehicle position from Mobility message
     private double vehiclePosition;
+    // The local timestamp when we received the status update of this member
+    private long timestamp;
 
-    public PlatoonMember(int memberId, String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition) {    
+    public PlatoonMember(int memberId, String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp) {    
         this.memberId = memberId;
         this.staticId = staticId;
         this.commandSpeed = commandSpeed;
         this.vehicleSpeed = vehicleSpeed;
         this.vehiclePosition = vehiclePosition;
+        this.timestamp = timestamp;
     }
 
     protected int getMemberId() {
@@ -76,4 +80,13 @@ public class PlatoonMember {
     protected void setVehiclePosition(double vehiclePosition) {
         this.vehiclePosition = vehiclePosition;
     }
+
+    protected long getTimestamp() {
+        return timestamp;
+    }
+
+    protected void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+    
 }

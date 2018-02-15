@@ -16,106 +16,84 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+
+import cav_msgs.NewPlan;
 
 /**
  * This class manages the changing of platoon list.
  */
-public class PlatoonManager {
+public class PlatoonManager implements Runnable {
     
     protected PlatooningPlugin plugin;
-    protected volatile LocalDateTime updateTimestamp = LocalDateTime.now();
+    protected List<PlatoonMember> platoon = Collections.synchronizedList(new ArrayList<>());
+    protected int memberTimeout = 750;
 
     public PlatoonManager(PlatooningPlugin plugin) {
         this.plugin = plugin;
+        // The max time duration we allow an entry to exist if we did not receive any update from it 
+        this.memberTimeout = plugin.messageTimeout;
     }
     
-    /**
-     * Given any staticId, this method tries to find the memberId for that vehicle
-     * @param staticId the static id of a vehicle
-     * @return return the desired member id, if not exist it will return -1
-     */
-    public int findMemberId(String staticId) {
-        SortedSet<PlatoonMember> platoon = this.plugin.platoon;
-        for(PlatoonMember member : platoon) {
-            if(member.getStaticId().equals(staticId)) {
-                return member.getMemberId();
-            }
-        }
-        return -1;
-    }
-    
-    /**
-     * Given any staticId, this method tries to find the vehicle member instance
-     * @param staticId the static id of a vehicle
-     * @return return the desired PlatoonMember instance, if not exist it will return null
-     */
-    public PlatoonMember findMember(String staticId) {
-        SortedSet<PlatoonMember> platoon = this.plugin.platoon;
-        for(PlatoonMember member : platoon) {
-            if(member.getStaticId().equals(staticId)) {
-                return member; 
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * When we have a new member join in our platoon, we add its status instance at the end of platoon list 
-     * @param member the new member
-     */
-    public void addNewMember(PlatoonMember member) {
-        if(findMemberId(member.getStaticId()) == -1) {
-            this.plugin.platoon.add(member);
-        }
-    }
-    
-    /**
-     * When we have a new member leave our platoon, we need to remove it from the platoon list
-     * and update the memberId for vehicles after that
-     * @param staticId
-     */
-    public void deleteMember(String staticId) {
-        PlatoonMember deleteCandidate = findMember(staticId);
-        if(deleteCandidate != null) {
-            this.plugin.platoon.remove(deleteCandidate);
-            int updateStart = deleteCandidate.getMemberId();
-            for(PlatoonMember member : this.plugin.platoon) {
-                if(member.getMemberId() > updateStart) {
-                    member.setMemberId(member.getMemberId() - 1);
+    @Override
+    public void run() {
+        // This loop will remove any expired entry from platoon list
+        while(true) {
+            long loopStart = System.currentTimeMillis();
+            List<PlatoonMember> removeCandidates = new ArrayList<>();
+            for(PlatoonMember pm : platoon) {
+                if(System.currentTimeMillis() - pm.getTimestamp() > memberTimeout) {
+                    removeCandidates.add(pm);
                 }
             }
+            if(removeCandidates.size() != 0) {
+                for(PlatoonMember candidate: removeCandidates) {
+                    platoon.remove(candidate);
+                }
+                // Update member id in the platoon
+                for(int i = 0; i < platoon.size(); i++) {
+                    platoon.get(i).setMemberId(i);
+                }
+            }
+            
+            long loopEnd = System.currentTimeMillis();
+            long sleepDuration = Math.max(memberTimeout - (loopEnd - loopStart), 0);
+            try {
+                Thread.sleep(sleepDuration);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
     
     /**
-     * This method is used in cases where a waypoint disallows the capability to empty platoon list
+     * Given any valid platooning mobility message with staticId, this method
+     * tries to find the vehicle member instance and update its status, if a member is not found
+     * and that is in the same lane with subject vehicle and in front of the subject vehicle,
+     * then we create a vehicle member instance and place it in the correct place in the platoon list.
+     * @param plan NewPlan message with valid input string in the format of "CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:5.0"
      */
-    public void disablePlatooning() {
-        // TODO we may need to disband only temporarily to later reform
-        this.plugin.platoon = new TreeSet<PlatoonMember>();
+    protected void memberUpdates(NewPlan plan) {
+        String vehicleId = plan.getSenderId();
+        String[] inputsArray = plan.getInputs().split(",");
+        boolean isExisted = false;
+        for(PlatoonMember pm : platoon) {
+            if(pm.getStaticId().equals(vehicleId)) {
+                pm.setCommandSpeed(Double.parseDouble(inputsArray[0].split(":")[1]));
+                pm.setVehiclePosition(Double.parseDouble(inputsArray[1].split(":")[1]));
+                pm.setVehicleSpeed(Double.parseDouble(inputsArray[2].split(":")[1]));
+                pm.setTimestamp(System.currentTimeMillis());
+                isExisted = true;
+            }
+            if(isExisted) {
+                break;
+            }
+        }
+        if(!isExisted) {
+            //TODO did not find the entry, need to add a new one
+        }
     }
     
-    /**
-     * Update the platoon member status when we receive their status
-     * @param status
-     */
-    public void updateMemberStatus(List<PlatoonMember> status) {
-        // TODO update member status based on STATUS messages
-        updateTimestamp = LocalDateTime.now();
-    }
-    
-    /**
-     * Get elapsed time between the current time and the latest update timestamp 
-     * @return timeElapsed in milliseconds
-     */
-    public long getTimeSinceLastUpdate() {
-        LocalDateTime now = LocalDateTime.now();
-        long timeElapsed = Duration.between(updateTimestamp, now).toMillis();
-        return timeElapsed;
-    }
 }

@@ -27,16 +27,14 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     
     public CommandGenerator(PlatooningPlugin plugin) {
         this.plugin_ = plugin;
-        timestep_ = plugin.getTimestep();
+        //timestep_ = plugin.();
     }
 
     @Override
     public void run() {
         while(true) {
             long tsStart = System.currentTimeMillis();
-            if(!plugin_.platoon.isEmpty()) {
                 // TODO Update speed commands and its timestamp based on the list of platoon members
-            }
             long tsEnd = System.currentTimeMillis();
             long sleepDuration = Math.max(timestep_ - (tsEnd - tsStart), 0);
             try {
@@ -54,12 +52,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     
     @Override
     public double getMaxAccelLimit() {
-        return plugin_.getMaxAccel();
-    }
-
-    @Override
-    public boolean isTimeout() {
-        return plugin_.manager.getTimeSinceLastUpdate() > plugin_.getCommandTimeout();
+        return plugin_.maxAccel;
     }
     
 }

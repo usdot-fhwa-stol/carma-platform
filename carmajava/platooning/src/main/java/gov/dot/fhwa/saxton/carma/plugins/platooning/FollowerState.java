@@ -58,11 +58,11 @@ public class FollowerState implements IPlatooningState {
             }
             double[] window = pluginServiceLocator_.getRouteService().getAlgorithmEnabledWindowInRange(complexManeuverStartLocation, traj.getEndLocation(), plugin_.PLATOONING_FLAG);
             // Check if we have a long enough plan window
-            if(window != null && Math.abs(window[1] - window[0]) < plugin_.getMinimumManeuverLength()) {
+            if(window != null && Math.abs(window[1] - window[0]) < plugin_.minimumManeuverLength) {
                 log_.warn("Cannot find a legal window to plan a platooning complex maneuver");
                 // TODO it may need to use arbitrator service to replan or request a longer trajectory
                 TrajectoryPlanningResponse response = new TrajectoryPlanningResponse();
-                response.requestLongerTrajectory(traj.getEndLocation() + (plugin_.getMinimumManeuverLength() - Math.abs(window[1] - window[0])));
+                response.requestLongerTrajectory(traj.getEndLocation() + (plugin_.minimumManeuverLength - Math.abs(window[1] - window[0])));
                 return response;
             }
             // Check if the plan window is at the start of the trajectory

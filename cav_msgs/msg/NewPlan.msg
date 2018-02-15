@@ -11,6 +11,9 @@
 # standard ROS message header
 std_msgs/Header   header
 
+# sender's static GUID (represents that vehicle throughout the current relationship)
+string            sender_id
+
 # a value from MobilityMessage which identifies this particular plan for future reference
 string            plan_id
 

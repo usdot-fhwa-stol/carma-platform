@@ -26,45 +26,44 @@ public class PlatooningManeuver extends ComplexManeuverBase {
      * @param minExpectedSpeed The minimum expected speed at the end of maneuver
      * @param maxExpectedSpeed The maximum expected speed at the end of maneuver
      */
-    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
-            IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
+    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs,
+            IManeuverInputs currentState, IGuidanceCommands commandsOutputs, IAccStrategy accStrategy,
+            double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
             double minExpectedSpeed, double maxExpectedSpeed) {
-        super(planner, currentState, commandsOutputs, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime, minExpectedSpeed,
-                maxExpectedSpeed);
+        super(planner, currentState, commandsOutputs, accStrategy,
+                startDist, endDist, minCompletionTime, maxCompletionTime, minExpectedSpeed, maxExpectedSpeed);
         commandInputs_ = commandInputs;
     }
 
-    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
-            IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime,
-            Time maxCompletionTime) {
-        super(planner, currentState, commandsOutputs, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime);
+    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs,
+            IManeuverInputs currentState, IGuidanceCommands commandsOutputs, IAccStrategy accStrategy,
+            double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
+        super(planner, currentState, commandsOutputs, accStrategy,
+                startDist, endDist, minCompletionTime, maxCompletionTime);
         commandInputs_ = commandInputs;
     }
 
-    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs, IManeuverInputs currentState, IGuidanceCommands commandsOutputs,
-            IAccStrategy accStrategy, double startDist, double endDist, double minExpectedSpeed,
-            double maxExpectedSpeed) {
-        super(planner, currentState, commandsOutputs, accStrategy, startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
+    protected PlatooningManeuver(IPlugin planner, IPlatooningCommandInputs commandInputs,
+            IManeuverInputs currentState, IGuidanceCommands commandsOutputs, IAccStrategy accStrategy,
+            double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
+        super(planner, currentState, commandsOutputs, accStrategy,
+                startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
         commandInputs_ = commandInputs;
     }
     
     @Override
     protected double generateSpeedCommand() {
-        if(checkTimeout()) {
-            // TODO handle speed command timeout
-        }
+//        if(checkTimeout()) {
+//            // TODO handle speed command timeout
+//        }
         return commandInputs_.getLastSpeedCommand();
     }
 
     @Override
     protected double generateMaxAccelCommand() {
-        if(checkTimeout()) {
-            // TODO handle speed command timeout
-        }
+//        if(checkTimeout()) {
+//            // TODO handle speed command timeout
+//        }
         return commandInputs_.getMaxAccelLimit();
-    }
-
-    private boolean checkTimeout() {
-        return commandInputs_.isTimeout();
     }
 }
