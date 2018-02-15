@@ -81,6 +81,13 @@ reset_cfg() {
     diff $GUIDANCE_PARAMS.bak $GUIDANCE_PARAMS
 }
 
+print_help() {
+    echo "configure.sh usage:"
+    echo "configure.sh {summarize | acc_enabled (true/false) | tracking_enabled (true/false) | reset | help}"
+    echo "-- Configurations will be modified in place, backup files will be saved in between commands as *.bak"
+    echo "-- Commands may be run in sequence, e.g.: configure.sh acc_enabled true tracking_enabled false"
+}
+
 # Main arg parsing loop
 argc=$#
 argv=($@)
@@ -98,6 +105,9 @@ for (( j=0; j<argc; j++ )); do
         ;;
         reset)
         reset_cfg
+        ;;
+        *)
+        print_help
         ;;
     esac
 done
