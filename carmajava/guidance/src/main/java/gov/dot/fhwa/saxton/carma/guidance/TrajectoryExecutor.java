@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.RouteState;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
@@ -66,6 +67,10 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
+    }
+
+    public void setArbitrator(Arbitrator arbitrator) {
+        trajectoryExecutorWorker.setArbitrator(arbitrator);
     }
 
     @Override

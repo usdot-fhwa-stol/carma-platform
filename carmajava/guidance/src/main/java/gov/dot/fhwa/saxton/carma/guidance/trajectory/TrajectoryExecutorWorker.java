@@ -15,6 +15,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
@@ -48,6 +49,9 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected double maneuverTickFrequencyHz = 10.0;
   protected ILogger log = LoggerManager.getLogger();
   cav_msgs.ActiveManeuvers activeManeuversMsg = null;
+  protected Arbitrator arbitrator;
+  protected int timeStepsWithoutTraj = 0;
+  protected static final int MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY = 3;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -64,6 +68,10 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
     this.activeManeuversPub = activeManeuversPub;
+  }
+
+  public void setArbitrator(Arbitrator arbitrator) {
+    this.arbitrator = arbitrator;
   }
 
   private void execute(IManeuver maneuver) {
@@ -378,7 +386,14 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
        * I've removed this nulling of current trajectory functionality as a fix, but lack complete understanding of the 
        * race condition so do not trust this code too heavily.
        */
-      log.warn("TrajectoryExecutorWorker failed to swap to buffered Trajectory! It was null!");
+      if (++timeStepsWithoutTraj >= MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY) {
+        log.warn("Timesteps without trajectory threshold exceeded, instructing arbitrator to forcibly plan!");
+        if (arbitrator != null) {
+          arbitrator.notifyTrajectoryFailure();
+        } else {
+          log.error("No Arbitrator set for replan notifications!");
+        }
+      }
       return;
     }
 
@@ -436,6 +451,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       // Hold onto this trajectory for double buffering, flip to it when we finish trajectory
       nextTrajectory = traj;
     }
+
+    timeStepsWithoutTraj = 0;
   }
 
   @Override
