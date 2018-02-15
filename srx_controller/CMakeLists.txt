@@ -200,6 +200,7 @@ endif(BUILD_SIMPLE_TELEOP)
    PATTERN ".svn" EXCLUDE
  )
 
+
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
 #   # myfile1  bondcpp
@@ -211,7 +212,7 @@ endif(BUILD_SIMPLE_TELEOP)
 
 install(DIRECTORY
         launch
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         PATTERN ".svn" EXCLUDE
         )
 

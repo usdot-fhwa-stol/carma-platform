@@ -1,15 +1,42 @@
 #!/bin/bash
+# 
+### Assumptions
+# This script copies the binaries and included files of the carma platform to a remote vehicle
+# The script is meant to be run from within a catkin workspace of the form "${catkin_ws}/src/CarmaPlatform"
+# The script must be run from within the CarmaPlatform/engineering_tools folder
 # This script requires that the remote machine and local machine have the same CPU architecture.
-# This script only supports one kind of project layout: "${catkin_ws}/src/CarmaPlatform"
-# The first argument is username for the target remote machine
-# The second argument is IP address of the remote machine
+# The script requires that the recieving pc have an example folder called app_v0 which will be duplicated to preserve structure
+# The script will attempt to rebuild if no catkin install folder can be found
+# All included files needed for launch (not the primary launch file) have been placed in their respective install/share folders at build time
+### Usage
+# remote_install.bash -n <username>
+# Required Options
+#	-n Name: The username to use on the target pc
+#    Argument: The username
+# Additional Options
+# -h Host: The ip of the target pc
+#    Argument: The ip-address of target pc
+# -b Build: A flag which will force a full rebuild
+# -p Copy Params: A flag which will cause the params folder to be copied
+# -r Copy Routes: A flag which will cause the routes folder to be copied
+# -u Copy Urdf: A flag which will cause the urdf folder to be copied
+# -e Copy Executables: A flag which will cause the contents of the install directory to be copied
+# -l Copy launch: A flag which will cause the carma launch file to be copied
+# -c Catkin Workspace: The path of the catkin workspace where the install folder can be found
+#    Argument: The path of the catking workspace
+# -m Copy Mock Data: A flag which will cause the mock driver data files to be copied
+# -a Copy App: A Flag which will cause everything except params, routes, and urdf files to be copied
+# -w Copy Web: A Flag which will cause the website (ui) files to be copied
+# -s Copy Scripts: A flag which will cause the scripts in engineering_tools to be copied
 
-# Target username and IP address
-USERNAME=$1
 
+usage() { echo "Usage: remote_install.bash -n <username> ";}
+
+ 
+
+# Default environment variables
 HOST="192.168.88.10"
 CATKIN_WS="/opt/carma"
-INSTALL_DIR="${CATKIN_WS}/install"
 BUILD=false
 EVERYTHING=true
 EXECUTABLES=false
@@ -22,10 +49,11 @@ APP=false
 WEB=false;
 SCRIPTS=false;
 
-while getopts h:bpruelmawst:c: option
+while getopts n:h:bpruelmawst:c: option
 do
 	case "${option}"
 	in
+		n) USERNAME=${OPTARG};;
 		h) HOST=${OPTARG};;
 		b) BUILD=true;;
 		p) PARAMS=true;;
@@ -33,14 +61,29 @@ do
 		u) URDF=true;;
 		e) EXECUTABLES=true;;
 		l) LAUNCH=true;;
-		t) TARGET=${OPTARG};;
 		c) CATKIN_WS=${OPTARG};;
 		m) MOCK_DATA=true;;
 		a) APP=true;;
 		w) WEB=true;;
 		s) SCRIPTS=true;;
+		\?) echo "Unknown option: -$OPTARG" >&2; exit 1;;
+		:) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
+		*) echo "Unimplemented option: -$OPTARG" >&2; exit 1;;
+
 	esac
 done
+
+INSTALL_DIR="${CATKIN_WS}/install"
+
+# Move to end of processed options list
+shift $(($OPTIND - 1))
+
+# Ensure a username has been specified
+if ! ${USERNAME} && [[ -d $1 ]]
+then
+    echo "Username must be specified with -n option. Example: remote_install.bash -n carma_user" >&2
+    exit 1
+fi
 
 # Move from engineering_tools to CarmaPlatform
 cd ..
@@ -70,7 +113,9 @@ CARMA_DIR="/opt/carma"
 APP_DIR="${CARMA_DIR}/app"
 
 # If copy executables, params, routes, urdf, or launch is set then don't copy everything
-if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ] || [ ${URDF} == true ] || [ ${LAUNCH} == true ] || [ ${MOCK_DATA} == true ] || [ ${APP} == true ]; then
+if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ] || \
+   [ ${URDF} == true ] || [ ${LAUNCH} == true ] || [ ${MOCK_DATA} == true ] || \
+	 [ ${APP} == true] || [ ${WEB} == true ] || [ ${SCRIPTS} == true ]; then
 	EVERYTHING=false
 fi
 
@@ -104,7 +149,7 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 		}
 		trap "exitfn" ERR
 		# Delete old folders for totally clean build
-		rm -r build/ devel/
+		rm -r build/ devel/ install/
 		# Run install
 		catkin_make install
 	fi
@@ -128,11 +173,16 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 
 	# SSH into the remote mechine and create a copy of the app_v0 directory to preserve permissions
 	# Then create symlink from app -> app_version
-	SCRIPT="cp -r ${EXAMPLE_FOLDER} ${TARGET}; rm ${APP_DIR}; ln -s ${TARGET} ${APP_DIR}"
+	SCRIPT="rm -r ${TARGET}; cp -r ${EXAMPLE_FOLDER} ${TARGET}; rm -r ${APP_DIR}; ln -s ${TARGET} ${APP_DIR}"
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 
 	# Copy the entire contents of install to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INSTALL_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/bin/"
+
+	# Create symlink to maven repo from carma install directory
+#	SYMLINK_PATH="${APP_DIR}/bin/share/carma/maven"
+#	SCRIPT="cd ${CARMA_DIR}; rm ${SYMLINK_PATH}; ln -s ${APP_DIR}/bin/share/maven ${SYMLINK_PATH};"
+#	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 fi
 
 # If we want to copy params
@@ -188,5 +238,9 @@ if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SCRIPTS_DIR}" ${USERNAME}@${HOST}:"${APP_DIR}"
 fi
 
+echo "Setting permissions"
+SCRIPT="chgrp -R carma ${CARMA_DIR}/app/*; chmod -R ug+rwx ${CARMA_DIR}/app/*;"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 
 echo "DONE!"
+exit
