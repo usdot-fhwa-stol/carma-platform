@@ -31,6 +31,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
 import java.util.*;
 
@@ -225,6 +226,12 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                     statusPub_.publish(this.buildPlanStatus(id, false));
                     planMap.put(id, new LinkedList<>());
                     return;
+                }
+
+                //verify that we don't have a different roadway speed limit at our starting location than at the ending location
+                SpeedLimit startingSpeedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(startLocation);
+                if (startingSpeedLimit.getLimit() < proposedLaneChangeStartSpeed) {
+                    log.warn("V2V", "Detected speed limit change within the initially planned tactic to accommodate a lane change.");
                 }
 
                 //build maneuvers for this vehicle
