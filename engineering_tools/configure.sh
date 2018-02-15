@@ -60,7 +60,6 @@ set_bsm() {
 }
 
 get_bsm() {
-
     if [[ $(grep "publish_outbound_bsm: true" $MESSAGE_PARAMS) ]]; then
         echo "bsm_enabled: true"
     else
@@ -109,7 +108,7 @@ reset_cfg() {
 
 print_help() {
     echo "configure.sh usage:"
-    echo "configure.sh {summarize | acc_enabled (true/false) | tracking_enabled (true/false) | reset | help}"
+    echo "configure.sh {summarize | acc_enabled (true/false) | tracking_enabled (true/false) | bsm_enabled (true/false) | reset | help}"
     echo "-- Configurations will be modified in place, backup files will be saved in between commands as *.bak"
     echo "-- Commands may be run in sequence, e.g.: configure.sh acc_enabled true tracking_enabled false"
 }
