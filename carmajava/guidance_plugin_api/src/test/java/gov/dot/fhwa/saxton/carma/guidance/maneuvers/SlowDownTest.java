@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
 
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -50,7 +51,7 @@ public class SlowDownTest {
         double maxAccel = inputs_.getAccel();
 
         //plan the maneuver
-        SlowDown mvr = new SlowDown();
+        SlowDown mvr = new SlowDown(mock(IPlugin.class));
         double startSpeed = inputs_.getFastSpeed();
         mvr.setSpeeds(startSpeed, targetSpeed);
         mvr.setMaxAccel(maxAccel);

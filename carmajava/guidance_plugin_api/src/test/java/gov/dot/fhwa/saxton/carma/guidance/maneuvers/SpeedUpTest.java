@@ -23,6 +23,7 @@ import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -50,7 +51,7 @@ public class SpeedUpTest {
         double maxAccel = inputs_.getAccel();
 
         //plan the maneuver
-        SpeedUp mvr = new SpeedUp();
+        SpeedUp mvr = new SpeedUp(mock(IPlugin.class));
         double startSpeed = inputs_.getSlowSpeed();
         mvr.setSpeeds(startSpeed, targetSpeed);
         mvr.setMaxAccel(maxAccel);

@@ -244,6 +244,10 @@ public class Trajectory {
       lastEnd = m.getEndDistance();
     }
 
+    if (lastEnd < endLocation) {
+      return lastEnd;
+    }
+
     return -1;
   }
 
@@ -274,6 +278,10 @@ public class Trajectory {
       }
 
       lastEnd = m.getEndDistance();
+    }
+
+    if (lastEnd < endLocation) {
+      return lastEnd;
     }
 
     return -1;
