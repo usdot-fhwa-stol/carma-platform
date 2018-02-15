@@ -49,6 +49,12 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     double startLocation;
     double endLocation;
     double startSpeed;
+    
+    @Override
+    public String toString() {
+        return "Gap: [startLocation = " + startLocation + "; endLocation = "
+               + endLocation + "; startSpeed = " + startSpeed + "]";
+    }
   }
 
   public CruisingPlugin(PluginServiceLocator psl) {
@@ -130,7 +136,12 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
             seg.startSpeed = lastManeuverEndSpeed;
             gaps.add(seg);
         }
-
+        
+        log.info("Found " + gaps.size() + " empty gaps in trajectory ["
+                 + traj.getStartLocation() + ", " + traj.getEndLocation() + "]");
+        for(TrajectorySegment seg : gaps) {
+            log.info(seg.toString());
+        }
         return gaps;
     }
 
@@ -206,7 +217,10 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         }
         limit_buffer.setLocation(trajSeg.endLocation);
         mergedLimits.add(limit_buffer);
-
+        log.info("Found" + mergedLimits.size() + "speed limits in " + trajSeg.toString());
+        for(SpeedLimit sl : mergedLimits) {
+            log.info(sl.toString());
+        }
         // Plan trajectory to follow all speed limits in this trajectory segment
         double newManeuverStartSpeed = trajSeg.startSpeed;
         double newManeuverStartLocation = trajSeg.startLocation;

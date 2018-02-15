@@ -116,7 +116,8 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	                info.setSensor(msg.getSensor());
 	                info.setPosition(msg.getPosition());
 	                info.setComms(msg.getComms());
-	                info.setController(msg.getController());
+	                info.setLonController(msg.getLonController());
+	                info.setLatController(msg.getLatController());
 
 	                //add the new driver info to our database
 	                worker_.handleNewDriverStatus(info);

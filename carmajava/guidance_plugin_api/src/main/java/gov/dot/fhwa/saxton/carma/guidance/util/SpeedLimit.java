@@ -60,4 +60,9 @@ public class SpeedLimit {
   public int hashCode() {
     return 13 * Double.hashCode(location)  + 17 * Double.hashCode(limit);
   }
+  
+  @Override
+  public String toString() {
+    return "SpeedLimit: [location = " + location + ", limit = " + limit + "]";
+  }
 }

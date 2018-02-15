@@ -75,11 +75,16 @@ public class CruisingPluginTest {
         when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
         LoggerManager.setLoggerFactory(mockFact);
         
+        NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
+        AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
+        
         routeService = mock(GuidanceRouteService.class);
         PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
                 mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
                 new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService);
         cruise = new CruisingPlugin(psl);
+        cruise.onInitialize();
+        cruise.maxAccel_ = 2.5;
     }
 
     //Test if CP can find the right longitudinal gap in empty trajectory
@@ -175,22 +180,39 @@ public class CruisingPluginTest {
         assertEquals(2.0, gaps.get(1).startSpeed, 0.01);
     }
     
-    //Test if cruising plugin can actually fill a trajectory with one future maneuver
+    //Test if cruising plugin can actually fill a trajectory with one maneuver at the middle
     //TODO can not run this test successfully, need help it throw NPE at line 189
     @Test
     public void testManeuverGeneration() {
-        Trajectory t = new Trajectory(0.0, 50.0);
-        FutureLongitudinalManeuver fLonM = mock(FutureLongitudinalManeuver.class);
-        when(fLonM.getStartDistance()).thenReturn(30.0);
-        when(fLonM.getEndDistance()).thenReturn(50.0);
-        when(fLonM.getTargetSpeed()).thenReturn(2.5);
-        t.addManeuver(fLonM);
+        Trajectory t = new Trajectory(0.0, 67.0);
+        SteadySpeed mockSteadyManeuver = mock(SteadySpeed.class);
+        when(mockSteadyManeuver.getStartDistance()).thenReturn(30.0);
+        when(mockSteadyManeuver.getEndDistance()).thenReturn(50.0);
+        when(mockSteadyManeuver.getTargetSpeed()).thenReturn(5.0);
+        t.addManeuver(mockSteadyManeuver);
         
-        SortedSet<SpeedLimit> trajLimitsAtRange = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
-        trajLimitsAtRange.add(new SpeedLimit(15, 2.5));
-        SpeedLimit trajLimitAtLocation = new SpeedLimit(30, 2.5);
-        when(routeService.getSpeedLimitsInRange(0.0, 30.0)).thenReturn(trajLimitsAtRange);
-        when(routeService.getSpeedLimitAtLocation(30.0)).thenReturn(trajLimitAtLocation);
-        cruise.planTrajectory(t, 2.0);
+        SortedSet<SpeedLimit> trajLimitsAtRange1 = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+        trajLimitsAtRange1.add(new SpeedLimit(15, 5));
+        SpeedLimit trajLimitAtLocation1 = new SpeedLimit(30, 5);
+        when(routeService.getSpeedLimitsInRange(0.0, 30.0)).thenReturn(trajLimitsAtRange1);
+        when(routeService.getSpeedLimitAtLocation(30.0)).thenReturn(trajLimitAtLocation1);
+        SortedSet<SpeedLimit> trajLimitsAtRange2 = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
+        SpeedLimit trajLimitAtLocation2 = new SpeedLimit(70, 10);
+        when(routeService.getSpeedLimitsInRange(50.0, 67.0)).thenReturn(trajLimitsAtRange2);
+        when(routeService.getSpeedLimitAtLocation(67.0)).thenReturn(trajLimitAtLocation2);
+        cruise.planTrajectory(t, 0.0);
+        assertEquals(4, t.getLongitudinalManeuvers().size());
+        assertEquals(0, t.getLongitudinalManeuvers().get(0).getStartDistance(), 0.01);
+        assertEquals(6, t.getLongitudinalManeuvers().get(0).getEndDistance(), 0.01);
+        assertEquals(0, t.getLongitudinalManeuvers().get(0).getStartSpeed(), 0.01);
+        assertEquals(5, t.getLongitudinalManeuvers().get(0).getTargetSpeed(), 0.01);
+        assertEquals(6, t.getLongitudinalManeuvers().get(1).getStartDistance(), 0.01);
+        assertEquals(30, t.getLongitudinalManeuvers().get(1).getEndDistance(), 0.01);
+        assertEquals(5, t.getLongitudinalManeuvers().get(1).getStartSpeed(), 0.01);
+        assertEquals(5, t.getLongitudinalManeuvers().get(1).getTargetSpeed(), 0.01);
+        assertEquals(50, t.getLongitudinalManeuvers().get(3).getStartDistance(), 0.01);
+        assertEquals(67, t.getLongitudinalManeuvers().get(3).getEndDistance(), 0.01);
+        assertEquals(5, t.getLongitudinalManeuvers().get(3).getStartSpeed(), 0.01);
+        assertEquals(10, t.getLongitudinalManeuvers().get(3).getTargetSpeed(), 0.01);
     }
 }
