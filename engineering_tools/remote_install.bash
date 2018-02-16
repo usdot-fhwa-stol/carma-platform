@@ -215,8 +215,9 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
 	# Create symlink to launch file so that roslaunch will work when package is sourced
 	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
-	SCRIPT="rm ${SYMLINK_LOCATION}/saxton_cav.launch; ln -s  ${APP_DIR}/launch ${SYMLINK_LOCATION}";
-	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
+	SCRIPT_1="rm ${SYMLINK_LOCATION}/saxton_cav.launch; ln -s  ${APP_DIR}/launch/saxton_cav.launch ${SYMLINK_LOCATION};"
+	SCRIPT_2="rm ${SYMLINK_LOCATION}/saxton_cav_src.launch; ln -s  ${APP_DIR}/launch/saxton_cav_src.launch ${SYMLINK_LOCATION};"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2}"
 fi
 
 # If we want to copy mock data files

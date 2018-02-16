@@ -28,7 +28,7 @@
   <!-- Set Environment Variables -->
   <env name="ROS_IP" value="192.168.88.10"/>
   <!-- Override Required Paths -->
-  <arg name="CARMA_DIR" default="/opt/caram" doc="The path of the package directory"/>
+  <arg name="CARMA_DIR" default="/opt/carma" doc="The path of the package directory"/>
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/params" doc="Directory of yaml parameter files"/>
   <arg name="URDF_FILE" default="$(arg CARMA_DIR)/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
   <arg name="DATA_DIR"  default="$(arg CARMA_DIR)/app/mock_data" doc="Directory of driver simulation"/>
@@ -40,5 +40,5 @@
   <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
   <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
   <!-- Include the detailed launch file and pass in new arguments -->
-  <include file="saxton_cav_src.launch" pass_all_args="true"/>
+  <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true"/>
 </launch>
