@@ -35,6 +35,15 @@ public class Interval<V> {
     }
 
     /**
+     * Constructor to build intervals for use in queries, do not attempt to insert into trees
+     */
+    public Interval(double start, double end) {
+        this.data = null;
+        this.start = start;
+        this.end = end;
+    }
+
+    /**
      * Get the data value associated with the interval
      */
     public V getData() {

@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.intervaltree;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -77,5 +79,31 @@ public class IntervalTree<T> {
         }
 
         return root.findIntersectionsWith(pt);
+    }
+
+    /**
+     * Get the sorted set of intervals in this tree
+     */
+    public SortedSet<Interval<T>> getIntervals() {
+        SortedSet<Interval<T>> out = new TreeSet<>(intCalculator::compareIntervals);
+        if (root != null) {
+            out.addAll(root.getIntervals());
+        }
+
+        return out;
+    }
+
+
+    /**
+     * Flatten the tree into a sorted list of raw elements, sorted according to the configured
+     * IntervalCalculatorStrategy. Discards all interval data in the output.
+     */
+    public List<T> toSortedList() {
+        List<T> out = new ArrayList<>();
+        if (root != null) {
+            out.addAll(root.toSortedList());
+        }
+
+        return out;
     }
 }
