@@ -9,7 +9,12 @@
 # The script will attempt to rebuild if no catkin install folder can be found
 # All included files needed for launch (not the primary launch file) have been placed in their respective install/share folders at build time
 ### Usage
+# Only deploy new code/html/launch files
+# remote_install.bash -n <username> -a
+# Redeploy all and rebuild if not install folder exists
 # remote_install.bash -n <username>
+# Redeploy all and force rebuild
+# remote_install.bash -n <username> -b
 # Required Options
 #	-n Name: The username to use on the target pc
 #    Argument: The username
@@ -111,30 +116,6 @@ SCRIPTS_DIR="${LOCAL_CARMA_DIR}/engineering_tools"
 # Define paths needed on vehicle pc
 CARMA_DIR="/opt/carma"
 APP_DIR="${CARMA_DIR}/app"
-
-# Check if symlink from server to install location exists and if not create it
-WEBSITE_SYMLINK="/var/www/html"
-if [ -L ${WEBSITE_SYMLINK} ] ; then
-	if [ -e ${WEBSITE_SYMLINK} ] ; then
-		echo "Server contains good symlink"
-		MAKE_SERVER_SYMLINK=false
-	else
-		echo "Server contains broken symlink"
-		MAKE_SERVER_SYMLINK=true
-	fi
-elif [ -e ${WEBSITE_SYMLINK} ] ; then
-	echo "html folder is not a symlink on server"
-	MAKE_SERVER_SYMLINK=true
-else
-	echo "Missing symlink in server"
-	MAKE_SERVER_SYMLINK=true
-fi
-
-if [ ${MAKE_SERVER_SYMLINK} == true ]; then
-	echo "ERROR: Symlink on server is invalid"
-	echo "Please ssh in and run the following command as sudo on the pc"
-	echo "rm -r ${WEBSITE_SYMLINK}; ln -s ${APP_DIR}/html ${WEBSITE_SYMLINK}"
-fi
 
 # If copy executables, params, routes, urdf, or launch is set then don't copy everything
 if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ] || \
