@@ -20,5 +20,8 @@ export ROS_IP=192.168.88.10
 # Ensure ROS_MASTER_URI is correct
 export ROS_MASTER_URI=http://192.168.88.10:11311/
 
+# Set ros to run from /opt/carma instead of home directory
+export ROS_HOME=/opt/carma
+
 # Launch platform
 roslaunch --pid=/opt/carma/launch.pid carma saxton_cav.launch

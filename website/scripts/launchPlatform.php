@@ -10,7 +10,7 @@
   }
   // Launch Platform
   // > /dev/null 2>&1 & echo $! (suppresses output and captures the bash file pid)
-  $bash_pid = shell_exec("sudo -u carma_launcher" . $HTML_DIR . "/scripts/launch.bash > /dev/null 2>&1 & echo $!");
+  $bash_pid = shell_exec("sudo -u carma_launcher " . $HTML_DIR . "/scripts/launch.bash > /dev/null 2>&1 & echo $!");
 
   sleep(5); // Need delay before trying to use rosbridge. TODO move to rosbridge.js
   // Switch to main.html
