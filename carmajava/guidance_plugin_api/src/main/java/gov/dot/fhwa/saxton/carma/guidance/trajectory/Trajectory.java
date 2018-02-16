@@ -43,6 +43,7 @@ public class Trajectory {
   protected IntervalTree<LateralManeuver> lateralManeuvers;
   protected IntervalTree<LongitudinalManeuver> longitudinalManeuvers;
   protected IComplexManeuver complexManeuver = null;
+  protected static final double DISTANCE_EPSILON = 0.00001;
 
   /**
    * Create a new trajectory instance that will command the vehicle on distances [startLocation, endLocation)
@@ -123,11 +124,11 @@ public class Trajectory {
     }
 
     // Check for overlap with any other maneuvers currentl planned
-    if (!lateralManeuvers.findIntersectionsWith(new Interval<>(complexManeuver.getStartDistance(), complexManeuver.getEndDistance())).isEmpty()) {
+    if (!lateralManeuvers.findIntersectionsWith(new Interval<>(maneuver.getStartDistance(), maneuver.getEndDistance())).isEmpty()) {
       return false;
     }
 
-    if (!longitudinalManeuvers.findIntersectionsWith(new Interval<>(complexManeuver.getStartDistance(), complexManeuver.getEndDistance())).isEmpty()) {
+    if (!longitudinalManeuvers.findIntersectionsWith(new Interval<>(maneuver.getStartDistance(), maneuver.getEndDistance())).isEmpty()) {
       return false;
     }
 
@@ -220,7 +221,7 @@ public class Trajectory {
    */
   public double findLatestWindowOfSize(double size) {
     List<IManeuver> maneuvers = new ArrayList<>();
-    maneuvers.addAll(lateralManeuvers.toSortedList());
+    maneuvers.addAll(longitudinalManeuvers.toSortedList());
     if (complexManeuver != null) {
       maneuvers.add(complexManeuver);
     }
@@ -293,12 +294,12 @@ public class Trajectory {
    */
   public IManeuver getNextManeuverAfter(double loc, ManeuverType type) {
     if (type == ManeuverType.LONGITUDINAL) {
-      SortedSet<Interval<LongitudinalManeuver>> mvrs = longitudinalManeuvers.findIntersectionsWith(new Interval<>(loc, endLocation));
+      SortedSet<Interval<LongitudinalManeuver>> mvrs = longitudinalManeuvers.findIntersectionsWith(new Interval<>(loc + DISTANCE_EPSILON, endLocation));
       return (mvrs.isEmpty() ? null : mvrs.first().getData());
     }
 
     if (type == ManeuverType.LATERAL) {
-      SortedSet<Interval<LateralManeuver>> mvrs = lateralManeuvers.findIntersectionsWith(new Interval<>(loc, endLocation));
+      SortedSet<Interval<LateralManeuver>> mvrs = lateralManeuvers.findIntersectionsWith(new Interval<>(loc + DISTANCE_EPSILON, endLocation));
       return (mvrs.isEmpty() ? null : mvrs.first().getData());
     }
 
@@ -320,9 +321,7 @@ public class Trajectory {
    */
   public List<ISimpleManeuver> getLateralManeuvers() {
     List<ISimpleManeuver> out = new ArrayList<>();
-    for (Interval<LateralManeuver> mvr : lateralManeuvers.findIntersectionsWith(new Interval<>(startLocation, endLocation))) {
-      out.add(mvr.getData());
-    }
+    out.addAll(lateralManeuvers.toSortedList());
 
     return out;
   }
@@ -331,12 +330,7 @@ public class Trajectory {
    * Get the trajectories stored longitudinal maneuvers in sorted order by start location
    */
   public List<LongitudinalManeuver> getLongitudinalManeuvers() {
-    List<LongitudinalManeuver> out = new ArrayList<>();
-    for (Interval<LongitudinalManeuver> mvr : longitudinalManeuvers.findIntersectionsWith(new Interval<>(startLocation, endLocation))) {
-      out.add(mvr.getData());
-    }
-
-    return out;
+    return longitudinalManeuvers.toSortedList();
   }
 
   /**
