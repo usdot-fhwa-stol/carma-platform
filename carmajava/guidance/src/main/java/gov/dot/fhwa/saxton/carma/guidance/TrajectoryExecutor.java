@@ -25,6 +25,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
+import gov.dot.fhwa.saxton.carma.guidance.util.ExecutionTimer;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
@@ -80,13 +81,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
 
     @Override
     public void onStartup() {
-        operatingSpeed = node.getParameterTree().getDouble("~trajectory_operating_speed");
-        amplitude = node.getParameterTree().getDouble("~trajectory_amplitude");
-        phase = node.getParameterTree().getDouble("~trajectory_phase");
-        period = node.getParameterTree().getDouble("~trajectory_period");
         maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
-        holdTimeMs = (long) (node.getParameterTree().getDouble("~trajectory_initial_hold_duration") * 1000);
-        useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
         sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
         routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
@@ -138,26 +133,10 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         bufferedTrajectoryRunning = false;
         startTime = 0;
     }
-    
-    /**
-     * Compute the sinusoidal part of the trajectory
-     * 
-     * @param t The current time in milliseconds
-     * @param amplitude the max/min of the sinusoidal curve in m/s
-     * @param period The number of seconds to complete a cycle
-     * @param phase Where in the cycle to start
-     * 
-     * @return The current value of the sinusoidal trajectory component
-     */
-    private double computeSin(double t, double amplitude, double period, double phase) {
-        double s = t / 1000.0;
-        double pFactor = 2 * Math.PI / period;
-
-        return amplitude * Math.sin((pFactor * s) + phase);
-    }
 
     @Override
     public void timingLoop() throws InterruptedException {
+        ExecutionTimer.runInFixedTime(sleepDurationMillis, trajectoryExecutorWorker::loop);
     }
 
   /**
