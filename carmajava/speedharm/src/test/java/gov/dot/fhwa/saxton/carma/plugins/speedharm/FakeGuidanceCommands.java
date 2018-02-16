@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ public class FakeGuidanceCommands implements IGuidanceCommands {
 
 
     @Override
-    public void setCommand(double speed, double accel) {
+    public void setSpeedCommand(double speed, double accel) {
         speedCmd_ = speed;
         accelCmd_ = accel;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,8 @@ public enum GuidanceAction {
     INTIALIZE,
     ACTIVATE,
     ENGAGE,
+    DEACTIVATE,
     SHUTDOWN,
+    PANIC_SHUTDOWN,
     RESTART
 }

@@ -1,0 +1,128 @@
+﻿body, html{
+    width:calc(100%-10px);
+    height:calc(100%-10px);
+    overflow:hidden;
+    padding: 5px;
+    margin:0;
+}
+.example-description {
+    margin:10px;
+    margin-left:2px;
+}
+jqx-bullet-chart{
+    width:800px;
+    height:80px;
+}
+jqx-scroll-view{
+    width:600px;
+}
+jqx-bar-gauge, jqx-draw {
+    width: 850px;
+    height: 600px;
+}
+jqx-menu {
+    width:600px;
+}
+jqx-data-table, jqx-grid, jqx-scheduler, jqx-tree-grid, jqx-docking-layout, jqx-layout, jqx-tree-map, jqx-splitter, jqx-kanban {
+    width: 850px;
+}
+jqx-nav-bar {
+    height:50px;
+}
+jqx-chart{
+    width: 850px;
+    height: 400px;
+}
+jqx-docking-layout, jqx-layout {
+    width: 850px;
+    height: 600px;
+}
+jqx-ribbon, jqx-panel{
+    width: 450px;
+    height: 300px;
+}
+jqx-scheduler {
+    height: 600px;
+}
+jqx-list-box, jqx-text-area{
+    width: 200px;
+    height: 200px;
+}
+jqx-file-upload {
+    width: 300px;
+}
+jqx-complex-input, jqx-formatted-input, jqx-password-input, jqx-input, jqx-number-input, jqx-slider,
+jqx-masked-input, jqx-drop-down-list, jqx-combo-box, jqx-date-time-input, jqx-drop-down-button{
+    width: 300px;
+    height: 35px;
+}
+jqx-loader{
+    width:100px !important;
+    height:60px !important;
+}
+jqx-expander, jqx-navigation-bar {
+    width:350px;
+}
+jqx-navigation-bar{
+    height:450px;
+}
+jqx-range-selector{
+    width:600px;
+}
+jqx-tabs{
+    width:800px;
+}
+jqx-tool-bar {
+    width:800px;
+    height: 35px;
+}
+jqx-editor {
+    width: 600px;
+    height: 400px;
+}
+jqx-tree-map{
+    width: 850px;
+    height: 600px;
+}
+jqx-tree{
+    width:250px;
+}
+jqx-linear-gauge{
+    width:100px;
+}
+jqx-color-picker, jqx-calendar{
+    width: 200px;
+    height: 200px;
+}
+jqx-scroll-bar, jqx-progress-bar {
+    width:400px;
+    height:20px;
+}
+jqx-knob {
+     width:600px;
+     height:600px;
+}
+@media all and (max-width: 849px) {
+    jqx-knob, jqx-slider, jqx-panel, jqx-scroll-bar, jqx-bullet-chart, jqx-tool-bar, jqx-text-area, jqx-menu, jqx-list-menu,jqx-data-table, jqx-grid, jqx-tree-grid, jqx-scheduler, jqx-docking-layout, jqx-layout, jqx-splitter, jqx-chart, jqx-editor {
+        width: 90% !important;
+        margin-left:5% !important;
+        margin-right:5% !important;
+    }
+    jqx-calendar, jqx-list-box, jqx-bar-gauge {
+        width: 90% !important;
+        height: 90% !important;
+        margin-left: 5% !important;
+        margin-right: 5% !important;
+    }
+    jqx-scroll-view, jqx-progress-bar, jqx-drop-down-list, jqx-drop-down-button, jqx-tree-map, jqx-combo-box, jqx-date-time-input, jqx-tree, jqx-kanban, jqx-ribbon, jqx-tabs {
+        width: 90% !important;
+        margin-left: 5% !important;
+        margin-right: 5% !important;
+    }
+    jqx-docking-layout, jqx-layout {
+        width: 100%; height: 100%;
+    }
+    .example-description {
+        display: none;
+    }
+}

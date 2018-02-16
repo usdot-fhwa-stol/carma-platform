@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,8 +60,9 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         this.commands = commands;
         this.tracking_ = tracking;
 
+        IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub = pubSubService.getPublisherForTopic("plugins/controlling_plugins", cav_msgs.ActiveManeuvers._TYPE);
         double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
-        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq);
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, activeManeuversPub);
         
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
@@ -83,6 +84,15 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         useSinTrajectory = node.getParameterTree().getBoolean("~use_sin_trajectory", false);
         sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
+        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
+            @Override
+            public void onMessage(RouteState msg) {
+                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
+                trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
+            }
+        });
+
         currentState.set(GuidanceState.STARTUP);
     }
 
@@ -92,17 +102,12 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     }
 
     @Override
-    public void onRouteActive() {
-        routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSubscriber.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-            @Override
-            public void onMessage(RouteState msg) {
-                log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
-                if (currentState.get() == GuidanceState.ENGAGED) {
-                    trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
-                }
-            }
-        });
+    public void onActive() {
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onDeactivate() {
         currentState.set(GuidanceState.INACTIVE);
     }
     
@@ -122,6 +127,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     public void onCleanRestart() {
         currentState.set(GuidanceState.DRIVERS_READY);
         TrajectoryExecutor.this.abortTrajectory();
+        trajectoryExecutorWorker.cleanRestart();
         this.unregisterAllTrajectoryProgressCallback();
         currentTrajectory = null;
         bufferedTrajectoryRunning = false;
@@ -150,9 +156,9 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         // Generate a simple sin(t) speed command
         if (currentState.get() == GuidanceState.ENGAGED && useSinTrajectory) {
             if ((node.getCurrentTime().toSeconds() * 1000) - startTime < holdTimeMs) {
-                commands.setCommand(operatingSpeed, maxAccel);
+                commands.setSpeedCommand(operatingSpeed, maxAccel);
             } else {
-                commands.setCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase),
+                commands.setSpeedCommand(operatingSpeed + computeSin(System.currentTimeMillis(), amplitude, period, phase),
                         maxAccel);
             }
         }
@@ -293,13 +299,19 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
+            break;
+        case DEACTIVATE:
+            jobQueue.add(this::onDeactivate);
             break;
         case ENGAGE:
             jobQueue.add(this::onEngaged);
             break;
         case SHUTDOWN:
             jobQueue.add(this::onShutdown);
+            break;
+        case PANIC_SHUTDOWN:
+            jobQueue.add(this::onPanic);
             break;
         case RESTART:
             jobQueue.add(this::onCleanRestart);

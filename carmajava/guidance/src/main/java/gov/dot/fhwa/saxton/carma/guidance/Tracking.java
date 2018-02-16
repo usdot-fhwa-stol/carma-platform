@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,12 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import cav_msgs.*;
-import cav_srvs.GetDriversWithCapabilities;
-import cav_srvs.GetDriversWithCapabilitiesRequest;
-import cav_srvs.GetDriversWithCapabilitiesResponse;
+import cav_srvs.*;
 import geometry_msgs.AccelStamped;
 import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
@@ -39,8 +40,10 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.ParameterClassCastException;
 import org.ros.exception.ParameterNotFoundException;
 import org.ros.exception.RosRuntimeException;
+import org.ros.message.Time;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
+import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import com.google.common.util.concurrent.AtomicDouble;
@@ -49,7 +52,6 @@ import sensor_msgs.NavSatFix;
 import std_msgs.Float64;
 
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -81,7 +83,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	protected int last_id_changed = 0;
 	protected float vehicleWidth = 0;
 	protected float vehicleLength = 0;
-	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);;
+	protected AtomicBoolean velocity_ready = new AtomicBoolean(false);
 	protected AtomicDouble current_speed = new AtomicDouble(0);
 	protected Random randomIdGenerator = new Random();
 	protected byte[] random_id = new byte[4];
@@ -100,11 +102,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	protected ISubscriber<std_msgs.Bool> stabilityActiveSubscriber;
 	protected ISubscriber<std_msgs.Bool> stabilityEnabledSubscriber;
 	protected ISubscriber<std_msgs.Bool> parkingBrakeSubscriber;
-	protected IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient;
-	protected List<String> req_drivers = Arrays.asList(
-			"steering_wheel_angle", "brake_position", "transmission_state",
-			"traction_ctrl_active", "traction_ctrl_enabled", "antilock_brakes_active",
-			"stability_ctrl_active", "stability_ctrl_enabled", "parking_brake");
+	protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
 	protected double speed_error_limit = 5; //speed error in meters
 	protected double downtrack_error_limit = 5; //downtrack error in meters
 	protected TrajectoryExecutor trajectoryExecutor = null;
@@ -114,6 +112,17 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	protected TreeMap<Long, double[]> speedTimeTree = new TreeMap<Long, double[]>((a, b) -> Long.compare(a, b));
 	protected double trajectoryStartLocation = 0;
 	protected long trajectoryStartTime = 0;
+	private static final String DRIVER_BASE_PATH = "/saxton_cav/drivers";
+	private static final String CAN_DRIVER_BASE_PATH = "/srx_can/can/";
+	private static final String STEERING_WHEEL_CAPABILITY = "steering_wheel_angle";
+	private static final String BRAKE_POSITION_CAPABILITY = "brake_position";
+	private static final String TRANSMISSION_STATE_CAPABILITY = "transmission_state";
+	private static final String TRACTION_CTRL_ACTIVE_CAPABILITY = "traction_ctrl_active";
+	private static final String TRACTION_CTRL_ENABLED_CAPABILITY = "traction_ctrl_enabled";
+	private static final String ANTILOCK_BRAKES_ACTIVE_CAPABILITY = "antilock_brakes_active";
+	private static final String STABILITY_CTRL_ACTIVE_CAPABILITY = "stability_ctrl_active";
+	private static final String STABILITY_CTRL_ENABLED_CAPABILITY = "stability_ctrl_enabled";
+	private static final String PARKING_BRAKE_CAPABILITY = "parking_brake";
 	
 
 	public Tracking(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
@@ -162,81 +171,16 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
     public void onSystemReady() {
         // Make service call to get drivers
         log.debug("Trying to get get_drivers_with_capabilities service...");
-        try {
-            getDriversWithCapabilitiesClient = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                    GetDriversWithCapabilities._TYPE);
-        } catch (TopicNotFoundException tnfe) {
-            exceptionHandler.handleException("get_drivers_with_capabilities service cannot be found", tnfe);
-        }
-        if (getDriversWithCapabilitiesClient == null) {
-            log.warn("get_drivers_with_capabilities service can not be found");
-            exceptionHandler.handleException("get_drivers_with_capabilities service cannot be found",
-                    new TopicNotFoundException());
-        }
 
-        GetDriversWithCapabilitiesRequest driver_request_wrapper = getDriversWithCapabilitiesClient.newMessage();
-        driver_request_wrapper.setCapabilities(req_drivers);
-
-        final GetDriversWithCapabilitiesResponse[] response = new GetDriversWithCapabilitiesResponse[1];
-
-        getDriversWithCapabilitiesClient.callSync(driver_request_wrapper,
-                new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-
-                    @Override
-                    public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                        response[0] = msg;
-                        log.debug("Tracking: service call is successful: " + response[0].getDriverData());
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        exceptionHandler.handleException("getDriversWithCapabilities service call failed", e);
-                    }
-
-                });
-
-        if (response[0] == null || response[0].getDriverData().size() == 0) {
-            exceptionHandler.handleException("cannot find suitable CAN driver",
-                    new RosRuntimeException("No CAN driver is found"));
-        }
-
-        for (String driver_url : response[0].getDriverData()) {
-            if (driver_url.endsWith("/can/steering_wheel_angle")) {
-                steeringWheelSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/brake_position")) {
-                brakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, Float64._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/transmission_state")) {
-                transmissionSubscriber = pubSubService.getSubscriberForTopic(driver_url, TransmissionState._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/traction_ctrl_active")) {
-                tractionActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/traction_ctrl_enabled")) {
-                tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/antilock_brakes_active")) {
-                antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/stability_ctrl_active")) {
-                stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/stability_ctrl_enabled")) {
-                stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-                continue;
-            }
-            if (driver_url.endsWith("/can/parking_brake")) {
-                parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(driver_url, std_msgs.Bool._TYPE);
-            }
-        }
+        steeringWheelSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STEERING_WHEEL_CAPABILITY, Float64._TYPE);
+        brakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + BRAKE_POSITION_CAPABILITY, Float64._TYPE);
+        transmissionSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRANSMISSION_STATE_CAPABILITY, TransmissionState._TYPE);
+        tractionActiveSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
+        antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + ANTILOCK_BRAKES_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STABILITY_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STABILITY_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
+        parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + PARKING_BRAKE_CAPABILITY, std_msgs.Bool._TYPE);
 
         if (steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null
                 || tractionActiveSubscriber == null || tractionEnabledSubscriber == null
@@ -257,11 +201,17 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             exceptionHandler.handleException("Cannot cast on the parameter type", e2);
         }
 
+		    try {
+			    getTransformClient = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
+		    } catch (TopicNotFoundException tnfe) {
+			    exceptionHandler.handleException("get_transform service cannot be found", tnfe);
+		    }
+
         currentState.set(GuidanceState.DRIVERS_READY);
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, new OnTrajectoryProgressCallback() {
 
             @Override
@@ -287,6 +237,11 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             }
         });
 
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onDeactivate() {
         currentState.set(GuidanceState.INACTIVE);
     }
 
@@ -304,15 +259,27 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
         speedTimeTree.clear();
         trajectoryStartLocation = 0;
         trajectoryStartTime = 0;
-        trajectory_start.set(false);
-    }
+		trajectory_start.set(false);
+	}
+	
+	@Override
+	public void onShutdown() {
+		super.onShutdown();
+		getTransformClient.close();
+	}
+
+	@Override
+	public void onPanic() {
+		super.onPanic();
+		getTransformClient.close();
+	}
 	
 	@Override
 	public void timingLoop() throws InterruptedException {
 		
 		long loop_start = System.currentTimeMillis();
 		
-		if(currentState.get() == GuidanceState.DRIVERS_READY) {
+		if(currentState.get() != GuidanceState.STARTUP && currentState.get() != GuidanceState.SHUTDOWN) {
 			
 			//publish content for a new BSM
 			bsmPublisher.publish(composeBSMData());
@@ -422,18 +389,26 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 		coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
 		if(navSatFixSubscriber != null && navSatFixSubscriber.getLastMessage() != null) {
 			NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
-			double lat = gps_msg.getLatitude();
-			double Lon = gps_msg.getLongitude();
-			float elev = (float) gps_msg.getAltitude();
-			//TODO: need to have transformation from baselink frame to vehicle frame
-			if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
-				coreData.setLatitude(lat);
-			}
-			if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
-				coreData.setLongitude(Lon);
-			}
-			if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
-				coreData.setElev(elev);
+			Transform earthToHostVehicle = getTransform("earth", "host_vehicle", gps_msg.getHeader().getStamp());
+
+			if (earthToHostVehicle == null) {
+				// No transform so leave the lat/lon/elev marked as unavailable
+				log.info("TRANSFORM", "Could not get transform for BSM");
+			} else {
+				GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+				Location loc = gcc.cartesian2Geodesic(new Point3D(0,0,0), earthToHostVehicle);
+				double lat = loc.getLatitude();
+				double Lon = loc.getLongitude();
+				float elev = (float) loc.getAltitude();
+				if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
+					coreData.setLatitude(lat);
+				}
+				if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
+					coreData.setLongitude(Lon);
+				}
+				if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
+					coreData.setElev(elev);
+				}
 			}
 			
 			double semi_major_square = gps_msg.getPositionCovariance()[0];
@@ -487,8 +462,10 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 		coreData.setSpeed(BSMCoreData.SPEED_UNAVAILABLE);
 		if(velocity_ready.get()) {
 			float speed = (float) current_speed.get();
-			if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
-				coreData.setSpeed(speed);
+                        if(speed < BSMCoreData.SPEED_MIN) {
+                            coreData.setSpeed(0);
+                        } else if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
+			    coreData.setSpeed(speed);
 			}
 		}
 		
@@ -628,7 +605,10 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
+            break;
+        case DEACTIVATE:
+            jobQueue.add(this::onDeactivate);
             break;
         case ENGAGE:
             jobQueue.add(this::onEngaged);
@@ -636,11 +616,52 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
         case SHUTDOWN:
             jobQueue.add(this::onShutdown);
             break;
+    	case PANIC_SHUTDOWN:
+     		jobQueue.add(this::onPanic);
+      		break;
         case RESTART:
             jobQueue.add(this::onCleanRestart);
             break;
         default:
             throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
+    }
+
+    private Transform getTransform(String parentFrame, String childFrame, Time stamp) {
+	    GetTransformRequest request = getTransformClient.newMessage();
+	    request.setParentFrame(parentFrame);
+	    request.setChildFrame(childFrame);
+	    request.setStamp(stamp);
+
+	    final GetTransformResponse[] response = new GetTransformResponse[1];
+	    final boolean[] gotTransform = {false};
+
+	    getTransformClient.callSync(request,
+		    new OnServiceResponseCallback<GetTransformResponse>() {
+
+			    @Override
+			    public void onSuccess(GetTransformResponse msg) {
+			    	if (msg.getErrorStatus() == GetTransformResponse.NO_ERROR
+					    || msg.getErrorStatus() == GetTransformResponse.COULD_NOT_EXTRAPOLATE) {
+					    response[0] = msg;
+					    gotTransform[0] = true;
+				    } else {
+			    		log.warn("TRANSFORM", "Request for transform ParentFrame: " + request.getParentFrame() +
+						    " ChildFrame: " + request.getChildFrame() + " returned ErrorCode: " + msg.getErrorStatus());
+				    }
+			    }
+
+			    @Override
+			    public void onFailure(Exception e) {
+				    exceptionHandler.handleException("get_transform service call failed", e);
+			    }
+
+		    });
+
+	    if(gotTransform[0]) {
+	    	return Transform.fromTransformMessage(response[0].getTransform().getTransform());
+	    } else {
+	    	return null;
+	    }
     }
 }

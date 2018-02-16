@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,12 +17,10 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.RouteSegment;
-import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import org.apache.commons.logging.Log;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
@@ -58,9 +56,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   protected SaxtonLogger log;
   // Topics
   // Publishers
-  Publisher<cav_msgs.RouteSegment> segmentPub;
   Publisher<cav_msgs.Route> routePub;
   Publisher<cav_msgs.RouteState> routeStatePub;
+  Publisher<cav_msgs.RouteEvent> routeEventPub;
   // Subscribers
   Subscriber<sensor_msgs.NavSatFix> gpsSub;
   Subscriber<cav_msgs.SystemAlert> alertSub;
@@ -88,10 +86,10 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
     /// Topics
     // Publishers
-    segmentPub = connectedNode.newPublisher("current_segment", cav_msgs.RouteSegment._TYPE);
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
+    routeEventPub = connectedNode.newPublisher("route_event", cav_msgs.RouteEvent._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
     String packagePath = params.getString("package_path");
@@ -108,7 +106,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath, requiredLeftRouteCount);
 
     // Subscribers
-    //Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
+    // Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
     gpsSub.addMessageListener(new MessageListener<NavSatFix>() {
       @Override public void onNewMessage(NavSatFix navSatFix) {
@@ -142,8 +140,13 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
               List<cav_msgs.Route> routeMsgs = new LinkedList<>();
 
               for (Route route : routeWorker.getAvailableRoutes()) {
-                routeMsgs.add(route.toMessage(connectedNode.getTopicMessageFactory()));
+                cav_msgs.Route routeMsg = route.toMessage(connectedNode.getTopicMessageFactory());
+                routeMsg.setSegments(new LinkedList<RouteSegment>()); // Clearing segments to match service spec
+                routeMsgs.add(routeMsg);
               }
+              routeMsgs.sort(
+                (cav_msgs.Route r1, cav_msgs.Route r2) -> r1.getRouteName().compareToIgnoreCase(r2.getRouteName())
+              );
               response.setAvailableRoutes(routeMsgs);
             } catch (Exception e) {
               handleException(e);
@@ -197,10 +200,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     connectedNode.shutdown();
   }
 
-  @Override public void publishCurrentRouteSegment(RouteSegment routeSegment) {
-    segmentPub.publish(routeSegment);
-  }
-
   @Override public void publishActiveRoute(cav_msgs.Route route) {
     routePub.publish(route);
   }
@@ -209,6 +208,10 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routeStatePub.publish(routeState);
   }
 
+  @Override public void publishRouteEvent(cav_msgs.RouteEvent routeEvent) {
+      routeEventPub.publish(routeEvent);
+  }
+  
   @Override public Time getTime() {
     if (connectedNode == null) {
       return new Time();

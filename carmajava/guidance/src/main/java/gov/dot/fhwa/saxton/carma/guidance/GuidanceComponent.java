@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,7 +79,7 @@ public abstract class GuidanceComponent implements Runnable {
     /**
      * Get called once route is selected and active
      */
-    public abstract void onRouteActive();
+    public abstract void onActive();
     
     /**
      * Get called once vehicle ACC is engaged
@@ -92,22 +92,33 @@ public abstract class GuidanceComponent implements Runnable {
     public abstract void onCleanRestart();
     
     /**
+     * Get called once guidance component found controller timeout when guidance is engaged
+     */
+    public abstract void onDeactivate();
+    
+    /**
      * Job queue task for performing the shutting down process
      * Will log the fatal condition, alert the other ROS nodes in the CAV network to begin
      * shutdown procedures and then trigger GuidanceComponent activities to cease as well.
      */
     public void onShutdown() {
         currentState.set(GuidanceState.SHUTDOWN);
+
+        log.info(getComponentName() + " shutting down normally.");
+        
+        // Cancel the loop
+        timingLoopThread.interrupt();
+        loopThread.interrupt();
+    }
+
+    /**
+     * Generic handler for panic conditions, just immediately shutdown and log this
+     */
+    public void onPanic() {
+        currentState.set(GuidanceState.SHUTDOWN);
         
         // Log the fatal error
-        log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
-        
-        // Alert the other ROS nodes to the FATAL condition
-        IPublisher<SystemAlert> pub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
-        SystemAlert fatalBroadcast = pub.newMessage();
-        fatalBroadcast.setDescription(getComponentName() + " is requested to SHUTDOWN!");
-        fatalBroadcast.setType(SystemAlert.FATAL);
-        pub.publish(fatalBroadcast);
+        log.fatal(getComponentName() + " has activated panic procedures. Shutting down immediately.");
         
         // Cancel the loop
         timingLoopThread.interrupt();

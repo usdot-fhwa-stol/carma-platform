@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,14 +64,6 @@ public abstract class AbstractPlugin implements IPlugin {
 
     @Override public final boolean getAvailability() {
         return availability.get();
-    }
-
-    @Override public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override public void onReceiveNegotiationRequest() {
-        throw new UnsupportedOperationException();
     }
 
     @Override

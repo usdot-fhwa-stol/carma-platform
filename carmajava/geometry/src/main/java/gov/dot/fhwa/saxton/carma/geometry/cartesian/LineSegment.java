@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,9 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian;
  * A representation of a line segment in N-dimensional space.
  */
 public class LineSegment implements CartesianElement {
-  private Point p1;
-  private Point p2;
-  private Vector vector;
+  protected Point p1;
+  protected Point p2;
+  protected Vector vector;
 
   /**
    * Constructor defines a line segment as the straight path between two provided points

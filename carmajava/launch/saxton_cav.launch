@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2017 LEIDOS.
+  Copyright (C) 2018 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,6 @@
   <arg name="mock_srx_controller" default="false" doc="True if using a simulated srx controller driver"/>
   <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
   <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
-  <arg name="mock_cellular"       default="false" doc="True if using a simulated cellular driver"/>
 
   <!-- Data Files -->
   <arg name="can_data_file"            default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
@@ -59,8 +58,7 @@
   <!-- JVM Debug arguments -->
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
   <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_environment_mgr" default="false" doc="Set true to enable debugging on the Environment Manager node"/>
-  <arg name="debug_transform_svr"   default="false" doc="Set true to enable debugging on the Transform Server node"/>
+  <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
   <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
   <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
   <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
@@ -71,7 +69,7 @@
   <arg name="debug_mock_can"        default="false" doc="Set true to enable debugging on the Mock CAN Driver"/>
   <arg name="debug_mock_dsrc"      default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
   <arg name="debug_mock_radar"      default="false" doc="Set true to enable debugging on the Mock Radar Driver"/>
-
+  <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
 
   <!-- ROS Namespaces -->
   <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
@@ -84,12 +82,19 @@
   <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
   <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
   <arg name="UI_NS"   default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+  
+  <!-- Environment Variables -->
+  <arg name="local_env"    default="false" doc="Prevents the launch file from setting ROS environment variables"/>
+  <env unless="$(arg local_env)" name="ROS_IP" value="192.168.88.10"/>
 
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
 
     <!-- Set package path for use with relative file paths -->
     <param name="package_path" value="$(arg CARMA_DIR)"/>
+
+    <!-- Generate log name configuration file -->
+    <param name="log_name" type="str" command="$(arg CARMA_DIR)/../engineering_tools/generate_log_name.sh"/>
 
     <!-- Load Vehicle Characteristics -->
     <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
@@ -177,6 +182,18 @@
         <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
       </node>
+
+      <!--Lateral Controller Driver Node-->
+      <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
+        args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
+
+        <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
+
+        <remap from="ui_instructions"
+               to="/$(arg TOP_NS)/ui_instructions"/>
+      </node>
     </group>
 
     <!-- Interface Manager Package -->
@@ -202,6 +219,9 @@
 
       <!-- Sensor Fusion Node -->
       <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/SensorFusion.yaml"/>
+
         <remap from="~filtered"
                to="filtered"/>
         <remap from="system_alert"
@@ -216,20 +236,18 @@
     <!-- Roadway Package -->
     <group ns="$(arg RD_NS)">
 
-      <!-- Environment Manager Node -->
-      <node pkg="carma" type="roadway" name="environment_manager"
-            args="gov.dot.fhwa.saxton.carma.roadway.EnvironmentManager">
+      <!-- Roadway Manager Node -->
+      <node pkg="carma" type="roadway" name="roadway_manager"
+            args="gov.dot.fhwa.saxton.carma.roadway.RoadwayManager">
 
-        <env if="$(arg debug_environment_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <env if="$(arg debug_roadway_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
-        <rosparam command="load" file="$(arg PARAM_DIR)/EnvironmentManagerParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/RoadwayManagerParams.yaml"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="map"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/map"/>
-        <remap from="route_current_segment"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
@@ -237,20 +255,19 @@
         <remap from="odometry"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/odometry"/>
         <remap from="objects"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/objects"/>
-        <remap from="tracked_vehicles"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/tracked_vehicles"/>
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/tracked_objects"/>
         <remap from="velocity"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
         <remap from="get_transform"
                to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
+        <remap from="route_state"
+              to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="route"
+              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       </node>
 
       <!-- Transform Server Node -->
       <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
-
-        <env if="$(arg debug_transform_svr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
       </node>
@@ -287,20 +304,20 @@
 
         <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
+        <rosparam command="load" file="$(arg PARAM_DIR)/MessageParams.yaml"/>
+
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="outgoing_bsm"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
         <remap from="mobility_ack_outbound"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_ack"/>
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_ack_outbound"/>
         <remap from="mobility_greeting_outbound"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_greeting"/>
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_greeting_outbound"/>
         <remap from="mobility_intro_outbound"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro"/>
-        <remap from="mobility_nack_outbound"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_nack"/>
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
         <remap from="mobility_plan_outbound"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_plan"/>
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_plan_outbound"/>
         <remap from="get_drivers_with_capabilities"
                to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
       </node>
@@ -314,21 +331,20 @@
             args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr">
 
         <env if="$(arg debug_negotiator)" name="NEGOTIATOR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
+        <rosparam command="load" file="$(arg PARAM_DIR)/NegotiatorParams.yaml"/>
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="host_bsm"
-               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/new_plan"/>
         <remap from="mobility_ack_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_ack"/>
         <remap from="mobility_greeting_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_greeting"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_greeting"/>
         <remap from="mobility_intro_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_intro"/>
-        <remap from="mobility_nack_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_nack"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_intro"/>
         <remap from="mobility_plan_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_plan"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_plan"/>
+        <remap from="plan_status"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plan_status"/>
+               
       </node>
     </group>
 
@@ -343,6 +359,7 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SpeedHarmParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/PlatooningParams.yaml"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
@@ -350,15 +367,19 @@
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
         <remap from="plan_status"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/plan_status"/>
-        <remap from="objects"
-               to="/$(arg TOP_NS)/drivers/srx_objects/f_lrr/sensor/objects"/>
+        <remap from="roadway_environment"
+               to="/$(arg TOP_NS)/$(arg RD_NS)/roadway_environment"/>
 
         <!-- Arbitrator Thread-->
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
         <remap from="robot_enabled"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
-
+               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+        
+        <!-- GuidanceStateHandler Thread-->
+        <remap from="route_event"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
+        
         <!-- Tracking Thread-->
         <remap from="vehicle_length"
                to="/$(arg TOP_NS)/vehicle_length"/>
@@ -380,8 +401,6 @@
         <!-- Trajectory Thread-->
         <remap from="get_drivers_with_capabilities"
                to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-        <remap from="current_segment"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
 
         <!-- Trajectory and Arbitrator -->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
@@ -392,6 +411,16 @@
         <remap from="route"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
+        <!-- Negotiation Receiver Plugin -->
+        <remap from="new_plan"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
+               
+        <!-- Lane Change Plugin -->
+        <remap from="mobility_intro_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
+        <remap from="mobility_ack_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+               
       </node>
     </group>
 
@@ -406,8 +435,6 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
       <remap from="nav_sat_fix"
              to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-      <remap from="current_segment"
-             to="/$(arg TOP_NS)/$(arg RT_NS)/current_segment"/>
       <remap from="get_available_routes"
              to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
       <remap from="set_active_route"
@@ -416,8 +443,12 @@
              to="/$(arg TOP_NS)/$(arg RT_NS)/start_active_route"/>
       <remap from="route_state"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+      <remap from="route_event"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
       <remap from="route"
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
+      <remap from="bsm"
+             to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="state"
@@ -430,8 +461,8 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
       <remap from="plugins/activate_plugin"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
-      <remap from="set_guidance_engaged"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_engaged"/>
+      <remap from="set_guidance_active"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
       <remap from="cmd_speed"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
       <remap from="robot_status"
@@ -442,6 +473,15 @@
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/engine_speed"/>
       <remap from="speed"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/speed"/>
+      <remap from="driver_discovery"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+      <remap from="cmd_lateral"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
+      <remap from="ui_instructions"
+             to="/$(arg TOP_NS)/ui_instructions"/>
+      <remap from="plugins/controlling_plugin"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
+             
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>

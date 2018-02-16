@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,13 @@ function openTab(evt, name) {
     tabcontent = document.getElementsByClassName('tabcontent');
     for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = 'none';
+
+        //If DriverView, collapse left navigation bar.
+        if (name != 'divCapabilities')
+            tabcontent[i].style.width = '88%';
+        else
+            tabcontent[i].style.width = '82%';
+
     }
     tablinks = document.getElementsByClassName('tablinks');
     for (i = 0; i < tablinks.length; i++) {
@@ -38,6 +45,41 @@ function openTab(evt, name) {
     //Initialize the map.
     if (name == 'divMap')
         initMap();
+
+    //If DriverView, collapse left navigation bar.
+    var tabname = document.getElementsByClassName('tabName');
+
+    for (i = 0; i < tabname.length; i++) {
+
+        //If DriverView, collapse left navigation bar.
+        if (name != 'divCapabilities')
+            tabname[i].style.display = 'none';
+        else
+            tabname[i].style.display = '';
+    }
+
+    var tab = document.getElementsByClassName('tab');
+
+    for (i = 0; i < tab.length; i++) {
+
+        //If DriverView, collapse left navigation bar.
+        if (name != 'divCapabilities')
+            tab[i].style.width = '6%';
+        else
+            tab[i].style.width = '12%';
+    }
+
+    var tabheader = document.getElementsByClassName('tabheader');
+
+    for (i = 0; i < tabheader.length; i++) {
+
+        //If DriverView, collapse left navigation bar.
+        if (name != 'divCapabilities')
+            tabheader[i].style.width = '88%';
+        else
+            tabheader[i].style.width = '82%';
+    }
+
 }
 
 // Get the element with id="defaultOpen" and click on it
@@ -47,7 +89,7 @@ document.getElementById('defaultOpen').click();
 /*
 * Adds a new radio button onto the container.
 */
-function createRadioElement(container, radioId, radioTitle, itemCount, groupName) {
+function createRadioElement(container, radioId, radioTitle, itemCount, groupName, isValid) {
 
     var newInput = document.createElement('input');
     newInput.type = 'radio';
@@ -63,6 +105,13 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
     newLabel.id = 'lbl' + revisedId;
     newLabel.htmlFor = newInput.id.toString();
     newLabel.innerHTML = radioTitle;
+
+    //If this field is false then the UI should mark the button and make it unselectable.
+    if (isValid == false)
+    {
+         newInput.disabled = true;
+         newLabel.innerHTML += '&nbsp; <i class="fa fa-ban" style="color:#b32400";></i>';
+    }
 
     // Add the new elements to the container
     container.appendChild(newInput);
@@ -186,7 +235,7 @@ function insertNewTableRow(tableName, rowTitle, rowValue) {
 */
 function clearTable(tableName) {
 
-    var myTable = document.getElementById("tableName");
+    var myTable = document.getElementById(tableName);
     var noOfRows = myTable.rows.length - 1;
     //alert(noOfRows);
 
@@ -213,6 +262,31 @@ function setSpeedometer(speed) {
 
 }
 
+
+/* Open the modal UIInstructions when there's no acknowledgement needed. */
+function showModalNoAck(icon) {
+
+    //IF modal is already open, skip;
+    if (isModalPopupShowing == true)
+        return;
+
+    //show modal
+    var modalUIInstructions = document.getElementById('modalUIInstructions');
+    var modalUIInstructionsContent = document.getElementById('modalUIInstructionsContent');
+    modalUIInstructionsContent.innerHTML = icon;
+    modalUIInstructions.style.display = 'block';
+    isModalPopupShowing = true;
+    
+    playSound('audioAlert4', false); 
+
+    //hide after 3 seconds.
+   setTimeout(function(){
+        modalUIInstructions.style.display = '';
+        modalUIInstructionsContent.innerHTML = '';
+        isModalPopupShowing = false;
+   }, 3000);
+}
+
 /*
  Open the modal popup.
  TODO: Update to allow caution and warning message scenarios. Currently only handles fatal and guidance dis-engage which redirects to logout page.
@@ -226,7 +300,7 @@ function showModal(showWarning, modalMessage, restart) {
     if (isModalPopupShowing == true)
         return;
 
-    var modal = document.getElementById('myModal');
+    var modal = document.getElementById('modalMessageBox');
     var span_modal = document.getElementsByClassName('close')[0];
     var btnModal = document.getElementById('btnModal');
 
@@ -336,7 +410,7 @@ function pad(num, size) {
 */
 function closeModal(action) {
 
-    var modal = document.getElementById('myModal');
+    var modal = document.getElementById('modalMessageBox');
     modal.style.display = 'none';
 
     isModalPopupShowing = false; //flag that modal popup has been closed.
@@ -344,6 +418,7 @@ function closeModal(action) {
     document.getElementById('audioAlert1').pause();
     document.getElementById('audioAlert2').pause();
     document.getElementById('audioAlert3').pause();
+    document.getElementById('audioAlert4').pause();
 
     //alert('modal action:' + action);
 
@@ -358,6 +433,7 @@ function closeModal(action) {
 
             //Clear global variables
             guidance_engaged = false;
+            guidance_active = false;
             route_name = 'No Route Selected';
             ready_counter = 0;
             ready_max_trial = 10;
@@ -368,12 +444,15 @@ function closeModal(action) {
             //clear sections
             setSpeedometer(0);
             document.getElementById('divSpeedCmdValue').innerHTML = '0';
-            document.getElementById('divCapabilitiesMessage').innerHTML = '';
+            document.getElementById('divCapabilitiesMessage').innerHTML = 'Please select a route.';
             clearTable('tblSecondA');
 
             // Get the element with id="defaultOpen" and click on it
             // This needs to be outside a funtion to work.
             document.getElementById('defaultOpen').click();
+
+            //Update CAV buttons state back to Gray
+            setCAVButtonState('DISABLED');
 
             //Evaluate next step
             evaluateNextStep();

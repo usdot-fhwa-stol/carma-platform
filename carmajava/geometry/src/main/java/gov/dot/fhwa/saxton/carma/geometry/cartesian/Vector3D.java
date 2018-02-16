@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
+
+import org.ros.rosjava_geometry.Vector3;
 
 /**
  * A representation of a vector in 3-dimensional space.
@@ -34,10 +36,10 @@ public class Vector3D extends Vector {
   }
   /**
    * Constructor defines a vector from the tail point to the head point
-   * @param head The head of the vector (the arrow when drawing)
    * @param tail The tail of the vector. Must be the same dimension as the head
+   * @param head The head of the vector (the arrow when drawing)
    */
-  public Vector3D(Point3D head, Point3D tail) {
+  public Vector3D(Point3D tail, Point3D head) {
     super(tail, head);
   }
 
@@ -73,13 +75,13 @@ public class Vector3D extends Vector {
   }
 
   /**
-   * Calculates the determinate of a 3x3 square matrix defined by 3 col vectors
+   * Calculates the determinant of a 3x3 square matrix defined by 3 col vectors
    * @param c1 First column vector
    * @param c2 Second column vector
    * @param c3 Third column vector
-   * @return The determinate
+   * @return The determinant
    */
-  public static double get3by3Determinate(Vector3D c1, Vector3D c2, Vector3D c3) {
+  public static double get3by3Determinant(Vector3D c1, Vector3D c2, Vector3D c3) {
     final double det1 = c2.getY()*c3.getZ() - c3.getY()*c2.getZ();
     final double det2 = c1.getY()*c3.getZ() - c3.getY()*c1.getZ();
     final double det3 = c1.getY()*c2.getZ() - c2.getY()*c1.getZ();
@@ -128,5 +130,14 @@ public class Vector3D extends Vector {
     }
 
     return new Vector3D(p);
+  }
+
+  /**
+   * Helper function to convert a rosjava Vector3 to a 3D vector.
+   * @param v The vector to convert to a Vector3D
+   * @return A new vector 3d
+   */
+  public static Vector3D fromVector(Vector3 v) {
+    return new Vector3D(new Point3D(v.getX(),v.getY(),v.getZ()));
   }
 }

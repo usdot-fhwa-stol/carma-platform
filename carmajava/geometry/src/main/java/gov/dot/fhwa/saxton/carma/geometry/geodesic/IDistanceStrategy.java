@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,4 +47,13 @@ public interface IDistanceStrategy {
    * @return The distance in meters
    */
   double downtrackDistance(Location loc, GreatCircleSegment seg);
+
+  /**
+   * Calculates location of a external point projected onto a greate circle segment
+   *
+   * @param loc The location whose projection is being calculated
+   * @param seg The great circle segment which defines the track
+   * @return The projected location
+   */
+  Location projectOntoSegment(Location loc, GreatCircleSegment seg);
 }

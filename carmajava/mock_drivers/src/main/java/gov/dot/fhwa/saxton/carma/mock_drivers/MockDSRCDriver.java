@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,11 @@
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import cav_msgs.ByteArray;
-import cav_srvs.GetLightsRequest;
-import cav_srvs.GetLightsResponse;
 import cav_srvs.SendMessageRequest;
 import cav_srvs.SendMessageResponse;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.ServiceException;
 import org.ros.message.MessageListener;
-import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
@@ -36,6 +33,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * A class which can be used to simulate an Arada comms driver for the CarmaPlatform.
@@ -71,6 +69,7 @@ public class MockDSRCDriver extends AbstractMockDriver {
   int current_vehicle = 0; // Do not change it.
   int pulishDelay = 1000; // Set to 1 second length between each BSM from the same vehicle
   int vehicle_number = 3; //Need to match the length of binary data array
+  int message_counter = 0; // Let driver send different inbound binary bytes
 
   public MockDSRCDriver(ConnectedNode connectedNode) {
     super(connectedNode);
@@ -115,8 +114,6 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // String rawByteString = elements[RAW_BYTES_IDX];
       // Set to static data for test
       
-
-      
       String[] rawByteString = {
     		  "00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0",
     		  "00 14 25 03 fa 2f 24 8e 1c 51 a6 6e 8c 2a 1e a6 bd 3b 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0",
@@ -124,6 +121,17 @@ public class MockDSRCDriver extends AbstractMockDriver {
       };
       
       String currentByteString = rawByteString[current_vehicle++ % rawByteString.length];
+      
+      //publish mobility intro message some time
+      message_counter++; 
+      if(message_counter % 3 == 0) {
+          recvMsg.setMessageType("MobilityIntro");
+          currentByteString = "00 f0 80 e7 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 6b 06 0c 18 2d 60 c1 83 05 ac 18 30 60 b5 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 62 d5 8b 67 0c 1c 31 70 d5 8b 36 01 45 5b a9 97 9f 44 14 b7 e1 c9 74 00 20 10 05 08 06 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 2c 99 33 66 dd 93 06 6d 9c 35 68 dd bb 57 0c 1b 95 b7 0f 0f 2d b8 68 6c c3 d3 36 fe 5b 50 76 64 b9 92 e6 77 40";
+      } else if(message_counter % 3 == 1) {
+          recvMsg.setMessageType("MobilityAck");
+          currentByteString = "00 f2 70 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 6b 06 0c 18 2d 60 c1 83 05 ac 18 30 60 b5 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 62 d5 8b 67 0c 1c 31 70 d5 8b 36 00";
+      }
+      
       
       boolean publish_control = false;
       if(currentByteString.equals("00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0")) {

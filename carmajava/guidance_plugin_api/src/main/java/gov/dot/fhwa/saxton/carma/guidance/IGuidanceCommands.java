@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,5 +27,17 @@ public interface IGuidanceCommands {
      * @param speed The speed to output
      * @param accel The maximum allowable acceleration in attaining and maintaining that speed
      */
-    void setCommand(double speed, double accel);
+    void setSpeedCommand(double speed, double accel);
+
+    /**
+     * Sets the desired axle angle by which to steer the vehicle.
+     * <p>
+     * Positive angles are interpreted as a command to steer to the right and negative ones as a command to steer
+     * to the left.
+     * 
+     * @param axleAngle The angle in the range [-pi/2, pi/2] to command for steering
+     * @param lateralAccel The maximum lateral acceleration of the vehicle, in m/s/s
+     * @param yawRate The rate of change of the vehicle's heading, in rad/s
+     */
+    void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate);
 }

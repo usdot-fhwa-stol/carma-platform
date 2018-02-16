@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ package gov.dot.fhwa.saxton.carma.guidance;
 public enum GuidanceState {
     STARTUP,
     DRIVERS_READY,
+    ACTIVE,
     INACTIVE,
     ENGAGED,
     SHUTDOWN

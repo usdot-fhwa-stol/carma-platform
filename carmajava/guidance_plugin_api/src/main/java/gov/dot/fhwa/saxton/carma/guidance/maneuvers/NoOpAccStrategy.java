@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,10 +31,5 @@ public class NoOpAccStrategy extends AbstractAccStrategy {
 	public double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
 			double desiredSpeedCommand) {
       return desiredSpeedCommand;
-	}
-
-	@Override
-	public double computeDesiredHeadway(double currentSpeed) {
-    return 0.0;
 	}
 }

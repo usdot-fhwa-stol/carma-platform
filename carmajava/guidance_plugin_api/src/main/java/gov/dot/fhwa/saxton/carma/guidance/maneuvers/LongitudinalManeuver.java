@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,23 +17,25 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Base class for all longitudinal maneuvers, providing the adaptive cruise control (ACC) functionality.
  */
 public abstract class LongitudinalManeuver extends ManeuverBase {
 
-    protected double startSpeed_ = -1.0; // m/s
-    protected double endSpeed_ = -1.0; // m/s
     protected double maxAccel_ = 0.999; // m/s^2 absolute value; default is a conservative value
     protected final double SMALL_SPEED_CHANGE = 2.5; // m/s
     protected final IAccStrategy accStrategy;
     protected boolean completed = false;
     protected long startTime_ = 0;
+    protected double startSpeed_ = -1.0; // m/s
+    protected double endSpeed_ = -1.0; // m/s
     protected double workingAccel_; // m/s^2 that we will actually use
     protected static final double SPEED_EPSILON = 0.0001;
 
-    public LongitudinalManeuver() {
+    public LongitudinalManeuver(IPlugin planner) {
+        super(planner);
         this.accStrategy = AccStrategyManager.newAccStrategy();
     }
 
@@ -88,32 +90,39 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     public boolean executeSpeedCommand(double executeSpeedCommand, boolean overrideActive) {
         //send the command to the vehicle
         if (overrideActive) {
-            commands_.setCommand(executeSpeedCommand, accStrategy.getMaxAccel());
+            commands_.setSpeedCommand(executeSpeedCommand, accStrategy.getMaxAccel());
         } else {
-            commands_.setCommand(executeSpeedCommand, workingAccel_);
+            commands_.setSpeedCommand(executeSpeedCommand, workingAccel_);
         }
         return completed;
     }
 
-    @Override
-    public void setSpeeds(double startSpeed, double targetSpeed) throws UnsupportedOperationException {
+        /**
+     * Stores the beginning and target speed of the maneuver.
+     * Since maneuvers will generally be chained together during planning, this is the only way that a maneuver
+     * can know what speed the vehicle will have after completing its predecessor maneuver.
+     * @param startSpeed - the expected speed at the beginning of the maneuver, m/s
+     * @param targetSpeed - target speed at end of maneuver, m/s
+     */
+    public void setSpeeds(double startSpeed, double targetSpeed) {
         startSpeed_ = startSpeed;
         endSpeed_ = targetSpeed;
     }
 
-    @Override
+    /**
+     * Returns the specified starting speed for the maneuver.  To be used for longitudinal maneuvers only.
+     * @return m/s
+     */
     public double getStartSpeed() {
         return startSpeed_;
     }
 
-    @Override
+    /**
+     * Returns the specified target speed for the end of the maneuver.  To be used for longitudinal maneuvers only.
+     * @return m/s
+     */
     public double getTargetSpeed() {
         return endSpeed_;
-    }
-
-    @Override
-    public void setTargetLane(int targetLane) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Attempting to use setTargetLane on a longitudinal maneuver.");
     }
 
     /**
@@ -121,7 +130,6 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
      * up and slowing down (symmetrical).
      * @param limit - max (absolute value) allowed, m/s^2
      */
-    @Override
     public void setMaxAccel(double limit) {
         if (limit > 0.0) { //can't be equal to zero
             maxAccel_ = limit;

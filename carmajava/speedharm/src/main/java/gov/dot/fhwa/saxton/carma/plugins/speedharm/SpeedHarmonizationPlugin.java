@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,15 +26,13 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.carma.guidance.util.AlgorithmFlags;
-import gov.dot.fhwa.saxton.speedharm.api.objects.VehicleStatusUpdate.AutomatedControlStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
 
 /**
  * Plugin implementing integration withe STOL I TO 22 Infrastructure Server
@@ -43,7 +41,7 @@ import java.util.SortedSet;
  * state and receive speed commands as may relate to whatever algorithm the server
  * is configured to run with.
  */
-public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHarmInputs {
+public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHarmInputs, IStrategicPlugin {
   protected String vehicleId = "";
   protected String serverUrl = "";
   protected boolean endSessionOnSuspend = true;
@@ -51,6 +49,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   protected long timestepDuration = 1000;
   protected double minimumManeuverLength = 10.0;
   protected double maxAccel = 2.0;
+  protected long maneuverTimeout = 3000; //ms
 
   protected StatusUpdater statusUpdater = null;
   protected Thread statusUpdaterThread = null;
@@ -69,6 +68,8 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     super(psl);
     version.setName("Speed Harmonization Plugin");
     version.setMajorRevision(1);
+    version.setIntermediateRevision(0);
+    version.setMinorRevision(0);
 
     restClient = new RestTemplate();
   }
@@ -83,7 +84,14 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_min_maneuver_length",
         10.0);
     maxAccel = pluginServiceLocator.getParameterSource().getDouble("~speed_harm_max_accel", 2.0);
+    maneuverTimeout = pluginServiceLocator.getParameterSource().getInteger("~speed_harm_maneuver_timeout", 3000);
 
+    log.info("LoadedParam: infrastructure_server_url: " + serverUrl);
+    log.info("LoadedParam: vehicle_id: " + vehicleId);
+    log.info("LoadedParam: speed_harm_min_maneuver_length: " + minimumManeuverLength);
+    log.info("LoadedParam: speed_harm_max_accel: " + maxAccel);
+    log.info("LoadedParam: speed_harm_maneuver_timeout: " + maneuverTimeout);
+    
     List<HttpMessageConverter<?>> httpMappers = new ArrayList<HttpMessageConverter<?>>();
     MappingJackson2HttpMessageConverter jsonMapper = new MappingJackson2HttpMessageConverter();
     jsonMapper.getObjectMapper().findAndRegisterModules();
@@ -124,7 +132,7 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     if (commandReceiverThread == null && commandReceiver == null) {
       commandReceiver = new CommandReceiver(serverUrl, sessionManager.getServerSessionId(), restClient);
       commandReceiverThread = new Thread(commandReceiver);
-      statusUpdaterThread.setName("SpeedHarm Command Receiver");
+      commandReceiverThread.setName("SpeedHarm Command Receiver");
       commandReceiverThread.start();
     }
   }
@@ -174,11 +182,12 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
   }
 
   private void planComplexManeuver(Trajectory traj, double start, double end) {
-    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(this,
+    SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(this, this,
         pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
         pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), AccStrategyManager.newAccStrategy(), start,
         end, 1.0, // Dummy values for now. TODO: Replace
         100.0);
+      maneuver.setTimeout(Duration.fromMillis(maneuverTimeout));
 
     boolean accepted = traj.setComplexManeuver(maneuver);
     log.info("Trajectory response to complex maneuver = " + accepted);
@@ -199,52 +208,15 @@ public class SpeedHarmonizationPlugin extends AbstractPlugin implements ISpeedHa
     }
 
     // Find the earliest window after the start location at which speedharm is enabled
-    SortedSet<AlgorithmFlags> flags = pluginServiceLocator.getRouteService()
-        .getAlgorithmFlagsInRange(complexManeuverStartLocation, traj.getEndLocation());
-    AlgorithmFlags flagsAtEnd = pluginServiceLocator.getRouteService()
-        .getAlgorithmFlagsAtLocation(traj.getEndLocation());
-    if (flagsAtEnd != null) {
-      flags.add(flagsAtEnd); // Since its a set if this is a duplicate it goes away
-      log.info("planTrajectory(): flagsAtEnd = " + flagsAtEnd);
-    }
-
-    double earliestLegalWindow = complexManeuverStartLocation;
-    for (AlgorithmFlags flagset : flags) {
-      if (flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
-        earliestLegalWindow = flagset.getLocation();
-        log.info("planTrajectory(): earliestLegalWindow = " + earliestLegalWindow);
-      } else {
-        log.info("planTrajectory(): earliestLegalWindow = BREAK");
-        break;
-      }
-    }
-
-    // Find the end of that same window
-    double endOfWindow = earliestLegalWindow;
-    for (AlgorithmFlags flagset : flags) {
-      if (flagset.getLocation() > earliestLegalWindow)
-        if (!flagset.getDisabledAlgorithms().contains(SPEED_HARM_FLAG)) {
-          endOfWindow = flagset.getLocation();
-          log.info("planTrajectory(): endOfWindow = " + endOfWindow);
-        } else {
-          log.info("planTrajectory(): endOfWindow = BREAK");
-          break;
-        }
-    }
-
-    // Clamp to end of trajectory window
-    endOfWindow = Math.min(endOfWindow, traj.getEndLocation());
-    log.info("planTrajectory(): endOfWindow : traj.getEndLocation()= " + traj.getEndLocation());
-    log.info(String.format("Planning SpeedHarmonization complex maneuver @ [%.02f, %.02f)", earliestLegalWindow,
-        endOfWindow));
-
-    if (earliestLegalWindow >= endOfWindow) {
-      log.info("Couldn't plan maneuver earliestWindow: " + earliestLegalWindow + " endOfWindow: " + endOfWindow);
+    double[] planWindow = pluginServiceLocator.getRouteService().getAlgorithmEnabledWindowInRange(
+            complexManeuverStartLocation, traj.getEndLocation(), SPEED_HARM_FLAG);
+    if (planWindow == null) {
+      log.info("Couldn't find plan window at start: " + complexManeuverStartLocation + " endOfWindow: " + traj.getEndLocation());
       return new TrajectoryPlanningResponse();
     }
 
-    if (Math.abs(endOfWindow - earliestLegalWindow) > minimumManeuverLength) {
-      planComplexManeuver(traj, earliestLegalWindow, endOfWindow);
+    if (Math.abs(planWindow[1] - planWindow[0]) > minimumManeuverLength) {
+      planComplexManeuver(traj, planWindow[0], planWindow[1]);
     } else {
       log.warn("Unable to find sufficient window to plan Speed Harmonization maneuver");
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,14 +34,14 @@ import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 
 import cav_msgs.RobotEnabled;
-import cav_msgs.RouteState;
+import cav_msgs.RouteEvent;
 import cav_msgs.SystemAlert;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
 import cav_srvs.GetDriversWithCapabilitiesResponse;
-import cav_srvs.SetGuidanceEngaged;
-import cav_srvs.SetGuidanceEngagedRequest;
-import cav_srvs.SetGuidanceEngagedResponse;
+import cav_srvs.SetGuidanceActive;
+import cav_srvs.SetGuidanceActiveRequest;
+import cav_srvs.SetGuidanceActiveResponse;
 
 /**
  * Handles final cleanup after Guidance shutdown
@@ -50,17 +50,19 @@ import cav_srvs.SetGuidanceEngagedResponse;
  */
 public class GuidanceStateHandler extends GuidanceComponent implements IStateChangeListener {
     
-    protected final String ROBOTIC_STATUS = "control/robot_status";
+    private static final String DRIVER_BASE_PATH = "/saxton_cav/drivers";
+    private static final String SRX_CONTROLLER_PATH = "/srx_controller/";
+    private static final String ROBOTIC_STATUS_CAPABILITY = "control/robot_status";
     
     protected long shutdownDelayMs = 5000;
+    protected boolean robotStatus = false;
     
-    protected ISubscriber<RouteState> routeStateSub;
+    protected ISubscriber<RouteEvent> routeEventSub;
     protected ISubscriber<SystemAlert> systemAlertSub;
     protected ISubscriber<RobotEnabled> robotStatusSub;
     protected IPublisher<SystemAlert> systemAlertPub;
     protected IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
-    
-    protected ServiceServer<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse> guidanceEngageService;
+    protected ServiceServer<SetGuidanceActiveRequest, SetGuidanceActiveResponse> guidanceActiveService;
 
     public GuidanceStateHandler(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
         super(stateMachine, pubSubService, node);
@@ -85,52 +87,51 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
                 if(msg.getType() == SystemAlert.DRIVERS_READY) {
                     log.info("GUIDANCE_STATE", getComponentName() + " received DRIVERS_READY");
                     stateMachine.processEvent(GuidanceEvent.FOUND_DRIVERS);
-                } else if(msg.getType() == SystemAlert.FATAL || msg.getType() == SystemAlert.SHUTDOWN) {
-                    log.fatal("GUIDANCE_STATE", getComponentName() + "received FATAL or SHUTDOWN");
+                } else if(msg.getType() == SystemAlert.FATAL) {
+                    log.fatal("GUIDANCE_STATE", getComponentName() + "received FATAL");
                     stateMachine.processEvent(GuidanceEvent.PANIC);
+                } else if(msg.getType() == SystemAlert.SHUTDOWN) {
+                    log.warn("GUIDANCE_STATE", getComponentName() + "received SHUTDOWN");
+                    stateMachine.processEvent(GuidanceEvent.SHUTDOWN);
                 }
                 
             }
         });
         systemAlertPub = pubSubService.getPublisherForTopic("system_alert", SystemAlert._TYPE);
         
-        routeStateSub = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
-        routeStateSub.registerOnMessageCallback(new OnMessageCallback<RouteState>() {
-
-            @Override
-            public void onMessage(RouteState msg) {
-                if(msg.getEvent() == RouteState.LEFT_ROUTE) {
-                    log.info("GUIDANCE_STATE", getComponentName() + " recieved LEFT_ROUTE");
-                    SystemAlert alert = systemAlertPub.newMessage();
-                    alert.setDescription("Guidance detected LEFT_ROUTE state!");
-                    alert.setType(SystemAlert.CAUTION);
-                    systemAlertPub.publish(alert);
-                    stateMachine.processEvent(GuidanceEvent.LEFT_ROUTE);
-                } else if (msg.getEvent() == RouteState.ROUTE_COMPLETED
-                        || msg.getEvent() == RouteState.ROUTE_ABORTED) {
-                    log.info("GUIDANCE_STATE", getComponentName() + " recieved ROUTE_COMPLETED or ROUTE_ABORTED");
-                    SystemAlert alert = systemAlertPub.newMessage();
-                    alert.setDescription("Guidance detected ROUTE_COMPLETED or ROUTE_ABORTED state.");
-                    alert.setType(SystemAlert.CAUTION);
-                    systemAlertPub.publish(alert);
-                    stateMachine.processEvent(GuidanceEvent.FINISH_ROUTE);
-                }
+        routeEventSub = pubSubService.getSubscriberForTopic("route_event", RouteEvent._TYPE);
+        routeEventSub.registerOnMessageCallback((msg) -> {
+            if (msg.getEvent() == RouteEvent.LEFT_ROUTE) {
+                log.info("GUIDANCE_STATE", getComponentName() + " recieved LEFT_ROUTE");
+                SystemAlert alert = systemAlertPub.newMessage();
+                alert.setDescription("Guidance detected LEFT_ROUTE state!");
+                alert.setType(SystemAlert.CAUTION);
+                systemAlertPub.publish(alert);
+                stateMachine.processEvent(GuidanceEvent.LEFT_ROUTE);
+            } else if (msg.getEvent() == RouteEvent.ROUTE_COMPLETED || msg.getEvent() == RouteEvent.ROUTE_ABORTED) {
+                log.info("GUIDANCE_STATE", getComponentName() + " recieved ROUTE_COMPLETED or ROUTE_ABORTED");
+                SystemAlert alert = systemAlertPub.newMessage();
+                alert.setDescription("Guidance detected ROUTE_COMPLETED or ROUTE_ABORTED state.");
+                alert.setType(SystemAlert.CAUTION);
+                systemAlertPub.publish(alert);
+                stateMachine.processEvent(GuidanceEvent.FINISH_ROUTE);
             }
         });
 
-        guidanceEngageService = node.newServiceServer("set_guidance_engaged", SetGuidanceEngaged._TYPE,
-                new ServiceResponseBuilder<SetGuidanceEngagedRequest, SetGuidanceEngagedResponse>() {
+        guidanceActiveService = node.newServiceServer("set_guidance_active", SetGuidanceActive._TYPE,
+                new ServiceResponseBuilder<SetGuidanceActiveRequest, SetGuidanceActiveResponse>() {
                     @Override
-                    public void build(SetGuidanceEngagedRequest setGuidanceEngagedRequest,
-                            SetGuidanceEngagedResponse setGuidanceEngagedResponse) throws ServiceException {
-                        if (setGuidanceEngagedRequest.getGuidanceEngage() && currentState.get() == GuidanceState.DRIVERS_READY) {
-                            stateMachine.processEvent(GuidanceEvent.ACTIVATE_ROUTE);
-                            setGuidanceEngagedResponse.setGuidanceStatus(stateMachine.getState() == GuidanceState.INACTIVE);
-                        } else if (!setGuidanceEngagedRequest.getGuidanceEngage()) {
+                    public void build(SetGuidanceActiveRequest setGuidanceActiveRequest,
+                            SetGuidanceActiveResponse setGuidanceActiveResponse) throws ServiceException {
+                        if (setGuidanceActiveRequest.getGuidanceActive() && currentState.get() == GuidanceState.DRIVERS_READY) {
+                            stateMachine.processEvent(GuidanceEvent.ACTIVATE);
+                            setGuidanceActiveResponse.setGuidanceStatus(stateMachine.getState() == GuidanceState.ACTIVE);
+                        } else if (!setGuidanceActiveRequest.getGuidanceActive()) {
+                            // this will trigger deactivate or disengage, here we just use the same name - DISENGAGE
                             stateMachine.processEvent(GuidanceEvent.DISENGAGE);
-                            setGuidanceEngagedResponse.setGuidanceStatus(false);
+                            setGuidanceActiveResponse.setGuidanceStatus(false);
                         } else {
-                            setGuidanceEngagedResponse.setGuidanceStatus(false);
+                            setGuidanceActiveResponse.setGuidanceStatus(false);
                         }
                     }
                 });
@@ -140,53 +141,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
 
     @Override
     public void onSystemReady() {
-        try {
-            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
-                    GetDriversWithCapabilities._TYPE);
-        } catch (TopicNotFoundException tnfe) {
-            stateMachine.processEvent(GuidanceEvent.PANIC);
-            log.fatal("SHUTDOWN", "Interface manager not found.");
-        }
-        
-        // Build request message
-        GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
-
-        List<String> reqdCapabilities = new ArrayList<>();
-        reqdCapabilities.add(ROBOTIC_STATUS);
-        req.setCapabilities(reqdCapabilities);
-
-        // Work around to pass a final object into our anonymous inner class so we can get the response
-        final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
-        drivers[0] = null;
-
-        // Call the InterfaceManager to see if we have a driver that matches our requirements
-        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-            @Override
-            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-                log.debug("Received GetDriversWithCapabilitiesResponse");
-                for (String driverName : msg.getDriverData()) {
-                    log.debug(getComponentName() + " discovered driver: " + driverName);
-                }
-                drivers[0] = msg;
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                stateMachine.processEvent(GuidanceEvent.PANIC);
-                log.fatal("InterfaceManager failed to return a control/robot_status capable driver!!!");
-            }
-        });
-        
-        String robotStatusTopic = null;
-        if(drivers[0] != null) {
-            for(String url : drivers[0].getDriverData()) {
-                if(url.endsWith(ROBOTIC_STATUS)) {
-                    robotStatusTopic = url;
-                    break;
-                }
-            }                
-        }
-        
+        String robotStatusTopic = DRIVER_BASE_PATH + SRX_CONTROLLER_PATH + ROBOTIC_STATUS_CAPABILITY;
         if(robotStatusTopic != null) {
             log.debug(getComponentName() + " is connecting to " + robotStatusTopic);
             robotStatusSub = pubSubService.getSubscriberForTopic(robotStatusTopic, RobotEnabled._TYPE);
@@ -194,9 +149,14 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
                 robotStatusSub.registerOnMessageCallback(new OnMessageCallback<RobotEnabled>() {
                     @Override
                     public void onMessage(RobotEnabled msg) {
-                        if(msg.getRobotActive()) {
+                        if(!robotStatus && msg.getRobotActive()) {
                             stateMachine.processEvent(GuidanceEvent.START_ROUTE);
                             log.info("GUIDANCE_STATE", "Guidance StateMachine received START_ROUTE event");
+                            robotStatus = true;
+                        } else if(robotStatus && !msg.getRobotActive()) {
+                            stateMachine.processEvent(GuidanceEvent.ROBOT_DISABLED);
+                            log.info("GUIDANCE_STATE", "Guidance StateMachine received ROBOT_DISABLED event");
+                            robotStatus = false;
                         }
                     }
                 });
@@ -207,7 +167,12 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
     }
 
     @Override
-    public void onRouteActive() { 
+    public void onActive() { 
+        currentState.set(GuidanceState.ACTIVE);
+    }
+    
+    @Override
+    public void onDeactivate() {
         currentState.set(GuidanceState.INACTIVE);
     }
     
@@ -239,8 +204,26 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
             log.error("SHUTDOWN", "Guidance shutdown handler interrupted while waiting, cleanup may not have finished!", e);
         }
         log.info("SHUTDOWN", "Guidance state handler killing Guidance node.");
-        node.shutdown();
         loopThread.interrupt();
+        node.shutdown();
+    }
+
+    @Override
+    public void onPanic() {
+        currentState.set(GuidanceState.SHUTDOWN);
+        log.info("SHUTDOWN",
+                "GuidanceStateHandler detected Guidance PANIC");
+        log.fatal("Publishing FATAL system_alert shutdown to ensure whole system shutdown");
+        SystemAlert alert = systemAlertPub.newMessage();
+        alert.setDescription("GuidanceStateHandler detected Guidance PANIC! See log files for source.");
+        alert.setType(SystemAlert.FATAL);
+        systemAlertPub.publish(alert);
+
+        timingLoopThread.interrupt();
+
+        log.fatal("SHUTDOWN", "Guidance state handler killing Guidance node.");
+        loopThread.interrupt();
+        node.shutdown();
     }
 
     /*
@@ -255,7 +238,10 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
+            break;
+        case DEACTIVATE:
+            jobQueue.add(this::onDeactivate);
             break;
         case ENGAGE:
             jobQueue.add(this::onEngaged);
@@ -266,8 +252,11 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
         case RESTART:
             jobQueue.add(this::onCleanRestart);
             break;
+        case PANIC_SHUTDOWN:
+            jobQueue.add(this::onPanic);
+            break;
         default:
-            throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+            throw new RosRuntimeException(getComponentName() + " received unknown instruction from guidance state machine.");
         }
     }
     

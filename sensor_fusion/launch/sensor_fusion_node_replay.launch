@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="PARAM_DIR" default="$(find sensor_fusion)/launch/params" doc="Directory of yaml parameter files"/>
+    <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
+    <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
+    <arg name="NEGTR_NS"  default="negotiator" doc="Namespace of nodes in negotiator package"/>
+    <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
+    <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
+    <arg name="RD_NS"     default="roadway" doc="Namespace of nodes in roadway package"/>
+    <arg name="RT_NS"     default="route" doc="Namespace of nodes in route package"/>
+    <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
+    <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
+    <arg name="UI_NS"   default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+
+    <param name="use_sim_time" value="true" />
+    <!-- Sensor Fusion Node -->
+    <group ns="$(arg SF_NS)">
+        <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion" output="screen">
+            <rosparam command="load" file="$(arg PARAM_DIR)/SensorFusion.yaml"/>
+            <rosparam param="odometry_topics" subst_value="True">["/$(arg TOP_NS)/$(arg DRIVER_NS)/pin_point_application/position/odometry"]</rosparam>
+            <rosparam param="velocity_topics" subst_value="True">["/$(arg TOP_NS)/$(arg DRIVER_NS)/pin_point_application/position/velocity"]</rosparam>
+            <rosparam param="navsatfix_topics" subst_value="True">["/$(arg TOP_NS)/$(arg DRIVER_NS)/pin_point_application/position/nav_sat_fix"]</rosparam>
+            <rosparam param="heading_topics" subst_value="True">["/$(arg TOP_NS)/$(arg DRIVER_NS)/pin_point_application/position/heading"]</rosparam>
+            <rosparam param="objects_topics" subst_value="True">["/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_objects/f_lrr/sensor/objects"]</rosparam>
+            <param name="use_interface_mgr" value="false" />
+            <remap from="system_alert"
+                   to="/$(arg TOP_NS)/system_alert"/>
+            <remap from="bsm"
+                   to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+            <remap from="get_drivers_with_capabilities"
+                   to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        </node>
+    </group>
+</launch>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,6 +57,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected SaxtonLogger log_;
     protected ConnectedNode connectedNode_;
     protected CancellableLoop mainLoop_;
+    protected boolean robotListenerCreated_ = false;
     protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
     protected boolean shutdownInitiated_ = false;
 
@@ -115,10 +116,9 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	                info.setSensor(msg.getSensor());
 	                info.setPosition(msg.getPosition());
 	                info.setComms(msg.getComms());
-	                info.setController(msg.getController());
-	                log_.debug("DRIVER", "InterfaceMgr.driverDiscoveryListener received new status: " + info.getName() + ", "
-	                        + info.getState().toString());
-	
+	                info.setLonController(msg.getLonController());
+	                info.setLatController(msg.getLatController());
+
 	                //add the new driver info to our database
 	                worker_.handleNewDriverStatus(info);
             	}catch (Exception e) {
@@ -133,6 +133,10 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         	
         	@Override
         	public void onNewMessage(cav_msgs.SystemAlert msg) {
+        	    if (msg == null) {
+        	        log_.warn("SHUTDOWN", "InterfaceMgr received a NULL system alert. Ignoring.");
+        	        return;
+                }
         		try {
         		
 	        		//if the alert is a FATAL or SHUTDOWN, then proceed to shut down this node
@@ -154,61 +158,6 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         	}
         });
         
-        //look for the controller driver topic that publishes robotic control status (no point in calling our own ROS service,
-        // just make the direct call to the worker class since we have access to it)
-        String robotTopic = null;
-        List<String> capabilities = new ArrayList<>();
-        capabilities.add("robot_status");
-        List<String> topics = worker_.getDrivers(capabilities);
-        if (topics.size() == 1) {
-        	robotTopic = topics.get(0);
-        
-	        //set up listener for the robot topic
-	        Subscriber<cav_msgs.RobotEnabled> robotListener = connectedNode.newSubscriber(robotTopic, cav_msgs.RobotEnabled._TYPE);
-	        robotListener.addMessageListener(new MessageListener<RobotEnabled>() {
-	        	
-	        	@Override
-	        	public void onNewMessage(cav_msgs.RobotEnabled msg) {
-	        		try {
-	        			
-	        			//if robotic control has already been enabled then
-	        			if (robotEnabled_) {
-	        				
-	        				//if robotic control is no longer active then warn and alert all nodes to shut down
-	        				if (!msg.getRobotActive()) {
-	        					log_.warn("SHUTDOWN", "InterfaceMgr.robotListener senses robot is no longer active at the hardware level.");
-	        					publishSystemAlert(AlertSeverity.FATAL, "Robotic control has been disengaged.", null);
-	        					connectedNode.shutdown();
-	        				}
-	        			
-	        			//else if it is now being commanded then
-	        			}else if (msg.getRobotEnabled()) {
-	        				//wait 200 ms to be sure the command has been acted upon, then indicate that it has; at this point
-	        				// getRobotActive() should return true until it is disengaged, but we can't rely on getRobotEnabled()
-	        				// as much since it is a command, not an actual status of the hardware
-	        				try {
-	        					Thread.sleep(200);
-	        				}catch (Exception e) {
-	        				}
-	        				robotEnabled_ = true;
-	        			}
-	        			
-	        			
-	        		}catch (Exception e) {
-	        			handleException(e);
-	        		}
-	        	}
-	        });
-
-        }else { //we didn't find just one topic, so don't know what to do
-        	log_.warn("DRIVER", "InterfaceMgr search for " + capabilities.get(0) + " topic produced " + topics.size() +
-                        " results! CANNOT SENSE DISENGAGEMENT.");
-        	for (String s : topics) {
-        		log_.info("DRIVER", "    Topic found: " + s);
-        	}
-        	publishSystemAlert(AlertSeverity.CAUTION, "InterfaceMgr unable to sense robotic capability shutdown.", null);
-        }
-
         //create a message listener for the bond messages coming from drivers (sendSystemAlert)
         //TODO: this will be implemented in a future iteration due to dependence on
         //      an as-yet non-existent JNI wrapper for the ros bindcpp library.
@@ -224,6 +173,11 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             // all other nodes know.
             @Override
             protected void loop() throws InterruptedException {
+
+                //attempt to check that we can listen to the controller driver to allow warning others if it dies
+                if (!robotListenerCreated_) {
+                    checkRobotTopic(connectedNode);
+                }
 
                 //if system has just achieved OPERATIONAL status then
                 if (worker_.isSystemReady()) {
@@ -348,6 +302,79 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     public boolean isShutdownUnderway() {
         return shutdownInitiated_;
     }
+
+
+    /**
+     *
+     * @param connectedNode
+     */
+    protected void checkRobotTopic(ConnectedNode connectedNode) {
+
+        //look for the controller driver topic that publishes robotic control status (no point in calling our own ROS service,
+        // just make the direct call to the worker class since we have access to it)
+        String robotTopic = null;
+        List<String> capabilities = new ArrayList<>();
+        capabilities.add("robot_status");
+        List<String> topics = worker_.getDrivers(capabilities);
+        if (topics.size() == 1) {
+            robotTopic = topics.get(0);
+            robotListenerCreated_ = true;
+            log_.info("DRIVER", "InterfaceMgr.checkRobotTopic - capability found, listener being created.");
+
+            //set up listener for the robot topic
+            Subscriber<cav_msgs.RobotEnabled> robotListener = connectedNode.newSubscriber(robotTopic, cav_msgs.RobotEnabled._TYPE);
+            robotListener.addMessageListener(new MessageListener<RobotEnabled>() {
+
+                @Override
+                public void onNewMessage(cav_msgs.RobotEnabled msg) {
+                    try {
+
+                        //if robotic control has already been enabled then
+                        if (robotEnabled_) {
+
+                            //if robotic control is no longer active then warn and alert all nodes to shut down
+                            if (!msg.getRobotActive()) {
+                                log_.warn("SHUTDOWN", "InterfaceMgr.robotListener senses robot is no longer active at the hardware level.");
+                                publishSystemAlert(AlertSeverity.FATAL, "Robotic control has been disengaged.", null);
+                                connectedNode.shutdown();
+                            }
+
+                            //else if it is now being commanded then
+                        }else if (msg.getRobotEnabled()) {
+                            //wait 200 ms to be sure the command has been acted upon, then indicate that it has; at this point
+                            // getRobotActive() should return true until it is disengaged, but we can't rely on getRobotEnabled()
+                            // as much since it is a command, not an actual status of the hardware
+                            try {
+                                Thread.sleep(200);
+                            }catch (Exception e) {
+                            }
+                            robotEnabled_ = true;
+                            log_.info("DRIVER", "InterfaceMgr.robotListener sensed robot enabled command.");
+                        }
+
+                        log_.debug("DRIVER", "InterfaceMgr.robotListener received robot_enabled msg: enabled = "
+                                + msg.getRobotEnabled() + ", active = " + msg.getRobotActive());
+
+
+                    }catch (Exception e) {
+                        handleException(e);
+                    }
+                }
+            });
+
+        }else if (topics.size() > 1) { //we didn't find just one topic, so don't know what to do
+            log_.warn("DRIVER", "InterfaceMgr search for " + capabilities.get(0) + " topic produced " + topics.size() +
+                    " results! CANNOT SENSE DISENGAGEMENT.");
+            for (String s : topics) {
+                log_.info("DRIVER", "    Topic found: " + s);
+            }
+            publishSystemAlert(AlertSeverity.CAUTION, "InterfaceMgr unable to sense robotic capability shutdown.", null);
+
+        }else {
+            log_.debug("DRIVER", "InterfaceMgr.checkRobotTopic has not yet found a publisher for robot status.");
+        }
+    }
+
 
     /***
      * Handles unhandled exceptions and reports to SystemAlert topic, and log the alert.

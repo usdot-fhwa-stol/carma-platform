@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,6 +55,16 @@ public class GreatCircleSegment {
    */
   public double downtrackDistance(Location loc) {
     return distanceStrategy.downtrackDistance(loc, this);
+  }
+
+  /**
+   * Calculates location of a external point projected onto the segment
+   *
+   * @param loc The location whose projection is being calculated
+   * @return The projected location
+   */
+  public Location projectOntoSegment(Location location) {
+    return distanceStrategy.projectOntoSegment(location, this);
   }
 
   /**

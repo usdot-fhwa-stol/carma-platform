@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,4 +51,10 @@ public interface IManeuverInputs {
      * @return speed, m/s, {@link IAccStrategy.NO_FRONT_VEHICLE_SPEED} if no such vehicle
      */
     double getFrontVehicleSpeed();
+
+    /**
+     * Get current vehicle lane index
+     * @return the index of the vehicles current lane
+     */
+    int getCurrentLane();
 }

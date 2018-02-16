@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,7 @@ import java.util.Set;
  * Responsible for instantiating, running, owning, and runtime management of
  * all plugins installed in the software's operating environment.
  */
-public class PluginManager extends GuidanceComponent implements AvailabilityListener, IStateChangeListener {
+public class PluginManager extends GuidanceComponent implements AvailabilityListener, IStateChangeListener, PluginManagementService {
     protected final long sleepDurationMillis = 30000;
     protected int sequenceNumber = 0;
 
@@ -92,7 +92,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
         pluginServiceLocator = new PluginServiceLocator(
                 null, // Need to call setArbitrator service to resolve circular dependency
-                new PluginManagementService(),
+                this,
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
@@ -237,40 +237,30 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     }
 
     @Override
-    public void onRouteActive() {
-        currentState.set(GuidanceState.INACTIVE);
-    }
-    
-    @Override
-    public void onEngaged() {
+    public void onActive() {
+        currentState.set(GuidanceState.ACTIVE);
+
         for (IPlugin p : getRegisteredPlugins()) {
             ComponentVersion v = p.getVersionInfo();
             if (p.getActivation()) {
                 executor.resumePlugin(v.componentName(), v.revisionString());
             }
         }
-        
+    }
+    
+    @Override
+    public void onDeactivate() {
+        currentState.set(GuidanceState.INACTIVE);
+    }
+    
+    @Override
+    public void onEngaged() {
         currentState.set(GuidanceState.ENGAGED);
     }
 
     @Override
     public void onCleanRestart() {
-        for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            p.setActivation(false);
-            executor.suspendPlugin(v.componentName(), v.revisionString());
-        }
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        for (IPlugin p : getRegisteredPlugins()) {
-            ComponentVersion v = p.getVersionInfo();
-            executor.terminatePlugin(v.componentName(), v.revisionString());
-        }
+        shutdownPlugins();
         
         List<Class<? extends IPlugin>> pluginClasses = discoverPluginsOnClasspath();
 
@@ -288,11 +278,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         
         currentState.set(GuidanceState.DRIVERS_READY);
     }
-    
-    @Override
-    public void onShutdown() {
-        log.fatal(getComponentName() + " is about to SHUTDOWN!");
-        
+
+    /**
+     * Cleanly shutdown all plugins that were started
+     */
+    private void shutdownPlugins() {
         // If we're shutting down, properly handle graceful plugin shutdown as well
         for (IPlugin p : getRegisteredPlugins()) {
             PluginState pState = executor.getPluginState(p.getVersionInfo().componentName(), p.getVersionInfo().revisionString());
@@ -316,9 +306,16 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 executor.terminatePlugin(v.componentName(), v.revisionString());
             }
         }
+    }
+    
+    @Override
+    public void onShutdown() {
+        log.fatal(getComponentName() + " is about to SHUTDOWN!");
         
         currentState.set(GuidanceState.SHUTDOWN);
 
+        shutdownPlugins();
+        
         // Log the fatal error
         log.fatal("!!!!! Guidance component " + getComponentName() + " has entered a PANIC state !!!!!");
 
@@ -479,13 +476,19 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
+            break;
+        case DEACTIVATE:
+            jobQueue.add(this::onDeactivate);
             break;
         case ENGAGE:
             jobQueue.add(this::onEngaged);
             break;
         case SHUTDOWN:
             jobQueue.add(this::onShutdown);
+            break;
+        case PANIC_SHUTDOWN:
+            jobQueue.add(this::onPanic);
             break;
         case RESTART:
             jobQueue.add(this::onCleanRestart);
@@ -494,5 +497,16 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
         }
     }
+
+	@Override
+	public ITacticalPlugin getTacticalPluginByName(String pluginName) {
+        for (IPlugin p : registeredPlugins) {
+            if (p instanceof ITacticalPlugin && p.getVersionInfo().componentName().equals(pluginName)) {
+                return (ITacticalPlugin) p;
+            }
+        }
+
+        return null;
+	}
     
 }

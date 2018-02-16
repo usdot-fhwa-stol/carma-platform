@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="PARAM_DIR" default="$(find sensor_fusion)/launch/params" doc="Directory of yaml parameter files"/>
+    <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
+    <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
+    <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
+    <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
+
+    <param name="robot_description" textfile="$(arg URDF_FILE)"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    <!-- Sensor Fusion Node -->
+    <group ns="$(arg SF_NS)">
+        <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
+            <rosparam command="load" file="$(arg PARAM_DIR)/SensorFusion.yaml"/>
+            <remap from="system_alert"
+                   to="/$(arg TOP_NS)/system_alert"/>
+            <remap from="bsm"
+                   to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+            <remap from="get_drivers_with_capabilities"
+                   to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        </node>
+    </group>
+</launch>

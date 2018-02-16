@@ -28,3 +28,5 @@ devel
 
 # Ignore Guidance auto-generate VersionID files
 carmajava/guidance/src/main/resources/version
+carmajava/guidance/out/**
+carmajava/route/out/**

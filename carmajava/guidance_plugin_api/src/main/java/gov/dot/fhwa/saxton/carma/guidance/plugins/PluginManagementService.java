@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,12 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 /**
  * Plugin's primary means of interacting with the PluginManager back in the main Guidance package
  */
-public class PluginManagementService {
-    // STUB
+public interface PluginManagementService {
+    /**
+     * Get a tactical plugin from the plugin manager by name, if it exists.
+     * 
+     * @param pluginName The name of the plugin to query for in string form. Must match the desired plugins componentName value
+     * @return The plugin, if it is registered. Returns null otherwise.
+     */
+    ITacticalPlugin getTacticalPluginByName(String pluginName);
 }

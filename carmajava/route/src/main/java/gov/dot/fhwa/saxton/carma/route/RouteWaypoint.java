@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,16 +18,19 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.Maneuver;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
-import gov.dot.fhwa.saxton.carma.guidance.Maneuvers;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
+import org.ros.rosjava_geometry.Transform;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
  * Waypoints are representations of sequential regions along a route.
@@ -36,6 +39,7 @@ import java.util.List;
  * Lane indices will run right to left. Such that the right most lane will be lane 0.
  */
 public class RouteWaypoint {
+  protected int waypointId; // The waypoint id is only set when a waypoint is published. It corresponds to the waypoint index. It is not used internally
   protected List<String> disabledGuidanceAlgorithms = new LinkedList<>();
   protected List<Integer> laneClosures = new ArrayList<>();
   protected int laneCount = 1;
@@ -47,10 +51,14 @@ public class RouteWaypoint {
   protected double minCrossTrack = -10.0; // Units: m
   protected double maxCrossTrack = 10.0; // Units: m
   protected int requiredLaneIndex = -1;
+  protected int laneIndex = 0;
+  protected double laneWidth = 3.7; // Units: m
+  protected Point3D ecefPoint;
   protected RoadType roadType = RoadType.FREEWAY;
   protected LaneEdgeType interiorLaneMarkings = LaneEdgeType.SOLID_WHITE;
   protected LaneEdgeType leftMostLaneMarking = LaneEdgeType.SOLID_YELLOW;
   protected LaneEdgeType rightMostLaneMarking = LaneEdgeType.SOLID_WHITE;
+  protected GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
   /**
    * Default constructor
@@ -63,7 +71,7 @@ public class RouteWaypoint {
    * @param loc The gps location of this waypoint.
    */
   public RouteWaypoint(Location loc) {
-    this.location = loc;
+    setLocation(loc);
     this.lowerSpeedLimit = 0;
     this.upperSpeedLimit = 5;
   }
@@ -90,17 +98,35 @@ public class RouteWaypoint {
     }
     // Copy remaining fields
     laneCount = wp.laneCount;
-    location = new Location(wp.location);
+    this.setLocation(wp.getLocation());
     lowerSpeedLimit = wp.lowerSpeedLimit;
     upperSpeedLimit = wp.upperSpeedLimit;
     nearestMileMarker = wp.nearestMileMarker;
     minCrossTrack = wp.minCrossTrack;
     maxCrossTrack = wp.maxCrossTrack;
     requiredLaneIndex = wp.requiredLaneIndex;
+    laneIndex = wp.laneIndex;
+    laneWidth = wp.laneWidth;
     roadType = wp.roadType;
     interiorLaneMarkings = wp.interiorLaneMarkings;
     leftMostLaneMarking = wp.leftMostLaneMarking;
     rightMostLaneMarking = wp.rightMostLaneMarking;
+  }
+
+  /**
+   * Gets the waypoint id
+   * @return waypoint id
+   */
+  public int getWaypointId() {
+    return this.waypointId;
+  }
+
+  /**
+   * Sets the waypoint id
+   * @param waypointId the waypoint id
+   */
+  public void setWaypointId(int waypointId) {
+    this.waypointId = waypointId;
   }
 
   /**
@@ -112,17 +138,17 @@ public class RouteWaypoint {
   public short getSetFields() {
     int bitMask = 0x0000;
     if (!disabledGuidanceAlgorithms.isEmpty())
-      bitMask = bitMask | 0x8000; //1000 0000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.DISABLED_GUIDANCE_ALGORITHMS;
     if (!laneClosures.isEmpty())
-      bitMask = bitMask | 0x4000; //0100 0000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.LANE_CLOSURES;
     if (nearestMileMarker != -1)
-      bitMask = bitMask | 0x2000; //0010 0000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.NEAREST_MILE_MARKER;
     if (!neededManeuvers.isEmpty())
-      bitMask = bitMask | 0x1000; //0001 0000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.NEEDED_MANEUVERS;
     if (requiredLaneIndex != -1)
-      bitMask = bitMask | 0x0800; //0000 1000 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.REQUIRED_LANE_INDEX;
     if (roadType != null)
-      bitMask = bitMask | 0x0400; //0000 0100 0000 0000
+      bitMask = bitMask | cav_msgs.RouteWaypoint.ROAD_TYPE;
 
     return (short) bitMask;
   }
@@ -143,6 +169,7 @@ public class RouteWaypoint {
     roadTypeMsg.setType((byte) roadType.ordinal());
     routeWPMsg.setRoadType(roadTypeMsg);
     routeWPMsg.setRequiredLaneIndex((byte) requiredLaneIndex);
+    routeWPMsg.setLaneIndex((byte) laneIndex);
     routeWPMsg.setNearestMileMarker((byte) nearestMileMarker);
     routeWPMsg.setLongitude(location.getLongitude());
     routeWPMsg.setLatitude(location.getLatitude());
@@ -155,6 +182,7 @@ public class RouteWaypoint {
     routeWPMsg.setInteriorLaneMarkings(interiorLaneMarkings.toMessage());
     routeWPMsg.setLeftMostLaneMarking(leftMostLaneMarking.toMessage());
     routeWPMsg.setRightMostLaneMarking(rightMostLaneMarking.toMessage());
+    routeWPMsg.setLaneWidth((float) laneWidth);
 
     byte[] laneClosuresAsBytes = new byte[laneClosures.size()];
     for (int i = 0; i < laneClosures.size(); i++) {
@@ -180,7 +208,7 @@ public class RouteWaypoint {
     RouteWaypoint wp = new RouteWaypoint(
       new Location(waypointMsg.getLatitude(), waypointMsg.getLongitude(),
         waypointMsg.getAltitude()));
-
+    wp.setWaypointId(waypointMsg.getWaypointId());
     wp.setLaneCount(waypointMsg.getLaneCount());
     wp.setLowerSpeedLimit(waypointMsg.getLowerSpeedLimit());
     wp.setUpperSpeedLimit(waypointMsg.getSpeedLimit());
@@ -189,12 +217,14 @@ public class RouteWaypoint {
     wp.setRightMostLaneMarking(LaneEdgeType.fromMessge(waypointMsg.getRightMostLaneMarking()));
     wp.setMinCrossTrack(waypointMsg.getMinCrossTrack());
     wp.setMaxCrossTrack(waypointMsg.getMaxCrossTrack());
+    wp.laneIndex = waypointMsg.getLaneIndex();
+    wp.laneWidth = waypointMsg.getLaneWidth();
 
     // Set member variables according to set fields bit mask
     int bitMask = waypointMsg.getSetFields();
-    if ((bitMask & 0x8000) != 0) //1000 0000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.DISABLED_GUIDANCE_ALGORITHMS) != 0)
       wp.setDisabledGuidanceAlgorithms(waypointMsg.getDisabledGuidanceAlgorithms());
-    if ((bitMask & 0x4000) != 0) { //0100 0000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.LANE_CLOSURES) != 0) {
       ChannelBuffer buffer = waypointMsg.getLaneClosures();
       List<Integer> laneClosures = new LinkedList<>();
       for (byte b : buffer.array()) {
@@ -202,13 +232,13 @@ public class RouteWaypoint {
       }
       wp.setLaneClosures(laneClosures);
     }
-    if ((bitMask & 0x2000) != 0) //0010 0000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.NEAREST_MILE_MARKER) != 0)
       wp.setNearestMileMarker(waypointMsg.getNearestMileMarker());
-    if ((bitMask & 0x1000) != 0) //0001 1000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.NEEDED_MANEUVERS) != 0)
       wp.setNeededManeuvers(waypointMsg.getNeededManeuvers());
-    if ((bitMask & 0x0800) != 0) //0000 1000 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.REQUIRED_LANE_INDEX) != 0)
       wp.setRequiredLaneIndex(waypointMsg.getRequiredLaneIndex());
-    if ((bitMask & 0x0400) != 0) //0000 0100 0000 0000
+    if ((bitMask & cav_msgs.RouteWaypoint.ROAD_TYPE) != 0)
       wp.setRoadType(RoadType.fromMessage(waypointMsg.getRoadType()));
 
     return wp;
@@ -239,6 +269,7 @@ public class RouteWaypoint {
    */
   public void setLocation(Location location) {
     this.location = location;
+    this.ecefPoint = gcc.geodesic2Cartesian(location, Transform.identity());
   }
 
   /**
@@ -409,6 +440,42 @@ public class RouteWaypoint {
   }
 
   /**
+   * Sets the index of the lane which this waypoint is in
+   *
+   * @param laneIndex lane index
+   */
+  public void setLaneIndex(int laneIndex) {
+    this.laneIndex = laneIndex;
+  }
+
+  /**
+   * Gets the index of the lane which this waypoint is in
+   *
+   * @return the waypoint lane index
+   */
+  public int getLaneIndex() {
+    return laneIndex;
+  }
+
+  /**
+   * Sets the width of the lane which this waypoint is in
+   *
+   * @param laneIndex lane width in m
+   */
+  public void setLaneWidth(double laneWidth) {
+    this.laneWidth = laneWidth;
+  }
+
+  /**
+   * Gets the lane width in m at this waypoint
+   *
+   * @return the waypoint lane width in m
+   */
+  public double getLaneWidth() {
+    return laneWidth;
+  }
+
+  /**
    * Gets the type of lane marking which separates interior lanes on this segment
    * @return the interior lane marking type
    */
@@ -467,5 +534,20 @@ public class RouteWaypoint {
    */
   public void setNeededManeuvers(List<cav_msgs.Maneuver> neededManeuvers) {
     this.neededManeuvers = neededManeuvers;
+  }
+
+  /**
+   * Gets the point of this waypoint in an ECEF frame
+   * @return point
+   */
+  public Point3D getECEFPoint() {
+    if (ecefPoint == null) {
+      ecefPoint = gcc.geodesic2Cartesian(location, Transform.identity());
+    }
+    return ecefPoint;
+  }
+
+  @Override public String toString() {
+    return "Waypoint{ " + location.toString() + " LaneIndex: " + laneIndex + " }";
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -66,7 +66,7 @@ public class BasicAccStrategyTest {
 
   @Before
   public void setUp() {
-    bas = new BasicAccStrategy(5.0);
+    bas = new BasicAccStrategy(5.0, 2.0);
     bas.setDesiredTimeGap(1.0);
     bas.setMaxAccel(2.0);
     bas.setVehicleResponseDelay(0.0);

@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sensor_fusion/sensor_fusion.h>
+#include "sensor_fusion.h"
 
 int main(int argc, char** argv)
 {

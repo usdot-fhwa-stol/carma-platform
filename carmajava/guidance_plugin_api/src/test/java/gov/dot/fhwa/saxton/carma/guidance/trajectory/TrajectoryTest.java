@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -114,11 +114,6 @@ class LateralTestManeuver implements ISimpleManeuver {
   }
 
   @Override
-  public void planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) throws IllegalStateException {
-
-  }
-
-  @Override
   public boolean executeTimeStep() throws IllegalStateException {
     return false;
   }
@@ -146,6 +141,21 @@ class LateralTestManeuver implements ISimpleManeuver {
   private double end;
   private double start;
   private ManeuverType type;
+@Override
+public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist)
+		throws IllegalStateException {
+	return 0;
+}
+
+@Override
+public boolean canPlan(IManeuverInputs inputs, double startDist, double endDist) throws UnsupportedOperationException {
+	return false;
+}
+
+@Override
+public void setMaxAccel(double limit) {
+	
+}
 
 }
 

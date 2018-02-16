@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -75,11 +75,6 @@ public interface IAccStrategy {
    * desiredSpeedCommand will be returned
    */
   double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed, double desiredSpeedCommand);
-
-  /**
-   * Compute the desired headway (in meters) at currentSpeed
-   */
-  double computeDesiredHeadway(double currentSpeed);
 
   /**
    * Get the maximum acceleration value this ACC strategy is authorized to command, in m/s/s

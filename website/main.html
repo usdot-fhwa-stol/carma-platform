@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <!--
-  Copyright (C) 2017 LEIDOS.
+  Copyright (C) 2018 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -19,16 +19,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <script src="scripts/eventemitter2.min.js"></script>
-    <script src="scripts/roslib.js"></script>
+    <script src="thirdparty/ros/eventemitter2.min.js"></script>
+    <script src="thirdparty/ros/roslib.js"></script>
     <script src="scripts/control.js" defer></script>
     <script src="scripts/rosbridge.js" defer></script>
     <script src="scripts/googlemap.js"></script>
     <script async defer
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMzV4biqVN0pf3l1lYVWQ4KSWLyoG6OV0&callback=initMap">
     </script>
-    <link rel="stylesheet" type="text/css" href="css/styles.css" />
-    <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css" />
+    <script src="thirdparty/svg/svg.min.js" defer></script>
+    <script src="scripts/svgcarma.js" defer></script>
+
+    <link rel="stylesheet" type="text/css" href="styles/styles.css" />
+    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome-animation.min.css"/>
     <!--
     Setup:
     1) Move files command: sudo cp -R -r /home/mfromm/catkin_ws/src/CarmaPlatform/website/* /var/www/html/
@@ -41,14 +45,20 @@
 </head>
 <body>
     <div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'divCapabilities')" id="defaultOpen">TASKS</button>
-        <button class="tablinks" onclick="openTab(event, 'divDriverView')">VIEW</button>
-        <button class="tablinks" onclick="openTab(event, 'divMap')">MAP</button>
-        <button class="tablinks" onclick="openTab(event, 'divSystemStatus')">STATUS</button>
-        <button class="tablinks" onclick="openTab(event, 'divSystemLogs')">LOGS</button>
+        <button class="tablinks active" onclick="openTab(event, 'divCapabilities')" id="defaultOpen"><i class="fa fa-tasks" aria-hidden="false"></i><span class="tabName">&nbsp;Tasks</span></button>
+        <button class="tablinks" onclick="openTab(event, 'divDriverView')"><i class="fa fa-qrcode" aria-hidden="true"></i><span class="tabName">&nbsp;Views</span></button>
+        <button class="tablinks" onclick="openTab(event, 'divMap')"><i class="fa fa-map" aria-hidden="true"></i><span class="tabName">&nbsp;Map</span></button>
+        <button class="tablinks" onclick="openTab(event, 'divSystemStatus')"><i class="fa fa-info-circle" aria-hidden="true"></i><span class="tabName">&nbsp;Status</span></button>
+        <button class="tablinks" onclick="openTab(event, 'divSystemLogs')"><i class="fa fa-file-text" aria-hidden="true"></i><span class="tabName">&nbsp;Logs</span></button>
+    </div>
+    <div class="tabindicators">
+        <button id="btnACCPrimed" disabled><img id="imgACCPrimed" src="images/acc_primed.png" style="width: 40px; height: 40px;" /></button>
+        <button id="btnPinPoint" disabled ><i id="imgPinPoint" class="fa fa-map-pin" aria-hidden="true" style="font-size: 38px;"></i></button>
+        <button id="btnWIFI" disabled onclick="alert('To be implemented');" ><i class="fa fa-wifi" aria-hidden="true" style="color:gray; font-size: 38px;"></i></button>
+        <button id="btnConnected" disabled onclick="alert('To be implemented');" ><i class="fa fa-handshake-o" aria-hidden="true" style="color:gray; font-size: 35px;"></i></button>
     </div>
     <div class="tabheader">
-        <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
+        <button id="btnCAVGuidance" onclick="activateGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
     </div>
     <div id="divCapabilities" class="tabcontent">
         <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
@@ -79,7 +89,8 @@
                 <div id="divSpeedLimitValue" class="sign-black-border-value">0</div>
             </div>
         </div>
-        <div id="divDistRemaining">Distance Remaining to Next Speed Limit: 0 miles</div>
+        <div id="divDistRemaining"></div>
+        <div id="divLaneTracking"></div>
     </div>
     <div id="divMap" class="tabcontent">
         <div id="map"></div>
@@ -159,7 +170,7 @@
         </div>
     </div>
     <!-- The Modal -->
-    <div id="myModal" class="modal">
+    <div id="modalMessageBox" class="modal">
         <!-- Modal content -->
         <div class="modal-content">
             <div class="modal-header">
@@ -174,6 +185,10 @@
             </div>
         </div>
     </div>
+    <div id="modalUIInstructions">
+        <div id="modalUIInstructionsContent">
+        </div>
+    </div>
     <audio id="audioAlert1" preload="auto">
         <source src="sound/not-kiddin.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
@@ -186,9 +201,13 @@
         <source src="sound/hurry.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
+    <audio id="audioAlert4" preload="auto">
+        <source src="sound/arp.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 </body>
 <footer>
-    <p class="copyright">© LEIDOS 2017</p>
+    <p class="copyright"></p>
     <p class="systemversion">&nbsp;</p>
 </footer>
 </html>

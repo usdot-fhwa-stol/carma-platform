@@ -11,7 +11,8 @@ string      sender_id
 string      recipient_id
 
 # a random value that identifies this particular plan for future reference
-uint16      plan_id
+string      plan_id
 
-# a simple 2s complement checksum of all fields in the message except the checksum itself
-uint16      checksum
+# the date and time when this message is created
+# A UNIX timestamp in milliseconds, which indicates the time elapsed since UNIX epoch
+uint64        timestamp

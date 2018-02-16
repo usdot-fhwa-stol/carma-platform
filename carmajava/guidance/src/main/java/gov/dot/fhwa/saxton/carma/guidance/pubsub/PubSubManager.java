@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,6 @@ public class PubSubManager implements IPubSubService {
     protected IServiceChannelFactory srvFactory;
     protected Map<String, IPublicationChannel> pubChannelManagers;
     protected Map<String, ISubscriptionChannel> subChannelManagers;
-    protected Map<String, IServiceChannel> srvManagers;
 
     public PubSubManager(ISubscriptionChannelFactory subFactory, IPublicationChannelFactory pubFactory,
             IServiceChannelFactory srvFactory) {
@@ -50,7 +49,6 @@ public class PubSubManager implements IPubSubService {
 
         pubChannelManagers = new HashMap<>();
         subChannelManagers = new HashMap<>();
-        srvManagers = new HashMap<>();
     }
 
     /**
@@ -65,13 +63,8 @@ public class PubSubManager implements IPubSubService {
     @Override
     @SuppressWarnings("unchecked")
     public <T, S> IService<T, S> getServiceForTopic(String topicUrl, String type) throws TopicNotFoundException {
-        if (srvManagers.containsKey(topicUrl) && srvManagers.get(topicUrl).isOpen()) {
-            return srvManagers.get(topicUrl).getService();
-        } else {
             IServiceChannel<T, S> mgr = srvFactory.newServiceChannel(topicUrl, type);
-            srvManagers.put(topicUrl, mgr);
             return mgr.getService();
-        }
     }
 
     /**
