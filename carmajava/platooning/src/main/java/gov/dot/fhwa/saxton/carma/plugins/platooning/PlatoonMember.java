@@ -22,9 +22,6 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
  */
 public class PlatoonMember {
     
-    // Member ID indicates the position of this vehicle in the current platoon
-    // When its ID is 0, it means it is the leader. 1 means it is the second vehicle in the platoon
-    private int memberId;
     // Static ID is permanent ID for each vehicle
     private final String staticId;
     // Vehicle command speed in m/s after any possible ACC override
@@ -36,21 +33,12 @@ public class PlatoonMember {
     // The local timestamp when we received the status update of this member
     private long timestamp;
 
-    public PlatoonMember(int memberId, String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp) {    
-        this.memberId = memberId;
+    public PlatoonMember(String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp) {
         this.staticId = staticId;
         this.commandSpeed = commandSpeed;
         this.vehicleSpeed = vehicleSpeed;
         this.vehiclePosition = vehiclePosition;
         this.timestamp = timestamp;
-    }
-
-    protected int getMemberId() {
-        return memberId;
-    }
-
-    protected void setMemberId(int memberId) {
-        this.memberId = memberId;
     }
 
     protected String getStaticId() {
@@ -88,5 +76,10 @@ public class PlatoonMember {
     protected void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
-    
+
+    @Override
+    public String toString() {
+        return "PlatoonMember [staticId=" + staticId + ", commandSpeed=" + commandSpeed + ", vehicleSpeed="
+                + vehicleSpeed + ", vehiclePosition=" + vehiclePosition + ", timestamp=" + timestamp + "]";
+    }
 }

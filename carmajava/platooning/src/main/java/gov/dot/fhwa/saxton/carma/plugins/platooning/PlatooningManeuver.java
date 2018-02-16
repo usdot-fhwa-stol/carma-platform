@@ -53,17 +53,18 @@ public class PlatooningManeuver extends ComplexManeuverBase {
     
     @Override
     protected double generateSpeedCommand() {
-//        if(checkTimeout()) {
-//            // TODO handle speed command timeout
-//        }
         return commandInputs_.getLastSpeedCommand();
     }
 
     @Override
     protected double generateMaxAccelCommand() {
-//        if(checkTimeout()) {
-//            // TODO handle speed command timeout
-//        }
         return commandInputs_.getMaxAccelLimit();
+    }
+
+    @Override
+    public String toString() {
+        return "PlatooningManeuver [startDist_=" + startDist_ + ", endDist_=" + endDist_ + ", minCompletionTime_="
+                + minCompletionTime_ + ", maxCompletionTime_=" + maxCompletionTime_ + ", minExpectedSpeed_="
+                + minExpectedSpeed_ + ", maxExpectedSpeed_=" + maxExpectedSpeed_ + "]";
     }
 }

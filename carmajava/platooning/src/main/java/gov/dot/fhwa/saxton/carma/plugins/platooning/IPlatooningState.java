@@ -16,7 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import cav_msgs.MobilityAck;
+import cav_msgs.MobilityIntro;
+import cav_msgs.NewPlan;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
@@ -34,22 +35,15 @@ public interface IPlatooningState {
      * Callback method to handle negotiation requests which may result in state changing
      * @param plan the detailed negotiation proposal from another vehicle
      */
-    public boolean onReceiveNegotiationRequest(String plan);
+    public void onReceiveNegotiationMessage(NewPlan plan);
     
     /**
-     * Infinite loop method for different platooning state  
+     * Get the MobilityIntro message the current state want to send out
      */
-    public default void loop() throws InterruptedException {
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
-        }
-    };
+    public MobilityIntro getNewOutboundIntroMessage();
     
     /**
-     * Callback method when we received a response on host vehicle plan
+     * Called in the plugin loop method and let state check if it needs to change state 
      */
-    public void onReceivePlanResponse(MobilityAck ack);
+    public void checkCurrentState();
 }
