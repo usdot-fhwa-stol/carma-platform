@@ -242,5 +242,8 @@ echo "Setting permissions"
 SCRIPT="chgrp -R carma ${CARMA_DIR}/app/*; chmod -R ug+rwx ${CARMA_DIR}/app/*;"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 
+# Source new install
+source "${CARMA_DIR}/app/bin/setup.bash"
+
 echo "DONE!"
 exit
