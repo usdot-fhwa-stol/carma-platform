@@ -70,33 +70,6 @@ arbitrator_plugins:
   - Negotiation Receiver Plugin
   - Cruising Plugin
 
-# Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
-use_sin_trajectory: false
-
-# Double: The frequency at which the trajectory executor will tick
-# Units: Hz
-trajectory_executor_frequency: 10.0
-
-# Double: Time the mock trajectory will initially command the operating speed for
-# Units: seconds
-trajectory_initial_hold_duration: 10.0
-
-# Double: Operating speed the trajectory will oscillate around for its sample trajectory
-# Units: m/s
-trajectory_operating_speed: 5.0
-
-# Double: Amplitude of the sinusoidal sample trajectory for Trajectory executor
-# Units m/s
-trajectory_amplitude: 2.5
-
-# Double: Phase shift of the sinusoidal sample trajectory for the Trajectory executor
-# Units: seconds
-trajectory_phase: 0.0
-
-# Double: Period of the sinusoidal sample trajectory for the Trajectory executor
-# Units: seconds
-trajectory_period: 15.0
-
 # Double: Time that it takes the host vehicle to respond to a new speed command
 # Units: seconds
 vehicle_response_lag: 1.4
