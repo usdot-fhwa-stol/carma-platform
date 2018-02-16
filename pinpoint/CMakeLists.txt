@@ -200,7 +200,7 @@ install(DIRECTORY
         launch
         cfg
         urdf
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         PATTERN ".svn" EXCLUDE
         )
 
