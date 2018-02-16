@@ -101,6 +101,7 @@ echo "Installing to ${HOST} as user: ${USERNAME}..."
 
 # Define paths for files to copy from src
 LAUNCH_FILE="${LOCAL_CARMA_DIR}/carmajava/launch/saxton_cav.launch"
+SRC_LAUNCH_FILE="${LOCAL_CARMA_DIR}/carmajava/launch/saxton_cav_src.launch"
 PARAMS_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/params"
 ROUTES_DIR="${LOCAL_CARMA_DIR}/carmajava/route/src/test/resources/routes"
 URDF_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/urdf"
@@ -230,9 +231,10 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then
 	echo "Trying to copy launch ..."
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
 	# Create symlink to launch file so that roslaunch will work when package is sourced
-	SYMLINK_FILE="${APP_DIR}/bin/share/carma/saxton_cav.launch"
-	SCRIPT="rm ${SYMLINK_FILE}; ln -s  ${APP_DIR}/launch/saxton_cav.launch ${SYMLINK_FILE}";
+	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
+	SCRIPT="rm ${SYMLINK_LOCATION}/saxton_cav.launch; ln -s  ${APP_DIR}/launch ${SYMLINK_LOCATION}";
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 fi
 
