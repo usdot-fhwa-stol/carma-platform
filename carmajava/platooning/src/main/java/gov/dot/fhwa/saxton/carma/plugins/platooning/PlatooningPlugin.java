@@ -43,6 +43,11 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     
     protected double maxAccel = 2.5;
     protected double minimumManeuverLength = 15.0;
+    protected double timeHeadway = 0.8;
+    protected double standStillGap = 7.0;
+    protected double kpPID = 1.5;
+    protected double kiPID = 0.0;
+    protected double kdPID = 0.1;
     protected int messageIntervalLength = 500;
     protected int messageTimeout = 750;
     
@@ -65,33 +70,49 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     @Override
     public void onInitialize() {
         log.info("CACC platooning pulgin is initializing...");
+        // initialize parameters of platooning plugin
         maxAccel = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
-        minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 5.0);
+        minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 15.0);
+        timeHeadway = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 0.8);
+        standStillGap = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 7.0);
+        kpPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
+        kiPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
+        kdPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
         messageIntervalLength = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 500);
         messageTimeout = (int) (messageIntervalLength * pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 1.5));
+        log.info("Parameters for speed PID controller are set to be [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
+        // initialize necessary pubs/subs 
         mobilityIntroPublisher = pubSubService.getPublisherForTopic("mobility_intro_outbound", MobilityIntro._TYPE);
         newPlanSub = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
         cmdSpeedSub = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
         maneuverInputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
+        // the plugin will start with standby state
         this.state = new StandbyState(this, log, pluginServiceLocator);
+        log.info("The current CACC plugin state is " + this.state.toString());
         log.info("CACC platooning pulgin is initialized");
     }
 
     @Override
     public void onResume() {
+        // reset plugin state to standby
         this.state = new StandbyState(this, log, pluginServiceLocator);
-        if(commandGenerator == null && commandGeneratorThread == null) {
-            commandGenerator = new CommandGenerator(this);
-            commandGeneratorThread = new Thread(commandGenerator);
-            commandGeneratorThread.setName("Platooning Command Generator");
-            commandGeneratorThread.start();
-        }
+        log.info("The current CACC plugin state is " + this.state.toString());
+        // Start all sub-threads
         if(platoonManager == null && platoonManagerThread == null) {
             platoonManager = new PlatoonManager(this, log);
             platoonManagerThread = new Thread(platoonManager);
             platoonManagerThread.setName("Platooning List Manager");
             platoonManagerThread.start();
+            log.debug("Started platoonManagerThread.");
         }
+        if(commandGenerator == null && commandGeneratorThread == null) {
+            commandGenerator = new CommandGenerator(this, log, pluginServiceLocator);
+            commandGeneratorThread = new Thread(commandGenerator);
+            commandGeneratorThread.setName("Platooning Command Generator");
+            commandGeneratorThread.start();
+            log.debug("Started commandGeneratorThread.");
+        }
+        // register message callback on NewPlan message
         newPlanSub.registerOnMessageCallback((plan) -> state.onReceiveNegotiationMessage(plan));
         this.setAvailability(true);
     }
@@ -101,8 +122,15 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         try {
             long loopStart = System.currentTimeMillis();
             MobilityIntro mobilityIntro = state.getNewOutboundIntroMessage(); 
+            // Publish mobility Intro messages at a fixed rate if the current state of plugin wants to publish something
             if(mobilityIntro != null) {
                 mobilityIntroPublisher.publish(state.getNewOutboundIntroMessage());
+                log.debug("V2V", "Sending MobilityIntro to message node at state " + this.state.toString());
+                log.debug("V2V", "    Plan ID = " + mobilityIntro.getHeader().getPlanId());
+                log.debug("V2V", "    PlayType = " + mobilityIntro.getPlanType().getType());
+                log.debug("V2V", "    My lane ID = " + mobilityIntro.getMyLaneId());
+                log.debug("V2V", "    Forward speed = " + mobilityIntro.getForwardSpeed());
+                log.debug("V2V", "    Capabilities = " + mobilityIntro.getCapabilities()); 
             }
             long loopStop = System.currentTimeMillis();
             long sleepTime = Math.max(0, messageIntervalLength - (loopStop - loopStart));
@@ -125,6 +153,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
             platoonManager = null;
             platoonManagerThread = null;
         }
+        // Reset to standby state as its default state
         this.state = new StandbyState(this, log, pluginServiceLocator);
     }
 
@@ -134,13 +163,13 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     }
 
     protected void setState(IPlatooningState state) {
-        log.info("Platooning plugin change from " + this.state.toString() + " state to " + state.toString() + " state");
+        log.info("Platooning plugin is changing from " + this.state.toString() + " state to " + state.toString() + " state");
         this.state = state;
     }
     
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        log.info("Plan Trajectory from " + traj.getStartLocation() + " to " + traj.getEndLocation() + " in state " + state.toString());
+        log.info("Plan Trajectory from " + traj.toString() + " in state " + state.toString());
         return this.state.planTrajectory(traj, expectedEntrySpeed);
     }
 

@@ -6,10 +6,30 @@ platooning_max_accel: 2.5;
 # Units: m
 platooning_min_maneuver_length: 15.0
 
-# Integer: The desired time interval between two platoon mobility messages from one vehicle
+# Integer: The desired time interval between two platoon mobility messages from the same vehicle
 # Units: ms
 platooning_status_interval: 500
 
-# Double: The factor to determine message timeout which is platooning_status_interval * platooning_status_timeout_factor
+# Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
 # Units: 1
 platooning_status_timeout_factor: 1.5
+
+# Double: The desired time headway to the front vehicle within the platoon
+# Units: s
+platooning_desired_time_headway: 0.8
+
+# Double: The minimum space between two consecutive vehicles from front bumper to front bumper
+# Units: m
+platooning_min_gap: 7.0
+
+# Double: The poportional term in the platoon speed PID controller
+# Units: 1
+platooning_Kp: 1.5
+
+# Double: The integral term in the platoon speed PID controller
+# Units: 1
+platooning_Ki: 0.0
+
+# Double: The derivative term in the platoon speed PID controller
+# Units: 1
+platooning_Kd: 0.1

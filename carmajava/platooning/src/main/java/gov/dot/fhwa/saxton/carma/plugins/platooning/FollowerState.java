@@ -39,7 +39,6 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
  */
 public class FollowerState implements IPlatooningState {
 
-    protected static final long DEFAULT_LOOP_SLEEP_MS = 1000;
     protected PlatooningPlugin plugin_;
     protected ILogger log_;
     protected PluginServiceLocator pluginServiceLocator_;

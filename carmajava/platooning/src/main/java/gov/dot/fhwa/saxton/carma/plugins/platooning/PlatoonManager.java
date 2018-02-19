@@ -26,7 +26,7 @@ import cav_msgs.NewPlan;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 /**
- * This class manages the changing of platoon list.
+ * This class manages the changing of platoon list and leader selection process.
  */
 public class PlatoonManager implements Runnable {
     
@@ -113,5 +113,13 @@ public class PlatoonManager implements Runnable {
                 log.info("Add CACC info on new vehicel " + pm.getStaticId());
             }
         }
+    }
+    
+    /**
+     * This method contains the logic of leader selection and will return a suitable leader for the subject vehicle
+     * TODO Integrate the leader selection algorithm later
+     */
+    protected PlatoonMember getLeader() {
+        return platoon.first();
     }
 }
