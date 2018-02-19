@@ -18,10 +18,8 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverRunner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -60,11 +58,13 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     OnTrajectoryProgressCallback callback;
 
     PctCallback(double pct, OnTrajectoryProgressCallback callback) {
-      this.pct = pct; this.callback = callback;
+      this.pct = pct;
+      this.callback = callback;
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz,
+      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
     this.activeManeuversPub = activeManeuversPub;
@@ -89,8 +89,12 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
     if (currentTrajectory == null) {
       // Nothing to do
-      log.info("Finished downtrack distance update.");
+      log.info("Finished downtrack distance update with no trajectory.");
       return;
+    } else {
+      if (downtrackDistance > currentTrajectory.get().getEndLocation()) {
+        swapTrajectories();
+      }
     }
 
     // Notify subscribers if needed
@@ -238,16 +242,26 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       currentComplexManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
 
       if (currentComplexManeuver != null) {
-        currentComplexManeuver.executeTimeStep();
+        try {
+          currentComplexManeuver.executeTimeStep();
+        } catch (IllegalStateException ise) {
+          log.warn("Maneuver " + currentComplexManeuver.getClass().getSimpleName() + " planned by " + currentComplexManeuver.getPlanner() + " attempted to run after its end distance.");
+        }
       }
       if (currentLongitudinalManeuver != null) {
-        currentLongitudinalManeuver.executeTimeStep();
+        try {
+          currentLongitudinalManeuver.executeTimeStep();
+        } catch (IllegalStateException ise) {
+          log.warn("Maneuver " + currentLongitudinalManeuver.getClass().getSimpleName() + " planned by " + currentComplexManeuver.getPlanner() + " attempted to run after its end distance.");
+        }
       }
       if (currentLateralManeuver != null) {
-        currentLateralManeuver.executeTimeStep();
+        try {
+          currentLateralManeuver.executeTimeStep();
+        } catch (IllegalStateException ise) {
+          log.warn("Maneuver " + currentLateralManeuver.getClass().getSimpleName() + " planned by " + currentComplexManeuver.getPlanner() + " attempted to run after its end distance.");
+        }
       }
-    } else {
-      timeStepsWithoutTraj++;
     }
   }
 
@@ -286,8 +300,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     synchronized (callbacks) {
       callbacks.clear();
     }
-  }  
-  
+  }
+
   /**
    * Get the current downtrack distance and then call any callbacks that have been triggered
    */
