@@ -32,7 +32,6 @@ public class PlatoonManager implements Runnable {
     
     protected PlatooningPlugin plugin;
     protected SortedSet<PlatoonMember> platoon;
-    protected int memberTimeout = 750;
     protected ILogger log;
 
     public PlatoonManager(PlatooningPlugin plugin, ILogger log) {
@@ -42,7 +41,6 @@ public class PlatoonManager implements Runnable {
         this.platoon = Collections.synchronizedSortedSet(
                 new TreeSet<PlatoonMember>((a, b) -> -Double.compare(a.getVehiclePosition(), b.getVehiclePosition())));
         // The max time duration we allow an entry to exist if we did not receive any update from it 
-        this.memberTimeout = plugin.messageTimeout;
     }
     
     @Override
@@ -53,22 +51,22 @@ public class PlatoonManager implements Runnable {
             List<PlatoonMember> removeCandidates = new ArrayList<>();
             int counter = 0;
             for(PlatoonMember pm : platoon) {
-                if(System.currentTimeMillis() - pm.getTimestamp() > memberTimeout) {
+                if(System.currentTimeMillis() - pm.getTimestamp() > plugin.messageTimeout) {
                     removeCandidates.add(pm);
                 }
                 counter++;
-                log.info("Found vehicel " + pm.getStaticId() + " in platoon list at " + counter);
-                log.info(pm.toString());
+                log.debug("Found vehicel " + pm.getStaticId() + " in platoon list at " + counter);
+                log.debug(pm.toString());
             }
             if(removeCandidates.size() != 0) {
                 for(PlatoonMember candidate: removeCandidates) {
-                    log.info("Remove vehicle " + candidate.getStaticId() + " from platoon list because the entry is timeout");
+                    log.info("Remove vehicle " + candidate.getStaticId() +
+                            " from platoon list because the entry is timeout by " + (System.currentTimeMillis() - candidate.getTimestamp()) + " ms");
                     platoon.remove(candidate);
                 }
             }
-            
             long loopEnd = System.currentTimeMillis();
-            long sleepDuration = Math.max(memberTimeout - (loopEnd - loopStart), 0);
+            long sleepDuration = Math.max(plugin.messageTimeout - (loopEnd - loopStart), 0);
             try {
                 Thread.sleep(sleepDuration);
             } catch (InterruptedException e) {
@@ -84,7 +82,7 @@ public class PlatoonManager implements Runnable {
      * then we create a vehicle member instance and place it in the correct place in the platoon list.
      * @param plan NewPlan message with valid input string in the format of "CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:5.0"
      */
-    protected void memberUpdates(NewPlan plan) {
+    protected synchronized void memberUpdates(NewPlan plan) {
         String vehicleId = plan.getSenderId();
         String[] inputsArray = plan.getInputs().split(",");
         boolean isExisted = false;
@@ -97,10 +95,11 @@ public class PlatoonManager implements Runnable {
                 pm.setVehiclePosition(distance);
                 pm.setVehicleSpeed(speed);
                 pm.setTimestamp(System.currentTimeMillis());
-                isExisted = true;
                 log.info("Receive and update CACC info on vehicel " + pm.getStaticId());
-            }
-            if(isExisted) {
+                log.info("    Speed = " + pm.getVehicleSpeed());
+                log.info("    Location = " + pm.getVehiclePosition());
+                log.info("    CommandSpeed = " + pm.getCommandSpeed());
+                isExisted = true;
                 break;
             }
         }
@@ -110,16 +109,18 @@ public class PlatoonManager implements Runnable {
             if(distance > plugin.maneuverInputs.getDistanceFromRouteStart()) {
                 PlatoonMember pm = new PlatoonMember(plan.getSenderId(), cmdSpeed, speed, distance, System.currentTimeMillis());
                 platoon.add(pm);
-                log.info("Add CACC info on new vehicel " + pm.getStaticId());
+                log.info("Add CACC info on new vehicle " + pm.getStaticId());
+            } else {
+                log.info("Ignore new vehicle info because it is behind us. Its id is " + plan.getSenderId());
             }
         }
     }
     
     /**
      * This method contains the logic of leader selection and will return a suitable leader for the subject vehicle
-     * TODO Integrate the leader selection algorithm later
+     * TODO Integrate the leader selection algorithm later, now it will only return the first member as leader
      */
-    protected PlatoonMember getLeader() {
+    protected synchronized PlatoonMember getLeader() {
         return platoon.first();
     }
 }

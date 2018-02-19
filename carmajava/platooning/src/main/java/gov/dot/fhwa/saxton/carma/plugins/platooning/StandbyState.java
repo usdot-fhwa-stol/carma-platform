@@ -47,9 +47,9 @@ public class StandbyState implements IPlatooningState {
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // Check if the next trajectory includes a platooning window
         if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
-            log_.info("In standby state, find an avaliable plan window and check to leader state.");
+            log_.info("In standby state, find an avaliable plan window and change to leader state in " + traj.toString());
             plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
-            // Request to replan with new state
+            // Request to replan with new state and give enough time for plugin state transition
             tpr.requestDelayedReplan(100);
         } else {
             log_.info("In standby state, asked to plan a trajectory without available winodw, ignoring " + traj.toString());
@@ -75,7 +75,6 @@ public class StandbyState implements IPlatooningState {
 
     @Override
     public void checkCurrentState() {
-        // We can only transit to other state from current state when the coming trajectory has an available window
-        // NO-OP
+        // We can only transit to other state from current state when the coming trajectory has an available window, so No-Op
     }
 }

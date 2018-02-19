@@ -43,7 +43,7 @@ public interface IPlatooningState {
     public MobilityIntro getNewOutboundIntroMessage();
     
     /**
-     * Called in the plugin loop method and let state check if it needs to change state 
+     * Called by the plugin loop method and the purpose is checking if plugin needs to change state 
      */
     public void checkCurrentState();
 }
