@@ -95,13 +95,14 @@ get_tracking() {
 }
 
 reset_cfg() {
-    echo "Checking out $GUIDANCE_PARAMS from git..."
+    BRANCH_NAME=$(git branch | sed -n '/\* /s///p')
+    echo "Checking out $GUIDANCE_PARAMS from git branch $BRANCH_NAME..."
     mv $GUIDANCE_PARAMS $GUIDANCE_PARAMS.bak
     git checkout $GUIDANCE_PARAMS
 
     diff $GUIDANCE_PARAMS.bak $GUIDANCE_PARAMS
 
-    echo "Checking out $MESSAGE_PARAMS from git..."
+    echo "Checking out $MESSAGE_PARAMS from git branch $BRANCH_NAME..."
     mv $MESSAGE_PARAMS $MESSAGE_PARAMS.bak
     git checkout $MESSAGE_PARAMS
 }
