@@ -228,7 +228,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         if (plan_ != null) {
             log.debug("V2V", "Sending MobilityIntro to Message node: ");
             log.debug("V2V", "    Plan ID = " + plan_.getHeader().getPlanId());
-            log.debug("V2V", "    PlayType = " + plan_.getPlanType());
+            log.debug("V2V", "    PlayType = " + plan_.getPlanType().getType());
             log.debug("V2V", "    My lane ID = " + plan_.getMyLaneId());
             log.debug("V2V", "    Forward speed = " + plan_.getForwardSpeed());
             log.debug("V2V", "    Capabilities = " + plan_.getCapabilities());
@@ -323,6 +323,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         log.info("V2V", "MobilityIntro has been built with planId = " + plan_.getHeader().getPlanId());
         float speed = (float)inputs.getCurrentSpeed();
         byte lane = (byte)inputs.getCurrentLane();
+        if (lane < 0) {
+            log.warn("buildAnnouncement found maneuver inputs providing lane ID = " + lane);
+        }
         String link = "[Test track]"; //TODO - placeholder for testing
         short linkPos = (short)inputs.getDistanceFromRouteStart(); //TODO - for now assume a single link in the route
         long expiration = System.currentTimeMillis() + EXPIRATION_TIME; //TODO - not in use for now
