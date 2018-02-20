@@ -106,7 +106,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   public void abortTrajectory() {
     log.debug("TrajectoryWorker aborting currently executing trajectory.");
     currentTrajectory.set(null);
-    nextTrajectory = null;
+    nextTrajectory.set(null);
     currentLateralManeuver = null;
     currentLongitudinalManeuver = null;
     currentComplexManeuver = null;
