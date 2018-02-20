@@ -268,6 +268,34 @@ public class TrajectoryTest {
   }
 
   @Test
+  public void testGetManeuvers1() {
+    traj.addManeuver(createLongitudinalManeuver(1.14, 11.4));
+
+    List<IManeuver> mvrs = traj.getManeuvers();
+    IManeuver m = mvrs.get(0);
+
+    assertEquals(1, mvrs.size());
+    assertEquals(1.14, mvrs.get(0).getStartDistance(), 0.001);
+    assertEquals(11.4, mvrs.get(0).getEndDistance(), 0.001);
+  }
+
+  @Test
+  public void testGetManeuvers2() {
+    ISimpleManeuver inputM1 = createLateralManeuver(1.14, 11.4);
+    ISimpleManeuver inputM2 = createLateralManeuver(11.4, 20.0);
+    traj.addManeuver(inputM1);
+    traj.addManeuver(inputM2);
+
+    List<IManeuver> mvrs = traj.getManeuvers();
+    assertEquals(2, mvrs.size());
+    IManeuver m1 = mvrs.get(0);
+    IManeuver m2 = mvrs.get(1);
+
+    assertEquals(inputM1, m1);
+    assertEquals(inputM2, m2);
+  }
+
+  @Test
   public void testGetNextLateralManeuverAfterFail() {
     traj.addManeuver(createLateralManeuver( 0.0, 0.0));
 
