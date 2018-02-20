@@ -157,7 +157,7 @@ public class Trajectory {
    * 
    * @returns The distance location of the start of the window if found, -1 otherwise
    */
-  public double findEarliestWindowOfSize(double size) {
+  public double findEarliestLongitudinalWindowOfSize(double size) {
     List<IManeuver> maneuvers = new ArrayList<>();
     maneuvers.addAll(longitudinalManeuvers.toSortedList());
     if (complexManeuver != null) {
@@ -177,7 +177,7 @@ public class Trajectory {
       lastEnd = m.getEndDistance();
     }
 
-    if (lastEnd < endLocation) {
+    if (lastEnd < endLocation && (endLocation - lastEnd) >= size) {
       return lastEnd;
     }
 
@@ -223,7 +223,7 @@ public class Trajectory {
    * 
    * @returns The distance location of the start of the window if found, -1 otherwise
    */
-  public double findLatestWindowOfSize(double size) {
+  public double findLatestLongitudinalWindowOfSize(double size) {
     List<IManeuver> maneuvers = new ArrayList<>();
     maneuvers.addAll(longitudinalManeuvers.toSortedList());
     if (complexManeuver != null) {

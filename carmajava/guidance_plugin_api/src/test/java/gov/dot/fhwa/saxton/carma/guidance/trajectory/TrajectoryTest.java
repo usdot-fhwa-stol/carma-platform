@@ -138,7 +138,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(0, 5));
     traj.addManeuver(createLongitudinalManeuver(7, 10));
 
-    double loc = traj.findEarliestWindowOfSize(2.0);
+    double loc = traj.findEarliestLongitudinalWindowOfSize(2.0);
 
     assertEquals(5.0, loc, 0.01);
   }
@@ -149,7 +149,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(7, 10));
     traj.addManeuver(createLongitudinalManeuver(15, 20));
 
-    double loc = traj.findEarliestWindowOfSize(5.0);
+    double loc = traj.findEarliestLongitudinalWindowOfSize(5.0);
 
     assertEquals(10.0, loc, 0.01);
   }
@@ -160,7 +160,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(7, 10));
     traj.addManeuver(createLongitudinalManeuver(15, 20));
 
-    double loc = traj.findEarliestWindowOfSize(2.0);
+    double loc = traj.findEarliestLongitudinalWindowOfSize(2.0);
 
     assertEquals(5.0, loc, 0.01);
   }
@@ -171,7 +171,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(5, 15));
     traj.addManeuver(createLongitudinalManeuver(15, 18));
 
-    double loc = traj.findEarliestWindowOfSize(2.0);
+    double loc = traj.findEarliestLongitudinalWindowOfSize(2.0);
 
     assertEquals(18.0, loc, 0.01);
   }
@@ -192,7 +192,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(0, 5));
     traj.addManeuver(createLongitudinalManeuver(7, 10));
 
-    double loc = traj.findLatestWindowOfSize(11.0);
+    double loc = traj.findLatestLongitudinalWindowOfSize(11.0);
 
     assertEquals(-1.0, loc, 0.01);
   }
@@ -202,7 +202,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(0, 5));
     traj.addManeuver(createLongitudinalManeuver(7, 10));
 
-    double loc = traj.findLatestWindowOfSize(2.0);
+    double loc = traj.findLatestLongitudinalWindowOfSize(2.0);
 
     assertEquals(10.0, loc, 0.01);
   }
@@ -213,7 +213,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(7, 10));
     traj.addManeuver(createLongitudinalManeuver(15, 20));
 
-    double loc = traj.findLatestWindowOfSize(5.0);
+    double loc = traj.findLatestLongitudinalWindowOfSize(5.0);
 
     assertEquals(10.0, loc, 0.01);
   }
@@ -224,7 +224,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(7, 10));
     traj.addManeuver(createLongitudinalManeuver(15, 20));
 
-    double loc = traj.findLatestWindowOfSize(2.0);
+    double loc = traj.findLatestLongitudinalWindowOfSize(2.0);
 
     assertEquals(10.0, loc, 0.01);
   }
@@ -234,7 +234,7 @@ public class TrajectoryTest {
     traj.addManeuver(createLongitudinalManeuver(0, 5));
     traj.addManeuver(createLongitudinalManeuver(7, 10));
 
-    double loc = traj.findLatestWindowOfSize(11.0);
+    double loc = traj.findLatestLongitudinalWindowOfSize(11.0);
 
     assertEquals(-1.0, loc, 0.01);
   }
