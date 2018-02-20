@@ -199,7 +199,7 @@
 
       <!-- Interface Manager Node -->
       <node pkg="carma" type="interfacemgr" name="interface_mgr"
-            args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr">
+            args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" required="true">
 
         <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
