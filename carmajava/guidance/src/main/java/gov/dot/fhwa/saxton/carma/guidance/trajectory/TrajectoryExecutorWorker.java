@@ -16,10 +16,7 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -87,7 +84,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     log.debug("TrajectoryExecutorWorker updating downtrack distance to " + downtrack);
     this.downtrackDistance = downtrack;
 
-    if (currentTrajectory == null) {
+    if (currentTrajectory.get() == null) {
       // Nothing to do
       log.info("Finished downtrack distance update with no trajectory.");
       return;
@@ -108,7 +105,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    */
   public void abortTrajectory() {
     log.debug("TrajectoryWorker aborting currently executing trajectory.");
-    currentTrajectory = null;
+    currentTrajectory.set(null);
     nextTrajectory = null;
     currentLateralManeuver = null;
     currentLongitudinalManeuver = null;
@@ -164,7 +161,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    */
   public double getTrajectoryCompletionPct() {
     // Handle the case where we're not running a trajectory yet
-    if (currentTrajectory == null) {
+    if (currentTrajectory.get() == null) {
       return -1.0;
     }
 
@@ -239,7 +236,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * Periodic loop method for iterating, this is where maneuvers get executed
    */
   public void loop() {
-    if (currentTrajectory != null) {
+    if (currentTrajectory.get() != null) {
       currentLongitudinalManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
       currentLateralManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       currentComplexManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
