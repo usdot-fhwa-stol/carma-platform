@@ -370,6 +370,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             }
         }
 
+		//Sort
+		pList.sort(
+			(Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+		);
+
         availablePlugins.setPlugins(pList);
         pluginPublisher.publish(availablePlugins);
     }
@@ -405,6 +410,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                             pList.add(p0);
                         }
 
+						//Sort
+						pList.sort(
+						  (Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+						);
+
                         pluginListResponse.setPlugins(pList);
                     }
                 });
@@ -437,6 +447,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                                 pList.add(p0);
                             }
                         }
+
+						//Sort
+						pList.sort(
+						  (Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+						);
 
                         pluginListResponse.setPlugins(pList);
                     }
