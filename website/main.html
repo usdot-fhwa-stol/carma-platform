@@ -161,8 +161,10 @@
             <p id="closed" style="display:none">
                 ROSBridge connection closed.
             </p>
-        </div>
+        </div>     
         <p />
+        <button id="btnModalLogout2" title="Shutdown and Logout" class="btnModal" onclick="javascript: shutdown();">Logout</button>
+        <p/>
         <div id="divLog" class="logStatus">
         </div>
     </div>
@@ -178,7 +180,8 @@
                 <p>Some text in the Modal Body.</p>
             </div>
             <div class="modal-footer">
-                <button id="btnModal" title="CAV Guidance">OK</button>
+                <button id="btnModalOK" title="Continue to Restart" class="btnModal">Continue</button> &nbsp; &nbsp;
+                <button id="btnModalLogout" title="Shutdown and Logout" class="btnModal">Logout</button>
             </div>
         </div>
     </div>
@@ -206,8 +209,5 @@
 <footer>
     <p class="copyright"></p>
     <p class="systemversion">&nbsp;</p>
-    <form action="scripts/killPlatform.php">
-        <input id="btnOk" type="submit" value="Shutdown" width="48" height="48"/>
-    </form>
 </footer>
 </html>
