@@ -239,7 +239,7 @@ public class TrajectoryTest {
     assertEquals(-1.0, loc, 0.01);
   }
 
-  @Test
+  @Teststart
   public void testGetNextLateralManeuverAfterEmpty() {
     IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(null, m);

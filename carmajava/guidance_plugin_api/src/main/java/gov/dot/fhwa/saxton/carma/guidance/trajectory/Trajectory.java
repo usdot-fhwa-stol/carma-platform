@@ -306,7 +306,12 @@ public class Trajectory {
             .findIntersectionsWith(new Interval<>(endOfMvrAtPt, endLocation));
         return (mvrs.isEmpty() ? null : mvrs.first().getData());
       } else {
-        return null;
+        SortedSet<Interval<LongitudinalManeuver>> intersections = longitudinalManeuvers.findIntersectionsWith(new Interval<>(loc, endLocation));
+        if (!intersections.isEmpty()) {
+          return intersections.first().getData();
+        } else {
+          return null;
+        }
       }
     }
 
@@ -318,7 +323,12 @@ public class Trajectory {
             .findIntersectionsWith(new Interval<>(endOfMvrAtPt, endLocation));
         return (mvrs.isEmpty() ? null : mvrs.first().getData());
       } else {
-        return null;
+        SortedSet<Interval<LateralManeuver>> intersections = lateralManeuvers.findIntersectionsWith(new Interval<>(loc, endLocation));
+        if (!intersections.isEmpty()) {
+          return intersections.first().getData();
+        } else {
+          return null;
+        }
       }
     }
 
