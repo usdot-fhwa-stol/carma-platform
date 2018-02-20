@@ -375,10 +375,10 @@ public class Trajectory {
     } else {
       // Neither is empty, proceed with the merge
       int latIdx = 0;
-      LateralManeuver lat = laterals.get(0);
       int lonIdx = 0;
-      LongitudinalManeuver lon = longitudinals.get(0);
       for (int i = 0; i < numElems; i++) {
+        LateralManeuver lat = laterals.get(latIdx);
+        LongitudinalManeuver lon = longitudinals.get(lonIdx);
         if (lon.getStartDistance() <= lat.getStartDistance()) {
           out.add(lon);
           lonIdx++;
