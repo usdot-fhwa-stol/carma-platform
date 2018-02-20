@@ -244,7 +244,7 @@ public class Trajectory {
       lastEnd = m.getEndDistance();
     }
 
-    if (lastEnd < endLocation) {
+    if (lastEnd < endLocation && (endLocation - lastEnd) >= size) {
       return lastEnd;
     }
 
