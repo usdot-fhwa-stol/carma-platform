@@ -252,14 +252,14 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
         try {
           currentLongitudinalManeuver.executeTimeStep();
         } catch (IllegalStateException ise) {
-          log.warn("Maneuver " + currentLongitudinalManeuver.getClass().getSimpleName() + " planned by " + currentComplexManeuver.getPlanner() + " attempted to run after its end distance.");
+          log.warn("Maneuver " + currentLongitudinalManeuver.getClass().getSimpleName() + " planned by " + currentLongitudinalManeuver.getPlanner() + " attempted to run after its end distance.");
         }
       }
       if (currentLateralManeuver != null) {
         try {
           currentLateralManeuver.executeTimeStep();
         } catch (IllegalStateException ise) {
-          log.warn("Maneuver " + currentLateralManeuver.getClass().getSimpleName() + " planned by " + currentComplexManeuver.getPlanner() + " attempted to run after its end distance.");
+          log.warn("Maneuver " + currentLateralManeuver.getClass().getSimpleName() + " planned by " + currentLateralManeuver.getPlanner() + " attempted to run after its end distance.");
         }
       }
     }
