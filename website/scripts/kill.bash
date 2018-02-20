@@ -10,11 +10,12 @@ source /opt/ros/kinetic/setup.bash
 # Source platform and set ros environment variables
 source /opt/carma/app/bin/setup.bash
 
-# Publish system alert
-rostopic pub /saxton_cav/system_alert cav_msgs/SystemAlert "type: 6 description: 'Shutdown requested by UI'"
+# Publish system alert (-1 is once mode which adds a 3sec delay)
+rostopic pub -1 /saxton_cav/system_alert cav_msgs/SystemAlert "type: 6
+description: 'Shutdown requested by UI'"
 
-# Wait for 5 seconds for roslaunch shutdown then kill process
-sleep 5
+# Wait for additional 3 seconds for roslaunch shutdown then kill process
+sleep 3
 
 #TODO make this more secure with somekind of validation on the target process
 
