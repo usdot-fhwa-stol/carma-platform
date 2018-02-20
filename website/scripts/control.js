@@ -316,7 +316,7 @@ function showModal(showWarning, modalMessage, restart) {
     }
 
     if (restart == true) {
-        btnModal.style.display = ''; 
+        btnModalOK.style.display = ''; 
         btnModalLogout.style.display = ''; 
 
         // When the user clicks on <span> (x), close the modal
@@ -326,7 +326,7 @@ function showModal(showWarning, modalMessage, restart) {
         }
     }
     else {
-        btnModal.style.display = 'none';
+        btnModalOK.style.display = 'none';
         btnModalLogout.style.display = '';
 
         // When the user clicks on <span> (x), close the modal
