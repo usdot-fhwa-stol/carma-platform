@@ -377,26 +377,21 @@ public class Trajectory {
     List<LongitudinalManeuver> longitudinals = longitudinalManeuvers.toSortedList();
     int numElems = laterals.size() + longitudinals.size();
 
-    // Check if we can shortcut the merge
+    // Merge the lists by peeling elements off their fronts until one is empty
+    while (!laterals.isEmpty() && !longitudinals.isEmpty()) {
+        LateralManeuver lat = laterals.remove(0);
+        LongitudinalManeuver lon = longitudinals.remove(0);
+        if (lon.getStartDistance() <= lat.getStartDistance()) {
+          out.add(lon);
+        } else {
+          out.add(lat);
+        }
+    }
+
     if (laterals.isEmpty()) {
       out.addAll(longitudinals);
     } else if (longitudinals.isEmpty()) {
       out.addAll(laterals);
-    } else {
-      // Neither is empty, proceed with the merge
-      int latIdx = 0;
-      int lonIdx = 0;
-      for (int i = 0; i < numElems; i++) {
-        LateralManeuver lat = laterals.get(latIdx);
-        LongitudinalManeuver lon = longitudinals.get(lonIdx);
-        if (lon.getStartDistance() <= lat.getStartDistance()) {
-          out.add(lon);
-          lonIdx++;
-        } else {
-          out.add(lat);
-          latIdx++;
-        }
-      }
     }
 
     if (complexManeuver != null) {
