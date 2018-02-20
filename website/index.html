@@ -20,7 +20,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width">
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="stylesheet" type="text/css" href="styles/styles.css"/>
+    <link rel="stylesheet" type="text/css" href="styles/index.css"/>
 </head>
 <body>
 <noscript>
@@ -49,12 +49,11 @@
         Please review the manual for complete system details and further instructions.
         <br /><br />
     </h2>
-    <form action="main.html">
-        <input id="btnOk" type="submit" value="OK">
-    </form>
-    <br /> <!-- TODO decide where this will live -->
-    <form action="scripts/launchPlatform.php">
-        <input id="btnOk" type="submit" value="Remote Launch">
+    <form action="scripts/launchPlatform.php" method="get">     
+            <input id="btnOk" type="submit" value="OK"> <br/> <br/>
+            <input type="checkbox" id="cbRemoteLaunch" name="remotelaunch" value="true" checked="checked" class="regular-checkbox big-checkbox" />
+            <label for="cbRemoteLaunch"></label>
+            &nbsp; <span id="lblCheckBox">Remote Launch</span> &nbsp;
     </form>
 </div>
 </body>

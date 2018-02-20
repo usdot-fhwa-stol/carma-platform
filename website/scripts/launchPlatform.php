@@ -1,4 +1,9 @@
 <?php
+  //Check if remotelaunch parameter is selected. 
+  if (!isset($_GET['remotelaunch'])){
+   exit;
+  }
+
   // Set paths
   $CARMA_DIR = "/opt/carma";
   $HTML_DIR = $CARMA_DIR . "/app/html";
