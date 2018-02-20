@@ -29,9 +29,14 @@ public class ClosedStartOpenEndIntervalCalculator<T> implements IntervalCalculat
         double start2 = inter2.getStart();
         double end2 = inter2.getEnd();
 
-        // Analyze case by case
+		// Analyze case by case
 
-        // Start2 is inside the first range
+		// Start2 is inside the first range
+		// Either input is the empty set
+		if (start1 == end1 || start2 == end2) {
+			return false;
+		}
+
 		if (start2 >= start1 && start2 < end1) {
 			return true;
 		}

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
- *
+ * Copyright (C) 2018 LEIDOS. *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
@@ -16,18 +15,15 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
-import java.util.List;
-import java.util.ArrayList;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import cav_msgs.Maneuver;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
@@ -60,7 +56,7 @@ public class TrajectoryExecutorWorkerTest {
 
       return m1;
     } else {
-      ISimpleManeuver m1 = mock(ISimpleManeuver.class);
+      ISimpleManeuver m1 = mock(LateralManeuver.class);
       when(m1.getStartDistance()).thenReturn(start);
       when(m1.getEndDistance()).thenReturn(end);
 
@@ -90,15 +86,15 @@ public class TrajectoryExecutorWorkerTest {
     tew.runTrajectory(t);
 
     tew.updateDowntrackDistance(0.0);
-    Thread.sleep(1000);
+    tew.loop();
     verify(m1, atLeastOnce()).executeTimeStep();
     verify(m1a, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(10.0);
-    Thread.sleep(1000);
+    tew.loop();
     verify(m2, atLeastOnce()).executeTimeStep();
     verify(m2a, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(15.0);
-    Thread.sleep(1000);
+    tew.loop();
     verify(m3, atLeastOnce()).executeTimeStep();
     verify(m3a, atLeastOnce()).executeTimeStep();
   }
@@ -120,10 +116,10 @@ public class TrajectoryExecutorWorkerTest {
     tew.runTrajectory(t);
 
     tew.updateDowntrackDistance(0.0);
-    Thread.sleep(1000);
+    tew.loop();
     verify(m1, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(10.0);
-    Thread.sleep(1000);
+    tew.loop();
     verify(m2, atLeastOnce()).executeTimeStep();
     tew.abortTrajectory();
 
@@ -146,9 +142,11 @@ public class TrajectoryExecutorWorkerTest {
     tew.runTrajectory(t);
 
     tew.updateDowntrackDistance(0.0);
+    tew.loop();
     assertEquals(m1, tew.getCurrentLateralManeuver());
     assertEquals(m2, tew.getCurrentLongitudinalManeuver());
     tew.updateDowntrackDistance(15.0);
+    tew.loop();
     assertEquals(m1, tew.getCurrentLateralManeuver());
     assertEquals(m3, tew.getCurrentLongitudinalManeuver());
   }
@@ -168,9 +166,11 @@ public class TrajectoryExecutorWorkerTest {
     tew.runTrajectory(t);
 
     tew.updateDowntrackDistance(0.0);
+    tew.loop();
     assertEquals(null, tew.getNextLateralManeuver());
     assertEquals(m3, tew.getNextLongitudinalManeuver());
     tew.updateDowntrackDistance(15.0);
+    tew.loop();
     assertEquals(null, tew.getNextLateralManeuver());
     assertEquals(null, tew.getNextLongitudinalManeuver());
   }
@@ -243,17 +243,18 @@ public class TrajectoryExecutorWorkerTest {
     tew.runTrajectory(t);
 
     tew.updateDowntrackDistance(0.0);
-    Thread.sleep(100);
+    tew.loop();
     verify(m3, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(10.0);
-    Thread.sleep(100);
+    tew.loop();
     verify(m3, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(20.0);
-    Thread.sleep(100);
+    tew.loop();
     verify(m3, atLeastOnce()).executeTimeStep();
-    Thread.sleep(100);
+    tew.loop();
     verify(m3, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(30.0);
+    tew.loop();
 
     assertEquals(null, tew.getCurrentComplexManeuver());
   }
@@ -281,13 +282,13 @@ public class TrajectoryExecutorWorkerTest {
     tew.updateDowntrackDistance(10.0);
     tew.updateDowntrackDistance(15.0);
     tew.updateDowntrackDistance(20.0);
-    Thread.sleep(100);
+    tew.loop();
     verify(m3, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(25.0);
-    Thread.sleep(100);
+    tew.loop();
     verify(m3, atLeastOnce()).executeTimeStep();
     tew.updateDowntrackDistance(30.0);
-    Thread.sleep(100);
+    tew.loop();
     verify(m3, atLeastOnce()).executeTimeStep();
   }
 

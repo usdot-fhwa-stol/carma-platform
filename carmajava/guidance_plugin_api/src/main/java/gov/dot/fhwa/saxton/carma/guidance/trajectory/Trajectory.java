@@ -77,11 +77,13 @@ public class Trajectory {
    * this trajectory instance.
    */
   public boolean addManeuver(ISimpleManeuver maneuver) {
-    if (maneuver.getStartDistance() >= startLocation && maneuver.getEndDistance() < endLocation) {
+    if (maneuver.getStartDistance() >= startLocation && maneuver.getEndDistance() <= endLocation) {
       if (maneuver instanceof LongitudinalManeuver) {
-        return longitudinalManeuvers.insert(new Interval<LongitudinalManeuver>((LongitudinalManeuver) maneuver, maneuver.getStartDistance(), maneuver.getEndDistance()));
+        return longitudinalManeuvers.insert(new Interval<LongitudinalManeuver>((LongitudinalManeuver) maneuver,
+            maneuver.getStartDistance(), maneuver.getEndDistance()));
       } else if (maneuver instanceof LateralManeuver) {
-        return lateralManeuvers.insert(new Interval<LateralManeuver>((LateralManeuver) maneuver, maneuver.getStartDistance(), maneuver.getEndDistance()));
+        return lateralManeuvers.insert(new Interval<LateralManeuver>((LateralManeuver) maneuver,
+            maneuver.getStartDistance(), maneuver.getEndDistance()));
       } else {
         // Maneuver is neither lateral nor longitudinal, we can't handle this case so reject it
         return false;
@@ -124,11 +126,13 @@ public class Trajectory {
     }
 
     // Check for overlap with any other maneuvers currentl planned
-    if (!lateralManeuvers.findIntersectionsWith(new Interval<>(maneuver.getStartDistance(), maneuver.getEndDistance())).isEmpty()) {
+    if (!lateralManeuvers.findIntersectionsWith(new Interval<>(maneuver.getStartDistance(), maneuver.getEndDistance()))
+        .isEmpty()) {
       return false;
     }
 
-    if (!longitudinalManeuvers.findIntersectionsWith(new Interval<>(maneuver.getStartDistance(), maneuver.getEndDistance())).isEmpty()) {
+    if (!longitudinalManeuvers
+        .findIntersectionsWith(new Interval<>(maneuver.getStartDistance(), maneuver.getEndDistance())).isEmpty()) {
       return false;
     }
 
@@ -256,7 +260,8 @@ public class Trajectory {
       out.add(mvr.getData());
     }
 
-    if (complexManeuver != null && loc >= complexManeuver.getStartDistance() && loc < complexManeuver.getEndDistance()) {
+    if (complexManeuver != null && loc >= complexManeuver.getStartDistance()
+        && loc < complexManeuver.getEndDistance()) {
       out.add(complexManeuver);
     }
 
@@ -269,12 +274,12 @@ public class Trajectory {
    */
   public IManeuver getManeuverAt(double loc, ManeuverType type) {
     if (type == ManeuverType.LATERAL) {
-      SortedSet<Interval<LateralManeuver>> mvrs =  lateralManeuvers.findIntersectionsWith(loc);
+      SortedSet<Interval<LateralManeuver>> mvrs = lateralManeuvers.findIntersectionsWith(loc);
       return (mvrs.isEmpty() ? null : mvrs.first().getData());
     }
 
     if (type == ManeuverType.LONGITUDINAL) {
-      SortedSet<Interval<LongitudinalManeuver>> mvrs =  longitudinalManeuvers.findIntersectionsWith(loc);
+      SortedSet<Interval<LongitudinalManeuver>> mvrs = longitudinalManeuvers.findIntersectionsWith(loc);
       return (mvrs.isEmpty() ? null : mvrs.first().getData());
     }
 
@@ -294,13 +299,27 @@ public class Trajectory {
    */
   public IManeuver getNextManeuverAfter(double loc, ManeuverType type) {
     if (type == ManeuverType.LONGITUDINAL) {
-      SortedSet<Interval<LongitudinalManeuver>> mvrs = longitudinalManeuvers.findIntersectionsWith(new Interval<>(loc + DISTANCE_EPSILON, endLocation));
-      return (mvrs.isEmpty() ? null : mvrs.first().getData());
+      SortedSet<Interval<LongitudinalManeuver>> mvrsAtPt = longitudinalManeuvers.findIntersectionsWith(loc);
+      if (!mvrsAtPt.isEmpty()) {
+        double endOfMvrAtPt = mvrsAtPt.first().getEnd();
+        SortedSet<Interval<LongitudinalManeuver>> mvrs = longitudinalManeuvers
+            .findIntersectionsWith(new Interval<>(endOfMvrAtPt, endLocation));
+        return (mvrs.isEmpty() ? null : mvrs.first().getData());
+      } else {
+        return null;
+      }
     }
 
     if (type == ManeuverType.LATERAL) {
-      SortedSet<Interval<LateralManeuver>> mvrs = lateralManeuvers.findIntersectionsWith(new Interval<>(loc + DISTANCE_EPSILON, endLocation));
-      return (mvrs.isEmpty() ? null : mvrs.first().getData());
+      SortedSet<Interval<LateralManeuver>> mvrsAtPt = lateralManeuvers.findIntersectionsWith(loc);
+      if (!mvrsAtPt.isEmpty()) {
+        double endOfMvrAtPt = mvrsAtPt.first().getEnd();
+        SortedSet<Interval<LateralManeuver>> mvrs = lateralManeuvers
+            .findIntersectionsWith(new Interval<>(endOfMvrAtPt, endLocation));
+        return (mvrs.isEmpty() ? null : mvrs.first().getData());
+      } else {
+        return null;
+      }
     }
 
     if (type == ManeuverType.COMPLEX) {
@@ -360,7 +379,7 @@ public class Trajectory {
       int lonIdx = 0;
       LongitudinalManeuver lon = longitudinals.get(0);
       for (int i = 0; i < numElems; i++) {
-        if (lon.getStartDistance()<= lat.getStartDistance()) {
+        if (lon.getStartDistance() <= lat.getStartDistance()) {
           out.add(lon);
           lonIdx++;
         } else {
