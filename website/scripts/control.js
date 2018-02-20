@@ -480,7 +480,7 @@ function closeModal(action) {
 function shutdown()
 {
     sessionStorage.clear();
-    window.location.assign('killPlatform.php');
+    window.location.assign('scripts/killPlatform.php');
 }
 /*** Start: AUDIO ***/
 
