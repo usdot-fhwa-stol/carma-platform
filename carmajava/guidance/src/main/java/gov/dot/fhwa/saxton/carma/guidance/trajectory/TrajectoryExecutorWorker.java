@@ -60,11 +60,13 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     OnTrajectoryProgressCallback callback;
 
     PctCallback(double pct, OnTrajectoryProgressCallback callback) {
-      this.pct = pct; this.callback = callback;
+      this.pct = pct;
+      this.callback = callback;
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz,
+      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
     this.activeManeuversPub = activeManeuversPub;
@@ -77,7 +79,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   private void execute(IManeuver maneuver) {
     log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", "
         + maneuver.getEndDistance() + ") Planned by: " + maneuver.getPlanner().getVersionInfo().componentName());
-    
+
     if (activeManeuversMsg == null) {
       activeManeuversMsg = activeManeuversPub.newMessage();
     }
@@ -157,7 +159,6 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       log.debug("TrajectoryExecutorWorker starting longitudinal maneuver");
       execute(currentLongitudinalManeuver);
     }
-
 
   }
 
@@ -400,12 +401,10 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     currentTrajectory = nextTrajectory;
     nextTrajectory = null;
 
-    if (currentTrajectory != null) {
-      currentLateralManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
-      currentLongitudinalManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
-      currentComplexManeuver = currentTrajectory.getComplexManeuver();
-      log.info("TrajectoryExecutorWorker successfully swapped Trajectories");
-    }
+    currentLateralManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
+    currentLongitudinalManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
+    currentComplexManeuver = currentTrajectory.getComplexManeuver();
+    log.info("TrajectoryExecutorWorker successfully swapped Trajectories");
 
     resetCallbacks();
   }
@@ -492,8 +491,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     synchronized (callbacks) {
       callbacks.clear();
     }
-  }  
-  
+  }
+
   /**
    * Get the current downtrack distance and then call any callbacks that have been triggered
    */
