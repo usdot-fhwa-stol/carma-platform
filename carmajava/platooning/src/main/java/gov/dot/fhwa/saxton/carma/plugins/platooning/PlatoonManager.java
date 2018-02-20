@@ -45,34 +45,35 @@ public class PlatoonManager implements Runnable {
     
     @Override
     public void run() {
-        // This loop will remove any expired entry from platoon list
-        while(true) {
-            long loopStart = System.currentTimeMillis();
-            List<PlatoonMember> removeCandidates = new ArrayList<>();
-            int counter = 0;
-            for(PlatoonMember pm : platoon) {
-                if(System.currentTimeMillis() - pm.getTimestamp() > plugin.messageTimeout) {
-                    removeCandidates.add(pm);
+        try {
+            // This loop will remove any expired entry from platoon list
+            while(!Thread.currentThread().isInterrupted()) {
+                long loopStart = System.currentTimeMillis();
+                List<PlatoonMember> removeCandidates = new ArrayList<>();
+                int counter = 0;
+                for(PlatoonMember pm : platoon) {
+                    if(System.currentTimeMillis() - pm.getTimestamp() > plugin.messageTimeout) {
+                        removeCandidates.add(pm);
+                    }
+                    counter++;
+                    log.debug("Found vehicel " + pm.getStaticId() + " in platoon list at " + counter);
+                    log.debug(pm.toString());
                 }
-                counter++;
-                log.debug("Found vehicel " + pm.getStaticId() + " in platoon list at " + counter);
-                log.debug(pm.toString());
-            }
-            if(removeCandidates.size() != 0) {
-                for(PlatoonMember candidate: removeCandidates) {
-                    log.info("Remove vehicle " + candidate.getStaticId() +
-                            " from platoon list because the entry is timeout by " + (System.currentTimeMillis() - candidate.getTimestamp()) + " ms");
-                    platoon.remove(candidate);
+                if(removeCandidates.size() != 0) {
+                    for(PlatoonMember candidate: removeCandidates) {
+                        log.info("Remove vehicle " + candidate.getStaticId() +
+                                " from platoon list because the entry is timeout by " + (System.currentTimeMillis() - candidate.getTimestamp()) + " ms");
+                        platoon.remove(candidate);
+                    }
                 }
-            }
-            long loopEnd = System.currentTimeMillis();
-            long sleepDuration = Math.max(plugin.messageTimeout - (loopEnd - loopStart), 0);
-            try {
+                long loopEnd = System.currentTimeMillis();
+                long sleepDuration = Math.max(plugin.messageTimeout - (loopEnd - loopStart), 0);
                 Thread.sleep(sleepDuration);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
+        
     }
     
     /**

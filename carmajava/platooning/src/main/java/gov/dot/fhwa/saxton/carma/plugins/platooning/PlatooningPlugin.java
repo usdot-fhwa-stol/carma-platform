@@ -33,6 +33,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin {
 
     protected final String PLATOONING_FLAG = "PLATOONING";
+    // TODO the plugin should use interface manager once rosjava multi-thread service call is fixed
     protected final String SPEED_CMD_CAPABILITY = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
     
     protected IPlatooningState state;
@@ -43,7 +44,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     
     protected double maxAccel = 2.5;
     protected double minimumManeuverLength = 15.0;
-    protected double timeHeadway = 0.8;
+    protected double timeHeadway = 1.8;
     protected double standStillGap = 7.0;
     protected double kpPID = 1.5;
     protected double kiPID = 0.0;
@@ -72,15 +73,21 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         log.info("CACC platooning pulgin is initializing...");
         // initialize parameters of platooning plugin
         maxAccel = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
+        log.debug("Load param maxAccel = " + maxAccel);
         minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 15.0);
-        timeHeadway = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 0.8);
+        log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
+        timeHeadway = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 1.8);
+        log.debug("Load param timeHeadway = " + timeHeadway);
         standStillGap = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 7.0);
+        log.debug("Load param standStillGap = " + standStillGap);
         kpPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
         kiPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
         kdPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
-        messageIntervalLength = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 500);
-        messageTimeout = (int) (messageIntervalLength * pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 1.5));
         log.info("Parameters for speed PID controller are set to be [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
+        messageIntervalLength = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 500);
+        log.debug("Load param messageIntervalLength = " + messageIntervalLength);
+        messageTimeout = (int) (messageIntervalLength * pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 1.5));
+        log.debug("Load param messageTimeout = " + messageTimeout);
         // initialize necessary pubs/subs 
         mobilityIntroPublisher = pubSubService.getPublisherForTopic("mobility_intro_outbound", MobilityIntro._TYPE);
         newPlanSub = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
