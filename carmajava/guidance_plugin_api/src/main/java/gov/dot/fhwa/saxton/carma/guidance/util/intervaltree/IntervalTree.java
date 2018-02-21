@@ -42,10 +42,17 @@ public class IntervalTree<T> {
 
     /**
      * Attempt to insert the value in the tree according to the configured insertion strategy.
+     * <p>
+     * Only accepts Intervals with non-null data fields, use Optional<T> if data may be missing
      * 
      * @return True if the insertion was successful, false o.w.
      */
     public boolean insert(Interval<T> value) {
+        if (value.getData() == null) {
+            // Reject an interval with null data
+            return false;
+        }
+
         if (root == null) {
             root = new IntervalTreeNode<T>(intCalculator, insertStrategy, (value.getStart() + value.getEnd()) / 2.0);
         }

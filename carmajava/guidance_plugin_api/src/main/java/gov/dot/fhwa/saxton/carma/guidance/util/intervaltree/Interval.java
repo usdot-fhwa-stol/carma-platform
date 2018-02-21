@@ -28,19 +28,27 @@ public class Interval<V> {
     private double start;
     private double end;
 
+    /**
+     * Construct an interval containing a data element
+     * <p>
+     * Start must not be greater than end, will throw an ArithmeticException if attempted
+     */
     public Interval(V data, double start, double end) {
         this.data = data;
         this.start = start;
         this.end = end;
+
+        // Check for sanity of interval ranges
+        if (start > end) {
+            throw new ArithmeticException(String.format("Attempted to create inverted interval [.02f, .02f)", start, end));
+        }
     }
 
     /**
      * Constructor to build intervals for use in queries, do not attempt to insert into trees
      */
     public Interval(double start, double end) {
-        this.data = null;
-        this.start = start;
-        this.end = end;
+        this(null, start, end);
     }
 
     /**

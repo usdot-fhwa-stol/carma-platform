@@ -85,8 +85,7 @@ public class IntervalTreeNode<T> {
             if (left != null) {
                 result.addAll(left.findIntersectionsWith(interval));
             }
-        }
-        if (cmp == 0) {
+        } else if (cmp == 0) {
             // Check for any intersections in our node's data
             double leftSpan = Double.POSITIVE_INFINITY;
             double rightSpan = Double.NEGATIVE_INFINITY;

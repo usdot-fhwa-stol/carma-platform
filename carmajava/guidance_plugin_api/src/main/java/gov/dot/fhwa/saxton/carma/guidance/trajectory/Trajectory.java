@@ -210,7 +210,7 @@ public class Trajectory {
       lastEnd = m.getEndDistance();
     }
 
-    if (lastEnd < endLocation) {
+    if (lastEnd < endLocation && (endLocation - lastEnd) >= size) {
       return lastEnd;
     }
 
@@ -231,7 +231,7 @@ public class Trajectory {
     }
 
     if (maneuvers.size() == 0) {
-      return -1;
+      return endLocation - size;
     }
 
     double lastStart = endLocation;
@@ -242,6 +242,44 @@ public class Trajectory {
       }
 
       lastStart = m.getStartDistance();
+    }
+
+    if (lastStart > startLocation && (lastStart - startLocation) > size) {
+      return lastStart - size;
+    }
+
+    return -1;
+  }
+
+  /**
+   * Find the latest available space in the lateral domain of the current trajectory for 
+   * which a maneuver of the specified size might fit.
+   * 
+   * @returns The distance location of the start of the window if found, -1 otherwise
+   */
+  public double findLatestLateralWindowOfSize(double size) {
+    List<IManeuver> maneuvers = new ArrayList<>();
+    maneuvers.addAll(lateralManeuvers.toSortedList());
+    if (complexManeuver != null) {
+      maneuvers.add(complexManeuver);
+    }
+
+    if (maneuvers.size() == 0) {
+      return endLocation - size;
+    }
+
+    double lastStart = endLocation;
+    for (int i = maneuvers.size() - 1; i >= 0; i--) {
+      IManeuver m = maneuvers.get(i);
+      if (lastStart - m.getEndDistance() >= size) {
+        return m.getEndDistance();
+      }
+
+      lastStart = m.getStartDistance();
+    }
+
+    if (lastStart > startLocation && (lastStart - startLocation) > size) {
+      return lastStart - size;
     }
 
     return -1;
@@ -346,7 +384,7 @@ public class Trajectory {
   }
 
   /**
-   * Get the trajectories stored lateral maneuvers in sorted order by start location
+   * Get the trajectory's stored lateral maneuvers in sorted order by start location
    */
   public List<ISimpleManeuver> getLateralManeuvers() {
     List<ISimpleManeuver> out = new ArrayList<>();
@@ -356,14 +394,14 @@ public class Trajectory {
   }
 
   /**
-   * Get the trajectories stored longitudinal maneuvers in sorted order by start location
+   * Get the trajectory's stored longitudinal maneuvers in sorted order by start location
    */
   public List<LongitudinalManeuver> getLongitudinalManeuvers() {
     return longitudinalManeuvers.toSortedList();
   }
 
   /**
-   * Get the trajectories stored maneuvers in sorted order by start location
+   * Get the trajectory's stored maneuvers in sorted order by start location
    * <p>
    * Note: This operation is more expensive than it might seem, it requires traversal
    * of two separate trees and a merge of the resulting flattened lists. If possible,
@@ -379,12 +417,12 @@ public class Trajectory {
 
     // Merge the lists by peeling elements off their fronts until one is empty
     while (!laterals.isEmpty() && !longitudinals.isEmpty()) {
-        LateralManeuver lat = laterals.remove(0);
-        LongitudinalManeuver lon = longitudinals.remove(0);
+        LateralManeuver lat = laterals.get(0);
+        LongitudinalManeuver lon = longitudinals.get(0);
         if (lon.getStartDistance() <= lat.getStartDistance()) {
-          out.add(lon);
+          out.add(laterals.remove(0));
         } else {
-          out.add(lat);
+          out.add(laterals.remove(0));
         }
     }
 

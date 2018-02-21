@@ -23,7 +23,6 @@ public class ClosedStartOpenEndIntervalCalculator<T> implements IntervalCalculat
 
 	@Override
 	public boolean checkIntersection(Interval<T> inter1, Interval<T> inter2) {
-        // Rename values to reuse previous code
         double start1 = inter1.getStart();
         double end1 = inter1.getEnd();
         double start2 = inter2.getStart();
@@ -31,33 +30,19 @@ public class ClosedStartOpenEndIntervalCalculator<T> implements IntervalCalculat
 
 		// Analyze case by case
 
-		// Start2 is inside the first range
 		// Either input is the empty set
 		if (start1 == end1 || start2 == end2) {
 			return false;
 		}
 
-		if (start2 >= start1 && start2 < end1) {
-			return true;
-		}
-		// End2 is inside the range
-		if (end2 > start1 && end2 < end1) { 
-			return true;
-		}
-		// The whole of range 2 overlaps range1
-		if (start2 <= start1 && end2 >= end1) {
+		if (end1 > start2 && end1 <= end2) {
 			return true;
 		}
 
-		// Start2 is inside the first range
 		if (start1 >= start2 && start1 < end2) {
 			return true;
 		}
-		// End2 is inside the range
-		if (end1 > start2 && end1 < end2) { 
-			return true;
-		}
-		// The whole of range 2 overlaps range1
+
 		if (start1 <= start2 && end1 >= end2) {
 			return true;
 		}
@@ -74,7 +59,7 @@ public class ClosedStartOpenEndIntervalCalculator<T> implements IntervalCalculat
 	public int compareIntervals(Interval<T> inter1, Interval<T> inter2) {
 		if (checkIntersection(inter1, inter2)) {
 			return 0;
-		} else if (inter1.getEnd() < inter2.getStart()) {
+		} else if (inter1.getEnd() <= inter2.getStart()) {
 				return -1;
 		} else {
 			return 1;
@@ -83,7 +68,13 @@ public class ClosedStartOpenEndIntervalCalculator<T> implements IntervalCalculat
 
 	@Override
 	public int compareIntervalAndPoint(Interval<T> inter1, double pt) {
-		return 0;
+		if (checkIntersection(inter1, pt)) {
+			return 0;
+		} else if (inter1.getEnd() <= pt) {
+			return -1;
+		} else {
+			return 1;
+		}
 	}
 
 }
