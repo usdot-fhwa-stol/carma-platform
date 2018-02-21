@@ -15,6 +15,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
@@ -48,6 +49,9 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected double maneuverTickFrequencyHz = 10.0;
   protected ILogger log = LoggerManager.getLogger();
   cav_msgs.ActiveManeuvers activeManeuversMsg = null;
+  protected Arbitrator arbitrator;
+  protected int timeStepsWithoutTraj = 0;
+  protected static final int MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY = 3;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -56,20 +60,26 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     OnTrajectoryProgressCallback callback;
 
     PctCallback(double pct, OnTrajectoryProgressCallback callback) {
-      this.pct = pct; this.callback = callback;
+      this.pct = pct;
+      this.callback = callback;
     }
   }
 
-  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz, IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
+  public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz,
+      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
     this.activeManeuversPub = activeManeuversPub;
   }
 
+  public void setArbitrator(Arbitrator arbitrator) {
+    this.arbitrator = arbitrator;
+  }
+
   private void execute(IManeuver maneuver) {
     log.info("TrajectoryExecutorWorker running new maneuver from [" + maneuver.getStartDistance() + ", "
         + maneuver.getEndDistance() + ") Planned by: " + maneuver.getPlanner().getVersionInfo().componentName());
-    
+
     if (activeManeuversMsg == null) {
       activeManeuversMsg = activeManeuversPub.newMessage();
     }
@@ -149,7 +159,6 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       log.debug("TrajectoryExecutorWorker starting longitudinal maneuver");
       execute(currentLongitudinalManeuver);
     }
-
 
   }
 
@@ -378,19 +387,24 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
        * I've removed this nulling of current trajectory functionality as a fix, but lack complete understanding of the 
        * race condition so do not trust this code too heavily.
        */
-      log.warn("TrajectoryExecutorWorker failed to swap to buffered Trajectory! It was null!");
+      if (++timeStepsWithoutTraj >= MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY) {
+        log.warn("Timesteps without trajectory threshold exceeded, instructing arbitrator to forcibly plan!");
+        if (arbitrator != null) {
+          arbitrator.notifyTrajectoryFailure();
+        } else {
+          log.error("No Arbitrator set for replan notifications!");
+        }
+      }
       return;
     }
 
     currentTrajectory = nextTrajectory;
     nextTrajectory = null;
 
-    if (currentTrajectory != null) {
-      currentLateralManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
-      currentLongitudinalManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
-      currentComplexManeuver = currentTrajectory.getComplexManeuver();
-      log.info("TrajectoryExecutorWorker successfully swapped Trajectories");
-    }
+    currentLateralManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
+    currentLongitudinalManeuver = currentTrajectory.getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
+    currentComplexManeuver = currentTrajectory.getComplexManeuver();
+    log.info("TrajectoryExecutorWorker successfully swapped Trajectories");
 
     resetCallbacks();
   }
@@ -436,6 +450,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       // Hold onto this trajectory for double buffering, flip to it when we finish trajectory
       nextTrajectory = traj;
     }
+
+    timeStepsWithoutTraj = 0;
   }
 
   @Override
@@ -475,8 +491,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     synchronized (callbacks) {
       callbacks.clear();
     }
-  }  
-  
+  }
+
   /**
    * Get the current downtrack distance and then call any callbacks that have been triggered
    */

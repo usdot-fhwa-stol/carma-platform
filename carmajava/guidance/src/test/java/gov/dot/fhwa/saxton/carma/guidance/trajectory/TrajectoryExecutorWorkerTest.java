@@ -48,7 +48,7 @@ public class TrajectoryExecutorWorkerTest {
     LoggerManager.setLoggerFactory(mockFact);
     
     MockitoAnnotations.initMocks(this);
-    IPublisher<std_msgs.String> pub = (IPublisher<std_msgs.String>) mock(IPublisher.class);
+    IPublisher<cav_msgs.ActiveManeuvers> pub = (IPublisher<cav_msgs.ActiveManeuvers>) mock(IPublisher.class);
     tew = new TrajectoryExecutorWorker(guidanceCommands, 10.0, pub);
   }
 
