@@ -20,6 +20,7 @@ import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
@@ -46,13 +47,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     protected Tracking tracking_;
     protected boolean bufferedTrajectoryRunning = false;
 
-    protected boolean useSinTrajectory = false;
-    protected long startTime = 0;
-    protected long holdTimeMs = 0;
-    protected double operatingSpeed;
-    protected double amplitude;
-    protected double phase;
-    protected double period;
     protected double maxAccel;
     protected long sleepDurationMillis = 100;
 
@@ -63,7 +57,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         this.tracking_ = tracking;
 
         IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub = pubSubService.getPublisherForTopic("plugins/controlling_plugins", cav_msgs.ActiveManeuvers._TYPE);
-        double maneuverTickFreq = node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0);
+        double maneuverTickFreq = Math.max(node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0), 1.0);
         trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, activeManeuversPub);
         
         jobQueue.add(this::onStartup);
@@ -113,7 +107,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     
     @Override
     public void onEngaged() {
-        startTime = (long) node.getCurrentTime().toSeconds() * 1000;
         if (currentTrajectory != null && !bufferedTrajectoryRunning) {
             log.info("Running buffered trajectory!");
             tracking_.addNewTrajectory(currentTrajectory);
@@ -131,7 +124,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         this.unregisterAllTrajectoryProgressCallback();
         currentTrajectory = null;
         bufferedTrajectoryRunning = false;
-        startTime = 0;
     }
 
     @Override
@@ -227,11 +219,13 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         log.info("TrajectoryExecutor received new trajectory!");
         int idx = 1;
         for (IManeuver m : traj.getManeuvers()) {
-            String maneuverType = "LATERAL";
+            String maneuverType = "UNKNOWN";
             if (m instanceof LongitudinalManeuver) {
                 maneuverType = "LONGITUDINAL";
             } else if (m instanceof IComplexManeuver) {
                 maneuverType = "COMPLEX";
+            } else if (m instanceof LateralManeuver) {
+                maneuverType = "LATERAL";
             }
 
             log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + maneuverType);
