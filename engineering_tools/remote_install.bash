@@ -90,16 +90,17 @@ then
     exit 1
 fi
 
-# Move from engineering_tools to CarmaPlatform
-cd ..
-LOCAL_CARMA_DIR=${PWD}
-
-if [ ! ${LOCAL_CARMA_DIR:(-13)} == "CarmaPlatform" ]; then
+# Ensure we are in engineering tools
+if [ ! ${PWD:(-17)} == "engineering_tools" ]; then
 	echo "ERROR: This script was not run from inside engineering tools"
 	echo "Cannot located needed files from path: ${LOCAL_CARMA_DIR}"
 	echo "Please rerun the script from inside CarmaPlatform/engineering_tools/"
 	exit
 fi
+
+# Move to parent directory
+cd ..
+LOCAL_CARMA_DIR=${PWD}
 
 # Show username and IP address of remote machine
 echo "Installing to ${HOST} as user: ${USERNAME}..."
@@ -121,7 +122,7 @@ APP_DIR="${CARMA_DIR}/app"
 # If copy executables, params, routes, urdf, or launch is set then don't copy everything
 if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ] || \
    [ ${URDF} == true ] || [ ${LAUNCH} == true ] || [ ${MOCK_DATA} == true ] || \
-	 [ ${APP} == true] || [ ${WEB} == true ] || [ ${SCRIPTS} == true ]; then
+	 [ ${APP} == true ] || [ ${WEB} == true ] || [ ${SCRIPTS} == true ]; then
 	EVERYTHING=false
 fi
 
