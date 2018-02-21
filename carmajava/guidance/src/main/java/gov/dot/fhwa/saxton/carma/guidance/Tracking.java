@@ -35,7 +35,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.exception.ParameterClassCastException;
 import org.ros.exception.ParameterNotFoundException;

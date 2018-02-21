@@ -302,13 +302,22 @@ function showModal(showWarning, modalMessage, restart) {
 
     var modal = document.getElementById('modalMessageBox');
     var span_modal = document.getElementsByClassName('close')[0];
-    var btnModal = document.getElementById('btnModal');
+    var btnModalOK = document.getElementById('btnModalOK');
+    var btnModalLogout = document.getElementById('btnModalLogout');
+
+    btnModalOK.onclick = function () {
+        closeModal('RESTART');
+        return;
+    }
+
+    btnModalLogout.onclick = function () {
+        closeModal('LOGOUT');
+        return;
+    }
 
     if (restart == true) {
-        btnModal.onclick = function () {
-            closeModal('RESTART');
-            return;
-        }
+        btnModalOK.style.display = ''; 
+        btnModalLogout.style.display = ''; 
 
         // When the user clicks on <span> (x), close the modal
         span_modal.onclick = function () {
@@ -317,10 +326,8 @@ function showModal(showWarning, modalMessage, restart) {
         }
     }
     else {
-        btnModal.onclick = function () {
-            closeModal('LOGOUT');
-            return;
-        }
+        btnModalOK.style.display = 'none';
+        btnModalLogout.style.display = '';
 
         // When the user clicks on <span> (x), close the modal
         span_modal.onclick = function () {
@@ -459,8 +466,7 @@ function closeModal(action) {
             break;
 
         case 'LOGOUT':
-            sessionStorage.clear();
-            window.location.assign('logout.html');
+            shutdown();
             break;
 
         default:
@@ -471,6 +477,11 @@ function closeModal(action) {
 
 }
 
+function shutdown()
+{
+    sessionStorage.clear();
+    window.location.assign('scripts/killPlatform.php');
+}
 /*** Start: AUDIO ***/
 
 /*
