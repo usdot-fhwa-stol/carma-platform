@@ -47,7 +47,7 @@ public class IntervalTree<T> {
      */
     public boolean insert(Interval<T> value) {
         if (root == null) {
-            root = new IntervalTreeNode<T>(intCalculator, insertStrategy, value.getStart() + (value.getEnd() - value.getStart()) / 2.0);
+            root = new IntervalTreeNode<T>(intCalculator, insertStrategy, (value.getStart() + value.getEnd()) / 2.0);
         }
 
         return root.insert(value);
