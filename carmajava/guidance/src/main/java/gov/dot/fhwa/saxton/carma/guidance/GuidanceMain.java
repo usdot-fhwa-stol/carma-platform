@@ -23,6 +23,7 @@ import cav_srvs.GetSystemVersion;
 import cav_srvs.GetSystemVersionRequest;
 import cav_srvs.GetSystemVersionResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;

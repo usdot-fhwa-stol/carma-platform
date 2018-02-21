@@ -14,9 +14,16 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance;
+package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import cav_msgs.RouteState;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
+import gov.dot.fhwa.saxton.carma.guidance.Tracking;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
