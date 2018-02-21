@@ -1,0 +1,488 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	saxton_cav_src.launch
+
+  A the ros launch file for the STOL CAV Prototype ROS Network.
+  Launches all the needed ros nodes and sets up the parameter server.
+  Also sets up all static transforms used by tf2 within the system.
+
+  Use:
+  First delete the generated build/scripts folder in all java packages.
+  roslaunch carma saxton_cav.launch
+  After using source devel/setup.bash from workspace root.
+
+  If not using simulated drivers they are activated using ros arguments as shown below.
+  roslaunch carma saxton_cav.launch mock_can:=false can_data_file:=/path/to/file.csv
+-->
+<launch>
+  <!-- Constants -->
+  <!-- Directory of Parameter Files -->
+  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
+  <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
+  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
+  <!-- Simulated Driver Arguments -->
+  <!-- Directory of Simulation Files -->
+  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
+  <!-- Directory of Engineering Tools -->
+  <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/../engineering_tools" doc="The directory containing scripts for execution"/>
+  <!-- Simulation Usage -->
+  <arg name="mock_can"            default="true" doc="True if using a simulated can driver"/>
+  <arg name="mock_dsrc"           default="true" doc="True if using a simulated dsrc driver"/>
+  <arg name="mock_srx_controller" default="true" doc="True if using a simulated srx controller driver"/>
+  <arg name="mock_pinpoint"       default="true" doc="True if using a simulated pinpoint driver"/>
+  <arg name="mock_radar"          default="true" doc="True if using a simulated radar driver"/>
+
+  <!-- Data Files -->
+  <arg name="can_data_file"            default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
+  <arg name="dsrc_data_file"           default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
+  <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
+  <arg name="pinpoint_data_file"       default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
+  <arg name="radar_data_file"          default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
+  <arg name="cellular_data_file"       default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
+
+  <!-- Debug -->
+  <!-- JVM Debug arguments -->
+  <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
+  <!-- Set to true to enable debugging on the specified node -->
+  <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
+  <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
+  <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
+  <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
+  <arg name="debug_negotiator"      default="false" doc="Set true to enable debugging on the Negotiator node"/>
+  <arg name="debug_route"           default="false" doc="Set true to enable debugging on the Route node"/>
+  <arg name="debug_mock_pinpoint"   default="false" doc="Set true to enable debugging on the Mock Pinpoint Driver"/>
+  <arg name="debug_mock_srx_controller" default="false" doc="Set true to enable debugging on the Mock SRX Controller Driver"/>
+  <arg name="debug_mock_can"        default="false" doc="Set true to enable debugging on the Mock CAN Driver"/>
+  <arg name="debug_mock_dsrc"      default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
+  <arg name="debug_mock_radar"      default="false" doc="Set true to enable debugging on the Mock Radar Driver"/>
+  <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
+
+  <!-- ROS Namespaces -->
+  <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
+  <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
+  <arg name="NEGTR_NS"  default="negotiator" doc="Namespace of nodes in negotiator package"/>
+  <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
+  <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
+  <arg name="RD_NS"     default="roadway" doc="Namespace of nodes in roadway package"/>
+  <arg name="RT_NS"     default="route" doc="Namespace of nodes in route package"/>
+  <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
+  <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
+  <arg name="UI_NS"     default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+
+  <!-- Launch Nodes -->
+  <group ns="$(arg TOP_NS)">
+
+    <!-- Set package path for use with relative file paths -->
+    <param name="package_path" value="$(arg CARMA_DIR)"/>
+
+    <!-- Generate log name configuration file -->
+    <param name="log_name" type="str" command="$(arg SCRIPTS_DIR)/generate_log_name.sh"/>
+
+    <!-- Load Vehicle Characteristics -->
+    <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
+
+    <!-- TF2 Setup Initial Static Transforms -->
+    <!-- Vehicle Transforms -->
+    <param name="robot_description" textfile="$(arg URDF_FILE)"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+    <!-- Drivers Package -->
+    <group ns="$(arg DRIVER_NS)">
+
+      <remap from="system_alert"
+             to="/$(arg TOP_NS)/system_alert"/>
+
+      <!-- DSRC OBU Driver Node -->
+      <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
+      <!-- Simulated DSRC Driver Node -->
+      <node if="$(arg mock_dsrc)" pkg="carma" type="mock_drivers" name="dsrc"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+
+        <env if="$(arg debug_mock_dsrc)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <param name="simulated_driver" type="string" value="dsrc"/>
+        <param name="data_file_path" type="string" value="$(arg dsrc_data_file)"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/DSRCOBUParams.yaml"/>
+      </node>
+
+      <!-- PinPoint Driver Node -->
+      <node unless="$(arg mock_pinpoint)" pkg="pinpoint" type="pinpoint_node" name="pin_point_application">
+        <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
+      </node>
+      <!-- Simulated PinPoint Driver Node -->
+      <node if="$(arg mock_pinpoint)" pkg="carma" type="mock_drivers" name="pin_point_application"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+
+        <env if="$(arg debug_mock_pinpoint)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <param name="simulated_driver" type="string" value="pinpoint"/>
+        <param name="data_file_path" type="string" value="$(arg pinpoint_data_file)"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
+      </node>
+
+      <!-- SRX CAN Driver Node -->
+      <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
+        <arg name="srx_can_can_device" value="can2" />
+      </include>
+      <!-- Simulated CAN Driver Node -->
+      <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+
+        <env if="$(arg debug_mock_can)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <param name="simulated_driver" type="string" value="can"/>
+        <param name="data_file_path" type="string" value="$(arg can_data_file)"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
+      </node>
+
+      <!--SRX Controller Driver Node-->
+      <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
+        <arg name="srx_controller_can_device" value="can1"/>
+      </include>
+      <!-- Simulated SRX Controller Driver Node -->
+      <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_controller"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+
+        <env if="$(arg debug_mock_srx_controller)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <param name="simulated_driver" type="string" value="srx_controller"/>
+        <param name="data_file_path" type="string" value="$(arg srx_controller_data_file)"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
+      </node>
+
+      <!-- SRX Radar Driver Node -->
+      <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
+        <arg name="srx_objects_can_device" value="can0"/>
+      </include>
+      <!-- Simulated Radar Driver Node -->
+      <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
+            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
+
+        <env if="$(arg debug_mock_radar)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <param name="simulated_driver" type="string" value="radar"/>
+        <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
+      </node>
+
+      <!--Lateral Controller Driver Node-->
+      <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
+        args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
+
+        <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
+
+        <remap from="ui_instructions"
+               to="/$(arg TOP_NS)/ui_instructions"/>
+      </node>
+    </group>
+
+    <!-- Interface Manager Package -->
+    <group ns="$(arg INTR_NS)">
+
+      <!-- Interface Manager Node -->
+      <node pkg="carma" type="interfacemgr" name="interface_mgr"
+            args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr">
+
+        <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
+
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="driver_discovery"
+               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+      </node>
+    </group>
+
+    <!-- Sensor Fusion Package -->
+    <group ns="$(arg SF_NS)">
+
+      <!-- Sensor Fusion Node -->
+      <node pkg="sensor_fusion" type="sensor_fusion_node" name="sensor_fusion">
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/SensorFusion.yaml"/>
+
+        <remap from="~filtered"
+               to="filtered"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="bsm"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+        <remap from="get_drivers_with_capabilities"
+               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+      </node>
+    </group>
+
+    <!-- Roadway Package -->
+    <group ns="$(arg RD_NS)">
+
+      <!-- Roadway Manager Node -->
+      <node pkg="carma" type="roadway" name="roadway_manager"
+            args="gov.dot.fhwa.saxton.carma.roadway.RoadwayManager">
+
+        <env if="$(arg debug_roadway_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/RoadwayManagerParams.yaml"/>
+
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="map"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/map"/>
+        <remap from="heading"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
+        <remap from="nav_sat_fix"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+        <remap from="odometry"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/odometry"/>
+        <remap from="objects"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/tracked_objects"/>
+        <remap from="velocity"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
+        <remap from="get_transform"
+               to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
+        <remap from="route_state"
+              to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="route"
+              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
+      </node>
+
+      <!-- Transform Server Node -->
+      <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+      </node>
+    </group>
+
+    <!-- Route Package -->
+    <group ns="$(arg RT_NS)">
+
+      <!-- Route Manager Node -->
+      <node pkg="carma" type="route" name="route_manager"
+            args="gov.dot.fhwa.saxton.carma.route.RouteManager">
+
+        <env if="$(arg debug_route)" name="ROUTE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
+
+        <remap from="package_path"
+               to="/$(arg TOP_NS)/package_path"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="tim"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/tim"/>
+        <remap from="nav_sat_fix"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+      </node>
+    </group>
+
+    <!-- Message Package -->
+    <group ns="$(arg MSG_NS)">
+
+      <!-- Message Consumer Node -->
+      <node pkg="carma" type="message" name="message_consumer"
+            args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
+
+        <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/MessageParams.yaml"/>
+
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="outgoing_bsm"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
+        <remap from="mobility_ack_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_ack_outbound"/>
+        <remap from="mobility_greeting_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_greeting_outbound"/>
+        <remap from="mobility_intro_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
+        <remap from="mobility_plan_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_plan_outbound"/>
+        <remap from="get_drivers_with_capabilities"
+               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+      </node>
+    </group>
+
+    <!-- Negotiator Package -->
+    <group ns="$(arg NEGTR_NS)">
+
+      <!-- Negotiator Node -->
+      <node pkg="carma" type="negotiator" name="negotiator_mgr"
+            args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr">
+
+        <env if="$(arg debug_negotiator)" name="NEGOTIATOR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/NegotiatorParams.yaml"/>
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="mobility_ack_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_ack"/>
+        <remap from="mobility_greeting_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_greeting"/>
+        <remap from="mobility_intro_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_intro"/>
+        <remap from="mobility_plan_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_plan"/>
+        <remap from="plan_status"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plan_status"/>
+               
+      </node>
+    </group>
+
+    <!-- Guidance Package -->
+    <group ns="$(arg GUIDE_NS)">
+      <!-- Guidance Main Node -->
+      <node pkg="carma" type="guidance" name="guidance_main"
+            args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
+
+        <env if="$(arg debug_guidance)" name="GUIDANCE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/SpeedHarmParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/PlatooningParams.yaml"/>
+
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="new_plan_inbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
+        <remap from="plan_status"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/plan_status"/>
+        <remap from="roadway_environment"
+               to="/$(arg TOP_NS)/$(arg RD_NS)/roadway_environment"/>
+
+        <!-- Arbitrator Thread-->
+        <remap from="route_state"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+        <remap from="robot_enabled"
+               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+        
+        <!-- GuidanceStateHandler Thread-->
+        <remap from="route_event"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
+        
+        <!-- Tracking Thread-->
+        <remap from="vehicle_length"
+               to="/$(arg TOP_NS)/vehicle_length"/>
+        <remap from="vehicle_width"
+               to="/$(arg TOP_NS)/vehicle_width"/>
+        <remap from="vehicle_id"
+               to="/$(arg TOP_NS)/vehicle_id"/>
+        <remap from="heading"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
+        <remap from="nav_sat_fix"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+        <remap from="velocity"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
+        <remap from="get_transform"
+               to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
+        <remap from="acceleration"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/acceleration"/>
+
+        <!-- Trajectory Thread-->
+        <remap from="get_drivers_with_capabilities"
+               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+
+        <!-- Trajectory and Arbitrator -->
+        <remap from="route_state" to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+
+        <!-- Maneuvers Thread-->
+        <remap from="roadway_environment"
+               to="/$(arg TOP_NS)/$(arg RD_NS)/roadway_environment"/>
+        <remap from="route"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
+
+        <!-- Negotiation Receiver Plugin -->
+        <remap from="new_plan"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
+               
+        <!-- Lane Change Plugin -->
+        <remap from="mobility_intro_outbound"
+               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
+        <remap from="mobility_ack_inbound"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+               
+      </node>
+    </group>
+
+    <!-- ROS Bridge for UI -->
+    <group ns="$(arg UI_NS)">
+
+      <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
+
+      <remap from="system_alert"
+             to="/$(arg TOP_NS)/system_alert"/>
+      <remap from="get_system_version"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
+      <remap from="nav_sat_fix"
+             to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+      <remap from="get_available_routes"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
+      <remap from="set_active_route"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/set_active_route"/>
+      <remap from="start_active_route"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/start_active_route"/>
+      <remap from="route_state"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+      <remap from="route_event"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
+      <remap from="route"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
+      <remap from="bsm"
+             to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+      <remap from="ui_instructions"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
+      <remap from="state"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/state"/>               
+      <remap from="ui_platoon_vehicle_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_platoon_vehicle_info"/>
+      <remap from="plugins/available_plugins"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/available_plugins"/>
+      <remap from="plugins/get_registered_plugins"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
+      <remap from="plugins/activate_plugin"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
+      <remap from="set_guidance_active"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
+      <remap from="cmd_speed"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
+      <remap from="robot_status"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+      <remap from="acc_engaged"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/acc_engaged"/>
+      <remap from="engine_speed"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/engine_speed"/>
+      <remap from="speed"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/speed"/>
+      <remap from="driver_discovery"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+      <remap from="cmd_lateral"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
+      <remap from="ui_instructions"
+             to="/$(arg TOP_NS)/ui_instructions"/>
+      <remap from="plugins/controlling_plugin"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
+             
+      <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+        <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
+      </include>
+    </group>
+  </group>
+</launch>
