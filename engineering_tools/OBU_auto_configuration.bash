@@ -10,7 +10,7 @@ USERNAME=rsu
 OBU=192.168.88.40
 
 # Set IPv6 address of host vehicle PC (no colons)
-HOST=FE800000000000009AB08974D16F34D8
+HOST=FE800000000000000260E0FFFE561C17
 
 # Set effective date and expiration date (YYYYMMDDHHMM in hex)
 # For example: 2017 10 01 00 00
@@ -33,17 +33,17 @@ sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES 
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.4.2 x 1516
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.8.2 x ${STARTDATE}
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.9.2 x ${ENDDATE}
-sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.2.3 x BFEE
+sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.2.3 x 0000
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.3.3 x ${HOST}
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.4.3 x 1516
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.8.3 x ${STARTDATE}
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.9.3 x ${ENDDATE}
-sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.2.4 x BFEE
+sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.2.4 x 0000
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.3.4 x ${HOST}
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.4.4 x 1516
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.8.4 x ${STARTDATE}
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.9.4 x ${ENDDATE}
-sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.2.5 x BFEE
+sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.2.5 x 0000
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.3.5 x ${HOST}
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.4.5 x 1516
 sudo snmpset -v 3 -l authPriv -u password -A password -X password -a SHA -x AES ${OBU} 1.0.15628.4.1.7.1.8.5 x ${STARTDATE}
