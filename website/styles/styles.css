@@ -372,7 +372,7 @@ div.message_box {
 }
 
 /* Modal Button */
-#btnModal{
+.btnModal{
     height: 50px;
     width: 110px;
     background-color:#336699;

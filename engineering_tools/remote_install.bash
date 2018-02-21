@@ -241,9 +241,10 @@ if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SCRIPTS_DIR}" ${USERNAME}@${HOST}:"${APP_DIR}"
 fi
 
-echo "Setting permissions"
-SCRIPT="chgrp -R carma ${CARMA_DIR}/app/*; chmod -R ug+rwx ${CARMA_DIR}/app/*;"
+echo "Setting permissions and sourcing"
+SCRIPT="chgrp -R carma ${CARMA_DIR}/app/*; chmod -R ug+rwx ${CARMA_DIR}/app/*; chmod -R o+rx ${CARMA_DIR}/app/*; source ${CARMA_DIR}/app/bin/setup.bash;"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
+
 
 echo "DONE!"
 exit
