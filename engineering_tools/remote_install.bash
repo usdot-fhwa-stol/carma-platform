@@ -243,7 +243,7 @@ if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
 fi
 
 echo "Setting permissions and sourcing"
-SCRIPT="chgrp -R carma ${CARMA_DIR}/app/*; chmod -R ug+rwx ${CARMA_DIR}/app/*; chmod -R o+rx ${CARMA_DIR}/app/*; source ${CARMA_DIR}/app/bin/setup.bash;"
+SCRIPT="chgrp -R carma ${CARMA_DIR}/*; chmod -R ug+rwx ${CARMA_DIR}/*; chmod -R o+rx ${CARMA_DIR}/*; source ${CARMA_DIR}/app/bin/setup.bash;"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 
 
