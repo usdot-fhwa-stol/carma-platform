@@ -191,25 +191,18 @@ TrackedObject toTrackedObject(const cav_msgs::ExternalObject& obj)
 }
 
 int SensorFusionApplication::run() {
-    ROS_INFO_STREAM("Sensor Fusion Running");
     nh_.reset(new ros::NodeHandle());
-    ROS_INFO_STREAM("SF1");
     pnh_.reset(new ros::NodeHandle("~"));
-        ROS_INFO_STREAM("SF2");
     ros::NodeHandle pnh("filtered");
-        ROS_INFO_STREAM("SF3");
     tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-        ROS_INFO_STREAM("SF4");
 
     pnh_->param<std::string>("inertial_frame_name",inertial_frame_name_,"odom");
     pnh_->param<std::string>("body_frame_name",body_frame_name_,"base_link");
     pnh_->param<std::string>("ned_frame_name",ned_frame_name_,"ned");
     pnh_->param<bool>("use_interface_mgr",use_interface_mgr_,false);
-        ROS_INFO_STREAM("SF5");
 
     bool use_sim_time;
     nh_->param<bool>("/use_sim_time", use_sim_time, false);
-        ROS_INFO_STREAM("SF6");
 
 		//This use sim time fix was added to support rosbag playback. The issue is that the tracker is time based
 		//and if a measurement comes in with an earlier time we assume it is old. So to support looping play back 
@@ -217,7 +210,6 @@ int SensorFusionApplication::run() {
 		//the default timer.
     if(use_sim_time)
     {
-            ROS_INFO_STREAM("SF7");
         ROS_INFO_STREAM("Using Sim Time");
         tracker_.reset(new torc::ObjectTracker(std::make_shared<torc::SimTimer>()));
         sub_map_["/clock"] = nh_->subscribe<rosgraph_msgs::Clock>("/clock", 10, [this](const rosgraph_msgs::ClockConstPtr& msg)
@@ -233,22 +225,19 @@ int SensorFusionApplication::run() {
         });
     }else
     {
-            ROS_INFO_STREAM("SF8");
         tracker_.reset(new torc::ObjectTracker());
     }
 
-    ROS_INFO_STREAM("SF9");
+
     //setup dyn_recfg_server
     {
         dynamic_reconfigure::Server<sensor_fusion::SensorFusionConfig>::CallbackType f;
         f = std::bind(&SensorFusionApplication::dyn_recfg_cb,this,std::placeholders::_1,std::placeholders::_2);
         dyn_cfg_server_->setCallback(f);
     }
-        ROS_INFO_STREAM("SF10");
 
     ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSM>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
 
-    ROS_INFO_STREAM("SF11");
     if(use_interface_mgr_)
     {
         ROS_INFO_STREAM("Waiting for Interface Manager");
@@ -323,19 +312,16 @@ int SensorFusionApplication::run() {
         }
     }
 
-    ROS_INFO_STREAM("SF12");
     odom_pub_       = pnh.advertise<nav_msgs::Odometry>("odometry",100);
     navsatfix_pub_  = pnh.advertise<sensor_msgs::NavSatFix>("nav_sat_fix",100);
     velocity_pub_   = pnh.advertise<geometry_msgs::TwistStamped>("velocity",100);
     heading_pub_    = pnh.advertise<cav_msgs::HeadingStamped>("heading",100);
     objects_pub_    = pnh.advertise<cav_msgs::ExternalObjectList>("tracked_objects",100);
     vehicles_pub_   = pnh.advertise<cav_msgs::ConnectedVehicleList>("tracked_vehicles",100);
-        ROS_INFO_STREAM("SF13");
 
     ros::Rate r(20);
     while(ros::ok())
     {
-     //       ROS_INFO_STREAM("Running ");
         ros::spinOnce();
 
         while(!objects_cb_q_.empty())
@@ -343,7 +329,6 @@ int SensorFusionApplication::run() {
             objects_cb(objects_cb_q_.front().second,objects_cb_q_.front().first);
             objects_cb_q_.pop_front();
         }
-    //        ROS_INFO_STREAM("SF14");
 
         publish_updates();
         r.sleep();
