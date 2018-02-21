@@ -333,7 +333,7 @@ public class Trajectory {
   }
 
   /**
-   * Get the next maneuver of the specified type which will be active after loc, null if one cannot be found
+   * Get the next maneuver of the specified type which will be wholly after loc, null if one cannot be found
    */
   public IManeuver getNextManeuverAfter(double loc, ManeuverType type) {
     if (type == ManeuverType.LONGITUDINAL) {
