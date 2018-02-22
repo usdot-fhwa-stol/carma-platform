@@ -1,6 +1,6 @@
 # Double: Maximum acceleration for platooning plugin
 # Units: m/s^2
-platooning_max_accel: 2.5;
+platooning_max_accel: 2.5
 
 # Double: The minimum length of platooning complex maneuver length
 # Units: m
@@ -18,7 +18,7 @@ platooning_status_timeout_factor: 1.5
 # Units: s
 platooning_desired_time_headway: 1.8
 
-# Double: The minimum space between two consecutive vehicles from front bumper to front bumper
+# Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
 # Units: m
 platooning_min_gap: 7.0
 
