@@ -193,7 +193,7 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INSTALL_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/bin/"
 	
 	# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT}; chgrp -R ${GROUP} ${APP_DIR}; chmod -R ${UG_PERMISSIONS} ${APP_DIR}; chmod -R ${O_PERMISSIONS} ${APP_DIR};"
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/bin/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/bin/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/bin/*;"
 fi
 
 # If we want to copy params
@@ -202,7 +202,7 @@ if [ ${EVERYTHING} == true ] || [ ${PARAMS} == true ]; then
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${PARAMS_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 	# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT}; chgrp -R ${GROUP} ${PARAMS_DIR}; chmod -R ${UG_PERMISSIONS} ${PARAMS_DIR}; chmod -R ${O_PERMISSIONS} ${PARAMS_DIR};"
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/params/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/params/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/params/*;"
 fi
 
 # If we want to copy routes
@@ -211,7 +211,7 @@ if [ ${EVERYTHING} == true ] || [ ${ROUTES} == true ]; then
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${ROUTES_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 		# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT}; chgrp -R ${GROUP} ${ROUTES_DIR}; chmod -R ${UG_PERMISSIONS} ${ROUTES_DIR}; chmod -R ${O_PERMISSIONS} ${ROUTES_DIR};"
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/routes/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/routes/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/routes/*;"
 fi
 
 # If we want to copy urdf
@@ -220,7 +220,7 @@ if [ ${EVERYTHING} == true ] || [ ${URDF} == true ]; then
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${URDF_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 		# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT}; chgrp -R ${GROUP} ${URDF_DIR}; chmod -R ${UG_PERMISSIONS} ${URDF_DIR}; chmod -R ${O_PERMISSIONS} ${URDF_DIR};"
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/urdf/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/urdf/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/urdf/*;"
 fi
 
 # If we want to copy launch file
@@ -235,7 +235,7 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then
 	SCRIPT_2="rm ${SYMLINK_LOCATION}/saxton_cav_src.launch; ln -s  ${APP_DIR}/launch/saxton_cav_src.launch ${SYMLINK_LOCATION};"
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2}"
 		# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT}; chgrp -R ${GROUP} ${APP_DIR}/launch; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/launch; chmod -R ${O_PERMISSIONS} ${APP_DIR}/launch;"
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/launch/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/launch/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/launch/*;"
 fi
 
 # If we want to copy mock data files
@@ -244,7 +244,7 @@ if [ ${EVERYTHING} == true ] || [ ${MOCK_DATA} == true ]; then
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${MOCK_DATA_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/mock_data/"
 	# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT}; chgrp -R ${GROUP} ${MOCK_DATA_DIR}; chmod -R ${UG_PERMISSIONS} ${MOCK_DATA_DIR}; chmod -R ${O_PERMISSIONS} ${MOCK_DATA_DIR};"
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/mock_data/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/mock_data/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/mock_data/*;"
 fi
 
 # If we want to copy website  files
@@ -253,7 +253,7 @@ if [ ${EVERYTHING} == true ] || [ ${WEB} == true ]; then
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${WEBSITE_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/html/"
 	# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT}; chgrp -R ${GROUP} ${WEBSITE_DIR}; chmod -R ${UG_PERMISSIONS} ${WEBSITE_DIR}; chmod -R ${O_PERMISSIONS} ${WEBSITE_DIR};"
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/html/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/html/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/html/*;"
 fi
 
 # If we want to copy mock data files
@@ -262,7 +262,7 @@ if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SCRIPTS_DIR}" ${USERNAME}@${HOST}:"${APP_DIR}"
 	# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT}; chgrp -R ${GROUP} ${SCRIPTS_DIR}; chmod -R ${UG_PERMISSIONS} ${SCRIPTS_DIR}; chmod -R ${O_PERMISSIONS} ${SCRIPTS_DIR};"
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/engineering_tools/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/engineering_tools/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/engineering_tools/*;"
 fi
 
 echo "Setting permissions and sourcing"
