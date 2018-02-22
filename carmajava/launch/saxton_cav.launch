@@ -23,6 +23,9 @@
 
   File is meant to be run on a configured vehicle pc.
   Applies the appropriate arguments to the saxton_cav_src.launch file to launch on a vehicle
+  
+  Note: To ensure all ros processes are killed before launch use
+  pkill -f ros
 -->
 <launch>
   <!-- Set Environment Variables -->
