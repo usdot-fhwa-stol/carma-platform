@@ -42,6 +42,7 @@ public class FollowerState implements IPlatooningState {
     protected PlatooningPlugin plugin_;
     protected ILogger log_;
     protected PluginServiceLocator pluginServiceLocator_;
+    protected long transitionToStnadbyTime = Long.MAX_VALUE;
     
     public FollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         plugin_ = plugin;
@@ -65,6 +66,7 @@ public class FollowerState implements IPlatooningState {
                 plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
                 return response;
             } else {
+                System.out.println(plugin_.minimumManeuverLength);
                 log_.info("Found enough platoon window: [" + platooningWindow[0] + ", " + platooningWindow[1] + "]");
                 if(traj.getEndLocation() < platooningWindow[1]) {
                     response.requestLongerTrajectory(platooningWindow[1]);
@@ -90,13 +92,19 @@ public class FollowerState implements IPlatooningState {
             boolean accepted = traj.setComplexManeuver(maneuver);
             log_.info("Planned complex maneuver: " + maneuver.toString());
             log_.info("Trajectory response to complex maneuver = " + accepted);
-            return new TrajectoryPlanningResponse();
         } else {
             // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
-            // TODO it may need to send out some mobility messages when the transition happened
-            plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
-            return new TrajectoryPlanningResponse();
+            // Need some time delay to let other vehicles finish current complex maneuver before we
+            // stop sending mobility messages and transit to the new state
+            // We assume the subjust vehicle will be at speed limit at the start for the next trajectory
+            double currentDistance = pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance();
+            double currentSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
+            double speedAtTrajectoryStart = pluginServiceLocator_.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit();
+            double speedAvg = (currentSpeed + speedAtTrajectoryStart) / 2;
+            int timeDelay = (int) ((traj.getStartLocation() - currentDistance) / speedAvg);
+            transitionToStnadbyTime = System.currentTimeMillis() + timeDelay * 1000;
         }
+        return new TrajectoryPlanningResponse();
     }
 
     @Override
@@ -139,6 +147,11 @@ public class FollowerState implements IPlatooningState {
         if(plugin_.platoonManager.platoon.size() == 0) {
             plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
             pluginServiceLocator_.getArbitratorService().notifyTrajectoryFailure();
+        }
+        // Transit to standby state when the current trajectory is finished
+        if(System.currentTimeMillis() > transitionToStnadbyTime) {
+            plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
+            transitionToStnadbyTime = Long.MAX_VALUE;
         }
     }
 }

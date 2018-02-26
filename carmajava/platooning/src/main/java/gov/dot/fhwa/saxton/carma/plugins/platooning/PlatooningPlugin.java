@@ -94,8 +94,6 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         cmdSpeedSub = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
         maneuverInputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
         // the plugin will start with standby state
-        this.state = new StandbyState(this, log, pluginServiceLocator);
-        log.info("The current CACC plugin state is " + this.state.toString());
         log.info("CACC platooning pulgin is initialized");
     }
 
@@ -139,6 +137,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
                 log.debug("V2V", "    Forward speed = " + mobilityIntro.getForwardSpeed());
                 log.debug("V2V", "    Capabilities = " + mobilityIntro.getCapabilities()); 
             }
+            state.checkCurrentState();
             long loopStop = System.currentTimeMillis();
             long sleepTime = Math.max(0, messageIntervalLength - (loopStop - loopStart));
             Thread.sleep(sleepTime);

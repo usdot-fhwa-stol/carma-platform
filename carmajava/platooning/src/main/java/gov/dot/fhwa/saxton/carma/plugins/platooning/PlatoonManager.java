@@ -122,6 +122,6 @@ public class PlatoonManager implements Runnable {
      * TODO Integrate the leader selection algorithm later, now it will only return the first member as leader
      */
     protected synchronized PlatoonMember getLeader() {
-        return platoon.first();
+        return platoon.size() == 0 ? null : platoon.first();
     }
 }
