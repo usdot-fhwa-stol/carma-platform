@@ -176,17 +176,45 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 	cd "${LOCAL_CARMA_DIR}" # Return to carma directory
 	# Extract version number file
 	jar xf ${GUIDANCE_JAR} version
-	FULL_VERSION_ID="${VERSION}-$(sed -n 1p version)-$(sed -n 2p version)"
-	FULL_VERSION_ID="$(echo "${FULL_VERSION_ID}" | tr \( \- | tr -d \) )" # Replace bbad ()
+	FULL_VERSION_ID="${VERSION}.$(sed -n 1p version)-$(sed -n 2p version)"
+	FULL_VERSION_ID="$(echo "${FULL_VERSION_ID}" | tr \( \- | tr -d \) )" # Replace bad characters ( and )
 	echo "Version appears to be: ${FULL_VERSION_ID}"
+
+	# Helper function for determining the index of a substring in a string
+	substring_index () {
+		local string=$1
+		local substring=$2
+
+		local rest=${string#*$substring}
+		echo $(( ${#string} - ${#rest} - ${#substring} ))
+	}
+	
+	# Try to extract version infromation to check version id validity
+	FIRST_DOT_IDX="$( substring_index ${FULL_VERSION_ID} .)"
+	MAJOR_VERSION="${FULL_VERSION_ID:0:${FIRST_DOT_IDX}}"
+	SECOND_DOT_IDX="$[${FIRST_DOT_IDX} + 1 + $( substring_index ${FULL_VERSION_ID:$[${FIRST_DOT_IDX} + 1]} .)]"
+	INTERMEDIATE_VERSION="${FULL_VERSION_ID:(${FIRST_DOT_IDX} + 1):(${SECOND_DOT_IDX} - ${FIRST_DOT_IDX} - 1)}"
+	THIRD_DOT_IDX="$[${SECOND_DOT_IDX} + 1 + $( substring_index ${FULL_VERSION_ID:(${FIRST_DOT_IDX} + 1)} .)]"
+	MINOR_VERSION="${FULL_VERSION_ID:(${SECOND_DOT_IDX} + 1):(${THIRD_DOT_IDX} - ${SECOND_DOT_IDX} - 1)}"
+
+	echo "Major: ${MAJOR_VERSION}"
+	echo "Intermediate: ${INTERMEDIATE_VERSION}"
+	echo "Minor: ${MINOR_VERSION}"
+
+	# Check if the version numbers are valid
+	if ! [[ ${MAJOR_VERSION} =~ ^-?[0-9]+$ &&  ${INTERMEDIATE_VERSION} =~ ^-?[0-9]+$ && ${MINOR_VERSION} =~ ^-?[0-9]+$ ]]; then
+		echo "Valid version could not be determined aborting copy of files"
+		exit
+	fi
 
 	# Determine target folder
 	TARGET="${APP_DIR}_${FULL_VERSION_ID}"
 	EXAMPLE_FOLDER="${APP_DIR}_v0"
 
-	# SSH into the remote mechine and create a copy of the app_v0 directory to preserve permissions
+	# SSH into the remote mechine and create a copy of the directory pointed to by the app symlink
 	# Then create symlink from app -> app_version
-	SCRIPT="rm -r ${TARGET}; cp -r ${EXAMPLE_FOLDER} ${TARGET}; rm -r ${APP_DIR}; ln -s ${TARGET} ${APP_DIR}"
+	# Then delete the contents of the app/bin directory to ensure clean copy
+	SCRIPT="cp -r \$(readlink -f ${APP_DIR}) ${TARGET}; rm -r ${APP_DIR}; ln -s ${TARGET} ${APP_DIR}; rm -r ${APP_DIR}/bin/*;"
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 
 	# Copy the entire contents of install to the remote machine using current symlink
@@ -265,7 +293,7 @@ if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/engineering_tools/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/engineering_tools/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/engineering_tools/*;"
 fi
 
-echo "Setting permissions and sourcing"
+echo "Setting permissions"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${PERMISSIONS_SCRIPT}"
 
 
