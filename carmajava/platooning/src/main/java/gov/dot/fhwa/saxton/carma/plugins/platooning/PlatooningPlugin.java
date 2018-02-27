@@ -103,14 +103,14 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         this.state = new StandbyState(this, log, pluginServiceLocator);
         log.info("The current CACC plugin state is " + this.state.toString());
         // Start all sub-threads
-        if(platoonManager == null && platoonManagerThread == null) {
+        if(platoonManagerThread == null) {
             platoonManager = new PlatoonManager(this, log);
             platoonManagerThread = new Thread(platoonManager);
             platoonManagerThread.setName("Platooning List Manager");
             platoonManagerThread.start();
             log.debug("Started platoonManagerThread.");
         }
-        if(commandGenerator == null && commandGeneratorThread == null) {
+        if(commandGeneratorThread == null) {
             commandGenerator = new CommandGenerator(this, log, pluginServiceLocator);
             commandGeneratorThread = new Thread(commandGenerator);
             commandGeneratorThread.setName("Platooning Command Generator");
@@ -151,19 +151,10 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         this.setAvailability(false);
         if(commandGeneratorThread != null) {
             commandGeneratorThread.interrupt();
-            commandGenerator = null;
             commandGeneratorThread = null;
-        }
-        // Wait current commandGeneratorThread loop to finish to avoid NPE
-        // because commandGenerator is depend on platoonManager
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            // No-Op
         }
         if(platoonManagerThread != null) {
             platoonManagerThread.interrupt();
-            platoonManager = null;
             platoonManagerThread = null;
         }
         // Reset to standby state as its default state
