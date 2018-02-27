@@ -258,11 +258,13 @@ if [ ${EVERYTHING} == true ] || [ ${URDF} == true ]; then
 fi
 
 # If we want to copy launch file
-if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then
-	echo "Trying to copy launch ..."
-	# Copy the launch file to the remote machine using current symlink
-	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
-	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == true ]; then
+	if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then 
+		echo "Trying to copy launch ..."
+		# Copy the launch file to the remote machine using current symlink
+		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	fi
 	# Create symlink to launch file so that roslaunch will work when package is sourced
 	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
 	SCRIPT_1="rm ${SYMLINK_LOCATION}/saxton_cav.launch; ln -s  ${APP_DIR}/launch/saxton_cav.launch ${SYMLINK_LOCATION};"
