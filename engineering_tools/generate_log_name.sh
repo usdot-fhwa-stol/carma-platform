@@ -1,8 +1,5 @@
 #!/bin/bash
 cd /opt/carma
-rm -rf configuration/
-mkdir configuration
-chmod 777 configuration
-cd configuration
+rm -f logname.txt
 date +%Y%m%d-%H%M%S > logname.txt
-chmod 777 logname.txt
+chmod -R 666 logname.txt
