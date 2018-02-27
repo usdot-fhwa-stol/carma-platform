@@ -111,6 +111,10 @@ public class EnvironmentWorker {
    */
   public void handleRouteMsg(cav_msgs.Route route) {
     activeRoute = Route.fromMessage(route);
+    for (RouteSegment seg : activeRoute.getSegments()) {
+      seg.getDowntrackWaypoint().getLocation().setAltitude(170);
+      seg.getUptrackWaypoint().getLocation().setAltitude(170);
+    }
   }
 
   /**

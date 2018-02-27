@@ -233,6 +233,9 @@ fi
 # If we want to copy params
 if [ ${EVERYTHING} == true ] || [ ${PARAMS} == true ]; then
 	echo "Trying to copy params"
+	# Delete old files
+	SCRIPT="rm -r ${CARMA_DIR}/params/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${PARAMS_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 	# Update permissions script
@@ -242,6 +245,9 @@ fi
 # If we want to copy routes
 if [ ${EVERYTHING} == true ] || [ ${ROUTES} == true ]; then
 	echo "Trying to copy routes..."
+	# Delete old files
+	SCRIPT="rm -r ${CARMA_DIR}/routes/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${ROUTES_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 		# Update permissions script
@@ -251,6 +257,9 @@ fi
 # If we want to copy urdf
 if [ ${EVERYTHING} == true ] || [ ${URDF} == true ]; then
 	echo "Trying to copy urdf..."
+	# Delete old files
+	SCRIPT="rm -r ${CARMA_DIR}/urdf/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${URDF_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 		# Update permissions script
@@ -261,6 +270,9 @@ fi
 if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == true ]; then
 	if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then 
 		echo "Trying to copy launch ..."
+		# Delete old files
+		SCRIPT="rm -r ${APP_DIR}/launch/*;"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 		# Copy the launch file to the remote machine using current symlink
 		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
 		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
@@ -277,6 +289,9 @@ fi
 # If we want to copy mock data files
 if [ ${EVERYTHING} == true ] || [ ${MOCK_DATA} == true ]; then
 	echo "Trying to copy mock_data ..."
+	# Delete old files
+	SCRIPT="rm -r ${APP_DIR}/mock_data/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${MOCK_DATA_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/mock_data/"
 	# Update permissions script
@@ -286,15 +301,21 @@ fi
 # If we want to copy website  files
 if [ ${EVERYTHING} == true ] || [ ${WEB} == true ]; then
 	echo "Trying to copy website ..."
+	# Delete old files
+	SCRIPT="rm -r ${APP_DIR}/html/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${WEBSITE_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/html/"
 	# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/html/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/html/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/html/*;"
 fi
 
-# If we want to copy mock data files
+# If we want to copy script files
 if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
 	echo "Trying to copy scripts from engineering tools ..."
+	# Delete old files
+	SCRIPT="rm -r ${APP_DIR}/engineering_tools/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SCRIPTS_DIR}" ${USERNAME}@${HOST}:"${APP_DIR}"
 	# Update permissions script
