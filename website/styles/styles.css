@@ -226,16 +226,7 @@ input:disabled + label { /* Disabled format */
     left: 0px;
 }
 
-#btnWidget
-{
-    height: 80px;
-    width: 220px;
-    background-color:#336699;
-    color: white;
-    font-size: 25px;
-    position: relative;
-    left: 0px;
-}
+
 /*** Message Box ***/
 div.message_box {
     display: block;
@@ -385,7 +376,9 @@ div.message_box {
 /* Modal Button */
 .btnModal{
     height: 50px;
-    width: 110px;
+    width: auto;
+    padding-left: 10px;
+    padding-right: 10px;
     background-color:#336699;
     color: white;
     border-radius: 15px;

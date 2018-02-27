@@ -29,7 +29,6 @@ CarmaJS.WidgetFramework = (function () {
                 s.setAttribute('src', url);
                 s.onload = urlCallback(url);
                 document.head.appendChild(s);
-
             }
 
             for (var script of scripts) {
@@ -38,6 +37,61 @@ CarmaJS.WidgetFramework = (function () {
         };
 
 
+        /*
+           Removes the first matched array by key and value pair.
+           Example Usage:
+           var removed = removeByArrayKey(items, {
+             key: 'id',
+             value: 43
+           });
+        */
+        var removeArrayByKey = function (array, params){
+          array.some(function(item, index) {
+            return (array[index][params.key] === params.value) ? !!(array.splice(index, 1)) : false;
+          });
+
+          return array;
+        };
+
+        //Get Plugin list
+        var getPluginsActivated = function(){
+
+               var pluginsActivated = sessionStorage.getItem('pluginsActivated');
+               //alert('getPluginsActivated: pluginsActivated: ' + pluginsActivated); //Show all widgets in the array.
+
+               if (pluginsActivated != 'undefined' && pluginsActivated != null && pluginsActivated != '') {
+                     pluginsActivated = JSON.parse(pluginsActivated);
+               }
+               else{
+                   pluginsActivated = [];
+                   console.log ('getPluginsActivated: No plugins activated.');
+               }
+
+               return pluginsActivated;
+        };
+
+        var updateIsWidgetShownValue = function(id, newValue ){
+
+              var pluginsActivated = getPluginsActivated();
+
+              for (var i in pluginsActivated) {
+
+                //alert('pluginsActivated[i].id: ' + pluginsActivated[i].id + '; widget.id: ' + widget.id);
+                //if (pluginsActivated[i].id == widget.id.substring(2, widget.id.length)) {
+                if (pluginsActivated[i].id == id.substring(2, id.length)) {
+                   pluginsActivated[i].isWidgetShown = newValue;
+                   //alert ('found!');
+                   break; //Stop this loop, we found it!
+                }
+              }
+
+               //Save changes back to session.
+               sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
+        };
+
+        /*
+            Saves selection and calls loadWidgets()
+        */
         var showSelectedWidgets = function () {
             //Get selected widgets from divWidgetOptionsList
             var divWidgetOptionsList = document.getElementById('divWidgetOptionsList');
@@ -46,31 +100,8 @@ CarmaJS.WidgetFramework = (function () {
             //Update the parameter to note selected widget
             selectedWidgets.forEach(function (widget) {
 
-               //Update plugin list
-                var pluginsActivated = sessionStorage.getItem('pluginsActivated');
+                updateIsWidgetShownValue(widget.id, true);
 
-               //alert('selectedWidgets: pluginsActivated: ' + pluginsActivated); //Show all widgets in the array.
-
-                if (pluginsActivated == null || pluginsActivated == 'undefined')
-                {
-                    console.log ('showSelectedWidgets: No plugins activated.');
-                    return;
-                }
-
-               pluginsActivated = JSON.parse(pluginsActivated);
-
-              for (var i in pluginsActivated) {
-
-                //alert('pluginsActivated[i].id: ' + pluginsActivated[i].id + '; widget.id: ' + widget.id);
-
-                if (pluginsActivated[i].id == widget.id.substring(2, widget.id.length)) {
-                   pluginsActivated[i].isWidgetShown = true;
-                   //alert ('found!');
-                   break; //Stop this loop, we found it!
-                }
-              }
-
-               sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
             });//ForEach
 
            //Load widgets
@@ -78,30 +109,21 @@ CarmaJS.WidgetFramework = (function () {
 
         };
 
-        //Show user selection of widgets based on Plugins that have been activated.
-        //pluginId is currently is the PluginName concatenated with _ and removing "Plugin" at the end.
+        /*
+            Show list of widgets based on Plugins that have been activated.
+        */
         var showWidgetOptions = function() {
 
             //Display the list of widgets
             var divWidgetOptions = document.getElementById('divWidgetOptions');
             divWidgetOptions.style.display = 'block';
 
-            var pluginsActivated = sessionStorage.getItem('pluginsActivated');
-
-            if (pluginsActivated == null || pluginsActivated == 'undefined')
-            {
-                console.log ('No widgets activated.');
-                return;
-            }
-
-            //alert(pluginsActivated); //Show all widgets in the array.
-
-            pluginsActivated = JSON.parse(pluginsActivated);
-
             var divWidgetOptionsList = document.getElementById('divWidgetOptionsList');
             divWidgetOptionsList.innerHTML = '';
 
             //Loop thru and create checkboxes
+            var pluginsActivated = getPluginsActivated();
+
             pluginsActivated.forEach(function (plugin) {
 
                 //Create the checkbox based on the plugin properties.
@@ -109,16 +131,35 @@ CarmaJS.WidgetFramework = (function () {
             });
         };
 
-        var activatePlugin = function(id, title) {
+        /*
+            Capturing the activated plugins in a list for Widget options.
+            pluginId is currently is the PluginName concatenated with _ and removing "Plugin" at the end.
+        */
+        var activatePlugin = function(id, title, value) {
 
-                //alert('WidgetFramework.activateWidget - Plugin activated:' + id)
+                //alert('WidgetFramework.activateWidget - Plugin activated:' + id + '; value=' + value );
                 //e.g. WidgetFramework.activateWidget - Plugin activated: cbNegotiation_Receiver_Plugin&1_0_0
+                var pluginsActivated = getPluginsActivated();
 
                 //Save the id and title for creating checkboxes.
                 var cbId = id.replace('Plugin', 'Widget').substring(0,id.replace('Plugin', 'Widget').length);
-                var cbTitle = title.replace('Plugin', 'Widget');
+                var cbTitle = title.substring(0, title.indexOf('Plugin') + 6).replace('Plugin', 'Widget');
 
-                //Add the plugin namespace and folder path into the array for loading.
+                //Remove the plugin if de-selected.
+                if (value == false)
+                {
+                     //Remove first if exists
+                     var pluginsActivated = removeArrayByKey(pluginsActivated, {
+                                              key: 'id',
+                                              value: cbId
+                                 });
+
+                     //Save changes back to session.
+                     sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
+                     return;
+                }
+
+                //Add the plugin when selected with namespace and folder path into the array for loading.
                 //Widget Namespace should come from the Plugin.name without "Plugin" at the end, and without spaces.
                 //e.g. "Speed Harmonization Plugin" widget namespace should be CarmaJS.WidgetFramework.SpeedHarmonization
                 //e.g. CarmaJS.WidgetFramework.RouteFollowing & CarmaJS.WidgetFramework.Cruising
@@ -130,37 +171,45 @@ CarmaJS.WidgetFramework = (function () {
                 var widgetInstallPath = 'widgets/' + id.substring(0, id.indexOf('_Plugin')).replace('cb','').toLowerCase(); //negotiation_receiver
 
                 var pluginItem = {id: cbId, title: cbTitle,  namespace: widgetNamespace, folderpath: widgetInstallPath, isWidgetShown: false};
-                var pluginsActivated = sessionStorage.getItem('pluginsActivated');
 
-                if (pluginsActivated != 'undefined' && pluginsActivated != null && pluginsActivated != '') {
-                     pluginsActivated = JSON.parse(pluginsActivated);
-                     pluginsActivated.push(pluginItem);
-                     sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
-                }
-                else{
-                    pluginsActivated = [];
+                //Check if results.
+                var result = $.grep(pluginsActivated, function(e){ return e.id == cbId; });
+
+                if (result.length == 0)
+                {
+                    //Then add new one everytime Plugin is selected, since add or remove to another list for Widget selection.
                     pluginsActivated.push(pluginItem);
+                    //Save and show
                     sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
+                    showWidgetOptions();
                 }
-
-                //alert(pluginsActivated.); //Show all widgets in the array.
         };
 
+        //TODO: Need to hide and show widget here and update array to have isWidgetShown = false.
+        var activateWidget = function(id) {
+
+            var cbWidgetOption = document.getElementById(id);
+            if (cbWidgetOption == null)
+                return;
+
+            var isChecked = cbWidgetOption.checked; // this is new value
+
+            console.log('activateWidget: id: ' + id + '; isChecked2: ' + isChecked);
+            //cbWidgetOption.setAttribute('checked', isChecked);
+
+            //Update list
+            updateIsWidgetShownValue(id, isChecked);
+
+            enableGuidance(); //rosbridge.js
+        };
+
+        /*
+            Based on selected widgets, this loads the widgets onto the Driver View.
+        */
         var loadWidgets = function(){
 
            //Get plugin list
-           var pluginsActivated = sessionStorage.getItem('pluginsActivated');
-
-           if (pluginsActivated == null || pluginsActivated == 'undefined')
-           {
-               console.log ('No widgets to load.');
-               return;
-           }
-
-           //alert('loadWidgets.pluginsActivated: ' + pluginsActivated);
-
-           //alert(pluginsActivated); //Show all widgets in the array.
-           pluginsActivated = JSON.parse(pluginsActivated);
+           var pluginsActivated = getPluginsActivated();
 
            //Check if results.
            var result = $.grep(pluginsActivated, function(e){ return e.isWidgetShown == true; });
@@ -222,7 +271,6 @@ CarmaJS.WidgetFramework = (function () {
                      success: function()
                      {
                         //console.log('cssFilePath: ' + cssFilePath);
-
                         //console.log('loadWidgets: Widget file DOES exist: ' + jsFilePath );
                         //1) Load css
                         var link = document.createElement('link');
@@ -245,7 +293,25 @@ CarmaJS.WidgetFramework = (function () {
             });
         };
 
-        var  closeWidgets = function(){
+        /*
+            Return the number of  selected widgets.
+        */
+        var countSelectedWidgets = function(){
+
+            //Get plugin list
+            var pluginsActivated = getPluginsActivated();
+            //alert('pluginsActivated:' + pluginsActivated);
+
+            //Check if results.
+            var result = $.grep(pluginsActivated, function(e){ return e.isWidgetShown == true; });
+
+            if (result == null || result == 'undefined' || result == '')
+                return 0;
+
+            return result.length;
+        };
+
+        var closeWidgets = function(){
             CarmaJS.WidgetFramework.Cruising.closeWidget();
             console.log('widgetfw.closeWidgets!');
         };
@@ -263,18 +329,18 @@ CarmaJS.WidgetFramework = (function () {
 
         var onRefresh = function () {
              //sessionStorage.removeItem('widgetsActivated');
-             sessionStorage.removeItem('pluginsActivated');
+             //sessionStorage.removeItem('pluginsActivated');
+
+             //load Widgets()
+             CarmaJS.WidgetFramework.showSelectedWidgets();
         };
 
-        //TODO: Need to hide and show widget here and update array to have isWidgetShown = false.
-        var activateWidget = function(id) {
-            console.log('activateWidget: ' + id);
-        };
 
         //Public API
         return {
             showWidgetOptions: showWidgetOptions,
             showSelectedWidgets: showSelectedWidgets,
+            countSelectedWidgets: countSelectedWidgets,
             loadWidgets: loadWidgets,
             activatePlugin: activatePlugin,
             activateWidget: activateWidget,

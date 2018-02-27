@@ -468,10 +468,10 @@ function showPluginOptions() {
             createCheckboxElement(divSubCapabilities, cbId, cbTitle, pluginList.length, 'groupPlugins', isChecked, isRequired, 'activatePlugin');
 
             //Call Carma Widget to activate for selection for required plugins that are pre-checked.
-            if (Boolean(isChecked) == true)
-            {
-                CarmaJS.WidgetFramework.activatePlugin(cbId, cbTitle);
-            }
+            //if (Boolean(isChecked) == true)
+            //{
+                CarmaJS.WidgetFramework.activatePlugin(cbId, cbTitle, isChecked);
+            //}
         }
 
         //If no selection available.
@@ -567,14 +567,14 @@ function activatePlugin(id) {
         }
         else if (cbCapabilities.checked == true) {
             lblCapabilities.style.backgroundColor = 'cornflowerblue';
-
-            //Call the widget fw to activate for selection.
-            var cbTitle = name + ' ' + version;
-            var cbId = id.substring(2,id.length);
-
-            //Populate list for Widget Options.
-            CarmaJS.WidgetFramework.activatePlugin(cbId, cbTitle);
         }
+
+        //Call the widget fw to activate for selection.
+        var cbTitle = name + ' ' + version;
+        var cbId = id.substring(2,id.length);
+
+        //Populate list for Widget Options.
+        CarmaJS.WidgetFramework.activatePlugin(cbId, cbTitle, cbCapabilities.checked);
 
         //Enable the CAV Guidance button if plugins are selected
         enableGuidance();
@@ -592,10 +592,11 @@ function enableGuidance() {
     checkGuidanceState();
 
     var divSubCapabilities = document.getElementById('divSubCapabilities');
-    var cntSelected = getCheckboxesSelected(divSubCapabilities).length;
+    var cntSelectedPlugins = getCheckboxesSelected(divSubCapabilities).length;
+    var cntSelectedWidgets = CarmaJS.WidgetFramework.countSelectedWidgets();
 
     //If more than on plugin is selected, enable button.
-    if (cntSelected > 0) {
+    if (cntSelectedPlugins > 0 && cntSelectedWidgets > 0) {
         //If guidance is engage, leave as green.
         //Else if not engaged, set to blue.
         if (is_guidance_engaged == false) {
@@ -604,13 +605,20 @@ function enableGuidance() {
         }
 
         //Load Widgets
-        //CarmaJS.WidgetFramework.showWidgets();
         //CarmaJS.WidgetFramework.showWidgetOptions();
         //CarmaJS.WidgetFramework.loadWidgets();
-
     }
     else {//else if no plugins have been selected, disable button.
         setCAVButtonState('DISABLED');
+
+        if (cntSelectedPlugins > 0)
+            CarmaJS.WidgetFramework.showWidgetOptions();
+
+        if (cntSelectedWidgets == 0 )
+        {
+            if (divCapabilitiesMessage.innerHTML.indexOf('Please go to Driver View to select Widgets') == -1)
+                divCapabilitiesMessage.innerHTML += '<br/> Please go to Driver View to select Widgets.';
+        }
     }
 }
 
@@ -663,7 +671,8 @@ function activateGuidance() {
         if (is_guidance_active == true){
             openTab(event, 'divDriverView');
 
-            CarmaJS.WidgetFramework.loadWidgets();
+            CarmaJS.WidgetFramework.showSelectedWidgets(); //Saves selection and loads widget
+            //CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget
             //CarmaJS.WidgetFramework.showWidgetOptions();
 
             //Start checking availability (or re-subscribe) if Guidance has been engaged.

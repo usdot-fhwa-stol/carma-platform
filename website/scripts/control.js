@@ -123,6 +123,11 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
 */
 function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, groupName, isChecked, isRequired, funcName) {
 
+    var alreadyExists = document.getElementById(checkboxId);
+
+    if (alreadyExists != null)
+        return;
+
     var newInput = document.createElement('input');
     newInput.type = 'checkbox';
     newInput.name = groupName;
