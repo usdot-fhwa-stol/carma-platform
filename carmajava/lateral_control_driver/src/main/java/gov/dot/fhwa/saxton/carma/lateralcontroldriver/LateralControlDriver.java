@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package gov.dot.fhwa.saxton.carma.lateralcontroldriver;
 
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
-import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
@@ -25,12 +24,10 @@ import org.ros.namespace.GraphName;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import org.ros.message.MessageListener;
 import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.Publisher;
 import org.ros.node.service.ServiceServer;
-import org.ros.node.service.ServiceResponseBuilder;
 import java.util.LinkedList;
 import java.util.Arrays;
 import java.util.List;
@@ -114,7 +111,7 @@ public class LateralControlDriver extends SaxtonBaseNode implements ILateralCont
         cav_msgs.DriverStatus msg = discoveryPub_.newMessage();
         msg.setName(connectedNode.getName().toString());
         msg.setStatus(worker_.getDriverStatus());
-        msg.setController(true);
+        msg.setLatController(true);
         res.setStatus(msg);
       });
 
@@ -125,7 +122,7 @@ public class LateralControlDriver extends SaxtonBaseNode implements ILateralCont
         cav_msgs.DriverStatus msg = discoveryPub_.newMessage();
         msg.setName(connectedNode.getName().toString());
         msg.setStatus(worker_.getDriverStatus());
-        msg.setController(true);
+        msg.setLatController(true);
         discoveryPub_.publish(msg); // Publish driver discovery message
         Thread.sleep(1000);
       }//loop

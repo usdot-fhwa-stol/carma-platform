@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import org.ros.message.Time;
@@ -36,10 +37,13 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   protected double minExpectedSpeed_;
   protected double maxExpectedSpeed_;
   protected double maxAccel_ = 0.999;     // m/s^2 absolute value; default is a conservative value
+  protected final IPlugin planner_;
+  protected static final double SPEED_EPSILON = 0.001;
 
   /**
    * Constructor where user provides all relevant inputs
    *
+   * @param planner           The name of the plugin which planned this maneuver
    * @param inputs            Input which provides the current state of the vehicle
    * @param commands          The target for calculated commands
    * @param startDist         The distance along the route to the maneuver starting point
@@ -49,9 +53,10 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
    * @param minExpectedSpeed  The minimum expected speed
    * @param maxExpectedSpeed  The maximum expected speed
    */
-  protected ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
+  protected ComplexManeuverBase(IPlugin planner, IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
     double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
     double minExpectedSpeed, double maxExpectedSpeed) {
+    planner_ = planner;
     startDist_ = startDist;
     endDist_ = endDist;
     minCompletionTime_ = minCompletionTime;
@@ -67,8 +72,9 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   /**
    * Constructor where the expected speeds are calculated
    */
-  public ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
+  public ComplexManeuverBase(IPlugin planner, IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
     double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
+    planner_ = planner;
     inputs_ = inputs;
     commands_ = commands;
     accStrategy_ = accStrategy;
@@ -84,8 +90,9 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
   /**
    * Constructor where the completion times are calculated
    */
-  public ComplexManeuverBase(IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
+  public ComplexManeuverBase(IPlugin planner, IManeuverInputs inputs, IGuidanceCommands commands, IAccStrategy accStrategy,
     double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
+    planner_ = planner;
     inputs_ = inputs;
     commands_ = commands;
     accStrategy_ = accStrategy;
@@ -122,11 +129,16 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
     double currentSpeed = inputs_.getCurrentSpeed();
     double frontVehicleSpeed = inputs_.getFrontVehicleSpeed();
 
-    if (accStrategy_.evaluateAccTriggerConditions(distToFrontVehicle, currentSpeed, frontVehicleSpeed)) {
-      speedCmd = accStrategy_.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
+    double speedCmdOverride = accStrategy_.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
+    boolean overrideActive = Math.abs(speedCmd - speedCmdOverride) > SPEED_EPSILON;
+
+    // If acc is active, give maximum control authority
+    if (overrideActive) {
+      commands_.setSpeedCommand(speedCmdOverride, accStrategy_.getMaxAccel());
+    } else {
+      commands_.setSpeedCommand(speedCmdOverride, maxAccelCmd);
     }
 
-    commands_.setSpeedCommand(speedCmd, maxAccelCmd);
     return false;
   }
 
@@ -216,6 +228,11 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
     if (limit > 0.0) { //can't be equal to zero
       maxAccel_ = limit;
     }
+  }
+
+  @Override
+  public IPlugin getPlanner() {
+      return planner_;
   }
 
   @Override public String toString() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -237,7 +237,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
 
         for (IPlugin p : getRegisteredPlugins()) {
@@ -370,6 +370,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             }
         }
 
+		//Sort
+		pList.sort(
+			(Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+		);
+
         availablePlugins.setPlugins(pList);
         pluginPublisher.publish(availablePlugins);
     }
@@ -405,6 +410,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                             pList.add(p0);
                         }
 
+						//Sort
+						pList.sort(
+						  (Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+						);
+
                         pluginListResponse.setPlugins(pList);
                     }
                 });
@@ -437,6 +447,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                                 pList.add(p0);
                             }
                         }
+
+						//Sort
+						pList.sort(
+						  (Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+						);
 
                         pluginListResponse.setPlugins(pList);
                     }
@@ -476,7 +491,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);

@@ -1,5 +1,5 @@
 #
-# Guidance State Message
+# Guidance Action Message
 # 
 # The indicator of current guidance state
 #

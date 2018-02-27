@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import cav_srvs.GetSystemVersion;
 import cav_srvs.GetSystemVersionRequest;
 import cav_srvs.GetSystemVersionResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -95,6 +96,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
+    trajectoryExecutor.setArbitrator(arbitrator);
     pluginManager.setArbitratorService(arbitrator);
 
     executor.execute(stateHandler);

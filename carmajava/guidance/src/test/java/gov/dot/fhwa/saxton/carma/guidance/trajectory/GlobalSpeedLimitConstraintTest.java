@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,15 +33,15 @@ public class GlobalSpeedLimitConstraintTest {
 
   @Test
   public void testSuccess() {
-    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(10.0);
 
-    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartSpeed()).thenReturn(10.0);
     when(m2.getTargetSpeed()).thenReturn(10.0);
 
-    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartSpeed()).thenReturn(10.0);
     when(m3.getTargetSpeed()).thenReturn(15.0);
 
@@ -54,13 +54,13 @@ public class GlobalSpeedLimitConstraintTest {
 
   @Test
   public void testSuccessMixedTypes() {
-    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(1.0);
 
     ISimpleManeuver m2 = mock(ISimpleManeuver.class);
 
-    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartSpeed()).thenReturn(15.0);
     when(m3.getTargetSpeed()).thenReturn(19.0);
 
@@ -73,11 +73,11 @@ public class GlobalSpeedLimitConstraintTest {
 
   @Test
   public void testRejection() {
-    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartSpeed()).thenReturn(0.0);
     when(m1.getTargetSpeed()).thenReturn(10.0);
 
-    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartSpeed()).thenReturn(10.0);
     when(m2.getTargetSpeed()).thenReturn(25.0);
 
@@ -89,15 +89,15 @@ public class GlobalSpeedLimitConstraintTest {
 
   @Test
   public void testRejection2() {
-    ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m1 = mock(LongitudinalManeuver.class);
     when(m1.getStartSpeed()).thenReturn(21.0);
     when(m1.getTargetSpeed()).thenReturn(25.0);
 
-    ISimpleManeuver m2 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m2 = mock(LongitudinalManeuver.class);
     when(m2.getStartSpeed()).thenReturn(25.0);
     when(m2.getTargetSpeed()).thenReturn(10.0);
 
-    ISimpleManeuver m3 = mock(LongitudinalManeuver.class);
+    LongitudinalManeuver m3 = mock(LongitudinalManeuver.class);
     when(m3.getStartSpeed()).thenReturn(10.0);
     when(m3.getTargetSpeed()).thenReturn(30.0);
 

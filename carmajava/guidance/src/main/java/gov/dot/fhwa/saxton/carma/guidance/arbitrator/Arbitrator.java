@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
-import gov.dot.fhwa.saxton.carma.guidance.TrajectoryExecutor;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse.PlanningRequest;
 import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
@@ -209,7 +209,7 @@ public class Arbitrator extends GuidanceComponent
   }
 
   @Override
-  public void onRouteActive() {
+  public void onActive() {
     // For now, find the configured lateral and longitudinal plugins
     for (IPlugin plugin : pluginManager.getRegisteredPlugins()) {
       if (plugin instanceof CruisingPlugin) {
@@ -603,7 +603,7 @@ public class Arbitrator extends GuidanceComponent
       jobQueue.add(this::onSystemReady);
       break;
     case ACTIVATE:
-      jobQueue.add(this::onRouteActive);
+      jobQueue.add(this::onActive);
       break;
     case DEACTIVATE:
       jobQueue.add(this::onDeactivate);

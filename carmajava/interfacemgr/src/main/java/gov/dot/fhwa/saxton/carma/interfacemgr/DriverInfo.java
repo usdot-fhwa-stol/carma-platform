@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,8 @@ public class DriverInfo {
     private boolean         sensor;
     private boolean         position;
     private boolean         comms;
-    private boolean         controller;
+    private boolean         lon_controller;
+    private boolean         lat_controller;
 
     public DriverInfo() {
         name = "";
@@ -40,7 +41,8 @@ public class DriverInfo {
         sensor = false;
         position = false;
         comms = false;
-        controller = false;
+        lon_controller = false;
+        lat_controller = false;
         capabilities = new ArrayList<String>();
     }
 
@@ -92,14 +94,22 @@ public class DriverInfo {
         this.comms = comms;
     }
 
-    public boolean isController() {
-        return controller;
+    public boolean isLonController() {
+        return lon_controller;
     }
 
-    public void setController(boolean controller) {
-        this.controller = controller;
+    public boolean isLatController() {
+        return lat_controller;
+    }
+    
+    public void setLonController(boolean lonController) {
+        this.lon_controller = lonController;
     }
 
+    public void setLatController(boolean latController) {
+        this.lat_controller = latController;
+    }
+    
     public List<String> getCapabilities() { return capabilities; }
 
     public void setCapabilities(List<String> capabilities) { this.capabilities = capabilities; }
@@ -117,7 +127,10 @@ public class DriverInfo {
         if (comms != b.isComms()) {
             return false;
         }
-        if (controller != b.isController()) {
+        if (lon_controller != b.isLonController()) {
+            return false;
+        }
+        if (lat_controller != b.isLatController()) {
             return false;
         }
         if (position != b.isPosition()) {
@@ -142,7 +155,8 @@ public class DriverInfo {
             return true;
         }
 
-        if ((cat == DriverCategory.CONTROLLER   &&  controller)   ||
+        if ((cat == DriverCategory.LON_CONTROLLER   &&  lon_controller)     ||
+                (cat == DriverCategory.LAT_CONTROLLER   &&  lat_controller) ||
                 (cat == DriverCategory.COMMS    &&  comms)        ||
                 (cat == DriverCategory.CAN      &&  can)          ||
                 (cat == DriverCategory.POSITION &&  position)     ||

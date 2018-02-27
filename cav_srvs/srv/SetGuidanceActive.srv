@@ -1,5 +1,5 @@
 #
-# Guidance Engage Service Message
+# Guidance Activate Service Message
 # 
 # A command from the user to activate or deactivate the Guidance component
 #
@@ -7,9 +7,9 @@
 # @version 0.1
 #
 
-# The state to change to
-bool guidance_engage
+# activate or deactivate the Guidance component
+bool guidance_active
 
 ---
-#Response
+# Response
 bool guidance_status

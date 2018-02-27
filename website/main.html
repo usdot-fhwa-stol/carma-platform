@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <!--
-  Copyright (C) 2017 LEIDOS.
+  Copyright (C) 2018 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -58,7 +58,7 @@
         <button id="btnConnected" disabled onclick="alert('To be implemented');" ><i class="fa fa-handshake-o" aria-hidden="true" style="color:gray; font-size: 35px;"></i></button>
     </div>
     <div class="tabheader">
-        <button id="btnCAVGuidance" onclick="engageGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
+        <button id="btnCAVGuidance" onclick="activateGuidance();" title="CAV Guidance" class="button_cav button_disabled" disabled="true">CAV Guidance</button>
     </div>
     <div id="divCapabilities" class="tabcontent">
         <div id="divCapabilitiesMessage" class="message_box">Welcome!</div>
@@ -161,8 +161,10 @@
             <p id="closed" style="display:none">
                 ROSBridge connection closed.
             </p>
-        </div>
+        </div>     
         <p />
+        <button id="btnModalLogout2" title="Shutdown and Logout" class="btnModal" onclick="javascript: shutdown();">Logout</button>
+        <p/>
         <div id="divLog" class="logStatus">
         </div>
     </div>
@@ -178,7 +180,8 @@
                 <p>Some text in the Modal Body.</p>
             </div>
             <div class="modal-footer">
-                <button id="btnModal" title="CAV Guidance">OK</button>
+                <button id="btnModalOK" title="Continue to Restart" class="btnModal">Continue</button> &nbsp; &nbsp;
+                <button id="btnModalLogout" title="Shutdown and Logout" class="btnModal">Logout</button>
             </div>
         </div>
     </div>
@@ -196,6 +199,10 @@
     </audio>
     <audio id="audioAlert3" preload="auto">
         <source src="sound/hurry.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="audioAlert4" preload="auto">
+        <source src="sound/arp.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 </body>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import org.apache.commons.logging.Log;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,7 +33,7 @@ public class InterfaceWorker {
     protected long                          startedWaiting_;
     protected long							systemReadyTime_;
     protected AtomicBoolean                 systemOperational_ = new AtomicBoolean(false);
-    protected AtomicBoolean                 controllerReady_ = new AtomicBoolean(false);
+    protected AtomicBoolean                 lonControllerReady_ = new AtomicBoolean(false);
     protected AtomicBoolean                 positionReady_ = new AtomicBoolean(false);
 
     InterfaceWorker(IInterfaceMgr mgr, SaxtonLogger log) {
@@ -80,7 +79,7 @@ public class InterfaceWorker {
                 //record the updates. Will need to fetch new driver api as well
                 newDriver.setCapabilities(mgr_.getDriverApi(name));
                 drivers_.set(index, newDriver);
-                if ((newDriver.isPosition() || newDriver.isController())
+                if ((newDriver.isPosition() || newDriver.isLonController())
                   && (newDriver.getState() == DriverState.FAULT
                   || newDriver.getState() == DriverState.OFF)) {
                     mgr_.errorShutdown("FAULT detected in critical driver: " + newDriver.getName());
@@ -107,8 +106,8 @@ public class InterfaceWorker {
                     //indicate if this is one of the critical drivers
                     if (newDriver.isPosition()) {
                         positionReady_.set(true);
-                    }else if (newDriver.isController()) {
-                        controllerReady_ .set(true);
+                    }else if (newDriver.isLonController()) {
+                        lonControllerReady_ .set(true);
                     }
 
                     //reset the wait timer
@@ -170,7 +169,7 @@ public class InterfaceWorker {
             AlertSeverity sev = AlertSeverity.CAUTION;
             String msg = null;
 
-            if (driver.isController()) {
+            if (driver.isLonController()) {
                 if (state == DriverState.FAULT  ||  state == DriverState.OFF) {
                     sev = AlertSeverity.FATAL;
                     msg = "Controller driver " + driverName + " is no longer available.";
@@ -286,7 +285,7 @@ public class InterfaceWorker {
             if (elapsed > 1000*waitTime_) {
 
                 //if we have the essential drivers registered then
-                if (controllerReady_.get()  &&  positionReady_.get()) {
+                if (lonControllerReady_.get()  &&  positionReady_.get()) {
 
                     //indicate that it is now OPERATIONAL
                     systemOperational_.set(true);

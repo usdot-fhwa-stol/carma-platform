@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -283,5 +283,9 @@ public class RouteSegment {
    */
   public static RouteSegment fromMessage(cav_msgs.RouteSegment segmentMsg){
     return new RouteSegment(RouteWaypoint.fromMessage(segmentMsg.getPrevWaypoint()),RouteWaypoint.fromMessage(segmentMsg.getWaypoint()));
+  }
+
+  @Override public String toString() {
+    return "RouteSegment{ length: " + length + " Uptrack " + uptrackWP + " Downtrack " + downtrackWP + " }";
   }
 }

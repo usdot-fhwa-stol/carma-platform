@@ -192,7 +192,7 @@ void SRXApplication::initialize() {
     status_publisher_timer_.start();
 
     cav_msgs::DriverStatus status;
-    status.controller = static_cast<unsigned char>(true);
+    status.lon_controller = static_cast<unsigned char>(true);
     status.status = cav_msgs::DriverStatus::OPERATIONAL;
 
     setStatus(status);

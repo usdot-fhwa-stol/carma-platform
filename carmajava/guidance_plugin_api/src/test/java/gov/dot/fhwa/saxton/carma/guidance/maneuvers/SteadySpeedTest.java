@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -51,7 +52,7 @@ public class SteadySpeedTest {
         double maxAccel = inputs_.getAccel();
 
         //plan the maneuver
-        SteadySpeed mvr = new SteadySpeed();
+        SteadySpeed mvr = new SteadySpeed(mock(IPlugin.class));
         mvr.setSpeeds(targetSpeed, targetSpeed); //yes, the same variable is repeated here for start & end speeds
         mvr.setMaxAccel(maxAccel);
 
@@ -97,8 +98,7 @@ public class SteadySpeedTest {
 
     @Test
     public void testSteadySpeedNoTarget() {
-
-        SteadySpeed mvr = new SteadySpeed();
+        SteadySpeed mvr = new SteadySpeed(mock(IPlugin.class));
         double startDist = inputs_.getStartDist();
         try {
             mvr.plan(inputs_, commands_, startDist); //should throw exception

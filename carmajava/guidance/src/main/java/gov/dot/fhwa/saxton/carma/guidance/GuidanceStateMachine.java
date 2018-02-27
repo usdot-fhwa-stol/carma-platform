@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,83 +50,63 @@ public class GuidanceStateMachine {
         log.debug("GUIDANCE_STATE", "Guidance state machine reveiced " + guidance_event + " at state: " + guidance_state.get());
         GuidanceState old_state = guidance_state.get();
         GuidanceAction action = null;
-        switch (old_state) {
-        case STARTUP:
-            if(guidance_event == GuidanceEvent.FOUND_DRIVERS) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.INTIALIZE;
-            } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.PANIC_SHUTDOWN;
+        if(guidance_event == GuidanceEvent.PANIC) {
+            guidance_state.set(GuidanceState.SHUTDOWN);
+            action = GuidanceAction.PANIC_SHUTDOWN;
+        } else if(guidance_event == GuidanceEvent.SHUTDOWN) {
+            guidance_state.set(GuidanceState.SHUTDOWN);
+            action = GuidanceAction.SHUTDOWN;
+        } else {
+            switch (old_state) {
+            case STARTUP:
+                if(guidance_event == GuidanceEvent.FOUND_DRIVERS) {
+                    guidance_state.set(GuidanceState.DRIVERS_READY);
+                    action = GuidanceAction.INTIALIZE;
+                }
+                break;
+            case DRIVERS_READY:
+                if(guidance_event == GuidanceEvent.ACTIVATE) {
+                    guidance_state.set(GuidanceState.ACTIVE);
+                    action = GuidanceAction.ACTIVATE;
+                }
+                break;
+            case ACTIVE:
+                if(guidance_event == GuidanceEvent.START_ROUTE) {
+                    guidance_state.set(GuidanceState.ENGAGED);
+                    action = GuidanceAction.ENGAGE;
+                } else if(guidance_event == GuidanceEvent.LEFT_ROUTE ||
+                          guidance_event == GuidanceEvent.DISENGAGE ||
+                          guidance_event == GuidanceEvent.FINISH_ROUTE) {
+                    guidance_state.set(GuidanceState.DRIVERS_READY);
+                    action = GuidanceAction.RESTART;
+                }
+                break;
+            case INACTIVE:
+                if(guidance_event == GuidanceEvent.START_ROUTE) {
+                    guidance_state.set(GuidanceState.ENGAGED);
+                    action = GuidanceAction.ENGAGE;
+                } else if(guidance_event == GuidanceEvent.LEFT_ROUTE ||
+                          guidance_event == GuidanceEvent.DISENGAGE ||
+                          guidance_event == GuidanceEvent.FINISH_ROUTE) {
+                    guidance_state.set(GuidanceState.DRIVERS_READY);
+                    action = GuidanceAction.RESTART;
+                }
+                break;
+            case ENGAGED:
+                if(guidance_event == GuidanceEvent.ROBOT_DISABLED) {
+                    guidance_state.set(GuidanceState.INACTIVE);
+                    action = GuidanceAction.DEACTIVATE;
+                } else if(guidance_event == GuidanceEvent.LEFT_ROUTE ||
+                          guidance_event == GuidanceEvent.DISENGAGE ||
+                          guidance_event == GuidanceEvent.FINISH_ROUTE) {
+                    guidance_state.set(GuidanceState.DRIVERS_READY);
+                    action = GuidanceAction.RESTART;
+                }
+                break;
+            default:
+                log.warn("GUIDANCE_STATE", "Guidance state machine take NO action on event " + guidance_event + " at state " + old_state);
             }
-            break;
-        case DRIVERS_READY:
-            if(guidance_event == GuidanceEvent.ACTIVATE_ROUTE) {
-                guidance_state.set(GuidanceState.ACTIVE);
-                action = GuidanceAction.ACTIVATE;
-            } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.PANIC_SHUTDOWN;
-            }
-            break;
-        case ACTIVE:
-            if(guidance_event == GuidanceEvent.START_ROUTE) {
-                guidance_state.set(GuidanceState.ENGAGED);
-                action = GuidanceAction.ENGAGE;
-            } else if(guidance_event == GuidanceEvent.LEFT_ROUTE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.PANIC_SHUTDOWN;
-            } else if(guidance_event == GuidanceEvent.DISENGAGE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            } else if(guidance_event == GuidanceEvent.FINISH_ROUTE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            }
-            break;
-        case INACTIVE:
-            if(guidance_event == GuidanceEvent.LEFT_ROUTE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.SHUTDOWN;
-            } else if(guidance_event == GuidanceEvent.DISENGAGE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            } else if(guidance_event == GuidanceEvent.START_ROUTE) {
-                guidance_state.set(GuidanceState.ENGAGED);
-                action = GuidanceAction.ENGAGE;
-            } else if(guidance_event == GuidanceEvent.FINISH_ROUTE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            }
-            break;
-        case ENGAGED:
-            if(guidance_event == GuidanceEvent.FINISH_ROUTE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            } else if(guidance_event == GuidanceEvent.LEFT_ROUTE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            } else if(guidance_event == GuidanceEvent.PANIC) {
-                guidance_state.set(GuidanceState.SHUTDOWN);
-                action = GuidanceAction.PANIC_SHUTDOWN;
-            } else if(guidance_event == GuidanceEvent.DISENGAGE) {
-                guidance_state.set(GuidanceState.DRIVERS_READY);
-                action = GuidanceAction.RESTART;
-            } else if(guidance_event == GuidanceEvent.ROBOT_DISABLED) {
-                guidance_state.set(GuidanceState.INACTIVE);
-                action = GuidanceAction.DEACTIVATE;
-            }
-            break;
-        default:
-            log.warn("GUIDANCE_STATE", "Guidance state machine take NO action on event " + guidance_event + " at state " + old_state);
-            break;
-        }
+        }     
         
         // Call all the listeners if we've changed state
         GuidanceState current_state = guidance_state.get(); 
@@ -134,6 +114,7 @@ public class GuidanceStateMachine {
             log.debug("GUIDANCE_STATE", "Guidance transited to state " + current_state);
             if(action != null) {
                 cav_msgs.GuidanceAction actionMsg = actionPub.newMessage();
+                log.debug("GUIDANCE_STATE", "Guidance is taking action " + action.name());
                 switch (action) {
                 case ACTIVATE:
                     actionMsg.setAction(cav_msgs.GuidanceAction.ACTIVATE);
