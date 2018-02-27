@@ -154,6 +154,13 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
             commandGenerator = null;
             commandGeneratorThread = null;
         }
+        // Wait current commandGeneratorThread loop to finish to avoid NPE
+        // because commandGenerator is depend on platoonManager
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            // No-Op
+        }
         if(platoonManagerThread != null) {
             platoonManagerThread.interrupt();
             platoonManager = null;

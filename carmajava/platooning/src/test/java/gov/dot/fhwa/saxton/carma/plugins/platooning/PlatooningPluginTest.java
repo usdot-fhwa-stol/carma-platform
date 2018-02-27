@@ -35,6 +35,7 @@ import org.ros.message.MessageFactory;
 import cav_msgs.BasicVehicleClass;
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityIntro;
+import cav_msgs.NewPlan;
 import cav_msgs.PlanType;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
@@ -56,7 +57,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
-public class StateTransitionTest {
+public class PlatooningPluginTest {
 
     private PlatooningPlugin platooning;
     private GuidanceRouteService routeService;
@@ -110,7 +111,7 @@ public class StateTransitionTest {
     }
     
     @Test
-    public void leaderToFollower() {
+    public synchronized void leaderToFollower() {
         IPlatooningState leaderState = new LeaderState(platooning, mockLogger, psl); 
         platooning.setState(leaderState);
         platooning.state.checkCurrentState();
@@ -142,7 +143,7 @@ public class StateTransitionTest {
     }
     
     @Test
-    public void followerToStandbyCase1() {
+    public synchronized void followerToStandbyCase1() {
         IPlatooningState followerState = new FollowerState(platooning, mockLogger, psl);
         platooning.setState(followerState);
         Trajectory traj = new Trajectory(25.0, 50.0);
