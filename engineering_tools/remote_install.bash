@@ -214,7 +214,13 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 	# SSH into the remote mechine and create a copy of the directory pointed to by the app symlink
 	# Then create symlink from app -> app_version
 	# Then delete the contents of the app/bin directory to ensure clean copy
-	SCRIPT="cp -r \$(readlink -f ${APP_DIR}) ${TARGET}; rm -r ${APP_DIR}; ln -s ${TARGET} ${APP_DIR}; rm -r ${APP_DIR}/bin/*;"
+	SCRIPT="export APP_LINK_DIR=\$(readlink -f ${APP_DIR});
+					if [ \${APP_LINK_DIR} != ${TARGET} ];
+						then cp -r \${APP_LINK_DIR} ${TARGET};
+					fi; 
+					rm -r ${APP_DIR}; 
+					ln -s ${TARGET} ${APP_DIR};
+					rm -r ${APP_DIR}/bin/*;"
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 
 	# Copy the entire contents of install to the remote machine using current symlink
