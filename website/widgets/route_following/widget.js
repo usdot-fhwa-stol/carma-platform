@@ -420,6 +420,9 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
            },
            checkRouteState: function(){
               checkRouteState();
+           },
+           showActiveRoute: function(){
+              showActiveRoute();
            }
 
         });
@@ -450,26 +453,19 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
             container.rfRouteInfo();
 
             container.rfLaneTracking();
-            container.rfLaneTracking("checkRouteState" );
-            container.rfLaneTracking("draw");
+            container.rfLaneTracking("showActiveRoute", null);
+            container.rfLaneTracking("checkRouteState", null);
+            container.rfLaneTracking("draw", null);
         };
 
         var onGuidanceEngaged = function(){
-            this.startRouteTimer();
+            startRouteTimer();
             //container.rfRouteInfo("startRouteTimer");
-            //alert('route_following.onGuidanceEngaged!');
-        };
-
-        var onRouteSelection = function(){
-            this.initializeRouteTimer();
-            //container.rfRouteInfo("initializeRouteTimer");
-            //alert('route_following.onRouteSelection!');
         };
 
         //Public API
         return {
             loadCustomWidget: loadCustomWidget,
-            onGuidanceEngaged: onGuidanceEngaged,
-            onRouteSelection: onRouteSelection
+            onGuidanceEngaged: onGuidanceEngaged
         };
 })();

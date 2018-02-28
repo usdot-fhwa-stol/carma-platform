@@ -431,7 +431,7 @@ function showSubCapabilitiesView2() {
         checkRouteInfo();
     }
 
-    console.log('showPluginOptions called.');
+    //console.log('showPluginOptions called.');
     showPluginOptions();
 }
 /*
@@ -709,7 +709,7 @@ function showGuidanceEngaged() {
         setCbSelectedBgColor('gray');
 
         //Unsubscribe from the topic when dis-engaging from guidance.
-        if (listenerPluginAvailability != 'undefined' || listenerPluginAvailability!= null)
+        if (listenerPluginAvailability != 'undefined' && listenerPluginAvailability!= null)
             listenerPluginAvailability.unsubscribe();
 
         //AFTER dis-engaging, redirect to a page. Guidance is sending all the nodes to stop.

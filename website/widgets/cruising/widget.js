@@ -87,7 +87,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
 
                 //alert('showActive Route: sessionStorage.getItem(routeSpeedLimitDist: ' + sessionStorage.getItem('routeSpeedLimitDist'));
                 if (sessionStorage.getItem('routeSpeedLimitDist') == null) {
-                    message.segments.forEach(this.calculateDistToNextSpeedLimit);
+                    message.segments.forEach(calculateDistToNextSpeedLimit);
                 }
 
             });
@@ -226,6 +226,9 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                 //this._div = $("<button>");
                 $(this.element).append(myDiv);
              },
+             _destroy: function() {
+                this.element.removeClass("CarmaJS.cruisingSpeedLimit");
+             },
              checkRouteState: function(){
                 checkRouteState();
              },
@@ -247,6 +250,10 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                 //this._div = $("<button>");
                 $(this.element).append(myDiv);
              },
+            _destroy: function() {
+                console.log('CarmaJS.cruisingSpeedCmd - destroy called.');
+                this.element.removeClass("CarmaJS.cruisingSpeedCmd");
+            },
              showSpeedAccelInfo: function(){
                 showSpeedAccelInfo();
              }
@@ -267,6 +274,9 @@ CarmaJS.WidgetFramework.Cruising = (function () {
 
                 $(this.element).append(myDiv);
              },
+            _destroy: function() {
+                this.element.removeClass("CarmaJS.cruisingSpeedometer");
+            },
              showCANSpeeds: function(){
                 showCANSpeeds();
              },
@@ -282,34 +292,19 @@ CarmaJS.WidgetFramework.Cruising = (function () {
 
             //Generate the  widget and calling its private method(s) below.
             container.cruisingSpeedLimit();
-            container.cruisingSpeedLimit("checkRouteState", null);
+            container.cruisingSpeedLimit("showActiveRoute",null);
+            container.cruisingSpeedLimit("checkRouteState",null);
 
             container.cruisingSpeedCmd();
-            container.cruisingSpeedCmd("showSpeedAccelInfo", null);
+            container.cruisingSpeedCmd("showSpeedAccelInfo",null);
 
             container.cruisingSpeedometer();
-            container.cruisingSpeedometer("showCANSpeeds", null);
-        };
-
-        var onRouteSelection = function(){
-            //After route selection
-            //container.cruisingSpeedLimit();
-            //container.cruisingSpeedLimit("showActiveRoute", null);
-            showActiveRoute();
-        };
-
-        var closeWidget = function(){
-            //container.cruisingSpeedometer("setSpeedometer", 0);
-            setSpeedometer(0);
-            if (document.getElementById('divSpeedCmdValue') != null)
-                document.getElementById('divSpeedCmdValue').innerHTML = '0';
+            container.cruisingSpeedometer("showCANSpeeds",null);
         };
 
         //*** Public API  ***
         return {
-            loadCustomWidget: loadCustomWidget,
-            onRouteSelection: onRouteSelection,
-            closeWidget: closeWidget
+            loadCustomWidget: loadCustomWidget
         };
 
 })(); //CarmaJS.WidgetFramework.Cruising

@@ -64,7 +64,7 @@ CarmaJS.WidgetFramework = (function () {
                }
                else{
                    pluginsActivated = [];
-                   console.log ('getPluginsActivated: No plugins activated.');
+                   //console.log ('getPluginsActivated: No plugins activated.');
                }
 
                return pluginsActivated;
@@ -105,7 +105,7 @@ CarmaJS.WidgetFramework = (function () {
             });//ForEach
 
            //Load widgets
-           this.loadWidgets();
+           loadWidgets();
 
         };
 
@@ -120,6 +120,9 @@ CarmaJS.WidgetFramework = (function () {
 
             var divWidgetOptionsList = document.getElementById('divWidgetOptionsList');
             divWidgetOptionsList.innerHTML = '';
+
+            var divWidgetArea = document.getElementById('divWidgetArea');
+            divWidgetArea.style.display = 'none';
 
             //Loop thru and create checkboxes
             var pluginsActivated = getPluginsActivated();
@@ -158,48 +161,58 @@ CarmaJS.WidgetFramework = (function () {
                      sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
                      return;
                 }
-
-                //Add the plugin when selected with namespace and folder path into the array for loading.
-                //Widget Namespace should come from the Plugin.name without "Plugin" at the end, and without spaces.
-                //e.g. "Speed Harmonization Plugin" widget namespace should be CarmaJS.WidgetFramework.SpeedHarmonization
-                //e.g. CarmaJS.WidgetFramework.RouteFollowing & CarmaJS.WidgetFramework.Cruising
-                var widgetNamespace = 'CarmaJS.WidgetFramework.' + id.substring(0, id.indexOf('_Plugin')).replace('cb','').replace('_','');
-
-                //Widget install path should come from the Plugin.name without the "Plugin", and replacing the spaces with underscore(s).
-                //e.g. "Speed Harmonization Plugin" widget folder path should be speed_harmonization
-                //e.g. widgets/route_following
-                var widgetInstallPath = 'widgets/' + id.substring(0, id.indexOf('_Plugin')).replace('cb','').toLowerCase(); //negotiation_receiver
-
-                var pluginItem = {id: cbId, title: cbTitle,  namespace: widgetNamespace, folderpath: widgetInstallPath, isWidgetShown: false};
-
-                //Check if results.
-                var result = $.grep(pluginsActivated, function(e){ return e.id == cbId; });
-
-                if (result.length == 0)
+                else
                 {
-                    //Then add new one everytime Plugin is selected, since add or remove to another list for Widget selection.
-                    pluginsActivated.push(pluginItem);
-                    //Save and show
-                    sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
-                    showWidgetOptions();
+                     //Add the plugin when selected with namespace and folder path into the array for loading.
+                     //Widget Namespace should come from the Plugin.name without "Plugin" at the end, and without spaces.
+                     //e.g. "Speed Harmonization Plugin" widget namespace should be CarmaJS.WidgetFramework.SpeedHarmonization
+                     //e.g. CarmaJS.WidgetFramework.RouteFollowing & CarmaJS.WidgetFramework.Cruising
+                     var widgetNamespace = 'CarmaJS.WidgetFramework.' + id.substring(0, id.indexOf('_Plugin')).replace('cb','').replace('_','');
+
+                     //Widget install path should come from the Plugin.name without the "Plugin", and replacing the spaces with underscore(s).
+                     //e.g. "Speed Harmonization Plugin" widget folder path should be speed_harmonization
+                     //e.g. widgets/route_following
+                     var widgetInstallPath = 'widgets/' + id.substring(0, id.indexOf('_Plugin')).replace('cb','').toLowerCase(); //negotiation_receiver
+
+                     var pluginItem = {id: cbId, title: cbTitle,  namespace: widgetNamespace, folderpath: widgetInstallPath, isWidgetShown: false};
+
+                     //Check if results.
+                     var result = $.grep(pluginsActivated, function(e){ return e.id == cbId; });
+
+                     if (result.length == 0)
+                     {
+                         //Then add new one everytime Plugin is selected, since add or remove to another list for Widget selection.
+                         pluginsActivated.push(pluginItem);
+                         //Save and show
+                         sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
+
+                     }
                 }
+
+                showWidgetOptions();
         };
 
-        //TODO: Need to hide and show widget here and update array to have isWidgetShown = false.
+        /*
+            OnClick of the Widget Option
+        */
         var activateWidget = function(id) {
 
             var cbWidgetOption = document.getElementById(id);
             if (cbWidgetOption == null)
-                return;
+            {
+                console.log('activateWidget: cbWidgetOption is null');
+            }
+            else{
+                var isChecked = cbWidgetOption.checked; // this is new value
 
-            var isChecked = cbWidgetOption.checked; // this is new value
+                console.log('activateWidget: id: ' + id + '; isChecked2: ' + isChecked);
+                //cbWidgetOption.setAttribute('checked', isChecked);
 
-            console.log('activateWidget: id: ' + id + '; isChecked2: ' + isChecked);
-            //cbWidgetOption.setAttribute('checked', isChecked);
+                //Update list
+                updateIsWidgetShownValue(id, isChecked);
 
-            //Update list
-            updateIsWidgetShownValue(id, isChecked);
-
+                //setCAVButtonState('ENABLED');
+            }
             enableGuidance(); //rosbridge.js
         };
 
@@ -217,20 +230,20 @@ CarmaJS.WidgetFramework = (function () {
             if (result.length == 0) {
               // not found, show OptionsList
               //showWidgetOptions();
-              console.log ('No widgets to load');
+              //console.log ('No widgets to load');
               return;
-            } else if (result.length == 1) {
-              // access the foo property using result[0].foo
-              console.log('1 widget to load');
-
-            } else {
+            }
+            else {
               // multiple items found
-              console.log('multiple widgets to load');
+              //console.log(result.length + ' widgets to load');
             }
 
           //Hide the list of widgets
           var divWidgetOptions = document.getElementById('divWidgetOptions');
           divWidgetOptions.style.display = 'none';
+
+          var divWidgetArea = document.getElementById('divWidgetArea');
+          divWidgetArea.style.display = 'block';
 
            //Hide the list of widgets
           //  var divWidgetOptions = document.getElementById('divWidgetOptions');
@@ -300,7 +313,6 @@ CarmaJS.WidgetFramework = (function () {
 
             //Get plugin list
             var pluginsActivated = getPluginsActivated();
-            //alert('pluginsActivated:' + pluginsActivated);
 
             //Check if results.
             var result = $.grep(pluginsActivated, function(e){ return e.isWidgetShown == true; });
@@ -308,23 +320,34 @@ CarmaJS.WidgetFramework = (function () {
             if (result == null || result == 'undefined' || result == '')
                 return 0;
 
+            //console.log('countSelectedWidgets: ' + result.length);
             return result.length;
+
         };
 
         var closeWidgets = function(){
-            CarmaJS.WidgetFramework.Cruising.closeWidget();
+
             console.log('widgetfw.closeWidgets!');
+            /*
+            //TODO: Need to reset the widget and unsubscribing
+            var divWidgetOptions = document.getElementById('divWidgetOptions');
+            divWidgetOptions.style.display = 'none';
+
+            var divWidgetOptionsList = document.getElementById('divWidgetOptionsList');
+            divWidgetOptionsList.innerHTML = '';
+
+            var divWidgetArea = document.getElementById('divWidgetArea');
+            divWidgetArea.style.display = 'none';
+
+            $("#CarmaJS.cruisingSpeedLimit").remove();
+            CarmaJS.WidgetFramework.Cruising.closeWidget();
+            */
         };
 
         var onGuidanceEngaged = function(){
             CarmaJS.WidgetFramework.RouteFollowing.onGuidanceEngaged();
             console.log('widgetfw.onGuidanceEngaged!');
 
-        };
-
-        var onRouteSelection = function(){
-            CarmaJS.WidgetFramework.RouteFollowing.onRouteSelection();
-            console.log('widgetfw.onRouteSelection!');
         };
 
         var onRefresh = function () {
@@ -346,7 +369,6 @@ CarmaJS.WidgetFramework = (function () {
             activateWidget: activateWidget,
             closeWidgets: closeWidgets,
             onGuidanceEngaged: onGuidanceEngaged,
-            onRouteSelection: onRouteSelection,
             onRefresh: onRefresh
         };
 })();
