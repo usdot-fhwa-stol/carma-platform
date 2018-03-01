@@ -19,17 +19,24 @@ package gov.dot.fhwa.saxton.carma.route;
 import cav_msgs.RouteSegment;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+
+import org.ros.concurrent.CancellableLoop;
+import org.ros.exception.RemoteException;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
+import org.ros.rosjava_geometry.Transform;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceServer;
+import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.service.ServiceResponseListener;
 import sensor_msgs.NavSatFix;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,7 +67,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   Publisher<cav_msgs.RouteState> routeStatePub;
   Publisher<cav_msgs.RouteEvent> routeEventPub;
   // Subscribers
-  Subscriber<sensor_msgs.NavSatFix> gpsSub;
   Subscriber<cav_msgs.SystemAlert> alertSub;
   // Services
   // Provided
@@ -72,6 +78,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   protected ServiceServer<AbortActiveRouteRequest, AbortActiveRouteResponse>
     abortActiveRouteService;
   protected RouteWorker routeWorker;
+  // Used
+  protected ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("route_manager");
@@ -107,16 +115,6 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
     // Subscribers
     // Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
-    gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
-    gpsSub.addMessageListener(new MessageListener<NavSatFix>() {
-      @Override public void onNewMessage(NavSatFix navSatFix) {
-        try {
-          routeWorker.handleNavSatFixMsg(navSatFix);
-        } catch (Exception e) {
-          handleException(e);
-        }
-      }
-    });
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
@@ -192,6 +190,19 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
           }
         });
 
+    // Loop
+    // This CancellableLoop will be canceled automatically when the node shuts down.
+    connectedNode.executeCancellableLoop(new CancellableLoop(){
+    
+      @Override
+      protected void setup() {}
+
+      @Override
+      protected void loop() throws InterruptedException {
+        routeWorker.loop();
+        Thread.sleep(100);
+      }
+    });;
   }//onStart
 
   @Override protected void handleException(Throwable e) {
@@ -210,6 +221,57 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   @Override public void publishRouteEvent(cav_msgs.RouteEvent routeEvent) {
       routeEventPub.publish(routeEvent);
+  }
+
+  /**
+   * Helper class to hold the result of a service call
+   */
+  protected class ResultHolder <T> {
+    private T result;
+
+    void setResult(T res) {
+      result = res;
+    }
+
+    T getResult() {
+      return result;
+    }
+  }
+
+  @Override public Transform getTransform(String parentFrame, String childFrame, Time stamp) {
+    final GetTransformRequest req = getTransformClient.newMessage();
+    req.setParentFrame(parentFrame);
+    req.setChildFrame(childFrame);
+    req.setStamp(stamp);
+    final ResultHolder<Transform> rh = new ResultHolder<>();
+    try {
+      RosServiceSynchronizer.callSync(getTransformClient, req,
+        new ServiceResponseListener<GetTransformResponse>() {
+          @Override
+          public void onSuccess(GetTransformResponse response) {
+            if (response.getErrorStatus() == GetTransformResponse.NO_ERROR
+              || response.getErrorStatus() == GetTransformResponse.COULD_NOT_EXTRAPOLATE) {
+
+              rh.setResult(Transform.fromTransformMessage(response.getTransform().getTransform()));
+
+            } else {
+              log.warn("TRANSFORM", "Attempt to get transform failed with error code: " + response.getErrorStatus());
+              rh.setResult(null);
+              return;
+            }
+          }
+
+          @Override
+          public void onFailure(RemoteException e) {
+            log.warn("TRANSFORM", "getTransform call failed for " + getTransformClient.getName());
+            rh.setResult(null);
+          }
+        });
+    } catch (InterruptedException e) {
+      log.warn("TRANSFORM", "getTransform call failed for " + getTransformClient.getName());
+      rh.setResult(null);
+    }
+    return rh.getResult();
   }
   
   @Override public Time getTime() {

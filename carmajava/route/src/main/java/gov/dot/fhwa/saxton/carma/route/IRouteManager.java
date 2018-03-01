@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.*;
 import org.ros.message.Time;
+import org.ros.rosjava_geometry.Transform;
 
 /**
  * Interface defines the needed functions of a route worker
@@ -44,6 +45,11 @@ public interface IRouteManager {
    * @param routeEvent The latest route event
    */
   void publishRouteEvent(RouteEvent routeEvent);
+
+  /**
+   * Gets the transform of between the requested frames
+   */
+  Transform getTransform(String parentFrame, String childFrame, Time stamp);
   
   /**
    * Gets the current time
