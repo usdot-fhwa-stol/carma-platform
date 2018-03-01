@@ -66,8 +66,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         };
 
         /*
-            Watch out for route completed, and display the Route State in the System Status tab.
-            Route state are only set and can be shown after Route has been selected.
+            Listen to route state to calculate the distance.
         */
         var showActiveRoute = function () {
 
@@ -100,16 +99,10 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         var calculateDistToNextSpeedLimit = function (segment) {
 
             if (segment == null)
-            {
-                //console.log('**** calculateDistToNextSpeedLimit: segment is null.');
                 return;
-            }
 
-            if (segment.length <= 0 || segment.length == null || segment.length == 'undefined')
-            {
-                //console.log('**** calculateDistToNextSpeedLimit: segment is null.');
+            if (segment.length == null || segment.length == 'undefined' || segment.length <= 0)
                 return;
-            }
 
             //To calculate the distance to next speed limit
             var routeSpeedLimit; //To store the total distance for each speed limit change.

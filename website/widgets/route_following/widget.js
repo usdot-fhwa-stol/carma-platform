@@ -88,8 +88,7 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
         };
 
        /*
-            Watch out for route completed, and display the Route State in the System Status tab.
-            Route state are only set and can be shown after Route has been selected.
+             Listen to route state to calculate the distance.
         */
         var showActiveRoute = function () {
 
@@ -119,6 +118,12 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
             Calculate the distance to next lane change.
         */
         var calculateDistToNextLaneChange = function (segment) {
+
+            if (segment == null)
+                return;
+
+            if (segment.length == null || segment.length == 'undefined' || segment.length <= 0)
+                return;
 
             //To calculate the distance to next next lane change.
             var routeLaneChange; //To store the total distance for each lane change.

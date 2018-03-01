@@ -14,9 +14,7 @@ CarmaJS.WidgetFramework = (function () {
 
             function urlCallback(url) {
                 return function () {
-                    //** DO NOT REMOVE THIS console.log, somehow this makes a difference on loading the script properly.
-                    console.log(url + ' was loaded (' + --count + ' more scripts remaining).');
-
+                    --count;
                     if (count < 1) {
                         callback();
                     }
