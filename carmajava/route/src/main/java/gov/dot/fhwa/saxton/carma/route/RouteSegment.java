@@ -101,12 +101,7 @@ public class RouteSegment {
    * @return The calculated cross track distance in meters
    */
   public double crossTrackDistance(Point3D point) {
-    Transform objInECEF = new Transform(new Vector3(point.getX(), point.getY(), point.getZ()), Quaternion.identity());
-    Transform objInSegment = getECEFToSegmentTransform().invert().multiply(objInECEF); // Find the transform from the segment to this object
-    Vector3 objVec = objInSegment.getTranslation();
-    Point3D objPosition = new Point3D(objVec.getX(), objVec.getY(), objVec.getZ());
-    return objPosition.getY();
-    //return this.lineSegment.crossTrackDistance(point);
+    return ecefPointInSegmentFrame(point).getY();
   }
 
   /**
@@ -117,7 +112,20 @@ public class RouteSegment {
    * @return The calculated down track distance in meters
    */
   public double downTrackDistance(Point3D point) {
-    return this.lineSegment.downtrackDistance(point);
+    return ecefPointInSegmentFrame(point).getX();
+  }
+
+  /**
+   * Helper function to convert a point from the ECEF frame into the route segment FRD frame
+   * 
+   * @param ecefPoint A point located in an ecef frame
+   */
+  private Point3D ecefPointInSegmentFrame(Point3D ecefPoint) {
+    Transform ecefToPoint = new Transform(new Vector3(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), Quaternion.identity());
+    Transform segmentToPoint = getECEFToSegmentTransform().invert().multiply(ecefToPoint); // Find the transform from the segment to this object
+    Vector3 pntVec = segmentToPoint.getTranslation();
+    Point3D pntPosition = new Point3D(pntVec.getX(), pntVec.getY(), pntVec.getZ());
+    return pntPosition;
   }
 
   /**
