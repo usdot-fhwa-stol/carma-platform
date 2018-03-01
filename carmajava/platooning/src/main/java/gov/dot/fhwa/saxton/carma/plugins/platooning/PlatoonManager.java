@@ -124,4 +124,8 @@ public class PlatoonManager implements Runnable {
     protected synchronized PlatoonMember getLeader() {
         return platoon.size() == 0 ? null : platoon.first();
     }
+    
+    protected int getPlatooningSize() {
+        return platoon.size();
+    }
 }

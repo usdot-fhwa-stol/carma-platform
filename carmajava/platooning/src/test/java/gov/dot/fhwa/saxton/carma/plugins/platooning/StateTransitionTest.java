@@ -24,19 +24,10 @@ import static org.mockito.Mockito.*;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.ros.internal.message.RawMessage;
-import org.ros.message.MessageFactory;
 
-import cav_msgs.BasicVehicleClass;
-import cav_msgs.MobilityHeader;
-import cav_msgs.MobilityIntro;
-import cav_msgs.NewPlan;
-import cav_msgs.PlanType;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
@@ -57,7 +48,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
-public class PlatooningPluginTest {
+public class StateTransitionTest {
 
     private PlatooningPlugin platooning;
     private GuidanceRouteService routeService;

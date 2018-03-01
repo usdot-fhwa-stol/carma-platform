@@ -177,4 +177,35 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         return this.state.planTrajectory(traj, expectedEntrySpeed);
     }
 
+    protected CommandGenerator getCommandGenerator() {
+        return commandGenerator;
+    }
+
+    protected PlatoonManager getPlatoonManager() {
+        return platoonManager;
+    }
+    
+    protected double getTimeHeadway() {
+        return timeHeadway;
+    }
+
+    protected double getStandStillGap() {
+        return standStillGap;
+    }
+
+    protected double getKpPID() {
+        return kpPID;
+    }
+
+    protected double getKiPID() {
+        return kiPID;
+    }
+
+    protected double getKdPID() {
+        return kdPID;
+    }
+    
+    protected double getMaxAccel() {
+        return maxAccel;
+    }
 }
