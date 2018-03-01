@@ -146,7 +146,7 @@ lane_change_notification_time: 4.0
 include_accel_dist: false
 
 # the fraction of desired speed that we will slow down to in order to grow the gap for a merge
-slow_speed_fraction: 0.8
+slow_speed_fraction: 0.6
 
 # the assumed gap, sec, between the following & merging vehicles and the forward vehicle
 initial_time_gap: 1.0
