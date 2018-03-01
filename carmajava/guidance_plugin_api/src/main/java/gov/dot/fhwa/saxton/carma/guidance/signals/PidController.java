@@ -83,7 +83,7 @@ public class PidController implements Filter<Double> {
             }
 
             if (Kd > 0) {
-                output -= Kd * (error - lastError.get().getData()) / dt;
+                output += Kd * (error - lastError.get().getData()) / dt;
             }
         }
 
