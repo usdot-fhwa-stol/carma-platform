@@ -384,6 +384,9 @@ public class RouteWorker {
   public void loop() {
     // Update vehicle position
     earthToHostVehicle = routeManager.getTransform(earthFrame, hostVehicleFrame, Time.fromMillis(0));
+    if (earthToHostVehicle == null) {
+      return;
+    }
     Vector3 transInECEF = earthToHostVehicle.getTranslation();
     hostVehicleInECEF = new Point3D(transInECEF.getX(), transInECEF.getY(), transInECEF.getZ());
 

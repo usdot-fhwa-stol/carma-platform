@@ -101,7 +101,12 @@ public class RouteSegment {
    * @return The calculated cross track distance in meters
    */
   public double crossTrackDistance(Point3D point) {
-    return this.lineSegment.crossTrackDistance(point);
+    Transform objInECEF = new Transform(new Vector3(point.getX(), point.getY(), point.getZ()), Quaternion.identity());
+    Transform objInSegment = getECEFToSegmentTransform().invert().multiply(objInECEF); // Find the transform from the segment to this object
+    Vector3 objVec = objInSegment.getTranslation();
+    Point3D objPosition = new Point3D(objVec.getX(), objVec.getY(), objVec.getZ());
+    return objPosition.getY();
+    //return this.lineSegment.crossTrackDistance(point);
   }
 
   /**

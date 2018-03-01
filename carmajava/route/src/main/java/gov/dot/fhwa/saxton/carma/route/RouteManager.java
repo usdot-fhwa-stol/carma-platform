@@ -113,6 +113,14 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
     routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath, requiredLeftRouteCount);
 
+    // Used Services
+    // Ensure transforms can be obtained
+    getTransformClient = this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 5000);
+    if (getTransformClient == null) {
+      log.fatal("TRANSFORM", "Node could not find service get_transform");
+      publishSystemAlert(AlertSeverity.FATAL, "Node could not find service get_transform: get_transform service is not available. Route package will not be able to function", null );
+    }
+
     // Subscribers
     // Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
 
