@@ -66,7 +66,7 @@ public class RouteProgressTest {
   @Test
   public void testRouteProgress() throws Exception {
     MockRouteManager routeMgr = new MockRouteManager();
-    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3);
+    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3, "earth", "host_vehicle");
 
     routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
@@ -133,7 +133,7 @@ public class RouteProgressTest {
   @Test
   public void testLeavingRouteVicinity() throws Exception {
     MockRouteManager routeMgr = new MockRouteManager();
-    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3);
+    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3, "earth", "host_vehicle");
 
     routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
@@ -197,7 +197,7 @@ public class RouteProgressTest {
   public void testRouteAbort() throws Exception {
     MockRouteManager routeMgr = new MockRouteManager();
     RouteWorker routeWorker =
-      new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3);
+      new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3, "earth", "host_vehicle");
 
     routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);

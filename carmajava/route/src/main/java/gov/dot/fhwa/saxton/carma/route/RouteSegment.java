@@ -94,7 +94,7 @@ public class RouteSegment {
   }
 
     /**
-   * Calculates the crosstrack distance from the provided GPS location to this route segment
+   * Calculates the crosstrack distance from the provided ECEF point to the route segment
    * Uses flat earth model
    *
    * @param point The gps location to be compared
@@ -105,7 +105,7 @@ public class RouteSegment {
   }
 
   /**
-   * Calculates the downtrack distance from the provided GPS location to this route segment start
+   * Calculates the downtrack distance from the provided ECEF point to the route segment start
    * Uses flat earth model
    *
    * @param point The gps location to be compared

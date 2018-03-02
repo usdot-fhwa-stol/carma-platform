@@ -109,9 +109,18 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
       finalDatabasePath = packagePath + "/" + databasePath;
     }
 
+    String earthFrame = params.getString("~earth_frame_id", "earth");
+    String hostVehicleFrame = params.getString("~host_vehicle_frame_id", "host_vehicle");
     int requiredLeftRouteCount = params.getInteger("~required_left_route_count", 3);
 
-    routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath, requiredLeftRouteCount);
+    // Echo params
+    log.info("LoadedParam: package_path = " + packagePath);
+    log.info("LoadedParam: default_database_path = " + databasePath);
+    log.info("LoadedParam: earth_frame_id = " + earthFrame);
+    log.info("LoadedParam: host_vehicle_frame_id = " + hostVehicleFrame);
+    log.info("LoadedParam: required_left_route_count = " + requiredLeftRouteCount);
+
+    routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath, requiredLeftRouteCount, earthFrame, hostVehicleFrame);
 
     // Used Services
     // Ensure transforms can be obtained

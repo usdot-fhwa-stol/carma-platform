@@ -85,24 +85,22 @@ public class RouteWorker {
   protected double currentSegmentDowntrack = 0;
 
   protected String earthFrame = "earth";
-  protected String odomFrame = "odom";
-  protected String baseLinkFrame = "base_link";
   protected String hostVehicleFrame = "host_vehicle";
-  Transform baseLinkToHostVehicle = null;
-  Transform odomToHostVehicle = null;
   Transform earthToHostVehicle = null;
   Point3D hostVehicleInECEF = null;
-  Time lastTransformStamp = Time.fromMillis(0);
 
   /**
    * Constructor initializes a route worker object with the provided logging tool
    *
    * @param log The logger to be used
    */
-  public RouteWorker(IRouteManager manager, Log log, int requiredLeftRouteCount) {
+  public RouteWorker(IRouteManager manager, Log log, int requiredLeftRouteCount,
+   String earthFrameId, String hostVehicleFrameId) {
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.routeManager = manager;
     this.requiredLeftRouteCount = requiredLeftRouteCount;
+    this.earthFrame = earthFrameId;
+    this.hostVehicleFrame = hostVehicleFrameId;
   }
 
   /**
@@ -111,10 +109,13 @@ public class RouteWorker {
    * @param manager negotiation manager which is used to publish data
    * @param log     the logger
    */
-  public RouteWorker(IRouteManager manager, Log log, String database_path, int requiredLeftRouteCount) {
+  public RouteWorker(IRouteManager manager, Log log, String database_path, int requiredLeftRouteCount,
+   String earthFrameId, String hostVehicleFrameId) {
     this.routeManager = manager;
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.requiredLeftRouteCount = requiredLeftRouteCount;
+    this.earthFrame = earthFrameId;
+    this.hostVehicleFrame = hostVehicleFrameId;
     // Load route files from database
     log.info("RouteDatabasePath: " + database_path);
     File folder = new File(database_path);
@@ -381,8 +382,11 @@ public class RouteWorker {
     return cav_srvs.AbortActiveRouteResponse.NO_ERROR;
   }
 
+  /**
+   * Function to be executed on regular intervals
+   */
   public void loop() {
-    // Update vehicle position
+    // Update vehicle position with most recent transform
     earthToHostVehicle = routeManager.getTransform(earthFrame, hostVehicleFrame, Time.fromMillis(0));
     if (earthToHostVehicle == null) {
       return;
@@ -390,44 +394,7 @@ public class RouteWorker {
     Vector3 transInECEF = earthToHostVehicle.getTranslation();
     hostVehicleInECEF = new Point3D(transInECEF.getX(), transInECEF.getY(), transInECEF.getZ());
 
-    // If in route following state update route progress
-    if (getCurrentState() != WorkerState.FOLLOWING_ROUTE || activeRoute == null) {
-      return;
-    }
-    updateRouteProgress();
-  }
-
-  /**
-   * @deprecated
-   * Function to be used as a callback for the arrival of new transform messages
-   * 
-   * @param msg The received message
-   */
-  protected void handleTFMsg(tf2_msgs.TFMessage msg) {
-    // Check if the static transform from base_link -> host_vehicle has been published yet. Get it if not
-    if (baseLinkToHostVehicle == null) {
-      baseLinkToHostVehicle = routeManager.getTransform(baseLinkFrame, hostVehicleFrame, Time.fromMillis(0));
-      if (baseLinkToHostVehicle == null) 
-        return;
-    }
-    geometry_msgs.TransformStamped odomToBaseLinkMsg = null;
-    for (geometry_msgs.TransformStamped tfStamped : msg.getTransforms()) {
-      if (tfStamped.getHeader().getFrameId() == odomFrame 
-          && tfStamped.getChildFrameId() == baseLinkFrame) {
-            odomToBaseLinkMsg = tfStamped;
-            break;
-          }
-    }
-    // If the transform from odom -> base_link was not provided in this message return
-    if (odomToBaseLinkMsg == null) {
-      return;
-    }
-    // Check if this is a new transform
-    if (lastTransformStamp.compareTo(odomToBaseLinkMsg.getHeader().getStamp()) == -1) {
-      return;
-    }
-
-    odomToHostVehicle = Transform.fromTransformMessage(odomToBaseLinkMsg.getTransform()).multiply(baseLinkToHostVehicle);
+    // If in route following state, update route progress
     if (getCurrentState() != WorkerState.FOLLOWING_ROUTE || activeRoute == null) {
       return;
     }
@@ -437,7 +404,6 @@ public class RouteWorker {
   /**
    * Function updates the progress along the route
    */
-
   private void updateRouteProgress() {
     // Loop to find current segment. This allows for small breaks in gps data
     while (atNextSegment()) { // TODO this might be problematic on tight turns
