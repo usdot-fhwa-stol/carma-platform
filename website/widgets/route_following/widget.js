@@ -12,6 +12,9 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
 
         var total_dist_next_lane_change = 0;
 
+        //Listeners
+        var listenerRouteState;
+        var listenerRoute;
 
         //Currently the URL path from document or window are pointing to the page, not the actual folder location.
         //Therefore this needs to be hardcoded.
@@ -26,7 +29,7 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
         var checkRouteState = function () {
 
             //Get Route State
-            var listenerRouteState = new ROSLIB.Topic({
+            listenerRouteState = new ROSLIB.Topic({
                 ros: ros,
                 name: t_route_state,
                 messageType: 'cav_msgs/RouteState'
@@ -93,7 +96,7 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
         var showActiveRoute = function () {
 
             //Get Route State
-            var listenerRoute = new ROSLIB.Topic({
+            listenerRoute = new ROSLIB.Topic({
                 ros: ros,
                 name: t_active_route,
                 messageType: 'cav_msgs/Route'
@@ -269,13 +272,11 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                 if (targetlane >= 0) {
                     var lineid = 'r' + rect_index + 'e' + (targetlane + 1) + '_line';
                     var targetline = SVG.get(lineid);
-                    //console.log('TARGET: lineid: ' + lineid +  '; x1: ' + targetline.attr('x1'));
 
                     if (targetline != null) {
                         var line_x = targetline.attr('x1');
-                        //console.log('TARGET: targetline.x1:' + line_x);
-
                         var targetlanestyle;
+
                         if (currentlaneid == targetlane)
                             targetlanestyle = 'fill:#4CAF50; fill-opacity:1.00;'; //Green
                         else
@@ -289,22 +290,17 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                             , style: targetlanestyle
                         });
                     }
-                    else {
-                        //console.log('TARGET: targetline is null!');
-                    }
                 }
 
-                /*** Current Lane
-                */
+                //Current Lane
+                //currentlaneid is 0 based.
                 if (currentlaneid >= 0) {
 
                     var lineid = 'r' + rect_index + 'e' + (currentlaneid + 1) + '_line';
                     var targetline = SVG.get(lineid);
-                    //console.log('CURRENT: lineid: ' + lineid + '; x1: ' + targetline.attr('x1'));
 
                     if (targetline != null) {
                         var line_x = targetline.attr('x1');
-                        //console.log('CURRENT: targetline.x1:' + line_x);
 
                         //To calculate image x position = e#_line.x1 - 19px
                         //TODO: Convert to svg to change colors.
@@ -318,13 +314,9 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                             , visibility: 'visible'
                         });
                     }
-                    else {
-                        //console.log('CURRENT: targetline is null!');
-                    }
                 }
 
                 //Display OFF ROAD when less than 0 or >= totallanes
-                //currentlaneid is 0 based.
                 if (currentlaneid < 0 || currentlaneid >= totallanes) {
                     var text = draw.text(function (add) {
                         add.tspan('OFF ROAD').fill('#b32400').style('font-weight:bold;font-size:20px;') /* red font */
@@ -355,6 +347,7 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
         *    Start route timer after engaging Guidance.
         ***/
         var startRouteTimer = function () {
+
             // Set the date we're counting down to and save to session.
             if (sessionStorage.getItem('startDateTime') == null) {
                 var startDateTime = new Date().getTime();
@@ -420,6 +413,14 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
               //this._div = $("<button>");
               $(this.element).append(myDiv);
            },
+           _destroy: function() {
+                if (listenerRouteState)
+                    listenerRouteState.unsubscribe();
+                if (listenerRoute)
+                   listenerRoute.unsubscribe();
+                this.element.empty();
+                this._super();
+           },
            draw: function() {
               drawLanes(false, true);
            },
@@ -429,15 +430,16 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
            showActiveRoute: function(){
               showActiveRoute();
            }
-
         });
 
         $.widget("CarmaJS.rfRouteInfo", {
            _create: function() {
               var myDiv = $(" <div id='divRouteInfo'>No Route Selected : 00h 00m 00s</div>");
-
-              //this._div = $("<button>");
               $(this.element).append(myDiv);
+           },
+           _destroy: function() {
+                this.element.empty();
+                this._super();
            },
            startRouteTimer: function(){
               startRouteTimer();
@@ -445,12 +447,10 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
            initializeRouteTimer: function(){
                initializeRouteTimer();
             }
-
         });
 
         /*** Public Functions ***
         This is the main call to setup the different widgets available in this plugin.
-        //TODO: In the future, when only one of the widgets here are created, need to add check if widget exists.
         ***/
         var loadCustomWidget = function(container) {
 
@@ -465,7 +465,6 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
 
         var onGuidanceEngaged = function(){
             startRouteTimer();
-            //container.rfRouteInfo("startRouteTimer");
         };
 
         //Public API

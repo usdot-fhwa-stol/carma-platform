@@ -10,6 +10,10 @@ CarmaJS.WidgetFramework = (function () {
         //NOTE: appending to document.head doesn't seem to work, need to have this callback to fully load the script.
         //Can parse multiple files. e.g. scriptLoader(['a.js','b.js'], functionname)
         var scriptLoader = function (scripts, callback) {
+
+            //In our scriptLoadHandler function we make sure that jQuery can be used with other libraries and also with other versions of itself.
+           //jQuery = window.jQuery.noConflict(true);
+
             var count = scripts.length;
 
             function urlCallback(url) {
@@ -33,7 +37,6 @@ CarmaJS.WidgetFramework = (function () {
                 loadScript(script);
             }
         };
-
 
         /*
            Removes the first matched array by key and value pair.
@@ -97,9 +100,7 @@ CarmaJS.WidgetFramework = (function () {
 
             //Update the parameter to note selected widget
             selectedWidgets.forEach(function (widget) {
-
                 updateIsWidgetShownValue(widget.id, true);
-
             });//ForEach
 
            //Load widgets
@@ -126,7 +127,6 @@ CarmaJS.WidgetFramework = (function () {
             var pluginsActivated = getPluginsActivated();
 
             pluginsActivated.forEach(function (plugin) {
-
                 //Create the checkbox based on the plugin properties.
                 createCheckboxElement(divWidgetOptionsList, plugin.id, plugin.title, pluginsActivated.length, 'groupWidgets', pluginsActivated.isWidgetShown, false, 'CarmaJS.WidgetFramework.activateWidget');
             });
@@ -151,9 +151,9 @@ CarmaJS.WidgetFramework = (function () {
                 {
                      //Remove first if exists
                      var pluginsActivated = removeArrayByKey(pluginsActivated, {
-                                              key: 'id',
-                                              value: cbId
-                                 });
+                                                key: 'id',
+                                                value: cbId
+                                            });
 
                      //Save changes back to session.
                      sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
@@ -196,21 +196,17 @@ CarmaJS.WidgetFramework = (function () {
         var activateWidget = function(id) {
 
             var cbWidgetOption = document.getElementById(id);
-            if (cbWidgetOption == null)
-            {
+            if (cbWidgetOption == null) {
                 console.log('activateWidget: cbWidgetOption is null');
             }
             else{
                 var isChecked = cbWidgetOption.checked; // this is new value
-
-                console.log('activateWidget: id: ' + id + '; isChecked2: ' + isChecked);
-                //cbWidgetOption.setAttribute('checked', isChecked);
+                //console.log('activateWidget: id: ' + id + '; isChecked2: ' + isChecked);
 
                 //Update list
                 updateIsWidgetShownValue(id, isChecked);
-
-                //setCAVButtonState('ENABLED');
             }
+
             enableGuidance(); //rosbridge.js
         };
 
@@ -226,15 +222,13 @@ CarmaJS.WidgetFramework = (function () {
            var result = $.grep(pluginsActivated, function(e){ return e.isWidgetShown == true; });
 
             if (result.length == 0) {
-              // not found, show OptionsList
-              //showWidgetOptions();
-              //console.log ('No widgets to load');
+              // No widgets shown, show OptionsList
               return;
             }
-            else {
+            //else {
               // multiple items found
               //console.log(result.length + ' widgets to load');
-            }
+            //}
 
           //Hide the list of widgets
           var divWidgetOptions = document.getElementById('divWidgetOptions');
@@ -242,10 +236,6 @@ CarmaJS.WidgetFramework = (function () {
 
           var divWidgetArea = document.getElementById('divWidgetArea');
           divWidgetArea.style.display = 'block';
-
-           //Hide the list of widgets
-          //  var divWidgetOptions = document.getElementById('divWidgetOptions');
-           // divWidgetOptions.style.display = 'none';
 
             //Loop thru the active widgets and load each css, js and call it's loadCustomWidget().
             //Check if at least one of the expected file exists.
@@ -282,7 +272,6 @@ CarmaJS.WidgetFramework = (function () {
                      success: function()
                      {
                         //console.log('cssFilePath: ' + cssFilePath);
-                        //console.log('loadWidgets: Widget file DOES exist: ' + jsFilePath );
                         //1) Load css
                         var link = document.createElement('link');
                         link.setAttribute('rel', 'stylesheet');
@@ -324,38 +313,22 @@ CarmaJS.WidgetFramework = (function () {
         };
 
         var closeWidgets = function(){
-
-            console.log('widgetfw.closeWidgets!');
-            /*
-            //TODO: Need to reset the widget and unsubscribing
-            var divWidgetOptions = document.getElementById('divWidgetOptions');
-            divWidgetOptions.style.display = 'none';
-
-            var divWidgetOptionsList = document.getElementById('divWidgetOptionsList');
-            divWidgetOptionsList.innerHTML = '';
-
-            var divWidgetArea = document.getElementById('divWidgetArea');
-            divWidgetArea.style.display = 'none';
-
-            $("#CarmaJS.cruisingSpeedLimit").remove();
-            CarmaJS.WidgetFramework.Cruising.closeWidget();
-            */
+            //Remove the divWidgetArea
+            $('#divWidgetArea').remove();
+            //Then add it back in.
+            var  myDiv = "<div id='divWidgetArea'></div>";
+             $('#divDriverView').append(myDiv);
         };
 
         var onGuidanceEngaged = function(){
             CarmaJS.WidgetFramework.RouteFollowing.onGuidanceEngaged();
             console.log('widgetfw.onGuidanceEngaged!');
-
         };
 
         var onRefresh = function () {
-             //sessionStorage.removeItem('widgetsActivated');
-             //sessionStorage.removeItem('pluginsActivated');
-
              //load Widgets()
              CarmaJS.WidgetFramework.showSelectedWidgets();
         };
-
 
         //Public API
         return {

@@ -6,8 +6,13 @@ CarmaJS.registerNamespace("CarmaJS.WidgetFramework.Cruising");
 CarmaJS.WidgetFramework.Cruising = (function () {
 
         //*** Private Variables ***
-        // var variable_name = 0;
         var total_dist_next_speed_limit = 0;
+
+        //Listeners
+        var listenerRouteState;
+        var listenerRoute;
+        var listenerSpeedAccel;
+        var listenerCANSpeed;
 
         //*** Widget Install Folder ***
         //Currently the URL path from document or window are pointing to the page, not the actual folder location.
@@ -16,7 +21,6 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         var installfoldername = 'widgets/cruising/';
 
         //*** Functions ***
-
         /***
         * Listen to route state to determine current, total, target lanes.
         * Assumes that ROSLIB object has been initalized.
@@ -24,7 +28,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         var checkRouteState = function () {
 
             //Get Route State
-            var listenerRouteState = new ROSLIB.Topic({
+            listenerRouteState = new ROSLIB.Topic({
                 ros: ros,
                 name: t_route_state,
                 messageType: 'cav_msgs/RouteState'
@@ -60,7 +64,6 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                             break;
                         }
                     }
-                    //insertNewTableRow('tblSecondA', 'total_dist_next_speed_limit', total_dist_next_speed_limit);
                 }
             });
         };
@@ -71,7 +74,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         var showActiveRoute = function () {
 
             //Get Route State
-            var listenerRoute = new ROSLIB.Topic({
+            listenerRoute = new ROSLIB.Topic({
                 ros: ros,
                 name: t_active_route,
                 messageType: 'cav_msgs/Route'
@@ -84,11 +87,9 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                     return;
                 }
 
-                //alert('showActive Route: sessionStorage.getItem(routeSpeedLimitDist: ' + sessionStorage.getItem('routeSpeedLimitDist'));
                 if (sessionStorage.getItem('routeSpeedLimitDist') == null) {
                     message.segments.forEach(calculateDistToNextSpeedLimit);
                 }
-
             });
         };
 
@@ -116,7 +117,6 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                 sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
             }
             else {
-
                 routeSpeedLimitDist = sessionStorage.getItem('routeSpeedLimitDist');
                 routeSpeedLimitDist = JSON.parse(routeSpeedLimitDist);
 
@@ -129,6 +129,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                         , total_length: (lastItem.total_length + segment.length) //make this a running total for every speed limit change
                         , speed_limit: segment.waypoint.speed_limit
                     };
+
                     routeSpeedLimitDist.push(routeSpeedLimit);
 
                     sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
@@ -140,7 +141,6 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                     lastItem.total_length += segment.length;
 
                     sessionStorage.setItem('routeSpeedLimitDist', JSON.stringify(routeSpeedLimitDist));
-
                 }
             }
         };
@@ -150,15 +150,13 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         ***/
         var showSpeedAccelInfo = function () {
 
-            //Get Speed Accell Info
-            var listenerSpeedAccel = new ROSLIB.Topic({
+            listenerSpeedAccel = new ROSLIB.Topic({
                 ros: ros,
                 name: t_cmd_speed,
                 messageType: 'cav_msgs/SpeedAccel'
             });
 
             listenerSpeedAccel.subscribe(function (message) {
-
                 var cmd_speed_mph = Math.round(message.speed * meter_to_mph);
 
                 //Display on DriverView the Speed Cmd for Speed Harm or Cruising
@@ -172,6 +170,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
             Set the values of the speedometer
         */
         var setSpeedometer = function (speed) {
+
             var maxMPH = 160;
             var deg = (speed / maxMPH) * 180;
             document.getElementById('percent').innerHTML = speed;
@@ -189,7 +188,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         */
         var showCANSpeeds = function () {
 
-            var listenerCANSpeed = new ROSLIB.Topic({
+            listenerCANSpeed = new ROSLIB.Topic({
                 ros: ros,
                 name: t_can_speed,
                 messageType: 'std_msgs/Float64'
@@ -208,6 +207,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         ***/
         $.widget("CarmaJS.cruisingSpeedLimit", {
             _create: function() {
+                //this.element.addClass('CarmaJS.cruisingSpeedLimit');
                 var myDiv = $("<div id='divSpeedLimit' class='sign-black-border-outer'>"
                             + "     <div class='sign-black-border-inner'>"
                             + "         <div class='sign-black-border-title'>SPEED LIMIT</div>"
@@ -216,11 +216,17 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                             + "</div>"
                             + "<div id='divSLDistRemaining'></div>");
 
-                //this._div = $("<button>");
                 $(this.element).append(myDiv);
              },
              _destroy: function() {
-                this.element.removeClass("CarmaJS.cruisingSpeedLimit");
+
+                if (listenerRouteState)
+                    listenerRouteState.unsubscribe();
+                if (listenerRoute)
+                   listenerRoute.unsubscribe();
+
+                this.element.empty();
+                this._super();
              },
              checkRouteState: function(){
                 checkRouteState();
@@ -228,7 +234,6 @@ CarmaJS.WidgetFramework.Cruising = (function () {
              showActiveRoute: function(){
                 showActiveRoute();
              }
-
         });//CarmaJS.cruisingSpeedLimit
 
         $.widget("CarmaJS.cruisingSpeedCmd", {
@@ -244,13 +249,16 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                 $(this.element).append(myDiv);
              },
             _destroy: function() {
-                console.log('CarmaJS.cruisingSpeedCmd - destroy called.');
-                this.element.removeClass("CarmaJS.cruisingSpeedCmd");
+
+                if (listenerSpeedAccel)
+                  listenerSpeedAccel.unsubscribe();
+
+                this.element.empty();
+                this._super();
             },
              showSpeedAccelInfo: function(){
                 showSpeedAccelInfo();
              }
-
         });//CarmaJS.cruisingSpeedCmd
 
         /*
@@ -268,13 +276,13 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                 $(this.element).append(myDiv);
              },
             _destroy: function() {
-                this.element.removeClass("CarmaJS.cruisingSpeedometer");
+                 if (listenerCANSpeed)
+                    listenerCANSpeed.unsubscribe();
+                this.element.empty();
+                this._super();
             },
              showCANSpeeds: function(){
                 showCANSpeeds();
-             },
-             setSpeedometer: function(val){
-                setSpeedometer(val);
              }
         });//CarmaJS.cruisingSpeedometer
 
@@ -283,7 +291,6 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         ***/
         var loadCustomWidget = function(container) {
 
-            //Generate the  widget and calling its private method(s) below.
             container.cruisingSpeedLimit();
             container.cruisingSpeedLimit("showActiveRoute",null);
             container.cruisingSpeedLimit("checkRouteState",null);
