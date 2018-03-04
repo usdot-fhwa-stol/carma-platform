@@ -7,22 +7,33 @@ from cav_msgs.msg import Route
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import Transform
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
 
-pub = rospy.Publisher('/external_pose', PoseArray, queue_size=10)
+pub = rospy.Publisher('/external_obj_markers', MarkerArray, queue_size=10)
 route_pub = rospy.Publisher('/route_pose', PoseArray, queue_size=10)
 
 def external_objects_cb(obj):
-    poses = []
-    posesArray = PoseArray()
+    markers = []
+    markersArrayMsg = MarkerArray()
     for obj in obj.objects:
-        posesArray.header.stamp = obj.header.stamp
-        posesArray.header.frame_id = obj.header.frame_id
-        poseStamped = Pose()
-        poseStamped = obj.pose.pose
-        poses.append(poseStamped)
-    posesArray.poses = poses
-    pub.publish(posesArray)
-        #poses.append(poseStamped)
+        marker = Marker()
+        marker.header.stamp = obj.header.stamp
+        marker.header.frame_id = obj.header.frame_id
+        marker.type = marker.CUBE
+        marker.action = marker.ADD
+        marker.pose = obj.pose.pose
+        marker.scale = obj.size
+        marker.frame_locked = True
+        marker.lifetime = rospy.Duration.from_sec(1)
+        # Color of blue
+        marker.color.a = 1.0 # Alpha of 1
+        marker.color.r = 0.0
+        marker.color.g = 0.0
+        marker.color.b = 1.0
+        markers.append(marker)
+    markersArrayMsg.markers = markers
+    pub.publish(markersArrayMsg)
 
 def route_cb(route):
     poses = []

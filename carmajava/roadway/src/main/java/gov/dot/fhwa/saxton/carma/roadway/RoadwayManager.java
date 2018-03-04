@@ -98,6 +98,7 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     roadwayEnvPub =
       connectedNode.newPublisher("roadway_environment", cav_msgs.RoadwayEnvironment._TYPE);
     posesPub = connectedNode.newPublisher("/route_poses", geometry_msgs.PoseArray._TYPE);
+    posesPub.setLatchMode(true);
     // Safer to initialize EnvironmentWorker after publishers and before subscribers
     // This means any future modifications which attempt to publish data shortly after initialization will be valid
     environmentWorker = new EnvironmentWorker(this, connectedNode.getLog(), earthFrameId,
