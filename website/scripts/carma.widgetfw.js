@@ -89,25 +89,7 @@ CarmaJS.WidgetFramework = (function () {
                //Save changes back to session.
                sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
         };
-
-        /*
-            Saves selection and calls loadWidgets()
-        
-        var showSelectedWidgets = function () {
-            //Get selected widgets from divWidgetOptionsList
-            var divWidgetOptionsList = document.getElementById('divWidgetOptionsList');
-            var selectedWidgets = getCheckboxesSelected(divWidgetOptionsList);
-
-            //Update the parameter to note selected widget
-            selectedWidgets.forEach(function (widget) {
-                updateIsWidgetShownValue(widget.id, true);
-            });//ForEach
-
-           //Load widgets
-           loadWidgets();
-
-        };
-        */
+    
         /*
             Show list of widgets based on Plugins that have been activated.
         */
@@ -339,15 +321,12 @@ CarmaJS.WidgetFramework = (function () {
         };
 
         var onRefresh = function () {
-             //load Widgets()
-            /* CarmaJS.WidgetFramework.showSelectedWidgets(); */
             CarmaJS.WidgetFramework.loadWidgets();
         };
 
         //Public API
         return {
             showWidgetOptions: showWidgetOptions,
-            /*showSelectedWidgets: showSelectedWidgets,*/
             countSelectedWidgets: countSelectedWidgets,
             loadWidgets: loadWidgets,
             activatePlugin: activatePlugin,

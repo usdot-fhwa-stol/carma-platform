@@ -667,10 +667,7 @@ function activateGuidance() {
         //Open to DriveView tab after engaging and show the widget options.
         if (is_guidance_active == true){
             openTab(event, 'divDriverView');
-
-            /* CarmaJS.WidgetFramework.showSelectedWidgets(); //Saves selection and loads widget */
             CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget
-            //CarmaJS.WidgetFramework.showWidgetOptions();
 
             //Start checking availability (or re-subscribe) if Guidance has been engaged.
             checkAvailability();
