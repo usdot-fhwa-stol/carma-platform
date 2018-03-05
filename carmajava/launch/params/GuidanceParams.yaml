@@ -109,7 +109,7 @@ max_downtrack_error: 100.0
 acc_exit_distance_factor: 1.5
 
 # Double: The poportional term in the acc PID controller
-acc_Kp: 1.75
+acc_Kp: -1.75
 
 # Double: The integral term in the acc PID controller
 acc_Ki: 0.0
