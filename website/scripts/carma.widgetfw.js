@@ -92,7 +92,7 @@ CarmaJS.WidgetFramework = (function () {
 
         /*
             Saves selection and calls loadWidgets()
-        */
+        
         var showSelectedWidgets = function () {
             //Get selected widgets from divWidgetOptionsList
             var divWidgetOptionsList = document.getElementById('divWidgetOptionsList');
@@ -107,12 +107,12 @@ CarmaJS.WidgetFramework = (function () {
            loadWidgets();
 
         };
-
+        */
         /*
             Show list of widgets based on Plugins that have been activated.
         */
         var showWidgetOptions = function() {
-
+            
             //Display the list of widgets
             var divWidgetOptions = document.getElementById('divWidgetOptions');
             divWidgetOptions.style.display = 'block';
@@ -127,8 +127,18 @@ CarmaJS.WidgetFramework = (function () {
             var pluginsActivated = getPluginsActivated();
 
             pluginsActivated.forEach(function (plugin) {
+                var exists = checkboxExistsById(divWidgetOptionsList, plugin.id);
+           
+                var isPreviouslySelected = false;
+                if (plugin.isWidgetShown == true ){
+                    isPreviouslySelected = true;
+                }
+
+                //console.log('showWidgetOptions: ' + plugin.id + ' : exists ' + exists + '; isPreviouslySelected: ' + isPreviouslySelected);
+
                 //Create the checkbox based on the plugin properties.
-                createCheckboxElement(divWidgetOptionsList, plugin.id, plugin.title, pluginsActivated.length, 'groupWidgets', pluginsActivated.isWidgetShown, false, 'CarmaJS.WidgetFramework.activateWidget');
+                createCheckboxElement(divWidgetOptionsList, plugin.id, plugin.title, pluginsActivated.length, 'groupWidgets', isPreviouslySelected, false, 'CarmaJS.WidgetFramework.activateWidget');
+                
             });
         };
 
@@ -311,9 +321,13 @@ CarmaJS.WidgetFramework = (function () {
 
         };
 
-        var closeWidgets = function(){
+        var closeWidgets = function () {
+            //Remove session variables
+            sessionStorage.removeItem('pluginsActivated');
+
             //Remove the divWidgetArea
             $('#divWidgetArea').remove();
+
             //Then add it back in.
             var  myDiv = "<div id='divWidgetArea'></div>";
              $('#divDriverView').append(myDiv);
@@ -321,18 +335,19 @@ CarmaJS.WidgetFramework = (function () {
 
         var onGuidanceEngaged = function(){
             CarmaJS.WidgetFramework.RouteFollowing.onGuidanceEngaged();
-            console.log('widgetfw.onGuidanceEngaged!');
+            //console.log('widgetfw.onGuidanceEngaged!');
         };
 
         var onRefresh = function () {
              //load Widgets()
-             CarmaJS.WidgetFramework.showSelectedWidgets();
+            /* CarmaJS.WidgetFramework.showSelectedWidgets(); */
+            CarmaJS.WidgetFramework.loadWidgets();
         };
 
         //Public API
         return {
             showWidgetOptions: showWidgetOptions,
-            showSelectedWidgets: showSelectedWidgets,
+            /*showSelectedWidgets: showSelectedWidgets,*/
             countSelectedWidgets: countSelectedWidgets,
             loadWidgets: loadWidgets,
             activatePlugin: activatePlugin,

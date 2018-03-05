@@ -16,6 +16,9 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
         var listenerRouteState;
         var listenerRoute;
 
+        // For Route Timer
+        var routeTimer;
+
         //Currently the URL path from document or window are pointing to the page, not the actual folder location.
         //Therefore this needs to be hardcoded.
         //TODO: However, this could be set by widgetfw based on final install folder naming convention. Using _setOptions.
@@ -379,6 +382,9 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
             //Display the route name
             var divRouteInfo = document.getElementById('divRouteInfo');
 
+            if (divRouteInfo == null)
+                return;
+
             if (divRouteInfo != null) {
                 if (is_guidance_engaged == true) {
                     divRouteInfo.innerHTML = route_name + ': ' + pad(hours, 2) + 'h '
@@ -437,7 +443,12 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
               var myDiv = $(" <div id='divRouteInfo'>No Route Selected : 00h 00m 00s</div>");
               $(this.element).append(myDiv);
            },
-           _destroy: function() {
+           _destroy: function () {
+               //Stop the timer when alert occurs;
+               //NOTE: even with clearInterval, the countUpTimer is still being called therefore had to add div exists check. 
+               clearInterval(routeTimer);
+               routeTimer = null;
+
                 this.element.empty();
                 this._super();
            },
@@ -463,7 +474,7 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
             container.rfLaneTracking("draw", null);
         };
 
-        var onGuidanceEngaged = function(){
+        var onGuidanceEngaged = function () {
             startRouteTimer();
         };
 

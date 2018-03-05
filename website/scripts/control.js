@@ -179,6 +179,30 @@ function getCheckboxesSelected(container) {
 }
 
 /*
+    Find the checkbox by Id within the DIV
+*/
+function checkboxExistsById(container, id) {
+    if (container == null || container == 'undefined')
+        return;
+
+    //var cbResults = 'Selected Items: ';
+    var count = 0;
+    var pluginList = [];
+
+    var allInputs = container.getElementsByTagName('input');
+
+    for (var i = 0, max = allInputs.length; i < max; i++) {
+        if (allInputs[i].type === 'checkbox') {
+            if (allInputs[i].id == id)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/*
 * Sets the background color of all selected checkboxes.
 */
 function setCbSelectedBgColor(color) {
@@ -324,9 +348,6 @@ function showModal(showWarning, modalMessage, restart) {
         }
     }
 
-    //stop the timer when alert occurs;
-    clearInterval(routeTimer);
-
     //display the modal
     modal.style.display = 'block';
 
@@ -352,8 +373,6 @@ function showModal(showWarning, modalMessage, restart) {
     modalBody.innerHTML = '<p>' + modalMessage + '</p>';
 
     isModalPopupShowing = true; //flag that modal popup for an alert is currently being shown to the user.
-
-
 }
 
 /*

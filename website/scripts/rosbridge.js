@@ -82,9 +82,6 @@ var isModalPopupShowing = false;
 
 var waitingForRouteStateSegmentStartup = false;
 
-// For Route Timer
-var routeTimer;
-
 //Conversion from m/s to MPH.
 var meter_to_mph = 2.23694;
 var meter_to_mile = 0.000621371;
@@ -423,7 +420,7 @@ function showSubCapabilitiesView2() {
         //Need to wait for route current segment to publish to not get negative total lengths. 
         setTimeout(function () {
             checkRouteInfo();
-            console.log('Wait call for checkRouteInfo.');
+            //console.log('Wait call for checkRouteInfo.');
             waitingForRouteStateSegmentStartup = true;
         }, 5000);
     }
@@ -671,8 +668,8 @@ function activateGuidance() {
         if (is_guidance_active == true){
             openTab(event, 'divDriverView');
 
-            CarmaJS.WidgetFramework.showSelectedWidgets(); //Saves selection and loads widget
-            //CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget
+            /* CarmaJS.WidgetFramework.showSelectedWidgets(); //Saves selection and loads widget */
+            CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget
             //CarmaJS.WidgetFramework.showWidgetOptions();
 
             //Start checking availability (or re-subscribe) if Guidance has been engaged.
