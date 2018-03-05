@@ -56,13 +56,13 @@ public class SpeedGenerationTest {
         when(mockManager.getPlatooningSize()).thenReturn(1);
         speedGenerator = new CommandGenerator(plugin, mockLogger, psl);
         speedGenerator.generateSpeed(100.0);
-        assertEquals(11.0, speedGenerator.getLastSpeedCommand(), 0.001);
+        assertEquals(9.0, speedGenerator.getLastSpeedCommand(), 0.001);
         when(mockManeuverInputs.getCurrentSpeed()).thenReturn(11.0);
         speedGenerator.generateSpeed(200.0);
-        assertEquals(9.01, speedGenerator.getLastSpeedCommand(), 0.001);
+        assertEquals(11.01, speedGenerator.getLastSpeedCommand(), 0.001);
         when(mockManeuverInputs.getCurrentSpeed()).thenReturn(10.0);
         speedGenerator.generateSpeed(300.0);
-        assertEquals(10.5, speedGenerator.getLastSpeedCommand(), 0.1);
+        assertEquals(9.995, speedGenerator.getLastSpeedCommand(), 0.001);
     }
     
 }
