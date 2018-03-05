@@ -157,7 +157,6 @@ CarmaJS.WidgetFramework = (function () {
 
                      //Save changes back to session.
                      sessionStorage.setItem('pluginsActivated', JSON.stringify(pluginsActivated));
-                     return;
                 }
                 else
                 {
