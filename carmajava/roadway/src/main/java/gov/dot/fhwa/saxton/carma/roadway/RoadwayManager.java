@@ -227,7 +227,7 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     req.setStamp(stamp);
     final ResultHolder<Transform> rh = new ResultHolder<>();
     try {
-      RosServiceSynchronizer.call(getTransformClient, req,
+      RosServiceSynchronizer.callSync(getTransformClient, req,
         new ServiceResponseListener<GetTransformResponse>() {
           @Override
           public void onSuccess(GetTransformResponse response) {

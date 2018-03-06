@@ -16,17 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import org.ros.exception.RemoteException;
 import org.ros.node.service.ServiceClient;
-import org.ros.node.service.ServiceResponseListener;
-
-import gov.dot.fhwa.saxton.carma.rosutils.RosServiceResult;
-import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
-import javassist.bytecode.analysis.ControlFlow.Block;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Concrete ROS implementation of the logic outlined in {@link IServiceChannel}
@@ -40,33 +30,9 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
     protected int numOpenChannels = 0;
     protected boolean open = true;
     protected ServiceClient<T, S> serviceClient;
-    protected BlockingQueue<ServiceTask> tasks;
-    protected Thread workerThread;
-
-    protected class ServiceTask {
-        protected T request;
-        protected ServiceResponseListener<S> callback;
-    }
-
-    protected class ServiceWorker implements Runnable {
-		@Override
-		public void run() {
-            // Spin on the task queue and run the tasks in order, waiting for each response in turn
-            while (!Thread.interrupted()) {
-                try {
-                    ServiceTask task = tasks.take();
-                    RosServiceSynchronizer.callSync(serviceClient, task.request, task.callback);
-                } catch (InterruptedException e) {
-                }
-            }
-		}
-    }
 
     RosServiceChannel(ServiceClient<T, S> serviceClient) {
         this.serviceClient = serviceClient;
-        this.tasks = new LinkedBlockingQueue<>();
-        this.workerThread = new Thread(new ServiceWorker());
-        workerThread.start();
     }
 
     /**
@@ -75,7 +41,7 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
     @Override public IService<T, S> getService() {
         numOpenChannels++;
 
-        return new RosService<>(this);
+        return new RosService<>(serviceClient, this);
     }
 
     /**
@@ -105,29 +71,5 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
      */
     public int getNumOpenChannel() {
         return numOpenChannels;
-    }
-
-    protected void submitCall(T request, OnServiceResponseCallback<S> callback) {
-        ServiceTask t = new ServiceTask();
-        t.request = request;
-        t.callback = new ServiceResponseListener<S>() {
-			@Override
-			public void onFailure(RemoteException arg0) {
-				callback.onFailure(arg0);
-			}
-			@Override
-			public void onSuccess(S arg0) {
-				callback.onSuccess(arg0);
-			}
-        };
-
-		try {
-			tasks.put(t);
-		} catch (InterruptedException e) {
-		}
-    }
-    
-    protected T newMessage() {
-        return serviceClient.newMessage();
     }
 }

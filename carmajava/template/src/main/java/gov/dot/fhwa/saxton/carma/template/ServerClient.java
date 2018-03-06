@@ -94,7 +94,7 @@ public class ServerClient extends SaxtonBaseNode {
         request.setData(true);
 
         //Make Service call.
-        RosServiceSynchronizer.call(serviceClient, request,
+        RosServiceSynchronizer.callSync(serviceClient, request,
             new ServiceResponseListener<std_srvs.SetBoolResponse>() {
               @Override
               public void onSuccess(std_srvs.SetBoolResponse response) {

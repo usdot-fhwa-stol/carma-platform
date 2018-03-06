@@ -124,7 +124,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         enableReq.setSet((byte) 1);
 
         // TODO: Implement no-response call method
-        enableRoboticService.call(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
             @Override
             public void onSuccess(SetEnableRoboticResponse resp) {
                 // NO-OP
@@ -161,7 +161,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         enableReq.setSet((byte) 0);
 
         // TODO: Implement no-response call method
-        enableRoboticService.call(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
+        enableRoboticService.callSync(enableReq, new OnServiceResponseCallback<SetEnableRoboticResponse>() {
             @Override
             public void onSuccess(SetEnableRoboticResponse resp) {
                 // NO-OP

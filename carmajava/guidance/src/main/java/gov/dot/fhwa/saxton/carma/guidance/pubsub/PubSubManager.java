@@ -37,9 +37,8 @@ public class PubSubManager implements IPubSubService {
     protected ISubscriptionChannelFactory subFactory;
     protected IPublicationChannelFactory pubFactory;
     protected IServiceChannelFactory srvFactory;
-    protected Map<String, IPublicationChannel<?>> pubChannelManagers;
-    protected Map<String, ISubscriptionChannel<?>> subChannelManagers;
-    protected Map<String, IServiceChannel<?, ?>> serviceChannelManagers;
+    protected Map<String, IPublicationChannel> pubChannelManagers;
+    protected Map<String, ISubscriptionChannel> subChannelManagers;
 
     public PubSubManager(ISubscriptionChannelFactory subFactory, IPublicationChannelFactory pubFactory,
             IServiceChannelFactory srvFactory) {
@@ -64,13 +63,8 @@ public class PubSubManager implements IPubSubService {
     @Override
     @SuppressWarnings("unchecked")
     public <T, S> IService<T, S> getServiceForTopic(String topicUrl, String type) throws TopicNotFoundException {
-        if (serviceChannelManagers.containsKey(topicUrl) && serviceChannelManagers.get(topicUrl).isOpen()) {
-            return (IService<T, S>) serviceChannelManagers.get(topicUrl);
-        } else {
             IServiceChannel<T, S> mgr = srvFactory.newServiceChannel(topicUrl, type);
-            serviceChannelManagers.put(topicUrl, mgr);
             return mgr.getService();
-        }
     }
 
     /**
@@ -85,7 +79,7 @@ public class PubSubManager implements IPubSubService {
     @SuppressWarnings("unchecked")
     public <T> ISubscriber<T> getSubscriberForTopic(String topicUrl, String type) {
         if (subChannelManagers.containsKey(topicUrl) && subChannelManagers.get(topicUrl).isOpen()) {
-            return (ISubscriber<T>) subChannelManagers.get(topicUrl).getSubscriber();
+            return subChannelManagers.get(topicUrl).getSubscriber();
         } else {
             ISubscriptionChannel<T> mgr = subFactory.newSubscriptionChannel(topicUrl, type);
             subChannelManagers.put(topicUrl, mgr);
@@ -105,7 +99,7 @@ public class PubSubManager implements IPubSubService {
     @SuppressWarnings("unchecked")
     public <T> IPublisher<T> getPublisherForTopic(String topicUrl, String type) {
         if (pubChannelManagers.containsKey(topicUrl) && pubChannelManagers.get(topicUrl).isOpen()) {
-            return (IPublisher<T>) pubChannelManagers.get(topicUrl).getPublisher();
+            return pubChannelManagers.get(topicUrl).getPublisher();
         } else {
             IPublicationChannel<T> mgr = pubFactory.newPublicationChannel(topicUrl, type);
             pubChannelManagers.put(topicUrl, mgr);
