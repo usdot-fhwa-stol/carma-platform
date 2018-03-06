@@ -129,4 +129,10 @@ public class FakeManeuverInputs implements IManeuverInputs {
 	public double getFrontVehicleSpeed() {
 		return 0;
 	}
+
+
+	@Override
+	public int getCurrentLane() {
+		return 0;
+	}
 }

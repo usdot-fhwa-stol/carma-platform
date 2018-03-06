@@ -53,6 +53,10 @@ trajectory_constraints:
 # Units: m/s
 trajectory_speed_limit: 34.00
 
+# Double: The frequency for the trajectory executor to invoke execution of maneuvers
+# Units: Hz
+trajectory_executor_frequency: 10.0
+
 # The set of IPlugin instances which will be ignored based on class name
 ignored_plugins: []
 
@@ -69,33 +73,6 @@ arbitrator_plugins:
   - Route Following Plugin
   - Negotiation Receiver Plugin
   - Cruising Plugin
-
-# Boolean: True if sinusoidal trajectory is desired rather than plugin-controlled trajectory
-use_sin_trajectory: false
-
-# Double: The frequency at which the trajectory executor will tick
-# Units: Hz
-trajectory_executor_frequency: 10.0
-
-# Double: Time the mock trajectory will initially command the operating speed for
-# Units: seconds
-trajectory_initial_hold_duration: 10.0
-
-# Double: Operating speed the trajectory will oscillate around for its sample trajectory
-# Units: m/s
-trajectory_operating_speed: 5.0
-
-# Double: Amplitude of the sinusoidal sample trajectory for Trajectory executor
-# Units m/s
-trajectory_amplitude: 2.5
-
-# Double: Phase shift of the sinusoidal sample trajectory for the Trajectory executor
-# Units: seconds
-trajectory_phase: 0.0
-
-# Double: Period of the sinusoidal sample trajectory for the Trajectory executor
-# Units: seconds
-trajectory_period: 15.0
 
 # Double: Time that it takes the host vehicle to respond to a new speed command
 # Units: seconds
@@ -132,7 +109,7 @@ max_downtrack_error: 100.0
 acc_exit_distance_factor: 1.5
 
 # Double: The poportional term in the acc PID controller
-acc_Kp: 1.75
+acc_Kp: -1.75
 
 # Double: The integral term in the acc PID controller
 acc_Ki: 0.0
@@ -169,7 +146,7 @@ lane_change_notification_time: 4.0
 include_accel_dist: false
 
 # the fraction of desired speed that we will slow down to in order to grow the gap for a merge
-slow_speed_fraction: 0.8
+slow_speed_fraction: 0.6
 
 # the assumed gap, sec, between the following & merging vehicles and the forward vehicle
 initial_time_gap: 1.0

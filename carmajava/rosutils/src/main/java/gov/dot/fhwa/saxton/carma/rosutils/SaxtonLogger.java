@@ -18,8 +18,6 @@ package gov.dot.fhwa.saxton.carma.rosutils;
 
 import org.apache.commons.logging.Log;
 
-import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -78,8 +76,8 @@ public class SaxtonLogger {
       //Initial setup requires performing 2 commands on the terminal.
       //1) sudo mkdir -p /opt/carma/logs and
       //2) sudo chmod -R ugo+rw /opt/carma
-      //log file name is generated and stored in /opt/carma/configuration/logname.txt
-      BufferedReader br = new BufferedReader(new FileReader("/opt/carma/configuration/logname.txt")); 
+      //log file name is generated and stored in /opt/carma/logname.txt
+      BufferedReader br = new BufferedReader(new FileReader("/opt/carma/logname.txt")); 
       fileName = br.readLine() + ".txt";
       file = new File("/opt/carma/logs/" + fileName); //TODO: Will see later if needed to be stored in param.
       file.getParentFile().mkdirs();
