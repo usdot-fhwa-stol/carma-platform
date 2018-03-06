@@ -42,7 +42,9 @@ import java.util.SortedSet;
 public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     
   protected double maxAccel_;
+  protected double cruisingTargetMultiplier_;
   protected static final double DISTANCE_EPSILON = 0.0001;
+  protected static final double SPEED_EPSILON = 0.0001;
   protected RouteService routeService;
 
   protected class TrajectorySegment {
@@ -72,6 +74,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
   public void onInitialize() {
     log.info("Cruisng plugin initializing...");
     maxAccel_ = pluginServiceLocator.getParameterSource().getDouble("~vehicle_acceleration_limit", 2.5);
+    cruisingTargetMultiplier_ = pluginServiceLocator.getParameterSource().getDouble("~cruising_target_multiplier", 1.0);
     routeService = pluginServiceLocator.getRouteService();
     log.info("Cruising plugin initialized.");
   }
@@ -204,14 +207,17 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();
         SpeedLimit limit_buffer = null;
         for (SpeedLimit limit : trajLimits) {
+            // Apply the cruising speed percentage to the speed limit
+            SpeedLimit followedLimit = new SpeedLimit(limit.getLocation(), limit.getLimit() * cruisingTargetMultiplier_);
+            // Merge segments with same speed
             if (limit_buffer == null) {
-                limit_buffer = limit;
+                limit_buffer = followedLimit;
             } else {
-                if (limit_buffer.getLimit() == limit.getLimit()) {
-                    limit_buffer.setLocation(limit.getLocation());
+                if (fpEquals(limit_buffer.getLimit(), followedLimit.getLimit(), SPEED_EPSILON)) {
+                    limit_buffer.setLocation(followedLimit.getLocation());
                 } else {
                     mergedLimits.add(limit_buffer);
-                    limit_buffer = limit;
+                    limit_buffer = followedLimit;
                 }
             }
         }
