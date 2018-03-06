@@ -150,3 +150,9 @@ slow_speed_fraction: 0.6
 
 # the assumed gap, sec, between the following & merging vehicles and the forward vehicle
 initial_time_gap: 1.0
+
+# String: The id of the frame which represents the point which downtrack distance is measured from
+acc_host_vehicle_frame_id: 'host_vehicle'
+
+# String: The id of the frame which represents the front grill of the vehicle with x facing forward
+acc_vehicle_front_frame_id: 'vehicle_front'

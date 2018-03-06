@@ -92,8 +92,8 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double Kd = node.getParameterTree().getDouble("~acc_Kd", 0.0);
         double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
         int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
-        hostVehicleFrame_ = node.getParameterTree().getString("~host_vehicle_frame_id", hostVehicleFrame_);
-        vehicleFrontFrame_ = node.getParameterTree().getString("~vehicle_front_frame_id", vehicleFrontFrame_);
+        hostVehicleFrame_ = node.getParameterTree().getString("~acc_host_vehicle_frame_id", hostVehicleFrame_);
+        vehicleFrontFrame_ = node.getParameterTree().getString("~acc_vehicle_front_frame_id", vehicleFrontFrame_);
 
         log.info(String.format(
             "ACC params Kp=%.02f, Ki=%.02f, Kd= %.02f, gap=%.02f, standoff=%.02f, exit_factor=%.02f, acc_pid_deadband=%.04f, acc_number_of_averaging_samples=%d" +
