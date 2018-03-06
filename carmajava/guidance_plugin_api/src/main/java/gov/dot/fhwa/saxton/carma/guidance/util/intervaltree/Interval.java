@@ -40,7 +40,7 @@ public class Interval<V> {
 
         // Check for sanity of interval ranges
         if (start > end) {
-            throw new ArithmeticException(String.format("Attempted to create inverted interval [.02f, .02f)", start, end));
+            throw new ArithmeticException(String.format("Attempted to create inverted interval [%.02f, %.02f)", start, end));
         }
     }
 

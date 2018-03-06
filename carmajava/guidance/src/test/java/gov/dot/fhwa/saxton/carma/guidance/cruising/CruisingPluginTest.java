@@ -151,6 +151,7 @@ public class CruisingPluginTest {
         Trajectory t = new Trajectory(0.0, 100.0);
         SpeedHarmonizationManeuver mockshm = mock(SpeedHarmonizationManeuver.class);
         when(mockshm.getStartDistance()).thenReturn(40.0);
+        when(mockshm.getEndDistance()).thenReturn(100.0);
         t.setComplexManeuver(mockshm);
         List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 1.0);
         assertEquals(1, gaps.size());
