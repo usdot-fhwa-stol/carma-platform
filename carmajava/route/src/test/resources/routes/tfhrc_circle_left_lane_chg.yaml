@@ -5,8 +5,8 @@ maxJoinDistance: 20.0 # The maximum distance in meters a CARMA vehicle can be fr
 waypoints: # The list of waypoints in the route
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint # Type indicator for loading with YAMLBeans
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location # Type indicator for loading with YAMLBeans
-      latitude: 38.95647 # The latitude in degrees of this waypoint according to WGS-84
-      longitude: -77.15031 # The longitude in degrees of this waypoint according to WGS-84
+      latitude: 38.95646 # The latitude in degrees of this waypoint according to WGS-84
+      longitude: -77.15029 # The longitude in degrees of this waypoint according to WGS-84
       altitude: 70.0 # The altitude in meters of this waypoint according to WGS-84
     minCrossTrack: -10.0 # The minimum cross track distance in meters of a vehicle relative to the route
     maxCrossTrack: 10.0 # The maximum cross track distance in meters of a vehicle relative to the route
@@ -19,8 +19,8 @@ waypoints: # The list of waypoints in the route
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.95631
-      longitude: -77.15041
+      latitude: 38.95633
+      longitude: -77.15037
       altitude: 70.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
