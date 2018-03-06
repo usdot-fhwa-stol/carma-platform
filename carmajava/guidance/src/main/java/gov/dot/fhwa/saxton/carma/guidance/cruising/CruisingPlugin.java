@@ -67,7 +67,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     version.setName("Cruising Plugin");
     version.setMajorRevision(1);
     version.setIntermediateRevision(0);
-    version.setMinorRevision(1);
+    version.setMinorRevision(2);
   }
 
   @Override
