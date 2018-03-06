@@ -79,6 +79,8 @@ public class CruisingPluginTest {
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
         
         routeService = mock(GuidanceRouteService.class);
+        ParameterSource mockParameterSource = mock(ParameterSource.class);
+        when(mockParameterSource.getDouble("~cruising_target_multiplier")).thenReturn(1.0);
         PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
                 mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
                 new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService);
