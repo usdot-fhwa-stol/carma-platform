@@ -82,7 +82,7 @@ public class CruisingPluginTest {
         ParameterSource mockParameterSource = mock(ParameterSource.class);
         when(mockParameterSource.getDouble("~cruising_target_multiplier")).thenReturn(1.0);
         PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
-                mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
+                mock(PluginManagementService.class), mock(IPubSubService.class), mockParameterSource,
                 new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService);
         cruise = new CruisingPlugin(psl);
         cruise.onInitialize();
