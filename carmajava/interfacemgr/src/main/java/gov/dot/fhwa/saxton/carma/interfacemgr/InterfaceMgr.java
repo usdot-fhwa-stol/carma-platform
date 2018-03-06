@@ -277,7 +277,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
             cav_srvs.GetDriverApiRequest req = serviceClient.newMessage();
 
             try {
-                RosServiceSynchronizer.callSync(serviceClient, req,
+                RosServiceSynchronizer.call(serviceClient, req,
                         new ServiceResponseListener<GetDriverApiResponse>() {
                             @Override
                             public void onSuccess(GetDriverApiResponse response) {
