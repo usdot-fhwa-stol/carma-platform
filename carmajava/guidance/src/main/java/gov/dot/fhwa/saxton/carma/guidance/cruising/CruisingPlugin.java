@@ -75,6 +75,8 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     log.info("Cruisng plugin initializing...");
     maxAccel_ = pluginServiceLocator.getParameterSource().getDouble("~vehicle_acceleration_limit", 2.5);
     cruisingTargetMultiplier_ = pluginServiceLocator.getParameterSource().getDouble("~cruising_target_multiplier", 1.0);
+    cruisingTargetMultiplier_ = Math.max(0.0, cruisingTargetMultiplier_);
+    cruisingTargetMultiplier_ = Math.min(1.0, cruisingTargetMultiplier_);
     routeService = pluginServiceLocator.getRouteService();
     log.info("Cruising plugin initialized.");
   }
