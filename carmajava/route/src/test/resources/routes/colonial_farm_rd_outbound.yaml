@@ -7,7 +7,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95647
       longitude: -77.15031
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -23,7 +23,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95631
       longitude: -77.15041
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -39,7 +39,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95628
       longitude: -77.15047
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -55,7 +55,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95613
       longitude: -77.15101
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -71,7 +71,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95581
       longitude: -77.15122
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -87,7 +87,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95551
       longitude: -77.15147
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -103,7 +103,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95511
       longitude: -77.15171
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -119,7 +119,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95465
       longitude: -77.15188
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -135,7 +135,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95411
       longitude: -77.15199
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -151,7 +151,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95365
       longitude: -77.15204
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -167,7 +167,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95315
       longitude: -77.15206
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -183,7 +183,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.9527
       longitude: -77.15201
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
@@ -199,7 +199,7 @@ waypoints:
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.95222
       longitude: -77.15191
-      altitude: 0.0
+      altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
