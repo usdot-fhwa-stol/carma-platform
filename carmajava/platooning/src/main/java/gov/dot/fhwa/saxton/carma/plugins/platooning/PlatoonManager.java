@@ -46,26 +46,10 @@ public class PlatoonManager implements Runnable {
     @Override
     public void run() {
         try {
-            // This loop will remove any expired entry from platoon list
+            
             while(!Thread.currentThread().isInterrupted()) {
                 long loopStart = System.currentTimeMillis();
-                List<PlatoonMember> removeCandidates = new ArrayList<>();
-                int counter = 0;
-                for(PlatoonMember pm : platoon) {
-                    if(System.currentTimeMillis() - pm.getTimestamp() > plugin.messageTimeout) {
-                        removeCandidates.add(pm);
-                    }
-                    counter++;
-                    log.debug("Found vehicel " + pm.getStaticId() + " in platoon list at " + counter);
-                    log.debug(pm.toString());
-                }
-                if(removeCandidates.size() != 0) {
-                    for(PlatoonMember candidate: removeCandidates) {
-                        log.info("Remove vehicle " + candidate.getStaticId() +
-                                " from platoon list because the entry is timeout by " + (System.currentTimeMillis() - candidate.getTimestamp()) + " ms");
-                        platoon.remove(candidate);
-                    }
-                }
+                removeExpiredMember();
                 long loopEnd = System.currentTimeMillis();
                 long sleepDuration = Math.max(plugin.messageTimeout - (loopEnd - loopStart), 0);
                 Thread.sleep(sleepDuration);
@@ -107,12 +91,33 @@ public class PlatoonManager implements Runnable {
         if(!isExisted) {
             // If we did not find the right entry, we need to consider to add a new one
             // For now, we only add members in front of us
-            if(distance > plugin.maneuverInputs.getDistanceFromRouteStart()) {
+            if(distance > plugin.getManeuverInputs().getDistanceFromRouteStart()) {
                 PlatoonMember pm = new PlatoonMember(plan.getSenderId(), cmdSpeed, speed, distance, System.currentTimeMillis());
                 platoon.add(pm);
                 log.info("Add CACC info on new vehicle " + pm.getStaticId());
             } else {
                 log.info("Ignore new vehicle info because it is behind us. Its id is " + plan.getSenderId());
+            }
+        }
+    }
+    
+    // This method removes any expired entry from platoon list
+    protected void removeExpiredMember() {
+        List<PlatoonMember> removeCandidates = new ArrayList<>();
+        int counter = 0;
+        for(PlatoonMember pm : platoon) {
+            if(System.currentTimeMillis() - pm.getTimestamp() > plugin.messageTimeout) {
+                removeCandidates.add(pm);
+            }
+            counter++;
+            log.debug("Found vehicel " + pm.getStaticId() + " in platoon list at " + counter);
+            log.debug(pm.toString());
+        }
+        if(removeCandidates.size() != 0) {
+            for(PlatoonMember candidate: removeCandidates) {
+                log.info("Remove vehicle " + candidate.getStaticId() +
+                        " from platoon list because the entry is timeout by " + (System.currentTimeMillis() - candidate.getTimestamp()) + " ms");
+                platoon.remove(candidate);
             }
         }
     }

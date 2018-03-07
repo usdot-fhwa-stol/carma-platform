@@ -41,7 +41,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     protected ISubscriber<NewPlan> newPlanSub;
     protected ISubscriber<SpeedAccel> cmdSpeedSub;
     protected IManeuverInputs maneuverInputs;
-    
+
     protected double maxAccel = 2.5;
     protected double minimumManeuverLength = 15.0;
     protected double timeHeadway = 1.8;
@@ -207,5 +207,9 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     
     protected double getMaxAccel() {
         return maxAccel;
+    }
+    
+    protected IManeuverInputs getManeuverInputs() {
+        return maneuverInputs;
     }
 }

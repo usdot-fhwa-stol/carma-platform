@@ -21,9 +21,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -93,6 +90,7 @@ public class StateTransitionTest {
     
     @Test
     public void standbyToLeader() {
+        // Standby state to Leader state when platooning is enabled in the next Trajectory
         Trajectory traj = new Trajectory(0.0, 50.0);
         when(routeService.isAlgorithmEnabledInRange(0.0, 50.0, platooning.PLATOONING_FLAG)).thenReturn(true);
         TrajectoryPlanningResponse tpr = platooning.planTrajectory(traj, 0.0);
@@ -103,6 +101,8 @@ public class StateTransitionTest {
     
     @Test
     public synchronized void leaderToFollower() {
+        // Leader state to Follower state when we have other platooning vehicle in front of us
+        // TODO This state transition need to happened after the leader from front platoon agreed our JOIN_A_PLATOON message
         IPlatooningState leaderState = new LeaderState(platooning, mockLogger, psl); 
         platooning.setState(leaderState);
         platooning.state.checkCurrentState();
@@ -113,6 +113,7 @@ public class StateTransitionTest {
     
     @Test
     public void leaderToStandby() {
+        // Leader state to Standby state when the platooning algorithm is disanbled in the next trajectory
         IPlatooningState leaderState = new LeaderState(platooning, mockLogger, psl); 
         platooning.setState(leaderState);
         Trajectory traj = new Trajectory(25.0, 50.0);
@@ -134,7 +135,8 @@ public class StateTransitionTest {
     }
     
     @Test
-    public synchronized void followerToStandbyCase1() {
+    public synchronized void followerToStandbyCase() {
+        // Follower state to Standby state when the platooning algorithm is disanbled in the next trajectory
         IPlatooningState followerState = new FollowerState(platooning, mockLogger, psl);
         platooning.setState(followerState);
         Trajectory traj = new Trajectory(25.0, 50.0);
@@ -157,23 +159,8 @@ public class StateTransitionTest {
     }
     
     @Test
-    public void followerToStandbyCase2() {
-        IPlatooningState followerState = new FollowerState(platooning, mockLogger, psl);
-        platooning.setState(followerState);
-        platooning.minimumManeuverLength = 15.0;
-        Trajectory traj = new Trajectory(25.0, 50.0);
-        when(routeService.isAlgorithmEnabledInRange(25.0, 50.0, platooning.PLATOONING_FLAG)).thenReturn(true);
-        SortedSet<SpeedLimit> speedLimits = new TreeSet<SpeedLimit>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
-        speedLimits.add(new SpeedLimit(100.0, 5.0));
-        when(routeService.getSpeedLimitsOnRoute()).thenReturn(speedLimits);
-        when(routeService.getAlgorithmEnabledWindowInRange(25.0, 100.0, platooning.PLATOONING_FLAG)).thenReturn(new double[] {25.0, 39.0});
-        TrajectoryPlanningResponse response = platooning.planTrajectory(traj, 5.0);
-        assertEquals(0, response.getRequests().size());
-        assertTrue(platooning.state instanceof StandbyState);
-    }
-    
-    @Test
     public void followerToLeader() {
+        // Follower state to Leader state when the host vehicle is the first one in the platooning
         IPlatooningState followerState = new FollowerState(platooning, mockLogger, psl);
         platooning.setState(followerState);
         platooning.state.checkCurrentState();
