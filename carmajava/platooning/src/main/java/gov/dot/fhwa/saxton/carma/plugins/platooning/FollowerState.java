@@ -42,7 +42,7 @@ public class FollowerState implements IPlatooningState {
     protected PlatooningPlugin plugin_;
     protected ILogger log_;
     protected PluginServiceLocator pluginServiceLocator_;
-    protected long transitionToStnadbyTime = Long.MAX_VALUE;
+    protected long transitionToStandbyTime = Long.MAX_VALUE;
     
     public FollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         plugin_ = plugin;
@@ -102,7 +102,7 @@ public class FollowerState implements IPlatooningState {
             double speedAtTrajectoryStart = pluginServiceLocator_.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit();
             double speedAvg = (currentSpeed + speedAtTrajectoryStart) / 2;
             int timeDelay = (int) ((traj.getStartLocation() - currentDistance) / speedAvg);
-            transitionToStnadbyTime = System.currentTimeMillis() + timeDelay * 1000;
+            transitionToStandbyTime = System.currentTimeMillis() + timeDelay * 1000;
         }
         return new TrajectoryPlanningResponse();
     }
@@ -149,9 +149,9 @@ public class FollowerState implements IPlatooningState {
             pluginServiceLocator_.getArbitratorService().notifyTrajectoryFailure();
         }
         // Transit to standby state when the current trajectory is finished
-        if(System.currentTimeMillis() > transitionToStnadbyTime) {
+        if(System.currentTimeMillis() > transitionToStandbyTime) {
             plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
-            transitionToStnadbyTime = Long.MAX_VALUE;
+            transitionToStandbyTime = Long.MAX_VALUE;
         }
     }
 }
