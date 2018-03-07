@@ -497,20 +497,17 @@ void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConst
     //Get Transform from object measurement to inertial frame
     //All tracking should be done in inertial frame
     geometry_msgs::TransformStamped transformStamped;
-    try
+    if(tf2_buffer_.canTransform(inertial_frame_name_,msg->header.frame_id,msg->header.stamp))
     {
         transformStamped = tf2_buffer_.lookupTransform(inertial_frame_name_,msg->header.frame_id,msg->header.stamp);
-
     }
-    catch (tf2::ExtrapolationException& ex)
+    else if(tf2_buffer_.canTransform(inertial_frame_name_,msg->header.frame_id,ros::Time(0)))
     {
-        ROS_DEBUG_STREAM(ex.what());
         ROS_DEBUG_STREAM("Using latest transform available");
         transformStamped = tf2_buffer_.lookupTransform(inertial_frame_name_,msg->header.frame_id,ros::Time(0));
     }
-    catch(tf2::TransformException&ex)
+    else
     {
-        ROS_WARN("%s", ex.what());
         return;
     }
 
@@ -579,7 +576,8 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     try {
         odom_tf = tf2_buffer_.lookupTransform(inertial_frame_name_, body_frame_name_, msg->header.stamp);
         ned_odom_tf = tf2_buffer_.lookupTransform(ned_frame_name_, inertial_frame_name_, msg->header.stamp);
-    } catch (...) {
+    } catch (tf2::TransformException&ex) {
+        ROS_WARN_STREAM(ex.what());
         return;
     }
     obj.presence_vector |= cav_msgs::ExternalObject::ID_PRESENCE_VECTOR;
