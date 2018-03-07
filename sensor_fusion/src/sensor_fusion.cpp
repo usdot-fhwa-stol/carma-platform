@@ -508,6 +508,7 @@ void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConst
     }
     else
     {
+        ROS_WARN_STREAM("No transform available from " << inertial_frame_name_ << " to " << msg->header.frame_id);
         return;
     }
 
