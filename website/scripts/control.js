@@ -348,6 +348,9 @@ function showModal(showWarning, modalMessage, restart) {
         }
     }
 
+    //stop the timer when alert occurs;
+    clearInterval(engaged_timer);
+
     //display the modal
     modal.style.display = 'block';
 
@@ -376,6 +379,42 @@ function showModal(showWarning, modalMessage, restart) {
 }
 
 /*
+    Count up Timer for when Guidance is engaged.
+*/
+
+function countUpTimer() {
+
+    // Get todays date and time
+    var now = new Date().getTime();
+    // Get from session
+    var startDateTime = sessionStorage.getItem('startDateTime');
+    // Find the distance between now an the count down date
+    var distance = now - startDateTime;
+
+    // Time calculations for days, hours, minutes and seconds
+    // var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    engaged_timer = '00h 00m 00s';
+
+    if (is_guidance_engaged == true) {
+        engaged_timer = pad(hours, 2) + 'h '
+            + pad(minutes, 2) + 'm ' + pad(seconds, 2) + 's ';
+    }
+    //console.log('engaged_timer: ' + engaged_timer);
+}
+
+/*
+    For countUpTimer to format the time.
+*/
+function pad(num, size) {
+    var s = "0000" + num;
+    return s.substr(s.length - size);
+}
+
+/*
     Close the modal popup and reset variable as needed. 
 */
 function closeModal(action) {
@@ -400,7 +439,7 @@ function closeModal(action) {
             sessionStorage.removeItem('routeName');
             sessionStorage.removeItem('routePlanCoordinates');
             sessionStorage.removeItem('routeSpeedLimitDist');
-            sessionStorage.removeItem('startDateTime'); //TODO: Move to widgetfw
+            sessionStorage.removeItem('startDateTime');
 
             //Clear global variables
             is_guidance_engaged = false;

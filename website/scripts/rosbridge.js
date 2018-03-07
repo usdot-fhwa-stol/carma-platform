@@ -66,7 +66,9 @@ var system_ready = false;
 var is_guidance_engaged = false;
 var is_guidance_active = false;
 var guidance_state = 0;
-var route_name = 'No Route Selected';
+var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages. 
+var route_name = 'No Route Selected';//UI needs to track selected route. 
+//var route_timer = '00h 00m 00s';
 
 var ready_counter = 0;
 var ready_max_trial = 10;
@@ -853,7 +855,8 @@ function checkGuidanceState() {
                 //Set based on returned status, regardless if succesful or not.
                 is_guidance_engaged = true;
 
-                CarmaJS.WidgetFramework.onGuidanceEngaged();
+                //start the timer when it first engages. 
+                startEngagedTimer();
 
                 //Update Guidance button and checkAvailability.
                 showGuidanceEngaged();
@@ -1480,6 +1483,20 @@ function showSystemVersion() {
         var elemSystemVersion = document.getElementsByClassName('systemversion');
         elemSystemVersion[0].innerHTML = result.system_name + ' ' + result.revision;
     });
+}
+
+/*
+    Start timer after engaging Guidance.
+*/
+function startEngagedTimer() {
+    // Set the date we're counting down to and save to session.
+    if (sessionStorage.getItem('startDateTime') == null) {
+        var startDateTime = new Date().getTime();
+        sessionStorage.setItem('startDateTime', startDateTime);
+    }
+
+    // Start counter
+    setInterval(countUpTimer, 1000);
 }
 
 /*

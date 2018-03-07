@@ -16,9 +16,6 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
         var listenerRouteState;
         var listenerRoute;
 
-        // For Route Timer
-        var routeTimer;
-
         //Currently the URL path from document or window are pointing to the page, not the actual folder location.
         //Therefore this needs to be hardcoded.
         //TODO: However, this could be set by widgetfw based on final install folder naming convention. Using _setOptions.
@@ -90,6 +87,11 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                     }
                     //insertNewTableRow('tblSecondA', 'total_dist_next_lane_change', total_dist_next_lane_change);
                 }
+
+                //Display the lateset route name and timer.
+                var divRouteInfo = document.getElementById('divRouteInfo');
+                if (divRouteInfo != null || divRouteInfo != 'undefined')
+                    divRouteInfo.innerHTML = route_name + ' : ' + engaged_timer;
             });
         };
 
@@ -337,77 +339,6 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
             };
 
         /***
-        *    Set route name after route selection.
-        ***/
-        var initializeRouteTimer = function () {
-
-            //Display the route name and Clear Timer.
-            var divRouteInfo = document.getElementById('divRouteInfo');
-            divRouteInfo.innerHTML = route_name + ': 00h 00m 00s';
-        };
-
-        /***
-        *    Start route timer after engaging Guidance.
-        ***/
-        var startRouteTimer = function () {
-
-            // Set the date we're counting down to and save to session.
-            if (sessionStorage.getItem('startDateTime') == null) {
-                var startDateTime = new Date().getTime();
-                sessionStorage.setItem('startDateTime', startDateTime);
-            }
-
-            // Start counter
-            routeTimer = setInterval(countUpTimer, 1000);
-        };
-
-        /***
-        * Count up Timer for Route Info
-        ***/
-        var countUpTimer = function () {
-
-            // Get todays date and time
-            var now = new Date().getTime();
-            // Get from session
-            var startDateTime = sessionStorage.getItem('startDateTime');
-            // Find the distance between now an the count down date
-            var distance = now - startDateTime;
-
-            // Time calculations for days, hours, minutes and seconds
-            // var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            //Display the route name
-            var divRouteInfo = document.getElementById('divRouteInfo');
-
-            if (divRouteInfo == null)
-                return;
-
-            if (divRouteInfo != null) {
-                if (is_guidance_engaged == true) {
-                    divRouteInfo.innerHTML = route_name + ': ' + pad(hours, 2) + 'h '
-                        + pad(minutes, 2) + 'm ' + pad(seconds, 2) + 's ';
-                }
-                else {
-                    divRouteInfo.innerHTML = route_name + ': 00h 00m 00s';
-                }
-            }
-            else {
-                divRouteInfo.innerHTML = 'No Route Selected : 00h 00m 00s';
-            }
-        };
-
-        /***
-        *   For countUpTimer to format the time.
-        ***/
-        var pad = function (num, size) {
-            var s = "0000" + num;
-            return s.substr(s.length - size);
-        };
-
-        /***
         * Custom widgets using JQuery Widget Framework.
         * NOTE: that widget framework namespace can only be one level deep.
         ***/
@@ -444,20 +375,9 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
               $(this.element).append(myDiv);
            },
            _destroy: function () {
-               //Stop the timer when alert occurs;
-               //NOTE: even with clearInterval, the countUpTimer is still being called therefore had to add div exists check. 
-               clearInterval(routeTimer);
-               routeTimer = null;
-
                 this.element.empty();
                 this._super();
-           },
-           startRouteTimer: function(){
-              startRouteTimer();
-           },
-           initializeRouteTimer: function(){
-               initializeRouteTimer();
-            }
+           }
         });
 
         /*** Public Functions ***
@@ -474,13 +394,8 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
             container.rfLaneTracking("draw", null);
         };
 
-        var onGuidanceEngaged = function () {
-            startRouteTimer();
-        };
-
         //Public API
         return {
-            loadCustomWidget: loadCustomWidget,
-            onGuidanceEngaged: onGuidanceEngaged
+            loadCustomWidget: loadCustomWidget
         };
 })();

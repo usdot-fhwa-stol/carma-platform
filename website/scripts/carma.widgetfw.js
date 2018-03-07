@@ -144,14 +144,21 @@ CarmaJS.WidgetFramework = (function () {
         var listWidgetOptions = function (value) {
             //Save the selection.
             sessionStorage.setItem('listWidgetOptions', value);
-            console.log('listWidgetOptions: ' + value);
+            //console.log('listWidgetOptions: ' + value);
 
             //Save the options everytime.
             if (value == true )
                 showWidgetOptions();
-            else
-                loadWidgets();
-                
+            else {
+                if (countSelectedWidgets() > 0)
+                    loadWidgets();
+                else
+                {
+                    $("#divWidgetOptionsList").append("<span style='color:red;'> Please select a widget to continue.</span>");
+                    return;
+                }        
+            }
+             
             //Go to Driver's View
             openTab(event, 'divDriverView');
         };
@@ -269,9 +276,6 @@ CarmaJS.WidgetFramework = (function () {
           var divWidgetOptions = document.getElementById('divWidgetOptions');
           divWidgetOptions.style.display = 'none';
 
-          var divWidgetArea = document.getElementById('divWidgetArea');
-          //divWidgetArea.innerHTML = '';
-          divWidgetArea.style.display = 'block';
           //NOTE: Since activation/reactivation and widget options changes, need to keep wiping out the divWidgetArea.
           clearWidgetArea();
 
@@ -362,12 +366,7 @@ CarmaJS.WidgetFramework = (function () {
             var  myDiv = "<div id='divWidgetArea'></div>";
             $('#divDriverView').append(myDiv);
         };
-
-        var onGuidanceEngaged = function () {
-            CarmaJS.WidgetFramework.RouteFollowing.onGuidanceEngaged();
-            //console.log('widgetfw.onGuidanceEngaged!');
-        };
-
+    
         var onRefresh = function () {
             var listWidgetOptions = sessionStorage.getItem('listWidgetOptions');
 
@@ -388,7 +387,6 @@ CarmaJS.WidgetFramework = (function () {
             activatePlugin: activatePlugin,
             activateWidget: activateWidget,
             closeWidgets: closeWidgets,
-            onGuidanceEngaged: onGuidanceEngaged,
             onRefresh: onRefresh
         };
 })();
