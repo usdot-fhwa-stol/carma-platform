@@ -79,7 +79,8 @@
     <div id="divDriverView" class="tabcontent">
         <div id="divWidgetOptions" hidden>
             <h3>Please select one or more widget(s): </h3>
-            <div id="divWidgetOptionsList"></div>
+            <div id="divWidgetOptionsList">
+            </div>
         </div>
         <div id="divWidgetArea"></div>
     </div>
@@ -160,8 +161,7 @@
         <button id="btnModalLogout2" title="Shutdown and Logout" class="btnModal" onclick="javascript: shutdown();">Logout</button>
         <!-- TODO: Implement to show list again  -->
         &nbsp;
-        <button id="btnWidget" title="Show Widget Options" class="btnModal" onclick="CarmaJS.WidgetFramework.showWidgetOptions();">Show Widget Options</button>
-
+        <button id="btnWidgetOptions" title="List Widget Options" class="btnModal" onclick="CarmaJS.WidgetFramework.listWidgetOptions(true);">List Widget Options</button>
         <p/>
         <div id="divLog" class="logStatus">
         </div>

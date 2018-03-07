@@ -122,6 +122,38 @@ CarmaJS.WidgetFramework = (function () {
                 createCheckboxElement(divWidgetOptionsList, plugin.id, plugin.title, pluginsActivated.length, 'groupWidgets', isPreviouslySelected, false, 'CarmaJS.WidgetFramework.activateWidget');
                 
             });
+
+            var listWidgetOptions = sessionStorage.getItem('listWidgetOptions');
+
+            if (listWidgetOptions == 'true') {
+                var btn = document.createElement("BUTTON");        // Create a <button> element
+                btn.title = 'Show Drivers View';
+                btn.className = 'btnModal';
+                btn.addEventListener("click", function () {CarmaJS.WidgetFramework.listWidgetOptions(false);});
+                btn.innerText = 'Show Drivers View';
+                divWidgetOptionsList.appendChild(btn);                    // Append <button> to <div> 
+            }
+        };
+
+
+        /*
+           Button on the Logs tab to show the user the widgets selection widgets once again that he/she wants to display.
+           Sets the session variable;
+           if value = false, means selection is made , reload widgets since it's been loaded once already.
+        */
+        var listWidgetOptions = function (value) {
+            //Save the selection.
+            sessionStorage.setItem('listWidgetOptions', value);
+            console.log('listWidgetOptions: ' + value);
+
+            //Save the options everytime.
+            if (value == true )
+                showWidgetOptions();
+            else
+                loadWidgets();
+                
+            //Go to Driver's View
+            openTab(event, 'divDriverView');
         };
 
         /*
@@ -202,6 +234,18 @@ CarmaJS.WidgetFramework = (function () {
         };
 
         /*
+            Clear the widget area so it's a blank slate again.
+        */
+        var clearWidgetArea = function () {
+            //Remove the divWidgetArea to call the destroy function on each widgets added to the area properly.
+            $('#divWidgetArea').remove();
+
+            //Then add it back in.
+            var myDiv = "<div id='divWidgetArea'></div>";
+            $('#divDriverView').append(myDiv);
+        };
+
+        /*
             Based on selected widgets, this loads the widgets onto the Driver View.
         */
         var loadWidgets = function(){
@@ -226,7 +270,10 @@ CarmaJS.WidgetFramework = (function () {
           divWidgetOptions.style.display = 'none';
 
           var divWidgetArea = document.getElementById('divWidgetArea');
+          //divWidgetArea.innerHTML = '';
           divWidgetArea.style.display = 'block';
+          //NOTE: Since activation/reactivation and widget options changes, need to keep wiping out the divWidgetArea.
+          clearWidgetArea();
 
             //Loop thru the active widgets and load each css, js and call it's loadCustomWidget().
             //Check if at least one of the expected file exists.
@@ -304,29 +351,38 @@ CarmaJS.WidgetFramework = (function () {
         };
 
         var closeWidgets = function () {
-            //Remove session variables
-            sessionStorage.removeItem('pluginsActivated');
 
-            //Remove the divWidgetArea
-            $('#divWidgetArea').remove();
+            clearWidgetArea();
+
+            //Clear session variables
+            sessionStorage.removeItem('pluginsActivated');
+            sessionStorage.removeItem('listWidgetOptions');
 
             //Then add it back in.
             var  myDiv = "<div id='divWidgetArea'></div>";
-             $('#divDriverView').append(myDiv);
+            $('#divDriverView').append(myDiv);
         };
 
-        var onGuidanceEngaged = function(){
+        var onGuidanceEngaged = function () {
             CarmaJS.WidgetFramework.RouteFollowing.onGuidanceEngaged();
             //console.log('widgetfw.onGuidanceEngaged!');
         };
 
         var onRefresh = function () {
-            CarmaJS.WidgetFramework.loadWidgets();
+            var listWidgetOptions = sessionStorage.getItem('listWidgetOptions');
+
+            if (listWidgetOptions == 'true') {
+                CarmaJS.WidgetFramework.showWidgetOptions();
+            }
+            else {
+                CarmaJS.WidgetFramework.loadWidgets();
+            }
         };
 
         //Public API
         return {
             showWidgetOptions: showWidgetOptions,
+            listWidgetOptions: listWidgetOptions,
             countSelectedWidgets: countSelectedWidgets,
             loadWidgets: loadWidgets,
             activatePlugin: activatePlugin,
