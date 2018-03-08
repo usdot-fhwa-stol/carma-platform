@@ -1180,7 +1180,8 @@ function checkRouteInfo() {
 
         //If completed, then route topic will publish something to guidance to shutdown.
         //For UI purpose, only need to notify the USER and show them that route has completed.
-        if (message.event == 3 && guidance_state != 2) //ROUTE_COMPLETED=3 && guidance_state != DRIVERS_READY
+        //Allow user to be notified of route completed/left route even if guidance is not active/engaged.
+        if (message.event == 3) //ROUTE_COMPLETED=3
         {
             //alert(guidance_state);
             //if (listenerSystemAlert != 'undefined')
