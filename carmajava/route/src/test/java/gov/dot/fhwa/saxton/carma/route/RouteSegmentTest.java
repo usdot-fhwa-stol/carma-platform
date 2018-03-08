@@ -20,6 +20,9 @@ import cav_msgs.SystemAlert;
 import cav_srvs.AbortActiveRouteResponse;
 import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.LineSegment3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -218,5 +221,67 @@ public class RouteSegmentTest {
     result = seg.determinePrimaryLane(0.0); // 0m crosstrack
     assertEquals(1, result);
     
+  }
+
+  /**
+   * Tests the crossTrackDistance function
+   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
+   * @throws Exception
+   */
+  @Test
+  public void testCrossTrackDistance() throws Exception {
+
+    log.info("// Entering crossTrackDistance test");
+
+    // Test on km long segment (Right side)
+    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+    // Test on km long segment
+    Point3D loc1 = gcc.geodesic2Cartesian(new Location(38.942201,-77.160108, 0), Transform.identity());
+    Point3D loc2 = gcc.geodesic2Cartesian(new Location(38.943804, -77.148832, 0), Transform.identity());
+    LineSegment3D seg = new LineSegment3D(loc1, loc2);
+    Point3D sideLoc = gcc.geodesic2Cartesian(new Location(38.942422, -77.154786, 0), Transform.identity());
+    double solution = 58.59;
+    assertEquals(seg.crossTrackDistance(sideLoc), solution, 0.1); // Check accuracy to within .1m
+
+    // Test on km long segment (Left side)
+    sideLoc = gcc.geodesic2Cartesian(new Location(38.94348, -77.15505, 0), Transform.identity());
+    solution = -61.14;
+    assertEquals(seg.crossTrackDistance(sideLoc), solution, 0.1); // Check accuracy to within .1m
+
+    // Test point on segment start
+    solution = 0.0;
+    assertEquals(seg.crossTrackDistance(loc1), solution, 0.1); // Check accuracy to within .1m
+
+    // Test point on segment start
+    solution = 0.0;
+    assertEquals(seg.crossTrackDistance(loc1), solution, 0.1); // Check accuracy to within .1m
+  }
+
+  /**
+   * Tests the downtrackDistance function
+   * Accuracy checked against online calculator http://www.movable-type.co.uk/scripts/latlong.html
+   * @throws Exception
+   */
+  @Test
+  public void testDownTrackDistance() throws Exception {
+
+    log.info("// Entering downtrackDistance test");
+    
+    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+    // Test on km long segment
+    Point3D loc1 = gcc.geodesic2Cartesian(new Location(38.942201,-77.160108, 0), Transform.identity());
+    Point3D loc2 = gcc.geodesic2Cartesian(new Location(38.943804, -77.148832, 0), Transform.identity());
+    LineSegment3D seg = new LineSegment3D(loc1, loc2);
+    Point3D sideLoc = gcc.geodesic2Cartesian(new Location(38.942422, -77.154786, 0), Transform.identity());
+    double solution = 458.3;
+    assertEquals(seg.downtrackDistance(sideLoc), solution, 0.1); // Check accuracy to within .1m
+
+    // Test point on segment start
+    solution = 0.0;
+    assertEquals(seg.downtrackDistance(loc1), solution, 0.1); // Check accuracy to within .1m
+
+    // Test point on segment end
+    solution = 991.4;
+    assertEquals(seg.downtrackDistance(loc2), solution, solution * 0.005); // Check accuracy to within .5% of result
   }
 }
