@@ -50,6 +50,7 @@ public class PubSubManager implements IPubSubService {
 
         pubChannelManagers = new HashMap<>();
         subChannelManagers = new HashMap<>();
+        serviceChannelManagers = new HashMap<>();
     }
 
     /**

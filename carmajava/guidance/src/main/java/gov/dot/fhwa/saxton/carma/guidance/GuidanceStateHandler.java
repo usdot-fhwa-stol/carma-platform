@@ -158,7 +158,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
         drivers[0] = null;
 
         // Call the InterfaceManager to see if we have a driver that matches our requirements
-        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+        driverCapabilityService.call(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
             @Override
             public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
                 log.debug("Received GetDriversWithCapabilitiesResponse");

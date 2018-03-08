@@ -106,7 +106,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         drivers[0] = null;
 
         // Call the InterfaceManager to see if we have a driver that matches our requirements
-        driverCapabilityService.callSync(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+        driverCapabilityService.call(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
             @Override
             public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
                 log.debug("Received GetDriversWithCapabilitiesResponse");
@@ -159,7 +159,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         lateralReq.setCapabilities(lateralCapabilities);
         final GetDriversWithCapabilitiesResponse[] lateralDrivers = new GetDriversWithCapabilitiesResponse[1];
         lateralDrivers[0] = null;
-        driverCapabilityService.callSync(lateralReq, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+        driverCapabilityService.call(lateralReq, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
             @Override
             public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
                 log.debug("Received GetDriversWithCapabilitiesResponse");
