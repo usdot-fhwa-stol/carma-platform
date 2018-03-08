@@ -16,7 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import cav_msgs.MobilityAck;
+import cav_msgs.MobilityIntro;
+import cav_msgs.NewPlan;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
@@ -29,8 +30,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  * In this state, the pulgin will not insert any maneuvers into a trajectory and ignore all negotiation messages.
  */
 public class StandbyState implements IPlatooningState {
-
-    protected static final long DEFAULT_LOOP_SLEEP_MS = 10000;
+    
     protected PlatooningPlugin plugin_;
     protected ILogger log_;
     protected PluginServiceLocator pluginServiceLocator_;
@@ -43,28 +43,38 @@ public class StandbyState implements IPlatooningState {
     
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        RouteService rs = pluginServiceLocator_.getRouteService(); 
+        RouteService rs = pluginServiceLocator_.getRouteService();
+        TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+        // Check if the next trajectory includes a platooning window
         if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
-            log_.info("Platooning", "In standby state, find an avaliable plan window and change to leader state");
+            log_.info("In standby state, find an avaliable plan window and change to leader state in " + traj.toString());
             plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
+            // Request to replan with new state and give enough time for plugin state transition
+            tpr.requestDelayedReplan(100);
+        } else {
+            log_.info("In standby state, asked to plan a trajectory without available winodw, ignoring " + traj.toString());
         }
-        return new TrajectoryPlanningResponse();
+        return tpr;
     }
 
     @Override
-    public boolean onReceiveNegotiationRequest(String plan) {
-        // give negative response to any new plan in standby state
-        log_.info("Platooning", "Reject new plan because the plugin is current in standby state");
-        return false;
-    }
-    
-    @Override
-    public void onReceivePlanResponse(MobilityAck ack) {
-        log_.info("Platooning", "Receive plan ack in standby state, ignoring");
+    public void onReceiveNegotiationMessage(NewPlan plan) {
+        // ignore NewPlan message in the standby state
+        log_.info("Ignore new plan message because the plugin is current in standby state");
     }
     
     @Override
     public String toString() {
         return "StandbyState";
+    }
+
+    @Override
+    public MobilityIntro getNewOutboundIntroMessage() {
+        return null;
+    }
+
+    @Override
+    public void checkCurrentState() {
+        // We can only transit to other state from current state when the coming trajectory has an available window, so No-Op
     }
 }

@@ -131,13 +131,14 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                     // TODO This modification to downtrack values calculation should really be based on transforms. 
                     double frontVehicleDist = 0.5 * vehicleLength_ + obs.getDownTrack() - obs.getObject().getSize().getX() - distanceDowntrack_;
                     boolean inLane = obs.getPrimaryLane() == currentLane_;
-                    byte[] secondaryLanes = obs.getSecondaryLanes().array();
-                    // Check secondary lanes
-                    for(int i = 0; i < secondaryLanes.length; i++) {
-                        if (inLane)
-                            break;
-                        inLane = secondaryLanes[i] == currentLane_;
-                    }
+                    // TODO: Add back into to check against the secondary lanes of an object
+                    // byte[] secondaryLanes = obs.getSecondaryLanes().array();
+                    // // Check secondary lanes
+                    // for(int i = 0; i < secondaryLanes.length; i++) {
+                    //     if (inLane)
+                    //         break;
+                    //     inLane = secondaryLanes[i] == currentLane_;
+                    // }
                     
                     if (inLane && frontVehicleDist < closestDistance && frontVehicleDist > -0.0) {
                         // If it's closer than our previous best candidate, update our candidate

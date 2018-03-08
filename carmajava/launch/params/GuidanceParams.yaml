@@ -82,6 +82,11 @@ vehicle_response_lag: 1.4
 # Units: m/s/s
 vehicle_acceleration_limit: 2.5
 
+# Double: A multiplier applied to the actual speed limit which will result in the cruising plugin's target speed
+# Max: 1.0
+# Min: 0.0
+cruising_target_multiplier: 1.0
+
 # Double: Time headway to control to with ACC
 # Units: seconds
 desired_acc_timegap: 2.0
@@ -109,7 +114,7 @@ max_downtrack_error: 100.0
 acc_exit_distance_factor: 1.5
 
 # Double: The poportional term in the acc PID controller
-acc_Kp: 1.75
+acc_Kp: -1.75
 
 # Double: The integral term in the acc PID controller
 acc_Ki: 0.0
