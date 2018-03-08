@@ -39,6 +39,7 @@ import org.ros.node.topic.Subscriber;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The Interface Manager provides a hardware-agnostic interface to all of the available vehicle
@@ -60,6 +61,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected boolean robotListenerCreated_ = false;
     protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
     protected boolean shutdownInitiated_ = false;
+    protected AtomicBoolean firstRequest = new AtomicBoolean(true);
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -206,6 +208,17 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                             @Override
                             public void build(cav_srvs.GetDriversWithCapabilitiesRequest request,
                                     cav_srvs.GetDriversWithCapabilitiesResponse response) {
+                                
+                                if (firstRequest.get() && request.getCapabilities().get(0).endsWith("cmd_speed")) {
+                                    firstRequest.set(false);
+                                    try {
+                                        log_.info("SLEEPING on " + request.getCapabilities().get(0));
+										Thread.sleep(1000);
+									} catch (InterruptedException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+                                }
 
                             	try {
 	                                log_.debug("DRIVER", "InterfaceMgr.driverCapSvr: received request with "
