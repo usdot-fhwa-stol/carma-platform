@@ -33,3 +33,13 @@ platooning_Ki: 0.0
 # Double: The derivative term in the platoon speed PID controller
 # Units: 1
 platooning_Kd: 0.1
+
+# Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
+# Units: s
+platooning_lower_boundary: 1.65
+platooning_upper_boundary: 1.75
+platooning_max_spacing: 2.0
+platooning_min_spacing: 1.9
+# Units: m
+platooning_min_gap: 12.0
+platooning_max_gap: 14.0

@@ -52,6 +52,14 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     protected int messageIntervalLength = 500;
     protected int messageTimeout = 750;
     
+    // following parameters are for leader selection
+    protected double lowerBoundary = 1.65;
+    protected double upperBoundary = 1.75;
+    protected double maxSpacing = 2.0;
+    protected double minSpacing = 1.9;
+    protected double minGap = 12.0;
+    protected double maxGap = 14.0;
+
     protected CommandGenerator commandGenerator = null;
     protected Thread commandGeneratorThread = null;
     protected PlatoonManager platoonManager = null;
@@ -88,6 +96,19 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         log.debug("Load param messageIntervalLength = " + messageIntervalLength);
         messageTimeout = (int) (messageIntervalLength * pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 1.5));
         log.debug("Load param messageTimeout = " + messageTimeout);
+        lowerBoundary = pluginServiceLocator.getParameterSource().getDouble("~platooning_lower_boundary", 1.65);
+        log.debug("Load param lowerBoundary = " + lowerBoundary);
+        upperBoundary = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
+        log.debug("Load param upperBoundary = " + upperBoundary);
+        maxSpacing = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_spacing", 2.0);
+        log.debug("Load param maxSpacing = " + maxSpacing);
+        minSpacing = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_spacing", 1.9);
+        log.debug("Load param minSpacing = " + minSpacing);
+        minGap = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 12.0);
+        log.debug("Load param minGap = " + minGap);
+        maxGap = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
+        log.debug("Load param maxGap = " + maxGap);
+        
         // initialize necessary pubs/subs 
         mobilityIntroPublisher = pubSubService.getPublisherForTopic("mobility_intro_outbound", MobilityIntro._TYPE);
         newPlanSub = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
@@ -104,7 +125,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         log.info("The current CACC plugin state is " + this.state.toString());
         // Start all sub-threads
         if(platoonManagerThread == null) {
-            platoonManager = new PlatoonManager(this, log);
+            platoonManager = new PlatoonManager(this, log, pluginServiceLocator);
             platoonManagerThread = new Thread(platoonManager);
             platoonManagerThread.setName("Platooning List Manager");
             platoonManagerThread.start();
@@ -211,5 +232,29 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     
     protected IManeuverInputs getManeuverInputs() {
         return maneuverInputs;
+    }
+    
+    protected double getLowerBoundary() {
+        return lowerBoundary;
+    }
+
+    protected double getUpperBoundary() {
+        return upperBoundary;
+    }
+
+    protected double getMaxSpacing() {
+        return maxSpacing;
+    }
+
+    protected double getMinSpacing() {
+        return minSpacing;
+    }
+
+    protected double getMinGap() {
+        return minGap;
+    }
+
+    protected double getMaxGap() {
+        return maxGap;
     }
 }

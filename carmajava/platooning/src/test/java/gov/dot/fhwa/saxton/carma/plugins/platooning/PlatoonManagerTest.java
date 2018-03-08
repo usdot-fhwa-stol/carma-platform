@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import cav_msgs.NewPlan;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 public class PlatoonManagerTest {
@@ -32,12 +33,14 @@ public class PlatoonManagerTest {
     private PlatoonManager manager;
     private PlatooningPlugin mockPlugin;
     private ILogger mockLogger;
+    private PluginServiceLocator mockPSL;
     
     @Before
     public void setup() {
         mockLogger = mock(ILogger.class);
         mockPlugin = mock(PlatooningPlugin.class);
-        manager = new PlatoonManager(mockPlugin, mockLogger);
+        mockPSL = mock(PluginServiceLocator.class);
+        manager = new PlatoonManager(mockPlugin, mockLogger, mockPSL);
     }
     
     @Test
@@ -67,7 +70,7 @@ public class PlatoonManagerTest {
         manager.memberUpdates(newPlan2);
         assertEquals(1, manager.platoon.size());
         PlatoonMember desiredMember = new PlatoonMember("1", 5.0, 4.9, 100, 0);
-        PlatoonMember actualMember = manager.platoon.first();
+        PlatoonMember actualMember = manager.platoon.get(0);
         assertEquals(desiredMember.getStaticId(), actualMember.getStaticId());
         assertEquals(desiredMember.getCommandSpeed(), actualMember.getCommandSpeed(), 0.01);
         assertEquals(desiredMember.getVehicleSpeed(), actualMember.getVehicleSpeed(), 0.01);
@@ -90,7 +93,7 @@ public class PlatoonManagerTest {
         manager.memberUpdates(newPlan);
         assertEquals(1, manager.platoon.size());
         PlatoonMember desiredMember = new PlatoonMember("1", 5.0, 4.9, 100, 0);
-        PlatoonMember actualMember = manager.platoon.first();
+        PlatoonMember actualMember = manager.platoon.get(0);
         assertEquals(desiredMember.getStaticId(), actualMember.getStaticId());
         assertEquals(desiredMember.getCommandSpeed(), actualMember.getCommandSpeed(), 0.01);
         assertEquals(desiredMember.getVehicleSpeed(), actualMember.getVehicleSpeed(), 0.01);

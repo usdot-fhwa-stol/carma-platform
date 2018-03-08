@@ -19,10 +19,9 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import cav_msgs.NewPlan;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 /**
@@ -31,25 +30,26 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 public class PlatoonManager implements Runnable {
     
     protected PlatooningPlugin plugin;
-    protected SortedSet<PlatoonMember> platoon;
+    protected List<PlatoonMember> platoon;
     protected ILogger log;
+    protected PluginServiceLocator psl;
+    protected String previousLeader = "";
 
-    public PlatoonManager(PlatooningPlugin plugin, ILogger log) {
+    public PlatoonManager(PlatooningPlugin plugin, ILogger log, PluginServiceLocator psl) {
         this.plugin = plugin;
         this.log = log;
-        // The leader vehicel is always the first on in the set.
-        this.platoon = Collections.synchronizedSortedSet(
-                new TreeSet<PlatoonMember>((a, b) -> -Double.compare(a.getVehiclePosition(), b.getVehiclePosition())));
-        // The max time duration we allow an entry to exist if we did not receive any update from it 
+        this.psl = psl;
+        // The leader vehicle is always the first on in the list.
+        this.platoon = Collections.synchronizedList(new ArrayList<>());
     }
     
     @Override
     public void run() {
         try {
-            
             while(!Thread.currentThread().isInterrupted()) {
                 long loopStart = System.currentTimeMillis();
                 removeExpiredMember();
+                Collections.sort(platoon, (a, b) -> (Double.compare(a.getVehiclePosition(), b.getVehiclePosition())));
                 long loopEnd = System.currentTimeMillis();
                 long sleepDuration = Math.max(plugin.messageTimeout - (loopEnd - loopStart), 0);
                 Thread.sleep(sleepDuration);
@@ -94,6 +94,7 @@ public class PlatoonManager implements Runnable {
             if(distance > plugin.getManeuverInputs().getDistanceFromRouteStart()) {
                 PlatoonMember pm = new PlatoonMember(plan.getSenderId(), cmdSpeed, speed, distance, System.currentTimeMillis());
                 platoon.add(pm);
+                Collections.sort(platoon, (a, b) -> (Double.compare(a.getVehiclePosition(), b.getVehiclePosition())));
                 log.info("Add CACC info on new vehicle " + pm.getStaticId());
             } else {
                 log.info("Ignore new vehicle info because it is behind us. Its id is " + plan.getSenderId());
@@ -102,7 +103,7 @@ public class PlatoonManager implements Runnable {
     }
     
     // This method removes any expired entry from platoon list
-    protected void removeExpiredMember() {
+    protected synchronized void removeExpiredMember() {
         List<PlatoonMember> removeCandidates = new ArrayList<>();
         int counter = 0;
         for(PlatoonMember pm : platoon) {
@@ -127,7 +128,17 @@ public class PlatoonManager implements Runnable {
      * TODO Integrate the leader selection algorithm later, now it will only return the first member as leader
      */
     protected synchronized PlatoonMember getLeader() {
-        return platoon.size() == 0 ? null : platoon.first();
+        PlatoonMember leader = platoon.size() == 0 ? null : platoon.get(0);
+        double distanceToFrontVehicle = this.psl.getManeuverPlanner().getManeuverInputs().getDistanceToFrontVehicle();
+        if(distanceToFrontVehicle < plugin.getMinGap()) {
+            leader = platoon.get(platoon.size() - 1);
+            previousLeader = leader.getStaticId();
+        } else if(distanceToFrontVehicle < plugin.getMaxGap() && previousLeader.equals(platoon.get(platoon.size() - 1).getStaticId())) {
+            leader = platoon.get(platoon.size() - 1);
+        } else {
+            //TODO actually APF algorithm
+        }
+        return leader;
     }
     
     protected int getPlatooningSize() {
