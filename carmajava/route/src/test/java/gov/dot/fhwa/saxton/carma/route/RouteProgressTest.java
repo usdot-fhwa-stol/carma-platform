@@ -72,7 +72,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
-    Location navSatFix = new Location(38.95649, -77.15028, 0);
+    Location navSatFix = new Location(38.95649, -77.15028, 72.0);
     routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
     routeWorker.loop();
 
@@ -88,7 +88,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
 
     assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
-      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+      new Location(38.95649, -77.15028, 72.0), 0.0000001, 0.0000001));
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // No change in location
@@ -96,11 +96,11 @@ public class RouteProgressTest {
     routeWorker.loop();
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
     assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
-      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+      new Location(38.95649, -77.15028, 72.0), 0.0000001, 0.0000001));
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after route file starting point
-    navSatFix = new Location(38.9564, -77.15035, 0);
+    navSatFix = new Location(38.9564, -77.15035, 72.0);
     routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
     routeWorker.loop();
 
@@ -108,7 +108,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after next point
-    navSatFix = new Location(38.95631, -77.15042, 0);
+    navSatFix = new Location(38.95631, -77.15042, 72.0);
     routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
     routeWorker.loop();
 
@@ -116,7 +116,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after end of route
-    navSatFix = new Location(38.95218, -77.15189, 0);
+    navSatFix = new Location(38.95218, -77.15189, 72.0);
     routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
     routeWorker.loop();
 
@@ -139,7 +139,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
-    Location navSatFix = new Location(38.95649, -77.15028, 0);
+    Location navSatFix = new Location(38.95649, -77.15028, 72.0);
     routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
     routeWorker.loop();
 
@@ -155,11 +155,11 @@ public class RouteProgressTest {
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
 
     assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
-      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+      new Location(38.95649, -77.15028, 72.0), 0.0000001, 0.0000001));
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after route file starting point
-    navSatFix = new Location(38.9564, -77.15035, 0);
+    navSatFix = new Location(38.9564, -77.15035, 72.0);
     routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
     routeWorker.loop();
 
@@ -168,7 +168,7 @@ public class RouteProgressTest {
 
     // Test vehicle has been placed inside the garage (off the route)
     // 3 off route nav sat msgs are required to consider vehicle off the route
-    navSatFix = new Location(38.95633, -77.15011, 0);
+    navSatFix = new Location(38.95633, -77.15011, 72.0);
     routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
     routeWorker.loop();
 
@@ -203,7 +203,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
-    Location navSatFix = new Location(38.95649, -77.15028, 0);
+    Location navSatFix = new Location(38.95649, -77.15028, 72.0);
     routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
     routeWorker.loop();
 
@@ -219,7 +219,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
 
     assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation()
-      .almostEqual(new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+      .almostEqual(new Location(38.95649, -77.15028, 72.0), 0.0000001, 0.0000001));
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Route has been joined time to abort

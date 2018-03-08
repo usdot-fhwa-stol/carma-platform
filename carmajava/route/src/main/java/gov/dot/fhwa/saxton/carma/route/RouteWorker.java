@@ -286,6 +286,10 @@ public class RouteWorker {
     if (getCurrentState() == WorkerState.FOLLOWING_ROUTE) {
       return StartActiveRouteResponse.ALREADY_FOLLOWING_ROUTE;
     }
+    if (hostVehicleInECEF == null) {
+      log.warn("Tried to start a route before transforms were published");
+      return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
+    }
     int startingIndex = getValidStartingWPIndex();
     log.info("Starting waypoint index = " + startingIndex);
     if (startingIndex == -1) {
