@@ -636,7 +636,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	    final GetTransformResponse[] response = new GetTransformResponse[1];
 	    final boolean[] gotTransform = {false};
 
-	    getTransformClient.callSync(request,
+	    getTransformClient.call(request,
 		    new OnServiceResponseCallback<GetTransformResponse>() {
 
 			    @Override
