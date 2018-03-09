@@ -59,6 +59,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     protected double minSpacing = 1.9;
     protected double minGap = 12.0;
     protected double maxGap = 14.0;
+    protected int algorithmType = 1;
 
     protected CommandGenerator commandGenerator = null;
     protected Thread commandGeneratorThread = null;
@@ -108,6 +109,8 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         log.debug("Load param minGap = " + minGap);
         maxGap = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
         log.debug("Load param maxGap = " + maxGap);
+        algorithmType = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
+        log.debug("Load param algorithmType = " + algorithmType);
         
         // initialize necessary pubs/subs 
         mobilityIntroPublisher = pubSubService.getPublisherForTopic("mobility_intro_outbound", MobilityIntro._TYPE);
@@ -256,5 +259,9 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
 
     protected double getMaxGap() {
         return maxGap;
+    }
+    
+    protected int getAlgorithmType() {
+        return algorithmType;
     }
 }
