@@ -208,18 +208,6 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                             @Override
                             public void build(cav_srvs.GetDriversWithCapabilitiesRequest request,
                                     cav_srvs.GetDriversWithCapabilitiesResponse response) {
-                                
-                                if (firstRequest.get() && request.getCapabilities().get(0).endsWith("cmd_speed")) {
-                                    firstRequest.set(false);
-                                    try {
-                                        log_.info("SLEEPING on " + request.getCapabilities().get(0));
-										Thread.sleep(1000);
-									} catch (InterruptedException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-                                }
-
                             	try {
 	                                log_.debug("DRIVER", "InterfaceMgr.driverCapSvr: received request with "
 	                                        + request.getCapabilities().size() + " capabilities listed.");
