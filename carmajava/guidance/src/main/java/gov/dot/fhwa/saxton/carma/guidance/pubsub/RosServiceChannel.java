@@ -25,6 +25,8 @@ import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import javassist.bytecode.analysis.ControlFlow.Block;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -108,22 +110,27 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
     }
 
     protected void submitCall(T request, OnServiceResponseCallback<S> callback) {
+        CompletableFuture<Void> blocker = new CompletableFuture<>();
         ServiceTask t = new ServiceTask();
         t.request = request;
         t.callback = new ServiceResponseListener<S>() {
 			@Override
 			public void onFailure(RemoteException arg0) {
-				callback.onFailure(arg0);
+                callback.onFailure(arg0);
+                blocker.complete(null);
 			}
 			@Override
 			public void onSuccess(S arg0) {
 				callback.onSuccess(arg0);
+                blocker.complete(null);
 			}
         };
 
 		try {
 			tasks.put(t);
+            blocker.get();
 		} catch (InterruptedException e) {
+        } catch (ExecutionException e) {
 		}
     }
     

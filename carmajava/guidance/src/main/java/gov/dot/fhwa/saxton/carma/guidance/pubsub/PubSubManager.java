@@ -65,8 +65,8 @@ public class PubSubManager implements IPubSubService {
     @Override
     @SuppressWarnings("unchecked")
     public <T, S> IService<T, S> getServiceForTopic(String topicUrl, String type) throws TopicNotFoundException {
-        if (serviceChannelManagers.containsKey(topicUrl) && serviceChannelManagers.get(topicUrl).isOpen()) {
-            return (IService<T, S>) serviceChannelManagers.get(topicUrl);
+        if (serviceChannelManagers.containsKey(topicUrl)) {
+            return (IService<T, S>) serviceChannelManagers.get(topicUrl).getService();
         } else {
             IServiceChannel<T, S> mgr = srvFactory.newServiceChannel(topicUrl, type);
             serviceChannelManagers.put(topicUrl, mgr);
