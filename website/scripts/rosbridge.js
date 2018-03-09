@@ -88,7 +88,6 @@ var isGuidance = {
         var isGuidanceActive = sessionStorage.getItem('isGuidanceActive');
         var value = false;
 
-        //Issue with Boolean returning opposite value, therefore doing manual check.
         if (isGuidanceActive != 'undefined' && isGuidanceActive != null && isGuidanceActive != '') {
             if (isGuidanceActive == 'true')
                 value = true;
@@ -173,7 +172,7 @@ var selectedRoute = {
 
         //console.log('get selectedRouteName INITIAL: ' + selectedRouteName);
 
-        if (selectedRouteName == 'undefined' || selectedRouteName == null) {
+        if (selectedRouteName == 'undefined' || selectedRouteName == null || selectedRouteName.length == 0) {
             selectedRouteName = 'No Route Selected';
         }
 
@@ -293,12 +292,10 @@ function checkSystemAlerts() {
                 break;
             case 5:
                 isSystemAlert.ready = true;
-                sessionStorage.setItem('isSystemReady', true);
                 messageTypeFullDescription = 'System is ready. ' + message.description;
                 break;
             case 6: // SHUTDOWN
                 isSystemAlert.ready = false;
-                sessionStorage.setItem('isSystemReady', false);
                 listenerSystemAlert.unsubscribe();
                 break;
             default:
