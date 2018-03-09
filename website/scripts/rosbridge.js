@@ -98,7 +98,7 @@ var isGuidance = {
     },
     set active(newValue) {
         sessionStorage.setItem('isGuidanceActive', newValue);
-        console.log('set active: ' + newValue + ' ; Boolean:' + Boolean(newValue));
+        //console.log('set active: ' + newValue + ' ; Boolean:' + Boolean(newValue));
     },
     get engaged() {
         var isGuidanceEngaged = sessionStorage.getItem('isGuidanceEngaged');
@@ -113,7 +113,7 @@ var isGuidance = {
     },
     set engaged(newValue) {
         sessionStorage.setItem('isGuidanceEngaged', newValue);
-        console.log('set engaged: ' + newValue + ' ; Boolean:' + Boolean(newValue));
+        //console.log('set engaged: ' + newValue + ' ; Boolean:' + Boolean(newValue));
     },
     remove() {
         sessionStorage.removeItem('isGuidanceActive');
@@ -785,7 +785,6 @@ function setCAVButtonState(state) {
             btnCAVGuidance.title = 'Start CAV Guidance';
             btnCAVGuidance.innerHTML = 'CAV Guidance - READY <i class="fa fa-thumbs-o-up"></i>';
 
-            //divCapabilitiesMessage.innerHTML = ''; // leave as is
             isGuidance.active = false;
             isGuidance.engaged = false;
 
@@ -795,8 +794,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.className = 'button_cav button_disabled'; //color to gray
             btnCAVGuidance.title = 'CAV Guidance is disabled.';
             btnCAVGuidance.innerHTML = 'CAV Guidance';
-
-            //divCapabilitiesMessage.innerHTML = ''; // leave as is
+            
             isGuidance.active = false;
             isGuidance.engaged = false;
 
@@ -806,8 +804,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.className = 'button_cav button_active'; //color to purple
             btnCAVGuidance.title = 'CAV Guidance is now active.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ACTIVE <i class="fa fa-check"></i>';
-
-            //divCapabilitiesMessage.innerHTML = ''; // leave as is
+            
             isGuidance.active = true;
             isGuidance.engaged = false;
 
@@ -818,7 +815,6 @@ function setCAVButtonState(state) {
             btnCAVGuidance.title = 'CAV Guidance status is inactive.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - INACTIVE <i class="fa fa-times-circle-o"></i>';
 
-            divCapabilitiesMessage.innerHTML = 'CAV Guidance has been de-activated. <br/> To re-engage, double tap the ACC switch downward on the steering wheel.';
             isGuidance.active = false;
             //isGuidance.engaged = false; //LEAVE value as-is. 
 
@@ -835,8 +831,7 @@ function setCAVButtonState(state) {
 
             btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
-
-            divCapabilitiesMessage.innerHTML = 'CAV Guidance is ENGAGED.';
+            
             isGuidance.active = true;
             isGuidance.engaged = true;
 
@@ -910,16 +905,18 @@ function checkGuidanceState() {
                 break;
             case 4: //ENGAGED
                 //start the timer when it first engages. 
+                messageTypeFullDescription = 'Guidance is now ENGAGED.';
                 startEngagedTimer();
                 setCAVButtonState('ENGAGED');
                 break;
             case 5: //INACTIVE
                 //Set based on whatever guidance_state says, regardless if UI has not been engaged yet.
+                messageTypeFullDescription = 'CAV Guidance is INACTIVE. <br/> To re-engage, double tap the ACC switch downward on the steering wheel.';
                 setCAVButtonState('INACTIVE');
                 break;
             case 0: //SHUTDOWN
                 //Show modal popup for Shutdown alerts from Guidance, which is equivalent to Fatal since it cannot restart with this state.
-                messageTypeFullDescription = 'System received a Guidance Shutdown. <br/><br/>' + message.description;
+                messageTypeFullDescription = 'System received a Guidance SHUTDOWN. <br/><br/>' + message.description;
                 messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
                 listenerSystemAlert.unsubscribe();
                 showModal(true, messageTypeFullDescription, false);
