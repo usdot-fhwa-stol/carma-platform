@@ -386,10 +386,8 @@ function countUpTimer() {
 
     // Get todays date and time
     var now = new Date().getTime();
-    // Get from session
-    var startDateTime = sessionStorage.getItem('startDateTime');
     // Find the distance between now an the count down date
-    var distance = now - startDateTime;
+    var distance = now - startDateTime.value;
 
     // Time calculations for days, hours, minutes and seconds
     // var days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -399,7 +397,7 @@ function countUpTimer() {
 
     engaged_timer = '00h 00m 00s';
 
-    if (is_guidance_engaged == true) {
+    if (isGuidance.engaged == true) {
         engaged_timer = pad(hours, 2) + 'h '
             + pad(minutes, 2) + 'm ' + pad(seconds, 2) + 's ';
     }
@@ -434,17 +432,12 @@ function closeModal(action) {
     switch (action) {
        case 'RESTART':
             //Clear session variables except SystemReady (assumes interface manager still have driver's ready)
-            sessionStorage.removeItem('isGuidanceEngaged');
-            sessionStorage.removeItem('isGuidanceActive');
-            sessionStorage.removeItem('routeName');
+            isGuidance.remove();
+            selectedRoute.remove();
+            startDateTime.remove();
             sessionStorage.removeItem('routePlanCoordinates');
             sessionStorage.removeItem('routeSpeedLimitDist');
-            sessionStorage.removeItem('startDateTime');
 
-            //Clear global variables
-            is_guidance_engaged = false;
-            is_guidance_active = false;
-            route_name = 'No Route Selected'; //TODO: Move to widgetfw
             ready_counter = 0;
             ready_max_trial = 10;
             sound_counter = 0;
@@ -466,19 +459,15 @@ function closeModal(action) {
 
             //Evaluate next step
             evaluateNextStep();
+
             break;
-
-
         case 'LOGOUT':
             shutdown();
             break;
-
         default:
             //no action
             break;
     }
-
-
 }
 
 function shutdown()
