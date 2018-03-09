@@ -43,7 +43,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                 //Show 0 if negative
                 var remaining_dist = total_dist_next_speed_limit - message.down_track;
                 remaining_dist = Math.max(0, remaining_dist);
-                var remaining_dist_miles = (remaining_dist * meter_to_mile);
+                var remaining_dist_miles = (remaining_dist * METER_TO_MILE);
                 remaining_dist_miles = Math.max(0, remaining_dist_miles);
 
                 insertNewTableRow('tblSecondA', 'Speed Limit Change Total Dist (m)', total_dist_next_speed_limit.toFixed(2));
@@ -157,7 +157,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
             });
 
             listenerSpeedAccel.subscribe(function (message) {
-                var cmd_speed_mph = Math.round(message.speed * meter_to_mph);
+                var cmd_speed_mph = Math.round(message.speed * METER_TO_MPH);
 
                 //Display on DriverView the Speed Cmd for Speed Harm or Cruising
                 //NOTE: There is currently no indicator to know if SpeedHarm is transmitting.
@@ -195,7 +195,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
             });
 
             listenerCANSpeed.subscribe(function (message) {
-                var speedMPH = Math.round(message.data * meter_to_mph);
+                var speedMPH = Math.round(message.data * METER_TO_MPH);
                 setSpeedometer(speedMPH);
             });
         };

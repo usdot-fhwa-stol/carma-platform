@@ -47,7 +47,7 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                     var lane_remaining_dist = total_dist_next_lane_change - message.down_track;
                     lane_remaining_dist = Math.max(0, lane_remaining_dist);
 
-                    var lane_remaining_dist_miles = (lane_remaining_dist * meter_to_mile);
+                    var lane_remaining_dist_miles = (lane_remaining_dist * METER_TO_MILE);
                     lane_remaining_dist_miles = Math.max(0, lane_remaining_dist_miles);
 
                     insertNewTableRow('tblSecondA', 'Lane Change Total Dist (m)', total_dist_next_lane_change.toFixed(2));
@@ -91,7 +91,7 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                 //Display the lateset route name and timer.
                 var divRouteInfo = document.getElementById('divRouteInfo');
                 if (divRouteInfo != null || divRouteInfo != 'undefined')
-                    divRouteInfo.innerHTML = route_name + ' : ' + engaged_timer;
+                    divRouteInfo.innerHTML = selectedRoute.name + ' : ' + engaged_timer;
             });
         };
 
