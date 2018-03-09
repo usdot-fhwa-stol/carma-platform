@@ -386,8 +386,8 @@ public class Trajectory {
   /**
    * Get the trajectory's stored lateral maneuvers in sorted order by start location
    */
-  public List<ISimpleManeuver> getLateralManeuvers() {
-    List<ISimpleManeuver> out = new ArrayList<>();
+  public List<LateralManeuver> getLateralManeuvers() {
+    List<LateralManeuver> out = new ArrayList<>();
     out.addAll(lateralManeuvers.toSortedList());
 
     return out;
