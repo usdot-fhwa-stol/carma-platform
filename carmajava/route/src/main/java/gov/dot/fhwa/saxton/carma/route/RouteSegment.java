@@ -298,8 +298,8 @@ public class RouteSegment {
     routeSegMsg.setPrevWaypoint(uptrackWP.toMessage(factory, downtrackWPIndex - 1));
     routeSegMsg.setWaypoint(downtrackWP.toMessage(factory, downtrackWPIndex));
     routeSegMsg.getFRDPose().getPosition().setX(ecefToUptrackWP.getTranslation().getX());
-    routeSegMsg.getFRDPose().getPosition().setY(ecefToUptrackWP.getTranslation().getX());
-    routeSegMsg.getFRDPose().getPosition().setZ(ecefToUptrackWP.getTranslation().getX());
+    routeSegMsg.getFRDPose().getPosition().setY(ecefToUptrackWP.getTranslation().getY());
+    routeSegMsg.getFRDPose().getPosition().setZ(ecefToUptrackWP.getTranslation().getZ());
     routeSegMsg.getFRDPose().getOrientation().setX(ecefToUptrackWP.getRotationAndScale().getX());
     routeSegMsg.getFRDPose().getOrientation().setY(ecefToUptrackWP.getRotationAndScale().getY());
     routeSegMsg.getFRDPose().getOrientation().setZ(ecefToUptrackWP.getRotationAndScale().getZ());
