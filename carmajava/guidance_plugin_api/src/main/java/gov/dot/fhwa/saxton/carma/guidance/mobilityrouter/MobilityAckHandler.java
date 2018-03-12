@@ -22,5 +22,5 @@ import org.ros.internal.message.Message;
  * 
  */
 public interface MobilityAckHandler {
-  void handleMessage(Message msg);
+  MobilityRequestResponse handleMobilityAckMessage(Message msg);
 }

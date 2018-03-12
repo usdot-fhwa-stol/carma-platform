@@ -30,6 +30,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
@@ -86,7 +87,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected int activePluginsSeqNum = 0;
 
     public PluginManager(GuidanceStateMachine stateMachine, IPubSubService pubSubManager, 
-    IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService, ConnectedNode node) {
+    IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService, MobilityRouter router, ConnectedNode node) {
         super(stateMachine, pubSubManager, node);
         this.executor = new PluginExecutor();
 
@@ -96,7 +97,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
-                routeService);
+                routeService,
+                router);
     }
 
     /**

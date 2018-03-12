@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance;
 
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import cav_srvs.GetSystemVersion;
 import cav_srvs.GetSystemVersionRequest;
@@ -91,13 +92,16 @@ public class GuidanceMain extends SaxtonBaseNode {
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands, tracking);
-    PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
+    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node);
+    PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs, routeService, router, node);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor);
     
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
     trajectoryExecutor.setArbitrator(arbitrator);
     pluginManager.setArbitratorService(arbitrator);
+    router.setArbitrator(arbitrator);
+    router.setPluginManager(pluginManager);
 
     executor.execute(stateHandler);
     executor.execute(maneuverInputs);

@@ -22,5 +22,5 @@ import org.ros.internal.message.Message;
  * 
  */
 public interface MobilityStatusHandler {
-  void handleMessage(Message msg, boolean hasConflict, double startDist, double endDist, double startTime, double endTime);
+  void handleMobilityStatusMessage(Message msg, boolean hasConflict, double startDist, double endDist, double startTime, double endTime);
 }

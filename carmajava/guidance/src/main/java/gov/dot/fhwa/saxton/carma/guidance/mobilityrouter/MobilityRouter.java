@@ -25,6 +25,9 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceExceptionHandler;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -35,7 +38,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
  * Defines the execution framework within the context of both Guidance and the overall system's state
  * due to driver initialization and user command.
  */
-public abstract class MobilityRouter extends GuidanceComponent {
+public class MobilityRouter extends GuidanceComponent implements IMobilityRouter {
     
     private final String componentName = "MobilityRouter";
     private final Integer YIELD_PLUGIN_ENUM_TYPE = 1; // LANE_CHANGE
@@ -44,13 +47,25 @@ public abstract class MobilityRouter extends GuidanceComponent {
     private ISubscriber<MobilityAck> ackSub;
     private ISubscriber<MobilityOperation> operationSub;
     private ISubscriber<MobilityStatus> statusSub;
-    private ConcurrentHashMap<Integer, LinkedList<MobilityRequestHandler>> requestMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<Integer, LinkedList<MobilityAckHandler>> ackMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<Integer, LinkedList<MobilityOperationHandler>> operationMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<Integer, LinkedList<MobilityStatusHandler>> statusMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, LinkedList<MobilityRequestHandler>> requestMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, LinkedList<MobilityAckHandler>> ackMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, LinkedList<MobilityOperationHandler>> operationMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, LinkedList<MobilityStatusHandler>> statusMap = new ConcurrentHashMap<>();
+
+    private PluginManager pluginManager;
+    private Arbitrator arbitrator;
+    private IPlugin yieldPlugin;
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
         super(stateMachine, pubSubService, node);
+    }
+
+    public void setArbitrator(Arbitrator arbitrator) {
+        this.arbitrator = arbitrator;
+    }
+
+    public void setPluginManager(PluginManager pluginManager) {
+        this.pluginManager = pluginManager;
     }
 
     @Override
@@ -66,21 +81,10 @@ public abstract class MobilityRouter extends GuidanceComponent {
         operationSub = pubSubService.getSubscriberForTopic("incoming_mobility_operation", MobilityOperation._TYPE);
         statusSub = pubSubService.getSubscriberForTopic("incoming_mobility_status", MobilityStatus._TYPE);
 
-        requestSub.registerOnMessageCallback((MobilityRequest msg) -> {
-            handleMobilityRequest(msg);
-        });
-
-        ackSub.registerOnMessageCallback((MobilityAck msg) -> {
-            handleMobilityAck(msg);
-        });
-
-        operationSub.registerOnMessageCallback((MobilityOperation msg) -> {
-            handleMobilityOperation(msg);
-        });
-
-        statusSub.registerOnMessageCallback((MobilityStatus msg) -> {
-            handleMobilityStatus(msg);
-        });
+        requestSub.registerOnMessageCallback(this::handleMobilityRequest);
+        ackSub.registerOnMessageCallback(this::handleMobilityAck);
+        operationSub.registerOnMessageCallback(this::handleMobilityOperation);
+        statusSub.registerOnMessageCallback(this::handleMobilityStatus);
         log.info("Setup complete");
     }
     
@@ -113,6 +117,9 @@ public abstract class MobilityRouter extends GuidanceComponent {
 
         // TODO add path to data structure
         addToCollisionTree(msg.path);
+
+        requestMap.getKeys().
+        
         List<MobilityRequestHandler> handlers = operationMap.get(msg.target);
         if (handlers == null) { // TODO Might be unsafe to leave without ensuring replan on conflict
             return;
@@ -120,7 +127,7 @@ public abstract class MobilityRouter extends GuidanceComponent {
 
         // TODO make call for conflict space
         ConflictSpace conflictSpace = getConflictSpace();
-        for (MobilityRequestHandler handler: handlers) {
+        for (MobilityRequestHandler handler : handlers) {
             // Plugin can handle this kind of message and it has a conflict. Allow it to handle the message
             if (conflictSpace.hasConflict()) {
                 if (conflictSpace.conflictsWithPlugin(msg.targetPlugin)) {
@@ -129,7 +136,7 @@ public abstract class MobilityRouter extends GuidanceComponent {
                     // TODO route to yield plugin
                 }
             }
-            handler.handleMessage(msg, false, conflictSpace.startDist, conflictSpace.endDist, conflictSpace.startTime, conflictSpace.endTime);
+            handler.handleMobilityRequestMessage(msg, false, conflictSpace.startDist, conflictSpace.endDist, conflictSpace.startTime, conflictSpace.endTime);
         }
     }
 
@@ -139,7 +146,7 @@ public abstract class MobilityRouter extends GuidanceComponent {
             return;
         }
         for (MobilityAckHandler handler: handlers) {
-            handler.handleMessage(msg);
+            handler.handleMobilityAckMessage(msg);
         }
     }
 
@@ -149,7 +156,7 @@ public abstract class MobilityRouter extends GuidanceComponent {
             return;
         }
         for (MobilityOperationHandler handler: handlers) {
-            handler.handleMessage(msg);
+            handler.handleMobilityOperationMessage(msg);
         }
     }
 
@@ -168,40 +175,40 @@ public abstract class MobilityRouter extends GuidanceComponent {
             // Plugin can handle this kind of message and it has a conflict. Allow it to handle the message
             if (conflictSpace.hasConflict()) {
                 if (conflictSpace.conflictsWithPlugin(msg.targetPlugin)) {
-                    handler.handleMessage(msg, true, conflictSpace.startDist, conflictSpace.endDist, conflictSpace.startTime, conflictSpace.endTime);
+                    handler.handleMobilityStatusMessage(msg, true, conflictSpace.startDist, conflictSpace.endDist, conflictSpace.startTime, conflictSpace.endTime);
                 } else {
                     // TODO route to yield plugin
                 }
             }
-            handler.handleMessage(msg, false, conflictSpace.startDist, conflictSpace.endDist, conflictSpace.startTime, conflictSpace.endTime);
+            handler.handleMobilityStatusMessage(msg, false, conflictSpace.startDist, conflictSpace.endDist, conflictSpace.startTime, conflictSpace.endTime);
         }
     }
 
-    public void registerMobilityRequestHandler(Integer targetPlugin, MobilityRequestHandler handler) {
-        if (!requestMap.containsKey(targetPlugin)) {
-            requestMap.put(targetPlugin, new LinkedList<MobilityRequestHandler>());
+    public void registerMobilityRequestHandler(String strategyId, MobilityRequestHandler handler) {
+        if (!requestMap.containsKey(strategyId)) {
+            requestMap.put(strategyId, new LinkedList<MobilityRequestHandler>());
         }
-        requestMap.get(targetPlugin).add(handler);
+        requestMap.get(strategyId).add(handler);
     }
 
-    public void registerMobilityAckHandler(Integer targetPlugin, MobilityAckHandler handler) {
-        if (!ackMap.containsKey(targetPlugin)) {
-            ackMap.put(targetPlugin, new LinkedList<MobilityAckHandler>());
+    public void registerMobilityAckHandler(String strategyId, MobilityAckHandler handler) {
+        if (!ackMap.containsKey(strategyId)) {
+            ackMap.put(strategyId, new LinkedList<MobilityAckHandler>());
         }
-        ackMap.get(targetPlugin).add(handler);
+        ackMap.get(strategyId).add(handler);
     }
 
-    public void registerMobilityOperationHandler(Integer targetPlugin, MobilityOperationHandler handler) {
-        if (!operationMap.containsKey(targetPlugin)) {
-            operationMap.put(targetPlugin, new LinkedList<MobilityOperationHandler>());
+    public void registerMobilityOperationHandler(String strategyId, MobilityOperationHandler handler) {
+        if (!operationMap.containsKey(strategyId)) {
+            operationMap.put(strategyId, new LinkedList<MobilityOperationHandler>());
         }
-        operationMap.get(targetPlugin).add(handler);
+        operationMap.get(strategyId).add(handler);
     }
 
-    public void registerMobilityStatusHandler(Integer targetPlugin, MobilityStatusHandler handler) {
-        if (!statusMap.containsKey(targetPlugin)) {
-            statusMap.put(targetPlugin, new LinkedList<MobilityStatusHandler>());
+    public void registerMobilityStatusHandler(String strategyId, MobilityStatusHandler handler) {
+        if (!statusMap.containsKey(strategyId)) {
+            statusMap.put(strategyId, new LinkedList<MobilityStatusHandler>());
         }
-        statusMap.get(targetPlugin).add(handler);
+        statusMap.get(strategyId).add(handler);
     }
 }

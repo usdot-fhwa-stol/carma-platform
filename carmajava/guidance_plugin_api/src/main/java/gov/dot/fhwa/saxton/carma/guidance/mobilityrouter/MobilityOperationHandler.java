@@ -22,5 +22,5 @@ import org.ros.internal.message.Message;
  * 
  */
 public interface MobilityOperationHandler {
-  void handleMessage(Message msg);
+  void handleMobilityOperationMessage(Message msg);
 }

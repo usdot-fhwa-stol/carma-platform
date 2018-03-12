@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
@@ -33,16 +34,18 @@ public class PluginServiceLocator {
     private final IPubSubService IPubSubService;
     private final ManeuverPlanner maneuverPlanner;
     private final RouteService routeService;
+    private final IMobilityRouter mobilityRouter;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
         PluginManagementService pluginManagementService, IPubSubService iPubSubService,
-        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService) {
+        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService, IMobilityRouter mobilityRouter) {
         this.arbitratorService = arbitratorService;
         this.IPubSubService = iPubSubService;
         this.pluginManagementService = pluginManagementService;
         this.parameterSource = parameterSource;
         this.maneuverPlanner = maneuverPlanner;
         this.routeService = routeService;
+        this.mobilityRouter = mobilityRouter;
     }
 
     /**
@@ -80,7 +83,17 @@ public class PluginServiceLocator {
         return maneuverPlanner;
     }
 
+    /**
+     * Get the {@link RouteService} instance available to the plugins.
+     */
     public RouteService getRouteService() {
         return routeService;
+    }
+
+    /**
+     * Get the {@link MobilityRouter} instance available to the plugins.
+     */
+    public IMobilityRouter getMobilityRouter() {
+        return mobilityRouter;
     }
 }
