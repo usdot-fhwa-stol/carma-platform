@@ -20,7 +20,7 @@ base_url = "http://35.153.64.44:8081" # Base url of server, defaults to localhos
 vehicles_url = "/rest/vehicles"
 experiments_url = "/rest/experiments"
 algorithms_url = "/rest/algorithms"
-default_algorithm = "ReduceSpeedAlgorithm"
+default_algorithm = "gov.dot.fhwa.saxton.speedharm.executive.algorithms.ReduceSpeedAlgorithm"
 sleep_duration_millis = 5000
 
 def log(msg):
@@ -56,7 +56,7 @@ def assign_experiment(veh_id, experiment_url):
 def get_registered_veh_data():
     r = requests.get(urlparse.urljoin(base_url, vehicles_url), verify=False)
     print_response(r)
-    return set(r.json())
+    return r.json()
 
 def create_algorithm(algo_name):
     full_url = urlparse.urljoin(base_url, algorithms_url)
@@ -78,27 +78,26 @@ def main():
     log("Connecting to " + base_url + "...")
     while True:
         for veh in get_registered_veh_data():
-            if not veh["expId"]:
-                # Vehicle isn't yet assigned to an experiment
-                log("Detected new vehicle ID=" + veh["id"] + " with no experiment, assigning to experiment.")
+            if not "expId" in veh:
+                # Vehicle isn't yet assigned to an experiment, assume it's also not assigned to an algorithm
+                log("Detected new vehicle ID=" + str(veh["id"]) + " with no experiment, assigning to experiment.")
                 active_experiment_url = get_active_experiment_url()
                 if not active_experiment_url:
                     cur_datetime = datetime.utcnow()
                     unix_ts = calendar.timegm(cur_datetime.utctimetuple())
-                    active_experiment_url = create_experiment("AUTO-CONFIG Experiment Generated @ " + unix_ts, "UNSPECIFIED")
+                    active_experiment_url = create_experiment("AUTO-CONFIG Experiment Generated @ " + str(unix_ts), "UNSPECIFIED")
                     log("Created new experiment at " + active_experiment_url)
                 else:
                     log("Discovered active experiment at " + active_experiment_url)
                 assign_experiment(veh["id"], active_experiment_url)
-                log("Assigned vehicle ID=" + veh["id"] + " to experiment " + active_experiment_url)
-            if not veh["algoId"]:
+                log("Assigned vehicle ID=" + str(veh["id"]) + " to experiment " + active_experiment_url)
                 # Vehicle isn't yet assigned to an algorithm
-                log("Detected new vehicle ID=" + veh["id"] + " with no algorithm, assigning to algorithm.")
+                log("Detected new vehicle ID=" + str(veh["id"]) + " with no algorithm, assigning to algorithm.")
                 algo_url = create_algorithm(default_algorithm)
                 log("Created new algorithm of type " + default_algorithm + " at " + algo_url)
                 assign_algorithm(veh["id"], algo_url)
-                log("Assigned vehicle ID=" + veh["id"] + " to algorithm " + algo_url)
-        log("Sleeping " + sleep_duration_millis + "ms...")
+                log("Assigned vehicle ID=" + str(veh["id"]) + " to algorithm " + algo_url)
+        log("Sleeping " + str(sleep_duration_millis) + "ms...")
         time.sleep(sleep_duration_millis / 1000.0)
 
 if __name__ == "__main__":
