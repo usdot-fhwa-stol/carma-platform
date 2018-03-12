@@ -6,6 +6,7 @@ import requests
 import re
 import urlparse
 from datetime import datetime
+import time
 import calendar
 
 # Disable annoying insecure requests warnings, we're using a self-signed cert
@@ -20,19 +21,17 @@ vehicles_url = "/rest/vehicles"
 experiments_url = "/rest/experiments"
 algorithms_url = "/rest/algorithms"
 default_algorithm = "ReduceSpeedAlgorithm"
+sleep_duration_millis = 5000
 
 def log(msg):
     cur_datetime = datetime.utcnow()
     unix_ts = calendar.timegm(cur_datetime.utctimetuple())
-    print("[" + str(unix_ts) + "] " + msg)
+    print("[" + str(unix_ts) + "] " + str(msg))
 
 def print_response(resp):
-    try:
-        log(resp.status_code)
-        log(resp.headers)
-        log(resp.json())
-    except:
-        log("Unable to decode the rest of the response.")
+    log(resp.status_code)
+    log(resp.headers)
+    log(resp.json())
 
 def get_active_experiment_url():
     r = requests.get(urlparse.urljoin(base_url, experiments_url), verify=False).json()
@@ -47,11 +46,12 @@ def create_experiment(desc, loc):
     headers = { "Content-Type" : "application/json" }
     r = requests.post(full_url, data=json.dumps({"description": desc, "location": loc}), headers=headers, verify=False)
     print_response(r)
+    return r.headers["Location"]
 
 def assign_experiment(veh_id, experiment_url):
     headers = { "Content-Type" : "application/json" }
     data = json.dumps({"id": int(veh_id)})
-    r = requests.post(urlparse.urljoin(experiment_url + "/vehicles"), data=data, headers=headers, verify=False)
+    r = requests.post(urlparse.urljoin(experiment_url + "/vehicles", ""), data=data, headers=headers, verify=False)
 
 def get_registered_veh_data():
     r = requests.get(urlparse.urljoin(base_url, vehicles_url), verify=False)
@@ -70,7 +70,7 @@ def create_algorithm(algo_name):
 def assign_algorithm(veh_id, algo_url):
     headers = { "Content-Type" : "application/json" }
     data = json.dumps({"id": int(veh_id)})
-    r = requests.post(urlparse.urljoin(algo_url + "/vehicles"), data=data, headers=headers, verify=False)
+    r = requests.post(urlparse.urljoin(algo_url + "/vehicles", ""), data=data, headers=headers, verify=False)
     print_response(r)
 
 def main():
@@ -98,10 +98,8 @@ def main():
                 log("Created new algorithm of type " + default_algorithm + " at " + algo_url)
                 assign_algorithm(veh["id"], algo_url)
                 log("Assigned vehicle ID=" + veh["id"] + " to algorithm " + algo_url)
-        log("Sleeping 500ms...")
-        sleep(500)
+        log("Sleeping " + sleep_duration_millis + "ms...")
+        time.sleep(sleep_duration_millis / 1000.0)
 
 if __name__ == "__main__":
     main()
-
-
