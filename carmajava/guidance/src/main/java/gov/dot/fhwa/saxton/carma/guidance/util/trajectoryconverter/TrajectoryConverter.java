@@ -63,10 +63,18 @@ public class TrajectoryConverter {
 
     // Process longitudinal maneuvers
     LongitudinalSimulationData longitudinalSimData = new LongitudinalSimulationData(currentTime, startingDowntrack, startingSegDowntrack, startingSegIdx);
+    Point3DStamped oldPathEndPoint = null;
+    int oldPathSize = 0;
     for (LongitudinalManeuver maneuver: longitudinalManeuvers) {
       // If this maneuver is happening or will happen add it to the path
       if (maneuver.getEndDistance() > longitudinalSimData.downtrack) {
         longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData, route);
+        // Ensure there are no overlapping points in time
+        if (oldPathEndPoint != null && oldPathEndPoint.getStamp() == path.get(oldPathSize).getStamp()){
+          path.remove(oldPathSize);
+        }
+        oldPathSize = path.size();
+        oldPathEndPoint = path.get(path.size() - 1);
       }
     }
 
