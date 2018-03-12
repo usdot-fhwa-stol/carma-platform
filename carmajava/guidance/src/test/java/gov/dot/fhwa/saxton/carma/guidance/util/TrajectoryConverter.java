@@ -34,48 +34,75 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 public class TrajectoryConverter {
+
+  private final int maxPointsInPath;
+  private final double timeStep;
+
+  public TrajectoryConverter(int maxPointsInPath, double timeStep) {
+    this.maxPointsInPath = maxPointsInPath;
+    this.timeStep = timeStep;
+  }
+
   public double estimateArrivalTime(double distance) {
     return 0;
   }
 
   public List<Point3DStamped> convertToPath(Trajectory traj) {
-
     List<LongitudinalManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     List<LateralManeuver> lateralManeuvers = traj.getLateralManeuvers();
-    Point3DStamped startPoint = new Point3DStamped();
-    startPoint.setPoint(new Point3D(0, 0, 0)); // TODO use real ecef location
-    startPoint.setStamp(System.currentTimeMillis()); // TODO use real GPS time
     List<Point3DStamped> path =  new LinkedList<Point3DStamped>();
-    path.add(startPoint);
+    final double startTime = 0; // TODO get start time
+    double maneuverStartTime = startTime; 
     // Process longitudinal maneuvers
     for (LongitudinalManeuver maneuver: longitudinalManeuvers) {
-      maneuver.getStartDistance();
+      // TODO find out if maneuvers are removed from the trajectory when they are completed
+      if (maneuver.getEndDistance() > routeState.getDownTrack()) {
+        addLongitudinalManeuverToPath(maneuver, maneuverStartTime, path, currentSeg, routeState, route);
+        maneuverStartTime = startTime + timeStep * path.size();
+      }
     }
     return new LinkedList<Point3DStamped>();
   }
 
-  private List<Point3DStamped> longitudinalManeuverToPoints(
-    final LongitudinalManeuver maneuver, final double startTime, final double timeStep, 
+  private void addLongitudinalManeuverToPath(
+    final LongitudinalManeuver maneuver, final double maneuverStartTime, List<Point3DStamped> path,
     RouteSegment currentSeg, final RouteState routeState, final Route route) {
 
-    // TODO
-    // I need to add the segment frame into my route messages even though it will break my rosbags
-    // Look at fix/roadway_obstacles for an example of how to do this (might have branched off that I can't remember)
+    final double startX = maneuver.getStartDistance();
+    final double endX = maneuver.getEndDistance();
     final double startV = maneuver.getStartSpeed();
-    final double deltaX = maneuver.getEndDistance() - maneuver.getStartDistance();
-    final double deltaV = maneuver.getTargetSpeed() - startV;
-    final double deltaT = deltaX / deltaV;
-    final double accel = deltaV / deltaT;
-    final double accelTerm = 0.5 * timeStep * timeStep;
-    double currentSimTime = 0;
-    List<Point3DStamped> points = new LinkedList<Point3DStamped>();
-    List<RouteSegment> routeSegments = route.getSegments();
+    final double endV = maneuver.getStartSpeed();
+    final double deltaX = endX - startX;
+    final double deltaV = endV - startV;
+    final double startVSqr = startV * startV;
+    final double twiceAccel = (startVSqr - endV * endV) /  deltaX;
+    final double accel = twiceAccel * 0.5;
+    final double deltaVPerTimeStep = accel * timeStep;
 
-    double startX = routeState.getSegmentDownTrack(); // Start measurement from current segment downtrack
+    // If this is the current maneuver only use the remaining distance
+    double actualStartV;
+    final double actualDeltaV;
+    if (maneuver.getStartDistance() < routeState.getDownTrack()) {
+      final double actualDeltaX = maneuver.getEndDistance() - routeState.getDownTrack();
+      actualStartV = Math.sqrt(startVSqr + twiceAccel * actualDeltaX);
+      actualDeltaV = actualStartV - startV;
+    } else {
+      actualStartV = startV;
+      actualDeltaV = deltaV;
+    }
+
+    final double deltaT = actualDeltaV / accel;
+
+    final double accelTerm = 0.5 * accel * timeStep * timeStep;
+    final double endTime = maneuverStartTime + deltaT;
+    double currentSimTime = maneuverStartTime;
+    final List<RouteSegment> routeSegments = route.getSegments();
+
+    double actualStartX = routeState.getSegmentDownTrack(); // Start measurement from current segment downtrack
     int segmentIdx = currentSeg.getPrevWaypoint().getWaypointId();
 
-    while(currentSimTime < startTime + deltaT) {
-      double newDist = startX + accelTerm + startV * timeStep;
+    while(currentSimTime < endTime && path.size() <= maxPointsInPath) {
+      double newDist = actualStartX + accelTerm + actualStartV * timeStep;
 
       // If past the current segment get the next one
       if (newDist > currentSeg.getLength()) {
@@ -85,20 +112,18 @@ public class TrajectoryConverter {
       }
       // Convert point to ecef
       Vector3 pointInSegmentFrame = new Vector3(newDist, 0, 0);
-      Transform ecefToSeg = Transform.fromTransformMessage(currentSeg.getECEFToSegTransform()); // TODO If the route was a java object this conversion might not be needed
+      Transform ecefToSeg = Transform.fromPoseMessage(currentSeg.getFRDPose()); 
       Vector3 vecInECEF = ecefToSeg.apply(pointInSegmentFrame);
       // Add point to list with timestamp
       Point3DStamped point = new Point3DStamped();
       point.setPoint(new Point3D(vecInECEF.getX(), vecInECEF.getY(), vecInECEF.getZ()));
       point.setStamp(currentSimTime);
-      points.add(point);
+      path.add(point);
       // Update starting distance, speed, and current time
-      startX = newDist;
-      startV += accel * timeStep;
+      actualStartX = newDist;
+      actualStartV += deltaVPerTimeStep;
       currentSimTime += timeStep;
     }
-
-    return points;
   }
 
   private class Point3DStamped {
