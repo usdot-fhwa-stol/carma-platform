@@ -308,7 +308,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 	    final GetTransformResponse[] response = new GetTransformResponse[1];
 	    final boolean[] gotTransform = {false};
 
-	    getTransformClient_.callSync(request,
+	    getTransformClient_.call(request,
 		    new OnServiceResponseCallback<GetTransformResponse>() {
 
 			    @Override
