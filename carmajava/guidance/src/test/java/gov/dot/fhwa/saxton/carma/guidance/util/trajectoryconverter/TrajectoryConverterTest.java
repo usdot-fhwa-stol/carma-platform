@@ -41,6 +41,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -51,9 +52,6 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 public class TrajectoryConverterTest {
 
-  private final int MAX_POINTS_IN_PATH = 20;
-  private final double TIME_STEP = 1;
-  private final TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
   private IPlugin mockPlugin;
   private Route route;
   private cav_msgs.Route routeMsg;
@@ -77,7 +75,64 @@ public class TrajectoryConverterTest {
   }
 
   @Test
+  public void testConvertToPath() {
+    final int MAX_POINTS_IN_PATH = 1000;
+    final double TIME_STEP = 0.1;
+    TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
+
+    List<Point3DStamped> path = new LinkedList<>();
+
+    // Setup starting configuration
+    // Vehicle at very start of route
+    cav_msgs.RouteState routeState = messageFactory.newFromType(cav_msgs.RouteState._TYPE);
+
+    // Build trajectory
+    // SpeedUp dist: [0,40) speed: [0,11] -> Slow down dist: [40,50) speed [15,10]-> Stead speed dist: [50,100) speed: [10,10]
+    
+    LongitudinalManeuver speedUp = mock(SpeedUp.class);
+    when(speedUp.getStartSpeed()).thenReturn(0.0);
+    when(speedUp.getTargetSpeed()).thenReturn(15.0);
+    when(speedUp.getStartDistance()).thenReturn(0.0);
+    when(speedUp.getEndDistance()).thenReturn(40.0);
+
+    LongitudinalManeuver slowDown = mock(SlowDown.class);
+    when(slowDown.getStartSpeed()).thenReturn(15.0);
+    when(slowDown.getTargetSpeed()).thenReturn(10.0);
+    when(slowDown.getStartDistance()).thenReturn(40.0);
+    when(slowDown.getEndDistance()).thenReturn(50.0);
+    
+    LongitudinalManeuver steadySpeed = mock(SteadySpeed.class);
+    when(steadySpeed.getStartSpeed()).thenReturn(10.0);
+    when(steadySpeed.getTargetSpeed()).thenReturn(10.0);
+    when(steadySpeed.getStartDistance()).thenReturn(50.0);
+    when(steadySpeed.getEndDistance()).thenReturn(100.0);
+
+    Trajectory traj = new Trajectory(0, 100.0);
+    traj.addManeuver(speedUp);
+    traj.addManeuver(slowDown);
+    traj.addManeuver(steadySpeed);
+
+    // Call function
+    path = tc.convertToPath(traj, 0.0, routeMsg, routeState);
+    assertEquals(112, path.size());
+
+    // Check starting point
+    Location expectedPoint = new Location(38.95647, -77.15031, 72.0);
+    Point3D expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
+    assertTrue(expecedfECEFPoint.almostEquals(path.get(0).getPoint(), 0.1));
+    assertEquals(0, path.get(0).getStamp(), 0.0001);
+    // Check ending point
+    expectedPoint = new Location(38.95594, -77.15114, 72.0);
+    expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
+    assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
+    assertEquals(11.1, path.get(path.size() - 1).getStamp(), 0.1);
+  }
+
+  @Test
   public void testAddLongitudinalManeuverToPath() {
+    final int MAX_POINTS_IN_PATH = 20;
+    final double TIME_STEP = 1;
+    TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
 
     List<Point3DStamped> path = new LinkedList<>();
     
@@ -111,7 +166,7 @@ public class TrajectoryConverterTest {
     assertEquals(endingData.simTime, path.get(path.size() - 1).getStamp(), 0.0001);
     
     // Test Steady Speed Maneuver at different point along route in the middle of the maneuver
-    // Vehicle is at very start of the route going 10m/s for the next 100 m
+    // Vehicle is at 50m going 10m/s for next 50 m
     path = new LinkedList<>();
 
     startingData = new LongitudinalSimulationData(5.0, 50, 24.07, 2);
