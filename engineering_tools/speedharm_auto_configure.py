@@ -21,7 +21,7 @@ vehicles_url = "/rest/vehicles"
 experiments_url = "/rest/experiments"
 algorithms_url = "/rest/algorithms"
 default_algorithm = "gov.dot.fhwa.saxton.speedharm.executive.algorithms.ReduceSpeedAlgorithm"
-sleep_duration_millis = 5000
+sleep_duration_millis = 1000
 
 def log(msg):
     cur_datetime = datetime.utcnow()
