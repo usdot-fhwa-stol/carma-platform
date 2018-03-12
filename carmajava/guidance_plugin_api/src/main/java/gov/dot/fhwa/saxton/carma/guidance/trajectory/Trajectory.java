@@ -438,4 +438,10 @@ public class Trajectory {
 
     return out;
   }
+
+  @Override
+  public String toString() {
+    return "Trajectory [startLocation=" + startLocation + ", endLocation=" + endLocation + "]";
+  }
+
 }

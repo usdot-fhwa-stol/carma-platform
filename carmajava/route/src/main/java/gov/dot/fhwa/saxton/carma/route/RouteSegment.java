@@ -94,25 +94,38 @@ public class RouteSegment {
   }
 
     /**
-   * Calculates the crosstrack distance from the provided GPS location to this route segment
+   * Calculates the crosstrack distance from the provided ECEF point to the route segment
    * Uses flat earth model
    *
    * @param point The gps location to be compared
    * @return The calculated cross track distance in meters
    */
   public double crossTrackDistance(Point3D point) {
-    return this.lineSegment.crossTrackDistance(point);
+    return ecefPointInSegmentFrame(point).getY();
   }
 
   /**
-   * Calculates the downtrack distance from the provided GPS location to this route segment start
+   * Calculates the downtrack distance from the provided ECEF point to the route segment start
    * Uses flat earth model
    *
    * @param point The gps location to be compared
    * @return The calculated down track distance in meters
    */
   public double downTrackDistance(Point3D point) {
-    return this.lineSegment.downtrackDistance(point);
+    return ecefPointInSegmentFrame(point).getX();
+  }
+
+  /**
+   * Helper function to convert a point from the ECEF frame into the route segment FRD frame
+   * 
+   * @param ecefPoint A point located in an ecef frame
+   */
+  private Point3D ecefPointInSegmentFrame(Point3D ecefPoint) {
+    Transform ecefToPoint = new Transform(new Vector3(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), Quaternion.identity());
+    Transform segmentToPoint = getECEFToSegmentTransform().invert().multiply(ecefToPoint); // Find the transform from the segment to this object
+    Vector3 pntVec = segmentToPoint.getTranslation();
+    Point3D pntPosition = new Point3D(pntVec.getX(), pntVec.getY(), pntVec.getZ());
+    return pntPosition;
   }
 
   /**

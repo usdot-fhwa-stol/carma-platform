@@ -19,6 +19,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="mobile-web-app-capable" content="yes" />
+
+    <link rel="stylesheet" type="text/css" href="styles/styles.css" />
+    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome-animation.min.css"/>
+
+    <!-- TODO: Pull down locally -->
+    <link rel = "stylesheet" href = "https://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+    <script src = "https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src = "https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+    <!-- Widget Framework -->
+    <script src="scripts/carma.config.js"></script>
+    <script src="scripts/carma.widgetfw.js"></script>
+
     <script src="thirdparty/ros/eventemitter2.min.js"></script>
     <script src="thirdparty/ros/roslib.js"></script>
     <script src="scripts/control.js" defer></script>
@@ -28,11 +42,7 @@
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMzV4biqVN0pf3l1lYVWQ4KSWLyoG6OV0&callback=initMap">
     </script>
     <script src="thirdparty/svg/svg.min.js" defer></script>
-    <script src="scripts/svgcarma.js" defer></script>
 
-    <link rel="stylesheet" type="text/css" href="styles/styles.css" />
-    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome.min.css" />
-    <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome-animation.min.css"/>
     <!--
     Setup:
     1) Move files command: sudo cp -R -r /home/mfromm/catkin_ws/src/CarmaPlatform/website/* /var/www/html/
@@ -67,27 +77,12 @@
         </div>
     </div>
     <div id="divDriverView" class="tabcontent">
-        <div id="divRouteInfo">No Route Selected : 00h 00m 00s</div>
-        <div class="divSpeedometer">
-            <div class="gauge-a"></div>
-            <div class="gauge-b"></div>
-            <div class="gauge-c"></div>
-            <div class="gauge-data"><h1 id="percent">0</h1><br>MPH</div>
-        </div>
-        <div id="divSpeedCmd" class="sign-black-border-outer">
-            <div class="sign-black-border-inner">
-                <div class="sign-black-border-title">SPEED CMD</div>
-                <div id="divSpeedCmdValue" class="sign-black-border-value">0</div>
+        <div id="divWidgetOptions" hidden>
+            <h3>Please select one or more widget(s): </h3>
+            <div id="divWidgetOptionsList">
             </div>
         </div>
-        <div id="divSpeedLimit" class="sign-black-border-outer">
-            <div class="sign-black-border-inner">
-                <div class="sign-black-border-title">SPEED LIMIT</div>
-                <div id="divSpeedLimitValue" class="sign-black-border-value">0</div>
-            </div>
-        </div>
-        <div id="divDistRemaining"></div>
-        <div id="divLaneTracking"></div>
+        <div id="divWidgetArea"></div>
     </div>
     <div id="divMap" class="tabcontent">
         <div id="map"></div>
@@ -164,6 +159,9 @@
         </div>     
         <p />
         <button id="btnModalLogout2" title="Shutdown and Logout" class="btnModal" onclick="javascript: shutdown();">Logout</button>
+        <!-- TODO: Implement to show list again  -->
+        &nbsp;
+        <button id="btnWidgetOptions" title="List Widget Options" class="btnModal" onclick="CarmaJS.WidgetFramework.listWidgetOptions(true);">List Widget Options</button>
         <p/>
         <div id="divLog" class="logStatus">
         </div>

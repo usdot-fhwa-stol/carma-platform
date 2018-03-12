@@ -1,15 +1,35 @@
 # Double: Maximum acceleration for platooning plugin
 # Units: m/s^2
-platooning_max_accel: 2.5;
-
-# Integer: Timestep for platooning plugin to generate new speed command
-# Units: ms
-platooning_command_timestep: 100
+platooning_max_accel: 2.5
 
 # Double: The minimum length of platooning complex maneuver length
 # Units: m
 platooning_min_maneuver_length: 15.0
 
-# Integer: The time duration for a command speed to timeout
+# Integer: The desired time interval between two platoon mobility messages from the same vehicle
 # Units: ms
-platooning_command_timeout: 3000
+platooning_status_interval: 500
+
+# Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
+# Units: 1
+platooning_status_timeout_factor: 1.5
+
+# Double: The desired time headway to the front vehicle within the platoon
+# Units: s
+platooning_desired_time_headway: 1.8
+
+# Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
+# Units: m
+platooning_min_gap: 7.0
+
+# Double: The poportional term in the platoon speed PID controller
+# Units: 1
+platooning_Kp: 1.5
+
+# Double: The integral term in the platoon speed PID controller
+# Units: 1
+platooning_Ki: 0.0
+
+# Double: The derivative term in the platoon speed PID controller
+# Units: 1
+platooning_Kd: 0.1

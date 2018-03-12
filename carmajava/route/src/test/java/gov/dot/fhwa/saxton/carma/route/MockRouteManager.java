@@ -22,12 +22,14 @@ import cav_msgs.RouteSegment;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
+import org.ros.rosjava_geometry.Transform;
 
 /**
  * Fake route manager for use in unit testing
  */
 public class MockRouteManager implements IRouteManager {
   private boolean routeStateRouteCompleteSent = false;
+  private Transform earthToHostVehicle = null;
 
   public static SystemAlert buildSystemAlert(byte systemAlertType, String msg) {
     NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
@@ -57,6 +59,11 @@ public class MockRouteManager implements IRouteManager {
       routeStateRouteCompleteSent = true;
     }
   }
+
+  @Override
+  public Transform getTransform(String parentFrame, String childFrame, Time stamp) {
+    return earthToHostVehicle;
+  }
   
   @Override public Time getTime() {
     return Time.fromMillis(System.currentTimeMillis());
@@ -64,6 +71,13 @@ public class MockRouteManager implements IRouteManager {
 
   @Override public void shutdown() {
 
+  }
+
+  /**
+   * Helper function to set the current earth -> host_vehicle transform
+   */
+  public void setEarthToHostTransform(Transform earthToHostVehicle) {
+    this.earthToHostVehicle = earthToHostVehicle;
   }
 
   /**

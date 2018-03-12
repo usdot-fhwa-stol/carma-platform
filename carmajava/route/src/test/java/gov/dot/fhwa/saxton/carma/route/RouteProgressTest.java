@@ -20,6 +20,8 @@ import cav_msgs.SystemAlert;
 import cav_srvs.AbortActiveRouteResponse;
 import cav_srvs.SetActiveRouteResponse;
 import cav_srvs.StartActiveRouteResponse;
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,6 +30,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
+import org.ros.rosjava_geometry.Quaternion;
+import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
+
 import sensor_msgs.NavSatFix;
 import sensor_msgs.NavSatStatus;
 
@@ -41,6 +47,7 @@ public class RouteProgressTest {
   Log log;
   NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
+  GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
   @Before
   public void setUp() throws Exception {
@@ -59,18 +66,15 @@ public class RouteProgressTest {
   @Test
   public void testRouteProgress() throws Exception {
     MockRouteManager routeMgr = new MockRouteManager();
-    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routefiles/", 3);
+    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3, "earth", "host_vehicle");
 
     routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
-    NavSatFix navMsg = messageFactory.newFromType(NavSatFix._TYPE);
-    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
-    navMsg.setLatitude(38.95649);
-    navMsg.setLongitude(-77.15028);
-    navMsg.setAltitude(0);
-    routeWorker.handleNavSatFixMsg(navMsg);
+    Location navSatFix = new Location(38.95649, -77.15028, 72.0);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
 
     assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
 
@@ -84,42 +88,37 @@ public class RouteProgressTest {
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
 
     assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
-      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+      new Location(38.95649, -77.15028, 72.0), 0.0000001, 0.0000001));
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // No change in location
-    routeWorker.handleNavSatFixMsg(navMsg);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
     assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
-      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+      new Location(38.95649, -77.15028, 72.0), 0.0000001, 0.0000001));
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after route file starting point
-    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
-    navMsg.setLatitude(38.9564);
-    navMsg.setLongitude(-77.15035);
-    navMsg.setAltitude(0);
-    routeWorker.handleNavSatFixMsg(navMsg);
+    navSatFix = new Location(38.9564, -77.15035, 72.0);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
 
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after next point
-    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
-    navMsg.setLatitude(38.95631);
-    navMsg.setLongitude(-77.15042);
-    navMsg.setAltitude(0);
-    routeWorker.handleNavSatFixMsg(navMsg);
+    navSatFix = new Location(38.95631, -77.15042, 72.0);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
 
     assertTrue(routeWorker.currentSegmentIndex == 2); // third segment
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after end of route
-    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
-    navMsg.setLatitude(38.95218);
-    navMsg.setLongitude(-77.15189);
-    navMsg.setAltitude(0);
-    routeWorker.handleNavSatFixMsg(navMsg);
+    navSatFix = new Location(38.95218, -77.15189, 72.0);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
 
     assertTrue(routeWorker.currentSegment == routeWorker.activeRoute.getLastSegment()); // third segment
     assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION); // Route was completed and no longer followed
@@ -133,18 +132,16 @@ public class RouteProgressTest {
    */
   @Test
   public void testLeavingRouteVicinity() throws Exception {
-    RouteWorker routeWorker = new RouteWorker(new MockRouteManager(), log, "src/test/resources/routefiles/", 3);
+    MockRouteManager routeMgr = new MockRouteManager();
+    RouteWorker routeWorker = new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3, "earth", "host_vehicle");
 
     routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
-    NavSatFix navMsg = messageFactory.newFromType(NavSatFix._TYPE);
-    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
-    navMsg.setLatitude(38.95649);
-    navMsg.setLongitude(-77.15028);
-    navMsg.setAltitude(0);
-    routeWorker.handleNavSatFixMsg(navMsg);
+    Location navSatFix = new Location(38.95649, -77.15028, 72.0);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
 
     assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
 
@@ -158,38 +155,34 @@ public class RouteProgressTest {
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
 
     assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation().almostEqual(
-      new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+      new Location(38.95649, -77.15028, 72.0), 0.0000001, 0.0000001));
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed after route file starting point
-    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
-    navMsg.setLatitude(38.9564);
-    navMsg.setLongitude(-77.15035);
-    navMsg.setAltitude(0);
-    routeWorker.handleNavSatFixMsg(navMsg);
+    navSatFix = new Location(38.9564, -77.15035, 72.0);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
 
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Test vehicle has been placed inside the garage (off the route)
     // 3 off route nav sat msgs are required to consider vehicle off the route
-    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
-    navMsg.setLatitude(38.95633);
-    navMsg.setLongitude(-77.15011);
-    navMsg.setAltitude(0);
-    routeWorker.handleNavSatFixMsg(navMsg);
+    navSatFix = new Location(38.95633, -77.15011, 72.0);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
 
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
     assertTrue(routeWorker.leftRouteVicinity());
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
-    routeWorker.handleNavSatFixMsg(navMsg);
+    routeWorker.loop();
 
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
     assertTrue(routeWorker.leftRouteVicinity());
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
-    routeWorker.handleNavSatFixMsg(navMsg);
+    routeWorker.loop();
 
     assertTrue(routeWorker.currentSegmentIndex == 1); // second segment
     assertTrue(routeWorker.leftRouteVicinity());
@@ -202,19 +195,17 @@ public class RouteProgressTest {
    */
   @Test
   public void testRouteAbort() throws Exception {
+    MockRouteManager routeMgr = new MockRouteManager();
     RouteWorker routeWorker =
-      new RouteWorker(new MockRouteManager(), log, "src/test/resources/routefiles/", 3);
+      new RouteWorker(routeMgr, log, "src/test/resources/routes/", 3, "earth", "host_vehicle");
 
     routeWorker.handleSystemAlertMsg(MockRouteManager.buildSystemAlert(SystemAlert.DRIVERS_READY, ""));
     assertTrue(routeWorker.systemOkay == true);
 
     // Test vehicle has been placed just before start of route
-    NavSatFix navMsg = messageFactory.newFromType(NavSatFix._TYPE);
-    navMsg.getStatus().setStatus(NavSatStatus.STATUS_FIX);
-    navMsg.setLatitude(38.95649);
-    navMsg.setLongitude(-77.15028);
-    navMsg.setAltitude(0);
-    routeWorker.handleNavSatFixMsg(navMsg);
+    Location navSatFix = new Location(38.95649, -77.15028, 72.0);
+    routeMgr.setEarthToHostTransform(transformFromLocation(navSatFix));
+    routeWorker.loop();
 
     assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
 
@@ -228,7 +219,7 @@ public class RouteProgressTest {
     assertTrue(routeWorker.currentSegmentIndex == 0); // start of route
 
     assertTrue(routeWorker.currentSegment.getUptrackWaypoint().getLocation()
-      .almostEqual(new Location(38.95649, -77.15028, 0), 0.0000001, 0.0000001));
+      .almostEqual(new Location(38.95649, -77.15028, 72.0), 0.0000001, 0.0000001));
     assertTrue(routeWorker.getCurrentState() == WorkerState.FOLLOWING_ROUTE);
 
     // Route has been joined time to abort
@@ -238,5 +229,17 @@ public class RouteProgressTest {
     // With no active route try call again
     assertTrue(routeWorker.abortActiveRoute() == AbortActiveRouteResponse.NO_ACTIVE_ROUTE);
     assertTrue(routeWorker.getCurrentState() == WorkerState.ROUTE_SELECTION);
+  }
+
+  /**
+   * Helper function to convert a lat lon point to a transform of earth -> host_vehicle
+   * 
+   * @param navSatFix The location
+   * @return the Transform in from ecef to the location
+   */
+  private Transform transformFromLocation(Location navSatFix) {
+    Point3D hostVehicleInECEF = gcc.geodesic2Cartesian(navSatFix, Transform.identity());
+    Vector3 trans = new Vector3(hostVehicleInECEF.getX(), hostVehicleInECEF.getY(), hostVehicleInECEF.getZ());
+    return new Transform(trans, Quaternion.identity());
   }
 }

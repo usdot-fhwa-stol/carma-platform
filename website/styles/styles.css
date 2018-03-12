@@ -225,6 +225,8 @@ input:disabled + label { /* Disabled format */
     position: relative;
     left: 0px;
 }
+
+
 /*** Message Box ***/
 div.message_box {
     display: block;
@@ -374,7 +376,9 @@ div.message_box {
 /* Modal Button */
 .btnModal{
     height: 50px;
-    width: 110px;
+    width: auto;
+    padding-left: 10px;
+    padding-right: 10px;
     background-color:#336699;
     color: white;
     border-radius: 15px;
