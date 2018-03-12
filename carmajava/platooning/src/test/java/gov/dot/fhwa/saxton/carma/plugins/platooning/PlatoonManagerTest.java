@@ -20,6 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,6 +51,7 @@ public class PlatoonManagerTest {
         // TODO Once we integrate the leader selection algorithm, we need change this test case
         manager.platoon.add(new PlatoonMember("", 0, 0, 50, Long.MAX_VALUE));
         manager.platoon.add(new PlatoonMember("", 0, 0, 60, Long.MAX_VALUE));
+        Collections.sort(manager.platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
         PlatoonMember leader = manager.getLeader();
         assertEquals(60.0, leader.getVehiclePosition(), 0.1);
     }

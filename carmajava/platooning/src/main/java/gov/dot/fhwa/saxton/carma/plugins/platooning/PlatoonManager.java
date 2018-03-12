@@ -23,7 +23,6 @@ import java.util.List;
 
 import cav_msgs.NewPlan;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
@@ -52,7 +51,7 @@ public class PlatoonManager implements Runnable {
             while(!Thread.currentThread().isInterrupted()) {
                 long loopStart = System.currentTimeMillis();
                 removeExpiredMember();
-                Collections.sort(platoon, (a, b) -> (Double.compare(a.getVehiclePosition(), b.getVehiclePosition())));
+                Collections.sort(platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
                 long loopEnd = System.currentTimeMillis();
                 long sleepDuration = Math.max(plugin.messageTimeout - (loopEnd - loopStart), 0);
                 Thread.sleep(sleepDuration);
@@ -97,7 +96,7 @@ public class PlatoonManager implements Runnable {
             if(distance > plugin.getManeuverInputs().getDistanceFromRouteStart()) {
                 PlatoonMember pm = new PlatoonMember(plan.getSenderId(), cmdSpeed, speed, distance, System.currentTimeMillis());
                 platoon.add(pm);
-                Collections.sort(platoon, (a, b) -> (Double.compare(a.getVehiclePosition(), b.getVehiclePosition())));
+                Collections.sort(platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
                 log.info("Add CACC info on new vehicle " + pm.getStaticId());
             } else {
                 log.info("Ignore new vehicle info because it is behind us. Its id is " + plan.getSenderId());
@@ -139,6 +138,8 @@ public class PlatoonManager implements Runnable {
         } else {
             // return the first vehicle in the platoon as default if no valid algorithm is indicated
             newLeader = platoon.get(0);
+            // We should not update the previous leader id here because that is not the final choice
+            //previousLeader = newLeader.getStaticId();
         }
         if(plugin.getAlgorithmType() == 1) {
             int newLeaderIndex = allPredecessorFollowing();
@@ -185,11 +186,11 @@ public class PlatoonManager implements Runnable {
                 double[] temporaryTimeHeadways = calculateTimeHeadwayFromIndex(timeHeadways, indexOfPreviousLeader);
                 closestLowerBoundaryViolation = findLowerBoundaryViolationClosestToTheHostVehicle(temporaryTimeHeadways);
                 closestMaximumSpacingViolation = findMaximumSpacingViolationClosestToTheHostVehicle(temporaryTimeHeadways);
-                // if there is no vialations in time headways
+                // if there is no violations in time headways
                 if(closestLowerBoundaryViolation == -1 && closestMaximumSpacingViolation == -1) {
                     // Two conditions for assigning leadership further downstream
                     boolean condition1 = timeHeadways[indexOfPreviousLeader] > plugin.getUpperBoundary();
-                    boolean condition2 = timeHeadways[indexOfPreviousLeader - 1] < plugin.getMinSpacing(); 
+                    boolean condition2 = timeHeadways[indexOfPreviousLeader - 1] < plugin.getMinSpacing();
                     if(condition1 && condition2) {
                         result = determineLeaderBasedOnViolation(timeHeadways);
                     } else {
