@@ -18,6 +18,8 @@ package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import org.ros.node.ConnectedNode;
 import cav_msgs.MobilityAck;
@@ -113,12 +115,35 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     }
 
-    private void handleMobilityRequest(MobilityRequest msg) {
+    private void fireMobilityRequestCallback(MobilityOperationHandler handler, MobilityRequest msg) {
+        new Thread(() -> handler.handleMobilityOperationMessage(msg), 
+        "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName())
+        .start();
+    }
 
+    private void fireMobilityAckCallback(MobilityAckHandler handler, MobilityAck msg) {
+        new Thread(() -> handler.handleMobilityAckMessage(msg), 
+        "MobilityAckHandlerCallback:" + handler.getClass().getSimpleName())
+        .start();
+    }
+
+    private void fireMobilityOperationCallback(MobilityOperationHandler handler, MobilityOperation msg) {
+        new Thread(() -> handler.handleMobilityOperationMessage(msg), 
+        "MobilityOperationHandlerCallback:" + handler.getClass().getSimpleName())
+        .start();
+    }
+
+    private void handleMobilityRequest(MobilityRequest msg) {
         // TODO add path to data structure
         addToCollisionTree(msg.path);
 
-        requestMap.getKeys().
+        for (Entry<String, LinkedList<MobilityRequestHandler>> entry : requestMap.entrySet()) {
+            if (entry.getKey().endsWith(msg.getStrategy())) {
+                for (MobilityRequestHandler handler : entry.getValue()) {
+                    fireMobilityRequestCallback(handler, msg);
+                }
+            }
+        }
         
         List<MobilityRequestHandler> handlers = operationMap.get(msg.target);
         if (handlers == null) { // TODO Might be unsafe to leave without ensuring replan on conflict
@@ -141,22 +166,22 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
 
     private void handleMobilityAck(MobilityAck msg) {
-        List<MobilityAckHandler> handlers = operationMap.get(msg.target);
-        if (handlers == null) {
-            return;
-        }
-        for (MobilityAckHandler handler: handlers) {
-            handler.handleMobilityAckMessage(msg);
+        for (Entry<String, LinkedList<MobilityAckHandler>> entry : requestMap.entrySet()) {
+            if (entry.getKey().endsWith(msg.getStrategy())) {
+                for (MobilityAckHandler handler : entry.getValue()) {
+                    fireMobilityAckCallback(handler, msg);
+                }
+            }
         }
     }
 
     private void handleMobilityOperation(MobilityOperation msg) {
-        List<MobilityOperationHandler> handlers = operationMap.get(msg.target);
-        if (handlers == null) {
-            return;
-        }
-        for (MobilityOperationHandler handler: handlers) {
-            handler.handleMobilityOperationMessage(msg);
+        for (Entry<String, LinkedList<MobilityOperationHandler>> entry : requestMap.entrySet()) {
+            if (entry.getKey().endsWith(msg.getStrategy())) {
+                for (MobilityOperationHandler handler : entry.getValue()) {
+                    fireMobilityOperationCallback(handler, msg);
+                }
+            }
         }
     }
 
