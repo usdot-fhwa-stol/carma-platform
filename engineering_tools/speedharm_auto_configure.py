@@ -14,7 +14,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 version_id = "v0.1" # Version string for cli client
-base_url = "http://35.153.64.44:8081" # Base url of server, defaults to localhost.
+base_url = "http://35.153.64.44:8081" # Base url of server, defaults to CARMA AWS server
 
 # Constants
 vehicles_url = "/rest/vehicles"
