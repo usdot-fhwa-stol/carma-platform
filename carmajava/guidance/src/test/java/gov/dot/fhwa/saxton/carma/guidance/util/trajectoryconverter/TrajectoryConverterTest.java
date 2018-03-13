@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import org.apache.commons.logging.Log;
 import org.junit.After;
@@ -26,6 +27,7 @@ import org.junit.Test;
 import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
 import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -34,8 +36,11 @@ import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LaneChange;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LaneKeeping;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
@@ -107,10 +112,34 @@ public class TrajectoryConverterTest {
     when(steadySpeed.getStartDistance()).thenReturn(50.0);
     when(steadySpeed.getEndDistance()).thenReturn(100.0);
 
+    LaneKeeping laneKeeping = mock(LaneKeeping.class);
+    when(laneKeeping.getEndingRelativeLane()).thenReturn(0);
+    when(laneKeeping.getStartDistance()).thenReturn(0.0);
+    when(laneKeeping.getEndDistance()).thenReturn(40.0);
+
+    LaneChange laneChange1 = mock(LaneChange.class);
+    when(laneChange1.getEndingRelativeLane()).thenReturn(1);
+    when(laneChange1.getStartDistance()).thenReturn(40.0);
+    when(laneChange1.getEndDistance()).thenReturn(70.0);
+
+    FutureLateralManeuver futureLaneChange1 = mock(FutureLateralManeuver.class);
+    when(futureLaneChange1.getEndingRelativeLane()).thenReturn(1);
+    when(futureLaneChange1.getStartDistance()).thenReturn(40.0);
+    when(futureLaneChange1.getEndDistance()).thenReturn(70.0);
+    when(futureLaneChange1.getLateralManeuvers()).thenReturn(new LinkedList<>(Arrays.asList(laneChange1)));  
+
+    FutureLateralManeuver futureLaneChange2 = mock(FutureLateralManeuver.class);
+    when(futureLaneChange2.getEndingRelativeLane()).thenReturn(-1);
+    when(futureLaneChange2.getStartDistance()).thenReturn(70.0);
+    when(futureLaneChange2.getEndDistance()).thenReturn(100.0);
+
     Trajectory traj = new Trajectory(0, 100.0);
     traj.addManeuver(speedUp);
     traj.addManeuver(slowDown);
     traj.addManeuver(steadySpeed);
+    traj.addManeuver(laneKeeping);
+    traj.addManeuver(futureLaneChange1);
+    traj.addManeuver(futureLaneChange2);
 
     // Call function
     path = tc.convertToPath(traj, 0.0, routeMsg, routeState);
@@ -126,6 +155,16 @@ public class TrajectoryConverterTest {
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
     assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
     assertEquals(11.1, path.get(path.size() - 1).getStamp(), 0.1);
+
+    System.out.println("\n\n");
+    int count = 0;
+    for(Point3DStamped p: path) {
+      if(count % 2 == 0) {
+        System.out.println(gcc.cartesian2Geodesic(p.getPoint(), Transform.identity()));
+      }
+      count++;
+    }
+    System.out.println("\n\n");
   }
 
   @Test
@@ -153,6 +192,8 @@ public class TrajectoryConverterTest {
 
     // Check number of points
     assertEquals(11, path.size());
+    // Put points in ecef
+    convertPathToECEF(path, routeMsg);
 
     // Check starting point
     Location expectedPoint = new Location(38.95647, -77.15031, 72.0);
@@ -184,6 +225,8 @@ public class TrajectoryConverterTest {
 
     // Check number of points
     assertEquals(6, path.size());
+    // Put points in ecef
+    convertPathToECEF(path, routeMsg);
 
     // Check starting point
     expectedPoint = new Location(38.95621, -77.15073, 72.0);
@@ -215,6 +258,8 @@ public class TrajectoryConverterTest {
 
     // Check number of points
     assertEquals(21, path.size());
+    // Put points in ecef
+    convertPathToECEF(path, routeMsg);
 
     // Check starting point
     expectedPoint = new Location(38.95647, -77.15031, 72.0);
@@ -247,6 +292,8 @@ public class TrajectoryConverterTest {
 
     // Check number of points
     assertEquals(21, path.size());
+    // Put points in ecef
+    convertPathToECEF(path, routeMsg);
 
     // Check starting point
     expectedPoint = new Location(38.95647, -77.15031, 72.0);
@@ -258,5 +305,21 @@ public class TrajectoryConverterTest {
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
     assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
     assertEquals(endingData.simTime, path.get(path.size() - 1).getStamp(), 0.0001);
+  }
+
+  /**
+   * Helper function converts a set of points from local segment frames to ecef frame
+   */
+  private void convertPathToECEF(List<Point3DStamped> path, cav_msgs.Route route) {
+    // Convert all points to ecef frame
+    for (Point3DStamped point: path) {
+      // Convert point to ecef
+      // Currently ignores elevation
+      Vector3 pointInSegmentFrame = new Vector3(point.getPoint().getX(), point.getPoint().getY(), 0);
+      Transform ecefToSeg = Transform.fromPoseMessage(route.getSegments().get(point.getSegmentIdx()).getFRDPose()); 
+      Vector3 vecInECEF = ecefToSeg.apply(pointInSegmentFrame);
+      // Update point
+      point.setPoint(new Point3D(vecInECEF.getX(), vecInECEF.getY(), vecInECEF.getZ()));
+    }
   }
 }
