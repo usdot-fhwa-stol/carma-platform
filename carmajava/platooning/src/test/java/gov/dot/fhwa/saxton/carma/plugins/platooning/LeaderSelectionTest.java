@@ -52,10 +52,11 @@ public class LeaderSelectionTest {
     }
     
     @Test
-    public void onNoPreviousLeader() {
-        manager.platoon.add(new PlatoonMember("1", 5.0, 4.9, 50.0, System.currentTimeMillis()));
-        manager.platoon.add(new PlatoonMember("2", 5.0, 4.9, 60.0, System.currentTimeMillis()));
+    public void noPreviousLeader() {
+        manager.platoon.add(new PlatoonMember("1", 5.0, 5.0, 50.0, System.currentTimeMillis()));
+        manager.platoon.add(new PlatoonMember("2", 5.0, 5.0, 60.0, System.currentTimeMillis()));
         Collections.sort(manager.platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
+        ///***** Case One *****///
         PlatoonMember leader = manager.getLeader();
         assertEquals("2", leader.getStaticId());
         assertEquals("2", manager.previousLeader);
@@ -70,21 +71,29 @@ public class LeaderSelectionTest {
         when(mockInputs.getCurrentSpeed()).thenReturn(5.0);
         when(mockInputs.getDistanceToFrontVehicle()).thenReturn(10.0);
         manager.previousLeader = "2";
+        ///***** Case Two - Sub Case One*****///
         PlatoonMember leader = manager.getLeader();
         assertEquals("1", leader.getStaticId());
         assertEquals("1", manager.previousLeader);
         when(mockInputs.getDistanceFromRouteStart()).thenReturn(37.0);
         when(mockInputs.getDistanceToFrontVehicle()).thenReturn(13.0);
+        ///***** Case Two - Sub Case Two*****///
         leader = manager.getLeader();
         assertEquals("1", leader.getStaticId());
         assertEquals("1", manager.previousLeader);
+    }
+    
+    @Test
+    public void previousLeaderIsTheFirstVehicle() {
+        manager.platoon.add(new PlatoonMember("1", 5.0, 5.0, 50.0, System.currentTimeMillis()));
+        manager.platoon.add(new PlatoonMember("2", 5.0, 5.0, 60.0, System.currentTimeMillis()));
+        Collections.sort(manager.platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
+        when(mockInputs.getDistanceFromRouteStart()).thenReturn(37.0);
+        when(mockInputs.getCurrentSpeed()).thenReturn(5.0);
+        when(mockInputs.getDistanceToFrontVehicle()).thenReturn(13.0);
         manager.previousLeader = "2";
-        leader = manager.getLeader();
+        ///***** Case Three - Sub Case One*****///
+        PlatoonMember leader = manager.getLeader();
         assertNull(leader);
-        manager.previousLeader = "1";
-        when(mockInputs.getDistanceFromRouteStart()).thenReturn(35.0);
-        when(mockInputs.getDistanceToFrontVehicle()).thenReturn(15.0);
-        leader = manager.getLeader();
-        assertNull(leader); //?????????
     }
 }
