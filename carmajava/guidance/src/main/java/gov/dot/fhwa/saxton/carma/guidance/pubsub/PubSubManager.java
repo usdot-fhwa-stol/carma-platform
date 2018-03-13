@@ -16,9 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.concurrent.ConcurrentHashMap;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceExceptionHandler;
 
 /**
@@ -48,9 +49,9 @@ public class PubSubManager implements IPubSubService {
         this.pubFactory = pubFactory;
         this.srvFactory = srvFactory;
 
-        pubChannelManagers = new HashMap<>();
-        subChannelManagers = new HashMap<>();
-        serviceChannelManagers = new HashMap<>();
+        pubChannelManagers = Collections.synchronizedMap(new HashMap<String, IPublicationChannel<?>>());
+        subChannelManagers = Collections.synchronizedMap(new HashMap<String, ISubscriptionChannel<?>>());
+        serviceChannelManagers = Collections.synchronizedMap(new HashMap<String, IServiceChannel<?, ?>>());
     }
 
     /**
