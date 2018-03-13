@@ -49,9 +49,6 @@ import cav_srvs.SetGuidanceActiveResponse;
  * Also listens for route_state changes that would indicate the need for a Guidance shutdown
  */
 public class GuidanceStateHandler extends GuidanceComponent implements IStateChangeListener {
-    
-    private static final String DRIVER_BASE_PATH = "/saxton_cav/drivers";
-    private static final String SRX_CONTROLLER_PATH = "/srx_controller/";
     private static final String ROBOTIC_STATUS_CAPABILITY = "control/robot_status";
     
     protected long shutdownDelayMs = 5000;
@@ -141,7 +138,53 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
 
     @Override
     public void onSystemReady() {
-        String robotStatusTopic = DRIVER_BASE_PATH + SRX_CONTROLLER_PATH + ROBOTIC_STATUS_CAPABILITY;
+        try {
+            driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities",
+                    GetDriversWithCapabilities._TYPE);
+        } catch (TopicNotFoundException tnfe) {
+            stateMachine.processEvent(GuidanceEvent.PANIC);
+            log.fatal("SHUTDOWN", "Interface manager not found.");
+        }
+        
+        // Build request message
+        GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
+
+        List<String> reqdCapabilities = new ArrayList<>();
+        reqdCapabilities.add(ROBOTIC_STATUS_CAPABILITY);
+        req.setCapabilities(reqdCapabilities);
+
+        // Work around to pass a final object into our anonymous inner class so we can get the response
+        final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
+        drivers[0] = null;
+
+        // Call the InterfaceManager to see if we have a driver that matches our requirements
+        driverCapabilityService.call(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+            @Override
+            public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                log.debug("Received GetDriversWithCapabilitiesResponse");
+                for (String driverName : msg.getDriverData()) {
+                    log.debug(getComponentName() + " discovered driver: " + driverName);
+                }
+                drivers[0] = msg;
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                stateMachine.processEvent(GuidanceEvent.PANIC);
+                log.fatal("InterfaceManager failed to return a control/robot_status capable driver!!!");
+            }
+        });
+        
+        String robotStatusTopic = null;
+        if(drivers[0] != null) {
+            for(String url : drivers[0].getDriverData()) {
+                if(url.endsWith(ROBOTIC_STATUS_CAPABILITY)) {
+                    robotStatusTopic = url;
+                    break;
+                }
+            }                
+        }
+        
         if(robotStatusTopic != null) {
             log.debug(getComponentName() + " is connecting to " + robotStatusTopic);
             robotStatusSub = pubSubService.getSubscriberForTopic(robotStatusTopic, RobotEnabled._TYPE);

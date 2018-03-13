@@ -18,6 +18,7 @@
  This file shall contain ROS relate function calls.
 ****/
 
+// *** Global variables ***
 // Deployment variables
 var ip = CarmaJS.Config.getIP(); // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
 
@@ -47,7 +48,6 @@ var s_get_available_routes = 'get_available_routes';
 var s_set_active_route = 'set_active_route';
 var s_start_active_route = 'start_active_route';
 var s_get_system_version = 'get_system_version';
-
 var s_get_registered_plugins = 'plugins/get_registered_plugins';
 var s_activate_plugins = 'plugins/activate_plugin';
 var s_set_guidance_active = 'set_guidance_active';
@@ -56,39 +56,138 @@ var s_set_guidance_active = 'set_guidance_active';
 var p_host_instructions = '/saxton_cav/ui/host_instructions';
 var p_page_refresh_interval = '/saxton_cav/ui/page_refresh_interval';
 
-// Global variables
+// ROS related
 var ros = new ROSLIB.Ros();
+var listenerPluginAvailability;
+var listenerSystemAlert;
 
+// Counters and Flags
 var cnt_log_lines = 0;
-var max_log_lines = 100;
-
-var system_ready = false;
-var is_guidance_engaged = false;
-var is_guidance_active = false;
-var guidance_state = 0;
-var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages. 
-var route_name = 'No Route Selected';//UI needs to track selected route. 
-//var route_timer = '00h 00m 00s';
-
 var ready_counter = 0;
 var ready_max_trial = 10;
 var sound_counter = 0;
 var sound_counter_max = 3; //max # of times the sounds will be repeated.
 var sound_played_once = false;
+var isModalPopupShowing = false;
+var waitingForRouteStateSegmentStartup = false;
+var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages. 
+var host_instructions = '';
+
+//Elements frequently accessed.
+var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
 var audioElements = document.getElementsByTagName('audio');
 
-var host_instructions = '';
-var listenerPluginAvailability;
-var listenerSystemAlert;
-var isModalPopupShowing = false;
+//Constants
+var MAX_LOG_LINES = 100;
+var METER_TO_MPH = 2.23694;
+var METER_TO_MILE = 0.000621371;
 
-var waitingForRouteStateSegmentStartup = false;
+//Getters and Setters for bool and string session variables. 
+var isGuidance = {
+    get active() {
+        var isGuidanceActive = sessionStorage.getItem('isGuidanceActive');
+        var value = false;
 
-//Conversion from m/s to MPH.
-var meter_to_mph = 2.23694;
-var meter_to_mile = 0.000621371;
+        if (isGuidanceActive != 'undefined' && isGuidanceActive != null && isGuidanceActive != '') {
+            if (isGuidanceActive == 'true')
+                value = true;
+        }
+        //console.log('get active - isGuidanceActive: ' + isGuidanceActive + ' ; value: ' + value + ' ; Boolean:' + Boolean(isGuidanceActive));
+        return value;
+    },
+    set active(newValue) {
+        sessionStorage.setItem('isGuidanceActive', newValue);
+        //console.log('set active: ' + newValue + ' ; Boolean:' + Boolean(newValue));
+    },
+    get engaged() {
+        var isGuidanceEngaged = sessionStorage.getItem('isGuidanceEngaged');
+        var value = false;
 
-var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
+        if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '') {
+            if (isGuidanceEngaged == 'true')
+                value = true;
+        }
+        //console.log('get engaged  - isGuidanceEngaged: ' + isGuidanceEngaged + ' ; value: ' + value + ' ; Boolean:' + Boolean(isGuidanceEngaged));
+        return value;
+    },
+    set engaged(newValue) {
+        sessionStorage.setItem('isGuidanceEngaged', newValue);
+        //console.log('set engaged: ' + newValue + ' ; Boolean:' + Boolean(newValue));
+    },
+    remove() {
+        sessionStorage.removeItem('isGuidanceActive');
+        sessionStorage.removeItem('isGuidanceEngaged');
+    }
+};
+
+var isSystemAlert = {
+    get ready() {
+        var isSystemAlert = sessionStorage.getItem('isSystemAlert');
+        var value = false;
+
+        //Issue with Boolean returning opposite value, therefore doing manual check.
+        if (isSystemAlert != 'undefined' && isSystemAlert != null && isSystemAlert != '') {
+            if (isSystemAlert == 'true')
+                value = true;
+        }
+        //console.log('get active - isSystemAlert: ' + isSystemAlert + ' ; value: ' + value + ' ; Boolean:' + Boolean(isSystemAlert));
+        return value;
+    },
+    set ready(newValue) {
+        sessionStorage.setItem('isSystemAlert', newValue);
+        //console.log('set active: ' + newValue + ' ; Boolean:' + Boolean(newValue));
+    },
+    remove() {
+        sessionStorage.removeItem('isSystemAlert');
+    }
+};
+
+var startDateTime = {//startDateTime
+    get value() {
+        var startDateTime = sessionStorage.getItem('startDateTime');
+        //console.log('get startDateTime ORIG: ' + startDateTime);
+        if (startDateTime == 'undefined' || startDateTime == null || startDateTime == '') {
+            this.start();
+            startDateTime = sessionStorage.getItem('startDateTime');
+        }
+
+        //console.log('get startDateTime FINAL: ' + startDateTime);
+        return startDateTime;
+    },
+    set value(newValue) {
+        sessionStorage.setItem('startDateTime', newValue);
+        //console.log('set startDateTime: ' + newValue);
+    },
+    remove() {
+        sessionStorage.removeItem('startDateTime');
+    },
+    start() {
+        sessionStorage.setItem('startDateTime', new Date().getTime());
+    }
+};
+
+var selectedRoute = {
+    get name() {
+        var selectedRouteName = sessionStorage.getItem('selectedRouteName');
+
+        //console.log('get selectedRouteName INITIAL: ' + selectedRouteName);
+
+        if (selectedRouteName == 'undefined' || selectedRouteName == null || selectedRouteName.length == 0) {
+            selectedRouteName = 'No Route Selected';
+        }
+
+        //console.log('get selectedRouteName FINAL: ' + selectedRouteName);
+
+        return selectedRouteName;
+    },
+    set name(newValue) {
+        sessionStorage.setItem('selectedRouteName', newValue);
+        //console.log('set selectedRouteName: ' + newValue);
+    },
+    remove() {
+        sessionStorage.removeItem('selectedRouteName');
+    }
+};
 
 /*
 * Custom sleep used in enabling guidance
@@ -188,25 +287,22 @@ function checkSystemAlerts() {
                 showModal(true, messageTypeFullDescription, false);
                 break;
             case 4:
-                system_ready = false;
-                sessionStorage.setItem('isSystemReady', false);
+                isSystemAlert.ready = false;
                 messageTypeFullDescription = 'System is not ready, please wait and try again. ' + message.description;
                 break;
             case 5:
-                system_ready = true;
-                sessionStorage.setItem('isSystemReady', true);
+                isSystemAlert.ready = true;
                 messageTypeFullDescription = 'System is ready. ' + message.description;
                 break;
             case 6: // SHUTDOWN
-                system_ready = false;
-                sessionStorage.setItem('isSystemReady', false);
+                isSystemAlert.ready = false;
                 listenerSystemAlert.unsubscribe();
                 break;
             default:
                 messageTypeFullDescription = 'System alert type is unknown. Assuming system it not yet ready.  ' + message.description;
         }
 
-        if (cnt_log_lines < max_log_lines) {
+        if (cnt_log_lines < MAX_LOG_LINES) {
             document.getElementById('divLog').innerHTML += '<br/> ' + messageTypeFullDescription;
             cnt_log_lines++;
         }
@@ -221,8 +317,6 @@ function checkSystemAlerts() {
         var containerHeight = container.clientHeight;
         var contentHeight = container.scrollHeight;
         container.scrollTop = contentHeight - containerHeight;
-
-        return system_ready;
     });
 }
 
@@ -392,11 +486,9 @@ function showSubCapabilitiesView(id) {
     if (lblRoute == null)
         return;
 
-    route_name = lblRoute.innerHTML;
-    sessionStorage.setItem('routeName', lblRoute.innerHTML);
+    selectedRoute.name = lblRoute.innerHTML;
 
     showSubCapabilitiesView2();
-
 }
 
 /*
@@ -405,10 +497,10 @@ function showSubCapabilitiesView(id) {
 function showSubCapabilitiesView2() {
 
     //if route hasn't been selected, skip
-    if (route_name == 'undefined' || route_name == null || route_name == 'No Route Selected')
+    if (selectedRoute.name == 'No Route Selected')
         return;
 
-    divCapabilitiesMessage.innerHTML = 'Selected route is " ' + route_name + '". <br/>';
+    divCapabilitiesMessage.innerHTML = 'Selected route is " ' + selectedRoute.name + '". <br/>';
 
     //Hide the Route selection
     var divRoutes = document.getElementById('divRoutes');
@@ -504,7 +596,7 @@ function activatePlugin(id) {
     }
 
     // If guidance is engaged, at least 1 plugin must be selected.
-    if (is_guidance_engaged == true) {
+    if (isGuidance.engaged == true) {
         var divSubCapabilities = document.getElementById('divSubCapabilities');
         var cntCapabilitiesSelected = getCheckboxesSelected(divSubCapabilities).length;
 
@@ -598,7 +690,7 @@ function enableGuidance() {
     if (cntSelectedPlugins > 0 && cntSelectedWidgets > 0) {
         //If guidance is engage, leave as green.
         //Else if not engaged, set to blue.
-        if (is_guidance_engaged == false) {
+        if (isGuidance.engaged == false) {
             setCAVButtonState('ENABLED');
             divCapabilitiesMessage.innerHTML += '<br/>' + host_instructions;
         }
@@ -633,7 +725,7 @@ function activateGuidance() {
     loadAudioElements();
 
     ////Sets the new status OPPOSITE to the current value.
-    var newStatus = !is_guidance_active;
+    var newStatus = !isGuidance.active;
 
     //Call the service to engage guidance.
     var setGuidanceClient = new ROSLIB.Service({
@@ -656,63 +748,23 @@ function activateGuidance() {
             return;
         }
 
-        //Set based on returned status, regardless if succesful or not.
-        is_guidance_active = Boolean(result.guidance_status);
-
-        //When active = false, this is equivalent to disengaging guidance.
+        //When active = false, this is equivalent to disengaging guidance. Would not be INACTIVE since inactivity is set by guidance. 
         if (newStatus == false)
         {
-            is_guidance_engaged = false;
-            showGuidanceEngaged();
+            setCAVButtonState('DISENGAGED');
+            return;
         }
 
-        //Open to DriveView tab after engaging and show the widget options.
-        if (is_guidance_active == true){
+        //Open to DriveView tab after activating and show the widget options.
+        //checkAvailability will call setCAVButtonState
+        if (newStatus == true){
             openTab(event, 'divDriverView');
-            CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget
-
-            //Start checking availability (or re-subscribe) if Guidance has been engaged.
-            checkAvailability();
-
-            //Start checking if Robot is active
-            checkRobotEnabled();
+            CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget          
+            checkAvailability(); //Start checking availability (or re-subscribe) if Guidance has been engaged.           
+            checkRobotEnabled(); //Start checking if Robot is active
+            return;
         }
     });
-}
-
-/*
-    Update the button style when guidance is engaged/disengaged.
-    And call checkAvailability when engaged.
-    Used by initial load and when refreshing.
-*/
-function showGuidanceEngaged() {
-
-    if (is_guidance_engaged == true) //To engage
-    {
-        setCAVButtonState('ENGAGED');
-
-        //TODO: TBD if still needed here
-        ////Start checking availability (or re-subscribe) if Guidance has been engaged.
-        //checkAvailability();
-        ////Start checking if Robot is active
-        //checkRobotEnabled();
-    }
-    else //To dis-engage
-    {
-        setCAVButtonState('DISENGAGED');
-
-        //When disengaging, mark all selected plugins to gray.
-        setCbSelectedBgColor('gray');
-
-        //Unsubscribe from the topic when dis-engaging from guidance.
-        if (listenerPluginAvailability != 'undefined' && listenerPluginAvailability!= null)
-            listenerPluginAvailability.unsubscribe();
-
-        //AFTER dis-engaging, redirect to a page. Guidance is sending all the nodes to stop.
-        //Currently, only way to re-engage would be to re-run the roslaunch file.
-        //Discussed that UI DOES NOT need to wait to disconnect and redirect to show any shutdown errors from Guidance.
-        showModal(true, 'You are disengaging guidance. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
-    }
 }
 
 /*
@@ -727,80 +779,41 @@ function setCAVButtonState(state) {
         case 'ENABLED': // equivalent READY where user has selected 1 route and at least 1 plugin.
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_enabled'; //color to blue
-
-            //Update the button title
             btnCAVGuidance.title = 'Start CAV Guidance';
             btnCAVGuidance.innerHTML = 'CAV Guidance - READY <i class="fa fa-thumbs-o-up"></i>';
 
-            //divCapabilitiesMessage.innerHTML = ''; // leave as is
+            isGuidance.active = false;
+            isGuidance.engaged = false;
 
-            sessionStorage.setItem('isGuidanceEngaged', false);
             break;
-
         case 'DISABLED': // equivalent NOT READY awaiting user selection.
             btnCAVGuidance.disabled = true;
             btnCAVGuidance.className = 'button_cav button_disabled'; //color to gray
-
-            //Update the button title
             btnCAVGuidance.title = 'CAV Guidance is disabled.';
             btnCAVGuidance.innerHTML = 'CAV Guidance';
+            
+            isGuidance.active = false;
+            isGuidance.engaged = false;
 
-            //divCapabilitiesMessage.innerHTML = ''; // leave as is
-
-            sessionStorage.setItem('isGuidanceEngaged', false);
             break;
-
         case 'ACTIVE':
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_active'; //color to purple
-
-            //Update the button title
             btnCAVGuidance.title = 'CAV Guidance is now active.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ACTIVE <i class="fa fa-check"></i>';
-
-            //divCapabilitiesMessage.innerHTML = ''; // leave as is
-
-            sessionStorage.setItem('isGuidanceEngaged', false);
-            sessionStorage.setItem('isGuidanceActive', true);
+            
+            isGuidance.active = true;
+            isGuidance.engaged = false;
 
             break;
-
-        case 'ENGAGED':
-            btnCAVGuidance.disabled = false;
-            btnCAVGuidance.className = 'button_cav button_engaged'; // color to green.
-
-            btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
-            btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
-
-            divCapabilitiesMessage.innerHTML = 'CAV Guidance is ENGAGED.';
-
-            //Set session for when user refreshes
-            sessionStorage.setItem('isGuidanceEngaged', true);
-
-            //reset to replay inactive sound if it comes back again.
-            sound_played_once = false;
-
-            break;
-
-        case 'DISENGAGED':
-            btnCAVGuidance.disabled = false;
-            btnCAVGuidance.className = 'button_cav button_disabled';
-
-            //Update the button title
-            btnCAVGuidance.title = 'Start CAV Guidance';
-            btnCAVGuidance.innerHTML = 'CAV Guidance - DISENGAGED <i class="fa fa-stop-circle-o"></i>';
-
-            sessionStorage.setItem('isGuidanceEngaged', false);
-            break;
-
         case 'INACTIVE':  //robot_active is inactive
             btnCAVGuidance.disabled = false;
             btnCAVGuidance.className = 'button_cav button_inactive'; // color to orange
             btnCAVGuidance.title = 'CAV Guidance status is inactive.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - INACTIVE <i class="fa fa-times-circle-o"></i>';
-            //leave isGuidanceEngaged as-is
 
-            divCapabilitiesMessage.innerHTML = 'CAV Guidance has been de-activated. <br/> To re-engage, double tap the ACC switch downward on the steering wheel.';
+            isGuidance.active = false;
+            //isGuidance.engaged = false; //LEAVE value as-is. 
 
             //This check to make sure inactive sound is only played once even when it's been published multiple times in a row.
             //It will get reset when status changes back to engage.
@@ -809,7 +822,44 @@ function setCAVButtonState(state) {
                 sound_played_once = true; //sound has already been played once.
             }
             break;
+        case 'ENGAGED':
+            btnCAVGuidance.disabled = false;
+            btnCAVGuidance.className = 'button_cav button_engaged'; // color to green.
 
+            btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
+            btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
+            
+            isGuidance.active = true;
+            isGuidance.engaged = true;
+
+            //reset to replay inactive sound if it comes back again.
+            sound_played_once = false;
+
+            break;
+        case 'DISENGAGED':
+            btnCAVGuidance.disabled = false;
+            btnCAVGuidance.className = 'button_cav button_disabled';
+
+            //Update the button title
+            btnCAVGuidance.title = 'Start CAV Guidance';
+            btnCAVGuidance.innerHTML = 'CAV Guidance - DISENGAGED <i class="fa fa-stop-circle-o"></i>';
+
+            isGuidance.active = false;
+            isGuidance.engaged = false;
+
+            //When disengaging, mark all selected plugins to gray.
+            setCbSelectedBgColor('gray');
+
+            //Unsubscribe from the topic when dis-engaging from guidance.
+            if (listenerPluginAvailability != 'undefined' && listenerPluginAvailability != null)
+                listenerPluginAvailability.unsubscribe();
+
+            //AFTER dis-engaging, redirect to a page. Guidance is sending all the nodes to stop.
+            //Currently, only way to re-engage would be to re-run the roslaunch file.
+            //Discussed that UI DOES NOT need to wait to disconnect and redirect to show any shutdown errors from Guidance.
+            showModal(true, 'You are disengaging guidance. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
+
+            break;
         default:
             break;
     }
@@ -839,7 +889,6 @@ function checkGuidanceState() {
     listenerGuidanceState.subscribe(function (message) {
 
         var messageTypeFullDescription = divCapabilitiesMessage.innerHTML;
-        guidance_state = message.state;
 
         switch (message.state) {
             case 1: //STARTUP
@@ -852,23 +901,19 @@ function checkGuidanceState() {
                 setCAVButtonState('ACTIVE');
                 break;
             case 4: //ENGAGED
-                //Set based on returned status, regardless if succesful or not.
-                is_guidance_engaged = true;
-
                 //start the timer when it first engages. 
+                messageTypeFullDescription = 'Guidance is now ENGAGED.';
                 startEngagedTimer();
-
-                //Update Guidance button and checkAvailability.
-                showGuidanceEngaged();
+                setCAVButtonState('ENGAGED');
                 break;
             case 5: //INACTIVE
                 //Set based on whatever guidance_state says, regardless if UI has not been engaged yet.
+                messageTypeFullDescription = 'CAV Guidance is INACTIVE. <br/> To re-engage, double tap the ACC switch downward on the steering wheel.';
                 setCAVButtonState('INACTIVE');
                 break;
             case 0: //SHUTDOWN
                 //Show modal popup for Shutdown alerts from Guidance, which is equivalent to Fatal since it cannot restart with this state.
-                //system_ready = false;
-                messageTypeFullDescription = 'System received a Guidance Shutdown. <br/><br/>' + message.description;
+                messageTypeFullDescription = 'System received a Guidance SHUTDOWN. <br/><br/>' + message.description;
                 messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
                 listenerSystemAlert.unsubscribe();
                 showModal(true, messageTypeFullDescription, false);
@@ -1183,15 +1228,11 @@ function checkRouteInfo() {
         //Allow user to be notified of route completed/left route even if guidance is not active/engaged.
         if (message.event == 3) //ROUTE_COMPLETED=3
         {
-            //alert(guidance_state);
-            //if (listenerSystemAlert != 'undefined')
-            //    listenerSystemAlert.unsubscribe();
             showModal(false, 'ROUTE COMPLETED. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
 
         if (message.event == 4)//LEFT_ROUTE=4
         {
-            //listenerSystemAlert.unsubscribe();
             showModal(true, 'You have LEFT THE ROUTE. <br/> <br/> PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.', true);
         }
     });
@@ -1241,7 +1282,7 @@ function showActiveRoute() {
     listenerRoute.subscribe(function (message) {
 
         //if route hasn't been selected.
-        if (route_name == 'undefined' || route_name == null || route_name == 'No Route Selected')
+        if (selectedRoute.name == 'No Route Selected')
             return;
 
         //If nothing on the list, set all selected checkboxes back to blue (or active).
@@ -1336,7 +1377,7 @@ function showSpeedAccelInfo() {
 
     listenerSpeedAccel.subscribe(function (message) {
 
-        var cmd_speed_mph = Math.round(message.speed * meter_to_mph);
+        var cmd_speed_mph = Math.round(message.speed * METER_TO_MPH);
 
         insertNewTableRow('tblFirstB', 'Cmd Speed (m/s)', message.speed.toFixed(2));
         insertNewTableRow('tblFirstB', 'Cmd Speed (MPH)', cmd_speed_mph);
@@ -1367,7 +1408,7 @@ function showCANSpeeds() {
     });
 
     listenerCANSpeed.subscribe(function (message) {
-        var speedMPH = Math.round(message.data * meter_to_mph);
+        var speedMPH = Math.round(message.data * METER_TO_MPH);
         insertNewTableRow('tblFirstB', 'CAN Speed (m/s)', message.data);
         insertNewTableRow('tblFirstB', 'CAN Speed (MPH)', speedMPH);
     });
@@ -1491,10 +1532,7 @@ function showSystemVersion() {
 */
 function startEngagedTimer() {
     // Set the date we're counting down to and save to session.
-    if (sessionStorage.getItem('startDateTime') == null) {
-        var startDateTime = new Date().getTime();
-        sessionStorage.setItem('startDateTime', startDateTime);
-    }
+    startDateTime.start();
 
     // Start counter
     setInterval(countUpTimer, 1000);
@@ -1511,13 +1549,13 @@ function waitForSystemReady() {
         ready_counter++;                                              //  increment the counter
 
         //  if the counter < 4, call the loop function
-        if (ready_counter < ready_max_trial && (system_ready == false || system_ready == null)) {
+        if (ready_counter < ready_max_trial && isSystemAlert.ready == false) {
             waitForSystemReady();             //  ..  again which will trigger another
             divCapabilitiesMessage.innerHTML = 'Awaiting SYSTEM READY status ...';
         }
 
         //If system is now ready
-        if (system_ready == true) {
+        if (isSystemAlert.ready == true) {
             showRouteOptions();
             showStatusandLogs();
             enableGuidance();
@@ -1536,12 +1574,12 @@ function waitForSystemReady() {
 */
 function evaluateNextStep() {
 
-    if (system_ready == null || system_ready == false) {
+    if (isSystemAlert.ready == false) {
         waitForSystemReady();
         return;
     }
 
-    if (route_name == null || route_name == '' || route_name == 'undefined' || route_name == 'No Route Selected') {
+    if (selectedRoute.name == 'No Route Selected') {
         showRouteOptions();
         showStatusandLogs();
         //enableGuidance(); Should not enable guidance as route has not been selected.
@@ -1561,10 +1599,6 @@ function evaluateNextStep() {
 
         //Enable the CAV Guidance button regardless plugins are selected
         enableGuidance();
-
-        if (is_guidance_engaged == true) {
-            showGuidanceEngaged();
-        }
     }
 
 }//evaluateNextStep
@@ -1581,33 +1615,8 @@ window.onload = function () {
             console.log('SVG not supported. Some images will not be displayed.');
         }
 
-        // Store CurrentPage.
-        sessionStorage.setItem('currentpage', 'main');
-
         //Refresh widget
         CarmaJS.WidgetFramework.onRefresh();
-
-        //Get session variables
-        var isSystemReady = sessionStorage.getItem('isSystemReady');
-        var routeName = sessionStorage.getItem('routeName');
-        var isGuidanceEngaged = sessionStorage.getItem('isGuidanceEngaged');
-        var isGuidanceActive = sessionStorage.getItem('isGuidanceActive');
-
-        //Re-Set Global variables ONLY if already connected.
-        if (isSystemReady != 'undefined' && isSystemReady != null)
-            system_ready = Boolean(isSystemReady);
-
-        if (routeName != 'undefined' && routeName != null) {
-            route_name = routeName;
-        }
-
-        if (isGuidanceEngaged != 'undefined' && isGuidanceEngaged != null && isGuidanceEngaged != '') {
-            is_guidance_engaged = (isGuidanceEngaged == 'true');
-        }
-
-        if (isGuidanceActive != 'undefined' && isGuidanceActive != null && isGuidanceActive != '') {
-            is_guidance_active = (isGuidanceActive == 'true');
-        }
 
         // Adding Copyright based on current year
         var elemCopyright = document.getElementsByClassName('copyright');
