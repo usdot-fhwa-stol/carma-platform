@@ -21,6 +21,8 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 public class Point3DStamped {
   Point3D point;
   double stamp;
+  int segmentIdx;
+  double downtrack;
 
   public void setPoint(Point3D point){
     this.point = point;
@@ -30,11 +32,27 @@ public class Point3DStamped {
     this.stamp = stamp;
   }
 
+  public void setSegmentIdx(int segmentIdx) {
+    this.segmentIdx = segmentIdx;
+  }
+
+  public void setDowntrack(double downtrack) {
+    this.downtrack = downtrack;
+  }
+
   public Point3D getPoint(){
     return point;
   }
 
   public double getStamp(){
     return stamp;
+  }
+
+  public int getSegmentIdx(){
+    return segmentIdx;
+  }
+
+  public double getDowntrack() {
+    return downtrack;
   }
 }

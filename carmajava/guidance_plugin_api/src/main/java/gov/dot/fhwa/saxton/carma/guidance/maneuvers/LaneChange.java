@@ -29,8 +29,8 @@ public class LaneChange extends LateralManeuver {
     protected double LEFT_LANE_CHANGE = -1.0;
     protected double KEEP_LANE = 0.0;
 
-    public LaneChange(IPlugin planner) {
-        super(planner);
+    public LaneChange(IPlugin planner, int endingRelativeLane) {
+        super(planner, endingRelativeLane);
     }
 
     @Override
