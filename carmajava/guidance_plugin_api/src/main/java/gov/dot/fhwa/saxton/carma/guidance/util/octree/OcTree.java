@@ -24,6 +24,24 @@ import java.util.TreeSet;
 /**
  */
 public class OcTree<T> {
-    protected OcTreeNode<T> root;
-  
+  protected OcTreeNode<T> root;
+  protected OcTreeInsertStrategy<T> insertStrategy;
+
+  protected OcTree(OcTreeInsertStrategy<T> insertStrategy) {
+    this.insertStrategy = insertStrategy;
+  }
+
+  /**
+   * Attempt to insert the value in the tree according to the configured insertion strategy.
+   * <p>
+   * Only accepts Intervals with non-null data fields, use Optional<T> if data may be missing
+   * 
+   * @return True if the insertion was successful, false o.w.
+   */
+  public boolean insert(OcTreeDatum<T> value) {
+    // TODO
+    // Think about how what the return from an insert should be (A list of conflicts?)
+    // If it is not true / false perhaps this should be broken into a strategy or a differently named class
+    return false;
+  }
 }

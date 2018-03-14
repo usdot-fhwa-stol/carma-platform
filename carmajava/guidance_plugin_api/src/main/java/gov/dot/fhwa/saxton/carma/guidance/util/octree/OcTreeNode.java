@@ -95,11 +95,10 @@ public class OcTreeNode<T> {
   @Override
   public String toString() {
     String dataString = "";
-    for (Interval<?> interval : data) {
-      dataString += interval.toString() + ",";
+    for (OcTreeDatum<?> datum : contents) {
+      dataString += datum.toString();
     }
 
-    return String.format("IntervalTreeNode{center=%.02f,data=%s,left=%s,right=%s}", center, dataString, left,
-        right);
+    return String.format("OcTreeTreeNode{contents: " + dataString + ", region: " + region + "}");
   }
 }

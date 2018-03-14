@@ -52,6 +52,6 @@ public class OcTreeDatum<T> {
 
   @Override
   public String toString() {
-    return "Interval{data=" + data + ", start=" + start + ", end=" + end + "}";
+    return "OcTreeDatum{data:" + data + ", point: " + point + "}";
   }
 }
