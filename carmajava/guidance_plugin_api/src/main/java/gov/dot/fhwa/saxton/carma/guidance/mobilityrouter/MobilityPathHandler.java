@@ -16,11 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
-import org.ros.internal.message.Message;
+import cav_msgs.MobilityPath;
 
 /**
  * 
  */
-public interface MobilityStatusHandler {
-  void handleMobilityStatusMessage(Message msg, boolean hasConflict, double startDist, double endDist, double startTime, double endTime);
+public interface MobilityPathHandler {
+  void handleMobilityPathMessageWithConflict(MobilityPath msg, boolean hasConflict, double startDist, double endDist, double startTime, double endTime);
 }

@@ -16,11 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
+import cav_msgs.LocationECEF;
+import cav_msgs.LocationOffsetECEF;
+import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
+import java.util.List;
 
-/**
- * 
- */
-public interface MobilityRequestHandler {
-  MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict, double startDist, double endDist, double startTime, double endTime);
+public interface ICollisionDetectionAlgo {
+    public void addPath(MobilityPath msg);
+    public void addPath(MobilityRequest msg);
+    public ConflictSpace checkConflict(LocationECEF origin, List<LocationOffsetECEF> offsets);
 }

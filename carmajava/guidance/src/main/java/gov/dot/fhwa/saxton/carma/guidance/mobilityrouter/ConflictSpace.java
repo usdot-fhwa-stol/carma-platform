@@ -16,11 +16,25 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
-import cav_msgs.MobilityRequest;
+public class ConflictSpace {
+    public boolean hasConflict() {
+        return true;
+    }
 
-/**
- * 
- */
-public interface MobilityRequestHandler {
-  MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict, double startDist, double endDist, double startTime, double endTime);
+    public boolean conflictsWith(String strategy) {
+        return true;
+    }
+
+    public double getStartDist() {
+        return 0.0;
+    }
+    public double getEndDist() {
+        return 0.0;
+    }
+    public double getStartTime() {
+        return 0.0;
+    }
+    public double getEndTime() {
+        return 0.0;
+    }
 }

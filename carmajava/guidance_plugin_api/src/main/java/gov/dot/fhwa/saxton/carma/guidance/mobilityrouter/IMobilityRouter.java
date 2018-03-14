@@ -7,5 +7,5 @@ public interface IMobilityRouter {
 
     public void registerMobilityOperationHandler(Integer targetPlugin, MobilityOperationHandler handler);
 
-    public void registerMobilityStatusHandler(Integer targetPlugin, MobilityStatusHandler handler);
+    public void registerMobilityStatusHandler(Integer targetPlugin, MobilityPathHandler handler);
 }
