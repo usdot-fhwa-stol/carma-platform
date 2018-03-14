@@ -16,11 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import cav_msgs.MobilityAck;
@@ -29,8 +29,6 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceExceptionHandler;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
@@ -53,10 +51,10 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ISubscriber<MobilityAck> ackSub;
     private ISubscriber<MobilityOperation> operationSub;
     private ISubscriber<MobilityPath> pathSub;
-    private ConcurrentHashMap<String, LinkedList<MobilityRequestHandler>> requestMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, LinkedList<MobilityAckHandler>> ackMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, LinkedList<MobilityOperationHandler>> operationMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, LinkedList<MobilityPathHandler>> pathMap = new ConcurrentHashMap<>();
+    private Map<String, LinkedList<MobilityRequestHandler>> requestMap = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, LinkedList<MobilityAckHandler>> ackMap = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, LinkedList<MobilityOperationHandler>> operationMap = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, LinkedList<MobilityPathHandler>> pathMap = Collections.synchronizedMap(new HashMap<>());
 
     private PluginManager pluginManager;
     private Arbitrator arbitrator;
@@ -107,6 +105,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             && p instanceof MobilityRequestHandler 
             && p instanceof MobilityPathHandler) {
                 defaultConflictHandler = p;
+                log.info("Detected default conflict handler: " + p.getVersionInfo());
             }
         }
 
@@ -171,14 +170,24 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
 
     private void handleMobilityRequest(MobilityRequest msg) {
+        log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
         ConflictSpace conflictSpace = collisionDetectionAlgo.checkConflict(msg.getTrajectoryStartLocation(),
                 msg.getOffsets());
 
         if (conflictSpace.hasConflict()) {
+            log.info(String.format("Conflict detected in request %s, startDist = %.02f, endDist = %.02f, startTime = %.02f, endTime = %.02f",
+            msg.getHeader().getPlanId(),
+            conflictSpace.getStartDist(),
+            conflictSpace.getEndDist(),
+            conflictSpace.getStartTime(),
+            conflictSpace.getEndTime()));
+
             boolean conflictHandled = false;
             for (Entry<String, LinkedList<MobilityRequestHandler>> entry : requestMap.entrySet()) {
                 if (entry.getKey().endsWith(msg.getStrategy())) {
+                    log.info("Firing message handlers registered for " + entry.getKey());
                     for (MobilityRequestHandler handler : entry.getValue()) {
+                        log.info("Firing mobility request handler: " + handler.getClass().getSimpleName());
                         fireMobilityRequestCallback(handler, msg, true, conflictSpace.getStartDist(), conflictSpace.getEndDist(), conflictSpace.getStartTime(), conflictSpace.getEndTime());
                         conflictHandled = true;
                     }
@@ -187,6 +196,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
             if (!conflictHandled && defaultConflictHandler != null) {
                 // Handle in default conflict handler
+                log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
                 fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace.getStartDist(), conflictSpace.getEndDist(), conflictSpace.getStartTime(), conflictSpace.getEndTime());
             } else {
                 throw new RosRuntimeException("Unhandled mobility path conflict detected and no default conflict handler available!!!");
@@ -195,9 +205,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
 
     private void handleMobilityAck(MobilityAck msg) {
+        log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
         for (Entry<String, LinkedList<MobilityAckHandler>> entry : ackMap.entrySet()) {
-            if (entry.getKey().endsWith(msg.getVerificationCode())) {
+            if (entry.getKey().endsWith(msg.getHeader().getPlanId())) {
+                log.info("Firing message handlers registered for " + entry.getKey());
                 for (MobilityAckHandler handler : entry.getValue()) {
+                    log.info("Firing mobility ack handler: " + handler.getClass().getSimpleName());
                     fireMobilityAckCallback(handler, msg);
                 }
             }
@@ -205,9 +218,11 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
 
     private void handleMobilityOperation(MobilityOperation msg) {
+        log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
         for (Entry<String, LinkedList<MobilityOperationHandler>> entry : operationMap.entrySet()) {
             if (entry.getKey().endsWith(msg.getStrategy())) {
                 for (MobilityOperationHandler handler : entry.getValue()) {
+                    log.info("Firing message handlers registered for " + entry.getKey());
                     fireMobilityOperationCallback(handler, msg);
                 }
             }
@@ -215,18 +230,27 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
 
     private void handleMobilityPath(MobilityPath msg) {
+        log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
         collisionDetectionAlgo.addPath(msg);
         ConflictSpace conflictSpace = collisionDetectionAlgo.checkConflict(msg.getLocation(),
                 msg.getOffsets());
 
         if (conflictSpace.hasConflict()) {
+            log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, startTime = %.02f, endTime = %.02f",
+            msg.getHeader().getPlanId(),
+            conflictSpace.getStartDist(),
+            conflictSpace.getEndDist(),
+            conflictSpace.getStartTime(),
+            conflictSpace.getEndTime()));
             // Handle in default conflict handler
+            log.info("Handling path conflict with " + defaultConflictHandler.getVersionInfo());
             fireMobilityPathCallback(((MobilityPathHandler) defaultConflictHandler), msg, true, conflictSpace.getStartDist(), conflictSpace.getEndDist(), conflictSpace.getStartTime(), conflictSpace.getEndTime());
         }
     }
 
     @Override
 	public void registerMobilityRequestHandler(String strategyId, MobilityRequestHandler handler) {
+        log.info("Mobility Request handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
         if (!requestMap.containsKey(strategyId)) {
             requestMap.put(strategyId, new LinkedList<MobilityRequestHandler>());
         }
@@ -235,6 +259,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     @Override
     public void registerMobilityAckHandler(String strategyId, MobilityAckHandler handler) {
+        log.info("Mobility Ack handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
         if (!ackMap.containsKey(strategyId)) {
             ackMap.put(strategyId, new LinkedList<MobilityAckHandler>());
         }
@@ -243,6 +268,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     @Override
     public void registerMobilityOperationHandler(String strategyId, MobilityOperationHandler handler) {
+        log.info("Mobility Operation handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
         if (!operationMap.containsKey(strategyId)) {
             operationMap.put(strategyId, new LinkedList<MobilityOperationHandler>());
         }
@@ -251,6 +277,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     @Override
     public void registerMobilityPathHandler(String strategyId, MobilityPathHandler handler) {
+        log.info("Mobility Path handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
         if (!pathMap.containsKey(strategyId)) {
             pathMap.put(strategyId, new LinkedList<MobilityPathHandler>());
         }
