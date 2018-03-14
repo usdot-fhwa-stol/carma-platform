@@ -142,7 +142,7 @@ public class TrajectoryConverterTest {
     traj.addManeuver(futureLaneChange2);
 
     // Call function
-    path = tc.convertToPath(traj, 0.0, routeMsg, routeState);
+    path = tc.convertToPath(traj, 0, routeMsg, routeState);
     assertEquals(112, path.size());
 
     // Check starting point
@@ -156,15 +156,15 @@ public class TrajectoryConverterTest {
     assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
     assertEquals(11.1, path.get(path.size() - 1).getStamp(), 0.1);
 
-    System.out.println("\n\n");
-    int count = 0;
-    for(Point3DStamped p: path) {
-      if(count % 2 == 0) {
-        System.out.println(gcc.cartesian2Geodesic(p.getPoint(), Transform.identity()));
-      }
-      count++;
-    }
-    System.out.println("\n\n");
+    // System.out.println("\n\n");
+    // int count = 0;
+    // for(Point3DStamped p: path) {
+    //   if(count % 2 == 0) {
+    //     System.out.println(gcc.cartesian2Geodesic(p.getPoint(), Transform.identity()));
+    //   }
+    //   count++;
+    // }
+    // System.out.println("\n\n");
   }
 
   @Test

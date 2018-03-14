@@ -16,6 +16,16 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 
+/**
+ * A helper class for storing the current state of a simulation when projecting a trajectory through time
+ * This class is really and immutable struct and therefore lacks getters or setters for simplicity 
+ * 
+ * The simulation data contains
+ * The current simulation time in seconds
+ * The current downtrack distance in meters
+ * The current segment downtrack distance in meters
+ * The current segment index on the route
+ */
 public final class LongitudinalSimulationData {
   final double simTime;
   final double downtrack;
