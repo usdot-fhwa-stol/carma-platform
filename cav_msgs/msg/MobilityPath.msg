@@ -6,10 +6,7 @@
 # the CAV should broadcats this message with new trajectory immediately
 
 # standard header for all mobility messages
-cav_msgs/MobilityHeader        header
+cav_msgs/MobilityHeader  header
 
-# current location in ECEF frame
-cav_msgs/LocationECEF          location
-
-# a list of offset describing current 6-second trajectory
-cav_msgs/LocationOffsetECEF[]  offsets
+# current trajectory
+cav_msgs/Trajectory      trajectory      
