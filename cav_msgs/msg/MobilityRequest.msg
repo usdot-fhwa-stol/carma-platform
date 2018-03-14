@@ -30,4 +30,4 @@ string                         strategy_params
 cav_msgs/Trajectory      trajectory  
 
 # time when this message is expired
-uint64                         timestamp
+uint64                         expiration

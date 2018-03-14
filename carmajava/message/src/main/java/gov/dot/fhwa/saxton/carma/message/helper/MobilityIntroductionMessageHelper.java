@@ -40,9 +40,9 @@ public class MobilityIntroductionMessageHelper {
     protected static final int PLAN_PARAM_MAX = 32767;
     protected static final int CAPABILITIES_SIZE_MIN = 1;
     protected static final int CAPABILITIES_SIZE_MAX = 100;
-    protected static final String STRING_DEFAULT = "[UNKNOWN]"; 
+    protected static final String STRING_DEFAULT = "[UNKNOWN]";
     
-    private MobilityHeaderHelper headerHelper = new MobilityHeaderHelper();
+    private MobilityHeaderHelper headerHelper;
     private int vehicleType = UNKNOWN_VEHICLE_TYPE;
     private byte[] roadwayId;
     private int position = POSITION_UNKNOWN;

@@ -9,4 +9,4 @@
 cav_msgs/MobilityHeader  header
 
 # current trajectory
-cav_msgs/Trajectory      trajectory      
+cav_msgs/Trajectory      trajectory

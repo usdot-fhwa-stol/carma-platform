@@ -66,15 +66,13 @@ public class MessageConsumer extends SaxtonBaseNode {
 	// Publishers
 	protected Publisher<ByteArray> outboundPub_; //outgoing byte array after encode
 	protected Publisher<BSM> bsmPub_; //incoming BSM after decoded
-	protected Publisher<MobilityIntro> mobilityIntroPub_; //incoming mobility introduction message after decoded
-	protected Publisher<MobilityAck> mobilityAckPub_; //incoming mobility ack message after decoded
+	protected Publisher<MobilityRequest> mobilityReqPub_; //incoming mobility request message after decoded
 
 	// Subscribers
 	protected Subscriber<SystemAlert> alertSub_;
 	protected Subscriber<ByteArray> inboundSub_; //incoming byte array, need to decode
 	protected Subscriber<BSM> bsmSub_; //outgoing BSM, need to encode
-	protected Subscriber<MobilityIntro> mobilityIntroSub_; //outgoing mobility introduction message, need to encode
-	protected Subscriber<MobilityAck> mobilityAckSub_; //outgoing mobility ack message, need to encode
+	protected Subscriber<MobilityRequest> mobilityReqSub_; //outgoing mobility request message, need to encode
 
 	// Used Services
 	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient_;
@@ -93,10 +91,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 
 	// Config parameters
     protected boolean publishOutboundBsm_ = true;
-    protected boolean publishOutboundMobilityIntro_ = true;
-    protected boolean publishOutboundMobilityAck_ = true;
-    protected boolean publishOutboundMobilityGreeting_ = true;
-    protected boolean publishOutboundMobilityPlan_ = true;
+    protected boolean publishOutboundMobilityRequest_ = true;
 	
 	@Override
 	public GraphName getDefaultNodeName() {
@@ -113,17 +108,12 @@ public class MessageConsumer extends SaxtonBaseNode {
 		//get config params
         try {
             ParameterTree param = connectedNode.getParameterTree();
-            publishOutboundBsm_ = param.getBoolean("~/publish_outbound_bsm");
-            publishOutboundMobilityIntro_ = param.getBoolean("~/publish_outbound_mobility_intro");
-            publishOutboundMobilityGreeting_ = param.getBoolean("~/publish_outbound_mobility_greeting");
-            publishOutboundMobilityAck_ = param.getBoolean("~/publish_outbound_mobility_ack");
-            publishOutboundMobilityPlan_ = param.getBoolean("~/publish_outbound_mobility_plan");
+            publishOutboundBsm_ = param.getBoolean("~/publish_outbound_bsm", true);
+            publishOutboundMobilityRequest_ = param.getBoolean("~/publish_outbound_mobility_request", true);
         }catch (Exception e) {
             log_.warn("STARTUP", "Error reading Message parameters. Using defaults.");
         }
-        log_.info("Read params to publish outbound: BSM = " + publishOutboundBsm_ + ", Mob intro = " + publishOutboundMobilityIntro_
-                + ", Mob greeting = " + publishOutboundMobilityGreeting_ + ", Mob ack = " + publishOutboundMobilityAck_
-                + ", Mob plan = " + publishOutboundMobilityPlan_);
+        log_.info("Read params to publish outbound: BSM = " + publishOutboundBsm_ + ", Mob req = " + publishOutboundMobilityRequest_);
 
         //initialize message statistic
 		messageCounters = new MessageStatistic(connectedNode_, log_);
@@ -200,30 +190,26 @@ public class MessageConsumer extends SaxtonBaseNode {
 		//initialize Pubs
 		bsmPub_ = connectedNode_.newPublisher("incoming_bsm", BSM._TYPE);
 		outboundPub_ = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
-		mobilityIntroPub_ = connectedNode_.newPublisher("incoming_mobility_intro", MobilityIntro._TYPE);
-		mobilityAckPub_ = connectedNode_.newPublisher("incoming_mobility_ack", MobilityAck._TYPE);
-		if(bsmPub_ == null || outboundPub_ == null || mobilityIntroPub_ == null || mobilityAckPub_ == null) {
+		mobilityReqPub_ = connectedNode_.newPublisher("incoming_mobility_request", MobilityRequest._TYPE);
+		if(bsmPub_ == null || outboundPub_ == null || mobilityReqPub_ == null) {
 		    log_.error("Cannot initialize necessary publishers.");
 		    handleException(new RosRuntimeException("Cannot initialize necessary publishers."));
 		}
 		
 		//register new message counters
 		messageCounters.registerEntry("BSM");
-		messageCounters.registerEntry("MobilityIntro");
-		messageCounters.registerEntry("MobilityAck");
+		messageCounters.registerEntry("MobilityRequest");
 		
 		//initialize Subs
 		bsmSub_ = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);
 		inboundSub_ = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
-		mobilityIntroSub_ = connectedNode_.newSubscriber("mobility_intro_outbound", MobilityIntro._TYPE);
-		mobilityAckSub_ = connectedNode_.newSubscriber("mobility_ack_outbound", MobilityAck._TYPE);
-		if(bsmSub_ == null || inboundSub_ == null || mobilityIntroSub_ == null || mobilityAckSub_ == null) {
+		mobilityReqSub_ = connectedNode_.newSubscriber("outgoing_mobility_request", MobilityRequest._TYPE);
+		if(bsmSub_ == null || inboundSub_ == null || mobilityReqSub_ == null) {
 		    log_.error("Cannot initialize necessary subscribers.");
 		    handleException(new RosRuntimeException("Cannot initialize necessary subscribers."));
 		}
         bsmSub_.addMessageListener((bsm) -> dsrcMessageQueue.add(new MessageContainer("BSM", bsm)));
-        mobilityIntroSub_.addMessageListener((intro) -> dsrcMessageQueue.add(new MessageContainer("MobilityIntro", intro)));
-        mobilityAckSub_.addMessageListener((ack) -> dsrcMessageQueue.add(new MessageContainer("MobilityAck", ack)));
+        mobilityReqSub_.addMessageListener((req) -> dsrcMessageQueue.add(new MessageContainer("MobilityRequest", req)));
         inboundSub_.addMessageListener((msg) -> {
 		    messageCounters.onMessageReceiving(msg.getMessageType());
 		    IMessage<?> message = DSRCMessageFactory.getMessage(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
@@ -233,15 +219,11 @@ public class MessageConsumer extends SaxtonBaseNode {
 	            case "BSM":
                     bsmPub_.publish((BSM) decodedMessage.getMessage());
 	                break;
-	            case "MobilityIntro":
-                    mobilityIntroPub_.publish((MobilityIntro) decodedMessage.getMessage());
-                    log_.debug("V2V", "Received & forwarding MobilityIntro, plan ID = " +
+	            case "MobilityRequest":
+	                mobilityReqPub_.publish((MobilityRequest) decodedMessage.getMessage());
+                    log_.debug("V2V", "Received & decoded MobilityRequest, plan ID = " +
                                 ((MobilityIntro) decodedMessage.getMessage()).getHeader().getPlanId());
 	                break;
-	            case "MobilityAck":
-                    mobilityAckPub_.publish((MobilityAck) decodedMessage.getMessage());
-                    log_.debug("V2V", "Received & forwarding MobilityAck, plan ID = " +
-                                ((MobilityAck)decodedMessage.getMessage()).getHeader().getPlanId());
 	            default:
 	                log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	            }
@@ -254,12 +236,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 			protected void loop() throws InterruptedException {
 			    MessageContainer outgoingMessage = dsrcMessageQueue.take();
 			    String mtype = outgoingMessage.getType();
-			    if (    (mtype.equals("BSM")               &&  publishOutboundBsm_)  ||
-                        (mtype.equals("MobilityIntro")     &&  publishOutboundMobilityIntro_)  ||
-                        (mtype.equals("MobilityGreeting")  &&  publishOutboundMobilityGreeting_)  ||
-                        (mtype.equals("MobilityAck")       &&  publishOutboundMobilityAck_)  ||
-                        (mtype.equals("MobilityPlan")      &&  publishOutboundMobilityPlan_)) {
-                    IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
+			    if((mtype.equals("BSM")             && publishOutboundBsm_) ||
+			       (mtype.equals("MobilityRequest") && publishOutboundMobilityRequest_)) {
+			        IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
                     MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
                     if(encodedMessage.getMessage() != null) {
                         log_.info("We encode " + outgoingMessage.getType());
@@ -268,9 +247,10 @@ public class MessageConsumer extends SaxtonBaseNode {
                     } else {
                         log_.warn("We failed to encode " + outgoingMessage.getType());
                     }
-                }
+			    }
 			}
 		});
+		
 	}
 	
 	@Override
