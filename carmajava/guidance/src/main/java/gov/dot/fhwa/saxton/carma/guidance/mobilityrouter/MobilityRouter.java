@@ -80,6 +80,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         return componentName;
     }
 
+    @Override
     public String getHostMobilityId() {
         return hostMobilityStaticId;
     }
@@ -122,22 +123,22 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     @Override
     public void onActive() {
-
+        // NO-OP
     }
 
     @Override
     public void onEngaged() {
-
+        // NO-OP
     }
 
     @Override
     public void onCleanRestart() {
-
+        // NO-OP
     }
 
     @Override
     public void onDeactivate() {
-
+        // NO-OP
     }
     
     private boolean isBroadcast(MobilityHeader header) {

@@ -19,8 +19,13 @@ package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 import org.ros.internal.message.Message;
 
 /**
- * 
+ * Callback interface for handling inbound relevant {@link MobilityAck} messages
  */
 public interface MobilityOperationHandler {
+  /**
+   * Callback to be invoked upon receipt of a relevant {@link MobilityOperation} message
+   * 
+   * @param msg The {@link MobilityOperation} message that was received
+   */
   void handleMobilityOperationMessage(Message msg);
 }
