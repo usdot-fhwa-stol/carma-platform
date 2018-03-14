@@ -225,6 +225,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         }
     }
 
+    @Override
 	public void registerMobilityRequestHandler(String strategyId, MobilityRequestHandler handler) {
         if (!requestMap.containsKey(strategyId)) {
             requestMap.put(strategyId, new LinkedList<MobilityRequestHandler>());
@@ -232,6 +233,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         requestMap.get(strategyId).add(handler);
     }
 
+    @Override
     public void registerMobilityAckHandler(String strategyId, MobilityAckHandler handler) {
         if (!ackMap.containsKey(strategyId)) {
             ackMap.put(strategyId, new LinkedList<MobilityAckHandler>());
@@ -239,6 +241,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         ackMap.get(strategyId).add(handler);
     }
 
+    @Override
     public void registerMobilityOperationHandler(String strategyId, MobilityOperationHandler handler) {
         if (!operationMap.containsKey(strategyId)) {
             operationMap.put(strategyId, new LinkedList<MobilityOperationHandler>());
@@ -246,7 +249,8 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         operationMap.get(strategyId).add(handler);
     }
 
-    public void registerMobilityStatusHandler(String strategyId, MobilityPathHandler handler) {
+    @Override
+    public void registerMobilityPathHandler(String strategyId, MobilityPathHandler handler) {
         if (!pathMap.containsKey(strategyId)) {
             pathMap.put(strategyId, new LinkedList<MobilityPathHandler>());
         }

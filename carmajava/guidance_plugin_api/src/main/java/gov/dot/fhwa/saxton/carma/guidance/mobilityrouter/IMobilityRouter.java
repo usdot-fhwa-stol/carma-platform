@@ -1,11 +1,11 @@
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
 public interface IMobilityRouter {
-    public void registerMobilityRequestHandler(Integer targetPlugin, MobilityRequestHandler handler);
+    public void registerMobilityRequestHandler(String strategy, MobilityRequestHandler handler);
 
-    public void registerMobilityAckHandler(Integer targetPlugin, MobilityAckHandler handler);
+    public void registerMobilityAckHandler(String strategy, MobilityAckHandler handler);
 
-    public void registerMobilityOperationHandler(Integer targetPlugin, MobilityOperationHandler handler);
+    public void registerMobilityOperationHandler(String strategy, MobilityOperationHandler handler);
 
-    public void registerMobilityStatusHandler(Integer targetPlugin, MobilityPathHandler handler);
+    public void registerMobilityPathHandler(String strategy, MobilityPathHandler handler);
 }
