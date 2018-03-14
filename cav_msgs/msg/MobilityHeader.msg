@@ -12,6 +12,10 @@ string  sender_id
 # Empty string indicates a broadcast message
 string  recipient_id
 
+# sender's dynamic ID which is its BSM id in hex string
+# Example: "FFFFFFFF"
+string sender_bsm_id
+
 # random GUID that identifies this particular plan for future reference
 # Example: "b937d2f6-e618-4867-920b-c1f74f98ef1f"
 string  plan_id
