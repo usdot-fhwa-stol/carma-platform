@@ -26,11 +26,8 @@ cav_msgs/LocationECEF          location
 # the maximum length of this string is 100
 string                         strategy_params
 
-# proposed trajectory start location in ECEF frame
-cav_msgs/LocationECEF          trajectory_start_location
-
-# a list of offset describing proposed 6-second trajectory
-cav_msgs/LocationOffsetECEF[]  offsets
+# proposed trajectory
+cav_msgs/Trajectory      trajectory  
 
 # time when this message is expired
 uint64                         timestamp
