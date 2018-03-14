@@ -36,6 +36,7 @@ public class PlatoonManager implements Runnable {
     protected ILogger log;
     protected PluginServiceLocator psl;
     protected String previousLeader = "";
+    protected int indexOfPreviousLeader = -1;
 
     public PlatoonManager(PlatooningPlugin plugin, ILogger log, PluginServiceLocator psl) {
         this.plugin = plugin;
@@ -51,7 +52,6 @@ public class PlatoonManager implements Runnable {
             while(!Thread.currentThread().isInterrupted()) {
                 long loopStart = System.currentTimeMillis();
                 removeExpiredMember();
-                Collections.sort(platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
                 long loopEnd = System.currentTimeMillis();
                 long sleepDuration = Math.max(plugin.messageTimeout - (loopEnd - loopStart), 0);
                 Thread.sleep(sleepDuration);
@@ -144,6 +144,7 @@ public class PlatoonManager implements Runnable {
         if(plugin.getAlgorithmType() == 1) {
             int newLeaderIndex = allPredecessorFollowing();
             newLeader = newLeaderIndex >= platoon.size() ? null : platoon.get(newLeaderIndex);
+            indexOfPreviousLeader = newLeaderIndex >= platoon.size() ? -1 : newLeaderIndex;
             previousLeader = newLeader == null ? "" : newLeader.getStaticId();
         }
         return newLeader;
@@ -174,7 +175,7 @@ public class PlatoonManager implements Runnable {
         }
         speed[speed.length - 1] = inputs.getCurrentSpeed();
         // if the distance headway between the subject vehicle and its predecessor is an issue, it should follow its predecessor
-        if(hasEnoughGapWithPredecessor(inputs.getDistanceToFrontVehicle())) {
+        if(insufficientGapWithPredecessor(inputs.getDistanceToFrontVehicle())) {
             ///***** Case Two *****///
             log.debug("APF algorithm decide there is an issue with the gap with predecessor. Case Two!");
             log.debug("APF returns the predecessor as the leader. Case Two!");
@@ -183,15 +184,21 @@ public class PlatoonManager implements Runnable {
             // implementation of the regular APF algorithm
             double[] timeHeadways = calculateTimeHeadway(downtrackDistance, speed);
             log.debug("APF calculate time headways: " + Arrays.toString(timeHeadways));
-            int indexOfPreviousLeader = findPreviousLeader();
             log.debug("APF found the previous leader is " + indexOfPreviousLeader);
             int closestLowerBoundaryViolation, closestMaximumSpacingViolation;
             // if the previous leader is the first vehicle in the platoon
             if(indexOfPreviousLeader == 0) {
-                ///***** Case Three *****///
-                log.debug("APF found violadations on lower boundary ot maximum spacing. Case Three!");
                 result = determineLeaderBasedOnViolation(timeHeadways);
-                log.debug("APF decide " + result + " as the leader. Case Three!");
+                if(result == 0) {
+                    ///***** Case Zero *****///
+                    // This should be the most regular case
+                    log.debug("APF did not found violations on lower boundary or maximum spacing. Case Zero.");
+                    log.debug("APF decides to continue follow the first vehicle.");
+                } else {
+                    ///***** Case Three *****///
+                    log.debug("APF found violations on lower boundary or maximum spacing. Case Three.");
+                    log.debug("APF decide " + result + " as the leader. Case Three!");
+                }
             } else {
                 // if the previous leader is not the first one
                 double[] temporaryTimeHeadways = calculateTimeHeadwayFromIndex(timeHeadways, indexOfPreviousLeader);
@@ -204,12 +211,13 @@ public class PlatoonManager implements Runnable {
                     boolean condition2 = timeHeadways[indexOfPreviousLeader - 1] < plugin.getMinSpacing();
                     if(condition1 && condition2) {
                         ///***** Case Four *****///
-                        log.debug("APF found there is no violatdations on both partial time headways and all time headways. Case Four.");
+                        log.debug("APF found two conditions for assigning leadership further downstream are satisfied. Case Four.");
+                        log.debug("APF decide " + result + " as the leader based on possible violations on all time headways. Case Four!");
                         result = determineLeaderBasedOnViolation(timeHeadways);
-                        log.debug("APF decide " + result + " as the leader. Case Four!");
+                        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!change here!!!!!!!!!!!!!!!!!!
                     } else {
                         ///***** Case Five *****///
-                        log.debug("APF found there is no violatdations on partial time headways but there is on all time headways. Case Five.");
+                        log.debug("APF found two conditions for assigning leadership further downstream are noy satisfied. Case Five.");
                         log.debug("APF returns the previous leader: " + indexOfPreviousLeader + ". Case Five.");
                         result = indexOfPreviousLeader;
                     }
@@ -247,7 +255,7 @@ public class PlatoonManager implements Runnable {
     }
     
     // Check if we have enough gap with the front vehicle
-    private boolean hasEnoughGapWithPredecessor(double distanceToFrontVehicle) {
+    private boolean insufficientGapWithPredecessor(double distanceToFrontVehicle) {
         boolean frontGapIsTooSmall = distanceToFrontVehicle < plugin.getMinGap();
         boolean previousLeaderIsPredecessor = previousLeader.equals(platoon.get(platoon.size() - 1).getStaticId());
         boolean frontGapIsNotLargeEnough = distanceToFrontVehicle < plugin.getMaxGap() && previousLeaderIsPredecessor;
@@ -285,17 +293,6 @@ public class PlatoonManager implements Runnable {
         for(int i = timeHeadways.length - 1; i >= 0; i--) {
             if(timeHeadways[i] > plugin.getMaxSpacing()) {
                 return i;
-            }
-        }
-        return -1;
-    }
-    
-    private int findPreviousLeader() {
-        if(!previousLeader.equals("")) {
-            for(int i = 0; i < platoon.size(); i++) {
-                if(previousLeader.equals(platoon.get(i).getStaticId())) {
-                    return i;
-                }
             }
         }
         return -1;
