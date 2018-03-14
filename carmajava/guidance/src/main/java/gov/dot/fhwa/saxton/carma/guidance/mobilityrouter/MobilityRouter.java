@@ -61,6 +61,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private String defaultConflictHandlerName = "";
     private IPlugin defaultConflictHandler;
     private ICollisionDetectionAlgo collisionDetectionAlgo;
+    private String ourMobilityStaticId = "";
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
         super(stateMachine, pubSubService, node);
@@ -171,6 +172,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     private void handleMobilityRequest(MobilityRequest msg) {
         log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
+
+        if (!msg.getHeader().getRecipientId().equals(ourMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+            log.info("Message destined for us, ignoring...");
+            return;
+        }
+
         ConflictSpace conflictSpace = collisionDetectionAlgo.checkConflict(msg.getTrajectoryStartLocation(),
                 msg.getOffsets());
 
@@ -206,6 +213,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     private void handleMobilityAck(MobilityAck msg) {
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
+
+        if (!msg.getHeader().getRecipientId().equals(ourMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+            log.info("Message destined for us, ignoring...");
+            return;
+        }
+
         for (Entry<String, LinkedList<MobilityAckHandler>> entry : ackMap.entrySet()) {
             if (entry.getKey().endsWith(msg.getHeader().getPlanId())) {
                 log.info("Firing message handlers registered for " + entry.getKey());
@@ -219,6 +232,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     private void handleMobilityOperation(MobilityOperation msg) {
         log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
+
+        if (!msg.getHeader().getRecipientId().equals(ourMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+            log.info("Message destined for us, ignoring...");
+            return;
+        }
+
         for (Entry<String, LinkedList<MobilityOperationHandler>> entry : operationMap.entrySet()) {
             if (entry.getKey().endsWith(msg.getStrategy())) {
                 for (MobilityOperationHandler handler : entry.getValue()) {
@@ -231,6 +250,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     private void handleMobilityPath(MobilityPath msg) {
         log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
+
+        if (!msg.getHeader().getRecipientId().equals(ourMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+            log.info("Message destined for us, ignoring...");
+            return;
+        }
+
         collisionDetectionAlgo.addPath(msg);
         ConflictSpace conflictSpace = collisionDetectionAlgo.checkConflict(msg.getLocation(),
                 msg.getOffsets());
