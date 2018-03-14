@@ -33,7 +33,6 @@ import org.ros.rosjava_geometry.Vector3;
 
 import cav_msgs.LocationECEF;
 import cav_msgs.LocationOffsetECEF;
-import cav_msgs.MobilityPath;
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
@@ -86,7 +85,7 @@ public class TrajectoryConverter {
    * 
    * @return A list of ecef points associated with time stamps and segments
    */
-  public List<Point3DStamped> convertToPath(Trajectory traj, long startTimeMS, cav_msgs.Route route, cav_msgs.RouteState routeState) {
+  public List<Point3DStamped> convertToPath(Trajectory traj, long startTimeMS, Route route, RouteState routeState) {
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers
@@ -198,18 +197,18 @@ public class TrajectoryConverter {
   }
 
   /**
-   * Function converts a path to a MobilityPath message using the provided message factory
+   * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
    * 
    * @param path The list of ecef points and times which defines the path
    * @param messageFactory The message factory which will be used to build this message
    * 
-   * @return A MobilityPath message. This message will be empty if the path was empty
+   * @return A cav_msgs.Trajectory message. This message will be empty if the path was empty
    */
-  public MobilityPath pathToMessage(List<Point3DStamped> path, MessageFactory messageFactory) {
+  public cav_msgs.Trajectory pathToMessage(List<Point3DStamped> path, MessageFactory messageFactory) {
     if (path.isEmpty()) {
-      return messageFactory.newFromType(MobilityPath._TYPE);
+      return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
-    MobilityPath pathMsg = messageFactory.newFromType(MobilityPath._TYPE);
+    cav_msgs.Trajectory pathMsg = messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     // Handle starting point
     Point3DStamped prevPoint = path.get(0);
 
