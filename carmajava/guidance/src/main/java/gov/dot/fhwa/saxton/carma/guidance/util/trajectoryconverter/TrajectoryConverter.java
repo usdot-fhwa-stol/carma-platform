@@ -19,44 +19,76 @@ package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LaneChange;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LaneKeeping;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
-import gov.dot.fhwa.saxton.carma.guidance.plugins.AvailabilityListener;
-import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.utils.ComponentVersion;
-import std_msgs.Header;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.ros.message.MessageFactory;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
+import cav_msgs.LocationECEF;
+import cav_msgs.LocationOffsetECEF;
+import cav_msgs.MobilityPath;
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
+/**
+ * Class responsible for converting Trajectories into paths described as a sequence for ECEF points for use in Mobility Messages
+ * Users of this class should call the convertToPath function
+ * then call the pathToMessage function to convert the path into a MobilityPath message as needed.
+ * 
+ * Paths are described internally as a list of Point3DStamped objects
+ * Simple Longitudinal Maneuver motion is estimated using the basic kinematic equations of motion
+ * Lateral motion is approximated using a cubic function calculated based on the start and end distance of a maneuver
+ * Complex maneuvers are treated as stead speed maneuvers operating at the average of the min and max speeds of that maneuver
+ * 
+ * Crosstrack distance is preserved across all traversed route segments
+ * Note: This class will become less reliable when dealing with lane changes along tight curves and changing lane widths
+ */
 public class TrajectoryConverter {
 
   private final int maxPointsInPath;
   private final double timeStep;
+  final double CM_PER_M = 100.0;
+  final double SEC_PER_MS = 0.001;
+  final double MS_PER_SEC = 1000;
 
+  /**
+   * Constructor
+   * 
+   * @param maxPointsInPath The maximum number of points which will be included in a path
+   * @param timeStep The size in seconds of the time step separating each point in a path. 
+   */
   public TrajectoryConverter(int maxPointsInPath, double timeStep) {
     this.maxPointsInPath = maxPointsInPath;
     this.timeStep = timeStep;
   }
 
-  public double estimateArrivalTime(double distance) {
-    return 0;
-  }
-
-  public List<Point3DStamped> convertToPath(Trajectory traj, double currentTime, cav_msgs.Route route, cav_msgs.RouteState routeState) {
+  /**
+   * Converts the provided trajectory and starting configuration into a list of ecef points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * @param traj The trajectory to convert
+   * @param currentTimeMs The starting time for this path in ms 
+   * @param route A route message containing all possible route segments
+   * @param routeState A route state message containing the current segment and progress along the route
+   * 
+   * @return A list of ecef points associated with time stamps and segments
+   */
+  public List<Point3DStamped> convertToPath(Trajectory traj, long startTimeMS, cav_msgs.Route route, cav_msgs.RouteState routeState) {
+    // Convert time to seconds
+    final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers
     List<LongitudinalManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     List<LateralManeuver> lateralManeuvers = traj.getLateralManeuvers();
@@ -119,7 +151,7 @@ public class TrajectoryConverter {
             path.get(currentPoint).getPoint().setY(currentCrosstrack);
             currentPoint++;
           }
-        } else {
+        } else { // A lane change will occur in this maneuver
           // Find the equation to generate the fake lane change
           double laneWidth = route.getSegments().get(path.get(currentPoint).getSegmentIdx()).getWaypoint().getLaneWidth();
           double y_0 = currentCrosstrack;
@@ -165,7 +197,55 @@ public class TrajectoryConverter {
     return path;
   }
 
-  protected LongitudinalSimulationData addLongitudinalManeuverToPath(
+  /**
+   * Function converts a path to a MobilityPath message using the provided message factory
+   * 
+   * @param path The list of ecef points and times which defines the path
+   * @param messageFactory The message factory which will be used to build this message
+   * 
+   * @return A MobilityPath message. This message will be empty if the path was empty
+   */
+  public MobilityPath pathToMessage(List<Point3DStamped> path, MessageFactory messageFactory) {
+    if (path.isEmpty()) {
+      return messageFactory.newFromType(MobilityPath._TYPE);
+    }
+    MobilityPath pathMsg = messageFactory.newFromType(MobilityPath._TYPE);
+    // Handle starting point
+    Point3DStamped prevPoint = path.get(0);
+
+    LocationECEF locationECEF = pathMsg.getLocation();
+    locationECEF.setEcefX((int)(prevPoint.getPoint().getX() * CM_PER_M));
+    locationECEF.setEcefY((int)(prevPoint.getPoint().getY() * CM_PER_M));
+    locationECEF.setEcefZ((int)(prevPoint.getPoint().getZ() * CM_PER_M));
+    locationECEF.setTimestamp((long) (prevPoint.getStamp() * MS_PER_SEC));
+
+    // Calculate offsets
+    List<LocationOffsetECEF> offsets = new ArrayList<>(path.size()-1);
+    for (int i = 1; i < path.size(); i++) {
+      Point3DStamped point = path.get(i);
+      LocationOffsetECEF offsetMsg = messageFactory.newFromType(LocationOffsetECEF._TYPE);
+      double deltaX = point.getPoint().getX() - prevPoint.getPoint().getX();
+      double deltaY = point.getPoint().getY() - prevPoint.getPoint().getY();
+      double deltaZ = point.getPoint().getZ() - prevPoint.getPoint().getZ();
+      offsetMsg.setOffsetX((short)(deltaX * CM_PER_M));
+      offsetMsg.setOffsetY((short)(deltaY * CM_PER_M));
+      offsetMsg.setOffsetZ((short)(deltaZ * CM_PER_M));
+      offsets.add(offsetMsg);
+      prevPoint = point;
+    }
+    pathMsg.setOffsets(offsets);
+    return pathMsg;
+  }
+
+  /**
+   * Function which converts and individual Simple Longitudinal Maneuver to a path based on starting configuration
+   * 
+   * @param maneuver The maneuver to convert
+   * @param path The list which will store the generated points
+   * @param startingData The starting configuration of the vehicle
+   * @param route The route the vehicle is on
+   */
+  public LongitudinalSimulationData addLongitudinalManeuverToPath(
     final LongitudinalManeuver maneuver, List<Point3DStamped> path,
     final LongitudinalSimulationData startingData, final Route route) {
 
@@ -176,6 +256,20 @@ public class TrajectoryConverter {
     return addKinematicMotionToPath(startX, endX, startV, endV, path, startingData, route);
   }
 
+  /**
+   * Helper function which generates a set of points along a route
+   * which describe vehicle position based on starting and ending configurations.
+   * 
+   * @param startX The starting downtrack location on the route
+   * @param endX The ending downtrack location on the route
+   * @param startV The starting velocity along the route
+   * @param endV The ending velocity along the route
+   * @param path The list of points which will be added to
+   * @param startingData The starting configuration
+   * @param route The route being traversed
+   * 
+   * @return The new configuration resulting from the motion
+   */
   private LongitudinalSimulationData addKinematicMotionToPath(
     final double startX, final double endX, final double startV, final double endV,
      List<Point3DStamped> path,final LongitudinalSimulationData startingData, final Route route) {
@@ -245,9 +339,9 @@ public class TrajectoryConverter {
      }
 
   /**
-   * Calculates the coefficients {a_3, a_2, a_1, a_0} of a cubic polynomial
+   * Calculates the coefficients {a_0, a_1, a_2, a_3} of a cubic polynomial
    * 
-   * The polynomial is assumed to have 0 slope at the points (x_0,y_0) and (x_1, y_1)
+   * The polynomial is assumed to have 0 slope at the points (x_0, y_0) and (x_1, y_1)
    * 
    * The equations used to generate the solution are as follows.
    * These were symbolically reduced to equations for the constants using an equation solver. 
@@ -259,6 +353,13 @@ public class TrajectoryConverter {
    * 
    * 
    * Note: This is only valid for x_0 != x_1 and y_0 != y1
+   * 
+   * @param x_0 The first x value
+   * @param y_0 The first y value
+   * @param x_1 The second x value
+   * @param y_1 The second y value
+   * 
+   * @return An array of coefficients of the form {a_0, a_1, a_2, a_3}
    * 
    */
   private double[] getCubicFunction(double x_0, double y_0, double x_1, double y_1) {
@@ -272,7 +373,7 @@ public class TrajectoryConverter {
     final double invDeltaXCubed = invDeltaX * invDeltaX * invDeltaX;
 
     final double invDeltaY = y_0 - y_1;
-    /* Original Form before optimization
+    /* Original Form before optimizations
     a_3 = -(2 * (y_0 - y_1))/(x_0 - x_1)^3;
     a_2 = (3 * (x_0 + x_1) * (y_0 - y_1))/(x_0 - x_1)^3;
     a_1 = (6 * x_0 *x_1 * (y_1 - y_0))/(x_0 - x_1)^3;
@@ -291,7 +392,8 @@ public class TrajectoryConverter {
    * Solves a cubic polynomial with the provided coefficients
    * f(x) = a_3 * x^3 + a_2 * x^2 + a_1 * x + a_0
    * 
-   * @params 
+   * @param x The value to solve for
+   * @param coefficients An array of coefficients which define the cubic equation must be of the form {a_0, a_1, a_2, a_3}
    */
   private double solveCubic(double x, double[] coefficients) {
     final double[] a = coefficients;
