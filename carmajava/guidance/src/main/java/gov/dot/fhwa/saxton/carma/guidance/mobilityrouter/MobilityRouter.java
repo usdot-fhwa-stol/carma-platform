@@ -61,7 +61,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private String defaultConflictHandlerName = "";
     private IPlugin defaultConflictHandler;
     private ICollisionDetectionAlgo collisionDetectionAlgo;
-    private String ourMobilityStaticId = "";
+    private String hostMobilityStaticId = "";
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
         super(stateMachine, pubSubService, node);
@@ -80,6 +80,10 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         return componentName;
     }
 
+    public String getHostMobilityId() {
+        return hostMobilityStaticId;
+    }
+
     @Override
     public void onStartup() {
         log.info("Setting up subscribers");
@@ -94,6 +98,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         pathSub.registerOnMessageCallback(this::handleMobilityPath);
 
         defaultConflictHandlerName = node.getParameterTree().getString("~default_mobility_conflict_handler", "Yield Plugin");
+        hostMobilityStaticId = node.getParameterTree().getString("~vehicle_id", "");
 
         log.info("Setup complete");
     }
@@ -173,7 +178,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void handleMobilityRequest(MobilityRequest msg) {
         log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
 
-        if (!msg.getHeader().getRecipientId().equals(ourMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
             log.info("Message destined for us, ignoring...");
             return;
         }
@@ -214,7 +219,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void handleMobilityAck(MobilityAck msg) {
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(ourMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
             log.info("Message destined for us, ignoring...");
             return;
         }
@@ -233,7 +238,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void handleMobilityOperation(MobilityOperation msg) {
         log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(ourMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
             log.info("Message destined for us, ignoring...");
             return;
         }
@@ -251,7 +256,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void handleMobilityPath(MobilityPath msg) {
         log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(ourMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
             log.info("Message destined for us, ignoring...");
             return;
         }

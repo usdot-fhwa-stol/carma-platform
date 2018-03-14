@@ -8,4 +8,6 @@ public interface IMobilityRouter {
     public void registerMobilityOperationHandler(String strategy, MobilityOperationHandler handler);
 
     public void registerMobilityPathHandler(String strategy, MobilityPathHandler handler);
+
+    public String getHostMobilityId();
 }
