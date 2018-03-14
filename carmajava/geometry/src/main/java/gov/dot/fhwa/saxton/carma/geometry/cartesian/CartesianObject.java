@@ -31,6 +31,7 @@ public class CartesianObject implements CartesianElement {
   public static final int MIN_BOUND_IDX = 0;
   public static final int MAX_BOUND_IDX = 1;
   protected double[][] bounds; // 2 cols as every dim has a min and max value
+  protected double[] size;
   protected Point centroidOfBounds;
   protected Point centroidOfCloud;
   protected int numDimensions;
@@ -71,7 +72,6 @@ public class CartesianObject implements CartesianElement {
 
   /**
    * Calculates the centroid of this object's point cloud
-   * Called in constructor
    * Assumes that validateInput() has already been called
    */
   protected void calculateCentroidOfCloud() {
@@ -86,10 +86,12 @@ public class CartesianObject implements CartesianElement {
 
   /**
    * Calculates the centroid of this object's bounds
-   * Called in constructor
    * Assumes calculateBounds() has already been called
    */
   protected void calculateCentroidOfBounds() {
+    if (bounds == null) {
+      calculateBounds();
+    }
     double[] centroidValues = new double[numDimensions];
     for (int i = 0; i < numDimensions; i++) {
       centroidValues[i] = (bounds[i][MIN_BOUND_IDX] + bounds[i][MAX_BOUND_IDX]) / 2;
@@ -99,16 +101,13 @@ public class CartesianObject implements CartesianElement {
 
   /**
    * Calculates the bounds of the provided point cloud
-   * Called in the constructor
-   * Assumes that validateInput() has already been called
-   * @param points A list of points assumed to be of the same dimension
    */
-  protected void calculateBounds(List<? extends Point> points) {
+  protected void calculateBounds() {
     int dims = this.getNumDimensions();
     bounds = new double[dims][2];
 
     boolean firstPoint = true;
-    for (Point p : points) {
+    for (Point p : pointCloud) {
       for (int i = 0; i < dims; i++) {
         if (firstPoint) {
           bounds[i][MIN_BOUND_IDX] = p.getDim(i);
@@ -153,9 +152,33 @@ public class CartesianObject implements CartesianElement {
    */
   public double[][] getBounds() {
     if (bounds == null) {
-      calculateBounds(pointCloud);
+      calculateBounds();
     }
     return bounds;
+  }
+
+  /**
+   * Calculates the size of the provided point cloud
+   * Assumes that validateInput() has already been called
+   * @param points A list of points assumed to be of the same dimension
+   */
+  protected void calculateSize() {
+    size = new double[bounds.length];
+
+    for (int i = 0; i < bounds.length; i++) {
+      size[i] = bounds[i][MAX_BOUND_IDX] - bounds[i][MIN_BOUND_IDX];
+    }
+  }
+
+  /**
+   * Gets the size of this object
+   * @return A array each entry corresponding to the size of the object bounds along the relevant dimension
+   */
+  public double[] getSize() {
+    if (size == null) {
+      calculateSize();
+    }
+    return size;
   }
 
   /**
@@ -178,6 +201,27 @@ public class CartesianObject implements CartesianElement {
       calculateCentroidOfCloud();
     }
     return centroidOfCloud;
+  }
+
+  /**
+   * Returns true if the provided dimensions are all larger than this object's corresponding measurements
+   * Only matching dimensions will be checked. 
+   * Dimensions are assumed to be positive
+   * Mismatched dimensions will return true as this object has 0 size on that axis
+   * 
+   * @param dimensions An array of dimensions to compare. All dimensions should be positive
+   * @param multiplier A multiplier to apply to this objects size when doing comparison
+   * 
+   * @return True if would fit inside
+   */
+  public boolean canFitInside(double[] dimensions, double multiplier) {
+    int numDims = dimensions.length < size.length ? dimensions.length : size.length;
+    for (int i = 0; i < numDims; i++) {
+      if (dimensions[i] < size[i] * multiplier) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
