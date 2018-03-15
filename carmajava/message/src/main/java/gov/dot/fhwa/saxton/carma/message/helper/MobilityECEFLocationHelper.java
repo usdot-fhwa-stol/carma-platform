@@ -36,7 +36,7 @@ public class MobilityECEFLocationHelper {
         this.setEcefX(location.getEcefX());
         this.setEcefY(location.getEcefY());
         this.setEcefX(location.getEcefZ());
-        StringConverterHelper.setTimestamp(location.getTimestamp(), this.timestamp);
+        this.timestamp = StringConverterHelper.setTimestamp(location.getTimestamp());
     }
     
     public void setEcefX(int x) {

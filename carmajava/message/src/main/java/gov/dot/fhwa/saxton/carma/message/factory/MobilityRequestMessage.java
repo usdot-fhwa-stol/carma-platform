@@ -17,15 +17,15 @@
 package gov.dot.fhwa.saxton.carma.message.factory;
 
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.internal.message.Message;
 import org.ros.message.MessageFactory;
-import org.ros.node.ConnectedNode;
+import org.ros.message.Time;
 
 import cav_msgs.ByteArray;
-import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityRequest;
 import gov.dot.fhwa.saxton.carma.message.helper.MobilityRequestHelper;
 import gov.dot.fhwa.saxton.carma.message.helper.MobilityTrajectoryHelper;
@@ -38,12 +38,10 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
  */
 public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
     
-    protected ConnectedNode node_;
     protected SaxtonLogger log_;
     protected MessageFactory messageFactory_;
     
-    public MobilityRequestMessage(ConnectedNode node, SaxtonLogger log, MessageFactory messageFactory) {
-        this.node_ = node;
+    public MobilityRequestMessage(SaxtonLogger log, MessageFactory messageFactory) {
         this.log_ = log;
         this.messageFactory_ = messageFactory;
     }
@@ -85,20 +83,9 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
     
     @Override
     public MessageContainer encode(Message plainMessage) {
-        MobilityRequestHelper helper = new MobilityRequestHelper((MobilityRequest) plainMessage);
-        byte[] encodedMsg = encodeMobilityRequest(
-                helper.getHeaderHelper().getSenderId(), helper.getHeaderHelper().getTargetId(),
-                helper.getHeaderHelper().getBSMId(), helper.getHeaderHelper().getPlanId(),
-                helper.getHeaderHelper().getTimestamp(), helper.getStrategy(), helper.getPlanType(),
-                helper.getUrgency(), helper.getLocationHelper().getEcefX(), helper.getLocationHelper().getEcefY(),
-                helper.getLocationHelper().getEcefZ(), helper.getLocationHelper().getTimestamp(),
-                helper.getStrategyParams(), helper.getTrajectoryHelper().getStartLocationHelper().getEcefX(),
-                helper.getTrajectoryHelper().getStartLocationHelper().getEcefY(),
-                helper.getTrajectoryHelper().getStartLocationHelper().getEcefZ(),
-                helper.getTrajectoryHelper().getStartLocationHelper().getTimestamp(),
-                helper.getTrajectoryHelper().getOffsets(), helper.getExpiration());
+        byte[] encodedMsg = this.callJniEncode((MobilityRequest) plainMessage);
         if(encodedMsg == null) {
-            log_.warn("MobilityRequest", "MobilityRequestMessage cannot encode the message: " + helper.getHeaderHelper().getPlanId());
+            log_.warn("MobilityRequest", "MobilityRequestMessage cannot encode the message");
             return new MessageContainer("ByteArray", null);
         }
         ByteArray binaryMsg = messageFactory_.newFromType(ByteArray._TYPE);
@@ -106,7 +93,7 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
         binaryMsg.setContent(buffer);
         binaryMsg.setMessageType("MobilityRequest");
         binaryMsg.getHeader().setFrameId("0");
-        binaryMsg.getHeader().setStamp(node_.getCurrentTime());
+        binaryMsg.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
         return new MessageContainer("MobilityRequest", binaryMsg);
     }
 
@@ -150,5 +137,21 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
         request.getTrajectory().setOffsets(helper.intArrayOffsetsToOffsetList(offsets));
         request.setExpiration(Long.parseLong(new String(expiration)));
         return new MessageContainer("MobilityRequest", request);
+    }
+    
+    public byte[] callJniEncode(MobilityRequest request) {
+        MobilityRequestHelper helper = new MobilityRequestHelper(request);
+        byte[] encodedMsg = encodeMobilityRequest(
+                helper.getHeaderHelper().getSenderId(), helper.getHeaderHelper().getTargetId(),
+                helper.getHeaderHelper().getBSMId(), helper.getHeaderHelper().getPlanId(),
+                helper.getHeaderHelper().getTimestamp(), helper.getStrategy(), helper.getPlanType(),
+                helper.getUrgency(), helper.getLocationHelper().getEcefX(), helper.getLocationHelper().getEcefY(),
+                helper.getLocationHelper().getEcefZ(), helper.getLocationHelper().getTimestamp(),
+                helper.getStrategyParams(), helper.getTrajectoryHelper().getStartLocationHelper().getEcefX(),
+                helper.getTrajectoryHelper().getStartLocationHelper().getEcefY(),
+                helper.getTrajectoryHelper().getStartLocationHelper().getEcefZ(),
+                helper.getTrajectoryHelper().getStartLocationHelper().getTimestamp(),
+                helper.getTrajectoryHelper().getOffsets(), helper.getExpiration());
+        return encodedMsg;
     }
 }

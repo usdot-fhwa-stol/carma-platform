@@ -124,13 +124,13 @@ public class MockDSRCDriver extends AbstractMockDriver {
       
       //publish mobility intro message some time
       message_counter++; 
-      if(message_counter % 3 == 0) {
-          recvMsg.setMessageType("MobilityIntro");
-          currentByteString = "00 f0 80 e7 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 6b 06 0c 18 2d 60 c1 83 05 ac 18 30 60 b5 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 62 d5 8b 67 0c 1c 31 70 d5 8b 36 01 45 5b a9 97 9f 44 14 b7 e1 c9 74 00 20 10 05 08 06 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 2c 99 33 66 dd 93 06 6d 9c 35 68 dd bb 57 0c 1b 95 b7 0f 0f 2d b8 68 6c c3 d3 36 fe 5b 50 76 64 b9 92 e6 77 40";
-      } else if(message_counter % 3 == 1) {
-          recvMsg.setMessageType("MobilityAck");
-          currentByteString = "00 f2 70 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 6b 06 0c 18 2d 60 c1 83 05 ac 18 30 60 b5 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 62 d5 8b 67 0c 1c 31 70 d5 8b 36 00";
-      }
+//      if(message_counter % 3 == 0) {
+//          recvMsg.setMessageType("MobilityIntro");
+//          currentByteString = "00 f0 80 e7 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 6b 06 0c 18 2d 60 c1 83 05 ac 18 30 60 b5 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 62 d5 8b 67 0c 1c 31 70 d5 8b 36 01 45 5b a9 97 9f 44 14 b7 e1 c9 74 00 20 10 05 08 06 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 2c 99 33 66 dd 93 06 6d 9c 35 68 dd bb 57 0c 1b 95 b7 0f 0f 2d b8 68 6c c3 d3 36 fe 5b 50 76 64 b9 92 e6 77 40";
+//      } else if(message_counter % 3 == 1) {
+//          recvMsg.setMessageType("MobilityAck");
+//          currentByteString = "00 f2 70 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 6b 06 0c 18 2d 60 c1 83 05 ac 18 30 60 b5 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 62 d5 8b 67 0c 1c 31 70 d5 8b 36 00";
+//      }
       
       
       boolean publish_control = false;

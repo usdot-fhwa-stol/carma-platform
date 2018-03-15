@@ -213,19 +213,21 @@ public class MessageConsumer extends SaxtonBaseNode {
         inboundSub_.addMessageListener((msg) -> {
 		    messageCounters.onMessageReceiving(msg.getMessageType());
 		    IMessage<?> message = DSRCMessageFactory.getMessage(msg.getMessageType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
-		    MessageContainer decodedMessage = message.decode(msg);
-		    if(decodedMessage.getMessage() != null) {
-		        switch (decodedMessage.getType()) {
-	            case "BSM":
-                    bsmPub_.publish((BSM) decodedMessage.getMessage());
-	                break;
-	            case "MobilityRequest":
-	                mobilityReqPub_.publish((MobilityRequest) decodedMessage.getMessage());
-                    log_.debug("V2V", "Received & decoded MobilityRequest, plan ID = " +
-                                ((MobilityIntro) decodedMessage.getMessage()).getHeader().getPlanId());
-	                break;
-	            default:
-	                log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
+		    if(message != null) {
+		        MessageContainer decodedMessage = message.decode(msg);
+	            if(decodedMessage.getMessage() != null) {
+	                switch (decodedMessage.getType()) {
+	                case "BSM":
+	                    bsmPub_.publish((BSM) decodedMessage.getMessage());
+	                    break;
+	                case "MobilityRequest":
+	                    mobilityReqPub_.publish((MobilityRequest) decodedMessage.getMessage());
+	                    log_.debug("V2V", "Received & decoded MobilityRequest, plan ID = " +
+	                                ((MobilityIntro) decodedMessage.getMessage()).getHeader().getPlanId());
+	                    break;
+	                default:
+	                    log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
+	                }
 	            }
 		    }
 		});
@@ -239,14 +241,19 @@ public class MessageConsumer extends SaxtonBaseNode {
 			    if((mtype.equals("BSM")             && publishOutboundBsm_) ||
 			       (mtype.equals("MobilityRequest") && publishOutboundMobilityRequest_)) {
 			        IMessage<?> message = DSRCMessageFactory.getMessage(outgoingMessage.getType(), connectedNode_, log_, connectedNode_.getTopicMessageFactory());
-                    MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
-                    if(encodedMessage.getMessage() != null) {
-                        log_.info("We encode " + outgoingMessage.getType());
-                        messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
-                        outboundPub_.publish((ByteArray) encodedMessage.getMessage());
-                    } else {
-                        log_.warn("We failed to encode " + outgoingMessage.getType());
+                    if(message != null) {
+                        log_.debug("Found message factory on type " + outgoingMessage.getType());
+                        MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
+                        log_.debug("After!!!!!!!!!!!!");
+                        if(encodedMessage.getMessage() != null) {
+                            log_.info("We encode " + outgoingMessage.getType());
+                            messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
+                            outboundPub_.publish((ByteArray) encodedMessage.getMessage());
+                        } else {
+                            log_.warn("We failed to encode " + outgoingMessage.getType());
+                        }
                     }
+			        
 			    }
 			}
 		});

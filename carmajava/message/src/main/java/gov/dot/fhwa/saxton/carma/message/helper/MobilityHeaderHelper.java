@@ -33,11 +33,11 @@ public class MobilityHeaderHelper {
     private byte[] senderId, targetId, hostBSMId, planId, timestamp;
     
     public MobilityHeaderHelper(MobilityHeader header) {
-        StringConverterHelper.setDynamicLengthString(header.getSenderId(), this.senderId, STATIC_ID_MAX_LENGTH);
-        StringConverterHelper.setDynamicLengthString(header.getRecipientId(), this.targetId, STATIC_ID_MAX_LENGTH);
-        StringConverterHelper.setFixedLengthString(header.getSenderBsmId(), this.hostBSMId, BSM_ID_LENGTH, BSM_ID_DEFAULT);
-        StringConverterHelper.setFixedLengthString(header.getPlanId(), this.planId, GUID_LENGTH, GUID_DEFAULT);
-        StringConverterHelper.setTimestamp(header.getTimestamp(), this.timestamp);
+        this.senderId = StringConverterHelper.setDynamicLengthString(header.getSenderId(), STATIC_ID_MAX_LENGTH);
+        this.targetId = StringConverterHelper.setDynamicLengthString(header.getRecipientId(), STATIC_ID_MAX_LENGTH);
+        this.hostBSMId = StringConverterHelper.setFixedLengthString(header.getSenderBsmId(), BSM_ID_LENGTH, BSM_ID_DEFAULT);
+        this.planId = StringConverterHelper.setFixedLengthString(header.getPlanId(), GUID_LENGTH, GUID_DEFAULT);
+        this.timestamp = StringConverterHelper.setTimestamp(header.getTimestamp());
     }
 
     public byte[] getSenderId() {

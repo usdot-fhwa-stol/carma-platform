@@ -27,7 +27,7 @@ public class DSRCMessageFactory {
         case "BSM":
             return new BSMMessage(node, log, factory);
         case "MobilityRequest":
-            return new MobilityRequestMessage(node, log, factory);
+            return new MobilityRequestMessage(log, factory);
         default:
             return null;
         }

@@ -40,13 +40,13 @@ public class MobilityRequestHelper {
     
     public MobilityRequestHelper(MobilityRequest request) {
         this.headerHelper = new MobilityHeaderHelper(request.getHeader());
-        StringConverterHelper.setDynamicLengthString(request.getStrategy(), this.strategy, STRATEGY_MAX_LENGTH);
+        this.strategy = StringConverterHelper.setDynamicLengthString(request.getStrategy(), STRATEGY_MAX_LENGTH);
         this.planType = request.getPlanType().getType();
         this.urgency = Math.min(Math.max(URGENCY_MIN, request.getUrgency()), URGENCY_MAX);
         this.locationHelper = new MobilityECEFLocationHelper(request.getLocation());
-        StringConverterHelper.setDynamicLengthString(request.getStrategyParams(), this.strategyParams, STRATEGY_PARAMS_MAX_LENGTH);
+        this.strategyParams = StringConverterHelper.setDynamicLengthString(request.getStrategyParams(), STRATEGY_PARAMS_MAX_LENGTH);
         this.trajectoryHelper = new MobilityTrajectoryHelper(request.getTrajectory());
-        StringConverterHelper.setTimestamp(request.getExpiration(), this.expiration);
+        this.expiration = StringConverterHelper.setTimestamp(request.getExpiration());
     }
 
     public MobilityHeaderHelper getHeaderHelper() {

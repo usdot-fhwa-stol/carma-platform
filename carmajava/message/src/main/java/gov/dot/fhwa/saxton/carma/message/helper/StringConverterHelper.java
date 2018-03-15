@@ -30,7 +30,7 @@ public class StringConverterHelper {
     public static final String DYNAMIC_STRING_DEFAULT = "[]";
     public static final int TIMESTAMP_LENGTH = Long.toString(Long.MAX_VALUE).length();
     
-    public static void setDynamicLengthString(String inputString, byte[] field, int maxLength) {
+    public static byte[] setDynamicLengthString(String inputString, int maxLength) {
         char[] tmp;
         if(inputString.length() <= maxLength) {
             inputString = "[" + inputString + "]";
@@ -38,36 +38,39 @@ public class StringConverterHelper {
         } else {
             tmp = DYNAMIC_STRING_DEFAULT.toCharArray();
         }
-        field = new byte[tmp.length];
+        byte[] field = new byte[tmp.length];
         for(int i = 0; i < tmp.length; i++) {
             field[i] = (byte) tmp[i];
         }
+        return field;
     }
     
-    public static void setFixedLengthString(String inputString, byte[] field, int length, String defaultString) {
+    public static byte[] setFixedLengthString(String inputString, int length, String defaultString) {
         char[] tmp;
         if(inputString.length() == length) {
             tmp = inputString.toCharArray();
         } else {
             tmp = defaultString.toCharArray();
         }
-        field = new byte[length];
+        byte[] field = new byte[length];
         for(int i = 0; i < tmp.length; i++) {
             field[i] = (byte) tmp[i];
         }
+        return field;
     }
     
-    public static void setTimestamp(long time, byte[] field) {
+    public static byte[] setTimestamp(long time) {
         StringBuffer number = new StringBuffer(Long.toString(time));
         int numberOfZeroNeeded = TIMESTAMP_LENGTH - number.length();
         for(int i = 0; i < numberOfZeroNeeded; i++) {
             number.insert(0, '0');
         }
         char[] tmp = number.toString().toCharArray();
-        field = new byte[tmp.length];
+        byte[] field = new byte[tmp.length];
         for(int i = 0; i < tmp.length; i++) {
             field[i] = (byte) tmp[i];
         }
+        return field;
     }
     
     public static String readDynamicLengthString(byte[] input) {
