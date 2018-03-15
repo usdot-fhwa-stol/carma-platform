@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import cav_msgs.ActiveManeuvers;
+
 /**
  * Guidance package TrajectoryExecutorWorker
  * <p>
@@ -241,6 +243,8 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       currentLateralManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       currentComplexManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
 
+      activeManeuversMsg = activeManeuversPub.newMessage();
+
       if (currentComplexManeuver != null) {
         try {
           currentComplexManeuver.executeTimeStep();
@@ -248,6 +252,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
           log.warn("Maneuver " + currentComplexManeuver.getClass().getSimpleName() + " planned by "
               + currentComplexManeuver.getPlanner() + " attempted to run after its end distance.");
         }
+        activeManeuversMsg.setLongitudinalStartDist(currentComplexManeuver.getStartDistance());
+        activeManeuversMsg.setLongitudinalEndDist(currentComplexManeuver.getEndDistance());
+        activeManeuversMsg.setLongitudinalManeuver(currentComplexManeuver.getClass().getSimpleName());
+        activeManeuversMsg
+            .setLongitudinalPlugin(currentComplexManeuver.getPlanner().getVersionInfo().componentName());
       } else {
         if (currentLongitudinalManeuver != null) {
           try {
@@ -256,6 +265,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
             log.warn("Maneuver " + currentLongitudinalManeuver.getClass().getSimpleName() + " planned by "
                 + currentLongitudinalManeuver.getPlanner() + " attempted to run after its end distance.");
           }
+          activeManeuversMsg.setLongitudinalStartDist(currentLongitudinalManeuver.getStartDistance());
+          activeManeuversMsg.setLongitudinalEndDist(currentLongitudinalManeuver.getEndDistance());
+          activeManeuversMsg.setLongitudinalManeuver(currentLongitudinalManeuver.getClass().getSimpleName());
+          activeManeuversMsg
+              .setLongitudinalPlugin(currentLongitudinalManeuver.getPlanner().getVersionInfo().componentName());
         }
         if (currentLateralManeuver != null) {
           try {
@@ -264,9 +278,14 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
             log.warn("Maneuver " + currentLateralManeuver.getClass().getSimpleName() + " planned by "
                 + currentLateralManeuver.getPlanner() + " attempted to run after its end distance.");
           }
+          activeManeuversMsg.setLateralStartDist(currentLateralManeuver.getStartDistance());
+          activeManeuversMsg.setLateralEndDist(currentLateralManeuver.getEndDistance());
+          activeManeuversMsg.setLateralManeuver(currentLateralManeuver.getClass().getSimpleName());
+          activeManeuversMsg.setLateralPlugin(currentLateralManeuver.getPlanner().getVersionInfo().componentName());
         }
       }
     }
+    activeManeuversPub.publish(activeManeuversMsg);
   }
 
   @Override
