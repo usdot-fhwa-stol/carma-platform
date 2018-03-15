@@ -74,7 +74,8 @@ public class LeaderState implements IPlatooningState {
     @Override
     public void onReceiveNegotiationMessage(NewPlan plan) {
         // Only care about SEARCHING_FOR_PLATOON message for now
-        if(plan.getType().getType() == PlanType.SEARCHING_FOR_PLATOON) {
+        // TODO need to accommodate new mobility message format
+        if(plan.getType().getType() == PlanType.UNKNOWN) {
             plugin_.platoonManager.memberUpdates(plan);
             log_.info("Receiving new platooning plan message " + plan.getPlanId() + " from " + plan.getSenderId());
         }
@@ -101,7 +102,8 @@ public class LeaderState implements IPlatooningState {
         double dowtrack = plugin_.maneuverInputs.getDistanceFromRouteStart();
         message.setMyRoadwayLinkPosition((short) dowtrack);
         message.setExpiration(System.currentTimeMillis() + 5000); //TODO not in use for now
-        message.getPlanType().setType(PlanType.SEARCHING_FOR_PLATOON);
+        // TODO need to accommodate new mobility message format
+        message.getPlanType().setType(PlanType.UNKNOWN);
         double cmdSpeed = plugin_.cmdSpeedSub.getLastMessage() != null ? plugin_.cmdSpeedSub.getLastMessage().getSpeed() : 0.0;  
         String cap = String.format("[CMDSPEED:%.1f, DOWNTRACK:%.1f, SPEED:%.1f]", cmdSpeed, dowtrack, speed);
         message.setCapabilities(cap);
