@@ -1141,7 +1141,7 @@ function showControllingPlugins()
         //Longitudinal Controlling Plugin
         var spanLonPlugin = document.getElementById('spanLonPlugin');
 
-        if (spanLonPlugin != null || spanLonPlugin != 'undefined'){
+        if (spanLonPlugin != null && spanLonPlugin != 'undefined'){
             if (message.longitudinal_plugin.trim().length > 0) {
                 spanLonPlugin.innerHTML = message.longitudinal_plugin.trim().match(/\b(\w)/g).join(''); //abbreviation
             }
@@ -1153,7 +1153,7 @@ function showControllingPlugins()
         //Lateral Controlling Plugin
         var spanLatPlugin = document.getElementById('spanLatPlugin');
 
-        if (spanLatPlugin != null || spanLatPlugin != 'undefined'){
+        if (spanLatPlugin != null && spanLatPlugin != 'undefined'){
             if (message.lateral_plugin.trim().length > 0) {
                 spanLatPlugin.innerHTML = message.lateral_plugin.trim().match(/\b(\w)/g).join(''); //abbreviation
             }else{
