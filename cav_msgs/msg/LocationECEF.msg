@@ -4,7 +4,6 @@
 # "earth-centered, earth-fixed" (ECEF) frame in centimeters.
 # Location unavailable can be represented by (0, 0, 0)
 
-
 # X coordinate in ECEF frame
 # the range for this value is [-638363700, 638363700]
 int32   ecef_x
