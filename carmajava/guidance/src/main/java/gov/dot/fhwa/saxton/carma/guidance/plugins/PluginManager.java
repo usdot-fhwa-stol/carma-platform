@@ -43,6 +43,7 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
+import org.ros.node.topic.Publisher;
 import std_msgs.Header;
 
 import java.lang.reflect.Constructor;
@@ -77,7 +78,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected ServiceServer<PluginListRequest, PluginListResponse> registeredPluginService;
     protected ServiceServer<PluginListRequest, PluginListResponse> activePluginService;
     protected ServiceServer<PluginActivationRequest, PluginActivationResponse> activatePluginService;
-    protected IPublisher<cav_msgs.PluginList> pluginPublisher;
+    protected Publisher<cav_msgs.PluginList> pluginPublisher;
 
     protected MessageFactory messageFactory;
 
@@ -225,8 +226,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         // Configure the plugin availability topic and topic message factory
         NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
         messageFactory = nodeConfig.getTopicMessageFactory();
-        pluginPublisher = pubSubService.getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
+        pluginPublisher = node.newPublisher(messagingBaseUrl + "/" + availablePluginsTopicUrl,
                 cav_msgs.PluginList._TYPE);
+        pluginPublisher.setLatchMode(true);
         
         currentState.set(GuidanceState.STARTUP);
     }
