@@ -16,18 +16,69 @@
 
 package gov.dot.fhwa.saxton.carma.message.helper;
 
+import cav_msgs.MobilityRequest;
+
 /**
  * This is the helper class for encoding Mobility Request message.
  * All fields' unit and type in this class match J2735 Mobility Request message.
  */
 public class MobilityRequestHelper {
     
-    protected static final String STRING_DEFAULT = "[]";
     protected static final int STRATEGY_MAX_LENGTH = 48;
-    protected static final int PLAN_TYPE_UNKNOWN = 0;
     protected static final int URGENCY_MIN = 0;
     protected static final int URGENCY_MAX = 1000;
     protected static final int STRATEGY_PARAMS_MAX_LENGTH = 98;
-    protected static final int EXPIRATION_LENGTH = Long.toString(Long.MAX_VALUE).length();
+
+    private MobilityHeaderHelper headerHelper;
+    private byte[] strategy;
+    private int planType;
+    private int urgency;
+    private MobilityECEFLocationHelper locationHelper;
+    private byte[] strategyParams;
+    private MobilityTrajectoryHelper trajectoryHelper;
+    private byte[] expiration;
+    
+    public MobilityRequestHelper(MobilityRequest request) {
+        this.headerHelper = new MobilityHeaderHelper(request.getHeader());
+        StringConverterHelper.setDynamicLengthString(request.getStrategy(), this.strategy, STRATEGY_MAX_LENGTH);
+        this.planType = request.getPlanType().getType();
+        this.urgency = Math.min(Math.max(URGENCY_MIN, request.getUrgency()), URGENCY_MAX);
+        this.locationHelper = new MobilityECEFLocationHelper(request.getLocation());
+        StringConverterHelper.setDynamicLengthString(request.getStrategyParams(), this.strategyParams, STRATEGY_PARAMS_MAX_LENGTH);
+        this.trajectoryHelper = new MobilityTrajectoryHelper(request.getTrajectory());
+        StringConverterHelper.setTimestamp(request.getTimestamp(), this.expiration);
+    }
+
+    public MobilityHeaderHelper getHeaderHelper() {
+        return headerHelper;
+    }
+
+    public byte[] getStrategy() {
+        return strategy;
+    }
+
+    public int getPlanType() {
+        return planType;
+    }
+
+    public int getUrgency() {
+        return urgency;
+    }
+
+    public MobilityECEFLocationHelper getLocationHelper() {
+        return locationHelper;
+    }
+
+    public byte[] getStrategyParams() {
+        return strategyParams;
+    }
+
+    public MobilityTrajectoryHelper getTrajectoryHelper() {
+        return trajectoryHelper;
+    }
+
+    public byte[] getExpiration() {
+        return expiration;
+    }
 
 }

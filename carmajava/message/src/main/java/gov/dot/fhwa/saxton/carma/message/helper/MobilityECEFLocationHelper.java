@@ -18,9 +18,12 @@ package gov.dot.fhwa.saxton.carma.message.helper;
 
 import cav_msgs.LocationECEF;
 
+/**
+ * This is a helper class for converting LocationECEF MESSAGE into a java
+ * helper class which only contains int and byte[] data type.
+ */
 public class MobilityECEFLocationHelper {
 
-    protected static final int TIMESTAMP_LENGTH = Long.toString(Long.MAX_VALUE).length();
     protected static final int ECEF_XY_MIN = -638363700;
     protected static final int ECEF_XY_MAX = 638363700;
     protected static final int ECEF_Z_MIN = -636225200;
@@ -33,7 +36,7 @@ public class MobilityECEFLocationHelper {
         this.setEcefX(location.getEcefX());
         this.setEcefY(location.getEcefY());
         this.setEcefX(location.getEcefZ());
-        this.setTimestamp(location.getTimestamp());
+        StringConverterHelper.setTimestamp(location.getTimestamp(), this.timestamp);
     }
     
     public void setEcefX(int x) {
@@ -57,18 +60,6 @@ public class MobilityECEFLocationHelper {
             ecefZ = z;
         } else {
             ecefZ = 0;
-        }
-    }
-    
-    public void setTimestamp(long timestamp) {
-        StringBuffer number = new StringBuffer(Long.toString(timestamp));
-        int numberOfZero = TIMESTAMP_LENGTH - number.length();
-        for(int i = 0; i < numberOfZero; i++) {
-            number.insert(0, '0');
-        }
-        char[] tmp = number.toString().toCharArray();
-        for(int i = 0; i < tmp.length; i++) {
-            this.timestamp[i] = (byte) tmp[i];
         }
     }
 
