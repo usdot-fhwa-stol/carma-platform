@@ -219,12 +219,6 @@ public class RouteSegment {
    * @return The lane index
    */
   public int determinePrimaryLane(double crossTrack) {
-    // TODO develop a standard for this
-    // Code for route going through lane center
-    // int segLane = this.getDowntrackWaypoint().getLaneIndex();
-    // double laneWidth = this.getDowntrackWaypoint().getLaneWidth();
-    // return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
-    //int segLane = this.getDowntrackWaypoint().getLaneIndex();
 
     // Code for route going through road centerline
     RouteWaypoint wp = this.getDowntrackWaypoint();

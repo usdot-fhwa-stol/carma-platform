@@ -24,4 +24,9 @@ public interface HyperOcTreeConditions<T> {
    * 
    */
   boolean doneInsert(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum);
+
+    /**
+   * 
+   */
+  boolean validInsert(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum);
 }

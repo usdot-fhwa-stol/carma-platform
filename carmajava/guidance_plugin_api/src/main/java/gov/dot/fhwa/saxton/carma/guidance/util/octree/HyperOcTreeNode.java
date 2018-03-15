@@ -95,7 +95,11 @@ public class HyperOcTreeNode<T> {
       collector.collect(this, datum, false);
       return false;
     }
-    // If this node should be the final parent of the new datum then insert it
+    // If this the datum triggers an invalid insert from the conditions return false without inserting
+    if (!conditions.validInsert(this, datum)) {
+      return false;
+    }
+    // Check if this is the lowest we need to go to insert the datum
     if (conditions.doneInsert(this, datum)) {
       contents.add(datum);
       collector.collect(this, datum, true);
@@ -122,8 +126,9 @@ public class HyperOcTreeNode<T> {
         return true;
       }
     }
-      collector.collect(this, datum, false);
-      return false;
+    // If we go through all children without an insert then this datum cannot be inserted
+    collector.collect(this, datum, false);
+    return false;
   }
 
 

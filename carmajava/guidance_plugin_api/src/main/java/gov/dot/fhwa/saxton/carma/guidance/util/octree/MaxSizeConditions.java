@@ -19,15 +19,22 @@ package gov.dot.fhwa.saxton.carma.guidance.util.octree;
 /**
  * Insert strategy for not allowing intervals in an interval tree to overlap
  */
-public class MaxSizeCondition<T> implements HyperOcTreeConditions<T> {
-
+public class MaxSizeConditions<T> implements HyperOcTreeConditions<T> {
+  
+  protected double minSizes[];
   // Just make this package private
-  protected MaxSizeCondition() {}
-  protected double minSizes[] = {4,4,0.1};
+  public MaxSizeConditions(double minSizes[]) {
+    this.minSizes = minSizes;
+  }
 
 	@Override
 	public boolean doneInsert(HyperOcTreeNode<T> node, HyperOcTreeDatum<T> datum) {
     // If the node cannot be subdivided add the datum to this node
     return node.region.canFitInside(minSizes, 0.5);
+  }
+
+  @Override
+  public boolean validInsert(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum) {
+    return true;
   }
 }
