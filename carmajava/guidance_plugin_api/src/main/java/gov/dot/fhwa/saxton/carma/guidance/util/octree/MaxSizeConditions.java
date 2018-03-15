@@ -37,4 +37,12 @@ public class MaxSizeConditions<T> implements HyperOcTreeConditions<T> {
   public boolean validInsert(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum) {
     return true;
   }
+
+          /**
+   * 
+   */
+  @Override
+  public void performInsertion(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum) {
+    currentNode.contents.add(datum);
+  }
 }

@@ -22,6 +22,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -37,15 +38,14 @@ public class HyperOcTreeNode<T> {
 
   private static final int NUM_SUB_REGIONS_PER_DIM[] = {0, 2, 4, 8, 16, 32, 64, 128, 256};
 
-  protected SortedSet<HyperOcTreeNode<T>> children;
-  protected List<HyperOcTreeDatum<T>> contents;
+  protected List<HyperOcTreeNode<T>> children;
+  protected List<HyperOcTreeDatum<T>> contents =  new LinkedList<>();
 
   protected CartesianObject region;
   AxisAlignedBoundingBox intersectionChecker = new AxisAlignedBoundingBox();
 
-  HyperOcTreeNode(CartesianObject region, List<HyperOcTreeDatum<T>> contents) {
+  HyperOcTreeNode(CartesianObject region) {
     this.region = region;
-    this.contents = contents;
   }
 
   public boolean contains(Point p) {
@@ -79,7 +79,7 @@ public class HyperOcTreeNode<T> {
       }
       Point point = new Point(pointData);
       CartesianObject subRegion = new CartesianObject(Arrays.asList(point, center));
-      children.add(new HyperOcTreeNode<>(subRegion, contents));
+      children.add(new HyperOcTreeNode<>(subRegion));
     }
   }
 
@@ -97,11 +97,12 @@ public class HyperOcTreeNode<T> {
     }
     // If this the datum triggers an invalid insert from the conditions return false without inserting
     if (!conditions.validInsert(this, datum)) {
+      collector.collect(this, datum, false);
       return false;
     }
     // Check if this is the lowest we need to go to insert the datum
     if (conditions.doneInsert(this, datum)) {
-      contents.add(datum);
+      conditions.performInsertion(this, datum);
       collector.collect(this, datum, true);
       return true;
     }
@@ -128,6 +129,42 @@ public class HyperOcTreeNode<T> {
     }
     // If we go through all children without an insert then this datum cannot be inserted
     collector.collect(this, datum, false);
+    return false;
+  }
+ 
+  public boolean remove(HyperOcTreeDatum<T> targetDatum) {
+    if (!contains(targetDatum.getPoint())) {
+      return false;
+    }
+    // Check if the target was within this node itself
+    boolean wasRemoved = contents.remove(targetDatum);
+    if (wasRemoved) {
+      return true;
+    }
+
+    // Continue to try removing the datum from node's children
+    boolean childContainedTarget = false;
+    for (HyperOcTreeNode<T> child: children) {
+      if (child.remove(targetDatum)) {
+        childContainedTarget = true;
+        break;
+      }
+    }
+    // If a child contained the target and no children still have contents the children can be removed
+    if (childContainedTarget) {
+      boolean usefulChild = false;
+      for (HyperOcTreeNode<T> child: children) {
+        // A child with children or contents means there is still more data in this node
+        if (!child.contents.isEmpty() || !child.children.isEmpty())
+          usefulChild = true;
+          break;
+      }
+      if (!usefulChild) {
+        children.clear();
+      }
+      return true;
+    }
+    // Datum does not exist below this node so return false
     return false;
   }
 

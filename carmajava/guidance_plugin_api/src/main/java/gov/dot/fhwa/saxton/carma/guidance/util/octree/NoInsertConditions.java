@@ -19,12 +19,12 @@ package gov.dot.fhwa.saxton.carma.guidance.util.octree;
 /**
  * Insert strategy for not allowing intervals in an interval tree to overlap
  */
-public class NoConflictConditions<T> implements HyperOcTreeConditions<T> {
+public class NoInsertConditions<T> implements HyperOcTreeConditions<T> {
 
   MaxSizeConditions<T> maxSizeConditions;
 
   // Just make this package private
-  protected NoConflictConditions(double minSizes[]) {
+  protected NoInsertConditions(double minSizes[]) {
     maxSizeConditions = new MaxSizeConditions<>(minSizes);
   }
 
@@ -40,16 +40,16 @@ public class NoConflictConditions<T> implements HyperOcTreeConditions<T> {
   /**
    * When using this condition it is illegal to insert a datum into a cell containing another datum
    */
-  @Override
+
   public boolean validInsert(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum) {
     return currentNode.contents.isEmpty();
   }
 
-  /**
+        /**
    * 
    */
   @Override
   public void performInsertion(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum) {
-    currentNode.contents.add(datum);
+    // do nothing
   }
 }
