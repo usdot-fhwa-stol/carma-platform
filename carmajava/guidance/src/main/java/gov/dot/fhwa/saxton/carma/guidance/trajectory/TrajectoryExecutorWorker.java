@@ -238,12 +238,12 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * Periodic loop method for iterating, this is where maneuvers get executed
    */
   public void loop() {
+    activeManeuversMsg = activeManeuversPub.newMessage();
+
     if (currentTrajectory.get() != null) {
       currentLongitudinalManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
       currentLateralManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
       currentComplexManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
-
-      activeManeuversMsg = activeManeuversPub.newMessage();
 
       if (currentComplexManeuver != null) {
         try {
@@ -285,6 +285,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
         }
       }
     }
+
     activeManeuversPub.publish(activeManeuversMsg);
   }
 
