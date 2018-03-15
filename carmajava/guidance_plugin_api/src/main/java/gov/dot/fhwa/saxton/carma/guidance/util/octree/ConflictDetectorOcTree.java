@@ -22,25 +22,41 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * An implementation of an OcTree for use in the Conflict Detector
+ * 
+ * Used to evaluate trajectories and mobility paths for conflicts
  */
 public class ConflictDetectorOcTree<T> {
-  protected HyperOcTreeNode<T> root; // TODO need to define the root and allow for changes in size
-  protected HyperOcTreeConditions<T> conditions;
+  protected HyperOcTreeNode<T> root; // TODO need to define the root and allow for changes in dimensions
+  // Axis number of route values in a point on the tree
   private static final int DOWNTRACK_IDX = 0;
   private static final int CROSSTRACK_IDX = 1;
   private static final int TIME_IDX = 2;
-  private double[] maxSize = {4,4,0.1};
+  // The maximum size of a cell in the tree
+  private double[] maxSize = {5,5,0.1};
   
+  // Conditions used for different insertion methods
   HyperOcTreeConditions<T> noConflictCondition = new NoConflictConditions<>(maxSize);
   HyperOcTreeConditions<T> sizeConditions = new MaxSizeConditions<>(maxSize);
   HyperOcTreeConditions<T> noInsertConditions = new NoInsertConditions<>(maxSize);
 
 
-  protected ConflictDetectorOcTree(HyperOcTreeConditions<T> conditions) {
-    this.conditions = conditions;
-  }
+  /**
+   * Constructor
+   */
+  protected ConflictDetectorOcTree() {}
 
 
+  /**
+   * Helper function which attempts to insert a list of points into the tree using the provided conditions.
+   * If the allOrNothing flag is set, a failure to insert a single point will result in no points being added
+   * 
+   * @param points The list of downtrack, crosstrack, time points to add
+   * @param conditions HyperOcTreeConditions which defines insertion behavior of the tree
+   * @param allOrNothing If true, a failure to insert a single point will result in no points being added
+   * 
+   * @return A list of detected conflicts between the provided points and the current tree contents
+   */
   private List<ConflictSpace> insertWithConditions(List<Point3D> points, HyperOcTreeConditions<T> conditions, boolean allOrNothing) {
 
     List<HyperOcTreeDatum<T>> insertedData = new LinkedList<>();
@@ -90,10 +106,30 @@ public class ConflictDetectorOcTree<T> {
   }
 
 
+
+  /**
+   * Function which attempts to insert a list of points into the tree.
+   * If any point fails to be inserted, then no points will be added
+   * If the list of returned conflict spaces is not empty, 
+   * then a conflict occurred and no points were added to the tree
+   * 
+   * @param points The list of downtrack, crosstrack, time points to add
+   * 
+   * @return A list of detected conflicts between the provided points and the current tree contents
+   */
   public List<ConflictSpace> attemptToInsert(List<Point3D> points) {
     return insertWithConditions(points, noConflictCondition, true);
   }
 
+  /**
+   * Function which checks if a list of points can be inserted into the tree.
+   * If the list of returned conflict spaces is not empty, 
+   * then a conflict will occur and the attemptToInsert function will fail
+   * 
+   * @param points The list of downtrack, crosstrack, time points to check
+   * 
+   * @return A list of detected conflicts between the provided points and the current tree contents
+   */
   public List<ConflictSpace> checkInsert(List<Point3D> points) {
     return insertWithConditions(points, noInsertConditions, true);
   }
