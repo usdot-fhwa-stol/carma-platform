@@ -46,7 +46,7 @@ public class MobilityRequestHelper {
         this.locationHelper = new MobilityECEFLocationHelper(request.getLocation());
         StringConverterHelper.setDynamicLengthString(request.getStrategyParams(), this.strategyParams, STRATEGY_PARAMS_MAX_LENGTH);
         this.trajectoryHelper = new MobilityTrajectoryHelper(request.getTrajectory());
-        StringConverterHelper.setTimestamp(request.getTimestamp(), this.expiration);
+        StringConverterHelper.setTimestamp(request.getExpiration(), this.expiration);
     }
 
     public MobilityHeaderHelper getHeaderHelper() {
