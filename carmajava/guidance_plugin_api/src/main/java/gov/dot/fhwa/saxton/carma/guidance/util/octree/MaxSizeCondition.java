@@ -17,13 +17,17 @@
 package gov.dot.fhwa.saxton.carma.guidance.util.octree;
 
 /**
- * Strategy-pattern interface for performing inserts on an octree
+ * Insert strategy for not allowing intervals in an interval tree to overlap
  */
-public interface OcTreeInsertStrategy<T> {
-  /**
-   * Attempts to insert a datum into the specified tree.
-   * 
-   * @return True if successful, false if the insert failed
-   */
-  boolean insert(OcTreeNode<T> root, OcTreeDatum<T> datum);
+public class MaxSizeCondition<T> implements HyperOcTreeConditions<T> {
+
+  // Just make this package private
+  protected MaxSizeCondition() {}
+  protected double minSizes[] = {4,4,0.1};
+
+	@Override
+	public boolean doneInsert(HyperOcTreeNode<T> node, HyperOcTreeDatum<T> datum) {
+    // If the node cannot be subdivided add the datum to this node
+    return node.region.canFitInside(minSizes, 0.5);
+  }
 }

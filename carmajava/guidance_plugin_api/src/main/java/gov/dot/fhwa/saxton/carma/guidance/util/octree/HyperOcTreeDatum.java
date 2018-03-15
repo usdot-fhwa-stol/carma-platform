@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.octree;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
@@ -25,8 +26,8 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
  * The inclusive/exclusiveness of those start and end points is determined by the IntervalTree's
  * {@link IntervalCalculatorStrategy}
  */
-public class OcTreeDatum<T> {
-  private Point3D point;
+public class HyperOcTreeDatum<T> {
+  private Point point;
   private T data;
 
   /**
@@ -34,7 +35,7 @@ public class OcTreeDatum<T> {
    * <p>
    * Start must not be greater than end, will throw an ArithmeticException if attempted
    */
-  public OcTreeDatum(Point3D point, T data) {
+  public HyperOcTreeDatum(Point point, T data) {
     this.data = data;
     this.point = point;
   }
@@ -46,7 +47,7 @@ public class OcTreeDatum<T> {
     return data;
   }
 
-  public Point3D getPoint() {
+  public Point getPoint() {
     return this.point;
   }
 
