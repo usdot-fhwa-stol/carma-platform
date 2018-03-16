@@ -14,13 +14,25 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.util.octree;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spacialhashmap;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 
 /**
  * Strategy-pattern interface for performing inserts on an octree
  */
-public interface NSpacialHashStrategy {
-  NSpacialHashKey getKey(Point point);
+public class SimpleHashStrategy implements NSpacialHashStrategy{
+  private final double[] cellDims;
+  public SimpleHashStrategy(final double[] cellDims) {
+    this.cellDims = cellDims;
+  }
+
+  @Override
+  public NSpacialHashKey getKey(Point point) {
+    final int[] key =  new int[point.getNumDimensions()];
+    for (int i = 0; i < point.getNumDimensions(); i++) {
+      key[i] = (int)(point.getDim(i)/cellDims[i]);
+    }
+    return new NSpacialHashKey(key);
+  }
 }

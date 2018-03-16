@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.util.octree;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spacialhashmap;
 
 import java.util.Arrays;
 
@@ -26,5 +26,17 @@ public final class NSpacialHashKey {
   @Override
   public int hashCode() {
     return Arrays.hashCode(values);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+      if (o == this) {
+          return true;
+      }
+      if (!(o instanceof NSpacialHashKey)) {
+          return false;
+      }
+      
+      return Arrays.equals(values, ((NSpacialHashKey)o).values);
   }
 }

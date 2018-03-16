@@ -14,24 +14,32 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.util.octree;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spacialhashmap;
+
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.CartesianObject;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
+import java.util.List;
 
 /**
- * Strategy-pattern interface for performing inserts on an octree
+ *  interface for performing inserts on an octree
  */
-public interface HyperOcTreeConditions<T> {
+public interface ISpacialStructure {
   /**
    * 
    */
-  boolean doneInsert(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum);
+  boolean insert(CartesianObject obj);
 
     /**
    * 
    */
-  boolean validInsert(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum);
+  boolean remove(CartesianObject obj);
 
       /**
    * 
    */
-  void performInsertion(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum);
+  List<CartesianObject> getCollisions(CartesianObject obj);
+
+  List<CartesianObject> getCollisions(Point p);
+
+  boolean encompasses(Point p);
 }

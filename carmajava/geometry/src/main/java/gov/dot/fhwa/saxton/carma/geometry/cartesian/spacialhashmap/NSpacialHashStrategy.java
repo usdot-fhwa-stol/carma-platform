@@ -14,18 +14,13 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.guidance.util.octree;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spacialhashmap;
+
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 
 /**
- * Insert strategy for not allowing intervals in an interval tree to overlap
+ * Strategy-pattern interface for performing inserts on an octree
  */
-public class DiscardCollector<T> implements HyperOcTreeCollector<T> {
-
-  // Just make this package private
-  protected DiscardCollector() {}
-
-	@Override
-  public void collect(HyperOcTreeNode<T> currentNode, HyperOcTreeDatum<T> datum, boolean actionResult) {
-    // Do nothing 
-  }
+public interface NSpacialHashStrategy {
+  NSpacialHashKey getKey(Point point);
 }
