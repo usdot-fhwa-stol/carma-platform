@@ -31,6 +31,7 @@ public class CartesianObject implements CartesianElement {
   public static final int MIN_BOUND_IDX = 0;
   public static final int MAX_BOUND_IDX = 1;
   protected double[][] bounds; // 2 cols as every dim has a min and max value
+  protected double[][] minMaxCoordinates; // Transpose of bounds #cols = #dimension such that the first row is (min,min,..., min) and the second row is (max,max,...,max)
   protected double[] size;
   protected Point centroidOfBounds;
   protected Point centroidOfCloud;
@@ -105,17 +106,21 @@ public class CartesianObject implements CartesianElement {
   protected void calculateBounds() {
     int dims = this.getNumDimensions();
     bounds = new double[dims][2];
-
+    minMaxCoordinates = new double[2][dims];
     boolean firstPoint = true;
     for (Point p : pointCloud) {
       for (int i = 0; i < dims; i++) {
         if (firstPoint) {
           bounds[i][MIN_BOUND_IDX] = p.getDim(i);
           bounds[i][MAX_BOUND_IDX] = p.getDim(i);
+          minMaxCoordinates[MIN_BOUND_IDX][i] = bounds[i][MIN_BOUND_IDX];
+          minMaxCoordinates[MAX_BOUND_IDX][i] = bounds[i][MAX_BOUND_IDX];
         } else if (p.getDim(i) < bounds[i][MIN_BOUND_IDX]) {
           bounds[i][MIN_BOUND_IDX] = p.getDim(i);
+          minMaxCoordinates[MIN_BOUND_IDX][i] = bounds[i][MIN_BOUND_IDX];
         } else if (p.getDim(i) > bounds[i][MAX_BOUND_IDX]) {
           bounds[i][MAX_BOUND_IDX] = p.getDim(i);
+          minMaxCoordinates[MAX_BOUND_IDX][i] = bounds[i][MAX_BOUND_IDX];
         }
       }
       firstPoint = false;
@@ -155,6 +160,19 @@ public class CartesianObject implements CartesianElement {
       calculateBounds();
     }
     return bounds;
+  }
+
+  /**
+   * Gets the min and max coordinates of this object bounds
+   * This returns a transpose of the getBounds() function
+   * 
+   * @return A 2d array where the rows are the min/max and the columns are the dimensions values
+   */
+  public double[][] getMinMaxCoordinates() {
+    if (minMaxCoordinates == null) {
+      calculateBounds();
+    }
+    return minMaxCoordinates;
   }
 
   /**

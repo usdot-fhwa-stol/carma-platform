@@ -16,30 +16,22 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.octree;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.CartesianObject;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
-import java.util.List;
 
 /**
- *  interface for performing inserts on an octree
+ * Strategy-pattern interface for performing inserts on an octree
  */
-public interface ISpacialStructure {
-  /**
-   * 
-   */
-  boolean insert(CartesianObject obj);
+public class SimpleHashStrategy {
+  private final double[] cellDims;
+  SimpleHashStrategy(final double[] cellDims) {
+    this.cellDims = cellDims;
+  }
 
-    /**
-   * 
-   */
-  boolean remove(CartesianObject obj);
-
-      /**
-   * 
-   */
-  List<CartesianObject> getCollisions(CartesianObject obj);
-
-  List<CartesianObject> getCollisions(Point p);
-
-  boolean encompasses(Point p);
+  NSpacialHashKey getKey(Point point) {
+    final int[] key =  new int[point.getNumDimensions()];
+    for (int i = 0; i < point.getNumDimensions(); i++) {
+      key[i] = (int)(point.getDim(i)/cellDims[i]);
+    }
+    return new NSpacialHashKey(key);
+  }
 }
