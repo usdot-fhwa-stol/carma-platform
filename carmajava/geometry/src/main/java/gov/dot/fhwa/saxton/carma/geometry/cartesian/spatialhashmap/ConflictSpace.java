@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.spacialhashmap;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
 
 /**
  * A helper class for storing the current state of a simulation when projecting a trajectory through time

@@ -14,32 +14,14 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.spacialhashmap;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.CartesianObject;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
-import java.util.List;
 
 /**
- *  interface for performing inserts on an octree
+ * Strategy-pattern interface for performing inserts on an octree
  */
-public interface ISpacialStructure {
-  /**
-   * 
-   */
-  boolean insert(CartesianObject obj);
-
-    /**
-   * 
-   */
-  boolean remove(CartesianObject obj);
-
-      /**
-   * 
-   */
-  List<CartesianObject> getCollisions(CartesianObject obj);
-
-  List<CartesianObject> getCollisions(Point p);
-
-  boolean encompasses(Point p);
+public interface NSpatialHashStrategy {
+  NSpatialHashKey getKey(Point point);
+  int getNumDimensions();
 }

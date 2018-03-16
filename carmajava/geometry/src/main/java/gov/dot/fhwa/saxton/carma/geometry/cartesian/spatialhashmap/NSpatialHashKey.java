@@ -14,13 +14,13 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.spacialhashmap;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
 
 import java.util.Arrays;
 
-public final class NSpacialHashKey {
+public final class NSpatialHashKey {
   final int[] values;
-  NSpacialHashKey(final int[] values) {
+  NSpatialHashKey(final int[] values) {
     this.values = values;
   }
   @Override
@@ -33,10 +33,10 @@ public final class NSpacialHashKey {
       if (o == this) {
           return true;
       }
-      if (!(o instanceof NSpacialHashKey)) {
+      if (!(o instanceof NSpatialHashKey)) {
           return false;
       }
       
-      return Arrays.equals(values, ((NSpacialHashKey)o).values);
+      return Arrays.equals(values, ((NSpatialHashKey)o).values);
   }
 }
