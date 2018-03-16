@@ -18,11 +18,21 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
 
 import java.util.Arrays;
 
+/**
+ * A key representing a cell in the NSpatialHashMap
+ */
 public final class NSpatialHashKey {
   final int[] values;
+
+  /**
+   * Constructor
+   * 
+   * @param values A cells coordinates
+   */
   NSpatialHashKey(final int[] values) {
     this.values = values;
   }
+  
   @Override
   public int hashCode() {
     return Arrays.hashCode(values);

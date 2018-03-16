@@ -31,8 +31,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *  N-Dimensional Spatial Hash Map
+ * N-Dimensional Spatial Hash Map
+ * Allows for fast collision lookup and object insertion
  * 
+ * Collision checking is evaluated with the provided IIntersectionChecker
+ * Objects are hashed using the provided NSpatialHashStrategy
  */
 public class NSpatialHashMap implements ISpatialStructure {
   public static final int MIN_BOUND_IDX = CartesianObject.MIN_BOUND_IDX;
@@ -43,10 +46,16 @@ public class NSpatialHashMap implements ISpatialStructure {
   private NSpatialHashStrategy spatialHashStrategy;
   private final int numDimensions;
   
+  /**
+   * Constructor
+   * 
+   * @param intersectionChecker The intersection testing method that will be used
+   * @param NSpatialHashStrategy The method used to generate a Key (spatial cell) for a given object
+   */
   public NSpatialHashMap(IIntersectionChecker intersectionChecker, NSpatialHashStrategy spatialHashStrategy) {
     this.intersectionChecker = intersectionChecker;
     this.spatialHashStrategy = spatialHashStrategy;
-    this.map = new HashMap<>(); // TODO either pass this in directly or supply an initial capacity
+    this.map = new HashMap<>(); // TODO should we let the user pass in the underlying map?
     this.numDimensions = spatialHashStrategy.getNumDimensions();
   }
 
@@ -63,21 +72,30 @@ public class NSpatialHashMap implements ISpatialStructure {
     NSpatialHashKey minKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MIN_BOUND_IDX]));
     NSpatialHashKey maxKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MAX_BOUND_IDX]));
   
-    // iterate over region
-    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);// TODO check this is deep copy
-    addToCells(obj, minKey, maxKey, iterators, 0, obj.getNumDimensions());
+    // iterate over all cells
+    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);
+    addToCells(obj, minKey, maxKey, iterators, 0);
     return true;
   }
 
-  // Double check that this doesn't duplicate objects
+  /**
+   * Helper function to add objects to there respective cells
+   * This function recuses in the form of n-nested for loops to add an object to all cells it overlaps
+   * 
+   * @param obj The object to be added
+   * @param minKey The minimum key (cell) this object will be added to
+   * @param maxKey The maximum key (cell) this object will be added to
+   * @param iterators An array containing the current value of each nest for loop iterator
+   * @param dim The current dimension being processed. Can also be thought of as loop depth
+   */
   private void addToCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey,
-   int[] iterators, int dim, int numDims) {
-    if (dim >= numDims) {
+   int[] iterators, int dim) {
+    if (dim >= numDimensions) {
       return;
     }
     for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
       iterators[dim] = i;
-      addToCells(obj, minKey, maxKey, iterators, dim+1, numDims);
+      addToCells(obj, minKey, maxKey, iterators, dim+1);
       NSpatialHashKey key = new NSpatialHashKey(Arrays.copyOf(iterators, iterators.length));
       List<CartesianObject> objects = map.get(key);
       if (objects == null) {
@@ -88,6 +106,11 @@ public class NSpatialHashMap implements ISpatialStructure {
     }
   }
 
+  /**
+   * Helper function updates the hash map bounds when a new object is inserted
+   * 
+   * @param minMaxCoordinates The minimum and maximum coordinates of the new object. Array is a transpose of that objects bounds
+   */
   private void updateBounds(double[][] minMaxCoordinates) {
     for (int i = 0; i < minMaxCoordinates[0].length; i++) {
       if (minMaxCoordinates[MIN_BOUND_IDX][i] < bounds[i][MIN_BOUND_IDX]) {
@@ -110,20 +133,29 @@ public class NSpatialHashMap implements ISpatialStructure {
     NSpatialHashKey maxKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MAX_BOUND_IDX]));
   
     // iterate over region
-    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);// TODO check this is deep copy
-    removeFromCells(obj, minKey, maxKey, iterators, 0, obj.getNumDimensions());
+    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);
+    removeFromCells(obj, minKey, maxKey, iterators, 0);
     return true;
   }
 
-  // Remove from cells
+  /**
+   * Helper function to remove objects to there respective cells
+   * This function recuses in the form of n-nested for loops to remove an object from all cells it overlaps
+   * 
+   * @param obj The object to be added
+   * @param minKey The minimum key (cell) this object will be added to
+   * @param maxKey The maximum key (cell) this object will be added to
+   * @param iterators An array containing the current value of each nest for loop iterator
+   * @param dim The current dimension being processed. Can also be thought of as loop depth
+   */
   private void removeFromCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey,
-   int[] iterators, int dim, int numDims) {
-    if (dim >= numDims) {
+   int[] iterators, int dim) {
+    if (dim >= numDimensions) {
       return;
     }
     for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
       iterators[dim] = i;
-      removeFromCells(obj, minKey, maxKey, iterators, dim+1, numDims);
+      removeFromCells(obj, minKey, maxKey, iterators, dim+1);
       NSpatialHashKey key = new NSpatialHashKey(iterators);
       List<CartesianObject> objects = map.get(key);
       if (objects == null) {
@@ -147,19 +179,30 @@ public class NSpatialHashMap implements ISpatialStructure {
   
     // iterate over region
     HashSet<CartesianObject> collidedObjects = new HashSet<>();
-    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);// TODO check this is deep copy
-    getCollisionsInCells(obj, collidedObjects, minKey, maxKey, iterators, 0, obj.getNumDimensions());
+    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);
+    getCollisionsInCells(obj, collidedObjects, minKey, maxKey, iterators, 0);
     return new ArrayList<CartesianObject>(collidedObjects);
   }
 
+  /**
+   * Helper function to determine all objects the provided object collides with
+   * This function recuses in the form of n-nested for loops to identify all colliding objects
+   * 
+   * @param obj The object to be added
+   * @param collidedObjects A hash set of all previously detected collisions
+   * @param minKey The minimum key (cell) this object will be added to
+   * @param maxKey The maximum key (cell) this object will be added to
+   * @param iterators An array containing the current value of each nest for loop iterator
+   * @param dim The current dimension being processed. Can also be thought of as loop depth
+   */
   private void getCollisionsInCells(CartesianObject obj, HashSet<CartesianObject> collidedObjects,
-  NSpatialHashKey minKey, NSpatialHashKey maxKey, int[] iterators, int dim, int numDims) {
-    if (dim >= numDims) {
+  NSpatialHashKey minKey, NSpatialHashKey maxKey, int[] iterators, int dim) {
+    if (dim >= numDimensions) {
       return;
     }
     for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
       iterators[dim] = i;
-      getCollisionsInCells(obj, collidedObjects, minKey, maxKey, iterators, dim+1, numDims);
+      getCollisionsInCells(obj, collidedObjects, minKey, maxKey, iterators, dim+1);
       NSpatialHashKey key = new NSpatialHashKey(iterators);
       List<CartesianObject> objects = map.get(key);
       if (objects == null) {
@@ -217,10 +260,22 @@ public class NSpatialHashMap implements ISpatialStructure {
     return bounds;
   }
 
+  /**
+   * Helper function for unit testing
+   * Extreme care should be taken if used outside a testing framework
+   * 
+   * @return A set of the keys currently in this hashmap
+   */
   protected Set<NSpatialHashKey> getKeys() {
     return map.keySet();
   }
 
+  /**
+   * Helper function for unit testing
+   * Extreme care should be taken if used outside a testing framework
+   * 
+   * @return The collection of objects in each cell
+   */
   protected Collection<List<CartesianObject>> getObjects() {
     return map.values();
   }

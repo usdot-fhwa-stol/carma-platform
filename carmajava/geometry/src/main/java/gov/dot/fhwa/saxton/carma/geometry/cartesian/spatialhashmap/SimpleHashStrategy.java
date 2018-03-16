@@ -19,16 +19,27 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 
 /**
- * Strategy-pattern interface for performing inserts on an octree
+ * A simple implementation of the NSpacialHashStrategy
+ * 
+ * The conversion is simply an int truncation of a points coordinates divided by the corresponding cell dimension
  */
 public class SimpleHashStrategy implements NSpatialHashStrategy{
   private final double[] cellDims;
+
+  /**
+   * Constructor
+   * 
+   * @param cellDims The dimensions of a cell which this will map points to
+   */
   public SimpleHashStrategy(final double[] cellDims) {
     this.cellDims = cellDims;
   }
 
   @Override
   public NSpatialHashKey getKey(Point point) {
+    if (point.getNumDimensions() != cellDims.length) {
+      return null;
+    }
     final int[] key =  new int[point.getNumDimensions()];
     for (int i = 0; i < point.getNumDimensions(); i++) {
       key[i] = (int)(point.getDim(i)/cellDims[i]);

@@ -19,9 +19,22 @@ package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 
 /**
- * Strategy-pattern interface for performing inserts on an octree
+ * Interface for a hashing strategy used to generate cell coordinates for an NSpacialHashMap
  */
 public interface NSpatialHashStrategy {
+  /**
+   * Gets the corresponding key for the provided point.
+   * 
+   * @param point The point to convert
+   * 
+   * @return The new key. Null if point.getNumDimensions != this.getNumDimensions
+   */
   NSpatialHashKey getKey(Point point);
+
+  /**
+   * Returns the number of dimensions this strategy is equipped to handle
+   * 
+   * @return The number of dimensions
+   */
   int getNumDimensions();
 }
