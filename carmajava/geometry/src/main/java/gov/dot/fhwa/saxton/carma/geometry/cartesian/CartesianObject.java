@@ -34,7 +34,7 @@ public class CartesianObject implements CartesianElement {
   protected double[] size;
   protected Point centroidOfBounds;
   protected Point centroidOfCloud;
-  protected int numDimensions;
+  protected final int numDimensions;
   protected List<? extends Point> pointCloud;
 
   /**
