@@ -191,7 +191,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             //create empty containers (future compound maneuvers) for the TBD maneuvers to be inserted into
             ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
             IManeuverInputs inputs = planner.getManeuverInputs();
-            futureLatMvr_ = new FutureLateralManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
+            futureLatMvr_ = new FutureLateralManeuver(this,  targetLane_ - inputs.getCurrentLane(), inputs, startDistance, startSpeed_, endDistance, endSpeed_);
             futureLonMvr_ = new FutureLongitudinalManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
 
             //insert these containers into the trajectory
@@ -272,7 +272,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
         //construct our proposed simple lane change maneuver
         log.info("Creating lane change maneuver");
-        laneChangeMvr_ = new LaneChange(this);
+        laneChangeMvr_ = new LaneChange(this, futureLatMvr_.getEndingRelativeLane());
         laneChangeMvr_.setTargetLane(targetLane);
         if (planner.canPlan(laneChangeMvr_, startDist, endDist)) {
             log.info("Planning lane change maneuver...");

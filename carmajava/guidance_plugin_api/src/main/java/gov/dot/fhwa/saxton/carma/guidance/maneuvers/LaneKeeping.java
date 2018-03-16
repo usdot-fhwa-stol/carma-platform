@@ -28,7 +28,7 @@ public class LaneKeeping extends LateralManeuver {
     protected double DEFAULT_AXEL_ANGLE = 0.0;
 
     public LaneKeeping(IPlugin planner) {
-        super(planner);
+        super(planner, 0);
     }
 
     @Override
