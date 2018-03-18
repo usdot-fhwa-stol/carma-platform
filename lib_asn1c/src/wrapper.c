@@ -258,11 +258,11 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
    jint startX, jint startY, jint startZ, jbyteArray startT, jobjectArray offsets, jbyteArray expiration) {
 
 	//Build a log in test file to debug if necessary
-	//FILE *fp;
-	//fp = fopen("/home/qsw/carma/log_C.txt", "w");
-	//fprintf(fp, "encodeMobilityRequest function is called\n");
+	FILE *fp;
+	fp = fopen("/home/qsw/carma/log_C.txt", "w");
+	fprintf(fp, "encodeMobilityRequest function is called\n");
 
-	uint8_t buffer[256];
+	uint8_t buffer[512];
 	size_t buffer_size = sizeof(buffer);
 	asn_enc_rval_t ec;
 	MessageFrame_t *message;
@@ -394,30 +394,94 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	(*env) -> ReleaseByteArrayElements(env, strategyParams, params_string, 0);
 
 	//The following fields are optional
-    // TODO add those optional fields
 	if(startX != 0 || startY != 0 || startZ != 0) {
-		message -> value.choice.TestMessage00.body.trajectoryStart -> ecefX = startX;
-		message -> value.choice.TestMessage00.body.trajectoryStart -> ecefY = startY;
-		message -> value.choice.TestMessage00.body.trajectoryStart -> ecefZ = startZ;
+		MobilityLocation_t *location;
+		location = calloc(1, sizeof(MobilityLocation_t));
+		location -> ecefX = startX;
+		location -> ecefY = startY;
+		location -> ecefZ = startZ;
 		jbyte *start_time = (*env) -> GetByteArrayElements(env, startT, 0);
 		uint8_t start_time_content[19] = {0};
 		for (int i = 0; i < 19; i++) {
 			start_time_content[i] = start_time[i];
 		}
-		message -> value.choice.TestMessage00.body.trajectoryStart -> timestamp.buf = start_time_content;
-		message -> value.choice.TestMessage00.body.trajectoryStart -> timestamp.size = 19;
+		location -> timestamp.buf = start_time_content;
+		location -> timestamp.size = 19;
+		message -> value.choice.TestMessage00.body.trajectoryStart = location;
 		(*env) -> ReleaseByteArrayElements(env, startT, start_time, 0);
+
+		// TODO handle ObjectArray
+		jsize dim = (*env) -> GetArrayLength(env, offsets);
+		if(dim == 3) {
+			jintArray offsets_X =  (jintArray) (*env) -> GetObjectArrayElement(env, offsets, 0);
+			jintArray offsets_Y =  (jintArray) (*env) -> GetObjectArrayElement(env, offsets, 1);
+			jintArray offsets_Z =  (jintArray) (*env) -> GetObjectArrayElement(env, offsets, 2);
+			jsize count = (*env) -> GetArrayLength(env, offsets_X);
+			jint *java_offsets_X = (*env) -> GetIntArrayElements(env, offsets_X, 0);
+			jint *java_offsets_Y = (*env) -> GetIntArrayElements(env, offsets_Y, 0);
+			jint *java_offsets_Z = (*env) -> GetIntArrayElements(env, offsets_Z, 0);
+			if(count > 0) {
+				fprintf(fp, "count: %d\n", count);
+				int *localArray[3];
+				int offsets_X_content[count];
+				int offsets_Y_content[count];
+				int offsets_Z_content[count];
+				for(int i = 0; i < count; i++) {
+					offsets_X_content[i] = java_offsets_X[i];
+					offsets_Y_content[i] = java_offsets_Y[i];
+					offsets_Z_content[i] = java_offsets_Z[i];
+				}
+				localArray[0] = offsets_X_content;
+				localArray[1] = offsets_Y_content;
+				localArray[2] = offsets_Z_content;
+				MobilityLocationOffsets_t *trajectory_offsets;
+				trajectory_offsets = calloc(1, sizeof(MobilityLocationOffsets_t));
+				for(int i = 0; i < count; i++) {
+					MobilityECEFOffset_t *offset_point;
+					offset_point = calloc(1, sizeof(MobilityECEFOffset_t));
+					offset_point -> offsetX = localArray[0][i];
+					offset_point -> offsetY = localArray[1][i];
+					offset_point -> offsetZ = localArray[2][i];
+					asn_sequence_add(&trajectory_offsets -> list, offset_point);
+				}
+				message -> value.choice.TestMessage00.body.trajectory = trajectory_offsets;
+			}
+			(*env) -> ReleaseIntArrayElements(env, offsets_X, java_offsets_X, 0);
+			(*env) -> ReleaseIntArrayElements(env, offsets_Y, java_offsets_Y, 0);
+			(*env) -> ReleaseIntArrayElements(env, offsets_Z, java_offsets_Z, 0);
+			(*env) -> DeleteLocalRef(env, offsets_X);
+			(*env) -> DeleteLocalRef(env, offsets_X);
+			(*env) -> DeleteLocalRef(env, offsets_X);
+		}
 	}
 
-	// TODO check this field
-	if(expiration) {
-
-
+	// set expiration if we need
+	int hasExpiration = 0;
+	jbyte *expiration_time = (*env) -> GetByteArrayElements(env, expiration, 0);
+	if(expiration_time == NULL) {
+		return NULL;
 	}
+	uint8_t expiration_time_content[19] = {0};
+	for (int i = 0; i < 19; i++) {
+		expiration_time_content[i] = expiration_time[i];
+		// check if there is a non-zero value
+		if(expiration_time_content[i] != 48) {
+			hasExpiration = 1;
+		}
+	}
+	if(hasExpiration != 0) {
+		MobilityTimestamp_t *expiration_time_in_C;
+		expiration_time_in_C = calloc(1, sizeof(MobilityTimestamp_t));
+		expiration_time_in_C -> buf = expiration_time_content;
+		expiration_time_in_C -> size = 19;
+		message -> value.choice.TestMessage00.body.expiration = expiration_time_in_C;
+	}
+	(*env) -> ReleaseByteArrayElements(env, expiration, expiration_time, 0);
 
 	//encode message
 	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, 0, message, buffer, buffer_size);
 	if(ec.encoded == -1) {
+		fprintf(fp, "!!!%s", ec.failed_type->name);
 		return NULL;
 	}
 
@@ -432,12 +496,16 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 }
 
 /**
- * Mobility Intro Decoder:
+ * Mobility Reuqest Decoder:
  * This function can decode a byte array in J2735 standards to
- * a messageFrame structure and map to a ROS MobilityIntro object.
+ * a messageFrame structure and map to a ROS MobilityRequest object.
  * Return -1 means an error has happened; return 0 means decoding succeed.
  */
 
+//JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityRequestMessage_decodeMobilityRequest
+  //(JNIEnv *, jobject, jbyteArray, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jobject, jobject, jbyteArray, jbyteArray, jobject, jbyteArray, jobjectArray, jbyteArray);
+
+//Example:
 //JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage_decode_1MobilityIntro
 //  (JNIEnv *env, jobject cls, jbyteArray encodedIntro, jobject introMsg,
 //   jbyteArray senderId, jbyteArray targetId, jbyteArray planId, jbyteArray timestamp,

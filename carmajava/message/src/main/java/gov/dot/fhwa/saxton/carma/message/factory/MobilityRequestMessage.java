@@ -17,7 +17,6 @@
 package gov.dot.fhwa.saxton.carma.message.factory;
 
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;

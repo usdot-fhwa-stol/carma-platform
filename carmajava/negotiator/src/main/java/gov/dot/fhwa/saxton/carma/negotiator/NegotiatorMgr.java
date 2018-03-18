@@ -34,16 +34,8 @@ import org.ros.namespace.GraphName;
 /**
  * The Negotiator package responsibility is to manage the details of negotiating tactical and strategic
  * agreements between the host vehicle and any other transportation system entities.
- * <p>
- * Command line test: rosrun carma negotiator gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr
- * Simple example
- * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
- * rostopic pub /new_plan_outbound cav_msgs/NewPlan '{header: {sender_id: a, plan_id: 44, checksum: 0}}'
+ * TODO This node will be removed in future. Now it is just a test tool for different Mobility messages
  */
-
-    //TODO - this is a minimalist implementation to get us through simplistic, "happy path" lane change maneuvers only.
-    //       The structure, data flows, and even message structures, need to be refactored for more general uses.
-
 
 public class NegotiatorMgr extends SaxtonBaseNode{
 
