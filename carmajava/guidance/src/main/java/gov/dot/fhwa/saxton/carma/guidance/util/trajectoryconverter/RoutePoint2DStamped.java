@@ -16,23 +16,24 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point2D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
  * Class to store points in a path returned by the TrajectoryConverter. 
  * Points have the following
- * 3D location either in the ECEF frame of a segment frame
+ * 2D location in a segment frame
  * A time stamp in seconds
- * The index of the route segment they correspond to
+ * The route segment they correspond to
  * A total downtrack distance along a route
  */
-public final class Point3DStamped {
-  Point3D point; // Position in meters
+public final class RoutePoint2DStamped {
+  Point2D point; // Segment Downtrack and Crosstrack position in meters
   double stamp; // Time in seconds
-  int segmentIdx; // Segment index on the route
+  cav_msgs.RouteSegment segment; // Segment on the route
   double downtrack; // Total downtrack distance in m
 
-  public void setPoint(Point3D point){
+  public void setPoint(Point2D point){
     this.point = point;
   }
 
@@ -40,15 +41,15 @@ public final class Point3DStamped {
     this.stamp = stamp;
   }
 
-  public void setSegmentIdx(int segmentIdx) {
-    this.segmentIdx = segmentIdx;
+  public void setSegment(cav_msgs.RouteSegment segment) {
+    this.segment = segment;
   }
 
   public void setDowntrack(double downtrack) {
     this.downtrack = downtrack;
   }
 
-  public Point3D getPoint(){
+  public Point2D getPoint(){
     return point;
   }
 
@@ -56,8 +57,8 @@ public final class Point3DStamped {
     return stamp;
   }
 
-  public int getSegmentIdx(){
-    return segmentIdx;
+  public cav_msgs.RouteSegment getSegment(){
+    return segment;
   }
 
   public double getDowntrack() {

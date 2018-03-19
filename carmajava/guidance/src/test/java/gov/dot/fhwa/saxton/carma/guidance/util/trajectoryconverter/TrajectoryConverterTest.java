@@ -85,7 +85,7 @@ public class TrajectoryConverterTest {
     final double TIME_STEP = 0.1;
     TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
 
-    List<Point3DStamped> path = new LinkedList<>();
+    List<ECEFPointStamped> ecefPath = new LinkedList<>();
 
     // Setup starting configuration
     // Vehicle at very start of route
@@ -142,19 +142,19 @@ public class TrajectoryConverterTest {
     traj.addManeuver(futureLaneChange2);
 
     // Call function
-    path = tc.convertToPath(traj, 0, routeMsg, routeState);
-    assertEquals(112, path.size());
+    ecefPath = tc.toECEFPoints(tc.convertToPath(traj, 0, routeMsg, routeState));
+    assertEquals(112, ecefPath.size());
 
     // Check starting point
     Location expectedPoint = new Location(38.95647, -77.15031, 72.0);
     Point3D expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(0).getPoint(), 0.1));
-    assertEquals(0, path.get(0).getStamp(), 0.0001);
+    assertTrue(expecedfECEFPoint.almostEquals(ecefPath.get(0).getPoint(), 0.1));
+    assertEquals(0, ecefPath.get(0).getStamp(), 0.0001);
     // Check ending point
     expectedPoint = new Location(38.95594, -77.15114, 72.0);
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
-    assertEquals(11.1, path.get(path.size() - 1).getStamp(), 0.1);
+    assertTrue(expecedfECEFPoint.almostEquals(ecefPath.get(ecefPath.size() - 1).getPoint(), 0.5));
+    assertEquals(11.1, ecefPath.get(ecefPath.size() - 1).getStamp(), 0.1);
 
     // System.out.println("\n\n");
     // int count = 0;
@@ -173,7 +173,8 @@ public class TrajectoryConverterTest {
     final double TIME_STEP = 1;
     TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
 
-    List<Point3DStamped> path = new LinkedList<>();
+    List<RoutePoint2DStamped> path = new LinkedList<>();
+    List<ECEFPointStamped> pathECEF = new LinkedList<>();
     
     // Test Steady Speed Maneuver at very start
     // Vehicle is at very start of the route going 10m/s for the next 100 m
@@ -193,18 +194,18 @@ public class TrajectoryConverterTest {
     // Check number of points
     assertEquals(11, path.size());
     // Put points in ecef
-    convertPathToECEF(path, routeMsg);
+    pathECEF = tc.toECEFPoints(path);
 
     // Check starting point
     Location expectedPoint = new Location(38.95647, -77.15031, 72.0);
     Point3D expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(0).getPoint(), 0.1));
-    assertEquals(startingData.simTime, path.get(0).getStamp(), 0.0001);
+    assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(0).getPoint(), 0.1));
+    assertEquals(startingData.simTime, pathECEF.get(0).getStamp(), 0.0001);
     // Check ending point
     expectedPoint = new Location(38.95594, -77.15114, 72.0);
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
-    assertEquals(endingData.simTime, path.get(path.size() - 1).getStamp(), 0.0001);
+    assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(pathECEF.size() - 1).getPoint(), 0.5));
+    assertEquals(endingData.simTime, pathECEF.get(pathECEF.size() - 1).getStamp(), 0.0001);
     
     // Test Steady Speed Maneuver at different point along route in the middle of the maneuver
     // Vehicle is at 50m going 10m/s for next 50 m
@@ -226,18 +227,18 @@ public class TrajectoryConverterTest {
     // Check number of points
     assertEquals(6, path.size());
     // Put points in ecef
-    convertPathToECEF(path, routeMsg);
+    pathECEF = tc.toECEFPoints(path);
 
     // Check starting point
     expectedPoint = new Location(38.95621, -77.15073, 72.0);
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(0).getPoint(), 0.5));
-    assertEquals(startingData.simTime, path.get(0).getStamp(), 0.0001);
+    assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(0).getPoint(), 0.5));
+    assertEquals(startingData.simTime, pathECEF.get(0).getStamp(), 0.0001);
     // Check ending point
     expectedPoint = new Location(38.95594, -77.15114, 72.0);
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
-    assertEquals(endingData.simTime, path.get(path.size() - 1).getStamp(), 0.0001);
+    assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(pathECEF.size() - 1).getPoint(), 0.5));
+    assertEquals(endingData.simTime, pathECEF.get(pathECEF.size() - 1).getStamp(), 0.0001);
 
     // Test Speed Up Maneuver at route start
     // Vehicle is at very start of the route accelerating from 0 m/s to 10 m/s for the next 100 m
@@ -259,18 +260,18 @@ public class TrajectoryConverterTest {
     // Check number of points
     assertEquals(21, path.size());
     // Put points in ecef
-    convertPathToECEF(path, routeMsg);
+    pathECEF = tc.toECEFPoints(path);
 
     // Check starting point
     expectedPoint = new Location(38.95647, -77.15031, 72.0);
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(0).getPoint(), 0.1));
-    assertEquals(startingData.simTime, path.get(0).getStamp(), 0.0001);
+    assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(0).getPoint(), 0.1));
+    assertEquals(startingData.simTime, pathECEF.get(0).getStamp(), 0.0001);
     // Check ending point
     expectedPoint = new Location(38.95594, -77.15114, 72.0);
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
-    assertEquals(endingData.simTime, path.get(path.size() - 1).getStamp(), 0.0001);
+    assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(pathECEF.size() - 1).getPoint(), 0.5));
+    assertEquals(endingData.simTime, pathECEF.get(pathECEF.size() - 1).getStamp(), 0.0001);
 
 
     // Test Slow Down Maneuver at route start
@@ -293,33 +294,17 @@ public class TrajectoryConverterTest {
     // Check number of points
     assertEquals(21, path.size());
     // Put points in ecef
-    convertPathToECEF(path, routeMsg);
+    pathECEF = tc.toECEFPoints(path);
 
     // Check starting point
     expectedPoint = new Location(38.95647, -77.15031, 72.0);
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(0).getPoint(), 0.1));
-    assertEquals(startingData.simTime, path.get(0).getStamp(), 0.0001);
+    assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(0).getPoint(), 0.1));
+    assertEquals(startingData.simTime, pathECEF.get(0).getStamp(), 0.0001);
     // Check ending point
     expectedPoint = new Location(38.95594, -77.15114, 72.0);
     expecedfECEFPoint = gcc.geodesic2Cartesian(expectedPoint, Transform.identity());
-    assertTrue(expecedfECEFPoint.almostEquals(path.get(path.size() - 1).getPoint(), 0.5));
-    assertEquals(endingData.simTime, path.get(path.size() - 1).getStamp(), 0.0001);
-  }
-
-  /**
-   * Helper function converts a set of points from local segment frames to ecef frame
-   */
-  private void convertPathToECEF(List<Point3DStamped> path, cav_msgs.Route route) {
-    // Convert all points to ecef frame
-    for (Point3DStamped point: path) {
-      // Convert point to ecef
-      // Currently ignores elevation
-      Vector3 pointInSegmentFrame = new Vector3(point.getPoint().getX(), point.getPoint().getY(), 0);
-      Transform ecefToSeg = Transform.fromPoseMessage(route.getSegments().get(point.getSegmentIdx()).getFRDPose()); 
-      Vector3 vecInECEF = ecefToSeg.apply(pointInSegmentFrame);
-      // Update point
-      point.setPoint(new Point3D(vecInECEF.getX(), vecInECEF.getY(), vecInECEF.getZ()));
-    }
+    assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(pathECEF.size() - 1).getPoint(), 0.5));
+    assertEquals(endingData.simTime, pathECEF.get(pathECEF.size() - 1).getStamp(), 0.0001);
   }
 }
