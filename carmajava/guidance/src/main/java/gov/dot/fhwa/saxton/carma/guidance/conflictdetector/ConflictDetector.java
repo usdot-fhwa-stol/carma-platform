@@ -29,6 +29,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryCon
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -98,6 +99,7 @@ public class ConflictDetector implements IConflictManager {
     
     // TODO need to handle the different sub trees
     List<ConflictSpace> conflicts = new LinkedList<>();
+    Collection<NSpatialHashMap> externalPaths = spatialMaps.values();
     ConflictSpace currentConflict = null;
     int lane = 0;
     RoutePointStamped prevPoint = null;
@@ -105,6 +107,15 @@ public class ConflictDetector implements IConflictManager {
     for (RoutePointStamped routePoint: hostPath) {
       // Get lane
       lane = RouteSegment.determinePrimaryLane(routePoint.getDowntrack());
+
+      for (NSpatialHashMap map: externalPaths) {
+
+        if (map.surrounds(routePoint.getPoint())) {
+          if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
+            
+          }
+        }
+      }
       // Get conflicts with point
       if (!spatialMap.getCollisions(routePoint.getPoint()).isEmpty()) { 
         // If no conflict is being tracked this is a new conflict
