@@ -17,8 +17,10 @@
 package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.AxisAlignedBoundingBox;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.CartesianObject;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMap;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.SimpleHashStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
@@ -26,6 +28,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,9 +51,10 @@ public class ConflictDetector implements IConflictManager {
   private static final int TIME_IDX = 2;
   // The maximum size of a cell in the tree
   private double[] maxSize = {5,5,0.1};
+  private Vector3D standardSizeVec = new Vector3D(2.5, 1.1, 1.1);
+  private double timeStep = 0.1;
 
   HashMap<String, NSpatialHashMap> spatialMaps = new HashMap<>();
-  private NSpatialHashMap spatialMap = new NSpatialHashMap(new AxisAlignedBoundingBox(), new SimpleHashStrategy(maxSize));
 
   /**
    * Constructor
@@ -63,15 +67,29 @@ public class ConflictDetector implements IConflictManager {
     NSpatialHashMap vehiclesPath = spatialMaps.get(vehicleStaticId);
     // If not current path for this vehicle add it 
     if (vehiclesPath == null) {
-      spatialMaps.put(vehicleStaticId, new NSpatialHashMap(new AxisAlignedBoundingBox(), new SimpleHashStrategy(maxSize)));
-      spatialMap.insert(obj);//TODO
+      vehiclesPath =  new NSpatialHashMap(new AxisAlignedBoundingBox(), new SimpleHashStrategy(maxSize));
+      spatialMaps.put(vehicleStaticId, vehiclesPath);
     }
-    return false;
+    // Add points to spatial map
+    for (RoutePointStamped routePoint: path) {
+      // Define bounds
+      Point3D minBoundingPoint = new Point3D(
+        routePoint.getDowntrack() - standardSizeVec.getX(),
+        routePoint.getCrosstrack() - standardSizeVec.getY(),
+        routePoint.getStamp() - timeStep);
+      Point3D maxBoundingPoint = new Point3D(
+        routePoint.getDowntrack() + standardSizeVec.getX(),
+        routePoint.getCrosstrack() + standardSizeVec.getY(),
+        routePoint.getStamp() + timeStep);
+      // Insert point
+      vehiclesPath.insert(new CartesianObject(Arrays.asList(minBoundingPoint, maxBoundingPoint)));
+    }
+    return true;
   }
   
   @Override
   public boolean removePath(String vehicleStaticId) {
-    return false;
+    return spatialMaps.remove(vehicleStaticId) != null ? true :  false;
   }
 
 
