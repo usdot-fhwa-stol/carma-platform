@@ -30,6 +30,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import cav_msgs.MobilityPath;
+import cav_msgs.Route;
+import cav_msgs.RouteState;
 
 /**
  * An implementation of an OcTree for use in the Conflict Detector
@@ -53,27 +55,23 @@ public class ConflictDetector implements IConflictManager {
   public ConflictDetector() {}
 
   @Override
-  public void addPath(MobilityPath pathMsg) {
-    String senderStaticID = pathMsg.getHeader().getSenderId();
-    String planID = pathMsg.getHeader().getPlanId(); // TODO decide if needed
+  public boolean addPath(List<RoutePointStamped> path, String vehicleStaticId) {
+    return false;
+  }
+  
+  @Override
+  public boolean removePath(String vehicleStaticId) {
+    return false;
   }
 
 
   @Override
-  public void removePath(MobilityPath pathMsg) {
-    
-  }
-
-
-  @Override // TODO add support for multiple maps
-  public List<ConflictSpace> getConflicts(Trajectory traj, long startTime,
-   cav_msgs.Route route, cav_msgs.RouteState routeState) {
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath) {
     
     TrajectoryConverter tc = new TrajectoryConverter(60, 0.1); // TODO
-    List<RoutePointStamped> points = tc.convertToPath(traj, startTime, route, routeState);
-    List<Point3D> trajPoints = new ArrayList<>(points.size());
+    List<Point3D> trajPoints = new ArrayList<>(hostPath.size());
     // Convert points into (downtrack, crosstrack, time);
-    for (RoutePointStamped routePoint: points) {
+    for (RoutePointStamped routePoint: hostPath) {
       trajPoints.add(new Point3D(routePoint.getPoint().getY(), routePoint.getDowntrack(), routePoint.getStamp()));
     }
 
@@ -115,4 +113,9 @@ public class ConflictDetector implements IConflictManager {
 
     return conflicts;
   }
+
+@Override
+public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath) {
+	return null;
+}
 }

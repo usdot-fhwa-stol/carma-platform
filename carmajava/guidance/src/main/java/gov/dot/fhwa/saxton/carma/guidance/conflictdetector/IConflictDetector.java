@@ -18,14 +18,32 @@ package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
 import java.util.List;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
- * Interface for a hashing strategy used to generate cell coordinates for an NSpacialHashMap
+ * A ConflictDetector is responsible for providing rapid conflict detection to other guidance components
+ * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
  */
 public interface IConflictDetector {
-  public List<ConflictSpace> getConflicts(List<RoutePointStamped> trajectory, long startTime,
-   cav_msgs.Route route, cav_msgs.RouteState routeState);
+
+  /**
+   * Returns the list of conflicts between the provided path and an internally tracked set of other paths
+   * 
+   * @param hostPath The path representing the host trajectory
+   * 
+   * @return A sorted list of conflict spaces where the provided path intersects with the tracked paths
+   */
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath);
+
+
+  /**
+   * Returns the list of conflicts between two provided vehicle paths.
+   * The returned set of conflicts is only for the provided paths and ignores any other currently tracked paths
+   * 
+   * @param hostPath The path representing the host trajectory
+   * @param otherPath The path to find conflicts with by comparing against the host trajectory
+   * 
+   * @return A sorted list of conflict spaces where the two paths conflict
+   */
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath);
 }
