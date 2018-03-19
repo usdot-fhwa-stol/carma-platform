@@ -212,6 +212,20 @@ public class TrajectoryConverter {
     return ecefPoints;
   }
 
+   /**
+   * TODO
+   * Helper function for converting a List of ECEFPointStamped into List of RoutePointStamped
+   * 
+   * @param path The list of ECEFPointStamped to be converted
+   * @param route The current route
+   * @param routeState The current route state
+   * 
+   * @return The path described as points along a route
+   */
+  public List<RoutePointStamped> toRoutePointStamped(List<ECEFPointStamped> path, cav_msgs.Route route, cav_msgs.RouteState routeState) {
+    return new LinkedList<>();
+  }
+
   /**
    * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
    * 
