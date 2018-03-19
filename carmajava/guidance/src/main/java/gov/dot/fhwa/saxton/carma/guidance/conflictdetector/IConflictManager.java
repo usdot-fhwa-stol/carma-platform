@@ -20,12 +20,20 @@ import java.util.List;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
  * Interface for a hashing strategy used to generate cell coordinates for an NSpacialHashMap
  */
 public interface IConflictManager extends IConflictDetector{
-  // Maybe add and remove should be boolean?
-  void addPath(cav_msgs.MobilityPath pathMsg);
-  void removePath(cav_msgs.MobilityPath pathMsg); // TODO might be better to just have vehicle id passed in
+  /**
+   * Adds a path to the ConflictManager
+   * The provided path will be associated with the provided vehicleStaticId from a MobilityPath message
+   * 
+   * @param path The path recie
+   */
+  boolean addPath(List<RoutePointStamped> path, String vehicleStaticId);
+  boolean removePath(String vehicleStaticId); 
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> trajectory, List<RoutePointStamped> otherPath, 
+  long startTime, cav_msgs.Route route, cav_msgs.RouteState routeState);
 }

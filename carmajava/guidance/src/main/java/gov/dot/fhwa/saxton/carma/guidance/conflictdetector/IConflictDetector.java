@@ -20,11 +20,12 @@ import java.util.List;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
  * Interface for a hashing strategy used to generate cell coordinates for an NSpacialHashMap
  */
 public interface IConflictDetector {
-  public List<ConflictSpace> getConflicts(Trajectory traj, long startTime,
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> trajectory, long startTime,
    cav_msgs.Route route, cav_msgs.RouteState routeState);
 }
