@@ -32,6 +32,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse.PlanningRequest;
 import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
@@ -643,5 +644,60 @@ public class Arbitrator extends GuidanceComponent
     default:
       return null;
     }
+  }
+
+  @Override
+  public void requestNewPlan() {
+    // TODO: Will likely need special logic at somepoint
+    notifyTrajectoryFailure();
+  }
+
+  @Override
+  public boolean planSubtrajectoryRecursively(Trajectory traj, double startDist, double endDist) {
+    if (!(arbitratorStateMachine.getState() == ArbitratorState.NORMAL_REPLANNING)
+    || !(arbitratorStateMachine.getState() == ArbitratorState.REPLAN_DUE_TO_FAILED_TRAJECTORY)) {
+      // Not in valid state to plan recursively
+      return false;
+    }
+
+    Trajectory tempBuffer = new Trajectory(traj); // Temporary copy to ensure we don't mess up the real one
+
+    Trajectory plannedRegion = planTrajectory(startDist, endDist);
+
+    // Test the insert into the copied trajectory
+    for (LateralManeuver m : plannedRegion.getLateralManeuvers()) {
+      if (!tempBuffer.addManeuver(m)) {
+        return false;
+      }
+    }
+    for (LongitudinalManeuver m : plannedRegion.getLongitudinalManeuvers()) {
+      if (!tempBuffer.addManeuver(m)) {
+        return false;
+      }
+    }
+    if (plannedRegion.getComplexManeuver() != null)  {
+      if(!tempBuffer.setComplexManeuver(plannedRegion.getComplexManeuver())) {
+        return false;
+      }
+    }
+
+    // We've succeeded the insert into the temporary trajectory, proceed with insert into real trajectory
+    for (LateralManeuver m : plannedRegion.getLateralManeuvers()) {
+      if (!traj.addManeuver(m)) {
+        throw new RosRuntimeException("Recursive subtrajectory planning failed even though operations on copy were successful. Trajetory may be corrupted!");
+      }
+    }
+    for (LongitudinalManeuver m : plannedRegion.getLongitudinalManeuvers()) {
+      if (!traj.addManeuver(m)) {
+        throw new RosRuntimeException("Recursive subtrajectory planning failed even though operations on copy were successful. Trajetory may be corrupted!");
+      }
+    }
+    if (plannedRegion.getComplexManeuver() != null)  {
+      if(!traj.setComplexManeuver(plannedRegion.getComplexManeuver())) {
+        throw new RosRuntimeException("Recursive subtrajectory planning failed even though operations on copy were successful. Trajetory may be corrupted!");
+      }
+    }
+
+    return true;
   }
 }

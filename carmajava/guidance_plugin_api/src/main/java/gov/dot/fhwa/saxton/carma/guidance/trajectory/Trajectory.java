@@ -57,6 +57,23 @@ public class Trajectory {
   }
 
   /**
+   * Deep copy constructor for Trajectory instances
+   */
+  public Trajectory(Trajectory traj) {
+    startLocation = traj.startLocation;
+    endLocation = traj.endLocation;
+
+    for (LateralManeuver m : traj.lateralManeuvers.toSortedList()) {
+      lateralManeuvers.insert(new Interval<LateralManeuver>(m, m.getStartDistance(), m.getEndDistance()));
+    }
+    for (LongitudinalManeuver m : traj.longitudinalManeuvers.toSortedList()) {
+      longitudinalManeuvers.insert(new Interval<LongitudinalManeuver>(m, m.getStartDistance(), m.getEndDistance()));
+    }
+
+    complexManeuver = traj.complexManeuver;
+  }
+
+  /**
    * Get the location along the route that this Trajectory will start at
    */
   public double getStartLocation() {
