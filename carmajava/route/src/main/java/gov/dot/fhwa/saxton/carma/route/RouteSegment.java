@@ -57,6 +57,20 @@ public class RouteSegment {
     this.ecefToUptrackWP = getSegmentAllignedFRDFrame();
   }
 
+    /**
+   * Constructor for use in the fromMessage function
+   * @param uptrackWP The uptrack waypoint for the segment to be built.
+   * @param downtrackWP The downtrack waypoint for the segment to be built.
+   * @param ecefToUptrackWP A precalculated transform to the FRD frame of this segment
+   */
+  private RouteSegment(RouteWaypoint uptrackWP, RouteWaypoint downtrackWP, Transform ecefToUptrackWP) {
+    this.uptrackWP = uptrackWP;
+    this.downtrackWP = downtrackWP;
+    this.lineSegment = new LineSegment3D(this.uptrackWP.getECEFPoint(), this.downtrackWP.getECEFPoint());
+    this.length = this.lineSegment.length();
+    this.ecefToUptrackWP = ecefToUptrackWP;
+  }
+
   /**
    * Calculates the crosstrack distance from the provided GPS location to this route segment
    * Uses flat earth model
@@ -277,7 +291,13 @@ public class RouteSegment {
     routeSegMsg.setLength(length);
     routeSegMsg.setPrevWaypoint(uptrackWP.toMessage(factory, downtrackWPIndex - 1));
     routeSegMsg.setWaypoint(downtrackWP.toMessage(factory, downtrackWPIndex));
-
+    routeSegMsg.getFRDPose().getPosition().setX(ecefToUptrackWP.getTranslation().getX());
+    routeSegMsg.getFRDPose().getPosition().setY(ecefToUptrackWP.getTranslation().getY());
+    routeSegMsg.getFRDPose().getPosition().setZ(ecefToUptrackWP.getTranslation().getZ());
+    routeSegMsg.getFRDPose().getOrientation().setX(ecefToUptrackWP.getRotationAndScale().getX());
+    routeSegMsg.getFRDPose().getOrientation().setY(ecefToUptrackWP.getRotationAndScale().getY());
+    routeSegMsg.getFRDPose().getOrientation().setZ(ecefToUptrackWP.getRotationAndScale().getZ());
+    routeSegMsg.getFRDPose().getOrientation().setW(ecefToUptrackWP.getRotationAndScale().getW());
     return routeSegMsg;
   }
 
@@ -286,8 +306,12 @@ public class RouteSegment {
    * @param segmentMsg The ros message
    * @return The route segment object
    */
-  public static RouteSegment fromMessage(cav_msgs.RouteSegment segmentMsg){
-    return new RouteSegment(RouteWaypoint.fromMessage(segmentMsg.getPrevWaypoint()),RouteWaypoint.fromMessage(segmentMsg.getWaypoint()));
+  public static RouteSegment fromMessage(cav_msgs.RouteSegment segmentMsg) {
+    return new RouteSegment(
+      RouteWaypoint.fromMessage(segmentMsg.getPrevWaypoint()),
+      RouteWaypoint.fromMessage(segmentMsg.getWaypoint()), 
+      Transform.fromPoseMessage(segmentMsg.getFRDPose())
+      );
   }
 
   @Override public String toString() {

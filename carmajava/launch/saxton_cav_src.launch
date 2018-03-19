@@ -479,7 +479,7 @@
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
       <remap from="ui_instructions"
              to="/$(arg TOP_NS)/ui_instructions"/>
-      <remap from="plugins/controlling_plugin"
+      <remap from="plugins/controlling_plugins"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
              
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >

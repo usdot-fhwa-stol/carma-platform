@@ -6,6 +6,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,13 +24,13 @@ public class FutureLateralManeuver extends LateralManeuver {
     protected double                            startSpeed_;
     protected double                            endSpeed_;
     protected double                            maneuversEnd_;
-    protected List<ISimpleManeuver>             mvrs_ = null;
+    protected List<LateralManeuver>             mvrs_ = null;
     protected int                               executingIdx_ = 0;
     protected final double                      CONCATENATION_TOLERANCE = 0.001; // meter
 
 
-    public FutureLateralManeuver(IPlugin planner, IManeuverInputs inputs, double startDist, double startSpeed, double endDist, double endSpeed) {
-        super(planner);
+    public FutureLateralManeuver(IPlugin planner, int endingRelativeLane, IManeuverInputs inputs, double startDist, double startSpeed, double endDist, double endSpeed) {
+        super(planner, endingRelativeLane);
         inputs_ = inputs;
         startDist_ = startDist;
         startSpeed_ = startSpeed;
@@ -68,7 +69,7 @@ public class FutureLateralManeuver extends LateralManeuver {
      * @return the location of the end of the last existing maneuver, in meters downtrack of route beginning
      * @throws IllegalStateException if the given maneuver doesn't fit the space available
      */
-    public double addManeuver(ISimpleManeuver mvr) throws IllegalStateException {
+    public double addManeuver(LateralManeuver mvr) throws IllegalStateException {
 
         if (!(mvr instanceof LateralManeuver)) {
             throw new IllegalStateException("Attempted to add " + mvr.getClass() + " as a constituent in FutureLateralManeuver.");
@@ -98,12 +99,12 @@ public class FutureLateralManeuver extends LateralManeuver {
      * @return the location of the end of the last existing maneuver, in meters downtrack of route beginning
      * @throws IllegalStateException if the list of maneuvers doesn't fit into the space available
      */
-    public double addManeuvers(List<ISimpleManeuver> mvrs) throws IllegalStateException {
+    public double addManeuvers(List<LateralManeuver> mvrs) throws IllegalStateException {
 
         mvrs_.clear();
         maneuversEnd_ = startDist_;
 
-        for (ISimpleManeuver m : mvrs) {
+        for (LateralManeuver m : mvrs) {
             addManeuver(m);
         }
 
@@ -174,4 +175,13 @@ public class FutureLateralManeuver extends LateralManeuver {
      * Returns the end distance of the last constituent maneuver, which may be less than the end distance of the container
      */
     public double getLastDistance() { return maneuversEnd_; }
+
+    /**
+     * Returns an unmodifiableList of lateral maneuvers stored in this future maneuver
+     * 
+     * @return Collections.unmodifiableList of List<LateralManeuver>
+     */
+    public List<LateralManeuver> getLateralManeuvers() {
+        return Collections.unmodifiableList(mvrs_);
+    }
 }

@@ -6,6 +6,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ import java.util.List;
 public class FutureLongitudinalManeuver extends LongitudinalManeuver {
 
     protected double                            maneuversEnd_;
-    protected List<ISimpleManeuver>             mvrs_ = null;
+    protected List<LongitudinalManeuver>             mvrs_ = null;
     protected int                               executingIdx_ = 0;
     protected final double                      CONCATENATION_TOLERANCE = 0.001; // meter
 
@@ -67,7 +68,7 @@ public class FutureLongitudinalManeuver extends LongitudinalManeuver {
      * @return the location of the end of the last existing maneuver, in meters downtrack of route beginning
      * @throws IllegalStateException if the given maneuver doesn't fit the space available
      */
-    public double addManeuver(ISimpleManeuver mvr) throws IllegalStateException {
+    public double addManeuver(LongitudinalManeuver mvr) throws IllegalStateException {
 
         if (!(mvr instanceof LongitudinalManeuver)) {
             throw new IllegalStateException("Attempted to add " + mvr.getClass() + " as a constituent in FutureLongitudinalManeuver.");
@@ -97,12 +98,12 @@ public class FutureLongitudinalManeuver extends LongitudinalManeuver {
      * @return the location of the end of the last existing maneuver, in meters downtrack of route beginning
      * @throws IllegalStateException if the list of maneuvers doesn't fit into the space available
      */
-    public double addManeuvers(List<ISimpleManeuver> mvrs) throws IllegalStateException {
+    public double addManeuvers(List<LongitudinalManeuver> mvrs) throws IllegalStateException {
 
         mvrs_.clear();
         maneuversEnd_ = startDist_;
 
-        for (ISimpleManeuver m : mvrs) {
+        for (LongitudinalManeuver m : mvrs) {
             addManeuver(m);
         }
 
@@ -173,4 +174,13 @@ public class FutureLongitudinalManeuver extends LongitudinalManeuver {
      * Returns the end distance of the last constituent maneuver, which may be less than the end distance of the container
      */
     public double getLastDistance() { return maneuversEnd_; }
+
+    /**
+     * Returns an unmodifiableList of lateral maneuvers stored in this future maneuver
+     * 
+     * @return Collections.unmodifiableList of List<LateralManeuver>
+     */
+    public List<LongitudinalManeuver> getLongitudinalManeuvers() {
+        return Collections.unmodifiableList(mvrs_);
+    }
 }
