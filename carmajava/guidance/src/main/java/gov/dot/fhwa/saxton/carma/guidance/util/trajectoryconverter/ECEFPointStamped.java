@@ -22,11 +22,11 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
  * Class to store points in a path returned by the TrajectoryConverter. 
  * Points have the following
  * 3D location either in the ECEF frame
- * A time stamp in seconds
+ * A unix UTC time stamp in seconds
  */
 public final class ECEFPointStamped {
   Point3D point; // Position in meters
-  double stamp; // Time in seconds
+  double stamp; // Time in seconds since Jan 1, 1970 00:00:00 UTC
 
   public void setPoint(Point3D point){
     this.point = point;
