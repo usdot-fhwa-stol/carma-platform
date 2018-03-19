@@ -56,9 +56,9 @@ public class TrajectoryConverter {
 
   private final int maxPointsInPath;
   private final double timeStep;
-  final double CM_PER_M = 100.0;
-  final double SEC_PER_MS = 0.001;
-  final double MS_PER_SEC = 1000;
+  private static final double CM_PER_M = 100.0;
+  private static final double SEC_PER_MS = 0.001;
+  private static final double MS_PER_SEC = 1000;
 
   /**
    * Constructor
@@ -191,7 +191,7 @@ public class TrajectoryConverter {
    * 
    * @return The path described as ECEF points
    */
-  public List<ECEFPointStamped> toECEFPoints(List<RoutePointStamped> path) {
+  public static List<ECEFPointStamped> toECEFPoints(List<RoutePointStamped> path) {
     ////
     // Convert all points to ecef frame
     ////
@@ -212,6 +212,20 @@ public class TrajectoryConverter {
     return ecefPoints;
   }
 
+   /**
+   * TODO
+   * Helper function for converting a List of ECEFPointStamped into List of RoutePointStamped
+   * 
+   * @param path The list of ECEFPointStamped to be converted
+   * @param route The current route
+   * @param routeState The current route state
+   * 
+   * @return The path described as points along a route
+   */
+  public static List<RoutePointStamped> toRoutePointStamped(List<ECEFPointStamped> path, cav_msgs.Route route, cav_msgs.RouteState routeState) {
+    return new LinkedList<>();
+  }
+
   /**
    * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
    * 
@@ -220,7 +234,7 @@ public class TrajectoryConverter {
    * 
    * @return A cav_msgs.Trajectory message. This message will be empty if the path was empty
    */
-  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory) {
+  public static cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory) {
     if (path.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
