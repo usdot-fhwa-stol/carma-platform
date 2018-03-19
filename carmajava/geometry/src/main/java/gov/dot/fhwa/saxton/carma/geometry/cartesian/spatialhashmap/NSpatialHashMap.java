@@ -36,11 +36,12 @@ import java.util.Set;
  * 
  * Collision checking is evaluated with the provided IIntersectionChecker
  * Objects are hashed using the provided NSpatialHashStrategy
+ * This class is not thread safe on its own
  */
 public class NSpatialHashMap implements ISpatialStructure {
   public static final int MIN_BOUND_IDX = CartesianObject.MIN_BOUND_IDX;
   public static final int MAX_BOUND_IDX = CartesianObject.MAX_BOUND_IDX;
-  final private HashMap<NSpatialHashKey, List<CartesianObject>> map;
+  final private Map<NSpatialHashKey, List<CartesianObject>> map;
   private IIntersectionChecker intersectionChecker;
   private double[][] bounds;
   private NSpatialHashStrategy spatialHashStrategy;
@@ -52,10 +53,11 @@ public class NSpatialHashMap implements ISpatialStructure {
    * @param intersectionChecker The intersection testing method that will be used
    * @param NSpatialHashStrategy The method used to generate a Key (spatial cell) for a given object
    */
-  public NSpatialHashMap(IIntersectionChecker intersectionChecker, NSpatialHashStrategy spatialHashStrategy) {
+  public NSpatialHashMap(IIntersectionChecker intersectionChecker,
+   NSpatialHashStrategy spatialHashStrategy, Map<NSpatialHashKey, List<CartesianObject>> map) {
     this.intersectionChecker = intersectionChecker;
     this.spatialHashStrategy = spatialHashStrategy;
-    this.map = new HashMap<>(); // TODO should we let the user pass in the underlying map?
+    this.map = map;
     this.numDimensions = spatialHashStrategy.getNumDimensions();
   }
 
@@ -73,8 +75,7 @@ public class NSpatialHashMap implements ISpatialStructure {
     NSpatialHashKey maxKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MAX_BOUND_IDX]));
   
     // iterate over all cells
-    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);
-    addToCells(obj, minKey, maxKey, iterators, 0);
+    addToCells(obj, minKey, maxKey, 0);
     return true;
   }
 
@@ -85,18 +86,16 @@ public class NSpatialHashMap implements ISpatialStructure {
    * @param obj The object to be added
    * @param minKey The minimum key (cell) this object will be added to
    * @param maxKey The maximum key (cell) this object will be added to
-   * @param iterators An array containing the current value of each nest for loop iterator
    * @param dim The current dimension being processed. Can also be thought of as loop depth
    */
-  private void addToCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey,
-   int[] iterators, int dim) {
+  private void addToCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim) {
     if (dim >= numDimensions) {
       return;
     }
     for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
-      iterators[dim] = i;
-      addToCells(obj, minKey, maxKey, iterators, dim+1);
-      NSpatialHashKey key = new NSpatialHashKey(Arrays.copyOf(iterators, iterators.length));
+      minKey.values[dim] = i;
+      addToCells(obj, minKey, maxKey, dim+1);
+      NSpatialHashKey key = new NSpatialHashKey(Arrays.copyOf(minKey.values, minKey.values.length));
       List<CartesianObject> objects = map.get(key);
       if (objects == null) {
         objects = new LinkedList<>();
@@ -133,8 +132,7 @@ public class NSpatialHashMap implements ISpatialStructure {
     NSpatialHashKey maxKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MAX_BOUND_IDX]));
   
     // iterate over region
-    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);
-    removeFromCells(obj, minKey, maxKey, iterators, 0);
+    removeFromCells(obj, minKey, maxKey, 0);
     return true;
   }
 
@@ -145,18 +143,16 @@ public class NSpatialHashMap implements ISpatialStructure {
    * @param obj The object to be added
    * @param minKey The minimum key (cell) this object will be added to
    * @param maxKey The maximum key (cell) this object will be added to
-   * @param iterators An array containing the current value of each nest for loop iterator
    * @param dim The current dimension being processed. Can also be thought of as loop depth
    */
-  private void removeFromCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey,
-   int[] iterators, int dim) {
+  private void removeFromCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim) {
     if (dim >= numDimensions) {
       return;
     }
     for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
-      iterators[dim] = i;
-      removeFromCells(obj, minKey, maxKey, iterators, dim+1);
-      NSpatialHashKey key = new NSpatialHashKey(iterators);
+      minKey.values[dim] = i;
+      removeFromCells(obj, minKey, maxKey, dim+1);
+      NSpatialHashKey key = new NSpatialHashKey(minKey.values);
       List<CartesianObject> objects = map.get(key);
       if (objects == null) {
         continue;
@@ -179,8 +175,7 @@ public class NSpatialHashMap implements ISpatialStructure {
   
     // iterate over region
     HashSet<CartesianObject> collidedObjects = new HashSet<>();
-    int[] iterators = Arrays.copyOf(minKey.values, minKey.values.length);
-    getCollisionsInCells(obj, collidedObjects, minKey, maxKey, iterators, 0);
+    getCollisionsInCells(obj, collidedObjects, minKey, maxKey, 0);
     return new ArrayList<CartesianObject>(collidedObjects);
   }
 
@@ -196,14 +191,14 @@ public class NSpatialHashMap implements ISpatialStructure {
    * @param dim The current dimension being processed. Can also be thought of as loop depth
    */
   private void getCollisionsInCells(CartesianObject obj, HashSet<CartesianObject> collidedObjects,
-  NSpatialHashKey minKey, NSpatialHashKey maxKey, int[] iterators, int dim) {
+  NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim) {
     if (dim >= numDimensions) {
       return;
     }
     for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
-      iterators[dim] = i;
-      getCollisionsInCells(obj, collidedObjects, minKey, maxKey, iterators, dim+1);
-      NSpatialHashKey key = new NSpatialHashKey(iterators);
+      minKey.values[dim] = i;
+      getCollisionsInCells(obj, collidedObjects, minKey, maxKey, dim+1);
+      NSpatialHashKey key = new NSpatialHashKey(minKey.values);
       List<CartesianObject> objects = map.get(key);
       if (objects == null) {
         continue;
