@@ -223,7 +223,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 	                case "MobilityRequest":
 	                    mobilityReqPub_.publish((MobilityRequest) decodedMessage.getMessage());
 	                    log_.debug("V2V", "Received & decoded MobilityRequest, plan ID = " +
-	                                ((MobilityIntro) decodedMessage.getMessage()).getHeader().getPlanId());
+	                                ((MobilityRequest) decodedMessage.getMessage()).getHeader().getPlanId());
 	                    break;
 	                default:
 	                    log_.warn("Cannot find correct publisher for " + decodedMessage.getType());

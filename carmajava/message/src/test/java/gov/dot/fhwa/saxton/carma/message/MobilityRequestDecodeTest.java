@@ -50,9 +50,12 @@ public class MobilityRequestDecodeTest {
                                  -44, 94, 76, 49, 12, -54, -63, -125, 6, 12, 24, 48, 96, -63, -125, 6, 12,
                                  24, 48, 96, -63, -125, 2, 118, -32, -46, -114, -59, -45, 85, -52, 22, 32,
                                  -125, 74, 59, 39, 76, 91, 46, 97, 116};
+        long start = System.currentTimeMillis();
         int res = message.callJniDecode(decodedMessage, request, senderId, targetId, bsmId, planId, timestamp, strategy,
                                         mock(PlanType.class), mock(LocationECEF.class), locationTime, strategyParams,
                                         mock(LocationECEF.class), trajectoryStartTime, offsets, expiration);
+        long end = System.currentTimeMillis();
+        System.out.println("decodeMobilityRequestWithoutOptionalField take " + (end - start) + "ms to finish.");
         assertEquals(0, res);
     }
     
@@ -91,9 +94,12 @@ public class MobilityRequestDecodeTest {
                                  104, -102, 38, -119, -30, 120, -98, 40, -118, 34, -120, -90, 41, -118, 98, -88, -86, 42,
                                  -118, -30, -72, -82, 44, -117, 34, -56, -74, 45, -117, 98, -24, -70, 46, -117, -30, -8,
                                  -67, -125, 6, 12, 24, 48, 96, -63, -125, 6, 12, 24, 48, 96, -63, -125, -122, 64};
+        long start = System.currentTimeMillis();
         int res = message.callJniDecode(decodedMessage, request, senderId, targetId, bsmId, planId, timestamp, strategy,
                 mock(PlanType.class), mock(LocationECEF.class), locationTime, strategyParams,
                 mock(LocationECEF.class), trajectoryStartTime, offsets, expiration);
+        long end = System.currentTimeMillis();
+        System.out.println("decodeMobilityRequestWithOptionalField take " + (end - start) + "ms to finish.");
         assertEquals(0, res);
     }
 }

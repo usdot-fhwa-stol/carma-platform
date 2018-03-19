@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.message.factory;
 
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -114,6 +115,13 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
         byte[] trajectoryStartTime = new byte[19];
         int[][] offsets = new int[3][60];
         byte[] expiration = new byte[19];
+        // fill with character 'zero'
+        Arrays.fill(trajectoryStartTime, (byte) 48);
+        Arrays.fill(expiration, (byte) 48);
+        // fill with unavailable data 
+        Arrays.fill(offsets[0], 501);
+        Arrays.fill(offsets[1], 501);
+        Arrays.fill(offsets[2], 501);
         MobilityRequest request = messageFactory_.newFromType(MobilityRequest._TYPE);
         int result = callJniDecode(
                 encodedMsg, request, senderId, targetId, bsmId, planId, timestamp, strategy,
@@ -123,8 +131,8 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
             log_.warn("MobilityRequest", "MobilityRequestMessage cannot decode message.");
             return new MessageContainer("MobilityRequest", null);
         }
-        request.getHeader().setSenderId(new String(senderId));
-        request.getHeader().setRecipientId(new String(targetId));
+        request.getHeader().setSenderId(StringConverterHelper.readDynamicLengthString(senderId));
+        request.getHeader().setRecipientId(StringConverterHelper.readDynamicLengthString(targetId));
         request.getHeader().setSenderBsmId(new String(bsmId));
         request.getHeader().setPlanId(new String(planId));
         request.getHeader().setTimestamp(Long.parseLong(new String(timestamp)));

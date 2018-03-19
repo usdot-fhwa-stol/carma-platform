@@ -79,7 +79,7 @@ public class MobilityTrajectoryHelper {
     public List<LocationOffsetECEF> intArrayOffsetsToOffsetList(int[][] array) {
         int size = 60;
         for(int i = 0; i < array[0].length; i++) {
-            if(array[0][i] == 0 && array[1][i] == 0 && array[2][i] == 0) {
+            if(array[0][i] == 501 && array[1][i] == 501 && array[2][i] == 501) {
                 size = i;
                 break;
             }

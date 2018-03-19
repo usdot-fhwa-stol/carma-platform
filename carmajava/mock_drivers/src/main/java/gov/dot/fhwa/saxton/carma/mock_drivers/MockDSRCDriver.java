@@ -33,7 +33,6 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * A class which can be used to simulate an Arada comms driver for the CarmaPlatform.
@@ -104,7 +103,6 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // Set Data
       std_msgs.Header hdr = messageFactory.newFromType(std_msgs.Header._TYPE);
       hdr.setFrameId("0");
-      hdr.setSeq(Integer.parseInt(elements[SAMPLE_ID_IDX]));
       hdr.setStamp(connectedNode.getCurrentTime());
 
       recvMsg.setHeader(hdr);
@@ -122,17 +120,6 @@ public class MockDSRCDriver extends AbstractMockDriver {
       
       String currentByteString = rawByteString[current_vehicle++ % rawByteString.length];
       
-      //publish mobility intro message some time
-      message_counter++; 
-//      if(message_counter % 3 == 0) {
-//          recvMsg.setMessageType("MobilityIntro");
-//          currentByteString = "00 f0 80 e7 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 6b 06 0c 18 2d 60 c1 83 05 ac 18 30 60 b5 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 62 d5 8b 67 0c 1c 31 70 d5 8b 36 01 45 5b a9 97 9f 44 14 b7 e1 c9 74 00 20 10 05 08 06 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 2c 99 33 66 dd 93 06 6d 9c 35 68 dd bb 57 0c 1b 95 b7 0f 0f 2d b8 68 6c c3 d3 36 fe 5b 50 76 64 b9 92 e6 77 40";
-//      } else if(message_counter % 3 == 1) {
-//          recvMsg.setMessageType("MobilityAck");
-//          currentByteString = "00 f2 70 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 6b 06 0c 18 2d 60 c1 83 05 ac 18 30 60 b5 83 06 0c 18 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 16 b0 60 c1 82 d6 0c 18 30 5a c1 83 06 0b 58 30 60 c1 83 06 0c 18 30 60 c1 83 06 0c 18 30 62 d5 8b 67 0c 1c 31 70 d5 8b 36 00";
-//      }
-      
-      
       boolean publish_control = false;
       if(currentByteString.equals("00 14 25 03 97 0d 6b 3b 13 39 26 6e 92 6a 1e a6 c1 55 90 00 7f ff 8c cc af ff f0 80 7e fa 1f a1 00 7f ff 08 00 4b 09 b0")) {
     	  publish_control = true;
@@ -148,6 +135,22 @@ public class MockDSRCDriver extends AbstractMockDriver {
       
       // Convert the string to a byte array
       byte[] rawBytes = DatatypeConverter.parseHexBinary(currentByteString);
+      
+      // Publish mobility Req message every 3 seconds
+      message_counter++;
+      if(message_counter % 30 == 0) {
+          rawBytes = new byte[]{0, -16, -128, -122, 77, -72, -109, -22, 45, 104, -43, -117, 6, 23, 66,
+                  -35, -42, 44, 32, -62, -121, 18, 44, 102, 44, 88, -79, 98, -59, -117, 21,
+                  -84, -103, 50, 100, -75, -101, 54, 108, -42, -63, -125, 6, 10, -42, 44, 88,
+                  -79, 98, -59, -117, 22, 44, 88, -79, 96, -63, -125, 6, 12, 24, 48, 96, -63,
+                  -117, 38, 109, 26, -74, 110, -31, -56, 66, -36, 60, 60, -74, -31, 95, 67,
+                  102, 30, -101, -9, -18, -45, -69, 61, -48, -7, -45, 10, -111, 43, -90, 22,
+                  -44, 94, 76, 49, 12, -54, -63, -125, 6, 12, 24, 48, 96, -63, -125, 6, 12,
+                  24, 48, 96, -63, -125, 2, 118, -32, -46, -114, -59, -45, 85, -52, 22, 32,
+                  -125, 74, 59, 39, 76, 91, 46, 97, 116};
+          recvMsg.setMessageType("MobilityRequest");
+      }
+      
       
       // It seems that the ros messages byte[] is LittleEndian. Using BigEndian results in a IllegalArgumentException
       recvMsg.setContent(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, rawBytes));
