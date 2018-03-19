@@ -26,12 +26,15 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 import cav_msgs.MobilityPath;
 import cav_msgs.Route;
+import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
+import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 /**
  * An implementation of an OcTree for use in the Conflict Detector
@@ -46,7 +49,7 @@ public class ConflictDetector implements IConflictManager {
   // The maximum size of a cell in the tree
   private double[] maxSize = {5,5,0.1};
 
-  List<NSpatialHashMap> spatialMaps = new LinkedList<>();
+  HashMap<String, NSpatialHashMap> spatialMaps = new HashMap<>();
   private NSpatialHashMap spatialMap = new NSpatialHashMap(new AxisAlignedBoundingBox(), new SimpleHashStrategy(maxSize));
 
   /**
@@ -56,6 +59,13 @@ public class ConflictDetector implements IConflictManager {
 
   @Override
   public boolean addPath(List<RoutePointStamped> path, String vehicleStaticId) {
+    // Get current path for this vehicle
+    NSpatialHashMap vehiclesPath = spatialMaps.get(vehicleStaticId);
+    // If not current path for this vehicle add it 
+    if (vehiclesPath == null) {
+      spatialMaps.put(vehicleStaticId, new NSpatialHashMap(new AxisAlignedBoundingBox(), new SimpleHashStrategy(maxSize)));
+      spatialMap.insert(obj);//TODO
+    }
     return false;
   }
   
@@ -68,46 +78,43 @@ public class ConflictDetector implements IConflictManager {
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath) {
     
-    TrajectoryConverter tc = new TrajectoryConverter(60, 0.1); // TODO
-    List<Point3D> trajPoints = new ArrayList<>(hostPath.size());
-    // Convert points into (downtrack, crosstrack, time);
-    for (RoutePointStamped routePoint: hostPath) {
-      trajPoints.add(new Point3D(routePoint.getPoint().getY(), routePoint.getDowntrack(), routePoint.getStamp()));
-    }
-
+    // TODO need to handle the different sub trees
     List<ConflictSpace> conflicts = new LinkedList<>();
     ConflictSpace currentConflict = null;
-    int lane = 0; // TODO lane for each point
-    Point prevPoint = null;
-    for (Point3D p: trajPoints) {
+    int lane = 0;
+    RoutePointStamped prevPoint = null;
+    
+    for (RoutePointStamped routePoint: hostPath) {
+      // Get lane
+      lane = RouteSegment.determinePrimaryLane(routePoint.getDowntrack());
       // Get conflicts with point
-      if (!spatialMap.getCollisions(p).isEmpty()) { 
+      if (!spatialMap.getCollisions(routePoint.getPoint()).isEmpty()) { 
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
-          currentConflict = new ConflictSpace(p.getDim(DOWNTRACK_IDX), p.getDim(TIME_IDX), lane);
+          currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
         } else if (lane != currentConflict.getLane()) {
           // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
-          currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-          currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
+          currentConflict.setEndDowntrack(prevPoint.getDowntrack());
+          currentConflict.setEndTime(prevPoint.getStamp());
           conflicts.add(currentConflict);
           // Use the current point's lane but the previous points distance and time to define the start of the new conflict
-          currentConflict = new ConflictSpace(prevPoint.getDim(DOWNTRACK_IDX), prevPoint.getDim(TIME_IDX), lane);
+          currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegment());
         } 
       } else {
-        // If we could insert the point but we are tracking a conflict then that conflict is done
+        // If there were no conflicts but we are tracking a conflict then that conflict is done
         if (currentConflict != null) {
-          currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-          currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
+          currentConflict.setEndDowntrack(prevPoint.getDowntrack());
+          currentConflict.setEndTime(prevPoint.getStamp());
           conflicts.add(currentConflict);
           currentConflict = null; // Stop tracking the conflict
         }
       }
-      prevPoint = p;
+      prevPoint = routePoint;
     }
     // Close the currentConflict if it was extending past the last point
     if (currentConflict != null) {
-      currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-      currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
+      currentConflict.setEndDowntrack(prevPoint.getDowntrack());
+      currentConflict.setEndTime(prevPoint.getStamp());
       conflicts.add(currentConflict);
     }
 
@@ -116,6 +123,7 @@ public class ConflictDetector implements IConflictManager {
 
 @Override
 public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath) {
+
 	return null;
 }
 }
