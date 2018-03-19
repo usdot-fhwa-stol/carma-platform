@@ -115,7 +115,7 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
         int[][] offsets = new int[3][60];
         byte[] expiration = new byte[19];
         MobilityRequest request = messageFactory_.newFromType(MobilityRequest._TYPE);
-        int result = decodeMobilityRequest(
+        int result = callJniDecode(
                 encodedMsg, request, senderId, targetId, bsmId, planId, timestamp, strategy,
                 request.getPlanType(), request.getLocation(), locationTime, strategyParams,
                 request.getTrajectory().getLocation(), trajectoryStartTime, offsets, expiration);
@@ -152,5 +152,16 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
                 helper.getTrajectoryHelper().getStartLocationHelper().getTimestamp(),
                 helper.getTrajectoryHelper().getOffsets(), helper.getExpiration());
         return encodedMsg;
+    }
+    
+    public int callJniDecode(byte[] encodedArray, Object mobilityReq, byte[] senderId, byte[] targetId,
+            byte[] bsmId, byte[] planId, byte[] timestamp, byte[] strategy, Object planType,
+            Object currentLocation, byte[] locationTime, byte[] strategyParams, Object trajectoryStartLocation,
+            byte[] trajectoryStartTime, int[][] offsets, byte[] expiration) {
+        int res = decodeMobilityRequest(
+                encodedArray, mobilityReq, senderId, targetId, bsmId, planId, timestamp,
+                strategy, planType, currentLocation, locationTime, strategyParams,
+                trajectoryStartLocation, trajectoryStartTime, offsets, expiration);
+        return res;
     }
 }

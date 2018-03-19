@@ -258,9 +258,9 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
    jint startX, jint startY, jint startZ, jbyteArray startT, jobjectArray offsets, jbyteArray expiration) {
 
 	//Build a log in test file to debug if necessary
-	FILE *fp;
-	fp = fopen("/home/qsw/carma/log_C.txt", "w");
-	fprintf(fp, "encodeMobilityRequest function is called\n");
+	//FILE *fp;
+	//fp = fopen("/home/qsw/carma/log_C.txt", "w");
+	//fprintf(fp, "encodeMobilityRequest function is called\n");
 
 	uint8_t buffer[512];
 	size_t buffer_size = sizeof(buffer);
@@ -421,7 +421,6 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 			jint *java_offsets_Y = (*env) -> GetIntArrayElements(env, offsets_Y, 0);
 			jint *java_offsets_Z = (*env) -> GetIntArrayElements(env, offsets_Z, 0);
 			if(count > 0) {
-				fprintf(fp, "count: %d\n", count);
 				int *localArray[3];
 				int offsets_X_content[count];
 				int offsets_Y_content[count];
@@ -450,8 +449,8 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 			(*env) -> ReleaseIntArrayElements(env, offsets_Y, java_offsets_Y, 0);
 			(*env) -> ReleaseIntArrayElements(env, offsets_Z, java_offsets_Z, 0);
 			(*env) -> DeleteLocalRef(env, offsets_X);
-			(*env) -> DeleteLocalRef(env, offsets_X);
-			(*env) -> DeleteLocalRef(env, offsets_X);
+			(*env) -> DeleteLocalRef(env, offsets_Y);
+			(*env) -> DeleteLocalRef(env, offsets_Z);
 		}
 	}
 
@@ -481,7 +480,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	//encode message
 	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, 0, message, buffer, buffer_size);
 	if(ec.encoded == -1) {
-		fprintf(fp, "!!!%s", ec.failed_type->name);
+		//fprintf(fp, "!!!%s", ec.failed_type->name);
 		return NULL;
 	}
 
@@ -502,92 +501,122 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
  * Return -1 means an error has happened; return 0 means decoding succeed.
  */
 
-//JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityRequestMessage_decodeMobilityRequest
-  //(JNIEnv *, jobject, jbyteArray, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jobject, jobject, jbyteArray, jbyteArray, jobject, jbyteArray, jobjectArray, jbyteArray);
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityRequestMessage_decodeMobilityRequest
+  (JNIEnv *env, jobject cls, jbyteArray encodedReq, jobject request, jbyteArray senderId, jbyteArray targetId,
+   jbyteArray bsmId, jbyteArray planId, jbyteArray timestamp, jbyteArray strategy, jobject planType,
+   jobject location, jbyteArray locationTimestamp, jbyteArray strategyParams, jobject startLocation,
+   jbyteArray startTimestamp, jobjectArray trajectoryOffsets, jbyteArray expiration) {
 
-//Example:
-//JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityIntroductionMessage_decode_1MobilityIntro
-//  (JNIEnv *env, jobject cls, jbyteArray encodedIntro, jobject introMsg,
-//   jbyteArray senderId, jbyteArray targetId, jbyteArray planId, jbyteArray timestamp,
-//   jobject vehicleType, jbyteArray roadwayId, jobject planType,
-//   jbyteArray publicKey, jbyteArray expiration, jbyteArray capabilities) {
-//
-//	asn_dec_rval_t rval; /* Decoder return value */
-//	MessageFrame_t *message = 0; /* Type to decode */
-//
-//	int len = (*env) -> GetArrayLength(env, encodedIntro); /* Number of bytes in encoded_bsm */
-//	jbyte *inCArray = (*env) -> GetByteArrayElements(env, encodedIntro, 0); /* Get Java byte array content */
-//	char buf[len]; /* Buffer for decoder function */
-//	for (int i = 0; i < len; i++) {
-//		buf[i] = inCArray[i];
-//	} /* Copy into buffer */
-//
-//	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
-//	if(rval.code == RC_OK) {
-//		//get jclass of each jobject
-//		jclass mobility_class = (*env) -> GetObjectClass(env, introMsg);
-//		jclass vehicle_type_class = (*env) -> GetObjectClass(env, vehicleType);
-//		jclass plan_type_class = (*env) -> GetObjectClass(env, planType);
-//
-//		//set senderId, targetId, planId and creation dateTime
-//		uint8_t *sender_id_content = message -> value.choice.TestMessage00.header.hostStaticId.buf;
-//		(*env) -> SetByteArrayRegion(env, senderId, 0, 36, sender_id_content);
-//		uint8_t *target_id_content = message -> value.choice.TestMessage00.header.targetStaticId.buf;
-//		(*env) -> SetByteArrayRegion(env, targetId, 0, 36, target_id_content);
-//		uint8_t *plan_id_content = message -> value.choice.TestMessage00.header.planId.buf;
-//		(*env) -> SetByteArrayRegion(env, planId, 0, 36, plan_id_content);
-//		uint8_t *creation_time_content = message -> value.choice.TestMessage00.header.timestamp.buf;
-//		(*env) -> SetByteArrayRegion(env, timestamp, 0, 19, creation_time_content);
-//
-//		//set vehicle type
-//		jmethodID mid_setType = (*env) -> GetMethodID(env, vehicle_type_class, "setType", "(B)V");
-//		jbyte vehicle_type = message -> value.choice.TestMessage00.body.vehicleType;
-//		(*env) -> CallVoidMethod(env, vehicleType, mid_setType, vehicle_type);
-//
-//		//set roadway link id
-//		uint8_t *roadway_id_content = message -> value.choice.TestMessage00.body.roadwayId.buf;
-//		int roadway_id_size = message -> value.choice.TestMessage00.body.roadwayId.size;
-//		(*env) -> SetByteArrayRegion(env, roadwayId, 0, roadway_id_size, roadway_id_content);
-//
-//		//set roadway link position
-//		jmethodID mid_setPosition = (*env) -> GetMethodID(env, mobility_class, "setMyRoadwayLinkPosition", "(S)V");
-//		jshort vehicle_position = message -> value.choice.TestMessage00.body.roadwayPosition;
-//		(*env) -> CallVoidMethod(env, introMsg, mid_setPosition, vehicle_position);
-//
-//		//set lane id
-//		jmethodID mid_setLane = (*env) -> GetMethodID(env, mobility_class, "setMyLaneId", "(B)V");
-//		jbyte lane_id = message -> value.choice.TestMessage00.body.lane;
-//		(*env) -> CallVoidMethod(env, introMsg, mid_setLane, lane_id);
-//
-//		//set forward speed
-//		jmethodID mid_setSpeed = (*env) -> GetMethodID(env, mobility_class, "setForwardSpeed", "(F)V");
-//		jfloat forward_speed = message -> value.choice.TestMessage00.body.speed * 0.02;
-//		(*env) -> CallVoidMethod(env, introMsg, mid_setSpeed, forward_speed);
-//
-//		//set plan type
-//		jmethodID mid_setPlanType = (*env) -> GetMethodID(env, plan_type_class, "setType", "(B)V");
-//		jbyte plan_type = message -> value.choice.TestMessage00.body.planType;
-//		(*env) -> CallVoidMethod(env, planType, mid_setPlanType, plan_type);
-//
-//		//set plan parameter
-//		jmethodID mid_setParam = (*env) -> GetMethodID(env, mobility_class, "setProposalParam", "(S)V");
-//		jshort proposal_param = message -> value.choice.TestMessage00.body.planParam;
-//		(*env) -> CallVoidMethod(env, introMsg, mid_setParam, proposal_param);
-//
-//		//set public key
-//		uint8_t *public_key_content = message -> value.choice.TestMessage00.body.publicKey.buf;
-//		(*env) -> SetByteArrayRegion(env, publicKey, 0, 64, public_key_content);
-//
-//		//set expiration
-//		uint8_t *expiration_time_content = message -> value.choice.TestMessage00.body.expiration.buf;
-//		(*env) -> SetByteArrayRegion(env, expiration, 0, 19, expiration_time_content);
-//
-//		//set capabilities string
-//		uint8_t *capabilities_content = message -> value.choice.TestMessage00.body.capabilities.buf;
-//		int capabilities_size = message -> value.choice.TestMessage00.body.capabilities.size;
-//		(*env) -> SetByteArrayRegion(env, capabilities, 0, capabilities_size, capabilities_content);
-//	} else {
-//		return -1; /* decoding fails */
-//	}
-//	return 0;
-//}
+	//Build a log in test file to debug if necessary
+	//FILE *fp;
+	//fp = fopen("/home/qsw/carma/log_C.txt", "w");
+	//fprintf(fp, "decodeMobilityRequest function is called\n");
+
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedReq); /* Number of bytes in encoded mobility request */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedReq, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+	    buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+
+	if(rval.code == RC_OK) {
+		//get jclass of each jobject
+		jclass mobility_class = (*env) -> GetObjectClass(env, request);
+		jclass plan_type_class = (*env) -> GetObjectClass(env, planType);
+		jclass current_location_class = (*env) -> GetObjectClass(env, location);
+		jclass start_location_class = (*env) -> GetObjectClass(env, startLocation);
+
+		//set senderId, targetId, bsmId, planId and creation timestamp
+		uint8_t *sender_id_content = message -> value.choice.TestMessage00.header.hostStaticId.buf;
+		size_t sender_id_size = message -> value.choice.TestMessage00.header.hostStaticId.size;
+		(*env) -> SetByteArrayRegion(env, senderId, 0, sender_id_size, sender_id_content);
+		uint8_t *target_id_content = message -> value.choice.TestMessage00.header.targetStaticId.buf;
+		size_t target_id_size = message -> value.choice.TestMessage00.header.targetStaticId.size;
+		(*env) -> SetByteArrayRegion(env, targetId, 0, target_id_size, target_id_content);
+		uint8_t *bsm_id_content = message -> value.choice.TestMessage00.header.hostBSMId.buf;
+		(*env) -> SetByteArrayRegion(env, bsmId, 0, 8, bsm_id_content);
+		uint8_t *plan_id_content = message -> value.choice.TestMessage00.header.planId.buf;
+		(*env) -> SetByteArrayRegion(env, planId, 0, 36, plan_id_content);
+		uint8_t *creation_time_content = message -> value.choice.TestMessage00.header.timestamp.buf;
+		(*env) -> SetByteArrayRegion(env, timestamp, 0, 19, creation_time_content);
+
+		//set strategy string
+		uint8_t *strategy_content = message -> value.choice.TestMessage00.body.strategy.buf;
+		size_t strategy_size = message -> value.choice.TestMessage00.body.strategy.size;
+		(*env) -> SetByteArrayRegion(env, strategy, 0, strategy_size, strategy_content);
+
+		//set plan type
+		jmethodID mid_setPlanType = (*env) -> GetMethodID(env, plan_type_class, "setType", "(B)V");
+		jbyte plan_type = message -> value.choice.TestMessage00.body.planType;
+		(*env) -> CallVoidMethod(env, planType, mid_setPlanType, plan_type);
+
+		//set urgency
+		jmethodID mid_setUrgency = (*env) -> GetMethodID(env, mobility_class, "setUrgency", "(S)V");
+		jshort urgency_value = message -> value.choice.TestMessage00.body.urgency;
+		(*env) -> CallVoidMethod(env, request, mid_setUrgency, urgency_value);
+
+		//set current location in ECEF frame
+		jmethodID mid_setEcefX = (*env) -> GetMethodID(env, current_location_class, "setEcefX", "(I)V");
+		jmethodID mid_setEcefY = (*env) -> GetMethodID(env, current_location_class, "setEcefY", "(I)V");
+		jmethodID mid_setEcefZ = (*env) -> GetMethodID(env, current_location_class, "setEcefZ", "(I)V");
+		jint ecef_x = message -> value.choice.TestMessage00.body.location.ecefX;
+		jint ecef_y = message -> value.choice.TestMessage00.body.location.ecefY;
+		jint ecef_z = message -> value.choice.TestMessage00.body.location.ecefZ;
+		(*env) -> CallVoidMethod(env, location, mid_setEcefX, ecef_x);
+		(*env) -> CallVoidMethod(env, location, mid_setEcefY, ecef_y);
+		(*env) -> CallVoidMethod(env, location, mid_setEcefZ, ecef_z);
+		uint8_t *location_time_content = message -> value.choice.TestMessage00.body.location.timestamp.buf;
+		(*env) -> SetByteArrayRegion(env, locationTimestamp, 0, 19, location_time_content);
+
+		//set strategy parameters
+		uint8_t *strategy_params_content = message -> value.choice.TestMessage00.body.strategyParams.buf;
+		size_t strategy_params_size = message -> value.choice.TestMessage00.body.strategyParams.size;
+		(*env) -> SetByteArrayRegion(env, strategyParams, 0, strategy_params_size, strategy_params_content);
+
+		//set trajectory start location if necessary
+		if(message -> value.choice.TestMessage00.body.trajectoryStart) {
+			jint start_ecef_x = message -> value.choice.TestMessage00.body.trajectoryStart -> ecefX;
+			jint start_ecef_y = message -> value.choice.TestMessage00.body.trajectoryStart -> ecefY;
+			jint start_ecef_z = message -> value.choice.TestMessage00.body.trajectoryStart -> ecefZ;
+			(*env) -> CallVoidMethod(env, startLocation, mid_setEcefX, start_ecef_x);
+			(*env) -> CallVoidMethod(env, startLocation, mid_setEcefY, start_ecef_y);
+			(*env) -> CallVoidMethod(env, startLocation, mid_setEcefZ, start_ecef_z);
+			uint8_t *start_location_time_content = message -> value.choice.TestMessage00.body.trajectoryStart -> timestamp.buf;
+			(*env) -> SetByteArrayRegion(env, startTimestamp, 0, 19, start_location_time_content);
+		}
+
+		// set trajectory offset data if necessary
+		if(message -> value.choice.TestMessage00.body.trajectory) {
+			jintArray offsets_X =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 0);
+			jintArray offsets_Y =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 1);
+			jintArray offsets_Z =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 2);
+			int count = message -> value.choice.TestMessage00.body.trajectory -> list.count;
+			int temp_offsets_X[60] = {0};
+			int temp_offsets_Y[60] = {0};
+			int temp_offsets_Z[60] = {0};
+			for(int i = 0; i < count; i++) {
+				temp_offsets_X[i] = message -> value.choice.TestMessage00.body.trajectory -> list.array[i] -> offsetX;
+				temp_offsets_Y[i] = message -> value.choice.TestMessage00.body.trajectory -> list.array[i] -> offsetY;
+				temp_offsets_Z[i] = message -> value.choice.TestMessage00.body.trajectory -> list.array[i] -> offsetZ;
+			}
+			(*env) -> SetIntArrayRegion(env, offsets_X, 0, 60, temp_offsets_X);
+			(*env) -> SetIntArrayRegion(env, offsets_Y, 0, 60, temp_offsets_Y);
+			(*env) -> SetIntArrayRegion(env, offsets_Z, 0, 60, temp_offsets_Z);
+			(*env) -> DeleteLocalRef(env, offsets_X);
+			(*env) -> DeleteLocalRef(env, offsets_Y);
+			(*env) -> DeleteLocalRef(env, offsets_Z);
+		}
+
+		if(message -> value.choice.TestMessage00.body.expiration) {
+			uint8_t *expiration_time_content = message -> value.choice.TestMessage00.body.expiration -> buf;
+			(*env) -> SetByteArrayRegion(env, expiration, 0, 19, expiration_time_content);
+		}
+	} else {
+		return -1;
+	}
+	return 0;
+}

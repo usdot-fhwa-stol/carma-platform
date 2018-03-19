@@ -20,7 +20,7 @@ import cav_msgs.Trajectory;
 import gov.dot.fhwa.saxton.carma.message.factory.MobilityRequestMessage;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
-public class MobilityRequestTest {
+public class MobilityRequestEncodeTest {
     
     MobilityRequest mockRequest;
     MobilityHeader mockHeader;
