@@ -21,16 +21,12 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 /**
  * Class to store points in a path returned by the TrajectoryConverter. 
  * Points have the following
- * 3D location either in the ECEF frame of a segment frame
+ * 3D location either in the ECEF frame
  * A time stamp in seconds
- * The index of the route segment they correspond to
- * A total downtrack distance along a route
  */
-public final class Point3DStamped {
+public final class ECEFPointStamped {
   Point3D point; // Position in meters
   double stamp; // Time in seconds
-  int segmentIdx; // Segment index on the route
-  double downtrack; // Total downtrack distance in m
 
   public void setPoint(Point3D point){
     this.point = point;
@@ -40,27 +36,11 @@ public final class Point3DStamped {
     this.stamp = stamp;
   }
 
-  public void setSegmentIdx(int segmentIdx) {
-    this.segmentIdx = segmentIdx;
-  }
-
-  public void setDowntrack(double downtrack) {
-    this.downtrack = downtrack;
-  }
-
   public Point3D getPoint(){
     return point;
   }
 
   public double getStamp(){
     return stamp;
-  }
-
-  public int getSegmentIdx(){
-    return segmentIdx;
-  }
-
-  public double getDowntrack() {
-    return downtrack;
   }
 }

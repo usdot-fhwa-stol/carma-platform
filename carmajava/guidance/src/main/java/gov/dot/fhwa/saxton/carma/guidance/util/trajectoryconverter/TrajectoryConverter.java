@@ -36,6 +36,7 @@ import cav_msgs.LocationOffsetECEF;
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point2D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
@@ -43,7 +44,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
  * Users of this class should call the convertToPath function
  * then call the pathToMessage function to convert the path into a MobilityPath message as needed.
  * 
- * Paths are described internally as a list of Point3DStamped objects
+ * Paths are described internally as a list of ECEFPointStamped objects
  * Simple Longitudinal Maneuver motion is estimated using the basic kinematic equations of motion
  * Lateral motion is approximated using a cubic function calculated based on the start and end distance of a maneuver
  * Complex maneuvers are treated as stead speed maneuvers operating at the average of the min and max speeds of that maneuver
@@ -71,7 +72,7 @@ public class TrajectoryConverter {
   }
 
   /**
-   * Converts the provided trajectory and starting configuration into a list of ecef points with associated time stamps
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
    * 
    * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
    * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
@@ -83,9 +84,9 @@ public class TrajectoryConverter {
    * @param route A route message containing all possible route segments
    * @param routeState A route state message containing the current segment and progress along the route
    * 
-   * @return A list of ecef points associated with time stamps and segments
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
-  public List<Point3DStamped> convertToPath(Trajectory traj, long startTimeMS, Route route, RouteState routeState) {
+  public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS, Route route, RouteState routeState) {
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers
@@ -94,7 +95,7 @@ public class TrajectoryConverter {
     IComplexManeuver complexManeuver = traj.getComplexManeuver();
 
     // Starting simulation configuration
-    List<Point3DStamped> path =  new LinkedList<Point3DStamped>();
+    List<RoutePointStamped> path =  new LinkedList<RoutePointStamped>();
     final double startTime = currentTime; 
     final double startingDowntrack = routeState.getDownTrack();
     final double startingSegDowntrack = routeState.getSegmentDownTrack();
@@ -103,7 +104,7 @@ public class TrajectoryConverter {
     // Process longitudinal maneuvers
     ////
     LongitudinalSimulationData longitudinalSimData = new LongitudinalSimulationData(currentTime, startingDowntrack, startingSegDowntrack, startingSegIdx);
-    Point3DStamped oldPathEndPoint = null;
+    RoutePointStamped oldPathEndPoint = null;
     int oldPathSize = 0;
     for (int i = 0; i < longitudinalManeuvers.size(); i++) {
       LongitudinalManeuver maneuver = longitudinalManeuvers.get(i);
@@ -147,18 +148,18 @@ public class TrajectoryConverter {
         // If no lane change occurs we will maintain the current crosstrack
         if (maneuver.getEndingRelativeLane() == 0) {
           while (currentPoint < path.size() && maneuver.getEndDistance() > path.get(currentPoint).getDowntrack()) {
-            path.get(currentPoint).getPoint().setY(currentCrosstrack);
+            path.get(currentPoint).setCrosstrack(currentCrosstrack);
             currentPoint++;
           }
         } else { // A lane change will occur in this maneuver
           // Find the equation to generate the fake lane change
-          double laneWidth = route.getSegments().get(path.get(currentPoint).getSegmentIdx()).getWaypoint().getLaneWidth();
+          double laneWidth = path.get(currentPoint).getSegment().getWaypoint().getLaneWidth();
           double y_0 = currentCrosstrack;
           double y_1 = currentCrosstrack + laneWidth * -1 * maneuver.getEndingRelativeLane();
           double[] coefficients = getCubicFunction(maneuver.getStartDistance(), y_0, maneuver.getEndDistance(), y_1);
           // Apply equation to relevant points
           while (currentPoint < path.size() && maneuver.getEndDistance() > path.get(currentPoint).getDowntrack()) {
-            path.get(currentPoint).getPoint().setY(solveCubic(path.get(currentPoint).getDowntrack(), coefficients));
+            path.get(currentPoint).setCrosstrack(solveCubic(path.get(currentPoint).getDowntrack(), coefficients));
             currentPoint++;
           }
           currentCrosstrack = y_1;
@@ -180,20 +181,35 @@ public class TrajectoryConverter {
       addKinematicMotionToPath(startDist, endDist, averageSpeed, averageSpeed, path, longitudinalSimData, route);
     }
 
+    return path;
+  }
+
+  /**
+   * Helper function for converting a List of RoutePoint2DStamped into List of ECEFPointStamped
+   * 
+   * @param path The list of RoutePoint2DStamped to be converted
+   * 
+   * @return The path described as ECEF points
+   */
+  public List<ECEFPointStamped> toECEFPoints(List<RoutePointStamped> path) {
     ////
     // Convert all points to ecef frame
     ////
-    for (Point3DStamped point: path) {
+    List<ECEFPointStamped> ecefPoints = new ArrayList<>(path.size());
+    for (RoutePointStamped point: path) {
       // Convert point to ecef
       // Currently ignores elevation
-      Vector3 pointInSegmentFrame = new Vector3(point.getPoint().getX(), point.getPoint().getY(), 0);
-      Transform ecefToSeg = Transform.fromPoseMessage(route.getSegments().get(point.getSegmentIdx()).getFRDPose()); 
+      Vector3 pointInSegmentFrame = new Vector3(point.getSegDowntrack(), point.getCrosstrack(), 0.0);
+      Transform ecefToSeg = Transform.fromPoseMessage(point.getSegment().getFRDPose()); 
       Vector3 vecInECEF = ecefToSeg.apply(pointInSegmentFrame);
       // Update point
-      point.setPoint(new Point3D(vecInECEF.getX(), vecInECEF.getY(), vecInECEF.getZ()));
+      ECEFPointStamped ecefPoint = new ECEFPointStamped();
+      ecefPoint.setPoint(new Point3D(vecInECEF.getX(), vecInECEF.getY(), vecInECEF.getZ()));
+      ecefPoint.setStamp(point.getStamp());
+      ecefPoints.add(ecefPoint);
     }
 
-    return path;
+    return ecefPoints;
   }
 
   /**
@@ -204,13 +220,17 @@ public class TrajectoryConverter {
    * 
    * @return A cav_msgs.Trajectory message. This message will be empty if the path was empty
    */
-  public cav_msgs.Trajectory pathToMessage(List<Point3DStamped> path, MessageFactory messageFactory) {
+  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory) {
     if (path.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
+
+    // Convert points to ecef
+    List<ECEFPointStamped> ecefPoints = toECEFPoints(path);
+    // Get message
     cav_msgs.Trajectory pathMsg = messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     // Handle starting point
-    Point3DStamped prevPoint = path.get(0);
+    ECEFPointStamped prevPoint = ecefPoints.get(0);
 
     LocationECEF locationECEF = pathMsg.getLocation();
     locationECEF.setEcefX((int)(prevPoint.getPoint().getX() * CM_PER_M));
@@ -219,9 +239,9 @@ public class TrajectoryConverter {
     locationECEF.setTimestamp((long) (prevPoint.getStamp() * MS_PER_SEC));
 
     // Calculate offsets
-    List<LocationOffsetECEF> offsets = new ArrayList<>(path.size()-1);
-    for (int i = 1; i < path.size(); i++) {
-      Point3DStamped point = path.get(i);
+    List<LocationOffsetECEF> offsets = new ArrayList<>(ecefPoints.size()-1);
+    for (int i = 1; i < ecefPoints.size(); i++) {
+      ECEFPointStamped point = ecefPoints.get(i);
       LocationOffsetECEF offsetMsg = messageFactory.newFromType(LocationOffsetECEF._TYPE);
       double deltaX = point.getPoint().getX() - prevPoint.getPoint().getX();
       double deltaY = point.getPoint().getY() - prevPoint.getPoint().getY();
@@ -245,7 +265,7 @@ public class TrajectoryConverter {
    * @param route The route the vehicle is on
    */
   public LongitudinalSimulationData addLongitudinalManeuverToPath(
-    final LongitudinalManeuver maneuver, List<Point3DStamped> path,
+    final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
     final LongitudinalSimulationData startingData, final Route route) {
 
     final double startX = maneuver.getStartDistance();
@@ -271,7 +291,7 @@ public class TrajectoryConverter {
    */
   private LongitudinalSimulationData addKinematicMotionToPath(
     final double startX, final double endX, final double startV, final double endV,
-     List<Point3DStamped> path,final LongitudinalSimulationData startingData, final Route route) {
+     List<RoutePointStamped> path,final LongitudinalSimulationData startingData, final Route route) {
       final double deltaX = endX - startX;
       final double deltaV = endV - startV;
       final double startVSqr = startV * startV;
@@ -320,11 +340,9 @@ public class TrajectoryConverter {
         }
 
         // Add point to list with timestamp
-        Point3DStamped point = new Point3DStamped();
-        point.setPoint(new Point3D(currentSegDowntrack, 0, 0));
-        point.setStamp(currentSimTime);
-        point.setSegmentIdx(segmentIdx);
-        point.setDowntrack(currentDowntrack);
+        RoutePointStamped point = new RoutePointStamped(currentDowntrack, 0.0, currentSimTime);
+        point.setSegDowntrack(currentSegDowntrack);
+        point.setSegment(currentSeg);
         path.add(point);
         // Update starting distance, speed, and current time
         distanceChange = accelTerm + actualStartV * timeStep;
