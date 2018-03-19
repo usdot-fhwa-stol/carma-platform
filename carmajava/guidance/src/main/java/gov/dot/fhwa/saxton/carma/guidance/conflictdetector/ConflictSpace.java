@@ -16,15 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
+import cav_msgs.RouteSegment;
+
 /**
- * A helper class for storing the current state of a simulation when projecting a trajectory through time
- * This class is really and immutable struct and therefore lacks getters or setters for simplicity 
- * 
- * The simulation data contains
- * The current simulation time in seconds
- * The current downtrack distance in meters
- * The current segment downtrack distance in meters
- * The current segment index on the route
+ * A struct representing a conflict with another vehicle along a route
+ * The conflict is define as a range of downtrack distances, times, a lane, and a starting route segment
+ * No conflict extends across multiple lanes. Such an occurrence will be represented as multiple conflicts.
  */
 public final class ConflictSpace {
   double startDowntrack;
@@ -32,33 +29,128 @@ public final class ConflictSpace {
   double startTime;
   double endTime;
   int lane;
+  RouteSegment segment;
 
-  ConflictSpace(double startDowntrack, double startTime, int lane) {
+  /**
+   * Constructor
+   * 
+   * @param startDowntrack The starting location on the route of this conflict
+   * @param startTime The starting time of this conflict in seconds
+   * @param The lane index this conflict will occur in
+   * @param The route segment this conflict starts on
+   */
+  ConflictSpace(double startDowntrack, double startTime, int lane, RouteSegment segment) {
     this.startDowntrack = startDowntrack;
     this.startTime = startTime; 
-    this.endDowntrack = startDowntrack; // TODO make note of this and next line in comments
-    this.endTime = startTime;
     this.lane = lane;
+    this.segment = segment;
   }
 
+  /**
+   * Set starting downtrack
+   * 
+   * @param startDowntrack The starting downtrack distance in meters
+   */
+  public void setStartDowntrack(double startDowntrack) {
+    this.startDowntrack = startDowntrack;
+  }
+
+  /**
+   * Set starting time
+   * 
+   * @param startTime The starting time in seconds
+   */
+  public void setStartTime(double startTime) {
+    this.startTime = startTime;
+  }
+
+  /**
+   * Set ending downtrack
+   * 
+   * @param endDowntrack The ending downtrack distance in meters
+   */
   public void setEndDowntrack(double endDowntrack) {
     this.endDowntrack = endDowntrack;
   }
 
+  /**
+   * Set ending time
+   * 
+   * @param endTime The ending time in seconds
+   */
   public void setEndTime(double endTime) {
     this.endTime = endTime;
   }
 
+  /**
+   * Set the lane
+   * 
+   * @param lane The lane index
+   */
+  public void setLane(int lane) {
+    this.lane = lane;
+  }
+
+  /**
+   * Set the route segment
+   * 
+   * @param segment The route segment this conflict starts on
+   */
+  public void setSegment(RouteSegment segment) {
+    this.segment = segment;
+  }
+
+  /**
+   * Get starting downtrack
+   * 
+   * @return The starting downtrack distance in meters
+   */
+  public double getStartDowntrack() {
+    return this.startDowntrack;
+  }
+
+  /**
+   * Get ending downtrack
+   * 
+   * @return The ending downtrack distance in meters
+   */
+  public double getEndDowntrack() {
+    return this.endDowntrack;
+  }
+
+  /**
+   * Get starting time
+   * 
+   * @return The starting time in seconds
+   */
+  public double getStartTime() {
+    return this.startTime;
+  }
+
+  /**
+   * Get ending time
+   * 
+   * @return The ending time in seconds
+   */
+  public double getEndTime() {
+    return this.endTime;
+  }
+
+  /**
+   * Get the lane
+   * 
+   * @return The lane index
+   */
   public int getLane() {
     return this.lane;
   }
 
-  public boolean almostEquals(ConflictSpace space, double epsilon) {
-    return 
-      Math.abs(this.startDowntrack - space.startDowntrack) < epsilon &&
-      Math.abs(this.endDowntrack - space.endDowntrack) < epsilon &&
-      Math.abs(this.startTime - space.startTime) < epsilon &&
-      Math.abs(this.endTime - space.endTime) < epsilon &&
-      this.lane == space.lane;
+  /**
+   * Set the route segment
+   * 
+   * @return The route segment this conflict starts on
+   */
+  public RouteSegment getSegment() {
+    return this.segment;
   }
 }
