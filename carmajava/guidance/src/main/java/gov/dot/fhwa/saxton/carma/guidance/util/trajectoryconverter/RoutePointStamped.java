@@ -22,7 +22,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 /**
  * Class to store points in a path returned by the TrajectoryConverter. 
  * Points have the following
- * A location on the route as (downtrack, crosstrack, time). This is stored as a point for use in ConflictDetector
+ * A location on the route as (downtrack, crosstrack, UTC time). This is stored as a point for use in ConflictDetector
  * The route segment they correspond to
  * A downtrack distance along the current segment
  */
@@ -36,7 +36,7 @@ public final class RoutePointStamped {
    * 
    * @param downtrack The downtrack distance along the route
    * @param crosstrack The cross track distance
-   * @param time The time stamp
+   * @param time Time in seconds since Jan 1, 1970 00:00:00 UTC
    */
   public RoutePointStamped(double downtrack, double crosstrack, double time) {
     this.point = new Point3D(downtrack, crosstrack, time);
