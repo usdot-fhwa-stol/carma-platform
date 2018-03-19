@@ -22,6 +22,8 @@ import cav_msgs.RouteSegment;
  * A struct representing a conflict with another vehicle along a route
  * The conflict is define as a range of downtrack distances, times, a lane, and a starting route segment
  * No conflict extends across multiple lanes. Such an occurrence will be represented as multiple conflicts.
+ * 
+ * Time is in seconds since Jan 1, 1970 00:00:00 UTC
  */
 public final class ConflictSpace {
   double startDowntrack;
