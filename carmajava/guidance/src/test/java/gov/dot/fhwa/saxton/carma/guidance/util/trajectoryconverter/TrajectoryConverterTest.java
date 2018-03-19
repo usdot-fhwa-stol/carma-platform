@@ -173,7 +173,7 @@ public class TrajectoryConverterTest {
     final double TIME_STEP = 1;
     TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
 
-    List<RoutePoint2DStamped> path = new LinkedList<>();
+    List<RoutePointStamped> path = new LinkedList<>();
     List<ECEFPointStamped> pathECEF = new LinkedList<>();
     
     // Test Steady Speed Maneuver at very start

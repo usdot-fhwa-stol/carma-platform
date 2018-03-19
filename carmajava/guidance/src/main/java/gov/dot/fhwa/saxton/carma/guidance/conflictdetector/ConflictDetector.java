@@ -16,11 +16,16 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.AxisAlignedBoundingBox;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMap;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.SimpleHashStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,90 +36,26 @@ import cav_msgs.MobilityPath;
  * 
  * Used to evaluate trajectories and mobility paths for conflicts
  */
-public class ConflictDetector<T> implements IConflictManager {
-  // protected HyperOcTreeNode<T> root; // TODO need to define the root and allow for changes in dimensions
-  // // Axis number of route values in a point on the tree
-  // private static final int DOWNTRACK_IDX = 0;
-  // private static final int CROSSTRACK_IDX = 1;
-  // private static final int TIME_IDX = 2;
-  // // The maximum size of a cell in the tree
-  // private double[] maxSize = {5,5,0.1};
-  
-  // // Conditions used for different insertion methods
-  // HyperOcTreeConditions<T> noConflictCondition = new NoConflictConditions<>(maxSize);
-  // HyperOcTreeConditions<T> sizeConditions = new MaxSizeConditions<>(maxSize);
-  // HyperOcTreeConditions<T> noInsertConditions = new NoInsertConditions<>(maxSize);
+public class ConflictDetector implements IConflictManager {
+  // Axis number of route values in a point on the tree
+  private static final int DOWNTRACK_IDX = 0;
+  private static final int CROSSTRACK_IDX = 1;
+  private static final int TIME_IDX = 2;
+  // The maximum size of a cell in the tree
+  private double[] maxSize = {5,5,0.1};
 
+  List<NSpatialHashMap> spatialMaps = new LinkedList<>();
+  private NSpatialHashMap spatialMap = new NSpatialHashMap(new AxisAlignedBoundingBox(), new SimpleHashStrategy(maxSize));
 
-  // /**
-  //  * Constructor
-  //  */
-  // protected ConflictDetectorOcTree() {}
-
-
-  // /**
-  //  * Helper function which attempts to insert a list of points into the tree using the provided conditions.
-  //  * If the allOrNothing flag is set, a failure to insert a single point will result in no points being added
-  //  * 
-  //  * @param points The list of downtrack, crosstrack, time points to add
-  //  * @param conditions HyperOcTreeConditions which defines insertion behavior of the tree
-  //  * @param allOrNothing If true, a failure to insert a single point will result in no points being added
-  //  * 
-  //  * @return A list of detected conflicts between the provided points and the current tree contents
-  //  */
-  // private List<ConflictSpace> insertWithConditions(List<Point3D> points, HyperOcTreeConditions<T> conditions, boolean allOrNothing) {
-
-  //   List<HyperOcTreeDatum<T>> insertedData = new LinkedList<>();
-  //   List<ConflictSpace> conflicts = new LinkedList<>();
-  //   ConflictSpace currentConflict = null;
-  //   int lane = 0; // TODO lane for each point
-  //   Point prevPoint = null;
-  //   for (Point p: points) {
-  //     HyperOcTreeDatum<T> datum = new HyperOcTreeDatum<T>(p, null);// TODO maybe we should do the insert with the lane information as the datum
-  //     // Failure to insert the point will mean a conflict has occurred
-  //     if (!root.insert(datum, noConflictCondition)) { 
-  //       // If no conflict is being tracked this is a new conflict
-  //       if (currentConflict == null) {
-  //         currentConflict = new ConflictSpace(p.getDim(DOWNTRACK_IDX), p.getDim(TIME_IDX), lane);
-  //       } else if (lane != currentConflict.getLane()) {
-  //         // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
-  //         currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-  //         currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
-  //         conflicts.add(currentConflict);
-  //         // Use the current point's lane but the previous points distance and time to define the start of the new conflict
-  //         currentConflict = new ConflictSpace(prevPoint.getDim(DOWNTRACK_IDX), prevPoint.getDim(TIME_IDX), lane);
-  //       } 
-  //     } else {
-  //       insertedData.add(datum); // Add the inserted point to the list of inserted points
-  //       // If we could insert the point but we are tracking a conflict then that conflict is done
-  //       if (currentConflict != null) {
-  //         currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-  //         currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
-  //         conflicts.add(currentConflict);
-  //         currentConflict = null; // Stop tracking the conflict
-  //       }
-  //     }
-  //     prevPoint = p;
-  //   }
-  //   // Close the currentConflict if it was extending past the last point
-  //   if (currentConflict != null) {
-  //     currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-  //     currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
-  //     conflicts.add(currentConflict);
-  //   }
-
-  //   // Conflicts were found so remove added data if all or nothing flag is set
-  //   if (allOrNothing && !conflicts.isEmpty()) {
-  //     remove(insertedData);
-  //   }
-  //   return conflicts;
-  // }
-
-
+  /**
+   * Constructor
+   */
+  public ConflictDetector() {}
 
   @Override
   public void addPath(MobilityPath pathMsg) {
-    
+    String senderStaticID = pathMsg.getHeader().getSenderId();
+    String planID = pathMsg.getHeader().getPlanId(); // TODO decide if needed
   }
 
 
@@ -124,55 +65,54 @@ public class ConflictDetector<T> implements IConflictManager {
   }
 
 
-  @Override
+  @Override // TODO add support for multiple maps
   public List<ConflictSpace> getConflicts(Trajectory traj, long startTime,
    cav_msgs.Route route, cav_msgs.RouteState routeState) {
     
-    // TrajectoryConverter tc = new TrajectoryConverter(60, 0.1); // TODO
-    // List<Point3DStamped> points = tc.convertToPath(traj, startTimeMS, route, routeState);
-    // List<HyperOcTreeDatum<T>> insertedData = new LinkedList<>();
-    // List<ConflictSpace> conflicts = new LinkedList<>();
-    // ConflictSpace currentConflict = null;
-    // int lane = 0; // TODO lane for each point
-    // Point prevPoint = null;
-    // for (Point p: points) {
-    //   HyperOcTreeDatum<T> datum = new HyperOcTreeDatum<T>(p, null);// TODO maybe we should do the insert with the lane information as the datum
-    //   // Failure to insert the point will mean a conflict has occurred
-    //   if (!root.insert(datum, noConflictCondition)) { 
-    //     // If no conflict is being tracked this is a new conflict
-    //     if (currentConflict == null) {
-    //       currentConflict = new ConflictSpace(p.getDim(DOWNTRACK_IDX), p.getDim(TIME_IDX), lane);
-    //     } else if (lane != currentConflict.getLane()) {
-    //       // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
-    //       currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-    //       currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
-    //       conflicts.add(currentConflict);
-    //       // Use the current point's lane but the previous points distance and time to define the start of the new conflict
-    //       currentConflict = new ConflictSpace(prevPoint.getDim(DOWNTRACK_IDX), prevPoint.getDim(TIME_IDX), lane);
-    //     } 
-    //   } else {
-    //     insertedData.add(datum); // Add the inserted point to the list of inserted points
-    //     // If we could insert the point but we are tracking a conflict then that conflict is done
-    //     if (currentConflict != null) {
-    //       currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-    //       currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
-    //       conflicts.add(currentConflict);
-    //       currentConflict = null; // Stop tracking the conflict
-    //     }
-    //   }
-    //   prevPoint = p;
-    // }
-    // // Close the currentConflict if it was extending past the last point
-    // if (currentConflict != null) {
-    //   currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
-    //   currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
-    //   conflicts.add(currentConflict);
-    // }
+    TrajectoryConverter tc = new TrajectoryConverter(60, 0.1); // TODO
+    List<RoutePointStamped> points = tc.convertToPath(traj, startTime, route, routeState);
+    List<Point3D> trajPoints = new ArrayList<>(points.size());
+    // Convert points into (downtrack, crosstrack, time);
+    for (RoutePointStamped routePoint: points) {
+      trajPoints.add(new Point3D(routePoint.getPoint().getY(), routePoint.getDowntrack(), routePoint.getStamp()));
+    }
 
-    // // Conflicts were found so remove added data if all or nothing flag is set
-    // if (allOrNothing && !conflicts.isEmpty()) {
-    //   remove(insertedData);
-    // }
-    return null;
+    List<ConflictSpace> conflicts = new LinkedList<>();
+    ConflictSpace currentConflict = null;
+    int lane = 0; // TODO lane for each point
+    Point prevPoint = null;
+    for (Point3D p: trajPoints) {
+      // Get conflicts with point
+      if (!spatialMap.getCollisions(p).isEmpty()) { 
+        // If no conflict is being tracked this is a new conflict
+        if (currentConflict == null) {
+          currentConflict = new ConflictSpace(p.getDim(DOWNTRACK_IDX), p.getDim(TIME_IDX), lane);
+        } else if (lane != currentConflict.getLane()) {
+          // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
+          currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
+          currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
+          conflicts.add(currentConflict);
+          // Use the current point's lane but the previous points distance and time to define the start of the new conflict
+          currentConflict = new ConflictSpace(prevPoint.getDim(DOWNTRACK_IDX), prevPoint.getDim(TIME_IDX), lane);
+        } 
+      } else {
+        // If we could insert the point but we are tracking a conflict then that conflict is done
+        if (currentConflict != null) {
+          currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
+          currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
+          conflicts.add(currentConflict);
+          currentConflict = null; // Stop tracking the conflict
+        }
+      }
+      prevPoint = p;
+    }
+    // Close the currentConflict if it was extending past the last point
+    if (currentConflict != null) {
+      currentConflict.setEndDowntrack(prevPoint.getDim(DOWNTRACK_IDX));
+      currentConflict.setEndTime(prevPoint.getDim(TIME_IDX));
+      conflicts.add(currentConflict);
+    }
+
+    return conflicts;
   }
 }

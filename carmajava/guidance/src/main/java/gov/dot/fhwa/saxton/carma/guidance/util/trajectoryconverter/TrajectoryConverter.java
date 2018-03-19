@@ -86,7 +86,7 @@ public class TrajectoryConverter {
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
-  public List<RoutePoint2DStamped> convertToPath(Trajectory traj, long startTimeMS, Route route, RouteState routeState) {
+  public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS, Route route, RouteState routeState) {
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers
@@ -95,7 +95,7 @@ public class TrajectoryConverter {
     IComplexManeuver complexManeuver = traj.getComplexManeuver();
 
     // Starting simulation configuration
-    List<RoutePoint2DStamped> path =  new LinkedList<RoutePoint2DStamped>();
+    List<RoutePointStamped> path =  new LinkedList<RoutePointStamped>();
     final double startTime = currentTime; 
     final double startingDowntrack = routeState.getDownTrack();
     final double startingSegDowntrack = routeState.getSegmentDownTrack();
@@ -104,7 +104,7 @@ public class TrajectoryConverter {
     // Process longitudinal maneuvers
     ////
     LongitudinalSimulationData longitudinalSimData = new LongitudinalSimulationData(currentTime, startingDowntrack, startingSegDowntrack, startingSegIdx);
-    RoutePoint2DStamped oldPathEndPoint = null;
+    RoutePointStamped oldPathEndPoint = null;
     int oldPathSize = 0;
     for (int i = 0; i < longitudinalManeuvers.size(); i++) {
       LongitudinalManeuver maneuver = longitudinalManeuvers.get(i);
@@ -148,7 +148,7 @@ public class TrajectoryConverter {
         // If no lane change occurs we will maintain the current crosstrack
         if (maneuver.getEndingRelativeLane() == 0) {
           while (currentPoint < path.size() && maneuver.getEndDistance() > path.get(currentPoint).getDowntrack()) {
-            path.get(currentPoint).getPoint().setY(currentCrosstrack);
+            path.get(currentPoint).setCrosstrack(currentCrosstrack);
             currentPoint++;
           }
         } else { // A lane change will occur in this maneuver
@@ -159,7 +159,7 @@ public class TrajectoryConverter {
           double[] coefficients = getCubicFunction(maneuver.getStartDistance(), y_0, maneuver.getEndDistance(), y_1);
           // Apply equation to relevant points
           while (currentPoint < path.size() && maneuver.getEndDistance() > path.get(currentPoint).getDowntrack()) {
-            path.get(currentPoint).getPoint().setY(solveCubic(path.get(currentPoint).getDowntrack(), coefficients));
+            path.get(currentPoint).setCrosstrack(solveCubic(path.get(currentPoint).getDowntrack(), coefficients));
             currentPoint++;
           }
           currentCrosstrack = y_1;
@@ -191,15 +191,15 @@ public class TrajectoryConverter {
    * 
    * @return The path described as ECEF points
    */
-  public List<ECEFPointStamped> toECEFPoints(List<RoutePoint2DStamped> path) {
+  public List<ECEFPointStamped> toECEFPoints(List<RoutePointStamped> path) {
     ////
     // Convert all points to ecef frame
     ////
     List<ECEFPointStamped> ecefPoints = new ArrayList<>(path.size());
-    for (RoutePoint2DStamped point: path) {
+    for (RoutePointStamped point: path) {
       // Convert point to ecef
       // Currently ignores elevation
-      Vector3 pointInSegmentFrame = new Vector3(point.getPoint().getX(), point.getPoint().getY(), 0);
+      Vector3 pointInSegmentFrame = new Vector3(point.getSegDowntrack(), point.getCrosstrack(), 0.0);
       Transform ecefToSeg = Transform.fromPoseMessage(point.getSegment().getFRDPose()); 
       Vector3 vecInECEF = ecefToSeg.apply(pointInSegmentFrame);
       // Update point
@@ -220,7 +220,7 @@ public class TrajectoryConverter {
    * 
    * @return A cav_msgs.Trajectory message. This message will be empty if the path was empty
    */
-  public cav_msgs.Trajectory pathToMessage(List<RoutePoint2DStamped> path, MessageFactory messageFactory) {
+  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory) {
     if (path.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
@@ -265,7 +265,7 @@ public class TrajectoryConverter {
    * @param route The route the vehicle is on
    */
   public LongitudinalSimulationData addLongitudinalManeuverToPath(
-    final LongitudinalManeuver maneuver, List<RoutePoint2DStamped> path,
+    final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
     final LongitudinalSimulationData startingData, final Route route) {
 
     final double startX = maneuver.getStartDistance();
@@ -291,7 +291,7 @@ public class TrajectoryConverter {
    */
   private LongitudinalSimulationData addKinematicMotionToPath(
     final double startX, final double endX, final double startV, final double endV,
-     List<RoutePoint2DStamped> path,final LongitudinalSimulationData startingData, final Route route) {
+     List<RoutePointStamped> path,final LongitudinalSimulationData startingData, final Route route) {
       final double deltaX = endX - startX;
       final double deltaV = endV - startV;
       final double startVSqr = startV * startV;
@@ -340,11 +340,9 @@ public class TrajectoryConverter {
         }
 
         // Add point to list with timestamp
-        RoutePoint2DStamped point = new RoutePoint2DStamped();
-        point.setPoint(new Point2D(currentSegDowntrack, 0));
-        point.setStamp(currentSimTime);
+        RoutePointStamped point = new RoutePointStamped(currentDowntrack, 0.0, currentSimTime);
+        point.setSegDowntrack(currentSegDowntrack);
         point.setSegment(currentSeg);
-        point.setDowntrack(currentDowntrack);
         path.add(point);
         // Update starting distance, speed, and current time
         distanceChange = accelTerm + actualStartV * timeStep;
