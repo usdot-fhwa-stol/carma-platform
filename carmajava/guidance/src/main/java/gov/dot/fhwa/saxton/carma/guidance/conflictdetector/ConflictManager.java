@@ -57,7 +57,7 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
  * The times stamps used on paths should all be referenced to the same origin
  * The current time information is provided by a passed in {@link IMobilityTimeProvider}
  */
-public class ConflictDetector implements IConflictManager {
+public class ConflictManager implements IConflictManager {
   // The maximum size of a cell in the map
   private final double[] cellSize;
   // Dimensions used for collision detection around point
@@ -73,7 +73,7 @@ public class ConflictDetector implements IConflictManager {
   /**
    * Constructor
    */
-  public ConflictDetector(double[] cellSize, double downtrackMargin, 
+  public ConflictManager(double[] cellSize, double downtrackMargin, 
    double crosstrackMargin, double timeMargin, IMobilityTimeProvider timeProvider) {
 
     this.cellSize = cellSize;
@@ -315,10 +315,3 @@ public class ConflictDetector implements IConflictManager {
     return conflicts;
   }
 }
-
-  // // The maximum size of a cell in the map
-  // private double[] cellSize = {5,5,0.1};
-  // // Dimensions used for collision detection around point
-  // private double downtrackMargin = 2.5; // meters
-  // private double crosstrackMargin = 1.0;
-  // private double timeMargin = 0.05;

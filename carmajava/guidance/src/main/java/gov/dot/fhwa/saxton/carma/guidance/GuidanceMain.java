@@ -17,6 +17,11 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictDetectorAccessor;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManagerAccessor;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.SystemUTCTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import cav_srvs.GetSystemVersion;
@@ -62,6 +67,8 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
   protected IPubSubService pubSubService;
+  
+  protected ConflictManager conflictManager;
 
   protected GuidanceExceptionHandler exceptionHandler;
 
@@ -126,6 +133,39 @@ public class GuidanceMain extends SaxtonBaseNode {
   private void initLogger(Log baseLog) {
     SaxtonLoggerProxyFactory slpf = new SaxtonLoggerProxyFactory(baseLog);
     LoggerManager.setLoggerFactory(slpf);
+  }
+
+  /**
+   * Initialize the Guidance conflict detection system
+   * Must be called after initLogger to ensure logging is provided
+   */
+  private void initConflictManager(ConnectedNode node, ILogger log) {
+    // Load params
+    ParameterTree params = node.getParameterTree();
+    double cellDowntrack = params.getDouble("conflict_map_cell_downtrack_size", 5.0);
+    double cellCrosstrack = params.getDouble("conflict_map_cell_crosstrack_size", 5.0);
+    double cellTime = params.getDouble("conflict_map_cell_time_size", 0.15);
+    
+    double[] cellSize = {cellDowntrack, cellCrosstrack, cellTime};
+
+    double downtrackMargin = params.getDouble("conflict_map_collision_downtrack_margin", 2.5);
+    double crosstrackMargin = params.getDouble("conflict_map_collision_crosstrack_margin", 1.0);
+    double timeMargin = params.getDouble("conflict_map_collision_time_margin", 0.05);
+    // Echo params
+    log.info("Param conflict_map_cell_downtrack_size: " + cellDowntrack);
+    log.info("Param conflict_map_cell_crosstrack_size: " + cellCrosstrack);
+    log.info("Param conflict_map_cell_time_size: " + cellTime);
+    log.info("Param conflict_map_collision_downtrack_margin: " + downtrackMargin);
+    log.info("Param conflict_map_collision_crosstrack_margin: " + crosstrackMargin);
+    log.info("Param conflict_map_collision_time_margin: " + timeMargin);
+    
+    // Set time strategy
+    IMobilityTimeProvider timeProvider = new SystemUTCTimeProvider();
+    // Build conflict manager
+    conflictManager = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    // Expose conflict manager to system
+    ConflictDetectorAccessor.setConflictDetector(conflictManager);
+    ConflictManagerAccessor.setConflictManager(conflictManager);
   }
 
   @Override
