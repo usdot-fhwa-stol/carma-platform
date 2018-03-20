@@ -32,8 +32,7 @@ public class StringConverterHelper {
     
     public static byte[] setDynamicLengthString(String inputString, int maxLength) {
         char[] tmp;
-        if(inputString.length() <= maxLength) {
-            inputString = "[" + inputString + "]";
+        if(inputString.length() <= maxLength && inputString.length() != 0) {
             tmp = inputString.toCharArray();   
         } else {
             tmp = DYNAMIC_STRING_DEFAULT.toCharArray();
@@ -75,20 +74,11 @@ public class StringConverterHelper {
     
     public static String readDynamicLengthString(byte[] input) {
         StringBuffer buffer = new StringBuffer();
-        boolean startRead = false;
         for(byte ch : input) {
-            // Because of the defect on asn1c compiler, we force to only put string between '[' and ']'
-            if(startRead) {
-                if(ch == 93) {
-                    startRead = false;
-                    break;
-                } else {
-                    buffer.append((char) ch);
-                }
+            if(ch == 0) {
+                break;
             } else {
-                if(ch == 91) {
-                    startRead = true;
-                }
+                buffer.append((char) ch);
             }
         }
         return buffer.toString();

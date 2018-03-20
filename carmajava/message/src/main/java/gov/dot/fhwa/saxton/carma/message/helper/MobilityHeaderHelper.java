@@ -24,7 +24,7 @@ import cav_msgs.MobilityHeader;
  */
 public class MobilityHeaderHelper {
     
-    protected static final int STATIC_ID_MAX_LENGTH = 14;
+    protected static final int STATIC_ID_MAX_LENGTH = 16;
     protected static final String BSM_ID_DEFAULT = "00000000";
     protected static final int BSM_ID_LENGTH = BSM_ID_DEFAULT.length();
     protected static final String GUID_DEFAULT = "00000000-0000-0000-0000-000000000000";

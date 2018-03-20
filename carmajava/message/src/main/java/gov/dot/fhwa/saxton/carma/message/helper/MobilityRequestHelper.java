@@ -24,10 +24,10 @@ import cav_msgs.MobilityRequest;
  */
 public class MobilityRequestHelper {
     
-    protected static final int STRATEGY_MAX_LENGTH = 48;
+    protected static final int STRATEGY_MAX_LENGTH = 50;
     protected static final int URGENCY_MIN = 0;
     protected static final int URGENCY_MAX = 1000;
-    protected static final int STRATEGY_PARAMS_MAX_LENGTH = 98;
+    protected static final int STRATEGY_PARAMS_MAX_LENGTH = 100;
 
     private MobilityHeaderHelper headerHelper;
     private byte[] strategy;
