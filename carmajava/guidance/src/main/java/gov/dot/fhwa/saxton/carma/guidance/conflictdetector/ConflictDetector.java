@@ -31,10 +31,13 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryCon
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import org.jboss.netty.util.internal.ConcurrentHashMap;
 
 import cav_msgs.MobilityPath;
 import cav_msgs.Route;
@@ -42,24 +45,34 @@ import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 /**
- * An implementation of an OcTree for use in the Conflict Detector
+ * Class Maintains a tracked set of external vehicle paths from MobilityPath and MobilityRequests messages
+ * The set of paths can be queried for collisions.
  * 
- * Used to evaluate trajectories and mobility paths for conflicts
+ * Collision detection is done with a {@link NSpatialHashMap}
+ * The path sets are synchronized making this class Thread-Safe
  */
 public class ConflictDetector implements IConflictManager {
   // The maximum size of a cell in the tree
-  private double[] maxSize = {5,5,0.1};
-  private Vector3D standardSizeVec = new Vector3D(2.5, 1.1, 1.1);
-  private double timeStep = 0.1;
-
-  private Map<String, NSpatialHashMap> mobilityPathSpatialMaps = new HashMap<>();
-  private Map<String, NSpatialHashMap> requestedPathSpatialMaps = new HashMap<>();
+  private double[] cellSize = {5,5,0.1};
+  // Dimensions used for collision detection around point
+  private double downtrackMargin = 2.5; // meters
+  private double crosstrackMargin = 1.0;
+  private double timeMargin = 0.05;
+  // The tracked paths
+  private Map<String, NSpatialHashMap> mobilityPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
+  private Map<String, NSpatialHashMap> requestedPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
 
   /**
    * Constructor
    */
-  public ConflictDetector() {}
+  public ConflictDetector(double[] cellSize, double downtrackMargin, double crosstrackMargin, double timeMargin) {
+    this.cellSize = cellSize;
+    this.downtrackMargin = downtrackMargin;
+    this.crosstrackMargin = crosstrackMargin;
+    this.timeMargin = timeMargin;
+  }
 
+  // TODO delete old paths
   @Override
   public boolean addMobilityPath(List<RoutePointStamped> path, String vehicleStaticId) {
     return addPath(path, vehicleStaticId, mobilityPathSpatialMaps);
@@ -83,7 +96,7 @@ public class ConflictDetector implements IConflictManager {
     NSpatialHashMap vehiclesPath = map.get(key);
     // If not current path for this vehicle add it 
     if (vehiclesPath == null) {
-      vehiclesPath =  NSpatialHashMapFactory.buildSpatialHashMap(maxSize);
+      vehiclesPath =  NSpatialHashMapFactory.buildSpatialHashMap(cellSize);
       map.put(key, vehiclesPath);
     }
     // Insert points
@@ -103,13 +116,13 @@ public class ConflictDetector implements IConflictManager {
     for (RoutePointStamped routePoint: path) {
       // Define bounds
       Point3D minBoundingPoint = new Point3D(
-        routePoint.getDowntrack() - standardSizeVec.getX(),
-        routePoint.getCrosstrack() - standardSizeVec.getY(),
-        routePoint.getStamp() - timeStep);
+        routePoint.getDowntrack() - downtrackMargin,
+        routePoint.getCrosstrack() - crosstrackMargin,
+        routePoint.getStamp() - timeMargin);
       Point3D maxBoundingPoint = new Point3D(
-        routePoint.getDowntrack() + standardSizeVec.getX(),
-        routePoint.getCrosstrack() + standardSizeVec.getY(),
-        routePoint.getStamp() + timeStep);
+        routePoint.getDowntrack() + downtrackMargin,
+        routePoint.getCrosstrack() + crosstrackMargin,
+        routePoint.getStamp() + timeMargin);
       // Insert point
       map.insert(new CartesianObject(Arrays.asList(minBoundingPoint, maxBoundingPoint)));
     }
@@ -204,7 +217,7 @@ public class ConflictDetector implements IConflictManager {
     // Prepare to store conflicts
     List<ConflictSpace> conflicts = new LinkedList<>();
     // Build Map for other path
-    NSpatialHashMap otherPathMap = NSpatialHashMapFactory.buildSpatialHashMap(maxSize);
+    NSpatialHashMap otherPathMap = NSpatialHashMapFactory.buildSpatialHashMap(cellSize);
     insertPoints(otherPath, otherPathMap);
 
     // Iterate over all points in the host path
