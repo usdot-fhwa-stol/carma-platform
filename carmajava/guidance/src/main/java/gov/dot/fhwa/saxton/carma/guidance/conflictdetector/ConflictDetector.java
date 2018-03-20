@@ -22,6 +22,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMap;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMapFactory;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.SimpleHashStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
@@ -33,10 +34,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import cav_msgs.MobilityPath;
 import cav_msgs.Route;
-import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
@@ -46,16 +47,13 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
  * Used to evaluate trajectories and mobility paths for conflicts
  */
 public class ConflictDetector implements IConflictManager {
-  // Axis number of route values in a point on the tree
-  private static final int DOWNTRACK_IDX = 0;
-  private static final int CROSSTRACK_IDX = 1;
-  private static final int TIME_IDX = 2;
   // The maximum size of a cell in the tree
   private double[] maxSize = {5,5,0.1};
   private Vector3D standardSizeVec = new Vector3D(2.5, 1.1, 1.1);
   private double timeStep = 0.1;
 
-  HashMap<String, NSpatialHashMap> spatialMaps = new HashMap<>();
+  private Map<String, NSpatialHashMap> mobilityPathSpatialMaps = new HashMap<>();
+  private Map<String, NSpatialHashMap> requestedPathSpatialMaps = new HashMap<>();
 
   /**
    * Constructor
@@ -63,14 +61,44 @@ public class ConflictDetector implements IConflictManager {
   public ConflictDetector() {}
 
   @Override
-  public boolean addPath(List<RoutePointStamped> path, String vehicleStaticId) {
+  public boolean addMobilityPath(List<RoutePointStamped> path, String vehicleStaticId) {
+    return addPath(path, vehicleStaticId, mobilityPathSpatialMaps);
+  }
+
+  @Override
+  public boolean addRequestedPath(List<RoutePointStamped> path, String planId) {
+    return addPath(path, planId, requestedPathSpatialMaps);
+  }
+  
+  /**
+   * Helper function fro adding paths to a map of spatial hash maps
+   * 
+   * @param path The path to add for future conflict detection
+   * @param key The key to use for identifying this path
+   * 
+   * @return True if the path could be added. False if not.
+   */
+  private boolean addPath(List<RoutePointStamped> path, String key, Map<String, NSpatialHashMap> map) {
     // Get current path for this vehicle
-    NSpatialHashMap vehiclesPath = spatialMaps.get(vehicleStaticId);
+    NSpatialHashMap vehiclesPath = map.get(key);
     // If not current path for this vehicle add it 
     if (vehiclesPath == null) {
-      vehiclesPath =  new NSpatialHashMap(new AxisAlignedBoundingBox(), new SimpleHashStrategy(maxSize));
-      spatialMaps.put(vehicleStaticId, vehiclesPath);
+      vehiclesPath =  NSpatialHashMapFactory.buildSpatialHashMap(maxSize);
+      map.put(key, vehiclesPath);
     }
+    // Insert points
+    return insertPoints(path, vehiclesPath);
+  }
+
+  /**
+   * Helper function inserts a list of RoutePointStamped into a NSpatialHashMap
+   * 
+   * @param path The points to insert
+   * @param map The map to insert points into
+   * 
+   * @return True if the path could be added. False if not.
+   */
+  private boolean insertPoints(List<RoutePointStamped> path, NSpatialHashMap map) {
     // Add points to spatial map
     for (RoutePointStamped routePoint: path) {
       // Define bounds
@@ -83,41 +111,62 @@ public class ConflictDetector implements IConflictManager {
         routePoint.getCrosstrack() + standardSizeVec.getY(),
         routePoint.getStamp() + timeStep);
       // Insert point
-      vehiclesPath.insert(new CartesianObject(Arrays.asList(minBoundingPoint, maxBoundingPoint)));
+      map.insert(new CartesianObject(Arrays.asList(minBoundingPoint, maxBoundingPoint)));
     }
     return true;
   }
   
   @Override
-  public boolean removePath(String vehicleStaticId) {
-    return spatialMaps.remove(vehicleStaticId) != null ? true :  false;
+  public boolean removeMobilityPath(String vehicleStaticId) {
+    return mobilityPathSpatialMaps.remove(vehicleStaticId) != null ? true :  false;
   }
 
+  @Override
+  public boolean removeRequestedPath(String planId) {
+    return requestedPathSpatialMaps.remove(planId) != null ? true :  false;
+  }
 
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath) {
-    
-    // TODO need to handle the different sub trees
+    // Prepare to store conflicts
     List<ConflictSpace> conflicts = new LinkedList<>();
-    Collection<NSpatialHashMap> externalPaths = spatialMaps.values();
+    // Get possible collision sets
+    Collection<NSpatialHashMap> mobilityPaths = mobilityPathSpatialMaps.values();
+    Collection<NSpatialHashMap> requestedPaths = requestedPathSpatialMaps.values();
+
+    // Iterate over all points in the host path
     ConflictSpace currentConflict = null;
     int lane = 0;
     RoutePointStamped prevPoint = null;
     
     for (RoutePointStamped routePoint: hostPath) {
       // Get lane
-      lane = RouteSegment.determinePrimaryLane(routePoint.getDowntrack());
+      lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getDowntrack());
 
-      for (NSpatialHashMap map: externalPaths) {
-
+      // Check for collisions
+      boolean hasCollision = false;
+      // Check mobility paths
+      for (NSpatialHashMap map: mobilityPaths) {
         if (map.surrounds(routePoint.getPoint())) {
           if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
-            
+            hasCollision = true;
+            break;
           }
         }
       }
-      // Get conflicts with point
-      if (!spatialMap.getCollisions(routePoint.getPoint()).isEmpty()) { 
+      if (!hasCollision) {
+        // Check requested paths
+        for (NSpatialHashMap map: requestedPaths) {
+          if (map.surrounds(routePoint.getPoint())) {
+            if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
+              hasCollision = true;
+              break;
+            }
+          }
+        }
+      }
+      // Update conflicts
+      if (hasCollision) { 
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
           currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
@@ -150,9 +199,61 @@ public class ConflictDetector implements IConflictManager {
     return conflicts;
   }
 
-@Override
-public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath) {
+  @Override
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath) {
+    // Prepare to store conflicts
+    List<ConflictSpace> conflicts = new LinkedList<>();
+    // Build Map for other path
+    NSpatialHashMap otherPathMap = NSpatialHashMapFactory.buildSpatialHashMap(maxSize);
+    insertPoints(otherPath, otherPathMap);
 
-	return null;
-}
+    // Iterate over all points in the host path
+    ConflictSpace currentConflict = null;
+    int lane = 0;
+    RoutePointStamped prevPoint = null;
+
+    for (RoutePointStamped routePoint: hostPath) {
+      // Get lane
+      lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getDowntrack());
+
+      // Check for collisions
+      boolean hasCollision = false;
+
+      if (!otherPathMap.surrounds(routePoint.getPoint())) {
+        continue;
+      }
+      
+      // Update conflicts
+      if (otherPathMap.getCollisions(routePoint.getPoint()).isEmpty()) { 
+        // If no conflict is being tracked this is a new conflict
+        if (currentConflict == null) {
+          currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
+        } else if (lane != currentConflict.getLane()) {
+          // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
+          currentConflict.setEndDowntrack(prevPoint.getDowntrack());
+          currentConflict.setEndTime(prevPoint.getStamp());
+          conflicts.add(currentConflict);
+          // Use the current point's lane but the previous points distance and time to define the start of the new conflict
+          currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegment());
+        } 
+      } else {
+        // If there were no conflicts but we are tracking a conflict then that conflict is done
+        if (currentConflict != null) {
+          currentConflict.setEndDowntrack(prevPoint.getDowntrack());
+          currentConflict.setEndTime(prevPoint.getStamp());
+          conflicts.add(currentConflict);
+          currentConflict = null; // Stop tracking the conflict
+        }
+      }
+      prevPoint = routePoint;
+    }
+    // Close the currentConflict if it was extending past the last point
+    if (currentConflict != null) {
+      currentConflict.setEndDowntrack(prevPoint.getDowntrack());
+      currentConflict.setEndTime(prevPoint.getStamp());
+      conflicts.add(currentConflict);
+    }
+
+    return conflicts;
+  }
 }
