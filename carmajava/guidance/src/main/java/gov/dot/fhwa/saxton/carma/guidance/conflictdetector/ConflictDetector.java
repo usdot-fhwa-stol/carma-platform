@@ -36,6 +36,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 
 import org.jboss.netty.util.internal.ConcurrentHashMap;
 
@@ -50,36 +53,49 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
  * 
  * Collision detection is done with a {@link NSpatialHashMap}
  * The path sets are synchronized making this class Thread-Safe
+ * 
+ * The times stamps used on paths should all be referenced to the same origin
+ * The current time information is provided by a passed in {@link IMobilityTimeProvider}
  */
 public class ConflictDetector implements IConflictManager {
-  // The maximum size of a cell in the tree
-  private double[] cellSize = {5,5,0.1};
+  // The maximum size of a cell in the map
+  private final double[] cellSize;
   // Dimensions used for collision detection around point
-  private double downtrackMargin = 2.5; // meters
-  private double crosstrackMargin = 1.0;
-  private double timeMargin = 0.05;
+  private final double downtrackMargin;
+  private final double crosstrackMargin;
+  private final double timeMargin;
   // The tracked paths
-  private Map<String, NSpatialHashMap> mobilityPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
-  private Map<String, NSpatialHashMap> requestedPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, NSpatialHashMap> mobilityPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, NSpatialHashMap> requestedPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
+  // Time provider
+  private final IMobilityTimeProvider timeProvider;
 
   /**
    * Constructor
    */
-  public ConflictDetector(double[] cellSize, double downtrackMargin, double crosstrackMargin, double timeMargin) {
+  public ConflictDetector(double[] cellSize, double downtrackMargin, 
+   double crosstrackMargin, double timeMargin, IMobilityTimeProvider timeProvider) {
+
     this.cellSize = cellSize;
     this.downtrackMargin = downtrackMargin;
     this.crosstrackMargin = crosstrackMargin;
     this.timeMargin = timeMargin;
+    this.timeProvider = timeProvider;
   }
 
-  // TODO delete old paths
   @Override
   public boolean addMobilityPath(List<RoutePointStamped> path, String vehicleStaticId) {
+    if (path == null || path.isEmpty() || vehicleStaticId == null) {
+      return false;
+    }
     return addPath(path, vehicleStaticId, mobilityPathSpatialMaps);
   }
 
   @Override
   public boolean addRequestedPath(List<RoutePointStamped> path, String planId) {
+    if (path == null || path.isEmpty() || planId == null) {
+      return false;
+    }
     return addPath(path, planId, requestedPathSpatialMaps);
   }
   
@@ -141,45 +157,35 @@ public class ConflictDetector implements IConflictManager {
 
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath) {
+    if (hostPath == null || hostPath.isEmpty()) {
+      return new LinkedList<>();
+    }
     // Prepare to store conflicts
     List<ConflictSpace> conflicts = new LinkedList<>();
-    // Get possible collision sets
-    Collection<NSpatialHashMap> mobilityPaths = mobilityPathSpatialMaps.values();
-    Collection<NSpatialHashMap> requestedPaths = requestedPathSpatialMaps.values();
 
     // Iterate over all points in the host path
     ConflictSpace currentConflict = null;
     int lane = 0;
     RoutePointStamped prevPoint = null;
+    // Get the minimum time stamp which is still viable
+    double minTime = timeProvider.getCurrentTimeSeconds();
     
     for (RoutePointStamped routePoint: hostPath) {
+      // If the provided point occurs before the current time. There is no point in evaluating it
+      if (routePoint.getStamp() < minTime) {
+        continue;
+      }
       // Get lane
       lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getDowntrack());
 
-      // Check for collisions
-      boolean hasCollision = false;
-      // Check mobility paths
-      for (NSpatialHashMap map: mobilityPaths) {
-        if (map.surrounds(routePoint.getPoint())) {
-          if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
-            hasCollision = true;
-            break;
-          }
-        }
-      }
-      if (!hasCollision) {
-        // Check requested paths
-        for (NSpatialHashMap map: requestedPaths) {
-          if (map.surrounds(routePoint.getPoint())) {
-            if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
-              hasCollision = true;
-              break;
-            }
-          }
-        }
+      // Check for collisions with mobility paths
+      boolean foundCollision = hasCollision(mobilityPathSpatialMaps, routePoint, minTime);
+      if (!foundCollision) {
+        // Check for collisions with requested paths
+        foundCollision = hasCollision(requestedPathSpatialMaps, routePoint, minTime);
       }
       // Update conflicts
-      if (hasCollision) { 
+      if (foundCollision) { 
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
           currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
@@ -212,8 +218,47 @@ public class ConflictDetector implements IConflictManager {
     return conflicts;
   }
 
+  /**
+   * Helper function returns true 
+   * if any of the spatial maps in the provided map contain elements which collide with the provided point
+   * 
+   * @param mapContainer The set of spatial hash maps which will be evaluated
+   * @param routePoint The point to check for collisions
+   * @param minTime The minimum time in seconds which is still valid for consideration
+   * 
+   * @return True if a collision was found. False if no collision was found
+   */
+  private boolean hasCollision(Map<String, NSpatialHashMap> mapContainer, RoutePointStamped routePoint, double minTime) {
+    final int TIME_IDX = 3, MAX_IDX = 1;
+    boolean hasCollision = false;
+
+    for (Entry<String, NSpatialHashMap> entry: mapContainer.entrySet()) {
+      String vehicleId = entry.getKey();
+      NSpatialHashMap map = entry.getValue();
+
+      // If the maximum time of the current map is before the minimum time being evaluated
+      // it should be skipped and removed from future consideration
+      if (minTime > map.getBounds()[TIME_IDX][MAX_IDX]) {
+        mobilityPathSpatialMaps.remove(vehicleId);
+        continue;
+      }
+      // If this map contains the point being evaluated collisions must be checked for
+      if (map.surrounds(routePoint.getPoint())) {
+        if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
+          hasCollision = true;
+          break;
+        }
+      }
+    }
+
+    return hasCollision;
+  }
+
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath) {
+    if (hostPath == null || otherPath == null || hostPath.isEmpty() || otherPath.isEmpty()) {
+      return new LinkedList<>();
+    }
     // Prepare to store conflicts
     List<ConflictSpace> conflicts = new LinkedList<>();
     // Build Map for other path
@@ -270,3 +315,10 @@ public class ConflictDetector implements IConflictManager {
     return conflicts;
   }
 }
+
+  // // The maximum size of a cell in the map
+  // private double[] cellSize = {5,5,0.1};
+  // // Dimensions used for collision detection around point
+  // private double downtrackMargin = 2.5; // meters
+  // private double crosstrackMargin = 1.0;
+  // private double timeMargin = 0.05;
