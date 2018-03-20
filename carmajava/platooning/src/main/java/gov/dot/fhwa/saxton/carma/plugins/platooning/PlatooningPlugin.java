@@ -163,9 +163,9 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
                 info.setSize((byte) 5);
                 info.setSizeLimit((byte) 10);
                 info.setLeaderId("DOT-40053");
-                info.setLeaderPosition((float) 50.3);
+                info.setLeaderDowntrackDistance((float) 50.3);
                 info.setLeaderCmdSpeed((float) 5.6);
-                info.setPlatoonPosition((byte) 4);
+                info.setHostPlatoonPosition((byte) 4);
                 info.setHostCmdSpeed((float) 5.4);
                 info.setDesiredGap((float) 45.8);
                 platooningInfoPublisher.publish(info);

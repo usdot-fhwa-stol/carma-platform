@@ -26,13 +26,13 @@ uint8    size_limit
 string   leader_id
 
 # Leader current downtrack distance
-float32  leader_position
+float32  leader_downtrack_distance
 
 # Leader command speed
 float32  leader_cmd_speed
 
 # Host position in platoon
-uint8    platoon_position
+uint8    host_platoon_position
 
 # Host adjusted command speed
 float32  host_cmd_speed
