@@ -17,18 +17,29 @@
 package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
 /**
- * Interface for a ConflictManager
- * A ConflictManager extends the behavior of a ConflictDetector 
- * by providing an interface for adding or removing current vehicle paths to the conflict detection system
+ * Static class for accessing a shared instance of a IConflictDetector
+ * During regular CARMA execution,
+*  the setConflictDetector function will be called in the guidance package on initialize
  */
 public final class ConflictDetectorAccessor {
 
   private static IConflictDetector conflictDetector;
 
+  /**
+   * Sets the conflict detector which will be shared by users of this class
+   * Note: During CARMA execution this function should only be called in the guidance package
+   * 
+   * @param conflictDetector The conflict detector to set
+   */
   public static void setConflictDetector(IConflictDetector conflictDetector) {
     ConflictDetectorAccessor.conflictDetector = conflictDetector;
   }
   
+  /**
+   * Get the shared conflict detector instance
+   * 
+   * @return an instance of a IConflictDetector or null if setConflictDetector has not been called in any thread
+   */
   public static IConflictDetector getConflictDetector() {
     return conflictDetector;
   }

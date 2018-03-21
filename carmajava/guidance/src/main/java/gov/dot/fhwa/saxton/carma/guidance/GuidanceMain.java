@@ -33,6 +33,8 @@ import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverterAccessor;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
@@ -69,6 +71,8 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected IPubSubService pubSubService;
   
   protected ConflictManager conflictManager;
+
+  protected TrajectoryConverter trajectoryConverter;
 
   protected GuidanceExceptionHandler exceptionHandler;
 
@@ -168,6 +172,25 @@ public class GuidanceMain extends SaxtonBaseNode {
     ConflictManagerAccessor.setConflictManager(conflictManager);
   }
 
+  /**
+   * Initialize the Trajectory Conversion system for use in Mobility Messages
+   * Must be called after initLogger to ensure logging is provided
+   */
+  private void initTrajectoryConverter(ConnectedNode node, ILogger log) {
+    // Load params
+    ParameterTree params = node.getParameterTree();
+    int maxPoints = params.getInteger("mobility_path_max_points", 60);
+    double timeStep = params.getDouble("mobility_path_time_step", 0.1);
+    // Echo params
+    log.info("Param mobility_path_max_points: " + maxPoints);
+    log.info("Param mobility_path_time_step: " + timeStep);
+    
+    // Build trajectory converter
+    trajectoryConverter = new TrajectoryConverter(maxPoints, timeStep);
+    // Expose trajectory converter to the system
+    TrajectoryConverterAccessor.setTrajectoryConverter(trajectoryConverter);
+  }
+
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
     initLogger(connectedNode.getLog());
@@ -191,6 +214,12 @@ public class GuidanceMain extends SaxtonBaseNode {
         guidanceExceptionHandler.handleException(e);
       }
     });
+
+    initTrajectoryConverter(connectedNode, log);
+    log.info("Guidance main TrajectoryConverter initialized");
+
+    initConflictManager(connectedNode, log);
+    log.info("Guidance main ConflictManager initialized");
 
     initPubSubManager(connectedNode, guidanceExceptionHandler);
     log.info("Guidance main PubSubManager initialized");
