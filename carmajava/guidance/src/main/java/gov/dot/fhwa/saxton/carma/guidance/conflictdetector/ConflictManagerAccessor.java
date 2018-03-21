@@ -25,10 +25,20 @@ public final class ConflictManagerAccessor {
 
   private static IConflictManager conflictManager;
 
+  /**
+   * Set the conflict manager which will be shared between objects in guidance
+   * 
+   * @param conflictManger The manager which will be shared
+   */
   public static void setConflictManager(IConflictManager conflictManager) {
     ConflictManagerAccessor.conflictManager = conflictManager;
   }
   
+  /**
+   * Get the shared conflict manager instance
+   * 
+   * @return The conflict manager instance
+   */
   public static IConflictManager getConflictManager() {
     return conflictManager;
   }

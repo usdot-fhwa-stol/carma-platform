@@ -95,7 +95,7 @@ public class NSpatialHashMap implements ISpatialStructure {
     for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
       iterators[dim] = i;
       addToCells(obj, minKey, maxKey, dim+1, iterators);
-      // Only add keys when at the base or recursion
+      // Only add keys when at the base of recursion
       if (dim == numDimensions - 1) {
         NSpatialHashKey key = new NSpatialHashKey(Arrays.copyOf(iterators, iterators.length));
         List<CartesianObject> objects = map.get(key);

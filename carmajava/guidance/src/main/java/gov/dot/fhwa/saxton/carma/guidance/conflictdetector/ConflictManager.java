@@ -72,6 +72,12 @@ public class ConflictManager implements IConflictManager {
 
   /**
    * Constructor
+   * 
+   * @param cellSize 3 element array of cell sizes for collision lookup
+   * @param downtrackMargin The downtrack distance margin within which a point will be considered in collision
+   * @param crosstrackMargin The crosstrack distance margin within which a point will be considered in collision
+   * @param timeMargin The time margin in seconds within which a point will be considered in collision
+   * @param timeProvider The object responsible to determining the time used in mobility messages
    */
   public ConflictManager(double[] cellSize, double downtrackMargin, 
    double crosstrackMargin, double timeMargin, IMobilityTimeProvider timeProvider) {
@@ -236,7 +242,7 @@ public class ConflictManager implements IConflictManager {
       // If the maximum time of the current map is before the minimum time being evaluated
       // it should be skipped and removed from future consideration
       if (minTime > map.getBounds()[TIME_IDX][MAX_IDX]) {
-        mobilityPathSpatialMaps.remove(vehicleId);
+        mapContainer.remove(vehicleId);
         continue;
       }
       // If this map contains the point being evaluated collisions must be checked for

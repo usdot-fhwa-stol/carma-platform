@@ -240,6 +240,41 @@ public class ConflictManagerTest {
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
 
+    //// Test time filtering
+    // Change time
+    timeProvider.setCurrentTime(1000);
+
+    List<RoutePointStamped> latePath = new ArrayList<>();
+    rp = new RoutePointStamped(0, 0, 1000);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    latePath.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 1000.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    latePath.add(rp);
+    rp = new RoutePointStamped(1.0, 0, 1001.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    latePath.add(rp);
+    rp = new RoutePointStamped(1.5, 0, 1001.5);
+    rp.setSegDowntrack(1.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    latePath.add(rp);
+    rp = new RoutePointStamped(2.0, 0, 1002.0);
+    rp.setSegDowntrack(2.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    latePath.add(rp);
+
+
+    conflicts = cm.getConflicts(latePath);
+    assertTrue(conflicts.isEmpty());
+    assertFalse(cm.removeMobilityPath("veh1"));
+
+    // Re-add path and reset time
+    timeProvider.setCurrentTime(0.0);
+    assertTrue(cm.addMobilityPath(path, "veh1"));
+
     //// Test conflict with multiple paths
     // Add path
     assertTrue(cm.addMobilityPath(path, "veh2"));
