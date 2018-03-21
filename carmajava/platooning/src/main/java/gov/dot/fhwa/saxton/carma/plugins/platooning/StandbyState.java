@@ -50,7 +50,7 @@ public class StandbyState implements IPlatooningState {
             log_.info("In standby state, find an avaliable plan window and change to leader state in " + traj.toString());
             plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
             // Request to replan with new state and give enough time for plugin state transition
-            tpr.requestDelayedReplan(100);
+            tpr.requestDelayedReplan(50);
         } else {
             log_.info("In standby state, asked to plan a trajectory without available winodw, ignoring " + traj.toString());
         }
@@ -60,6 +60,7 @@ public class StandbyState implements IPlatooningState {
     @Override
     public void onReceiveNegotiationMessage(NewPlan plan) {
         // ignore NewPlan message in the standby state
+        if(plan instanceof NewPlan)
         log_.info("Ignore new plan message because the plugin is current in standby state");
     }
     

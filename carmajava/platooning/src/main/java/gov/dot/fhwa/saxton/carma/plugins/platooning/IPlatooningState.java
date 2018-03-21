@@ -16,8 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import cav_msgs.MobilityIntro;
-import cav_msgs.NewPlan;
+import java.util.List;
+
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
@@ -32,18 +35,42 @@ public interface IPlatooningState {
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
     
     /**
-     * Callback method to handle negotiation requests which may result in state changing
-     * @param plan the detailed negotiation proposal from another vehicle
+     * Callback method to handle mobility requests which may result in state changing or replan
+     * @param request the detailed proposal from other vehicles
      */
-    public void onReceiveNegotiationMessage(NewPlan plan);
+    public void onReceiveMobilityRequest(MobilityRequest request);
     
     /**
-     * Get the MobilityIntro message the current state want to send out
+     * Callback method to handle mobility responses which may determine whether the plugin should execute a plan
+     * @param response the negative/positive response from other vehicles
      */
-    public MobilityIntro getNewOutboundIntroMessage();
+    public void onReceiveMobilityResponse(MobilityResponse response);
     
     /**
-     * Called by the plugin loop method and the purpose is checking if plugin needs to change state 
+     * Callback method to handle mobility operation messages which updates information on the current/surrounding platoon 
+     * @param operation the operation from surrounding vehicles
      */
-    public void checkCurrentState();
+    public void onReceiveMobilityOperation(MobilityOperation operation);
+    
+    /**
+     * Get MobilityOperation messages that the current platooning state want to send out
+     */
+    public List<MobilityOperation> getNewMobilityOperationOutbound();
+    
+    /**
+     * Get MobilityRequest messages that the current platooning state want to send out
+     */
+    public MobilityRequest getNewMobilityRequestOutbound();
+    
+    /**
+     * Get MobilityRequest messages that the current platooning state want to send out
+     */
+    public MobilityResponse getNewMobilityResponseOutbound();
+    
+    /**
+     * Called by the plugin loop method and the purpose is running jobs in the queue in sequence 
+     */
+    public default void runJobQueue() {
+        ///???
+    }
 }
