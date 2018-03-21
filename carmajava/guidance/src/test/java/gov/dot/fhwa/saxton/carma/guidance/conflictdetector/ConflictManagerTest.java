@@ -196,7 +196,45 @@ public class ConflictManagerTest {
 
   @Test
   public void testGetConflicts() {
-    
+    double[] cellSize = {1,1,1};
+    double downtrackMargin = 0.5;
+    double crosstrackMargin = 0.5;
+    double timeMargin = 0.5;
+    MockTimeProvider timeProvider = new MockTimeProvider();
+    timeProvider.setCurrentTime(0.0);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    // Build path
+    List<RoutePointStamped> path = new ArrayList<>();
+    RoutePointStamped rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+
+    // Add path
+    assertTrue(cm.addMobilityPath(path, "veh1"));
+    List<ConflictSpace> conflicts = cm.getConflicts(path);
+    assertEquals(1, conflicts.size());
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
+    // Remove path
+    assertTrue(cm.removeMobilityPath("veh1"));
+    assertTrue(cm.getConflicts(path).isEmpty());
+
+
+    // Test null path
+    assertFalse(cm.addMobilityPath(null, "veh1"));
+    // Test empty path
+    assertFalse(cm.addMobilityPath(new LinkedList<>(), "veh1"));
+    // Test null string
+    assertFalse(cm.addMobilityPath(path, null));
+    // Test remove null string
+    assertFalse(cm.removeMobilityPath(null));
   }
   
   @Test
