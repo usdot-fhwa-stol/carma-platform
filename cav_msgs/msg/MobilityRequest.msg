@@ -27,7 +27,7 @@ cav_msgs/LocationECEF          location
 string                         strategy_params
 
 # proposed trajectory
-cav_msgs/Trajectory      trajectory  
+cav_msgs/Trajectory            trajectory
 
 # time when this message is expired
-uint64                         timestamp
+uint64                         expiration

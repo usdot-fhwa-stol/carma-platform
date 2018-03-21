@@ -5,7 +5,7 @@
 #  talking about and the message creation timestamp.
 
 # sender's static ID which is its license plate
-# Example: "USDOT-49096"
+# Example: "USDOT-49096" (the maximum length is 14)
 string  sender_id
 
 # recipient's static ID

@@ -73,6 +73,7 @@ arbitrator_plugins:
   - Route Following Plugin
   - Negotiation Receiver Plugin
   - Cruising Plugin
+  - CACC Platooning Plugin
 
 # Double: Time that it takes the host vehicle to respond to a new speed command
 # Units: seconds

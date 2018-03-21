@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import cav_msgs.MobilityIntro;
 import cav_msgs.NewPlan;
+import cav_msgs.PlatooningInfo;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
@@ -38,6 +39,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     
     protected IPlatooningState state;
     protected IPublisher<MobilityIntro> mobilityIntroPublisher;
+    protected IPublisher<PlatooningInfo> platooningInfoPublisher;
     protected ISubscriber<NewPlan> newPlanSub;
     protected ISubscriber<SpeedAccel> cmdSpeedSub;
     protected IManeuverInputs maneuverInputs;
@@ -114,6 +116,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         
         // initialize necessary pubs/subs 
         mobilityIntroPublisher = pubSubService.getPublisherForTopic("mobility_intro_outbound", MobilityIntro._TYPE);
+        platooningInfoPublisher = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
         newPlanSub = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
         cmdSpeedSub = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
         maneuverInputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
@@ -150,7 +153,24 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     public void loop() throws InterruptedException {
         try {
             long loopStart = System.currentTimeMillis();
-            MobilityIntro mobilityIntro = state.getNewOutboundIntroMessage(); 
+            MobilityIntro mobilityIntro = state.getNewOutboundIntroMessage();
+            // Publish platooning information message for the usage of UI
+            // TODO once this plugin is finished, we should replace them with actual data
+            if(platooningInfoPublisher != null) {
+                PlatooningInfo info = platooningInfoPublisher.newMessage();
+                info.setState(PlatooningInfo.FOLLOWER);
+                info.setPlatoonId("b937d2f6-e618-4867-920b-c1f74f98ef1f");
+                info.setSize((byte) 5);
+                info.setSizeLimit((byte) 10);
+                info.setLeaderId("DOT-40053");
+                info.setLeaderDowntrackDistance((float) 50.3);
+                info.setLeaderCmdSpeed((float) 5.6);
+                info.setHostPlatoonPosition((byte) 4);
+                info.setHostCmdSpeed((float) 5.4);
+                info.setDesiredGap((float) 45.8);
+                platooningInfoPublisher.publish(info);
+            }
+            
             // Publish mobility Intro messages at a fixed rate if the current state of plugin wants to publish something
             if(mobilityIntro != null) {
                 mobilityIntroPublisher.publish(state.getNewOutboundIntroMessage());
