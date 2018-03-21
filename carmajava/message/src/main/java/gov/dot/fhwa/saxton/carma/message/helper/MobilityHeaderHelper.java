@@ -23,66 +23,40 @@ import cav_msgs.MobilityHeader;
  * All fields' unit in this class match the units in J2735 message.
  */
 public class MobilityHeaderHelper {
-
+    
+    protected static final int STATIC_ID_MAX_LENGTH = 16;
+    protected static final String BSM_ID_DEFAULT = "00000000";
+    protected static final int BSM_ID_LENGTH = BSM_ID_DEFAULT.length();
     protected static final String GUID_DEFAULT = "00000000-0000-0000-0000-000000000000";
-    protected static final long TIMESTAMP_DEFAULT = 0;
-    protected static final int TIMESTAMP_LENGTH = Long.toString(Long.MAX_VALUE).length(); 
     protected static final int GUID_LENGTH = GUID_DEFAULT.length();
     
-    protected byte[] senderId = new byte[GUID_LENGTH];
-    protected byte[] targetId = new byte[GUID_LENGTH];
-    protected byte[] planId = new byte[GUID_LENGTH];
-    protected byte[] timestamp = new byte[TIMESTAMP_LENGTH];
-    
-    public MobilityHeaderHelper() {
-        this.setId(GUID_DEFAULT, this.senderId);
-        this.setId(GUID_DEFAULT, this.targetId);
-        this.setId(GUID_DEFAULT, this.planId);
-        this.setTimestamp(TIMESTAMP_DEFAULT);
-    }
+    private byte[] senderId, targetId, hostBSMId, planId, timestamp;
     
     public MobilityHeaderHelper(MobilityHeader header) {
-        this.setId(header.getSenderId(), this.senderId);
-        this.setId(header.getRecipientId(), this.targetId);
-        this.setId(header.getPlanId(), this.planId);
-        this.setTimestamp(header.getTimestamp());
+        this.senderId = StringConverterHelper.setDynamicLengthString(header.getSenderId(), STATIC_ID_MAX_LENGTH);
+        this.targetId = StringConverterHelper.setDynamicLengthString(header.getRecipientId(), STATIC_ID_MAX_LENGTH);
+        this.hostBSMId = StringConverterHelper.setFixedLengthString(header.getSenderBsmId(), BSM_ID_LENGTH, BSM_ID_DEFAULT);
+        this.planId = StringConverterHelper.setFixedLengthString(header.getPlanId(), GUID_LENGTH, GUID_DEFAULT);
+        this.timestamp = StringConverterHelper.setTimestamp(header.getTimestamp());
     }
-    
+
     public byte[] getSenderId() {
         return senderId;
     }
-
-    public void setId(String inputId, byte[] field) {
-        if(inputId.length() == GUID_LENGTH) {
-            char[] tmp = inputId.toCharArray();
-            for(int i = 0; i < tmp.length; i++) {
-                field[i] = (byte) tmp[i];
-            }
-        }
-    }
-
+    
     public byte[] getTargetId() {
         return targetId;
     }
-
+    
+    public byte[] getBSMId() {
+        return hostBSMId;
+    }
+    
     public byte[] getPlanId() {
         return planId;
     }
-
+    
     public byte[] getTimestamp() {
         return timestamp;
     }
-
-    public void setTimestamp(long timestamp) {
-        String number = Long.toString(timestamp);
-        int numberOfZero = TIMESTAMP_LENGTH - number.length();
-        for(int i = 0; i < numberOfZero; i++) {
-            number = "0" + number;
-        }
-        char[] tmp = number.toCharArray();
-        for(int i = 0; i < tmp.length; i++) {
-            this.timestamp[i] = (byte) tmp[i];
-        }
-    }
-    
 }
