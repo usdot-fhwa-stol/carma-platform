@@ -229,7 +229,7 @@ public class ConflictManager implements IConflictManager {
    * @return True if a collision was found. False if no collision was found
    */
   private boolean hasCollision(Map<String, NSpatialHashMap> mapContainer, RoutePointStamped routePoint, double minTime) {
-    final int TIME_IDX = 3, MAX_IDX = 1;
+    final int TIME_IDX = 2, MAX_IDX = 1;
     boolean hasCollision = false;
 
     for (Entry<String, NSpatialHashMap> entry: mapContainer.entrySet()) {

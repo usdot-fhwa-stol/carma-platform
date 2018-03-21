@@ -17,19 +17,28 @@
 package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
 /**
- * Interface for a ConflictManager
- * A ConflictManager extends the behavior of a ConflictDetector 
- * by providing an interface for adding or removing current vehicle paths to the conflict detection system
+ * Mock implementation of the IMobilityTimeProvider for unit testing
  */
-public final class ConflictManagerAccessor {
-
-  private static IConflictManager conflictManager;
-
-  public static void setConflictManager(IConflictManager conflictManager) {
-    ConflictManagerAccessor.conflictManager = conflictManager;
-  }
+public class MockTimeProvider implements IMobilityTimeProvider {
   
-  public static IConflictManager getConflictManager() {
-    return conflictManager;
+  private double currentTime = 0.0;
+
+  /**
+   * Set the current time in seconds
+   * 
+   * @param currentTime the currentTime to set
+   */
+  public void setCurrentTime(double currentTime) {
+    this.currentTime = currentTime;
+  }
+
+  @Override
+  public double getCurrentTimeSeconds() {
+    return currentTime;
+  }
+
+  @Override
+  public long getCurrentTimeMillis() {
+    return (long) (currentTime * 1000);
   }
 }
