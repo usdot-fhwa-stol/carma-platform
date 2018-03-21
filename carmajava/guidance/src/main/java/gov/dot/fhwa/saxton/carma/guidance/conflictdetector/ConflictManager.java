@@ -176,7 +176,7 @@ public class ConflictManager implements IConflictManager {
         continue;
       }
       // Get lane
-      lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getDowntrack());
+      lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getCrosstrack());
 
       // Check for collisions with mobility paths
       boolean foundCollision = hasCollision(mobilityPathSpatialMaps, routePoint, minTime);
@@ -191,8 +191,7 @@ public class ConflictManager implements IConflictManager {
           currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
         } else if (lane != currentConflict.getLane()) {
           // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
-          currentConflict.setEndDowntrack(prevPoint.getDowntrack());
-          currentConflict.setEndTime(prevPoint.getStamp());
+          closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
           conflicts.add(currentConflict);
           // Use the current point's lane but the previous points distance and time to define the start of the new conflict
           currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegment());
@@ -200,8 +199,7 @@ public class ConflictManager implements IConflictManager {
       } else {
         // If there were no conflicts but we are tracking a conflict then that conflict is done
         if (currentConflict != null) {
-          currentConflict.setEndDowntrack(prevPoint.getDowntrack());
-          currentConflict.setEndTime(prevPoint.getStamp());
+          closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
           conflicts.add(currentConflict);
           currentConflict = null; // Stop tracking the conflict
         }
@@ -210,8 +208,7 @@ public class ConflictManager implements IConflictManager {
     }
     // Close the currentConflict if it was extending past the last point
     if (currentConflict != null) {
-      currentConflict.setEndDowntrack(prevPoint.getDowntrack());
-      currentConflict.setEndTime(prevPoint.getStamp());
+      closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
       conflicts.add(currentConflict);
     }
 
@@ -272,24 +269,16 @@ public class ConflictManager implements IConflictManager {
 
     for (RoutePointStamped routePoint: hostPath) {
       // Get lane
-      lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getDowntrack());
-
-      // Check for collisions
-      boolean hasCollision = false;
-
-      if (!otherPathMap.surrounds(routePoint.getPoint())) {
-        continue;
-      }
+      lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getCrosstrack());
       
       // Update conflicts
-      if (otherPathMap.getCollisions(routePoint.getPoint()).isEmpty()) { 
+      if (!otherPathMap.getCollisions(routePoint.getPoint()).isEmpty()) { 
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
           currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
         } else if (lane != currentConflict.getLane()) {
           // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
-          currentConflict.setEndDowntrack(prevPoint.getDowntrack());
-          currentConflict.setEndTime(prevPoint.getStamp());
+          closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
           conflicts.add(currentConflict);
           // Use the current point's lane but the previous points distance and time to define the start of the new conflict
           currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegment());
@@ -297,8 +286,7 @@ public class ConflictManager implements IConflictManager {
       } else {
         // If there were no conflicts but we are tracking a conflict then that conflict is done
         if (currentConflict != null) {
-          currentConflict.setEndDowntrack(prevPoint.getDowntrack());
-          currentConflict.setEndTime(prevPoint.getStamp());
+          closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
           conflicts.add(currentConflict);
           currentConflict = null; // Stop tracking the conflict
         }
@@ -307,11 +295,29 @@ public class ConflictManager implements IConflictManager {
     }
     // Close the currentConflict if it was extending past the last point
     if (currentConflict != null) {
-      currentConflict.setEndDowntrack(prevPoint.getDowntrack());
-      currentConflict.setEndTime(prevPoint.getStamp());
+      closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
       conflicts.add(currentConflict);
     }
 
     return conflicts;
+  }
+
+  /**
+   * Helper function to close a conflict while ensuring it has some non-zero width
+   * 
+   * @param conflict The conflict to close. Modified in place to have minimum dimensions equal to the collision margins
+   * @param endDowntrack The ending downtrack distance
+   * @param endTime the ending time
+   */
+  void closeConflict(ConflictSpace conflict, double endDowntrack, double endTime) {
+    if (endDowntrack - conflict.getStartDowntrack() < downtrackMargin) {
+      endDowntrack = conflict.getStartDowntrack() + downtrackMargin;
+    }
+    conflict.setEndDowntrack(endDowntrack);
+
+    if (endTime - conflict.getStartTime() < timeMargin) {
+      endTime = conflict.getStartTime() + timeMargin;
+    }
+    conflict.setEndTime(endTime);
   }
 }

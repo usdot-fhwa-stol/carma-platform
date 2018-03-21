@@ -203,6 +203,7 @@ public class ConflictManagerTest {
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
     ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    //// Test conflict with same path
     // Build path
     List<RoutePointStamped> path = new ArrayList<>();
     RoutePointStamped rp = new RoutePointStamped(0, 0, 0);
@@ -213,32 +214,465 @@ public class ConflictManagerTest {
     rp.setSegDowntrack(0.5);
     rp.setSegment(routeMsg.getSegments().get(0));
     path.add(rp);
+    rp = new RoutePointStamped(1.0, 0, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.5, 0, 1.5);
+    rp.setSegDowntrack(1.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(2.0, 0, 2.0);
+    rp.setSegDowntrack(2.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+
 
     // Add path
     assertTrue(cm.addMobilityPath(path, "veh1"));
+    // Check conflict with same path
     List<ConflictSpace> conflicts = cm.getConflicts(path);
     assertEquals(1, conflicts.size());
     assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
     assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(2.0, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(2.0, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+
+    //// Test conflict with multiple paths
+    // Add path
+    assertTrue(cm.addMobilityPath(path, "veh2"));
+    // Check conflict with same path
+    conflicts = cm.getConflicts(path);
+    assertEquals(1, conflicts.size());
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(2.0, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(2.0, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    
+    // Remove extra path
+    assertTrue(cm.removeMobilityPath("veh2"));
+
+    //// Test no conflict in adjacent lane
+    // Build path2
+    List<RoutePointStamped> path2 = new ArrayList<>();
+    rp = new RoutePointStamped(0, 5, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(0.5, 5, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(1.0, 5, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+
+
+    // Check no conflict in adjacent lanes
+    conflicts = cm.getConflicts(path2);
+    assertTrue(conflicts.isEmpty());
+
+    //// Test conflict in lane change
+    // Build path2
+    path2 = new ArrayList<>();
+    rp = new RoutePointStamped(0, 5, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(1.0, 0, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+
+
+    // Check conflict in lane change
+    conflicts = cm.getConflicts(path2);
+    assertEquals(1, conflicts.size());
+    assertEquals(0.5, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(1.0, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(1.0, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+
+
+    //// Test split conflicts
+    // Build path2
+    path2 = new ArrayList<>();
+    rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(1.0, 5, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(1.5, 0, 1.5);
+    rp.setSegDowntrack(1.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(2.0, 0, 2.0);
+    rp.setSegDowntrack(2.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+
+    // Check conflict
+    conflicts = cm.getConflicts(path2);
+    assertEquals(2, conflicts.size());
+    // First conflict
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
     assertEquals(0.5, conflicts.get(0).getEndDowntrack(), 0.0000001);
     assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
-    // Remove path
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    // Second conflict
+    assertEquals(1.5, conflicts.get(1).getStartDowntrack(), 0.0000001);
+    assertEquals(1.5, conflicts.get(1).getStartTime(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndDowntrack(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(1).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(1).getSegment());
+
+    //// Test conflict split on lane
+    assertTrue(cm.removeMobilityPath("veh1"));
+    // Build path
+    path = new ArrayList<>();
+    rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.0, -5, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.5, -5, 1.5);
+    rp.setSegDowntrack(1.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(2.0, -5, 2.0);
+    rp.setSegDowntrack(2.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+
+    // Add path
+    assertTrue(cm.addMobilityPath(path, "veh1"));
+
+    // Check conflict
+    conflicts = cm.getConflicts(path);
+    assertEquals(2, conflicts.size());
+    // First conflict
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    // Second conflict
+    assertEquals(0.5, conflicts.get(1).getStartDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(1).getStartTime(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndDowntrack(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndTime(), 0.0000001);
+    assertEquals(1, conflicts.get(1).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(1).getSegment());
+
+    //// Test single point conflict
+    // Build path2
+    path2 = new ArrayList<>();
+    rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+
+    // Check conflict
+    conflicts = cm.getConflicts(path2);
+    assertEquals(1, conflicts.size());
+    // First conflict
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(0 + downtrackMargin, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(0 + timeMargin, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+
+    //// Test conflict with requested path
     assertTrue(cm.removeMobilityPath("veh1"));
     assertTrue(cm.getConflicts(path).isEmpty());
+    // Build path
+    path = new ArrayList<>();
+    rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.0, -5, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.5, -5, 1.5);
+    rp.setSegDowntrack(1.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(2.0, -5, 2.0);
+    rp.setSegDowntrack(2.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+
+    // Add path as requested path
+    assertTrue(cm.addRequestedPath(path, "plan1"));
+
+    // Check conflict
+    conflicts = cm.getConflicts(path);
+    assertEquals(2, conflicts.size());
+    // First conflict
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    // Second conflict
+    assertEquals(0.5, conflicts.get(1).getStartDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(1).getStartTime(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndDowntrack(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndTime(), 0.0000001);
+    assertEquals(1, conflicts.get(1).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(1).getSegment());
 
 
-    // Test null path
-    assertFalse(cm.addMobilityPath(null, "veh1"));
-    // Test empty path
-    assertFalse(cm.addMobilityPath(new LinkedList<>(), "veh1"));
-    // Test null string
-    assertFalse(cm.addMobilityPath(path, null));
-    // Test remove null string
-    assertFalse(cm.removeMobilityPath(null));
+    //// Test null path
+    assertTrue(cm.getConflicts(null).isEmpty());
+    //// Test empty path
+    assertTrue(cm.getConflicts(new LinkedList<>()).isEmpty());
+    //// Remove path
+    assertTrue(cm.removeRequestedPath("plan1"));
+    assertTrue(cm.getConflicts(path).isEmpty());
+    //// Test conflict with no path stored
+    assertTrue(cm.getConflicts(path).isEmpty());
   }
   
   @Test
   public void testGetConflictsBetweenPaths() {
-    
+    double[] cellSize = {1,1,1};
+    double downtrackMargin = 0.5;
+    double crosstrackMargin = 0.5;
+    double timeMargin = 0.5;
+    MockTimeProvider timeProvider = new MockTimeProvider();
+    timeProvider.setCurrentTime(0.0);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    //// Test conflict with same path
+    // Build path
+    List<RoutePointStamped> path = new ArrayList<>();
+    RoutePointStamped rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.0, 0, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.5, 0, 1.5);
+    rp.setSegDowntrack(1.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(2.0, 0, 2.0);
+    rp.setSegDowntrack(2.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+
+    // Check conflict with same path
+    List<ConflictSpace> conflicts = cm.getConflicts(path, path);
+    assertEquals(1, conflicts.size());
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(2.0, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(2.0, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+
+    //// Test no conflict in adjacent lane
+    // Build path2
+    List<RoutePointStamped> path2 = new ArrayList<>();
+    rp = new RoutePointStamped(0, 5, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(0.5, 5, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(1.0, 5, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+
+
+    // Check no conflict in adjacent lanes
+    conflicts = cm.getConflicts(path2, path);
+    assertTrue(conflicts.isEmpty());
+
+    //// Test conflict in lane change
+    // Build path2
+    path2 = new ArrayList<>();
+    rp = new RoutePointStamped(0, 5, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(1.0, 0, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+
+
+    // Check conflict in lane change
+    conflicts = cm.getConflicts(path2, path);
+    assertEquals(1, conflicts.size());
+    assertEquals(0.5, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(1.0, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(1.0, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+
+
+    //// Test split conflicts
+    // Build path2
+    path2 = new ArrayList<>();
+    rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(1.0, 5, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(1.5, 0, 1.5);
+    rp.setSegDowntrack(1.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+    rp = new RoutePointStamped(2.0, 0, 2.0);
+    rp.setSegDowntrack(2.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+
+    // Check conflict
+    conflicts = cm.getConflicts(path2, path);
+    assertEquals(2, conflicts.size());
+    // First conflict
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    // Second conflict
+    assertEquals(1.5, conflicts.get(1).getStartDowntrack(), 0.0000001);
+    assertEquals(1.5, conflicts.get(1).getStartTime(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndDowntrack(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(1).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(1).getSegment());
+
+    //// Test conflict split on lane
+    // Build path
+    path = new ArrayList<>();
+    rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(0.5, 0, 0.5);
+    rp.setSegDowntrack(0.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.0, -5, 1.0);
+    rp.setSegDowntrack(1.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(1.5, -5, 1.5);
+    rp.setSegDowntrack(1.5);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+    rp = new RoutePointStamped(2.0, -5, 2.0);
+    rp.setSegDowntrack(2.0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path.add(rp);
+
+    // Check conflict
+    conflicts = cm.getConflicts(path, path);
+    assertEquals(2, conflicts.size());
+    // First conflict
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    // Second conflict
+    assertEquals(0.5, conflicts.get(1).getStartDowntrack(), 0.0000001);
+    assertEquals(0.5, conflicts.get(1).getStartTime(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndDowntrack(), 0.0000001);
+    assertEquals(2.0, conflicts.get(1).getEndTime(), 0.0000001);
+    assertEquals(1, conflicts.get(1).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(1).getSegment());
+
+    //// Test single point conflict
+    // Build path2
+    path2 = new ArrayList<>();
+    rp = new RoutePointStamped(0, 0, 0);
+    rp.setSegDowntrack(0);
+    rp.setSegment(routeMsg.getSegments().get(0));
+    path2.add(rp);
+
+    // Check conflict
+    conflicts = cm.getConflicts(path2, path);
+    assertEquals(1, conflicts.size());
+    // First conflict
+    assertEquals(0, conflicts.get(0).getStartDowntrack(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getStartTime(), 0.0000001);
+    assertEquals(0 + downtrackMargin, conflicts.get(0).getEndDowntrack(), 0.0000001);
+    assertEquals(0 + timeMargin, conflicts.get(0).getEndTime(), 0.0000001);
+    assertEquals(0, conflicts.get(0).getLane());
+    assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+
+    //// Test null path
+    assertTrue(cm.getConflicts(null, path).isEmpty());
+    assertTrue(cm.getConflicts(path, null).isEmpty());
+    assertTrue(cm.getConflicts(null, null).isEmpty());
+    //// Test empty path
+    assertTrue(cm.getConflicts(new LinkedList<>(), path).isEmpty());
+    assertTrue(cm.getConflicts(path, new LinkedList<>()).isEmpty());
+    assertTrue(cm.getConflicts(new LinkedList<>(), new LinkedList<>()).isEmpty());
   }
 }
