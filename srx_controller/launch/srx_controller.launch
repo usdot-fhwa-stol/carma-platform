@@ -8,6 +8,6 @@
         <param name="can_device" value="$(arg srx_controller_can_device)" />
         <remap from="received_messages" to="$(arg srx_controller_can_device)/received_messages" />
         <remap from="sent_messages" to="$(arg srx_controller_can_device)/sent_messages" />
-        <rosparam param="can_ids">['1a0','111','113','114','1B0']</rosparam>
+        <rosparam param="can_ids">['1a0','111','113','114','115','1B0']</rosparam>
     </node>
 </launch>
