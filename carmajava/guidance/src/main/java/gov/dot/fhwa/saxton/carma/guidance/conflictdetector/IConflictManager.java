@@ -43,11 +43,11 @@ public interface IConflictManager extends IConflictDetector{
    * 
    * @param path The path to add for future conflict detection
    * @param planId The plan id of MobilityRequest message used to generate this path
+   * @param vehicleStaticId The static vehicle mobility id
    * 
    * @return True if the path could be added. False if not.
    */
-  boolean addRequestedPath(List<RoutePointStamped> path, String planId);
-
+  boolean addRequestedPath(List<RoutePointStamped> path, String planId, String vehicleStaticId);
 
   /**
    * Removes from the ConflictManager the MobilityPath belonging to the associated VehicleStaticId
