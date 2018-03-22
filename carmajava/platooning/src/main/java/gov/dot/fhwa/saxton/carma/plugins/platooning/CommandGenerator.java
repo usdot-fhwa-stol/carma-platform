@@ -101,6 +101,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             log_.debug("A speed command is generated from pid controller: " + speedCmd_ + " m/s");
         } else {
             log_.warn("CommandGenerator can not find the leader, starting latching speed commands if complex maneuver is still running");
+            // TODO if there is no leader avaliable, we should change back to Leader State and rejoin other platoon later
             speedCmd_.set(pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
             distanceGapController_.reset();
         }

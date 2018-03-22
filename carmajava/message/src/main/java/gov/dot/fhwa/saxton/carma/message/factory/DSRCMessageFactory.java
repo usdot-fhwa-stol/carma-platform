@@ -26,10 +26,8 @@ public class DSRCMessageFactory {
         switch(messageType) {
         case "BSM":
             return new BSMMessage(node, log, factory);
-        case "MobilityIntro":
-            return new MobilityIntroductionMessage(node, log, factory);
-        case "MobilityAck":
-            return new MobilityAckMessage(node, log, factory);
+        case "MobilityRequest":
+            return new MobilityRequestMessage(log, factory);
         default:
             return null;
         }

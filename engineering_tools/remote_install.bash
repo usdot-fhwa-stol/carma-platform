@@ -179,6 +179,7 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 	FULL_VERSION_ID="${VERSION}.$(sed -n 1p version)-$(sed -n 2p version)"
 	FULL_VERSION_ID="$(echo "${FULL_VERSION_ID}" | tr \( \- | tr -d \) )" # Replace bad characters ( and )
 	echo "Version appears to be: ${FULL_VERSION_ID}"
+	rm version
 
 	# Helper function for determining the index of a substring in a string
 	substring_index () {

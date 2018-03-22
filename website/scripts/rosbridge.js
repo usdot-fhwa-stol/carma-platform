@@ -25,6 +25,7 @@ var ip = CarmaJS.Config.getIP(); // TODO: Update with proper environment IP addr
 // Topics
 var t_system_alert = 'system_alert';
 var t_available_plugins = 'plugins/available_plugins';
+var t_controlling_plugins = 'plugins/controlling_plugins'; 
 var t_nav_sat_fix = 'nav_sat_fix';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
@@ -550,7 +551,7 @@ function showPluginOptions() {
 
         for (i = 0; i < pluginList.length; i++) {
 
-            var cbTitle = pluginList[i].name + ' ' + pluginList[i].versionId;
+            var cbTitle = pluginList[i].name + ' ' + pluginList[i].versionId + ' (' + pluginList[i].name.trim().match(/\b(\w)/g).join('') + ')'; //get abbreviation;
             var cbId = pluginList[i].name.replace(/\s/g, '_') + '&' + pluginList[i].versionId.replace(/\./g, '_');
             var isChecked = pluginList[i].activated;
             var isRequired = pluginList[i].required;
@@ -1117,6 +1118,51 @@ function showDriverStatus() {
 }
 
 /*
+    Show which plugins are controlling the lateral and longitudinal manuevers.
+*/
+function showControllingPlugins()
+{
+        var listenerControllingPlugins = new ROSLIB.Topic({
+            ros: ros,
+            name: t_controlling_plugins,
+            messageType: 'cav_msgs/ActiveManeuvers'
+        });
+
+        listenerControllingPlugins.subscribe(function (message) {
+            insertNewTableRow('tblFirstB', 'Lon Plugin', message.longitudinal_plugin);
+            insertNewTableRow('tblFirstB', 'Lon Manuever', message.longitudinal_maneuver);
+            insertNewTableRow('tblFirstB', 'Lon Start Dist', message.longitudinal_start_dist.toFixed(6));
+            insertNewTableRow('tblFirstB', 'Lon End Dist', message.longitudinal_end_dist.toFixed(6));
+            insertNewTableRow('tblFirstB', 'Lat Plugin', message.lateral_plugin);
+            insertNewTableRow('tblFirstB', 'Lat Maneuver', message.lateral_maneuver);
+            insertNewTableRow('tblFirstB', 'Lat Start Dist', message.lateral_start_dist.toFixed(6));
+            insertNewTableRow('tblFirstB', 'Lat End Dist', message.lateral_end_dist.toFixed(6));
+
+        //Longitudinal Controlling Plugin
+        var spanLonPlugin = document.getElementById('spanLonPlugin');
+
+        if (spanLonPlugin != null && spanLonPlugin != 'undefined'){
+            if (message.longitudinal_plugin.trim().length > 0) {
+                spanLonPlugin.innerHTML = message.longitudinal_plugin.trim().match(/\b(\w)/g).join(''); //abbreviation
+            }
+            else {
+                spanLonPlugin.innerHTML = '';
+            }
+        }
+
+        //Lateral Controlling Plugin
+        var spanLatPlugin = document.getElementById('spanLatPlugin');
+
+        if (spanLatPlugin != null && spanLatPlugin != 'undefined'){
+            if (message.lateral_plugin.trim().length > 0) {
+                spanLatPlugin.innerHTML = message.lateral_plugin.trim().match(/\b(\w)/g).join(''); //abbreviation
+            }else{
+                spanLatPlugin.innerHTML = '';
+            }
+        }
+   });
+}
+/*
     Show the Lateral Control Driver message
 */
 function checkLateralControlDriver() {
@@ -1497,9 +1543,9 @@ function showStatusandLogs() {
     showCANSpeeds();
     showDiagnostics();
     showDriverStatus();
+    showControllingPlugins();
     checkLateralControlDriver();
     showUIInstructions();
-
     mapOtherVehicles();
 }
 

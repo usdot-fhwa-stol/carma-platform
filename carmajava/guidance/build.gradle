@@ -61,6 +61,8 @@ dependencies {
   compile project(':guidance_plugin_api')
   compile project(':speedharm')
   compile project(':rosutils')
+  compile project(':route')
+  compile project(':platooning')
   compile name: 'saxton-utils-2.0.0'
   compile project(':geometry')
 

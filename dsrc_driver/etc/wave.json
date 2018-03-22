@@ -28,16 +28,30 @@
     "priority" : "3"
   },
   {
-    "name" : "MobilityIntro",
+    "name" : "MobilityRequest",
     "psid" : "BFEE",
     "dsrc_id" : "240",
     "channel" : "172",
     "priority" : "6"
   },
   {
-    "name" : "MobilityAck",
+    "name" : "MobilityResponse",
+    "psid" : "BFEE",
+    "dsrc_id" : "241",
+    "channel" : "172",
+    "priority" : "6"
+  },
+  {
+    "name" : "MobilityOperation",
     "psid" : "BFEE",
     "dsrc_id" : "242",
+    "channel" : "172",
+    "priority" : "6"
+  },
+  {
+    "name" : "MobilityPath",
+    "psid" : "BFEE",
+    "dsrc_id" : "243",
     "channel" : "172",
     "priority" : "6"
   }
