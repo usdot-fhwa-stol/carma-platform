@@ -22,6 +22,8 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.route.Route;
+import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -33,9 +35,6 @@ import org.ros.rosjava_geometry.Vector3;
 
 import cav_msgs.LocationECEF;
 import cav_msgs.LocationOffsetECEF;
-import cav_msgs.Route;
-import cav_msgs.RouteSegment;
-import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
@@ -58,6 +57,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   private static final double CM_PER_M = 100.0;
   private static final double SEC_PER_MS = 0.001;
   private static final double MS_PER_SEC = 1000;
+  private static final double DISTANCE_BACKWARD_TO_SEARCH = 500; //m
+  private static final double DISTANCE_FORWARD_TO_SEARCH = 500; //m
 
   /**
    * Constructor
@@ -71,7 +72,9 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   @Override
-  public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS, Route route, RouteState routeState) {
+  public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
+   Route route, double downtrack, double crosstrack,
+   RouteSegment currentSegment, double segDowntrack, int lane) {
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers
@@ -82,9 +85,9 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     // Starting simulation configuration
     List<RoutePointStamped> path =  new LinkedList<RoutePointStamped>();
     final double startTime = currentTime; 
-    final double startingDowntrack = routeState.getDownTrack();
-    final double startingSegDowntrack = routeState.getSegmentDownTrack();
-    final int startingSegIdx = routeState.getCurrentSegment().getPrevWaypoint().getWaypointId();  
+    final double startingDowntrack = downtrack;
+    final double startingSegDowntrack = segDowntrack;
+    final int startingSegIdx = currentSegment.getUptrackWaypoint().getWaypointId();  
     ////
     // Process longitudinal maneuvers
     ////
@@ -115,8 +118,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     // Process Lateral Maneuvers
     ////
     int currentPoint = 0;
-    double currentCrosstrack = routeState.getCrossTrack();
-    int currentLane = routeState.getLaneIndex();
+    double currentCrosstrack = crosstrack;
+    int currentLane = lane;
     for (int i = 0; i < lateralManeuvers.size(); i++) {
       if (currentPoint >= path.size()) {
         break;
@@ -192,8 +195,42 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
   
   @Override
-  public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, cav_msgs.Route route, cav_msgs.RouteState routeState) {
-    return null;
+  public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, Route route, RouteSegment currentSegment, double segDowntrack) {
+    // Get segments within DSRC range
+    final int segmentIdx = currentSegment.getUptrackWaypoint().getWaypointId();
+    final List<cav_msgs.RouteSegment> segments = route.findRouteSubsection(segmentIdx, segDowntrack, DISTANCE_BACKWARD_TO_SEARCH, DISTANCE_FORWARD_TO_SEARCH);
+    // Get starting location
+    final cav_msgs.LocationECEF startMsg = trajMsg.getLocation();
+    Vector3 ecefPoint = new Vector3(startMsg.getEcefX(), startMsg.getEcefY(), startMsg.getEcefZ());
+    // Get starting segment and remaining segments to search
+    RouteSegment startingSegment = route.routeSegmentOfPoint(new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), segments);
+    int startIdx = startingSegment.getUptrackWaypoint().getWaypointId();
+
+    segments = segments.subList(startIdx, segments.size() - 1);
+
+    // Build list of route points
+    List<RoutePointStamped> routePoints;
+    // Get starting time
+    double time = startMsg.getTimestamp() / 1000L;
+    // Get starting route point
+    Transform ecefToSegment = startingSegment.getECEFToSegmentTransform();
+    Vector3 segmentPoint = ecefToSegment.apply(new Vector3(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()));
+    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time);
+    routePoints.add(routePoint);
+    // Iterate over offsets
+    for (LocationOffsetECEF offset: trajMsg.getOffsets()) {
+      time += this.timeStep;
+      ecefPoint = new Vector3(
+        ecefPoint.getX() + offset.getOffsetX(),
+        ecefPoint.getY() + offset.getOffsetY(),
+        ecefPoint.getZ() + offset.getOffsetZ()
+      );
+      segmentPoint = ecefToSegment.apply(ecefPoint);
+      
+      routePoints.add(new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time));
+    }
+    
+    return routePoints;
   }
 
   @Override

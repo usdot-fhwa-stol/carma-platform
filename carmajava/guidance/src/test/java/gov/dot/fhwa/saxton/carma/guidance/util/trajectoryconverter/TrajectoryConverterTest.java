@@ -58,7 +58,7 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 public class TrajectoryConverterTest {
 
   private IPlugin mockPlugin;
-  private Route route;
+  private cav_msgs.Route route;
   private cav_msgs.Route routeMsg;
 
 
@@ -141,8 +141,9 @@ public class TrajectoryConverterTest {
     traj.addManeuver(futureLaneChange1);
     traj.addManeuver(futureLaneChange2);
 
+
     // Call function
-    ecefPath = tc.toECEFPoints(tc.convertToPath(traj, 0, routeMsg, routeState));
+    ecefPath = tc.toECEFPoints(tc.convertToPath(traj, 0, route, 0, 0, route.getSegments().get(0), 0, 0));
     assertEquals(112, ecefPath.size());
 
     // Check starting point
@@ -188,7 +189,7 @@ public class TrajectoryConverterTest {
     when(steadySpeed.getEndDistance()).thenReturn(endingData.downtrack);
 
     // Call function
-    LongitudinalSimulationData result = tc.addLongitudinalManeuverToPath(steadySpeed, path, startingData, routeMsg);
+    LongitudinalSimulationData result = tc.addLongitudinalManeuverToPath(steadySpeed, path, startingData, route);
     assertTrue(endingData.almostEquals(result, 0.01));
 
     // Check number of points
@@ -221,7 +222,7 @@ public class TrajectoryConverterTest {
     when(steadySpeed.getEndDistance()).thenReturn(endingData.downtrack);
 
     // Call function
-    result = tc.addLongitudinalManeuverToPath(steadySpeed, path, startingData, routeMsg);
+    result = tc.addLongitudinalManeuverToPath(steadySpeed, path, startingData, route);
     assertTrue(endingData.almostEquals(result, 0.01));
 
     // Check number of points
@@ -254,7 +255,7 @@ public class TrajectoryConverterTest {
     when(speedUp.getEndDistance()).thenReturn(endingData.downtrack);
 
     // Call function
-    result = tc.addLongitudinalManeuverToPath(speedUp, path, startingData, routeMsg);
+    result = tc.addLongitudinalManeuverToPath(speedUp, path, startingData, route);
     assertTrue(endingData.almostEquals(result, 0.01));
 
     // Check number of points
@@ -288,7 +289,7 @@ public class TrajectoryConverterTest {
     when(slowDown.getEndDistance()).thenReturn(endingData.downtrack);
 
     // Call function
-    result = tc.addLongitudinalManeuverToPath(slowDown, path, startingData, routeMsg);
+    result = tc.addLongitudinalManeuverToPath(slowDown, path, startingData, route);
     assertTrue(endingData.almostEquals(result, 0.01));
 
     // Check number of points
