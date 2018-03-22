@@ -103,7 +103,10 @@ public class GuidanceMain extends SaxtonBaseNode {
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands, tracking);
-    PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs, routeService, node);
+    PluginManager pluginManager = new PluginManager(
+      stateMachine, pubSubService, guidanceCommands, maneuverInputs,
+      routeService, node, conflictManager, trajectoryConverter
+      );
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor);
     
     tracking.setTrajectoryExecutor(trajectoryExecutor);
@@ -142,6 +145,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   /**
    * Initialize the Guidance conflict detection system
    * Must be called after initLogger to ensure logging is provided
+   * Must be called before initExecutor
    */
   private void initConflictManager(ConnectedNode node, ILogger log) {
     // Load params
@@ -167,14 +171,12 @@ public class GuidanceMain extends SaxtonBaseNode {
     IMobilityTimeProvider timeProvider = new SystemUTCTimeProvider();
     // Build conflict manager
     conflictManager = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
-    // Expose conflict manager to system
-    ConflictDetectorAccessor.setConflictDetector(conflictManager);
-    ConflictManagerAccessor.setConflictManager(conflictManager);
   }
 
   /**
    * Initialize the Trajectory Conversion system for use in Mobility Messages
    * Must be called after initLogger to ensure logging is provided
+   * Must be called before initExecutor
    */
   private void initTrajectoryConverter(ConnectedNode node, ILogger log) {
     // Load params
@@ -187,8 +189,6 @@ public class GuidanceMain extends SaxtonBaseNode {
     
     // Build trajectory converter
     trajectoryConverter = new TrajectoryConverter(maxPoints, timeStep);
-    // Expose trajectory converter to the system
-    TrajectoryConverterAccessor.setTrajectoryConverter(trajectoryConverter);
   }
 
   @Override
