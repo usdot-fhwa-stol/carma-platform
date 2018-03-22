@@ -80,16 +80,16 @@ public interface ITrajectoryConverter {
   List<ECEFPointStamped> toECEFPoints(List<RoutePointStamped> path);
 
    /**
-   * Helper function for converting a List of ECEFPointStamped into List of RoutePointStamped
+   * Helper function for converting a cav_msgs.Trajectory into List of RoutePointStamped
    * 
-   * @param path The list of ECEFPointStamped to be converted
+   * @param trajMsg The message to be converted
    * @param route The current route
    * @param routeState The current route state
    * 
    * @return The path described as points along a route
    */
-  List<RoutePointStamped> toRoutePointStamped(List<ECEFPointStamped> path, cav_msgs.Route route, cav_msgs.RouteState routeState);
-
+  public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, cav_msgs.Route route, cav_msgs.RouteState routeState);
+  
   /**
    * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
    * 

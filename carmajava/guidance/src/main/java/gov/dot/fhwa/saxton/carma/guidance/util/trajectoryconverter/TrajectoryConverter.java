@@ -190,10 +190,10 @@ public class TrajectoryConverter implements ITrajectoryConverter {
 
     return ecefPoints;
   }
-  //TODO
+  
   @Override
-  public List<RoutePointStamped> toRoutePointStamped(List<ECEFPointStamped> path, cav_msgs.Route route, cav_msgs.RouteState routeState) {
-    return new LinkedList<>();
+  public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, cav_msgs.Route route, cav_msgs.RouteState routeState) {
+    return null;
   }
 
   @Override
