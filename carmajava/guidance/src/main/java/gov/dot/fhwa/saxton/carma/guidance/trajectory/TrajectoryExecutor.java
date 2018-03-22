@@ -59,8 +59,8 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     protected Trajectory currentTrajectory;
     protected Tracking tracking_;
     protected boolean bufferedTrajectoryRunning = false;
-    protected AtomicReference<RouteState> curRouteState;
-    protected AtomicReference<Route> curRoute;
+    protected AtomicReference<RouteState> curRouteState = new AtomicReference<>();
+    protected AtomicReference<Route> curRoute = new AtomicReference<>();
 
     protected double maxAccel;
     protected long sleepDurationMillis = 100;
