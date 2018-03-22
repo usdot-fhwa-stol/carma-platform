@@ -36,7 +36,6 @@ import cav_msgs.LocationOffsetECEF;
 import cav_msgs.Route;
 import cav_msgs.RouteSegment;
 import cav_msgs.RouteState;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point2D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
@@ -52,7 +51,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
  * Crosstrack distance is preserved across all traversed route segments
  * Note: This class will become less reliable when dealing with lane changes along tight curves and changing lane widths
  */
-public class TrajectoryConverter {
+public class TrajectoryConverter implements ITrajectoryConverter {
 
   private final int maxPointsInPath;
   private final double timeStep;
@@ -71,21 +70,7 @@ public class TrajectoryConverter {
     this.timeStep = timeStep;
   }
 
-  /**
-   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
-   * 
-   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
-   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
-   * Then any complex maneuvers are added to the path
-   * Finally all points are converted into the ECEF frame
-   * 
-   * @param traj The trajectory to convert
-   * @param currentTimeMs The starting time for this path in ms 
-   * @param route A route message containing all possible route segments
-   * @param routeState A route state message containing the current segment and progress along the route
-   * 
-   * @return A list of downtrack, crosstrack points associated with time stamps and segments
-   */
+  @Override
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS, Route route, RouteState routeState) {
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
@@ -184,14 +169,8 @@ public class TrajectoryConverter {
     return path;
   }
 
-  /**
-   * Helper function for converting a List of RoutePoint2DStamped into List of ECEFPointStamped
-   * 
-   * @param path The list of RoutePoint2DStamped to be converted
-   * 
-   * @return The path described as ECEF points
-   */
-  public static List<ECEFPointStamped> toECEFPoints(List<RoutePointStamped> path) {
+  @Override
+  public List<ECEFPointStamped> toECEFPoints(List<RoutePointStamped> path) {
     ////
     // Convert all points to ecef frame
     ////
@@ -211,30 +190,14 @@ public class TrajectoryConverter {
 
     return ecefPoints;
   }
-
-   /**
-   * TODO
-   * Helper function for converting a List of ECEFPointStamped into List of RoutePointStamped
-   * 
-   * @param path The list of ECEFPointStamped to be converted
-   * @param route The current route
-   * @param routeState The current route state
-   * 
-   * @return The path described as points along a route
-   */
-  public static List<RoutePointStamped> toRoutePointStamped(List<ECEFPointStamped> path, cav_msgs.Route route, cav_msgs.RouteState routeState) {
+  //TODO
+  @Override
+  public List<RoutePointStamped> toRoutePointStamped(List<ECEFPointStamped> path, cav_msgs.Route route, cav_msgs.RouteState routeState) {
     return new LinkedList<>();
   }
 
-  /**
-   * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
-   * 
-   * @param path The list of ecef points and times which defines the path
-   * @param messageFactory The message factory which will be used to build this message
-   * 
-   * @return A cav_msgs.Trajectory message. This message will be empty if the path was empty
-   */
-  public static cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory) {
+  @Override
+  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory) {
     if (path.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
@@ -270,14 +233,7 @@ public class TrajectoryConverter {
     return pathMsg;
   }
 
-  /**
-   * Function which converts and individual Simple Longitudinal Maneuver to a path based on starting configuration
-   * 
-   * @param maneuver The maneuver to convert
-   * @param path The list which will store the generated points
-   * @param startingData The starting configuration of the vehicle
-   * @param route The route the vehicle is on
-   */
+  @Override
   public LongitudinalSimulationData addLongitudinalManeuverToPath(
     final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
     final LongitudinalSimulationData startingData, final Route route) {
