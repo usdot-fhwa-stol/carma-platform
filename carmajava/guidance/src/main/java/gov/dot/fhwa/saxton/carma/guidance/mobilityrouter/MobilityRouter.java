@@ -56,6 +56,9 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * Handles incoming MobilityAck, MobilityPath, MobilityRequest, and MobilityOperations messages and 
  * route them to the appropriately registered handler callback based on the incoming messages strategy
  * string. Also handles ignoring messages not directed at the host vehicle.
+ * <p>
+ * Also handles publication of ACK/NACK responses to inbound MobilityRequest messages based on plugin
+ * handler return codes.
  */
 public class MobilityRouter extends GuidanceComponent implements IMobilityRouter {
 
@@ -174,9 +177,21 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         return header.getSenderId().equals("");
     }
 
-    private void fireMobilityRequestCallback(MobilityRequestHandler handler, MobilityRequest msg, boolean hasConflict, double conflictStartDist, double conflictEndDist, double conflictStartTime, double conflictEndTime) {
+    /**
+     * Handles the mobility request callback execution in a separate thread.
+     * <p>
+     * Also uses the plugin's returned {@link MobilityRequestResponse} value to determine how to proceed,
+     * if nacked or ignored in special cases the path will not be added to the set of known paths in potential
+     * conflict analysis.
+     * 
+     * @param handler the callback to be invoked in the background thread
+     * @param msg The MobilityRequest message being handled
+     * @param hasConflict True if the MobilityRequest message has a conflict that needs to be resolved, false o.w.
+     * @param conflictSpace The spatial data describing the conflict, null if has conflict is false
+     */
+    private void fireMobilityRequestCallback(MobilityRequestHandler handler, MobilityRequest msg, boolean hasConflict, ConflictSpace conflictSpace) {
         new Thread(() -> {
-            MobilityRequestResponse resp = handler.handleMobilityRequestMessage(msg, hasConflict, conflictStartDist, conflictEndDist, conflictStartTime, conflictEndTime);
+            MobilityRequestResponse resp = handler.handleMobilityRequestMessage(msg, hasConflict, conflictSpace);
 
             // Initialize the response message
             MobilityAck respMsg = ackPub.newMessage();
@@ -202,16 +217,36 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName()).start();
     }
 
+    /**
+     * Handles the mobility ack callback execution in a separate thread.
+     * 
+     * @param handler the callback to be invoked in the background thread
+     * @param msg The MobilityAck message being handled
+     */
     private void fireMobilityAckCallback(MobilityAckHandler handler, MobilityAck msg) {
         new Thread(() -> handler.handleMobilityAckMessage(msg),
                 "MobilityAckHandlerCallback:" + handler.getClass().getSimpleName()).start();
     }
 
+    /**
+     * Handles the mobility operations callback execution in a separate thread.
+     * 
+     * @param handler the callback to be invoked in the background thread
+     * @param msg The MobilityOperation message being handled
+     */
     private void fireMobilityOperationCallback(MobilityOperationHandler handler, MobilityOperation msg) {
         new Thread(() -> handler.handleMobilityOperationMessage(msg),
                 "MobilityOperationHandlerCallback:" + handler.getClass().getSimpleName()).start();
     }
 
+    /**
+     * Handles the mobility path callback execution in a separate thread.
+     * 
+     * @param handler the callback to be invoked in the background thread
+     * @param msg The MobilityOperation message being handled
+     * @param hasConflict True if the MobilityPath message has a conflict that needs to be resolved, false o.w.
+     * @param conflictSpace The spatial data describing the conflict, null if has conflict is false
+     */
     private void fireMobilityPathCallback(MobilityPathHandler handler, MobilityPath msg, boolean hasConflict,
 			double startDist, double endDist, double startTime, double endTime) {
         new Thread(() -> {
@@ -221,6 +256,14 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 	}
 
 
+    /**
+     * ROS messaging callback to be invoked upon receipt of an inbound MobilityRequest message
+     * <p>
+     * This method is responsible for ensuring that the inbound message is relevant to the host vehicle and analyzing
+     * the path contained in the inbound message for any potential conflicts with the host vehicle's predicted path
+     * prior to notifying any of the the registered callbacks of it's existence. If the message is not deemed relevant
+     * or does not contain a conflict then no call is made.
+     */
     private void handleMobilityRequest(MobilityRequest msg) {
         log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
 
@@ -267,6 +310,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         }
     }
 
+    /**
+     * ROS message callback responsible for handling an inbound MobilityAck message
+     */
     private void handleMobilityAck(MobilityAck msg) {
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
 
@@ -291,6 +337,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         }
     }
 
+    /**
+     * ROS message callback responsible for handling an inbound MobilityOperation message
+     */
     private void handleMobilityOperation(MobilityOperation msg) {
         log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
 
@@ -314,6 +363,14 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         }
     }
 
+    /**
+     * ROS messaging callback to be invoked upon receipt of an inbound MobilityPath message
+     * <p>
+     * This method is responsible for ensuring that the inbound message is relevant to the host vehicle and analyzing
+     * the path contained in the inbound message for any potential conflicts with the host vehicle's predicted path
+     * prior to notifying any of the the registered callbacks of it's existence. If the message is not deemed relevant
+     * or does not contain a conflict then no call is made.
+     */
     private void handleMobilityPath(MobilityPath msg) {
         log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
 
