@@ -53,6 +53,7 @@ import org.ros.node.ConnectedNode;
 public class TrajectoryExecutor extends GuidanceComponent implements IStateChangeListener {
     // Member variables
     protected ISubscriber<RouteState> routeStateSubscriber;
+    protected ISubscriber<Route> routeSubscriber;
     protected GuidanceCommands commands;
     protected TrajectoryExecutorWorker trajectoryExecutorWorker;
     protected Trajectory currentTrajectory;
@@ -97,9 +98,13 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
             @Override
             public void onMessage(RouteState msg) {
                 log.info("Received RouteState. New downtrack distance: " + msg.getDownTrack());
+                curRouteState.set(msg);
                 trajectoryExecutorWorker.updateDowntrackDistance(msg.getDownTrack());
             }
         });
+
+        routeSubscriber = pubSubService.getSubscriberForTopic("route", Route._TYPE);
+        routeSubscriber.registerOnMessageCallback((msg) -> curRoute.set(msg));
 
         currentState.set(GuidanceState.STARTUP);
     }

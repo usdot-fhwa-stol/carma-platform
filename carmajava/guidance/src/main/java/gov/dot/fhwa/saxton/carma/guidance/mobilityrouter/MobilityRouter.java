@@ -113,6 +113,8 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         ackSub = pubSubService.getSubscriberForTopic("incoming_mobility_ack", MobilityAck._TYPE);
         operationSub = pubSubService.getSubscriberForTopic("incoming_mobility_operation", MobilityOperation._TYPE);
         pathSub = pubSubService.getSubscriberForTopic("incoming_mobility_path", MobilityPath._TYPE);
+        routeSub = pubSubService.getSubscriberForTopic("route", Route._TYPE);
+        routeStateSub = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
 
         requestSub.registerOnMessageCallback(this::handleMobilityRequest);
         ackSub.registerOnMessageCallback(this::handleMobilityAck);
