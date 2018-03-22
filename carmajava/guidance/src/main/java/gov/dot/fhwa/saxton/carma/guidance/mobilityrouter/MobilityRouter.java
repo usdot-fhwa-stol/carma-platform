@@ -29,6 +29,7 @@ import javax.swing.text.html.HTMLDocument.HTMLReader.HiddenAction;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import cav_msgs.MobilityAck;
+import cav_msgs.MobilityAckType;
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
@@ -50,10 +51,11 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryCo
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
- * Base class for all Guidance components.
+ * Mobility Message Routing Component for Guidance
  * <p>
- * Defines the execution framework within the context of both Guidance and the overall system's state
- * due to driver initialization and user command.
+ * Handles incoming MobilityAck, MobilityPath, MobilityRequest, and MobilityOperations messages and 
+ * route them to the appropriately registered handler callback based on the incoming messages strategy
+ * string. Also handles ignoring messages not directed at the host vehicle.
  */
 public class MobilityRouter extends GuidanceComponent implements IMobilityRouter {
 
@@ -65,6 +67,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ISubscriber<MobilityPath> pathSub;
     private ISubscriber<Route> routeSub;
     private ISubscriber<RouteState> routeStateSub;
+    private IPublisher<MobilityAck> ackPub;
     private Map<String, LinkedList<MobilityRequestHandler>> requestMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityAckHandler>> ackMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityOperationHandler>> operationMap = Collections.synchronizedMap(new HashMap<>());
@@ -115,6 +118,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         pathSub = pubSubService.getSubscriberForTopic("incoming_mobility_path", MobilityPath._TYPE);
         routeSub = pubSubService.getSubscriberForTopic("route", Route._TYPE);
         routeStateSub = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+        ackPub = pubSubService.getPublisherForTopic("outbound_mobility_ack", MobilityAck._TYPE);
 
         requestSub.registerOnMessageCallback(this::handleMobilityRequest);
         ackSub.registerOnMessageCallback(this::handleMobilityAck);
@@ -173,13 +177,27 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void fireMobilityRequestCallback(MobilityRequestHandler handler, MobilityRequest msg, boolean hasConflict, double conflictStartDist, double conflictEndDist, double conflictStartTime, double conflictEndTime) {
         new Thread(() -> {
             MobilityRequestResponse resp = handler.handleMobilityRequestMessage(msg, hasConflict, conflictStartDist, conflictEndDist, conflictStartTime, conflictEndTime);
+
+            // Initialize the response message
+            MobilityAck respMsg = ackPub.newMessage();
+            respMsg.getHeader().setPlanId(msg.getHeader().getPlanId());
+            respMsg.getHeader().setRecipientId(msg.getHeader().getSenderId());
+            respMsg.getHeader().setSenderId(hostMobilityStaticId);
+            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, shoud this field be set in Message node?
+            respMsg.getHeader().setTimestamp(System.currentTimeMillis());
+
             if (resp == MobilityRequestResponse.ACK) {
                 List<RoutePointStamped> path = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
                 conflictManager.addRequestedPath(path, msg.getHeader().getPlanId());
+                respMsg.getAgreement().setType(MobilityAckType.ACCEPT_WITH_EXECUTE);
+                ackPub.publish(respMsg);
             } else if (isBroadcast(msg.getHeader()) && resp == MobilityRequestResponse.NO_RESPONSE) {
                 List<RoutePointStamped> path = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
                 conflictManager.addRequestedPath(path, msg.getHeader().getPlanId());
-            } // else, we've rejected it so ignore it
+            } else if (resp == MobilityRequestResponse.NACK) {
+                respMsg.getAgreement().setType(MobilityAckType.REJECT);
+                ackPub.publish(respMsg);
+            }
         },
         "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName()).start();
     }
