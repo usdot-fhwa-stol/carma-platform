@@ -101,7 +101,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands, tracking);
-    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node);
+    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter, trajectoryExecutor);
     PluginManager pluginManager = new PluginManager(
       stateMachine, pubSubService, guidanceCommands, maneuverInputs,
       routeService, node, router, conflictManager, trajectoryConverter);

@@ -16,11 +16,16 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
+import java.awt.List;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.swing.text.html.HTMLDocument.HTMLReader.HiddenAction;
+
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import cav_msgs.MobilityAck;
@@ -28,14 +33,21 @@ import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
+import cav_msgs.Route;
+import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
  * Base class for all Guidance components.
@@ -51,20 +63,29 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ISubscriber<MobilityAck> ackSub;
     private ISubscriber<MobilityOperation> operationSub;
     private ISubscriber<MobilityPath> pathSub;
+    private ISubscriber<Route> routeSub;
+    private ISubscriber<RouteState> routeStateSub;
     private Map<String, LinkedList<MobilityRequestHandler>> requestMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityAckHandler>> ackMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityOperationHandler>> operationMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityPathHandler>> pathMap = Collections.synchronizedMap(new HashMap<>());
+    private AtomicReference<Route> curRoute = new AtomicReference<>();
+    private AtomicReference<RouteState> curRouteState = new AtomicReference<>();
 
     private PluginManager pluginManager;
     private Arbitrator arbitrator;
+    private TrajectoryExecutor trajectoryExecutor;
     private String defaultConflictHandlerName = "";
     private IPlugin defaultConflictHandler;
-    private ICollisionDetectionAlgo collisionDetectionAlgo;
+    private IConflictManager conflictManager;
+    private ITrajectoryConverter trajectoryConverter;
     private String hostMobilityStaticId = "";
 
-    public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node) {
+    public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node, IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter, TrajectoryExecutor trajectoryExecutor) {
         super(stateMachine, pubSubService, node);
+        this.conflictManager = conflictManager;
+        this.trajectoryConverter = trajectoryConverter;
+        this.trajectoryExecutor = trajectoryExecutor;
     }
 
     public void setArbitrator(Arbitrator arbitrator) {
@@ -97,6 +118,8 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         ackSub.registerOnMessageCallback(this::handleMobilityAck);
         operationSub.registerOnMessageCallback(this::handleMobilityOperation);
         pathSub.registerOnMessageCallback(this::handleMobilityPath);
+        routeSub.registerOnMessageCallback((msg) -> curRoute.set(msg));
+        routeStateSub.registerOnMessageCallback((msg) -> curRouteState.set(msg));
 
         defaultConflictHandlerName = node.getParameterTree().getString("~default_mobility_conflict_handler", "Yield Plugin");
         hostMobilityStaticId = node.getParameterTree().getString("~vehicle_id", "");
@@ -149,9 +172,11 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         new Thread(() -> {
             MobilityRequestResponse resp = handler.handleMobilityRequestMessage(msg, hasConflict, conflictStartDist, conflictEndDist, conflictStartTime, conflictEndTime);
             if (resp == MobilityRequestResponse.ACK) {
-                collisionDetectionAlgo.addPath(msg);
+                List<RoutePointStamped> path = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+                conflictManager.addRequestedPath(path, msg.getHeader().getPlanId());
             } else if (isBroadcast(msg.getHeader()) && resp == MobilityRequestResponse.NO_RESPONSE) {
-                collisionDetectionAlgo.addPath(msg);
+                List<RoutePointStamped> path = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+                conflictManager.addRequestedPath(path, msg.getHeader().getPlanId());
             } // else, we've rejected it so ignore it
         },
         "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName()).start();
@@ -179,13 +204,18 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void handleMobilityRequest(MobilityRequest msg) {
         log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
-            log.info("Message destined for us, ignoring...");
+        if (curRoute.get() != null || curRouteState.get() != null) {
+            log.warn("Message received prior to route being inited, ignoring...");
             return;
         }
 
-        ConflictSpace conflictSpace = collisionDetectionAlgo.checkConflict(msg.getTrajectoryStartLocation(),
-                msg.getOffsets());
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+            log.info("Message not destined for us, ignoring...");
+            return;
+        }
+        List<RoutePointStamped> otherPath = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+        List<RoutePointStamped> hostPath = trajectoryExecutor.getHostPathPrediction();
+        ConflictSpace conflictSpace = conflictManager.getConflicts(hostPath, otherPath);
 
         if (conflictSpace.hasConflict()) {
             log.info(String.format("Conflict detected in request %s, startDist = %.02f, endDist = %.02f, startTime = %.02f, endTime = %.02f",
@@ -220,8 +250,13 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void handleMobilityAck(MobilityAck msg) {
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
 
+        if (curRoute.get() != null || curRouteState.get() != null) {
+            log.warn("Message received prior to route being inited, ignoring...");
+            return;
+        }
+
         if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
-            log.info("Message destined for us, ignoring...");
+            log.info("Message not destined for us, ignoring...");
             return;
         }
 
@@ -239,8 +274,13 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void handleMobilityOperation(MobilityOperation msg) {
         log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
 
+        if (curRoute.get() != null || curRouteState.get() != null) {
+            log.warn("Message received prior to route being inited, ignoring...");
+            return;
+        }
+
         if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
-            log.info("Message destined for us, ignoring...");
+            log.info("Message not destined for us, ignoring...");
             return;
         }
 
@@ -257,14 +297,20 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private void handleMobilityPath(MobilityPath msg) {
         log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
-            log.info("Message destined for us, ignoring...");
+        if (curRoute.get() != null || curRouteState.get() != null) {
+            log.warn("Message received prior to route being inited, ignoring...");
             return;
         }
 
-        collisionDetectionAlgo.addPath(msg);
-        ConflictSpace conflictSpace = collisionDetectionAlgo.checkConflict(msg.getLocation(),
-                msg.getOffsets());
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+            log.info("Message not destined for us, ignoring...");
+            return;
+        }
+
+        conflictManager.addMobilityPath(trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get()), msg.getHeader().getSenderId());
+        List<RoutePointStamped> hostTrajectory = trajectoryExecutor.getHostPathPrediction();
+        List<RoutePointStamped> otherTrajectory = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+        ConflictSpace conflictSpace = conflictManager.getConflicts(hostTrajectory, otherTrajectory);
 
         if (conflictSpace.hasConflict()) {
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, startTime = %.02f, endTime = %.02f",

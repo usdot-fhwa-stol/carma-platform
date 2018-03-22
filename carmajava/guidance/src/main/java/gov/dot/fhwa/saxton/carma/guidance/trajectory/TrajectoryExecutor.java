@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
+import cav_msgs.Route;
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
@@ -34,6 +35,10 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.OnTrajectoryProgressCallbac
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 import gov.dot.fhwa.saxton.carma.guidance.util.ExecutionTimer;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
@@ -53,6 +58,8 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     protected Trajectory currentTrajectory;
     protected Tracking tracking_;
     protected boolean bufferedTrajectoryRunning = false;
+    protected AtomicReference<RouteState> curRouteState;
+    protected AtomicReference<Route> curRoute;
 
     protected double maxAccel;
     protected long sleepDurationMillis = 100;
@@ -251,6 +258,13 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         } else {
             currentTrajectory = traj;
         }
+    }
+
+  /**
+   * Convert the current trajectory to a timestamped list of points along the route frame
+   */
+    public List<RoutePointStamped> getHostPathPrediction() {
+        return trajectoryExecutorWorker.getHostPathPrediction(curRoute.get(), curRouteState.get());
     }
 
     /**
