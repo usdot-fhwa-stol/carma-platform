@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -234,14 +235,16 @@ public class ConflictManager implements IConflictManager {
     final int TIME_IDX = 2, MAX_IDX = 1;
     boolean hasCollision = false;
 
-    for (Entry<String, NSpatialHashMap> entry: mapContainer.entrySet()) {
+    // Directly access iterator for safe removal while iterating
+    for(Iterator<Entry<String, NSpatialHashMap>> i = mapContainer.entrySet().iterator(); i.hasNext();) {
+      Entry<String, NSpatialHashMap> entry = i.next();
       String vehicleId = entry.getKey();
       NSpatialHashMap map = entry.getValue();
 
       // If the maximum time of the current map is before the minimum time being evaluated
       // it should be skipped and removed from future consideration
       if (minTime > map.getBounds()[TIME_IDX][MAX_IDX]) {
-        mapContainer.remove(vehicleId);
+        i.remove();
         continue;
       }
       // If this map contains the point being evaluated collisions must be checked for
@@ -252,7 +255,6 @@ public class ConflictManager implements IConflictManager {
         }
       }
     }
-
     return hasCollision;
   }
 

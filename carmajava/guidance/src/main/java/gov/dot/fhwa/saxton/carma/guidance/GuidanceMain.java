@@ -17,9 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
-import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictDetectorAccessor;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
-import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManagerAccessor;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.SystemUTCTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
@@ -34,7 +32,6 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
-import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverterAccessor;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
