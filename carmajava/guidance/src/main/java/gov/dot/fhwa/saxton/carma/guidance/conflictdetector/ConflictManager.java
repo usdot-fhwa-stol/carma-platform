@@ -94,7 +94,8 @@ public class ConflictManager implements IConflictManager {
     if (path == null || path.isEmpty() || vehicleStaticId == null) {
       return false;
     }
-    return addPath(path, vehicleStaticId, mobilityPathSpatialMaps);
+    addPath(path, vehicleStaticId, mobilityPathSpatialMaps);
+    return true;
   }
 
   @Override
@@ -102,7 +103,8 @@ public class ConflictManager implements IConflictManager {
     if (path == null || path.isEmpty() || planId == null) {
       return false;
     }
-    return addPath(path, planId, requestedPathSpatialMaps);
+    addPath(path, planId, requestedPathSpatialMaps);
+    return true;
   }
   
   /**
@@ -113,7 +115,7 @@ public class ConflictManager implements IConflictManager {
    * 
    * @return True if the path could be added. False if not.
    */
-  private boolean addPath(List<RoutePointStamped> path, String key, Map<String, NSpatialHashMap> map) {
+  private void addPath(List<RoutePointStamped> path, String key, Map<String, NSpatialHashMap> map) {
     // Get current path for this vehicle
     NSpatialHashMap vehiclesPath = map.get(key);
     // If not current path for this vehicle add it 
@@ -122,7 +124,7 @@ public class ConflictManager implements IConflictManager {
       map.put(key, vehiclesPath);
     }
     // Insert points
-    return insertPoints(path, vehiclesPath);
+    insertPoints(path, vehiclesPath);
   }
 
   /**
@@ -130,10 +132,8 @@ public class ConflictManager implements IConflictManager {
    * 
    * @param path The points to insert
    * @param map The map to insert points into
-   * 
-   * @return True if the path could be added. False if not.
    */
-  private boolean insertPoints(List<RoutePointStamped> path, NSpatialHashMap map) {
+  private void insertPoints(List<RoutePointStamped> path, NSpatialHashMap map) {
     // Add points to spatial map
     for (RoutePointStamped routePoint: path) {
       // Define bounds
@@ -148,17 +148,16 @@ public class ConflictManager implements IConflictManager {
       // Insert point
       map.insert(new CartesianObject(Arrays.asList(minBoundingPoint, maxBoundingPoint)));
     }
-    return true;
   }
   
   @Override
   public boolean removeMobilityPath(String vehicleStaticId) {
-    return mobilityPathSpatialMaps.remove(vehicleStaticId) != null ? true :  false;
+    return mobilityPathSpatialMaps.remove(vehicleStaticId) != null;
   }
 
   @Override
   public boolean removeRequestedPath(String planId) {
-    return requestedPathSpatialMaps.remove(planId) != null ? true :  false;
+    return requestedPathSpatialMaps.remove(planId) != null;
   }
 
   @Override

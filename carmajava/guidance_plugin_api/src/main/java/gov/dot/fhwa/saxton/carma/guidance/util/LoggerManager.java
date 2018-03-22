@@ -48,7 +48,7 @@ public class LoggerManager {
   }
 
   /**
-   * Strongly typed variant of getLogger() for uses in cases where getLogger() may return the wrong class name
+   * Stringly typed variant of getLogger() for uses in cases where getLogger() may return the wrong class name
    */
   public static ILogger getLogger(String className) {
     try {
