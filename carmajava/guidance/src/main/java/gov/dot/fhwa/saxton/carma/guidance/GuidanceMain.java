@@ -63,7 +63,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
   // Member Variables
   protected ExecutorService executor;
-  protected final int NUMTHREADS = 7;
+  protected final int NUMTHREADS = 8;
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
   protected IPubSubService pubSubService;
@@ -120,6 +120,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     executor.execute(trajectoryExecutor);
     executor.execute(tracking);
     executor.execute(guidanceCommands);
+    executor.execute(router);
   }
 
   /**
