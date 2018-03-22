@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.swing.text.html.HTMLDocument.HTMLReader.HiddenAction;
-
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import cav_msgs.MobilityAck;
