@@ -169,7 +169,7 @@ public final class ConflictSpace {
    * @param vehicleStaticId The static id of the vehicle to add
    */
   public void addConflictingVehicles(List<String> conflictingVehicles) {
-    conflictingVehicles.addAll(conflictingVehicles); // HashSet implementation of add does not have duplicates
+    this.conflictingVehicles.addAll(conflictingVehicles); // HashSet implementation of add does not have duplicates
   }
 
   /**

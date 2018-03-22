@@ -102,7 +102,7 @@ public class ConflictManager implements IConflictManager {
 
   @Override
   public boolean addRequestedPath(List<RoutePointStamped> path, String planId, String vehicleId) {
-    if (path == null || path.isEmpty() || planId == null) {
+    if (path == null || path.isEmpty() || planId == null || vehicleId == null) {
       return false;
     }
     addPath(path, planId, requestedPathSpatialMaps);
@@ -265,7 +265,7 @@ public class ConflictManager implements IConflictManager {
           } else {
             conflictingVehicles.add(id);
           }
-          break;
+          continue;
         }
       }
     }
