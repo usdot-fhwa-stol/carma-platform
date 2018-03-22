@@ -18,9 +18,8 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import java.util.List;
 
-import cav_msgs.MobilityOperation;
-import cav_msgs.MobilityRequest;
-import cav_msgs.MobilityResponse;
+import org.ros.internal.message.Message;
+
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
@@ -35,42 +34,18 @@ public interface IPlatooningState {
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
     
     /**
-     * Callback method to handle mobility requests which may result in state changing or replan
+     * Callback method to handle mobility requests, responses and operation, which may result in
+     * state changing, trajectory replan and information updating.
      * @param request the detailed proposal from other vehicles
      */
-    public void onReceiveMobilityRequest(MobilityRequest request);
+    public void onReceiveMobilityMessgae(Message mobilityMessage);
     
     /**
-     * Callback method to handle mobility responses which may determine whether the plugin should execute a plan
-     * @param response the negative/positive response from other vehicles
+     * Get mobility messages that the current platooning state want to send out
+     * The returned message list can only contain operation, request and response
      */
-    public void onReceiveMobilityResponse(MobilityResponse response);
+    public List<Message> getNewMobilityOutbound();
     
-    /**
-     * Callback method to handle mobility operation messages which updates information on the current/surrounding platoon 
-     * @param operation the operation from surrounding vehicles
-     */
-    public void onReceiveMobilityOperation(MobilityOperation operation);
-    
-    /**
-     * Get MobilityOperation messages that the current platooning state want to send out
-     */
-    public List<MobilityOperation> getNewMobilityOperationOutbound();
-    
-    /**
-     * Get MobilityRequest messages that the current platooning state want to send out
-     */
-    public MobilityRequest getNewMobilityRequestOutbound();
-    
-    /**
-     * Get MobilityRequest messages that the current platooning state want to send out
-     */
-    public MobilityResponse getNewMobilityResponseOutbound();
-    
-    /**
-     * Called by the plugin loop method and the purpose is running jobs in the queue in sequence 
-     */
-    public default void runJobQueue() {
-        ///???
-    }
+    // The loop method which is called by the loop method in platooning plug-in
+    public void loop() throws InterruptedException;
 }

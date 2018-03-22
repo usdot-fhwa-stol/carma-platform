@@ -6,13 +6,13 @@ platooning_max_accel: 2.5
 # Units: m
 platooning_min_maneuver_length: 15.0
 
-# Integer: The desired time interval between two platoon mobility messages from the same vehicle
+# Integer: The desired time interval between two platoon mobility operation messages from the same vehicle
 # Units: ms
-platooning_status_interval: 500
+platooning_status_interval: 100
 
 # Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
 # Units: 1
-platooning_status_timeout_factor: 1.5
+platooning_status_timeout_factor: 2.5
 
 # Double: The desired time headway to the front vehicle within the platoon
 # Units: s
