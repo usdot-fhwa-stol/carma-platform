@@ -16,10 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
-import java.awt.List;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,6 +37,7 @@ import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
@@ -77,7 +78,6 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private AtomicReference<RouteState> curRouteState = new AtomicReference<>();
 
     private PluginManager pluginManager;
-    private Arbitrator arbitrator;
     private TrajectoryExecutor trajectoryExecutor;
     private String defaultConflictHandlerName = "";
     private IPlugin defaultConflictHandler;
@@ -90,10 +90,6 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
-    }
-
-    public void setArbitrator(Arbitrator arbitrator) {
-        this.arbitrator = arbitrator;
     }
 
     public void setPluginManager(PluginManager pluginManager) {
@@ -185,7 +181,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * @param handler the callback to be invoked in the background thread
      * @param msg The MobilityRequest message being handled
      * @param hasConflict True if the MobilityRequest message has a conflict that needs to be resolved, false o.w.
-     * @param conflictSpace The spatial data describing the conflict, null if has conflict is false
+     * @param conflictSpace The spatial data describing the conflict
      */
     private void fireMobilityRequestCallback(MobilityRequestHandler handler, MobilityRequest msg, boolean hasConflict, ConflictSpace conflictSpace) {
         new Thread(() -> {
@@ -200,13 +196,13 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             respMsg.getHeader().setTimestamp(System.currentTimeMillis());
 
             if (resp == MobilityRequestResponse.ACK) {
-                List<RoutePointStamped> path = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
-                conflictManager.addRequestedPath(path, msg.getHeader().getPlanId());
+                List<RoutePointStamped> path = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+                conflictManager.addRequestedPath(path, msg.getHeader().getPlanId(), msg.getHeader().getSenderId());
                 respMsg.getAgreement().setType(MobilityAckType.ACCEPT_WITH_EXECUTE);
                 ackPub.publish(respMsg);
             } else if (isBroadcast(msg.getHeader()) && resp == MobilityRequestResponse.NO_RESPONSE) {
-                List<RoutePointStamped> path = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
-                conflictManager.addRequestedPath(path, msg.getHeader().getPlanId());
+                List<RoutePointStamped> path = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+                conflictManager.addRequestedPath(path, msg.getHeader().getPlanId(), msg.getHeader().getSenderId());
             } else if (resp == MobilityRequestResponse.NACK) {
                 respMsg.getAgreement().setType(MobilityAckType.REJECT);
                 ackPub.publish(respMsg);
@@ -246,9 +242,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * @param conflictSpace The spatial data describing the conflict, null if has conflict is false
      */
     private void fireMobilityPathCallback(MobilityPathHandler handler, MobilityPath msg, boolean hasConflict,
-			double startDist, double endDist, double startTime, double endTime) {
+			ConflictSpace conflictSpace) {
         new Thread(() -> {
-            handler.handleMobilityPathMessageWithConflict(msg, hasConflict, startDist, endDist, startTime, endTime);
+            handler.handleMobilityPathMessageWithConflict(msg, hasConflict, conflictSpace);
         },
         "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName()).start();
 	}
@@ -274,15 +270,16 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             log.info("Message not destined for us, ignoring...");
             return;
         }
-        List<RoutePointStamped> otherPath = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+        List<RoutePointStamped> otherPath = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
         List<RoutePointStamped> hostPath = trajectoryExecutor.getHostPathPrediction();
-        ConflictSpace conflictSpace = conflictManager.getConflicts(hostPath, otherPath);
+        List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostPath, otherPath);
 
-        if (conflictSpace.hasConflict()) {
+        if (!conflictSpaces.isEmpty()) {
+            ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in request %s, startDist = %.02f, endDist = %.02f, startTime = %.02f, endTime = %.02f",
             msg.getHeader().getPlanId(),
-            conflictSpace.getStartDist(),
-            conflictSpace.getEndDist(),
+            conflictSpace.getStartDowntrack(),
+            conflictSpace.getEndDowntrack(),
             conflictSpace.getStartTime(),
             conflictSpace.getEndTime()));
 
@@ -292,7 +289,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
                     log.info("Firing message handlers registered for " + entry.getKey());
                     for (MobilityRequestHandler handler : entry.getValue()) {
                         log.info("Firing mobility request handler: " + handler.getClass().getSimpleName());
-                        fireMobilityRequestCallback(handler, msg, true, conflictSpace.getStartDist(), conflictSpace.getEndDist(), conflictSpace.getStartTime(), conflictSpace.getEndTime());
+                        fireMobilityRequestCallback(handler, msg, true, conflictSpace);
                         conflictHandled = true;
                     }
                 }
@@ -301,7 +298,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             if (!conflictHandled && defaultConflictHandler != null) {
                 // Handle in default conflict handler
                 log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
-                fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace.getStartDist(), conflictSpace.getEndDist(), conflictSpace.getStartTime(), conflictSpace.getEndTime());
+                fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace);
             } else {
                 throw new RosRuntimeException("Unhandled mobility path conflict detected and no default conflict handler available!!!");
             }
@@ -382,21 +379,22 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             return;
         }
 
-        conflictManager.addMobilityPath(trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get()), msg.getHeader().getSenderId());
         List<RoutePointStamped> hostTrajectory = trajectoryExecutor.getHostPathPrediction();
-        List<RoutePointStamped> otherTrajectory = trajectoryConverter.toRoutePointStamped(msg.getTrajectory(), curRoute.get(), curRouteState.get());
-        ConflictSpace conflictSpace = conflictManager.getConflicts(hostTrajectory, otherTrajectory);
+        List<RoutePointStamped> otherTrajectory = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+        conflictManager.addMobilityPath(otherTrajectory, msg.getHeader().getSenderId());
+        List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostTrajectory, otherTrajectory);
 
-        if (conflictSpace.hasConflict()) {
+        if (!conflictSpaces.isEmpty()) {
+            ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, startTime = %.02f, endTime = %.02f",
             msg.getHeader().getPlanId(),
-            conflictSpace.getStartDist(),
-            conflictSpace.getEndDist(),
+            conflictSpace.getStartDowntrack(),
+            conflictSpace.getEndDowntrack(),
             conflictSpace.getStartTime(),
             conflictSpace.getEndTime()));
             // Handle in default conflict handler
             log.info("Handling path conflict with " + defaultConflictHandler.getVersionInfo());
-            fireMobilityPathCallback(((MobilityPathHandler) defaultConflictHandler), msg, true, conflictSpace.getStartDist(), conflictSpace.getEndDist(), conflictSpace.getStartTime(), conflictSpace.getEndTime());
+            fireMobilityPathCallback(((MobilityPathHandler) defaultConflictHandler), msg, true, conflictSpace);
         }
     }
 

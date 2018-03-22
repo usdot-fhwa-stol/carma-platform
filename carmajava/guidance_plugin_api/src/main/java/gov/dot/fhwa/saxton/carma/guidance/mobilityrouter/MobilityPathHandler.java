@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
 import cav_msgs.MobilityPath;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 
 /**
  * Callback interface for handling inbound relevant {@link MobilityPath} messages
@@ -27,10 +28,7 @@ public interface MobilityPathHandler {
    * 
    * @param msg The MobilityPath message
    * @param hasConflict True/false if the path data contained in the MobilityPath message conflicts with our current projected path
-   * @param startDist The downtrack distance at which the conflict with our current trajectory starts
-   * @param endDist The downtrack distance at which the conflict with our current trajectory ends
-   * @param startTime The future time at which the conflict with our current trajectory starts
-   * @param endTime The future time at which the conflict with our current trajectory ends
+   * @param conflictSpace The data related to the physical parameters of the conflict
    */
-  void handleMobilityPathMessageWithConflict(MobilityPath msg, boolean hasConflict, double startDist, double endDist, double startTime, double endTime);
+  void handleMobilityPathMessageWithConflict(MobilityPath msg, boolean hasConflict, ConflictSpace conflictSpace);
 }
