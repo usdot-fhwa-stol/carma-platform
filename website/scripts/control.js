@@ -348,9 +348,6 @@ function showModal(showWarning, modalMessage, restart) {
         }
     }
 
-    //stop the timer when alert occurs;
-    clearInterval(engaged_timer);
-
     //display the modal
     modal.style.display = 'block';
 
@@ -434,7 +431,8 @@ function closeModal(action) {
             //Clear session variables except SystemReady (assumes interface manager still have driver's ready)
             isGuidance.remove();
             selectedRoute.remove();
-            startDateTime.remove();
+            startDateTime.remove(); //resets the startDatetime
+            clearInterval(timer); //stops the execution
             sessionStorage.removeItem('routePlanCoordinates');
             sessionStorage.removeItem('routeSpeedLimitDist');
 

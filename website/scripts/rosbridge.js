@@ -71,6 +71,7 @@ var sound_counter_max = 3; //max # of times the sounds will be repeated.
 var sound_played_once = false;
 var isModalPopupShowing = false;
 var waitingForRouteStateSegmentStartup = false;
+var timer; 
 var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages. 
 var host_instructions = '';
 
@@ -1577,11 +1578,8 @@ function showSystemVersion() {
     Start timer after engaging Guidance.
 */
 function startEngagedTimer() {
-    // Set the date we're counting down to and save to session.
-    startDateTime.start();
-
-    // Start counter
-    setInterval(countUpTimer, 1000);
+    // Start counter 
+    timer = setInterval(countUpTimer, 1000);
 }
 
 /*

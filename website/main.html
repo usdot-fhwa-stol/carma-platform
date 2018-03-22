@@ -23,11 +23,11 @@
     <link rel="stylesheet" type="text/css" href="styles/styles.css" />
     <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome.min.css" />
     <link rel="stylesheet" href="thirdparty/font-awesome-4.7.0/css/font-awesome-animation.min.css"/>
+    <link rel="stylesheet" href="thirdparty/jqwidgets/styles/jqx.base.css"/>
+    <link rel = "stylesheet" href = "thirdparty/jquery-ui-1.12.1/jquery-ui.min.css"/>
 
-    <!-- TODO: Pull down locally -->
-    <link rel = "stylesheet" href = "https://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
-    <script src = "https://code.jquery.com/jquery-1.10.2.js"></script>
-    <script src = "https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <script src = "thirdparty/jquery/jquery-1.12.4.min.js"></script>
+    <script src = "thirdparty/jquery-ui-1.12.1/jquery-ui.min.js"></script>
 
     <!-- Widget Framework -->
     <script src="scripts/carma.config.js"></script>
@@ -43,15 +43,6 @@
     </script>
     <script src="thirdparty/svg/svg.min.js" defer></script>
 
-    <!--
-    Setup:
-    1) Move files command: sudo cp -R -r /home/mfromm/catkin_ws/src/CarmaPlatform/website/* /var/www/html/
-    2) Update IP on rosbridge.js
-    3) roslaunch carma saxton_cav.launch mock_arada:=true mock_can:=true mock_pinpoint:=true mock_radar:=true
-
-    To Test Fatal:
-    rostopic pub /saxton_cav/system_alert cav_msgs/SystemAlert '{type: 3, description: This is the fatal message description.}'
-    -->
 </head>
 <body>
     <div class="tab">
