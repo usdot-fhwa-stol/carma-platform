@@ -54,6 +54,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.LongitudinalSimulationData;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.route.FileStrategy;
 import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
@@ -159,37 +160,39 @@ public class ConflictManagerTest {
     path.add(rp);
 
     // Add path
-    assertTrue(cm.addRequestedPath(path, "veh1"));
+    assertTrue(cm.addRequestedPath(path, "plan1", "veh1"));
     assertFalse(cm.getConflicts(path).isEmpty());
     // Remove path
-    assertTrue(cm.removeRequestedPath("veh1"));
+    assertTrue(cm.removeRequestedPath("plan1"));
     assertTrue(cm.getConflicts(path).isEmpty());
     // Add multiple paths
-    assertTrue(cm.addRequestedPath(path, "veh1"));
-    assertTrue(cm.addRequestedPath(path, "veh2"));
+    assertTrue(cm.addRequestedPath(path, "plan1", "veh1"));
+    assertTrue(cm.addRequestedPath(path, "plan2", "veh2"));
     assertFalse(cm.getConflicts(path).isEmpty());
     // Remove one path
-    assertTrue(cm.removeRequestedPath("veh1"));
+    assertTrue(cm.removeRequestedPath("plan1"));
     assertFalse(cm.getConflicts(path).isEmpty());
     // Remove non-added path
-    assertFalse(cm.removeRequestedPath("veh1"));
+    assertFalse(cm.removeRequestedPath("plan1"));
     assertFalse(cm.getConflicts(path).isEmpty());
     // Remove all paths
-    assertTrue(cm.removeRequestedPath("veh2"));
+    assertTrue(cm.removeRequestedPath("plan2"));
     assertTrue(cm.getConflicts(path).isEmpty());
     // Add duplicate vehicles
-    assertTrue(cm.addRequestedPath(path, "veh1"));
-    assertTrue(cm.addRequestedPath(path, "veh1"));
+    assertTrue(cm.addRequestedPath(path, "plan1", "veh1"));
+    assertTrue(cm.addRequestedPath(path, "plan1", "veh1"));
     assertFalse(cm.getConflicts(path).isEmpty());
-    assertTrue(cm.removeRequestedPath("veh1"));
+    assertTrue(cm.removeRequestedPath("plan1"));
     assertTrue(cm.getConflicts(path).isEmpty());
 
     // Test null path
-    assertFalse(cm.addRequestedPath(null, "veh1"));
+    assertFalse(cm.addRequestedPath(null, "plan1", "veh1"));
     // Test empty path
-    assertFalse(cm.addRequestedPath(new LinkedList<>(), "veh1"));
+    assertFalse(cm.addRequestedPath(new LinkedList<>(), "plan1", "veh1"));
     // Test null string
-    assertFalse(cm.addRequestedPath(path, null));
+    assertFalse(cm.addRequestedPath(path, null, "veh1"));
+    assertFalse(cm.addRequestedPath(path, "plan1", null));
+    assertFalse(cm.addRequestedPath(path, null, null));
     // Test remove null string
     assertFalse(cm.removeRequestedPath(null));
   }
@@ -239,6 +242,8 @@ public class ConflictManagerTest {
     assertEquals(2.0, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(0).getConflictingVehicles().size());
 
     //// Test conflict with multiple paths
     // Add path
@@ -252,6 +257,9 @@ public class ConflictManagerTest {
     assertEquals(2.0, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh2"));
+    assertEquals(2, conflicts.get(0).getConflictingVehicles().size());
     
     // Remove extra path
     assertTrue(cm.removeMobilityPath("veh2"));
@@ -303,6 +311,8 @@ public class ConflictManagerTest {
     assertEquals(1.0, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(0).getConflictingVehicles().size());
 
 
     //// Test split conflicts
@@ -339,6 +349,8 @@ public class ConflictManagerTest {
     assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(0).getConflictingVehicles().size());
     // Second conflict
     assertEquals(1.5, conflicts.get(1).getStartDowntrack(), 0.0000001);
     assertEquals(1.5, conflicts.get(1).getStartTime(), 0.0000001);
@@ -346,6 +358,8 @@ public class ConflictManagerTest {
     assertEquals(2.0, conflicts.get(1).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(1).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(1).getSegment());
+    assertTrue(conflicts.get(1).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(1).getConflictingVehicles().size());
 
     //// Test conflict split on lane
     assertTrue(cm.removeMobilityPath("veh1"));
@@ -385,6 +399,8 @@ public class ConflictManagerTest {
     assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(0).getConflictingVehicles().size());
     // Second conflict
     assertEquals(0.5, conflicts.get(1).getStartDowntrack(), 0.0000001);
     assertEquals(0.5, conflicts.get(1).getStartTime(), 0.0000001);
@@ -392,6 +408,8 @@ public class ConflictManagerTest {
     assertEquals(2.0, conflicts.get(1).getEndTime(), 0.0000001);
     assertEquals(1, conflicts.get(1).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(1).getSegment());
+    assertTrue(conflicts.get(1).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(1).getConflictingVehicles().size());
 
     //// Test single point conflict
     // Build path2
@@ -411,6 +429,8 @@ public class ConflictManagerTest {
     assertEquals(0 + timeMargin, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(0).getConflictingVehicles().size());
 
     //// Test conflict with requested path
     assertTrue(cm.removeMobilityPath("veh1"));
@@ -439,7 +459,7 @@ public class ConflictManagerTest {
     path.add(rp);
 
     // Add path as requested path
-    assertTrue(cm.addRequestedPath(path, "plan1"));
+    assertTrue(cm.addRequestedPath(path, "plan1", "veh1"));
 
     // Check conflict
     conflicts = cm.getConflicts(path);
@@ -451,6 +471,8 @@ public class ConflictManagerTest {
     assertEquals(0.5, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(0).getConflictingVehicles().size());
     // Second conflict
     assertEquals(0.5, conflicts.get(1).getStartDowntrack(), 0.0000001);
     assertEquals(0.5, conflicts.get(1).getStartTime(), 0.0000001);
@@ -458,6 +480,8 @@ public class ConflictManagerTest {
     assertEquals(2.0, conflicts.get(1).getEndTime(), 0.0000001);
     assertEquals(1, conflicts.get(1).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(1).getSegment());
+    assertTrue(conflicts.get(1).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(1).getConflictingVehicles().size());
 
 
     //// Test null path
@@ -721,6 +745,8 @@ public class ConflictManagerTest {
     assertEquals(2.0, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertEquals(1, conflicts.get(0).getConflictingVehicles().size());
 
     //// Test time filtering
     // Change time
@@ -770,6 +796,10 @@ public class ConflictManagerTest {
     assertEquals(2.0, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh1"));
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh2"));
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh3"));
+    assertEquals(3, conflicts.get(0).getConflictingVehicles().size());
     
     timeProvider.setCurrentTime(1000);
     assertTrue(cm.addMobilityPath(latePath, "veh4"));
@@ -782,6 +812,8 @@ public class ConflictManagerTest {
     assertEquals(1002.0, conflicts.get(0).getEndTime(), 0.0000001);
     assertEquals(0, conflicts.get(0).getLane());
     assertEquals(routeMsg.getSegments().get(0), conflicts.get(0).getSegment());
+    assertTrue(conflicts.get(0).getConflictingVehicles().contains("veh4"));
+    assertEquals(1, conflicts.get(0).getConflictingVehicles().size());
 
     conflicts = cm.getConflicts(path);
     assertTrue(conflicts.isEmpty());

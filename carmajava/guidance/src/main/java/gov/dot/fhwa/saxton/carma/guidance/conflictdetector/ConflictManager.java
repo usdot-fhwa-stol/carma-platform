@@ -68,6 +68,7 @@ public class ConflictManager implements IConflictManager {
   // The tracked paths
   private final Map<String, NSpatialHashMap> mobilityPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, NSpatialHashMap> requestedPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, String> planIdMap = Collections.synchronizedMap(new HashMap<>());
   // Time provider
   private final IMobilityTimeProvider timeProvider;
 
@@ -100,11 +101,12 @@ public class ConflictManager implements IConflictManager {
   }
 
   @Override
-  public boolean addRequestedPath(List<RoutePointStamped> path, String planId) {
+  public boolean addRequestedPath(List<RoutePointStamped> path, String planId, String vehicleId) {
     if (path == null || path.isEmpty() || planId == null) {
       return false;
     }
     addPath(path, planId, requestedPathSpatialMaps);
+    planIdMap.put(planId, vehicleId);
     return true;
   }
   
@@ -158,6 +160,7 @@ public class ConflictManager implements IConflictManager {
 
   @Override
   public boolean removeRequestedPath(String planId) {
+    planIdMap.remove(planId);
     return requestedPathSpatialMaps.remove(planId) != null;
   }
 
@@ -185,26 +188,29 @@ public class ConflictManager implements IConflictManager {
       lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getCrosstrack());
 
       // Check for collisions with mobility paths
-      boolean foundCollision = hasCollision(mobilityPathSpatialMaps, routePoint, minTime);
-      if (!foundCollision) {
+      List<String> conflictingVehicles = hasCollision(mobilityPathSpatialMaps, routePoint, minTime);
+      if (conflictingVehicles.isEmpty()) {
         // Check for collisions with requested paths
-        foundCollision = hasCollision(requestedPathSpatialMaps, routePoint, minTime);
+        conflictingVehicles = hasCollision(requestedPathSpatialMaps, routePoint, minTime);
       }
       // Update conflicts
-      if (foundCollision) { 
+      if (!conflictingVehicles.isEmpty()) { 
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
           currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
+          currentConflict.addConflictingVehicles(conflictingVehicles);
         } else if (lane != currentConflict.getLane()) {
           // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
           closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
           conflicts.add(currentConflict);
           // Use the current point's lane but the previous points distance and time to define the start of the new conflict
           currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegment());
+          currentConflict.addConflictingVehicles(conflictingVehicles);
         } 
       } else {
         // If there were no conflicts but we are tracking a conflict then that conflict is done
         if (currentConflict != null) {
+          currentConflict.addConflictingVehicles(conflictingVehicles);
           closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
           conflicts.add(currentConflict);
           currentConflict = null; // Stop tracking the conflict
@@ -229,33 +235,41 @@ public class ConflictManager implements IConflictManager {
    * @param routePoint The point to check for collisions
    * @param minTime The minimum time in seconds which is still valid for consideration
    * 
-   * @return True if a collision was found. False if no collision was found
+   * @return A list static ids for vehicles which the provided point conflict with. The list is empty if no conflict exist
    */
-  private boolean hasCollision(Map<String, NSpatialHashMap> mapContainer, RoutePointStamped routePoint, double minTime) {
+  private List<String> hasCollision(Map<String, NSpatialHashMap> mapContainer, RoutePointStamped routePoint, double minTime) {
     final int TIME_IDX = 2, MAX_IDX = 1;
-    boolean hasCollision = false;
-
+    List<String> conflictingVehicles =  new LinkedList<>();
     // Directly access iterator for safe removal while iterating
     for(Iterator<Entry<String, NSpatialHashMap>> i = mapContainer.entrySet().iterator(); i.hasNext();) {
       Entry<String, NSpatialHashMap> entry = i.next();
-      String vehicleId = entry.getKey();
+      String id = entry.getKey();
       NSpatialHashMap map = entry.getValue();
 
       // If the maximum time of the current map is before the minimum time being evaluated
       // it should be skipped and removed from future consideration
       if (minTime > map.getBounds()[TIME_IDX][MAX_IDX]) {
         i.remove();
+        // If this is the a requested path disassociate the plan and vehicle ids
+        if (mapContainer == requestedPathSpatialMaps) {
+          planIdMap.remove(id);
+        }
         continue;
       }
       // If this map contains the point being evaluated collisions must be checked for
       if (map.surrounds(routePoint.getPoint())) {
         if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
-          hasCollision = true;
+          // Get the vehicle id and add it to list of conflicting ids
+          if (mapContainer == requestedPathSpatialMaps) {
+            conflictingVehicles.add(planIdMap.get(id));
+          } else {
+            conflictingVehicles.add(id);
+          }
           break;
         }
       }
     }
-    return hasCollision;
+    return conflictingVehicles;
   }
 
   @Override

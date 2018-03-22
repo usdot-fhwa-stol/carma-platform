@@ -16,6 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import cav_msgs.RouteSegment;
 
 /**
@@ -32,6 +37,7 @@ public final class ConflictSpace {
   private double endTime;
   private int lane;
   private RouteSegment segment;
+  private HashSet<String> conflictingVehicles = new HashSet<>();
 
   /**
    * Constructor
@@ -154,5 +160,24 @@ public final class ConflictSpace {
    */
   public RouteSegment getSegment() {
     return this.segment;
+  }
+
+  /**
+   * Add all conflicting vehicle to this conflict space
+   * Duplicates are not added
+   * 
+   * @param vehicleStaticId The static id of the vehicle to add
+   */
+  public void addConflictingVehicles(List<String> conflictingVehicles) {
+    conflictingVehicles.addAll(conflictingVehicles); // HashSet implementation of add does not have duplicates
+  }
+
+  /**
+   * Get list of conflicting vehicle static ids
+   * 
+   * @return list of conflicting vehicle static ids
+   */
+  public Set<String> getConflictingVehicles() {
+    return conflictingVehicles;
   }
 }
