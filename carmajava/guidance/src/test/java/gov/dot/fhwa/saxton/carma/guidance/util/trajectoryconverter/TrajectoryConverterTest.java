@@ -58,8 +58,7 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 public class TrajectoryConverterTest {
 
   private IPlugin mockPlugin;
-  private cav_msgs.Route route;
-  private cav_msgs.Route routeMsg;
+  private Route route;
 
 
   private Log log;
@@ -76,7 +75,7 @@ public class TrajectoryConverterTest {
     mockPlugin = mock(IPlugin.class);
     log = mock(Log.class);
     route = (new FileStrategy("../route/src/test/resources/routes/colonial_farm_rd_outbound.yaml", log)).load();
-    routeMsg = route.toMessage(messageFactory);
+    route = Route.fromMessage(route.toMessage(messageFactory)); // Assign waypoint ids
   }
 
   @Test
@@ -84,12 +83,11 @@ public class TrajectoryConverterTest {
     final int MAX_POINTS_IN_PATH = 1000;
     final double TIME_STEP = 0.1;
     TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
-
+    tc.setRoute(route);
     List<ECEFPointStamped> ecefPath = new LinkedList<>();
 
     // Setup starting configuration
     // Vehicle at very start of route
-    cav_msgs.RouteState routeState = messageFactory.newFromType(cav_msgs.RouteState._TYPE);
 
     // Build trajectory
     // SpeedUp dist: [0,40) speed: [0,11] -> Slow down dist: [40,50) speed [15,10]-> Stead speed dist: [50,100) speed: [10,10]
@@ -143,7 +141,7 @@ public class TrajectoryConverterTest {
 
 
     // Call function
-    ecefPath = tc.toECEFPoints(tc.convertToPath(traj, 0, route, 0, 0, route.getSegments().get(0), 0, 0));
+    ecefPath = tc.toECEFPoints(tc.convertToPath(traj, 0, 0, 0, 0, 0, 0));
     assertEquals(112, ecefPath.size());
 
     // Check starting point
@@ -173,7 +171,7 @@ public class TrajectoryConverterTest {
     final int MAX_POINTS_IN_PATH = 20;
     final double TIME_STEP = 1;
     TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
-
+    tc.setRoute(route);
     List<RoutePointStamped> path = new LinkedList<>();
     List<ECEFPointStamped> pathECEF = new LinkedList<>();
     
@@ -189,7 +187,7 @@ public class TrajectoryConverterTest {
     when(steadySpeed.getEndDistance()).thenReturn(endingData.downtrack);
 
     // Call function
-    LongitudinalSimulationData result = tc.addLongitudinalManeuverToPath(steadySpeed, path, startingData, route);
+    LongitudinalSimulationData result = tc.addLongitudinalManeuverToPath(steadySpeed, path, startingData);
     assertTrue(endingData.almostEquals(result, 0.01));
 
     // Check number of points
@@ -222,7 +220,7 @@ public class TrajectoryConverterTest {
     when(steadySpeed.getEndDistance()).thenReturn(endingData.downtrack);
 
     // Call function
-    result = tc.addLongitudinalManeuverToPath(steadySpeed, path, startingData, route);
+    result = tc.addLongitudinalManeuverToPath(steadySpeed, path, startingData);
     assertTrue(endingData.almostEquals(result, 0.01));
 
     // Check number of points
@@ -255,7 +253,7 @@ public class TrajectoryConverterTest {
     when(speedUp.getEndDistance()).thenReturn(endingData.downtrack);
 
     // Call function
-    result = tc.addLongitudinalManeuverToPath(speedUp, path, startingData, route);
+    result = tc.addLongitudinalManeuverToPath(speedUp, path, startingData);
     assertTrue(endingData.almostEquals(result, 0.01));
 
     // Check number of points
@@ -289,7 +287,7 @@ public class TrajectoryConverterTest {
     when(slowDown.getEndDistance()).thenReturn(endingData.downtrack);
 
     // Call function
-    result = tc.addLongitudinalManeuverToPath(slowDown, path, startingData, route);
+    result = tc.addLongitudinalManeuverToPath(slowDown, path, startingData);
     assertTrue(endingData.almostEquals(result, 0.01));
 
     // Check number of points

@@ -33,8 +33,6 @@ import org.ros.rosjava_geometry.Vector3;
 
 import cav_msgs.LocationECEF;
 import cav_msgs.LocationOffsetECEF;
-import gov.dot.fhwa.saxton.carma.route.Route;
-import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point2D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
@@ -63,18 +61,17 @@ public interface ITrajectoryConverter {
    * 
    * @param traj The trajectory to convert
    * @param currentTimeMs The starting time for this path in ms 
-   * @param route A route containing all possible route segments
    * @param downtrack Current downtrack distance on route
    * @param crosstrack Current crosstrack on route
-   * @param currentSegment The current route segment
+   * @param currentSegmentIdx The current route segment index
    * @param segDowntrack The current downtrack relative to the current segment start
    * @param lane The current lane index
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
-  public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
-   Route route, double downtrack, double crosstrack,
-   RouteSegment currentSegment, double segDowntrack, int lane);
+  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
+  double downtrack, double crosstrack,
+  int currentSegmentIdx, double segDowntrack, int lane);
   /**
    * Helper function for converting a List of RoutePoint2DStamped into List of ECEFPointStamped
    * 
@@ -88,12 +85,12 @@ public interface ITrajectoryConverter {
    * Helper function for converting a cav_msgs.Trajectory into List of RoutePointStamped
    * 
    * @param trajMsg The message to be converted
-   * @param route The current route
-   * @param routeState The current route state
+   * @param currentSegmentIdx The current route segment index
+   * @param segDowntrack the downtrack distance along the segment
    * 
    * @return The path described as points along a route
    */
-  public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, Route route, cav_msgs.RouteState routeState);
+  List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, int currentSegmentIdx, double segDowntrack);
   
   /**
    * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
@@ -103,7 +100,7 @@ public interface ITrajectoryConverter {
    * 
    * @return A cav_msgs.Trajectory message. This message will be empty if the path was empty
    */
-   cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory);
+  cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory);
 
   /**
    * Function which converts and individual Simple Longitudinal Maneuver to a path based on starting configuration
@@ -116,5 +113,5 @@ public interface ITrajectoryConverter {
    */
   LongitudinalSimulationData addLongitudinalManeuverToPath(
     final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
-    final LongitudinalSimulationData startingData, final Route route);
+    final LongitudinalSimulationData startingData);
 }

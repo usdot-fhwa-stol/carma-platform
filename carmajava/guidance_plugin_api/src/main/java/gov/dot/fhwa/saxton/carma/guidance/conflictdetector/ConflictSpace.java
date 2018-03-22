@@ -36,7 +36,7 @@ public final class ConflictSpace {
   private double startTime;
   private double endTime;
   private int lane;
-  private RouteSegment segment;
+  private int segmentIdx;
   private HashSet<String> conflictingVehicles = new HashSet<>();
 
   /**
@@ -45,13 +45,13 @@ public final class ConflictSpace {
    * @param startDowntrack The starting location on the route of this conflict
    * @param startTime The starting time of this conflict in seconds
    * @param The lane index this conflict will occur in
-   * @param The route segment this conflict starts on
+   * @param The route segment index this conflict starts on
    */
-  ConflictSpace(double startDowntrack, double startTime, int lane, RouteSegment segment) {
+  ConflictSpace(double startDowntrack, double startTime, int lane, int segmentIdx) {
     this.startDowntrack = startDowntrack;
     this.startTime = startTime; 
     this.lane = lane;
-    this.segment = segment;
+    this.segmentIdx = segmentIdx;
   }
 
   /**
@@ -100,12 +100,12 @@ public final class ConflictSpace {
   }
 
   /**
-   * Set the route segment
+   * Set the route segment index
    * 
-   * @param segment The route segment this conflict starts on
+   * @param segmentIdx The route segment index this conflict starts on
    */
-  public void setSegment(RouteSegment segment) {
-    this.segment = segment;
+  public void setSegmentIdx(int segmentIdx) {
+    this.segmentIdx = segmentIdx;
   }
 
   /**
@@ -154,12 +154,12 @@ public final class ConflictSpace {
   }
 
   /**
-   * Set the route segment
+   * Get the route segment idex
    * 
-   * @return The route segment this conflict starts on
+   * @return The route segment idex this conflict starts on
    */
-  public RouteSegment getSegment() {
-    return this.segment;
+  public int getSegmentIdx() {
+    return this.segmentIdx;
   }
 
   /**

@@ -59,6 +59,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   private static final double MS_PER_SEC = 1000;
   private static final double DISTANCE_BACKWARD_TO_SEARCH = 500; //m
   private static final double DISTANCE_FORWARD_TO_SEARCH = 500; //m
+  private Route route;
 
   /**
    * Constructor
@@ -71,10 +72,28 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     this.timeStep = timeStep;
   }
 
+  /**
+   * Sets the route
+   * 
+   * @param route The route to set
+   */
+  public void setRoute(Route route) {
+    this.route = route;
+  }
+
+  /**
+   * Gets the route
+   * 
+   * @return The set route
+   */
+  public Route getRoute() {
+    return route;
+  }
+
   @Override
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
-   Route route, double downtrack, double crosstrack,
-   RouteSegment currentSegment, double segDowntrack, int lane) {
+   double downtrack, double crosstrack,
+   int currentSegmentIdx, double segDowntrack, int lane) {
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers
@@ -87,7 +106,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     final double startTime = currentTime; 
     final double startingDowntrack = downtrack;
     final double startingSegDowntrack = segDowntrack;
-    final int startingSegIdx = currentSegment.getUptrackWaypoint().getWaypointId();  
+    final int startingSegIdx = route.getSegments().get(currentSegmentIdx).getUptrackWaypoint().getWaypointId();  
     ////
     // Process longitudinal maneuvers
     ////
@@ -105,7 +124,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
 
       // If this maneuver is happening or will happen add it to the path
       if (maneuver.getEndDistance() > longitudinalSimData.downtrack) {
-        longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData, route);
+        longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData);
         // Ensure there are no overlapping points in time
         if (oldPathEndPoint != null && oldPathEndPoint.getStamp() == path.get(oldPathSize).getStamp()){
           path.remove(oldPathSize);
@@ -141,7 +160,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
           }
         } else { // A lane change will occur in this maneuver
           // Find the equation to generate the fake lane change
-          double laneWidth = path.get(currentPoint).getSegment().getWaypoint().getLaneWidth();
+          double laneWidth = route.getSegments().get(path.get(currentPoint).getSegmentIdx()).getDowntrackWaypoint().getLaneWidth();
           double y_0 = currentCrosstrack;
           double y_1 = currentCrosstrack + laneWidth * -1 * maneuver.getEndingRelativeLane();
           double[] coefficients = getCubicFunction(maneuver.getStartDistance(), y_0, maneuver.getEndDistance(), y_1);
@@ -166,7 +185,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       double startDist = complexManeuver.getStartDistance();
       double endDist = complexManeuver.getEndDistance();
       // Treat complex maneuver as stead speed maneuver
-      addKinematicMotionToPath(startDist, endDist, averageSpeed, averageSpeed, path, longitudinalSimData, route);
+      addKinematicMotionToPath(startDist, endDist, averageSpeed, averageSpeed, path, longitudinalSimData);
     }
 
     return path;
@@ -182,7 +201,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       // Convert point to ecef
       // Currently ignores elevation
       Vector3 pointInSegmentFrame = new Vector3(point.getSegDowntrack(), point.getCrosstrack(), 0.0);
-      Transform ecefToSeg = Transform.fromPoseMessage(point.getSegment().getFRDPose()); 
+      Transform ecefToSeg =  route.getSegments().get(point.getSegmentIdx()).getECEFToSegmentTransform(); 
       Vector3 vecInECEF = ecefToSeg.apply(pointInSegmentFrame);
       // Update point
       ECEFPointStamped ecefPoint = new ECEFPointStamped();
@@ -195,12 +214,11 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
   
   @Override
-  public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, Route route, RouteSegment currentSegment, double segDowntrack) {
+  public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, int currentSegmentIdx, double segDowntrack) {
     // Get segments within DSRC range
-    final int segmentIdx = currentSegment.getUptrackWaypoint().getWaypointId();
-    final List<cav_msgs.RouteSegment> segments = route.findRouteSubsection(segmentIdx, segDowntrack, DISTANCE_BACKWARD_TO_SEARCH, DISTANCE_FORWARD_TO_SEARCH);
+    List<RouteSegment> segments = route.findRouteSubsection(currentSegmentIdx, segDowntrack, DISTANCE_BACKWARD_TO_SEARCH, DISTANCE_FORWARD_TO_SEARCH);
     // Get starting location
-    final cav_msgs.LocationECEF startMsg = trajMsg.getLocation();
+    cav_msgs.LocationECEF startMsg = trajMsg.getLocation();
     Vector3 ecefPoint = new Vector3(startMsg.getEcefX(), startMsg.getEcefY(), startMsg.getEcefZ());
     // Get starting segment and remaining segments to search
     RouteSegment startingSegment = route.routeSegmentOfPoint(new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), segments);
@@ -209,7 +227,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     segments = segments.subList(startIdx, segments.size() - 1);
 
     // Build list of route points
-    List<RoutePointStamped> routePoints;
+    List<RoutePointStamped> routePoints = new ArrayList<>(trajMsg.getOffsets().size() + 1);
     // Get starting time
     double time = startMsg.getTimestamp() / 1000L;
     // Get starting route point
@@ -273,13 +291,13 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   @Override
   public LongitudinalSimulationData addLongitudinalManeuverToPath(
     final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
-    final LongitudinalSimulationData startingData, final Route route) {
+    final LongitudinalSimulationData startingData) {
 
     final double startX = maneuver.getStartDistance();
     final double endX = maneuver.getEndDistance();
     final double startV = maneuver.getStartSpeed();
     final double endV = maneuver.getTargetSpeed();
-    return addKinematicMotionToPath(startX, endX, startV, endV, path, startingData, route);
+    return addKinematicMotionToPath(startX, endX, startV, endV, path, startingData);
   }
 
   /**
@@ -298,7 +316,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
    */
   private LongitudinalSimulationData addKinematicMotionToPath(
     final double startX, final double endX, final double startV, final double endV,
-     List<RoutePointStamped> path,final LongitudinalSimulationData startingData, final Route route) {
+     List<RoutePointStamped> path,final LongitudinalSimulationData startingData) {
       final double deltaX = endX - startX;
       final double deltaV = endV - startV;
       final double startVSqr = startV * startV;
@@ -340,8 +358,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       double distanceChange = 0;
       while(currentSimTime <= endTime && path.size() <= maxPointsInPath) {
         // If past the current segment get the next one
-        if (currentSegDowntrack > currentSeg.getLength()) {
-          currentSegDowntrack = currentSegDowntrack - currentSeg.getLength(); // Map distance onto new segment
+        if (currentSegDowntrack > currentSeg.length()) {
+          currentSegDowntrack = currentSegDowntrack - currentSeg.length(); // Map distance onto new segment
           segmentIdx++;
           currentSeg = routeSegments.get(segmentIdx);
         }
@@ -349,7 +367,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
         // Add point to list with timestamp
         RoutePointStamped point = new RoutePointStamped(currentDowntrack, 0.0, currentSimTime);
         point.setSegDowntrack(currentSegDowntrack);
-        point.setSegment(currentSeg);
+        point.setSegmentIdx(currentSeg.getUptrackWaypoint().getWaypointId());
         path.add(point);
         // Update starting distance, speed, and current time
         distanceChange = accelTerm + actualStartV * timeStep;
