@@ -269,10 +269,11 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         if (!conflictSpaces.isEmpty()) {
             ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
-            log.info(String.format("Conflict detected in request %s, startDist = %.02f, endDist = %.02f, startTime = %.02f, endTime = %.02f",
+            log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
             msg.getHeader().getPlanId(),
             conflictSpace.getStartDowntrack(),
             conflictSpace.getEndDowntrack(),
+            conflictSpace.getLane(),
             conflictSpace.getStartTime(),
             conflictSpace.getEndTime()));
 
@@ -376,10 +377,11 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         if (!conflictSpaces.isEmpty()) {
             ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
-            log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, startTime = %.02f, endTime = %.02f",
+            log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
             msg.getHeader().getPlanId(),
             conflictSpace.getStartDowntrack(),
             conflictSpace.getEndDowntrack(),
+            conflictSpace.getLane(),
             conflictSpace.getStartTime(),
             conflictSpace.getEndTime()));
             // Handle in default conflict handler
