@@ -36,6 +36,9 @@ CarmaJS.WidgetFramework.Cruising = (function () {
 
             listenerRouteState.subscribe(function (message) {
 
+                if (document.getElementById('divSpeedLimitValue') == null)
+                    return;
+
                 if (message.current_segment.waypoint.speed_limit != null && message.current_segment.waypoint.speed_limit != 'undefined')
                     document.getElementById('divSpeedLimitValue').innerHTML = message.current_segment.waypoint.speed_limit;
 
@@ -173,6 +176,10 @@ CarmaJS.WidgetFramework.Cruising = (function () {
 
             var maxMPH = 160;
             var deg = (speed / maxMPH) * 180;
+
+            if (document.getElementById('percent') == null)
+                return;
+
             document.getElementById('percent').innerHTML = speed;
             var element = document.getElementsByClassName('gauge-c')[0];
 
