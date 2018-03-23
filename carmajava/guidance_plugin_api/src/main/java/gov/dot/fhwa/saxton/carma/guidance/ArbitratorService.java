@@ -47,11 +47,11 @@ public interface ArbitratorService {
      * at which point planning is considered to have failed. Can only be called by a planning plugin while
      * planning is in progress.
      * 
-     * @param traj The trajectory to be planned
      * @param startDist the downtrack distance to start planning at, must be within the span of traj, inclusive
      * @param endDist the downtrack distance to end planning at, must be within the span of traj, exclusive
      * 
-     * @return True or false indicating the success or failure of the planning
+     * @return The planned trajectory, to be evaluated and inserted into the real Trajectory by the caller.
+     * See {@link Trajectory#copyManeuvers} for the recommended way to do this.
      */
-    boolean planSubtrajectoryRecursively(Trajectory traj, double startDist, double endDist);
+    Trajectory planSubtrajectoryRecursively(double startDist, double endDist);
 }

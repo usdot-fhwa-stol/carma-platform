@@ -95,6 +95,8 @@ public class Arbitrator extends GuidanceComponent
   protected static final long SLEEP_DURATION_MILLIS = 100;
   protected static final double TRAJ_SIZE_WARNING = 50.0;
   protected static final double DISTANCE_EPSILON = 0.0001;
+  protected int recursionCount = 0;
+  protected static final int RECURSION_LIMIT = 10;
 
   public Arbitrator(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node,
       PluginManager pluginManager, TrajectoryExecutor trajectoryExecutor) {
@@ -653,51 +655,14 @@ public class Arbitrator extends GuidanceComponent
   }
 
   @Override
-  public boolean planSubtrajectoryRecursively(Trajectory traj, double startDist, double endDist) {
-    if (!(arbitratorStateMachine.getState() == ArbitratorState.NORMAL_REPLANNING)
-    || !(arbitratorStateMachine.getState() == ArbitratorState.REPLAN_DUE_TO_FAILED_TRAJECTORY)) {
-      // Not in valid state to plan recursively
-      return false;
+  public Trajectory planSubtrajectoryRecursively(double startDist, double endDist) {
+    if (recursionCount > RECURSION_LIMIT) {
+      throw new RosRuntimeException("Arbitrator planning recursion exceeded limit of: " + RECURSION_LIMIT + "!");
     }
+    recursionCount++;
+    Trajectory out = planTrajectory(startDist, endDist);
+    recursionCount--;
 
-    Trajectory tempBuffer = new Trajectory(traj); // Temporary copy to ensure we don't mess up the real one
-
-    Trajectory plannedRegion = planTrajectory(startDist, endDist);
-
-    // Test the insert into the copied trajectory
-    for (LateralManeuver m : plannedRegion.getLateralManeuvers()) {
-      if (!tempBuffer.addManeuver(m)) {
-        return false;
-      }
-    }
-    for (LongitudinalManeuver m : plannedRegion.getLongitudinalManeuvers()) {
-      if (!tempBuffer.addManeuver(m)) {
-        return false;
-      }
-    }
-    if (plannedRegion.getComplexManeuver() != null)  {
-      if(!tempBuffer.setComplexManeuver(plannedRegion.getComplexManeuver())) {
-        return false;
-      }
-    }
-
-    // We've succeeded the insert into the temporary trajectory, proceed with insert into real trajectory
-    for (LateralManeuver m : plannedRegion.getLateralManeuvers()) {
-      if (!traj.addManeuver(m)) {
-        throw new RosRuntimeException("Recursive subtrajectory planning failed even though operations on copy were successful. Trajetory may be corrupted!");
-      }
-    }
-    for (LongitudinalManeuver m : plannedRegion.getLongitudinalManeuvers()) {
-      if (!traj.addManeuver(m)) {
-        throw new RosRuntimeException("Recursive subtrajectory planning failed even though operations on copy were successful. Trajetory may be corrupted!");
-      }
-    }
-    if (plannedRegion.getComplexManeuver() != null)  {
-      if(!traj.setComplexManeuver(plannedRegion.getComplexManeuver())) {
-        throw new RosRuntimeException("Recursive subtrajectory planning failed even though operations on copy were successful. Trajetory may be corrupted!");
-      }
-    }
-
-    return true;
+    return out;
   }
 }
