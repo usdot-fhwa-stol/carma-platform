@@ -22,39 +22,30 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
-import cav_msgs.MobilityAck;
-import cav_msgs.MobilityAckType;
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
-import cav_msgs.Route;
-import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
-import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
-import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
-import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
  * Mobility Message Routing Component for Guidance
  * <p>
- * Handles incoming MobilityAck, MobilityPath, MobilityRequest, and MobilityOperations messages and 
+ * Handles incoming MobilityResponse, MobilityPath, MobilityRequest, and MobilityOperations messages and 
  * route them to the appropriately registered handler callback based on the incoming messages strategy
  * string. Also handles ignoring messages not directed at the host vehicle.
  * <p>
@@ -108,10 +99,10 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     public void onStartup() {
         log.info("Setting up subscribers");
         requestSub = pubSubService.getSubscriberForTopic("incoming_mobility_request", MobilityRequest._TYPE);
-        ackSub = pubSubService.getSubscriberForTopic("incoming_mobility_ack", MobilityAck._TYPE);
+        ackSub = pubSubService.getSubscriberForTopic("incoming_mobility_response", MobilityResponse._TYPE);
         operationSub = pubSubService.getSubscriberForTopic("incoming_mobility_operation", MobilityOperation._TYPE);
         pathSub = pubSubService.getSubscriberForTopic("incoming_mobility_path", MobilityPath._TYPE);
-        ackPub = pubSubService.getPublisherForTopic("outbound_mobility_ack", MobilityAck._TYPE);
+        ackPub = pubSubService.getPublisherForTopic("outbound_mobility_response", MobilityResponse._TYPE);
 
         requestSub.registerOnMessageCallback(this::handleMobilityRequest);
         ackSub.registerOnMessageCallback(this::handleMobilityResponse);
@@ -206,10 +197,10 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
 
     /**
-     * Handles the mobility ack callback execution in a separate thread.
+     * Handles the mobility response callback execution in a separate thread.
      * 
      * @param handler the callback to be invoked in the background thread
-     * @param msg The MobilityAck message being handled
+     * @param msg The MobilityResponse message being handled
      */
     private void fireMobilityResponseCallback(MobilityResponseHandler handler, MobilityResponse msg) {
         new Thread(() -> handler.handleMobilityResponseMessage(msg),
