@@ -60,7 +60,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     protected Tracking tracking_;
     protected boolean bufferedTrajectoryRunning = false;
     protected AtomicReference<RouteState> curRouteState = new AtomicReference<>();
-    protected AtomicReference<Route> curRoute = new AtomicReference<>();
 
     protected double maxAccel;
     protected long sleepDurationMillis = 100;
@@ -104,7 +103,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         });
 
         routeSubscriber = pubSubService.getSubscriberForTopic("route", Route._TYPE);
-        routeSubscriber.registerOnMessageCallback((msg) -> curRoute.set(msg));
 
         currentState.set(GuidanceState.STARTUP);
     }
@@ -269,7 +267,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
    * Convert the current trajectory to a timestamped list of points along the route frame
    */
     public List<RoutePointStamped> getHostPathPrediction() {
-        return trajectoryExecutorWorker.getHostPathPrediction(curRoute.get(), curRouteState.get());
+        return trajectoryExecutorWorker.getHostPathPrediction();
     }
 
     /**
