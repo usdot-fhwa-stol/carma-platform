@@ -38,6 +38,7 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -152,7 +153,7 @@ public class PluginManagerTest {
         ConnectedNode node = mock(ConnectedNode.class);
         pm = new PluginManager(mock(GuidanceStateMachine.class), mock(IPubSubService.class), 
         mock(IGuidanceCommands.class), mock(IManeuverInputs.class), mock(GuidanceRouteService.class), node,
-        mock(IConflictDetector.class), mock(ITrajectoryConverter.class));
+        mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class));
         pluginClasses = new ArrayList<>();
         plugins = new ArrayList<>();
     }
