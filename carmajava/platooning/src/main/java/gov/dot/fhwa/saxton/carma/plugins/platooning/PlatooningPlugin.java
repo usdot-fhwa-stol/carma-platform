@@ -16,10 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.List;
-
-import org.ros.internal.message.Message;
-
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import cav_msgs.PlatooningInfo;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
@@ -33,39 +32,44 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin {
 
-    protected final String PLATOONING_FLAG = "PLATOONING";
     // TODO the plugin should use interface manager once rosjava multi-thread service call is fixed
     protected final String SPEED_CMD_CAPABILITY = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
+    protected final String PLATOONING_FLAG      = "PLATOONING";
 
     // initialize pubs/subs
-    protected IPublisher<PlatooningInfo> platooningInfoPublisher;
-    protected ISubscriber<SpeedAccel> cmdSpeedSub;
+    protected IPublisher<MobilityRequest>   mobilityRequestPublisher;
+    protected IPublisher<MobilityOperation> mobilityOperationPublisher;
+    protected IPublisher<PlatooningInfo>    platooningInfoPublisher;
+    protected ISubscriber<SpeedAccel>       cmdSpeedSub;
+    
     
     // following parameters are for CACC platooning
-    protected double maxAccel = 2.5;
+    protected double maxAccel              = 2.5;
     protected double minimumManeuverLength = 15.0;
-    protected double timeHeadway = 1.8;
-    protected double standStillGap = 7.0;
-    protected double kpPID = 1.5;
-    protected double kiPID = 0.0;
-    protected double kdPID = 0.1;
-    protected int messageIntervalLength = 100;
-    protected int messageTimeout = 750;
+    protected double timeHeadway           = 1.8;
+    protected double standStillGap         = 7.0;
+    protected double kpPID                 = 1.5;
+    protected double kiPID                 = 0.0;
+    protected double kdPID                 = 0.1;
+    protected double messageTimeoutFactor  = 750;
+    protected int    messageIntervalLength = 100;
     
     // following parameters are for leader selection
     protected double lowerBoundary = 1.65;
     protected double upperBoundary = 1.75;
-    protected double maxSpacing = 2.0;
-    protected double minSpacing = 1.9;
-    protected double minGap = 12.0;
-    protected double maxGap = 14.0;
-    protected int algorithmType = 1;
-
-    protected IPlatooningState state = null;
-    protected CommandGenerator commandGenerator = null;
-    protected Thread commandGeneratorThread = null;
-    protected PlatoonManager platoonManager = null;
-    protected Thread platoonManagerThread = null;
+    protected double maxSpacing    = 2.0;
+    protected double minSpacing    = 1.9;
+    protected double minGap        = 12.0;
+    protected double maxGap        = 14.0;
+    protected int    algorithmType = 1;
+    
+    // platooning plug-in components
+    protected IPlatooningState state                  = null;
+    protected Thread           stateThread            = null;
+    protected CommandGenerator commandGenerator       = null;
+    protected Thread           commandGeneratorThread = null;
+    protected PlatoonManager   platoonManager         = null;
+    protected Thread           platoonManagerThread   = null;
     
     public PlatooningPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -77,71 +81,81 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
 
     @Override
     public void onInitialize() {
-        log.info("CACC platooning pulgin is initializing...");
-        // initialize parameters of platooning plugin
-        maxAccel = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
-        log.debug("Load param maxAccel = " + maxAccel);
+        log.info("CACC platooning plugin is initializing...");
+        
+        // initialize parameters of platooning plug-in
+        maxAccel              = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
         minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 15.0);
-        log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
-        timeHeadway = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 1.8);
-        log.debug("Load param timeHeadway = " + timeHeadway);
-        standStillGap = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 7.0);
-        log.debug("Load param standStillGap = " + standStillGap);
-        kpPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
-        kiPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
-        kdPID = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
-        log.info("Parameters for speed PID controller are set to be [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
+        timeHeadway           = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 1.8);
+        standStillGap         = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 7.0);
+        kpPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
+        kiPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
+        kdPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
+        messageTimeoutFactor  = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
+        lowerBoundary         = pluginServiceLocator.getParameterSource().getDouble("~platooning_lower_boundary", 1.65);
+        upperBoundary         = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
+        maxSpacing            = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_spacing", 2.0);
+        minSpacing            = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_spacing", 1.9);
+        minGap                = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 12.0);
+        maxGap                = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
         messageIntervalLength = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 100);
+        algorithmType         = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
+        //log all loaded parameters
+        log.debug("Load param maxAccel = " + maxAccel);
+        log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
+        log.debug("Load param timeHeadway = " + timeHeadway);
+        log.debug("Load param standStillGap = " + standStillGap);
+        log.debug("Load param for speed PID controller: [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
         log.debug("Load param messageIntervalLength = " + messageIntervalLength);
-        messageTimeout = (int) (messageIntervalLength * pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5));
-        log.debug("Load param messageTimeout = " + messageTimeout);
-        lowerBoundary = pluginServiceLocator.getParameterSource().getDouble("~platooning_lower_boundary", 1.65);
-        log.debug("Load param lowerBoundary = " + lowerBoundary);
-        upperBoundary = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
-        log.debug("Load param upperBoundary = " + upperBoundary);
-        maxSpacing = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_spacing", 2.0);
-        log.debug("Load param maxSpacing = " + maxSpacing);
-        minSpacing = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_spacing", 1.9);
-        log.debug("Load param minSpacing = " + minSpacing);
-        minGap = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 12.0);
-        log.debug("Load param minGap = " + minGap);
-        maxGap = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
-        log.debug("Load param maxGap = " + maxGap);
-        algorithmType = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
+        log.debug("Load param messageTimeoutFactor = " + messageTimeoutFactor);        
+        log.debug("Load param lowerBoundary = " + lowerBoundary);        
+        log.debug("Load param upperBoundary = " + upperBoundary);        
+        log.debug("Load param maxSpacing = " + maxSpacing);        
+        log.debug("Load param minSpacing = " + minSpacing);        
+        log.debug("Load param minGap = " + minGap);        
+        log.debug("Load param maxGap = " + maxGap);        
         log.debug("Load param algorithmType = " + algorithmType);
+        
         // initialize necessary pubs/subs
-        platooningInfoPublisher = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
-        cmdSpeedSub = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
-        // the plugin will start with standby state
-        log.info("CACC platooning pulgin is initialized");
+        mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
+        mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
+        platooningInfoPublisher    = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
+        cmdSpeedSub                = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
+        
+        //TODO register with MobilityRouter
+        log.info("CACC platooning plugin is initialized.");
     }
 
     @Override
     public void onResume() {
-        // reset plugin state to standby
-        state = new StandbyState(this, log, pluginServiceLocator);
-        log.info("The current CACC plugin state is " + this.state.toString());
-        // Start all other sub-threads
+        log.info("CACC platooning plugin resume to operate.");
+        // reset plug-in's sub-components
+        this.setState(new StandbyState(this, log, pluginServiceLocator));
         if(platoonManagerThread == null) {
-            platoonManager = new PlatoonManager(this, log, pluginServiceLocator);
+            platoonManager       = new PlatoonManager(this, log, pluginServiceLocator);
             platoonManagerThread = new Thread(platoonManager);
             platoonManagerThread.setName("Platooning List Manager");
             platoonManagerThread.start();
-            log.debug("Started platoonManagerThread.");
+            log.debug("Started platoonManagerThread");
         }
         if(commandGeneratorThread == null) {
-            commandGenerator = new CommandGenerator(this, log, pluginServiceLocator);
+            commandGenerator       = new CommandGenerator(this, log, pluginServiceLocator);
             commandGeneratorThread = new Thread(commandGenerator);
             commandGeneratorThread.setName("Platooning Command Generator");
             commandGeneratorThread.start();
-            log.debug("Started commandGeneratorThread.");
+            log.debug("Started commandGeneratorThread");
         }
+        log.info("The current CACC plugin state is " + this.state.toString());
         this.setAvailability(true);
     }
 
     @Override
     public void onSuspend() {
         this.setAvailability(false);
+        if(stateThread != null) {
+            stateThread.interrupt();
+            stateThread = null;
+        }
         if(commandGeneratorThread != null) {
             commandGeneratorThread.interrupt();
             commandGeneratorThread = null;
@@ -150,6 +164,7 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
             platoonManagerThread.interrupt();
             platoonManagerThread = null;
         }
+        log.info("CACC platooning plugin is suspended.");
     }
     
     @Override
@@ -159,7 +174,8 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     
     @Override
     public void loop() throws InterruptedException {
-        this.state.loop();
+        // publish platooning information message for the usage of UI
+        publishPlatooningInfo();
     }
 
     @Override
@@ -168,14 +184,37 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         return this.state.planTrajectory(traj, expectedEntrySpeed);
     }
     
-    protected void setState(IPlatooningState state) {
-        log.info("Platooning plugin is changing from " + this.state.toString() + " state to " + state.toString() + " state");
-        this.state = state;
+    // TODO The following method belongs to the mobility message handler interface that guidance package will provide
+    public void handleMobilityOperationMessage(MobilityOperation msg) {
+        this.state.onMobilityOperationMessage(msg);
     }
-
-    // Publish platooning information message for the usage of UI
-    // TODO Once this plugin is finished, we should replace them with actual data
-    protected void publishPlatooningInfo() {
+    
+    // TODO The following method belongs to the mobility message handler interface that guidance package will provide
+    public boolean handleMobilityRequestMessage(MobilityRequest msg) {
+        return this.state.onMobilityRequestMessgae(msg);
+    }
+    
+    // TODO The following method belongs to the mobility message handler interface that guidance package will provide
+    public void headleMobilityResponse(MobilityResponse msg) {
+        this.state.onMobilityResponseMessage(msg);
+    }
+    
+    // Set state for the current plug-in
+    protected void setState(IPlatooningState state) {
+        if(stateThread != null) {
+            stateThread.interrupt();
+            stateThread = null;
+        }
+        String previousState = this.state == null ? "NULL" : this.state.toString();
+        log.info("Platooning plugin is changing from " + previousState + " state to " + state.toString() + " state");
+        this.state = state;
+        stateThread = new Thread(state);
+        stateThread.start();
+        log.debug("Started stateThread");
+    }
+    
+    // TODO Once this plug-in is finished, we should replace them with actual data
+    private void publishPlatooningInfo() {
         if (platooningInfoPublisher != null) {
             PlatooningInfo info = platooningInfoPublisher.newMessage();
             info.setState(PlatooningInfo.FOLLOWER);
@@ -190,11 +229,6 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
             info.setDesiredGap((float) 45.8);
             platooningInfoPublisher.publish(info);
         }
-    }
-    
-    // This method will publish different mobility messages on different topics via guidance route component
-    protected void publishMobilityMessage(List<Message> messages) {
-        // TODO use the new routing system to publish necessary mobility message
     }
     
     // The following getters will be helpful on doing unit tests, because it will let the plugin's

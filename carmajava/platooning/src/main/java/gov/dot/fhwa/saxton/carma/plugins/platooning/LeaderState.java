@@ -18,8 +18,11 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import java.util.UUID;
 
+import org.ros.internal.message.Message;
+
 import cav_msgs.BasicVehicleClass;
 import cav_msgs.MobilityIntro;
+import cav_msgs.MobilityOperation;
 import cav_msgs.NewPlan;
 import cav_msgs.PlanType;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
@@ -32,7 +35,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  * The LeaderState is a state when the platooning algorithm is enabled and the host vehicle is acting as the leader for zero or many vehicles
  * It will transit to StandbyState when the algorithm is disabled in the next trajectory
  * It will transit to FollowerState when it found an available leader in front of it in the same lane
- * In this state, the pulgin will not insert any maneuvers into the trajectory,
+ * In this state, the plug-in will not insert any maneuvers into the trajectory,
  * but it will try to join another platoon or to let others join its platoon by
  * sending out introduction message with platooning status and also handle mobility messages from other vehicles
  */
@@ -57,27 +60,23 @@ public class LeaderState implements IPlatooningState {
             // As the leader, no need to plan any Platooning maneuvers
             log_.info("Not insert any maneuvers in trajectory at leader state " + traj.toString());
         } else {
-            // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
+            // Put plug-in in StandbyState when platooning algorithm in disabled in the next trajectory
             // Need some time delay to let other vehicles finish current complex maneuver before we
-            // stop sending mobility messages and transit to the new state
-            // We assume the subjust vehicle will be at speed limit at the start for the next trajectory
+            // stop sending mobility opertaion messages and transit to the new state
+            // We assume the subject vehicle will stay at the current speed until the start for the next trajectory
             double currentDistance = pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance();
             double currentSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
-            double speedAtTrajectoryStart = pluginServiceLocator_.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit();
-            double speedAvg = (currentSpeed + speedAtTrajectoryStart) / 2;
-            int timeDelay = (int) ((traj.getStartLocation() - currentDistance) / speedAvg);
+            int timeDelay = (int) ((traj.getStartLocation() - currentDistance) / currentSpeed);
             transitionToStandbyTime = System.currentTimeMillis() + timeDelay * 1000;
         }
         return tpr;
     }
 
     @Override
-    public void onReceiveNegotiationMessage(NewPlan plan) {
-        // Only care about SEARCHING_FOR_PLATOON message for now
-        // TODO need to accommodate new mobility message format
-        if(plan.getType().getType() == PlanType.UNKNOWN) {
-            plugin_.platoonManager.memberUpdates(plan);
-            log_.info("Receiving new platooning plan message " + plan.getPlanId() + " from " + plan.getSenderId());
+    public void onReceiveMobilityMessgae(Message mobilityMessage) {
+        if(mobilityMessage instanceof MobilityOperation) {
+            // The format of strategy params should be "Type|Arg1:0.0,Arg2:0.0" 
+            String[] strategyParams = ((MobilityOperation) mobilityMessage).getStrategyParams().split("|");
         }
     }
     

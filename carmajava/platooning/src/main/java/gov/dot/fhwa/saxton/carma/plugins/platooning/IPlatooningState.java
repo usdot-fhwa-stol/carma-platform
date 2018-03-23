@@ -16,14 +16,13 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.List;
-
-import org.ros.internal.message.Message;
-
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-public interface IPlatooningState {
+public interface IPlatooningState extends Runnable {
     
     /**
      * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if possible.
@@ -34,18 +33,22 @@ public interface IPlatooningState {
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
     
     /**
-     * Callback method to handle mobility requests, responses and operation, which may result in
-     * state changing, trajectory replan and information updating.
-     * @param request the detailed proposal from other vehicles
+     * Callback method to handle mobility requests which may result in
+     * state changing, trajectory re-plan and platoon info updates. 
+     * @param msg the detailed proposal from other vehicles
+     * @return simple yes/no response to the incoming proposal
      */
-    public void onReceiveMobilityMessgae(Message mobilityMessage);
+    public boolean onMobilityRequestMessgae(MobilityRequest msg);
     
     /**
-     * Get mobility messages that the current platooning state want to send out
-     * The returned message list can only contain operation, request and response
+     * Callback method to handle mobility operation.
+     * @param msg the necessary operational info from other vehicles
      */
-    public List<Message> getNewMobilityOutbound();
+    public void onMobilityOperationMessage(MobilityOperation msg);
     
-    // The loop method which is called by the loop method in platooning plug-in
-    public void loop() throws InterruptedException;
+    /**
+     * Callback method to handle mobility response.
+     * @param msg response for the current plan from other vehicles
+     */
+    public void onMobilityResponseMessage(MobilityResponse msg);
 }

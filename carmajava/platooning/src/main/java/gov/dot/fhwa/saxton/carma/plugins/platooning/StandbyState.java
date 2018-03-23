@@ -16,8 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import cav_msgs.MobilityIntro;
-import cav_msgs.NewPlan;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.ros.internal.message.Message;
+
+import cav_msgs.MobilityRequest;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
@@ -27,7 +31,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 /**
  * The StandbyState is a state when the platooning algorithm is current disabled on the route.
  * It will transit to LeaderState when it knows the algorithm will be enabled in the next trajectory.
- * In this state, the pulgin will not insert any maneuvers into a trajectory and ignore all negotiation messages.
+ * In this state, the plug-in will not insert any maneuvers into a trajectory and ignore all negotiation messages.
  */
 public class StandbyState implements IPlatooningState {
     
@@ -50,7 +54,7 @@ public class StandbyState implements IPlatooningState {
             log_.info("In standby state, find an avaliable plan window and change to leader state in " + traj.toString());
             plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
             // Request to replan with new state and give enough time for plugin state transition
-            tpr.requestDelayedReplan(50);
+            tpr.requestDelayedReplan(100);
         } else {
             log_.info("In standby state, asked to plan a trajectory without available winodw, ignoring " + traj.toString());
         }
@@ -58,24 +62,30 @@ public class StandbyState implements IPlatooningState {
     }
 
     @Override
-    public void onReceiveNegotiationMessage(NewPlan plan) {
-        // ignore NewPlan message in the standby state
-        if(plan instanceof NewPlan)
-        log_.info("Ignore new plan message because the plugin is current in standby state");
+    public void onReceiveMobilityMessgae(Message mobilityMessage) {
+        if(mobilityMessage instanceof MobilityRequest) {
+            // TODO send NACK message in the standby state for mobility request which targets the host vehicle
+            log_.info("Send negative response for targeted MobilityRequest because we are in standby state.");
+        } else {
+            log_.info("Ignore other mobility messages because the plugin is current in standby state");
+        }
+        
+    }
+    
+    @Override
+    public List<Message> getNewMobilityOutbound() {
+        // return an empty list at standby state
+        // TODO depends on the routing system, we may need to add mobility nack in this list 
+        return new ArrayList<Message>();
+    }
+    
+    @Override
+    public void loop() throws InterruptedException {
+        Thread.sleep(1000);
     }
     
     @Override
     public String toString() {
         return "StandbyState";
-    }
-
-    @Override
-    public MobilityIntro getNewOutboundIntroMessage() {
-        return null;
-    }
-
-    @Override
-    public void checkCurrentState() {
-        // We can only transit to other state from current state when the coming trajectory has an available window, so No-Op
     }
 }

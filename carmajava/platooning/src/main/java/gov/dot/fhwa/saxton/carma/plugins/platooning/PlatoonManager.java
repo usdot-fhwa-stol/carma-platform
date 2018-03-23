@@ -69,9 +69,9 @@ public class PlatoonManager implements Runnable {
      * then we create a vehicle member instance and place it in the correct place in the platoon list.
      * @param plan NewPlan message with valid input string in the format of "CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:5.0"
      */
-    protected synchronized void memberUpdates(NewPlan plan) {
-        String vehicleId = plan.getSenderId();
-        String[] inputsArray = plan.getInputs().split(",");
+    protected synchronized void memberUpdates(String senderId, String params) {
+        String vehicleId = senderId;
+        String[] inputsArray = params.split(",");
         boolean isExisted = false;
         double cmdSpeed = Double.parseDouble(inputsArray[0].split(":")[1]);
         double distance = Double.parseDouble(inputsArray[1].split(":")[1]);
