@@ -650,7 +650,7 @@ public class Arbitrator extends GuidanceComponent
 
   @Override
   public void requestNewPlan() {
-    // TODO: Will likely need special logic at somepoint
+    planningWindow /= planningWindowShrinkFactor; // Offset for the planning window size decrease involved
     notifyTrajectoryFailure();
   }
 
