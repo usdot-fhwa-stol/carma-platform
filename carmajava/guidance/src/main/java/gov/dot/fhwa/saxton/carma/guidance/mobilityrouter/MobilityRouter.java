@@ -36,6 +36,7 @@ import cav_msgs.MobilityResponse;
 import cav_msgs.Route;
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
@@ -68,15 +69,11 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ISubscriber<MobilityResponse> ackSub;
     private ISubscriber<MobilityOperation> operationSub;
     private ISubscriber<MobilityPath> pathSub;
-    private ISubscriber<Route> routeSub;
-    private ISubscriber<RouteState> routeStateSub;
     private IPublisher<MobilityResponse> ackPub;
     private Map<String, LinkedList<MobilityRequestHandler>> requestMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityResponseHandler>> ackMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityOperationHandler>> operationMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityPathHandler>> pathMap = Collections.synchronizedMap(new HashMap<>());
-    private AtomicReference<Route> curRoute = new AtomicReference<>();
-    private AtomicReference<RouteState> curRouteState = new AtomicReference<>();
 
     private PluginManager pluginManager;
     private TrajectoryExecutor trajectoryExecutor;
@@ -114,16 +111,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         ackSub = pubSubService.getSubscriberForTopic("incoming_mobility_ack", MobilityAck._TYPE);
         operationSub = pubSubService.getSubscriberForTopic("incoming_mobility_operation", MobilityOperation._TYPE);
         pathSub = pubSubService.getSubscriberForTopic("incoming_mobility_path", MobilityPath._TYPE);
-        routeSub = pubSubService.getSubscriberForTopic("route", Route._TYPE);
-        routeStateSub = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
         ackPub = pubSubService.getPublisherForTopic("outbound_mobility_ack", MobilityAck._TYPE);
 
         requestSub.registerOnMessageCallback(this::handleMobilityRequest);
         ackSub.registerOnMessageCallback(this::handleMobilityResponse);
         operationSub.registerOnMessageCallback(this::handleMobilityOperation);
         pathSub.registerOnMessageCallback(this::handleMobilityPath);
-        routeSub.registerOnMessageCallback((msg) -> curRoute.set(msg));
-        routeStateSub.registerOnMessageCallback((msg) -> curRouteState.set(msg));
 
         defaultConflictHandlerName = node.getParameterTree().getString("~default_mobility_conflict_handler", "Yield Plugin");
         hostMobilityStaticId = node.getParameterTree().getString("~vehicle_id", "");
@@ -197,12 +190,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             respMsg.getHeader().setTimestamp(System.currentTimeMillis());
 
             if (resp == MobilityRequestResponse.ACK) {
-                List<RoutePointStamped> path = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+                List<RoutePointStamped> path = trajectoryConverter.messageToPath(msg.getTrajectory());
                 conflictManager.addRequestedPath(path, msg.getHeader().getPlanId(), msg.getHeader().getSenderId());
                 respMsg.setIsAccepted(true);
                 ackPub.publish(respMsg);
             } else if (isBroadcast(msg.getHeader()) && resp == MobilityRequestResponse.NO_RESPONSE) {
-                List<RoutePointStamped> path = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+                List<RoutePointStamped> path = trajectoryConverter.messageToPath(msg.getTrajectory());
                 conflictManager.addRequestedPath(path, msg.getHeader().getPlanId(), msg.getHeader().getSenderId());
             } else if (resp == MobilityRequestResponse.NACK) {
                 respMsg.setIsAccepted(false);
@@ -260,18 +253,17 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * or does not contain a conflict then no call is made.
      */
     private void handleMobilityRequest(MobilityRequest msg) {
-        log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
-
-        if (curRoute.get() != null || curRouteState.get() != null) {
-            log.warn("Message received prior to route being inited, ignoring...");
+        if (stateMachine.getState() != GuidanceState.ENGAGED) {
             return;
         }
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+        log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
+
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
-        List<RoutePointStamped> otherPath = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+        List<RoutePointStamped> otherPath = trajectoryConverter.messageToPath(msg.getTrajectory());
         List<RoutePointStamped> hostPath = trajectoryExecutor.getHostPathPrediction();
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostPath, otherPath);
 
@@ -310,14 +302,13 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * ROS message callback responsible for handling an inbound MobilityAck message
      */
     private void handleMobilityResponse(MobilityResponse msg) {
-        log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
-
-        if (curRoute.get() != null || curRouteState.get() != null) {
-            log.warn("Message received prior to route being inited, ignoring...");
+        if (stateMachine.getState() != GuidanceState.ENGAGED) {
             return;
         }
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+        log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
+
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())){
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -337,14 +328,13 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * ROS message callback responsible for handling an inbound MobilityOperation message
      */
     private void handleMobilityOperation(MobilityOperation msg) {
-        log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
-
-        if (curRoute.get() != null || curRouteState.get() != null) {
-            log.warn("Message received prior to route being inited, ignoring...");
+        if (stateMachine.getState() != GuidanceState.ENGAGED) {
             return;
         }
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+        log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
+
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -368,20 +358,19 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * or does not contain a conflict then no call is made.
      */
     private void handleMobilityPath(MobilityPath msg) {
-        log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
-
-        if (curRoute.get() != null || curRouteState.get() != null) {
-            log.warn("Message received prior to route being inited, ignoring...");
+        if (stateMachine.getState() != GuidanceState.ENGAGED) {
             return;
         }
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !msg.getHeader().getRecipientId().isEmpty()) {
+        log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
+
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
 
         List<RoutePointStamped> hostTrajectory = trajectoryExecutor.getHostPathPrediction();
-        List<RoutePointStamped> otherTrajectory = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
+        List<RoutePointStamped> otherTrajectory = trajectoryConverter.messageToPath(msg.getTrajectory());
         conflictManager.addMobilityPath(otherTrajectory, msg.getHeader().getSenderId());
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostTrajectory, otherTrajectory);
 
