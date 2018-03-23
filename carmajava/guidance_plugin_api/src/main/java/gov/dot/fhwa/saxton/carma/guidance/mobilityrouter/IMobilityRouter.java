@@ -36,9 +36,9 @@ public interface IMobilityRouter {
      * matches the end of the message's strategy field.
      * 
      * @param strategy The strategy value for which this callback is relevant
-     * @param handler The {@link MobilityRequestHandler} to invoke upon receiving a relevant event
+     * @param handler The {@link MobilityResponseHandler} to invoke upon receiving a relevant event
      */
-    public void registerMobilityAckHandler(String strategy, MobilityAckHandler handler);
+    public void registerMobilityResponseHandler(String strategy, MobilityResponseHandler handler);
 
     /**
      * Register a callback to be executed when a mobility operation message is received and is either directed
@@ -46,7 +46,7 @@ public interface IMobilityRouter {
      * matches the end of the message's strategy field.
      * 
      * @param strategy The strategy value for which this callback is relevant
-     * @param handler The {@link MobilityRequestHandler} to invoke upon receiving a relevant event
+     * @param handler The {@link MobilityOperationHandler} to invoke upon receiving a relevant event
      */
     public void registerMobilityOperationHandler(String strategy, MobilityOperationHandler handler);
 
@@ -56,7 +56,7 @@ public interface IMobilityRouter {
      * matches the end of the message's strategy field.
      * 
      * @param strategy The strategy value for which this callback is relevant
-     * @param handler The {@link MobilityRequestHandler} to invoke upon receiving a relevant event
+     * @param handler The {@link MobilityPathHandler} to invoke upon receiving a relevant event
      */
     public void registerMobilityPathHandler(String strategy, MobilityPathHandler handler);
 

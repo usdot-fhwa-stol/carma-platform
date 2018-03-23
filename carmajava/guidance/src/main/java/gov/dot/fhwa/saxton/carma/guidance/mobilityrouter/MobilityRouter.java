@@ -32,6 +32,7 @@ import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import cav_msgs.Route;
 import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
@@ -64,14 +65,14 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private final String componentName = "MobilityRouter";
     //private IPublisher<MobilityRequest> bsmPublisher;
     private ISubscriber<MobilityRequest> requestSub;
-    private ISubscriber<MobilityAck> ackSub;
+    private ISubscriber<MobilityResponse> ackSub;
     private ISubscriber<MobilityOperation> operationSub;
     private ISubscriber<MobilityPath> pathSub;
     private ISubscriber<Route> routeSub;
     private ISubscriber<RouteState> routeStateSub;
-    private IPublisher<MobilityAck> ackPub;
+    private IPublisher<MobilityResponse> ackPub;
     private Map<String, LinkedList<MobilityRequestHandler>> requestMap = Collections.synchronizedMap(new HashMap<>());
-    private Map<String, LinkedList<MobilityAckHandler>> ackMap = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, LinkedList<MobilityResponseHandler>> ackMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityOperationHandler>> operationMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityPathHandler>> pathMap = Collections.synchronizedMap(new HashMap<>());
     private AtomicReference<Route> curRoute = new AtomicReference<>();
@@ -118,7 +119,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         ackPub = pubSubService.getPublisherForTopic("outbound_mobility_ack", MobilityAck._TYPE);
 
         requestSub.registerOnMessageCallback(this::handleMobilityRequest);
-        ackSub.registerOnMessageCallback(this::handleMobilityAck);
+        ackSub.registerOnMessageCallback(this::handleMobilityResponse);
         operationSub.registerOnMessageCallback(this::handleMobilityOperation);
         pathSub.registerOnMessageCallback(this::handleMobilityPath);
         routeSub.registerOnMessageCallback((msg) -> curRoute.set(msg));
@@ -188,7 +189,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             MobilityRequestResponse resp = handler.handleMobilityRequestMessage(msg, hasConflict, conflictSpace);
 
             // Initialize the response message
-            MobilityAck respMsg = ackPub.newMessage();
+            MobilityResponse respMsg = ackPub.newMessage();
             respMsg.getHeader().setPlanId(msg.getHeader().getPlanId());
             respMsg.getHeader().setRecipientId(msg.getHeader().getSenderId());
             respMsg.getHeader().setSenderId(hostMobilityStaticId);
@@ -198,15 +199,15 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             if (resp == MobilityRequestResponse.ACK) {
                 List<RoutePointStamped> path = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
                 conflictManager.addRequestedPath(path, msg.getHeader().getPlanId(), msg.getHeader().getSenderId());
-                respMsg.getAgreement().setType(MobilityAckType.ACCEPT_WITH_EXECUTE);
+                respMsg.setIsAccepted(true);
                 ackPub.publish(respMsg);
             } else if (isBroadcast(msg.getHeader()) && resp == MobilityRequestResponse.NO_RESPONSE) {
                 List<RoutePointStamped> path = trajectoryConverter.messageToPath(msg.getTrajectory(), curRoute.get(), curRouteState.get());
                 conflictManager.addRequestedPath(path, msg.getHeader().getPlanId(), msg.getHeader().getSenderId());
             } else if (resp == MobilityRequestResponse.NACK) {
-                respMsg.getAgreement().setType(MobilityAckType.REJECT);
+                respMsg.setIsAccepted(false);
                 ackPub.publish(respMsg);
-            }
+            } // else don't send a response
         },
         "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName()).start();
     }
@@ -217,9 +218,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * @param handler the callback to be invoked in the background thread
      * @param msg The MobilityAck message being handled
      */
-    private void fireMobilityAckCallback(MobilityAckHandler handler, MobilityAck msg) {
-        new Thread(() -> handler.handleMobilityAckMessage(msg),
-                "MobilityAckHandlerCallback:" + handler.getClass().getSimpleName()).start();
+    private void fireMobilityResponseCallback(MobilityResponseHandler handler, MobilityResponse msg) {
+        new Thread(() -> handler.handleMobilityResponseMessage(msg),
+                "MobilityResponseHandlerCallback:" + handler.getClass().getSimpleName()).start();
     }
 
     /**
@@ -308,7 +309,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     /**
      * ROS message callback responsible for handling an inbound MobilityAck message
      */
-    private void handleMobilityAck(MobilityAck msg) {
+    private void handleMobilityResponse(MobilityResponse msg) {
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
 
         if (curRoute.get() != null || curRouteState.get() != null) {
@@ -321,12 +322,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             return;
         }
 
-        for (Entry<String, LinkedList<MobilityAckHandler>> entry : ackMap.entrySet()) {
+        for (Entry<String, LinkedList<MobilityResponseHandler>> entry : ackMap.entrySet()) {
             if (entry.getKey().endsWith(msg.getHeader().getPlanId())) {
                 log.info("Firing message handlers registered for " + entry.getKey());
-                for (MobilityAckHandler handler : entry.getValue()) {
-                    log.info("Firing mobility ack handler: " + handler.getClass().getSimpleName());
-                    fireMobilityAckCallback(handler, msg);
+                for (MobilityResponseHandler handler : entry.getValue()) {
+                    log.info("Firing mobility response handler: " + handler.getClass().getSimpleName());
+                    fireMobilityResponseCallback(handler, msg);
                 }
             }
         }
@@ -408,10 +409,10 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
 
     @Override
-    public void registerMobilityAckHandler(String strategyId, MobilityAckHandler handler) {
-        log.info("Mobility Ack handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
+    public void registerMobilityResponseHandler(String strategyId, MobilityResponseHandler handler) {
+        log.info("Mobility Response handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
         if (!ackMap.containsKey(strategyId)) {
-            ackMap.put(strategyId, new LinkedList<MobilityAckHandler>());
+            ackMap.put(strategyId, new LinkedList<MobilityResponseHandler>());
         }
         ackMap.get(strategyId).add(handler);
     }
