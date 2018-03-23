@@ -59,7 +59,6 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        
     }
     
     @Override

@@ -16,13 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.ros.internal.message.Message;
-
+import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -35,57 +33,73 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  */
 public class StandbyState implements IPlatooningState {
     
-    protected PlatooningPlugin plugin_;
-    protected ILogger log_;
-    protected PluginServiceLocator pluginServiceLocator_;
+    protected static int LOOP_SLEEP_TIME = 1000;
+    
+    protected PlatooningPlugin     plugin;
+    protected ILogger              log;
+    protected PluginServiceLocator pluginServiceLocator;
     
     public StandbyState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
-        plugin_ = plugin;
-        log_ = log;
-        pluginServiceLocator_ = pluginServiceLocator;
+        this.plugin               = plugin;
+        this.log                  = log;
+        this.pluginServiceLocator = pluginServiceLocator;
     }
     
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        RouteService rs = pluginServiceLocator_.getRouteService();
+        RouteService rs = pluginServiceLocator.getRouteService();
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+        
         // Check if the next trajectory includes a platooning window
-        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
-            log_.info("In standby state, find an avaliable plan window and change to leader state in " + traj.toString());
-            plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
-            // Request to replan with new state and give enough time for plugin state transition
-            tpr.requestDelayedReplan(100);
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
+            log.info("In standby state, find an avaliable plan window and change to leader state in " + traj.toString());
+            plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
+            // Request to replan with new state and give enough time for plug-in state transition
+            tpr.requestDelayedReplan(50);
         } else {
-            log_.info("In standby state, asked to plan a trajectory without available winodw, ignoring " + traj.toString());
+            log.info("In standby state, asked to plan a trajectory without available winodw, ignoring " + traj.toString());
         }
         return tpr;
     }
 
     @Override
-    public void onReceiveMobilityMessgae(Message mobilityMessage) {
-        if(mobilityMessage instanceof MobilityRequest) {
-            // TODO send NACK message in the standby state for mobility request which targets the host vehicle
-            log_.info("Send negative response for targeted MobilityRequest because we are in standby state.");
-        } else {
-            log_.info("Ignore other mobility messages because the plugin is current in standby state");
+    public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg) {
+        // In the standby state, the plugin has no responsible for replying any request messages 
+        synchronized(plugin.sharedLock) {
+            log.info("CACC plugin receives a mobility request but chooses to ignore. PlanId = " + msg.getHeader().getPlanId());
+            return MobilityRequestResponse.NO_RESPONSE;
         }
-        
     }
     
     @Override
-    public List<Message> getNewMobilityOutbound() {
-        // return an empty list at standby state
-        // TODO depends on the routing system, we may need to add mobility nack in this list 
-        return new ArrayList<Message>();
+    public void onMobilityResponseMessage(MobilityResponse msg) {
+        // In standby state, it will not send out any requests so it will ignore all response
+        synchronized(plugin.sharedLock) {
+            log.info("CACC plugin receives a mobility response but chooses to ignore. PlanId = " + msg.getHeader().getPlanId());
+        }
     }
     
     @Override
-    public void loop() throws InterruptedException {
-        Thread.sleep(1000);
+    public void onMobilityOperationMessage(MobilityOperation msg) {
+        // In standby state, it will ignore operation message since it is not operating
+        synchronized(plugin.sharedLock) {
+            log.info("CACC plugin receives a mobility operation but chooses to ignore. PlanId = " + msg.getHeader().getPlanId());
+        }
+    }
+    
+    @Override
+    public void run() {
+        try {
+            // No-Op
+            Thread.sleep(LOOP_SLEEP_TIME);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
     
     @Override
     public String toString() {
         return "StandbyState";
     }
+
 }

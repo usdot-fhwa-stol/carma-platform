@@ -20,6 +20,7 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 public interface IPlatooningState extends Runnable {
@@ -38,7 +39,7 @@ public interface IPlatooningState extends Runnable {
      * @param msg the detailed proposal from other vehicles
      * @return simple yes/no response to the incoming proposal
      */
-    public boolean onMobilityRequestMessgae(MobilityRequest msg);
+    public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg);
     
     /**
      * Callback method to handle mobility operation.

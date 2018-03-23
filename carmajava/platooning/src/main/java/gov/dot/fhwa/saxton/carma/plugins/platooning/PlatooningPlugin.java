@@ -22,7 +22,12 @@ import cav_msgs.MobilityResponse;
 import cav_msgs.PlatooningInfo;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityOperationHandler;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityResponseHandler;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -30,18 +35,18 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin {
-
-    // TODO the plugin should use interface manager once rosjava multi-thread service call is fixed
+public class PlatooningPlugin extends AbstractPlugin
+                              implements IStrategicPlugin, MobilityOperationHandler, MobilityRequestHandler, MobilityResponseHandler {
+    
+    // TODO the plugin should use interface manager once rosjava multiple thread service call is fixed
     protected final String SPEED_CMD_CAPABILITY = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
     protected final String PLATOONING_FLAG      = "PLATOONING";
 
     // initialize pubs/subs
-    protected IPublisher<MobilityRequest>   mobilityRequestPublisher;
-    protected IPublisher<MobilityOperation> mobilityOperationPublisher;
-    protected IPublisher<PlatooningInfo>    platooningInfoPublisher;
-    protected ISubscriber<SpeedAccel>       cmdSpeedSub;
-    
+    protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
+    protected IPublisher<MobilityOperation>   mobilityOperationPublisher;
+    protected IPublisher<PlatooningInfo>      platooningInfoPublisher;
+    protected ISubscriber<SpeedAccel>         cmdSpeedSub;
     
     // following parameters are for CACC platooning
     protected double maxAccel              = 2.5;
@@ -70,6 +75,9 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
     protected Thread           commandGeneratorThread = null;
     protected PlatoonManager   platoonManager         = null;
     protected Thread           platoonManagerThread   = null;
+    
+    // initialize a lock for handle mobility messages
+    protected Object sharedLock = new Object();
     
     public PlatooningPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -184,18 +192,18 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         return this.state.planTrajectory(traj, expectedEntrySpeed);
     }
     
-    // TODO The following method belongs to the mobility message handler interface that guidance package will provide
+    @Override
     public void handleMobilityOperationMessage(MobilityOperation msg) {
         this.state.onMobilityOperationMessage(msg);
     }
     
-    // TODO The following method belongs to the mobility message handler interface that guidance package will provide
-    public boolean handleMobilityRequestMessage(MobilityRequest msg) {
+    @Override
+    public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict, ConflictSpace conflictSpace) {
         return this.state.onMobilityRequestMessgae(msg);
     }
     
-    // TODO The following method belongs to the mobility message handler interface that guidance package will provide
-    public void headleMobilityResponse(MobilityResponse msg) {
+    @Override
+    public void handleMobilityResponseMessage(MobilityResponse msg) {
         this.state.onMobilityResponseMessage(msg);
     }
     
@@ -211,6 +219,10 @@ public class PlatooningPlugin extends AbstractPlugin implements IStrategicPlugin
         stateThread = new Thread(state);
         stateThread.start();
         log.debug("Started stateThread");
+    }
+    
+    protected double fromECEFToDowntrack(cav_msgs.Trajectory traj) {
+        return pluginServiceLocator.getTrajectoryConverter().messageToPath(traj).get(0).getDowntrack();
     }
     
     // TODO Once this plug-in is finished, we should replace them with actual data
