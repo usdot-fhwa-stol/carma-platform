@@ -29,10 +29,13 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import org.reflections.Reflections;
@@ -87,7 +90,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected int activePluginsSeqNum = 0;
 
     public PluginManager(GuidanceStateMachine stateMachine, IPubSubService pubSubManager, 
-    IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService, ConnectedNode node) {
+    IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService,
+    ConnectedNode node, IMobilityRouter router, IConflictDetector conflictDetector, ITrajectoryConverter trajectoryConverter) {
         super(stateMachine, pubSubManager, node);
         this.executor = new PluginExecutor();
 
@@ -97,7 +101,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
-                routeService);
+                routeService, router , conflictDetector, trajectoryConverter);
     }
 
     /**
@@ -112,7 +116,10 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pluginServiceLocator.getPubSubService(), 
                 pluginServiceLocator.getParameterSource(), 
                 pluginServiceLocator.getManeuverPlanner(), 
-                pluginServiceLocator.getRouteService());
+                pluginServiceLocator.getRouteService(),
+                pluginServiceLocator.getMobilityRouter(),
+                pluginServiceLocator.getConflictDetector(),
+                pluginServiceLocator.getTrajectoryConverter());
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }
