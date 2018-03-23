@@ -20,7 +20,7 @@
 
 // *** Global variables ***
 // Deployment variables
-var ip = CarmaJS.Config.getIP(); // TODO: Update with proper environment IP address to 166.241.207.252 or 192.168.88.10
+var ip = CarmaJS.Config.getIP();
 
 // Topics
 var t_system_alert = 'system_alert';

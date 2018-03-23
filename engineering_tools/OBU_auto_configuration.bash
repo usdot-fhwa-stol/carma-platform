@@ -7,7 +7,7 @@
 # Set IP address and username of target OBU
 # Password for this username is: rsuadmin
 USERNAME=rsu
-OBU=192.168.88.40
+OBU=192.168.0.41
 
 # Set IPv6 address of host vehicle PC (Do not change it unless PC's IPv6 address is changed)
 HOST=FE800000000000000260E0FFFE561C17

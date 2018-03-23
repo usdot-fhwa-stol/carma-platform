@@ -40,7 +40,7 @@ usage() { echo "Usage: remote_install.bash -n <username> ";}
  
 
 # Default environment variables
-HOST="192.168.88.10"
+HOST="192.168.0.4"
 CATKIN_WS="/opt/carma"
 BUILD=false
 EVERYTHING=true

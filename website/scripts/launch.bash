@@ -14,10 +14,10 @@ source /opt/carma/app/bin/setup.bash
 unset ROS_HOSTNAME
 
 # Ensure ROS_IP is correct
-export ROS_IP=192.168.88.10
+export ROS_IP=192.168.0.4
 
 # Ensure ROS_MASTER_URI is correct
-export ROS_MASTER_URI=http://192.168.88.10:11311/
+export ROS_MASTER_URI=http://192.168.0.4:11311/
 
 # Set ros to run from /opt/carma instead of home directory
 export ROS_HOME=/opt/carma/.ros
