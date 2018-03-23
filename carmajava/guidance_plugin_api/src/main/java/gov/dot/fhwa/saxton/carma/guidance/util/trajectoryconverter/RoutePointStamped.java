@@ -28,7 +28,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
  */
 public final class RoutePointStamped {
   Point3D point; // Downtrack, Crosstrack, and Time 
-  cav_msgs.RouteSegment segment; // Segment on the route
+  int segmentIdx; // Segment on the route
   double segDowntrack; // Downtrack distance along current segment
 
   /**
@@ -54,8 +54,8 @@ public final class RoutePointStamped {
     this.point.setZ(time);
   }
 
-  public void setSegment(cav_msgs.RouteSegment segment) {
-    this.segment = segment;
+  public void setSegmentIdx(int segmentIdx) {
+    this.segmentIdx = segmentIdx;
   }
 
   public void setSegDowntrack(double segDowntrack) {
@@ -82,7 +82,7 @@ public final class RoutePointStamped {
     return this.segDowntrack;
   }
 
-  public cav_msgs.RouteSegment getSegment(){
-    return segment;
+  public int getSegmentIdx(){
+    return segmentIdx;
   }
 }

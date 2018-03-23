@@ -27,6 +27,8 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.SimpleHashStr
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
+import gov.dot.fhwa.saxton.carma.route.Route;
+import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,8 +46,6 @@ import java.util.function.BiConsumer;
 import org.jboss.netty.util.internal.ConcurrentHashMap;
 
 import cav_msgs.MobilityPath;
-import cav_msgs.Route;
-import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 /**
@@ -71,6 +71,8 @@ public class ConflictManager implements IConflictManager {
   private final Map<String, String> planIdMap = Collections.synchronizedMap(new HashMap<>());
   // Time provider
   private final IMobilityTimeProvider timeProvider;
+  // Route
+  private Route route;
 
   /**
    * Constructor
@@ -89,6 +91,24 @@ public class ConflictManager implements IConflictManager {
     this.crosstrackMargin = crosstrackMargin;
     this.timeMargin = timeMargin;
     this.timeProvider = timeProvider;
+  }
+
+  /**
+   * Sets the route
+   * 
+   * @param route The route to set
+   */
+  public void setRoute(Route route) {
+    this.route = route;
+  }
+
+  /**
+   * Gets the route
+   * 
+   * @return The set route
+   */
+  public Route getRoute() {
+    return route;
   }
 
   @Override
@@ -185,7 +205,7 @@ public class ConflictManager implements IConflictManager {
         continue;
       }
       // Get lane
-      lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getCrosstrack());
+      lane = route.getSegments().get(routePoint.getSegmentIdx()).determinePrimaryLane(routePoint.getCrosstrack());
 
       // Check for collisions with mobility paths
       List<String> conflictingVehicles = hasCollision(mobilityPathSpatialMaps, routePoint, minTime);
@@ -197,14 +217,14 @@ public class ConflictManager implements IConflictManager {
       if (!conflictingVehicles.isEmpty()) { 
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
-          currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
+          currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegmentIdx());
           currentConflict.addConflictingVehicles(conflictingVehicles);
         } else if (lane != currentConflict.getLane()) {
           // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
           closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
           conflicts.add(currentConflict);
           // Use the current point's lane but the previous points distance and time to define the start of the new conflict
-          currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegment());
+          currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegmentIdx());
           currentConflict.addConflictingVehicles(conflictingVehicles);
         } 
       } else {
@@ -290,19 +310,19 @@ public class ConflictManager implements IConflictManager {
 
     for (RoutePointStamped routePoint: hostPath) {
       // Get lane
-      lane = RouteSegment.fromMessage(routePoint.getSegment()).determinePrimaryLane(routePoint.getCrosstrack());
+      lane = route.getSegments().get(routePoint.getSegmentIdx()).determinePrimaryLane(routePoint.getCrosstrack());
       
       // Update conflicts
       if (!otherPathMap.getCollisions(routePoint.getPoint()).isEmpty()) { 
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
-          currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegment());
+          currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane, routePoint.getSegmentIdx());
         } else if (lane != currentConflict.getLane()) {
           // If we are tracking a conflict but the lane has changed then end that conflict and create a new one
           closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
           conflicts.add(currentConflict);
           // Use the current point's lane but the previous points distance and time to define the start of the new conflict
-          currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegment());
+          currentConflict = new ConflictSpace(prevPoint.getDowntrack(), prevPoint.getStamp(), lane, routePoint.getSegmentIdx());
         } 
       } else {
         // If there were no conflicts but we are tracking a conflict then that conflict is done
