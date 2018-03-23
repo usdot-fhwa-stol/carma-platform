@@ -291,7 +291,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
 
     /**
-     * ROS message callback responsible for handling an inbound MobilityAck message
+     * ROS message callback responsible for handling an inbound MobilityResponse message
      */
     private void handleMobilityResponse(MobilityResponse msg) {
         if (stateMachine.getState() != GuidanceState.ENGAGED) {
