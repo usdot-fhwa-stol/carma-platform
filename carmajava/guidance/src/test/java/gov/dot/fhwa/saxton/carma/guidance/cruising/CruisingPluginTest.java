@@ -48,6 +48,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.NoOpAccStrategyFactory;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManagementService;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -86,7 +87,7 @@ public class CruisingPluginTest {
         PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
                 mock(PluginManagementService.class), mock(IPubSubService.class), mockParameterSource,
                 new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService,
-                mock(IConflictDetector.class), mock(ITrajectoryConverter.class));
+                mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class));
         cruise = new CruisingPlugin(psl);
         cruise.onInitialize();
         cruise.maxAccel_ = 2.5;

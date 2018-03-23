@@ -21,11 +21,16 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import cav_msgs.ActiveManeuvers;
+import cav_msgs.Route;
+import cav_msgs.RouteState;
 
 /**
  * Guidance package TrajectoryExecutorWorker
@@ -49,6 +54,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected Arbitrator arbitrator;
   protected int timeStepsWithoutTraj = 0;
   protected static final int MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY = 3;
+  protected TrajectoryConverter trajectoryConverter;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -91,7 +97,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       log.info("Finished downtrack distance update with no trajectory.");
       return;
     } else {
-      if (downtrackDistance > currentTrajectory.get().getEndLocation()) {
+      if (downtrackDistance >= currentTrajectory.get().getEndLocation()) {
         swapTrajectories();
       }
     }
@@ -371,5 +377,12 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     for (PctCallback callback : tmpCallbacks) {
       callback.called = false;
     }
+  }
+
+  /**
+   * Convert the current trajectory to a timestamped list of points along the route frame
+   */
+  public List<RoutePointStamped> getHostPathPrediction() {
+    return trajectoryConverter.convertToPath(currentTrajectory.get());
   }
 }

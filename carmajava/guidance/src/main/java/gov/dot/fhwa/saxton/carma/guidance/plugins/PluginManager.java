@@ -31,6 +31,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
@@ -90,7 +91,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
     public PluginManager(GuidanceStateMachine stateMachine, IPubSubService pubSubManager, 
     IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService,
-    ConnectedNode node, IConflictDetector conflictDetector, ITrajectoryConverter trajectoryConverter) {
+    ConnectedNode node, IMobilityRouter router, IConflictDetector conflictDetector, ITrajectoryConverter trajectoryConverter) {
         super(stateMachine, pubSubManager, node);
         this.executor = new PluginExecutor();
 
@@ -100,7 +101,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
-                routeService, conflictDetector, trajectoryConverter);
+                routeService, router , conflictDetector, trajectoryConverter);
     }
 
     /**
@@ -116,6 +117,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pluginServiceLocator.getParameterSource(), 
                 pluginServiceLocator.getManeuverPlanner(), 
                 pluginServiceLocator.getRouteService(),
+                pluginServiceLocator.getMobilityRouter(),
                 pluginServiceLocator.getConflictDetector(),
                 pluginServiceLocator.getTrajectoryConverter());
         jobQueue.add(this::onStartup);

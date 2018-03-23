@@ -60,6 +60,11 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   private static final double DISTANCE_BACKWARD_TO_SEARCH = 500; //m
   private static final double DISTANCE_FORWARD_TO_SEARCH = 500; //m
   private Route route;
+  private double downtrack;
+  private double crosstrack;
+  private int currentSegmentIdx;
+  private double currentSegDowntrack;
+  private int lane;
 
   /**
    * Constructor
@@ -88,6 +93,25 @@ public class TrajectoryConverter implements ITrajectoryConverter {
    */
   public Route getRoute() {
     return route;
+  }
+
+  /**
+   * Update the segment index and current downtrack to be used for calculations
+   * 
+   * @param currentSegmentIdx the integer identifier of the current segment on the route
+   * @param currentSegDowntrack the current progress down that segment in double-valued meters
+   */
+  public void setRouteState(double downtrack, double crosstrack, int currentSegmentIdx, double currentSegDowntrack, int lane) {
+    this.downtrack = downtrack;
+    this.crosstrack = crosstrack;
+    this.currentSegmentIdx = currentSegmentIdx;
+    this.currentSegDowntrack = currentSegDowntrack;
+    this.lane = lane;
+  }
+
+  @Override
+  public List<RoutePointStamped> convertToPath(Trajectory traj) {
+    return convertToPath(traj, System.currentTimeMillis(), downtrack, crosstrack, currentSegmentIdx, currentSegDowntrack, lane);
   }
 
   @Override
@@ -211,6 +235,11 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     }
 
     return ecefPoints;
+  }
+
+  @Override
+  public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg) {
+    return messageToPath(trajMsg, currentSegmentIdx, currentSegDowntrack);
   }
   
   @Override

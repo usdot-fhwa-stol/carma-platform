@@ -66,7 +66,6 @@ required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.routefollowing.RouteFollowingPlugin
   - gov.dot.fhwa.saxton.carma.guidance.lanechange.LaneChangePlugin
 
-
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins: 
   - Speed Harmonization Plugin
@@ -164,6 +163,10 @@ acc_host_vehicle_frame_id: 'host_vehicle'
 
 # String: The id of the frame which represents the front grill of the vehicle with x facing forward
 acc_vehicle_front_frame_id: 'vehicle_front'
+
+# String: The component name of the Plugin which will handle mobility path and request conflicts
+# Note: This string must match the Versionable.getVersionInfo().componentName() value of the plugin
+default_mobility_conflict_handler: Yield Plugin
 
 # Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
 # Units: meters
