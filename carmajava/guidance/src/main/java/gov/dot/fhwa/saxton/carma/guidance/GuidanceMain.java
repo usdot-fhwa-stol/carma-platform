@@ -35,6 +35,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import org.apache.commons.logging.Log;
@@ -67,7 +68,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
   protected IPubSubService pubSubService;
-  
+
   protected ConflictManager conflictManager;
 
   protected TrajectoryConverter trajectoryConverter;
@@ -77,9 +78,9 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected final AtomicBoolean engaged = new AtomicBoolean(false);
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
-  
+
   ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
-  
+
   @Override
   public GraphName getDefaultNodeName() {
     return GraphName.of("guidance_main");
@@ -95,18 +96,24 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     GuidanceRouteService routeService = new GuidanceRouteService(pubSubService);
     routeService.init();
-    
+
+    routeService.registerNewRouteCallback((route) -> trajectoryConverter.setRoute(Route.fromMessage(route)));
+    routeService.registerNewRouteStateCallback((state) -> trajectoryConverter.setRouteState(state.getDownTrack(),
+        state.getCrossTrack(), state.getCurrentSegment().getPrevWaypoint().getWaypointId(), state.getSegmentDownTrack(),
+        state.getLaneIndex()));
+
     GuidanceStateHandler stateHandler = new GuidanceStateHandler(stateMachine, pubSubService, node);
     GuidanceCommands guidanceCommands = new GuidanceCommands(stateMachine, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
-    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands, tracking);
-    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter, trajectoryExecutor);
-    PluginManager pluginManager = new PluginManager(
-      stateMachine, pubSubService, guidanceCommands, maneuverInputs,
-      routeService, node, router, conflictManager, trajectoryConverter);
+    TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands,
+        tracking);
+    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter,
+        trajectoryExecutor);
+    PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
+        routeService, node, router, conflictManager, trajectoryConverter);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor);
-    
+
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
     trajectoryExecutor.setArbitrator(arbitrator);
@@ -127,7 +134,8 @@ public class GuidanceMain extends SaxtonBaseNode {
    * Initialize the PubSubManager and setup it's message queue.
    */
   private void initPubSubManager(ConnectedNode node, GuidanceExceptionHandler guidanceExceptionHandler) {
-    ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node, guidanceExceptionHandler);
+    ISubscriptionChannelFactory subscriptionChannelFactory = new RosSubscriptionChannelFactory(node,
+        guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
     IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node, this);
 
@@ -153,8 +161,8 @@ public class GuidanceMain extends SaxtonBaseNode {
     double cellDowntrack = params.getDouble("conflict_map_cell_downtrack_size", 5.0);
     double cellCrosstrack = params.getDouble("conflict_map_cell_crosstrack_size", 5.0);
     double cellTime = params.getDouble("conflict_map_cell_time_size", 0.15);
-    
-    double[] cellSize = {cellDowntrack, cellCrosstrack, cellTime};
+
+    double[] cellSize = { cellDowntrack, cellCrosstrack, cellTime };
 
     double downtrackMargin = params.getDouble("conflict_map_collision_downtrack_margin", 2.5);
     double crosstrackMargin = params.getDouble("conflict_map_collision_crosstrack_margin", 1.0);
@@ -166,7 +174,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     log.info("Param conflict_map_collision_downtrack_margin: " + downtrackMargin);
     log.info("Param conflict_map_collision_crosstrack_margin: " + crosstrackMargin);
     log.info("Param conflict_map_collision_time_margin: " + timeMargin);
-    
+
     // Set time strategy
     IMobilityTimeProvider timeProvider = new SystemUTCTimeProvider();
     // Build conflict manager
@@ -186,7 +194,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     // Echo params
     log.info("Param mobility_path_max_points: " + maxPoints);
     log.info("Param mobility_path_time_step: " + timeStep);
-    
+
     // Build trajectory converter
     trajectoryConverter = new TrajectoryConverter(maxPoints, timeStep);
   }
@@ -195,7 +203,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   public void onSaxtonStart(final ConnectedNode connectedNode) {
     initLogger(connectedNode.getLog());
     final ILogger log = LoggerManager.getLogger();
-    
+
     log.info("//////////");
     log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
     log.info("//////////");
@@ -223,20 +231,21 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     initPubSubManager(connectedNode, guidanceExceptionHandler);
     log.info("Guidance main PubSubManager initialized");
-    
+
     stateMachine.initSubPub(pubSubService);
-    
+
     initExecutor(stateMachine, connectedNode);
     log.info("Guidance main executor initialized");
 
     systemVersionServer = connectedNode.newServiceServer("get_system_version", GetSystemVersion._TYPE,
-            new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
-                @Override
-                public void build(GetSystemVersionRequest request, GetSystemVersionResponse response) throws ServiceException {
-                    response.setSystemName(version.componentName());
-                    response.setRevision(version.revisionString());
-                }
-            });
+        new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
+          @Override
+          public void build(GetSystemVersionRequest request, GetSystemVersionResponse response)
+              throws ServiceException {
+            response.setSystemName(version.componentName());
+            response.setRevision(version.revisionString());
+          }
+        });
   }//onStart
 
   /**
@@ -247,6 +256,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     exceptionHandler.handleException(e);
 
     //Leverage SaxtonNode to publish the system alert.
-    publishSystemAlert(AlertSeverity.FATAL, "Guidance PANIC triggered in thread " + Thread.currentThread().getName() + " by an uncaught exception!", e);
+    publishSystemAlert(AlertSeverity.FATAL,
+        "Guidance PANIC triggered in thread " + Thread.currentThread().getName() + " by an uncaught exception!", e);
   }
 }//AbstractNodeMain
