@@ -34,51 +34,43 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  * but it will try to join another platoon or to let others join its platoon by
  * sending out introduction message with platooning status and also handle mobility messages from other vehicles
  */
-public class LeaderState implements IPlatooningState {
-    
-    enum LeaderSubstate {
-        // the regular leader state which means the host vehicle is leading a non-zero length platoon  
-        PLATOON_LEADER,
-        // the single vehicle state which is acting as a leader but it does not actually lead any vehicles
-        SINGLE_VEHICLE,
-        // the leader has accepted a join request and is waiting on a specific vehicle to join
-        LEADER_WAITING,
-        // the leader is trying to join another platoon in front of him by being at the rear of that platoon
-        CANDIDATE_FOLLOWER
-    }
+public class LeaderWaitingState implements IPlatooningState {
     
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
-    protected LeaderSubstate       substate = LeaderSubstate.SINGLE_VEHICLE; 
+    protected PlatoonPlan          currentPlan;
     
-    public LeaderState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
-        this.plugin               = plugin;
-        this.log                  = log;
+    public LeaderWaitingState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
+        this.plugin = plugin;
+        this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
+        this.currentPlan = null;
     }
     
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
         RouteService rs = pluginServiceLocator.getRouteService();
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-        switch(this.substate) {
-            case SINGLE_VEHICLE:
-            case LEADER_WAITING:
-            case PLATOON_LEADER:
-                if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
-                    // as the leader, the actual plan job is delegated to its default cruising plug-in
-                    log.info("Not insert any maneuvers in trajectory at leader state in " + traj.toString());
-                } else {
-                    // if the next trajectory did not have a plan window, we transit to standby state
-                    log.info(traj.toString() + " does not have any platooning plan window, transiting to Standby");
-                    plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
-                }
-                break;
-            case CANDIDATE_FOLLOWER:
-                // TODO insert a speed-up maneuver and a steady speed maneuver to stay at the rear of the target platoon 
-                break;
+        // check if we have a platooning window, if not we change back to standby state
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
+            // In SINGLE_VEHICLE state, it acts like the only vehicle on this route, so no operations are needed
+            // In LEADER_WAITING state, it is waiting on another vehicle to join, so no special operations are needed
+            // In PLATOON_LEADER state, we did not change the current behavior
+            // In CANDIDATE_FOLLOWER state, we only replan once in order to join the front platoon
+            if(this.substate == LeaderSubstate.CANDIDATE_FOLLOWER) {
+                
+            } else {
+                log.info("Not insert any maneuvers in trajectory at leader state in " + traj.toString());
+            }
+        } else {
+            log.info(traj.toString() + " does not have any platooning plan window, transiting to Standby");
+            plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+            // if the next trajectory did not have a plan window, we transit to standby state
+            // as the leader, the actual plan job is delegated to its default cruising plug-in
+            
         }
+        
         return tpr;
     }
     

@@ -41,6 +41,7 @@ public class PlatooningPlugin extends AbstractPlugin
     // TODO the plugin should use interface manager once rosjava multiple thread service call is fixed
     protected final String SPEED_CMD_CAPABILITY = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
     protected final String PLATOONING_FLAG      = "PLATOONING";
+    protected final String MOBILITY_STRATEGY    = "Carma/Platooning";
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
@@ -60,14 +61,21 @@ public class PlatooningPlugin extends AbstractPlugin
     protected int    messageIntervalLength = 100;
     
     // following parameters are for leader selection
-    protected double lowerBoundary = 1.65;
-    protected double upperBoundary = 1.75;
-    protected double maxSpacing    = 2.0;
-    protected double minSpacing    = 1.9;
-    protected double minGap        = 12.0;
-    protected double maxGap        = 14.0;
-    protected int    algorithmType = 1;
+    protected double lowerBoundary         = 1.65;
+    protected double upperBoundary         = 1.75;
+    protected double maxSpacing            = 2.0;
+    protected double minSpacing            = 1.9;
+    protected double minGap                = 12.0;
+    protected double maxGap                = 14.0;
+    protected int    algorithmType         = 1;
     
+    // following parameters are for negotiation when a CAV want to join a platoon
+    // TODO put those params into YAML file
+    protected double maxJoinTime           = 10.0;
+    protected double desiredJoinDistance   = 13.0;
+    protected int    maxPlatoonSize        = 5;
+     
+
     // platooning plug-in components
     protected IPlatooningState state                  = null;
     protected Thread           stateThread            = null;
@@ -194,17 +202,23 @@ public class PlatooningPlugin extends AbstractPlugin
     
     @Override
     public void handleMobilityOperationMessage(MobilityOperation msg) {
-        this.state.onMobilityOperationMessage(msg);
+        synchronized (this.sharedLock) {
+            this.state.onMobilityOperationMessage(msg);
+        }
     }
     
     @Override
     public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict, ConflictSpace conflictSpace) {
-        return this.state.onMobilityRequestMessgae(msg);
+        synchronized (this.sharedLock) {
+            return this.state.onMobilityRequestMessgae(msg);
+        }
     }
     
     @Override
     public void handleMobilityResponseMessage(MobilityResponse msg) {
-        this.state.onMobilityResponseMessage(msg);
+        synchronized (this.sharedLock) {
+            this.state.onMobilityResponseMessage(msg);
+        }
     }
     
     // Set state for the current plug-in
@@ -307,6 +321,26 @@ public class PlatooningPlugin extends AbstractPlugin
     
     protected int getAlgorithmType() {
         return algorithmType;
+    }
+    
+    protected double getMaxJoinTime() {
+        return maxJoinTime;
+    }
+    
+    protected int getMaxPlatoonSize() {
+        return maxPlatoonSize;
+    }
+    
+    protected double getDesiredJoinDistance() {
+        return desiredJoinDistance;
+    }
+    
+    protected IPublisher<MobilityRequest> getMobilityRequestPublisher() {
+        return mobilityRequestPublisher;
+    }
+
+    protected IPublisher<MobilityOperation> getMobilityOperationPublisher() {
+        return mobilityOperationPublisher;
     }
     
 }

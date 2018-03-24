@@ -147,7 +147,7 @@ public class FollowerState implements IPlatooningState {
     public void checkCurrentState() {
         // Change to leader state if the subject vehicle became the first one in the platoon and re-plan the trajectory
         if(plugin_.platoonManager.platoon.size() == 0) {
-            plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
+            plugin_.setState(new LeaderWaitingState(plugin_, log_, pluginServiceLocator_));
             pluginServiceLocator_.getArbitratorService().notifyTrajectoryFailure();
         }
         // Transit to standby state when the current trajectory is finished
