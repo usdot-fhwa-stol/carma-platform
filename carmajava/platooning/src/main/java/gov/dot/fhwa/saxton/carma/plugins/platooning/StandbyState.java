@@ -53,7 +53,7 @@ public class StandbyState implements IPlatooningState {
         // Check if the next trajectory includes a platooning window
         if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
             log.info("In standby state, find an avaliable plan window and change to leader state in " + traj.toString());
-            plugin.setState(new SingleVehiclePlatoonState(plugin, log, pluginServiceLocator));
+            plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
             // Request to replan with new state and give enough time for plug-in state transition
             tpr.requestDelayedReplan(50);
         } else {

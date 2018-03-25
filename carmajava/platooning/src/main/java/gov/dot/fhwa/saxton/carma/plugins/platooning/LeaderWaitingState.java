@@ -39,13 +39,14 @@ public class LeaderWaitingState implements IPlatooningState {
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
-    protected PlatoonPlan          currentPlan;
+    // The target vehicle we are currently waiting for
+    protected String               targetVehicleId;
     
-    public LeaderWaitingState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
+    public LeaderWaitingState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, String targetId) {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
-        this.currentPlan = null;
+        this.targetVehicleId = targetId;
     }
     
     @Override
@@ -54,35 +55,13 @@ public class LeaderWaitingState implements IPlatooningState {
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // check if we have a platooning window, if not we change back to standby state
         if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
-            // In SINGLE_VEHICLE state, it acts like the only vehicle on this route, so no operations are needed
-            // In LEADER_WAITING state, it is waiting on another vehicle to join, so no special operations are needed
-            // In PLATOON_LEADER state, we did not change the current behavior
-            // In CANDIDATE_FOLLOWER state, we only replan once in order to join the front platoon
-            if(this.substate == LeaderSubstate.CANDIDATE_FOLLOWER) {
-                
-            } else {
-                log.info("Not insert any maneuvers in trajectory at leader state in " + traj.toString());
-            }
+            // as a leader, the actual plan job is delegated to its default cruising plug-in
+            log.debug("Not insert any maneuvers in trajectory at LeaderWaitingState in " + traj.toString());
         } else {
             log.info(traj.toString() + " does not have any platooning plan window, transiting to Standby");
             plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
-            // if the next trajectory did not have a plan window, we transit to standby state
-            // as the leader, the actual plan job is delegated to its default cruising plug-in
-            
         }
-        
         return tpr;
-    }
-    
-    @Override
-    public String toString() {
-        return "LeaderState";
-    }
-
-    @Override
-    public void run() {
-        // TODO Auto-generated method stub
-        
     }
 
     @Override
@@ -103,6 +82,17 @@ public class LeaderWaitingState implements IPlatooningState {
         
     }
 
+    @Override
+    public void run() {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    @Override
+    public String toString() {
+        return "LeaderWaitingState";
+    }
+    
 //    @Override
 //    public MobilityIntro getNewOutboundIntroMessage() {
 //        MobilityIntro message = plugin_.mobilityIntroPublisher.newMessage(); 

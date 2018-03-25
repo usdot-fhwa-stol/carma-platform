@@ -22,7 +22,7 @@ public class PlatoonPlan {
     // This enum describes the status of a platooning plan
     protected enum PlanStatus {
         WAITING_ON_RESPONSE,
-        EXECUTING_PLAN,    
+        EXECUTING_PLAN,
     }
     
     // This enum describes all possible plan type of a platooning plan

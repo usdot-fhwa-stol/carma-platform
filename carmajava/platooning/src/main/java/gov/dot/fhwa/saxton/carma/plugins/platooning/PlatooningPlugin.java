@@ -49,7 +49,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected IPublisher<PlatooningInfo>      platooningInfoPublisher;
     protected ISubscriber<SpeedAccel>         cmdSpeedSub;
     
-    // following parameters are for CACC platooning
+    // following parameters are for general CACC platooning algorithm
     protected double maxAccel              = 2.5;
     protected double minimumManeuverLength = 15.0;
     protected double timeHeadway           = 1.8;
@@ -57,8 +57,6 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double kpPID                 = 1.5;
     protected double kiPID                 = 0.0;
     protected double kdPID                 = 0.1;
-    protected double messageTimeoutFactor  = 750;
-    protected int    messageIntervalLength = 100;
     
     // following parameters are for leader selection
     protected double lowerBoundary         = 1.65;
@@ -71,9 +69,15 @@ public class PlatooningPlugin extends AbstractPlugin
     
     // following parameters are for negotiation when a CAV want to join a platoon
     // TODO put those params into YAML file
-    protected double maxJoinTime           = 10.0;
-    protected double desiredJoinDistance   = 13.0;
-    protected int    maxPlatoonSize        = 5;
+    protected double maxJoinTime                    = 10.0;
+    protected double desiredJoinDistance            = 13.0;
+    protected double operationUpdatesTimeoutFactor  = 2.5;
+    protected int    operationUpdatesIntervalLength = 100;
+    protected int    operationInfoIntervalLength    = 3000;
+    protected int    shortNegotiationTimeout        = 5000;
+    protected int    longNegotiationTimeout         = 25000;
+    protected int    maxPlatoonSize                 = 5;
+    
      
 
     // platooning plug-in components
@@ -107,14 +111,14 @@ public class PlatooningPlugin extends AbstractPlugin
         kpPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
         kiPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
         kdPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
-        messageTimeoutFactor  = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
+        operationUpdatesTimeoutFactor  = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
         lowerBoundary         = pluginServiceLocator.getParameterSource().getDouble("~platooning_lower_boundary", 1.65);
         upperBoundary         = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
         maxSpacing            = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_spacing", 2.0);
         minSpacing            = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_spacing", 1.9);
         minGap                = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 12.0);
         maxGap                = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
-        messageIntervalLength = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 100);
+        operationUpdatesIntervalLength = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 100);
         algorithmType         = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
         //log all loaded parameters
         log.debug("Load param maxAccel = " + maxAccel);
@@ -122,8 +126,8 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param timeHeadway = " + timeHeadway);
         log.debug("Load param standStillGap = " + standStillGap);
         log.debug("Load param for speed PID controller: [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
-        log.debug("Load param messageIntervalLength = " + messageIntervalLength);
-        log.debug("Load param messageTimeoutFactor = " + messageTimeoutFactor);        
+        log.debug("Load param messageIntervalLength = " + operationUpdatesIntervalLength);
+        log.debug("Load param messageTimeoutFactor = " + operationUpdatesTimeoutFactor);        
         log.debug("Load param lowerBoundary = " + lowerBoundary);        
         log.debug("Load param upperBoundary = " + upperBoundary);        
         log.debug("Load param maxSpacing = " + maxSpacing);        
@@ -333,6 +337,18 @@ public class PlatooningPlugin extends AbstractPlugin
     
     protected double getDesiredJoinDistance() {
         return desiredJoinDistance;
+    }
+    
+    protected int getShortNegotiationTimeout() {
+        return shortNegotiationTimeout;
+    }
+
+    protected int getLongNegotiationTimeout() {
+        return longNegotiationTimeout;
+    }
+    
+    protected int getOperationInfoIntervalLength() {
+        return operationInfoIntervalLength;
     }
     
     protected IPublisher<MobilityRequest> getMobilityRequestPublisher() {

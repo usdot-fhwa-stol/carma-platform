@@ -17,22 +17,22 @@ import gov.dot.fhwa.saxton.carma.plugins.platooning.PlatoonPlan.PlanStatus;
 import gov.dot.fhwa.saxton.carma.plugins.platooning.PlatoonPlan.PlatooningPlanType;
 
 /**
- * The SingleVehiclePlatoonState is a state which platooning algorithm is enabled
- * on the current trajectory or the next trajectory but it did not actually lead any vehicles.
+ * The PlatoonLeaderState is a state which platooning algorithm is enabled
+ * on the current trajectory or the next trajectory no matter whether it actually lead vehicles or not.
  * This state will transit to Standby state when the algorithm is disabled on the next trajectory;
  * it will transit to CandidateFollower state if it is trying to join another platoon in front;
- * it will also transit to LeaderWaiting state if it is waiting on another vehicle to join at its rear.
+ * it will also transit to LeaderWaiting state if it is waiting on another vehicle behind him to join at its platoon rear.
  * In this state, it will not active plan any maneuvers but it will handle any JOIN request,
- * actively look for an available platoon in front and sends out heart beat platoon message to inform other CAVs.
+ * actively look for an available platoon in front and sends out heart beat platoon message to inform its existence.
  */
-public class SingleVehiclePlatoonState implements IPlatooningState {
+public class PlatoonLeaderState implements IPlatooningState {
 
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
     private   PlatoonPlan          currentPlan;
 
-    public SingleVehiclePlatoonState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
+    public PlatoonLeaderState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
@@ -45,7 +45,11 @@ public class SingleVehiclePlatoonState implements IPlatooningState {
         // If there is no platooning window, we set plugin to standby state
         if(!rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
             log.info("There is no platoon window in " + traj.toString() + " . Change back to standby state from " + this.toString());
+            // TODO send out mobility operation message to inform LEAVE and delegate the leader job
             plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+        } else {
+            // as a leader, the actual plan job is done by the default cruising plug-in
+            log.debug("Not insert any maneuvers in trajectory at LeaderWaitingState in " + traj.toString());
         }
         return tpr;
     }
@@ -57,39 +61,50 @@ public class SingleVehiclePlatoonState implements IPlatooningState {
         if(msg.getPlanType().getType() == (PlanType.JOIN_PLATOON_AT_REAR)) {
             // We need to check the size limitation on current platoon based on the leader's parameters
             // and we also need to calculate how long that vehicle can be in a reasonable distance to actually join
+            // TODO To evaluate the JOIN conditions, we assume the applicant is in the same lane with us for now
             MobilityHeader msgHeader = msg.getHeader();
             String params = msg.getStrategyParams();
-            log.debug("Receive mobility request to join a platoon from " + msgHeader.getSenderId() + " and PlanId = " + msgHeader.getPlanId());
+            String applicantId = msgHeader.getSenderId();
+            log.debug("Receive mobility JOIN request from " + applicantId + " and PlanId = " + msgHeader.getPlanId());
             log.debug("The strategy parameters are " + params);
             // For JOIN_PLATOON_AT_REAR message, the strategy params is defined as "SIZE:xx,MAX_ACCEL:xx"
             int applicantSize = Integer.parseInt(params.split(",")[0].split(":")[1]);
             // check if we have enough room for that applicant
-            boolean hasEnoughRoomInPlatoon = applicantSize + 1 <= plugin.getMaxPlatoonSize();
+            int currentNumberOfFollower = plugin.getPlatoonManager().getPlatooningSize();
+            boolean hasEnoughRoomInPlatoon = applicantSize + currentNumberOfFollower + 1 <= plugin.getMaxPlatoonSize();
             if(hasEnoughRoomInPlatoon) {
                 log.debug("The current platoon has enough room for the applicant with size " + applicantSize);
-                double currentDtd = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+                double currentRearDtd;
+                if(currentNumberOfFollower == 0) {
+                    currentRearDtd = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+                    log.debug("The current platoon only have the leader itself, so the platoon rear dtd is " + currentRearDtd);
+                } else {
+                    currentRearDtd = plugin.getPlatoonManager().platoon.get(currentNumberOfFollower - 1).getVehiclePosition();
+                    log.debug("The current platoon has " + currentNumberOfFollower + " followers, so the platoon rear dtd is " + currentRearDtd);
+                }
                 // TODO need trajectory convert provide the functionality to convert from ECEF point to downtrack distance  
                 cav_msgs.Trajectory dummyTraj = plugin.getMobilityRequestPublisher().newMessage().getTrajectory();
                 dummyTraj.setLocation(msg.getLocation());
                 double applicantCurrentDtd = pluginServiceLocator.getTrajectoryConverter().messageToPath(dummyTraj).get(0).getDowntrack();
-                log.debug("The current vehicle and applicant have a gap with length " + (currentDtd - applicantCurrentDtd));
+                log.debug("The current vehicle and applicant have a gap with length " + (currentRearDtd - applicantCurrentDtd));
                 // check if the applicant can join immediately without any acceleration
-                boolean isDistanceCloseEnough = (currentDtd - applicantCurrentDtd) <= plugin.getDesiredJoinDistance();
+                boolean isDistanceCloseEnough = (currentRearDtd - applicantCurrentDtd) <= plugin.getDesiredJoinDistance();
                 if(isDistanceCloseEnough) {
-                    log.debug("The applicant is close enough and it can join without accelerarion. Changing to LeaderWaitingState.");
-                    plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator));
+                    log.debug("The applicant is close enough and it can join without accelerarion.");
+                    log.debug("Changing to LeaderWaitingState and waiting for " + msg.getHeader().getSenderId());
+                    plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, msg.getHeader().getSenderId()));
                     return MobilityRequestResponse.ACK;
                 } else {
                     log.debug("The applicant is not close enough. Calculating if it can join in a reasonable time");
                     // Assume the applicant has the same speed with us and is lower than speed limit
                     double currentSpeed = plugin.getManeuverInputs().getCurrentSpeed();
-                    double currentSpeedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentDtd).getLimit();
+                    double currentSpeedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentRearDtd).getLimit();
                     double applicantMaxAccel = Double.parseDouble(params.split(",")[1].split(":")[1]);
                     // Assume the applicant can speed up to the speed limit
                     double applicantSpeedUpTime = (currentSpeedLimit - currentSpeed) / applicantMaxAccel;
                     // If we ignore the gap change during applicant acceleration,
                     // we can calculate the time the applicant will take to reach the desired join distance
-                    double timeToCatchUp = (currentDtd - applicantCurrentDtd - plugin.getDesiredJoinDistance()) / (currentSpeedLimit - currentSpeed);
+                    double timeToCatchUp = (currentRearDtd - applicantCurrentDtd - plugin.getDesiredJoinDistance()) / (currentSpeedLimit - currentSpeed);
                     // Assume there is no vehicle lag time, we now know the total time need for the applicant to join
                     double totalTimeNeeded = applicantSpeedUpTime + timeToCatchUp;
                     // check if it is a reasonable time
@@ -98,8 +113,9 @@ public class SingleVehiclePlatoonState implements IPlatooningState {
                     log.debug("The applicant max accel is " + applicantMaxAccel + " so it need " + applicantSpeedUpTime + "to speed up");
                     log.debug("The applicant also needs " + timeToCatchUp + " to close the gap. So the total time is " + totalTimeNeeded);
                     if(isTotalTimeReasonable) {
-                        log.debug("The total time for applicant joining is reasonable. Changing to LeaderWaitingState.");
-                        plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator));
+                        log.debug("The total time for applicant joining is reasonable.");
+                        log.debug("Changing to LeaderWaitingState and waiting for " + msg.getHeader().getSenderId());
+                        plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, msg.getHeader().getSenderId()));
                         return MobilityRequestResponse.ACK;
                     } else {
                         log.debug("The total time for applicant joining is unreasonable. Sending NACK to this request");
@@ -117,8 +133,10 @@ public class SingleVehiclePlatoonState implements IPlatooningState {
     @Override
     public void onMobilityOperationMessage(MobilityOperation msg) {
         String strategyParams = msg.getStrategyParams();
-        // In the current state, we only care about the INFO heart beat operation message if we are not currently in a negotiation
+        // In the current state, we care about the INFO heart beat operation message if we are not currently in a negotiation,
+        // and also we need to care about operation from members in the current platoon
         boolean isPlatoonInfoMsg = strategyParams.startsWith("INFO");
+        
         boolean isNotInNegotiation = this.currentPlan == null;
         if(isPlatoonInfoMsg && isNotInNegotiation) {
             // For INFO params, the string format is INFO|LEADER:xx,ECEFx:xx,ECEFy:xx,ECEFz:xx
@@ -143,12 +161,12 @@ public class SingleVehiclePlatoonState implements IPlatooningState {
                 request.getPlanType().setType((byte) 3);
                 request.setStrategy(plugin.MOBILITY_STRATEGY);
                 request.setStrategyParams(String.format("SIZE:1,MAX_ACCEL:%.2f", plugin.getMaxAccel()));
-                // TODO need to populate the urgency
+                // TODO need to populate the urgency later
                 request.setUrgency((short) 50);
                 this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), planId, PlanStatus.WAITING_ON_RESPONSE, PlatooningPlanType.JOIN_FROM_REAR);
                 plugin.getMobilityRequestPublisher().publish(request);
             } else {
-                log.debug("Ignore platoon behind the host vehicle with platoon id: " + msg.getPlanId());
+                log.debug("Ignore platoon behind the host vehicle with platoon id: " + msg.getHeader().getPlanId());
             }
         } else {
             log.debug("Receive operation message but ignore it isPlatoonInfoMsg = " + isPlatoonInfoMsg + " & isNotInNegotiation = " + isNotInNegotiation);
@@ -157,18 +175,69 @@ public class SingleVehiclePlatoonState implements IPlatooningState {
 
     @Override
     public void onMobilityResponseMessage(MobilityResponse msg) {
-        // TODO Auto-generated method stub
-        
+        // Only care about response message when we are waiting on a plan
+        if(this.currentPlan != null && this.currentPlan.status == PlanStatus.WAITING_ON_RESPONSE &&
+           this.currentPlan.planId.equals(msg.getHeader().getPlanId())) {
+            if(msg.getIsAccepted()) {
+                log.debug("Received positive response for plan id = " + this.currentPlan.planId);
+                log.debug("Change to CandidateFollower state and notify trajectory failure");
+                // change to candidate follower state and request a new plan to catch with the front vehicle
+                plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator));
+                pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+            } else {
+                log.debug("Received negative response for plan id = " + this.currentPlan.planId);
+                // forget about the previous plan
+                this.currentPlan = null;
+            }
+        }
     }
 
     @Override
     public void run() {
-        // TODO Auto-generated method stub
-        
+        // This is a loop which is also safe to interrupt
+        // This loop does two thing:
+        // 1. Send out heart beat mobility operation INFO message every 3 seconds
+        // 2. Remove current plan if we wait for long enough time
+        try {
+            while(!Thread.currentThread().isInterrupted()) {
+                long tsStart = System.currentTimeMillis();
+                MobilityOperation infoOperation = plugin.getMobilityOperationPublisher().newMessage();
+                composeMobilityOperationInfo(infoOperation);
+                plugin.getMobilityOperationPublisher().publish(infoOperation);
+                log.debug("Published heart beat message with parameters: " + infoOperation.getStrategyParams());
+                if(this.currentPlan != null && this.currentPlan.status == PlanStatus.WAITING_ON_RESPONSE) {
+                    long waitTime = System.currentTimeMillis() - this.currentPlan.planStartTime;
+                    if(waitTime > plugin.getShortNegotiationTimeout()) {
+                        this.currentPlan = null;
+                        log.info("Give up current on waiting plan with planId: " + this.currentPlan.planId);
+                    }
+                }
+                long tsEnd = System.currentTimeMillis();
+                long sleepDuration = Math.max(plugin.getOperationInfoIntervalLength() - (tsEnd - tsStart), 0);
+                Thread.sleep(sleepDuration);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
     
     @Override
     public String toString() {
         return "SingleVehiclePlatoonState";
+    }
+    
+    private void composeMobilityOperationInfo(MobilityOperation msg) {
+        msg.getHeader().setPlanId("");
+        // This message is for broadcast
+        msg.getHeader().setRecipientId("");
+        // TODO need to have a easy way to get bsmId in plugin
+        msg.getHeader().setSenderBsmId("FFFFFFFF");
+        String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
+        msg.getHeader().setSenderId(hostStaticId);
+        msg.setStrategyId(plugin.getPlatoonManager().getCurrentPlatoonID());
+        msg.setStrategy(plugin.MOBILITY_STRATEGY);
+        //For INFO params, the string format is INFO|LEADER:xx,ECEFx:xx,ECEFy:xx,ECEFz:xx
+        // TODO need to have a easy way to get current location in ECEF
+        msg.setStrategyParams("INFO|LEADER:" + hostStaticId + ",ECEFx:0.0,ECEFy:0.0,ECEFz:0.0");
     }
 }

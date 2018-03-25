@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import cav_msgs.NewPlan;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
@@ -28,13 +29,16 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 /**
  * This class manages the changing of platoon list and leader selection process.
+ * In any leader state, platoon list will keep a full list of every follower.
+ * In any follower state, platoon list will keep a list of platoon member in front of it. 
  */
 public class PlatoonManager implements Runnable {
     
     protected PlatooningPlugin plugin;
-    protected List<PlatoonMember> platoon;
     protected ILogger log;
     protected PluginServiceLocator psl;
+    protected List<PlatoonMember> platoon;
+    protected String currentPlatoonID = UUID.randomUUID().toString();
     protected String previousLeader = "";
     protected int indexOfPreviousLeader = -1;
 
@@ -53,8 +57,8 @@ public class PlatoonManager implements Runnable {
                 long loopStart = System.currentTimeMillis();
                 removeExpiredMember();
                 long loopEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(plugin.messageTimeout - (loopEnd - loopStart), 0);
-                Thread.sleep(sleepDuration);
+                //long sleepDuration = Math.max(plugin - (loopEnd - loopStart), 0);
+                Thread.sleep(6);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -94,12 +98,12 @@ public class PlatoonManager implements Runnable {
             // If we did not find the right entry, we need to consider to add a new one
             // For now, we only add members in front of us
             if(distance > plugin.getManeuverInputs().getDistanceFromRouteStart()) {
-                PlatoonMember pm = new PlatoonMember(plan.getSenderId(), cmdSpeed, speed, distance, System.currentTimeMillis());
-                platoon.add(pm);
-                Collections.sort(platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
-                log.info("Add CACC info on new vehicle " + pm.getStaticId());
+                //PlatoonMember pm = new PlatoonMember(plan.getSenderId(), cmdSpeed, speed, distance, System.currentTimeMillis());
+                //platoon.add(pm);
+                //Collections.sort(platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
+                //log.info("Add CACC info on new vehicle " + pm.getStaticId());
             } else {
-                log.info("Ignore new vehicle info because it is behind us. Its id is " + plan.getSenderId());
+                //log.info("Ignore new vehicle info because it is behind us. Its id is " + plan.getSenderId());
             }
         }
     }
@@ -109,9 +113,9 @@ public class PlatoonManager implements Runnable {
         List<PlatoonMember> removeCandidates = new ArrayList<>();
         int counter = 0;
         for(PlatoonMember pm : platoon) {
-            if(System.currentTimeMillis() - pm.getTimestamp() > plugin.messageTimeout) {
-                removeCandidates.add(pm);
-            }
+            //if(System.currentTimeMillis() - pm.getTimestamp() > plugin.messageTimeout) {
+                //removeCandidates.add(pm);
+            //}
             counter++;
             log.debug("Found vehicel " + pm.getStaticId() + " in platoon list at " + counter);
             log.debug(pm.toString());
@@ -148,6 +152,14 @@ public class PlatoonManager implements Runnable {
             previousLeader = newLeader == null ? "" : newLeader.getStaticId();
         }
         return newLeader;
+    }
+    
+    protected int getPlatooningSize() {
+        return platoon.size();
+    }
+    
+    protected String getCurrentPlatoonID() {
+        return currentPlatoonID;
     }
     
     /**
@@ -341,9 +353,5 @@ public class PlatoonManager implements Runnable {
         } else {
             return 0;  
         }
-    }
-    
-    protected int getPlatooningSize() {
-        return platoon.size();
     }
 }
