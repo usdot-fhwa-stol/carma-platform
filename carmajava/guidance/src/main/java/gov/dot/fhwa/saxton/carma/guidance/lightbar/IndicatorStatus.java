@@ -24,8 +24,10 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * A ConflictDetector is responsible for providing rapid conflict detection to other guidance components
  * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
  */
-public interface ILightBarManager {
-  List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, ILightBarControlChangeHandler lightBarChangeHandler, String requestingComponent);
-
-  boolean setIndicator(LightBarIndicator light, IndicatorStatus status, String requestingComponent);
+public enum IndicatorStatus {
+  LEFT_ARROW,
+  RIGHT_ARROW,
+  SOLID,
+  FLASH,
+  OFF;
 }
