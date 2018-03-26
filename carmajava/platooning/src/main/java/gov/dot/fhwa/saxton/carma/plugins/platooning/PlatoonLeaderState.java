@@ -7,6 +7,7 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
+import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -31,6 +32,7 @@ public class PlatoonLeaderState implements IPlatooningState {
     protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
     private   PlatoonPlan          currentPlan;
+    private   long                 lastHeartBeatTime = 0;
 
     public PlatoonLeaderState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         this.plugin = plugin;
@@ -136,7 +138,7 @@ public class PlatoonLeaderState implements IPlatooningState {
         // In the current state, we care about the INFO heart beat operation message if we are not currently in a negotiation,
         // and also we need to care about operation from members in the current platoon
         boolean isPlatoonInfoMsg = strategyParams.startsWith("INFO");
-        
+        boolean isPlatoonStatusMsg = strategyParams.startsWith("STATUS");
         boolean isNotInNegotiation = this.currentPlan == null;
         if(isPlatoonInfoMsg && isNotInNegotiation) {
             // For INFO params, the string format is INFO|LEADER:xx,ECEFx:xx,ECEFy:xx,ECEFz:xx
@@ -168,14 +170,25 @@ public class PlatoonLeaderState implements IPlatooningState {
             } else {
                 log.debug("Ignore platoon behind the host vehicle with platoon id: " + msg.getHeader().getPlanId());
             }
+        } else if(isPlatoonStatusMsg) {
+            // if it is platoon status message, the params string is in format:
+            // STATUS|CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:5.0
+            // we only care about platoon status message when the strategy id matches
+            if(plugin.getPlatoonManager().getCurrentPlatoonID().equals(msg.getStrategyId())) {
+                String vehicleID = msg.getHeader().getSenderId();
+                String statusParams    = strategyParams.split("|")[1];
+                log.info("Receive operation message from our platoon from vehicle: " + vehicleID);
+                plugin.getPlatoonManager().memberUpdates(vehicleID, statusParams);
+            }
         } else {
-            log.debug("Receive operation message but ignore it isPlatoonInfoMsg = " + isPlatoonInfoMsg + " & isNotInNegotiation = " + isNotInNegotiation);
+            log.debug("Receive operation message but ignore it because isPlatoonInfoMsg = " + isPlatoonInfoMsg 
+                    + ", isNotInNegotiation = " + isNotInNegotiation + " and isPlatoonStatusMsg = " + isPlatoonStatusMsg);
         }
     }
 
     @Override
     public void onMobilityResponseMessage(MobilityResponse msg) {
-        // Only care about response message when we are waiting on a plan
+        // Only care the response message for the plan on which we are waiting
         if(this.currentPlan != null && this.currentPlan.status == PlanStatus.WAITING_ON_RESPONSE &&
            this.currentPlan.planId.equals(msg.getHeader().getPlanId())) {
             if(msg.getIsAccepted()) {
@@ -195,16 +208,22 @@ public class PlatoonLeaderState implements IPlatooningState {
     @Override
     public void run() {
         // This is a loop which is also safe to interrupt
-        // This loop does two thing:
+        // This loop does three things:
         // 1. Send out heart beat mobility operation INFO message every 3 seconds
         // 2. Remove current plan if we wait for long enough time
+        // 3. Publish operation status every 100 milliseconds if necessary
         try {
             while(!Thread.currentThread().isInterrupted()) {
                 long tsStart = System.currentTimeMillis();
-                MobilityOperation infoOperation = plugin.getMobilityOperationPublisher().newMessage();
-                composeMobilityOperationInfo(infoOperation);
-                plugin.getMobilityOperationPublisher().publish(infoOperation);
-                log.debug("Published heart beat message with parameters: " + infoOperation.getStrategyParams());
+                // Publish heart beat message if the current platoon is not full
+                if(tsStart - lastHeartBeatTime >= plugin.getOperationInfoIntervalLength() &&
+                    plugin.getPlatoonManager().getPlatooningSize() + 1 < plugin.getMaxPlatoonSize()) {
+                    MobilityOperation infoOperation = plugin.getMobilityOperationPublisher().newMessage();
+                    composeMobilityOperation(infoOperation, "INFO");
+                    plugin.getMobilityOperationPublisher().publish(infoOperation);
+                    log.debug("Published heart beat message with parameters: " + infoOperation.getStrategyParams());
+                }
+                // Remove old timeout plan
                 if(this.currentPlan != null && this.currentPlan.status == PlanStatus.WAITING_ON_RESPONSE) {
                     long waitTime = System.currentTimeMillis() - this.currentPlan.planStartTime;
                     if(waitTime > plugin.getShortNegotiationTimeout()) {
@@ -212,8 +231,15 @@ public class PlatoonLeaderState implements IPlatooningState {
                         log.info("Give up current on waiting plan with planId: " + this.currentPlan.planId);
                     }
                 }
+                // Publish operation status
+                if(plugin.getPlatoonManager().getPlatooningSize() != 0) {
+                    MobilityOperation statusOperation = plugin.getMobilityOperationPublisher().newMessage();
+                    composeMobilityOperation(statusOperation, "STATUS");
+                    plugin.getMobilityOperationPublisher().publish(statusOperation);
+                    log.debug("Published STATUS operation message with parameters: " + statusOperation.getStrategyParams());
+                }
                 long tsEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(plugin.getOperationInfoIntervalLength() - (tsEnd - tsStart), 0);
+                long sleepDuration = Math.max(plugin.getOperationUpdatesIntervalLength() - (tsEnd - tsStart), 0);
                 Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {
@@ -226,7 +252,8 @@ public class PlatoonLeaderState implements IPlatooningState {
         return "SingleVehiclePlatoonState";
     }
     
-    private void composeMobilityOperationInfo(MobilityOperation msg) {
+    // This method compose mobility operation INFO/STATUS message
+    private void composeMobilityOperation(MobilityOperation msg, String type) {
         msg.getHeader().setPlanId("");
         // This message is for broadcast
         msg.getHeader().setRecipientId("");
@@ -236,8 +263,22 @@ public class PlatoonLeaderState implements IPlatooningState {
         msg.getHeader().setSenderId(hostStaticId);
         msg.setStrategyId(plugin.getPlatoonManager().getCurrentPlatoonID());
         msg.setStrategy(plugin.MOBILITY_STRATEGY);
-        //For INFO params, the string format is INFO|LEADER:xx,ECEFx:xx,ECEFy:xx,ECEFz:xx
-        // TODO need to have a easy way to get current location in ECEF
-        msg.setStrategyParams("INFO|LEADER:" + hostStaticId + ",ECEFx:0.0,ECEFy:0.0,ECEFz:0.0");
+        if(type.equals("INFO")) {
+            //For INFO params, the string format is INFO|LEADER:xx,ECEFx:xx,ECEFy:xx,ECEFz:xx
+            // TODO need to have a easy way to get current location in ECEF
+            msg.setStrategyParams("INFO|LEADER:" + hostStaticId + ",ECEFx:0.0,ECEFy:0.0,ECEFz:0.0");
+        } else if(type.equals("STATUS")) {
+            // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
+            SpeedAccel lastCmdSpeed = plugin.getCmdSpeedSub().getLastMessage();
+            double cmdSpeed = lastCmdSpeed == null ? 0.0 : lastCmdSpeed.getSpeed();
+            double downtrackDistance = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+            double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
+            String params = String.format("STATUS|CMDSPEED:%.2f,DOWNTRACK:%.2f,SPEED:%.2f", cmdSpeed, downtrackDistance, currentSpeed);
+            msg.setStrategyParams(params);
+        } else {
+            log.error("UNKNOW strategy param string!!!");
+            msg.setStrategyParams("");
+        }
     }
+    
 }

@@ -162,6 +162,10 @@ public class PlatoonManager implements Runnable {
         return currentPlatoonID;
     }
     
+    protected void addNewMember(String vehicleId) {
+        // TODO this is a list of vehicle id the leader maintains
+    }
+    
     /**
      * This is the implementation of all predecessor following (APF) algorithm for leader
      * selection in a platoon. This function will recognize who is acting as the current leader

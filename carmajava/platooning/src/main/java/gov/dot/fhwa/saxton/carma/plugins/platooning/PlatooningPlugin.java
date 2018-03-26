@@ -48,7 +48,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected IPublisher<MobilityOperation>   mobilityOperationPublisher;
     protected IPublisher<PlatooningInfo>      platooningInfoPublisher;
     protected ISubscriber<SpeedAccel>         cmdSpeedSub;
-    
+
     // following parameters are for general CACC platooning algorithm
     protected double maxAccel              = 2.5;
     protected double minimumManeuverLength = 15.0;
@@ -351,6 +351,10 @@ public class PlatooningPlugin extends AbstractPlugin
         return operationInfoIntervalLength;
     }
     
+    protected int getOperationUpdatesIntervalLength() {
+        return operationUpdatesIntervalLength;
+    }
+    
     protected IPublisher<MobilityRequest> getMobilityRequestPublisher() {
         return mobilityRequestPublisher;
     }
@@ -359,4 +363,7 @@ public class PlatooningPlugin extends AbstractPlugin
         return mobilityOperationPublisher;
     }
     
+    protected ISubscriber<SpeedAccel> getCmdSpeedSub() {
+        return cmdSpeedSub;
+    }
 }

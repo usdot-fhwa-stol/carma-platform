@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import cav_msgs.PlanType;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -27,12 +28,15 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
- * The LeaderState is a state when the platooning algorithm is enabled and the host vehicle is acting as the leader for zero or many vehicles
- * It will transit to StandbyState when the algorithm is disabled in the next trajectory
- * It will transit to FollowerState when it found an available leader in front of it in the same lane
+ * The LeaderWaitingState is a state when the platooning algorithm is enabled.
+ * The host vehicle is acting as the leader for zero or many vehicles.
+ * The host vehicle will stay in current state for ~30 seconds to wait the target vehicle joining.
+ * It will transit to StandbyState when the algorithm is disabled in the next trajectory.
+ * It will transit to PlatoonLeaderState when either the target vehicle is joined or timeout
  * In this state, the plug-in will not insert any maneuvers into the trajectory,
- * but it will try to join another platoon or to let others join its platoon by
- * sending out introduction message with platooning status and also handle mobility messages from other vehicles
+ * and it will not response to other request messages.
+ * In this state, the leader stops sending out heart beat message because
+ * it can not handle any other JOIN request at this time.
  */
 public class LeaderWaitingState implements IPlatooningState {
     
@@ -41,12 +45,14 @@ public class LeaderWaitingState implements IPlatooningState {
     protected PluginServiceLocator pluginServiceLocator;
     // The target vehicle we are currently waiting for
     protected String               targetVehicleId;
+    protected long                 waitingStartTime;
     
     public LeaderWaitingState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, String targetId) {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
         this.targetVehicleId = targetId;
+        this.waitingStartTime = System.currentTimeMillis();
     }
     
     @Override
@@ -59,6 +65,9 @@ public class LeaderWaitingState implements IPlatooningState {
             log.debug("Not insert any maneuvers in trajectory at LeaderWaitingState in " + traj.toString());
         } else {
             log.info(traj.toString() + " does not have any platooning plan window, transiting to Standby");
+            // TODO Since it is currently waiting on someone else to join, it might be
+            // a good idea to send out some kind of abort message to inform another vehicle to
+            // stop accelerating and to abort its current JOIN plan 
             plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
         }
         return tpr;
@@ -66,57 +75,85 @@ public class LeaderWaitingState implements IPlatooningState {
 
     @Override
     public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg) {
-        // TODO Auto-generated method stub
-        return null;
+        // In this state, it is wait on target vehicle's request message to let it actually join
+        boolean isTargetVehicle = msg.getHeader().getSenderId().equals(targetVehicleId);
+        boolean isCandidateJoin = msg.getPlanType().getType() == PlanType.PLATOON_FOLLOWER_JOIN;
+        if(isTargetVehicle && isCandidateJoin) {
+            log.debug("Target vehicle " + targetVehicleId + " is actually joining.");
+            // evaludate if it is really able to join immediately
+            // TODO need trajectory convert provide the functionality to convert from ECEF point to downtrack distance  
+            cav_msgs.Trajectory dummyTraj = plugin.getMobilityRequestPublisher().newMessage().getTrajectory();
+            dummyTraj.setLocation(msg.getLocation());
+            double targetVehicleDtd = pluginServiceLocator.getTrajectoryConverter().messageToPath(dummyTraj).get(0).getDowntrack();
+            log.debug("Target vehicle is at downtrack distance " + targetVehicleDtd);
+            int currentNumberOfFollower = plugin.getPlatoonManager().getPlatooningSize();
+            double vehicleAtRearDtd = currentNumberOfFollower == 0
+                                      ? pluginServiceLocator.getRouteService().getCurrentDowntrackDistance()
+                                      : plugin.getPlatoonManager().platoon.get(currentNumberOfFollower - 1).getVehiclePosition();
+            boolean isGapCloseEnough = (vehicleAtRearDtd - targetVehicleDtd) <= plugin.getDesiredJoinDistance();
+            if(isGapCloseEnough) {
+                log.debug("The target vehicle is close enough to join immediately.");
+                plugin.getPlatoonManager().addNewMember(targetVehicleId);
+                log.debug("Add " + targetVehicleId + "into our platoon member list.");
+                log.debug("Changing to PlatoonLeaderState and send ack to target vehicle");
+                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                return MobilityRequestResponse.ACK;
+            } else {
+                return MobilityRequestResponse.NACK;
+            }
+        } else {
+            log.debug("Received platoon request with vehicle id = " + msg.getHeader().getSenderId());
+            log.debug("The request type is " + msg.getPlanType().getType() + " and we choose to ignore it");
+            return MobilityRequestResponse.NO_RESPONSE;
+        }
     }
 
     @Override
     public void onMobilityOperationMessage(MobilityOperation msg) {
-        // TODO Auto-generated method stub
-        
+        // In this statem it will only care about operation STATUS from members in the current platoon
+        String strategyParams = msg.getStrategyParams();
+        boolean isStatusOperationMsg = strategyParams.startsWith("STATUS");
+        boolean hasSamePlatoonId     = plugin.getPlatoonManager().getCurrentPlatoonID().equals(msg.getStrategyId()); 
+        if(isStatusOperationMsg && hasSamePlatoonId) {
+            String vehicleID = msg.getHeader().getSenderId();
+            String statusParams    = strategyParams.split("|")[1];
+            log.info("Receive operation message from our platoon from vehicle: " + vehicleID);
+            plugin.getPlatoonManager().memberUpdates(vehicleID, statusParams);
+        } else {
+            log.debug("Ignore mobility operation message with params: " + msg.getStrategyParams());
+            log.debug("Because isStatusOperationMsg = " + isStatusOperationMsg + " and hasSamePlatoonId = " + hasSamePlatoonId);
+        }
     }
 
     @Override
     public void onMobilityResponseMessage(MobilityResponse msg) {
-        // TODO Auto-generated method stub
-        
+        log.debug("Ignore mobility response message at current state. planId = " + msg.getHeader().getPlanId());
     }
 
     @Override
     public void run() {
-        // TODO Auto-generated method stub
-        
+        try {
+            // The only job for this loop is to check the waiting time for LeaderWaiting state
+            while(!Thread.currentThread().isInterrupted()) {
+                long tsStart = System.currentTimeMillis();
+                // If we are waiting for the target vehicle for enough time, we will
+                // change back to normal PlatoonLeaderState and start accepting new JOIN request
+                if(tsStart - this.waitingStartTime > plugin.getLongNegotiationTimeout()) {
+                    log.info("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
+                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                }
+                long tsEnd = System.currentTimeMillis();
+                long sleepDuration = Math.max(plugin.getOperationInfoIntervalLength() - (tsEnd - tsStart), 0);
+                Thread.sleep(sleepDuration);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
     
     @Override
     public String toString() {
         return "LeaderWaitingState";
     }
-    
-//    @Override
-//    public MobilityIntro getNewOutboundIntroMessage() {
-//        MobilityIntro message = plugin_.mobilityIntroPublisher.newMessage(); 
-//        message.getHeader().setSenderId(plugin_.STATIC_ID);
-//        message.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
-//        message.getHeader().setPlanId(UUID.randomUUID().toString());
-//        message.getHeader().setTimestamp(System.currentTimeMillis());
-//        message.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE);
-//        double speed = plugin_.maneuverInputs.getCurrentSpeed();
-//        message.setForwardSpeed((float) speed);
-//        message.setMyLaneId((byte) plugin_.maneuverInputs.getCurrentLane());
-//        // TODO change it to real road name, just a placeholder for now
-//        message.setMyRoadwayLink("[Test track]");
-//        double dowtrack = plugin_.maneuverInputs.getDistanceFromRouteStart();
-//        message.setMyRoadwayLinkPosition((short) dowtrack);
-//        message.setExpiration(System.currentTimeMillis() + 5000); //TODO not in use for now
-//        // TODO need to accommodate new mobility message format
-//        message.getPlanType().setType(PlanType.UNKNOWN);
-//        double cmdSpeed = plugin_.cmdSpeedSub.getLastMessage() != null ? plugin_.cmdSpeedSub.getLastMessage().getSpeed() : 0.0;  
-//        String cap = String.format("[CMDSPEED:%.1f, DOWNTRACK:%.1f, SPEED:%.1f]", cmdSpeed, dowtrack, speed);
-//        message.setCapabilities(cap);
-//        log_.info("V2V", "Platooning leader has built a mobility message with planId = " + message.getHeader().getPlanId());
-//        log_.info("V2V", message.getHeader().getPlanId() + " has capabilities string: " + cap);
-//        return message;
-//    }
     
 }
