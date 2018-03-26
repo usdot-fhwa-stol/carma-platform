@@ -20,6 +20,7 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.SystemUTCTimeProvider;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import cav_srvs.GetSystemVersion;
@@ -44,6 +45,10 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 
+import cav_msgs.LightBarStatus;
+
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -72,6 +77,8 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected TrajectoryConverter trajectoryConverter;
 
   protected GuidanceExceptionHandler exceptionHandler;
+
+  protected LightBarManager lightBarManager;
 
   protected final AtomicBoolean engaged = new AtomicBoolean(false);
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
@@ -102,7 +109,8 @@ public class GuidanceMain extends SaxtonBaseNode {
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands, tracking);
     PluginManager pluginManager = new PluginManager(
       stateMachine, pubSubService, guidanceCommands, maneuverInputs,
-      routeService, node, conflictManager, trajectoryConverter
+      routeService, node, conflictManager, trajectoryConverter,
+      lightBarManager
       );
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor);
     
@@ -188,6 +196,22 @@ public class GuidanceMain extends SaxtonBaseNode {
     trajectoryConverter = new TrajectoryConverter(maxPoints, timeStep);
   }
 
+  /**
+   * Initialize the light bar management system
+   * Must be called after initLogger to ensure logging is provided
+   * Must be called after initSubPub to ensure publishing is provided
+   */
+  private void initLightBarManager(ConnectedNode node, ILogger log) {
+    // Load params
+    ParameterTree params = node.getParameterTree();
+    List<String> priorities = (List<String>) params.getList("~light_bar_priorities", new LinkedList<String>());
+    // Echo params
+    log.info("Param light_bar_priorities: " + priorities);
+    // Init light bar manager
+    IPublisher<LightBarStatus> lightBarPub = pubSubService.getPublisherForTopic("topicUrl", LightBarStatus._TYPE);
+    lightBarManager = new LightBarManager(lightBarPub, priorities);
+  }
+
   @Override
   public void onSaxtonStart(final ConnectedNode connectedNode) {
     initLogger(connectedNode.getLog());
@@ -223,6 +247,9 @@ public class GuidanceMain extends SaxtonBaseNode {
     
     stateMachine.initSubPub(pubSubService);
     
+    initLightBarManager(connectedNode, log);
+    log.info("Guidance main LightBarManager initialized");
+
     initExecutor(stateMachine, connectedNode);
     log.info("Guidance main executor initialized");
 

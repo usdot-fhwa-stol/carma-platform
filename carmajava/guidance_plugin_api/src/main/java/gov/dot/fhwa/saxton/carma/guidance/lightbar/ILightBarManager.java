@@ -25,7 +25,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
  */
 public interface ILightBarManager {
-  List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, ILightBarControlChangeHandler lightBarChangeHandler, String requestingComponent);
+  List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler);
 
   boolean setIndicator(LightBarIndicator light, IndicatorStatus status, String requestingComponent);
 }

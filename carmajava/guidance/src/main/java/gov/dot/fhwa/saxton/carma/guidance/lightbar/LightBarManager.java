@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -47,26 +50,45 @@ import cav_msgs.LightBarStatus;
  */
 public class LightBarManager implements ILightBarManager {
  
-  private List<String> controlPriorities = new ArrayList<>();
+  private List<String> controlPriorities;
   private Map<LightBarIndicator, String> lightControlMap = Collections.synchronizedMap(new HashMap<>());
   private Map<String, ILightBarControlChangeHandler> handlerMap = Collections.synchronizedMap(new HashMap<>());
   private final IPublisher<LightBarStatus> lightBarPub;
   private final ILogger log;
   private LightBarStatus statusMsg;
+  private GuidanceStateMachine guidanceStateMachine;
+  private ControlChangeHandler controlChangeHandler = new ControlChangeHandler();
+  private final List<LightBarIndicator> ALL_INDICATORS = LightBarIndicator.getListOfAllIndicators();
 
   /**
    * Constructor
    */
-  public LightBarManager(IPublisher<LightBarStatus> lightBarPub) {
+  public LightBarManager(IPublisher<LightBarStatus> lightBarPub, List<String> controlPriorities) {
     this.lightBarPub = lightBarPub;
     this.log = LoggerManager.getLogger();
     this.statusMsg = lightBarPub.newMessage();
+    this.controlPriorities = controlPriorities;
+    takeControlOfIndicators();
+    registerStateChangeListener();
+  }
+
+  private String getComponentName() {
+    return "Light Bar Manager";
+  }
+
+  private void takeControlOfIndicators() {
+    List<LightBarIndicator> indicators = new ArrayList<>(Arrays.asList(LightBarIndicator.CENTER));
+    List<LightBarIndicator> deniedIndicators = this.requestControl(indicators, this.getComponentName(), controlChangeHandler);
+
+    for (LightBarIndicator indicator: deniedIndicators) {
+        log.info("Failed to take control of light bar indicator: " + indicator);
+    }
   }
 
 
 
   @Override
-  public List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, ILightBarControlChangeHandler lightBarChangeHandler, String requestingComponent) {
+  public List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler) {
     List<LightBarIndicator> deniedIndicators = new LinkedList<>();
     // Attempt to acquire control of all indicators
     for (LightBarIndicator indicator: indicators) {
@@ -120,14 +142,14 @@ public class LightBarManager implements ILightBarManager {
         // TODO:
         break;
       case LEFT_ARROW:
-        if (indicator != LightBarIndicator.LEFT_INDICATOR) {
+        if (indicator != LightBarIndicator.LEFT) {
           log.warn(warningString);
           return false;
         }
         statusMsg.setLeftArrow(LightBarStatus.ON);
         break;
       case RIGHT_ARROW:
-        if (indicator != LightBarIndicator.RIGHT_INDICATOR) {
+        if (indicator != LightBarIndicator.RIGHT) {
           log.warn(warningString);
           return false;
         }
@@ -135,15 +157,15 @@ public class LightBarManager implements ILightBarManager {
       break;
       case SOLID: 
         switch(indicator) {
-          case CENTER_INDICATOR:
+          case CENTER:
             statusMsg.setGreenSolid(LightBarStatus.ON);
             statusMsg.setGreenFlash(LightBarStatus.OFF);
             statusMsg.setFlash(LightBarStatus.OFF);
             break;
-          case LEFT_INDICATOR:
+          case LEFT:
             log.warn(warningString);
             return false;
-          case RIGHT_INDICATOR:
+          case RIGHT:
             log.warn(warningString);
             return false;
           default:
@@ -153,16 +175,16 @@ public class LightBarManager implements ILightBarManager {
       break;
       case OFF:
         switch(indicator) {
-          case CENTER_INDICATOR:
+          case CENTER:
             statusMsg.setGreenSolid(LightBarStatus.OFF);
             statusMsg.setGreenFlash(LightBarStatus.OFF);
             statusMsg.setFlash(LightBarStatus.OFF);
             break;
-          case LEFT_INDICATOR:
+          case LEFT:
             statusMsg.setLeftArrow(LightBarStatus.OFF);
             statusMsg.setFlash(LightBarStatus.OFF);
             break;
-          case RIGHT_INDICATOR:
+          case RIGHT:
             statusMsg.setLeftArrow(LightBarStatus.OFF);
             statusMsg.setFlash(LightBarStatus.OFF);
             break;
@@ -182,4 +204,51 @@ public class LightBarManager implements ILightBarManager {
     return true;
   }
 
+    public void registerStateChangeListener() {
+      guidanceStateMachine.registerStateChangeListener(
+        (GuidanceAction action) -> {
+          log.debug("GUIDANCE_STATE", this.getComponentName() + " received action: " + action);
+          switch (action) {
+          case INTIALIZE:
+            break;
+          case ACTIVATE:
+            break;
+          case DEACTIVATE:
+            // Take control of all indicators and turn them off
+            this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
+            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
+            break;
+          case ENGAGE:
+            // Show the center green bar as solid
+            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.SOLID, this.getComponentName());
+            break;
+          case SHUTDOWN:
+            // Take control of all indicators and turn them off
+            this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
+            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
+            break;
+          case RESTART:
+            // Take control of all indicators and turn them off
+            this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
+            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
+            break;
+          case PANIC_SHUTDOWN:
+            // Take control of all indicators and turn them off
+            this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
+            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
+            break;
+          default:
+            log.error(this.getComponentName() + " received unknown instruction from guidance state machine.");
+          }
+      });  
+    }
+
+  private class ControlChangeHandler implements ILightBarControlChangeHandler{
+
+    @Override
+    public void controlLost(LightBarIndicator lostIndicator) {
+      log.info("Lost control of light bar indicator: " + lostIndicator);
+    }
+
+  }
 }

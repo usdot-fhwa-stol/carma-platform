@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
+import java.util.Arrays;
 import java.util.List;
 
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
@@ -25,7 +26,18 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
  */
 public enum LightBarIndicator {
-  LEFT_INDICATOR,
-  RIGHT_INDICATOR,
-  CENTER_INDICATOR;
+  LEFT,
+  RIGHT,
+  CENTER;
+
+  private static final List<LightBarIndicator> ALL_INDICATORS = 
+    Arrays.asList(
+      CENTER,
+      LEFT,
+      RIGHT
+    );
+
+  public static final List<LightBarIndicator> getListOfAllIndicators() {
+    return ALL_INDICATORS;
+  }
 }

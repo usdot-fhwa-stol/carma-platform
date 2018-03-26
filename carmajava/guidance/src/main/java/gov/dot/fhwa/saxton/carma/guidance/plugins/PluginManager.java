@@ -30,6 +30,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
@@ -90,7 +91,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
 
     public PluginManager(GuidanceStateMachine stateMachine, IPubSubService pubSubManager, 
     IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService,
-    ConnectedNode node, IConflictDetector conflictDetector, ITrajectoryConverter trajectoryConverter) {
+    ConnectedNode node, IConflictDetector conflictDetector, ITrajectoryConverter trajectoryConverter,
+    ILightBarManager lightBarManager) {
         super(stateMachine, pubSubManager, node);
         this.executor = new PluginExecutor();
 
@@ -100,7 +102,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
-                routeService, conflictDetector, trajectoryConverter);
+                routeService, conflictDetector, trajectoryConverter, lightBarManager);
     }
 
     /**

@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarControlChangeHandler;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarIndicator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
@@ -25,6 +28,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.ros.exception.RosRuntimeException;
@@ -302,5 +306,4 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
             throw new RosRuntimeException(getComponentName() + " received unknown instruction from guidance state machine.");
         }
     }
-    
 }
