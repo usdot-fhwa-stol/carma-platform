@@ -151,11 +151,12 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       </node>
 
-      <!--SRX Controller Driver Node-->
+      <!--SRX Controller Driver Node--><!--
       <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
         <arg name="srx_controller_can_device" value="can1"/>
       </include>
-      <!-- Simulated SRX Controller Driver Node -->
+      -->
+      <!-- Simulated SRX Controller Driver Node --><!--
       <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_controller"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
@@ -164,7 +165,11 @@
         <param name="simulated_driver" type="string" value="srx_controller"/>
         <param name="data_file_path" type="string" value="$(arg srx_controller_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
-      </node>
+      </node>-->
+
+      <!--XGV Controller Driver Node-->
+      <include file="$(find xgv_controller)/launch/xgv_controller.launch">      
+      </include>
 
       <!-- SRX Radar Driver Node -->
       <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
@@ -368,7 +373,7 @@
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
         <remap from="robot_enabled"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/xgv_controller/control/robot_status"/>
         
         <!-- GuidanceStateHandler Thread-->
         <remap from="route_event"
@@ -458,9 +463,9 @@
       <remap from="set_guidance_active"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
       <remap from="cmd_speed"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/xgv_controller/control/cmd_speed"/>
       <remap from="robot_status"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/xgv_controller/control/robot_status"/>
       <remap from="acc_engaged"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/acc_engaged"/>
       <remap from="engine_speed"
