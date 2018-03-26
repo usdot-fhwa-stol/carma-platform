@@ -17,9 +17,15 @@
 package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
@@ -36,7 +42,16 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
+import org.ros.node.ConnectedNode;
+import org.ros.node.parameter.ParameterTree;
+
 import cav_msgs.LightBarStatus;
+import cav_srvs.GetDriversWithCapabilities;
+import cav_srvs.GetDriversWithCapabilitiesRequest;
+import cav_srvs.GetDriversWithCapabilitiesResponse;
+import cav_srvs.SetLights;
+import cav_srvs.SetLightsRequest;
+import cav_srvs.SetLightsResponse;
 
 /**
  * Class Maintains a tracked set of external vehicle paths from MobilityPath and MobilityRequests messages
@@ -48,32 +63,71 @@ import cav_msgs.LightBarStatus;
  * The times stamps used on paths should all be referenced to the same origin
  * The current time information is provided by a passed in {@link IMobilityTimeProvider}
  */
-public class LightBarManager implements ILightBarManager {
+public class LightBarManager   extends GuidanceComponent implements ILightBarManager {
  
   private List<String> controlPriorities;
   private Map<LightBarIndicator, String> lightControlMap = Collections.synchronizedMap(new HashMap<>());
   private Map<String, ILightBarControlChangeHandler> handlerMap = Collections.synchronizedMap(new HashMap<>());
-  private final IPublisher<LightBarStatus> lightBarPub;
-  private final ILogger log;
+  private IService<SetLightsRequest, SetLightsResponse> lightBarService;
   private LightBarStatus statusMsg;
-  private GuidanceStateMachine guidanceStateMachine;
   private ControlChangeHandler controlChangeHandler = new ControlChangeHandler();
   private final List<LightBarIndicator> ALL_INDICATORS = LightBarIndicator.getListOfAllIndicators();
+  private final String LIGHT_BAR_SERVICE = "set_lights";
 
   /**
    * Constructor
    */
-  public LightBarManager(IPublisher<LightBarStatus> lightBarPub, List<String> controlPriorities) {
-    this.lightBarPub = lightBarPub;
-    this.log = LoggerManager.getLogger();
-    this.statusMsg = lightBarPub.newMessage();
-    this.controlPriorities = controlPriorities;
+  public LightBarManager(GuidanceStateMachine guidanceStateMachine, IPubSubService pubSubService, ConnectedNode node) {
+    super(guidanceStateMachine, pubSubService, node);
+    // Load params
+    ParameterTree params = node.getParameterTree();
+    this.controlPriorities = (List<String>) params.getList("~light_bar_priorities", new LinkedList<String>());
+    // Echo params
+    log.info("Param light_bar_priorities: " + controlPriorities);
+    // Take control of indicators
     takeControlOfIndicators();
-    registerStateChangeListener();
   }
 
-  private String getComponentName() {
+  @Override
+  public String getComponentName() {
     return "Light Bar Manager";
+  }
+
+  @Override
+  public void onStartup() {
+    // Do Nothing
+  }
+  @Override
+  public void onSystemReady() {
+    initLightBarService();
+  }
+  @Override
+  public void onActive() {
+    // Do Nothing
+  }
+  @Override
+  public void onEngaged() {
+    // Show the center green light as solid
+    this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.SOLID, this.getComponentName());
+  }
+  @Override
+  public void onCleanRestart() {
+    turnOffAllLights();
+    // Relinquish control of non-center light
+    releaseControl(Arrays.asList(LightBarIndicator.LEFT, LightBarIndicator.RIGHT), this.getComponentName());
+  }
+  @Override
+  public void onDeactivate() {
+    turnOffAllLights();
+  }
+
+  private class ControlChangeHandler implements ILightBarControlChangeHandler{
+
+    @Override
+    public void controlLost(LightBarIndicator lostIndicator) {
+      log.info("Lost control of light bar indicator: " + lostIndicator);
+    }
+
   }
 
   private void takeControlOfIndicators() {
@@ -121,6 +175,15 @@ public class LightBarManager implements ILightBarManager {
   private boolean hasHigherPriority(String requester, String controller) {
     final int requesterPriority = controlPriorities.indexOf(requester);
     final int controllerPriority = controlPriorities.indexOf(controller);
+
+    // Components not in the priority list are assumed to have lowest priority
+    if (requesterPriority < 0) {
+      log.warn(requester + " tried to set the light bar but is not in the priority list");
+      return false;
+    } else if (controllerPriority < 0) {
+      log.warn(controller + " a component controls the light bar but is not in the priority list");
+      return true; 
+    }
     return requesterPriority < controllerPriority;
   }
 
@@ -200,55 +263,107 @@ public class LightBarManager implements ILightBarManager {
     // Take down state is currently unsupported
     statusMsg.setTakedown(LightBarStatus.OFF);
     // Publish new status
-    lightBarPub.publish(statusMsg);
+    SetLightsRequest req = lightBarService.newMessage();
+    req.setSetState(statusMsg);
+    lightBarService.call(req, new OnServiceResponseCallback<SetLightsResponse>() {
+
+      @Override
+      public void onSuccess(SetLightsResponse msg) {
+        log.info("Set light bar for " + requestingComponent + " for LightBarIndicator " + indicator + 
+        " with status" + status);
+      }
+
+      @Override
+      public void onFailure(Exception e) {
+        log.warn("Failed to set light bar for " + requestingComponent + " for LightBarIndicator " + indicator + 
+        " with status" + status + " due to service call error");
+      }
+
+    });
     return true;
   }
 
-    public void registerStateChangeListener() {
-      guidanceStateMachine.registerStateChangeListener(
-        (GuidanceAction action) -> {
-          log.debug("GUIDANCE_STATE", this.getComponentName() + " received action: " + action);
-          switch (action) {
-          case INTIALIZE:
-            break;
-          case ACTIVATE:
-            break;
-          case DEACTIVATE:
-            // Take control of all indicators and turn them off
-            this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
-            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
-            break;
-          case ENGAGE:
-            // Show the center green bar as solid
-            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.SOLID, this.getComponentName());
-            break;
-          case SHUTDOWN:
-            // Take control of all indicators and turn them off
-            this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
-            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
-            break;
-          case RESTART:
-            // Take control of all indicators and turn them off
-            this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
-            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
-            break;
-          case PANIC_SHUTDOWN:
-            // Take control of all indicators and turn them off
-            this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
-            this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
-            break;
-          default:
-            log.error(this.getComponentName() + " received unknown instruction from guidance state machine.");
+  private void turnOffAllLights() {
+    // Take control of all indicators and turn them off
+    this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
+    this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
+  }
+
+  private void initLightBarService() {
+    // Register with the interface manager's service
+    IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
+    try {
+      driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+    } catch (TopicNotFoundException tnfe) {
+      log.warn("Failed to find GetDriversWithCapabilities service. Not able to control light bar");
+      return;
+    }
+
+    // Build our request message for longitudinal control drivers
+    GetDriversWithCapabilitiesRequest req = (GetDriversWithCapabilitiesRequest) driverCapabilityService.newMessage();
+
+    List<String> reqdCapabilities = new ArrayList<>();
+    reqdCapabilities.add(LIGHT_BAR_SERVICE);
+    req.setCapabilities(reqdCapabilities);
+
+    // Work around to pass a final object into our anonymous inner class so we can get the
+    // response
+    final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
+    drivers[0] = null;
+
+    // Call the InterfaceManager to see if we have a driver that matches our requirements
+    driverCapabilityService.call(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+        @Override
+        public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+            log.debug("Received GetDriversWithCapabilitiesResponse");
+            for (String driverName : msg.getDriverData()) {
+                log.debug("Discovered driver: " + driverName);
+            }
+
+            drivers[0] = msg;
+        }
+
+        @Override
+        public void onFailure(Exception e) {
+          log.warn("Failed to call GetDriversWithCapabilities service. Not able to control light bar");
+        }
+    });
+
+    // Verify that the message returned drivers that we can use
+    String lightBarServiceName = null;
+    if (drivers[0] != null) {
+        for (String serviceName : drivers[0].getDriverData()) {
+            if (serviceName.endsWith(LIGHT_BAR_SERVICE)) {
+              lightBarServiceName = serviceName;
+              break;
+            }
+        }
+        if (lightBarServiceName != null) {
+          try {
+            lightBarService = pubSubService.getServiceForTopic(lightBarServiceName, SetLights._TYPE);
+          } catch (TopicNotFoundException e1) {
+            log.warn("Failed to find  SetLights service. Not able to control light bar");
           }
-      });  
+        }
     }
+  }
 
-  private class ControlChangeHandler implements ILightBarControlChangeHandler{
+  @Override
+  public void releaseControl(List<LightBarIndicator> indicators, String requestingComponent) {
 
-    @Override
-    public void controlLost(LightBarIndicator lostIndicator) {
-      log.info("Lost control of light bar indicator: " + lostIndicator);
+    for (LightBarIndicator indicator: indicators) {
+      if (indicator == null) {
+        log.warn("Tried to release control of null indicator for " + requestingComponent);
+        continue;
+      }
+      // Release control
+      String controllingComponent = lightControlMap.get(indicator);
+      // If the requester controls this indicator
+      if (controllingComponent.equals(requestingComponent)) { 
+        // Remove control
+        lightControlMap.remove(indicator);
+        handlerMap.remove(requestingComponent);
+      }
     }
-
   }
 }

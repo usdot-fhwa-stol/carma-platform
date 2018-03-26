@@ -78,8 +78,6 @@ public class GuidanceMain extends SaxtonBaseNode {
 
   protected GuidanceExceptionHandler exceptionHandler;
 
-  protected LightBarManager lightBarManager;
-
   protected final AtomicBoolean engaged = new AtomicBoolean(false);
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
@@ -107,6 +105,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands, tracking);
+    LightBarManager lightBarManager = new LightBarManager(stateMachine, pubSubService, node);
     PluginManager pluginManager = new PluginManager(
       stateMachine, pubSubService, guidanceCommands, maneuverInputs,
       routeService, node, conflictManager, trajectoryConverter,
@@ -126,6 +125,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     executor.execute(trajectoryExecutor);
     executor.execute(tracking);
     executor.execute(guidanceCommands);
+    executor.execute(lightBarManager);
   }
 
   /**
@@ -201,15 +201,14 @@ public class GuidanceMain extends SaxtonBaseNode {
    * Must be called after initLogger to ensure logging is provided
    * Must be called after initSubPub to ensure publishing is provided
    */
-  private void initLightBarManager(ConnectedNode node, ILogger log) {
+  private void initLightBarManager(ConnectedNode node, ILogger log, GuidanceStateMachine stateMachine) {
     // Load params
     ParameterTree params = node.getParameterTree();
     List<String> priorities = (List<String>) params.getList("~light_bar_priorities", new LinkedList<String>());
     // Echo params
     log.info("Param light_bar_priorities: " + priorities);
     // Init light bar manager
-    IPublisher<LightBarStatus> lightBarPub = pubSubService.getPublisherForTopic("topicUrl", LightBarStatus._TYPE);
-    lightBarManager = new LightBarManager(lightBarPub, priorities);
+    lightBarManager = new LightBarManager(stateMachine, pubSubService, node);
   }
 
   @Override
@@ -247,7 +246,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     
     stateMachine.initSubPub(pubSubService);
     
-    initLightBarManager(connectedNode, log);
+    initLightBarManager(connectedNode, log, stateMachine);
     log.info("Guidance main LightBarManager initialized");
 
     initExecutor(stateMachine, connectedNode);

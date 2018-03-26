@@ -23,7 +23,7 @@ import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarManager;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 
 /**
  * Service collection for the Plugin interface. Provides access to the generic, ROS agnostic interfaces
@@ -113,6 +113,6 @@ public class PluginServiceLocator {
      * Get the {@link ILightBarManager} instance available to the plugins
      */
     public ILightBarManager getLightBarManager() {
-
+        return this.lightBarManager;
     }
 }

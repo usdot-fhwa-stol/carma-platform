@@ -28,4 +28,6 @@ public interface ILightBarManager {
   List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler);
 
   boolean setIndicator(LightBarIndicator light, IndicatorStatus status, String requestingComponent);
+
+  void releaseControl(List<LightBarIndicator> indicators, String requestingComponent);
 }

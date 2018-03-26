@@ -119,7 +119,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pluginServiceLocator.getManeuverPlanner(), 
                 pluginServiceLocator.getRouteService(),
                 pluginServiceLocator.getConflictDetector(),
-                pluginServiceLocator.getTrajectoryConverter());
+                pluginServiceLocator.getTrajectoryConverter(),
+                pluginServiceLocator.getLightBarManager());
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }
