@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
-import java.util.Arrays;
 import java.util.List;
 
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
@@ -25,17 +24,9 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * A ConflictDetector is responsible for providing rapid conflict detection to other guidance components
  * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
  */
-public enum LightBarIndicator {
-  GREEN,
-  YELLOW;
-
-  private static final List<LightBarIndicator> ALL_INDICATORS = 
-    Arrays.asList(
-      GREEN,
-      YELLOW
-    );
-
-  public static final List<LightBarIndicator> getListOfAllIndicators() {
-    return ALL_INDICATORS;
-  }
+public enum LightBarState {
+  DISENGAGED,
+  ENGAGED,
+  RECEIVING_MESSAGES,
+  NEGOTIATING;
 }

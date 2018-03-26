@@ -108,13 +108,13 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
   @Override
   public void onEngaged() {
     // Show the center green light as solid
-    this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.SOLID, this.getComponentName());
+    this.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.SOLID, this.getComponentName());
   }
   @Override
   public void onCleanRestart() {
     turnOffAllLights();
     // Relinquish control of non-center light
-    releaseControl(Arrays.asList(LightBarIndicator.LEFT, LightBarIndicator.RIGHT), this.getComponentName());
+    releaseControl(Arrays.asList(LightBarIndicator.YELLOW), this.getComponentName());
   }
   @Override
   public void onDeactivate() {
@@ -131,15 +131,13 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
   }
 
   private void takeControlOfIndicators() {
-    List<LightBarIndicator> indicators = new ArrayList<>(Arrays.asList(LightBarIndicator.CENTER));
+    List<LightBarIndicator> indicators = new ArrayList<>(Arrays.asList(LightBarIndicator.GREEN));
     List<LightBarIndicator> deniedIndicators = this.requestControl(indicators, this.getComponentName(), controlChangeHandler);
 
     for (LightBarIndicator indicator: deniedIndicators) {
         log.info("Failed to take control of light bar indicator: " + indicator);
     }
   }
-
-
 
   @Override
   public List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler) {
@@ -205,14 +203,14 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
         // TODO:
         break;
       case LEFT_ARROW:
-        if (indicator != LightBarIndicator.LEFT) {
+        if (indicator != LightBarIndicator.YELLOW) {
           log.warn(warningString);
           return false;
         }
         statusMsg.setLeftArrow(LightBarStatus.ON);
         break;
       case RIGHT_ARROW:
-        if (indicator != LightBarIndicator.RIGHT) {
+        if (indicator != LightBarIndicator.YELLOW) {
           log.warn(warningString);
           return false;
         }
@@ -220,15 +218,12 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
       break;
       case SOLID: 
         switch(indicator) {
-          case CENTER:
+          case GREEN:
             statusMsg.setGreenSolid(LightBarStatus.ON);
             statusMsg.setGreenFlash(LightBarStatus.OFF);
             statusMsg.setFlash(LightBarStatus.OFF);
             break;
-          case LEFT:
-            log.warn(warningString);
-            return false;
-          case RIGHT:
+          case YELLOW:
             log.warn(warningString);
             return false;
           default:
@@ -238,16 +233,12 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
       break;
       case OFF:
         switch(indicator) {
-          case CENTER:
+          case GREEN:
             statusMsg.setGreenSolid(LightBarStatus.OFF);
             statusMsg.setGreenFlash(LightBarStatus.OFF);
             statusMsg.setFlash(LightBarStatus.OFF);
             break;
-          case LEFT:
-            statusMsg.setLeftArrow(LightBarStatus.OFF);
-            statusMsg.setFlash(LightBarStatus.OFF);
-            break;
-          case RIGHT:
+          case YELLOW:
             statusMsg.setLeftArrow(LightBarStatus.OFF);
             statusMsg.setFlash(LightBarStatus.OFF);
             break;
@@ -286,7 +277,7 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
   private void turnOffAllLights() {
     // Take control of all indicators and turn them off
     this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
-    this.setIndicator(LightBarIndicator.CENTER, IndicatorStatus.OFF, this.getComponentName());
+    this.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.OFF, this.getComponentName());
   }
 
   private void initLightBarService() {
