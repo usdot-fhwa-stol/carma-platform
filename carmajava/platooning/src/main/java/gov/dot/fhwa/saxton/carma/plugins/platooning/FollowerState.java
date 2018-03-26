@@ -16,26 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.List;
-import java.util.UUID;
-
-import cav_msgs.BasicVehicleClass;
-import cav_msgs.MobilityIntro;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
-import cav_msgs.NewPlan;
-import cav_msgs.PlanType;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
-import gov.dot.fhwa.saxton.carma.plugins.platooning.PlatoonPlan.PlanStatus;
 
 /**
  * The FollowerState is a state when the platooning algorithm is enabled and the host vehicle is not the leader.
@@ -46,9 +37,11 @@ import gov.dot.fhwa.saxton.carma.plugins.platooning.PlatoonPlan.PlanStatus;
  */
 public class FollowerState implements IPlatooningState {
 
-    protected PlatooningPlugin plugin;
-    protected ILogger log;
+    protected PlatooningPlugin     plugin;
+    protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
+    private   int                  noLeaderUpdatesCounter = 0;
+    
     
     public FollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         this.plugin = plugin;
@@ -144,9 +137,16 @@ public class FollowerState implements IPlatooningState {
                 // Job 2
                 // TODO get the number of vehicles in this platoon who is in front of us
                 if(plugin.getPlatoonManager().getPlatooningSize() == 0) {
-                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
-                    // We need to change to the leader state and which requests a re-plan
-                    pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+                    noLeaderUpdatesCounter++;
+                    if(noLeaderUpdatesCounter == 5) {
+                        log.debug("noLeaderUpdatesCounter = " + noLeaderUpdatesCounter + " and change to leader state");
+                        plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                        // We need to change to the leader state and which requests a re-plan
+                        pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+                    }
+                } else {
+                    // reset counter to zero
+                    noLeaderUpdatesCounter = 0;
                 }
                 long tsEnd = System.currentTimeMillis();
                 long sleepDuration = Math.max(plugin.getOperationUpdatesIntervalLength() - (tsEnd - tsStart), 0);

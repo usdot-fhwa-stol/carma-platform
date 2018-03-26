@@ -22,32 +22,99 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import cav_msgs.NewPlan;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 /**
- * This class manages the changing of platoon list and leader selection process.
- * In any leader state, platoon list will keep a full list of every follower.
- * In any follower state, platoon list will keep a list of platoon member in front of it. 
+ * This class manages the info of members in the current platoon and leader selection process.
+ * In leader state, the manager will maintain a full list of followers' information.
+ * In follower state, the manager will keep a list of platoon members' information who is in front of the host vehicle. 
  */
 public class PlatoonManager implements Runnable {
     
-    protected PlatooningPlugin plugin;
-    protected ILogger log;
+    protected PlatooningPlugin     plugin;
+    protected ILogger              log;
     protected PluginServiceLocator psl;
-    protected List<PlatoonMember> platoon;
-    protected String currentPlatoonID = UUID.randomUUID().toString();
-    protected String previousLeader = "";
-    protected int indexOfPreviousLeader = -1;
+    private   long                 memberInfoTimeout;
+    
+    // This field will have different usages under leader/follower state
+    protected List<PlatoonMember>  platoon             = Collections.synchronizedList(new ArrayList<>());
+    protected String               currentPlatoonID    = UUID.randomUUID().toString();
+    protected String               candidateFollowerID = "";
+    
+    // The following variable is used for APF leader selection algorithm
+    protected String               previousLeaderID    = "";
+    protected int                  previousLeaderIndex = -1;
 
     public PlatoonManager(PlatooningPlugin plugin, ILogger log, PluginServiceLocator psl) {
         this.plugin = plugin;
         this.log = log;
         this.psl = psl;
-        // The leader vehicle is always the first on in the list.
-        this.platoon = Collections.synchronizedList(new ArrayList<>());
+        this.memberInfoTimeout = (long) (plugin.getOperationUpdatesIntervalLength() * plugin.getOperationUpdatesTimeoutFactor());
+    }
+    
+    /**
+     * Given any valid platooning mobility STATUS operation message and sender staticId,
+     * in leader state this method will add/updates the information of platoon memeber if it is using
+     * the same strategy ID, in follower state this method will updates the vehicle information who
+     * is in front of the subject vehicle and also updates the platoon information based on the leader STATUS
+     * @param senderId Sender ID for the current info
+     * @param params Strategy params from STATUS message in the format of "CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:5.0"
+     */
+    protected synchronized void memberUpdates(String senderId, String strategyId, String params) {
+        String[] inputsParams = params.split(",");
+        //TODO we should get downtrack distance for other vehicle from either roadway enviroment or
+        //     from strategy params in the frame of ECEF, but not directly from this string
+        double cmdSpeed   = Double.parseDouble(inputsParams[0].split(":")[1]);
+        double dtDistance = Double.parseDouble(inputsParams[1].split(":")[1]);
+        double curSpeed   = Double.parseDouble(inputsParams[2].split(":")[1]);
+        // If we are currently in any leader state, we updates platoon member based on strategy ID
+        if(plugin.state instanceof LeaderWaitingState ||
+           plugin.state instanceof PlatoonLeaderState ||
+           plugin.state instanceof CandidateFollowerState) {
+            if(currentPlatoonID.equals(strategyId)) {
+                log.debug("This STATUS messages is from our platoon. Updating the info...");
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+            }
+            
+        } else if(plugin.state instanceof FollowerState) {
+            // If we are currently in a follower state, we will update this list based on leader's STATUS
+            // and all the other vehicles which is in the current platoon and in front of us
+            boolean isFromLeader = previousLeaderID.equals(senderId);
+            boolean needPlatoonIdChange = (!this.currentPlatoonID.equals(strategyId));
+            if(isFromLeader && needPlatoonIdChange) {
+                this.setCurrentPlatoonID(strategyId);
+            }
+            if(currentPlatoonID.equals(strategyId) && dtDistance > psl.getRouteService().getCurrentDowntrackDistance()) {
+                log.debug("This STATUS messages is from our platoon and is in front of us. Updating the info...");
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+            }
+        }
+    }
+    
+    // This method removes any expired/invalid entry from platoon list
+    protected synchronized void removeExpiredMember() {
+        List<PlatoonMember> removeCandidates = new ArrayList<>();
+        for(PlatoonMember pm : platoon) {
+            boolean isTimeout = System.currentTimeMillis() - pm.getTimestamp() > memberInfoTimeout;
+            boolean isNotInPlatoon = !this.currentPlatoonID.equals(pm.getStaticId());
+            if(isTimeout || isNotInPlatoon) {
+                removeCandidates.add(pm);
+                log.debug("Found invalid vehicel entry " + pm.getStaticId() + " in platoon list which will be removed");
+                log.debug("Because isTimeout = " + isTimeout + " isNotInPlatoon = " + isNotInPlatoon);
+            }
+        }
+        if(removeCandidates.size() != 0) {
+            for(PlatoonMember candidate: removeCandidates) {
+                platoon.remove(candidate);
+            }
+        }
+    }
+    
+    protected void setCurrentPlatoonID(String newPlatoonID) {
+        log.info("Platoon ID is changed from " + this.currentPlatoonID + " to " + newPlatoonID);
+        this.currentPlatoonID = newPlatoonID;
     }
     
     @Override
@@ -57,75 +124,11 @@ public class PlatoonManager implements Runnable {
                 long loopStart = System.currentTimeMillis();
                 removeExpiredMember();
                 long loopEnd = System.currentTimeMillis();
-                //long sleepDuration = Math.max(plugin - (loopEnd - loopStart), 0);
-                Thread.sleep(6);
+                long sleepDuration = Math.max(this.memberInfoTimeout - (loopEnd - loopStart), 0);
+                Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        }
-        
-    }
-    
-    /**
-     * Given any valid platooning mobility message with staticId, this method
-     * tries to find the vehicle member instance and update its status, if a member is not found
-     * and that is in the same lane with subject vehicle and in front of the subject vehicle,
-     * then we create a vehicle member instance and place it in the correct place in the platoon list.
-     * @param plan NewPlan message with valid input string in the format of "CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:5.0"
-     */
-    protected synchronized void memberUpdates(String senderId, String params) {
-        String vehicleId = senderId;
-        String[] inputsArray = params.split(",");
-        boolean isExisted = false;
-        double cmdSpeed = Double.parseDouble(inputsArray[0].split(":")[1]);
-        double distance = Double.parseDouble(inputsArray[1].split(":")[1]);
-        double speed = Double.parseDouble(inputsArray[2].split(":")[1]);
-        for(PlatoonMember pm : platoon) {
-            if(pm.getStaticId().equals(vehicleId)) {
-                pm.setCommandSpeed(cmdSpeed);
-                pm.setVehiclePosition(distance);
-                pm.setVehicleSpeed(speed);
-                pm.setTimestamp(System.currentTimeMillis());
-                log.info("Receive and update CACC info on vehicel " + pm.getStaticId());
-                log.info("    Speed = " + pm.getVehicleSpeed());
-                log.info("    Location = " + pm.getVehiclePosition());
-                log.info("    CommandSpeed = " + pm.getCommandSpeed());
-                isExisted = true;
-                break;
-            }
-        }
-        if(!isExisted) {
-            // If we did not find the right entry, we need to consider to add a new one
-            // For now, we only add members in front of us
-            if(distance > plugin.getManeuverInputs().getDistanceFromRouteStart()) {
-                //PlatoonMember pm = new PlatoonMember(plan.getSenderId(), cmdSpeed, speed, distance, System.currentTimeMillis());
-                //platoon.add(pm);
-                //Collections.sort(platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
-                //log.info("Add CACC info on new vehicle " + pm.getStaticId());
-            } else {
-                //log.info("Ignore new vehicle info because it is behind us. Its id is " + plan.getSenderId());
-            }
-        }
-    }
-    
-    // This method removes any expired entry from platoon list
-    protected synchronized void removeExpiredMember() {
-        List<PlatoonMember> removeCandidates = new ArrayList<>();
-        int counter = 0;
-        for(PlatoonMember pm : platoon) {
-            //if(System.currentTimeMillis() - pm.getTimestamp() > plugin.messageTimeout) {
-                //removeCandidates.add(pm);
-            //}
-            counter++;
-            log.debug("Found vehicel " + pm.getStaticId() + " in platoon list at " + counter);
-            log.debug(pm.toString());
-        }
-        if(removeCandidates.size() != 0) {
-            for(PlatoonMember candidate: removeCandidates) {
-                log.info("Remove vehicle " + candidate.getStaticId() +
-                        " from platoon list because the entry is timeout by " + (System.currentTimeMillis() - candidate.getTimestamp()) + " ms");
-                platoon.remove(candidate);
-            }
         }
     }
     
@@ -148,8 +151,8 @@ public class PlatoonManager implements Runnable {
         if(plugin.getAlgorithmType() == 1) {
             int newLeaderIndex = allPredecessorFollowing();
             newLeader = newLeaderIndex >= platoon.size() ? null : platoon.get(newLeaderIndex);
-            indexOfPreviousLeader = newLeaderIndex >= platoon.size() ? -1 : newLeaderIndex;
-            previousLeader = newLeader == null ? "" : newLeader.getStaticId();
+            previousLeaderIndex = newLeaderIndex >= platoon.size() ? -1 : newLeaderIndex;
+            previousLeaderID = newLeader == null ? "" : newLeader.getStaticId();
         }
         return newLeader;
     }
@@ -162,9 +165,7 @@ public class PlatoonManager implements Runnable {
         return currentPlatoonID;
     }
     
-    protected void addNewMember(String vehicleId) {
-        // TODO this is a list of vehicle id the leader maintains
-    }
+
     
     /**
      * This is the implementation of all predecessor following (APF) algorithm for leader
@@ -182,7 +183,7 @@ public class PlatoonManager implements Runnable {
     private int allPredecessorFollowing() {
         int result = 0;
         // If we do not have any leader in the previous time step, we follow the first vehicle as default 
-        if(previousLeader.equals("")) {
+        if(previousLeaderID.equals("")) {
             ///***** Case One *****///
             log.debug("APF algorithm did not found a leader in previous time step. Case one!");
             log.debug("APF follows the first vehicle in this platoon. Case one!");
@@ -215,9 +216,9 @@ public class PlatoonManager implements Runnable {
             // calculate the time headway between every consecutive pair of vehicles
             double[] timeHeadways = calculateTimeHeadway(downtrackDistance, speed);
             log.debug("APF calculate time headways: " + Arrays.toString(timeHeadways));
-            log.debug("APF found the previous leader is " + indexOfPreviousLeader);
+            log.debug("APF found the previous leader is " + previousLeaderIndex);
             // if the previous leader is the first vehicle in the platoon
-            if(indexOfPreviousLeader == 0) {
+            if(previousLeaderIndex == 0) {
                 result = determineLeaderBasedOnViolation(timeHeadways);
                 if(result == 0) {
                     ///***** Case Zero *****///
@@ -233,7 +234,7 @@ public class PlatoonManager implements Runnable {
             } else {
                 // if the previous leader is not the first vehicle
                 // get the time headway between every consecutive pair of vehicles from indexOfPreviousLeader
-                double[] temporaryTimeHeadways = getTimeHeadwayFromIndex(timeHeadways, indexOfPreviousLeader);
+                double[] temporaryTimeHeadways = getTimeHeadwayFromIndex(timeHeadways, previousLeaderIndex);
                 int closestLowerBoundaryViolation, closestMaximumSpacingViolation;
                 closestLowerBoundaryViolation = findLowerBoundaryViolationClosestToTheHostVehicle(temporaryTimeHeadways);
                 closestMaximumSpacingViolation = findMaximumSpacingViolationClosestToTheHostVehicle(temporaryTimeHeadways);
@@ -252,8 +253,8 @@ public class PlatoonManager implements Runnable {
                     // the "lower_boundary" threshold; second the leading vehicle and its predecessor must have
                     // a time headway less than "min_spacing" second. Just as with "upper_boundary", "min_spacing" exists to
                     // introduce a hysteresis where leaders are continually being switched.
-                    boolean condition1 = timeHeadways[indexOfPreviousLeader] > plugin.getUpperBoundary();
-                    boolean condition2 = timeHeadways[indexOfPreviousLeader - 1] < plugin.getMinSpacing();
+                    boolean condition1 = timeHeadways[previousLeaderIndex] > plugin.getUpperBoundary();
+                    boolean condition2 = timeHeadways[previousLeaderIndex - 1] < plugin.getMinSpacing();
                     if(condition1 && condition2) {
                         ///***** Case Four *****///
                         //we may switch leader further downstream
@@ -264,31 +265,31 @@ public class PlatoonManager implements Runnable {
                         ///***** Case Five *****///
                         // We may not switch leadership to another vehicle further downstream because some criteria are not satisfied
                         log.debug("APF found two conditions for assigning leadership further downstream are noy satisfied. Case Five.");
-                        log.debug("APF returns the previous leader: " + indexOfPreviousLeader + ". Case Five.");
-                        result = indexOfPreviousLeader;
+                        log.debug("APF returns the previous leader: " + previousLeaderIndex + ". Case Five.");
+                        result = previousLeaderIndex;
                     }
                 } else if(closestLowerBoundaryViolation != -1 && closestMaximumSpacingViolation == -1) {
                     // The rest four cases have roughly the same logic: locate the closest violation and assign leadership accordingly
                     ///***** Case Six *****///
                     log.debug("APF found closestLowerBoundaryViolation on partial time headways. Case Six.");
-                    result = indexOfPreviousLeader - 1 + closestLowerBoundaryViolation;
+                    result = previousLeaderIndex - 1 + closestLowerBoundaryViolation;
                     log.debug("APF decides to assign leader further upstream" + result + ". Case Six.");
                 } else if(closestLowerBoundaryViolation == -1 && closestMaximumSpacingViolation != -1) {
                     ///***** Case Seven *****///
                     log.debug("APF found closestMaximumSpacingViolation on partial time headways. Case Seven.");
-                    result = indexOfPreviousLeader + closestMaximumSpacingViolation;
+                    result = previousLeaderIndex + closestMaximumSpacingViolation;
                     log.debug("APF decides to assign leader further upstream" + result + ". Case Seven.");
                 } else {
                     log.debug("APF found closestMaximumSpacingViolation and closestLowerBoundaryViolation on partial time headways.");
                     if(closestLowerBoundaryViolation > closestMaximumSpacingViolation) {
                         ///***** Case Eight *****///
                         log.debug("closestLowerBoundaryViolation is higher than closestMaximumSpacingViolation on partial time headways. Case Eight.");
-                        result = indexOfPreviousLeader - 1 + closestLowerBoundaryViolation;
+                        result = previousLeaderIndex - 1 + closestLowerBoundaryViolation;
                         log.debug("APF decides to assign leader further upstream" + result + ". Case Eight.");
                     } else if(closestLowerBoundaryViolation < closestMaximumSpacingViolation) {
                         ///***** Case Nine *****///
                         log.debug("closestMaximumSpacingViolation is higher than closestLowerBoundaryViolation on partial time headways. Case Nine.");
-                        result = indexOfPreviousLeader + closestMaximumSpacingViolation;
+                        result = previousLeaderIndex + closestMaximumSpacingViolation;
                         log.debug("APF decides to assign leader further upstream" + result + ". Case Nine.");
                     } else {
                         log.error("APF Leader selection cannot handle this case.");
@@ -304,7 +305,7 @@ public class PlatoonManager implements Runnable {
     // Check if we have enough gap with the front vehicle
     private boolean insufficientGapWithPredecessor(double distanceToFrontVehicle) {
         boolean frontGapIsTooSmall = distanceToFrontVehicle < plugin.getMinGap();
-        boolean previousLeaderIsPredecessor = previousLeader.equals(platoon.get(platoon.size() - 1).getStaticId());
+        boolean previousLeaderIsPredecessor = previousLeaderID.equals(platoon.get(platoon.size() - 1).getStaticId());
         boolean frontGapIsNotLargeEnough = distanceToFrontVehicle < plugin.getMaxGap() && previousLeaderIsPredecessor;
         return frontGapIsTooSmall || frontGapIsNotLargeEnough;
     }
@@ -356,6 +357,31 @@ public class PlatoonManager implements Runnable {
             return closestMaximumSpacingViolation + 1;
         } else {
             return 0;  
+        }
+    }
+    
+    private void updatesOrAddMemberInfo(String senderId, double cmdSpeed, double dtDistance, double curSpeed) {
+        boolean isExisted = false;
+        // update/add this info into the list
+        for(PlatoonMember pm : platoon) {
+            if(pm.getStaticId().equals(senderId)) {
+                pm.setCommandSpeed(cmdSpeed);
+                pm.setVehiclePosition(dtDistance);
+                pm.setVehicleSpeed(curSpeed);
+                pm.setTimestamp(System.currentTimeMillis());
+                log.info("Receive and update CACC info on vehicel " + pm.getStaticId());
+                log.info("    Speed = "                             + pm.getVehicleSpeed());
+                log.info("    Location = "                          + pm.getVehiclePosition());
+                log.info("    CommandSpeed = "                      + pm.getCommandSpeed());
+                isExisted = true;
+                break;
+            }
+        }
+        if(!isExisted) {
+            PlatoonMember newMember = new PlatoonMember(senderId, cmdSpeed, curSpeed, dtDistance, System.currentTimeMillis());
+            platoon.add(newMember);
+            Collections.sort(platoon, (a, b) -> (Double.compare(b.getVehiclePosition(), a.getVehiclePosition())));
+            log.debug("Add a new vehicle into our platoon list" + newMember.getStaticId());
         }
     }
 }
