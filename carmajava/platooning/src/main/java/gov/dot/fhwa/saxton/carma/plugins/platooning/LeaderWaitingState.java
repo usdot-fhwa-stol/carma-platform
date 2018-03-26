@@ -20,6 +20,7 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
+import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -133,7 +134,7 @@ public class LeaderWaitingState implements IPlatooningState {
     @Override
     public void run() {
         try {
-            // The only job for this loop is to check the waiting time for LeaderWaiting state
+            // The job for this loop is to check the waiting time for LeaderWaiting state and sends out operation STATUS message
             while(!Thread.currentThread().isInterrupted()) {
                 long tsStart = System.currentTimeMillis();
                 // If we are waiting for the target vehicle for enough time, we will
@@ -142,8 +143,11 @@ public class LeaderWaitingState implements IPlatooningState {
                     log.info("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
                     plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
                 }
+                MobilityOperation status = plugin.getMobilityOperationPublisher().newMessage();
+                composeMobilityOperationStatus(status);
+                plugin.getMobilityOperationPublisher().publish(status);
                 long tsEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(plugin.getOperationInfoIntervalLength() - (tsEnd - tsStart), 0);
+                long sleepDuration = Math.max(plugin.getOperationUpdatesIntervalLength() - (tsEnd - tsStart), 0);
                 Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {
@@ -154,6 +158,27 @@ public class LeaderWaitingState implements IPlatooningState {
     @Override
     public String toString() {
         return "LeaderWaitingState";
+    }
+    
+    // This method compose mobility operation STATUS message
+    private void composeMobilityOperationStatus(MobilityOperation msg) {
+        msg.getHeader().setPlanId("");
+        // This message is for broadcast
+        msg.getHeader().setRecipientId("");
+        // TODO need to have a easy way to get bsmId in plugin
+        msg.getHeader().setSenderBsmId("FFFFFFFF");
+        String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
+        msg.getHeader().setSenderId(hostStaticId);
+        msg.getHeader().setTimestamp(System.currentTimeMillis());
+        msg.setStrategyId(plugin.getPlatoonManager().getCurrentPlatoonID());
+        msg.setStrategy(plugin.MOBILITY_STRATEGY);
+        // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
+        SpeedAccel lastCmdSpeed = plugin.getCmdSpeedSub().getLastMessage();
+        double cmdSpeed = lastCmdSpeed == null ? 0.0 : lastCmdSpeed.getSpeed();
+        double downtrackDistance = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+        double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
+        String params = String.format("STATUS|CMDSPEED:%.2f,DOWNTRACK:%.2f,SPEED:%.2f", cmdSpeed, downtrackDistance, currentSpeed);
+        msg.setStrategyParams(params);
     }
     
 }

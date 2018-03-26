@@ -33,6 +33,7 @@ public class PlatoonLeaderState implements IPlatooningState {
     protected PluginServiceLocator pluginServiceLocator;
     private   PlatoonPlan          currentPlan;
     private   long                 lastHeartBeatTime = 0;
+    private   double               speedUpTime       = 0.0;
 
     public PlatoonLeaderState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         this.plugin = plugin;
@@ -141,14 +142,19 @@ public class PlatoonLeaderState implements IPlatooningState {
         boolean isPlatoonStatusMsg = strategyParams.startsWith("STATUS");
         boolean isNotInNegotiation = this.currentPlan == null;
         if(isPlatoonInfoMsg && isNotInNegotiation) {
-            // For INFO params, the string format is INFO|LEADER:xx,ECEFx:xx,ECEFy:xx,ECEFz:xx
+            // For INFO params, the string format is INFO|LEADER:xx,ECEFx:xx,ECEFy:xx,ECEFz:xx,SPEED:xx
             // TODO need trajectory convert provide the functionality to convert from ECEF point to downtrack distance  
             cav_msgs.Trajectory dummyTraj = plugin.getMobilityRequestPublisher().newMessage().getTrajectory();
             dummyTraj.getLocation().setEcefX(Integer.parseInt(strategyParams.split(",")[1].split(":")[1]));
             dummyTraj.getLocation().setEcefY(Integer.parseInt(strategyParams.split(",")[2].split(":")[1]));
             dummyTraj.getLocation().setEcefZ(Integer.parseInt(strategyParams.split(",")[3].split(":")[1]));
-            double platoonDtd = pluginServiceLocator.getTrajectoryConverter().messageToPath(dummyTraj).get(0).getDowntrack();
-            boolean isInFrontOfHostVehicle = platoonDtd > pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+            double platoonRearDtd = pluginServiceLocator.getTrajectoryConverter().messageToPath(dummyTraj).get(0).getDowntrack();
+            // calculate how much time the host should accelerate to close the gap
+            double platoonSpeed = Double.parseDouble(strategyParams.split(",")[4].split(":")[1]);
+            double currentHostDtd = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+            double hostMaxSpeed = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentHostDtd).getLimit();
+            this.speedUpTime = (platoonRearDtd - currentHostDtd) / (hostMaxSpeed - platoonSpeed);
+            boolean isInFrontOfHostVehicle = platoonRearDtd > pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
             if(isInFrontOfHostVehicle) {
                 MobilityRequest request = plugin.getMobilityRequestPublisher().newMessage();
                 String planId = UUID.randomUUID().toString();
@@ -160,7 +166,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                 request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
                 request.getHeader().setTimestamp(System.currentTimeMillis());
                 // TODO need to have a easy way to get current location in ECEF
-                request.getPlanType().setType((byte) 3);
+                request.getPlanType().setType(PlanType.JOIN_PLATOON_AT_REAR);
                 request.setStrategy(plugin.MOBILITY_STRATEGY);
                 request.setStrategyParams(String.format("SIZE:1,MAX_ACCEL:%.2f", plugin.getMaxAccel()));
                 // TODO need to populate the urgency later
@@ -175,6 +181,7 @@ public class PlatoonLeaderState implements IPlatooningState {
             // STATUS|CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:5.0
             // we only care about platoon status message when the strategy id matches
             if(plugin.getPlatoonManager().getCurrentPlatoonID().equals(msg.getStrategyId())) {
+                // TODO maybe we do not need to updates all infomations on every vehicles
                 String vehicleID = msg.getHeader().getSenderId();
                 String statusParams    = strategyParams.split("|")[1];
                 log.info("Receive operation message from our platoon from vehicle: " + vehicleID);
@@ -193,9 +200,9 @@ public class PlatoonLeaderState implements IPlatooningState {
            this.currentPlan.planId.equals(msg.getHeader().getPlanId())) {
             if(msg.getIsAccepted()) {
                 log.debug("Received positive response for plan id = " + this.currentPlan.planId);
-                log.debug("Change to CandidateFollower state and notify trajectory failure");
+                log.debug("Change to CandidateFollower state and notify trajectory failure in order to replan");
                 // change to candidate follower state and request a new plan to catch with the front vehicle
-                plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator));
+                plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, this.speedUpTime));
                 pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
             } else {
                 log.debug("Received negative response for plan id = " + this.currentPlan.planId);
@@ -207,7 +214,7 @@ public class PlatoonLeaderState implements IPlatooningState {
 
     @Override
     public void run() {
-        // This is a loop which is also safe to interrupt
+        // This is a loop which is safe to interrupt
         // This loop does three things:
         // 1. Send out heart beat mobility operation INFO message every 3 seconds
         // 2. Remove current plan if we wait for long enough time
@@ -249,7 +256,7 @@ public class PlatoonLeaderState implements IPlatooningState {
     
     @Override
     public String toString() {
-        return "SingleVehiclePlatoonState";
+        return "PlatoonLeaderState";
     }
     
     // This method compose mobility operation INFO/STATUS message
@@ -261,6 +268,7 @@ public class PlatoonLeaderState implements IPlatooningState {
         msg.getHeader().setSenderBsmId("FFFFFFFF");
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
+        msg.getHeader().setTimestamp(System.currentTimeMillis());
         msg.setStrategyId(plugin.getPlatoonManager().getCurrentPlatoonID());
         msg.setStrategy(plugin.MOBILITY_STRATEGY);
         if(type.equals("INFO")) {
