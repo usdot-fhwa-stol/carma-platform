@@ -355,6 +355,10 @@ public class PlatooningPlugin extends AbstractPlugin
         return operationUpdatesIntervalLength;
     }
     
+    protected double getMinimumManeuverLength() {
+        return minimumManeuverLength;
+    }
+    
     protected IPublisher<MobilityRequest> getMobilityRequestPublisher() {
         return mobilityRequestPublisher;
     }

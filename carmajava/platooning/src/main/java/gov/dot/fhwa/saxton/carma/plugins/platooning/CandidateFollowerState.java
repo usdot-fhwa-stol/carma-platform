@@ -133,6 +133,7 @@ public class CandidateFollowerState implements IPlatooningState {
                 if(msg.getIsAccepted()) {
                     // we change to follower state and start to actually follow that leader
                     log.debug("The leader " + msg.getHeader().getSenderId() + " agreed on our join. Change to follower state.");
+                    // TODO need to set strategy ID for platoon manager?
                     plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
                     // TODO maybe to reset leader on platoon manager
                 } else {

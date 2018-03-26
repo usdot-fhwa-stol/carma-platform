@@ -21,14 +21,21 @@ import java.util.UUID;
 
 import cav_msgs.BasicVehicleClass;
 import cav_msgs.MobilityIntro;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import cav_msgs.NewPlan;
 import cav_msgs.PlanType;
+import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.plugins.platooning.PlatoonPlan.PlanStatus;
 
 /**
  * The FollowerState is a state when the platooning algorithm is enabled and the host vehicle is not the leader.
@@ -39,121 +46,140 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
  */
 public class FollowerState implements IPlatooningState {
 
-    protected PlatooningPlugin plugin_;
-    protected ILogger log_;
-    protected PluginServiceLocator pluginServiceLocator_;
-    protected long transitionToStandbyTime = Long.MAX_VALUE;
+    protected PlatooningPlugin plugin;
+    protected ILogger log;
+    protected PluginServiceLocator pluginServiceLocator;
     
     public FollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
-        plugin_ = plugin;
-        log_ = log;
-        pluginServiceLocator_ = pluginServiceLocator;
+        this.plugin = plugin;
+        this.log = log;
+        this.pluginServiceLocator = pluginServiceLocator;
     }
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        TrajectoryPlanningResponse response = new TrajectoryPlanningResponse();
+        RouteService rs = pluginServiceLocator.getRouteService();
+        TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // Check if we have a plan window
-        if(pluginServiceLocator_.getRouteService().isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
             // Insert a PlatooningManeuver in the earliest legal window if it is in follower state
-            // Extend the trajectpory end location to the very end of the same window
-            double endOfCurrentRoute = pluginServiceLocator_.getRouteService().getSpeedLimitsOnRoute().last().getLocation();
-            double[] platooningWindow = pluginServiceLocator_.getRouteService()
-                    .getAlgorithmEnabledWindowInRange(traj.getStartLocation(), endOfCurrentRoute, plugin_.PLATOONING_FLAG);
+            double[] platooningWindow = rs.getAlgorithmEnabledWindowInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG);
             // Check if we have a long enough plan window
-            if(platooningWindow != null && Math.abs(platooningWindow[1] - platooningWindow[0]) < plugin_.minimumManeuverLength) {
-                log_.warn("Cannot find enough window to plan a platooning complex maneuver and change to standby state");
-                plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
-                return response;
+            if(platooningWindow != null && Math.abs(platooningWindow[1] - platooningWindow[0]) < plugin.getMinimumManeuverLength()) {
+                log.warn("Cannot find enough window to plan a platooning complex maneuver and change to standby state");
+                plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
             } else {
-                System.out.println(plugin_.minimumManeuverLength);
-                log_.info("Found enough platoon window: [" + platooningWindow[0] + ", " + platooningWindow[1] + "]");
-                if(traj.getEndLocation() < platooningWindow[1]) {
-                    response.requestLongerTrajectory(platooningWindow[1]);
-                    log_.info("Requesting a longer trajectory");
-                    return response;
+                // plan a complex maneuver in the current platoon window
+                log.debug("Found enough platoon window: [" + platooningWindow[0] + ", " + platooningWindow[1] + "] and start to plan CM");
+                PlatooningManeuver maneuver = new PlatooningManeuver(
+                        plugin, plugin.getCommandGenerator(),
+                        pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
+                        pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(),
+                        AccStrategyManager.newAccStrategy(),
+                        platooningWindow[0], platooningWindow[1],
+                        1.0, 100.0); // TODO the last two are dummy variables, replace them later if possible
+                boolean isAccepted = traj.setComplexManeuver(maneuver);
+                if(isAccepted) {
+                    log.debug("Planned and inserted a complex maneuver: " + maneuver.toString());
+                } else {
+                    log.debug("Planned a complex maneuver: " + maneuver.toString() + " but it cannot be inserted into trajectory");
+                    log.debug("Request a higher priority in plan");
+                    tpr.requestHigherPriority();
                 }
             }
-            List<IManeuver> maneuvers = traj.getManeuvers();
-            // Check if the trajectory is empty
-            if(!maneuvers.isEmpty()) {
-                response.requestHigherPriority();
-                return response;
-            }
-            
-            PlatooningManeuver maneuver = new PlatooningManeuver(
-                    plugin_,
-                    plugin_.commandGenerator,
-                    pluginServiceLocator_.getManeuverPlanner().getManeuverInputs(),
-                    pluginServiceLocator_.getManeuverPlanner().getGuidanceCommands(),
-                    AccStrategyManager.newAccStrategy(),
-                    platooningWindow[0], platooningWindow[1],
-                    1.0, 100.0); // TODO the last two are dummy variables, replace them later if possible
-            boolean accepted = traj.setComplexManeuver(maneuver);
-            log_.info("Planned complex maneuver: " + maneuver.toString());
-            log_.info("Trajectory response to complex maneuver = " + accepted);
         } else {
             // Put plugin in StandbyState when platooning algorithm in disabled in the next trajectory
-            // Need some time delay to let other vehicles finish current complex maneuver before we
-            // stop sending mobility messages and transit to the new state
-            // We assume the subjust vehicle will be at speed limit at the start for the next trajectory
-            double currentDistance = pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance();
-            double currentSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
-            double speedAtTrajectoryStart = pluginServiceLocator_.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit();
-            double speedAvg = (currentSpeed + speedAtTrajectoryStart) / 2;
-            int timeDelay = (int) ((traj.getStartLocation() - currentDistance) / speedAvg);
-            transitionToStandbyTime = System.currentTimeMillis() + timeDelay * 1000;
+            log.debug("Plugin is disabled on the next trajectory. Change to StandbyState");
+            plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
         }
-        return new TrajectoryPlanningResponse();
+        return tpr;
     }
 
     @Override
-    public void onReceiveNegotiationMessage(NewPlan plan) {
-        // update the info of platoon members in front of us
-        // TODO Should use another type here in future, for now it is just the general type for platooning plan message
-        // TODO need to accommodate new mobility message format
-        if(plan.getType().getType() == PlanType.UNKNOWN) {
-            plugin_.platoonManager.memberUpdates(plan);
+    public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg) {
+        // No need to response as a follower
+        return MobilityRequestResponse.NO_RESPONSE;
+    }
+
+    @Override
+    public void onMobilityOperationMessage(MobilityOperation msg) {
+        String strategyParams = msg.getStrategyParams();
+        // In the current state, we care about the STATUS message
+        boolean isPlatoonStatusMsg = strategyParams.startsWith("STATUS");
+        // if it is platoon status message, the params string is in format:
+        // STATUS|CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:5.0
+        if(isPlatoonStatusMsg) {
+            // we only care about platoon status message when the strategy id matches    
+            if(plugin.getPlatoonManager().getCurrentPlatoonID().equals(msg.getStrategyId())) {
+                String vehicleID = msg.getHeader().getSenderId();
+                String statusParams    = strategyParams.split("|")[1];
+                log.info("Receive operation message from our platoon from vehicle: " + vehicleID);
+                plugin.getPlatoonManager().memberUpdates(vehicleID, statusParams);
+            } else {
+                log.debug("Ignore other STATUS messages from other platoon");
+            }
+        } else {
+            log.debug("Ignore other non-STATUS messages with params " + strategyParams);
+        }
+    }
+
+    @Override
+    public void onMobilityResponseMessage(MobilityResponse msg) {
+        // No need to handle response since we are not sending any requests
+    }
+    
+    @Override
+    public void run() {
+        // This is an interrupt-safe loop 
+        // This loop does two things:
+        // 1. Publish operation status every 100 milliseconds
+        // 2. Change to leader state if there is no active leader
+        try {
+            while(!Thread.currentThread().isInterrupted()) {
+                long tsStart = System.currentTimeMillis();
+                // Job 1
+                MobilityOperation status = plugin.getMobilityOperationPublisher().newMessage();
+                composeMobilityOperationStatus(status);
+                plugin.getMobilityOperationPublisher().publish(status);
+                // Job 2
+                // TODO get the number of vehicles in this platoon who is in front of us
+                if(plugin.getPlatoonManager().getPlatooningSize() == 0) {
+                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                    // We need to change to the leader state and which requests a re-plan
+                    pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+                }
+                long tsEnd = System.currentTimeMillis();
+                long sleepDuration = Math.max(plugin.getOperationUpdatesIntervalLength() - (tsEnd - tsStart), 0);
+                Thread.sleep(sleepDuration);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
     
     @Override
-    public MobilityIntro getNewOutboundIntroMessage() {
-        MobilityIntro message = plugin_.mobilityIntroPublisher.newMessage(); 
-        message.getHeader().setSenderId(plugin_.STATIC_ID);
-        message.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
-        message.getHeader().setPlanId(UUID.randomUUID().toString());
-        message.getHeader().setTimestamp(System.currentTimeMillis());
-        message.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE);
-        double speed = plugin_.maneuverInputs.getCurrentSpeed();
-        message.setForwardSpeed((float) speed);
-        message.setMyLaneId((byte) plugin_.maneuverInputs.getCurrentLane());
-        // TODO change it to real road name, just a placeholder for now
-        message.setMyRoadwayLink("[Test track]");
-        double dowtrack = plugin_.maneuverInputs.getDistanceFromRouteStart();
-        message.setMyRoadwayLinkPosition((short) dowtrack);
-        message.setExpiration(System.currentTimeMillis() + 5000); //TODO not in use for now
-        // TODO need to accommodate new mobility message format
-        message.getPlanType().setType(PlanType.UNKNOWN);
-        double cmdSpeed = plugin_.cmdSpeedSub.getLastMessage() != null ? plugin_.cmdSpeedSub.getLastMessage().getSpeed() : 0.0;  
-        String cap = String.format("[CMDSPEED:%.1f, DOWNTRACK:%.1f, SPEED:%.1f]", cmdSpeed, dowtrack, speed);
-        message.setCapabilities(cap);
-        log_.info("V2V", "Platooning leader has built a mobility message with planId = " + message.getHeader().getPlanId());
-        log_.info("V2V", message.getHeader().getPlanId() + " has capabilities string: " + cap);
-        return message;
+    public String toString() {
+        return "FollowerState";
     }
-
-    @Override
-    public void checkCurrentState() {
-        // Change to leader state if the subject vehicle became the first one in the platoon and re-plan the trajectory
-        if(plugin_.platoonManager.platoon.size() == 0) {
-            plugin_.setState(new LeaderWaitingState(plugin_, log_, pluginServiceLocator_));
-            pluginServiceLocator_.getArbitratorService().notifyTrajectoryFailure();
-        }
-        // Transit to standby state when the current trajectory is finished
-        if(System.currentTimeMillis() > transitionToStandbyTime) {
-            plugin_.setState(new StandbyState(plugin_, log_, pluginServiceLocator_));
-            transitionToStandbyTime = Long.MAX_VALUE;
-        }
+    
+    // This method compose mobility operation STATUS message
+    private void composeMobilityOperationStatus(MobilityOperation msg) {
+        msg.getHeader().setPlanId("");
+        // This message is for broadcast
+        msg.getHeader().setRecipientId("");
+        // TODO need to have a easy way to get bsmId in plugin
+        msg.getHeader().setSenderBsmId("FFFFFFFF");
+        String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
+        msg.getHeader().setSenderId(hostStaticId);
+        msg.getHeader().setTimestamp(System.currentTimeMillis());
+        msg.setStrategyId(plugin.getPlatoonManager().getCurrentPlatoonID());
+        msg.setStrategy(plugin.MOBILITY_STRATEGY);
+        // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
+        SpeedAccel lastCmdSpeed = plugin.getCmdSpeedSub().getLastMessage();
+        double cmdSpeed = lastCmdSpeed == null ? 0.0 : lastCmdSpeed.getSpeed();
+        double downtrackDistance = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+        double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
+        String params = String.format("STATUS|CMDSPEED:%.2f,DOWNTRACK:%.2f,SPEED:%.2f", cmdSpeed, downtrackDistance, currentSpeed);
+        msg.setStrategyParams(params);
     }
 }
