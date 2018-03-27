@@ -63,7 +63,7 @@ import cav_srvs.SetLightsResponse;
  * The times stamps used on paths should all be referenced to the same origin
  * The current time information is provided by a passed in {@link IMobilityTimeProvider}
  */
-public class LightBarStateMachine {
+public class LightBarStateMachine implements ILightBarStateMachine {
  
   private IService<SetLightsRequest, SetLightsResponse> lightBarService;
   private LightBarStatus statusMsg;
@@ -72,7 +72,6 @@ public class LightBarStateMachine {
   private final String LIGHT_BAR_SERVICE = "set_lights";
   private final ILogger log;
   private final ILightBarManager lightBarManager;
-  private final IPubSubService pubSubService;
   private int stateIdx = 0;
   // State array to assign indices to states
   protected final LightBarState[] states =
@@ -92,28 +91,30 @@ public class LightBarStateMachine {
   /**
    * Constructor
    */
-  public LightBarStateMachine(IPubSubService pubSubService, ILightBarManager lightBarManager) {
+  public LightBarStateMachine(ILightBarManager lightBarManager) {
     // Take control of indicators
     log = LoggerManager.getLogger();
     this.lightBarManager = lightBarManager;
-    this.pubSubService = pubSubService;
     takeControlOfIndicators();
   }
 
+
+  //TODO decide if needed
   public String getComponentName() {
     return "Light Bar State Machine";
   }
 
-  /**
-   * Function which coordinates state transitions and the timeout timers
-   *
-   * @param event the event which will be used to determine the next state
-   */
-  public void notify(LightBarEvent event) {
-    LightBarState prevState = getState();
+  @Override
+  public void next(LightBarEvent event) {
+    LightBarState prevState = getCurrentState();
     stateIdx = transition[event.ordinal()][stateIdx];
-    handleEvent(event, prevState, getState());
-    log.info("State = " + getState());
+    handleEvent(event, prevState, getCurrentState());
+    log.info("State = " + getCurrentState());
+  }
+
+  @Override
+  public LightBarState getCurrentState() {
+    return states[stateIdx];
   }
 
   public void handleEvent(LightBarEvent event, LightBarState prevState, LightBarState newState) {
@@ -155,10 +156,6 @@ public class LightBarStateMachine {
         }
         break;
     }
-  }
-
-  private LightBarState getState() {
-    return states[stateIdx];
   }
 
   private class ControlChangeHandler implements ILightBarControlChangeHandler{

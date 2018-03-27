@@ -54,28 +54,25 @@ import cav_srvs.SetLightsRequest;
 import cav_srvs.SetLightsResponse;
 
 /**
- * Class Maintains a tracked set of external vehicle paths from MobilityPath and MobilityRequests messages
- * The set of paths can be queried for collisions.
- * 
- * Collision detection is done with a {@link NSpatialHashMap}
- * The path sets are synchronized making this class Thread-Safe
- * 
- * The times stamps used on paths should all be referenced to the same origin
- * The current time information is provided by a passed in {@link IMobilityTimeProvider}
+ * Guidance component which exposes control of the light bar to plugins
+ * Maintains its own light bar state machine which can be overruled by plugins using a parameter
  */
-public class LightBarManager   extends GuidanceComponent implements ILightBarManager {
+public class LightBarManager extends GuidanceComponent implements ILightBarManager, ILightBarStateMachine {
  
   private List<String> controlPriorities;
   private Map<LightBarIndicator, String> lightControlMap = Collections.synchronizedMap(new HashMap<>());
   private Map<String, ILightBarControlChangeHandler> handlerMap = Collections.synchronizedMap(new HashMap<>());
   private IService<SetLightsRequest, SetLightsResponse> lightBarService;
   private LightBarStatus statusMsg;
-  private ControlChangeHandler controlChangeHandler = new ControlChangeHandler();
-  private final List<LightBarIndicator> ALL_INDICATORS = LightBarIndicator.getListOfAllIndicators();
   private final String LIGHT_BAR_SERVICE = "set_lights";
+  private final LightBarStateMachine lightBarStateMachine;
 
   /**
    * Constructor
+   * 
+   * @param guidanceStateMachine The guidance state machine
+   * @param pubSubService An instance of an IPubSubService to extract the set_lights service from
+   * @param node A rose node which contains this object
    */
   public LightBarManager(GuidanceStateMachine guidanceStateMachine, IPubSubService pubSubService, ConnectedNode node) {
     super(guidanceStateMachine, pubSubService, node);
@@ -84,59 +81,47 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
     this.controlPriorities = (List<String>) params.getList("~light_bar_priorities", new LinkedList<String>());
     // Echo params
     log.info("Param light_bar_priorities: " + controlPriorities);
-    // Take control of indicators
-    takeControlOfIndicators();
+    // Init State Machine
+    lightBarStateMachine = new LightBarStateMachine(this);
   }
 
+  //// ILightBarStateMachine Methods
+  @Override
+  public void next(LightBarEvent event) {
+    lightBarStateMachine.next(event); 
+  }
+
+  @Override
+  public LightBarState getCurrentState() {
+    return lightBarStateMachine.getCurrentState();
+  }
+
+  //// ILightBarManager Methods
   @Override
   public String getComponentName() {
     return "Light Bar Manager";
   }
-
   @Override
   public void onStartup() {
-    // Do Nothing
   }
   @Override
   public void onSystemReady() {
-    initLightBarService();
+    initLightBarService(); // Get the light bar service
   }
   @Override
   public void onActive() {
-    // Do Nothing
   }
   @Override
   public void onEngaged() {
-    // Show the center green light as solid
-    this.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.SOLID, this.getComponentName());
+    lightBarStateMachine.next(LightBarEvent.GUIDANCE_ENGAGED);
   }
   @Override
   public void onCleanRestart() {
-    turnOffAllLights();
-    // Relinquish control of non-center light
-    releaseControl(Arrays.asList(LightBarIndicator.YELLOW), this.getComponentName());
+    lightBarStateMachine.next(LightBarEvent.GUIDANCE_DISENGAGED);
   }
   @Override
   public void onDeactivate() {
-    turnOffAllLights();
-  }
-
-  private class ControlChangeHandler implements ILightBarControlChangeHandler{
-
-    @Override
-    public void controlLost(LightBarIndicator lostIndicator) {
-      log.info("Lost control of light bar indicator: " + lostIndicator);
-    }
-
-  }
-
-  private void takeControlOfIndicators() {
-    List<LightBarIndicator> indicators = new ArrayList<>(Arrays.asList(LightBarIndicator.GREEN));
-    List<LightBarIndicator> deniedIndicators = this.requestControl(indicators, this.getComponentName(), controlChangeHandler);
-
-    for (LightBarIndicator indicator: deniedIndicators) {
-        log.info("Failed to take control of light bar indicator: " + indicator);
-    }
+    lightBarStateMachine.next(LightBarEvent.GUIDANCE_DISENGAGED);
   }
 
   @Override
@@ -170,6 +155,14 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
     return deniedIndicators;
   }
 
+  /**
+   * Helper function for comparing two light bar controllers
+   * 
+   * @param requester The component requesting control from the controller
+   * @param controller The component currently in control of the relevant indicator
+   * 
+   * @return True if the requester has higher priority than the controller
+   */
   private boolean hasHigherPriority(String requester, String controller) {
     final int requesterPriority = controlPriorities.indexOf(requester);
     final int controllerPriority = controlPriorities.indexOf(controller);
@@ -197,10 +190,25 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
 
     final String warningString = requestingComponent + " failed to set the LightBarIndicator " + indicator + 
     " as the status" + status + "was unsupported";
-
+    // TODO brake this big switch statement out if possible
+    // Set indicator and validate request
+    // TODO brake this big switch statement out if possible
     switch(status) {
       case FLASH:
-        // TODO:
+        switch(indicator) {
+          case GREEN:
+            statusMsg.setGreenFlash(LightBarStatus.ON);
+            statusMsg.setGreenSolid(LightBarStatus.OFF);
+            break;
+          case YELLOW:
+            statusMsg.setFlash(LightBarStatus.ON);
+            statusMsg.setLeftArrow(LightBarStatus.OFF);
+            statusMsg.setRightArrow(LightBarStatus.OFF);
+            break;
+          default:
+            log.warn(warningString);
+            return false;
+        }
         break;
       case LEFT_ARROW:
         if (indicator != LightBarIndicator.YELLOW) {
@@ -217,29 +225,22 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
         statusMsg.setRightArrow(LightBarStatus.ON); 
       break;
       case SOLID: 
-        switch(indicator) {
-          case GREEN:
-            statusMsg.setGreenSolid(LightBarStatus.ON);
-            statusMsg.setGreenFlash(LightBarStatus.OFF);
-            statusMsg.setFlash(LightBarStatus.OFF);
-            break;
-          case YELLOW:
-            log.warn(warningString);
-            return false;
-          default:
-            log.warn(warningString);
-            return false;
+        if (indicator != LightBarIndicator.GREEN) {
+          log.warn(warningString);
+          return false;
         }
+        statusMsg.setGreenSolid(LightBarStatus.ON);
+        statusMsg.setGreenFlash(LightBarStatus.OFF); 
       break;
       case OFF:
         switch(indicator) {
           case GREEN:
             statusMsg.setGreenSolid(LightBarStatus.OFF);
             statusMsg.setGreenFlash(LightBarStatus.OFF);
-            statusMsg.setFlash(LightBarStatus.OFF);
             break;
           case YELLOW:
             statusMsg.setLeftArrow(LightBarStatus.OFF);
+            statusMsg.setRightArrow(LightBarStatus.OFF);
             statusMsg.setFlash(LightBarStatus.OFF);
             break;
           default:
@@ -274,12 +275,10 @@ public class LightBarManager   extends GuidanceComponent implements ILightBarMan
     return true;
   }
 
-  private void turnOffAllLights() {
-    // Take control of all indicators and turn them off
-    this.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
-    this.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.OFF, this.getComponentName());
-  }
-
+  /**
+   * Helper function for initializing the set_lights service
+   * Uses the interface manager to find the required service
+   */
   private void initLightBarService() {
     // Register with the interface manager's service
     IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
