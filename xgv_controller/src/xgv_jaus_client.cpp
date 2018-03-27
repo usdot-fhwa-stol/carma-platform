@@ -704,9 +704,13 @@ private:
         setWrenchEffortMessage->destination->component = JAUS_PRIMITIVE_DRIVER;
         setWrenchEffortMessage->destination->instance = 1;
 
-        setWrenchEffortMessage->presenceVector = 0b1;
-        setWrenchEffortMessage->propulsiveLinearEffortXPercent = wrench_effort_;
-
+        auto tmp_wrench = wrench_effort_;
+        setWrenchEffortMessage->presenceVector = 0b1000001;
+        setWrenchEffortMessage->propulsiveLinearEffortXPercent = tmp_wrench;
+        if(tmp_wrench < 0)
+            setWrenchEffortMessage->resistiveLinearEffortXPercent = -1*tmp_wrench;
+        else
+            setWrenchEffortMessage->resistiveLinearEffortXPercent = 0.0;
 
         std::shared_ptr<JausMessageStruct> msg(setWrenchEffortMessageToJausMessage(setWrenchEffortMessage.get()),jausMessageDestroy);
 
