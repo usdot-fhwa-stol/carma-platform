@@ -74,7 +74,7 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
          * instead of a single MobilityPath object.
          * @return -1 means decode failed; 0 means decode is successful
          */
-        private native int decodeMobilityPath(byte[] encodedArray, Object mobilityPath, byte[] senderId,
+        public native int decodeMobilityPath(byte[] encodedArray, Object mobilityPath, byte[] senderId,
                         byte[] targetId, byte[] bsmId, byte[] planId, byte[] timestamp, Object currentLocation,
                         byte[] locationTimestamp, int[][] offsets);
 

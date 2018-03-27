@@ -792,6 +792,69 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage_decodeMobilityPath
   (JNIEnv *env, jobject this, jbyteArray encodedArray, jobject pathObj, jbyteArray senderId, jbyteArray targetId, jbyteArray bsmId, jbyteArray planId, jbyteArray timestamp, jobject currentLocation, jbyteArray locationTimestamp, jobjectArray offsets) {
-	  return -1;
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedArray); /* Number of bytes in encoded mobility path */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedArray, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+	    buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+	if(rval.code == RC_OK) {
+		jclass start_location_class = (*env) -> GetObjectClass(env, startLocation);
+
+		//set senderId, targetId, bsmId, planId and creation timestamp
+		uint8_t *sender_id_content = message -> value.choice.TestMessage00.header.hostStaticId.buf;
+		size_t sender_id_size = message -> value.choice.TestMessage00.header.hostStaticId.size;
+		(*env) -> SetByteArrayRegion(env, senderId, 0, sender_id_size, sender_id_content);
+		uint8_t *target_id_content = message -> value.choice.TestMessage00.header.targetStaticId.buf;
+		size_t target_id_size = message -> value.choice.TestMessage00.header.targetStaticId.size;
+		(*env) -> SetByteArrayRegion(env, targetId, 0, target_id_size, target_id_content);
+		uint8_t *bsm_id_content = message -> value.choice.TestMessage00.header.hostBSMId.buf;
+		(*env) -> SetByteArrayRegion(env, bsmId, 0, 8, bsm_id_content);
+		uint8_t *plan_id_content = message -> value.choice.TestMessage00.header.planId.buf;
+		(*env) -> SetByteArrayRegion(env, planId, 0, 36, plan_id_content);
+		uint8_t *creation_time_content = message -> value.choice.TestMessage00.header.timestamp.buf;
+		(*env) -> SetByteArrayRegion(env, timestamp, 0, 19, creation_time_content);
+
+		//set current location in ECEF frame
+		jmethodID mid_setEcefX = (*env) -> GetMethodID(env, current_location_class, "setEcefX", "(I)V");
+		jmethodID mid_setEcefY = (*env) -> GetMethodID(env, current_location_class, "setEcefY", "(I)V");
+		jmethodID mid_setEcefZ = (*env) -> GetMethodID(env, current_location_class, "setEcefZ", "(I)V");
+		jint ecef_x = message -> value.choice.TestMessage00.body.location.ecefX;
+		jint ecef_y = message -> value.choice.TestMessage00.body.location.ecefY;
+		jint ecef_z = message -> value.choice.TestMessage00.body.location.ecefZ;
+		(*env) -> CallVoidMethod(env, location, mid_setEcefX, ecef_x);
+		(*env) -> CallVoidMethod(env, location, mid_setEcefY, ecef_y);
+		(*env) -> CallVoidMethod(env, location, mid_setEcefZ, ecef_z);
+		uint8_t *location_time_content = message -> value.choice.TestMessage00.body.location.timestamp.buf;
+		(*env) -> SetByteArrayRegion(env, locationTimestamp, 0, 19, location_time_content);
+		// set trajectory offset data if necessary
+		if(message -> value.choice.TestMessage00.body.trajectory) {
+			jintArray offsets_X =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 0);
+			jintArray offsets_Y =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 1);
+			jintArray offsets_Z =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 2);
+			int count = message -> value.choice.TestMessage00.body.trajectory -> list.count;
+			int temp_offsets_X[60] = {0};
+			int temp_offsets_Y[60] = {0};
+			int temp_offsets_Z[60] = {0};
+			for(int i = 0; i < count; i++) {
+				temp_offsets_X[i] = message -> value.choice.TestMessage00.body.trajectory -> list.array[i] -> offsetX;
+				temp_offsets_Y[i] = message -> value.choice.TestMessage00.body.trajectory -> list.array[i] -> offsetY;
+				temp_offsets_Z[i] = message -> value.choice.TestMessage00.body.trajectory -> list.array[i] -> offsetZ;
+			}
+			(*env) -> SetIntArrayRegion(env, offsets_X, 0, 60, temp_offsets_X);
+			(*env) -> SetIntArrayRegion(env, offsets_Y, 0, 60, temp_offsets_Y);
+			(*env) -> SetIntArrayRegion(env, offsets_Z, 0, 60, temp_offsets_Z);
+			(*env) -> DeleteLocalRef(env, offsets_X);
+			(*env) -> DeleteLocalRef(env, offsets_Y);
+			(*env) -> DeleteLocalRef(env, offsets_Z);
+		}
+		return 0;
+	} else {
+		return -1;
+	}
   }
 
