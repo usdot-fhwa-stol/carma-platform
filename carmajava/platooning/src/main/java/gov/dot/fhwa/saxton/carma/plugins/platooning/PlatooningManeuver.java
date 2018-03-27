@@ -16,7 +16,7 @@ public class PlatooningManeuver extends ComplexManeuverBase {
      * Constructor where provides all relevant inputs
      *
      * @param planner The plugin responsible for this maneuver
-     * @param commandInputs Input which provides the current desired commands from the platooning speed control logic
+     * @param commandInputs Input which provides the current desired commands from the platoon speed control logic
      * @param currentState Input which provides the current state of the vehicle
      * @param commandsOutputs The target for calculated commands
      * @param startDist The distance along the route to the maneuver starting point

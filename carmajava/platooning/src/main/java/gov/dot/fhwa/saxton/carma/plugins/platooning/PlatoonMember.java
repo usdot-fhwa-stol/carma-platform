@@ -28,9 +28,9 @@ public class PlatoonMember {
     protected double commandSpeed;
     // Actual vehicle speed in m/s
     protected double vehicleSpeed;
-    // Vehicle current downtrack distance on the current route in m
+    // Vehicle current down track distance on the current route in m
     protected double vehiclePosition;
-    // The local timestamp when the host vehicle update any infomations of this member
+    // The local time stamp when the host vehicle update any informations of this member
     protected long   timestamp;
 
     public PlatoonMember(String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp) {

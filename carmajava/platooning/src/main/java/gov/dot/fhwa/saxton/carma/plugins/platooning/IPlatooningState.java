@@ -35,7 +35,7 @@ public interface IPlatooningState extends Runnable {
     
     /**
      * Callback method to handle mobility requests which may result in
-     * state changing, trajectory re-plan and platoon info updates. 
+     * state changing, trajectory re-plan and platooning info updates. 
      * @param msg the detailed proposal from other vehicles
      * @return simple yes/no response to the incoming proposal
      */

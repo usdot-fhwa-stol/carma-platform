@@ -19,7 +19,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
  * The CandidateFollowerState is a state which platooning algorithm is enabled on the current trajectory
- * ans the host vehicle is trying to change its current distance in order to join a front platoon.
+ * anD the host vehicle is trying to change its current distance in order to join a front platoon.
  * This state will transit to Standby state when the algorithm is disabled when it is asked to plan;
  * it will transit to FollowerState if its PLATOON_CANDIDATE_JOIN request get an approval from the target
  * leader vehicle. It can also transit back to PlatoonLeader state if the current state is timeout or
@@ -135,7 +135,7 @@ public class CandidateFollowerState implements IPlatooningState {
 
     @Override
     public void onMobilityOperationMessage(MobilityOperation msg) {
-        // We still need to handle STATUS opertion message from our platoonn
+        // We still need to handle STATUS operAtion message from our platoon
         String strategyParams = msg.getStrategyParams();
         boolean isPlatoonStatusMsg = strategyParams.startsWith("STATUS");
         if(isPlatoonStatusMsg) {
@@ -181,7 +181,7 @@ public class CandidateFollowerState implements IPlatooningState {
     public void run() {
         // This is a interrupted-safe loop.
         // This loop has four tasks:
-        // 1. Check the state start time, if it execeeds a limit it will give up current plan and change back to leader state
+        // 1. Check the state start time, if it exceeds a limit it will give up current plan and change back to leader state
         // 2. Abort current request if we wait for long enough time for response from leader and change back to leader state
         // 3. Check the current distance with the target platoon rear and send out CANDIDATE-JOIN request when we get close
         // 4. Publish operation status every 100 milliseconds if we still have followers
@@ -265,7 +265,7 @@ public class CandidateFollowerState implements IPlatooningState {
         // TODO Strategy id in operation might be ready to removed
         msg.setStrategyId("");
         msg.setStrategy(plugin.MOBILITY_STRATEGY);
-        // TODO Maneuver planner from plugin service locator may need to provide this data firectly 
+        // TODO Maneuver planner from plugin service locator may need to provide this data directly 
         SpeedAccel lastCmdSpeedObject = plugin.getCmdSpeedSub().getLastMessage();
         double cmdSpeed = lastCmdSpeedObject == null ? 0.0 : lastCmdSpeedObject.getSpeed();
         // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"

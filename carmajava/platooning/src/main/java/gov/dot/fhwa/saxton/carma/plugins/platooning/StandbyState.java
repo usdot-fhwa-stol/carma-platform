@@ -54,7 +54,7 @@ public class StandbyState implements IPlatooningState {
         if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
             log.debug("In standby state, find an avaliable plan window in " + traj.toString());
             plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
-            // Request to replan with new leader state
+            // Request to re-plan with new leader state
             log.debug("Change to leader state and request to re-plan");
             tpr.requestDelayedReplan(REPLAN_DELAY_TIME);
         } else {

@@ -17,7 +17,7 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 /**
- * This is a class describing a onwaiting platoon plan between two platooning plugins
+ * This is a class describing a on waiting platoon plan between two platooning plugins
  * from two different CAVs. It will keep track of the plan start time in order to calculate
  * timeout. It will also store the current plan Id and also the recipient static Id.
  */

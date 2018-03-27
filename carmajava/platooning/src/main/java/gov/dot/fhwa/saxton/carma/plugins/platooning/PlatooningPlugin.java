@@ -99,7 +99,7 @@ public class PlatooningPlugin extends AbstractPlugin
     @Override
     public void onInitialize() {
         log.info("CACC platooning plugin is initializing...");
-        // initialize parameters of platooning plug-in
+        // initialize parameters of platooning plugin
         maxAccel                = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
         minimumManeuverLength   = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 15.0);
         timeHeadway             = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 1.8);

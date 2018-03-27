@@ -69,7 +69,7 @@ public class FollowerState implements IPlatooningState {
             } else {
                 // Plan a complex maneuver in the current platoon window
                 log.debug("Found a long enough platoon window: " + Arrays.toString(platooningWindow) + " and start to plan a complex maneuver");
-                // TODO the last two are dummy variables, replace them later if possibllog.
+                // TODO the last two are dummy variables, replace them later if possible
                 PlatooningManeuver maneuver = new PlatooningManeuver(
                         plugin, plugin.getCommandGenerator(),
                         pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
@@ -178,7 +178,7 @@ public class FollowerState implements IPlatooningState {
         // TODO Strategy id in operation might be ready to removed
         msg.setStrategyId("");
         msg.setStrategy(plugin.MOBILITY_STRATEGY);
-        // TODO Maneuver planner from plugin service locator may need to provide this data firectly 
+        // TODO Maneuver planner from plugin service locator may need to provide this data directly 
         SpeedAccel lastCmdSpeedObject = plugin.getCmdSpeedSub().getLastMessage();
         double cmdSpeed = lastCmdSpeedObject == null ? 0.0 : lastCmdSpeedObject.getSpeed();
         // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"

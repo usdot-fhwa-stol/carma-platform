@@ -58,7 +58,7 @@ public class PlatoonManager implements Runnable {
     
     /**
      * Given any valid platooning mobility STATUS operation params and sender staticId,
-     * in leader state this method will add/updates the information of platoon memeber if it is using
+     * in leader state this method will add/updates the information of platoon member if it is using
      * the same strategy ID, in follower state this method will updates the vehicle information who
      * is in front of the subject vehicle and also updates the platoon ID information if necessary
      * @param senderId Sender ID for the current info
@@ -66,7 +66,7 @@ public class PlatoonManager implements Runnable {
      */
     protected synchronized void memberUpdates(String senderId, String platoonId, String params) {
         String[] inputsParams = params.split(",");
-        // TODO we should get downtrack distance for other vehicle from either roadway enviroment or
+        // TODO we should get downtrack distance for other vehicle from either roadway environment or
         // from strategy params in the ECEF frame, but not directly from this string
         double cmdSpeed   = Double.parseDouble(inputsParams[0].split(":")[1]);
         double dtDistance = Double.parseDouble(inputsParams[1].split(":")[1]);
@@ -283,7 +283,7 @@ public class PlatoonManager implements Runnable {
                 // leader further downstream. This is because the subject vehicle has determined that there are
                 // no time headways between itself and the current leader which would cause the platoon to be unsafe.
                 // if there are violations somewhere betweent the subject vehicle and the current leader,
-                // then rather than assigning leadershp further DOWNSTREAM, we must go further UPSTREAM in the following lines
+                // then rather than assigning leadership further DOWNSTREAM, we must go further UPSTREAM in the following lines
                 if(closestLowerBoundaryViolation == -1 && closestMaximumSpacingViolation == -1) {
                     // In order for the subject vehicle to assign leadership further downstream,
                     // two criteria must be satisfied: first the leading vehicle and its immediate follower must

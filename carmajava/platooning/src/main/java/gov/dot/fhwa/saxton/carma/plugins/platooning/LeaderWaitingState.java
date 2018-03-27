@@ -78,7 +78,7 @@ public class LeaderWaitingState implements IPlatooningState {
         boolean isCandidateJoin = msg.getPlanType().getType() == PlanType.PLATOON_FOLLOWER_JOIN;
         if(isTargetVehicle && isCandidateJoin) {
             log.debug("Target vehicle " + applicantId + " is actually joining.");
-            // Evaludate if it is ready to join immediately
+            // Evaluate if it is ready to join immediately
             // TODO The current strategy string is in format: "DTD:xx", but we need to use location field 
             double targetVehicleDtd = Double.parseDouble(msg.getStrategyParams().split(":")[1]);
             log.debug("Target vehicle is at downtrack distance " + targetVehicleDtd);
@@ -102,7 +102,7 @@ public class LeaderWaitingState implements IPlatooningState {
 
     @Override
     public void onMobilityOperationMessage(MobilityOperation msg) {
-        // We still need to handle STATUS opertion message from our platoonn
+        // We still need to handle STATUS operation message from our platoon
         String strategyParams = msg.getStrategyParams();
         boolean isPlatoonStatusMsg = strategyParams.startsWith("STATUS");
         if(isPlatoonStatusMsg) {

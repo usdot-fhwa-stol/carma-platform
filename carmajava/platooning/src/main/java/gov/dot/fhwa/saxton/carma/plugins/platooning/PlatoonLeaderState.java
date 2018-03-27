@@ -74,8 +74,8 @@ public class PlatoonLeaderState implements IPlatooningState {
             log.debug("Receive mobility JOIN request from " + applicantId + " and PlanId = " + msgHeader.getPlanId());
             log.debug("The strategy parameters are " + params);
             // For JOIN_PLATOON_AT_REAR message, the strategy params is defined as "SIZE:xx,ACCEL:xx,DTD:xx"
-            // TODO In future, we should remove Downtrack distance from this string and use location field in request message
-            // TODO And we need trajectory convert provide the functionality to convert from ECEF point to downtrack distance easily
+            // TODO In future, we should remove down track distance from this string and use location field in request message
+            // TODO And we need trajectory convert provide the functionality to convert from ECEF point to down track distance easily
             int applicantSize = Integer.parseInt(params.split(",")[0].split(":")[1]);
             double applicantMaxAccel = Double.parseDouble(params.split(",")[1].split(":")[1]);
             double applicantCurrentDtd = Double.parseDouble(params.split(",")[2].split(":")[1]);
@@ -143,7 +143,7 @@ public class PlatoonLeaderState implements IPlatooningState {
         boolean isNotInNegotiation = (this.currentPlan == null);
         if(isPlatoonInfoMsg && isNotInNegotiation) {
             // For INFO params, the string format is INFO|LEADER:xx,REAR_DTD:xx,SPEED:xx
-            // TODO In future, we should remove Downtrack distance from this string and send XYZ location in ECEF
+            // TODO In future, we should remove downtrack distance from this string and send XYZ location in ECEF
             String leaderId = strategyParams.split(",")[0].split(":")[1]; 
             double platoonRearDtd = Double.parseDouble(strategyParams.split(",")[1].split(":")[1]);
             double platoonSpeed = Double.parseDouble(strategyParams.split(",")[2].split(":")[1]);
@@ -296,7 +296,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                                 pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
             msg.setStrategyParams(infoParams);
         } else if(type.equals("STATUS")) {
-            // TODO Maneuver planner from plugin service locator may need to provide this data firectly 
+            // TODO Maneuver planner from plugin service locator may need to provide this data directly 
             SpeedAccel lastCmdSpeedObject = plugin.getCmdSpeedSub().getLastMessage();
             double cmdSpeed = lastCmdSpeedObject == null ? 0.0 : lastCmdSpeedObject.getSpeed();
             // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
