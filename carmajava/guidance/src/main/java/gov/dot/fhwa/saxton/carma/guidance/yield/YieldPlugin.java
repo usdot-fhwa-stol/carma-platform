@@ -23,9 +23,12 @@ import cav_msgs.PlanStatus;
 import cav_msgs.PlanType;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
@@ -45,7 +48,8 @@ import java.util.*;
  * into the trajectory according to the timing of receiving. For now, it will let arbitrator to replan
  * everytime when it received a new plan message.
  */
-public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin {
+public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, MobilityRequestHandler {
+
 
     /* Constants
     protected static final double TARGET_SPEED_EPSILON = 0.1;
@@ -66,7 +70,7 @@ public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin {
     protected double slowSpeedFraction_ = 0.8;
     protected double initialTimeGap_ = 1.0;
     */
-
+    
     // Constructor
     public YieldPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -164,6 +168,12 @@ public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin {
         */
         return new TrajectoryPlanningResponse();
     }
+
+	@Override
+	public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict,
+			ConflictSpace conflictSpace) {
+		return null;
+	}
 
     /*TODO: Good reference material
     private void onPlanReceived(NewPlan plan) {
