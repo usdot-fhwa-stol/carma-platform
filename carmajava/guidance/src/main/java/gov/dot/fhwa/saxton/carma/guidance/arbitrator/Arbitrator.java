@@ -665,4 +665,9 @@ public class Arbitrator extends GuidanceComponent
 
     return out;
   }
+
+  @Override
+  public Trajectory getCurrentTrajectory() {
+    return trajectoryExecutor.getCurrentTrajectory();
+  }
 }

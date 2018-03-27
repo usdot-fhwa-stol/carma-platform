@@ -36,6 +36,11 @@ public interface ArbitratorService {
     IManeuver getCurrentlyExecutingManeuver(ManeuverType maneuverType);
 
     /**
+     * Get the currently executing Trajectory running on the the host vehicle, null if none is executing
+     */
+    Trajectory getCurrentTrajectory();
+
+    /**
      * Request the arbitrator to plan and execute a new trajectory.
      */
     void requestNewPlan();
