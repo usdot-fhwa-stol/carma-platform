@@ -19,14 +19,17 @@ package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 import java.util.Arrays;
 import java.util.List;
 
-import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
-
 /**
- * A ConflictDetector is responsible for providing rapid conflict detection to other guidance components
- * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
+ * Enum of possible light bar indicators which can be controlled
  */
 public enum LightBarIndicator {
+  /**
+   * Center green light
+   */
   GREEN,
+  /**
+   * Side yellow lights
+   */
   YELLOW;
 
   private static final List<LightBarIndicator> ALL_INDICATORS = 
@@ -35,6 +38,11 @@ public enum LightBarIndicator {
       YELLOW
     );
 
+  /**
+   * Returns a list of all the indicators
+   * 
+   * @return list of each unique indicator
+   */
   public static final List<LightBarIndicator> getListOfAllIndicators() {
     return ALL_INDICATORS;
   }

@@ -24,6 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -45,6 +46,7 @@ import java.util.function.BiConsumer;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 
+import cav_msgs.BSM;
 import cav_msgs.LightBarStatus;
 import cav_srvs.GetDriversWithCapabilities;
 import cav_srvs.GetDriversWithCapabilitiesRequest;
@@ -65,7 +67,11 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
   private IService<SetLightsRequest, SetLightsResponse> lightBarService;
   private LightBarStatus statusMsg;
   private final String LIGHT_BAR_SERVICE = "set_lights";
+  private final String BSM_TOPIC = "bsm";
   private final LightBarStateMachine lightBarStateMachine;
+  private final ISubscriber<BSM> bsmTopic;
+  private long lastBSM = 0;
+  private long TIMEOUT_MS = 1000;
 
   /**
    * Constructor
@@ -79,10 +85,19 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
     // Load params
     ParameterTree params = node.getParameterTree();
     this.controlPriorities = (List<String>) params.getList("~light_bar_priorities", new LinkedList<String>());
+    this.TIMEOUT_MS = params.getInteger("~light_bar_comms_timeout", (int) TIMEOUT_MS);
     // Echo params
     log.info("Param light_bar_priorities: " + controlPriorities);
     // Init State Machine
     lightBarStateMachine = new LightBarStateMachine(this);
+    // Get incoming bsm topic
+    lastBSM = System.currentTimeMillis();
+    bsmTopic = pubSubService.getSubscriberForTopic(BSM_TOPIC, BSM._TYPE);
+    bsmTopic.registerOnMessageCallback(
+      (BSM message) -> {
+        lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_RECEIVED);
+        lastBSM = System.currentTimeMillis();
+    });
   }
 
   //// ILightBarStateMachine Methods
@@ -123,6 +138,19 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
   public void onDeactivate() {
     lightBarStateMachine.next(LightBarEvent.GUIDANCE_DISENGAGED);
   }
+
+  @Override
+  public void timingLoop() throws InterruptedException {
+    try {
+        Thread.sleep(TIMEOUT_MS);
+        if (System.currentTimeMillis() - lastBSM > TIMEOUT_MS) {
+          lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_TIMEOUT);
+        }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw e;
+    }
+}
 
   @Override
   public List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler) {
@@ -355,5 +383,9 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
         handlerMap.remove(requestingComponent);
       }
     }
+  }
+
+  private void handleBSM(BSM message) {
+
   }
 }

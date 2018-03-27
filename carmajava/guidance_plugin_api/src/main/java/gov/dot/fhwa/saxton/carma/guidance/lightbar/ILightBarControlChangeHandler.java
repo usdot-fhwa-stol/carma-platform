@@ -16,12 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
-import java.util.List;
-
 /**
- * A ConflictDetector is responsible for providing rapid conflict detection to other guidance components
- * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
+ * A callback interface for changes in light bar control status
  */
 public interface ILightBarControlChangeHandler {
+  /**
+   * Called if a plugin or guidance component lost control of an indicator
+   * 
+   * @param lostIndicator The indicator which the owning component no longer controls
+   */
   void controlLost(LightBarIndicator lostIndicator);
 }

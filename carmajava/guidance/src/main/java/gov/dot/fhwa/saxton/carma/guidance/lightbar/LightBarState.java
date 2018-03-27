@@ -16,17 +16,24 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
-import java.util.List;
-
-import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
-
 /**
- * A ConflictDetector is responsible for providing rapid conflict detection to other guidance components
- * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
+ * The state of the state machine used to control the light bar from within guidance. 
  */
 public enum LightBarState {
+  /**
+   * Guidance is disengage, the light bar should be off
+   */
   DISENGAGED,
+  /**
+   * Guidance is engaged, the light bar should show solid green
+   */
   ENGAGED,
+  /**
+   * Guidance is receiving DSRC messages, the light bar should be blinking green
+   */
   RECEIVING_MESSAGES,
+  /**
+   * A negotiation is in progress, the light bar should be blinking yellow
+   */
   NEGOTIATING;
 }

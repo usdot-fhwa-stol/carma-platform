@@ -35,6 +35,8 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarEvent;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
@@ -73,12 +75,16 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private IConflictManager conflictManager;
     private ITrajectoryConverter trajectoryConverter;
     private String hostMobilityStaticId = "";
+    private ILightBarStateMachine lightBarStateMachine;
 
-    public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node, IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter, TrajectoryExecutor trajectoryExecutor) {
+    public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
+     IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
+     TrajectoryExecutor trajectoryExecutor, ILightBarStateMachine lightBarStateMachine) {
         super(stateMachine, pubSubService, node);
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
+        this.lightBarStateMachine = lightBarStateMachine;
     }
 
     public void setPluginManager(PluginManager pluginManager) {
@@ -170,6 +176,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      */
     private void fireMobilityRequestCallback(MobilityRequestHandler handler, MobilityRequest msg, boolean hasConflict, ConflictSpace conflictSpace) {
         new Thread(() -> {
+            lightBarStateMachine.next(LightBarEvent.NEGOTIATION_UNDERWAY);
             MobilityRequestResponse resp = handler.handleMobilityRequestMessage(msg, hasConflict, conflictSpace);
 
             // Initialize the response message
@@ -177,7 +184,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             respMsg.getHeader().setPlanId(msg.getHeader().getPlanId());
             respMsg.getHeader().setRecipientId(msg.getHeader().getSenderId());
             respMsg.getHeader().setSenderId(hostMobilityStaticId);
-            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, shoud this field be set in Message node?
+            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, should this field be set in Message node?
             respMsg.getHeader().setTimestamp(System.currentTimeMillis());
 
             if (resp == MobilityRequestResponse.ACK) {
@@ -192,6 +199,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
                 respMsg.setIsAccepted(false);
                 ackPub.publish(respMsg);
             } // else don't send a response
+            lightBarStateMachine.next(LightBarEvent.NEGOTIATION_COMPLETE);
         },
         "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName()).start();
     }

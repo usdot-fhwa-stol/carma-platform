@@ -21,8 +21,7 @@ import java.util.List;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
- * A ConflictDetector is responsible for providing rapid conflict detection to other guidance components
- * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
+ * Enum of the possible indicator statuses
  */
 public enum IndicatorStatus {
   LEFT_ARROW,

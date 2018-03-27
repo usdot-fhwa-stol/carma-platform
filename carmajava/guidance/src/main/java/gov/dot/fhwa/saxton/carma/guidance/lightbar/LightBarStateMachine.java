@@ -16,60 +16,21 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
-import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
-import java.util.function.BiConsumer;
-
-import org.ros.node.ConnectedNode;
-import org.ros.node.parameter.ParameterTree;
-
-import cav_msgs.LightBarStatus;
-import cav_srvs.GetDriversWithCapabilities;
-import cav_srvs.GetDriversWithCapabilitiesRequest;
-import cav_srvs.GetDriversWithCapabilitiesResponse;
-import cav_srvs.SetLights;
-import cav_srvs.SetLightsRequest;
-import cav_srvs.SetLightsResponse;
 
 /**
- * Class Maintains a tracked set of external vehicle paths from MobilityPath and MobilityRequests messages
- * The set of paths can be queried for collisions.
- * 
- * Collision detection is done with a {@link NSpatialHashMap}
- * The path sets are synchronized making this class Thread-Safe
- * 
- * The times stamps used on paths should all be referenced to the same origin
- * The current time information is provided by a passed in {@link IMobilityTimeProvider}
+ * Class which serves to coordinate light bar transitions
+ * The behavior of this class can be overriden if plugins are given higher lighbar priority
  */
 public class LightBarStateMachine implements ILightBarStateMachine {
  
-  private IService<SetLightsRequest, SetLightsResponse> lightBarService;
-  private LightBarStatus statusMsg;
   private ControlChangeHandler controlChangeHandler = new ControlChangeHandler();
   private final List<LightBarIndicator> ALL_INDICATORS = LightBarIndicator.getListOfAllIndicators();
-  private final String LIGHT_BAR_SERVICE = "set_lights";
   private final ILogger log;
   private final ILightBarManager lightBarManager;
   private int stateIdx = 0;
@@ -90,6 +51,8 @@ public class LightBarStateMachine implements ILightBarStateMachine {
 
   /**
    * Constructor
+   * 
+   * @param lightBarManager The light bar manager which will be called when changes are requested
    */
   public LightBarStateMachine(ILightBarManager lightBarManager) {
     // Take control of indicators
@@ -98,8 +61,6 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     takeControlOfIndicators();
   }
 
-
-  //TODO decide if needed
   public String getComponentName() {
     return "Light Bar State Machine";
   }
@@ -117,12 +78,19 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     return states[stateIdx];
   }
 
-  public void handleEvent(LightBarEvent event, LightBarState prevState, LightBarState newState) {
+  /**
+   * Helper function for processing incoming events
+   * 
+   * @param event The event to process
+   * @param prevState The previous state
+   * @param newState The new state resulting from the event 
+   */
+  private void handleEvent(LightBarEvent event, LightBarState prevState, LightBarState newState) {
     switch(event) {
       case GUIDANCE_DISENGAGED:
         if(newState == LightBarState.DISENGAGED) {
           turnOffAllLights();
-          // Maybe release control here
+          // Maybe release control here for restart
         }
         break;
       case GUIDANCE_ENGAGED:
@@ -158,6 +126,9 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     }
   }
 
+  /**
+   * Helper class for processing changes in light control
+   */
   private class ControlChangeHandler implements ILightBarControlChangeHandler{
 
     @Override
@@ -167,6 +138,9 @@ public class LightBarStateMachine implements ILightBarStateMachine {
 
   }
 
+  /**
+   * Helper function to take control of the needed indicators
+   */
   private void takeControlOfIndicators() {
     List<LightBarIndicator> indicators = new ArrayList<>(Arrays.asList(LightBarIndicator.GREEN));
     List<LightBarIndicator> deniedIndicators = lightBarManager.requestControl(indicators, this.getComponentName(), controlChangeHandler);
@@ -176,6 +150,9 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     }
   }
 
+  /**
+   * Helper function to turnoff all indicators
+   */
   private void turnOffAllLights() {
     // Take control of all indicators and turn them off
     lightBarManager.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);

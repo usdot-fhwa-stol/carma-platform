@@ -16,20 +16,22 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
-import java.util.List;
-
-import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
-
 /**
- * A ConflictDetector is responsible for providing rapid conflict detection to other guidance components
- * An internal set of vehicle paths is maintained which a suggested path can be queried against to identify conflicts
+ * An interface for use within the guidance package 
+ * which allows components to notify the light bar state machine of events
  */
 public interface ILightBarStateMachine {
-    /**
-   * Function which coordinates state transitions and the timeout timers
+  /**
+   * Function which processes events to coordinate state transitions 
    *
    * @param event the LightBarEvent which will be used to determine the next state
    */
   void next(LightBarEvent event);
+
+  /**
+   * Gets the current state
+   * 
+   * @return The current state of this state machine
+   */
   LightBarState getCurrentState();
 }
