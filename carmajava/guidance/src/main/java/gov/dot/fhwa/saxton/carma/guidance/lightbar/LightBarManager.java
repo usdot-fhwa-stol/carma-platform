@@ -59,7 +59,7 @@ import cav_srvs.SetLightsResponse;
  * Guidance component which exposes control of the light bar to plugins
  * Maintains its own light bar state machine which can be overruled by plugins using a parameter
  */
-public class LightBarManager extends GuidanceComponent implements ILightBarManager, ILightBarStateMachine {
+public class LightBarManager extends GuidanceComponent implements IStateChangeListener, ILightBarManager, ILightBarStateMachine {
  
   private List<String> controlPriorities;
   private Map<LightBarIndicator, String> lightControlMap = Collections.synchronizedMap(new HashMap<>());
@@ -72,6 +72,7 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
   private final ISubscriber<BSM> bsmTopic;
   private long lastBSM = 0;
   private long TIMEOUT_MS = 1000;
+  private boolean haveRecentBSM = false;
 
   /**
    * Constructor
@@ -88,6 +89,7 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
     this.TIMEOUT_MS = params.getInteger("~light_bar_comms_timeout", (int) TIMEOUT_MS);
     // Echo params
     log.info("Param light_bar_priorities: " + controlPriorities);
+    log.info("Param light_bar_comms_timeout: " + TIMEOUT_MS);
     // Init State Machine
     lightBarStateMachine = new LightBarStateMachine(this);
     // Get incoming bsm topic
@@ -95,9 +97,14 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
     bsmTopic = pubSubService.getSubscriberForTopic(BSM_TOPIC, BSM._TYPE);
     bsmTopic.registerOnMessageCallback(
       (BSM message) -> {
-        lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_RECEIVED);
+        if (!haveRecentBSM) { // Only notify state machine of change when this is the first message after a timeout
+          lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_RECEIVED);
+          haveRecentBSM = true;
+        }
         lastBSM = System.currentTimeMillis();
     });
+
+    guidanceStateMachine.registerStateChangeListener(this);
   }
 
   //// ILightBarStateMachine Methods
@@ -145,6 +152,7 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
         Thread.sleep(TIMEOUT_MS);
         if (System.currentTimeMillis() - lastBSM > TIMEOUT_MS) {
           lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_TIMEOUT);
+          haveRecentBSM = false;
         }
     } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -214,6 +222,10 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
       log.info(requestingComponent + " failed to set the LightBarIndicator " + indicator + 
       " as this was already controlled by " + controllingComponent);
       return false;
+    }
+
+    if (statusMsg == null) {
+      statusMsg = lightBarService.newMessage().getSetState();
     }
 
     final String warningString = requestingComponent + " failed to set the LightBarIndicator " + indicator + 
@@ -387,5 +399,39 @@ public class LightBarManager extends GuidanceComponent implements ILightBarManag
 
   private void handleBSM(BSM message) {
 
+  }
+
+    /*
+     * This method add the right job in the jobQueue base on the instruction given by GuidanceStateMachine
+     * The actual changing of GuidanceState local copy is happened when each job is performed
+     */
+    @Override
+  public void onStateChange(GuidanceAction action) {
+    log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+    switch (action) {
+      case INTIALIZE:
+        jobQueue.add(this::onSystemReady);
+        break;
+      case ACTIVATE:
+        jobQueue.add(this::onActive);
+        break;
+      case DEACTIVATE:
+        jobQueue.add(this::onDeactivate);
+        break;
+      case ENGAGE:
+        jobQueue.add(this::onEngaged);
+        break;
+      case SHUTDOWN:
+        jobQueue.add(this::onShutdown);
+        break;
+      case PANIC_SHUTDOWN:
+        jobQueue.add(this::onPanic);
+        break;
+      case RESTART:
+        jobQueue.add(this::onCleanRestart);
+        break;
+      default:
+        log.warn(getComponentName() + "received unknown instruction from guidance state machine.");
+    }
   }
 }

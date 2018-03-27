@@ -70,7 +70,7 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     LightBarState prevState = getCurrentState();
     stateIdx = transition[event.ordinal()][stateIdx];
     handleEvent(event, prevState, getCurrentState());
-    log.info("State = " + getCurrentState());
+    log.info("Event: " + event + " Prev State: " + prevState + " New State: " + getCurrentState());
   }
 
   @Override
