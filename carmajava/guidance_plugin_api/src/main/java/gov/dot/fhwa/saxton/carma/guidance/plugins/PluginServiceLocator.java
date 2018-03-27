@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
@@ -36,6 +37,7 @@ public class PluginServiceLocator {
     private final IPubSubService IPubSubService;
     private final ManeuverPlanner maneuverPlanner;
     private final RouteService routeService;
+    private final IMobilityRouter mobilityRouter;
     private final IConflictDetector conflictDetector;
     private final ITrajectoryConverter trajectoryConverter;
     private final ILightBarManager lightBarManager;
@@ -43,14 +45,16 @@ public class PluginServiceLocator {
     public PluginServiceLocator(ArbitratorService arbitratorService,
         PluginManagementService pluginManagementService, IPubSubService iPubSubService,
         ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService,
-        IConflictDetector conflictDetector, ITrajectoryConverter trajectoryConverter,
-        ILightBarManager lightBarManager) {
+        IMobilityRouter mobilityRouter, IConflictDetector conflictDetector,
+        ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager) {
+            
         this.arbitratorService = arbitratorService;
         this.IPubSubService = iPubSubService;
         this.pluginManagementService = pluginManagementService;
         this.parameterSource = parameterSource;
         this.maneuverPlanner = maneuverPlanner;
         this.routeService = routeService;
+        this.mobilityRouter = mobilityRouter;
         this.conflictDetector = conflictDetector;
         this.trajectoryConverter = trajectoryConverter;
         this.lightBarManager = lightBarManager;
@@ -91,10 +95,20 @@ public class PluginServiceLocator {
         return maneuverPlanner;
     }
 
+    /**
+     * Get the {@link RouteService} instance available to the plugins.
+     */
     public RouteService getRouteService() {
         return routeService;
     }
 
+    /**
+     * Get the {@link MobilityRouter} instance available to the plugins.
+     */
+    public IMobilityRouter getMobilityRouter() {
+        return mobilityRouter;
+    }
+    
     /**
      * Get the {@link IConflictDetector} instance available to the plugins
      */

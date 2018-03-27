@@ -72,6 +72,22 @@ public interface ITrajectoryConverter {
   List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
   double downtrack, double crosstrack,
   int currentSegmentIdx, double segDowntrack, int lane);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * This function uses current data from Guidance Route Service.
+   * 
+   * @param traj The trajectory to convert
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj);
   /**
    * Helper function for converting a List of RoutePoint2DStamped into List of ECEFPointStamped
    * 
@@ -91,6 +107,17 @@ public interface ITrajectoryConverter {
    * @return The path described as points along a route
    */
   List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, int currentSegmentIdx, double segDowntrack);
+
+   /**
+   * Helper function for converting a cav_msgs.Trajectory into List of RoutePointStamped
+   * 
+   * This method uses current data from Guidance Route Service
+   * 
+   * @param trajMsg The message to be converted
+   * 
+   * @return The path described as points along a route
+   */
+  List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg);
   
   /**
    * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
