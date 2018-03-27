@@ -672,7 +672,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	(*env) -> ReleaseByteArrayElements(env, targetId, target_string, 0);
 
 	//set hostBSMId in header
-	jbyte *bsm_string = (*env) -> GetByteArrayElements(env, senderBSMId, 0);
+	jbyte *bsm_string = (*env) -> GetByteArrayElements(env, senderBsmId, 0);
 	if(bsm_string == NULL) {
 	    return NULL;
 	}
@@ -682,7 +682,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	}
 	message -> value.choice.TestMessage02.header.hostBSMId.buf = host_bsm_id_content;
 	message -> value.choice.TestMessage02.header.hostBSMId.size = 8;
-	(*env) -> ReleaseByteArrayElements(env, senderBSMId, bsm_string, 0);
+	(*env) -> ReleaseByteArrayElements(env, senderBsmId, bsm_string, 0);
 
 	//set planId in header
 	jbyte *plan_id = (*env) -> GetByteArrayElements(env, planId, 0);
@@ -710,19 +710,18 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 	message -> value.choice.TestMessage02.header.timestamp.size = 19;
 	(*env) -> ReleaseByteArrayElements(env, timestamp, time, 0);
 
-	MobilityLocation_t *location;
-	location = calloc(1, sizeof(MobilityLocation_t));
-	location -> ecefX = startX;
-	location -> ecefY = startY;
-	location -> ecefZ = startZ;
+	MobilityLocation_t location;
+	location.ecefX = startX;
+	location.ecefY = startY;
+	location.ecefZ = startZ;
 	jbyte *start_time = (*env) -> GetByteArrayElements(env, locationTimestamp, 0);
 
 	uint8_t start_time_content[19] = {0};
 	for (int i = 0; i < 19; i++) {
 		start_time_content[i] = start_time[i];
 	}
-	location -> timestamp.buf = start_time_content;
-	location -> timestamp.size = 19;
+	location.timestamp.buf = start_time_content;
+	location.timestamp.size = 19;
 
 	message -> value.choice.TestMessage02.body.location = location;
 	(*env) -> ReleaseByteArrayElements(env, locationTimestamp, start_time, 0);
@@ -749,15 +748,14 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 			localArray[0] = offsets_X_content;
 			localArray[1] = offsets_Y_content;
 			localArray[2] = offsets_Z_content;
-			MobilityLocationOffsets_t *trajectory_offsets;
-			trajectory_offsets = calloc(1, sizeof(MobilityLocationOffsets_t));
+			MobilityLocationOffsets_t trajectory_offsets;
 			for(int i = 0; i < count; i++) {
 				MobilityECEFOffset_t *offset_point;
 				offset_point = calloc(1, sizeof(MobilityECEFOffset_t));
 				offset_point -> offsetX = localArray[0][i];
 				offset_point -> offsetY = localArray[1][i];
 				offset_point -> offsetZ = localArray[2][i];
-				asn_sequence_add(&trajectory_offsets -> list, offset_point);
+				asn_sequence_add(&trajectory_offsets.list, offset_point);
 			}
 			message -> value.choice.TestMessage02.body.trajectory = trajectory_offsets;
 		}
