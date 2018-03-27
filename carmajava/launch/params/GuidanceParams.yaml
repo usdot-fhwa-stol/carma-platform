@@ -205,3 +205,14 @@ mobility_path_max_points: 60
 # Units: seconds
 mobility_path_time_step: 0.01
 
+# Plugin or guidance component name: The priority which components are given for control of the light bar
+light_bar_priorities:
+  - Light Bar State Machine
+  - CACC Platooning Plugin
+  - Yield Plugin
+  - Speed Harmonization Plugin
+  - Route Following Plugin
+  - Cruising Plugin
+# Integer: The amount of time for the light bar to consider a communication timeout
+# Units: seconds
+light_bar_comms_timeout: 1000
