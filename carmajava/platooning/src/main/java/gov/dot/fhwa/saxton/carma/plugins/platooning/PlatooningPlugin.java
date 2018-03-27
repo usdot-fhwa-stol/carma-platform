@@ -36,7 +36,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 public class PlatooningPlugin extends AbstractPlugin
-                              implements IStrategicPlugin, MobilityOperationHandler, MobilityRequestHandler, MobilityResponseHandler {
+    implements IStrategicPlugin, MobilityOperationHandler, MobilityRequestHandler, MobilityResponseHandler {
     
     // TODO the plugin should use interface manager once rosjava multiple thread service call is fixed
     protected final String SPEED_CMD_CAPABILITY = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
@@ -77,8 +77,6 @@ public class PlatooningPlugin extends AbstractPlugin
     protected int    shortNegotiationTimeout        = 5000;
     protected int    longNegotiationTimeout         = 25000;
     protected int    maxPlatoonSize                 = 5;
-    
-     
 
     // platooning plug-in components
     protected IPlatooningState state                  = null;
@@ -142,7 +140,10 @@ public class PlatooningPlugin extends AbstractPlugin
         platooningInfoPublisher    = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
         cmdSpeedSub                = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
         
-        //TODO register with MobilityRouter
+        // register with MobilityRouter
+        pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
+        pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(MOBILITY_STRATEGY, this);
+        pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
         log.info("CACC platooning plugin is initialized.");
     }
 

@@ -16,33 +16,21 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-
+/**
+ * This is a class describing a onwaiting platoon plan between two platooning plugins
+ * from two different CAVs. It will keep track of the plan start time in order to calculate
+ * timeout. It will also store the current plan Id and also the recipient static Id.
+ */
 public class PlatoonPlan {
-
-    // This enum describes the status of a platooning plan
-    protected enum PlanStatus {
-        WAITING_ON_RESPONSE,
-        EXECUTING_PLAN,
-    }
-    
-    // This enum describes all possible plan type of a platooning plan
-    protected enum PlatooningPlanType {
-        JOIN_FROM_REAR,
-        CANDIDATE_FOLLOWER_JOIN,
-        LOOKING_FOR_MEMBERS,
-        PLATOONING_STATUS
-    }
     
     protected long                 planStartTime;
     protected String               planId;
-    protected PlanStatus           status;
-    protected PlatooningPlanType   type;
+    protected String               peerId;
     
-    public PlatoonPlan(long planStartTime, String planId, PlanStatus status, PlatooningPlanType type) {
+    public PlatoonPlan(long planStartTime, String planId, String peerId) {
         this.planStartTime = planStartTime;
         this.planId        = planId;
-        this.status        = status;
-        this.type          = type;
+        this.peerId        = peerId;
     }
     
 }

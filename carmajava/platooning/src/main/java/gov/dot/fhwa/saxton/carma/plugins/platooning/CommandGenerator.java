@@ -78,7 +78,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             leader = plugin_.getPlatoonManager().getLeader();
         }
         if(leader != null) {
-            double leaderCurrentPosition = leader.getVehiclePosition();
+            double leaderCurrentPosition = leader.vehiclePosition;
             log_.debug("The current leader position is " + leaderCurrentPosition);
             double hostVehiclePosition = pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance();
             double hostVehicleSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
@@ -96,7 +96,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             Signal<Double> signal = new Signal<Double>(leaderCurrentPosition, timeStamp);
             double output = speedController_.apply(signal).get().getData();
             log_.debug("The output from controller is " + output);
-            speedCmd_.set(Math.max(output + leader.getCommandSpeed(), 0));
+            speedCmd_.set(Math.max(output + leader.commandSpeed, 0));
             log_.debug("A speed command is generated from pid controller: " + speedCmd_ + " m/s");
         } else {
             log_.warn("CommandGenerator can not find the leader, starting latching speed commands if complex maneuver is still running");

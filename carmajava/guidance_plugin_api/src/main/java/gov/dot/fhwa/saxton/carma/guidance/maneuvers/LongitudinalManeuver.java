@@ -135,4 +135,10 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
             maxAccel_ = limit;
         }
     }
+
+    @Override
+    public String toString() {
+        return "LongitudinalManeuver [startSpeed_=" + startSpeed_ + ", endSpeed_=" + endSpeed_ + "]";
+    }
+    
 }
