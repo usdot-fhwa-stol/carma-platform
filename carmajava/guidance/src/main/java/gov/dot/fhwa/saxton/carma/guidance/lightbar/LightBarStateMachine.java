@@ -43,7 +43,7 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     /*   STATES: DISENGAGED(0), ENGAGED(1), RECEIVING_MESSAGES(2), NEGOTIATING(3) */
                     /*          EVENTS           */
     { 0, 0, 0, 0 }, /*GUIDANCE_DISENGAGED    */
-    { 1, 1, 2, 3 }, /*GUIDANCE_ENGAGED  */
+    { 1, 1, 1, 1 }, /*GUIDANCE_ENGAGED  */
     { 0, 2, 2, 3 }, /*DSRC_MESSAGE_RECEIVED */
     { 0, 3, 3, 3 }, /*NEGOTIATION_UNDERWAY      */
     { 0, 2, 2, 2 }, /*NEGOTIATION_COMPLETE  */
