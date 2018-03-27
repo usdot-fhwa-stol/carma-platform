@@ -68,15 +68,14 @@ public class PlatooningPlugin extends AbstractPlugin
     protected int    algorithmType         = 1;
     
     // following parameters are for negotiation when a CAV want to join a platoon
-    // TODO put those params into YAML file
     protected double maxJoinTime                    = 10.0;
     protected double desiredJoinDistance            = 13.0;
-    protected double operationUpdatesTimeoutFactor  = 2.5;
-    protected int    operationUpdatesIntervalLength = 100;
-    protected int    operationInfoIntervalLength    = 3000;
+    protected double statusTimeoutFactor            = 2.5;
+    protected int    statusIntervalLength           = 100;
+    protected int    infoIntervalLength             = 3000;
     protected int    shortNegotiationTimeout        = 5000;
     protected int    longNegotiationTimeout         = 25000;
-    protected int    maxPlatoonSize                 = 5;
+    protected int    maxPlatoonSize                 = 10;
 
     // platooning plug-in components
     protected IPlatooningState state                  = null;
@@ -100,32 +99,37 @@ public class PlatooningPlugin extends AbstractPlugin
     @Override
     public void onInitialize() {
         log.info("CACC platooning plugin is initializing...");
-        
         // initialize parameters of platooning plug-in
-        maxAccel              = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
-        minimumManeuverLength = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 15.0);
-        timeHeadway           = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 1.8);
-        standStillGap         = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 7.0);
-        kpPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
-        kiPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
-        kdPID                 = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
-        operationUpdatesTimeoutFactor  = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
-        lowerBoundary         = pluginServiceLocator.getParameterSource().getDouble("~platooning_lower_boundary", 1.65);
-        upperBoundary         = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
-        maxSpacing            = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_spacing", 2.0);
-        minSpacing            = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_spacing", 1.9);
-        minGap                = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 12.0);
-        maxGap                = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
-        operationUpdatesIntervalLength = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 100);
-        algorithmType         = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
+        maxAccel                = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_accel", 2.5);
+        minimumManeuverLength   = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_maneuver_length", 15.0);
+        timeHeadway             = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 1.8);
+        standStillGap           = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 7.0);
+        kpPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
+        kiPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
+        kdPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
+        statusTimeoutFactor     = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
+        lowerBoundary           = pluginServiceLocator.getParameterSource().getDouble("~platooning_lower_boundary", 1.65);
+        upperBoundary           = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
+        maxSpacing              = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_spacing", 2.0);
+        minSpacing              = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_spacing", 1.9);
+        minGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 12.0);
+        maxGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
+        statusIntervalLength    = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 100);
+        algorithmType           = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
+        maxJoinTime             = pluginServiceLocator.getParameterSource().getDouble("~max_join_time", 10.0);
+        desiredJoinDistance     = pluginServiceLocator.getParameterSource().getDouble("~desired_join_distance", 13.0);
+        infoIntervalLength      = pluginServiceLocator.getParameterSource().getInteger("~operation_info_interval_length", 3000);
+        shortNegotiationTimeout = pluginServiceLocator.getParameterSource().getInteger("~short_negotiation_timeout", 5000);
+        longNegotiationTimeout  = pluginServiceLocator.getParameterSource().getInteger("~long_negotiation_timeout", 25000);
+        maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~max_platoon_size", 10);
         //log all loaded parameters
         log.debug("Load param maxAccel = " + maxAccel);
         log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
         log.debug("Load param timeHeadway = " + timeHeadway);
         log.debug("Load param standStillGap = " + standStillGap);
         log.debug("Load param for speed PID controller: [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
-        log.debug("Load param messageIntervalLength = " + operationUpdatesIntervalLength);
-        log.debug("Load param messageTimeoutFactor = " + operationUpdatesTimeoutFactor);        
+        log.debug("Load param messageIntervalLength = " + statusIntervalLength);
+        log.debug("Load param messageTimeoutFactor = " + statusTimeoutFactor);        
         log.debug("Load param lowerBoundary = " + lowerBoundary);        
         log.debug("Load param upperBoundary = " + upperBoundary);        
         log.debug("Load param maxSpacing = " + maxSpacing);        
@@ -133,13 +137,17 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param minGap = " + minGap);        
         log.debug("Load param maxGap = " + maxGap);        
         log.debug("Load param algorithmType = " + algorithmType);
-        
+        log.debug("Load param maxJoinTime = " + maxJoinTime);
+        log.debug("Load param desiredJoinDistance = " + desiredJoinDistance);
+        log.debug("Load param infoIntervalLength = " + infoIntervalLength);
+        log.debug("Load param shortNegotiationTimeout = " + shortNegotiationTimeout);
+        log.debug("Load param longNegotiationTimeout = " + longNegotiationTimeout);
+        log.debug("Load param maxPlatoonSize = " + maxPlatoonSize);
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
         mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
         platooningInfoPublisher    = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
         cmdSpeedSub                = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
-        
         // register with MobilityRouter
         pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
         pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(MOBILITY_STRATEGY, this);
@@ -349,11 +357,11 @@ public class PlatooningPlugin extends AbstractPlugin
     }
     
     protected int getOperationInfoIntervalLength() {
-        return operationInfoIntervalLength;
+        return infoIntervalLength;
     }
     
     protected int getOperationUpdatesIntervalLength() {
-        return operationUpdatesIntervalLength;
+        return statusIntervalLength;
     }
     
     protected double getMinimumManeuverLength() {
@@ -361,7 +369,7 @@ public class PlatooningPlugin extends AbstractPlugin
     }
     
     protected double getOperationUpdatesTimeoutFactor() {
-        return operationUpdatesTimeoutFactor;
+        return statusTimeoutFactor;
     }
     
     protected IPublisher<MobilityRequest> getMobilityRequestPublisher() {
