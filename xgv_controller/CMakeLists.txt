@@ -137,6 +137,9 @@ target_include_directories(xgv_client_messages PUBLIC
 target_link_libraries(xgv_client_messages ${catkin_LIBRARIES})
 
 add_executable(xgv_controller_node src/xgv_jaus_client.h src/xgv_application.h src/xgv_jaus_client.cpp src/xgv_application.cpp src/main.cpp)
+
+add_dependencies(xgv_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(xgv_controller_node ${catkin_LIBRARIES} ${boost_LIBRARIES} xgv_client_messages)
 
 add_executable(jausNM_node src/nm_application.cpp src/node_manager.h)
