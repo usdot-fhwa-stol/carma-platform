@@ -611,5 +611,7 @@ bool torc::SRXDBWController::LightParams_t::operator==(const torc::SRXDBWControl
     return TakeDownOn   == rhs.TakeDownOn   &&
            FlashOn      == rhs.FlashOn      &&
            LeftArrowOn  == rhs.LeftArrowOn  &&
-           RightArrowOn == rhs.RightArrowOn;
+           RightArrowOn == rhs.RightArrowOn &&
+           GreenFlashOn == rhs.GreenFlashOn &&
+           GreenSolidOn == rhs.GreenSolidOn;
 }

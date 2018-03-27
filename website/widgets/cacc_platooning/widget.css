@@ -1,0 +1,83 @@
+.divPlatoonStyle1 {
+    position: relative;
+    width: 580px;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+}
+
+.leftRelative {
+    float: left;
+    position: relative;
+}
+
+.divWidth {
+    left: 300px;
+}
+
+.numberCircle {
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    background: #fff;
+    border: 2px solid #666;
+    color: #666;
+    text-align: center;
+    font: 15px Arial, sans-serif;
+    float: left;
+    position: absolute;
+    top: 65px;
+    left: 100px;
+}
+
+#divHostTitle {
+    float: left;
+    position: absolute;
+    top: 60px;
+    width: 100%;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+}
+
+#gaugeActualGap {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+#gaugeDesiredGap {
+    position: absolute;
+    top: 13px;
+    left: 0px;
+    z-index: -1;
+}
+
+#txtActualGap {
+    float: left;
+    position: absolute;
+    top: 80px;
+    width: 300px;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+}
+
+#txtDesiredGap {
+    float: left;
+    position: absolute;
+    top: 90px;
+    width: 300px;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+}
+
+#divLeaderTitle {
+    position: absolute;
+    top: 60px;
+    width: 100%;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+}
+
+#divLeadCmdSpeed {
+    left: -10px;
+}

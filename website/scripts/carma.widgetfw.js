@@ -123,9 +123,11 @@ CarmaJS.WidgetFramework = (function () {
                 
             });
 
-            var listWidgetOptions = sessionStorage.getItem('listWidgetOptions');
+            var listWidgetOptionsFlag = sessionStorage.getItem('listWidgetOptionsFlag');
+            //console.log ('listWidgetOptionsFlag: ' + listWidgetOptionsFlag);
 
-            if (listWidgetOptions == 'true') {
+            if (listWidgetOptionsFlag == 'true' ) {
+
                 var btn = document.createElement("BUTTON");        // Create a <button> element
                 btn.title = 'Show Drivers View';
                 btn.className = 'btnModal';
@@ -143,8 +145,8 @@ CarmaJS.WidgetFramework = (function () {
         */
         var listWidgetOptions = function (value) {
             //Save the selection.
-            sessionStorage.setItem('listWidgetOptions', value);
-            //console.log('listWidgetOptions: ' + value);
+            sessionStorage.setItem('listWidgetOptionsFlag', value);
+            //console.log('listWidgetOptionsFlag: ' + value);
 
             //Save the options everytime.
             if (value == true )
@@ -360,7 +362,7 @@ CarmaJS.WidgetFramework = (function () {
 
             //Clear session variables
             sessionStorage.removeItem('pluginsActivated');
-            sessionStorage.removeItem('listWidgetOptions');
+            sessionStorage.removeItem('listWidgetOptionsFlag');
 
             //Then add it back in.
             var  myDiv = "<div id='divWidgetArea'></div>";
@@ -368,14 +370,19 @@ CarmaJS.WidgetFramework = (function () {
         };
     
         var onRefresh = function () {
-            var listWidgetOptions = sessionStorage.getItem('listWidgetOptions');
 
-            if (listWidgetOptions == 'true') {
+            if (isGuidance.active == true)
+                sessionStorage.setItem('listWidgetOptionsFlag', true);
+
+            var listWidgetOptionsFlag = sessionStorage.getItem('listWidgetOptionsFlag');
+
+            if (listWidgetOptionsFlag == 'true') {
                 CarmaJS.WidgetFramework.showWidgetOptions();
+                return;
             }
-            else {
-                CarmaJS.WidgetFramework.loadWidgets();
-            }
+
+            CarmaJS.WidgetFramework.loadWidgets();
+
         };
 
         //Public API
