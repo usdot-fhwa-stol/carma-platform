@@ -215,5 +215,5 @@ light_bar_priorities:
   - Cruising Plugin
 
 # Integer: The amount of time for the light bar to consider a communication timeout
-# Units: seconds
+# Units: mili-seconds
 light_bar_comms_timeout: 1000
