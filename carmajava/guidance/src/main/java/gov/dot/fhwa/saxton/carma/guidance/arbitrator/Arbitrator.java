@@ -32,6 +32,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse.PlanningRequest;
 import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
@@ -94,6 +95,8 @@ public class Arbitrator extends GuidanceComponent
   protected static final long SLEEP_DURATION_MILLIS = 100;
   protected static final double TRAJ_SIZE_WARNING = 50.0;
   protected static final double DISTANCE_EPSILON = 0.0001;
+  protected int recursionCount = 0;
+  protected static final int RECURSION_LIMIT = 10;
 
   public Arbitrator(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node,
       PluginManager pluginManager, TrajectoryExecutor trajectoryExecutor) {
@@ -643,5 +646,23 @@ public class Arbitrator extends GuidanceComponent
     default:
       return null;
     }
+  }
+
+  @Override
+  public void requestNewPlan() {
+    planningWindow /= planningWindowShrinkFactor; // Offset for the planning window size decrease involved
+    notifyTrajectoryFailure();
+  }
+
+  @Override
+  public Trajectory planSubtrajectoryRecursively(double startDist, double endDist) {
+    if (recursionCount > RECURSION_LIMIT) {
+      throw new RosRuntimeException("Arbitrator planning recursion exceeded limit of: " + RECURSION_LIMIT + "!");
+    }
+    recursionCount++;
+    Trajectory out = planTrajectory(startDist, endDist);
+    recursionCount--;
+
+    return out;
   }
 }
