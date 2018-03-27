@@ -397,15 +397,11 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
     }
   }
 
-  private void handleBSM(BSM message) {
-
-  }
-
-    /*
-     * This method add the right job in the jobQueue base on the instruction given by GuidanceStateMachine
-     * The actual changing of GuidanceState local copy is happened when each job is performed
-     */
-    @Override
+  /*
+    * This method add the right job in the jobQueue base on the instruction given by GuidanceStateMachine
+    * The actual changing of GuidanceState local copy is happened when each job is performed
+    */
+  @Override
   public void onStateChange(GuidanceAction action) {
     log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
     switch (action) {
