@@ -38,6 +38,7 @@ public class LightBarStateMachine implements ILightBarStateMachine {
   protected final LightBarState[] states =
   { LightBarState.DISENGAGED, LightBarState.ENGAGED, LightBarState.RECEIVING_MESSAGES, LightBarState.NEGOTIATING};
   // Transition table for state machine
+  // Columns are states and rows are events
   protected final int[][] transition = {
     /*   STATES: DISENGAGED(0), ENGAGED(1), RECEIVING_MESSAGES(2), NEGOTIATING(3) */
                     /*          EVENTS           */
@@ -69,7 +70,7 @@ public class LightBarStateMachine implements ILightBarStateMachine {
   public void next(LightBarEvent event) {
     LightBarState prevState = getCurrentState();
     stateIdx = transition[event.ordinal()][stateIdx];
-    handleEvent(event, prevState, getCurrentState());
+    handleEvent(event, getCurrentState());
     log.info("Event: " + event + " Prev State: " + prevState + " New State: " + getCurrentState());
   }
 
@@ -82,10 +83,9 @@ public class LightBarStateMachine implements ILightBarStateMachine {
    * Helper function for processing incoming events
    * 
    * @param event The event to process
-   * @param prevState The previous state
    * @param newState The new state resulting from the event 
    */
-  private void handleEvent(LightBarEvent event, LightBarState prevState, LightBarState newState) {
+  private void handleEvent(LightBarEvent event, LightBarState newState) {
     switch(event) {
       case GUIDANCE_DISENGAGED:
         if(newState == LightBarState.DISENGAGED) {

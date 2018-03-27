@@ -21,19 +21,19 @@ package gov.dot.fhwa.saxton.carma.guidance.lightbar;
  */
 public enum LightBarState {
   /**
-   * Guidance is disengage, the light bar should be off
+   * Guidance is disengaged
    */
   DISENGAGED,
   /**
-   * Guidance is engaged, the light bar should show solid green
+   * Guidance is engaged
    */
   ENGAGED,
   /**
-   * Guidance is receiving DSRC messages, the light bar should be blinking green
+   * Guidance is receiving DSRC messages
    */
   RECEIVING_MESSAGES,
   /**
-   * A negotiation is in progress, the light bar should be blinking yellow
+   * A negotiation is in progress
    */
   NEGOTIATING;
 }

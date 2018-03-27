@@ -39,16 +39,18 @@ public interface ILightBarManager {
 
   /**
    * Set the specified indicator
+   * 
    * @param indicator The indicator the caller whishes to set
    * @param status The status to set the indicator to
    * @param requestingComponent The name of the caller as specified in the configuration
    * 
-   * @return True if the light could be set. False if not
+   * @return True if the indicator could be set. False if not
    */
-  boolean setIndicator(LightBarIndicator light, IndicatorStatus status, String requestingComponent);
+  boolean setIndicator(LightBarIndicator indicator, IndicatorStatus status, String requestingComponent);
 
   /**
    * Releases control of the specified indicators if the calling component has control of them
+   * If the caller does not have control of an indicator, its status remains unchanged. 
    * 
    * @param indicators The indicators to release
    * @param requestingComponent The name of the caller as specified in the configuration
