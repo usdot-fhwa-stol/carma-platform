@@ -52,16 +52,17 @@ public class MobilityPathTest {
 
         mockTrajectory = mock(Trajectory.class);
         mockStartLocation = mock(LocationECEF.class);
+    }
+
+    @Test
+    public void mobilityPathEncodeWithNoOffsets() {
         when(mockStartLocation.getEcefX()).thenReturn(0);
         when(mockStartLocation.getEcefY()).thenReturn(0);
         when(mockStartLocation.getEcefZ()).thenReturn(0);
         when(mockTrajectory.getOffsets()).thenReturn(new LinkedList<LocationOffsetECEF>());
         when(mockTrajectory.getLocation()).thenReturn(mockStartLocation);
         when(mockPath.getTrajectory()).thenReturn(mockTrajectory);
-    }
 
-    @Test
-    public void mobilityPathEncodeWithNoOffsets() {
         byte[] data = message.callJniEncode(mockPath);
         System.out.println(Arrays.toString(data));
         byte[] expected = { 0, -14, 97, 77, 90, 113, 39, -44, 90, -47, -85, 22, 12, 2, -35, -42, 44, 32, -62, -121, 18,
@@ -73,7 +74,43 @@ public class MobilityPathTest {
     }
 
     @Test
-    public void decodeMobilityRequestWithNoOffsets() {
+    public void mobilityPathEncodeWithOffsets() {
+        when(mockStartLocation.getEcefX()).thenReturn(0);
+        when(mockStartLocation.getEcefY()).thenReturn(0);
+        when(mockStartLocation.getEcefZ()).thenReturn(0);
+        List<LocationOffsetECEF> offsets = new LinkedList<>();
+        LocationOffsetECEF offset1 = mock(LocationOffsetECEF.class);
+        when(offset1.getOffsetX()).thenReturn((short) 10);
+        when(offset1.getOffsetY()).thenReturn((short) 10);
+        when(offset1.getOffsetZ()).thenReturn((short) 10);
+        LocationOffsetECEF offset2 = mock(LocationOffsetECEF.class);
+        when(offset2.getOffsetX()).thenReturn((short) 20);
+        when(offset2.getOffsetY()).thenReturn((short) 20);
+        when(offset2.getOffsetZ()).thenReturn((short) 20);
+        LocationOffsetECEF offset3 = mock(LocationOffsetECEF.class);
+        when(offset3.getOffsetX()).thenReturn((short) 20);
+        when(offset3.getOffsetY()).thenReturn((short) 25);
+        when(offset3.getOffsetZ()).thenReturn((short) 30);
+        offsets.add(offset1);
+        offsets.add(offset2);
+        offsets.add(offset3);
+        when(mockTrajectory.getOffsets()).thenReturn(offsets);
+        when(mockTrajectory.getLocation()).thenReturn(mockStartLocation);
+        when(mockPath.getTrajectory()).thenReturn(mockTrajectory);
+
+        byte[] data = message.callJniEncode(mockPath);
+        System.out.println(Arrays.toString(data));
+        byte[] expected = { 0, -14, 97, 77, 90, 113, 39, -44, 90, -47, -85, 22, 12, 2, -35, -42, 44, 32, -62, -121, 18,
+                44, 102, 44, 88, -79, 98, -59, -117, 21, -84, -103, 50, 100, -75, -101, 54, 108, -42, -63, -125, 6, 10,
+                -42, 44, 88, -79, 98, -59, -117, 22, 44, 88, -79, 96, -63, -125, 6, 12, 24, 48, 96, -63, -117, 38, 109,
+                26, -74, 110, -31, -54, 96, -54, -125, 68, -63, -107, 6, -119, -125, 42, 13, 24, 48, 96, -63, -125, 6,
+                12, 24, 48, 96, -63, -125, 6, 12, 24, 48, 96, 0 };
+        assertArrayEquals(expected, data);
+    }
+
+
+    @Test
+    public void decodeMobilityPathWithNoOffsets() {
         byte[] senderId = new byte[16];
         byte[] targetId = new byte[16];
         byte[] bsmId = new byte[8];
