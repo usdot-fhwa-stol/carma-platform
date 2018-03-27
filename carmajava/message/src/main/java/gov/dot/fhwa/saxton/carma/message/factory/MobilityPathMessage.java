@@ -46,6 +46,16 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
                 this.log = log;
         }
 
+        // Load libasn1c.so external C library
+        static {
+                try {
+                        System.loadLibrary("asn1c");
+                } catch (Exception e) {
+                        System.out.println("Exception trapped while trying to load the asn1c library" + e.toString());
+                        e.printStackTrace();
+                }
+        }
+
         /**
          * This is the declaration for native method. It will take data from MobilityPath ROS message
          * and return a byte array including the encoded message. Because of the efficiency of JNI method
@@ -68,7 +78,7 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
                         byte[] targetId, byte[] bsmId, byte[] planId, byte[] timestamp, Object currentLocation,
                         byte[] locationTimestamp, int[][] offsets);
 
-        private byte[] callJniEncode(MobilityPath message) {
+        public byte[] callJniEncode(MobilityPath message) {
                 MobilityPathHelper helper = new MobilityPathHelper(message);
                 return encodeMobilityPath(helper.getHeaderHelper().getSenderId(),
                                 helper.getHeaderHelper().getTargetId(), helper.getHeaderHelper().getBSMId(),

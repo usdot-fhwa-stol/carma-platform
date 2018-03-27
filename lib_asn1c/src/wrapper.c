@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include "gov_dot_fhwa_saxton_carma_message_factory_BSMMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityRequestMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage.h"
 #include "MessageFrame.h"
 
 /**
