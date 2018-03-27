@@ -791,7 +791,7 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
  * Signature: ([BLjava/lang/Object;[B[B[B[B[B[BLjava/lang/Object;[[I)I
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage_decodeMobilityPath
-  (JNIEnv *env, jobject this, jbyteArray encodedArray, jobject pathObj, jbyteArray senderId, jbyteArray targetId, jbyteArray bsmId, jbyteArray planId, jbyteArray timestamp, jobject currentLocation, jbyteArray locationTimestamp, jobjectArray offsets) {
+  (JNIEnv *env, jobject this, jbyteArray encodedArray, jobject pathObj, jbyteArray senderId, jbyteArray targetId, jbyteArray bsmId, jbyteArray planId, jbyteArray timestamp, jobject location, jbyteArray locationTimestamp, jobjectArray trajectoryOffsets) {
 	asn_dec_rval_t rval; /* Decoder return value */
 	MessageFrame_t *message = 0; /* Construct MessageFrame */
 
@@ -803,7 +803,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPa
 	} /* Copy into buffer */
 	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
 	if(rval.code == RC_OK) {
-		jclass start_location_class = (*env) -> GetObjectClass(env, startLocation);
+		jclass start_location_class = (*env) -> GetObjectClass(env, location);
 
 		//set senderId, targetId, bsmId, planId and creation timestamp
 		uint8_t *sender_id_content = message -> value.choice.TestMessage02.header.hostStaticId.buf;
@@ -833,27 +833,25 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPa
 		uint8_t *location_time_content = message -> value.choice.TestMessage02.body.location.timestamp.buf;
 		(*env) -> SetByteArrayRegion(env, locationTimestamp, 0, 19, location_time_content);
 
-		// set trajectory offset data if necessary
-		if(message -> value.choice.TestMessage00.body.trajectory) {
-			jintArray offsets_X =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 0);
-			jintArray offsets_Y =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 1);
-			jintArray offsets_Z =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 2);
-			int count = message -> value.choice.TestMessage02.body.trajectory -> list.count;
-			int temp_offsets_X[60] = {0};
-			int temp_offsets_Y[60] = {0};
-			int temp_offsets_Z[60] = {0};
-			for(int i = 0; i < count; i++) {
-				temp_offsets_X[i] = message -> value.choice.TestMessage02.body.trajectory -> list.array[i] -> offsetX;
-				temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory -> list.array[i] -> offsetY;
-				temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory -> list.array[i] -> offsetZ;
-			}
-			(*env) -> SetIntArrayRegion(env, offsets_X, 0, 60, temp_offsets_X);
-			(*env) -> SetIntArrayRegion(env, offsets_Y, 0, 60, temp_offsets_Y);
-			(*env) -> SetIntArrayRegion(env, offsets_Z, 0, 60, temp_offsets_Z);
-			(*env) -> DeleteLocalRef(env, offsets_X);
-			(*env) -> DeleteLocalRef(env, offsets_Y);
-			(*env) -> DeleteLocalRef(env, offsets_Z);
+		// set trajectory offset
+		jintArray offsets_X =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 0);
+		jintArray offsets_Y =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 1);
+		jintArray offsets_Z =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 2);
+		int count = message -> value.choice.TestMessage02.body.trajectory.list.count;
+		int temp_offsets_X[60] = {0};
+		int temp_offsets_Y[60] = {0};
+		int temp_offsets_Z[60] = {0};
+		for(int i = 0; i < count; i++) {
+			temp_offsets_X[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetX;
+			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetY;
+			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetZ;
 		}
+		(*env) -> SetIntArrayRegion(env, offsets_X, 0, 60, temp_offsets_X);
+		(*env) -> SetIntArrayRegion(env, offsets_Y, 0, 60, temp_offsets_Y);
+		(*env) -> SetIntArrayRegion(env, offsets_Z, 0, 60, temp_offsets_Z);
+		(*env) -> DeleteLocalRef(env, offsets_X);
+		(*env) -> DeleteLocalRef(env, offsets_Y);
+		(*env) -> DeleteLocalRef(env, offsets_Z);
 
 		return 0;
 	} else {
