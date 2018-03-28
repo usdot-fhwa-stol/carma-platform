@@ -88,6 +88,22 @@ public interface ITrajectoryConverter {
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
   List<RoutePointStamped> convertToPath(Trajectory traj);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * @param traj The trajectory to convert
+   * @param startPoint the point one timestep prior to the beginning of this trajectory
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, RoutePointStamped startPoint);
+
   /**
    * Helper function for converting a List of RoutePoint2DStamped into List of ECEFPointStamped
    * 

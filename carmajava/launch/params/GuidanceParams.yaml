@@ -217,3 +217,6 @@ light_bar_priorities:
 # Integer: The amount of time for the light bar to consider a communication timeout
 # Units: mili-seconds
 light_bar_comms_timeout: 1000
+
+ mobility_path_publish_interval:  3000
+ max_points_per_mobility_path: 60

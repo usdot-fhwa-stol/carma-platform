@@ -115,6 +115,16 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   @Override
+  public List<RoutePointStamped> convertToPath(Trajectory traj, RoutePointStamped startPoint) {
+    final long startTime = (long) ((startPoint.getStamp() + timeStep) * MS_PER_SEC);
+    final double downtrack = startPoint.getDowntrack();
+    final double crosstrack = startPoint.getCrosstrack();
+    final int segmentIdx = startPoint.getSegmentIdx();
+    final double segDowntrack = startPoint.getSegDowntrack();
+    return convertToPath(traj, startTime, downtrack, crosstrack, segmentIdx, segDowntrack, lane);
+  }
+
+  @Override
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
    double downtrack, double crosstrack,
    int currentSegmentIdx, double segDowntrack, int lane) {
