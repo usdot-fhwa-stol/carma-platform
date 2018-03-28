@@ -39,9 +39,16 @@ public class PlatooningPlugin extends AbstractPlugin
     implements IStrategicPlugin, MobilityOperationHandler, MobilityRequestHandler, MobilityResponseHandler {
     
     // TODO the plugin should use interface manager once rosjava multiple thread service call is fixed
-    protected final String SPEED_CMD_CAPABILITY = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
-    protected final String PLATOONING_FLAG      = "PLATOONING";
-    protected final String MOBILITY_STRATEGY    = "Carma/Platooning";
+    protected final String SPEED_CMD_CAPABILITY    = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
+    protected final String PLATOONING_FLAG         = "PLATOONING";
+    protected final String MOBILITY_STRATEGY       = "Carma/Platooning";
+    protected final String JOIN_AT_REAR_PARAMS     = "SIZE:%d,MAX_ACCEL:%.2f,DTD:%.2f";
+    protected final String CANDIDATE_JOIN_PARAMS   = "DTD:%.2f";
+    protected final String OPERATION_INFO_PARAMS   = "INFO|LEADER:%s,REAR_DTD:%.2f,SPEED:%.2f";
+    protected final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
+    protected final String OPERATION_INFO_TYPE     = "INFO";
+    protected final String OPERATION_STATUS_TYPE   = "STATUS";
+    
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
@@ -205,6 +212,7 @@ public class PlatooningPlugin extends AbstractPlugin
     public void loop() throws InterruptedException {
         // publish platooning information message for the usage of UI
         publishPlatooningInfo();
+        Thread.sleep(statusIntervalLength);
     }
 
     @Override
@@ -248,24 +256,21 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Started stateThread");
     }
     
-    protected double fromECEFToDowntrack(cav_msgs.Trajectory traj) {
-        return pluginServiceLocator.getTrajectoryConverter().messageToPath(traj).get(0).getDowntrack();
-    }
-    
-    // TODO Once this plug-in is finished, we should replace them with actual data
     private void publishPlatooningInfo() {
-        if (platooningInfoPublisher != null) {
+        if (platooningInfoPublisher != null && (!(this.state instanceof StandbyState))) {
             PlatooningInfo info = platooningInfoPublisher.newMessage();
-            info.setState(PlatooningInfo.FOLLOWER);
-            info.setPlatoonId("b937d2f6-e618-4867-920b-c1f74f98ef1f");
-            info.setSize((byte) 5);
-            info.setSizeLimit((byte) 10);
-            info.setLeaderId("DOT-40053");
-            info.setLeaderDowntrackDistance((float) 50.3);
-            info.setLeaderCmdSpeed((float) 5.6);
-            info.setHostPlatoonPosition((byte) 4);
-            info.setHostCmdSpeed((float) 5.4);
-            info.setDesiredGap((float) 45.8);
+            boolean isFollower = this.state instanceof FollowerState;
+            info.setState(isFollower ? PlatooningInfo.FOLLOWER : PlatooningInfo.LEADER);
+            info.setPlatoonId(this.platoonManager.currentPlatoonID);
+            info.setSize((byte) (isFollower ? 0 : this.platoonManager.getPlatooningSize() + 1));
+            info.setSizeLimit((byte) this.maxPlatoonSize);
+            info.setLeaderId(isFollower ? this.platoonManager.leaderID : pluginServiceLocator.getMobilityRouter().getHostMobilityId());
+            PlatoonMember currentLeader = this.platoonManager.getLeader();
+            info.setLeaderDowntrackDistance((float) (currentLeader == null ? pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() : currentLeader.vehiclePosition));
+            info.setLeaderCmdSpeed((float) (currentLeader == null ? pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed() : currentLeader.commandSpeed));
+            info.setHostPlatoonPosition((byte) (isFollower ? this.platoonManager.getPlatooningSize() : 0));
+            info.setHostCmdSpeed((float) (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
+            info.setDesiredGap((float) commandGenerator.desiredGap_);
             platooningInfoPublisher.publish(info);
         }
     }

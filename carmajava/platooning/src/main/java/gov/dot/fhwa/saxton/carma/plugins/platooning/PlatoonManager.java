@@ -188,23 +188,20 @@ public class PlatoonManager implements Runnable {
      * CommandGenerator will use the output of this function as the baseline cmd_speed 
      */
     protected synchronized PlatoonMember getLeader() {
-        PlatoonMember newLeader = null;
-        if(platoon.isEmpty()) {
-            // This will make sure we only apply leader selection algorithm when the platoon list is not empty
-            return newLeader;
+        PlatoonMember leader = null;
+        if(isFollower) {
+            // return the first vehicle in the platoon as default if no valid algorithm applied
+            leader = platoon.get(0);
+            if(plugin.getAlgorithmType() == 1) {
+                int newLeaderIndex = allPredecessorFollowing();
+                leader = newLeaderIndex >= platoon.size() ? null : platoon.get(newLeaderIndex);
+                previousFunctionalLeaderIndex = newLeaderIndex >= platoon.size() ? -1 : newLeaderIndex;
+                previousFunctionalLeaderID = leader == null ? "" : leader.staticId;
+            }
+            return leader;
         } else {
-            // return the first vehicle in the platoon as default if no valid algorithm is indicated
-            newLeader = platoon.get(0);
-            // We should not update the previous leader id here because that is not the final choice
-            //previousLeader = newLeader.getStaticId();
+            return null;
         }
-        if(plugin.getAlgorithmType() == 1) {
-            int newLeaderIndex = allPredecessorFollowing();
-            newLeader = newLeaderIndex >= platoon.size() ? null : platoon.get(newLeaderIndex);
-            previousFunctionalLeaderIndex = newLeaderIndex >= platoon.size() ? -1 : newLeaderIndex;
-            previousFunctionalLeaderID = newLeader == null ? "" : newLeader.staticId;
-        }
-        return newLeader;
     }
     
     /**

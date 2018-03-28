@@ -104,7 +104,7 @@ public class LeaderWaitingState implements IPlatooningState {
     public void onMobilityOperationMessage(MobilityOperation msg) {
         // We still need to handle STATUS operation message from our platoon
         String strategyParams = msg.getStrategyParams();
-        boolean isPlatoonStatusMsg = strategyParams.startsWith("STATUS");
+        boolean isPlatoonStatusMsg = strategyParams.startsWith(plugin.OPERATION_STATUS_TYPE);
         if(isPlatoonStatusMsg) {
             String vehicleID = msg.getHeader().getSenderId();
             String platoonId = msg.getHeader().getPlanId();
@@ -131,6 +131,7 @@ public class LeaderWaitingState implements IPlatooningState {
                 long tsStart = System.currentTimeMillis();
                 // Task 1
                 if(tsStart - this.waitingStartTime > plugin.getLongNegotiationTimeout()) {
+                    //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     log.info("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
                     plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
                 }
@@ -169,7 +170,7 @@ public class LeaderWaitingState implements IPlatooningState {
         double cmdSpeed = lastCmdSpeed == null ? 0.0 : lastCmdSpeed.getSpeed();
         double downtrackDistance = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
         double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
-        String params = String.format("STATUS|CMDSPEED:%.2f,DOWNTRACK:%.2f,SPEED:%.2f", cmdSpeed, downtrackDistance, currentSpeed);
+        String params = String.format(plugin.OPERATION_STATUS_PARAMS, cmdSpeed, downtrackDistance, currentSpeed);
         msg.setStrategyParams(params);
     }
     

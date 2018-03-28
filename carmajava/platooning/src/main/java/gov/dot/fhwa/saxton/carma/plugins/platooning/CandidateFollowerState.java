@@ -137,7 +137,7 @@ public class CandidateFollowerState implements IPlatooningState {
     public void onMobilityOperationMessage(MobilityOperation msg) {
         // We still need to handle STATUS operAtion message from our platoon
         String strategyParams = msg.getStrategyParams();
-        boolean isPlatoonStatusMsg = strategyParams.startsWith("STATUS");
+        boolean isPlatoonStatusMsg = strategyParams.startsWith(plugin.OPERATION_STATUS_TYPE);
         if(isPlatoonStatusMsg) {
             String vehicleID = msg.getHeader().getSenderId();
             String platoonId = msg.getHeader().getPlanId();
@@ -222,7 +222,7 @@ public class CandidateFollowerState implements IPlatooningState {
                     request.getLocation().setTimestamp(System.currentTimeMillis());
                     request.getPlanType().setType(PlanType.PLATOON_FOLLOWER_JOIN);
                     request.setStrategy(plugin.MOBILITY_STRATEGY);
-                    request.setStrategyParams(String.format("DTD:%.2f",
+                    request.setStrategyParams(String.format(plugin.CANDIDATE_JOIN_PARAMS,
                                               pluginServiceLocator.getRouteService().getCurrentDowntrackDistance()));
                     // TODO Maybe need to add some params (vehicle IDs) into strategy string
                     // TODO Maybe need to populate the urgency later
@@ -269,7 +269,7 @@ public class CandidateFollowerState implements IPlatooningState {
         SpeedAccel lastCmdSpeedObject = plugin.getCmdSpeedSub().getLastMessage();
         double cmdSpeed = lastCmdSpeedObject == null ? 0.0 : lastCmdSpeedObject.getSpeed();
         // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
-        String statusParams = String.format("STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f",
+        String statusParams = String.format(plugin.OPERATION_STATUS_PARAMS,
                                             cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
                                             pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         msg.setStrategyParams(statusParams);

@@ -103,7 +103,7 @@ public class FollowerState implements IPlatooningState {
     public void onMobilityOperationMessage(MobilityOperation msg) {
         String strategyParams = msg.getStrategyParams();
         // In the current state, we care about the STATUS message
-        boolean isPlatoonStatusMsg = strategyParams.startsWith("STATUS");
+        boolean isPlatoonStatusMsg = strategyParams.startsWith(plugin.OPERATION_STATUS_TYPE);
         // If it is platoon status message, the params string is in format:
         // STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
         if(isPlatoonStatusMsg) {
@@ -182,7 +182,7 @@ public class FollowerState implements IPlatooningState {
         SpeedAccel lastCmdSpeedObject = plugin.getCmdSpeedSub().getLastMessage();
         double cmdSpeed = lastCmdSpeedObject == null ? 0.0 : lastCmdSpeedObject.getSpeed();
         // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
-        String statusParams = String.format("STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f",
+        String statusParams = String.format(plugin.OPERATION_STATUS_PARAMS,
                                             cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
                                             pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         msg.setStrategyParams(statusParams);

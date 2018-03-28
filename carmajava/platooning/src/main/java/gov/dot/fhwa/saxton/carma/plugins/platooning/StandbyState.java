@@ -65,21 +65,18 @@ public class StandbyState implements IPlatooningState {
 
     @Override
     public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg) {
-        // In standby state, the plugin has no responsible for replying to any request messages
-        log.info("CACC plugin receives a mobility request but chooses to ignore. PlanId = " + msg.getHeader().getPlanId());
+        // In standby state, the plugin is not responsible for replying to any request messages
         return MobilityRequestResponse.NO_RESPONSE;
     }
     
     @Override
     public void onMobilityResponseMessage(MobilityResponse msg) {
         // In standby state, it will not send out any requests so it will also ignore all responses
-        log.info("CACC plugin receives a mobility response but chooses to ignore. PlanId = " + msg.getHeader().getPlanId());
     }
     
     @Override
     public void onMobilityOperationMessage(MobilityOperation msg) {
         // In standby state, it will ignore operation message since it is not actively operating
-        log.info("CACC plugin receives a mobility operation but chooses to ignore. PlanId = " + msg.getHeader().getPlanId());
     }
     
     @Override
