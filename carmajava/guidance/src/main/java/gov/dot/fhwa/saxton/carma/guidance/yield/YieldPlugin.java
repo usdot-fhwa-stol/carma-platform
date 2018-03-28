@@ -14,19 +14,57 @@
  * the License.
  */
 
- //TODO: Main documentation goes here
+ // The Yield Plugin exists to resolve vehicle trajectory conflicts, or in English, to handle the
+ // situation where two vehicles, based on existing trajectories or on trajectories that are still
+ // under consideration, will collide at some point in the near future.  A decision is made at a
+ // higher level (based on urgencies, priorities, or other factors) to determine which of the two
+ // vehicles should replan its trajectory, so when the Yield plugin is "activated" on a vehicle,
+ // it doesn't have to make that determination.  It knows that it was called, and therefore its
+ // responsibility is to change its vehicle's trajectory to avoid the collision.
+
+ // Version 1.0.0 will work as follows.  It will be passed the vehicle trajectory (or somehow gain
+ // access to it) along with a collision "point" or region (that could have a starting and ending
+ // downtrack distance (d) and time (t)).  It will request a new blank trajectory and it will
+ // calculate the downtrack distance (d - Delta) where it will be "safe" from the collision,
+ // effectively arriving behind the other vehicle instead of colliding with it.  To accomplish this
+ // it will loop through the maneuvers (Mi) in the "old" vehicle trajectory, copying each one to the
+ // new trajectory until it finds the maneuver, Mc, that would cause the collision.  At this point it
+ // allocates a new, blank maneuver.  It makes whatever function call or calls that are necessary to
+ // populate the maneuver with a path(?) that has the same starting information as Mc, but ends at
+ // d - Delta instead of at d.  For now, that's it.
+ 
+ // ??? -- This partially filled trajectory is returned to the planner or arbitrator which does
+ // something TBD.  Alternatively, it calls ACC(?) to fill out the rest of the trajectory and returns
+ // that as a complete new trajectory that avoids the collision.  This may be sufficient for initial
+ // testing.  Alternatively, (or for version 1.1.0), this new trajectory can be run through collision
+ // checking again, and if another collision is found (at a higher d value than before), Yield is
+ // called again.  If each time Yield is called for this single trajectory, the collision is further
+ // downtrack (d is always getting larger, and d-delta is always located in a new Maneuver), then
+ // this process will terminate.  We should be careful to avoid loops where even though we move further
+ // downtrack, we are still redoing the same maneuver over and over again.
+
+ // Other future implementations may include having Yield planning the entire new trajectory.  It would
+ // process everything through Mc as before, but instead of returning control back to the arbitrator,
+ // planner, or guidance (???), it would recursively (or maybe iteratively) call the planner/arbitrator
+ // to fill in the rest of the trajectory.  This is all TBD later after v1.0.0 is build and tested.
 
 package gov.dot.fhwa.saxton.carma.guidance.yield;
 
 import cav_msgs.NewPlan;
 import cav_msgs.PlanStatus;
 import cav_msgs.PlanType;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityPath;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityPathHandler;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
@@ -37,29 +75,20 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
-
 import java.util.*;
 
-/**TODO: Delete and replace
- * 
- * Negotiation Receiver Plugin subscribes to NewPlan message for any new plans proposed by negotiator
- * and it all calls ArbitratorService to replan a trajectory such that it can insert its new planed
- * maneuvers into the new trajectory. For plans with different planIds, the plugin inserts new plans
- * into the trajectory according to the timing of receiving. For now, it will let arbitrator to replan
- * everytime when it received a new plan message.
- */
-public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, MobilityRequestHandler {
+public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, MobilityRequestHandler, MobilityPathHandler {
 
-
-    /* Constants
+    /* Constants */
+    /*TODO: Remove -- From NegotiationReceiver
     protected static final double TARGET_SPEED_EPSILON = 0.1;
-    */
     protected static final long SLEEP_DURATION = 1000; //TODO: Was 50
-
     protected SimpleManeuverFactory maneuverFactory;
     protected ManeuverPlanner       planner;
-
-    /* Class Variables
+    */
+    
+    /* Class Variables */
+    /*TODO: Remove -- From NegotiationReceiver
     protected ISubscriber<NewPlan> planSub_;
     protected IPublisher<PlanStatus> statusPub_;
     protected Map<String, List<LongitudinalManeuver>> planMap = new Hashtable<>(); //planId to a list of maneuvers
@@ -70,7 +99,22 @@ public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, Mob
     protected double slowSpeedFraction_ = 0.8;
     protected double initialTimeGap_ = 1.0;
     */
+
+    // For now, there are two states.  One in which there is no trajectory stored, and one in which there is.  Initially we are
+    // in the former state - call it state 0.  That is also the start state.  To transition out of this state, we must receive a
+    // call to handleMobilityPathMessageWithConflict() or handleMobilityRequestMessage().  In either case we are passed a
+    // trajectory (and a collision point?, and other information?).  We store this trajectory (and other information) in class
+    // variables, and if successful, transition from state 0 to state 1 by changing the value of the class variable state_ to 1.
     
+    // To transition back to state 0, we must receive a call to planTrajectory().  If planTrajectory() is called while in state 0,
+    // nothing happens.  It returns.  If it is called in state 1, then this is where the real work is done.  As described above, a
+    // new trajectory is created, replacing the old one, where the collision is avoided by having our vehicle arrive behind the
+    // collision point at the collision time (the details of which are TBD).
+
+    protected int        state_       = 0;
+    protected Trajectory trajectory_  = null;
+    // Place other things to rememeber (such as the collision point) here.
+///TODO(BDR): Got This Far.
     // Constructor
     public YieldPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -98,7 +142,7 @@ public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, Mob
         setAvailability(true);
         log.info("Yield plugin resumed");
     }
-
+    TODO: Main documentation goes here
     @Override
     public void loop() throws InterruptedException {
         /*Todo:
@@ -168,11 +212,28 @@ public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, Mob
         */
         return new TrajectoryPlanningResponse();
     }
+    
+    //Todo: Both of the entry points below can call the same function to handle the collision
 
 	@Override
 	public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict,
 			ConflictSpace conflictSpace) {
+                // Primary Entry Point
+                
+                Trajectory traj = pluginServiceLocator.getArbitratorService().getCurrentTrajectory();
+                
+                IManeuver maneuver = traj.getManeuverAt(conflictSpace.getStartDowntrack(), ManeuverType.LONGITUDINAL);
+                SlowDown slowDown = new SlowDown(this);
+                pluginServiceLocator.getManeuverPlanner().planManeuver(slowDown, startDist, endDist);
+                pluginServiceLocator.getArbitratorService().planSubtrajectoryRecursively(startDist, endDist);
+                pluginServiceLocator.getArbitratorService().requestNewPlan();
 		return null;
+	}
+
+	@Override
+	public void handleMobilityPathMessageWithConflict(MobilityPath msg, boolean hasConflict,
+			ConflictSpace conflictSpace) {
+                // Primary Entry Point		
 	}
 
     /*TODO: Good reference material
