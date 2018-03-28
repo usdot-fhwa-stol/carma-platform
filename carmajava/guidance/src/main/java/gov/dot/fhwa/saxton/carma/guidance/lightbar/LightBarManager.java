@@ -406,7 +406,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
       // Release control
       String controllingComponent = lightControlMap.get(indicator);
       // If the requester controls this indicator
-      if (controllingComponent.equals(requestingComponent)) { 
+      if (controllingComponent != null && controllingComponent.equals(requestingComponent)) { 
         // Remove control
         lightControlMap.remove(indicator);
         // Check if the requesting component still controls any indicators
