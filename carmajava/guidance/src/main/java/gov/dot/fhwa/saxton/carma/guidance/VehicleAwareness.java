@@ -49,7 +49,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     protected Trajectory nextTrajectory = null;
     protected TrajectoryConverter trajectoryConverter;
     protected IConflictDetector conflictDetector;
-    protected String conflictHandlerName;
+    protected String conflictHandlerName = "Yield Plugin";
     protected MobilityPathHandler conflictHandler;
     protected String mobilitySenderId = "UNKNOWN";
     protected String currentBsmId = "";
@@ -223,6 +223,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
         switch (action) {
         case INTIALIZE:
+            jobQueue.add(this::onStartup);
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:

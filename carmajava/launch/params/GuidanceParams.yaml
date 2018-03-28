@@ -166,7 +166,7 @@ acc_vehicle_front_frame_id: 'vehicle_front'
 
 # String: The component name of the Plugin which will handle mobility path and request conflicts
 # Note: This string must match the Versionable.getVersionInfo().componentName() value of the plugin
-default_mobility_conflict_handler: Yield Plugin
+default_mobility_conflict_handler: 'Yield Plugin'
 
 # Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
 # Units: meters
@@ -218,5 +218,9 @@ light_bar_priorities:
 # Units: mili-seconds
 light_bar_comms_timeout: 1000
 
- mobility_path_publish_interval:  3000
- max_points_per_mobility_path: 60
+# Integer: The number of milliseconds between MobilityPath message publications coming out of guidance
+# Units: milliseconds
+mobility_path_publish_interval:  3000
+
+# Integer: The maximum number of points of path prediction to include in each MobilityPath message
+max_points_per_mobility_path: 60
