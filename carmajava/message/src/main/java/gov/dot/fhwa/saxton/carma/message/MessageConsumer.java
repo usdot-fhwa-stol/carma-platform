@@ -211,7 +211,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		inboundSub_ = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
 		mobilityReqSub_ = connectedNode_.newSubscriber("outgoing_mobility_request", MobilityRequest._TYPE);
 		mobilityPathSub_ = connectedNode_.newSubscriber("outgoing_mobility_path", MobilityPath._TYPE);
-		if(bsmSub_ == null || inboundSub_ == null || mobilityReqSub_ == null || mobilityPathPub_ == null) {
+		if(bsmSub_ == null || inboundSub_ == null || mobilityReqSub_ == null || mobilityPathSub_ == null) {
 		    log_.error("Cannot initialize necessary subscribers.");
 		    handleException(new RosRuntimeException("Cannot initialize necessary subscribers."));
 		}
