@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.ros.exception.RosRuntimeException;
 import org.ros.message.MessageFactory;
 import org.ros.node.ConnectedNode;
+import org.springframework.core.convert.support.DefaultConversionService;
 
 import cav_msgs.MobilityPath;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
@@ -95,7 +96,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         }
 
         if (conflictHandler == null) {
-            throw new RosRuntimeException("Unable to locate default conflict handler: " + conflictHandlerName);
+            log.warn("No default conflict handler detected by name: " + conflictHandlerName + ". Guidance will fail on first detected conflict!!!"); 
         }
     }
 
@@ -156,11 +157,14 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         List<ConflictSpace> conflicts = conflictDetector.getConflicts(getPathPrediction());
 
         if (!conflicts.isEmpty()) {
-            log.info("Conflict detected! Handling by delegating to: " + conflictHandlerName);
-            // Just pass it null for now
-            new Thread(() -> conflictHandler.handleMobilityPathMessageWithConflict(null, true, conflicts.get(0)))
-                    .start();
-            ;
+            if (conflictHandler == null) {
+                throw new RosRuntimeException("Unable to locate default conflict handler: " + conflictHandlerName + ". Cannot handle conflict on current trajectory!!!");
+            } else {
+                log.info("Conflict detected! Handling by delegating to: " + conflictHandlerName);
+                // Just pass it null for now
+                new Thread(() -> conflictHandler.handleMobilityPathMessageWithConflict(null, true, conflicts.get(0)))
+                        .start();
+            }
         } else {
             log.info("No conflicts detected in trajectory.");
         }
