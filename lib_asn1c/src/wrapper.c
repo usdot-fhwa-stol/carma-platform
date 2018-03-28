@@ -749,19 +749,20 @@ JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_Mobi
 			localArray[0] = offsets_X_content;
 			localArray[1] = offsets_Y_content;
 			localArray[2] = offsets_Z_content;
-			MobilityLocationOffsets_t trajectory_offsets;
+			MobilityLocationOffsets_t *trajectory_offsets;
+			trajectory_offsets = calloc(1, sizeof(MobilityLocationOffsets_t));
 			for(int i = 0; i < count; i++) {
 				MobilityECEFOffset_t *offset_point;
 				offset_point = calloc(1, sizeof(MobilityECEFOffset_t));
 				offset_point -> offsetX = localArray[0][i];
 				offset_point -> offsetY = localArray[1][i];
 				offset_point -> offsetZ = localArray[2][i];
-				asn_sequence_add(&trajectory_offsets.list, offset_point);
+				asn_sequence_add(&trajectory_offsets->list, offset_point);
 			}
-			message -> value.choice.TestMessage02.body.trajectory = trajectory_offsets;
+			message -> value.choice.TestMessage02.body.trajectory.list = trajectory_offsets->list;
 		}
 		(*env) -> ReleaseIntArrayElements(env, offsets_X, java_offsets_X, 0);
-		(*env) -> ReleaseIntArrayElements(env, offsets_Y, java_offsets_Y, 0);
+		(*env) -> ReleaseIntArrayElements(env,offsets_Y, java_offsets_Y, 0);
 		(*env) -> ReleaseIntArrayElements(env, offsets_Z, java_offsets_Z, 0);
 		(*env) -> DeleteLocalRef(env, offsets_X);
 		(*env) -> DeleteLocalRef(env, offsets_Y);
