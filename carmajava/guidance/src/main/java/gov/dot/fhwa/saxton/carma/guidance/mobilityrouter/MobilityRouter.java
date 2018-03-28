@@ -35,6 +35,8 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarEvent;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
@@ -74,7 +76,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ITrajectoryConverter trajectoryConverter;
     private String hostMobilityStaticId = "";
 
-    public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node, IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter, TrajectoryExecutor trajectoryExecutor) {
+    public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
+     IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
+     TrajectoryExecutor trajectoryExecutor) {
         super(stateMachine, pubSubService, node);
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
@@ -177,7 +181,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             respMsg.getHeader().setPlanId(msg.getHeader().getPlanId());
             respMsg.getHeader().setRecipientId(msg.getHeader().getSenderId());
             respMsg.getHeader().setSenderId(hostMobilityStaticId);
-            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, shoud this field be set in Message node?
+            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, should this field be set in Message node?
             respMsg.getHeader().setTimestamp(System.currentTimeMillis());
 
             if (resp == MobilityRequestResponse.ACK) {
