@@ -17,19 +17,20 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 /**
- * In Mobility plan message, the first word in strategy string indicates the request type.
- * TODO This enum is not a comprehensive list. It will expand based on usage.  
+ * This is a class describing a on waiting platoon plan between two platooning plugins
+ * from two different CAVs. It will keep track of the plan start time in order to calculate
+ * timeout. It will also store the current plan Id and also the recipient static Id.
  */
-public enum PlatooningRequests {
+public class PlatoonPlan {
     
-    JOIN,
-    LEAVE,
-    DELEGATE,
-    UPDATE;
+    protected long                 planStartTime;
+    protected String               planId;
+    protected String               peerId;
     
-    // This method returns the name of each enum without its class name 
-    @Override
-    public String toString() {
-        return name().split(".")[1];
+    public PlatoonPlan(long planStartTime, String planId, String peerId) {
+        this.planStartTime = planStartTime;
+        this.planId        = planId;
+        this.peerId        = peerId;
     }
+    
 }

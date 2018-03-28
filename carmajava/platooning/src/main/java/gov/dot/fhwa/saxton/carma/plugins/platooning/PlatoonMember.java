@@ -17,64 +17,28 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 /**
- * This class records the latest knowledge (status and constraints) for
- * each platoon member who is in front of the subject vehicle. 
+ * This class describes the latest knowledge for a platoon member.
+ * This class will not be used to store the host vehicle status.
  */
 public class PlatoonMember {
     
     // Static ID is permanent ID for each vehicle
-    private final String staticId;
-    // Vehicle command speed in m/s after any possible ACC override
-    private double commandSpeed;
-    // The actual vehicle speed in m/s
-    private double vehicleSpeed;
-    // The vehicle position from Mobility message
-    private double vehiclePosition;
-    // The local timestamp when we received the status update of this member
-    private long timestamp;
+    protected String staticId;
+    // Vehicle real time command speed in m/s
+    protected double commandSpeed;
+    // Actual vehicle speed in m/s
+    protected double vehicleSpeed;
+    // Vehicle current down track distance on the current route in m
+    protected double vehiclePosition;
+    // The local time stamp when the host vehicle update any informations of this member
+    protected long   timestamp;
 
     public PlatoonMember(String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp) {
-        this.staticId = staticId;
-        this.commandSpeed = commandSpeed;
-        this.vehicleSpeed = vehicleSpeed;
+        this.staticId        = staticId;
+        this.commandSpeed    = commandSpeed;
+        this.vehicleSpeed    = vehicleSpeed;
         this.vehiclePosition = vehiclePosition;
-        this.timestamp = timestamp;
-    }
-
-    protected String getStaticId() {
-        return staticId;
-    }
-
-    protected double getCommandSpeed() {
-        return commandSpeed;
-    }
-    
-    protected void setCommandSpeed(double commandSpeed) {
-        this.commandSpeed = commandSpeed;
-    }
-    
-    protected double getVehicleSpeed() {
-        return vehicleSpeed;
-    }
-    
-    protected void setVehicleSpeed(double vehicleSpeed) {
-        this.vehicleSpeed = vehicleSpeed;
-    }
-    
-    protected double getVehiclePosition() {
-        return vehiclePosition;
-    }
-    
-    protected void setVehiclePosition(double vehiclePosition) {
-        this.vehiclePosition = vehiclePosition;
-    }
-
-    protected long getTimestamp() {
-        return timestamp;
-    }
-
-    protected void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+        this.timestamp       = timestamp;
     }
 
     @Override

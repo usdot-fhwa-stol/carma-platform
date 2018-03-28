@@ -6,13 +6,13 @@ platooning_max_accel: 2.5
 # Units: m
 platooning_min_maneuver_length: 15.0
 
-# Integer: The desired time interval between two platoon mobility messages from the same vehicle
+# Integer: The desired time interval between two platoon mobility operation messages from the same vehicle
 # Units: ms
-platooning_status_interval: 500
+platooning_status_interval: 100
 
 # Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
 # Units: 1
-platooning_status_timeout_factor: 1.5
+platooning_status_timeout_factor: 2.5
 
 # Double: The desired time headway to the front vehicle within the platoon
 # Units: s
@@ -45,7 +45,32 @@ platooning_min_gap: 12.0
 platooning_max_gap: 14.0
 
 # Integer: The algorithm type used for leader selection in a platoon
+# When algorithm_type == 0, it means no leader selection algorithm
 # When algorithm_type == 1, it means the APF algorithm
-# When algorithm_type == 0, it means the PF algorithm
-# When algorithm_type == 2, it means the PF* algorithm
-algorithm_type: 1
+# When algorithm_type == 2, it means the PF algorithm
+# When algorithm_type == 3, it means the PF* algorithm
+algorithm_type: 0
+
+# Double: The maximum time we allowed for candidate to accelerate in order to join
+# Units: s
+max_join_time: 10.0
+
+# Double: The desired distance for the candidate vehicle to join at rear
+# Units: m
+desired_join_distance: 13.0
+
+# Integer: The time interval between two mobility INFO message
+# Units: ms
+operation_info_interval_length: 3000
+
+# Integer: The timeout length for a YES/NO negotiation process
+# Units: ms
+short_negotiation_timeout: 5000
+
+# Integer: The timeout length for a long negotitaion process (waiting on Follower to speed up and join)
+# Units: ms
+long_negotiation_timeout: 25000
+
+# Integer: The maximum number of platoon member we allow
+# Units: 1
+max_platoon_size: 10
