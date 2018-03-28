@@ -41,7 +41,7 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
         private MessageFactory factory;
         private SaxtonLogger log;
 
-        public MobilityPathMessage(MessageFactory factory, SaxtonLogger log) {
+        public MobilityPathMessage(SaxtonLogger log, MessageFactory factory) {
                 this.factory = factory;
                 this.log = log;
         }
@@ -74,9 +74,9 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
          * instead of a single MobilityPath object.
          * @return -1 means decode failed; 0 means decode is successful
          */
-        public native int decodeMobilityPath(byte[] encodedArray, Object mobilityPath, byte[] senderId,
-                        byte[] targetId, byte[] bsmId, byte[] planId, byte[] timestamp, Object currentLocation,
-                        byte[] locationTimestamp, int[][] offsets);
+        public native int decodeMobilityPath(byte[] encodedArray, Object mobilityPath, byte[] senderId, byte[] targetId,
+                        byte[] bsmId, byte[] planId, byte[] timestamp, Object currentLocation, byte[] locationTimestamp,
+                        int[][] offsets);
 
         public byte[] callJniEncode(MobilityPath message) {
                 MobilityPathHelper helper = new MobilityPathHelper(message);

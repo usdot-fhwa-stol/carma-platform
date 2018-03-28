@@ -29,7 +29,7 @@ public class DSRCMessageFactory {
         case "MobilityRequest":
             return new MobilityRequestMessage(log, factory);
         case "MobilityPath":
-            return new MobilityPathMessage(factory, log);
+            return new MobilityPathMessage(log, factory);
         default:
             return null;
         }

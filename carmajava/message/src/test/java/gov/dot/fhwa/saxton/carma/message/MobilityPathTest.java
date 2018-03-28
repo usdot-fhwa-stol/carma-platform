@@ -40,7 +40,7 @@ public class MobilityPathTest {
     public void setup() {
         mockLogger = mock(SaxtonLogger.class);
         mockFactory = mock(MessageFactory.class);
-        message = new MobilityPathMessage(mockFactory, mockLogger);
+        message = new MobilityPathMessage(mockLogger, mockFactory);
         mockPath = mock(MobilityPath.class);
         mockHeader = mock(MobilityHeader.class);
         when(mockHeader.getSenderId()).thenReturn("USDOT-45100");
