@@ -157,7 +157,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
   public void timingLoop() throws InterruptedException {
     try {
         Thread.sleep(TIMEOUT_MS);
-        if (System.currentTimeMillis() - lastBSM > TIMEOUT_MS) {
+        if (System.currentTimeMillis() - lastBSM > TIMEOUT_MS && lightBarService != null) {
           lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_TIMEOUT);
           haveRecentBSM.set(false);
         }
@@ -231,6 +231,12 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
       return false;
     }
 
+    if (lightBarService == null) {
+      log.info(requestingComponent + " failed to set the LightBarIndicator " + indicator + 
+      " as lightBarService was null");
+      return false;
+    }
+    
     if (statusMsg == null) {
       statusMsg = lightBarService.newMessage().getSetState();
     }
@@ -400,7 +406,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
       // Release control
       String controllingComponent = lightControlMap.get(indicator);
       // If the requester controls this indicator
-      if (controllingComponent.equals(requestingComponent)) { 
+      if (controllingComponent != null && controllingComponent.equals(requestingComponent)) { 
         // Remove control
         lightControlMap.remove(indicator);
         // Check if the requesting component still controls any indicators
