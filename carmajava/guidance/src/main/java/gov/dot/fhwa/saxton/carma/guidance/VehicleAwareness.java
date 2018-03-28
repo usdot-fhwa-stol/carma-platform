@@ -72,6 +72,13 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         this.pluginManager = pluginManager;
     }
 
+    /**
+     * @param trajectoryExecutor the trajectoryExecutor to set
+     */
+    public void setTrajectoryExecutor(TrajectoryExecutor trajectoryExecutor) {
+        this.trajectoryExecutor = trajectoryExecutor;
+    }
+
     @Override
     public String getComponentName() {
         return "VehicleAwareness";
