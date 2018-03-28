@@ -86,7 +86,8 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     switch(newState) {
       case DISENGAGED:
         turnOffAllLights();
-        // Maybe release control here for restart
+        // Release control here for restart
+        lightBarManager.releaseControl(Arrays.asList(LightBarIndicator.YELLOW), this.getComponentName());
         break;
       case ENGAGED:
         // Show the center green light as solid
