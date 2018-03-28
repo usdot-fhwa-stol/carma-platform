@@ -33,14 +33,6 @@ public enum LightBarEvent {
    */
   DSRC_MESSAGE_RECEIVED,
   /**
-   * A negotiation is underway
-   */
-  NEGOTIATION_UNDERWAY,
-  /**
-   * A negotiation is complete
-   */
-  NEGOTIATION_COMPLETE,
-  /**
    * No DSRC messages have been received recently
    */
   DSRC_MESSAGE_TIMEOUT;

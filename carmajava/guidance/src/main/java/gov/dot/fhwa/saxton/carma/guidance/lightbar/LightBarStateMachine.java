@@ -36,18 +36,16 @@ public class LightBarStateMachine implements ILightBarStateMachine {
   private int stateIdx = 0;
   // State array to assign indices to states
   protected final LightBarState[] states =
-  { LightBarState.DISENGAGED, LightBarState.ENGAGED, LightBarState.RECEIVING_MESSAGES, LightBarState.NEGOTIATING};
+  { LightBarState.DISENGAGED, LightBarState.ENGAGED, LightBarState.RECEIVING_MESSAGES};
   // Transition table for state machine
   // Columns are states and rows are events
   protected final int[][] transition = {
-    /*   STATES: DISENGAGED(0), ENGAGED(1), RECEIVING_MESSAGES(2), NEGOTIATING(3) */
+    /*   STATES: DISENGAGED(0), ENGAGED(1), RECEIVING_MESSAGES(2)*/
                     /*          EVENTS           */
-    { 0, 0, 0, 0 }, /*GUIDANCE_DISENGAGED    */
-    { 1, 1, 1, 1 }, /*GUIDANCE_ENGAGED  */
-    { 0, 2, 2, 3 }, /*DSRC_MESSAGE_RECEIVED */
-    { 0, 3, 3, 3 }, /*NEGOTIATION_UNDERWAY      */
-    { 0, 2, 2, 2 }, /*NEGOTIATION_COMPLETE  */
-    { 0, 1, 1, 1 }  /*DSRC_MESSAGE_TIMEOUT*/
+    { 0, 0, 0}, /*GUIDANCE_DISENGAGED    */
+    { 1, 1, 1}, /*GUIDANCE_ENGAGED  */
+    { 0, 2, 2}, /*DSRC_MESSAGE_RECEIVED */
+    { 0, 1, 1}  /*DSRC_MESSAGE_TIMEOUT*/
   };
 
   /**
@@ -70,7 +68,7 @@ public class LightBarStateMachine implements ILightBarStateMachine {
   public void next(LightBarEvent event) {
     LightBarState prevState = getCurrentState();
     stateIdx = transition[event.ordinal()][stateIdx];
-    handleEvent(event, getCurrentState());
+    handleStateChange(getCurrentState());
     log.info("Event: " + event + " Prev State: " + prevState + " New State: " + getCurrentState());
   }
 
@@ -82,46 +80,21 @@ public class LightBarStateMachine implements ILightBarStateMachine {
   /**
    * Helper function for processing incoming events
    * 
-   * @param event The event to process
    * @param newState The new state resulting from the event 
    */
-  private void handleEvent(LightBarEvent event, LightBarState newState) {
-    switch(event) {
-      case GUIDANCE_DISENGAGED:
-        if(newState == LightBarState.DISENGAGED) {
-          turnOffAllLights();
-          // Maybe release control here for restart
-        }
+  private void handleStateChange(LightBarState newState) {
+    switch(newState) {
+      case DISENGAGED:
+        turnOffAllLights();
+        // Maybe release control here for restart
         break;
-      case GUIDANCE_ENGAGED:
-        if (newState == LightBarState.ENGAGED) {
-          // Show the center green light as solid
-          lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.SOLID, this.getComponentName());
-        }
+      case ENGAGED:
+        // Show the center green light as solid
+        lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.SOLID, this.getComponentName());
         break;
-      case DSRC_MESSAGE_RECEIVED:
-        if (newState == LightBarState.RECEIVING_MESSAGES) {
-          // Show the center green light as flashing
-          lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.FLASH, this.getComponentName());
-        }
-        break;
-      case NEGOTIATION_UNDERWAY:
-        if (newState == LightBarState.NEGOTIATING) {
-          // Show the yellow lights as flashing
-          lightBarManager.setIndicator(LightBarIndicator.YELLOW, IndicatorStatus.FLASH, this.getComponentName());
-        }
-        break;
-      case NEGOTIATION_COMPLETE:
-        if (newState == LightBarState.RECEIVING_MESSAGES) {
-          // Show the yellows light as off
-          lightBarManager.setIndicator(LightBarIndicator.YELLOW, IndicatorStatus.OFF, this.getComponentName());
-        }
-        break;
-      case DSRC_MESSAGE_TIMEOUT:
-        if (newState == LightBarState.ENGAGED) {
-          // Show the center green light as solid
-          lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.SOLID, this.getComponentName());
-        }
+      case RECEIVING_MESSAGES:
+        // Show the center green light as flashing
+        lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.FLASH, this.getComponentName());
         break;
     }
   }

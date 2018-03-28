@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 import org.ros.node.ConnectedNode;
@@ -72,7 +73,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
   private final ISubscriber<BSM> bsmTopic;
   private long lastBSM = 0;
   private long TIMEOUT_MS = 1000;
-  private boolean haveRecentBSM = false;
+  private AtomicBoolean haveRecentBSM = new AtomicBoolean();
 
   /**
    * Constructor
@@ -97,9 +98,9 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
     bsmTopic = pubSubService.getSubscriberForTopic(BSM_TOPIC, BSM._TYPE);
     bsmTopic.registerOnMessageCallback(
       (BSM message) -> {
-        if (!haveRecentBSM) { // Only notify state machine of change when this is the first message after a timeout
+        if (!haveRecentBSM.get()) { // Only notify state machine of change when this is the first message after a timeout
           lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_RECEIVED);
-          haveRecentBSM = true;
+          haveRecentBSM.set(true);
         }
         lastBSM = System.currentTimeMillis();
     });
@@ -123,24 +124,30 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
   public String getComponentName() {
     return "Light Bar Manager";
   }
+
   @Override
   public void onStartup() {
   }
+
   @Override
   public void onSystemReady() {
     initLightBarService(); // Get the light bar service
   }
+
   @Override
   public void onActive() {
   }
+
   @Override
   public void onEngaged() {
     lightBarStateMachine.next(LightBarEvent.GUIDANCE_ENGAGED);
   }
+  
   @Override
   public void onCleanRestart() {
     lightBarStateMachine.next(LightBarEvent.GUIDANCE_DISENGAGED);
   }
+
   @Override
   public void onDeactivate() {
     lightBarStateMachine.next(LightBarEvent.GUIDANCE_DISENGAGED);
@@ -152,7 +159,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
         Thread.sleep(TIMEOUT_MS);
         if (System.currentTimeMillis() - lastBSM > TIMEOUT_MS) {
           lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_TIMEOUT);
-          haveRecentBSM = false;
+          haveRecentBSM.set(false);
         }
     } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -263,7 +270,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
           return false;
         }
         statusMsg.setRightArrow(LightBarStatus.ON); 
-      break;
+        break;
       case SOLID: 
         if (indicator != LightBarIndicator.GREEN) {
           log.warn(warningString);
@@ -271,7 +278,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
         }
         statusMsg.setGreenSolid(LightBarStatus.ON);
         statusMsg.setGreenFlash(LightBarStatus.OFF); 
-      break;
+        break;
       case OFF:
         switch(indicator) {
           case GREEN:
@@ -287,7 +294,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
             log.warn(warningString);
             return false;
         }
-      break;
+        break;
       default:
         log.warn(warningString);
         return false;
@@ -330,7 +337,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
     }
 
     // Build our request message for longitudinal control drivers
-    GetDriversWithCapabilitiesRequest req = (GetDriversWithCapabilitiesRequest) driverCapabilityService.newMessage();
+    GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
 
     List<String> reqdCapabilities = new ArrayList<>();
     reqdCapabilities.add(LIGHT_BAR_SERVICE);
@@ -374,7 +381,11 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
           } catch (TopicNotFoundException e1) {
             log.warn("Failed to find  SetLights service. Not able to control light bar");
           }
+        } else {
+          log.warn("Failed to find  SetLights service. Not able to control light bar. lightBarServiceName is null");
         }
+    } else {
+      log.warn("Failed to find  SetLights service. Not able to control light bar. drivers[0] is null");
     }
   }
 
@@ -392,7 +403,11 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
       if (controllingComponent.equals(requestingComponent)) { 
         // Remove control
         lightControlMap.remove(indicator);
-        handlerMap.remove(requestingComponent);
+        // Check if the requesting component still controls any indicators
+        // Remove the handler if it does
+        if (!lightControlMap.containsValue(requestingComponent)) {
+          handlerMap.remove(requestingComponent);
+        }
       }
     }
   }

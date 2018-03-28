@@ -31,9 +31,5 @@ public enum LightBarState {
   /**
    * Guidance is receiving DSRC messages
    */
-  RECEIVING_MESSAGES,
-  /**
-   * A negotiation is in progress
-   */
-  NEGOTIATING;
+  RECEIVING_MESSAGES;
 }
