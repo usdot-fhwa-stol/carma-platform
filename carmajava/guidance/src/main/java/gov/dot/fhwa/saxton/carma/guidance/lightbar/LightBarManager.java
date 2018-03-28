@@ -157,7 +157,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
   public void timingLoop() throws InterruptedException {
     try {
         Thread.sleep(TIMEOUT_MS);
-        if (System.currentTimeMillis() - lastBSM > TIMEOUT_MS) {
+        if (System.currentTimeMillis() - lastBSM > TIMEOUT_MS && lightBarService != null) {
           lightBarStateMachine.next(LightBarEvent.DSRC_MESSAGE_TIMEOUT);
           haveRecentBSM.set(false);
         }
@@ -231,6 +231,12 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
       return false;
     }
 
+    if (lightBarService == null) {
+      log.info(requestingComponent + " failed to set the LightBarIndicator " + indicator + 
+      " as lightBarService was null");
+      return false;
+    }
+    
     if (statusMsg == null) {
       statusMsg = lightBarService.newMessage().getSetState();
     }
