@@ -847,9 +847,9 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPa
 			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetY;
 			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetZ;
 		}
-		(*env) -> SetIntArrayRegion(env, offsets_X, 0, 60, temp_offsets_X);
-		(*env) -> SetIntArrayRegion(env, offsets_Y, 0, 60, temp_offsets_Y);
-		(*env) -> SetIntArrayRegion(env, offsets_Z, 0, 60, temp_offsets_Z);
+		(*env) -> SetIntArrayRegion(env, offsets_X, 0, count, temp_offsets_X);
+		(*env) -> SetIntArrayRegion(env, offsets_Y, 0, count, temp_offsets_Y);
+		(*env) -> SetIntArrayRegion(env, offsets_Z, 0, count, temp_offsets_Z);
 		(*env) -> DeleteLocalRef(env, offsets_X);
 		(*env) -> DeleteLocalRef(env, offsets_Y);
 		(*env) -> DeleteLocalRef(env, offsets_Z);
