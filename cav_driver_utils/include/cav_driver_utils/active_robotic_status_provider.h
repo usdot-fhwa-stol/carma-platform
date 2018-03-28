@@ -13,10 +13,7 @@ class ActiveRoboticStatusProvider
     std::vector<std::string> api_;
 
     bool active_, enabled_;
-
 public:
-
-    cav_msgs::RobotEnabled msg;
     ActiveRoboticStatusProvider() : pnh_("~control"), active_(false), enabled_(false)
     {
         pub_ = pnh_.advertise<cav_msgs::RobotEnabled>("robot_status", 1);
@@ -27,6 +24,10 @@ public:
 
     void publishState()
     {
+        cav_msgs::RobotEnabled msg;
+        msg.robot_enabled = enabled_;
+        msg.robot_active = active_;
+
         pub_.publish(msg);
     }
 
