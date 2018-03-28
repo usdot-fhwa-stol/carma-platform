@@ -23,6 +23,8 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 
+import cav_msgs.LocationOffsetECEF;
+import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
 import cav_msgs.SystemAlert;
 
@@ -47,6 +49,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   // Topics
   // Publishers
   protected Publisher<cav_msgs.MobilityRequest>      mobReqOutPub;
+  protected Publisher<cav_msgs.MobilityPath>      mobPathOutPub;
 
   // Subscribers
   protected Subscriber<cav_msgs.SystemAlert>         alertSub;
@@ -61,6 +64,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     // Topics
     // Publishers
     mobReqOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
+    mobPathOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath._TYPE);
     timeDelay      = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
@@ -94,6 +98,33 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             requestMsg.getLocation().setTimestamp(0);
             requestMsg.setStrategyParams("ARG1:5.0, ARG2:16.0");
             mobReqOutPub.publish(requestMsg);
+
+            MobilityPath pathMsg = mobPathOutPub.newMessage();
+            pathMsg.getHeader().setSenderId("DOT-45100");
+            pathMsg.getHeader().setRecipientId("");
+            pathMsg.getHeader().setSenderBsmId("10ABCDEF");
+            pathMsg.getHeader().setPlanId("11111111-2222-3333-BBBB-111111111111");
+            pathMsg.getHeader().setTimestamp(System.currentTimeMillis());
+            pathMsg.getTrajectory().getLocation().setEcefX(5555);
+            pathMsg.getTrajectory().getLocation().setEcefY(6666);
+            pathMsg.getTrajectory().getLocation().setEcefZ(7777);
+            pathMsg.getTrajectory().getLocation().setTimestamp(0);
+            LocationOffsetECEF offset1 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset1.setOffsetX((short) 1);
+            offset1.setOffsetY((short) 2);
+            offset1.setOffsetZ((short) 3);
+            LocationOffsetECEF offset2 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset2.setOffsetX((short) 4);
+            offset2.setOffsetY((short) 5);
+            offset2.setOffsetZ((short) 6);
+            LocationOffsetECEF offset3 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset3.setOffsetX((short) 7);
+            offset3.setOffsetY((short) 8);
+            offset3.setOffsetZ((short) 9);
+            pathMsg.getTrajectory().getOffsets().add(offset1);
+            pathMsg.getTrajectory().getOffsets().add(offset2);
+            pathMsg.getTrajectory().getOffsets().add(offset3);
+            mobPathOutPub.publish(pathMsg);
         }
         Thread.sleep(timeDelay);
       }

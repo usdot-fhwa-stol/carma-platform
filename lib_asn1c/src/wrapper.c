@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include "gov_dot_fhwa_saxton_carma_message_factory_BSMMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityRequestMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage.h"
 #include "MessageFrame.h"
 
 /**
@@ -620,3 +621,242 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityRe
 	}
 	return 0;
 }
+
+
+/*
+ * Class:     gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage
+ * Method:    encodeMobilityPath
+ * Signature: ([B[B[B[B[B[BIII[[I)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage_encodeMobilityPath
+  (JNIEnv *env, jobject obj, jbyteArray senderId, jbyteArray targetId, jbyteArray senderBsmId, jbyteArray planId, jbyteArray timestamp, jint startX, jint startY, jint startZ, jbyteArray locationTimestamp, jobjectArray offsets) {
+	uint8_t buffer[512];
+	size_t buffer_size = sizeof(buffer);
+	asn_enc_rval_t ec;
+	MessageFrame_t *message;
+
+	message = calloc(1, sizeof(MessageFrame_t));
+	if (!message) {
+		return NULL;
+	}
+
+	//set default value of testmessage02
+	message -> messageId = 242;
+	message -> value.present = MessageFrame__value_PR_TestMessage02;
+
+	//set senderId in header
+	jsize sender_string_size = (*env) -> GetArrayLength(env, senderId);
+	jbyte *sender_string = (*env) -> GetByteArrayElements(env, senderId, 0);
+	if (sender_string == NULL) {
+		return NULL;
+	}
+	uint8_t sender_string_content[sender_string_size];
+	for (int i = 0; i < sender_string_size; i++) {
+		sender_string_content[i] = sender_string[i];
+	}
+	message -> value.choice.TestMessage02.header.hostStaticId.buf = sender_string_content;
+	message -> value.choice.TestMessage02.header.hostStaticId.size = (size_t) sender_string_size;
+	(*env) -> ReleaseByteArrayElements(env, senderId, sender_string, 0);
+
+	//set targetId in header
+	jsize target_string_size = (*env) -> GetArrayLength(env, targetId);
+	jbyte *target_string = (*env) -> GetByteArrayElements(env, targetId, 0);
+	if (target_string == NULL) {
+		return NULL;
+	}
+	uint8_t target_string_content[target_string_size];
+	for (int i = 0; i < target_string_size; i++) {
+		target_string_content[i] = target_string[i];
+	}
+	message -> value.choice.TestMessage02.header.targetStaticId.buf = target_string_content;
+	message -> value.choice.TestMessage02.header.targetStaticId.size = (size_t) target_string_size;
+	(*env) -> ReleaseByteArrayElements(env, targetId, target_string, 0);
+
+	//set hostBSMId in header
+	jbyte *bsm_string = (*env) -> GetByteArrayElements(env, senderBsmId, 0);
+	if(bsm_string == NULL) {
+	    return NULL;
+	}
+	uint8_t host_bsm_id_content[8] = {0};
+	for(int i = 0; i < 8; i++) {
+		host_bsm_id_content[i] = bsm_string[i];
+	}
+	message -> value.choice.TestMessage02.header.hostBSMId.buf = host_bsm_id_content;
+	message -> value.choice.TestMessage02.header.hostBSMId.size = 8;
+	(*env) -> ReleaseByteArrayElements(env, senderBsmId, bsm_string, 0);
+
+	//set planId in header
+	jbyte *plan_id = (*env) -> GetByteArrayElements(env, planId, 0);
+	if (plan_id == NULL) {
+		return NULL;
+	}
+	uint8_t plan_id_content[36] = {0};
+	for (int i = 0; i < 36; i++) {
+		plan_id_content[i] = plan_id[i];
+	}
+	message -> value.choice.TestMessage02.header.planId.buf = plan_id_content;
+	message -> value.choice.TestMessage02.header.planId.size = 36;
+	(*env) -> ReleaseByteArrayElements(env, planId, plan_id, 0);
+
+	//set timestamp
+	jbyte *time = (*env) -> GetByteArrayElements(env, timestamp, 0);
+	if (time == NULL) {
+		return NULL;
+	}
+	uint8_t time_content[19] = {0};
+	for (int i = 0; i < 19; i++) {
+		time_content[i] = time[i];
+	}
+	message -> value.choice.TestMessage02.header.timestamp.buf = time_content;
+	message -> value.choice.TestMessage02.header.timestamp.size = 19;
+	(*env) -> ReleaseByteArrayElements(env, timestamp, time, 0);
+
+	MobilityLocation_t location;
+	location.ecefX = startX;
+	location.ecefY = startY;
+	location.ecefZ = startZ;
+	jbyte *start_time = (*env) -> GetByteArrayElements(env, locationTimestamp, 0);
+
+	uint8_t start_time_content[19] = {0};
+	for (int i = 0; i < 19; i++) {
+		start_time_content[i] = start_time[i];
+	}
+	location.timestamp.buf = start_time_content;
+	location.timestamp.size = 19;
+
+	message -> value.choice.TestMessage02.body.location = location;
+	(*env) -> ReleaseByteArrayElements(env, locationTimestamp, start_time, 0);
+
+	jsize dim = (*env) -> GetArrayLength(env, offsets);
+	if(dim == 3) {
+		jintArray offsets_X =  (jintArray) (*env) -> GetObjectArrayElement(env, offsets, 0);
+		jintArray offsets_Y =  (jintArray) (*env) -> GetObjectArrayElement(env, offsets, 1);
+		jintArray offsets_Z =  (jintArray) (*env) -> GetObjectArrayElement(env, offsets, 2);
+		jsize count = (*env) -> GetArrayLength(env, offsets_X);
+		jint *java_offsets_X = (*env) -> GetIntArrayElements(env, offsets_X, 0);
+		jint *java_offsets_Y = (*env) -> GetIntArrayElements(env, offsets_Y, 0);
+		jint *java_offsets_Z = (*env) -> GetIntArrayElements(env, offsets_Z, 0);
+		if(count > 0) {
+			int *localArray[3];
+			int offsets_X_content[count];
+			int offsets_Y_content[count];
+			int offsets_Z_content[count];
+			for(int i = 0; i < count; i++) {
+				offsets_X_content[i] = java_offsets_X[i];
+				offsets_Y_content[i] = java_offsets_Y[i];
+				offsets_Z_content[i] = java_offsets_Z[i];
+			}
+			localArray[0] = offsets_X_content;
+			localArray[1] = offsets_Y_content;
+			localArray[2] = offsets_Z_content;
+			MobilityLocationOffsets_t *trajectory_offsets;
+			trajectory_offsets = calloc(1, sizeof(MobilityLocationOffsets_t));
+			for(int i = 0; i < count; i++) {
+				MobilityECEFOffset_t *offset_point;
+				offset_point = calloc(1, sizeof(MobilityECEFOffset_t));
+				offset_point -> offsetX = localArray[0][i];
+				offset_point -> offsetY = localArray[1][i];
+				offset_point -> offsetZ = localArray[2][i];
+				asn_sequence_add(&trajectory_offsets->list, offset_point);
+			}
+			message -> value.choice.TestMessage02.body.trajectory.list = trajectory_offsets->list;
+		}
+		(*env) -> ReleaseIntArrayElements(env, offsets_X, java_offsets_X, 0);
+		(*env) -> ReleaseIntArrayElements(env,offsets_Y, java_offsets_Y, 0);
+		(*env) -> ReleaseIntArrayElements(env, offsets_Z, java_offsets_Z, 0);
+		(*env) -> DeleteLocalRef(env, offsets_X);
+		(*env) -> DeleteLocalRef(env, offsets_Y);
+		(*env) -> DeleteLocalRef(env, offsets_Z);
+	}
+
+	//encode message
+	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, 0, message, buffer, buffer_size);
+	if(ec.encoded == -1) {
+		//fprintf(fp, "!!!%s", ec.failed_type->name);
+		return NULL;
+	}
+
+	//copy back to java output
+	jsize length = ec.encoded / 8;
+	jbyteArray outputJNIArray = (*env) -> NewByteArray(env, length);
+	if(outputJNIArray == NULL) {
+		return NULL;
+	}
+	(*env) -> SetByteArrayRegion(env, outputJNIArray, 0, length, buffer);
+	return outputJNIArray;
+  }
+
+/*
+ * Class:     gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage
+ * Method:    decodeMobilityPath
+ * Signature: ([BLjava/lang/Object;[B[B[B[B[B[BLjava/lang/Object;[[I)I
+ */
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage_decodeMobilityPath
+  (JNIEnv *env, jobject this, jbyteArray encodedArray, jobject pathObj, jbyteArray senderId, jbyteArray targetId, jbyteArray bsmId, jbyteArray planId, jbyteArray timestamp, jobject location, jbyteArray locationTimestamp, jobjectArray trajectoryOffsets) {
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedArray); /* Number of bytes in encoded mobility path */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedArray, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+	    buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+	if(rval.code == RC_OK) {
+		jclass start_location_class = (*env) -> GetObjectClass(env, location);
+
+		//set senderId, targetId, bsmId, planId and creation timestamp
+		uint8_t *sender_id_content = message -> value.choice.TestMessage02.header.hostStaticId.buf;
+		size_t sender_id_size = message -> value.choice.TestMessage02.header.hostStaticId.size;
+		(*env) -> SetByteArrayRegion(env, senderId, 0, sender_id_size, sender_id_content);
+		uint8_t *target_id_content = message -> value.choice.TestMessage02.header.targetStaticId.buf;
+		size_t target_id_size = message -> value.choice.TestMessage02.header.targetStaticId.size;
+		(*env) -> SetByteArrayRegion(env, targetId, 0, target_id_size, target_id_content);
+		uint8_t *bsm_id_content = message -> value.choice.TestMessage02.header.hostBSMId.buf;
+		(*env) -> SetByteArrayRegion(env, bsmId, 0, 8, bsm_id_content);
+		uint8_t *plan_id_content = message -> value.choice.TestMessage02.header.planId.buf;
+		(*env) -> SetByteArrayRegion(env, planId, 0, 36, plan_id_content);
+		uint8_t *creation_time_content = message -> value.choice.TestMessage02.header.timestamp.buf;
+		(*env) -> SetByteArrayRegion(env, timestamp, 0, 19, creation_time_content);
+
+		//set current location in ECEF frame
+		jmethodID mid_setEcefX = (*env) -> GetMethodID(env, start_location_class, "setEcefX", "(I)V");
+		jmethodID mid_setEcefY = (*env) -> GetMethodID(env, start_location_class, "setEcefY", "(I)V");
+		jmethodID mid_setEcefZ = (*env) -> GetMethodID(env, start_location_class, "setEcefZ", "(I)V");
+		jint ecef_x = message -> value.choice.TestMessage02.body.location.ecefX;
+		jint ecef_y = message -> value.choice.TestMessage02.body.location.ecefY;
+		jint ecef_z = message -> value.choice.TestMessage02.body.location.ecefZ;
+		(*env) -> CallVoidMethod(env, location, mid_setEcefX, ecef_x);
+		(*env) -> CallVoidMethod(env, location, mid_setEcefY, ecef_y);
+		(*env) -> CallVoidMethod(env, location, mid_setEcefZ, ecef_z);
+
+		uint8_t *location_time_content = message -> value.choice.TestMessage02.body.location.timestamp.buf;
+		(*env) -> SetByteArrayRegion(env, locationTimestamp, 0, 19, location_time_content);
+
+		// set trajectory offset
+		jintArray offsets_X =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 0);
+		jintArray offsets_Y =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 1);
+		jintArray offsets_Z =  (jintArray) (*env) -> GetObjectArrayElement(env, trajectoryOffsets, 2);
+		int count = message -> value.choice.TestMessage02.body.trajectory.list.count;
+		int temp_offsets_X[60] = {0};
+		int temp_offsets_Y[60] = {0};
+		int temp_offsets_Z[60] = {0};
+		for(int i = 0; i < count; i++) {
+			temp_offsets_X[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetX;
+			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetY;
+			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetZ;
+		}
+		(*env) -> SetIntArrayRegion(env, offsets_X, 0, count, temp_offsets_X);
+		(*env) -> SetIntArrayRegion(env, offsets_Y, 0, count, temp_offsets_Y);
+		(*env) -> SetIntArrayRegion(env, offsets_Z, 0, count, temp_offsets_Z);
+		(*env) -> DeleteLocalRef(env, offsets_X);
+		(*env) -> DeleteLocalRef(env, offsets_Y);
+		(*env) -> DeleteLocalRef(env, offsets_Z);
+
+		return 0;
+	} else {
+		return -1;
+	}
+  }
+
