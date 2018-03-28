@@ -23,7 +23,6 @@ import java.util.UUID;
 import org.ros.exception.RosRuntimeException;
 import org.ros.message.MessageFactory;
 import org.ros.node.ConnectedNode;
-import org.springframework.core.convert.support.DefaultConversionService;
 
 import cav_msgs.MobilityPath;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
@@ -34,6 +33,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.util.ExecutionTimer;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
@@ -49,6 +49,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     protected Trajectory currentTrajectory = null;
     protected Trajectory nextTrajectory = null;
     protected TrajectoryConverter trajectoryConverter;
+    protected TrajectoryExecutor trajectoryExecutor;
     protected IConflictDetector conflictDetector;
     protected String conflictHandlerName = "Yield Plugin";
     protected MobilityPathHandler conflictHandler;
@@ -98,6 +99,14 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         if (conflictHandler == null) {
             log.warn("No default conflict handler detected by name: " + conflictHandlerName + ". Guidance will fail on first detected conflict!!!"); 
         }
+
+        trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, (pct) -> rollTrajectoryBuffer());
+    }
+
+    protected synchronized void rollTrajectoryBuffer() {
+        currentTrajectory = nextTrajectory;
+        nextTrajectory = null;
+        publishMobilityPath();
     }
 
     @Override
