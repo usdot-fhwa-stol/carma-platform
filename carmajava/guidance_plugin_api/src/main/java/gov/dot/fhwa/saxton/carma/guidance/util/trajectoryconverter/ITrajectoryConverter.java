@@ -90,7 +90,7 @@ public interface ITrajectoryConverter {
    * @param currentSegmentIdx The current route segment index
    * @param segDowntrack The current downtrack relative to the current segment start
    * @param lane The current lane index
-   * @param maxPointsInPath The maximum number of points to include in the path
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
@@ -141,7 +141,7 @@ public interface ITrajectoryConverter {
    * 
    * @param traj The trajectory to convert
    * @param startPoint the point one timestep prior to the beginning of this trajectory
-   * @param maxPointsInPath The maximum number of points to include in the path
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
@@ -157,7 +157,7 @@ public interface ITrajectoryConverter {
    * 
    * @param traj The trajectory to convert
    * @param startPoint the point one timestep prior to the beginning of this trajectory
-   * @param maxPointsInPath The maximum number of points to include in the path
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
@@ -227,7 +227,7 @@ public interface ITrajectoryConverter {
    * @param path The list which will store the generated points
    * @param startingData The starting configuration of the vehicle
    * @param route The route the vehicle is on
-   * @param maxPointsInPath The maximum number of points to compute
+   * @param maxPointsInPath The maximum number of points to compute, not to exceed the configured value
    */
   LongitudinalSimulationData addLongitudinalManeuverToPath(
     final LongitudinalManeuver maneuver, List<RoutePointStamped> path,

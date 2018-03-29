@@ -418,6 +418,9 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       final double twiceAccel = (endV * endV -  startVSqr) /  deltaX;
       final double accel = twiceAccel * 0.5;
       final double deltaVPerTimeStep = accel * timeStep;
+
+      // Ensure maxPointsInPath never exceeds the configured parameter
+      maxPointsInPath = Math.min(maxPointsInPath, this.maxPointsInPath);
   
       // If this is the current maneuver only use the remaining distance
       double actualStartV;
