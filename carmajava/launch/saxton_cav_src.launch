@@ -316,6 +316,8 @@
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_path"/>
         <remap from="outgoing_mobility_response"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_response"/>
+        <remap from="outgoing_mobility_operation"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_operation"/>
         <remap from="get_drivers_with_capabilities"
                to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
       </node>

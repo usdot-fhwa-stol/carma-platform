@@ -175,8 +175,6 @@ public class FollowerState implements IPlatooningState {
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());
-        // TODO Strategy id in operation might be ready to removed
-        msg.setStrategyId("");
         msg.setStrategy(plugin.MOBILITY_STRATEGY);
         // TODO Maneuver planner from plugin service locator may need to provide this data directly 
         SpeedAccel lastCmdSpeedObject = plugin.getCmdSpeedSub().getLastMessage();

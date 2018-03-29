@@ -301,8 +301,6 @@ public class PlatoonLeaderState implements IPlatooningState {
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());
-        // TODO Strategy id in operation might be ready to removed
-        msg.setStrategyId("");
         msg.setStrategy(plugin.MOBILITY_STRATEGY);
         if(type.equals(plugin.OPERATION_INFO_TYPE)) {
             // For INFO params, the string format is INFO|LEADER:xx,REAR_DTD:xx,SPEED:xx

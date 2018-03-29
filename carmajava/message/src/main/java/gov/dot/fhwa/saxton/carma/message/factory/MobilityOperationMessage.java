@@ -26,28 +26,28 @@ import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 
 import cav_msgs.ByteArray;
-import cav_msgs.MobilityResponse;
+import cav_msgs.MobilityOperation;
 import gov.dot.fhwa.saxton.carma.message.helper.MobilityHeaderHelper;
 import gov.dot.fhwa.saxton.carma.message.helper.StringConverterHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 /**
  * This class is the actual worker for encoding and decoding Mobility
- * Response message by using J2735 compiler shared library.
+ * Operation message by using J2735 compiler shared library.
  */
-public class MobilityResponseMessage implements IMessage<MobilityResponse> {
+public class MobilityOperationMessage implements IMessage<MobilityOperation> {
 
-    private static int URGENCY_MAX = 1000;
-    private static int URGENCY_MIN = 0;
+    protected static final int STRATEGY_MAX_LENGTH = 50;
+    protected static final int STRATEGY_PARAMS_MAX_LENGTH = 100;
     
     private MessageFactory factory;
     private SaxtonLogger   log;
     
-    public MobilityResponseMessage(SaxtonLogger log, MessageFactory factory) {
+    public MobilityOperationMessage(MessageFactory factory, SaxtonLogger log) {
         this.factory = factory;
         this.log     = log;
     }
-    
+
     // Load libasn1c.so external C library
     static {
         try {
@@ -59,34 +59,34 @@ public class MobilityResponseMessage implements IMessage<MobilityResponse> {
     }
     
     /**
-     * This is the declaration for native method. It will take data from MobilityResponse ROS message
+     * This is the declaration for native method. It will take data from MobilityOperation ROS message
      * and return a byte array including the encoded message. Because of the efficiency of JNI method
-     * call, it takes fields directly instead of a single MobilityResponse object.
+     * call, it takes fields directly instead of a single MobilityOperation object.
      * 
-     * @return encoded MobilityResponse Message
+     * @return encoded MobilityOperation Message
      */
-    private native byte[] encodeMobilityResponse(byte[] senderId, byte[] targetId, byte[] senderBSMId,
-            byte[] planId, byte[] timestamp, int urgency, boolean isAccepted);
+    private native byte[] encodeMobilityOperation(byte[] senderId, byte[] targetId, byte[] senderBSMId,
+            byte[] planId, byte[] timestamp, byte[] strategy, byte[] params);
     
     /**
-     * This is the declaration for native method. It will take encoded MobilityResponse byte array
-     * and a empty MobilityResponse object as input. It will decode the message and set all fields in MobilityResponse.
+     * This is the declaration for native method. It will take encoded MobilityOperation byte array as input.
+     * It will decode the message and set all string fields in other byte array inputs.
      * @return -1 means decode failed; 0 means decode is successful
      */
-    public native int decodeMobilityResponse(byte[] encodedArray, Object mobilityResponse, byte[] senderId,
-            byte[] targetId, byte[] bsmId, byte[] planId, byte[] timestamp);
+    public native int decodeMobilityOperation(byte[] encodedArray, byte[] senderId, byte[] targetId, byte[] bsmId,
+            byte[] planId, byte[] timestamp, byte[] strategy, byte[] params);
     
     @Override
     public MessageContainer encode(Message plainMessage) {
-        byte[] encodedMsg = callJniEncode((MobilityResponse) plainMessage);
+        byte[] encodedMsg = callJniEncode((MobilityOperation) plainMessage);
         if (encodedMsg == null) {
-            log.warn("MobilityResponse", "MobilityResponseMessage cannot encode the message");
+            log.warn("MobilityOperation", "MobilityOperationMessage cannot encode the message");
             return new MessageContainer("ByteArray", null);
         }
         ByteArray binaryMsg = factory.newFromType(ByteArray._TYPE);
         ChannelBuffer buffer = ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, encodedMsg);
         binaryMsg.setContent(buffer);
-        binaryMsg.setMessageType("MobilityResponse");
+        binaryMsg.setMessageType("MobilityOperation");
         binaryMsg.getHeader().setFrameId("0");
         binaryMsg.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
         return new MessageContainer("ByteArray", binaryMsg);
@@ -104,28 +104,32 @@ public class MobilityResponseMessage implements IMessage<MobilityResponse> {
         byte[] bsmId = new byte[8];
         byte[] planId = new byte[36];
         byte[] timestamp = new byte[19];
+        byte[] strategy = new byte[50];
+        byte[] strategyParams = new byte[100];
         // fill with character 'zero'
         Arrays.fill(timestamp, (byte) 48);
-        MobilityResponse response = factory.newFromType(MobilityResponse._TYPE);
-        int result = decodeMobilityResponse(encodedMsg, response, senderId, targetId, bsmId, planId, timestamp);
+        MobilityOperation operation = factory.newFromType(MobilityOperation._TYPE);
+        int result = decodeMobilityOperation(encodedMsg, senderId, targetId, bsmId, planId, timestamp, strategy, strategyParams);
         if (result == -1) {
-                log.warn("MobilityResponseMessage cannot decode message.");
-                return new MessageContainer("MobilityResponse", null);
+                log.warn("MobilityOperationMessage cannot decode message.");
+                return new MessageContainer("MobilityOperation", null);
         }
-        response.getHeader().setSenderId(StringConverterHelper.readDynamicLengthString(senderId));
-        response.getHeader().setRecipientId(StringConverterHelper.readDynamicLengthString(targetId));
-        response.getHeader().setSenderBsmId(new String(bsmId));
-        response.getHeader().setPlanId(new String(planId));
-        response.getHeader().setTimestamp(Long.parseLong(new String(timestamp)));
-        return new MessageContainer("MobilityResponse", response);
+        operation.getHeader().setSenderId(StringConverterHelper.readDynamicLengthString(senderId));
+        operation.getHeader().setRecipientId(StringConverterHelper.readDynamicLengthString(targetId));
+        operation.getHeader().setSenderBsmId(new String(bsmId));
+        operation.getHeader().setPlanId(new String(planId));
+        operation.getHeader().setTimestamp(Long.parseLong(new String(timestamp)));
+        operation.setStrategy(StringConverterHelper.readDynamicLengthString(strategy));
+        operation.setStrategyParams(StringConverterHelper.readDynamicLengthString(strategyParams));
+        return new MessageContainer("MobilityResponse", operation);
     }
 
-    public byte[] callJniEncode(MobilityResponse message) {
-        MobilityHeaderHelper header = new MobilityHeaderHelper(message.getHeader());
-        // we did not use a header class here, so we need to hard-code the upper bound for this value
-        int urgency = Math.min(Math.max(URGENCY_MIN, message.getUrgency()), URGENCY_MAX);
-        return encodeMobilityResponse(header.getSenderId(), header.getTargetId(), header.getBSMId(),
-                                      header.getPlanId(), header.getTimestamp(), urgency, message.getIsAccepted());
+    public byte[] callJniEncode(MobilityOperation msg) {
+        MobilityHeaderHelper header = new MobilityHeaderHelper(msg.getHeader());
+        return encodeMobilityOperation(header.getSenderId(), header.getTargetId(),
+                            header.getBSMId(), header.getPlanId(), header.getTimestamp(),
+                            StringConverterHelper.setDynamicLengthString(msg.getStrategy(), STRATEGY_MAX_LENGTH),
+                            StringConverterHelper.setDynamicLengthString(msg.getStrategyParams(), STRATEGY_PARAMS_MAX_LENGTH));
     }
     
 }
