@@ -26,6 +26,7 @@ import org.ros.node.topic.Subscriber;
 import cav_msgs.LocationOffsetECEF;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import cav_msgs.SystemAlert;
 
 import org.ros.node.ConnectedNode;
@@ -50,6 +51,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
   // Publishers
   protected Publisher<cav_msgs.MobilityRequest>      mobReqOutPub;
   protected Publisher<cav_msgs.MobilityPath>      mobPathOutPub;
+  protected Publisher<cav_msgs.MobilityResponse>      mobResOutPub;
 
   // Subscribers
   protected Subscriber<cav_msgs.SystemAlert>         alertSub;
@@ -65,6 +67,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     // Publishers
     mobReqOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
     mobPathOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath._TYPE);
+    mobResOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_response", MobilityResponse._TYPE);
     timeDelay      = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
@@ -125,6 +128,16 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             pathMsg.getTrajectory().getOffsets().add(offset2);
             pathMsg.getTrajectory().getOffsets().add(offset3);
             mobPathOutPub.publish(pathMsg);
+            
+            MobilityResponse response = mobResOutPub.newMessage();
+            response.getHeader().setSenderId("DOT-45100");
+            response.getHeader().setRecipientId("");
+            response.getHeader().setSenderBsmId("10ABCDEF");
+            response.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
+            response.getHeader().setTimestamp(System.currentTimeMillis());
+            response.setIsAccepted(true);
+            response.setUrgency((short) 500);
+            mobResOutPub.publish(response);
         }
         Thread.sleep(timeDelay);
       }
