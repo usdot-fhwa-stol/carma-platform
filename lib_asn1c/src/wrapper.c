@@ -20,6 +20,7 @@
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityRequestMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityResponseMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage.h"
 #include "MessageFrame.h"
 
 /**
@@ -1021,3 +1022,187 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityRe
 		return -1;
 	}
 }
+
+	/*
+	 * Class:     gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage
+	 * Method:    encodeMobilityOperation
+	 * Signature: ([B[B[B[B[B[B[B)[B
+	 */
+JNIEXPORT jbyteArray JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage_encodeMobilityOperation
+  (JNIEnv *env, jobject obj, jbyteArray senderId, jbyteArray targetId, jbyteArray senderBsmId,
+   jbyteArray planId, jbyteArray timestamp, jbyteArray strategy, jbyteArray params) {
+
+	uint8_t buffer[512];
+	size_t buffer_size = sizeof(buffer);
+	asn_enc_rval_t ec;
+	MessageFrame_t *message;
+
+	message = calloc(1, sizeof(MessageFrame_t));
+	if (!message) {
+		return NULL;
+	}
+
+	//set default value of testmessage01
+	message -> messageId = 243;
+	message -> value.present = MessageFrame__value_PR_TestMessage03;
+
+	//set senderId in header
+	jsize sender_string_size = (*env) -> GetArrayLength(env, senderId);
+	jbyte *sender_string = (*env) -> GetByteArrayElements(env, senderId, 0);
+	if (sender_string == NULL) {
+		return NULL;
+	}
+	uint8_t sender_string_content[sender_string_size];
+	for (int i = 0; i < sender_string_size; i++) {
+		sender_string_content[i] = sender_string[i];
+	}
+	message -> value.choice.TestMessage03.header.hostStaticId.buf = sender_string_content;
+	message -> value.choice.TestMessage03.header.hostStaticId.size = (size_t) sender_string_size;
+	(*env) -> ReleaseByteArrayElements(env, senderId, sender_string, 0);
+
+	//set targetId in header
+	jsize target_string_size = (*env) -> GetArrayLength(env, targetId);
+	jbyte *target_string = (*env) -> GetByteArrayElements(env, targetId, 0);
+	if (target_string == NULL) {
+		return NULL;
+	}
+	uint8_t target_string_content[target_string_size];
+	for (int i = 0; i < target_string_size; i++) {
+		target_string_content[i] = target_string[i];
+	}
+	message -> value.choice.TestMessage03.header.targetStaticId.buf = target_string_content;
+	message -> value.choice.TestMessage03.header.targetStaticId.size = (size_t) target_string_size;
+	(*env) -> ReleaseByteArrayElements(env, targetId, target_string, 0);
+
+	//set hostBSMId in header
+	jbyte *bsm_string = (*env) -> GetByteArrayElements(env, senderBsmId, 0);
+	if(bsm_string == NULL) {
+		return NULL;
+	}
+	uint8_t host_bsm_id_content[8] = {0};
+	for(int i = 0; i < 8; i++) {
+		host_bsm_id_content[i] = bsm_string[i];
+	}
+	message -> value.choice.TestMessage03.header.hostBSMId.buf = host_bsm_id_content;
+	message -> value.choice.TestMessage03.header.hostBSMId.size = 8;
+	(*env) -> ReleaseByteArrayElements(env, senderBsmId, bsm_string, 0);
+
+	//set planId in header
+	jbyte *plan_id = (*env) -> GetByteArrayElements(env, planId, 0);
+	if (plan_id == NULL) {
+		return NULL;
+	}
+	uint8_t plan_id_content[36] = {0};
+	for (int i = 0; i < 36; i++) {
+		plan_id_content[i] = plan_id[i];
+	}
+	message -> value.choice.TestMessage03.header.planId.buf = plan_id_content;
+	message -> value.choice.TestMessage03.header.planId.size = 36;
+	(*env) -> ReleaseByteArrayElements(env, planId, plan_id, 0);
+
+	//set timestamp
+	jbyte *time = (*env) -> GetByteArrayElements(env, timestamp, 0);
+	if (time == NULL) {
+		return NULL;
+	}
+	uint8_t time_content[19] = {0};
+	for (int i = 0; i < 19; i++) {
+		time_content[i] = time[i];
+	}
+	message -> value.choice.TestMessage03.header.timestamp.buf = time_content;
+	message -> value.choice.TestMessage03.header.timestamp.size = 19;
+	(*env) -> ReleaseByteArrayElements(env, timestamp, time, 0);
+
+	// set strategy
+	jsize strategy_string_size = (*env) -> GetArrayLength(env, strategy);
+	jbyte *strategy_string = (*env) -> GetByteArrayElements(env, strategy, 0);
+	if (strategy_string == NULL) {
+		return NULL;
+	}
+	uint8_t strategy_string_content[strategy_string_size];
+	for (int i = 0; i < strategy_string_size; i++) {
+		strategy_string_content[i] = strategy_string[i];
+	}
+	message -> value.choice.TestMessage03.body.strategy.buf = strategy_string_content;
+	message -> value.choice.TestMessage03.body.strategy.size = (size_t) strategy_string_size;
+	(*env) -> ReleaseByteArrayElements(env, strategy, strategy_string, 0);
+
+	//set params
+	jsize params_string_size = (*env) -> GetArrayLength(env, params);
+	jbyte *params_string = (*env) -> GetByteArrayElements(env, params, 0);
+	if (params_string == NULL) {
+		return NULL;
+	}
+	uint8_t params_string_content[params_string_size];
+	for (int i = 0; i < params_string_size; i++) {
+		params_string_content[i] = params_string[i];
+	}
+	message -> value.choice.TestMessage03.body.operationParams.buf = params_string_content;
+	message -> value.choice.TestMessage03.body.operationParams.size = (size_t) params_string_size;
+	(*env) -> ReleaseByteArrayElements(env, params, params_string, 0);
+
+	//encode message
+	ec = uper_encode_to_buffer(&asn_DEF_MessageFrame, 0, message, buffer, buffer_size);
+	if(ec.encoded == -1) {
+		//fprintf(fp, "!!!%s", ec.failed_type->name);
+		return NULL;
+	}
+
+	//copy back to java output
+	jsize length = ec.encoded / 8;
+	jbyteArray outputJNIArray = (*env) -> NewByteArray(env, length);
+	if(outputJNIArray == NULL) {
+		return NULL;
+	}
+	(*env) -> SetByteArrayRegion(env, outputJNIArray, 0, length, buffer);
+	return outputJNIArray;
+}
+
+/*
+ * Class:     gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage
+ * Method:    decodeMobilityOperation
+ * Signature: ([B[B[B[B[B[B[B[B)I
+ */
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage_decodeMobilityOperation
+  (JNIEnv *env, jobject obj, jbyteArray encodedArray, jbyteArray senderId, jbyteArray targetId,
+   jbyteArray bsmId, jbyteArray planId, jbyteArray timestamp, jbyteArray strategy, jbyteArray params) {
+
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedArray); /* Number of bytes in encoded mobility path */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedArray, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+	    buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+	if(rval.code == RC_OK) {
+		//set senderId, targetId, bsmId, planId and creation timestamp
+		uint8_t *sender_id_content = message -> value.choice.TestMessage03.header.hostStaticId.buf;
+		size_t sender_id_size = message -> value.choice.TestMessage03.header.hostStaticId.size;
+		(*env) -> SetByteArrayRegion(env, senderId, 0, sender_id_size, sender_id_content);
+		uint8_t *target_id_content = message -> value.choice.TestMessage03.header.targetStaticId.buf;
+		size_t target_id_size = message -> value.choice.TestMessage03.header.targetStaticId.size;
+		(*env) -> SetByteArrayRegion(env, targetId, 0, target_id_size, target_id_content);
+		uint8_t *bsm_id_content = message -> value.choice.TestMessage03.header.hostBSMId.buf;
+		(*env) -> SetByteArrayRegion(env, bsmId, 0, 8, bsm_id_content);
+		uint8_t *plan_id_content = message -> value.choice.TestMessage03.header.planId.buf;
+		(*env) -> SetByteArrayRegion(env, planId, 0, 36, plan_id_content);
+		uint8_t *creation_time_content = message -> value.choice.TestMessage03.header.timestamp.buf;
+		(*env) -> SetByteArrayRegion(env, timestamp, 0, 19, creation_time_content);
+
+		//set strategy and params
+		uint8_t *strategy_content = message -> value.choice.TestMessage03.body.strategy.buf;
+		size_t strategy_size = message -> value.choice.TestMessage03.body.strategy.size;
+		(*env) -> SetByteArrayRegion(env, strategy, 0, strategy_size, strategy_content);
+		uint8_t *strategy_params_content = message -> value.choice.TestMessage03.body.operationParams.buf;
+		size_t strategy_params_size = message -> value.choice.TestMessage03.body.operationParams.size;
+		(*env) -> SetByteArrayRegion(env, params, 0, strategy_params_size, strategy_params_content);
+
+		return 0;
+	} else {
+		return -1;
+	}
+}
+

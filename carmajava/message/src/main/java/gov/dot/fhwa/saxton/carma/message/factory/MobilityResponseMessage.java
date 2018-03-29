@@ -89,7 +89,7 @@ public class MobilityResponseMessage implements IMessage<MobilityResponse> {
         binaryMsg.setMessageType("MobilityResponse");
         binaryMsg.getHeader().setFrameId("0");
         binaryMsg.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
-        return new MessageContainer("MobilityResponse", binaryMsg);
+        return new MessageContainer("ByteArray", binaryMsg);
     }
 
     @Override

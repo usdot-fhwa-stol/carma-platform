@@ -155,7 +155,7 @@ public class LeaderWaitingState implements IPlatooningState {
     
     // This method compose mobility operation STATUS message
     private void composeMobilityOperationStatus(MobilityOperation msg) {
-        msg.getHeader().setPlanId("");
+        msg.getHeader().setPlanId(plugin.getPlatoonManager().getCurrentPlatoonID());
         // This message is for broadcast
         msg.getHeader().setRecipientId("");
         // TODO need to have a easy way to get bsmId in plugin
@@ -163,7 +163,6 @@ public class LeaderWaitingState implements IPlatooningState {
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());
-        msg.setStrategyId(plugin.getPlatoonManager().getCurrentPlatoonID());
         msg.setStrategy(plugin.MOBILITY_STRATEGY);
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
         SpeedAccel lastCmdSpeed = plugin.getCmdSpeedSub().getLastMessage();
