@@ -103,7 +103,7 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
                 binaryMsg.setMessageType("MobilityPath");
                 binaryMsg.getHeader().setFrameId("0");
                 binaryMsg.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
-                return new MessageContainer("MobilityPath", binaryMsg);
+                return new MessageContainer("ByteArray", binaryMsg);
         }
 
         @Override
@@ -113,7 +113,6 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
                 for (int i = 0; i < buffer.capacity(); i++) {
                         encodedMsg[i] = buffer.getByte(i);
                 }
-
                 byte[] senderId = new byte[16];
                 byte[] targetId = new byte[16];
                 byte[] bsmId = new byte[8];
@@ -130,12 +129,10 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
                 MobilityPath path = factory.newFromType(MobilityPath._TYPE);
                 int result = decodeMobilityPath(encodedMsg, path, senderId, targetId, bsmId, planId, timestamp,
                                 path.getTrajectory().getLocation(), trajectoryStartTime, offsets);
-
                 if (result == -1) {
                         log.warn("MobilityPathMessage cannot decode message.");
                         return new MessageContainer("MobilityPath", null);
                 }
-
                 path.getHeader().setSenderId(StringConverterHelper.readDynamicLengthString(senderId));
                 path.getHeader().setRecipientId(StringConverterHelper.readDynamicLengthString(targetId));
                 path.getHeader().setSenderBsmId(new String(bsmId));
