@@ -153,7 +153,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         }
         if (nextTrajectory != null && !pathPrediction.isEmpty()) {
             RoutePointStamped lastPoint = pathPrediction.get(pathPrediction.size() - 1);
-            pathPrediction.addAll(trajectoryConverter.convertToPath(nextTrajectory, lastPoint));
+            pathPrediction.addAll(trajectoryConverter.convertToPath(nextTrajectory, lastPoint, maxPointsPerMessage - pathPrediction.size()));
         }
 
         return pathPrediction;
@@ -231,14 +231,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
 
         // TODO: Figure out how to get currentBsmId, I don't think we need this yet though
         pathMsg.getHeader().setSenderBsmId(currentBsmId);
-
-        // Ensure that size constraints per message are met
-        if (pathPrediction.size() > maxPointsPerMessage) {
-            pathMsg.setTrajectory(
-                    trajectoryConverter.pathToMessage(pathPrediction.subList(0, maxPointsPerMessage + 1), factory));
-        } else {
-            pathMsg.setTrajectory(trajectoryConverter.pathToMessage(pathPrediction, factory));
-        }
+        pathMsg.setTrajectory(trajectoryConverter.pathToMessage(pathPrediction, factory));
 
         pathPub.publish(pathMsg);
         log.info(String.format("Publication complete for planId=%s containing %d points",
