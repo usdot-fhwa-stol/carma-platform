@@ -181,7 +181,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       if (maneuver.getEndDistance() > longitudinalSimData.downtrack) {
         longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData, maxPointsInPath);
         // Ensure there are no overlapping points in time
-        if (oldPathEndPoint != null && oldPathEndPoint.getStamp() == path.get(oldPathSize).getStamp()){
+        if (oldPathEndPoint != null && path.size() > oldPathSize && oldPathEndPoint.getStamp() == path.get(oldPathSize).getStamp()){
           path.remove(oldPathSize);
         }
         oldPathSize = path.size();
