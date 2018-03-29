@@ -208,6 +208,7 @@ mobility_path_time_step: 0.01
 # Plugin or guidance component name: The priority which components are given for control of the light bar
 light_bar_priorities:
   - Light Bar State Machine
+  - Lane Change Plugin
   - CACC Platooning Plugin
   - Yield Plugin
   - Speed Harmonization Plugin
