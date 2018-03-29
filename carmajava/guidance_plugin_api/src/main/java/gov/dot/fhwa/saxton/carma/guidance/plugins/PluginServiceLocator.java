@@ -24,6 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 
 /**
  * Service collection for the Plugin interface. Provides access to the generic, ROS agnostic interfaces
@@ -39,11 +40,14 @@ public class PluginServiceLocator {
     private final IMobilityRouter mobilityRouter;
     private final IConflictDetector conflictDetector;
     private final ITrajectoryConverter trajectoryConverter;
+    private final ILightBarManager lightBarManager;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
         PluginManagementService pluginManagementService, IPubSubService iPubSubService,
         ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService,
-        IMobilityRouter mobilityRouter, IConflictDetector conflictDetector, ITrajectoryConverter trajectoryConverter) {
+        IMobilityRouter mobilityRouter, IConflictDetector conflictDetector,
+        ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager) {
+            
         this.arbitratorService = arbitratorService;
         this.IPubSubService = iPubSubService;
         this.pluginManagementService = pluginManagementService;
@@ -53,6 +57,7 @@ public class PluginServiceLocator {
         this.mobilityRouter = mobilityRouter;
         this.conflictDetector = conflictDetector;
         this.trajectoryConverter = trajectoryConverter;
+        this.lightBarManager = lightBarManager;
     }
 
     /**
@@ -116,5 +121,12 @@ public class PluginServiceLocator {
      */
     public ITrajectoryConverter getTrajectoryConverter() {
         return trajectoryConverter;
+    }
+
+    /**
+     * Get the {@link ILightBarManager} instance available to the plugins
+     */
+    public ILightBarManager getLightBarManager() {
+        return this.lightBarManager;
     }
 }

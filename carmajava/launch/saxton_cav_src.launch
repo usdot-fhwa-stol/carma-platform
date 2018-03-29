@@ -312,6 +312,12 @@
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
         <remap from="outgoing_mobility_request"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_request"/>
+        <remap from="outgoing_mobility_path"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_path"/>
+        <remap from="outgoing_mobility_response"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_response"/>
+        <remap from="outgoing_mobility_operation"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_operation"/>
         <remap from="get_drivers_with_capabilities"
                to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
       </node>
@@ -414,6 +420,8 @@
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
         <remap from="mobility_ack_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+        <remap from="ui_instructions"
+               to="/$(arg TOP_NS)/ui_instructions"/>
                
       </node>
     </group>

@@ -20,6 +20,7 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.SystemUTCTimeProvider;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
@@ -46,6 +47,10 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 
+import cav_msgs.LightBarStatus;
+
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,7 +69,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
   // Member Variables
   protected ExecutorService executor;
-  protected final int NUMTHREADS = 8;
+  protected final int NUMTHREADS = 9;
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
   protected IPubSubService pubSubService;
@@ -106,19 +111,24 @@ public class GuidanceMain extends SaxtonBaseNode {
     GuidanceCommands guidanceCommands = new GuidanceCommands(stateMachine, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
+
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands,
         tracking);
+    LightBarManager lightBarManager = new LightBarManager(stateMachine, pubSubService, node);
     MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter,
         trajectoryExecutor);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
-        routeService, node, router, conflictManager, trajectoryConverter);
-    Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor);
+        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager);
+    VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager);
+    Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor, vehicleAwareness);
 
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
     trajectoryExecutor.setArbitrator(arbitrator);
     pluginManager.setArbitratorService(arbitrator);
     router.setPluginManager(pluginManager);
+    vehicleAwareness.setPluginManager(pluginManager);
+    vehicleAwareness.setTrajectoryExecutor(trajectoryExecutor);
 
     executor.execute(stateHandler);
     executor.execute(maneuverInputs);
@@ -128,6 +138,8 @@ public class GuidanceMain extends SaxtonBaseNode {
     executor.execute(tracking);
     executor.execute(guidanceCommands);
     executor.execute(router);
+    executor.execute(lightBarManager);
+    executor.execute(vehicleAwareness);
   }
 
   /**

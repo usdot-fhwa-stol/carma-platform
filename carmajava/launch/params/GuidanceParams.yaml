@@ -166,7 +166,7 @@ acc_vehicle_front_frame_id: 'vehicle_front'
 
 # String: The component name of the Plugin which will handle mobility path and request conflicts
 # Note: This string must match the Versionable.getVersionInfo().componentName() value of the plugin
-default_mobility_conflict_handler: Yield Plugin
+default_mobility_conflict_handler: 'Yield Plugin'
 
 # Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
 # Units: meters
@@ -205,3 +205,23 @@ mobility_path_max_points: 60
 # Units: seconds
 mobility_path_time_step: 0.01
 
+# Plugin or guidance component name: The priority which components are given for control of the light bar
+light_bar_priorities:
+  - Light Bar State Machine
+  - Lane Change Plugin
+  - CACC Platooning Plugin
+  - Yield Plugin
+  - Speed Harmonization Plugin
+  - Route Following Plugin
+  - Cruising Plugin
+
+# Integer: The amount of time for the light bar to consider a communication timeout
+# Units: mili-seconds
+light_bar_comms_timeout: 1000
+
+# Integer: The number of milliseconds between MobilityPath message publications coming out of guidance
+# Units: milliseconds
+mobility_path_publish_interval:  3000
+
+# Integer: The maximum number of points of path prediction to include in each MobilityPath message
+max_points_per_mobility_path: 60

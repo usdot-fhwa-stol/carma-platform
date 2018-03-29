@@ -36,6 +36,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     protected long timestep_;
     protected Filter<Double> distanceGapController_;
     protected Pipeline<Double> speedController_;
+    protected double desiredGap_ = 0.0;
     protected AtomicDouble speedCmd_ = new AtomicDouble(0.0);
     
     public CommandGenerator(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
@@ -59,7 +60,6 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        
     }
     
     @Override
@@ -79,14 +79,15 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             leader = plugin_.getPlatoonManager().getLeader();
         }
         if(leader != null) {
-            double leaderCurrentPosition = leader.getVehiclePosition();
+            double leaderCurrentPosition = leader.vehiclePosition;
             log_.debug("The current leader position is " + leaderCurrentPosition);
             double hostVehiclePosition = pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance();
             double hostVehicleSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
             log_.debug("The host vehicle speed is + " + hostVehicleSpeed + " and its position is " + hostVehiclePosition);
             int vehiclesInFront = plugin_.getPlatoonManager().getPlatooningSize();
             log_.debug("The host vehicle have " + vehiclesInFront + " vehicles in front of it");
-            double desiredLeaderPosition = hostVehiclePosition + Math.max(hostVehicleSpeed * plugin_.getTimeHeadway() * vehiclesInFront, plugin_.getStandStillGap());
+            desiredGap_ = Math.max(hostVehicleSpeed * plugin_.getTimeHeadway() * vehiclesInFront, plugin_.getStandStillGap());
+            double desiredLeaderPosition = hostVehiclePosition + this.desiredGap_;
             log_.debug("The desired leader position and the setpoint for pid controller is " + desiredLeaderPosition);
             // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
             // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
@@ -97,11 +98,11 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             Signal<Double> signal = new Signal<Double>(leaderCurrentPosition, timeStamp);
             double output = speedController_.apply(signal).get().getData();
             log_.debug("The output from controller is " + output);
-            speedCmd_.set(Math.max(output + leader.getCommandSpeed(), 0));
+            speedCmd_.set(Math.max(output + leader.commandSpeed, 0));
             log_.debug("A speed command is generated from pid controller: " + speedCmd_ + " m/s");
         } else {
             log_.warn("CommandGenerator can not find the leader, starting latching speed commands if complex maneuver is still running");
-            // TODO if there is no leader avaliable, we should change back to Leader State and rejoin other platoon later
+            // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
             speedCmd_.set(pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
             distanceGapController_.reset();
         }
