@@ -246,7 +246,7 @@ public class PlatoonLeaderState implements IPlatooningState {
     @Override
     public void run() {
         // This is a loop which is safe to interrupt
-        // This loop does for tasks:
+        // This loop does four tasks:
         // 1. Send out heart beat mobility operation INFO message every ~3 seconds if the platoon is not full
         // 2. Updates the light bar status every ~3 seconds 
         // 3. Remove current plan if we wait for a long enough time
