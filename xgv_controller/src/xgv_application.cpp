@@ -74,18 +74,20 @@ void XGVApplication::initialize()
 
     xgv_client_->connect();
 
-    {
-        //Set up the effort controller. This manages the cmd_longitudinal_effort topic
-        effort_controller_.reset(new cav::LongitudinalEffortController());
-        auto& v = effort_controller_->get_api();
-        api_.insert(api_.end(),v.begin(),v.end());
-        effort_controller_->onNewCommand.connect([this](const cav::LongitudinalEffortController::Command&)
-                                                 {
-                                                    if(!active_robotic_status_provider_->getEnabled()) return;
-                                                    cmd_mode_ = cav::CommandMode_t::Wrench;
-                                                 });
-
-    }
+    //todo: disabling wrench effort control until the abrupt halting issue is resolved
+//
+//    {
+//        //Set up the effort controller. This manages the cmd_longitudinal_effort topic
+//        effort_controller_.reset(new cav::LongitudinalEffortController());
+//        auto& v = effort_controller_->get_api();
+//        api_.insert(api_.end(),v.begin(),v.end());
+//        effort_controller_->onNewCommand.connect([this](const cav::LongitudinalEffortController::Command&)
+//                                                 {
+//                                                    if(!active_robotic_status_provider_->getEnabled()) return;
+//                                                    cmd_mode_ = cav::CommandMode_t::Wrench;
+//                                                 });
+//
+//    }
 
     {
         //Set up the speed controller. This manages the cmd_speed topic
@@ -201,9 +203,10 @@ void XGVApplication::post_spin()
         {
             case cav::CommandMode_t::None:
                 break;
-            case cav::CommandMode_t::Wrench:
-                xgv_client_->setWrenchEffort(effort_controller_->command.effort);
-                break;
+            //todo: disabling wrench effort until abrupt stopping behaviour is resolved
+//            case cav::CommandMode_t::Wrench:
+//                xgv_client_->setWrenchEffort(effort_controller_->command.effort);
+//                break;
             case cav::CommandMode_t::ClosedLoop:
                 xgv_client_->setSpeedAccel(speed_controller_->command.speed,speed_controller_->command.max_accel);
                 break;
