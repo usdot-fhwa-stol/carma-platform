@@ -24,6 +24,7 @@ import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 
 import cav_msgs.LocationOffsetECEF;
+import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
@@ -49,9 +50,10 @@ public class NegotiatorMgr extends SaxtonBaseNode{
  
   // Topics
   // Publishers
-  protected Publisher<cav_msgs.MobilityRequest>      mobReqOutPub;
+  protected Publisher<cav_msgs.MobilityRequest>   mobReqOutPub;
   protected Publisher<cav_msgs.MobilityPath>      mobPathOutPub;
-  protected Publisher<cav_msgs.MobilityResponse>      mobResOutPub;
+  protected Publisher<cav_msgs.MobilityResponse>  mobResOutPub;
+  protected Publisher<cav_msgs.MobilityOperation> mobOperPub;
 
   // Subscribers
   protected Subscriber<cav_msgs.SystemAlert>         alertSub;
@@ -65,10 +67,11 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     log = new SaxtonLogger(NegotiatorMgr.class.getSimpleName(), connectedNode.getLog());
     // Topics
     // Publishers
-    mobReqOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
-    mobPathOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath._TYPE);
-    mobResOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_response", MobilityResponse._TYPE);
-    timeDelay      = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
+    mobReqOutPub  = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
+    mobPathOutPub = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath._TYPE);
+    mobResOutPub  = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_response", MobilityResponse._TYPE);
+    mobOperPub    = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_operation", MobilityOperation._TYPE);
+    timeDelay     = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
@@ -138,6 +141,16 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             response.setIsAccepted(true);
             response.setUrgency((short) 500);
             mobResOutPub.publish(response);
+            
+            MobilityOperation op = mobOperPub.newMessage();
+            op.getHeader().setSenderId("DOT-45100");
+            op.getHeader().setRecipientId("");
+            op.getHeader().setSenderBsmId("10ABCDEF");
+            op.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
+            op.getHeader().setTimestamp(System.currentTimeMillis());
+            op.setStrategy("Carma/Platooning");
+            op.setStrategyParams("STATUS|CMDSPEED:10.01,DTD:50.02,SPEED:10.01");
+            mobOperPub.publish(op);
         }
         Thread.sleep(timeDelay);
       }

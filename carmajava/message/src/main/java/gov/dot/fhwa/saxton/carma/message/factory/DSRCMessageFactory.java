@@ -32,6 +32,8 @@ public class DSRCMessageFactory {
             return new MobilityPathMessage(log, factory);
         case "MobilityResponse":
             return new MobilityResponseMessage(log, factory);
+        case "MobilityOperation":
+            return new MobilityOperationMessage(factory, log);
         default:
             return null;
         }

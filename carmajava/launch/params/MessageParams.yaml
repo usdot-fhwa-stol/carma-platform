@@ -5,3 +5,5 @@
 publish_outbound_bsm: false
 publish_outbound_mobility_request: true
 publish_outbound_mobility_path: true
+publish_outbound_mobility_response: true
+publish_outbound_mobility_operation: true
