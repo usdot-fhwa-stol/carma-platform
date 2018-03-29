@@ -37,8 +37,16 @@
 
 XGVApplication::XGVApplication(int argc, char **argv) :
     DriverApplication(argc,argv,"xgv_controller"), 
-    cmd_mode_(cav::CommandMode_t::None)
+    cmd_mode_(cav::CommandMode_t::None),
+    timeout_(1.0)
 {
+    cav_msgs::DriverStatus status;
+    status.lon_controller = static_cast<unsigned char>(true);
+    status.status = cav_msgs::DriverStatus::OFF;
+
+    setStatus(status);
+
+    spin_rate = 50;
 
 }
 
@@ -148,8 +156,15 @@ void XGVApplication::initialize()
     //Connect the vehicleMode signal so that we know when the robot is robot active
     xgv_client_->vehicleModeReceivedSignal.connect([this](const XGVJausClient::VehicleModeEventArgs& args)
                                                    {
-                                                      ROS_DEBUG_STREAM_NAMED("vehicle_mode","Received VehicleMode Event: " << std::endl << args);
-                                                      active_robotic_status_provider_->setActive(args.safetyMode == XGVJausClient::SafetyMode::DriveByWire);
+                                                        cav_msgs::DriverStatus status;
+                                                        status.lon_controller = static_cast<unsigned char>(true);
+                                                        status.status = cav_msgs::DriverStatus::OPERATIONAL;
+
+                                                        setStatus(status);
+                                                        last_recv_update_ = ros::Time::now();
+
+                                                        ROS_DEBUG_STREAM_NAMED("vehicle_mode","Received VehicleMode Event: " << std::endl << args);
+                                                        active_robotic_status_provider_->setActive(args.safetyMode == XGVJausClient::SafetyMode::DriveByWire);
                                                    });
 
     xgv_client_->wrenchEffortReceivedSignal.connect([this](const XGVJausClient::WrenchEffortSignalArgs& state)
@@ -158,21 +173,21 @@ void XGVApplication::initialize()
                                                     });
 
 
-
-    cav_msgs::DriverStatus status;
-    status.lon_controller = static_cast<unsigned char>(true);
-    status.status = cav_msgs::DriverStatus::OPERATIONAL;
-
-    setStatus(status);
-
-    spin_rate = 50;
-
-
 }
 
 
 void XGVApplication::pre_spin()
 {
+    if(ros::Time::now()-last_recv_update_ > timeout_)
+    {
+        ROS_WARN_STREAM_THROTTLE(1,"Haven't received vehicle mode update from XGV in " << ros::Time::now() - last_recv_update_);
+        cav_msgs::DriverStatus status;
+        status.lon_controller = static_cast<unsigned char>(true);
+        status.status = cav_msgs::DriverStatus::FAULT;
+
+        setStatus(status);
+    }
+
     active_robotic_status_provider_->publishState();
     cmd_mode_ = !active_robotic_status_provider_->getEnabled() ? cav::CommandMode_t::DisableRobotic : cav::CommandMode_t::None;
 }
