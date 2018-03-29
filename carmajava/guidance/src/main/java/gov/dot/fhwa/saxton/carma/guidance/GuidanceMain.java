@@ -69,7 +69,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
   // Member Variables
   protected ExecutorService executor;
-  protected final int NUMTHREADS = 8;
+  protected final int NUMTHREADS = 9;
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
   protected IPubSubService pubSubService;
@@ -119,13 +119,16 @@ public class GuidanceMain extends SaxtonBaseNode {
         trajectoryExecutor);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
         routeService, node, router, conflictManager, trajectoryConverter, lightBarManager);
-    Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor);
+    VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager);
+    Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor, vehicleAwareness);
 
     tracking.setTrajectoryExecutor(trajectoryExecutor);
     tracking.setArbitrator(arbitrator);
     trajectoryExecutor.setArbitrator(arbitrator);
     pluginManager.setArbitratorService(arbitrator);
     router.setPluginManager(pluginManager);
+    vehicleAwareness.setPluginManager(pluginManager);
+    vehicleAwareness.setTrajectoryExecutor(trajectoryExecutor);
 
     executor.execute(stateHandler);
     executor.execute(maneuverInputs);
@@ -136,6 +139,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     executor.execute(guidanceCommands);
     executor.execute(router);
     executor.execute(lightBarManager);
+    executor.execute(vehicleAwareness);
   }
 
   /**
