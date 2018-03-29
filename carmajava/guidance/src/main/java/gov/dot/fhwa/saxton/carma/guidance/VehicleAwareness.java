@@ -174,7 +174,8 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
             nextTrajectory = traj;
         }
 
-        List<ConflictSpace> conflicts = conflictDetector.getConflicts(getPathPrediction());
+        List<RoutePointStamped> pathPrediction = getPathPrediction();
+        List<ConflictSpace> conflicts = conflictDetector.getConflicts(pathPrediction);
 
         if (!conflicts.isEmpty()) {
             if (conflictHandler == null) {
@@ -190,7 +191,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
             log.info("No conflicts detected in trajectory.");
         }
 
-        publishMobilityPath();
+        publishMobilityPath(pathPrediction);
     }
 
     /**
@@ -207,13 +208,19 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
      * Collects the current path prediction of the vehicle and publishes that as a MobilityPath message
      */
     private synchronized void publishMobilityPath() {
+        publishMobilityPath(getPathPrediction());
+    }
+
+    /**
+     * Publishes the MobilityPath message that corresponds to the input path prediction data
+     */
+    private synchronized void publishMobilityPath(List<RoutePointStamped> pathPrediction) {
         if (stateMachine.getState() != GuidanceState.ENGAGED) {
             // Don't bother until we're engaged
             return;
         }
 
         log.info("Beginning publication of mobility path...");
-        List<RoutePointStamped> pathPrediction = getPathPrediction();
         MessageFactory factory = node.getTopicMessageFactory();
         MobilityPath pathMsg = factory.newFromType(MobilityPath._TYPE);
         // Set message header data
