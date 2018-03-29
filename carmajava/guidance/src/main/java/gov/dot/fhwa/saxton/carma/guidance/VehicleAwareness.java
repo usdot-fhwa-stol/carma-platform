@@ -88,9 +88,12 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     public void onStartup() {
         log.info("Loading config params and initing publisher");
         pathPublishInterval = node.getParameterTree().getInteger("~mobility_path_publish_interval", 3000);
-        maxPointsPerMessage = node.getParameterTree().getInteger("~max_points_per_mobility_path", 60);
+        maxPointsPerMessage = node.getParameterTree().getInteger("~mobility_path_max_points", 60);
         mobilitySenderId = node.getParameterTree().getString("~vehicle_id", "UNKNOWN");
         conflictHandlerName = node.getParameterTree().getString("~default_mobility_conflict_handler", "Yield Plugin");
+        log.info(String.format(
+                "VehicleAwareness init'd with pathPublishInterval=%d, maxPointsPerMessage=%d, mobilitySenderId=%s, conflictHandlerName=%s",
+                pathPublishInterval, maxPointsPerMessage, mobilitySenderId, conflictHandlerName));
         pathPub = pubSubService.getPublisherForTopic("outgoing_mobility_path", MobilityPath._TYPE);
     }
 
@@ -104,7 +107,8 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         }
 
         if (conflictHandler == null) {
-            log.warn("No default conflict handler detected by name: " + conflictHandlerName + ". Guidance will fail on first detected conflict!!!"); 
+            log.warn("No default conflict handler detected by name: " + conflictHandlerName
+                    + ". Guidance will fail on first detected conflict!!!");
         }
 
         trajectoryExecutor.registerOnTrajectoryProgressCallback(0.0, (pct) -> rollTrajectoryBuffer());
@@ -174,7 +178,8 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
 
         if (!conflicts.isEmpty()) {
             if (conflictHandler == null) {
-                throw new RosRuntimeException("Unable to locate default conflict handler: " + conflictHandlerName + ". Cannot handle conflict on current trajectory!!!");
+                throw new RosRuntimeException("Unable to locate default conflict handler: " + conflictHandlerName
+                        + ". Cannot handle conflict on current trajectory!!!");
             } else {
                 log.info("Conflict detected! Handling by delegating to: " + conflictHandlerName);
                 // Just pass it null for now
