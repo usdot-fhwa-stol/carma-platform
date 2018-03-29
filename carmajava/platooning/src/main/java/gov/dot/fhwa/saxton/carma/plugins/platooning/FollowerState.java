@@ -23,6 +23,7 @@ import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -51,6 +52,7 @@ public class FollowerState implements IPlatooningState {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
+        updateLightBar();
     }
 
     @Override
@@ -186,5 +188,11 @@ public class FollowerState implements IPlatooningState {
         msg.setStrategyParams(statusParams);
         log.debug("Composed a mobility operation message with params " + msg.getStrategyParams());
     }
-    
+
+    /**
+     * Helper function to update the light bar
+     */
+    private void updateLightBar() {
+        plugin.setLightBarStatus(IndicatorStatus.FLASH);
+    }
 }

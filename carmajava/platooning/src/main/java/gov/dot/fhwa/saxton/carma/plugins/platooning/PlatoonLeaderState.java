@@ -9,6 +9,7 @@ import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
@@ -41,6 +42,8 @@ public class PlatoonLeaderState implements IPlatooningState {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
+        // Update the light bar
+        updateLightBar();
     }
 
     @Override
@@ -243,10 +246,11 @@ public class PlatoonLeaderState implements IPlatooningState {
     @Override
     public void run() {
         // This is a loop which is safe to interrupt
-        // This loop does three tasks:
+        // This loop does four tasks:
         // 1. Send out heart beat mobility operation INFO message every ~3 seconds if the platoon is not full
-        // 2. Remove current plan if we wait for a long enough time
-        // 3. Publish operation status every 100 milliseconds if we have follower
+        // 2. Updates the light bar status every ~3 seconds 
+        // 3. Remove current plan if we wait for a long enough time
+        // 4. Publish operation status every 100 milliseconds if we have follower
         try {
             while(!Thread.currentThread().isInterrupted()) {
                 long tsStart = System.currentTimeMillis();
@@ -260,6 +264,10 @@ public class PlatoonLeaderState implements IPlatooningState {
                     log.debug("Published heart beat platoon INFO mobility operatrion message");
                 }
                 // Task 2
+                if (isTimeForHeartBeat) {
+                    updateLightBar();
+                }
+                // Task 3
                 if(currentPlan != null) {
                     synchronized(this.currentPlan) {
                         boolean isCurrentPlanTimeout = ((System.currentTimeMillis() - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout());
@@ -269,7 +277,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                         }
                     }
                 }
-                // Task 3
+                // Task 4
                 boolean hasFollower = plugin.getPlatoonManager().getPlatooningSize() != 0; 
                 if(hasFollower) {
                     MobilityOperation statusOperation = plugin.getMobilityOperationPublisher().newMessage();
@@ -322,6 +330,19 @@ public class PlatoonLeaderState implements IPlatooningState {
             msg.setStrategyParams("");
         }
         log.debug("Composed a mobility operation message with params " + msg.getStrategyParams());
+    }
+
+    /**
+     * Helper function to update the light bar
+     */
+    private void updateLightBar() {
+        // Set the light bar flashing if we are a leader with a follower
+        if (plugin.getPlatoonManager().getPlatooningSize() != 0) {
+            plugin.setLightBarStatus(IndicatorStatus.FLASH);
+        } else {
+            // Turn off the light bar
+            plugin.setLightBarStatus(IndicatorStatus.OFF);
+        }
     }
     
 }
