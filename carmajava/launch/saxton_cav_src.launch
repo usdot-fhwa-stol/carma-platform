@@ -420,6 +420,8 @@
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
         <remap from="mobility_ack_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
+        <remap from="ui_instructions"
+               to="/$(arg TOP_NS)/ui_instructions"/>
                
       </node>
     </group>
