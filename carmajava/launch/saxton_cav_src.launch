@@ -375,6 +375,14 @@
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
         
         <!-- Tracking Thread-->
+        <!-- Params -->
+        <remap from="vehicle_length"
+               to="/$(arg TOP_NS)/vehicle_length"/>
+        <remap from="vehicle_width"
+               to="/$(arg TOP_NS)/vehicle_width"/>
+        <remap from="vehicle_id"
+               to="/$(arg TOP_NS)/vehicle_id"/>
+        <!-- Topics and Services -->
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
