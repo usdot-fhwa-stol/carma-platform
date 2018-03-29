@@ -16,6 +16,11 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import java.util.List;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import cav_msgs.LightBarStatus;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
@@ -23,6 +28,10 @@ import cav_msgs.PlatooningInfo;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarControlChangeHandler;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarIndicator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityOperationHandler;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
@@ -94,6 +103,14 @@ public class PlatooningPlugin extends AbstractPlugin
     
     // initialize a lock for handle mobility messages
     protected Object sharedLock = new Object();
+
+    // Light Bar Control
+    protected final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
+    protected ILightBarManager lightBarManager;
+    protected AtomicBoolean lostControlOfLights = new AtomicBoolean(false);
+    protected final int LOOPS_PER_REQUEST = 10;
+    protected int requestControlLoopsCount = 0;
+    protected IndicatorStatus lastAttemptedIndicatorStatus = IndicatorStatus.OFF;
     
     public PlatooningPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -160,6 +177,8 @@ public class PlatooningPlugin extends AbstractPlugin
         pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(MOBILITY_STRATEGY, this);
         pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
         log.info("CACC platooning plugin is initialized.");
+        // get light bar manager
+        lightBarManager = pluginServiceLocator.getLightBarManager();
     }
 
     @Override
@@ -183,6 +202,8 @@ public class PlatooningPlugin extends AbstractPlugin
         }
         log.info("The current CACC plugin state is " + this.state.toString());
         this.setAvailability(true);
+        // Take control of light bar indicator
+        takeControlOfLightBar();
     }
 
     @Override
@@ -201,6 +222,9 @@ public class PlatooningPlugin extends AbstractPlugin
             platoonManagerThread = null;
         }
         log.info("CACC platooning plugin is suspended.");
+        // Turn off lights and release control
+        lightBarManager.setIndicator(LIGHT_BAR_INDICATOR, IndicatorStatus.OFF, this.getVersionInfo().componentName());
+        lightBarManager.releaseControl(Arrays.asList(LIGHT_BAR_INDICATOR), this.getVersionInfo().componentName());
     }
     
     @Override
@@ -212,6 +236,13 @@ public class PlatooningPlugin extends AbstractPlugin
     public void loop() throws InterruptedException {
         // publish platooning information message for the usage of UI
         publishPlatooningInfo();
+        // Request control of light bar if needed
+        if (lostControlOfLights.get() == true) {
+            if (requestControlLoopsCount == LOOPS_PER_REQUEST) {
+                takeControlOfLightBar();
+                requestControlLoopsCount = 0;
+            }
+        }
         Thread.sleep(statusIntervalLength);
     }
 
@@ -273,6 +304,37 @@ public class PlatooningPlugin extends AbstractPlugin
             info.setDesiredGap((float) commandGenerator.desiredGap_);
             platooningInfoPublisher.publish(info);
         }
+    }
+
+    /**
+     * Helper function to acquire control of the light bar
+     */
+    private void takeControlOfLightBar() {
+        List<LightBarIndicator> acquired = lightBarManager.requestControl(Arrays.asList(LIGHT_BAR_INDICATOR), this.getVersionInfo().componentName(),
+            // Lost control of light call back
+            (LightBarIndicator lostIndicator) -> {
+                lostControlOfLights.set(true);
+                log.info("Lost control of light bar indicator: " + LIGHT_BAR_INDICATOR);
+        });
+        // Check if the control request was successful. 
+        if (acquired.contains(LIGHT_BAR_INDICATOR)) {
+            lightBarManager.setIndicator(LIGHT_BAR_INDICATOR, lastAttemptedIndicatorStatus, this.getVersionInfo().componentName());
+            lostControlOfLights.set(false);
+            log.info("Got control of light bar indicator: " + LIGHT_BAR_INDICATOR);
+        }
+    }
+
+    /**
+     * Attempts to set the platooning controlled light bar indicators to the provided status
+     * 
+     * @param status the indicator status to set
+     */
+    protected void setLightBarStatus(IndicatorStatus status) {
+        if (lightBarManager == null) {
+            return;
+        }
+        lightBarManager.setIndicator(LIGHT_BAR_INDICATOR, status, this.getVersionInfo().componentName());
+        lastAttemptedIndicatorStatus = status;
     }
     
     // The following getters will be helpful on doing unit tests, because it will let the plugin's
