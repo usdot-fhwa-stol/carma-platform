@@ -115,6 +115,11 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   @Override
+  public List<RoutePointStamped> convertToPath(Trajectory traj, int maxPointsInPath) {
+    return convertToPath(traj, System.currentTimeMillis(), downtrack, crosstrack, currentSegmentIdx, currentSegDowntrack, lane, maxPointsInPath);
+  }
+
+  @Override
   public List<RoutePointStamped> convertToPath(Trajectory traj, RoutePointStamped startPoint) {
     final long startTime = (long) ((startPoint.getStamp() + timeStep) * MS_PER_SEC);
     final double downtrack = startPoint.getDowntrack();
@@ -125,9 +130,25 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   @Override
+  public List<RoutePointStamped> convertToPath(Trajectory traj, RoutePointStamped startPoint, int maxPointsInPath) {
+    final long startTime = (long) ((startPoint.getStamp() + timeStep) * MS_PER_SEC);
+    final double downtrack = startPoint.getDowntrack();
+    final double crosstrack = startPoint.getCrosstrack();
+    final int segmentIdx = startPoint.getSegmentIdx();
+    final double segDowntrack = startPoint.getSegDowntrack();
+    return convertToPath(traj, startTime, downtrack, crosstrack, segmentIdx, segDowntrack, lane, maxPointsInPath);
+  }
+  @Override
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
    double downtrack, double crosstrack,
    int currentSegmentIdx, double segDowntrack, int lane) {
+    return convertToPath(traj, startTimeMS, downtrack, crosstrack, currentSegmentIdx, segDowntrack, lane, this.maxPointsInPath);
+  }
+
+  @Override
+  public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
+   double downtrack, double crosstrack,
+   int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath) {
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers
@@ -158,7 +179,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
 
       // If this maneuver is happening or will happen add it to the path
       if (maneuver.getEndDistance() > longitudinalSimData.downtrack) {
-        longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData);
+        longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData, maxPointsInPath);
         // Ensure there are no overlapping points in time
         if (oldPathEndPoint != null && oldPathEndPoint.getStamp() == path.get(oldPathSize).getStamp()){
           path.remove(oldPathSize);
@@ -219,7 +240,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       double startDist = complexManeuver.getStartDistance();
       double endDist = complexManeuver.getEndDistance();
       // Treat complex maneuver as stead speed maneuver
-      addKinematicMotionToPath(startDist, endDist, averageSpeed, averageSpeed, path, longitudinalSimData);
+      addKinematicMotionToPath(startDist, endDist, averageSpeed, averageSpeed, path, longitudinalSimData, maxPointsInPath);
     }
 
     return path;
@@ -339,9 +360,23 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     return addKinematicMotionToPath(startX, endX, startV, endV, path, startingData);
   }
 
+  @Override
+  public LongitudinalSimulationData addLongitudinalManeuverToPath(
+    final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
+    final LongitudinalSimulationData startingData, final int maxPointsInPath) {
+
+    final double startX = maneuver.getStartDistance();
+    final double endX = maneuver.getEndDistance();
+    final double startV = maneuver.getStartSpeed();
+    final double endV = maneuver.getTargetSpeed();
+    return addKinematicMotionToPath(startX, endX, startV, endV, path, startingData, maxPointsInPath);
+  }
+
   /**
    * Helper function which generates a set of points along a route
    * which describe vehicle position based on starting and ending configurations.
+   * 
+   * Uses the TrajectoryConverter's current configured max path size
    * 
    * @param startX The starting downtrack location on the route
    * @param endX The ending downtrack location on the route
@@ -356,6 +391,27 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   private LongitudinalSimulationData addKinematicMotionToPath(
     final double startX, final double endX, final double startV, final double endV,
      List<RoutePointStamped> path,final LongitudinalSimulationData startingData) {
+      return addKinematicMotionToPath(startX, endX, startV, endV, path, startingData, this.maxPointsInPath);
+  }
+
+  /**
+   * Helper function which generates a set of points along a route
+   * which describe vehicle position based on starting and ending configurations.
+   * 
+   * @param startX The starting downtrack location on the route
+   * @param endX The ending downtrack location on the route
+   * @param startV The starting velocity along the route
+   * @param endV The ending velocity along the route
+   * @param path The list of points which will be added to
+   * @param startingData The starting configuration
+   * @param route The route being traversed
+   * @param maxPointsInPath The maximum number of points to convert
+   * 
+   * @return The new configuration resulting from the motion
+   */
+  private LongitudinalSimulationData addKinematicMotionToPath(
+    final double startX, final double endX, final double startV, final double endV,
+     List<RoutePointStamped> path,final LongitudinalSimulationData startingData, int maxPointsInPath) {
       final double deltaX = endX - startX;
       final double deltaV = endV - startV;
       final double startVSqr = startV * startV;
