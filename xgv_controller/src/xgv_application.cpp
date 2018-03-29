@@ -155,6 +155,7 @@ void XGVApplication::initialize()
                                                           });
     }
 
+    last_recv_update_ = ros::Time::now();
     //Connect the vehicleMode signal so that we know when the robot is robot active
     xgv_client_->vehicleModeReceivedSignal.connect([this](const XGVJausClient::VehicleModeEventArgs& args)
                                                    {
