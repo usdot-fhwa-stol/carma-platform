@@ -70,7 +70,6 @@ required_plugins:
 arbitrator_plugins: 
   - Speed Harmonization Plugin
   - Route Following Plugin
-  - Negotiation Receiver Plugin
   - Cruising Plugin
   - CACC Platooning Plugin
 
@@ -145,6 +144,7 @@ lane_change_safety_factor: 2.0
 # Units: seconds
 lane_change_notification_time: 4.0
 
+##### DEPRECATED
 ##### The following are used by the NegotiationReceiverPlugin
 
 # should we include the acceleration distance in the total tactic length?

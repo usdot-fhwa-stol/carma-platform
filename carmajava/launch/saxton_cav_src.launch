@@ -411,10 +411,6 @@
         <remap from="route"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
-        <!-- Negotiation Receiver Plugin -->
-        <remap from="new_plan"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
-               
         <!-- Lane Change Plugin -->
         <remap from="mobility_intro_outbound"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
