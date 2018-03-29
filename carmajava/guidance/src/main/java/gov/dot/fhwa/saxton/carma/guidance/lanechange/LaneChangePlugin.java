@@ -433,6 +433,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
      * Helper function to acquire control of the light bar
      */
     private void releaseControlAndTurnOff() {
+        if (lightBarManager_ == null) {
+            return;
+        }
         lightBarManager_.setIndicator(LIGHT_BAR_INDICATOR, IndicatorStatus.OFF, this.getVersionInfo().componentName());
         lightBarManager_.releaseControl(Arrays.asList(LIGHT_BAR_INDICATOR), this.getVersionInfo().componentName());
     }
