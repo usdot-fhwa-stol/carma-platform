@@ -73,7 +73,8 @@ void XGVApplication::initialize()
         api_.insert(api_.end(),v.begin(),v.end());
         effort_controller_->onNewCommand.connect([this](const cav::LongitudinalEffortController::Command&)
                                                  {
-                                                     cmd_mode_ = cav::CommandMode_t::Wrench;
+                                                    if(!active_robotic_status_provider_->getEnabled()) return;
+                                                    cmd_mode_ = cav::CommandMode_t::Wrench;
                                                  });
 
     }
@@ -85,6 +86,7 @@ void XGVApplication::initialize()
         api_.insert(api_.end(),v.begin(),v.end());
         speed_controller_->onNewCommand.connect([this](const cav::LongitudinalSpeedController::Command& cmd)
                                                 {
+                                                    if(!active_robotic_status_provider_->getEnabled()) return;
                                                     if(cmd.speed < 0 || cmd.max_accel < 0)
                                                     {
                                                         ROS_ERROR_STREAM("Invalid command received: speed: " << cmd.speed << ", max_accel: " << cmd.max_accel);
@@ -132,14 +134,14 @@ void XGVApplication::initialize()
         api_.insert(api_.end(),v.begin(),v.end());
         enable_robotic_service_->onEnabledChanged.connect([this](bool new_value)
                                                           {
-                                                              ROS_INFO_STREAM("Robotic_enabled set to: " << (new_value ? "true" : "false"));
-                                                              if(!new_value)
-                                                              {
-                                                                  cmd_mode_ = cav::CommandMode_t::DisableRobotic;
-                                                              }
+                                                                ROS_INFO_STREAM("Robotic_enabled set to: " << (new_value ? "true" : "false"));
+
+                                                                if(!new_value)
+                                                                {
+                                                                    cmd_mode_ = cav::CommandMode_t::DisableRobotic;
+                                                                }
                                                             
-                                                                if(active_robotic_status_provider_)
-                                                                    active_robotic_status_provider_->setEnabled(new_value);
+                                                                active_robotic_status_provider_->setEnabled(new_value);
                                                           });
     }
 
@@ -172,7 +174,7 @@ void XGVApplication::initialize()
 void XGVApplication::pre_spin()
 {
     active_robotic_status_provider_->publishState();
-    cmd_mode_ = cmd_mode_ == cav::CommandMode_t::DisableRobotic ? cav::CommandMode_t::DisableRobotic : cav::CommandMode_t::None;
+    cmd_mode_ = !active_robotic_status_provider_->getEnabled() ? cav::CommandMode_t::DisableRobotic : cav::CommandMode_t::None;
 }
 
 
@@ -192,7 +194,7 @@ void XGVApplication::post_spin()
                 break;
         }
     }
-    else if(cmd_mode_ == cav::CommandMode_t::DisableRobotic)
+    else
     {
         xgv_client_->disableRoboticControl();
     }
