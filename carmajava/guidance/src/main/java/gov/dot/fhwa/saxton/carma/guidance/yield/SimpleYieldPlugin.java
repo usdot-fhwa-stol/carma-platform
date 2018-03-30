@@ -48,7 +48,7 @@ public class SimpleYieldPlugin extends AbstractPlugin
 
     /* Constants */
     private static final String YIELD_STRATEGY = "carma/yield";
-	private static final long SLEEP_DURATION = 10000;
+    private static final long SLEEP_DURATION = 10000;
     private double minConflictAvoidanceTimegap = 4.0;
     private double maxYieldAccelAuthority = 2.0;
 
@@ -73,9 +73,14 @@ public class SimpleYieldPlugin extends AbstractPlugin
     public void onInitialize() {
         ParameterSource params = pluginServiceLocator.getParameterSource();
         minConflictAvoidanceTimegap = params.getDouble("~min_conflict_avoidance_timegap");
-        maxYieldAccelAuthority = params.getDouble("~max_acceleration_capability") * params.getDouble("~max_yield_accel_authority");
+        maxYieldAccelAuthority = params.getDouble("~max_acceleration_capability")
+                * params.getDouble("~max_yield_accel_authority");
         pluginServiceLocator.getMobilityRouter().registerMobilityPathHandler(YIELD_STRATEGY, this);
         pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(YIELD_STRATEGY, this);
+
+        log.info(String.format(
+                "Yield plugin inited with maxYieldAccelAuthority =%.02f, minConflictAvoidanceTimegap = %.02f",
+                minConflictAvoidanceTimegap, maxYieldAccelAuthority));
     }
 
     @Override
@@ -130,7 +135,8 @@ public class SimpleYieldPlugin extends AbstractPlugin
             }
         }
 
-        List<RoutePointStamped> oldPathPrediction = pluginServiceLocator.getTrajectoryConverter().convertToPath(oldTraj);
+        List<RoutePointStamped> oldPathPrediction = pluginServiceLocator.getTrajectoryConverter()
+                .convertToPath(oldTraj);
 
         double conflictAvoidanceStartDist = 0.0;
         double conflictAvoidanceStartSpeed = 0.0;
@@ -141,7 +147,7 @@ public class SimpleYieldPlugin extends AbstractPlugin
             LongitudinalManeuver mvr = lonMvrs.remove(lonMvrs.size() - 1);
             conflictAvoidanceStartDist = mvr.getEndDistance();
             conflictAvoidanceStartSpeed = mvr.getTargetSpeed();
-            
+
             conflictAvoidanceStartTime = oldPathPrediction.get(0).getStamp();
 
             for (RoutePointStamped pt : oldPathPrediction) {
@@ -158,7 +164,7 @@ public class SimpleYieldPlugin extends AbstractPlugin
             double v = conflictAvoidanceStartSpeed;
             double t = timeAvailableForConflictAvoidance;
             double epsilon = minConflictAvoidanceTimegap;
-            requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2); 
+            requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2);
 
             if (requiredAcceleration <= maxYieldAccelAuthority) {
                 solved = true;
@@ -169,7 +175,7 @@ public class SimpleYieldPlugin extends AbstractPlugin
             // Try one last time from the start of the trajectory
             conflictAvoidanceStartDist = trajectory.getStartLocation();
             conflictAvoidanceStartSpeed = expectedEntrySpeed;
-            
+
             conflictAvoidanceStartTime = System.currentTimeMillis();
 
             double spaceAvailableForConflictAvoidance = conflict.getStartDowntrack() - conflictAvoidanceStartDist;
@@ -180,15 +186,16 @@ public class SimpleYieldPlugin extends AbstractPlugin
             double v = conflictAvoidanceStartSpeed;
             double t = timeAvailableForConflictAvoidance;
             double epsilon = minConflictAvoidanceTimegap;
-            requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2); 
+            requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2);
         }
 
         if (requiredAcceleration > maxYieldAccelAuthority) {
             // Nothing we can do, throw control to driver
-            throw new RosRuntimeException(String.format("Yield plugin unable to solve conflict at [%.02f, %.02f]m within acceleration constraints maxYieldAccelAuthority=%.02m/s/s, requiredAccel=%.02fm/s/s",
-            conflict.getStartDowntrack(), conflict.getEndDowntrack(), maxYieldAccelAuthority, requiredAcceleration));
+            throw new RosRuntimeException(String.format(
+                    "Yield plugin unable to solve conflict at [%.02f, %.02f]m within acceleration constraints maxYieldAccelAuthority=%.02m/s/s, requiredAccel=%.02fm/s/s",
+                    conflict.getStartDowntrack(), conflict.getEndDowntrack(), maxYieldAccelAuthority,
+                    requiredAcceleration));
         }
-
 
         // We solved it, implement solution
         for (LongitudinalManeuver mvr : lonMvrs) {
