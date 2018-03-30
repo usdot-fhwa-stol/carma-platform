@@ -309,7 +309,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
 
         //construct our proposed simple lane change maneuver
         log.info("Creating lane change maneuver");
-        laneChangeMvr_ = new LaneChange(this, futureLatMvr_.getEndingRelativeLane());
+        laneChangeMvr_ = new LaneChange(this, targetLane-inputs.getCurrentLane());
         laneChangeMvr_.setTargetLane(targetLane);
         if (planner.canPlan(laneChangeMvr_, startDist, endDist)) {
             log.info("Planning lane change maneuver...");
