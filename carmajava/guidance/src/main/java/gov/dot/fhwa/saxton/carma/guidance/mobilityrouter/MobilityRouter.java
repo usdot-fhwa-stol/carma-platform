@@ -291,12 +291,14 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             }
         }
 
-        if (!conflictHandled && defaultConflictHandler != null) {
-            // Handle in default conflict handler
-            log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
-            fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace);
-        } else {
-            throw new RosRuntimeException("Unhandled mobility path conflict detected and no default conflict handler available!!!");
+        if (conflictSpace != null) {
+            if (!conflictHandled && defaultConflictHandler != null) {
+                // Handle in default conflict handler
+                log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
+                fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace);
+            } else {
+                throw new RosRuntimeException("Unhandled mobility path conflict detected and no default conflict handler available!!!");
+            }
         }
     }
 
