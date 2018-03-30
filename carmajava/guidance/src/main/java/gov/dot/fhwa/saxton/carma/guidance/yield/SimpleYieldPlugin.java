@@ -51,6 +51,7 @@ public class SimpleYieldPlugin extends AbstractPlugin
     private static final long SLEEP_DURATION = 10000;
     private double minConflictAvoidanceTimegap = 4.0;
     private double maxYieldAccelAuthority = 2.0;
+    private double vehicleResponseLag = 1.4;
 
     private class ReplanData {
         Trajectory trajectoryToReplan;
@@ -72,9 +73,10 @@ public class SimpleYieldPlugin extends AbstractPlugin
     @Override
     public void onInitialize() {
         ParameterSource params = pluginServiceLocator.getParameterSource();
-        minConflictAvoidanceTimegap = params.getDouble("~min_conflict_avoidance_timegap");
-        maxYieldAccelAuthority = params.getDouble("~max_acceleration_capability")
-                * params.getDouble("~max_yield_accel_authority");
+        minConflictAvoidanceTimegap = params.getDouble("~min_conflict_avoidance_timegap", 4.0);
+        maxYieldAccelAuthority = params.getDouble("~max_acceleration_capability", 2.5)
+                * params.getDouble("~max_yield_accel_authority", 0.8);
+        maxYieldAccelAuthority = params.getDouble("~vehicle_response_lag", 1.4);
         pluginServiceLocator.getMobilityRouter().registerMobilityPathHandler(YIELD_STRATEGY, this);
         pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(YIELD_STRATEGY, this);
 
@@ -156,8 +158,13 @@ public class SimpleYieldPlugin extends AbstractPlugin
                 }
             }
 
-            double spaceAvailableForConflictAvoidance = conflict.getStartDowntrack() - conflictAvoidanceStartDist;
-            double timeAvailableForConflictAvoidance = conflict.getStartTime() - conflictAvoidanceStartTime;
+            double spaceAvailableForConflictAvoidance = conflict.getStartDowntrack() - conflictAvoidanceStartDist - (conflictAvoidanceStartSpeed * vehicleResponseLag);
+            if (spaceAvailableForConflictAvoidance <= 0) {
+                // Definitely wont work skip to next iteration
+                continue;
+            }
+
+            double timeAvailableForConflictAvoidance = conflict.getStartTime() - conflictAvoidanceStartTime - vehicleResponseLag;
 
             // Rename params for conciseness
             double d = spaceAvailableForConflictAvoidance;
@@ -166,7 +173,7 @@ public class SimpleYieldPlugin extends AbstractPlugin
             double epsilon = minConflictAvoidanceTimegap;
             requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2);
 
-            if (requiredAcceleration <= maxYieldAccelAuthority) {
+            if (Math.abs(requiredAcceleration) <= maxYieldAccelAuthority) {
                 solved = true;
             }
         }
@@ -178,8 +185,8 @@ public class SimpleYieldPlugin extends AbstractPlugin
 
             conflictAvoidanceStartTime = System.currentTimeMillis();
 
-            double spaceAvailableForConflictAvoidance = conflict.getStartDowntrack() - conflictAvoidanceStartDist;
-            double timeAvailableForConflictAvoidance = conflict.getStartTime() - conflictAvoidanceStartTime;
+            double spaceAvailableForConflictAvoidance = conflict.getStartDowntrack() - conflictAvoidanceStartDist - (vehicleResponseLag * expectedEntrySpeed);
+            double timeAvailableForConflictAvoidance = conflict.getStartTime() - conflictAvoidanceStartTime - vehicleResponseLag;
 
             // Rename params for conciseness
             double d = spaceAvailableForConflictAvoidance;
@@ -189,7 +196,7 @@ public class SimpleYieldPlugin extends AbstractPlugin
             requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2);
         }
 
-        if (requiredAcceleration > maxYieldAccelAuthority) {
+        if (Math.abs(requiredAcceleration) > maxYieldAccelAuthority) {
             // Nothing we can do, throw control to driver
             throw new RosRuntimeException(String.format(
                     "Yield plugin unable to solve conflict at [%.02f, %.02f]m within acceleration constraints maxYieldAccelAuthority=%.02m/s/s, requiredAccel=%.02fm/s/s",
@@ -202,14 +209,14 @@ public class SimpleYieldPlugin extends AbstractPlugin
             trajectory.addManeuver(mvr);
         }
 
-        double finalVelocity = conflictAvoidanceStartSpeed + 0.5 * requiredAcceleration;
+        double finalVelocity = conflictAvoidanceStartSpeed +  requiredAcceleration * (conflict.getStartTime() - conflictAvoidanceStartTime);
 
         SlowDown conflictAvoidanceMvr = new SlowDown(this);
         conflictAvoidanceMvr.setSpeeds(conflictAvoidanceStartSpeed, finalVelocity);
         ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
         planner.planManeuver(conflictAvoidanceMvr, conflictAvoidanceStartDist);
         trajectory.addManeuver(conflictAvoidanceMvr);
-        if (conflictAvoidanceMvr.getEndDistance() < conflict.getEndDowntrack()) {
+        if (conflictAvoidanceMvr.getEndDistance() <= conflict.getEndDowntrack()) {
             SteadySpeed steady = new SteadySpeed(this);
             steady.setSpeeds(finalVelocity, finalVelocity);
             planner.planManeuver(steady, conflictAvoidanceMvr.getEndDistance(), conflict.getEndDowntrack());
