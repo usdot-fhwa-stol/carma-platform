@@ -55,9 +55,13 @@ import cav_msgs.PlanStatus;
 import cav_msgs.PlanType;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityPath;
+import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LaneKeeping;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
@@ -154,7 +158,6 @@ public class SimpleYieldPlugin extends AbstractPlugin
                 trajectory.getStartLocation(), trajectory.getEndLocation(), conflict.getStartDowntrack(),
                 conflict.getEndDowntrack(), conflict.getStartTime(), conflict.getEndTime(), planId, "UNKNOWN"));
 
-        // Find the good maneuvers
         List<LongitudinalManeuver> lonMvrs = new ArrayList<>();
 
         // Load the stack of maneuvers we'll iterate over
@@ -241,6 +244,23 @@ public class SimpleYieldPlugin extends AbstractPlugin
             steady.setSpeeds(finalVelocity, finalVelocity);
             planner.planManeuver(steady, conflictAvoidanceMvr.getEndDistance(), conflict.getEndDowntrack());
             trajectory.addManeuver(steady);
+        }
+
+        // Copy the unchanged lateral maneuvers
+        double latMvrsEnd = Double.POSITIVE_INFINITY;
+        for (LateralManeuver mvr : oldTraj.getLateralManeuvers()) {
+            if (mvr.getEndDistance() < conflictAvoidanceStartDist) {
+                trajectory.addManeuver(mvr);
+                latMvrsEnd = mvr.getEndDistance();
+            }
+        }
+
+        // Backfill the lateral maneuvers up to the end of the conflict
+        if (latMvrsEnd < conflict.getEndDowntrack()) {
+            LaneKeeping laneKeeping = new LaneKeeping(this);
+            IGuidanceCommands gc = pluginServiceLocator.getManeuverPlanner().getGuidanceCommands();
+            IManeuverInputs mi = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
+            laneKeeping.planToTargetDistance(mi, gc, latMvrsEnd, conflict.getEndDowntrack());
         }
 
         return new TrajectoryPlanningResponse();
