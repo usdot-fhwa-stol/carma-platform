@@ -211,7 +211,7 @@ public class PlatoonLeaderState implements IPlatooningState {
             // The platoonManager will ignore it if it is not from our platoon
             String vehicleID = msg.getHeader().getSenderId();
             String statusParams = strategyParams.split("|")[1];
-            log.info("Receive operation status message from vehicle: " + vehicleID);
+            log.info("Receive operation status message from vehicle: " + vehicleID + " with params: " + statusParams);
             plugin.getPlatoonManager().memberUpdates(vehicleID, msg.getHeader().getPlanId(), statusParams);
         } else {
             log.debug("Receive operation message but ignore it because isPlatoonInfoMsg = " + isPlatoonInfoMsg 
