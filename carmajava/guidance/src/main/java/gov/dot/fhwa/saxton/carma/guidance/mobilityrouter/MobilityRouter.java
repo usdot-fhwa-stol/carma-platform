@@ -30,9 +30,11 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarStateMachine;
@@ -54,7 +56,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * Also handles publication of ACK/NACK responses to inbound MobilityRequest messages based on plugin
  * handler return codes.
  */
-public class MobilityRouter extends GuidanceComponent implements IMobilityRouter {
+public class MobilityRouter extends GuidanceComponent implements IMobilityRouter, IStateChangeListener {
 
     private final String componentName = "MobilityRouter";
     //private IPublisher<MobilityRequest> bsmPublisher;
@@ -83,6 +85,8 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
+
+        stateMachine.registerStateChangeListener(this);
     }
 
     public void setPluginManager(PluginManager pluginManager) {
@@ -420,4 +424,36 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         }
         pathMap.get(strategyId).add(handler);
     }
+
+  @Override
+  public void onStateChange(GuidanceAction action) {
+    log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+    switch (action) {
+    case INTIALIZE:
+      jobQueue.add(this::onStartup);
+      jobQueue.add(this::onSystemReady);
+      break;
+    case ACTIVATE:
+      jobQueue.add(this::onActive);
+      break;
+    case DEACTIVATE:
+      jobQueue.add(this::onDeactivate);
+      break;
+    case ENGAGE:
+      jobQueue.add(this::onEngaged);
+      break;
+    case SHUTDOWN:
+      jobQueue.add(this::onShutdown);
+      break;
+    case PANIC_SHUTDOWN:
+      jobQueue.add(this::onPanic);
+      break;
+    case RESTART:
+      jobQueue.add(this::onCleanRestart);
+      break;
+    default:
+      throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+    }
+  }
+
 }
