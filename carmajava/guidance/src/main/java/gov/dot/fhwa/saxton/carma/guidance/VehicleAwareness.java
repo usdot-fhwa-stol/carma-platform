@@ -55,7 +55,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     protected MobilityPathHandler conflictHandler;
     protected String mobilitySenderId = "UNKNOWN";
     protected String currentBsmId = "";
-    protected static final String BROADCAST_RECIPIENT_ID = "";
+    protected static final String BROADCAST_RECIPIENT_ID = "LANE-MERGE-TEST";
     protected IPublisher<MobilityPath> pathPub;
     protected PluginManager pluginManager;
 
