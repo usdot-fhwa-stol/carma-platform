@@ -273,8 +273,8 @@ public class PlatoonLeaderState implements IPlatooningState {
                     synchronized(this.currentPlan) {
                         boolean isCurrentPlanTimeout = ((System.currentTimeMillis() - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout());
                         if(isCurrentPlanTimeout) {
-                            this.currentPlan = null;
                             log.info("Give up current on waiting plan with planId: " + this.currentPlan.planId);
+                            this.currentPlan = null;
                         }
                     }
                 }
