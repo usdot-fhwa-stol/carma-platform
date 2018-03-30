@@ -161,7 +161,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
     
     private boolean isBroadcast(MobilityHeader header) {
-        return header.getSenderId().equals("");
+        return header.getRecipientId().equals("");
     }
 
     /**
@@ -258,16 +258,18 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
         List<RoutePointStamped> otherPath = trajectoryConverter.messageToPath(msg.getTrajectory());
         List<RoutePointStamped> hostPath = trajectoryExecutor.getHostPathPrediction();
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostPath, otherPath);
+        boolean conflictHandled = true;
+        ConflictSpace conflictSpace = null;
 
         if (!conflictSpaces.isEmpty()) {
-            ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
+            conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
             msg.getHeader().getPlanId(),
             conflictSpace.getStartDowntrack(),
@@ -275,26 +277,26 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             conflictSpace.getLane(),
             conflictSpace.getStartTime(),
             conflictSpace.getEndTime()));
+            conflictHandled = false;
+        }
 
-            boolean conflictHandled = false;
-            for (Entry<String, LinkedList<MobilityRequestHandler>> entry : requestMap.entrySet()) {
-                if (entry.getKey().endsWith(msg.getStrategy())) {
-                    log.info("Firing message handlers registered for " + entry.getKey());
-                    for (MobilityRequestHandler handler : entry.getValue()) {
-                        log.info("Firing mobility request handler: " + handler.getClass().getSimpleName());
-                        fireMobilityRequestCallback(handler, msg, true, conflictSpace);
-                        conflictHandled = true;
-                    }
+        for (Entry<String, LinkedList<MobilityRequestHandler>> entry : requestMap.entrySet()) {
+            if (entry.getKey().endsWith(msg.getStrategy())) {
+                log.info("Firing message handlers registered for " + entry.getKey());
+                for (MobilityRequestHandler handler : entry.getValue()) {
+                    log.info("Firing mobility request handler: " + handler.getClass().getSimpleName());
+                    fireMobilityRequestCallback(handler, msg, conflictSpace != null, conflictSpace);
+                    conflictHandled = true;
                 }
             }
+        }
 
-            if (!conflictHandled && defaultConflictHandler != null) {
-                // Handle in default conflict handler
-                log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
-                fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace);
-            } else {
-                throw new RosRuntimeException("Unhandled mobility path conflict detected and no default conflict handler available!!!");
-            }
+        if (!conflictHandled && defaultConflictHandler != null) {
+            // Handle in default conflict handler
+            log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
+            fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace);
+        } else {
+            throw new RosRuntimeException("Unhandled mobility path conflict detected and no default conflict handler available!!!");
         }
     }
 
@@ -308,7 +310,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())){
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())){
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -334,7 +336,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -364,7 +366,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }

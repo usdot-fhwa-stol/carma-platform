@@ -81,6 +81,11 @@ public class StringConverterHelper {
                 buffer.append((char) ch);
             }
         }
-        return buffer.toString();
+        String bufferString = buffer.toString();
+        // If this is a default dynamic string return an empty string
+        if (bufferString.equals(DYNAMIC_STRING_DEFAULT)) {
+            return "";
+        }
+        return bufferString;
     }
 }

@@ -211,7 +211,7 @@ public class PlatoonLeaderState implements IPlatooningState {
             // The platoonManager will ignore it if it is not from our platoon
             String vehicleID = msg.getHeader().getSenderId();
             String statusParams = strategyParams.split("|")[1];
-            log.info("Receive operation status message from vehicle: " + vehicleID);
+            log.info("Receive operation status message from vehicle: " + vehicleID + " with params: " + statusParams);
             plugin.getPlatoonManager().memberUpdates(vehicleID, msg.getHeader().getPlanId(), statusParams);
         } else {
             log.debug("Receive operation message but ignore it because isPlatoonInfoMsg = " + isPlatoonInfoMsg 
@@ -261,6 +261,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                     MobilityOperation infoOperation = plugin.getMobilityOperationPublisher().newMessage();
                     composeMobilityOperation(infoOperation, "INFO");
                     plugin.getMobilityOperationPublisher().publish(infoOperation);
+                    lastHeartBeatTime = System.currentTimeMillis();
                     log.debug("Published heart beat platoon INFO mobility operatrion message");
                 }
                 // Task 2
@@ -272,8 +273,8 @@ public class PlatoonLeaderState implements IPlatooningState {
                     synchronized(this.currentPlan) {
                         boolean isCurrentPlanTimeout = ((System.currentTimeMillis() - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout());
                         if(isCurrentPlanTimeout) {
-                            this.currentPlan = null;
                             log.info("Give up current on waiting plan with planId: " + this.currentPlan.planId);
+                            this.currentPlan = null;
                         }
                     }
                 }

@@ -114,7 +114,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
 
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands,
-        tracking);
+        tracking, trajectoryConverter);
     LightBarManager lightBarManager = new LightBarManager(stateMachine, pubSubService, node);
     MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter,
         trajectoryExecutor);
