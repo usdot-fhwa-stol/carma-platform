@@ -69,10 +69,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   }
 
   public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz,
-      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
+      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub, TrajectoryConverter trajectoryConverter) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
     this.activeManeuversPub = activeManeuversPub;
+    this.trajectoryConverter = trajectoryConverter;
   }
 
   public void setArbitrator(Arbitrator arbitrator) {
