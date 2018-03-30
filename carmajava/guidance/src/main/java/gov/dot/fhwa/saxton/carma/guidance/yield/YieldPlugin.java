@@ -20,18 +20,25 @@
  // higher level (based on urgencies, priorities, or other factors) to determine which of the two
  // vehicles should replan its trajectory, so when the Yield plugin is "activated" on a vehicle,
  // it doesn't have to make that determination.  It knows that it was called, and therefore its
- // responsibility is to change its vehicle's trajectory to avoid the collision.
+ // responsibility is to change its vehicle's trajectory to avoid the collision.  There are some
+ // exceptions to this, such as during initialization time, when the plugin registers itself, or
+ // when the planning function is called while there is no valid trajectory stored.
 
  // Version 1.0.0 will work as follows.  It will be passed the vehicle trajectory (or somehow gain
  // access to it) along with a collision "point" or region (that could have a starting and ending
  // downtrack distance (d) and time (t)).  It will request a new blank trajectory and it will
  // calculate the downtrack distance (d - Delta) where it will be "safe" from the collision,
- // effectively arriving behind the other vehicle instead of colliding with it.  To accomplish this
- // it will loop through the maneuvers (Mi) in the "old" vehicle trajectory, copying each one to the
+ // effectively trying to arrive behind the other vehicle instead of colliding with it.  To accomplish
+ // this it loops through the maneuvers (Mi) in the "old" vehicle trajectory, copying each one to the
  // new trajectory until it finds the maneuver, Mc, that would cause the collision.  At this point it
  // allocates a new, blank maneuver.  It makes whatever function call or calls that are necessary to
  // populate the maneuver with a path(?) that has the same starting information as Mc, but ends at
- // d - Delta instead of at d.  For now, that's it.
+ // at downtrack location d - Delta instead of at d.  For now, that's it.  Once we get this working,
+ // it will be relatively easy to add more complex decision-making to support more situations, but for
+ // the upcoming demo, it should work fine.  If we are worried that it will sense a collision with a
+ // vehicle that leads a non-empty platoon, or with a vehicle that happens to have a car close behind
+ // it, we will hae to be careful to increase Delta to account for this, or to collision-check our
+ // solution, see that we are now colliding with the car behind it, and repeat (as necessary).
  
  // ??? -- This partially filled trajectory is returned to the planner or arbitrator which does
  // something TBD.  Alternatively, it calls ACC(?) to fill out the rest of the trajectory and returns
@@ -39,14 +46,16 @@
  // testing.  Alternatively, (or for version 1.1.0), this new trajectory can be run through collision
  // checking again, and if another collision is found (at a higher d value than before), Yield is
  // called again.  If each time Yield is called for this single trajectory, the collision is further
- // downtrack (d is always getting larger, and d-delta is always located in a new Maneuver), then
+ // downtrack (d is always getting larger, and d - Delta is always located in a new Maneuver), then
  // this process will terminate.  We should be careful to avoid loops where even though we move further
- // downtrack, we are still redoing the same maneuver over and over again.
+ // downtrack, we are still redoing the same maneuver over and over again.  We should remember to check
+ // for any possible infinite loop, no matter how unlikely, and incorporate a maximum recursion depth
+ // constant to avoid it.
 
  // Other future implementations may include having Yield planning the entire new trajectory.  It would
  // process everything through Mc as before, but instead of returning control back to the arbitrator,
  // planner, or guidance (???), it would recursively (or maybe iteratively) call the planner/arbitrator
- // to fill in the rest of the trajectory.  This is all TBD later after v1.0.0 is build and tested.
+ // to fill in the rest of the trajectory.  This is all TBD after v1.0.0 is built and tested.
 
 package gov.dot.fhwa.saxton.carma.guidance.yield;
 
@@ -80,7 +89,7 @@ import java.util.*;
 public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, MobilityRequestHandler, MobilityPathHandler {
 
     /* Constants */
-    /*TODO: Remove -- From NegotiationReceiver
+    /*TODO: Remove -- From NegotiationReceiver -- Kept here only as reference for me (BDR)
     protected static final double TARGET_SPEED_EPSILON = 0.1;
     protected static final long SLEEP_DURATION = 1000; //TODO: Was 50
     protected SimpleManeuverFactory maneuverFactory;
@@ -88,7 +97,7 @@ public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, Mob
     */
     
     /* Class Variables */
-    /*TODO: Remove -- From NegotiationReceiver
+    /*TODO: Remove -- From NegotiationReceiver -- also kept here for reference (BDR)
     protected ISubscriber<NewPlan> planSub_;
     protected IPublisher<PlanStatus> statusPub_;
     protected Map<String, List<LongitudinalManeuver>> planMap = new Hashtable<>(); //planId to a list of maneuvers
@@ -109,12 +118,13 @@ public class YieldPlugin extends AbstractPlugin implements IStrategicPlugin, Mob
     // To transition back to state 0, we must receive a call to planTrajectory().  If planTrajectory() is called while in state 0,
     // nothing happens.  It returns.  If it is called in state 1, then this is where the real work is done.  As described above, a
     // new trajectory is created, replacing the old one, where the collision is avoided by having our vehicle arrive behind the
-    // collision point at the collision time (the details of which are TBD).
+    // collision point or region at the collision time (the details of which are TBD).
 
     protected int        state_       = 0;
     protected Trajectory trajectory_  = null;
     // Place other things to rememeber (such as the collision point) here.
-///TODO(BDR): Got This Far.
+///TODO(BDR): Got This Far.  Much of the code below, especially the logging code is probably valid.  The rest is left over from
+///           copying NegotiationReceiver, and is being used as reference since I never wrote a plugin before.
     // Constructor
     public YieldPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
