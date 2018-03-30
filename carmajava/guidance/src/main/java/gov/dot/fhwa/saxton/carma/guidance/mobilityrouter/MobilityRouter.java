@@ -161,7 +161,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
     
     private boolean isBroadcast(MobilityHeader header) {
-        return header.getSenderId().equals("");
+        return header.getRecipientId().equals("");
     }
 
     /**

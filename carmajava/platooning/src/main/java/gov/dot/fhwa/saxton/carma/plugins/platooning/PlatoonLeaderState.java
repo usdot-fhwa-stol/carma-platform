@@ -261,6 +261,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                     MobilityOperation infoOperation = plugin.getMobilityOperationPublisher().newMessage();
                     composeMobilityOperation(infoOperation, "INFO");
                     plugin.getMobilityOperationPublisher().publish(infoOperation);
+                    lastHeartBeatTime = System.currentTimeMillis();
                     log.debug("Published heart beat platoon INFO mobility operatrion message");
                 }
                 // Task 2
