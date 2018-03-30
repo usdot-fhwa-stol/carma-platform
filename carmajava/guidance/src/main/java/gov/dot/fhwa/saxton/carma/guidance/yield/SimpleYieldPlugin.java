@@ -14,45 +14,8 @@
  * the License.
  */
 
-// The Yield Plugin exists to resolve vehicle trajectory conflicts, or in English, to handle the
-// situation where two vehicles, based on existing trajectories or on trajectories that are still
-// under consideration, will collide at some point in the near future.  A decision is made at a
-// higher level (based on urgencies, priorities, or other factors) to determine which of the two
-// vehicles should replan its trajectory, so when the Yield plugin is "activated" on a vehicle,
-// it doesn't have to make that determination.  It knows that it was called, and therefore its
-// responsibility is to change its vehicle's trajectory to avoid the collision.
-
-// Version 1.0.0 will work as follows.  It will be passed the vehicle trajectory (or somehow gain
-// access to it) along with a collision "point" or region (that could have a starting and ending
-// downtrack distance (d) and time (t)).  It will request a new blank trajectory and it will
-// calculate the downtrack distance (d - Delta) where it will be "safe" from the collision,
-// effectively arriving behind the other vehicle instead of colliding with it.  To accomplish this
-// it will loop through the maneuvers (Mi) in the "old" vehicle trajectory, copying each one to the
-// new trajectory until it finds the maneuver, Mc, that would cause the collision.  At this point it
-// allocates a new, blank maneuver.  It makes whatever function call or calls that are necessary to
-// populate the maneuver with a path(?) that has the same starting information as Mc, but ends at
-// d - Delta instead of at d.  For now, that's it.
-
-// ??? -- This partially filled trajectory is returned to the planner or arbitrator which does
-// something TBD.  Alternatively, it calls ACC(?) to fill out the rest of the trajectory and returns
-// that as a complete new trajectory that avoids the collision.  This may be sufficient for initial
-// testing.  Alternatively, (or for version 1.1.0), this new trajectory can be run through collision
-// checking again, and if another collision is found (at a higher d value than before), Yield is
-// called again.  If each time Yield is called for this single trajectory, the collision is further
-// downtrack (d is always getting larger, and d-delta is always located in a new Maneuver), then
-// this process will terminate.  We should be careful to avoid loops where even though we move further
-// downtrack, we are still redoing the same maneuver over and over again.
-
-// Other future implementations may include having Yield planning the entire new trajectory.  It would
-// process everything through Mc as before, but instead of returning control back to the arbitrator,
-// planner, or guidance (???), it would recursively (or maybe iteratively) call the planner/arbitrator
-// to fill in the rest of the trajectory.  This is all TBD later after v1.0.0 is build and tested.
-
 package gov.dot.fhwa.saxton.carma.guidance.yield;
 
-import cav_msgs.NewPlan;
-import cav_msgs.PlanStatus;
-import cav_msgs.PlanType;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityPath;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
