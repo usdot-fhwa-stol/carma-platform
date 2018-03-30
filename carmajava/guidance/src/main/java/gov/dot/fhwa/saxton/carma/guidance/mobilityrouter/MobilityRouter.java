@@ -161,7 +161,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
     
     private boolean isBroadcast(MobilityHeader header) {
-        return header.getSenderId().equals("");
+        return header.getRecipientId().equals("");
     }
 
     /**
@@ -258,7 +258,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -308,7 +308,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())){
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())){
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -334,7 +334,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -364,7 +364,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
