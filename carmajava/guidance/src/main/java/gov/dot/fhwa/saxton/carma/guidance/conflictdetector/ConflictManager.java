@@ -186,7 +186,7 @@ public class ConflictManager implements IConflictManager {
 
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath) {
-    if (hostPath == null || hostPath.isEmpty()) {
+    if (hostPath == null || hostPath.isEmpty() || route == null) {
       return new LinkedList<>();
     }
     // Prepare to store conflicts

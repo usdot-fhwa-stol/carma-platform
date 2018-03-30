@@ -63,6 +63,8 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
             TrajectoryConverter converter, IConflictDetector conflictDetector) {
         super(stateMachine, pubSubService, node);
         stateMachine.registerStateChangeListener(this);
+        this.trajectoryConverter = converter;
+        this.conflictDetector = conflictDetector;
     }
 
     /*

@@ -225,7 +225,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
   public boolean setIndicator(LightBarIndicator indicator, IndicatorStatus status, String requestingComponent) {
     String controllingComponent = lightControlMap.get(indicator);
     // Check if the requester has control of this light
-    if (!controllingComponent.equals(requestingComponent)) {
+    if (controllingComponent != null && !controllingComponent.equals(requestingComponent)) {
       log.info(requestingComponent + " failed to set the LightBarIndicator " + indicator + 
       " as this was already controlled by " + controllingComponent);
       return false;

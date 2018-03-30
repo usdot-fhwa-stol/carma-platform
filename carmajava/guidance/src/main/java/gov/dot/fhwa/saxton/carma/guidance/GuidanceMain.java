@@ -103,6 +103,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     routeService.init();
 
     routeService.registerNewRouteCallback((route) -> trajectoryConverter.setRoute(Route.fromMessage(route)));
+    routeService.registerNewRouteCallback((route) -> conflictManager.setRoute(Route.fromMessage(route)));
     routeService.registerNewRouteStateCallback((state) -> trajectoryConverter.setRouteState(state.getDownTrack(),
         state.getCrossTrack(), state.getCurrentSegment().getPrevWaypoint().getWaypointId(), state.getSegmentDownTrack(),
         state.getLaneIndex()));

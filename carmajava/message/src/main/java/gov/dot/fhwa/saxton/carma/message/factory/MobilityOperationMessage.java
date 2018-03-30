@@ -121,7 +121,7 @@ public class MobilityOperationMessage implements IMessage<MobilityOperation> {
         operation.getHeader().setTimestamp(Long.parseLong(new String(timestamp)));
         operation.setStrategy(StringConverterHelper.readDynamicLengthString(strategy));
         operation.setStrategyParams(StringConverterHelper.readDynamicLengthString(strategyParams));
-        return new MessageContainer("MobilityResponse", operation);
+        return new MessageContainer("MobilityOperation", operation);
     }
 
     public byte[] callJniEncode(MobilityOperation msg) {
