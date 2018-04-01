@@ -210,7 +210,7 @@ public class PlatoonLeaderState implements IPlatooningState {
             // If it is platoon status message, the params string is in format: STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
             // The platoonManager will ignore it if it is not from our platoon
             String vehicleID = msg.getHeader().getSenderId();
-            String statusParams = strategyParams.split("|")[1];
+            String statusParams = strategyParams.substring(plugin.OPERATION_STATUS_TYPE.length() + 1);
             log.info("Receive operation status message from vehicle: " + vehicleID + " with params: " + statusParams);
             plugin.getPlatoonManager().memberUpdates(vehicleID, msg.getHeader().getPlanId(), statusParams);
         } else {
