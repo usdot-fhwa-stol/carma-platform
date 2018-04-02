@@ -111,7 +111,7 @@ public class FollowerState implements IPlatooningState {
         if(isPlatoonStatusMsg) {
             String vehicleID = msg.getHeader().getSenderId();
             String platoonID = msg.getHeader().getPlanId();
-            String statusParams = strategyParams.split("|")[1];
+            String statusParams = strategyParams.substring(plugin.OPERATION_STATUS_TYPE.length() + 1);
             log.debug("Receive operation message from vehicle: " + vehicleID);
             plugin.getPlatoonManager().memberUpdates(vehicleID, platoonID, statusParams);
         } else {
