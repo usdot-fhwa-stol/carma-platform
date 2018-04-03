@@ -216,6 +216,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   public void onSaxtonStart(final ConnectedNode connectedNode) {
     initLogger(connectedNode.getLog());
     final ILogger log = LoggerManager.getLogger();
+    Thread.currentThread().setName(this.getClass().getSimpleName() + "Thread");
 
     log.info("//////////");
     log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");
