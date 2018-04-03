@@ -23,7 +23,11 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 
+import cav_msgs.LocationOffsetECEF;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import cav_msgs.SystemAlert;
 
 import org.ros.node.ConnectedNode;
@@ -46,7 +50,10 @@ public class NegotiatorMgr extends SaxtonBaseNode{
  
   // Topics
   // Publishers
-  protected Publisher<cav_msgs.MobilityRequest>      mobReqOutPub;
+  protected Publisher<cav_msgs.MobilityRequest>   mobReqOutPub;
+  protected Publisher<cav_msgs.MobilityPath>      mobPathOutPub;
+  protected Publisher<cav_msgs.MobilityResponse>  mobResOutPub;
+  protected Publisher<cav_msgs.MobilityOperation> mobOperPub;
 
   // Subscribers
   protected Subscriber<cav_msgs.SystemAlert>         alertSub;
@@ -60,8 +67,11 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     log = new SaxtonLogger(NegotiatorMgr.class.getSimpleName(), connectedNode.getLog());
     // Topics
     // Publishers
-    mobReqOutPub   = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
-    timeDelay      = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
+    mobReqOutPub  = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
+    mobPathOutPub = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath._TYPE);
+    mobResOutPub  = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_response", MobilityResponse._TYPE);
+    mobOperPub    = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_operation", MobilityOperation._TYPE);
+    timeDelay     = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
@@ -85,7 +95,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             requestMsg.getHeader().setSenderBsmId("10ABCDEF");
             requestMsg.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
             requestMsg.getHeader().setTimestamp(System.currentTimeMillis());
-            requestMsg.setStrategy("Carma/Platooning");
+            requestMsg.setStrategy("FakeStrategy");
             requestMsg.getPlanType().setType((byte) 0);
             requestMsg.setUrgency((short) 999);
             requestMsg.getLocation().setEcefX(555555);
@@ -94,6 +104,53 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             requestMsg.getLocation().setTimestamp(0);
             requestMsg.setStrategyParams("ARG1:5.0, ARG2:16.0");
             mobReqOutPub.publish(requestMsg);
+
+            MobilityPath pathMsg = mobPathOutPub.newMessage();
+            pathMsg.getHeader().setSenderId("DOT-45100");
+            pathMsg.getHeader().setRecipientId("");
+            pathMsg.getHeader().setSenderBsmId("10ABCDEF");
+            pathMsg.getHeader().setPlanId("11111111-2222-3333-BBBB-111111111111");
+            pathMsg.getHeader().setTimestamp(System.currentTimeMillis());
+            pathMsg.getTrajectory().getLocation().setEcefX(5555);
+            pathMsg.getTrajectory().getLocation().setEcefY(6666);
+            pathMsg.getTrajectory().getLocation().setEcefZ(7777);
+            pathMsg.getTrajectory().getLocation().setTimestamp(0);
+            LocationOffsetECEF offset1 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset1.setOffsetX((short) 1);
+            offset1.setOffsetY((short) 2);
+            offset1.setOffsetZ((short) 3);
+            LocationOffsetECEF offset2 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset2.setOffsetX((short) 4);
+            offset2.setOffsetY((short) 5);
+            offset2.setOffsetZ((short) 6);
+            LocationOffsetECEF offset3 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset3.setOffsetX((short) 7);
+            offset3.setOffsetY((short) 8);
+            offset3.setOffsetZ((short) 9);
+            pathMsg.getTrajectory().getOffsets().add(offset1);
+            pathMsg.getTrajectory().getOffsets().add(offset2);
+            pathMsg.getTrajectory().getOffsets().add(offset3);
+            mobPathOutPub.publish(pathMsg);
+            
+            MobilityResponse response = mobResOutPub.newMessage();
+            response.getHeader().setSenderId("DOT-45100");
+            response.getHeader().setRecipientId("");
+            response.getHeader().setSenderBsmId("10ABCDEF");
+            response.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
+            response.getHeader().setTimestamp(System.currentTimeMillis());
+            response.setIsAccepted(true);
+            response.setUrgency((short) 500);
+            mobResOutPub.publish(response);
+            
+            MobilityOperation op = mobOperPub.newMessage();
+            op.getHeader().setSenderId("DOT-45100");
+            op.getHeader().setRecipientId("");
+            op.getHeader().setSenderBsmId("10ABCDEF");
+            op.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
+            op.getHeader().setTimestamp(System.currentTimeMillis());
+            op.setStrategy("FakeStrategy");
+            op.setStrategyParams("STATUS|CMDSPEED:10.01,DTD:50.02,SPEED:10.01");
+            mobOperPub.publish(op);
         }
         Thread.sleep(timeDelay);
       }

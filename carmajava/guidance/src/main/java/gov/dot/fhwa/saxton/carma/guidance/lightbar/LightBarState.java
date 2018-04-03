@@ -14,22 +14,22 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.plugins.platooning;
+package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
 /**
- * In Mobility plan message, the first word in strategy string indicates the request type.
- * TODO This enum is not a comprehensive list. It will expand based on usage.  
+ * The state of the state machine used to control the light bar from within guidance. 
  */
-public enum PlatooningRequests {
-    
-    JOIN,
-    LEAVE,
-    DELEGATE,
-    UPDATE;
-    
-    // This method returns the name of each enum without its class name 
-    @Override
-    public String toString() {
-        return name().split(".")[1];
-    }
+public enum LightBarState {
+  /**
+   * Guidance is disengaged
+   */
+  DISENGAGED,
+  /**
+   * Guidance is engaged
+   */
+  ENGAGED,
+  /**
+   * Guidance is receiving DSRC messages
+   */
+  RECEIVING_MESSAGES;
 }

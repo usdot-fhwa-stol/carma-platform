@@ -30,11 +30,15 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarEvent;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
@@ -52,7 +56,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * Also handles publication of ACK/NACK responses to inbound MobilityRequest messages based on plugin
  * handler return codes.
  */
-public class MobilityRouter extends GuidanceComponent implements IMobilityRouter {
+public class MobilityRouter extends GuidanceComponent implements IMobilityRouter, IStateChangeListener {
 
     private final String componentName = "MobilityRouter";
     //private IPublisher<MobilityRequest> bsmPublisher;
@@ -74,11 +78,15 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ITrajectoryConverter trajectoryConverter;
     private String hostMobilityStaticId = "";
 
-    public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node, IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter, TrajectoryExecutor trajectoryExecutor) {
+    public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
+     IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
+     TrajectoryExecutor trajectoryExecutor) {
         super(stateMachine, pubSubService, node);
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
+
+        stateMachine.registerStateChangeListener(this);
     }
 
     public void setPluginManager(PluginManager pluginManager) {
@@ -102,7 +110,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         ackSub = pubSubService.getSubscriberForTopic("incoming_mobility_response", MobilityResponse._TYPE);
         operationSub = pubSubService.getSubscriberForTopic("incoming_mobility_operation", MobilityOperation._TYPE);
         pathSub = pubSubService.getSubscriberForTopic("incoming_mobility_path", MobilityPath._TYPE);
-        ackPub = pubSubService.getPublisherForTopic("outbound_mobility_response", MobilityResponse._TYPE);
+        ackPub = pubSubService.getPublisherForTopic("outgoing_mobility_response", MobilityResponse._TYPE);
 
         requestSub.registerOnMessageCallback(this::handleMobilityRequest);
         ackSub.registerOnMessageCallback(this::handleMobilityResponse);
@@ -153,7 +161,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
     
     private boolean isBroadcast(MobilityHeader header) {
-        return header.getSenderId().equals("");
+        return header.getRecipientId().equals("");
     }
 
     /**
@@ -177,7 +185,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             respMsg.getHeader().setPlanId(msg.getHeader().getPlanId());
             respMsg.getHeader().setRecipientId(msg.getHeader().getSenderId());
             respMsg.getHeader().setSenderId(hostMobilityStaticId);
-            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, shoud this field be set in Message node?
+            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, should this field be set in Message node?
             respMsg.getHeader().setTimestamp(System.currentTimeMillis());
 
             if (resp == MobilityRequestResponse.ACK) {
@@ -250,16 +258,18 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
         List<RoutePointStamped> otherPath = trajectoryConverter.messageToPath(msg.getTrajectory());
         List<RoutePointStamped> hostPath = trajectoryExecutor.getHostPathPrediction();
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostPath, otherPath);
+        boolean conflictHandled = true;
+        ConflictSpace conflictSpace = null;
 
         if (!conflictSpaces.isEmpty()) {
-            ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
+            conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
             msg.getHeader().getPlanId(),
             conflictSpace.getStartDowntrack(),
@@ -267,19 +277,21 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             conflictSpace.getLane(),
             conflictSpace.getStartTime(),
             conflictSpace.getEndTime()));
+            conflictHandled = false;
+        }
 
-            boolean conflictHandled = false;
-            for (Entry<String, LinkedList<MobilityRequestHandler>> entry : requestMap.entrySet()) {
-                if (entry.getKey().endsWith(msg.getStrategy())) {
-                    log.info("Firing message handlers registered for " + entry.getKey());
-                    for (MobilityRequestHandler handler : entry.getValue()) {
-                        log.info("Firing mobility request handler: " + handler.getClass().getSimpleName());
-                        fireMobilityRequestCallback(handler, msg, true, conflictSpace);
-                        conflictHandled = true;
-                    }
+        for (Entry<String, LinkedList<MobilityRequestHandler>> entry : requestMap.entrySet()) {
+            if (entry.getKey().endsWith(msg.getStrategy())) {
+                log.info("Firing message handlers registered for " + entry.getKey());
+                for (MobilityRequestHandler handler : entry.getValue()) {
+                    log.info("Firing mobility request handler: " + handler.getClass().getSimpleName());
+                    fireMobilityRequestCallback(handler, msg, conflictSpace != null, conflictSpace);
+                    conflictHandled = true;
                 }
             }
+        }
 
+        if (conflictSpace != null) {
             if (!conflictHandled && defaultConflictHandler != null) {
                 // Handle in default conflict handler
                 log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
@@ -300,7 +312,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())){
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())){
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -326,7 +338,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -356,7 +368,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -416,4 +428,36 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         }
         pathMap.get(strategyId).add(handler);
     }
+
+  @Override
+  public void onStateChange(GuidanceAction action) {
+    log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+    switch (action) {
+    case INTIALIZE:
+      jobQueue.add(this::onStartup);
+      jobQueue.add(this::onSystemReady);
+      break;
+    case ACTIVATE:
+      jobQueue.add(this::onActive);
+      break;
+    case DEACTIVATE:
+      jobQueue.add(this::onDeactivate);
+      break;
+    case ENGAGE:
+      jobQueue.add(this::onEngaged);
+      break;
+    case SHUTDOWN:
+      jobQueue.add(this::onShutdown);
+      break;
+    case PANIC_SHUTDOWN:
+      jobQueue.add(this::onPanic);
+      break;
+    case RESTART:
+      jobQueue.add(this::onCleanRestart);
+      break;
+    default:
+      throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+    }
+  }
+
 }

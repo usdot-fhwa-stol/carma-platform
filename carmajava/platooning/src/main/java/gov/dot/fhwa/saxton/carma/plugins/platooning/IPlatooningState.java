@@ -16,12 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import cav_msgs.MobilityIntro;
-import cav_msgs.NewPlan;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-public interface IPlatooningState {
+public interface IPlatooningState extends Runnable {
     
     /**
      * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if possible.
@@ -32,18 +34,22 @@ public interface IPlatooningState {
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
     
     /**
-     * Callback method to handle negotiation requests which may result in state changing
-     * @param plan the detailed negotiation proposal from another vehicle
+     * Callback method to handle mobility requests which may result in
+     * state changing, trajectory re-plan and platooning info updates. 
+     * @param msg the detailed proposal from other vehicles
+     * @return simple yes/no response to the incoming proposal
      */
-    public void onReceiveNegotiationMessage(NewPlan plan);
+    public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg);
     
     /**
-     * Get the MobilityIntro message the current state want to send out
+     * Callback method to handle mobility operation.
+     * @param msg the necessary operational info from other vehicles
      */
-    public MobilityIntro getNewOutboundIntroMessage();
+    public void onMobilityOperationMessage(MobilityOperation msg);
     
     /**
-     * Called by the plugin loop method and the purpose is checking if plugin needs to change state 
+     * Callback method to handle mobility response.
+     * @param msg response for the current plan from other vehicles
      */
-    public void checkCurrentState();
+    public void onMobilityResponseMessage(MobilityResponse msg);
 }

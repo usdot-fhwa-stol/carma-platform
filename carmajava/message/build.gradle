@@ -51,3 +51,9 @@ installApp {
     }
 }
 
+test {
+    testLogging {
+        showStandardStreams = true
+    }
+}
+

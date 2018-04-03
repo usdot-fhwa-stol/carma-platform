@@ -59,6 +59,8 @@ public interface ITrajectoryConverter {
    * Then any complex maneuvers are added to the path
    * Finally all points are converted into the ECEF frame
    * 
+   * Uses the TrajectoryConverter's configured max path size
+   * 
    * @param traj The trajectory to convert
    * @param currentTimeMs The starting time for this path in ms 
    * @param downtrack Current downtrack distance on route
@@ -81,6 +83,29 @@ public interface ITrajectoryConverter {
    * Then any complex maneuvers are added to the path
    * Finally all points are converted into the ECEF frame
    * 
+   * @param traj The trajectory to convert
+   * @param currentTimeMs The starting time for this path in ms 
+   * @param downtrack Current downtrack distance on route
+   * @param crosstrack Current crosstrack on route
+   * @param currentSegmentIdx The current route segment index
+   * @param segDowntrack The current downtrack relative to the current segment start
+   * @param lane The current lane index
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
+   double downtrack, double crosstrack,
+   int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
    * This function uses current data from Guidance Route Service.
    * 
    * @param traj The trajectory to convert
@@ -88,6 +113,56 @@ public interface ITrajectoryConverter {
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
   List<RoutePointStamped> convertToPath(Trajectory traj);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * Uses the TrajectoryConverter's configured max path size
+   * 
+   * @param traj The trajectory to convert
+   * @param startPoint the point one timestep prior to the beginning of this trajectory
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, RoutePointStamped startPoint);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * @param traj The trajectory to convert
+   * @param startPoint the point one timestep prior to the beginning of this trajectory
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, int maxPointsInPath);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * @param traj The trajectory to convert
+   * @param startPoint the point one timestep prior to the beginning of this trajectory
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, RoutePointStamped startPoint, int maxPointsInPath);
+
   /**
    * Helper function for converting a List of RoutePoint2DStamped into List of ECEFPointStamped
    * 
@@ -133,6 +208,8 @@ public interface ITrajectoryConverter {
    * Function which converts and individual Simple Longitudinal Maneuver to a path based on starting configuration
    * This function is used internally in the convertToPath function
    * 
+   * Uses the TrajectoryConverter's configured max path size
+   * 
    * @param maneuver The maneuver to convert
    * @param path The list which will store the generated points
    * @param startingData The starting configuration of the vehicle
@@ -141,4 +218,18 @@ public interface ITrajectoryConverter {
   LongitudinalSimulationData addLongitudinalManeuverToPath(
     final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
     final LongitudinalSimulationData startingData);
+
+  /**
+   * Function which converts and individual Simple Longitudinal Maneuver to a path based on starting configuration
+   * This function is used internally in the convertToPath function
+   * 
+   * @param maneuver The maneuver to convert
+   * @param path The list which will store the generated points
+   * @param startingData The starting configuration of the vehicle
+   * @param route The route the vehicle is on
+   * @param maxPointsInPath The maximum number of points to compute, not to exceed the configured value
+   */
+  LongitudinalSimulationData addLongitudinalManeuverToPath(
+    final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
+    final LongitudinalSimulationData startingData, final int maxPointsInPath);
 }

@@ -94,7 +94,7 @@ public class StateTransitionTest {
         Trajectory traj = new Trajectory(0.0, 50.0);
         when(routeService.isAlgorithmEnabledInRange(0.0, 50.0, platooning.PLATOONING_FLAG)).thenReturn(true);
         TrajectoryPlanningResponse tpr = platooning.planTrajectory(traj, 0.0);
-        assertTrue(platooning.state instanceof LeaderState);
+        assertTrue(platooning.state instanceof LeaderWaitingState);
         assertEquals(1, tpr.getRequests().size());
         assertEquals(100, tpr.getProposedReplanDelay().get().longValue());
     }
@@ -103,7 +103,7 @@ public class StateTransitionTest {
     public synchronized void leaderToFollower() {
         // Leader state to Follower state when we have other platooning vehicle in front of us
         // TODO This state transition need to happened after the leader from front platoon agreed our JOIN_A_PLATOON message
-        IPlatooningState leaderState = new LeaderState(platooning, mockLogger, psl); 
+        IPlatooningState leaderState = new LeaderWaitingState(platooning, mockLogger, psl); 
         platooning.setState(leaderState);
         platooning.state.checkCurrentState();
         platooning.platoonManager.platoon.add(new PlatoonMember("", 0.0, 0.0, 0.0, Long.MAX_VALUE));
@@ -114,7 +114,7 @@ public class StateTransitionTest {
     @Test
     public void leaderToStandby() {
         // Leader state to Standby state when the platooning algorithm is disanbled in the next trajectory
-        IPlatooningState leaderState = new LeaderState(platooning, mockLogger, psl); 
+        IPlatooningState leaderState = new LeaderWaitingState(platooning, mockLogger, psl); 
         platooning.setState(leaderState);
         Trajectory traj = new Trajectory(25.0, 50.0);
         when(routeService.isAlgorithmEnabledInRange(25.0, 50.0, platooning.PLATOONING_FLAG)).thenReturn(false);
@@ -124,7 +124,7 @@ public class StateTransitionTest {
         TrajectoryPlanningResponse response = platooning.planTrajectory(traj, 25.0);
         assertEquals(0, response.getRequests().size());
         platooning.state.checkCurrentState();
-        assertTrue(platooning.state instanceof LeaderState);
+        assertTrue(platooning.state instanceof LeaderWaitingState);
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -164,6 +164,6 @@ public class StateTransitionTest {
         IPlatooningState followerState = new FollowerState(platooning, mockLogger, psl);
         platooning.setState(followerState);
         platooning.state.checkCurrentState();
-        assertTrue(platooning.state instanceof LeaderState);
+        assertTrue(platooning.state instanceof LeaderWaitingState);
     }
 }
