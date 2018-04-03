@@ -38,7 +38,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 
-public class SpeedGenerationTest {
+public class SpeedGeneratorTest {
     
     private PlatooningPlugin mockPlugin;
     private PlatoonManager   mockManager;

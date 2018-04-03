@@ -123,7 +123,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                     // calculate the time the applicant will take to reach the desired join distance
                     double timeToCatchUp = Math.max((currentGap - plugin.getDesiredJoinDistance()) / (speedDiff), 0);
                     // We need to plus the vehicle lag time
-                    double vehicleResponseLag = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();
+                    double vehicleResponseLag = plugin.getManeuverInputs().getResponseLag();
                     double totalTimeNeeded = applicantSpeedUpTime + timeToCatchUp + vehicleResponseLag;
                     // Check if it is a reasonable total time
                     boolean isTotalTimeReasonable = totalTimeNeeded <= plugin.getMaxJoinTime();
@@ -170,13 +170,17 @@ public class PlatoonLeaderState implements IPlatooningState {
                 log.debug("Found a platoon with id = " + msg.getHeader().getPlanId() + " in front of us.");
                 // Calculate how much time the host should accelerate to close the gap
                 double hostMaxSpeed = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentHostDtd).getLimit();
-                // Whether we can/need acceleration
-                if(hostMaxSpeed == platoonSpeed || platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance() < 0) {
-                    log.debug("We can not or we do not need to speed up in order to join.");
+                // Whether we can join by speed up
+                if(hostMaxSpeed <= platoonSpeed) {
+                    log.debug("The local speed limit " + hostMaxSpeed + "is less or equal with the platoon speed. Unable to join");
+                    return;
+                }
+                if(platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance() <= 0) {
+                    log.debug("We do not need to speed up in order to join.");
                 } else {
                     speedUpTime = (platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance()) / (hostMaxSpeed - platoonSpeed);
+                    log.debug("The speed up time we need to close the gap is roughly " + speedUpTime);
                 }
-                log.debug("The speed up time we need to close the gap is roughly " + speedUpTime);
                 // Compose a mobility request to publish a JOIN request
                 MobilityRequest request = plugin.getMobilityRequestPublisher().newMessage();
                 String planId = UUID.randomUUID().toString();
@@ -345,5 +349,5 @@ public class PlatoonLeaderState implements IPlatooningState {
             plugin.setLightBarStatus(IndicatorStatus.OFF);
         }
     }
-    
+
 }
