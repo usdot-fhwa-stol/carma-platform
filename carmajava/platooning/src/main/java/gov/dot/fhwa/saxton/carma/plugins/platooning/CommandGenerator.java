@@ -87,15 +87,15 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             int vehiclesInFront = plugin_.getPlatoonManager().getPlatooningSize();
             log_.debug("The host vehicle have " + vehiclesInFront + " vehicles in front of it");
             desiredGap_ = Math.max(hostVehicleSpeed * plugin_.getTimeHeadway() * vehiclesInFront, plugin_.getStandStillGap());
-            double desiredLeaderPosition = hostVehiclePosition + this.desiredGap_;
-            log_.debug("The desired leader position and the setpoint for pid controller is " + desiredLeaderPosition);
+            double desiredHostPosition = leaderCurrentPosition - this.desiredGap_;
+            log_.debug("The desired host position and the setpoint for pid controller is " + desiredHostPosition);
             // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
             // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
             // A positive error implies that that the two vehicles are too far and a negative error implies that the two vehicles are too close
             // The summation of the leader vehicle command speed and the output of PD controller will be used as speed commands
             // The command speed of leader vehicle will act as the baseline for our speed control
-            distanceGapController_.changeSetpoint(desiredLeaderPosition);
-            Signal<Double> signal = new Signal<Double>(leaderCurrentPosition, timeStamp);
+            distanceGapController_.changeSetpoint(desiredHostPosition);
+            Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
             double output = speedController_.apply(signal).get().getData();
             log_.debug("The output from controller is " + output);
             speedCmd_.set(Math.max(output + leader.commandSpeed, 0));

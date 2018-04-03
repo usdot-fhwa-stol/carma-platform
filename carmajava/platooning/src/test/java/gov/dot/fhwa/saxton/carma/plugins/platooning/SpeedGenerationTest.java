@@ -26,59 +26,86 @@ import org.junit.Test;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManagementService;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 
 public class SpeedGenerationTest {
     
-    private PlatooningPlugin plugin;
-    private PlatoonManager mockManager;
-    private ILogger mockLogger;
+    private PlatooningPlugin mockPlugin;
+    private PlatoonManager   mockManager;
+    private ILogger          mockLogger;
+    private RouteService     mockRouteService;
+    private IManeuverInputs  mockManeuverInputs;
+    
     private PluginServiceLocator psl;
-    private CommandGenerator speedGenerator;
-    private GuidanceRouteService mockRouteService;
-    private IManeuverInputs mockManeuverInputs;
+    private CommandGenerator     speedGenerator;
+    
     
     @Before
     public void setup() {
-        mockManager = mock(PlatoonManager.class);
-        mockLogger = mock(ILogger.class);
-        mockRouteService = mock(GuidanceRouteService.class);
+        mockManager        = mock(PlatoonManager.class);
+        mockLogger         = mock(ILogger.class);
+        mockRouteService   = mock(RouteService.class);
         mockManeuverInputs = mock(IManeuverInputs.class);
-        psl = new PluginServiceLocator(mock(ArbitratorService.class),
-                mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-                new ManeuverPlanner(mock(IGuidanceCommands.class), mockManeuverInputs), mockRouteService);
-        plugin = mock(PlatooningPlugin.class);
-        when(plugin.getTimeHeadway()).thenReturn(1.0);
-        when(plugin.getStandStillGap()).thenReturn(5.0);
-        when(plugin.getKpPID()).thenReturn(1.0);
-        when(plugin.getKiPID()).thenReturn(0.0);
-        when(plugin.getKdPID()).thenReturn(0.5);
+        mockPlugin         = mock(PlatooningPlugin.class);
+        psl = new PluginServiceLocator(mock(ArbitratorService.class), mock(PluginManagementService.class),
+                                       mock(IPubSubService.class),    mock(ParameterSource.class),
+                                       new ManeuverPlanner(mock(IGuidanceCommands.class), mockManeuverInputs),
+                                       mockRouteService, mock(IMobilityRouter.class), mock(IConflictDetector.class),
+                                       mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
+        when(mockPlugin.getTimeHeadway()).thenReturn(1.0);
+        when(mockPlugin.getStandStillGap()).thenReturn(5.0);
+        when(mockPlugin.getKpPID()).thenReturn(1.0);
+        when(mockPlugin.getKiPID()).thenReturn(0.0);
+        when(mockPlugin.getKdPID()).thenReturn(-0.5);
+        when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
     }
     
     @Test
-    public void adjustSpeedTest() {
-        // In platoon with two vehicles, the rear vehicle is trying to maintain the gap with the front vehicle
-        when(plugin.getPlatoonManager()).thenReturn(mockManager);
-        PlatoonMember member = new PlatoonMember("", 10.0, 10.0, 50, Long.MAX_VALUE);
-        when(mockManager.getLeader()).thenReturn(member);
+    public void adjustSpeedAsTheFirstFollower() {
+        // The host vehicle is the first follower and trying to maintain the gap with the leader vehicle
+        PlatoonMember leader = new PlatoonMember("", 10.0, 10.0, 50, Long.MAX_VALUE);
+        when(mockManager.getLeader()).thenReturn(leader);
         when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(40.0);
-        when(mockManeuverInputs.getCurrentSpeed()).thenReturn(9.0);
-        when(mockManager.getPlatooningSize()).thenReturn(1);
-        speedGenerator = new CommandGenerator(plugin, mockLogger, psl);
-        speedGenerator.generateSpeed(100.0);
-        assertEquals(9.0, speedGenerator.getLastSpeedCommand(), 0.001);
-        when(mockManeuverInputs.getCurrentSpeed()).thenReturn(11.0);
-        speedGenerator.generateSpeed(200.0);
-        assertEquals(11.01, speedGenerator.getLastSpeedCommand(), 0.001);
         when(mockManeuverInputs.getCurrentSpeed()).thenReturn(10.0);
+        when(mockManager.getPlatooningSize()).thenReturn(1);
+        speedGenerator = new CommandGenerator(mockPlugin, mockLogger, psl);
+        speedGenerator.generateSpeed(100.0);
+        assertEquals(10.0, speedGenerator.getLastSpeedCommand(), 0.001);
+        when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(41.0);
+        speedGenerator.generateSpeed(200.0);
+        assertEquals(9.005, speedGenerator.getLastSpeedCommand(), 0.001);
+        when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(39.0);
         speedGenerator.generateSpeed(300.0);
-        assertEquals(9.995, speedGenerator.getLastSpeedCommand(), 0.001);
+        assertEquals(10.99, speedGenerator.getLastSpeedCommand(), 0.001);
     }
     
+    @Test
+    public void adjustSpeedAsTheSecondFollwer() {
+        // The host vehicle is the second follower and trying to maintain the double time-gap with the leader vehicle
+        PlatoonMember leader = new PlatoonMember("", 10.0, 10.0, 50.0, Long.MAX_VALUE);
+        when(mockManager.getLeader()).thenReturn(leader);
+        when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(30.0);
+        when(mockManeuverInputs.getCurrentSpeed()).thenReturn(10.0);
+        when(mockManager.getPlatooningSize()).thenReturn(2);
+        speedGenerator = new CommandGenerator(mockPlugin, mockLogger, psl);
+        speedGenerator.generateSpeed(100.0);
+        assertEquals(10.0, speedGenerator.getLastSpeedCommand(), 0.001);
+        leader.vehiclePosition = 51.0;
+        speedGenerator.generateSpeed(200.0);
+        assertEquals(10.995, speedGenerator.getLastSpeedCommand(), 0.001);
+        leader.vehiclePosition = 49.0;
+        speedGenerator.generateSpeed(300.0);
+        assertEquals(9.01, speedGenerator.getLastSpeedCommand(), 0.001);
+    }
+            
 }
