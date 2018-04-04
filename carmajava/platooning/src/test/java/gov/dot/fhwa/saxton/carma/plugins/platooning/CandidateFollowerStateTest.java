@@ -83,7 +83,6 @@ public class CandidateFollowerStateTest {
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
-        when(mockPlugin.getMaxPlatoonSize()).thenReturn(0);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
         candidateFollowerState = new CandidateFollowerState(mockPlugin, mockLog, pluginServiceLocator, 5.0, "A", "E1B2");
     }

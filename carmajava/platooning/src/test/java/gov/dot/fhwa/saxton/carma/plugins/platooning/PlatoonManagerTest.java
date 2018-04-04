@@ -17,79 +17,66 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import cav_msgs.NewPlan;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 public class PlatoonManagerTest {
 
-    private PlatoonManager manager;
-    private PlatooningPlugin mockPlugin;
-    private ILogger mockLogger;
-    private PluginServiceLocator mockPSL;
+    private PlatoonManager       manager;
+    private PlatooningPlugin     mockPlugin;
+    private ILogger              mockLogger;
+    private PluginServiceLocator mockPsl;
     
     @Before
     public void setup() {
         mockLogger = mock(ILogger.class);
         mockPlugin = mock(PlatooningPlugin.class);
-        mockPSL = mock(PluginServiceLocator.class);
-        manager = new PlatoonManager(mockPlugin, mockLogger, mockPSL);
+        mockPsl    = mock(PluginServiceLocator.class);
+        when(mockPlugin.getOperationUpdatesIntervalLength()).thenReturn(100);
+        when(mockPlugin.getOperationUpdatesTimeoutFactor()).thenReturn(2.5);
+        manager    = new PlatoonManager(mockPlugin, mockLogger, mockPsl);
     }
     
     @Test
-    public void addNewMember() {
-//        // Add new member from new plan message of vehicles in front of us
-//        // TODO It might change to other message type
-//        NewPlan newPlan = mock(NewPlan.class);
-//        when(newPlan.getSenderId()).thenReturn("1");
-//        when(newPlan.getInputs()).thenReturn("CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:4.9");
-//        NewPlan newPlan2 = mock(NewPlan.class);
-//        when(newPlan2.getSenderId()).thenReturn("2");
-//        when(newPlan2.getInputs()).thenReturn("CMDSPEED:6.0, DOWNTRACK:5.0, SPEED:5.9");
-//        IManeuverInputs maneuverInputs = mock(IManeuverInputs.class);
-//        when(maneuverInputs.getDistanceFromRouteStart()).thenReturn(50.0);
-//        when(mockPlugin.getManeuverInputs()).thenReturn(maneuverInputs);
-//        manager.memberUpdates(newPlan);
-//        manager.memberUpdates(newPlan2);
-//        assertEquals(1, manager.platoon.size());
-//        PlatoonMember desiredMember = new PlatoonMember("1", 5.0, 4.9, 100, 0);
-//        PlatoonMember actualMember = manager.platoon.get(0);
-//        assertEquals(desiredMember.getStaticId(), actualMember.getStaticId());
-//        assertEquals(desiredMember.getCommandSpeed(), actualMember.getCommandSpeed(), 0.01);
-//        assertEquals(desiredMember.getVehicleSpeed(), actualMember.getVehicleSpeed(), 0.01);
-//        assertEquals(desiredMember.getVehiclePosition(), actualMember.getVehiclePosition(), 0.01);
-//        assertEquals(System.currentTimeMillis(), actualMember.getTimestamp(), 1000);
+    public void updateMemberInfoInLeaderState() {
+        assertNull(manager.getLeader());
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
+        assertNull(manager.getLeader());
+        assertEquals(1, manager.getPlatooningSize());
+        assertEquals(50.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:60.00,SPEED:1.00");
+        assertEquals(1, manager.getPlatooningSize());
+        assertEquals(60.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
+        manager.memberUpdates("B", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:70.00,SPEED:1.00");
+        assertEquals(2, manager.getPlatooningSize());
+        assertEquals(60.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
+        manager.memberUpdates("C", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:10.00,SPEED:1.00");
+        assertEquals(3, manager.getPlatooningSize());
+        assertEquals(10.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
     }
     
     @Test
-    public void updateExistedMember() {
-//        // Update an existed member
-//        // TODO It might change to other message type
-//        PlatoonMember existedMember = new PlatoonMember("1", 0, 0, 5, 0);
-//        manager.platoon.add(existedMember);
-//        NewPlan newPlan = mock(NewPlan.class);
-//        when(newPlan.getSenderId()).thenReturn("1");
-//        when(newPlan.getInputs()).thenReturn("CMDSPEED:5.0, DOWNTRACK:100.0, SPEED:4.9");
-//        IManeuverInputs maneuverInputs = mock(IManeuverInputs.class);
-//        when(maneuverInputs.getDistanceFromRouteStart()).thenReturn(50.0);
-//        when(mockPlugin.getManeuverInputs()).thenReturn(maneuverInputs);
-//        manager.memberUpdates(newPlan);
-//        assertEquals(1, manager.platoon.size());
-//        PlatoonMember desiredMember = new PlatoonMember("1", 5.0, 4.9, 100, 0);
-//        PlatoonMember actualMember = manager.platoon.get(0);
-//        assertEquals(desiredMember.getStaticId(), actualMember.getStaticId());
-//        assertEquals(desiredMember.getCommandSpeed(), actualMember.getCommandSpeed(), 0.01);
-//        assertEquals(desiredMember.getVehicleSpeed(), actualMember.getVehicleSpeed(), 0.01);
-//        assertEquals(desiredMember.getVehiclePosition(), actualMember.getVehiclePosition(), 0.01);
-//        assertEquals(System.currentTimeMillis(), actualMember.getTimestamp(), 1000);
+    public void removeExpiredMember() {
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
+        assertEquals(1, manager.getPlatooningSize());
+        manager.removeExpiredMember();
+        assertEquals(1, manager.getPlatooningSize());
+        try {
+            Thread.sleep(2500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            e.printStackTrace();
+        }
+        manager.removeExpiredMember();
+        assertEquals(0, manager.getPlatooningSize());
     }
+    
+    
 }
