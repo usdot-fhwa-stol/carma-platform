@@ -65,7 +65,7 @@ public class PubSubManager implements IPubSubService {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public <T, S> IService<T, S> getServiceForTopic(String topicUrl, String type) throws TopicNotFoundException {
+    public synchronized <T, S> IService<T, S> getServiceForTopic(String topicUrl, String type) throws TopicNotFoundException {
         if (serviceChannelManagers.containsKey(topicUrl)) {
             return (IService<T, S>) serviceChannelManagers.get(topicUrl).getService();
         } else {
@@ -85,7 +85,7 @@ public class PubSubManager implements IPubSubService {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public <T> ISubscriber<T> getSubscriberForTopic(String topicUrl, String type) {
+    public synchronized <T> ISubscriber<T> getSubscriberForTopic(String topicUrl, String type) {
         if (subChannelManagers.containsKey(topicUrl) && subChannelManagers.get(topicUrl).isOpen()) {
             return (ISubscriber<T>) subChannelManagers.get(topicUrl).getSubscriber();
         } else {
@@ -105,7 +105,7 @@ public class PubSubManager implements IPubSubService {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public <T> IPublisher<T> getPublisherForTopic(String topicUrl, String type) {
+    public synchronized <T> IPublisher<T> getPublisherForTopic(String topicUrl, String type) {
         if (pubChannelManagers.containsKey(topicUrl) && pubChannelManagers.get(topicUrl).isOpen()) {
             return (IPublisher<T>) pubChannelManagers.get(topicUrl).getPublisher();
         } else {
