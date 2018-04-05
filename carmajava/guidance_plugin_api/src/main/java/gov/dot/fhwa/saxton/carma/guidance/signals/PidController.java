@@ -82,9 +82,7 @@ public class PidController implements Filter<Double> {
                 output += Ki * integrator;
             }
 
-            if (Kd > 0) {
-                output += Kd * (error - lastError.get().getData()) / dt;
-            }
+            output += Kd * (error - lastError.get().getData()) / dt;
         }
 
         lastError = Optional.of(new Signal<>(error, signal.getTimestamp()));

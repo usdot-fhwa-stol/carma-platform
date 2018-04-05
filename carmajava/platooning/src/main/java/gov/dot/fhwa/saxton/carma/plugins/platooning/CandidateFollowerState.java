@@ -40,8 +40,9 @@ public class CandidateFollowerState implements IPlatooningState {
     protected String               targetLeaderId;
     protected String               targetPlatoonId;
     private   PlatoonPlan          currentPlan;
-    private   boolean              hasPlannedManeuvers;
+    private   boolean              plannedSomeManeuvers;
     private   long                 stateStartTime;
+    private   double               speedUpStartDistance;
     private   double               speedUpEndDistance;
 
     public CandidateFollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, double speedUpTime, String targetId, String newPlatoonId) {
@@ -51,7 +52,8 @@ public class CandidateFollowerState implements IPlatooningState {
         this.speedUpTime          = speedUpTime;
         this.targetLeaderId       = targetId;
         this.targetPlatoonId      = newPlatoonId;
-        this.hasPlannedManeuvers  = false;
+        this.plannedSomeManeuvers = false;
+        this.speedUpStartDistance = Double.MAX_VALUE;
         this.speedUpEndDistance   = Double.MAX_VALUE;
         this.stateStartTime       = System.currentTimeMillis();
     }
@@ -66,12 +68,12 @@ public class CandidateFollowerState implements IPlatooningState {
             // TODO Send out mobility request message to inform its LEAVE and delegate the leader job properly
             plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
             // If we have already planned a speed up trajectory, it will be interrupted 
-            if(hasPlannedManeuvers) {
+            if(plannedSomeManeuvers) {
                 // TODO Maybe need to inform the front waiting leader to abort current plan and stop waiting
-                log.warn("We have planned a speed up but the plan is interrupted due to no avaliable plan window");
+                log.warn("We have planned a speed up maneuver but the plan is interrupted due to no avaliable plan window in the next trajectory");
             }
         } else {
-            if(hasPlannedManeuvers) {
+            if(hasPlannedInTheSameSpace(traj.getStartLocation())) {
                 // If we are in this block, it means the current plan is interrupted, we change back to normal leader state
                 // TODO Maybe need to inform the front waiting leader to abort current plan and stop waiting
                 log.debug("We have planned a speed up but the plan is interrupted due to a re-plan event");
@@ -81,7 +83,7 @@ public class CandidateFollowerState implements IPlatooningState {
                 // Plan a speed up maneuver to speed limit and a steady speed maneuver at the speed limit if necessary
                 if(speedUpTime > 0) {
                     SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory(plugin);
-                    double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
+                    double currentSpeed = plugin.getManeuverInputs().getCurrentSpeed();
                     double speedLimit = rs.getSpeedLimitAtLocation(rs.getCurrentDowntrackDistance()).getLimit();
                     LongitudinalManeuver speedUp = maneuverFactory.createManeuver(currentSpeed, speedLimit);
                     speedUp.setSpeeds(currentSpeed, speedLimit);
@@ -90,11 +92,11 @@ public class CandidateFollowerState implements IPlatooningState {
                     double speedUpEndDtd = speedUp.getEndDistance();
                     log.debug("Planned a speedUp maneuver " + speedUp.toString());
                     // Calculate how far the host vehicle should stay on the speed limit based on the required time
-                    this.speedUpEndDistance = speedUpEndDtd + (speedLimit * this.speedUpTime);
-                    log.debug("If we plan a steady speed maneuver to catch up the gap, we need trajectory to end at " + this.speedUpEndDistance);
-                    if(this.speedUpEndDistance > traj.getEndLocation()) {
+                    double steadyEndDtd = speedUpEndDtd + (speedLimit * this.speedUpTime);
+                    log.debug("If we plan a steady speed maneuver to catch up the gap, we need trajectory to end at " + steadyEndDtd);
+                    if(steadyEndDtd > traj.getEndLocation()) {
                         log.debug("steadySpeedManeuverEnd exceeds the end of current trajectory, requesting a longer one.");
-                        double totalDistanceNeeded = LONGER_TRAJ_BUFFER_FACTOR * (this.speedUpEndDistance - traj.getStartLocation());
+                        double totalDistanceNeeded = LONGER_TRAJ_BUFFER_FACTOR * (steadyEndDtd - traj.getStartLocation());
                         log.debug("Request to extend the trajectory to " + traj.getStartLocation() + totalDistanceNeeded);
                         tpr.requestLongerTrajectory(traj.getStartLocation() + totalDistanceNeeded);
                     } else {
@@ -102,13 +104,15 @@ public class CandidateFollowerState implements IPlatooningState {
                         steadySpeed.setSpeeds(speedLimit, speedLimit);
                         steadySpeed.setMaxAccel(plugin.getMaxAccel());
                         pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed, speedUpEndDtd);
-                        ((SteadySpeed) steadySpeed).overrideEndDistance(this.speedUpEndDistance);
+                        ((SteadySpeed) steadySpeed).overrideEndDistance(steadyEndDtd);
                         log.debug("Planned steady speed maneuver " + steadySpeed.toString());
                         boolean isSpeedUpInserted = traj.addManeuver(speedUp);
                         boolean isSteadySpeedInserted = traj.addManeuver(steadySpeed);
                         if(isSpeedUpInserted && isSteadySpeedInserted) {
                             log.debug("Inserted a speed up and a steady speed maneuver to close the gap.");
-                            this.hasPlannedManeuvers = true;
+                            this.plannedSomeManeuvers = true;
+                            this.speedUpStartDistance = speedUp.getStartDistance();
+                            this.speedUpEndDistance = steadySpeed.getEndDistance();
                         } else {
                             log.debug("Insertion of speed up maneuver and steady speed maneuver fails:");
                             log.debug("isSpeedUpInserted = " + isSpeedUpInserted + ", isSteadySpeedInserted = " + isSteadySpeedInserted);
@@ -118,7 +122,7 @@ public class CandidateFollowerState implements IPlatooningState {
                     }
                 } else {
                     log.debug("We do not need to speed up to join the front platoon because we are already close enough");
-                    this.hasPlannedManeuvers = true;
+                    this.plannedSomeManeuvers = true;
                 }
             }
         }
@@ -207,7 +211,7 @@ public class CandidateFollowerState implements IPlatooningState {
                     
                 }
                 // Task 3
-                if(pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() >= speedUpEndDistance) {
+                if(pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() >= this.speedUpEndDistance) {
                     MobilityRequest request = plugin.getMobilityRequestPublisher().newMessage();
                     String planId = UUID.randomUUID().toString();
                     request.getHeader().setPlanId(planId);
@@ -272,5 +276,10 @@ public class CandidateFollowerState implements IPlatooningState {
                                             pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         msg.setStrategyParams(statusParams);
         log.debug("Composed a mobility operation message with params " + msg.getStrategyParams());
+    }
+    
+    // Determine whether this space it already be planned by this state
+    private boolean hasPlannedInTheSameSpace(double trajStart) {
+        return trajStart >= this.speedUpStartDistance && trajStart <= this.speedUpEndDistance;
     }
 }
