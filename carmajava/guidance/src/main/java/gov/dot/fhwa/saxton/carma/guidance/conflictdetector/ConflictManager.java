@@ -131,7 +131,7 @@ public class ConflictManager implements IConflictManager {
   }
   
   /**
-   * Helper function fro adding paths to a map of spatial hash maps
+   * Helper function for adding paths to a map of spatial hash maps
    * 
    * @param path The path to add for future conflict detection
    * @param key The key to use for identifying this path

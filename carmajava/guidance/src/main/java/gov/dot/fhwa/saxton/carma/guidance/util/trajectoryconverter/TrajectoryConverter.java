@@ -411,7 +411,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
    */
   private LongitudinalSimulationData addKinematicMotionToPath(
     final double startX, final double endX, final double startV, final double endV,
-     List<RoutePointStamped> path,final LongitudinalSimulationData startingData, int maxPointsInPath) {
+    List<RoutePointStamped> path,final LongitudinalSimulationData startingData, int maxPointsInPath) {
+
       final double deltaX = endX - startX;
       final double deltaV = endV - startV;
       final double startVSqr = startV * startV;
@@ -476,7 +477,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       }
   
       return new LongitudinalSimulationData(currentSimTime - timeStep, currentDowntrack - distanceChange, currentSegDowntrack - distanceChange, segmentIdx);  
-     }
+  }
 
   /**
    * Calculates the coefficients {a_0, a_1, a_2, a_3} of a cubic polynomial
