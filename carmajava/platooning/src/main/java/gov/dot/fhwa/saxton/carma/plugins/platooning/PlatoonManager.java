@@ -202,7 +202,7 @@ public class PlatoonManager implements Runnable {
      */
     protected synchronized PlatoonMember getLeader() {
         PlatoonMember leader = null;
-        if(isFollower) {
+        if(isFollower && platoon.size() != 0) {
             // return the first vehicle in the platoon as default if no valid algorithm applied
             leader = platoon.get(0);
             if(plugin.getAlgorithmType() == 1) {
