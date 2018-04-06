@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import cav_msgs.LightBarStatus;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
@@ -28,7 +27,6 @@ import cav_msgs.PlatooningInfo;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarControlChangeHandler;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarIndicator;

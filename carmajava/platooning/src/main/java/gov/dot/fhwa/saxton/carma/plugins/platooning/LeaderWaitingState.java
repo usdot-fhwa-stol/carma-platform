@@ -91,6 +91,8 @@ public class LeaderWaitingState implements IPlatooningState {
                 plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
                 return MobilityRequestResponse.ACK;
             } else {
+                log.debug("The gap is still not close enough: " + (vehicleAtRearDtd - targetVehicleDtd) + ". Change back to PlatoonLeaderState");
+                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
                 return MobilityRequestResponse.NACK;
             }
         } else {
@@ -108,7 +110,7 @@ public class LeaderWaitingState implements IPlatooningState {
         if(isPlatoonStatusMsg) {
             String vehicleID = msg.getHeader().getSenderId();
             String platoonId = msg.getHeader().getPlanId();
-            String statusParams = strategyParams.split("|")[1];
+            String statusParams = strategyParams.substring(plugin.OPERATION_STATUS_TYPE.length() + 1);
             plugin.getPlatoonManager().memberUpdates(vehicleID, platoonId, statusParams);
             log.debug("Received platoon status message from " + msg.getHeader().getSenderId());
         } else {
