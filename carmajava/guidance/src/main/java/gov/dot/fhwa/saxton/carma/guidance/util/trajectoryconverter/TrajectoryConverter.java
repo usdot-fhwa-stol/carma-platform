@@ -155,6 +155,10 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
    double downtrack, double crosstrack,
    int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath) {
+    // If can't add points return an empty list
+    if (maxPointsInPath <= 0) {
+      return new LinkedList<>(); 
+    }
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers

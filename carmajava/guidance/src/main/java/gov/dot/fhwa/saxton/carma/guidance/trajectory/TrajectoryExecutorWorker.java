@@ -393,6 +393,10 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * Convert the current trajectory to a timestamped list of points along the route frame
    */
   public List<RoutePointStamped> getHostPathPrediction() {
-    return trajectoryConverter.convertToPath(currentTrajectory.get());
+    Trajectory traj = currentTrajectory.get();
+    if (traj == null) {
+      return new ArrayList<>();
+    }
+    return trajectoryConverter.convertToPath(traj);
   }
 }
