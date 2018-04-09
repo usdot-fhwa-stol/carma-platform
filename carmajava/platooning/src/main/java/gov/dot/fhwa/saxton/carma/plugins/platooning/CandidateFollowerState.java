@@ -122,6 +122,8 @@ public class CandidateFollowerState implements IPlatooningState {
                     }
                 } else {
                     log.debug("We do not need to speed up to join the front platoon because we are already close enough");
+                    // pretend we already finished speedUp maneuvers in order to send PLATOON_FOLLOWER_JOIN request
+                    this.speedUpEndDistance = 0.0;
                     this.plannedSomeManeuvers = true;
                 }
             }

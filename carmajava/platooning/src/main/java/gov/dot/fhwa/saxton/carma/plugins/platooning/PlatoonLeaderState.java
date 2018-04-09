@@ -204,7 +204,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                 // TODO Need to populate the urgency later
                 request.setUrgency((short) 50);
                 this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), planId, leaderId);
-                log.debug("Publishing request to leader " + leaderId + " with params " + strategyParamsString);
+                log.debug("Publishing request to leader " + leaderId + " with params " + strategyParamsString + " and plan id = " + planId);
                 plugin.getMobilityRequestPublisher().publish(request);
                 this.potentialNewPlatoonId = msg.getHeader().getPlanId();
             } else {
@@ -242,8 +242,15 @@ public class PlatoonLeaderState implements IPlatooningState {
                         // Forget about the previous plan totally
                         this.currentPlan = null;
                     }
+                } else {
+                    log.debug("Ignore the response message because planID match: " + this.currentPlan.planId.equals(msg.getHeader().getPlanId()));
+                    log.debug("My plan id = " + this.currentPlan.planId + " and response plan Id = " + msg.getHeader().getPlanId());
+                    log.debug("And peer id match " + this.currentPlan.peerId.equals(msg.getHeader().getSenderId()));
+                    log.debug("Expected peer id = " + this.currentPlan.peerId + " and response sender Id = " + msg.getHeader().getSenderId());
                 }
             }
+        } else {
+            log.debug("Ignore imcoming plan because our current plan is null. plan id = " + msg.getHeader().getPlanId());
         }
     }
 
