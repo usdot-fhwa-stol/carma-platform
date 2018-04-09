@@ -30,10 +30,11 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
  */
 public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     
+    protected static long CMD_TIMESTEP = 100;
+    
     protected PlatooningPlugin plugin_;
     protected PluginServiceLocator pluginServiceLocator_;
     protected ILogger log_;
-    protected long timestep_;
     protected Filter<Double> distanceGapController_;
     protected Pipeline<Double> speedController_;
     protected double desiredGap_ = 0.0;
@@ -54,7 +55,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
                 long tsStart = System.currentTimeMillis();
                 generateSpeed((double) tsStart);
                 long tsEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(timestep_ - (tsEnd - tsStart), 0);
+                long sleepDuration = Math.max(CMD_TIMESTEP - (tsEnd - tsStart), 0);
                 Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {
