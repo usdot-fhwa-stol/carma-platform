@@ -160,22 +160,24 @@ public class CandidateFollowerState implements IPlatooningState {
         // Waiting on response for the current Candidate-Join plan
         if(this.currentPlan != null) {
             synchronized(currentPlan) {
-                boolean isForCurrentPlan = msg.getHeader().getPlanId().equals(this.currentPlan.planId);
-                boolean isFromTargetVehicle = msg.getHeader().getSenderId().equals(this.targetLeaderId);
-                if(isForCurrentPlan && isFromTargetVehicle) {
-                    if(msg.getIsAccepted()) {
-                        // We change to follower state and start to actually follow that leader
-                        // The platoon manager also need to change the platoon Id to the one that the target leader is using 
-                        log.debug("The leader " + msg.getHeader().getSenderId() + " agreed on our join. Change to follower state.");
-                        plugin.getPlatoonManager().changeFromLeaderToFollower(targetLeaderId, targetPlatoonId);
-                        plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
+                if(this.currentPlan != null) {
+                    boolean isForCurrentPlan = msg.getHeader().getPlanId().equals(this.currentPlan.planId);
+                    boolean isFromTargetVehicle = msg.getHeader().getSenderId().equals(this.targetLeaderId);
+                    if(isForCurrentPlan && isFromTargetVehicle) {
+                        if(msg.getIsAccepted()) {
+                            // We change to follower state and start to actually follow that leader
+                            // The platoon manager also need to change the platoon Id to the one that the target leader is using 
+                            log.debug("The leader " + msg.getHeader().getSenderId() + " agreed on our join. Change to follower state.");
+                            plugin.getPlatoonManager().changeFromLeaderToFollower(targetLeaderId, targetPlatoonId);
+                            plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
+                        } else {
+                            // We change back to normal leader state and try to join other platoons
+                            log.debug("The leader " + msg.getHeader().getSenderId() + " does not agree on our join. Change back to leader state.");
+                            plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                        }
                     } else {
-                        // We change back to normal leader state and try to join other platoons
-                        log.debug("The leader " + msg.getHeader().getSenderId() + " does not agree on our join. Change back to leader state.");
-                        plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
-                    }
-                } else {
-                    log.debug("Ignore received response message because it is not for the current plan.");
+                        log.debug("Ignore received response message because it is not for the current plan.");
+                    }    
                 }
             }
         } else {
@@ -203,9 +205,11 @@ public class CandidateFollowerState implements IPlatooningState {
                 // Task 2
                 if(this.currentPlan != null) {
                     synchronized (currentPlan) {
-                        boolean isPlanTimeout = (tsStart - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout();
-                        if(isPlanTimeout) {
-                            this.currentPlan = null;
+                        if(this.currentPlan != null) {
+                            boolean isPlanTimeout = (tsStart - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout();
+                            if(isPlanTimeout) {
+                                this.currentPlan = null;
+                            }    
                         }
                     }
                     log.debug("The current plan did not receive any response. Abort and change to leader state.");
