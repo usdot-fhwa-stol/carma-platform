@@ -22,6 +22,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
@@ -65,6 +66,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   private int currentSegmentIdx;
   private double currentSegDowntrack;
   private int lane;
+  private ILogger log;
 
   /**
    * Constructor
@@ -76,6 +78,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     this.maxPointsInPath = maxPointsInPath;
     this.timeStep = timeStep;
   }
+
+  public void setLogger(ILogger logger) { log = logger; }
 
   /**
    * Sets the route
@@ -102,6 +106,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
    * @param currentSegDowntrack the current progress down that segment in double-valued meters
    */
   public void setRouteState(double downtrack, double crosstrack, int currentSegmentIdx, double currentSegDowntrack, int lane) {
+    log.debug("PATH", "setRouteState called with dontrack = " + downtrack + ", currentSegmentIdx = " +
+              currentSegmentIdx + ", currentSegDowntrack = " +  currentSegDowntrack + ", lane = " + lane);
     this.downtrack = downtrack;
     this.crosstrack = crosstrack;
     this.currentSegmentIdx = currentSegmentIdx;
@@ -155,6 +161,12 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     List<LongitudinalManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     List<LateralManeuver> lateralManeuvers = traj.getLateralManeuvers();
     IComplexManeuver complexManeuver = traj.getComplexManeuver();
+    log.debug("PATH", "convertToPath entered: " + longitudinalManeuvers.size() + " long mvrs, " +
+                lateralManeuvers.size() + " lat mvrs, " + (complexManeuver == null ? "null" : "non-null") +
+                "complex mvr.");
+    log.debug("PATH", "    downtrack = " + downtrack + ", currentSegmentIdx = " + currentSegmentIdx +
+                ", segDowntrack = " + segDowntrack + ", lane = " + lane + ", maxPoints = " + maxPointsInPath +
+                ", currentTime = " + currentTime);
 
     // Starting simulation configuration
     List<RoutePointStamped> path =  new LinkedList<RoutePointStamped>();
@@ -179,6 +191,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
 
       // If this maneuver is happening or will happen add it to the path
       if (maneuver.getEndDistance() > longitudinalSimData.downtrack) {
+        log.debug("PATH", "convertToPath adding long mvr #" + i);
         longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData, maxPointsInPath);
         // Ensure there are no overlapping points in time
         if (oldPathEndPoint != null && path.size() > oldPathSize && oldPathEndPoint.getStamp() == path.get(oldPathSize).getStamp()){
@@ -207,6 +220,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       }
       // If this maneuver is happening or will happen add it to the path
       if (maneuver.getEndDistance() > path.get(currentPoint).getDowntrack()) {
+        log.debug("PATH", "convertToPath adding lat mvr #" + i);
         // If no lane change occurs we will maintain the current crosstrack
         if (maneuver.getEndingRelativeLane() == 0) {
           while (currentPoint < path.size() && maneuver.getEndDistance() > path.get(currentPoint).getDowntrack()) {
