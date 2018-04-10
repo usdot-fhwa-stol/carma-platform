@@ -209,12 +209,11 @@ public class CandidateFollowerState implements IPlatooningState {
                             boolean isPlanTimeout = (tsStart - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout();
                             if(isPlanTimeout) {
                                 this.currentPlan = null;
+                                log.debug("The current plan did not receive any response. Abort and change to leader state.");
+                                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
                             }    
                         }
                     }
-                    log.debug("The current plan did not receive any response. Abort and change to leader state.");
-                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
-                    
                 }
                 // Task 3
                 if(pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() >= this.speedUpEndDistance) {

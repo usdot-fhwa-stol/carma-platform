@@ -84,6 +84,7 @@ public class PlatooningPlugin extends AbstractPlugin
     // following parameters are for negotiation when a CAV want to join a platoon
     protected double maxJoinTime                    = 10.0;
     protected double desiredJoinDistance            = 13.0;
+    protected double followerJoinDistance           = 5.0;
     protected double statusTimeoutFactor            = 2.5;
     protected int    statusIntervalLength           = 100;
     protected int    infoIntervalLength             = 3000;
@@ -140,10 +141,12 @@ public class PlatooningPlugin extends AbstractPlugin
         algorithmType           = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
         maxJoinTime             = pluginServiceLocator.getParameterSource().getDouble("~max_join_time", 10.0);
         desiredJoinDistance     = pluginServiceLocator.getParameterSource().getDouble("~desired_join_distance", 13.0);
+        followerJoinDistance    = pluginServiceLocator.getParameterSource().getDouble("~follower_join_distance", 5.0);
         infoIntervalLength      = pluginServiceLocator.getParameterSource().getInteger("~operation_info_interval_length", 3000);
         shortNegotiationTimeout = pluginServiceLocator.getParameterSource().getInteger("~short_negotiation_timeout", 5000);
         longNegotiationTimeout  = pluginServiceLocator.getParameterSource().getInteger("~long_negotiation_timeout", 25000);
         maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~max_platoon_size", 10);
+        
         //log all loaded parameters
         log.debug("Load param maxAccel = " + maxAccel);
         log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
@@ -165,6 +168,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param shortNegotiationTimeout = " + shortNegotiationTimeout);
         log.debug("Load param longNegotiationTimeout = " + longNegotiationTimeout);
         log.debug("Load param maxPlatoonSize = " + maxPlatoonSize);
+        log.debug("Load param followerJoinDistance = " + followerJoinDistance);
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
         mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
@@ -447,5 +451,9 @@ public class PlatooningPlugin extends AbstractPlugin
     
     protected ISubscriber<SpeedAccel> getCmdSpeedSub() {
         return cmdSpeedSub;
+    }
+    
+    protected double getFollowerJoinDistance() {
+        return followerJoinDistance;
     }
 }

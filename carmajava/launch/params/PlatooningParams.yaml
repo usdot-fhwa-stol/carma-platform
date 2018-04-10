@@ -74,3 +74,7 @@ long_negotiation_timeout: 25000
 # Integer: The maximum number of platoon member we allow
 # Units: 1
 max_platoon_size: 10
+
+# Double: The gap distance between the candidate vehicle to leader vehicle before sending out Candidate_Join request
+# Units: m
+follower_join_distance: 5.0

@@ -178,7 +178,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                 if(platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance() <= 0) {
                     log.debug("We do not need to speed up in order to join.");
                 } else {
-                    speedUpTime = (platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance()) / (hostMaxSpeed - platoonSpeed);
+                    speedUpTime = (platoonRearDtd - currentHostDtd - plugin.getFollowerJoinDistance()) / (hostMaxSpeed - platoonSpeed);
                     log.debug("The speed up time we need to close the gap is roughly " + speedUpTime);
                 }
                 // Compose a mobility request to publish a JOIN request
