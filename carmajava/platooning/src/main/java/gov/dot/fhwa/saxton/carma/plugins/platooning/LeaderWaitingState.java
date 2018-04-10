@@ -77,7 +77,7 @@ public class LeaderWaitingState implements IPlatooningState {
         boolean isTargetVehicle = msg.getHeader().getSenderId().equals(applicantId);
         boolean isCandidateJoin = msg.getPlanType().getType() == PlanType.PLATOON_FOLLOWER_JOIN;
         if(isTargetVehicle && isCandidateJoin) {
-            log.debug("Target vehicle " + applicantId + " is actually joining.");
+            log.debug("Target vehicle " + applicantId + " is actually trying to join.");
             // Evaluate if it is ready to join immediately
             // TODO The current strategy string is in format: "DTD:xx", but we need to use location field 
             double targetVehicleDtd = Double.parseDouble(msg.getStrategyParams().split(":")[1]);
