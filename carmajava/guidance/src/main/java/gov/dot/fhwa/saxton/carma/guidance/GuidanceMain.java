@@ -69,7 +69,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
   // Member Variables
   protected ExecutorService executor;
-  protected final int NUMTHREADS = 9;
+  protected final int NUMTHREADS = 10;
   protected static ComponentVersion version = CarmaVersion.getVersion();
 
   protected IPubSubService pubSubService;
@@ -216,6 +216,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   public void onSaxtonStart(final ConnectedNode connectedNode) {
     initLogger(connectedNode.getLog());
     final ILogger log = LoggerManager.getLogger();
+    Thread.currentThread().setName(this.getClass().getSimpleName() + "Thread");
 
     log.info("//////////");
     log.info("//////////   GuidanceMain starting up:    " + version.toString() + "    //////////");

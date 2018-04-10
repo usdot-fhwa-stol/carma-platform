@@ -186,8 +186,8 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
             } else {
                 log.info("Conflict detected! Handling by delegating to: " + conflictHandlerName);
                 // Just pass it null for now
-                new Thread(() -> conflictHandler.handleMobilityPathMessageWithConflict(null, true, conflicts.get(0)))
-                        .start();
+                new Thread(() -> conflictHandler.handleMobilityPathMessageWithConflict(null, true, conflicts.get(0)),
+                 "HandleMobilityPathMessageWithConflictCallback").start();
             }
         } else {
             log.info("No conflicts detected in trajectory.");
