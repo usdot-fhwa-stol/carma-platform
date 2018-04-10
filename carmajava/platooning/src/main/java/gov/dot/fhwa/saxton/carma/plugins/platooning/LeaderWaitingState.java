@@ -91,6 +91,8 @@ public class LeaderWaitingState implements IPlatooningState {
                 plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
                 return MobilityRequestResponse.ACK;
             } else {
+                log.debug("The gap is still not close enough: " + (vehicleAtRearDtd - targetVehicleDtd) + ". Change back to PlatoonLeaderState");
+                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
                 return MobilityRequestResponse.NACK;
             }
         } else {

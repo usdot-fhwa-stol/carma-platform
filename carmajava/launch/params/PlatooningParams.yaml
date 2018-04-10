@@ -32,7 +32,7 @@ platooning_Ki: 0.0
 
 # Double: The derivative term in the platoon speed PID controller
 # Units: 1
-platooning_Kd: 0.1
+platooning_Kd: -0.1
 
 # Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
 # Units: s
@@ -53,7 +53,7 @@ algorithm_type: 0
 
 # Double: The maximum time we allowed for candidate to accelerate in order to join
 # Units: s
-max_join_time: 10.0
+max_join_time: 15.0
 
 # Double: The desired distance for the candidate vehicle to join at rear
 # Units: m

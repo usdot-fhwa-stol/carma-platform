@@ -318,12 +318,10 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         }
 
         for (Entry<String, LinkedList<MobilityResponseHandler>> entry : ackMap.entrySet()) {
-            if (entry.getKey().endsWith(msg.getHeader().getPlanId())) {
-                log.info("Firing message handlers registered for " + entry.getKey());
-                for (MobilityResponseHandler handler : entry.getValue()) {
-                    log.info("Firing mobility response handler: " + handler.getClass().getSimpleName());
-                    fireMobilityResponseCallback(handler, msg);
-                }
+            log.info("Firing message handlers registered for " + entry.getKey());
+            for (MobilityResponseHandler handler : entry.getValue()) {
+                log.info("Firing mobility response handler: " + handler.getClass().getSimpleName());
+                fireMobilityResponseCallback(handler, msg);
             }
         }
     }

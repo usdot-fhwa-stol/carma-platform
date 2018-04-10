@@ -53,7 +53,7 @@ public class PlatoonManager implements Runnable {
         this.log               = log;
         this.psl               = psl;
         this.memberInfoTimeout = (long) (plugin.getOperationUpdatesIntervalLength() * plugin.getOperationUpdatesTimeoutFactor());
-        isFollower             = false;
+        this.isFollower        = false;
     }
     
     /**
@@ -76,18 +76,28 @@ public class PlatoonManager implements Runnable {
         // 2. We will update platoon members info based on platoon ID if it is in front of us 
         if(isFollower) {
             boolean isFromLeader = leaderID.equals(senderId);
-            boolean notNeedPlatoonIdChange = this.currentPlatoonID.equals(platoonId);
+            boolean needPlatoonIdChange = isFromLeader && !this.currentPlatoonID.equals(platoonId);
+            boolean isInFrontOfUs = dtDistance >= psl.getRouteService().getCurrentDowntrackDistance();
             // Task 1
-            if(isFromLeader && !notNeedPlatoonIdChange) {
+            if(needPlatoonIdChange) {
+                log.debug("It seems that the current leader is joining another platoon.");
+                log.debug("So the platoon ID is changed from " + this.currentPlatoonID + " to " + platoonId);
                 this.setCurrentPlatoonID(platoonId);
-            } else if(notNeedPlatoonIdChange) {
-                log.debug("This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+            } else if(this.currentPlatoonID.equals(platoonId) && isInFrontOfUs) {
+                log.debug("This STATUS messages is from our platoon in front of us. Updating the info...");
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                if(!platoon.isEmpty() && !this.leaderID.equals(platoon.get(0).staticId)) {
+                    this.leaderID = platoon.get(0).staticId;
+                    log.debug("Now the leader change to " + this.leaderID);
+                }
+            } else {
+                log.debug("This STATUS message is not from our platoon. We ignore this message with id: " + senderId);
             }
         } else {
             // If we are currently in any leader state, we only updates platoon member based on platoon ID
-            if(currentPlatoonID.equals(platoonId) && dtDistance > psl.getRouteService().getCurrentDowntrackDistance()) {
-                log.debug("This STATUS messages is from our platoon and is in front of us. Updating the info...");
+            if(currentPlatoonID.equals(platoonId)) {
+                log.debug("This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
             }
         }
@@ -102,10 +112,10 @@ public class PlatoonManager implements Runnable {
                 pm.vehiclePosition = dtDistance;
                 pm.vehicleSpeed = curSpeed;
                 pm.timestamp = System.currentTimeMillis();
-                log.info("Receive and update CACC info on vehicel " + pm.staticId);
-                log.info("    Speed = "                             + pm.vehicleSpeed);
-                log.info("    Location = "                          + pm.vehiclePosition);
-                log.info("    CommandSpeed = "                      + pm.commandSpeed);
+                log.debug("Receive and update CACC info on vehicel " + pm.staticId);
+                log.debug("    Speed = "                             + pm.vehicleSpeed);
+                log.debug("    Location = "                          + pm.vehiclePosition);
+                log.debug("    CommandSpeed = "                      + pm.commandSpeed);
                 isExisted = true;
                 break;
             }
@@ -143,11 +153,10 @@ public class PlatoonManager implements Runnable {
         List<PlatoonMember> removeCandidates = new ArrayList<>();
         for(PlatoonMember pm : platoon) {
             boolean isTimeout = System.currentTimeMillis() - pm.timestamp > memberInfoTimeout;
-            boolean isNotInPlatoon = !this.currentPlatoonID.equals(pm.staticId);
-            if(isTimeout || isNotInPlatoon) {
+            if(isTimeout) {
                 removeCandidates.add(pm);
                 log.debug("Found invalid vehicel entry " + pm.staticId + " in platoon list which will be removed");
-                log.debug("Because isTimeout = " + isTimeout + " isNotInPlatoon = " + isNotInPlatoon);
+                log.debug("Because isTimeout = " + isTimeout);
             }
         }
         if(removeCandidates.size() != 0) {
@@ -157,28 +166,32 @@ public class PlatoonManager implements Runnable {
         }
     }
     
-    protected int getPlatooningSize() {
+    protected synchronized int getPlatooningSize() {
         return platoon.size();
     }
     
-    protected double getPlatoonRearDowntrackDistance() {
+    protected synchronized double getPlatoonRearDowntrackDistance() {
         if(this.getPlatooningSize() == 0) {
             return psl.getRouteService().getCurrentDowntrackDistance();
         }
         return this.platoon.get(this.getPlatooningSize() - 1).vehiclePosition;
     }
     
-    protected void changeFromLeaderToFollower(String newLeaderId, String newPlatoonId) {
+    protected synchronized void changeFromLeaderToFollower(String newLeaderId, String newPlatoonId) {
         this.isFollower = true;
         this.leaderID = newLeaderId;
         this.currentPlatoonID = newPlatoonId;
+        this.platoon = Collections.synchronizedList(new ArrayList<>());
+        log.debug("The platoon manager is changed from leader state to follower state.");
     }
     
-    protected void changeFromFollowerToLeader() {
+    protected synchronized void changeFromFollowerToLeader() {
         this.isFollower = false;
+        this.platoon = Collections.synchronizedList(new ArrayList<>());
+        log.debug("The platoon manager is changed from follower state to leader state.");
     }
 
-    protected String getCurrentPlatoonID() {
+    protected synchronized String getCurrentPlatoonID() {
         return currentPlatoonID;
     }
     
@@ -189,7 +202,7 @@ public class PlatoonManager implements Runnable {
      */
     protected synchronized PlatoonMember getLeader() {
         PlatoonMember leader = null;
-        if(isFollower) {
+        if(isFollower && platoon.size() != 0) {
             // return the first vehicle in the platoon as default if no valid algorithm applied
             leader = platoon.get(0);
             if(plugin.getAlgorithmType() == 1) {

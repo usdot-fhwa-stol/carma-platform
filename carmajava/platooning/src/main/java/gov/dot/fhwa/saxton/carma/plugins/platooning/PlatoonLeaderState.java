@@ -123,7 +123,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                     // calculate the time the applicant will take to reach the desired join distance
                     double timeToCatchUp = Math.max((currentGap - plugin.getDesiredJoinDistance()) / (speedDiff), 0);
                     // We need to plus the vehicle lag time
-                    double vehicleResponseLag = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();
+                    double vehicleResponseLag = plugin.getManeuverInputs().getResponseLag();
                     double totalTimeNeeded = applicantSpeedUpTime + timeToCatchUp + vehicleResponseLag;
                     // Check if it is a reasonable total time
                     boolean isTotalTimeReasonable = totalTimeNeeded <= plugin.getMaxJoinTime();
@@ -170,13 +170,17 @@ public class PlatoonLeaderState implements IPlatooningState {
                 log.debug("Found a platoon with id = " + msg.getHeader().getPlanId() + " in front of us.");
                 // Calculate how much time the host should accelerate to close the gap
                 double hostMaxSpeed = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentHostDtd).getLimit();
-                // Whether we can/need acceleration
-                if(hostMaxSpeed == platoonSpeed || platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance() < 0) {
-                    log.debug("We can not or we do not need to speed up in order to join.");
+                // Whether we can join by speed up
+                if(hostMaxSpeed <= platoonSpeed) {
+                    log.debug("The local speed limit " + hostMaxSpeed + "is less or equal with the platoon speed. Unable to join");
+                    return;
+                }
+                if(platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance() <= 0) {
+                    log.debug("We do not need to speed up in order to join.");
                 } else {
                     speedUpTime = (platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance()) / (hostMaxSpeed - platoonSpeed);
+                    log.debug("The speed up time we need to close the gap is roughly " + speedUpTime);
                 }
-                log.debug("The speed up time we need to close the gap is roughly " + speedUpTime);
                 // Compose a mobility request to publish a JOIN request
                 MobilityRequest request = plugin.getMobilityRequestPublisher().newMessage();
                 String planId = UUID.randomUUID().toString();
@@ -200,7 +204,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                 // TODO Need to populate the urgency later
                 request.setUrgency((short) 50);
                 this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), planId, leaderId);
-                log.debug("Publishing request to leader " + leaderId + " with params " + strategyParamsString);
+                log.debug("Publishing request to leader " + leaderId + " with params " + strategyParamsString + " and plan id = " + planId);
                 plugin.getMobilityRequestPublisher().publish(request);
                 this.potentialNewPlatoonId = msg.getHeader().getPlanId();
             } else {
@@ -224,22 +228,30 @@ public class PlatoonLeaderState implements IPlatooningState {
         // Only care the response message for the plan for which we are waiting
         if(this.currentPlan != null) {
             synchronized(this.currentPlan) {
-                if(this.currentPlan.planId.equals(msg.getHeader().getPlanId()) &&
-                   this.currentPlan.peerId.equals(msg.getHeader().getSenderId())) {
-                    if(msg.getIsAccepted()) {
-                        log.debug("Received positive response for plan id = " + this.currentPlan.planId);
-                        log.debug("Change to CandidateFollower state and notify trajectory failure in order to replan");
-                        // Change to candidate follower state and request a new plan to catch up with the front platoon
-                        plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator,
-                                        speedUpTime, currentPlan.peerId, potentialNewPlatoonId));
-                        pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+                if(this.currentPlan != null) {
+                    if(this.currentPlan.planId.equals(msg.getHeader().getPlanId()) && this.currentPlan.peerId.equals(msg.getHeader().getSenderId())) {
+                        if(msg.getIsAccepted()) {
+                            log.debug("Received positive response for plan id = " + this.currentPlan.planId);
+                            log.debug("Change to CandidateFollower state and notify trajectory failure in order to replan");
+                            // Change to candidate follower state and request a new plan to catch up with the front platoon
+                            plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator,
+                                            speedUpTime, currentPlan.peerId, potentialNewPlatoonId));
+                            pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+                        } else {
+                            log.debug("Received negative response for plan id = " + this.currentPlan.planId);
+                            // Forget about the previous plan totally
+                            this.currentPlan = null;
+                        }
                     } else {
-                        log.debug("Received negative response for plan id = " + this.currentPlan.planId);
-                        // Forget about the previous plan totally
-                        this.currentPlan = null;
+                        log.debug("Ignore the response message because planID match: " + this.currentPlan.planId.equals(msg.getHeader().getPlanId()));
+                        log.debug("My plan id = " + this.currentPlan.planId + " and response plan Id = " + msg.getHeader().getPlanId());
+                        log.debug("And peer id match " + this.currentPlan.peerId.equals(msg.getHeader().getSenderId()));
+                        log.debug("Expected peer id = " + this.currentPlan.peerId + " and response sender Id = " + msg.getHeader().getSenderId());
                     }
                 }
             }
+        } else {
+            log.debug("Ignore imcoming plan because our current plan is null. plan id = " + msg.getHeader().getPlanId());
         }
     }
 
@@ -271,10 +283,12 @@ public class PlatoonLeaderState implements IPlatooningState {
                 // Task 3
                 if(currentPlan != null) {
                     synchronized(this.currentPlan) {
-                        boolean isCurrentPlanTimeout = ((System.currentTimeMillis() - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout());
-                        if(isCurrentPlanTimeout) {
-                            log.info("Give up current on waiting plan with planId: " + this.currentPlan.planId);
-                            this.currentPlan = null;
+                        if(currentPlan != null) {
+                            boolean isCurrentPlanTimeout = ((System.currentTimeMillis() - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout());
+                            if(isCurrentPlanTimeout) {
+                                log.info("Give up current on waiting plan with planId: " + this.currentPlan.planId);
+                                this.currentPlan = null;
+                            }    
                         }
                     }
                 }
@@ -345,5 +359,5 @@ public class PlatoonLeaderState implements IPlatooningState {
             plugin.setLightBarStatus(IndicatorStatus.OFF);
         }
     }
-    
+
 }
