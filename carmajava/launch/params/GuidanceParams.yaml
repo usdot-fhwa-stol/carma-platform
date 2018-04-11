@@ -65,11 +65,11 @@ required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin
   - gov.dot.fhwa.saxton.carma.guidance.routefollowing.RouteFollowingPlugin
   - gov.dot.fhwa.saxton.carma.guidance.lanechange.LaneChangePlugin
-  - gov.dot.fhwa.saxton.carma.guidance.yield.SimpleYieldPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.yield.YieldPlugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins:
-  - Simple Yield Plugin
+  - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
   - Cruising Plugin
@@ -168,7 +168,7 @@ acc_vehicle_front_frame_id: 'vehicle_front'
 
 # String: The component name of the Plugin which will handle mobility path and request conflicts
 # Note: This string must match the Versionable.getVersionInfo().componentName() value of the plugin
-default_mobility_conflict_handler: 'Simple Yield Plugin'
+default_mobility_conflict_handler: 'Yield Plugin'
 
 # Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
 # Units: meters
@@ -212,7 +212,7 @@ light_bar_priorities:
   - Light Bar State Machine
   - Lane Change Plugin
   - CACC Platooning Plugin
-  - Simple Yield Plugin
+  - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
   - Cruising Plugin
