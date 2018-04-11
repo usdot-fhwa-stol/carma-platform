@@ -20,7 +20,7 @@ platooning_desired_time_headway: 1.8
 
 # Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
 # Units: m
-platooning_min_gap: 7.0
+platooning_min_gap: 10.0
 
 # Double: The proportional term in the platoon speed PID controller
 # Units: 1
@@ -41,7 +41,6 @@ platooning_upper_boundary: 1.75
 platooning_max_spacing: 2.0
 platooning_min_spacing: 1.9
 # Units: m
-platooning_min_gap: 12.0
 platooning_max_gap: 14.0
 
 # Integer: The algorithm type used for leader selection in a platoon
@@ -57,7 +56,7 @@ max_join_time: 15.0
 
 # Double: The desired time gap for the candidate vehicle to join at rear
 # Units: s
-desired_join_distance: 4.0
+desired_join_time_gap: 4.0
 
 # Integer: The time interval between two mobility INFO message
 # Units: ms
@@ -77,4 +76,4 @@ max_platoon_size: 10
 
 # Double: The time gap distance the candidate vehicle wants to achieve with the leader
 # Units: s
-follower_join_distance: 3.0
+follower_join_time_gap: 3.0
