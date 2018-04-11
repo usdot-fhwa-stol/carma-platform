@@ -63,6 +63,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected IService<GetTransformRequest, GetTransformResponse> getTransformClient_;
     Transform hostVehicleToVehicleFront_ = null;
     protected double distanceDowntrack_ = 0.0; // m
+    protected double distanceCrosstrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
     protected int currentLane_ = 0;
@@ -335,5 +336,10 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 	    } else {
 	    	return null;
 	    }
+    }
+
+    @Override
+    public double getCrosstrackDistance() {
+        return distanceCrosstrack_;
     }
 }

@@ -29,6 +29,12 @@ public interface IManeuverInputs {
     double getDistanceFromRouteStart();
 
     /**
+     * Provides the vehicle's current crosstrack distance on the route
+     * @return distance, m
+     */
+    double getCrosstrackDistance();
+
+    /**
      * Provides the vehicle's current speed.
      * @return current speed, m/s
      */
