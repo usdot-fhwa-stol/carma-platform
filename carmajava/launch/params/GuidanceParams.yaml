@@ -146,6 +146,10 @@ lane_change_safety_factor: 2.0
 # Units: seconds
 lane_change_notification_time: 4.0
 
+# Double: The amount of time the lane change plugin will wait for an external NACK before considering it safe to change lanes
+# Units: miliseconds
+lane_change_nack_timeout: 1000
+
 ##### DEPRECATED
 ##### The following are used by the NegotiationReceiverPlugin
 
