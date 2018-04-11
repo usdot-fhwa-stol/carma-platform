@@ -22,7 +22,7 @@ platooning_desired_time_headway: 1.8
 # Units: m
 platooning_min_gap: 7.0
 
-# Double: The poportional term in the platoon speed PID controller
+# Double: The proportional term in the platoon speed PID controller
 # Units: 1
 platooning_Kp: 1.5
 
