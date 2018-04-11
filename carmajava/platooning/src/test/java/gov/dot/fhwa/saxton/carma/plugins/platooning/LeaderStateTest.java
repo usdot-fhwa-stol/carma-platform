@@ -55,7 +55,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 
 // This test only focus on the behavior of IPlatooningState API.
-public class PlatoonLeaderStateTest {
+public class LeaderStateTest {
 
     protected PlatooningPlugin     mockPlugin;
     protected ILogger              mockLog;
@@ -82,7 +82,7 @@ public class PlatoonLeaderStateTest {
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         when(mockPlugin.getMaxPlatoonSize()).thenReturn(5);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
-        leaderState = new PlatoonLeaderState(mockPlugin, mockLog, pluginServiceLocator);
+        leaderState = new LeaderState(mockPlugin, mockLog, pluginServiceLocator);
     }
     
     @Test

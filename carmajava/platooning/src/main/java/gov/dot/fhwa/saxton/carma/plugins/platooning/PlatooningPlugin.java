@@ -174,10 +174,6 @@ public class PlatooningPlugin extends AbstractPlugin
         mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
         platooningInfoPublisher    = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
         cmdSpeedSub                = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
-        // register with MobilityRouter
-        pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
-        pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(MOBILITY_STRATEGY, this);
-        pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
         log.info("CACC platooning plugin is initialized.");
         // get light bar manager
         lightBarManager = pluginServiceLocator.getLightBarManager();
@@ -186,6 +182,10 @@ public class PlatooningPlugin extends AbstractPlugin
     @Override
     public void onResume() {
         log.info("CACC platooning plugin resume to operate.");
+        // register with MobilityRouter
+        pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
+        pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
+        pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
         // reset plug-in's sub-components
         this.setState(new StandbyState(this, log, pluginServiceLocator));
         if(platoonManagerThread == null) {

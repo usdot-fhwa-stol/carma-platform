@@ -153,7 +153,7 @@ public class CandidateFollowerStateTest {
         when(mockRouteService.isAlgorithmEnabledInRange(0.0, 60.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
         TrajectoryPlanningResponse tpr2 = candidateFollowerState.planTrajectory(traj2, 0);
         assertTrue(tpr2.getRequests().isEmpty());
-        ArgumentCaptor<PlatoonLeaderState> newState = ArgumentCaptor.forClass(PlatoonLeaderState.class);
+        ArgumentCaptor<LeaderState> newState = ArgumentCaptor.forClass(LeaderState.class);
         verify(mockPlugin).setState(newState.capture());
         assertEquals("PlatoonLeaderState", newState.getValue().toString());
     }

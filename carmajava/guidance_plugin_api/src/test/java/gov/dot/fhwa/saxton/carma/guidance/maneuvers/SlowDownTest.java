@@ -25,13 +25,13 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SlowDownTest {
+    
     private FakeManeuverInputs   inputs_;
     private FakeGuidanceCommands commands_;
-
 
     @Before
     public void setup() {
@@ -40,7 +40,7 @@ public class SlowDownTest {
         AccStrategyManager.setAccStrategyFactory(new NoOpAccStrategyFactory());
         ILoggerFactory mockFact = mock(ILoggerFactory.class);
         ILogger mockLogger = mock(ILogger.class);
-        when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+        when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
         LoggerManager.setLoggerFactory(mockFact);
     }
 
@@ -61,8 +61,8 @@ public class SlowDownTest {
         double endDist = mvr.getEndDistance();
 
         //compute expected distance required to perform the maneuver
-        double deltaV = targetSpeed - startSpeed;
-        double mvrLength = -startSpeed*deltaV/maxAccel + 0.5*deltaV*deltaV/maxAccel + 0.2*targetSpeed;
+        double deltaV = targetSpeed - startSpeed; 
+        double mvrLength = (-deltaV / maxAccel) * (0.5 * (targetSpeed + startSpeed)) + 0.2 * targetSpeed;
         assertEquals(startDist + mvrLength, endDist, 0.1);
 
         //execute the maneuver for several time steps
@@ -74,7 +74,8 @@ public class SlowDownTest {
             done = mvr.executeTimeStep();
             double speedCmd = commands_.getSpeedCmd();
             double accelCmd = commands_.getAccelCmd();
-            assertEquals(inputs_.getAccel(), accelCmd, 0.001);
+            
+            assertEquals(-inputs_.getAccel(), accelCmd, 0.001);
 
             double expectedSpeedCmd = Math.max(inputs_.getFastSpeed() - (double)i * 0.1 * accelCmd, inputs_.getTargetSpeed());
             System.out.println("expected = " + expectedSpeedCmd + ", actual = " + speedCmd + ", prev = " + prevCmd);

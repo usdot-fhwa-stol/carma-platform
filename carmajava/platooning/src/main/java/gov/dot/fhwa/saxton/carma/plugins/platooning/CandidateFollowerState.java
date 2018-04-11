@@ -36,7 +36,7 @@ public class CandidateFollowerState implements IPlatooningState {
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
-    protected double               speedUpTime;
+    protected double               timeAtHighSpeed;
     protected String               targetLeaderId;
     protected String               targetPlatoonId;
     private   PlatoonPlan          currentPlan;
@@ -49,7 +49,7 @@ public class CandidateFollowerState implements IPlatooningState {
         this.plugin               = plugin;
         this.log                  = log;
         this.pluginServiceLocator = pluginServiceLocator;
-        this.speedUpTime          = speedUpTime;
+        this.timeAtHighSpeed      = speedUpTime;
         this.targetLeaderId       = targetId;
         this.targetPlatoonId      = newPlatoonId;
         this.plannedSomeManeuvers = false;
@@ -78,10 +78,10 @@ public class CandidateFollowerState implements IPlatooningState {
                 // TODO Maybe need to inform the front waiting leader to abort current plan and stop waiting
                 log.debug("We have planned a speed up but the plan is interrupted due to a re-plan event");
                 log.debug("Change back to PlatoonLeaderState and try to join another platoon");
-                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
             } else {
                 // Plan a speed up maneuver to speed limit and a steady speed maneuver at the speed limit if necessary
-                if(speedUpTime > 0) {
+                if(timeAtHighSpeed > 0) {
                     SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory(plugin);
                     double currentSpeed = plugin.getManeuverInputs().getCurrentSpeed();
                     double speedLimit = rs.getSpeedLimitAtLocation(rs.getCurrentDowntrackDistance()).getLimit();
@@ -92,7 +92,7 @@ public class CandidateFollowerState implements IPlatooningState {
                     double speedUpEndDtd = speedUp.getEndDistance();
                     log.debug("Planned a speedUp maneuver " + speedUp.toString());
                     // Calculate how far the host vehicle should stay on the speed limit based on the required time
-                    double steadyEndDtd = speedUpEndDtd + (speedLimit * this.speedUpTime);
+                    double steadyEndDtd = speedUpEndDtd + (speedLimit * this.timeAtHighSpeed);
                     log.debug("If we plan a steady speed maneuver to catch up the gap, we need trajectory to end at " + steadyEndDtd);
                     if(steadyEndDtd > traj.getEndLocation()) {
                         log.debug("steadySpeedManeuverEnd exceeds the end of current trajectory, requesting a longer one.");
@@ -173,7 +173,7 @@ public class CandidateFollowerState implements IPlatooningState {
                         } else {
                             // We change back to normal leader state and try to join other platoons
                             log.debug("The leader " + msg.getHeader().getSenderId() + " does not agree on our join. Change back to leader state.");
-                            plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                            plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                         }
                     } else {
                         log.debug("Ignore received response message because it is not for the current plan.");
@@ -200,7 +200,7 @@ public class CandidateFollowerState implements IPlatooningState {
                 boolean isCurrentStateTimeout = (tsStart - this.stateStartTime) > plugin.getLongNegotiationTimeout();
                 if(isCurrentStateTimeout) {
                     log.debug("The current candidate follower state is timeout. Change back to leader state.");
-                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                    plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 }
                 // Task 2
                 if(this.currentPlan != null) {
@@ -210,13 +210,13 @@ public class CandidateFollowerState implements IPlatooningState {
                             if(isPlanTimeout) {
                                 this.currentPlan = null;
                                 log.debug("The current plan did not receive any response. Abort and change to leader state.");
-                                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                             }    
                         }
                     }
                 }
                 // Task 3
-                if(pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() >= this.speedUpEndDistance) {
+                if(pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() >= this.speedUpEndDistance && this.currentPlan == null) {
                     MobilityRequest request = plugin.getMobilityRequestPublisher().newMessage();
                     String planId = UUID.randomUUID().toString();
                     request.getHeader().setPlanId(planId);

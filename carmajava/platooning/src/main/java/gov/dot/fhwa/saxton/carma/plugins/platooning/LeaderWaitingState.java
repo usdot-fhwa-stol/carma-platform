@@ -88,11 +88,11 @@ public class LeaderWaitingState implements IPlatooningState {
             if(isGapCloseEnough) {
                 log.debug("The target vehicle is close enough to join immediately.");
                 log.debug("Changing to PlatoonLeaderState and send ACK to target vehicle");
-                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 return MobilityRequestResponse.ACK;
             } else {
                 log.debug("The gap is still not close enough: " + (vehicleAtRearDtd - targetVehicleDtd) + ". Change back to PlatoonLeaderState");
-                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 return MobilityRequestResponse.NACK;
             }
         } else {
@@ -135,7 +135,7 @@ public class LeaderWaitingState implements IPlatooningState {
                 if(tsStart - this.waitingStartTime > plugin.getLongNegotiationTimeout()) {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     log.info("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
-                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                    plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 }
                 // Task 2
                 MobilityOperation status = plugin.getMobilityOperationPublisher().newMessage();

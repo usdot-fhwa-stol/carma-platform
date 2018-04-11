@@ -25,7 +25,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  * actively plan any maneuvers but it will handle any JOIN request, actively look for any available platoons
  * in front of it and keep broadcasting heart-beat mobility operation INFO message to inform its existence.
  */
-public class PlatoonLeaderState implements IPlatooningState {
+public class LeaderState implements IPlatooningState {
 
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
@@ -34,11 +34,11 @@ public class PlatoonLeaderState implements IPlatooningState {
     // This speedUpTime field is used when it sends out a JOIN request and is prepared to transit to CandidateFollower
     // state. This field describes how much time the CandidateFollower state need to keep at the speed limit
     // after speed-up, in order to close the gap with the rear vehicle in the target platoon in front of it.
-    private   double               speedUpTime           = 0.0;
+    private   double               timeAtHighSpeed           = 0.0;
     private   long                 lastHeartBeatTime     = 0;
     private   String               potentialNewPlatoonId = "";
 
-    public PlatoonLeaderState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
+    public LeaderState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
@@ -178,8 +178,8 @@ public class PlatoonLeaderState implements IPlatooningState {
                 if(platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance() <= 0) {
                     log.debug("We do not need to speed up in order to join.");
                 } else {
-                    speedUpTime = (platoonRearDtd - currentHostDtd - plugin.getFollowerJoinDistance()) / (hostMaxSpeed - platoonSpeed);
-                    log.debug("The speed up time we need to close the gap is roughly " + speedUpTime);
+                    timeAtHighSpeed = (platoonRearDtd - currentHostDtd - plugin.getFollowerJoinDistance()) / (hostMaxSpeed - platoonSpeed);
+                    log.debug("The speed up time we need to close the gap is roughly " + timeAtHighSpeed);
                 }
                 // Compose a mobility request to publish a JOIN request
                 MobilityRequest request = plugin.getMobilityRequestPublisher().newMessage();
@@ -235,7 +235,7 @@ public class PlatoonLeaderState implements IPlatooningState {
                             log.debug("Change to CandidateFollower state and notify trajectory failure in order to replan");
                             // Change to candidate follower state and request a new plan to catch up with the front platoon
                             plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator,
-                                            speedUpTime, currentPlan.peerId, potentialNewPlatoonId));
+                                            timeAtHighSpeed, currentPlan.peerId, potentialNewPlatoonId));
                             pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
                         } else {
                             log.debug("Received negative response for plan id = " + this.currentPlan.planId);

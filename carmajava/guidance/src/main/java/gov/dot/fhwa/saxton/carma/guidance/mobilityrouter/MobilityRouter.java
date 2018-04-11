@@ -37,8 +37,6 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarStateMachine;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarEvent;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
@@ -66,7 +64,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ISubscriber<MobilityPath> pathSub;
     private IPublisher<MobilityResponse> ackPub;
     private Map<String, LinkedList<MobilityRequestHandler>> requestMap = Collections.synchronizedMap(new HashMap<>());
-    private Map<String, LinkedList<MobilityResponseHandler>> ackMap = Collections.synchronizedMap(new HashMap<>());
+    private List<MobilityResponseHandler> ackList = Collections.synchronizedList(new LinkedList<>());
     private Map<String, LinkedList<MobilityOperationHandler>> operationMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityPathHandler>> pathMap = Collections.synchronizedMap(new HashMap<>());
 
@@ -317,12 +315,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             return;
         }
 
-        for (Entry<String, LinkedList<MobilityResponseHandler>> entry : ackMap.entrySet()) {
-            log.info("Firing message handlers registered for " + entry.getKey());
-            for (MobilityResponseHandler handler : entry.getValue()) {
-                log.info("Firing mobility response handler: " + handler.getClass().getSimpleName());
-                fireMobilityResponseCallback(handler, msg);
-            }
+        for (MobilityResponseHandler handler : ackList) {
+            log.info("Firing message handler for " + handler.getClass().getSimpleName() + "with planId = " + msg.getHeader().getPlanId());
+            fireMobilityResponseCallback(handler, msg);
         }
     }
 
@@ -397,16 +392,17 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         if (!requestMap.containsKey(strategyId)) {
             requestMap.put(strategyId, new LinkedList<MobilityRequestHandler>());
         }
-        requestMap.get(strategyId).add(handler);
+        if(!requestMap.get(strategyId).contains(handler)) {
+            requestMap.get(strategyId).add(handler);
+        }
     }
 
     @Override
-    public void registerMobilityResponseHandler(String strategyId, MobilityResponseHandler handler) {
-        log.info("Mobility Response handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
-        if (!ackMap.containsKey(strategyId)) {
-            ackMap.put(strategyId, new LinkedList<MobilityResponseHandler>());
+    public void registerMobilityResponseHandler(MobilityResponseHandler handler) {
+        log.info("Mobility Response handler: " + handler.getClass().getSimpleName() + " registered");
+        if(!ackList.contains(handler)) {
+            ackList.add(handler);
         }
-        ackMap.get(strategyId).add(handler);
     }
 
     @Override
@@ -415,7 +411,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         if (!operationMap.containsKey(strategyId)) {
             operationMap.put(strategyId, new LinkedList<MobilityOperationHandler>());
         }
-        operationMap.get(strategyId).add(handler);
+        if(!operationMap.get(strategyId).contains(handler)) {
+            operationMap.get(strategyId).add(handler);
+        }
     }
 
     @Override
@@ -424,7 +422,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         if (!pathMap.containsKey(strategyId)) {
             pathMap.put(strategyId, new LinkedList<MobilityPathHandler>());
         }
-        pathMap.get(strategyId).add(handler);
+        if(!pathMap.get(strategyId).add(handler)) {
+            pathMap.get(strategyId).add(handler);
+        }
     }
 
   @Override

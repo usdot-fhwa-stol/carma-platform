@@ -69,11 +69,11 @@ required_plugins:
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins:
+  - CACC Platooning Plugin
   - Simple Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
   - Cruising Plugin
-  - CACC Platooning Plugin
 
 # Double: Time that it takes the host vehicle to respond to a new speed command
 # Units: seconds
