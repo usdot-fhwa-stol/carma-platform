@@ -389,41 +389,49 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     @Override
 	public void registerMobilityRequestHandler(String strategyId, MobilityRequestHandler handler) {
         log.info("Mobility Request handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
-        if (!requestMap.containsKey(strategyId)) {
-            requestMap.put(strategyId, new LinkedList<MobilityRequestHandler>());
-        }
-        if(!requestMap.get(strategyId).contains(handler)) {
-            requestMap.get(strategyId).add(handler);
+        synchronized (requestMap) {
+            if (!requestMap.containsKey(strategyId)) {
+                requestMap.put(strategyId, new LinkedList<MobilityRequestHandler>());
+            }
+            if(!requestMap.get(strategyId).contains(handler)) {
+                requestMap.get(strategyId).add(handler);
+            }
         }
     }
 
     @Override
     public void registerMobilityResponseHandler(MobilityResponseHandler handler) {
         log.info("Mobility Response handler: " + handler.getClass().getSimpleName() + " registered");
-        if(!ackList.contains(handler)) {
-            ackList.add(handler);
+        synchronized(ackList) {
+            if(!ackList.contains(handler)) {
+                ackList.add(handler);
+            }
         }
     }
 
     @Override
     public void registerMobilityOperationHandler(String strategyId, MobilityOperationHandler handler) {
         log.info("Mobility Operation handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
-        if (!operationMap.containsKey(strategyId)) {
-            operationMap.put(strategyId, new LinkedList<MobilityOperationHandler>());
-        }
-        if(!operationMap.get(strategyId).contains(handler)) {
-            operationMap.get(strategyId).add(handler);
+        synchronized(operationMap) {
+            if (!operationMap.containsKey(strategyId)) {
+                operationMap.put(strategyId, new LinkedList<MobilityOperationHandler>());
+            }
+            if(!operationMap.get(strategyId).contains(handler)) {
+                operationMap.get(strategyId).add(handler);
+            }
         }
     }
 
     @Override
     public void registerMobilityPathHandler(String strategyId, MobilityPathHandler handler) {
         log.info("Mobility Path handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
-        if (!pathMap.containsKey(strategyId)) {
-            pathMap.put(strategyId, new LinkedList<MobilityPathHandler>());
-        }
-        if(!pathMap.get(strategyId).contains(handler)) {
-            pathMap.get(strategyId).add(handler);
+        synchronized(pathMap) {
+            if (!pathMap.containsKey(strategyId)) {
+                pathMap.put(strategyId, new LinkedList<MobilityPathHandler>());
+            }
+            if(!pathMap.get(strategyId).contains(handler)) {
+                pathMap.get(strategyId).add(handler);
+            }
         }
     }
 
