@@ -96,7 +96,8 @@ public class LeaderState implements IPlatooningState {
                     return MobilityRequestResponse.NACK;
                 }
                 // Check if the applicant can join immediately without any accelerations
-                boolean isDistanceCloseEnough = currentGap <= plugin.getDesiredJoinDistance();
+                double desiredJoinDistance = plugin.getDesiredJoinTimeGap() * plugin.getManeuverInputs().getCurrentSpeed();
+                boolean isDistanceCloseEnough = (currentGap <= desiredJoinDistance);
                 if(isDistanceCloseEnough) {
                     log.debug("The applicant is close enough and it can join without accelerarion");
                     log.debug("Changing to LeaderWaitingState and waiting for " + msg.getHeader().getSenderId() + " to join");
@@ -121,7 +122,7 @@ public class LeaderState implements IPlatooningState {
                     double applicantSpeedUpTime = Math.max((speedDiff) / applicantMaxAccel, 0);
                     // If we ignore the gap change during applicant acceleration, then we can
                     // calculate the time the applicant will take to reach the desired join distance
-                    double timeToCatchUp = Math.max((currentGap - plugin.getDesiredJoinDistance()) / (speedDiff), 0);
+                    double timeToCatchUp = Math.max((currentGap - desiredJoinDistance) / (speedDiff), 0);
                     // We need to plus the vehicle lag time
                     double vehicleResponseLag = plugin.getManeuverInputs().getResponseLag();
                     double totalTimeNeeded = applicantSpeedUpTime + timeToCatchUp + vehicleResponseLag;
@@ -175,10 +176,11 @@ public class LeaderState implements IPlatooningState {
                     log.debug("The local speed limit " + hostMaxSpeed + "is less or equal with the platoon speed. Unable to join");
                     return;
                 }
-                if(platoonRearDtd - currentHostDtd - plugin.getDesiredJoinDistance() <= 0) {
+                double followerJoinDistance = plugin.getFollowerJoinTimeGap() * plugin.getManeuverInputs().getCurrentSpeed();
+                if(platoonRearDtd - currentHostDtd - followerJoinDistance <= 0) {
                     log.debug("We do not need to speed up in order to join.");
                 } else {
-                    timeAtHighSpeed = (platoonRearDtd - currentHostDtd - plugin.getFollowerJoinDistance()) / (hostMaxSpeed - platoonSpeed);
+                    timeAtHighSpeed = (platoonRearDtd - currentHostDtd - followerJoinDistance) / (hostMaxSpeed - platoonSpeed);
                     log.debug("The speed up time we need to close the gap is roughly " + timeAtHighSpeed);
                 }
                 // Compose a mobility request to publish a JOIN request

@@ -84,7 +84,8 @@ public class LeaderWaitingState implements IPlatooningState {
             log.debug("Target vehicle is at downtrack distance " + targetVehicleDtd);
             double vehicleAtRearDtd = plugin.getPlatoonManager().getPlatoonRearDowntrackDistance();
             log.debug("The current platoon rear vehicle is at downtrack distance " + vehicleAtRearDtd);
-            boolean isGapCloseEnough = (vehicleAtRearDtd - targetVehicleDtd) <= plugin.getDesiredJoinDistance();
+            double desiredJoinDistance = plugin.getDesiredJoinTimeGap() * plugin.getManeuverInputs().getCurrentSpeed();
+            boolean isGapCloseEnough = (vehicleAtRearDtd - targetVehicleDtd) <= desiredJoinDistance;
             if(isGapCloseEnough) {
                 log.debug("The target vehicle is close enough to join immediately.");
                 log.debug("Changing to PlatoonLeaderState and send ACK to target vehicle");

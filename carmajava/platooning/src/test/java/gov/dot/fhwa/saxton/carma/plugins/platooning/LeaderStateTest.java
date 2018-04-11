@@ -146,11 +146,11 @@ public class LeaderStateTest {
         when(unknownRequest.getStrategyParams()).thenReturn("SIZE:1,ACCEL:2.5,DTD:10");
         when(mockManager.getPlatooningSize()).thenReturn(0);
         when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(50.0);
-        when(mockPlugin.getDesiredJoinDistance()).thenReturn(13.0);
+        when(mockPlugin.getDesiredJoinTimeGap()).thenReturn(4.0);
         when(mockInputs.getCurrentSpeed()).thenReturn(5.0);
         when(mockRouteService.getSpeedLimitAtLocation(50.0)).thenReturn(new SpeedLimit(55, 10));
         when(mockInputs.getResponseLag()).thenReturn(1.0);
-        when(mockPlugin.getMaxJoinTime()).thenReturn(8.0);
+        when(mockPlugin.getMaxJoinTime()).thenReturn(6.0);
         assertEquals(MobilityRequestResponse.NACK, leaderState.onMobilityRequestMessgae(unknownRequest));
         verify(mockPlugin, times(0)).setState(any());
         when(mockPlugin.getMaxJoinTime()).thenReturn(10.0);
@@ -198,7 +198,7 @@ public class LeaderStateTest {
         when(mockOperation.getHeader()).thenReturn(header);
         when(mockOperation.getStrategyParams()).thenReturn(String.format(mockPlugin.OPERATION_INFO_PARAMS, "A", 50.0, 5.0));
         when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(30.0);
-        when(mockPlugin.getDesiredJoinDistance()).thenReturn(13.0);
+        when(mockPlugin.getDesiredJoinTimeGap()).thenReturn(4.0);
         when(mockRouteService.getSpeedLimitAtLocation(30.0)).thenReturn(new SpeedLimit(30, 10.0));
         IPublisher<MobilityRequest> mockPublisher = mock(IPublisher.class);
         MobilityRequest mockRequest = mock(MobilityRequest.class);

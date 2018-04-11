@@ -55,9 +55,9 @@ algorithm_type: 0
 # Units: s
 max_join_time: 15.0
 
-# Double: The desired distance for the candidate vehicle to join at rear
-# Units: m
-desired_join_distance: 13.0
+# Double: The desired time gap for the candidate vehicle to join at rear
+# Units: s
+desired_join_distance: 4.0
 
 # Integer: The time interval between two mobility INFO message
 # Units: ms
@@ -75,6 +75,6 @@ long_negotiation_timeout: 25000
 # Units: 1
 max_platoon_size: 10
 
-# Double: The gap distance between the candidate vehicle to leader vehicle before sending out Candidate_Join request
-# Units: m
-follower_join_distance: 5.0
+# Double: The time gap distance the candidate vehicle wants to achieve with the leader
+# Units: s
+follower_join_distance: 3.0

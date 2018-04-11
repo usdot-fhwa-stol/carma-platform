@@ -26,6 +26,7 @@ import org.junit.Test;
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityRequest;
 import cav_msgs.PlanType;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -36,6 +37,7 @@ public class LeaderWaitingStateTest {
     protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
     protected PlatoonManager       mockManager;
+    protected IManeuverInputs      mockInputs;
     protected IPlatooningState     leaderWaitingState;
     
     @Before
@@ -44,7 +46,9 @@ public class LeaderWaitingStateTest {
         log = mock(ILogger.class);
         pluginServiceLocator = mock(PluginServiceLocator.class);
         mockManager = mock(PlatoonManager.class);
+        mockInputs = mock(IManeuverInputs.class);
         when(plugin.getPlatoonManager()).thenReturn(mockManager);
+        when(plugin.getManeuverInputs()).thenReturn(mockInputs);
         leaderWaitingState = new LeaderWaitingState(plugin, log, pluginServiceLocator, "C");
     }
     
@@ -59,7 +63,8 @@ public class LeaderWaitingStateTest {
         when(request.getPlanType()).thenReturn(type);
         when(request.getStrategyParams()).thenReturn("DTD:50.00");
         when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(60.0);
-        when(plugin.getDesiredJoinDistance()).thenReturn(13.0);
+        when(plugin.getDesiredJoinTimeGap()).thenReturn(4.0);
+        when(mockInputs.getCurrentSpeed()).thenReturn(3.25);
         assertEquals(MobilityRequestResponse.ACK, leaderWaitingState.onMobilityRequestMessgae(request));
     }
     
@@ -74,7 +79,8 @@ public class LeaderWaitingStateTest {
         when(request.getPlanType()).thenReturn(type);
         when(request.getStrategyParams()).thenReturn("DTD:45.00");
         when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(60.0);
-        when(plugin.getDesiredJoinDistance()).thenReturn(13.0);
+        when(plugin.getDesiredJoinTimeGap()).thenReturn(4.0);
+        when(mockInputs.getCurrentSpeed()).thenReturn(3.25);
         assertEquals(MobilityRequestResponse.NACK, leaderWaitingState.onMobilityRequestMessgae(request));
     }
     
