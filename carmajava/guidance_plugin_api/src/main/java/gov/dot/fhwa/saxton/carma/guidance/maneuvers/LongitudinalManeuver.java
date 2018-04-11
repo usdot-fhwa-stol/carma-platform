@@ -72,7 +72,6 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
 
         double overrideCmd = accStrategy.computeAccOverrideSpeed(distToFrontVehicle, frontVehicleSpeed, currentSpeed, speedCmd);
         boolean overrideActive = Math.abs(speedCmd - overrideCmd) > SPEED_EPSILON;
-        System.out.println(Math.abs(speedCmd - overrideCmd));
 
         if (overrideActive) {
             log_.warn(String.format("ACC override engaged! Speed command reduced from %.02f m/s to %.02f m/s. Adjusting max accel to command %.02f m/s^2",

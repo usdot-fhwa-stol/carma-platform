@@ -422,7 +422,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         if (!pathMap.containsKey(strategyId)) {
             pathMap.put(strategyId, new LinkedList<MobilityPathHandler>());
         }
-        if(!pathMap.get(strategyId).add(handler)) {
+        if(!pathMap.get(strategyId).contains(handler)) {
             pathMap.get(strategyId).add(handler);
         }
     }
