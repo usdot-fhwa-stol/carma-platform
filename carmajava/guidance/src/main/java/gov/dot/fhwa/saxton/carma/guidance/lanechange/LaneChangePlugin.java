@@ -48,22 +48,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * thrown and that trajectory will be aborted by the parent.
  */
 
-    //TODO - this plugin was written in a very limited amount of time, so has made a lot of assumptions and simplifications.
-    //       Below are some of the major things known now that should be refactored (not necessarily a complete list):
-    //
-    //  - As soon as negotiations fail, we should let arbitrator know so that it has a chance to abort & replace the
-    //  current trajectory in an orderly way; otherwise the only way arbitrator will know is when the trajectory fails
-    //  ugly because it attempts to execute an empty FutureLongitudinalManeuver.
-    //
-    //  - We have a very simplistic model for what our neighbor situation will look like at the time of maneuver
-    //  execution. This could be beefed up in many ways.
-    //
-    //  - There are several complementary simplifications built into the Negotiator node as well.
-    //
-    //  - Assumes there is only one lane change being planned at a time. So the planSubtrajectory() method will not get
-    //  called while the loop() method is actively working on current negotiations.
-    //
-    //  - Lots of "TODO"s throughout this package
+/**
+ * The plugin as it is currently written works the following way
+ * TODO make more robust
+ * 1. When called future maneuvers are added to the trajectory
+ * 2. A broadcast MobilityRequest message is published to notify other vehicles of our intention
+ * 3. If no vehicle NACKs this message in the provided time a lane change is added to the future maneuver
+ * 4. If a vehicle does NACK our request then a lane keeping maneuver is added to the future maneuver instead
+ * 5. Vehicle maintains a steady speed in either case
+ * 
+ * Assumptions
+ * 
+ * - The resulting lane of any trajectory ending is never more than one lane away from lane at planning time(right or left)
+ * - Vehicles in conflict with our plan will notify us themselves
+ * - Never change more than one lane at a time
+ */
 
 public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin, MobilityResponseHandler {
 
@@ -78,7 +77,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     private LaneChange                      laneChangeMvr_ = null;
     private final String                    STATIC_ID;
     private final String                    MOBILITY_STRATEGY = "Carma/LaneChange";
-    private IPublisher                      requestPub_;
+    private IPublisher<MobilityRequest>     requestPub_;
     private String                          mostRecentPlanId_ = "";
     private final long                      MS_PER_S = 1000L;
     // Light bar control variables
@@ -295,7 +294,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         ITrajectoryConverter trajectoryConverter = pluginServiceLocator.getTrajectoryConverter();
         // Convert path to trajectory message
         cav_msgs.Trajectory trajMsg = trajectoryConverter.pathToMessage(routePoints);
-        // TODO we need some sort of timeout for an abort?
+        
+        // Build request message
         MobilityRequest requestMsg = (MobilityRequest) requestPub_.newMessage();
         requestMsg.setStrategy(MOBILITY_STRATEGY);
         requestMsg.setUrgency((short)500);

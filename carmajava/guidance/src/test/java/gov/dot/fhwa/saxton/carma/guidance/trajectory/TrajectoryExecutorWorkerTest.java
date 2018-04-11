@@ -49,7 +49,7 @@ public class TrajectoryExecutorWorkerTest {
     MockitoAnnotations.initMocks(this);
     IPublisher<cav_msgs.ActiveManeuvers> pub = (IPublisher<cav_msgs.ActiveManeuvers>) mock(IPublisher.class);
     when(pub.newMessage()).thenReturn(mock(ActiveManeuvers.class));
-    tew = new TrajectoryExecutorWorker(guidanceCommands, 10.0, pub);
+    tew = new TrajectoryExecutorWorker(guidanceCommands, 10.0, pub, null);
   }
 
   private ISimpleManeuver newManeuver(double start, double end, ManeuverType type, boolean running) {
