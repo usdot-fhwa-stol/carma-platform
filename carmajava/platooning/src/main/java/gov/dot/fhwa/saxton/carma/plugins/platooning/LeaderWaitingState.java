@@ -77,22 +77,23 @@ public class LeaderWaitingState implements IPlatooningState {
         boolean isTargetVehicle = msg.getHeader().getSenderId().equals(applicantId);
         boolean isCandidateJoin = msg.getPlanType().getType() == PlanType.PLATOON_FOLLOWER_JOIN;
         if(isTargetVehicle && isCandidateJoin) {
-            log.debug("Target vehicle " + applicantId + " is actually joining.");
+            log.debug("Target vehicle " + applicantId + " is actually trying to join.");
             // Evaluate if it is ready to join immediately
             // TODO The current strategy string is in format: "DTD:xx", but we need to use location field 
             double targetVehicleDtd = Double.parseDouble(msg.getStrategyParams().split(":")[1]);
             log.debug("Target vehicle is at downtrack distance " + targetVehicleDtd);
             double vehicleAtRearDtd = plugin.getPlatoonManager().getPlatoonRearDowntrackDistance();
             log.debug("The current platoon rear vehicle is at downtrack distance " + vehicleAtRearDtd);
-            boolean isGapCloseEnough = (vehicleAtRearDtd - targetVehicleDtd) <= plugin.getDesiredJoinDistance();
+            double desiredJoinDistance = plugin.getDesiredJoinTimeGap() * plugin.getManeuverInputs().getCurrentSpeed();
+            boolean isGapCloseEnough = (vehicleAtRearDtd - targetVehicleDtd) <= desiredJoinDistance;
             if(isGapCloseEnough) {
                 log.debug("The target vehicle is close enough to join immediately.");
                 log.debug("Changing to PlatoonLeaderState and send ACK to target vehicle");
-                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 return MobilityRequestResponse.ACK;
             } else {
                 log.debug("The gap is still not close enough: " + (vehicleAtRearDtd - targetVehicleDtd) + ". Change back to PlatoonLeaderState");
-                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 return MobilityRequestResponse.NACK;
             }
         } else {
@@ -135,7 +136,7 @@ public class LeaderWaitingState implements IPlatooningState {
                 if(tsStart - this.waitingStartTime > plugin.getLongNegotiationTimeout()) {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     log.info("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
-                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                    plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 }
                 // Task 2
                 MobilityOperation status = plugin.getMobilityOperationPublisher().newMessage();
