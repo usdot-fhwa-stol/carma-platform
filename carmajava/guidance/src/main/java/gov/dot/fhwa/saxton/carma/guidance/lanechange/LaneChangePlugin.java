@@ -66,7 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin, MobilityResponseHandler {
 
-    private long                            EXPIRATION_TIME = 500;
+    private long                            EXPIRATION_TIME = 500; //ms
     private final int                       SLEEP_TIME = 50; //ms
     private int                             targetLane_ = -1;
     private double                          startSpeed_ = 0.0;
@@ -80,6 +80,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     private IPublisher<MobilityRequest>     requestPub_;
     private String                          mostRecentPlanId_ = "";
     private final long                      MS_PER_S = 1000L;
+    private final Object                    planMutex_ = new Object();
     // Light bar control variables
     private ILightBarManager lightBarManager_;
     private final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
@@ -143,10 +144,12 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
 
         // If we are waiting on a plan to be nacked
         if (plan_ != null) {
-            synchronized (plan_) {
+            synchronized (planMutex_) {
                 if (plan_ != null) {
                     // Check if enough time has passed without a NACK
                     if (System.currentTimeMillis() - plan_.getHeader().getTimestamp() > EXPIRATION_TIME) {
+                        log.info("No rejection received for lane change with plan id: " + plan_.getHeader().getPlanId()
+                          + " Inserting lane change maneuver");
                         // Add the actual lane change to the trajectory
                         populateFutureManeuverWithLaneChange();
                         // Done negotiating
@@ -198,21 +201,19 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         //verify that the input parameters have been defined already
         if (targetLane_ > -1) {
 
-            //attempt to plan the lane change
-            try {
-                plan(startDistance, endDistance, targetLane_, startSpeed_, endSpeed_);
-            }catch (IllegalStateException e) {
-                // if we can't fit the maneuver in the space available, no point in starting negotiations to do so;
-                // abort the whole subtrajectory, with no future maneuver inserted
-                log.warn("Plan returned false!");
-                return false;
-            }
-
             //create empty containers (future compound maneuvers) for the TBD maneuvers to be inserted into
             ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
             IManeuverInputs inputs = planner.getManeuverInputs();
             futureLatMvr_ = new FutureLateralManeuver(this,  targetLane_ - inputs.getCurrentLane(), inputs, startDistance, startSpeed_, endDistance, endSpeed_);
             futureLonMvr_ = new FutureLongitudinalManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
+
+            // Validate lane change is possible
+            log.info("Validating space for lane change");
+            LaneChange tempManeuver = new LaneChange(this, futureLatMvr_.getEndingRelativeLane());
+            if (!planner.canPlan(tempManeuver, futureLatMvr_.getStartDistance(), futureLatMvr_.getEndDistance())) {
+                log.warn("V2V", "Proposed lane change maneuver won't fit the geometry. Maneuver: " + tempManeuver);
+                return false;
+            }
 
             //insert these containers into the trajectory
             if (!traj.addManeuver(futureLatMvr_)  ||  !traj.addManeuver(futureLonMvr_)) {
@@ -220,7 +221,11 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
                 return false;
             }
 
+            // Start planning lane change
+            plan(startDistance, endDistance, targetLane_, startSpeed_, endSpeed_);
+
             //if we've reached this point, a future maneuver is at least possible, so parent can continue planning
+            log.info("Successfully began negotiating lane change");
             return true;
 
         }else {
@@ -262,22 +267,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         ITrajectoryConverter trajectoryConverter = pluginServiceLocator.getTrajectoryConverter();
         List<RoutePointStamped> routePoints = trajectoryConverter.convertToPath(laneChangeTraj, startPoint);
 
-        buildRequest(inputs, targetLane, routePoints);
-
-        //construct our proposed simple lane change maneuver
-        log.info("Creating lane change maneuver");
-        laneChangeMvr_ = new LaneChange(this, futureLatMvr_.getEndingRelativeLane());
-        laneChangeMvr_.setTargetLane(targetLane);
-        if (planner.canPlan(laneChangeMvr_, startDist, endDist)) {
-            log.info("Planning lane change maneuver...");
-            planner.planManeuver(laneChangeMvr_, startDist, endDist);
-            log.info("V2V", "plan: simple lane change maneuver is built.");
-        }else {
-            //TODO - would be nice to have some logic here to diagnose the problem and try again
-            laneChangeMvr_ = null;
-            log.warn("V2V", "plan: unable to construct the simple lane change maneuver.");
-            throw new IllegalStateException("Proposed lane change maneuver won't fit the geometry.");
-        }
+        // Publish the request for lane change
+        publishRequestMessage(inputs, targetLane, routePoints);
     }
 
 
@@ -305,8 +296,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         } else {
             requestMsg.getPlanType().setType(cav_msgs.PlanType.CHANGE_LANE_LEFT);
         }
-
-        RoutePointStamped currentLocation = new RoutePointStamped(inputs.getDistanceFromRouteStart(), inputs.getCrosstrackDistance(), System.currentTimeMillis());
+        long currentTime = System.currentTimeMillis();
+        RoutePointStamped currentLocation = new RoutePointStamped(inputs.getDistanceFromRouteStart(), inputs.getCrosstrackDistance(), currentTime / MS_PER_S);
         cav_msgs.Trajectory currentLocationMsg = trajectoryConverter.pathToMessage(Arrays.asList(currentLocation));
         requestMsg.setLocation(currentLocationMsg.getLocation());
         requestMsg.setStrategyParams("LANE_CHANGE_PARAM");
@@ -315,7 +306,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         // Build header
         requestMsg.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
         requestMsg.getHeader().setRecipientId(""); //Broadcast
-        requestMsg.getHeader().setTimestamp((long)(currentLocation.getStamp() * MS_PER_S));
+        requestMsg.getHeader().setTimestamp(currentTime);
         requestMsg.getHeader().setPlanId(UUID.randomUUID().toString());
         requestMsg.getHeader().setSenderBsmId("FFFFFFFF"); // TODO use real BSM id
         requestMsg.setExpiration(requestMsg.getHeader().getTimestamp() + EXPIRATION_TIME);
@@ -336,22 +327,25 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         
         mostRecentPlanId_ = requestMsg.getHeader().getPlanId();
         
-        synchronized (plan_) {
+        synchronized (planMutex_) {
             plan_ = requestMsg;
             requestPub_.publish(plan_);
         }
+        log.info("Published lane change request message with plan id: " + requestMsg.getHeader().getPlanId());
     }
 
     @Override
     public void handleMobilityResponseMessage(MobilityResponse msg) {
         // Check if this message is for the most recent plan we are tracking
         if (msg.getHeader().getPlanId().equals(mostRecentPlanId_)) {
-            synchronized (plan_) {
+            synchronized (planMutex_) {
                 // Check if we are still tracking this plan
                 if (plan_ != null) {
                     // If the request was rejected (NACK)
                     if (!msg.getIsAccepted()) {
                         // Abandon the lane change
+                        log.warn("Lane change request for plan: " + msg.getHeader().getPlanId() +
+                          " Rejected by vehicle id: " + msg.getHeader().getSenderId());
                         populateFutureManeuverWithSteadySpeed();
                         plan_ = null;
                     }
@@ -370,20 +364,14 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
 
         try {
             //start the lane change immediately
-            futureLatMvr_.addManeuver(laneChangeMvr_);
-
-            //fill the remainder with a constant lane
-            double startDist = futureLatMvr_.getLastDistance();
-            double endDist = futureLatMvr_.getEndDistance();
-            if (endDist - startDist > 0) {
-                LaneKeeping lk = new LaneKeeping(this);
-                lk.planToTargetDistance(inputs,commands, startDist, endDist);
-                futureLatMvr_.addManeuver(lk);
-            }
+            LaneChange laneChange = new LaneChange(this, futureLatMvr_.getEndingRelativeLane());
+            laneChange.setTargetLane(targetLane_);
+            laneChange.planToTargetDistance(inputs, commands, futureLatMvr_.getStartDistance(), futureLatMvr_.getEndDistance());
+            futureLatMvr_.addManeuver(laneChange);
 
             //fill the whole longitudinal space with a constant speed
             SteadySpeed ss = new SteadySpeed(this);
-            planner.planManeuver(ss, futureLonMvr_.getStartDistance(), endDist);
+            planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
             futureLonMvr_.addManeuver(ss);
 
         }catch (IllegalStateException ise) {
