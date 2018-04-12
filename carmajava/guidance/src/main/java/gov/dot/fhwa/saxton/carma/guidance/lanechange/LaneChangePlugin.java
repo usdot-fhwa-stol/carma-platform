@@ -97,7 +97,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         version.setIntermediateRevision(0);
         version.setMinorRevision(1);
         STATIC_ID = UUID.randomUUID().toString();
-        pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(MOBILITY_STRATEGY, this);
+        pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
     }
 
     @Override
