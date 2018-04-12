@@ -147,7 +147,7 @@ var isSystemAlert = {
 var startDateTime = {//startDateTime
     get value() {
         var startDateTime = sessionStorage.getItem('startDateTime');
-        //console.log('get startDateTime ORIG: ' + startDateTime);
+        console.log('get startDateTime ORIG: ' + startDateTime);
         if (startDateTime == 'undefined' || startDateTime == null || startDateTime == '') {
             this.start();
             startDateTime = sessionStorage.getItem('startDateTime');
@@ -1578,8 +1578,12 @@ function showSystemVersion() {
     Start timer after engaging Guidance.
 */
 function startEngagedTimer() {
-    // Start counter 
-    timer = setInterval(countUpTimer, 1000);
+    // Start counter    
+    if (timer == null && isGuidance.engaged == true)
+    {
+        timer = setInterval(countUpTimer, 1000);
+        //console.log('*** setInterval & countUpTimer was called.');
+    }
 }
 
 /*
