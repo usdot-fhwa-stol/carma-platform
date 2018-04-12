@@ -41,8 +41,10 @@ import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import org.apache.commons.logging.Log;
 import org.ros.exception.ServiceException;
+import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
+import org.ros.node.NodeConfiguration;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
@@ -85,6 +87,8 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected boolean initialized = false;
 
   ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
+  protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+  protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -207,9 +211,8 @@ public class GuidanceMain extends SaxtonBaseNode {
     // Echo params
     log.info("Param mobility_path_max_points: " + maxPoints);
     log.info("Param mobility_path_time_step: " + timeStep);
-
     // Build trajectory converter
-    trajectoryConverter = new TrajectoryConverter(maxPoints, timeStep);
+    trajectoryConverter = new TrajectoryConverter(maxPoints, timeStep, messageFactory);
   }
 
   @Override

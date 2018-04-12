@@ -3,10 +3,16 @@ package gov.dot.fhwa.saxton.carma.guidance.lanechange;
 import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarIndicator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.*;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
+import cav_msgs.MobilityResponse;
+import cav_msgs.MobilityRequest;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityResponseHandler;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.ITacticalPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -14,10 +20,15 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -37,40 +48,39 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * thrown and that trajectory will be aborted by the parent.
  */
 
-    //TODO - this plugin was written in a very limited amount of time, so has made a lot of assumptions and simplifications.
-    //       Below are some of the major things known now that should be refactored (not necessarily a complete list):
-    //
-    //  - As soon as negotiations fail, we should let arbitrator know so that it has a chance to abort & replace the
-    //  current trajectory in an orderly way; otherwise the only way arbitrator will know is when the trajectory fails
-    //  ugly because it attempts to execute an empty FutureLongitudinalManeuver.
-    //
-    //  - We have a very simplistic model for what our neighbor situation will look like at the time of maneuver
-    //  execution. This could be beefed up in many ways.
-    //
-    //  - There are several complementary simplifications built into the Negotiator node as well.
-    //
-    //  - Assumes there is only one lane change being planned at a time. So the planSubtrajectory() method will not get
-    //  called while the loop() method is actively working on current negotiations.
-    //
-    //  - Lots of "TODO"s throughout this package
+/**
+ * The plugin as it is currently written works the following way
+ * TODO make more robust
+ * 1. When called future maneuvers are added to the trajectory
+ * 2. A broadcast MobilityRequest message is published to notify other vehicles of our intention
+ * 3. If no vehicle NACKs this message in the provided time a lane change is added to the future maneuver
+ * 4. If a vehicle does NACK our request then a lane keeping maneuver is added to the future maneuver instead
+ * 5. Vehicle maintains a steady speed in either case
+ * 
+ * Assumptions
+ * 
+ * - The resulting lane of any trajectory ending is never more than one lane away from lane at planning time(right or left)
+ * - Vehicles in conflict with our plan will notify us themselves
+ * - Never change more than one lane at a time
+ */
 
-public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin {
+public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin, MobilityResponseHandler {
 
-    private final int                       EXPIRATION_TIME = 2000;
+    private long                            EXPIRATION_TIME = 500; //ms
     private final int                       SLEEP_TIME = 50; //ms
     private int                             targetLane_ = -1;
     private double                          startSpeed_ = 0.0;
     private double                          endSpeed_ = 0.0;
-    private MobilityIntro                   plan_ = null;           //TODO: type this as MobilityPlan once that type is implemented
-    private List<Negotiation>               negotiations_ = new ArrayList<>();
-    private ExtrapolatedEnvironment         env_ = new ExtrapolatedEnvironment();
+    private MobilityRequest                 plan_ = null;
     private FutureLongitudinalManeuver      futureLonMvr_ = null;
     private FutureLateralManeuver           futureLatMvr_ = null;
     private LaneChange                      laneChangeMvr_ = null;
-    private IPublisher<MobilityIntro>       mobilityIntroPublisher_;
-    private IPublisher<LaneChangeStatus>    laneChangeStatusPublisher_;
-    private ISubscriber<MobilityAck>        mobilityAckSubscriber_;
     private final String                    STATIC_ID;
+    private final String                    MOBILITY_STRATEGY = "Carma/LaneChange";
+    private IPublisher<MobilityRequest>     requestPub_;
+    private String                          mostRecentPlanId_ = "";
+    private final long                      MS_PER_S = 1000L;
+    private final Object                    planMutex_ = new Object();
     // Light bar control variables
     private ILightBarManager lightBarManager_;
     private final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
@@ -85,35 +95,22 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         version.setName("Lane Change Plugin");
         version.setMajorRevision(1);
         version.setIntermediateRevision(0);
-        version.setMinorRevision(0);
+        version.setMinorRevision(1);
         STATIC_ID = UUID.randomUUID().toString();
+        pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(MOBILITY_STRATEGY, this);
     }
 
     @Override
     public void onInitialize() {
+        // Load Params
+        this.EXPIRATION_TIME = pluginServiceLocator.getParameterSource().getInteger("~lane_change_nack_timeout", 500);
+        log.info("Loaded param lane_change_nack_timeout: " + EXPIRATION_TIME);
+
         // Get light bar manager
         lightBarManager_ = pluginServiceLocator.getLightBarManager();
 
-        //set up a publisher of mobility introduction & ack messages
-        mobilityIntroPublisher_ = pubSubService.getPublisherForTopic("mobility_intro_outbound", cav_msgs.MobilityIntro._TYPE);
-        
-        //set up publisher of status messages for the UI
-        laneChangeStatusPublisher_ = pubSubService.getPublisherForTopic( "~/lane_change_status", cav_msgs.LaneChangeStatus._TYPE);
-        
-        //set up subscriber for mobility acks
-        mobilityAckSubscriber_ = pubSubService.getSubscriberForTopic( "mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
-        mobilityAckSubscriber_.registerOnMessageCallback(new OnMessageCallback<MobilityAck>() {
-            @Override
-            public void onMessage(MobilityAck msg) {
-                if (negotiations_.size() > 0) {
-                    for (Negotiation n : negotiations_) {
-                        n.newMessageArrived(msg);
-                    }
-                }else {
-                    log.warn("V2V", "Received a MobilityAck message but no Negotiation objects exist! msg = " + msg.toString());
-                }
-            }
-        });
+        // Get MobilityRequest publisher
+        requestPub_ = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
 
         // get subscriber for the ui instructions and use to set light bar
         uiInstructionsSubscriber_ = pubSubService.getSubscriberForTopic( "ui_instructions", UIInstructions._TYPE);
@@ -145,25 +142,20 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
     @Override
     public void loop() throws InterruptedException {
 
-        //loop through all outstanding negotiations and process them
-        if (negotiations_.size() > 0) {
-            List<Negotiation> toBeRemoved = new ArrayList<>();
-            for (Negotiation n : negotiations_) {
-                LaneChangeStatus stat = laneChangeStatusPublisher_.newMessage();
-
-                //if this one indicates our plan was accepted then
-                if (n.process(stat)) {
-                    //populate the future placeholder when no FutureManeuver is populated
-                    if(!(futureLatMvr_.isFull() || futureLonMvr_.isFull())) {
-                        populateFutureManeuver();
+        // If we are waiting on a plan to be nacked
+        if (plan_ != null) {
+            synchronized (planMutex_) {
+                if (plan_ != null) {
+                    // Check if enough time has passed without a NACK
+                    if (System.currentTimeMillis() - plan_.getHeader().getTimestamp() > EXPIRATION_TIME) {
+                        log.info("No rejection received for lane change with plan id: " + plan_.getHeader().getPlanId()
+                          + " Inserting lane change maneuver");
+                        // Add the actual lane change to the trajectory
+                        populateFutureManeuverWithLaneChange();
+                        // Done negotiating
+                        plan_ = null;
                     }
-                    //remove the negotiation from the list of outstanding negotiations
-                    toBeRemoved.add(n);
                 }
-            }
-            // avoid current modification exceptions
-            for(Negotiation n : toBeRemoved) {
-                negotiations_.remove(n);
             }
         }
 
@@ -172,9 +164,6 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             releaseControlAndTurnOff();
             conductingLaneChange_ = false;
         }
-
-        //TODO: consider replacing this logic with a BlockingQueue to avoid doing all these gyrations & context switches
-
         //sleep a while
         Thread.sleep(SLEEP_TIME);
     }
@@ -209,21 +198,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             startDistance,
             endDistance));
 
-        boolean planningComplete;
-
         //verify that the input parameters have been defined already
         if (targetLane_ > -1) {
-
-            //attempt to plan the lane change [plan]
-            try {
-                planningComplete = plan(startDistance, endDistance, targetLane_, startSpeed_, endSpeed_);
-                log.info("Plan returned " + planningComplete);
-            }catch (IllegalStateException e) {
-                //if we can't fit the maneuver in the space available, no point in starting negotiations to do so;
-                // abort the whole subtrajectory, with no future maneuver inserted
-                log.warn("Plan returned false!");
-                return false;
-            }
 
             //create empty containers (future compound maneuvers) for the TBD maneuvers to be inserted into
             ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
@@ -231,24 +207,25 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             futureLatMvr_ = new FutureLateralManeuver(this,  targetLane_ - inputs.getCurrentLane(), inputs, startDistance, startSpeed_, endDistance, endSpeed_);
             futureLonMvr_ = new FutureLongitudinalManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
 
+            // Validate lane change is possible
+            log.info("Validating space for lane change");
+            LaneChange tempManeuver = new LaneChange(this, futureLatMvr_.getEndingRelativeLane());
+            if (!planner.canPlan(tempManeuver, futureLatMvr_.getStartDistance(), futureLatMvr_.getEndDistance())) {
+                log.warn("V2V", "Proposed lane change maneuver won't fit the geometry. Maneuver: " + tempManeuver);
+                return false;
+            }
+
             //insert these containers into the trajectory
             if (!traj.addManeuver(futureLatMvr_)  ||  !traj.addManeuver(futureLonMvr_)) {
                 log.warn("Unable to add lane change future maneuvers to trajectory");
                 return false;
             }
 
-            //if it is safe to commit to the maneuver now, with no negotiations, then
-            if (planningComplete) {
-                //fill the future maneuver container with real stuff now
-                populateFutureManeuver();
-            }
-
-            //add the plan to the list of in-work negotiations for monitoring (we can do this since both plan & announcement
-            // occupy the same message type for the time being)
-            Negotiation neg = new Negotiation(this);
-            negotiations_.add(neg);
+            // Start planning lane change
+            plan(startDistance, endDistance, targetLane_, startSpeed_, endSpeed_);
 
             //if we've reached this point, a future maneuver is at least possible, so parent can continue planning
+            log.info("Successfully began negotiating lane change");
             return true;
 
         }else {
@@ -257,31 +234,6 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         }
     }
 
-
-    /**
-     * Publishes the provided plan message onto the ROS network for the Negotiator to pick up
-     */
-    public void sendPlan() {
-        if (plan_ != null) {
-            log.debug("V2V", "Sending MobilityIntro to Message node: ");
-            log.debug("V2V", "    Plan ID = " + plan_.getHeader().getPlanId());
-            log.debug("V2V", "    PlayType = " + plan_.getPlanType().getType());
-            log.debug("V2V", "    My lane ID = " + plan_.getMyLaneId());
-            log.debug("V2V", "    Forward speed = " + plan_.getForwardSpeed());
-            log.debug("V2V", "    Capabilities = " + plan_.getCapabilities());
-            mobilityIntroPublisher_.publish(plan_);
-        }
-    }
-
-
-    /**
-     * Publishes a status message onto the ROS network for the UI to pick up
-     */
-    public void sendStatusUpdate(LaneChangeStatus msg) {
-        laneChangeStatusPublisher_.publish(msg);
-    }
-
-
     /**
      * Plans the tactical operation (one or more maneuvers), which may include negotiating with neighbor vehicles.
      * @param startDist - starting location of the tactic, meters from beginning of route
@@ -289,10 +241,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
      * @param targetLane - ID of the lane we are heading toward
      * @param startSpeed - speed at the start of the tactical operation, m/s
      * @param endSpeed - speed at the end of the tactical operation, m/s
-     * @return true if a completed plan is immediately available; false if we need to wait on a negotiation
      * @throws IllegalStateException if the lane change is geometrically infeasible
      */
-    private boolean plan(double startDist, double endDist, int targetLane, double startSpeed, double endSpeed)
+    private void plan(double startDist, double endDist, int targetLane, double startSpeed, double endSpeed)
                         throws IllegalStateException {
         boolean planAvailable = false;
         ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
@@ -300,127 +251,127 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
         double curDist = inputs.getDistanceFromRouteStart();
         double curSpeed = inputs.getCurrentSpeed();
 
-        //check for expected neighbor vehicles in our target area (target area is the target lane for the whole length
-        // of the compound maneuver, since we could begin moving into that lane at any point along that length)
+        // Estimate starting point of maneuver
+        // TODO this is a very simplistic estimate and could be improved
         long futureTime = System.currentTimeMillis() + (long)(1000.0*2.0*(startDist - curDist)/(startSpeed + curSpeed));
         log.info("Expected arrival time at lane change area = " + futureTime);
-        List<Object> vehicles = env_.getVehiclesInTargetArea(targetLane, startDist, endDist, futureTime);
-        log.info("Num vehicles @ target area: " + vehicles.size());
+        // TODO Estimate starting crosstrack using trajectory being planned
+        double startCrosstrack = inputs.getCrosstrackDistance();                    
+        RoutePointStamped startPoint = new RoutePointStamped(startDist, startCrosstrack, futureTime);
 
-        //construct our proposed simple lane change maneuver
-        log.info("Creating lane change maneuver");
-        laneChangeMvr_ = new LaneChange(this, futureLatMvr_.getEndingRelativeLane());
-        laneChangeMvr_.setTargetLane(targetLane);
-        if (planner.canPlan(laneChangeMvr_, startDist, endDist)) {
-            log.info("Planning lane change maneuver...");
-            planner.planManeuver(laneChangeMvr_, startDist, endDist);
-            log.info("V2V", "plan: simple lane change maneuver is built.");
-        }else {
-            //TODO - would be nice to have some logic here to diagnose the problem and try again
-            laneChangeMvr_ = null;
-            log.warn("V2V", "plan: unable to construct the simple lane change maneuver.");
-            throw new IllegalStateException("Proposed lane change maneuver won't fit the geometry.");
+        // Convert the future maneuver to a set of route points
+        Trajectory laneChangeTraj = new Trajectory(futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
+        laneChangeTraj.addManeuver(futureLonMvr_);
+        laneChangeTraj.addManeuver(futureLatMvr_);
+
+        ITrajectoryConverter trajectoryConverter = pluginServiceLocator.getTrajectoryConverter();
+        List<RoutePointStamped> routePoints = trajectoryConverter.convertToPath(laneChangeTraj, startPoint);
+
+        // Publish the request for lane change
+        publishRequestMessage(inputs, targetLane, routePoints);
+    }
+
+
+    /**
+     * Constructs a MobilityRequest message for a lane change
+     * 
+     * @param inputs Maneuver inputs for accessing vehicle state
+     * @param targetLane The lane index we intend to change to
+     * @param routePoints The list of points which describe the lane change motion to be performed
+     * 
+     * @return A constructed MobilityRequest
+     */
+    private MobilityRequest buildRequest(IManeuverInputs inputs, int targetLane, List<RoutePointStamped> routePoints) {
+        ITrajectoryConverter trajectoryConverter = pluginServiceLocator.getTrajectoryConverter();
+        // Convert path to trajectory message
+        cav_msgs.Trajectory trajMsg = trajectoryConverter.pathToMessage(routePoints);
+        
+        // Build request message
+        MobilityRequest requestMsg = (MobilityRequest) requestPub_.newMessage();
+        requestMsg.setStrategy(MOBILITY_STRATEGY);
+        requestMsg.setUrgency((short)500);
+
+        if (targetLane_ < inputs.getCurrentLane()) {
+            requestMsg.getPlanType().setType(cav_msgs.PlanType.CHANGE_LANE_RIGHT);
+        } else {
+            requestMsg.getPlanType().setType(cav_msgs.PlanType.CHANGE_LANE_LEFT);
         }
+        long currentTime = System.currentTimeMillis();
+        RoutePointStamped currentLocation = new RoutePointStamped(inputs.getDistanceFromRouteStart(), inputs.getCrosstrackDistance(), currentTime / MS_PER_S);
+        cav_msgs.Trajectory currentLocationMsg = trajectoryConverter.pathToMessage(Arrays.asList(currentLocation));
+        requestMsg.setLocation(currentLocationMsg.getLocation());
+        requestMsg.setStrategyParams("LANE_CHANGE_PARAM");
+        
+        requestMsg.setTrajectory(trajMsg);
+        // Build header
+        requestMsg.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
+        requestMsg.getHeader().setRecipientId(""); //Broadcast
+        requestMsg.getHeader().setTimestamp(currentTime);
+        requestMsg.getHeader().setPlanId(UUID.randomUUID().toString());
+        requestMsg.getHeader().setSenderBsmId("FFFFFFFF"); // TODO use real BSM id
+        requestMsg.setExpiration(requestMsg.getHeader().getTimestamp() + EXPIRATION_TIME);
+        
+        return requestMsg;
+    }
 
-        //if no vehicles are expected to be in the way then
-        if (vehicles.size() == 0) {
-            //insert the simple lane change maneuver into the container
-            if (laneChangeMvr_ != null) {
 
-                //formulate an announcement for Negotiator to broadcast our intentions, just in case someone is there that
-                // we don't know about (but we'll move out with our plan assuming we understand the environment correctly)
-                // TODO change it to an intro message when ExtrapolatedEnviroment logic is finished
-                buildPlanMessage(inputs, targetLane, startDist, startSpeed);
-                planAvailable = true;
+    /**
+     * Builds and publishes a MobilityRequest message to notify other CAVs of our intended lane change
+     * 
+     * @param inputs Maneuver inputs for accessing vehicle state
+     * @param targetLane The lane index we intend to change to
+     * @param routePoints The list of points which describe the lane change motion to be performed
+     */
+    private void publishRequestMessage(IManeuverInputs inputs, int targetLane,  List<RoutePointStamped> routePoints) {
+        MobilityRequest requestMsg = buildRequest(inputs, targetLane, routePoints);
+        
+        mostRecentPlanId_ = requestMsg.getHeader().getPlanId();
+        
+        synchronized (planMutex_) {
+            plan_ = requestMsg;
+            requestPub_.publish(plan_);
+        }
+        log.info("Published lane change request message with plan id: " + requestMsg.getHeader().getPlanId());
+    }
+
+    @Override
+    public void handleMobilityResponseMessage(MobilityResponse msg) {
+        // Check if this message is for the most recent plan we are tracking
+        if (msg.getHeader().getPlanId().equals(mostRecentPlanId_)) {
+            synchronized (planMutex_) {
+                // Check if we are still tracking this plan
+                if (plan_ != null) {
+                    // If the request was rejected (NACK)
+                    if (!msg.getIsAccepted()) {
+                        // Abandon the lane change
+                        log.warn("Lane change request for plan: " + msg.getHeader().getPlanId() +
+                          " Rejected by vehicle id: " + msg.getHeader().getSenderId());
+                        populateFutureManeuverWithSteadySpeed();
+                        plan_ = null;
+                    }
+                }
             }
         }
-
-        //if we can't do it outright then
-        if (!planAvailable){
-            // formulate a plan for coordinated maneuvering
-            // we will not go into this case before ExtrapolatedEnviroment is ready
-            buildPlanMessage(inputs, targetLane, startDist, startSpeed);
-        }
-
-        return planAvailable;
-    }
-
-
-    /**
-     * Constructs a mobility Intro message intended to broadcast our intentions without any expectation of response.
-     */
-    private void buildAnnouncement(IManeuverInputs inputs, int targetLane) {
-        plan_ = mobilityIntroPublisher_.newMessage();
-
-        //TODO let the Negotiator fill in header info and other fields not defined here
-        plan_.getHeader().setSenderId(this.STATIC_ID);
-        plan_.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
-        plan_.getHeader().setPlanId(UUID.randomUUID().toString());
-        plan_.getHeader().setTimestamp(System.currentTimeMillis());
-        log.info("V2V", "MobilityIntro has been built with planId = " + plan_.getHeader().getPlanId());
-        float speed = (float)inputs.getCurrentSpeed();
-        byte lane = (byte)inputs.getCurrentLane();
-        if (lane < 0) {
-            log.warn("buildAnnouncement found maneuver inputs providing lane ID = " + lane);
-        }
-        String link = "[Test track]"; //TODO - placeholder for testing
-        short linkPos = (short)inputs.getDistanceFromRouteStart(); //TODO - for now assume a single link in the route
-        long expiration = System.currentTimeMillis() + EXPIRATION_TIME; //TODO - not in use for now
-        
-        plan_.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE); //TODO - move to negotiator node
-        plan_.setForwardSpeed(speed);
-        plan_.setMyLaneId(lane);
-        plan_.setMyRoadwayLink(link);
-        plan_.setMyRoadwayLinkPosition(linkPos);
-        plan_.setExpiration(expiration);
-        if (targetLane > inputs.getCurrentLane()) {
-            plan_.getPlanType().setType(PlanType.CHANGE_LANE_LEFT);
-        }else if (targetLane < inputs.getCurrentLane()) {
-            plan_.getPlanType().setType(PlanType.CHANGE_LANE_RIGHT);
-        }
-    }
-
-
-    /**
-     * Constructs a detailed plan for coordinated movement that anticipates a response from a neighbor vehicle.
-     *
-     * For the current implementation we will largely use the same Intro message as for the announcement, (not enough
-     * time to implement the full vision just yet).
-     */
-    private void buildPlanMessage(IManeuverInputs inputs, int targetLane, double startDist, double startSpeed) {
-        //TODO - have this build a real plan message
-        buildAnnouncement(inputs, targetLane);
-
-        //use the capabilities string field to insert the specifics of what we will do
-        String capabilities = String.format("[STARTDIST:%.1f, STARTSPEED:%.1f]", startDist, startSpeed);
-        plan_.setCapabilities(capabilities);
-
     }
 
     /**
-     * Fills up the future maneuver structure from beginning to end in both dimensions
+     * Fills up the future maneuver structure from beginning to end with lane change and steady speed maneuvers
      */
-    private void populateFutureManeuver() {
+    private void populateFutureManeuverWithLaneChange() {
         ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
         IManeuverInputs inputs = planner.getManeuverInputs();
         IGuidanceCommands commands = planner.getGuidanceCommands();
 
         try {
             //start the lane change immediately
-            futureLatMvr_.addManeuver(laneChangeMvr_);
-
-            //fill the remainder with a constant lane
-            double startDist = futureLatMvr_.getLastDistance();
-            double endDist = futureLatMvr_.getEndDistance();
-            if (endDist - startDist > 0) {
-                LaneKeeping lk = new LaneKeeping(this);
-                lk.planToTargetDistance(inputs,commands, startDist, endDist);
-                futureLatMvr_.addManeuver(lk);
-            }
+            LaneChange laneChange = new LaneChange(this, futureLatMvr_.getEndingRelativeLane());
+            laneChange.setTargetLane(targetLane_);
+            laneChange.planToTargetDistance(inputs, commands, futureLatMvr_.getStartDistance(), futureLatMvr_.getEndDistance());
+            futureLatMvr_.addManeuver(laneChange);
 
             //fill the whole longitudinal space with a constant speed
             SteadySpeed ss = new SteadySpeed(this);
-            planner.planManeuver(ss, futureLonMvr_.getStartDistance(), endDist);
+            planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
             futureLonMvr_.addManeuver(ss);
 
         }catch (IllegalStateException ise) {
@@ -429,6 +380,33 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin 
             throw ise;
         }
     }
+
+    /**
+     * Fills up the future maneuver structure from beginning to end with steady speed and lane keeping maneuvers
+     */
+    private void populateFutureManeuverWithSteadySpeed() {
+        ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
+        IManeuverInputs inputs = planner.getManeuverInputs();
+        IGuidanceCommands commands = planner.getGuidanceCommands();
+
+        try {
+            // fill the whole longitudinal space with a constant speed
+            SteadySpeed ss = new SteadySpeed(this);
+            planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
+            futureLonMvr_.addManeuver(ss);
+
+            // Fill the whole lateral space with 
+            LaneKeeping laneKeeping = new LaneKeeping(this);
+            laneKeeping.planToTargetDistance(inputs, commands, futureLatMvr_.getStartDistance(), futureLatMvr_.getEndDistance());
+            futureLatMvr_.addManeuver(laneKeeping);
+
+        }catch (IllegalStateException ise) {
+            // log it to clarify the call sequence
+            log.warn("V2V", "Exception trapped in populateFutureManeuver: " + ise.toString());
+            throw ise;
+        }
+    }
+
     /**
      * Helper function to acquire control of the light bar
      */

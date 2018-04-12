@@ -234,7 +234,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
 
         // TODO: Figure out how to get currentBsmId, I don't think we need this yet though
         pathMsg.getHeader().setSenderBsmId(currentBsmId);
-        pathMsg.setTrajectory(trajectoryConverter.pathToMessage(pathPrediction, factory));
+        pathMsg.setTrajectory(trajectoryConverter.pathToMessage(pathPrediction));
 
         pathPub.publish(pathMsg);
         log.info(String.format("Publication complete for planId=%s containing %d points",

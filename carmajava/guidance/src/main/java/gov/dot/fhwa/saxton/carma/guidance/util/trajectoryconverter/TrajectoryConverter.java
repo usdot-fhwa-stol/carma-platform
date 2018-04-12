@@ -65,16 +65,19 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   private int currentSegmentIdx;
   private double currentSegDowntrack;
   private int lane;
+  private final MessageFactory messageFactory;
 
   /**
    * Constructor
    * 
    * @param maxPointsInPath The maximum number of points which will be included in a path
    * @param timeStep The size in seconds of the time step separating each point in a path. 
+   * @param messageFactory A factory for creating ros messages
    */
-  public TrajectoryConverter(int maxPointsInPath, double timeStep) {
+  public TrajectoryConverter(int maxPointsInPath, double timeStep, MessageFactory messageFactory) {
     this.maxPointsInPath = maxPointsInPath;
     this.timeStep = timeStep;
+    this.messageFactory = messageFactory;
   }
 
   /**
@@ -316,7 +319,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   @Override
-  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory) {
+  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path) {
     if (path.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
