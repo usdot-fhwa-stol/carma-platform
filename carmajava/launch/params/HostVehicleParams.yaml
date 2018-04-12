@@ -9,7 +9,7 @@ vehicle_color: 'Green'
 vehicle_height: 2.2
 
 # String: Host vehicle’s Unique ID that will be used in mobility messages.
-vehicle_id: 'DOT-45099'
+vehicle_id: 'DOT-BLACK'
 
 # Double: Host vehicle length
 # Units: Meters
