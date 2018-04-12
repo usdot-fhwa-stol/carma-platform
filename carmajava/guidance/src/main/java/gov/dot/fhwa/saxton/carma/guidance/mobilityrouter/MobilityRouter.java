@@ -289,8 +289,8 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             }
         }
 
-        if (conflictSpace != null) {
-            if (!conflictHandled && defaultConflictHandler != null) {
+        if(!conflictHandled) {
+            if(defaultConflictHandler != null && conflictSpace != null) {
                 // Handle in default conflict handler
                 log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
                 fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace);
@@ -298,6 +298,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
                 throw new RosRuntimeException("Unhandled mobility path conflict detected and no default conflict handler available!!!");
             }
         }
+        
     }
 
     /**
