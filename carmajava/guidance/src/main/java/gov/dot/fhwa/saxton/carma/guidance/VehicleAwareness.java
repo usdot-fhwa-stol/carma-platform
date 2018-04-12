@@ -117,9 +117,11 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     }
 
     protected synchronized void rollTrajectoryBuffer() {
-        currentTrajectory = nextTrajectory;
-        nextTrajectory = null;
-        publishMobilityPath();
+        if (nextTrajectory != null) { // Don't roll if this is the first trajectory
+            currentTrajectory = nextTrajectory;
+            nextTrajectory = null;
+            publishMobilityPath();
+        }
     }
 
     @Override
@@ -203,7 +205,6 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         log.info("Notified of a forced replan, cleaning invalid trajectories!");
         currentTrajectory = null;
         nextTrajectory = null;
-        publishMobilityPath();
     }
 
     /**
