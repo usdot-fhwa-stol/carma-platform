@@ -147,7 +147,7 @@ var isSystemAlert = {
 var startDateTime = {//startDateTime
     get value() {
         var startDateTime = sessionStorage.getItem('startDateTime');
-        console.log('get startDateTime ORIG: ' + startDateTime);
+        //console.log('get startDateTime ORIG: ' + startDateTime);
         if (startDateTime == 'undefined' || startDateTime == null || startDateTime == '') {
             this.start();
             startDateTime = sessionStorage.getItem('startDateTime');
