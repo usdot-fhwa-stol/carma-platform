@@ -32,11 +32,7 @@ dependencies {
     /* Example of a local subproject dependency */
     /* compile project(':sibling_gradle_project') */
     compile project(':guidance_plugin_api')
-    compile 'org.ros.rosjava_messages:std_msgs:0.5.10'
-    compile 'org.ros.rosjava_core:rosjava_geometry:0.3.5'
-    compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
     compile name: 'saxton-utils-2.0.0'
-    compile name: 'signal_plugin-common-1.0-SNAPSHOT'
 
     testCompile 'org.mockito:mockito-core:2.+'
     testCompile 'junit:junit:4.12'
