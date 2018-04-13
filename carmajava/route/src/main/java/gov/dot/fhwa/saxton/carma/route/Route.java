@@ -39,20 +39,12 @@ public class Route {
   protected List<RouteSegment> segments;
   protected List<RouteWaypoint> waypoints;
   protected boolean valid = false;
-  protected SaxtonLogger log;
-
 
   /**
    * Default constructor does nothing.
    * Needed to make the route a bean which can be easily parsed from yaml file
    */
   public Route() {}
-
-
-  public void setLogger(SaxtonLogger logger) {
-      log = logger;
-  }
-
 
   /**
    * Constructor which initializes a route from a provided list of waypoints
@@ -404,11 +396,9 @@ public class Route {
       RouteWaypoint wp = seg.getDowntrackWaypoint();
       double crossTrack = seg.crossTrackDistance(point);
       double downTrack = seg.downTrackDistance(point);
-      log.debug("routeSegmentOfPoint: candidate seg: wp = " + wp.getWaypointId() + ", crossTrack = " + crossTrack + ", downTrack = " + downTrack);
 
       if (-0.0 < downTrack && downTrack <= seg.length()) { 
         if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
-          log.debug("routeSegmentOfPoint: found it!");
           return seg;
         
       } else if (count == segments.size() - 1 && downTrack > seg.length()) {
@@ -416,7 +406,6 @@ public class Route {
       }
       count++;
     }
-    log.debug("routeSegmentOfPoint: no clear answer - returning bestSegment = " + bestSegment.toString());
     return bestSegment;
   }
 
