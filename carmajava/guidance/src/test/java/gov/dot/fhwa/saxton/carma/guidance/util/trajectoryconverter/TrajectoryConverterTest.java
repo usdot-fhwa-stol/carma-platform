@@ -36,6 +36,8 @@ import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
@@ -80,7 +82,7 @@ public class TrajectoryConverterTest {
 
   @Test
   public void testConvertToPath() {
-    final int MAX_POINTS_IN_PATH = 1000;
+    final int MAX_POINTS_IN_PATH = 60;
     final double TIME_STEP = 0.1;
     TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP, messageFactory);
     tc.setRoute(route);
@@ -139,8 +141,21 @@ public class TrajectoryConverterTest {
     traj.addManeuver(futureLaneChange1);
     traj.addManeuver(futureLaneChange2);
 
-
+    IMobilityTimeProvider timeProvider = mock(IMobilityTimeProvider.class);
+    when(timeProvider.getCurrentTimeMillis()).thenReturn(0L);
+    when(timeProvider.getCurrentTimeSeconds()).thenReturn(0.0);
+    double[] cellSize = {5.0,2.5,0.15};
+    ConflictManager cm = new ConflictManager(cellSize, 2.5, 1.0, 0.05, timeProvider);
+    cm.setRoute(route);
     // Call function
+    List<RoutePointStamped> tempPoints = tc.convertToPath(traj, 0, 0, 0, 0, 0, 0);
+    cm.addRequestedPath(tempPoints, "planId", "vehid");
+    cm.getConflicts(tempPoints, tempPoints);
+    cav_msgs.Trajectory message = tc.pathToMessage(tempPoints);
+    long startTime = System.currentTimeMillis();
+    List<RoutePointStamped> resultPoints = tc.messageToPath(message);
+    long endTime = System.currentTimeMillis();
+    System.out.println("\n\n\n PathSize: " + resultPoints.size() + "\n MS: " + (endTime - startTime) + "\n\n\n");
     ecefPath = tc.toECEFPoints(tc.convertToPath(traj, 0, 0, 0, 0, 0, 0));
     assertEquals(112, ecefPath.size());
 

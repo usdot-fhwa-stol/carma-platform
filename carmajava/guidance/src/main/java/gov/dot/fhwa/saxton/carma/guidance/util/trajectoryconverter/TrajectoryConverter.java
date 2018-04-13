@@ -23,6 +23,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
@@ -80,6 +81,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     this.maxPointsInPath = maxPointsInPath;
     this.timeStep = timeStep;
     this.messageFactory = messageFactory;
+    this.log = LoggerManager.getLogger();
   }
 
   public void setLogger(ILogger logger) { log = logger; }
@@ -158,6 +160,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
    double downtrack, double crosstrack,
    int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath) {
+
+    log.info("Converting trajectory to path");
     // If can't add points return an empty list
     if (maxPointsInPath <= 0) {
       return new LinkedList<>(); 
@@ -296,6 +300,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   
   @Override
   public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, int currentSegmentIdx, double segDowntrack) {
+    log.info("Converting message with " + (trajMsg.getOffsets().size() + 1) +" points to path");
     // Get segments within DSRC range
     List<RouteSegment> segments = route.findRouteSubsection(currentSegmentIdx, segDowntrack, DISTANCE_BACKWARD_TO_SEARCH, DISTANCE_FORWARD_TO_SEARCH);
     // Get starting location
@@ -334,6 +339,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
 
   @Override
   public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path) {
+    log.info("Converting path with " + path.size() + " points to message");
     if (path.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
