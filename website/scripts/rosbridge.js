@@ -1578,8 +1578,12 @@ function showSystemVersion() {
     Start timer after engaging Guidance.
 */
 function startEngagedTimer() {
-    // Start counter 
-    timer = setInterval(countUpTimer, 1000);
+    // Start counter    
+    if (timer == null && isGuidance.engaged == true)
+    {
+        timer = setInterval(countUpTimer, 1000);
+        //console.log('*** setInterval & countUpTimer was called.');
+    }
 }
 
 /*

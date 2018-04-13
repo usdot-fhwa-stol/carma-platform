@@ -386,13 +386,19 @@ function countUpTimer() {
     // Find the elapsed time
     var elapsedTime = now - startDateTime.value;
 
+    //engaged_timer = '00h 00m 00s';
+
+    if (elapsedTime < 0)
+    {
+        //console.log('elapsedTime is negative');
+        return;
+    }
+
     // Time calculations for days, hours, minutes and seconds
     // var days = Math.floor(elapsedTime / (1000 * 60 * 60 * 24));
     var hours = Math.floor((elapsedTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     var minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
     var seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
-
-    engaged_timer = '00h 00m 00s';
 
     if (isGuidance.engaged == true) {
         engaged_timer = pad(hours, 2) + 'h '
@@ -433,6 +439,9 @@ function closeModal(action) {
             selectedRoute.remove();
             startDateTime.remove(); //resets the startDatetime
             clearInterval(timer); //stops the execution
+            timer = null;
+            engaged_timer = '00h 00m 00s';
+             
             sessionStorage.removeItem('routePlanCoordinates');
             sessionStorage.removeItem('routeSpeedLimitDist');
 
