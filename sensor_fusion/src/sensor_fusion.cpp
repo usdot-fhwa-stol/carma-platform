@@ -470,7 +470,7 @@ void SensorFusionApplication::publish_updates() {
     if(tracker_->process() > 0 && !tracker_->tracked_sensor->objects.empty())
     {
         cav_msgs::ExternalObjectList list;
-        list.header.stamp.fromBoost(tracker_->tracked_sensor->time_stamp);
+        list.header.stamp = ros::Time::fromBoost(tracker_->tracked_sensor->time_stamp);
         list.header.frame_id = inertial_frame_name_;
         for (auto& it : tracker_->tracked_sensor->objects)
         {
@@ -497,20 +497,18 @@ void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConst
     //Get Transform from object measurement to inertial frame
     //All tracking should be done in inertial frame
     geometry_msgs::TransformStamped transformStamped;
-    try
+    if(tf2_buffer_.canTransform(inertial_frame_name_,msg->header.frame_id,msg->header.stamp))
     {
         transformStamped = tf2_buffer_.lookupTransform(inertial_frame_name_,msg->header.frame_id,msg->header.stamp);
-
     }
-    catch (tf2::ExtrapolationException& ex)
+    else if(tf2_buffer_.canTransform(inertial_frame_name_,msg->header.frame_id,ros::Time(0)))
     {
-        ROS_DEBUG_STREAM(ex.what());
         ROS_DEBUG_STREAM("Using latest transform available");
         transformStamped = tf2_buffer_.lookupTransform(inertial_frame_name_,msg->header.frame_id,ros::Time(0));
     }
-    catch(tf2::TransformException&ex)
+    else
     {
-        ROS_WARN("%s", ex.what());
+        ROS_WARN_STREAM("No transform available from " << inertial_frame_name_ << " to " << msg->header.frame_id);
         return;
     }
 
@@ -579,7 +577,8 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     try {
         odom_tf = tf2_buffer_.lookupTransform(inertial_frame_name_, body_frame_name_, msg->header.stamp);
         ned_odom_tf = tf2_buffer_.lookupTransform(ned_frame_name_, inertial_frame_name_, msg->header.stamp);
-    } catch (...) {
+    } catch (tf2::TransformException&ex) {
+        ROS_WARN_STREAM(ex.what());
         return;
     }
     obj.presence_vector |= cav_msgs::ExternalObject::ID_PRESENCE_VECTOR;

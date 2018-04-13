@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,8 +22,12 @@ import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 
 /**
  * Concrete implementation of RouteService responsible for handling processing of
@@ -39,6 +43,8 @@ public class GuidanceRouteService implements RouteService {
   protected SortedSet<SpeedLimit> limits;
   protected SortedSet<AlgorithmFlags> disabledAlgorithms;
   protected SortedSet<RequiredLane> requiredLanes;
+  protected List<Consumer<Route>> routeCallbacks = Collections.synchronizedList(new ArrayList<>());
+  protected List<Consumer<RouteState>> routeStateCallbacks = Collections.synchronizedList(new ArrayList<>());
 
   public GuidanceRouteService(IPubSubService pubSubService) {
     this.pubSubService = pubSubService;
@@ -56,6 +62,10 @@ public class GuidanceRouteService implements RouteService {
       if (currentRoute != null) {
         downtrackDistance = state.getDownTrack();
         currentSegment = getRouteSegmentAtLocation(downtrackDistance);
+
+        for (Consumer<RouteState> callback : routeStateCallbacks) {
+          callback.accept(state);
+        }
       }
     });
 
@@ -101,6 +111,10 @@ public class GuidanceRouteService implements RouteService {
     }
 
     requiredLanes = requiredLaneChanges;
+
+    for (Consumer<Route> callback : routeCallbacks) {
+      callback.accept(newRoute);
+    }
   }
 
   @Override
@@ -278,5 +292,19 @@ public class GuidanceRouteService implements RouteService {
     }
 
     return out;
+  }
+
+  /**
+   * Register a callback to be invoked upon receipt of a new Route setting from the user
+   */
+  public void registerNewRouteCallback(Consumer<Route> callback) {
+    routeCallbacks.add(callback);
+  }
+
+  /**
+   * Register a callback to be invoked upon receipt of a new RouteState value
+   */
+  public void registerNewRouteStateCallback(Consumer<RouteState> callback) {
+    routeStateCallbacks.add(callback);
   }
 }

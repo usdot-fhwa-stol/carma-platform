@@ -1,3 +1,6 @@
+# SpeedHarmParams.yaml
+# This file specifies the configurable parameters of the speed harmonization plugin
+
 # String: Infrastructure server URL base
 # Units: URL
 infrastructure_server_url: http://35.153.64.44:8081/rest
@@ -17,3 +20,7 @@ speed_harm_min_maneuver_length: 10.0
 # Double: The maximum acceleration or deceleration to apply during a speed harmonization maneuver
 # Units: m/s/s
 speed_harm_accel: 2.0
+
+# Integer: The number of miliseconds before the speed harm complex maneuver will timeout
+# Units: ms
+speed_harm_maneuver_timeout: 3000

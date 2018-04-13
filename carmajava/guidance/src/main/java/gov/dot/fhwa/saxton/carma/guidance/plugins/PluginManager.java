@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,10 +29,14 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import org.reflections.Reflections;
@@ -43,6 +47,7 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
+import org.ros.node.topic.Publisher;
 import std_msgs.Header;
 
 import java.lang.reflect.Constructor;
@@ -77,7 +82,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected ServiceServer<PluginListRequest, PluginListResponse> registeredPluginService;
     protected ServiceServer<PluginListRequest, PluginListResponse> activePluginService;
     protected ServiceServer<PluginActivationRequest, PluginActivationResponse> activatePluginService;
-    protected IPublisher<cav_msgs.PluginList> pluginPublisher;
+    protected Publisher<cav_msgs.PluginList> pluginPublisher;
 
     protected MessageFactory messageFactory;
 
@@ -86,7 +91,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     protected int activePluginsSeqNum = 0;
 
     public PluginManager(GuidanceStateMachine stateMachine, IPubSubService pubSubManager, 
-    IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService, ConnectedNode node) {
+    IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService,
+    ConnectedNode node, IMobilityRouter router, IConflictDetector conflictDetector,
+     ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager) {
         super(stateMachine, pubSubManager, node);
         this.executor = new PluginExecutor();
 
@@ -96,7 +103,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
-                routeService);
+                routeService, router , conflictDetector, trajectoryConverter, lightBarManager);
     }
 
     /**
@@ -111,7 +118,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pluginServiceLocator.getPubSubService(), 
                 pluginServiceLocator.getParameterSource(), 
                 pluginServiceLocator.getManeuverPlanner(), 
-                pluginServiceLocator.getRouteService());
+                pluginServiceLocator.getRouteService(),
+                pluginServiceLocator.getMobilityRouter(),
+                pluginServiceLocator.getConflictDetector(),
+                pluginServiceLocator.getTrajectoryConverter(),
+                pluginServiceLocator.getLightBarManager());
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }
@@ -225,8 +236,9 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         // Configure the plugin availability topic and topic message factory
         NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
         messageFactory = nodeConfig.getTopicMessageFactory();
-        pluginPublisher = pubSubService.getPublisherForTopic(messagingBaseUrl + "/" + availablePluginsTopicUrl,
+        pluginPublisher = node.newPublisher(messagingBaseUrl + "/" + availablePluginsTopicUrl,
                 cav_msgs.PluginList._TYPE);
+        pluginPublisher.setLatchMode(true);
         
         currentState.set(GuidanceState.STARTUP);
     }
@@ -237,7 +249,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
 
         for (IPlugin p : getRegisteredPlugins()) {
@@ -370,6 +382,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             }
         }
 
+		//Sort
+		pList.sort(
+			(Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+		);
+
         availablePlugins.setPlugins(pList);
         pluginPublisher.publish(availablePlugins);
     }
@@ -405,6 +422,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                             pList.add(p0);
                         }
 
+						//Sort
+						pList.sort(
+						  (Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+						);
+
                         pluginListResponse.setPlugins(pList);
                     }
                 });
@@ -437,6 +459,11 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                                 pList.add(p0);
                             }
                         }
+
+						//Sort
+						pList.sort(
+						  (Plugin p1, Plugin p2) -> p1.getName().compareToIgnoreCase(p2.getName())
+						);
 
                         pluginListResponse.setPlugins(pList);
                     }
@@ -476,7 +503,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);

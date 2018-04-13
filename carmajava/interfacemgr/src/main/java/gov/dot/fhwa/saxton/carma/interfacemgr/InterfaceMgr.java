@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ import org.ros.node.topic.Subscriber;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The Interface Manager provides a hardware-agnostic interface to all of the available vehicle
@@ -60,6 +61,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected boolean robotListenerCreated_ = false;
     protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
     protected boolean shutdownInitiated_ = false;
+    protected AtomicBoolean firstRequest = new AtomicBoolean(true);
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -116,7 +118,8 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	                info.setSensor(msg.getSensor());
 	                info.setPosition(msg.getPosition());
 	                info.setComms(msg.getComms());
-	                info.setController(msg.getController());
+	                info.setLonController(msg.getLonController());
+	                info.setLatController(msg.getLatController());
 
 	                //add the new driver info to our database
 	                worker_.handleNewDriverStatus(info);
@@ -205,7 +208,6 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                             @Override
                             public void build(cav_srvs.GetDriversWithCapabilitiesRequest request,
                                     cav_srvs.GetDriversWithCapabilitiesResponse response) {
-
                             	try {
 	                                log_.debug("DRIVER", "InterfaceMgr.driverCapSvr: received request with "
 	                                        + request.getCapabilities().size() + " capabilities listed.");

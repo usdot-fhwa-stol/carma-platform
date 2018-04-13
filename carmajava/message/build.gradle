@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,11 +40,20 @@ dependencies {
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
   /* Local subproject dependency */
   compile project(':rosutils')
+  
+  testCompile 'org.mockito:mockito-core:2.+'
+  testCompile 'junit:junit:4.12'
 }
 
 installApp {
     doLast {
         delete 'build/scripts'
+    }
+}
+
+test {
+    testLogging {
+        showStandardStreams = true
     }
 }
 

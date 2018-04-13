@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,8 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.*;
-import cav_msgs.Route;
-import cav_srvs.GetAvailableRoutesResponse;
-import cav_srvs.SetActiveRouteRequest;
-import cav_srvs.SetActiveRouteResponse;
 import org.ros.message.Time;
-
-import java.util.PriorityQueue;
+import org.ros.rosjava_geometry.Transform;
 
 /**
  * Interface defines the needed functions of a route worker
@@ -35,7 +30,7 @@ public interface IRouteManager {
    *
    * @param route The active route message
    */
-  void publishActiveRoute(Route route);
+  void publishActiveRoute(cav_msgs.Route route);
 
   /**
    * Publishes the current route following state in the form of a ros message
@@ -44,6 +39,18 @@ public interface IRouteManager {
    */
   void publishRouteState(RouteState routeState);
 
+  /**
+   * Publishes the latest route event in the form of a ros message
+   * 
+   * @param routeEvent The latest route event
+   */
+  void publishRouteEvent(RouteEvent routeEvent);
+
+  /**
+   * Gets the transform of between the requested frames
+   */
+  Transform getTransform(String parentFrame, String childFrame, Time stamp);
+  
   /**
    * Gets the current time
    *

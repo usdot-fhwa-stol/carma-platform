@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,7 +59,7 @@ public class SpeedHarmonizationTest {
     // Check valid configuration with distance and time
     try {
       SpeedHarmonizationManeuver shManeuver =
-        new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(1000),
+        new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(1000),
           Time.fromMillis(2000));
     } catch (IllegalArgumentException e) {
       fail("Valid speed harm maneuver failed to construct");
@@ -68,7 +68,7 @@ public class SpeedHarmonizationTest {
     // Check invalid distances
     try {
       SpeedHarmonizationManeuver shManeuver =
-        new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 5, Time.fromMillis(1000),
+        new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 5, Time.fromMillis(1000),
           Time.fromMillis(2000));
       fail("Invalid speed harm maneuver constructed");
     } catch (IllegalArgumentException e) {
@@ -77,7 +77,7 @@ public class SpeedHarmonizationTest {
     // Check invalid times
     try {
       SpeedHarmonizationManeuver shManeuver =
-        new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 5, Time.fromMillis(2000),
+        new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 5, Time.fromMillis(2000),
           Time.fromMillis(1000));
       fail("Invalid speed harm maneuver constructed");
     } catch (IllegalArgumentException e) {
@@ -86,7 +86,7 @@ public class SpeedHarmonizationTest {
     // Check valid configuration with distance and speed
     try {
       SpeedHarmonizationManeuver shManeuver =
-        new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 20, 10, 20);
+        new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 20, 10, 20);
     } catch (IllegalArgumentException e) {
       fail("Valid speed harm maneuver failed to construct");
     }
@@ -94,7 +94,7 @@ public class SpeedHarmonizationTest {
     // Check invalid speeds
     try {
       SpeedHarmonizationManeuver shManeuver =
-        new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 5, 20, 10);
+        new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 5, 20, 10);
       fail("Invalid speed harm maneuver constructed");
     } catch (IllegalArgumentException e) {
     }
@@ -102,7 +102,7 @@ public class SpeedHarmonizationTest {
     // Check valid configuration with all inputs
     try {
       SpeedHarmonizationManeuver shManeuver =
-        new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(1000),
+        new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(1000),
           Time.fromMillis(2000), 6, 9);
     } catch (IllegalArgumentException e) {
       fail("Valid speed harm maneuver failed to construct");
@@ -111,7 +111,7 @@ public class SpeedHarmonizationTest {
     // Check invalid configuration with all inputs
     try {
       SpeedHarmonizationManeuver shManeuver =
-        new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(1000),
+        new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(1000),
           Time.fromMillis(2000), 3, 4);
       fail("Invalid speed harm maneuver constructed");
     } catch (IllegalArgumentException e) {
@@ -120,7 +120,7 @@ public class SpeedHarmonizationTest {
     // Check invalid configuration with all inputs
     try {
       SpeedHarmonizationManeuver shManeuver =
-        new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(100),
+        new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(100),
           Time.fromMillis(2000), 1000, 2000);
       fail("Invalid speed harm maneuver constructed");
     } catch (IllegalArgumentException e) {
@@ -133,7 +133,7 @@ public class SpeedHarmonizationTest {
     SpeedHarmonizationManeuver shManeuver;
     // Check valid configuration with distance and time
     try {
-      shManeuver = new SpeedHarmonizationManeuver(shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(1000),
+      shManeuver = new SpeedHarmonizationManeuver(null, shInputs, inputs_, commands_, accStrategy_, 10, 20, Time.fromMillis(1000),
         Time.fromMillis(2000));
       shManeuver.setTimeout(Duration.fromMillis(2000));
     } catch (IllegalArgumentException e) {

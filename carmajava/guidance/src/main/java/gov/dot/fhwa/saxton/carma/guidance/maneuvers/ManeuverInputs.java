@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,13 @@ package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import cav_msgs.ExternalObject;
 import cav_msgs.ExternalObjectList;
+import cav_msgs.RoadwayEnvironment;
 import cav_msgs.RouteState;
+import cav_srvs.GetTransform;
+import cav_srvs.GetTransformRequest;
+import cav_srvs.GetTransformResponse;
+import cav_msgs.RoadwayObstacle;
+import cav_msgs.SystemAlert;
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
@@ -28,8 +34,12 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.params.RosParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Deadband;
 import gov.dot.fhwa.saxton.carma.guidance.signals.MovingAverageFilter;
 import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
@@ -37,7 +47,9 @@ import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import org.ros.exception.RosRuntimeException;
+import org.ros.message.Time;
 import org.ros.node.ConnectedNode;
+import org.ros.rosjava_geometry.Transform;
 
 /**
  * Interacts with the ROS network to provide the necessary input data to the Maneuver classes, allowing the rest
@@ -47,11 +59,16 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
 
     protected ISubscriber<RouteState> routeStateSubscriber_;
     protected ISubscriber<TwistStamped> twistSubscriber_;
-    protected ISubscriber<ExternalObjectList> externalObjectListSubscriber_;
+    protected ISubscriber<RoadwayEnvironment> roadwaySubscriber_;
+    protected IService<GetTransformRequest, GetTransformResponse> getTransformClient_;
+    Transform hostVehicleToVehicleFront_ = null;
     protected double distanceDowntrack_ = 0.0; // m
+    protected double distanceCrosstrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
     protected int currentLane_ = 0;
+    protected String hostVehicleFrame_ = "host_vehicle";
+    protected String vehicleFrontFrame_ = "vehicle_front";
     protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
     protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
     protected ILogger log;
@@ -74,10 +91,15 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         double Kp = node.getParameterTree().getDouble("~acc_Kp", 1.0);
         double Ki = node.getParameterTree().getDouble("~acc_Ki", 0.0);
         double Kd = node.getParameterTree().getDouble("~acc_Kd", 0.0);
-        log.info(String.format("ACC params Kp=%.02f, Ki=%.02f, Kd= %.02f, gap=%.02f, standoff=%.02f, exit_factor=%.02f", Kp, Ki, Kd,
-                desiredTimeGap, minStandoffDistance, exitDistanceFactor));
         double deadband = node.getParameterTree().getDouble("~acc_pid_deadband", 0.0);
         int numSamples = node.getParameterTree().getInteger("~acc_number_of_averaging_samples", 1);
+        hostVehicleFrame_ = node.getParameterTree().getString("~acc_host_vehicle_frame_id", hostVehicleFrame_);
+        vehicleFrontFrame_ = node.getParameterTree().getString("~acc_vehicle_front_frame_id", vehicleFrontFrame_);
+
+        log.info(String.format(
+            "ACC params Kp=%.02f, Ki=%.02f, Kd= %.02f, gap=%.02f, standoff=%.02f, exit_factor=%.02f, acc_pid_deadband=%.04f, acc_number_of_averaging_samples=%d" +
+            " host_vehicle_frame_id= " + hostVehicleFrame_ + "vehicle_front_frame_id= " + vehicleFrontFrame_,
+             Kp, Ki, Kd, desiredTimeGap, minStandoffDistance, exitDistanceFactor, deadband, numSamples));
 
         PidController timeGapController = new PidController(Kp, Ki, Kd, desiredTimeGap);
         MovingAverageFilter movingAverageFilter = new MovingAverageFilter(numSamples);
@@ -87,6 +109,14 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel, vehicleResponseLag,
                 minStandoffDistance, exitDistanceFactor, accFilterPipeline);
         AccStrategyManager.setAccStrategyFactory(accFactory);
+
+        // Used Services
+        // Must be called before message subscribers
+        try {
+            getTransformClient_ = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
+        } catch (TopicNotFoundException tnfe) {
+            exceptionHandler.handleException("get_transform service cannot be found", tnfe);
+        }
 
         // subscribers
         routeStateSubscriber_ = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
@@ -116,26 +146,43 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
          * data is available in those data publications.
          */
 
-        // TODO: Update to use actual topic provided by sensor fusion
-        externalObjectListSubscriber_ = pubSubService.getSubscriberForTopic("objects", ExternalObjectList._TYPE);
-        externalObjectListSubscriber_.registerOnMessageCallback(new OnMessageCallback<ExternalObjectList>() {
+        roadwaySubscriber_ = pubSubService.getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
+        roadwaySubscriber_.registerOnMessageCallback(new OnMessageCallback<RoadwayEnvironment>() {
             @Override
-            public void onMessage(ExternalObjectList msg) {
+            public void onMessage(RoadwayEnvironment msg) {
+                if (hostVehicleToVehicleFront_ == null) {
+                    // Transform is static so we only need it once
+                    hostVehicleToVehicleFront_ = getTransform(hostVehicleFrame_, vehicleFrontFrame_, Time.fromMillis(0));
+                    if (hostVehicleToVehicleFront_ == null)
+                        return;
+                }
                 double closestDistance = Double.POSITIVE_INFINITY;
-                ExternalObject frontVehicle = null;
-                for (ExternalObject eo : msg.getObjects()) {
-                    // TODO: When sensor fusion publishes relative lane data, ensure object is in HOST_LANE
-                    if (eo.getPose().getPose().getPosition().getX() < closestDistance) {
-                        // If its close than our previous best candidate, update our candidate
-                        frontVehicle = eo;
-                        closestDistance = eo.getPose().getPose().getPosition().getX();
+                RoadwayObstacle frontVehicle = null;
+                for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
+
+                    // TODO This modification to downtrack values calculation should really be based on transforms. 
+                    double frontVehicleDist =  obs.getDownTrack() - distanceDowntrack_ - hostVehicleToVehicleFront_.getTranslation().getX() - obs.getObject().getSize().getX();
+                    boolean inLane = obs.getPrimaryLane() == currentLane_;
+                    // TODO: Add back into to check against the secondary lanes of an object
+                    // byte[] secondaryLanes = obs.getSecondaryLanes().array();
+                    // // Check secondary lanes
+                    // for(int i = 0; i < secondaryLanes.length; i++) {
+                    //     if (inLane)
+                    //         break;
+                    //     inLane = secondaryLanes[i] == currentLane_;
+                    // }
+                    
+                    if (inLane && frontVehicleDist < closestDistance && frontVehicleDist > -0.0) {
+                        // If it's closer than our previous best candidate, update our candidate
+                        frontVehicle = obs;
+                        closestDistance = frontVehicleDist;
                     }
                 }
 
                 // Store our results
                 if (frontVehicle != null) {
-                    frontVehicleDistance.set(frontVehicle.getPose().getPose().getPosition().getX());
-                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getVelocity().getTwist().getLinear().getX());
+                    frontVehicleDistance.set(frontVehicle.getObject().getPose().getPose().getPosition().getX());
+                    frontVehicleSpeed.set(currentSpeed_ + frontVehicle.getObject().getVelocity().getTwist().getLinear().getX());
                 } else {
                     frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
                     frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
@@ -156,7 +203,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     }
 
     @Override
-    public void onRouteActive() {
+    public void onActive() {
         currentState.set(GuidanceState.ACTIVE);
     }
 
@@ -217,7 +264,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
             jobQueue.add(this::onSystemReady);
             break;
         case ACTIVATE:
-            jobQueue.add(this::onRouteActive);
+            jobQueue.add(this::onActive);
             break;
         case DEACTIVATE:
             jobQueue.add(this::onDeactivate);
@@ -243,5 +290,56 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     @Override
     public int getCurrentLane() {
         return currentLane_;
+    }
+
+   /**
+    * Gets the transform of between the requested frames
+    * The transform describes the location of the child frame in the parent frame
+    * 
+    * @param parentFrame Frame Id of parent frame
+    * @param childFrame Frame Id of child frame
+    * @param stamp The time which this transform should correspond to
+    */
+    private Transform getTransform(String parentFrame, String childFrame, Time stamp) {
+	    GetTransformRequest request = getTransformClient_.newMessage();
+	    request.setParentFrame(parentFrame);
+	    request.setChildFrame(childFrame);
+	    request.setStamp(stamp);
+
+	    final GetTransformResponse[] response = new GetTransformResponse[1];
+	    final boolean[] gotTransform = {false};
+
+	    getTransformClient_.call(request,
+		    new OnServiceResponseCallback<GetTransformResponse>() {
+
+			    @Override
+			    public void onSuccess(GetTransformResponse msg) {
+			    	if (msg.getErrorStatus() == GetTransformResponse.NO_ERROR
+					    || msg.getErrorStatus() == GetTransformResponse.COULD_NOT_EXTRAPOLATE) {
+					    response[0] = msg;
+					    gotTransform[0] = true;
+				    } else {
+			    		log.warn("TRANSFORM", "Request for transform ParentFrame: " + request.getParentFrame() +
+						    " ChildFrame: " + request.getChildFrame() + " returned ErrorCode: " + msg.getErrorStatus());
+				    }
+			    }
+
+			    @Override
+			    public void onFailure(Exception e) {
+				    exceptionHandler.handleException("get_transform service call failed", e);
+			    }
+
+		    });
+
+	    if(gotTransform[0]) {
+	    	return Transform.fromTransformMessage(response[0].getTransform().getTransform());
+	    } else {
+	    	return null;
+	    }
+    }
+
+    @Override
+    public double getCrosstrackDistance() {
+        return distanceCrosstrack_;
     }
 }

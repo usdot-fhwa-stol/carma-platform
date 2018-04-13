@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,6 +61,8 @@ dependencies {
   compile project(':guidance_plugin_api')
   compile project(':speedharm')
   compile project(':rosutils')
+  compile project(':route')
+  compile project(':platooning')
   compile name: 'saxton-utils-2.0.0'
   compile project(':geometry')
 

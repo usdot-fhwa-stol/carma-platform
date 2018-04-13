@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package gov.dot.fhwa.saxton.carma.route;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +37,7 @@ public class Route {
   protected double maxJoinDistance = 20.0;
   protected List<RouteSegment> segments;
   protected List<RouteWaypoint> waypoints;
+  protected boolean valid = false;
 
   /**
    * Default constructor does nothing.
@@ -52,6 +55,9 @@ public class Route {
   public Route(List<RouteWaypoint> waypoints, String routeID, String routeName) {
     this.routeID = routeID;
     this.routeName = routeName;
+    if (routeID==null) {
+      routeID=routeName;
+    }
     this.setWaypoints(waypoints);
   }
 
@@ -65,6 +71,7 @@ public class Route {
     cav_msgs.Route routeMsg = factory.newFromType(cav_msgs.Route._TYPE);
     routeMsg.setRouteID(routeID);
     routeMsg.setRouteName(routeName);
+    routeMsg.setValid(valid);
 
     List<cav_msgs.RouteSegment> routeSegmentMsgs = new LinkedList<>();
     for (int i = 0; i < segments.size(); i++) {
@@ -83,10 +90,12 @@ public class Route {
   public static Route fromMessage(cav_msgs.Route routeMsg){
     List<RouteWaypoint> waypoints = new LinkedList<>();
 
-    for (cav_msgs.RouteSegment segmentMsg: routeMsg.getSegments()){
-      RouteSegment segment = RouteSegment.fromMessage(segmentMsg);
-      waypoints.add(segment.getUptrackWaypoint());
-      waypoints.add(segment.getDowntrackWaypoint());
+    List<cav_msgs.RouteSegment> segmentMsgs = routeMsg.getSegments();
+    if (segmentMsgs.size() > 0) {
+      waypoints.add(RouteWaypoint.fromMessage(segmentMsgs.get(0).getPrevWaypoint())); // Add the first waypoint
+      for (cav_msgs.RouteSegment segmentMsg: routeMsg.getSegments()){
+        waypoints.add(RouteWaypoint.fromMessage(segmentMsg.getWaypoint())); // Add remaining waypoints
+      }
     }
     return new Route(waypoints, routeMsg.getRouteID(), routeMsg.getRouteName());
   }
@@ -160,6 +169,14 @@ public class Route {
   }
 
   /**
+   * Returns true if this route can be considered valid for use in host vehicle operation
+   * @return boolean valid status
+   */
+  public boolean isValid() {
+    return this.valid;
+  }
+
+  /**
    * Gets the first (starting) segment of this route
    *
    * @return The route segment which is the first segment of the route
@@ -202,6 +219,9 @@ public class Route {
    * @param routeName The name which will be used for this route
    */
   public void setRouteName(String routeName) {
+    if (routeID==null) {
+      routeID=routeName;
+    }
     this.routeName = routeName;
   }
 
@@ -256,6 +276,7 @@ public class Route {
     calculateLength();
   }
 
+
   /**
    * Gets the expected time of arrival for a vehicle on this route
    *
@@ -309,6 +330,14 @@ public class Route {
   }
 
   /**
+   * Set the validity status of this route for use in the CARMA platform
+   * @param valid The validity status
+   */
+  public void setValid(boolean valid) {
+    this.valid = valid;
+  }
+
+  /**
    * Returns a list of route segments which span the provided distances infront and behind of the 
    * segment at the specified index.
    * The returned list is in order from back to front.
@@ -321,6 +350,9 @@ public class Route {
    */
   public List<RouteSegment> findRouteSubsection(int startingIndex, double segmentDowntrack, double distBackward, double distForward) {
     List<RouteSegment> subList = new LinkedList<>();
+    if (startingIndex < 0 || startingIndex >= segments.size())
+      return subList;
+
     subList.add(segments.get(startingIndex));
 
     // Process segments behind host vehicle
@@ -334,7 +366,6 @@ public class Route {
     }
 
     Collections.reverse(subList);
-
     // Process segments infront of host vehicle
     distance = segments.get(startingIndex).length - segmentDowntrack;
     for (int i = startingIndex + 1; i < segments.size(); i++) {
@@ -344,7 +375,6 @@ public class Route {
       distance += segments.get(i).length();
       subList.add(segments.get(i));
     }
-
     return subList;
   }
 
@@ -377,5 +407,9 @@ public class Route {
       count++;
     }
     return bestSegment;
+  }
+
+  @Override public String toString() {
+    return "Route{ name: " + routeName + " id: " + routeID + " }";
   }
 }

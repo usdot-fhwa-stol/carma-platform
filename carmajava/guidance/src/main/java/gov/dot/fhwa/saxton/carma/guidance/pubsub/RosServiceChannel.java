@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,19 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+import org.ros.exception.RemoteException;
 import org.ros.node.service.ServiceClient;
+import org.ros.node.service.ServiceResponseListener;
+
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceResult;
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
+import javassist.bytecode.analysis.ControlFlow.Block;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Concrete ROS implementation of the logic outlined in {@link IServiceChannel}
@@ -30,9 +42,34 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
     protected int numOpenChannels = 0;
     protected boolean open = true;
     protected ServiceClient<T, S> serviceClient;
+    protected BlockingQueue<ServiceTask> tasks;
+    protected Thread workerThread;
+
+    protected class ServiceTask {
+        protected T request;
+        protected ServiceResponseListener<S> callback;
+    }
+
+    protected class ServiceWorker implements Runnable {
+		@Override
+		public void run() {
+            // Spin on the task queue and run the tasks in order, waiting for each response in turn
+            while (!Thread.interrupted()) {
+                try {
+                    ServiceTask task = tasks.take();
+                    RosServiceSynchronizer.callSync(serviceClient, task.request, task.callback);
+                } catch (InterruptedException e) {
+                }
+            }
+		}
+    }
 
     RosServiceChannel(ServiceClient<T, S> serviceClient) {
         this.serviceClient = serviceClient;
+        this.tasks = new LinkedBlockingQueue<>();
+        this.workerThread = new Thread(new ServiceWorker());
+        this.workerThread.setName(this.getClass().getSimpleName() + "ServiceWorkerThread");
+        workerThread.start();
     }
 
     /**
@@ -41,7 +78,7 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
     @Override public IService<T, S> getService() {
         numOpenChannels++;
 
-        return new RosService<>(serviceClient, this);
+        return new RosService<>(this);
     }
 
     /**
@@ -71,5 +108,34 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
      */
     public int getNumOpenChannel() {
         return numOpenChannels;
+    }
+
+    protected void submitCall(T request, OnServiceResponseCallback<S> callback) {
+        CompletableFuture<Void> blocker = new CompletableFuture<>();
+        ServiceTask t = new ServiceTask();
+        t.request = request;
+        t.callback = new ServiceResponseListener<S>() {
+			@Override
+			public void onFailure(RemoteException arg0) {
+                callback.onFailure(arg0);
+                blocker.complete(null);
+			}
+			@Override
+			public void onSuccess(S arg0) {
+				callback.onSuccess(arg0);
+                blocker.complete(null);
+			}
+        };
+
+		try {
+			tasks.put(t);
+            blocker.get();
+		} catch (InterruptedException e) {
+        } catch (ExecutionException e) {
+		}
+    }
+    
+    protected T newMessage() {
+        return serviceClient.newMessage();
     }
 }

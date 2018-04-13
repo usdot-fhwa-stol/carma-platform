@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,17 +16,20 @@
 
 package gov.dot.fhwa.saxton.carma.negotiator;
 
-import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
-import java.nio.ByteOrder;
-import java.util.Arrays;
-
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
+
+import cav_msgs.LocationOffsetECEF;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityPath;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
+import cav_msgs.SystemAlert;
+
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.concurrent.CancellableLoop;
@@ -35,40 +38,25 @@ import org.ros.namespace.GraphName;
 /**
  * The Negotiator package responsibility is to manage the details of negotiating tactical and strategic
  * agreements between the host vehicle and any other transportation system entities.
- * <p>
- * Command line test: rosrun carma negotiator gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr
- * Simple example
- * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
- * rostopic pub /new_plan_outbound cav_msgs/NewPlan '{header: {sender_id: a, plan_id: 44, checksum: 0}}'
+ * TODO This node will be removed in future. Now it is just a test tool for different Mobility messages
  */
-
-    //TODO - this is a minimalist implementation to get us through simplistic, "happy path" lane change maneuvers only.
-    //       The structure, data flows, and even message structures, need to be refactored for more general uses.
-
 
 public class NegotiatorMgr extends SaxtonBaseNode{
 
   protected ConnectedNode connectedNode;
   protected boolean       systemReady    = false;
-  protected MobilityPlan  lastNewPlanMsg = null;
   protected SaxtonLogger  log;
   protected int           timeDelay = 5000;
  
   // Topics
   // Publishers
-  protected Publisher<cav_msgs.MobilityAck>      mobAckOutPub;
-  protected Publisher<cav_msgs.MobilityGreeting> mobGreetOutPub;
-  protected Publisher<cav_msgs.MobilityIntro>    mobIntroOutPub;
-  protected Publisher<cav_msgs.MobilityPlan>     mobPlanOutPub;
-  protected Publisher<cav_msgs.NewPlan>          newPlanPub;
+  protected Publisher<cav_msgs.MobilityRequest>   mobReqOutPub;
+  protected Publisher<cav_msgs.MobilityPath>      mobPathOutPub;
+  protected Publisher<cav_msgs.MobilityResponse>  mobResOutPub;
+  protected Publisher<cav_msgs.MobilityOperation> mobOperPub;
 
   // Subscribers
-  protected Subscriber<cav_msgs.MobilityAck>      mobAckInSub;
-  protected Subscriber<cav_msgs.MobilityGreeting> mobGreetInSub;
-  protected Subscriber<cav_msgs.MobilityIntro>    mobIntroInSub;
-  protected Subscriber<cav_msgs.MobilityPlan>     mobPlanInSub;
-  protected Subscriber<cav_msgs.SystemAlert>      alertSub;
-  protected Subscriber<cav_msgs.PlanStatus>       planStatusSub;
+  protected Subscriber<cav_msgs.SystemAlert>         alertSub;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("negotiator_mgr");
@@ -79,53 +67,11 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     log = new SaxtonLogger(NegotiatorMgr.class.getSimpleName(), connectedNode.getLog());
     // Topics
     // Publishers
-    mobAckOutPub   = connectedNode.newPublisher("mobility_ack_outbound",     cav_msgs.MobilityAck._TYPE);
-    mobGreetOutPub = connectedNode.newPublisher("mobility_greeting_outbound",cav_msgs.MobilityGreeting._TYPE);
-    mobIntroOutPub = connectedNode.newPublisher("mobility_intro_outbound",   cav_msgs.MobilityIntro._TYPE);
-    mobPlanOutPub  = connectedNode.newPublisher("mobility_plan_outbound",    cav_msgs.MobilityPlan._TYPE);
-    newPlanPub     = connectedNode.newPublisher("new_plan", cav_msgs.NewPlan._TYPE);
-    timeDelay      = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
-
-    mobAckInSub = connectedNode.newSubscriber("mobility_ack_inbound", cav_msgs.MobilityAck._TYPE);
-    mobAckInSub.addMessageListener(new MessageListener<cav_msgs.MobilityAck>() {
-      @Override public void onNewMessage(cav_msgs.MobilityAck message) {
-        log.info("V2V", "Negotiator received new MobilityAck");
-      }//onNewMessage
-    });//addMessageListener
-
-    mobGreetInSub = connectedNode.newSubscriber("mobility_greeting_inbound", cav_msgs.MobilityGreeting._TYPE);
-    mobGreetInSub.addMessageListener(new MessageListener<cav_msgs.MobilityGreeting>() {
-      @Override public void onNewMessage(cav_msgs.MobilityGreeting message) {
-        log.info("V2V", "Negotiator received new MobilityGreeting");
-      }//onNewMessage
-    });//addMessageListener
-
-    mobIntroInSub = connectedNode.newSubscriber("mobility_intro_inbound", cav_msgs.MobilityIntro._TYPE);
-    mobIntroInSub.addMessageListener((msg) -> {
-        log.info("V2V", "Negotiator received new MobilityIntro");
-        // only generate NewPlan messages when the mobility message contains some plan detail
-        // TODO Once we have MobilityPlan message, we should remove this logic
-        // because NewPlan message should only related to MobilityPlan message
-        // This default of string length is 2 because "[]" means empty string
-        if(msg.getPlanType().getType() != PlanType.UNKNOWN && msg.getCapabilities().length() > 2) {
-            log.info("V2V", "Looks like it contains a real plan, so forwarding the plan to Guidance.");
-            NewPlan plan = newPlanPub.newMessage();
-            plan.getHeader().setFrameId("0");
-            plan.setPlanId(msg.getHeader().getPlanId());
-            plan.setType(msg.getPlanType());
-            String mobInputs = msg.getCapabilities();
-            // get rid of square bracket on both sides 
-            plan.setInputs(mobInputs.substring(1, mobInputs.length() - 1));
-            newPlanPub.publish(plan);
-        }
-    });
-    
-    mobPlanInSub = connectedNode.newSubscriber("mobility_plan_inbound", cav_msgs.MobilityPlan._TYPE);
-    mobPlanInSub.addMessageListener(new MessageListener<cav_msgs.MobilityPlan>() {
-      @Override public void onNewMessage(cav_msgs.MobilityPlan message) {
-        log.info("V2V", "Negotiator received new MobilityPlan");
-      }//onNewMessage
-    });//addMessageListener
+    mobReqOutPub  = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
+    mobPathOutPub = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath._TYPE);
+    mobResOutPub  = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_response", MobilityResponse._TYPE);
+    mobOperPub    = connectedNode.newPublisher("/saxton_cav/guidance/outgoing_mobility_operation", MobilityOperation._TYPE);
+    timeDelay     = connectedNode.getParameterTree().getInteger("~sleep_duration", 5000);
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
@@ -138,45 +84,73 @@ public class NegotiatorMgr extends SaxtonBaseNode{
 
       }//onNewMessage
     });//addMessageListener
-
-    planStatusSub = connectedNode.newSubscriber("plan_status", cav_msgs.SystemAlert._TYPE);
-    planStatusSub.addMessageListener((msg) -> {
-        MobilityAck ackMsg = mobAckOutPub.newMessage();
-        //TODO decide how to handle host vehicle static id
-        ackMsg.getHeader().setSenderId("00000000-0000-0000-0000-000000000000");
-        ackMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
-        ackMsg.getHeader().setPlanId(msg.getPlanId());
-        ackMsg.getHeader().setTimestamp(System.currentTimeMillis());
-        ackMsg.getAgreement().setType((msg.getAccepted() ? MobilityAckType.ACCEPT_WITH_EXECUTE : MobilityAckType.REJECT));
-        mobAckOutPub.publish(ackMsg);
-    });
-    
     
     connectedNode.executeCancellableLoop(new CancellableLoop() {
-      @Override protected void setup() {
-
-      }
       @Override protected void loop() throws InterruptedException {
         if (systemReady) {
             //This is a test for Mobility Introduction message
-            MobilityIntro introMsg = mobIntroOutPub.newMessage();
-            introMsg.getHeader().setSenderId("00000000-0000-0000-0000-000000000000");
-            introMsg.getHeader().setRecipientId("00000000-0000-0000-0000-000000000000");
-            introMsg.getHeader().setPlanId("00000000-0000-0000-0000-000000000000");
-            introMsg.getHeader().setTimestamp(System.currentTimeMillis());
-            introMsg.getMyEntityType().setType(BasicVehicleClass.DEFAULT_PASSENGER_VEHICLE);
-            introMsg.setMyRoadwayLink("[Test track]");
-            introMsg.setMyRoadwayLinkPosition((short) 2);
-            introMsg.setMyLaneId((byte) 1);
-            introMsg.setForwardSpeed((float) 0.2);
-            introMsg.getPlanType().setType(PlanType.UNKNOWN);
-            introMsg.setProposalParam((short) 100);
-            byte[] publicKey = new byte[64];
-            Arrays.fill(publicKey, (byte) 0);
-            introMsg.setMyPublicKey(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, publicKey));
-            introMsg.setExpiration(Long.MAX_VALUE);
-            introMsg.setCapabilities("[]");
-            mobIntroOutPub.publish(introMsg);
+            MobilityRequest requestMsg = mobReqOutPub.newMessage();
+            requestMsg.getHeader().setSenderId("DOT-45100");
+            requestMsg.getHeader().setRecipientId("");
+            requestMsg.getHeader().setSenderBsmId("10ABCDEF");
+            requestMsg.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
+            requestMsg.getHeader().setTimestamp(System.currentTimeMillis());
+            requestMsg.setStrategy("FakeStrategy");
+            requestMsg.getPlanType().setType((byte) 0);
+            requestMsg.setUrgency((short) 999);
+            requestMsg.getLocation().setEcefX(555555);
+            requestMsg.getLocation().setEcefY(666666);
+            requestMsg.getLocation().setEcefZ(777777);
+            requestMsg.getLocation().setTimestamp(0);
+            requestMsg.setStrategyParams("ARG1:5.0, ARG2:16.0");
+            mobReqOutPub.publish(requestMsg);
+
+            MobilityPath pathMsg = mobPathOutPub.newMessage();
+            pathMsg.getHeader().setSenderId("DOT-45100");
+            pathMsg.getHeader().setRecipientId("");
+            pathMsg.getHeader().setSenderBsmId("10ABCDEF");
+            pathMsg.getHeader().setPlanId("11111111-2222-3333-BBBB-111111111111");
+            pathMsg.getHeader().setTimestamp(System.currentTimeMillis());
+            pathMsg.getTrajectory().getLocation().setEcefX(5555);
+            pathMsg.getTrajectory().getLocation().setEcefY(6666);
+            pathMsg.getTrajectory().getLocation().setEcefZ(7777);
+            pathMsg.getTrajectory().getLocation().setTimestamp(0);
+            LocationOffsetECEF offset1 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset1.setOffsetX((short) 1);
+            offset1.setOffsetY((short) 2);
+            offset1.setOffsetZ((short) 3);
+            LocationOffsetECEF offset2 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset2.setOffsetX((short) 4);
+            offset2.setOffsetY((short) 5);
+            offset2.setOffsetZ((short) 6);
+            LocationOffsetECEF offset3 = connectedNode.getTopicMessageFactory().newFromType(LocationOffsetECEF._TYPE);
+            offset3.setOffsetX((short) 7);
+            offset3.setOffsetY((short) 8);
+            offset3.setOffsetZ((short) 9);
+            pathMsg.getTrajectory().getOffsets().add(offset1);
+            pathMsg.getTrajectory().getOffsets().add(offset2);
+            pathMsg.getTrajectory().getOffsets().add(offset3);
+            mobPathOutPub.publish(pathMsg);
+            
+            MobilityResponse response = mobResOutPub.newMessage();
+            response.getHeader().setSenderId("DOT-45100");
+            response.getHeader().setRecipientId("");
+            response.getHeader().setSenderBsmId("10ABCDEF");
+            response.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
+            response.getHeader().setTimestamp(System.currentTimeMillis());
+            response.setIsAccepted(true);
+            response.setUrgency((short) 500);
+            mobResOutPub.publish(response);
+            
+            MobilityOperation op = mobOperPub.newMessage();
+            op.getHeader().setSenderId("DOT-45100");
+            op.getHeader().setRecipientId("");
+            op.getHeader().setSenderBsmId("10ABCDEF");
+            op.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
+            op.getHeader().setTimestamp(System.currentTimeMillis());
+            op.setStrategy("FakeStrategy");
+            op.setStrategyParams("STATUS|CMDSPEED:10.01,DTD:50.02,SPEED:10.01");
+            mobOperPub.publish(op);
         }
         Thread.sleep(timeDelay);
       }

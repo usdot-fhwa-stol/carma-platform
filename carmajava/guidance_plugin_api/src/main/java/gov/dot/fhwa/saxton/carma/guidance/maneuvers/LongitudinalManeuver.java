@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Base class for all longitudinal maneuvers, providing the adaptive cruise control (ACC) functionality.
@@ -33,7 +34,8 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
     protected double workingAccel_; // m/s^2 that we will actually use
     protected static final double SPEED_EPSILON = 0.0001;
 
-    public LongitudinalManeuver() {
+    public LongitudinalManeuver(IPlugin planner) {
+        super(planner);
         this.accStrategy = AccStrategyManager.newAccStrategy();
     }
 
@@ -133,4 +135,10 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
             maxAccel_ = limit;
         }
     }
+
+    @Override
+    public String toString() {
+        return "LongitudinalManeuver [startSpeed_=" + startSpeed_ + ", endSpeed_=" + endSpeed_ + ", startDist_=" + startDist_ + ", endDist_=" + endDist_ + "]";
+    }
+    
 }

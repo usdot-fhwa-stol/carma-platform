@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,51 +27,24 @@ import org.ros.node.service.ServiceResponseListener;
  * Concrete ROS implementation of the logic outlined in {@link IService}
  *
  * Shares a {@link ServiceClient} between its coworkers (other RosService instances for the same
- * topic) and its parent {@link RosServiceChannel}
+ * topic) and its parent {@link RosServiceChannel}. Passes all service calls up to it's parent for execution in a single
+ * threaded manner to avoid data race conditions.
+ * 
  * @param <T> Type parameter for the request message type for the service
  * @param <S> Type parameter for the response message type for the service
  */
 public class RosService<T, S> implements IService<T, S> {
-    protected ServiceClient<T, S> serviceClient;
     protected RosServiceChannel<T, S> parent;
     protected boolean open = true;
 
-    RosService(ServiceClient<T, S> serviceClient, RosServiceChannel<T, S> parent) {
-        this.serviceClient = serviceClient;
+    RosService(RosServiceChannel<T, S> parent) {
         this.parent = parent;
     }
 
     @Override
-    public RosServiceResult<S> callAsync(T request) {
+    public void call(T request, final OnServiceResponseCallback<S> callback) {
         if (open) {
-            return RosServiceSynchronizer.callAsync(serviceClient, request);
-        } else {
-            RosServiceResult<S> out = new RosServiceResult<>();
-            out.complete(new RosServiceResponse<S>(
-                    new RemoteException(StatusCode.FAILURE, "Service resource has already been closed!")));
-            return out;
-        }
-    }
-
-    @Override
-    public void callSync(T request, final OnServiceResponseCallback<S> callback) {
-        if (open) {
-            try {
-                RosServiceSynchronizer.callSync(serviceClient, request, new ServiceResponseListener<S>() {
-                    @Override
-                    public void onSuccess(S msg) {
-                        callback.onSuccess(msg);
-                    }
-
-                    @Override
-                    public void onFailure(RemoteException e) {
-                        callback.onFailure(e);
-                    }
-                });
-            } catch (InterruptedException e) {
-                callback.onFailure(
-                        new RemoteException(StatusCode.FAILURE, "Interrupted while waiting for service response!"));
-            }
+            parent.submitCall(request, callback);
         } else {
             callback.onFailure(new RemoteException(StatusCode.FAILURE, "Service resource has already been closed!"));
         }
@@ -79,7 +52,7 @@ public class RosService<T, S> implements IService<T, S> {
 
     @Override
     public T newMessage() {
-        return serviceClient.newMessage();
+        return parent.newMessage();
     }
 
     @Override

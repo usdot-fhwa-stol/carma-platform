@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,7 +89,7 @@ document.getElementById('defaultOpen').click();
 /*
 * Adds a new radio button onto the container.
 */
-function createRadioElement(container, radioId, radioTitle, itemCount, groupName) {
+function createRadioElement(container, radioId, radioTitle, itemCount, groupName, isValid) {
 
     var newInput = document.createElement('input');
     newInput.type = 'radio';
@@ -106,6 +106,13 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
     newLabel.htmlFor = newInput.id.toString();
     newLabel.innerHTML = radioTitle;
 
+    //If this field is false then the UI should mark the button and make it unselectable.
+    if (isValid == false)
+    {
+         newInput.disabled = true;
+         newLabel.innerHTML += '&nbsp; <i class="fa fa-ban" style="color:#b32400";></i>';
+    }
+
     // Add the new elements to the container
     container.appendChild(newInput);
     container.appendChild(newLabel);
@@ -114,18 +121,24 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
 /*
 * Adds a new checkbox onto the container.
 */
-function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, groupName, isChecked, isRequired) {
+function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, groupName, isChecked, isRequired, funcName) {
+
+    var alreadyExists = document.getElementById(checkboxId);
+
+    if (alreadyExists != null)
+        return;
 
     var newInput = document.createElement('input');
     newInput.type = 'checkbox';
     newInput.name = groupName;
-    newInput.id = 'cb' + checkboxId.toString();
+    newInput.id = 'cb' + checkboxId;
     newInput.checked = isChecked;
-    newInput.onclick = function () { activatePlugin(newInput.id.toString()) };
+    newInput.onclick = function () { eval(funcName) (newInput.id) }; //e.g. function () { activatePlugin(newInput.id) };
+    newInput.setAttribute('title', checkboxTitle);
 
     var newLabel = document.createElement('label');
-    newLabel.id = 'lbl' + checkboxId.toString();
-    newLabel.htmlFor = newInput.id.toString();
+    newLabel.id = 'lbl' + checkboxId;
+    newLabel.htmlFor = newInput.id;
 
     if (isRequired == true)
         newLabel.innerHTML = '<span style="color:#FF0000">* </span>'
@@ -136,33 +149,57 @@ function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, 
     container.appendChild(newInput);
     container.appendChild(newLabel);
 
-    //var newDiv = document.createElement('div');
-    //newDiv.id = 'div' + checkboxId.toString();
-
-    // Add the new elements to the container
-    //container.appendChild(newDiv);
-    //newDiv.appendChild(newInput);
-    //newDiv.appendChild(newLabel);
-
 }
 
 /*
 * Get list of plugins selected by user and return count.
 */
-function getCheckboxesSelected() {
-    var cbResults = 'Selected Items: ';
+function getCheckboxesSelected(container) {
+
+    if (container == null || container == 'undefined')
+        return;
+
+    //var cbResults = 'Selected Items: ';
     var count = 0;
-    var allInputs = document.getElementsByTagName('input');
+    var pluginList = [];
+
+    var allInputs = container.getElementsByTagName('input');
+
     for (var i = 0, max = allInputs.length; i < max; i++) {
         if (allInputs[i].type === 'checkbox') {
             if (allInputs[i].checked == true) {
-                cbResults += allInputs[i].id + '; ';
+                //cbResults += allInputs[i].id + '; ';
+                pluginList.push (allInputs[i]);
                 count++;
             }
         }
     }
 
-    return count;
+    return pluginList;
+}
+
+/*
+    Find the checkbox by Id within the DIV
+*/
+function checkboxExistsById(container, id) {
+    if (container == null || container == 'undefined')
+        return;
+
+    //var cbResults = 'Selected Items: ';
+    var count = 0;
+    var pluginList = [];
+
+    var allInputs = container.getElementsByTagName('input');
+
+    for (var i = 0, max = allInputs.length; i < max; i++) {
+        if (allInputs[i].type === 'checkbox') {
+            if (allInputs[i].id == id)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /*
@@ -238,24 +275,6 @@ function clearTable(tableName) {
     }
 }
 
-/*
-    Set the values of the speedometer
-*/
-function setSpeedometer(speed) {
-    var maxMPH = 160;
-    var deg = (speed / maxMPH) * 180;
-    document.getElementById('percent').innerHTML = speed;
-    var element = document.getElementsByClassName('gauge-c')[0];
-
-    element.style.webkitTransform = 'rotate(' + deg + 'deg)';
-    element.style.mozTransform = 'rotate(' + deg + 'deg)';
-    element.style.msTransform = 'rotate(' + deg + 'deg)';
-    element.style.oTransform = 'rotate(' + deg + 'deg)';
-    element.style.transform = 'rotate(' + deg + 'deg)';
-
-}
-
-
 /* Open the modal UIInstructions when there's no acknowledgement needed. */
 function showModalNoAck(icon) {
 
@@ -269,6 +288,8 @@ function showModalNoAck(icon) {
     modalUIInstructionsContent.innerHTML = icon;
     modalUIInstructions.style.display = 'block';
     isModalPopupShowing = true;
+    
+    playSound('audioAlert4', false); 
 
     //hide after 3 seconds.
    setTimeout(function(){
@@ -293,13 +314,22 @@ function showModal(showWarning, modalMessage, restart) {
 
     var modal = document.getElementById('modalMessageBox');
     var span_modal = document.getElementsByClassName('close')[0];
-    var btnModal = document.getElementById('btnModal');
+    var btnModalOK = document.getElementById('btnModalOK');
+    var btnModalLogout = document.getElementById('btnModalLogout');
+
+    btnModalOK.onclick = function () {
+        closeModal('RESTART');
+        return;
+    }
+
+    btnModalLogout.onclick = function () {
+        closeModal('LOGOUT');
+        return;
+    }
 
     if (restart == true) {
-        btnModal.onclick = function () {
-            closeModal('RESTART');
-            return;
-        }
+        btnModalOK.style.display = ''; 
+        btnModalLogout.style.display = ''; 
 
         // When the user clicks on <span> (x), close the modal
         span_modal.onclick = function () {
@@ -308,10 +338,8 @@ function showModal(showWarning, modalMessage, restart) {
         }
     }
     else {
-        btnModal.onclick = function () {
-            closeModal('LOGOUT');
-            return;
-        }
+        btnModalOK.style.display = 'none';
+        btnModalLogout.style.display = '';
 
         // When the user clicks on <span> (x), close the modal
         span_modal.onclick = function () {
@@ -319,9 +347,6 @@ function showModal(showWarning, modalMessage, restart) {
             return;
         }
     }
-
-    //stop the timer when alert occurs;
-    clearInterval(routeTimer);
 
     //display the modal
     modal.style.display = 'block';
@@ -348,44 +373,38 @@ function showModal(showWarning, modalMessage, restart) {
     modalBody.innerHTML = '<p>' + modalMessage + '</p>';
 
     isModalPopupShowing = true; //flag that modal popup for an alert is currently being shown to the user.
-
-
 }
 
 /*
-    Count up Timer for when Guidance is started.
+    Count up Timer for when Guidance is engaged.
 */
 
 function countUpTimer() {
 
     // Get todays date and time
     var now = new Date().getTime();
-    // Get from session
-    var startDateTime = sessionStorage.getItem('startDateTime');
-    // Find the distance between now an the count down date
-    var distance = now - startDateTime;
+    // Find the elapsed time
+    var elapsedTime = now - startDateTime.value;
+
+    //engaged_timer = '00h 00m 00s';
+
+    if (elapsedTime < 0)
+    {
+        //console.log('elapsedTime is negative');
+        return;
+    }
 
     // Time calculations for days, hours, minutes and seconds
-    // var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    // var days = Math.floor(elapsedTime / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((elapsedTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
 
-    //Display the route name
-    var divRouteInfo = document.getElementById('divRouteInfo');
-
-    if (divRouteInfo != null) {
-        if (guidance_engaged == true) {
-            divRouteInfo.innerHTML = route_name + ': ' + pad(hours, 2) + 'h '
-                + pad(minutes, 2) + 'm ' + pad(seconds, 2) + 's ';
-        }
-        else {
-            divRouteInfo.innerHTML = route_name + ': 00h 00m 00s';
-        }
+    if (isGuidance.engaged == true) {
+        engaged_timer = pad(hours, 2) + 'h '
+            + pad(minutes, 2) + 'm ' + pad(seconds, 2) + 's ';
     }
-    else {
-        divRouteInfo.innerHTML = 'No Route Selected : 00h 00m 00s';
-    }
+    //console.log('engaged_timer: ' + engaged_timer);
 }
 
 /*
@@ -409,21 +428,23 @@ function closeModal(action) {
     document.getElementById('audioAlert1').pause();
     document.getElementById('audioAlert2').pause();
     document.getElementById('audioAlert3').pause();
+    document.getElementById('audioAlert4').pause();
 
     //alert('modal action:' + action);
 
     switch (action) {
-        case 'RESTART':
+       case 'RESTART':
             //Clear session variables except SystemReady (assumes interface manager still have driver's ready)
-            sessionStorage.removeItem('isGuidanceEngaged');
-            sessionStorage.removeItem('routeName');
+            isGuidance.remove();
+            selectedRoute.remove();
+            startDateTime.remove(); //resets the startDatetime
+            clearInterval(timer); //stops the execution
+            timer = null;
+            engaged_timer = '00h 00m 00s';
+             
             sessionStorage.removeItem('routePlanCoordinates');
             sessionStorage.removeItem('routeSpeedLimitDist');
-            sessionStorage.removeItem('startDateTime');
 
-            //Clear global variables
-            guidance_engaged = false;
-            route_name = 'No Route Selected';
             ready_counter = 0;
             ready_max_trial = 10;
             sound_counter = 0;
@@ -431,32 +452,36 @@ function closeModal(action) {
             host_instructions = '';
 
             //clear sections
-            setSpeedometer(0);
-            document.getElementById('divSpeedCmdValue').innerHTML = '0';
-            document.getElementById('divCapabilitiesMessage').innerHTML = '';
+            document.getElementById('divCapabilitiesMessage').innerHTML = 'Please select a route.';
             clearTable('tblSecondA');
+
+            CarmaJS.WidgetFramework.closeWidgets();
 
             // Get the element with id="defaultOpen" and click on it
             // This needs to be outside a funtion to work.
             document.getElementById('defaultOpen').click();
 
+            //Update CAV buttons state back to Gray
+            setCAVButtonState('DISABLED');
+
             //Evaluate next step
             evaluateNextStep();
-            break;
 
+            break;
         case 'LOGOUT':
-            sessionStorage.clear();
-            window.location.assign('logout.html');
+            shutdown();
             break;
-
         default:
             //no action
             break;
     }
-
-
 }
 
+function shutdown()
+{
+    sessionStorage.clear();
+    window.location.assign('scripts/killPlatform.php');
+}
 /*** Start: AUDIO ***/
 
 /*

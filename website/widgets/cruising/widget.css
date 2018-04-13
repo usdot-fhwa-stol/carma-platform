@@ -1,0 +1,137 @@
+
+/* Black Rounded Border Sign */
+#divSpeedCmd {
+    position: absolute;
+    top: 23%;
+    left: 20%;
+}
+
+#divSpeedLimit {
+    position: absolute;
+    top: 23%;
+    left: 75%;
+}
+
+.sign-black-border-outer {
+    width:200px;
+    height:225px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border:1px solid #000000;
+    background:rgba(227,162,11,0.0);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.sign-black-border-inner {
+    width:95%;
+    height:95%;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border: 5px solid #000000;
+    background-color: FFFFFF;
+    text-align:center;
+   position: relative;
+}
+
+.sign-black-border-title {
+    position: relative;
+    top: 28%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 45px;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.sign-black-border-value {
+    position: relative;
+    top: 23%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    font-size: 75px;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+/* Remaining Distance to Next Speed Limit */
+#divSLDistRemaining {
+ position: relative;
+ top: 300px;
+ color: black;
+ font-size: 25px;
+ font-weight: bold;
+ text-align: center;
+ justify-content: center;
+}
+
+/* Speedometer */
+.divSpeedometer {
+    width: 400px;
+    height: 200px;
+    position: absolute;
+    top: 35%;
+    left: 55%;
+    overflow: hidden;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+.gauge-a {
+    z-index: 1;
+    position: absolute;
+    background-color: rgba(136, 185, 195, .2);
+    width: 400px;
+    height: 200px;
+    top: 0%;
+    border-radius: 250px 250px 0px 0px;
+}
+
+.gauge-b {
+    z-index: 3;
+    position: absolute;
+    background-color: #1858cd;
+    width: 250px;
+    height: 125px;
+    top: 75px;
+    margin-left: 75px;
+    margin-right: auto;
+    border-radius: 250px 250px 0px 0px;
+}
+
+.gauge-c {
+    z-index: 2;
+    position: absolute;
+    background-color: cornflowerblue;
+    width: 400px;
+    height: 200px;
+    top: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 0px 0px 200px 200px;
+    transform-origin: center top;
+    transition: all 1.3s ease-in-out;
+}
+
+.gauge-data {
+    z-index: 4;
+    color: white;
+    font-size: 35px;
+    line-height: 25px;
+    position: absolute;
+    width: 400px;
+    height: 200px;
+    top: 90px;
+    margin-left: auto;
+    margin-right: auto;
+    transition: all 1s ease-out;
+}
+
+

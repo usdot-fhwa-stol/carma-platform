@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,5 +37,11 @@ public class FakeGuidanceCommands implements IGuidanceCommands {
 
     public double getAccelCmd() {
         return accelCmd_;
+    }
+
+    @Override
+    public void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
+        // TODO Auto-generated method stub
+        
     }
 }

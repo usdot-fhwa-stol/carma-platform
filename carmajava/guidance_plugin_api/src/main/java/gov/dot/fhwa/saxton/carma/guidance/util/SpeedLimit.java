@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,5 +59,10 @@ public class SpeedLimit {
   @Override
   public int hashCode() {
     return 13 * Double.hashCode(location)  + 17 * Double.hashCode(limit);
+  }
+  
+  @Override
+  public String toString() {
+    return "SpeedLimit: [location = " + location + ", limit = " + limit + "]";
   }
 }

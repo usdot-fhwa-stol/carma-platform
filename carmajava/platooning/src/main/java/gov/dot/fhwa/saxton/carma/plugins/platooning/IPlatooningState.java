@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-public interface IPlatooningState {
+public interface IPlatooningState extends Runnable {
     
     /**
      * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if possible.
@@ -30,8 +34,22 @@ public interface IPlatooningState {
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
     
     /**
-     * Callback method to handle negotiation requests which may result in state changing
-     * @param plan the detailed negotiation proposal from another vehicle
+     * Callback method to handle mobility requests which may result in
+     * state changing, trajectory re-plan and platooning info updates. 
+     * @param msg the detailed proposal from other vehicles
+     * @return simple yes/no response to the incoming proposal
      */
-    public void onReceiveNegotiationRequest(String plan);
+    public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg);
+    
+    /**
+     * Callback method to handle mobility operation.
+     * @param msg the necessary operational info from other vehicles
+     */
+    public void onMobilityOperationMessage(MobilityOperation msg);
+    
+    /**
+     * Callback method to handle mobility response.
+     * @param msg response for the current plan from other vehicles
+     */
+    public void onMobilityResponseMessage(MobilityResponse msg);
 }

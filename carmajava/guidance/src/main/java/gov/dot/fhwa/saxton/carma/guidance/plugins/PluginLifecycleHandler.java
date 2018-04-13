@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,6 +59,7 @@ public class PluginLifecycleHandler {
         }
 
         t = new Thread(new PluginWorker(tasks));
+        t.setName(plugin.getVersionInfo().componentName() + "DoInitializePluginWorkerThread");
         t.start();
     }
 
@@ -167,6 +168,7 @@ public class PluginLifecycleHandler {
             e.printStackTrace();
         }
         t = new Thread(new PluginWorker(tasks));
+        t.setName(plugin.getVersionInfo().componentName() + "DoSuspendPluginWorkerThread");
         t.start();
     }
 

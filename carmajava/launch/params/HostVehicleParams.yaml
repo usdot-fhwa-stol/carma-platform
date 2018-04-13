@@ -9,11 +9,11 @@ vehicle_color: 'Green'
 vehicle_height: 2.2
 
 # String: Host vehicle’s Unique ID that will be used in mobility messages.
-vehicle_id: 'saxton_cav_1'
+vehicle_id: 'DOT-45099'
 
 # Double: Host vehicle length
 # Units: Meters
-vehicle_length: 3.1
+vehicle_length: 4.88
 
 # String: Host vehicle make
 vehicle_make: 'Cadillac'

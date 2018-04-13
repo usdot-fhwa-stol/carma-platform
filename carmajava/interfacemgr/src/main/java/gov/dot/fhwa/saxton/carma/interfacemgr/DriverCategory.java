@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,8 @@
 package gov.dot.fhwa.saxton.carma.interfacemgr;
 
 public enum DriverCategory {
-    CONTROLLER,
+    LON_CONTROLLER,
+    LAT_CONTROLLER,
     COMMS,
     POSITION,
     SENSOR,
@@ -25,9 +26,11 @@ public enum DriverCategory {
     UNDEFINED;
 
     static DriverCategory getCat(String cat) {
-        if (cat.equalsIgnoreCase("controller")) {
-            return CONTROLLER;
-        }else if (cat.equalsIgnoreCase("comms")) {
+        if (cat.equalsIgnoreCase("lon_controller")) {
+            return LON_CONTROLLER;
+        } else if(cat.equalsIgnoreCase("lat_controller")) {
+            return LAT_CONTROLLER;
+        } else if (cat.equalsIgnoreCase("comms")) {
             return COMMS;
         }else if (cat.equalsIgnoreCase("position")) {
             return POSITION;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
+import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
@@ -94,14 +95,16 @@ public class MockRadarDriver extends AbstractMockDriver {
 
     List<cav_msgs.ExternalObject> objects = new LinkedList<>(); // The list of ExternalObjects (obstacles) detected by the radar
 
+    String frameId = "f_lrr_frame";
+    Time currentTime = connectedNode.getCurrentTime();
     for (String[] elements :  data){
       cav_msgs.ExternalObject externalObject = messageFactory.newFromType(cav_msgs.ExternalObject._TYPE);
 
       // Build Header
       std_msgs.Header hdr = externalObject.getHeader();
-      hdr.setFrameId("radar");
+      hdr.setFrameId(frameId);
       hdr.setSeq(Integer.parseInt(elements[SAMPLE_ID_IDX]));
-      hdr.setStamp(connectedNode.getCurrentTime());
+      hdr.setStamp(currentTime);
 
       externalObject.setHeader(hdr);
       externalObject.setId(Short.parseShort(elements[ID_IDX]));
@@ -194,15 +197,19 @@ public class MockRadarDriver extends AbstractMockDriver {
 
     // Make message
     cav_msgs.ExternalObjectList objectListMsg = flrrObjectPub.newMessage();
+    objectListMsg.getHeader().setFrameId(frameId);
+    objectListMsg.getHeader().setStamp(currentTime);
     objectListMsg.setObjects(objects);
 
     // Publish data
     // Only publish actual data on one topic the rest will be empty lists
     flrrObjectPub.publish(objectListMsg);
-    lfsrrObjectPub.publish(lfsrrObjectPub.newMessage());
-    rsrrObjectPub.publish(rsrrObjectPub.newMessage());
-    rfsrrObjectPub.publish(rfsrrObjectPub.newMessage());
-    visionObjectPub.publish(visionObjectPub.newMessage());
+    // TODO: Un-comment when other radars are used in sensor fusion
+    // The frame_id will also need to be updated on each
+    // lfsrrObjectPub.publish(lfsrrObjectPub.newMessage());
+    // rsrrObjectPub.publish(rsrrObjectPub.newMessage());
+    // rfsrrObjectPub.publish(rfsrrObjectPub.newMessage());
+    // visionObjectPub.publish(visionObjectPub.newMessage());
   }
 
   @Override protected short getExpectedColCount() {

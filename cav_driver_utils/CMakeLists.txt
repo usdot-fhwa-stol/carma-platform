@@ -9,7 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   can_msgs
   roscpp
   std_msgs
-
 )
 
 find_package(Boost REQUIRED system)
@@ -60,6 +59,9 @@ add_library(cav_socketcan_interface
         include/cav_driver_utils/can/socketcan_interface/socketcan_interface.h
         )
 
+
+add_dependencies(cav_socketcan_interface ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(cav_socketcan_interface
         ${Boost_LIBRARIES})
 
@@ -68,6 +70,7 @@ add_library(ros_socketcan_interface
         include/cav_driver_utils/can/ros_socketcan_bridge/ros_socketcan_bridge.h
         )
 
+add_dependencies(ros_socketcan_interface ${catkin_EXPORTED_TARGETS})
 target_link_libraries(ros_socketcan_interface
         ${Boost_LIBRARIES})
 

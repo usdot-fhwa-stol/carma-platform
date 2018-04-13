@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,9 +21,6 @@ public interface IPlatooningCommandInputs {
     // Get the latest generated speed command
     public double getLastSpeedCommand();
     
-    // Get the corresponding max accel limit
+    // Get the corresponding max acceleration limit
     public double getMaxAccelLimit();
-    
-    // Check if the vehicle status are time out
-    public boolean isTimeout();
 }

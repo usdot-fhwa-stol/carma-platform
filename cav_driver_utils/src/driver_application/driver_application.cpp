@@ -80,8 +80,9 @@ bool DriverStatusEquals(cav_msgs::DriverStatus a, cav_msgs::DriverStatus b)
             a.position == b.position &&
             a.can_bus == b.can_bus &&
             a.comms == b.comms &&
-            a.controller == b.controller
-           && a.sensor == b.sensor;
+            a.lon_controller == b.lon_controller &&
+            a.lat_controller == b.lat_controller &&
+            a.sensor == b.sensor;
 }
 
 void DriverApplication::setStatus(cav_msgs::DriverStatus status)

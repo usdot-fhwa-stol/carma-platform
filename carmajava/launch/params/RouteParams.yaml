@@ -8,3 +8,9 @@ default_database_path: '/opt/carma/routes/'
 # Integer: The number of left route alerts which must be handled before
 # the RouteManager node will notify the rest of the platform via a system alert
 required_left_route_count: 3
+
+# String: The id of the frame which represents an Earth Centered Earth Fixed (ECEF) frame
+earth_frame_id: 'earth'
+
+# String: The id of the frame which represents the bounding box center of the host vehicle
+host_vehicle_frame_id: 'host_vehicle'

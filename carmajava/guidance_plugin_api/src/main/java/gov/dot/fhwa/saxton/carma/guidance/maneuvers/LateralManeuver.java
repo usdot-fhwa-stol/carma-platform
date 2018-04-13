@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * Base class for all lateral maneuvers.
@@ -29,8 +30,11 @@ public abstract class LateralManeuver extends ManeuverBase {
     protected double axleAngle_ = 0.0; // rad: Angle in radians to turn the wheels. Positive is left, Negative is right
     protected double lateralAccel_ = 0.0; // Max acceleration which can be caused by a turn
     protected double yawRate_ = 0.0;  // rad/s: Max axel angle velocity
+    protected int endingRelativeLane_ = 0; // 0 is no change +1 is moving left -1 is moving right
 
-    public LateralManeuver() {
+    public LateralManeuver(IPlugin planner, int endingRelativeLane) {
+        super(planner);
+        endingRelativeLane_ = endingRelativeLane;
     }
 
     @Override
@@ -80,5 +84,9 @@ public abstract class LateralManeuver extends ManeuverBase {
     public void setDynamicLimits(double yawRate, double lateralAccel) {
         yawRate_ = yawRate;
         lateralAccel_ = lateralAccel;
+    }
+
+    public int getEndingRelativeLane() {
+        return this.endingRelativeLane_;
     }
 }

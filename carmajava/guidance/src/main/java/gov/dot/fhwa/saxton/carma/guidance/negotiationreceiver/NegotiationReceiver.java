@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,12 +24,14 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
+import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
 import java.util.*;
 
@@ -53,23 +55,31 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
     protected Queue<String> replanQueue = new LinkedList<>(); //a task list for replan jobs indicated by planIds
     protected double maxAccel_ = 2.5;
     protected String currentPlanId = null; //the next planId for replan
+    protected boolean includeAccelDist_ = true;
+    protected double slowSpeedFraction_ = 0.8;
+    protected double initialTimeGap_ = 1.0;
 
     public NegotiationReceiver(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
         version.setName("Negotiation Receiver Plugin");
         version.setMajorRevision(1);
-        version.setIntermediateRevision(0);
+        version.setIntermediateRevision(1);
         version.setMinorRevision(0);
     }
 
     @Override
     public void onInitialize() {
-        maxAccel_ = pluginServiceLocator.getParameterSource().getDouble("~vehicle_acceleration_limit", 2.5);
-        maneuverFactory_ = new SimpleManeuverFactory();
+        ParameterSource params = pluginServiceLocator.getParameterSource();
+        maxAccel_ = params.getDouble("~vehicle_acceleration_limit", 2.5);
+        includeAccelDist_ = params.getBoolean("~include_accel_dist", true);
+        slowSpeedFraction_ = params.getDouble("~slow_speed_fraction", 0.8);
+        initialTimeGap_ = params.getDouble("~initial_time_gap", 1.0);
+        maneuverFactory_ = new SimpleManeuverFactory(this);
         planner_ = pluginServiceLocator.getManeuverPlanner();
         planSub_ = pubSubService.getSubscriberForTopic("new_plan", NewPlan._TYPE);
         statusPub_ = pubSubService.getPublisherForTopic("plan_status", PlanStatus._TYPE);
-        log.info("Negotiation Receiver plugin initialized");
+        log.info("Negotiation Receiver plugin initialized with includeAccelDist = " + includeAccelDist_ +
+                    "slowSpeedFraction = " + slowSpeedFraction_ + ", maxAccel = " + maxAccel_);
     }
 
     @Override
@@ -151,37 +161,66 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
             log.info("Received new plan with planId: " + id);
             // TODO this maneuvers list may need to include lateral maneuvers in the future
             List<LongitudinalManeuver> maneuvers = new LinkedList<>();
-            String inputs = plan.getInputs();
+            String planInputs = plan.getInputs();
             if(plan.getType().getType() == PlanType.CHANGE_LANE_LEFT || plan.getType().getType() == PlanType.CHANGE_LANE_RIGHT) {
-                String[] splitInput = inputs.split(", ");
+                String[] splitInput = planInputs.split(", ");
                 double proposedLaneChangeStartDist = Double.parseDouble(splitInput[0].split(":")[1]);
-                double proposedLaneChangeStartSpeed = Double.parseDouble(splitInput[1].split(":")[1]);
-                // Assume the neighbor vehicle is travelling exactly beside us at the same speed when following mvrs begin.
-                // We first need to slow down fairly quickly while the neighbor vehicle wait (continue to cruise).
-                // Once the gap opens enough, then the neighbor vehicle changes lanes (assume already have
+                double proposedLaneChangeStartSpeed = Double.parseDouble(splitInput[1].split(":")[1]) - TARGET_SPEED_EPSILON;
+
+                // Assume the neighbor vehicle is travelling exactly beside us at the same speed and forward vehicle
+                // is also travelling at our speed when following mvrs begin.
+                // We first need to slow down fairly quickly while the neighbor vehicle waits (continues to cruise).
+                // Once the gap to fwd vehicle opens enough, then the neighbor vehicle changes lanes (assume already have
                 // the right gap in front of him, since we presumably did) while we speed up again to his original
                 // cruising speed to follow him. ACC will be a handy feature here!
                 //
-                // So that he can start his lane change immediately upon crossing the threshold of the new FutureLongitudinalManeuver space,
-                // because we have already slowed to open the gap for him. For now, assume the gap is 1 sec, so we need
-                // to double that (vehicle length is negligible if we have ACC working).  That means adding 1 sec over, say, 5
-                // sec to make it smooth, or operating at 80% of our current speed for 5 sec.  To get to that lower speed,
-                // we assume we can decel at 2 m/s^2. At 10 m/s the slowdown can be achieved in 1 sec. At 35 m/s we will take
-                // 3.5 sec to reach the lower speed.  Since this decel time will be widening the gap somewhat, they can probably
-                // live with constant speed for only 4 sec, we accel back to the beginning speed.
+                // So that he can start his lane change immediately upon crossing the threshold of the new
+                // FutureLongitudinalManeuver space, we need to complete our slowing & gap growth before that point.
+                // We need to double the time gap (vehicle length is negligible if we have ACC working).  We will reduce our speed
+                // to some fraction of its initial value to grow the gap.  To get to that lower speed,
+                // we assume we can decel at 80% of our maximum allowed acceleration.
+                //
+                // This planning may be occurring well uptrack of where the maneuver actually needs to occur, so we
+                // cannot assume that our current speed is relevant.  What we will assume is that we will be going
+                // roughly the same speed that the merging vehicle thinks it will be going at the beginning of its lane
+                // change.  This speed will be our "default" speed through that part of the route (what we would be
+                // doing if not for this slowdown interruption).
                 IManeuverInputs mInputs = planner_.getManeuverInputs();
-                double distAtCurSpeed = mInputs.getResponseLag() * proposedLaneChangeStartSpeed; //time to respond to slowdown cmd
-                double distAtLowerSpeed = 0.8 * proposedLaneChangeStartSpeed * 4.0;
-                double distToDecel = 0.9 * proposedLaneChangeStartSpeed * (0.1*proposedLaneChangeStartSpeed); //avg of start speed & the 80% speed for 1 sec for every 10 m/s
-                double totalDist = 2.0*distToDecel + distAtCurSpeed + distAtLowerSpeed; //2x to account for accel at end
-                log.debug("V2V", "calculated distAtCurSpeed = " + distAtCurSpeed + ", distAtLowerSpeed = "
-                            + distAtLowerSpeed + ", distToDecel = " + distToDecel + ", totalDist = " + totalDist);
+                double accel = 0.8*maxAccel_; //assumed conservatively, m/s^2
+                double initialSpeed = 1.1*proposedLaneChangeStartSpeed; //allows extra distance for some control error
+                double responseLag = mInputs.getResponseLag();
+                double slowSpeed = slowSpeedFraction_*proposedLaneChangeStartSpeed;
+                double initialLagDist = responseLag * initialSpeed; //time to respond to slowdown cmd
+
+                //this will still work in the unlikely case that initialSpeed < slowSpeed (shouldn't happen in TO 13 testing)
+                double distToDecel = initialLagDist + 0.5*(initialSpeed + slowSpeed) * Math.abs(initialSpeed - slowSpeed)/accel;
+                double finalLagDist = responseLag * slowSpeed;
+                double distToAccel = finalLagDist + 0.5*(slowSpeed + proposedLaneChangeStartSpeed) *
+                                                    0.5*(proposedLaneChangeStartSpeed - slowSpeed);
+
+                double timeToDecel = responseLag + Math.abs(initialSpeed - slowSpeed)/accel;
+                //calculate how big the forward gap is growing while we decelerate and how much more gap we will need
+                // in order to double the gap size
+                double initialGap = initialTimeGap_*proposedLaneChangeStartSpeed;
+                double gapGrowthDuringDecel = initialSpeed*timeToDecel - distToDecel; //assumes fwd vehicle going same initial speed
+                double distAtLowerSpeed = 0.0;
+                if (gapGrowthDuringDecel < initialGap) {
+                    distAtLowerSpeed = (initialGap - gapGrowthDuringDecel)/Math.abs(initialSpeed - slowSpeed)*slowSpeed;
+                }
+
+                double totalDist = distToDecel + distAtLowerSpeed + (includeAccelDist_ ? distToAccel : 0.0);
+                log.debug("V2V", "calculated slowSpeed = " + slowSpeed + ", distAtLowerSpeed = "
+                            + distAtLowerSpeed + ", distToDecel = " + distToDecel + ", distToAccel = " + distToAccel
+                            + ", includeAccelDist = " + includeAccelDist_ + ", totalDist = " + totalDist);
+                log.debug("V2V", "initialGap = " + initialGap + ", gapGrowthDuringDecel = " + gapGrowthDuringDecel
+                            + ", timeToDecel = " + timeToDecel);
 
                 double startLocation = proposedLaneChangeStartDist - totalDist;
                 log.debug("V2V", "calculated startLocation = " + startLocation);
-                if (startLocation < mInputs.getDistanceFromRouteStart()) {
+                double locAfterReplan = mInputs.getDistanceFromRouteStart() + 0.1*initialSpeed; //assume new trajectory can begin executing in 100 ms
+                if (startLocation < locAfterReplan) {
                     log.warn("V2V", "calculated - insufficient distance for us to slow down. They are "
-                                + (mInputs.getDistanceFromRouteStart() - startLocation) + " m late. Sending NACK.");
+                                + (locAfterReplan - startLocation) + " m late. Sending NACK.");
                     // reject this plan
                     // TODO now it rejects a plan forever, need allow back and forth in future
                     statusPub_.publish(this.buildPlanStatus(id, false));
@@ -189,16 +228,29 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                     return;
                 }
 
-                //build maneuvers for this vehicle; we don't want to account for lag distance in these instructions
+                //verify that we don't have a different roadway speed limit at our starting location than at the ending location
+                SpeedLimit startingSpeedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(startLocation);
+                if (startingSpeedLimit.getLimit() < proposedLaneChangeStartSpeed) {
+                    log.warn("V2V", "Detected speed limit change within the initially planned tactic to accommodate a lane change.");
+                }
+
+                //build maneuvers for this vehicle
                 double endSlowdown = startLocation + distToDecel;
-                double slowSpeed = 0.8*proposedLaneChangeStartSpeed;
-                double endConstant = endSlowdown + 4.0*slowSpeed;
-                double endSpeedup = endSlowdown + distToDecel;
+                double endConstant = endSlowdown + distAtLowerSpeed;
+                double endSpeedup = endConstant + distToAccel;
+                log.debug("MVR", "onPlanReceived: endSlowdown = " + endSlowdown
+                            + ", endConstant = " + endConstant + ", endSpeedup = " + endSpeedup);
+
                 //create a list of maneuvers that we should execute
                 List<String> maneuversString = new ArrayList<>();
                 maneuversString.add(startLocation + ":" + endSlowdown + ":" + proposedLaneChangeStartSpeed + ":" + slowSpeed);
-                maneuversString.add(endSlowdown + ":" + endConstant + ":" + slowSpeed + ":" + slowSpeed);
+                if (distAtLowerSpeed > 0.1) {
+                    maneuversString.add(endSlowdown + ":" + endConstant + ":" + slowSpeed + ":" + slowSpeed);
+                }
                 maneuversString.add(endConstant + ":" + endSpeedup + ":" + slowSpeed + ":" + proposedLaneChangeStartSpeed);
+
+                //attempt to plan each maneuver
+                int index = 0;
                 for(String m : maneuversString) {
                     String[] params = m.split(":");
                     //the params format is <startDistance>:<endDistance>:<startSpeed>:<endSpeed>
@@ -208,15 +260,19 @@ public class NegotiationReceiver extends AbstractPlugin implements IStrategicPlu
                     maneuver.setSpeeds(paramsInDouble[2], paramsInDouble[3]);
                     maneuver.setMaxAccel(maxAccel_);
                     planner_.planManeuver(maneuver, paramsInDouble[0], paramsInDouble[1]);
+
                     // check the adjusted target speed to see if it can plan without huge adjustment
                     // if not it will show a negative status on PlanStatus message and ignore this planId in future
                     if(Math.abs(maneuver.getTargetSpeed() - paramsInDouble[3]) > TARGET_SPEED_EPSILON) {
-                        log.warn("Cannot plan the proposed maneuvers within accel_max limits");
-                        statusPub_.publish(this.buildPlanStatus(id, false));
-                        planMap.put(id, new LinkedList<>());
-                        return;
+                        log.warn("V2V", "Cannot plan the proposed maneuvers within accel_max limits. Failed maneuver #" + index
+                                    + ". maneuver target speed = " + maneuver.getTargetSpeed());
+                        //            + ". Sending Ack failure message.");
+                        //statusPub_.publish(this.buildPlanStatus(id, false));
+                        //planMap.put(id, new LinkedList<>());
+                        //return;
                     }
                     maneuvers.add(maneuver);
+                    ++index;
                 }
             }
             log.info("V2V", "Maneuvers defined - adding them to queue for replanning.");

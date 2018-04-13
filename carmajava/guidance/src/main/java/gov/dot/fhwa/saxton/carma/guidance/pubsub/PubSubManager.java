@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.concurrent.ConcurrentHashMap;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceExceptionHandler;
 
 /**
@@ -37,8 +38,9 @@ public class PubSubManager implements IPubSubService {
     protected ISubscriptionChannelFactory subFactory;
     protected IPublicationChannelFactory pubFactory;
     protected IServiceChannelFactory srvFactory;
-    protected Map<String, IPublicationChannel> pubChannelManagers;
-    protected Map<String, ISubscriptionChannel> subChannelManagers;
+    protected Map<String, IPublicationChannel<?>> pubChannelManagers;
+    protected Map<String, ISubscriptionChannel<?>> subChannelManagers;
+    protected Map<String, IServiceChannel<?, ?>> serviceChannelManagers;
 
     public PubSubManager(ISubscriptionChannelFactory subFactory, IPublicationChannelFactory pubFactory,
             IServiceChannelFactory srvFactory) {
@@ -47,8 +49,9 @@ public class PubSubManager implements IPubSubService {
         this.pubFactory = pubFactory;
         this.srvFactory = srvFactory;
 
-        pubChannelManagers = new HashMap<>();
-        subChannelManagers = new HashMap<>();
+        pubChannelManagers = Collections.synchronizedMap(new HashMap<String, IPublicationChannel<?>>());
+        subChannelManagers = Collections.synchronizedMap(new HashMap<String, ISubscriptionChannel<?>>());
+        serviceChannelManagers = Collections.synchronizedMap(new HashMap<String, IServiceChannel<?, ?>>());
     }
 
     /**
@@ -63,8 +66,15 @@ public class PubSubManager implements IPubSubService {
     @Override
     @SuppressWarnings("unchecked")
     public <T, S> IService<T, S> getServiceForTopic(String topicUrl, String type) throws TopicNotFoundException {
-            IServiceChannel<T, S> mgr = srvFactory.newServiceChannel(topicUrl, type);
-            return mgr.getService();
+        synchronized (serviceChannelManagers) {
+            if (serviceChannelManagers.containsKey(topicUrl)) {
+                return (IService<T, S>) serviceChannelManagers.get(topicUrl).getService();
+            } else {
+                IServiceChannel<T, S> mgr = srvFactory.newServiceChannel(topicUrl, type);
+                serviceChannelManagers.put(topicUrl, mgr);
+                return mgr.getService();
+            }
+        }
     }
 
     /**
@@ -78,12 +88,14 @@ public class PubSubManager implements IPubSubService {
     @Override
     @SuppressWarnings("unchecked")
     public <T> ISubscriber<T> getSubscriberForTopic(String topicUrl, String type) {
-        if (subChannelManagers.containsKey(topicUrl) && subChannelManagers.get(topicUrl).isOpen()) {
-            return subChannelManagers.get(topicUrl).getSubscriber();
-        } else {
-            ISubscriptionChannel<T> mgr = subFactory.newSubscriptionChannel(topicUrl, type);
-            subChannelManagers.put(topicUrl, mgr);
-            return mgr.getSubscriber();
+        synchronized (subChannelManagers) {
+            if (subChannelManagers.containsKey(topicUrl) && subChannelManagers.get(topicUrl).isOpen()) {
+                return (ISubscriber<T>) subChannelManagers.get(topicUrl).getSubscriber();
+            } else {
+                ISubscriptionChannel<T> mgr = subFactory.newSubscriptionChannel(topicUrl, type);
+                subChannelManagers.put(topicUrl, mgr);
+                return mgr.getSubscriber();
+            }
         }
     }
 
@@ -98,12 +110,14 @@ public class PubSubManager implements IPubSubService {
     @Override
     @SuppressWarnings("unchecked")
     public <T> IPublisher<T> getPublisherForTopic(String topicUrl, String type) {
-        if (pubChannelManagers.containsKey(topicUrl) && pubChannelManagers.get(topicUrl).isOpen()) {
-            return pubChannelManagers.get(topicUrl).getPublisher();
-        } else {
-            IPublicationChannel<T> mgr = pubFactory.newPublicationChannel(topicUrl, type);
-            pubChannelManagers.put(topicUrl, mgr);
-            return mgr.getPublisher();
+        synchronized (pubChannelManagers) {
+            if (pubChannelManagers.containsKey(topicUrl) && pubChannelManagers.get(topicUrl).isOpen()) {
+                return (IPublisher<T>) pubChannelManagers.get(topicUrl).getPublisher();
+            } else {
+                IPublicationChannel<T> mgr = pubFactory.newPublicationChannel(topicUrl, type);
+                pubChannelManagers.put(topicUrl, mgr);
+                return mgr.getPublisher();
+            }
         }
     }
 }

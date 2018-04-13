@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,10 +36,10 @@ public class Vector3D extends Vector {
   }
   /**
    * Constructor defines a vector from the tail point to the head point
-   * @param head The head of the vector (the arrow when drawing)
    * @param tail The tail of the vector. Must be the same dimension as the head
+   * @param head The head of the vector (the arrow when drawing)
    */
-  public Vector3D(Point3D head, Point3D tail) {
+  public Vector3D(Point3D tail, Point3D head) {
     super(tail, head);
   }
 

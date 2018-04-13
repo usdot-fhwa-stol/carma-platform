@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,10 +26,14 @@ public class DSRCMessageFactory {
         switch(messageType) {
         case "BSM":
             return new BSMMessage(node, log, factory);
-        case "MobilityIntro":
-            return new MobilityIntroductionMessage(node, log, factory);
-        case "MobilityAck":
-            return new MobilityAckMessage(node, log, factory);
+        case "MobilityRequest":
+            return new MobilityRequestMessage(log, factory);
+        case "MobilityPath":
+            return new MobilityPathMessage(log, factory);
+        case "MobilityResponse":
+            return new MobilityResponseMessage(log, factory);
+        case "MobilityOperation":
+            return new MobilityOperationMessage(factory, log);
         default:
             return null;
         }

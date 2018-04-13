@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,21 +17,26 @@
 package gov.dot.fhwa.saxton.carma.route;
 
 import cav_msgs.RouteSegment;
-import cav_msgs.SystemAlert;
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
+import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import org.apache.commons.logging.Log;
+
+import org.ros.concurrent.CancellableLoop;
+import org.ros.exception.RemoteException;
 import org.ros.message.MessageListener;
 import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
+import org.ros.rosjava_geometry.Transform;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceServer;
+import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.service.ServiceResponseListener;
 import sensor_msgs.NavSatFix;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,8 +65,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   // Publishers
   Publisher<cav_msgs.Route> routePub;
   Publisher<cav_msgs.RouteState> routeStatePub;
+  Publisher<cav_msgs.RouteEvent> routeEventPub;
   // Subscribers
-  Subscriber<sensor_msgs.NavSatFix> gpsSub;
   Subscriber<cav_msgs.SystemAlert> alertSub;
   // Services
   // Provided
@@ -73,6 +78,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   protected ServiceServer<AbortActiveRouteRequest, AbortActiveRouteResponse>
     abortActiveRouteService;
   protected RouteWorker routeWorker;
+  // Used
+  protected ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("route_manager");
@@ -90,6 +97,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routePub = connectedNode.newPublisher("route", cav_msgs.Route._TYPE);
     routePub.setLatchMode(true); // Routes will not be changed regularly so latch
     routeStatePub = connectedNode.newPublisher("route_state", cav_msgs.RouteState._TYPE);
+    routeEventPub = connectedNode.newPublisher("route_event", cav_msgs.RouteEvent._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
     String packagePath = params.getString("package_path");
@@ -101,22 +109,29 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
       finalDatabasePath = packagePath + "/" + databasePath;
     }
 
+    String earthFrame = params.getString("~earth_frame_id", "earth");
+    String hostVehicleFrame = params.getString("~host_vehicle_frame_id", "host_vehicle");
     int requiredLeftRouteCount = params.getInteger("~required_left_route_count", 3);
 
-    routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath, requiredLeftRouteCount);
+    // Echo params
+    log.info("LoadedParam: package_path = " + packagePath);
+    log.info("LoadedParam: default_database_path = " + databasePath);
+    log.info("LoadedParam: earth_frame_id = " + earthFrame);
+    log.info("LoadedParam: host_vehicle_frame_id = " + hostVehicleFrame);
+    log.info("LoadedParam: required_left_route_count = " + requiredLeftRouteCount);
+
+    routeWorker = new RouteWorker(this, connectedNode.getLog(), finalDatabasePath, requiredLeftRouteCount, earthFrame, hostVehicleFrame);
+
+    // Used Services
+    // Ensure transforms can be obtained
+    getTransformClient = this.waitForService("get_transform", cav_srvs.GetTransform._TYPE, connectedNode, 5000);
+    if (getTransformClient == null) {
+      log.fatal("TRANSFORM", "Node could not find service get_transform");
+      publishSystemAlert(AlertSeverity.FATAL, "Node could not find service get_transform: get_transform service is not available. Route package will not be able to function", null );
+    }
 
     // Subscribers
     // Subscriber<cav_msgs.Tim> timSub = connectedNode.newSubscriber("tim", cav_msgs.Map._TYPE); //TODO: Add once we have tim messages
-    gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
-    gpsSub.addMessageListener(new MessageListener<NavSatFix>() {
-      @Override public void onNewMessage(NavSatFix navSatFix) {
-        try {
-          routeWorker.handleNavSatFixMsg(navSatFix);
-        } catch (Exception e) {
-          handleException(e);
-        }
-      }
-    });
 
     alertSub = connectedNode.newSubscriber("system_alert", cav_msgs.SystemAlert._TYPE);
     alertSub.addMessageListener(new MessageListener<cav_msgs.SystemAlert>() {
@@ -140,8 +155,13 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
               List<cav_msgs.Route> routeMsgs = new LinkedList<>();
 
               for (Route route : routeWorker.getAvailableRoutes()) {
-                routeMsgs.add(route.toMessage(connectedNode.getTopicMessageFactory()));
+                cav_msgs.Route routeMsg = route.toMessage(connectedNode.getTopicMessageFactory());
+                routeMsg.setSegments(new LinkedList<RouteSegment>()); // Clearing segments to match service spec
+                routeMsgs.add(routeMsg);
               }
+              routeMsgs.sort(
+                (cav_msgs.Route r1, cav_msgs.Route r2) -> r1.getRouteName().compareToIgnoreCase(r2.getRouteName())
+              );
               response.setAvailableRoutes(routeMsgs);
             } catch (Exception e) {
               handleException(e);
@@ -187,6 +207,19 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
           }
         });
 
+    // Loop
+    // This CancellableLoop will be canceled automatically when the node shuts down.
+    connectedNode.executeCancellableLoop(new CancellableLoop(){
+    
+      @Override
+      protected void setup() {}
+
+      @Override
+      protected void loop() throws InterruptedException {
+        routeWorker.loop();
+        Thread.sleep(100);
+      }
+    });;
   }//onStart
 
   @Override protected void handleException(Throwable e) {
@@ -203,6 +236,61 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     routeStatePub.publish(routeState);
   }
 
+  @Override public void publishRouteEvent(cav_msgs.RouteEvent routeEvent) {
+      routeEventPub.publish(routeEvent);
+  }
+
+  /**
+   * Helper class to hold the result of a service call
+   */
+  protected class ResultHolder <T> {
+    private T result;
+
+    void setResult(T res) {
+      result = res;
+    }
+
+    T getResult() {
+      return result;
+    }
+  }
+
+  @Override public Transform getTransform(String parentFrame, String childFrame, Time stamp) {
+    final GetTransformRequest req = getTransformClient.newMessage();
+    req.setParentFrame(parentFrame);
+    req.setChildFrame(childFrame);
+    req.setStamp(stamp);
+    final ResultHolder<Transform> rh = new ResultHolder<>();
+    try {
+      RosServiceSynchronizer.callSync(getTransformClient, req,
+        new ServiceResponseListener<GetTransformResponse>() {
+          @Override
+          public void onSuccess(GetTransformResponse response) {
+            if (response.getErrorStatus() == GetTransformResponse.NO_ERROR
+              || response.getErrorStatus() == GetTransformResponse.COULD_NOT_EXTRAPOLATE) {
+
+              rh.setResult(Transform.fromTransformMessage(response.getTransform().getTransform()));
+
+            } else {
+              log.warn("TRANSFORM", "Attempt to get transform failed with error code: " + response.getErrorStatus());
+              rh.setResult(null);
+              return;
+            }
+          }
+
+          @Override
+          public void onFailure(RemoteException e) {
+            log.warn("TRANSFORM", "getTransform call failed for " + getTransformClient.getName());
+            rh.setResult(null);
+          }
+        });
+    } catch (InterruptedException e) {
+      log.warn("TRANSFORM", "getTransform call failed for " + getTransformClient.getName());
+      rh.setResult(null);
+    }
+    return rh.getResult();
+  }
+  
   @Override public Time getTime() {
     if (connectedNode == null) {
       return new Time();

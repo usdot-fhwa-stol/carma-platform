@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,11 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 import org.junit.After;
 import org.junit.Before;
@@ -30,8 +32,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
+import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -39,7 +47,7 @@ import static org.mockito.Mockito.*;
 public class PluginManagerTest {
 
 
-    public class TestPlugin1 implements IPlugin {
+    public class TestPlugin1 implements IPlugin, IStrategicPlugin {
 
         @Override public void onInitialize() {
 
@@ -73,12 +81,8 @@ public class PluginManagerTest {
             return false;
         }
 
-        @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-
-        }
-
-        @Override public void onReceiveNegotiationRequest() {
-
+        @Override public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+            return null;
         }
 
         @Override
@@ -92,7 +96,7 @@ public class PluginManagerTest {
 		}
     }
 
-    public class TestPlugin2 implements IPlugin {
+    public class TestPlugin2 implements IPlugin, IStrategicPlugin {
 
         @Override public void onInitialize() {
 
@@ -126,12 +130,8 @@ public class PluginManagerTest {
             return false;
         }
 
-        @Override public void planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-
-        }
-
-        @Override public void onReceiveNegotiationRequest() {
-
+        @Override public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+            return null;
         }
 
         @Override
@@ -152,8 +152,10 @@ public class PluginManagerTest {
         LoggerManager.setLoggerFactory(mockFact);
         psl = mock(PluginServiceLocator.class);
         ConnectedNode node = mock(ConnectedNode.class);
-        pm = new PluginManager(new AtomicReference<GuidanceState>(GuidanceState.DRIVERS_READY), mock(IPubSubService.class), 
-        mock(IGuidanceCommands.class), mock(IManeuverInputs.class), node);
+        pm = new PluginManager(mock(GuidanceStateMachine.class), mock(IPubSubService.class), 
+        mock(IGuidanceCommands.class), mock(IManeuverInputs.class), mock(GuidanceRouteService.class), node,
+        mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class),
+        mock(ILightBarManager.class));
         pluginClasses = new ArrayList<>();
         plugins = new ArrayList<>();
     }

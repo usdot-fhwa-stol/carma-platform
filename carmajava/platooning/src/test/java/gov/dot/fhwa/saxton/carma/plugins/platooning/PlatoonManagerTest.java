@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package gov.dot.fhwa.saxton.carma.plugins.platooning;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+
+public class PlatoonManagerTest {
+
+    private PlatoonManager       manager;
+    private PlatooningPlugin     mockPlugin;
+    private ILogger              mockLogger;
+    private PluginServiceLocator mockPsl;
+    
+    @Before
+    public void setup() {
+        mockLogger = mock(ILogger.class);
+        mockPlugin = mock(PlatooningPlugin.class);
+        mockPsl    = mock(PluginServiceLocator.class);
+        when(mockPlugin.getOperationUpdatesIntervalLength()).thenReturn(100);
+        when(mockPlugin.getOperationUpdatesTimeoutFactor()).thenReturn(2.5);
+        manager    = new PlatoonManager(mockPlugin, mockLogger, mockPsl);
+    }
+    
+    @Test
+    public void updateMemberInfoInLeaderState() {
+        assertNull(manager.getLeader());
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
+        assertNull(manager.getLeader());
+        assertEquals(1, manager.getPlatooningSize());
+        assertEquals(50.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:60.00,SPEED:1.00");
+        assertEquals(1, manager.getPlatooningSize());
+        assertEquals(60.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
+        manager.memberUpdates("B", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:70.00,SPEED:1.00");
+        assertEquals(2, manager.getPlatooningSize());
+        assertEquals(60.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
+        manager.memberUpdates("C", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:10.00,SPEED:1.00");
+        assertEquals(3, manager.getPlatooningSize());
+        assertEquals(10.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
+    }
+    
+    @Test
+    public void removeExpiredMember() {
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
+        assertEquals(1, manager.getPlatooningSize());
+        manager.removeExpiredMember();
+        assertEquals(1, manager.getPlatooningSize());
+        try {
+            Thread.sleep(2500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            e.printStackTrace();
+        }
+        manager.removeExpiredMember();
+        assertEquals(0, manager.getPlatooningSize());
+    }
+    
+    
+}

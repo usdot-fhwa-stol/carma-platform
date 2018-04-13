@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 LEIDOS.
+# Copyright (C) 2018 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -62,3 +62,29 @@ catkin_package()
 # allprojects closure the root build.gradle
 install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_MAVEN_DESTINATION}/gov/dot/fhwa/saxton/${PROJECT_NAME}/
         DESTINATION ${CATKIN_GLOBAL_MAVEN_DESTINATION}/gov/dot/fhwa/saxton/${PROJECT_NAME})
+
+# Instal Binaries from Gradle Build folder
+install(DIRECTORY
+        guidance/build
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/guidance)
+install(DIRECTORY
+        interfacemgr/build
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/interfacemgr)
+install(DIRECTORY
+        lateral_control_driver/build
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/lateral_control_driver)
+install(DIRECTORY
+        message/build
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/message)
+install(DIRECTORY
+        mock_drivers/build
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/mock_drivers)
+install(DIRECTORY
+        negotiator/build
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/negotiator)
+install(DIRECTORY
+        roadway/build
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/roadway)
+install(DIRECTORY
+        route/build
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/route)

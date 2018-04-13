@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 LEIDOS.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.maneuvers;
 
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
 /**
  * A lane keeping maneuver.
@@ -25,6 +26,10 @@ import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 public class LaneKeeping extends LateralManeuver {
 
     protected double DEFAULT_AXEL_ANGLE = 0.0;
+
+    public LaneKeeping(IPlugin planner) {
+        super(planner, 0);
+    }
 
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist)
