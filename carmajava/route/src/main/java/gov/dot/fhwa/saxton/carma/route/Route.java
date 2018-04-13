@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
@@ -38,12 +39,20 @@ public class Route {
   protected List<RouteSegment> segments;
   protected List<RouteWaypoint> waypoints;
   protected boolean valid = false;
+  protected SaxtonLogger log;
+
 
   /**
    * Default constructor does nothing.
    * Needed to make the route a bean which can be easily parsed from yaml file
    */
   public Route() {}
+
+
+  public void setLogger(SaxtonLogger logger) {
+      log = logger;
+  }
+
 
   /**
    * Constructor which initializes a route from a provided list of waypoints
@@ -391,21 +400,23 @@ public class Route {
   public RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
     int count = 0;
     RouteSegment bestSegment = segments.get(0);
-    for (RouteSegment seg: segments) {      
+    for (RouteSegment seg : segments) {
       RouteWaypoint wp = seg.getDowntrackWaypoint();
       double crossTrack = seg.crossTrackDistance(point);
       double downTrack = seg.downTrackDistance(point);
+      log.debug("routeSegmentOfPoint: candidate seg: wp = " + wp.getWaypointId() + ", crossTrack = " + crossTrack + ", downTrack = " + downTrack);
 
       if (-0.0 < downTrack && downTrack <= seg.length()) { 
         if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
+          log.debug("routeSegmentOfPoint: found it!");
           return seg;
         
-        bestSegment = seg;
       } else if (count == segments.size() - 1 && downTrack > seg.length()) {
         bestSegment = seg;
       }
       count++;
     }
+    log.debug("routeSegmentOfPoint: no clear answer - returning bestSegment = " + bestSegment.toString());
     return bestSegment;
   }
 
