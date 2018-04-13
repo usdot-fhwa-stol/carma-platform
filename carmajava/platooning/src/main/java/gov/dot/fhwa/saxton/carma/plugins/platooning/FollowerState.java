@@ -145,7 +145,7 @@ public class FollowerState implements IPlatooningState {
                     if(noLeaderUpdatesCounter >= LEADER_TIMEOUT_COUNTER_LIMIT) {
                         log.debug("noLeaderUpdatesCounter = " + noLeaderUpdatesCounter + " and change to leader state");
                         plugin.getPlatoonManager().changeFromFollowerToLeader();
-                        plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                        plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                         // Because we need to abort current complex maneuver, we call arbitrator to re-plan
                         pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
                     }

@@ -32,13 +32,11 @@ public interface IMobilityRouter {
 
     /**
      * Register a callback to be executed when a mobility ack message is received and is either directed
-     * at the host vehicle or is a broadcast message. This callback will be executed if the strategy argument
-     * matches the end of the message's strategy field.
+     * at the host vehicle or is a broadcast message.
      * 
-     * @param strategy The strategy value for which this callback is relevant
      * @param handler The {@link MobilityResponseHandler} to invoke upon receiving a relevant event
      */
-    public void registerMobilityResponseHandler(String strategy, MobilityResponseHandler handler);
+    public void registerMobilityResponseHandler(MobilityResponseHandler handler);
 
     /**
      * Register a callback to be executed when a mobility operation message is received and is either directed

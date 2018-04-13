@@ -82,7 +82,7 @@ public class TrajectoryConverterTest {
   public void testConvertToPath() {
     final int MAX_POINTS_IN_PATH = 1000;
     final double TIME_STEP = 0.1;
-    TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
+    TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP, messageFactory);
     tc.setRoute(route);
     List<ECEFPointStamped> ecefPath = new LinkedList<>();
 
@@ -170,7 +170,7 @@ public class TrajectoryConverterTest {
   public void testAddLongitudinalManeuverToPath() {
     final int MAX_POINTS_IN_PATH = 20;
     final double TIME_STEP = 1;
-    TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP);
+    TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP, messageFactory);
     tc.setRoute(route);
     List<RoutePointStamped> path = new LinkedList<>();
     List<ECEFPointStamped> pathECEF = new LinkedList<>();

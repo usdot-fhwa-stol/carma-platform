@@ -65,15 +65,15 @@ required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin
   - gov.dot.fhwa.saxton.carma.guidance.routefollowing.RouteFollowingPlugin
   - gov.dot.fhwa.saxton.carma.guidance.lanechange.LaneChangePlugin
-  - gov.dot.fhwa.saxton.carma.guidance.yield.SimpleYieldPlugin
+  - gov.dot.fhwa.saxton.carma.guidance.yield.YieldPlugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins:
-  - Simple Yield Plugin
+  - CACC Platooning Plugin
+  - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
   - Cruising Plugin
-  - CACC Platooning Plugin
 
 # Double: Time that it takes the host vehicle to respond to a new speed command
 # Units: seconds
@@ -86,7 +86,7 @@ vehicle_acceleration_limit: 2.5
 # Double: A multiplier applied to the actual speed limit which will result in the cruising plugin's target speed
 # Max: 1.0
 # Min: 0.0
-cruising_target_multiplier: 0.8
+cruising_target_multiplier: 1.0
 
 # Double: Time headway to control to with ACC
 # Units: seconds
@@ -146,6 +146,10 @@ lane_change_safety_factor: 2.0
 # Units: seconds
 lane_change_notification_time: 4.0
 
+# Double: The amount of time the lane change plugin will wait for an external NACK before considering it safe to change lanes
+# Units: miliseconds
+lane_change_nack_timeout: 1000
+
 ##### DEPRECATED
 ##### The following are used by the NegotiationReceiverPlugin
 
@@ -168,7 +172,7 @@ acc_vehicle_front_frame_id: 'vehicle_front'
 
 # String: The component name of the Plugin which will handle mobility path and request conflicts
 # Note: This string must match the Versionable.getVersionInfo().componentName() value of the plugin
-default_mobility_conflict_handler: 'Simple Yield Plugin'
+default_mobility_conflict_handler: 'Yield Plugin'
 
 # Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
 # Units: meters
@@ -212,7 +216,7 @@ light_bar_priorities:
   - Light Bar State Machine
   - Lane Change Plugin
   - CACC Platooning Plugin
-  - Simple Yield Plugin
+  - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
   - Cruising Plugin

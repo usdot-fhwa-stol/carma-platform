@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.ros.message.MessageFactory;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -198,11 +197,10 @@ public interface ITrajectoryConverter {
    * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
    * 
    * @param path The list of ecef points and times which defines the path
-   * @param messageFactory The message factory which will be used to build this message
    * 
    * @return A cav_msgs.Trajectory message. This message will be empty if the path was empty
    */
-  cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory);
+  cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path);
 
   /**
    * Function which converts and individual Simple Longitudinal Maneuver to a path based on starting configuration

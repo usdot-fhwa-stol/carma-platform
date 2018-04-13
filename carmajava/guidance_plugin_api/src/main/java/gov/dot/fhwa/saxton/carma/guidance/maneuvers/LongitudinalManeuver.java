@@ -138,7 +138,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
 
     @Override
     public String toString() {
-        return "LongitudinalManeuver [startSpeed_=" + startSpeed_ + ", endSpeed_=" + endSpeed_ + "]";
+        return "LongitudinalManeuver [startSpeed_=" + startSpeed_ + ", endSpeed_=" + endSpeed_ + ", startDist_=" + startDist_ + ", endDist_=" + endDist_ + "]";
     }
     
 }

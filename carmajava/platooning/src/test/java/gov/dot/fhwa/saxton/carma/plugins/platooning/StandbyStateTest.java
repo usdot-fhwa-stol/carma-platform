@@ -93,7 +93,7 @@ public class StandbyStateTest {
         assertTrue(traj.getLateralManeuvers().isEmpty());
         assertTrue(!tpr.getRequests().isEmpty());
         assertEquals(50, tpr.getProposedReplanDelay().get().longValue());
-        ArgumentCaptor<PlatoonLeaderState> newState = ArgumentCaptor.forClass(PlatoonLeaderState.class);
+        ArgumentCaptor<LeaderState> newState = ArgumentCaptor.forClass(LeaderState.class);
         verify(mockPlugin).setState(newState.capture());
         assertEquals("PlatoonLeaderState", newState.getValue().toString());
     }
