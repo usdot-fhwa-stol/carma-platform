@@ -301,16 +301,23 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   @Override
   public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, int currentSegmentIdx, double segDowntrack) {
     log.info("Converting message with " + (trajMsg.getOffsets().size() + 1) +" points to path");
+    log.debug("messageToPath: entering with currentSegmentIdx = " + currentSegmentIdx + ", segDowntrack = " + segDowntrack);
+
     // Get segments within DSRC range
     List<RouteSegment> segments = route.findRouteSubsection(currentSegmentIdx, segDowntrack, DISTANCE_BACKWARD_TO_SEARCH, DISTANCE_FORWARD_TO_SEARCH);
+    log.debug("messageToPath: segments is " + segments.size() + " elements long.");
+
     // Get starting location
     cav_msgs.LocationECEF startMsg = trajMsg.getLocation();
     Vector3 ecefPoint = new Vector3(startMsg.getEcefX(), startMsg.getEcefY(), startMsg.getEcefZ());
+
     // Get starting segment and remaining segments to search
     RouteSegment startingSegment = route.routeSegmentOfPoint(new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), segments);
     int startIdx = startingSegment.getUptrackWaypoint().getWaypointId();
+    log.debug("messageToPath: initial ecefPoint = " + ecefPoint.toString() + ", corresponding to startIdx = " + startIdx);
 
     segments = segments.subList(startIdx, segments.size() - 1);
+    //TODO: note that neither segments nor startIdx is used for anything - smells like a problem...
 
     // Build list of route points
     List<RoutePointStamped> routePoints = new ArrayList<>(trajMsg.getOffsets().size() + 1);
@@ -318,8 +325,11 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     double time = startMsg.getTimestamp() / 1000L;
     // Get starting route point
     Transform ecefToSegment = startingSegment.getECEFToSegmentTransform();
-    Vector3 segmentPoint = ecefToSegment.apply(new Vector3(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()));
+    Vector3 segmentPoint = ecefToSegment.apply(ecefPoint);
+    log.debug("messageToPath: segmentPoint = " + segmentPoint.toString());
+    //TODO: the routePoint never gets sits segmentIdx or segDowntrack defined. Is this okay?
     RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time);
+    log.debug("messageToPath: routePoint = " + routePoint.toString());
     routePoints.add(routePoint);
     // Iterate over offsets
     for (LocationOffsetECEF offset: trajMsg.getOffsets()) {

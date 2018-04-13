@@ -369,7 +369,9 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         long tempStartTime = System.currentTimeMillis();
         List<RoutePointStamped> hostTrajectory = trajectoryExecutor.getHostPathPrediction();
         List<RoutePointStamped> otherTrajectory = trajectoryConverter.messageToPath(msg.getTrajectory());
+        log.debug("handleMobilityPath: computed otherTrajectory of " + otherTrajectory.size() + " points. Adding to map.");
         conflictManager.addMobilityPath(otherTrajectory, msg.getHeader().getSenderId());
+        log.debug("handleMobilityPath: back from call to addMobilityPath().");
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostTrajectory, otherTrajectory);
         long tempEndTime = System.currentTimeMillis();
         log.info("Analyzing the path message with " + otherTrajectory.size() + " points took: " + (tempEndTime - tempStartTime));

@@ -61,7 +61,7 @@ public interface ITrajectoryConverter {
    * Uses the TrajectoryConverter's configured max path size
    * 
    * @param traj The trajectory to convert
-   * @param currentTimeMs The starting time for this path in ms 
+   * @param startTimeMs The starting time for this path in ms
    * @param downtrack Current downtrack distance on route
    * @param crosstrack Current crosstrack on route
    * @param currentSegmentIdx The current route segment index
@@ -70,7 +70,7 @@ public interface ITrajectoryConverter {
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
-  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
+  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMs,
   double downtrack, double crosstrack,
   int currentSegmentIdx, double segDowntrack, int lane);
 
@@ -83,17 +83,17 @@ public interface ITrajectoryConverter {
    * Finally all points are converted into the ECEF frame
    * 
    * @param traj The trajectory to convert
-   * @param currentTimeMs The starting time for this path in ms 
-   * @param downtrack Current downtrack distance on route
-   * @param crosstrack Current crosstrack on route
+   * @param startTimeMs The starting time for this path in ms
+   * @param downtrack Current downtrack distance on route, m
+   * @param crosstrack Current crosstrack on route, m
    * @param currentSegmentIdx The current route segment index
-   * @param segDowntrack The current downtrack relative to the current segment start
+   * @param segDowntrack The current downtrack distance relative to the current segment start, m
    * @param lane The current lane index
    * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
-  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
+  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMs,
    double downtrack, double crosstrack,
    int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath);
 
@@ -139,7 +139,6 @@ public interface ITrajectoryConverter {
    * Finally all points are converted into the ECEF frame
    * 
    * @param traj The trajectory to convert
-   * @param startPoint the point one timestep prior to the beginning of this trajectory
    * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
@@ -176,7 +175,7 @@ public interface ITrajectoryConverter {
    * 
    * @param trajMsg The message to be converted
    * @param currentSegmentIdx The current route segment index
-   * @param segDowntrack the downtrack distance along the segment
+   * @param segDowntrack the downtrack distance along the segment, m
    * 
    * @return The path described as points along a route
    */
@@ -211,7 +210,6 @@ public interface ITrajectoryConverter {
    * @param maneuver The maneuver to convert
    * @param path The list which will store the generated points
    * @param startingData The starting configuration of the vehicle
-   * @param route The route the vehicle is on
    */
   LongitudinalSimulationData addLongitudinalManeuverToPath(
     final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
@@ -224,7 +222,6 @@ public interface ITrajectoryConverter {
    * @param maneuver The maneuver to convert
    * @param path The list which will store the generated points
    * @param startingData The starting configuration of the vehicle
-   * @param route The route the vehicle is on
    * @param maxPointsInPath The maximum number of points to compute, not to exceed the configured value
    */
   LongitudinalSimulationData addLongitudinalManeuverToPath(

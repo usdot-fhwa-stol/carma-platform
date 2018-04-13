@@ -344,9 +344,9 @@ public class Route {
    * 
    * @param startingIndex The index of the route segment which will be the starting point for the search. 
    *                      This segment will always be included in the returned list
-   * @param segmentDowntrack The distance along the specified segment to start the calculation from
-   * @param distBackward The distance in m uptrack of the starting segment which will be included
-   * @param distForward The distance in m downtrack of the starting segment which will be included
+   * @param segmentDowntrack The distance along the specified segment to start the calculation from, m
+   * @param distBackward The distance in m uptrack of the starting segment which will be included, m
+   * @param distForward The distance in m downtrack of the starting segment which will be included, m
    */
   public List<RouteSegment> findRouteSubsection(int startingIndex, double segmentDowntrack, double distBackward, double distForward) {
     List<RouteSegment> subList = new LinkedList<>();
