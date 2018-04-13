@@ -55,7 +55,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     protected MobilityPathHandler conflictHandler;
     protected String mobilitySenderId = "UNKNOWN";
     protected String currentBsmId = "";
-    protected static final String BROADCAST_RECIPIENT_ID = "";
+    protected static final String BROADCAST_RECIPIENT_ID = "LANE-MERGE-TEST";
     protected IPublisher<MobilityPath> pathPub;
     protected PluginManager pluginManager;
 
@@ -65,6 +65,8 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         stateMachine.registerStateChangeListener(this);
         this.trajectoryConverter = converter;
         this.conflictDetector = conflictDetector;
+
+        trajectoryConverter.setLogger(log);
     }
 
     /*
@@ -155,10 +157,13 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         if (currentTrajectory != null) {
             pathPrediction.addAll(trajectoryConverter.convertToPath(currentTrajectory));
         }
+        log.debug("PATH", "getPathPrediction added " + pathPrediction.size() + " points from currentTrajectory.");
         if (nextTrajectory != null && !pathPrediction.isEmpty()) {
             RoutePointStamped lastPoint = pathPrediction.get(pathPrediction.size() - 1);
             pathPrediction.addAll(trajectoryConverter.convertToPath(nextTrajectory, lastPoint, maxPointsPerMessage - pathPrediction.size()));
+            log.debug("PATH", "    adding more points from nextTrajectory...");
         }
+        log.debug("PATH", "    getPathPrediction returning pathPrediction of size " + pathPrediction.size());
 
         return pathPrediction;
     }
@@ -237,8 +242,8 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         pathMsg.setTrajectory(trajectoryConverter.pathToMessage(pathPrediction));
 
         pathPub.publish(pathMsg);
-        log.info(String.format("Publication complete for planId=%s containing %d points",
-                pathMsg.getHeader().getPlanId(), (pathMsg.getTrajectory().getOffsets().size() + 1)));
+        log.info(String.format("Publication complete for planId=%s containing %d points from a pathPrediction with %d points",
+                pathMsg.getHeader().getPlanId(), (pathMsg.getTrajectory().getOffsets().size() + 1), pathPrediction.size()));
     }
 
     @Override

@@ -95,7 +95,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         version.setName("Lane Change Plugin");
         version.setMajorRevision(1);
         version.setIntermediateRevision(0);
-        version.setMinorRevision(1);
+        version.setMinorRevision(2);        //Mike's changes for route converter + John's fix for NPE
         STATIC_ID = UUID.randomUUID().toString();
         pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
     }

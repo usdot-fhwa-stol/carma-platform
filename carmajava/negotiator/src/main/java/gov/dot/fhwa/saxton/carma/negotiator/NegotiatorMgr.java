@@ -87,7 +87,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       @Override protected void loop() throws InterruptedException {
-        if (systemReady) {
+        if (systemReady && false) {
             //This is a test for Mobility Introduction message
             MobilityRequest requestMsg = mobReqOutPub.newMessage();
             requestMsg.getHeader().setSenderId("DOT-45100");
