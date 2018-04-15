@@ -67,28 +67,15 @@ public class NSpatialHashMap implements ISpatialStructure {
       return false; // Cannot insert mismatched dimensions
     if (bounds == null) { // Create bounds if this is the first object
       bounds = Arrays.copyOf(obj.getBounds(), obj.getBounds().length);
-      System.out.println("bound0: " + bounds[0]);
-      System.out.println("bound1: " + bounds[1]);
-      System.out.println("bound2: " + bounds[2]);
     }
     
     double[][] minMaxCoordinates = obj.getMinMaxCoordinates();
     updateBounds(minMaxCoordinates);
-    
     // get keys for the min and max points
     NSpatialHashKey minKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MIN_BOUND_IDX]));
     NSpatialHashKey maxKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MAX_BOUND_IDX]));
-    
     // iterate over all cells
-    System.out.println(minKey.values[0]);
-    System.out.println(minKey.values[1]);
-    System.out.println(minKey.values[2]);
-    System.out.println("~~~~~~~~~~~~~~~~");
-    System.out.println(maxKey.values[0]);
-    System.out.println(maxKey.values[1]);
-    System.out.println(maxKey.values[2]);
-    System.out.println("----------------");
-    //addToCells(obj, minKey, maxKey, 0, Arrays.copyOf(minKey.values, minKey.values.length));
+    addToCells(obj, minKey, maxKey, 0, Arrays.copyOf(minKey.values, minKey.values.length));
     return true;
   }
 
@@ -101,11 +88,11 @@ public class NSpatialHashMap implements ISpatialStructure {
    * @param maxKey The maximum key (cell) this object will be added to
    * @param dim The current dimension being processed. Can also be thought of as loop depth
    */
-  private void addToCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim, int[] iterators) {
-    if (dim >= numDimensions) {
+  private void addToCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim, long[] iterators) {
+	  if (dim >= numDimensions) {
       return;
     }
-    for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
+    for (long i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
       iterators[dim] = i;
       addToCells(obj, minKey, maxKey, dim+1, iterators);
       // Only add keys when at the base of recursion
@@ -161,11 +148,11 @@ public class NSpatialHashMap implements ISpatialStructure {
    * @param maxKey The maximum key (cell) this object will be added to
    * @param dim The current dimension being processed. Can also be thought of as loop depth
    */
-  private void removeFromCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim, int[] iterators) {
+  private void removeFromCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim, long[] iterators) {
     if (dim >= numDimensions) {
       return;
     }
-    for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
+    for (long i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
       iterators[dim] = i;
       removeFromCells(obj, minKey, maxKey, dim+1, iterators);
       if (dim == numDimensions - 1) {
@@ -209,11 +196,11 @@ public class NSpatialHashMap implements ISpatialStructure {
    * @param dim The current dimension being processed. Can also be thought of as loop depth
    */
   private void getCollisionsInCells(CartesianObject obj, HashSet<CartesianObject> collidedObjects,
-  NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim, int[] iterators) {
+  NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim, long[] iterators) {
     if (dim >= numDimensions) {
       return;
     }
-    for (int i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
+    for (long i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {
       iterators[dim] = i;
       getCollisionsInCells(obj, collidedObjects, minKey, maxKey, dim+1, iterators);
       // Only add objects at bottom of recursion

@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.impl.Log4JLogger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,12 +79,12 @@ public class ConflictManagerTest {
     LoggerManager.setLoggerFactory(mockFact);
     mockPlugin = mock(IPlugin.class);
     log = mock(Log.class);
-    route = (new FileStrategy("../route/src/test/resources/routes/colonial_farm_rd_outbound.yaml", log)).load();
+    //route = (new FileStrategy("../route/src/test/resources/routes/colonial_farm_rd_outbound.yaml", log)).load();
   }
 
   @Test
   public void testAndMobilityPathTimeCost() {
-    route = (new FileStrategy("../route/src/test/resources/routes/colonial_farm_rd_outbound.yaml", log)).load();
+    route = (new FileStrategy("../route/src/test/resources/routes/tfhrc_circle.yaml", log)).load();
     double[] cellSize = {5, 5, 0.15};
     double downtrackMargin = 2.5;
     double crosstrackMargin = 1.0;
@@ -96,12 +97,12 @@ public class ConflictManagerTest {
     List<RoutePointStamped> path = new ArrayList<>();
     RoutePointStamped rp = new RoutePointStamped(377686497.36456925, 228142743.31807262, 1523800144);
     rp.setSegDowntrack(0);
-    rp.setSegmentIdx(0);;
+    rp.setSegmentIdx(0);
     path.add(rp);
-    rp = new RoutePointStamped(377686507.9069903, 228142749.34611508, 1523800308.1);
-    rp.setSegDowntrack(0.0);
-    rp.setSegmentIdx(0);;
-    path.add(rp);
+    RoutePointStamped rp2 = new RoutePointStamped(377686507.9069903, 228142749.34611508, 1523800308.1);
+    rp2.setSegDowntrack(0.0);
+    rp2.setSegmentIdx(0);
+    path.add(rp2);
     long start = System.currentTimeMillis();
     assertTrue(cm.addMobilityPath(path, "veh1"));
     long end = System.currentTimeMillis();
