@@ -135,11 +135,4 @@ public class FakeManeuverInputs implements IManeuverInputs {
 	public int getCurrentLane() {
 		return 0;
 	}
-
-
-	@Override
-	public double getCrosstrackDistance() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
 }

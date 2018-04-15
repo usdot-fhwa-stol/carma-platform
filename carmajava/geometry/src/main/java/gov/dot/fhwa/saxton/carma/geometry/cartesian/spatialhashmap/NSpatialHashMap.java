@@ -71,9 +71,11 @@ public class NSpatialHashMap implements ISpatialStructure {
     
     double[][] minMaxCoordinates = obj.getMinMaxCoordinates();
     updateBounds(minMaxCoordinates);
+    
     // get keys for the min and max points
     NSpatialHashKey minKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MIN_BOUND_IDX]));
     NSpatialHashKey maxKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MAX_BOUND_IDX]));
+    
     // iterate over all cells
     addToCells(obj, minKey, maxKey, 0, Arrays.copyOf(minKey.values, minKey.values.length));
     return true;
@@ -89,7 +91,7 @@ public class NSpatialHashMap implements ISpatialStructure {
    * @param dim The current dimension being processed. Can also be thought of as loop depth
    */
   private void addToCells(CartesianObject obj, NSpatialHashKey minKey, NSpatialHashKey maxKey, int dim, long[] iterators) {
-	  if (dim >= numDimensions) {
+	if (dim >= numDimensions) {
       return;
     }
     for (long i = minKey.values[dim]; i <= maxKey.values[dim]; i++) {

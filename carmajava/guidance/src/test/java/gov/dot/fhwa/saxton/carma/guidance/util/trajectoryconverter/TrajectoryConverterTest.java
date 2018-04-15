@@ -76,7 +76,7 @@ public class TrajectoryConverterTest {
   public void setup() {
     ILoggerFactory mockFact = mock(ILoggerFactory.class);
     ILogger mockLogger = mock(ILogger.class);
-    when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+    when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
     LoggerManager.setLoggerFactory(mockFact);
     mockPlugin = mock(IPlugin.class);
     log = mock(Log.class);
@@ -98,7 +98,7 @@ public class TrajectoryConverterTest {
       when(ecef.getEcefZ()).thenReturn(398858656);
       when(ecef.getTimestamp()).thenReturn(System.currentTimeMillis());
       when(message.getLocation()).thenReturn(ecef);
-      List<LocationOffsetECEF> offsets = new LinkedList();
+      List<LocationOffsetECEF> offsets = new LinkedList<>();
       LocationOffsetECEF offset1 = mock(LocationOffsetECEF.class);
       when(offset1.getOffsetX()).thenReturn((short) -15);
       when(offset1.getOffsetY()).thenReturn((short) -7);
