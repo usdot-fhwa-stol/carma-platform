@@ -82,6 +82,33 @@ public class ConflictManagerTest {
   }
 
   @Test
+  public void testAndMobilityPathTimeCost() {
+    route = (new FileStrategy("../route/src/test/resources/routes/colonial_farm_rd_outbound.yaml", log)).load();
+    double[] cellSize = {5, 5, 0.15};
+    double downtrackMargin = 2.5;
+    double crosstrackMargin = 1.0;
+    double timeMargin = 0.05;
+    MockTimeProvider timeProvider = new MockTimeProvider();
+    timeProvider.setCurrentTime(0.0);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    cm.setRoute(route);
+    // Build path
+    List<RoutePointStamped> path = new ArrayList<>();
+    RoutePointStamped rp = new RoutePointStamped(377686497.36456925, 228142743.31807262, 1523800144);
+    rp.setSegDowntrack(0);
+    rp.setSegmentIdx(0);;
+    path.add(rp);
+    rp = new RoutePointStamped(377686507.9069903, 228142749.34611508, 1523800308.1);
+    rp.setSegDowntrack(0.0);
+    rp.setSegmentIdx(0);;
+    path.add(rp);
+    long start = System.currentTimeMillis();
+    assertTrue(cm.addMobilityPath(path, "veh1"));
+    long end = System.currentTimeMillis();
+    System.out.println("!!!!!!!!!!!! " + (end - start));
+  }
+  
+  @Test
   public void testAddAndRemoveMobilityPaths() {
     double[] cellSize = {1,1,1};
     double downtrackMargin = 0.5;

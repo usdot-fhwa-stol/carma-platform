@@ -65,8 +65,13 @@ public class NSpatialHashMap implements ISpatialStructure {
   public boolean insert(CartesianObject obj) {
     if (obj == null || obj.getNumDimensions() != numDimensions)
       return false; // Cannot insert mismatched dimensions
-    if (bounds == null) // Create bounds if this is the first object
+    if (bounds == null) { // Create bounds if this is the first object
       bounds = Arrays.copyOf(obj.getBounds(), obj.getBounds().length);
+      System.out.println("bound0: " + bounds[0]);
+      System.out.println("bound1: " + bounds[1]);
+      System.out.println("bound2: " + bounds[2]);
+    }
+    
     double[][] minMaxCoordinates = obj.getMinMaxCoordinates();
     updateBounds(minMaxCoordinates);
     
@@ -75,7 +80,15 @@ public class NSpatialHashMap implements ISpatialStructure {
     NSpatialHashKey maxKey = spatialHashStrategy.getKey(new Point(minMaxCoordinates[MAX_BOUND_IDX]));
     
     // iterate over all cells
-    addToCells(obj, minKey, maxKey, 0, Arrays.copyOf(minKey.values, minKey.values.length));
+    System.out.println(minKey.values[0]);
+    System.out.println(minKey.values[1]);
+    System.out.println(minKey.values[2]);
+    System.out.println("~~~~~~~~~~~~~~~~");
+    System.out.println(maxKey.values[0]);
+    System.out.println(maxKey.values[1]);
+    System.out.println(maxKey.values[2]);
+    System.out.println("----------------");
+    //addToCells(obj, minKey, maxKey, 0, Arrays.copyOf(minKey.values, minKey.values.length));
     return true;
   }
 

@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 
 import java.util.List;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -28,6 +29,9 @@ import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
+
+import cav_msgs.LocationECEF;
+import cav_msgs.LocationOffsetECEF;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -80,6 +84,40 @@ public class TrajectoryConverterTest {
     route = Route.fromMessage(route.toMessage(messageFactory)); // Assign waypoint ids
   }
 
+  @Test
+  public void testMessageToPath() {
+      route = (new FileStrategy("../route/src/test/resources/routes/tfhrc_circle.yaml", log)).load();
+      final int MAX_POINTS_IN_PATH = 60;
+      final double TIME_STEP = 0.1;
+      TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP, messageFactory);
+      tc.setRoute(route);
+      cav_msgs.Trajectory message = mock(cav_msgs.Trajectory.class);
+      cav_msgs.LocationECEF ecef = mock(LocationECEF.class);
+      when(ecef.getEcefX()).thenReturn(110449015);
+      when(ecef.getEcefY()).thenReturn(-484206432);
+      when(ecef.getEcefZ()).thenReturn(398858656);
+      when(ecef.getTimestamp()).thenReturn(System.currentTimeMillis());
+      when(message.getLocation()).thenReturn(ecef);
+      List<LocationOffsetECEF> offsets = new LinkedList();
+      LocationOffsetECEF offset1 = mock(LocationOffsetECEF.class);
+      when(offset1.getOffsetX()).thenReturn((short) -15);
+      when(offset1.getOffsetY()).thenReturn((short) -7);
+      when(offset1.getOffsetZ()).thenReturn((short) -5);
+      offsets.add(offset1);
+      when(message.getOffsets()).thenReturn(offsets);
+      long startTime = System.currentTimeMillis();
+      List<RoutePointStamped> resultPoints = tc.messageToPath(message);
+      long endTime = System.currentTimeMillis();
+      System.out.println("\n\n\n PathSize: " + resultPoints.size() + "\n MS: " + (endTime - startTime) + "\n\n\n");
+      for(RoutePointStamped rps : resultPoints) {
+          System.out.println(BigDecimal.valueOf(rps.getDowntrack()).toPlainString());
+          System.out.println(BigDecimal.valueOf(rps.getCrosstrack()).toPlainString());
+          System.out.println(BigDecimal.valueOf(rps.getStamp()).toPlainString());
+          System.out.println(rps.getSegDowntrack());
+          System.out.println(rps.getSegmentIdx());
+      }
+  }
+  
   @Test
   public void testConvertToPath() {
     final int MAX_POINTS_IN_PATH = 60;
