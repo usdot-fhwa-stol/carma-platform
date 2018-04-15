@@ -390,26 +390,24 @@ public class Route {
    * @return The matching route segment
    */
   public RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
-    int count = 0;
-    RouteSegment bestSegment = segments.get(0);
     for (RouteSegment seg : segments) {
       RouteWaypoint wp = seg.getDowntrackWaypoint();
       double crossTrack = seg.crossTrackDistance(point);
       double downTrack = seg.downTrackDistance(point);
 
-      if (-0.0 < downTrack && downTrack <= seg.length()) { 
-        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
-          return seg;
-        
-      } else if (count == segments.size() - 1 && downTrack > seg.length()) {
-        bestSegment = seg;
+      if (-0.0 < downTrack && downTrack <= seg.length()) {
+          if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack()) {
+              return seg;
+          }
       }
-      count++;
     }
-    return bestSegment;
+
+    //couldn't find a matching segment, so guess that we are uptrack of the route start
+    return segments.get(0);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "Route{ name: " + routeName + " id: " + routeID + " }";
   }
 }
