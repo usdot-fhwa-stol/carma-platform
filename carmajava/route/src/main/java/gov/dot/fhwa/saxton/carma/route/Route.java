@@ -380,9 +380,20 @@ public class Route {
   }
 
   /**
-   * Get the route segment in the list which the provided point should be considered in
+   * Get the route segment in the list which the provided point should be considered in.
    * If the point cannot be matched with any segments in the provided subsection,
-   * it will be assigned to the first or last segment based on location.
+   * it will be assigned to the first segment.
+   *
+   * In general, two adjacent segments will have some angle between them (their common waypoint will form
+   * a turn in the route so that they don't lie on a straight line). If we think of our point as being "in"
+   * a segment if it is within a bounding box described by the start & end waypoints of that segment and its
+   * min & max crosstrack allowed, then we have a wedge between the two bounding boxes on the outside of the
+   * turn (on the inside of the turn the bounding boxes overlap). If our point is in this outside wedge it
+   * will not be considered within either segment, thus be assigned to the first one. Clearly, this is not
+   * what we desire. To avoid getting found if in this wedge, we extend the length of the bounding box of
+   * each segment uptrack by the amount of allowed crosstrack error of the previous segment. This will
+   * cause additional overlap in some areas, which is okay, since it will still give preference to the uptrack
+   * segment in any overlap situation.
    * 
    * @param point The 3d point to match with a segment
    * @param segments The subsection of a route which will be searched against
@@ -390,26 +401,33 @@ public class Route {
    * @return The matching route segment
    */
   public RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
-    int count = 0;
-    RouteSegment bestSegment = segments.get(0);
+    double maxCrosstrackAllowed = 0.0;
+    double prevMaxCrosstrack = 0.0;
+
     for (RouteSegment seg : segments) {
       RouteWaypoint wp = seg.getDowntrackWaypoint();
+      maxCrosstrackAllowed = Math.max(Math.abs(wp.getMinCrossTrack()), Math.abs(wp.getMaxCrossTrack())); //either could be negative
+
+      //find where the point in question lies relative to the segment
       double crossTrack = seg.crossTrackDistance(point);
       double downTrack = seg.downTrackDistance(point);
 
-      if (-0.0 < downTrack && downTrack <= seg.length()) { 
-        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
+      //check if it's in the extended bounding box
+      if (-prevMaxCrosstrack < downTrack && downTrack <= seg.length()) {
+        if (Math.abs(crossTrack) <= maxCrosstrackAllowed) {
           return seg;
-        
-      } else if (count == segments.size() - 1 && downTrack > seg.length()) {
-        bestSegment = seg;
+        }
       }
-      count++;
+
+      prevMaxCrosstrack = maxCrosstrackAllowed;
     }
-    return bestSegment;
+
+    //couldn't find a matching segment, so guess that we are uptrack of the route start
+    return segments.get(0);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "Route{ name: " + routeName + " id: " + routeID + " }";
   }
 }

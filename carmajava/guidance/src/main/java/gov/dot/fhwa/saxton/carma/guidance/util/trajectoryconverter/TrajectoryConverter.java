@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
@@ -84,8 +85,6 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     this.log = LoggerManager.getLogger();
   }
 
-  public void setLogger(ILogger logger) { log = logger; }
-
   /**
    * Sets the route
    * 
@@ -111,7 +110,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
    * @param currentSegDowntrack the current progress down that segment in double-valued meters
    */
   public void setRouteState(double downtrack, double crosstrack, int currentSegmentIdx, double currentSegDowntrack, int lane) {
-    log.debug("PATH", "setRouteState called with dontrack = " + downtrack + ", currentSegmentIdx = " +
+    log.debug("PATH", "setRouteState called with downtrack = " + downtrack + ", currentSegmentIdx = " +
               currentSegmentIdx + ", currentSegDowntrack = " +  currentSegDowntrack + ", lane = " + lane);
     this.downtrack = downtrack;
     this.crosstrack = crosstrack;
@@ -310,18 +309,26 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     // Get starting location
     cav_msgs.LocationECEF startMsg = trajMsg.getLocation();
     Vector3 ecefPoint = new Vector3(startMsg.getEcefX(), startMsg.getEcefY(), startMsg.getEcefZ());
+    Point3D ecef3d = new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ());
+    try {
+        //TODO: this try-catch block is only for debugging - suggest removing for production to improve performance
+        assert(Math.abs(ecefPoint.getX() - ecef3d.getX()) < 0.1);
+        assert(Math.abs(ecefPoint.getY() - ecef3d.getY()) < 0.1);
+        assert(Math.abs(ecefPoint.getZ() - ecef3d.getZ()) < 0.1);
+    }catch (Exception e) {
+        log.warn("messageToPath: ecef3d differs from ecefPoint!  Values below:");
+        log.warn("               ecefPoint = (" + ecefPoint.getX() + ", " + ecefPoint.getY() + ", " + ecefPoint.getZ() + ")");
+        log.warn("               ecef3d =    (" + ecef3d.getX() + ", " + ecef3d.getY() + ", " + ecef3d.getZ() + ")");
+    }
 
     // Get starting segment and remaining segments to search
-    RouteSegment startingSegment = route.routeSegmentOfPoint(new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), segments);
-    int startIdx = startingSegment.getUptrackWaypoint().getWaypointId();
+    RouteSegment startingSegment = route.routeSegmentOfPoint(ecef3d, segments);
+    int startIdx = startingSegment.getUptrackWaypoint().getWaypointId(); //this is only needed for logging in next stmt
     log.debug("messageToPath: initial ecefPoint = " + ecefPoint.toString() + ", corresponding to startIdx = " + startIdx);
-
-    segments = segments.subList(startIdx, segments.size() - 1);
-    //TODO: note that neither segments nor startIdx is used for anything - smells like a problem...
 
     // Build list of route points
     List<RoutePointStamped> routePoints = new ArrayList<>(trajMsg.getOffsets().size() + 1);
-    // Get starting time
+    // Get starting time in seconds
     double time = startMsg.getTimestamp() / 1000L;
     // Get starting route point
     Transform ecefToSegment = startingSegment.getECEFToSegmentTransform();
