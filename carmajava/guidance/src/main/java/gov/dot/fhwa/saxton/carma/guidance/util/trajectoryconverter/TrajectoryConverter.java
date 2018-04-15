@@ -315,7 +315,6 @@ public class TrajectoryConverter implements ITrajectoryConverter {
         assert(Math.abs(ecefPoint.getX() - ecef3d.getX()) < 0.1);
         assert(Math.abs(ecefPoint.getY() - ecef3d.getY()) < 0.1);
         assert(Math.abs(ecefPoint.getZ() - ecef3d.getZ()) < 0.1);
-        log.debug("messageToPath: ")
     }catch (Exception e) {
         log.warn("messageToPath: ecef3d differs from ecefPoint!  Values below:");
         log.warn("               ecefPoint = (" + ecefPoint.getX() + ", " + ecefPoint.getY() + ", " + ecefPoint.getZ() + ")");
