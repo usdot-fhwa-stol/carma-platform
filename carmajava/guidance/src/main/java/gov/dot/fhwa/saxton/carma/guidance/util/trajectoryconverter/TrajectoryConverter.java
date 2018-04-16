@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
@@ -180,7 +179,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
 
     // Starting simulation configuration
     List<RoutePointStamped> path =  new LinkedList<RoutePointStamped>();
-    final double startTime = currentTime; 
+    //final double startTime = currentTime; 
     final double startingDowntrack = downtrack;
     final double startingSegDowntrack = segDowntrack;
     final int startingSegIdx = route.getSegments().get(currentSegmentIdx).getUptrackWaypoint().getWaypointId();  
@@ -216,7 +215,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     ////
     int currentPoint = 0;
     double currentCrosstrack = crosstrack;
-    int currentLane = lane;
+    //int currentLane = lane; // This variable is not used meaningfully
     for (int i = 0; i < lateralManeuvers.size(); i++) {
       if (currentPoint >= path.size()) {
         break;
@@ -249,7 +248,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
             currentPoint++;
           }
           currentCrosstrack = y_1;
-          currentLane += maneuver.getEndingRelativeLane();
+          //currentLane += maneuver.getEndingRelativeLane();
         }
       }
     }
@@ -306,26 +305,16 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     List<RouteSegment> segments = route.findRouteSubsection(currentSegmentIdx, segDowntrack, DISTANCE_BACKWARD_TO_SEARCH, DISTANCE_FORWARD_TO_SEARCH);
     log.debug("messageToPath: segments is " + segments.size() + " elements long.");
 
-    // Get starting location
+    // Get starting location in m
     cav_msgs.LocationECEF startMsg = trajMsg.getLocation();
-    Vector3 ecefPoint = new Vector3(startMsg.getEcefX(), startMsg.getEcefY(), startMsg.getEcefZ());
-    Point3D ecef3d = new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ());
-    try {
-        //TODO: this try-catch block is only for debugging - suggest removing for production to improve performance
-        assert(Math.abs(ecefPoint.getX() - ecef3d.getX()) < 0.1);
-        assert(Math.abs(ecefPoint.getY() - ecef3d.getY()) < 0.1);
-        assert(Math.abs(ecefPoint.getZ() - ecef3d.getZ()) < 0.1);
-    }catch (Exception e) {
-        log.warn("messageToPath: ecef3d differs from ecefPoint!  Values below:");
-        log.warn("               ecefPoint = (" + ecefPoint.getX() + ", " + ecefPoint.getY() + ", " + ecefPoint.getZ() + ")");
-        log.warn("               ecef3d =    (" + ecef3d.getX() + ", " + ecef3d.getY() + ", " + ecef3d.getZ() + ")");
-    }
-
+    Vector3 ecefPoint = new Vector3((double)startMsg.getEcefX() / CM_PER_M, (double)startMsg.getEcefY()  / CM_PER_M, (double)startMsg.getEcefZ()  / CM_PER_M);
+    
+    //Point3D ecef3d = new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ());
     // Get starting segment and remaining segments to search
-    RouteSegment startingSegment = route.routeSegmentOfPoint(ecef3d, segments);
-    int startIdx = startingSegment.getUptrackWaypoint().getWaypointId(); //this is only needed for logging in next stmt
+    RouteSegment startingSegment = route.routeSegmentOfPoint(new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), segments);
+    int startIdx = startingSegment.getUptrackWaypoint().getWaypointId();
     log.debug("messageToPath: initial ecefPoint = " + ecefPoint.toString() + ", corresponding to startIdx = " + startIdx);
-
+    
     // Build list of route points
     List<RoutePointStamped> routePoints = new ArrayList<>(trajMsg.getOffsets().size() + 1);
     // Get starting time in seconds
@@ -334,21 +323,31 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     Transform ecefToSegment = startingSegment.getECEFToSegmentTransform();
     Vector3 segmentPoint = ecefToSegment.apply(ecefPoint);
     log.debug("messageToPath: segmentPoint = " + segmentPoint.toString());
-    //TODO: the routePoint never gets sits segmentIdx or segDowntrack defined. Is this okay?
-    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time);
+    double downtrackOfSegment = route.lengthOfSegments(0, startIdx - 1);
+    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time);
     log.debug("messageToPath: routePoint = " + routePoint.toString());
     routePoints.add(routePoint);
+
+    RouteSegment currentSegment = startingSegment;
+    int segmentIdx = startIdx;
     // Iterate over offsets
     for (LocationOffsetECEF offset: trajMsg.getOffsets()) {
       time += this.timeStep;
       ecefPoint = new Vector3(
-        ecefPoint.getX() + offset.getOffsetX(),
-        ecefPoint.getY() + offset.getOffsetY(),
-        ecefPoint.getZ() + offset.getOffsetZ()
+        ecefPoint.getX() + ((double)offset.getOffsetX() / CM_PER_M),
+        ecefPoint.getY() + ((double)offset.getOffsetY() / CM_PER_M),
+        ecefPoint.getZ() + ((double)offset.getOffsetZ() / CM_PER_M)
       );
-      segmentPoint = ecefToSegment.apply(ecefPoint);
       
-      routePoints.add(new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time));
+      segmentPoint = ecefToSegment.apply(ecefPoint);
+      if (segmentPoint.getX() > currentSegment.length()) {
+        downtrackOfSegment += currentSegment.length();
+        segmentIdx++;
+        currentSegment = route.getSegments().get(segmentIdx);
+        ecefToSegment = currentSegment.getECEFToSegmentTransform();
+        segmentPoint =  ecefToSegment.apply(ecefPoint);
+      }
+      routePoints.add(new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time));
     }
     
     return routePoints;

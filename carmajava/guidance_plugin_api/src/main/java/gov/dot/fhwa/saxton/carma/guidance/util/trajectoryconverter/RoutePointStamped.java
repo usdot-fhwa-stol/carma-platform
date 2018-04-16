@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point2D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
@@ -85,4 +84,10 @@ public final class RoutePointStamped {
   public int getSegmentIdx(){
     return segmentIdx;
   }
+
+  @Override
+  public String toString() {
+    return "RoutePointStamped [point=" + point + ", segmentIdx=" + segmentIdx + ", segDowntrack=" + segDowntrack + "]";
+  }
+  
 }
