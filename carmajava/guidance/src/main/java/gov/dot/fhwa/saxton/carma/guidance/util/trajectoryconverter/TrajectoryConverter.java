@@ -284,14 +284,12 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, int currentSegmentIdx, double segDowntrack) {
     // Get segments within DSRC range
     List<RouteSegment> segments = route.findRouteSubsection(currentSegmentIdx, segDowntrack, DISTANCE_BACKWARD_TO_SEARCH, DISTANCE_FORWARD_TO_SEARCH);
-    // Get starting location
+    // Get starting location in m
     cav_msgs.LocationECEF startMsg = trajMsg.getLocation();
-    Vector3 ecefPoint = new Vector3(startMsg.getEcefX(), startMsg.getEcefY(), startMsg.getEcefZ());
+    Vector3 ecefPoint = new Vector3((double)startMsg.getEcefX() / CM_PER_M, (double)startMsg.getEcefY()  / CM_PER_M, (double)startMsg.getEcefZ()  / CM_PER_M);
     // Get starting segment and remaining segments to search
     RouteSegment startingSegment = route.routeSegmentOfPoint(new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), segments);
     int startIdx = startingSegment.getUptrackWaypoint().getWaypointId();
-
-    segments = segments.subList(startIdx, segments.size() - 1);
 
     // Build list of route points
     List<RoutePointStamped> routePoints = new ArrayList<>(trajMsg.getOffsets().size() + 1);
@@ -299,20 +297,31 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     double time = startMsg.getTimestamp() / 1000L;
     // Get starting route point
     Transform ecefToSegment = startingSegment.getECEFToSegmentTransform();
-    Vector3 segmentPoint = ecefToSegment.apply(new Vector3(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()));
-    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time);
+    Vector3 segmentPoint = ecefToSegment.apply(ecefPoint);
+    double downtrackOfSegment = route.lengthOfSegments(0, startIdx - 1);
+    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time);
     routePoints.add(routePoint);
+
+    RouteSegment currentSegment = startingSegment;
+    int segmentIdx = startIdx;
     // Iterate over offsets
     for (LocationOffsetECEF offset: trajMsg.getOffsets()) {
       time += this.timeStep;
       ecefPoint = new Vector3(
-        ecefPoint.getX() + offset.getOffsetX(),
-        ecefPoint.getY() + offset.getOffsetY(),
-        ecefPoint.getZ() + offset.getOffsetZ()
+        ecefPoint.getX() + ((double)offset.getOffsetX() / CM_PER_M),
+        ecefPoint.getY() + ((double)offset.getOffsetY() / CM_PER_M),
+        ecefPoint.getZ() + ((double)offset.getOffsetZ() / CM_PER_M)
       );
-      segmentPoint = ecefToSegment.apply(ecefPoint);
       
-      routePoints.add(new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time));
+      segmentPoint = ecefToSegment.apply(ecefPoint);
+      if (segmentPoint.getX() > currentSegment.length()) {
+        downtrackOfSegment += currentSegment.length();
+        segmentIdx++;
+        currentSegment = route.getSegments().get(segmentIdx);
+        ecefToSegment = currentSegment.getECEFToSegmentTransform();
+        segmentPoint =  ecefToSegment.apply(ecefPoint);
+      }
+      routePoints.add(new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time));
     }
     
     return routePoints;
