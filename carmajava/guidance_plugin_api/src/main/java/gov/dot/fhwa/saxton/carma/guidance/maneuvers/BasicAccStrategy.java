@@ -92,8 +92,9 @@ public class BasicAccStrategy extends AbstractAccStrategy {
     if (pidActive) {
       Optional<Signal<Double>> speedCmdSignal = speedCmdPipeline
           .apply(new Signal<>(computeActualTimeGap(distanceGap, currentSpeed, frontVehicleSpeed)));
-      double rawSpeedCmd = speedCmdSignal.get().getData() + currentSpeed;
-      speedCmd = applyAccelLimit(rawSpeedCmd, currentSpeed, maxAccel);
+      double rawSpeedCmd = speedCmdSignal.get().getData() + frontVehicleSpeed;
+      speedCmd = rawSpeedCmd;
+      //speedCmd = applyAccelLimit(rawSpeedCmd, currentSpeed, maxAccel);
       log.info(String.format(
           "ACC OVERRIDE CMD = %.02f, current speed = %.02f, override after accel limit applied (%.02f m/s/s) = %.02f, distToVehicle: %.02f m",
           rawSpeedCmd, currentSpeed, maxAccel, speedCmd, distToFrontVehicle));

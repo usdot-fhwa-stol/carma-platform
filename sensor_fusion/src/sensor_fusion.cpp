@@ -486,11 +486,7 @@ void SensorFusionApplication::publish_updates() {
         objects_pub_.publish(list);
     }
     else {
-        ROS_DEBUG_STREAM_THROTTLE(1.0,"No tracked_objects. Publishing empty list");
-        cav_msgs::ExternalObjectList list;
-        list.header.stamp = ros::Time::now();
-        list.header.frame_id = inertial_frame_name_;
-        objects_pub_.publish(list);
+        ROS_DEBUG_STREAM_THROTTLE(1.0,"No tracked_objects");
     }
 }
 

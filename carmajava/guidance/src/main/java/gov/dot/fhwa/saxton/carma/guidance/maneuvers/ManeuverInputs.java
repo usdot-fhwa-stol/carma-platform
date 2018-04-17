@@ -25,6 +25,9 @@ import cav_srvs.GetTransformRequest;
 import cav_srvs.GetTransformResponse;
 import cav_msgs.RoadwayObstacle;
 import cav_msgs.SystemAlert;
+
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.google.common.util.concurrent.AtomicDouble;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
@@ -72,6 +75,9 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected AtomicDouble frontVehicleDistance = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
     protected AtomicDouble frontVehicleSpeed = new AtomicDouble(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
     protected ILogger log;
+    protected Object frontVehicleMutex = new Object();
+    protected AtomicLong lastFrontVehicleTime = new AtomicLong(0);
+    protected final long FRONT_VEHICLE_TIMEOUT = 500; //ms
 
     public ManeuverInputs(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node) {
         super(stateMachine, iPubSubService, node);
@@ -160,7 +166,6 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 RoadwayObstacle frontVehicle = null;
                 for (RoadwayObstacle obs : msg.getRoadwayObstacles()) {
 
-                    // TODO This modification to downtrack values calculation should really be based on transforms. 
                     double frontVehicleDist =  obs.getDownTrack() - distanceDowntrack_ - hostVehicleToVehicleFront_.getTranslation().getX() - obs.getObject().getSize().getX();
                     boolean inLane = obs.getPrimaryLane() == currentLane_;
                     // TODO: Add back into to check against the secondary lanes of an object
@@ -180,12 +185,15 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
                 }
 
                 // Store our results
-                if (frontVehicle != null) {
-                    frontVehicleDistance.set(closestDistance);
-                    frontVehicleSpeed.set(frontVehicle.getObject().getVelocity().getTwist().getLinear().getX());
-                } else {
-                    frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
-                    frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
+                synchronized (frontVehicleMutex) {
+                    if (frontVehicle != null) {
+                        lastFrontVehicleTime.set(System.currentTimeMillis());
+                        frontVehicleDistance.set(closestDistance);
+                        frontVehicleSpeed.set(frontVehicle.getObject().getVelocity().getTwist().getLinear().getX());
+                    } else {
+                        frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
+                        frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
+                    }
                 }
             }
         });
@@ -224,6 +232,24 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         currentSpeed_ = 0.0;
         frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
         frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
+    }
+
+    @Override
+    public void timingLoop() throws InterruptedException {
+      try {
+          Thread.sleep(FRONT_VEHICLE_TIMEOUT);
+          synchronized (frontVehicleMutex) {
+            if (frontVehicleDistance.get() != IAccStrategy.NO_FRONT_VEHICLE_DISTANCE 
+             && System.currentTimeMillis() - lastFrontVehicleTime.get() > FRONT_VEHICLE_TIMEOUT) {
+              log.info("No front vehicle seen within timeout. Resting frontVehicleDistance and frontVehicleSpeed");
+              frontVehicleDistance.set(IAccStrategy.NO_FRONT_VEHICLE_DISTANCE);
+              frontVehicleSpeed.set(IAccStrategy.NO_FRONT_VEHICLE_SPEED);
+            }
+          }
+      } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw e;
+      }
     }
 
     @Override
