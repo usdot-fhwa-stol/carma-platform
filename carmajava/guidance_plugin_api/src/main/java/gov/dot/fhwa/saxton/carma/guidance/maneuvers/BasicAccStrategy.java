@@ -68,11 +68,14 @@ public class BasicAccStrategy extends AbstractAccStrategy {
   @Override
   public double computeAccOverrideSpeed(double distToFrontVehicle, double frontVehicleSpeed, double currentSpeed,
       double desiredSpeedCommand) {
+      
+    // Calculate distance gap
+    double distanceGap = distGap(distToFrontVehicle);
     // Check PID control state
-    if (!pidActive && evaluateAccTriggerConditions(distGap(distToFrontVehicle), currentSpeed, frontVehicleSpeed)) {
+    if (!pidActive && evaluateAccTriggerConditions(distanceGap, currentSpeed, frontVehicleSpeed)) {
       log.info(
           String.format("ACC PID Control now active! {distToFrontVehicle=%.02f, distGap=%.02f, currentSpeed=%.02f, fvehSpeed=%.02f",
-              distToFrontVehicle, distGap(distToFrontVehicle), currentSpeed, frontVehicleSpeed));
+              distToFrontVehicle, distanceGap, currentSpeed, frontVehicleSpeed));
       pidActive = true;
       // If PID becomes inactive we should reset the controller before it is reactivated
       speedCmdPipeline.reset();
@@ -81,19 +84,20 @@ public class BasicAccStrategy extends AbstractAccStrategy {
         * desiredTimeGap) {
       log.info(
           String.format("ACC PID Control now inactive! {distToFrontVehicle=%.02f, distGap=%.02f, currentSpeed=%.02f, fvehSpeed=%.02f",
-              distToFrontVehicle, distGap(distToFrontVehicle),currentSpeed, frontVehicleSpeed));
+              distToFrontVehicle, distanceGap,currentSpeed, frontVehicleSpeed));
       pidActive = false;
     }
 
     double speedCmd = desiredSpeedCommand;
     if (pidActive) {
       Optional<Signal<Double>> speedCmdSignal = speedCmdPipeline
-          .apply(new Signal<>(computeActualTimeGap(distGap(distToFrontVehicle), currentSpeed, frontVehicleSpeed)));
+          .apply(new Signal<>(computeActualTimeGap(distanceGap, currentSpeed, frontVehicleSpeed)));
       double rawSpeedCmd = speedCmdSignal.get().getData() + currentSpeed;
-      speedCmd = applyAccelLimit(rawSpeedCmd, currentSpeed, maxAccel);
+      speedCmd = rawSpeedCmd;
+      //speedCmd = applyAccelLimit(rawSpeedCmd, currentSpeed, maxAccel);
       log.info(String.format(
-          "ACC OVERRIDE CMD = %.02f, current speed = %.02f, override after accel limit applied (%.02f m/s/s) = %.02f",
-          rawSpeedCmd, currentSpeed, maxAccel, speedCmd));
+          "ACC OVERRIDE CMD = %.02f, current speed = %.02f, override after accel limit applied (%.02f m/s/s) = %.02f, distToVehicle: %.02f m",
+          rawSpeedCmd, currentSpeed, maxAccel, speedCmd, distToFrontVehicle));
       speedCmd = Math.min(speedCmd, desiredSpeedCommand);
     }
 

@@ -90,11 +90,11 @@ cruising_target_multiplier: 1.0
 
 # Double: Time headway to control to with ACC
 # Units: seconds
-desired_acc_timegap: 0.0
+desired_acc_timegap: 1.8
 
 # Double: Minimum distance between vehicle and front vehicle at any point
 # Units: m
-min_acc_standoff_distance: 0.0
+min_acc_standoff_distance: 5.0
 
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
@@ -103,19 +103,20 @@ shutdown_wait_time: 5000
 # Double: Time to plan for after a complex trajectory to allow for our speed to steady after a complex trajectory
 # Units: seconds
 post_complex_trajectory_steadying_period: 2.0
+
 # Double: Maximum speed error between cmd_speed and actual vehicle speed
 # Units: m
-max_speed_error: 100.0
+max_speed_error: 10000.0
 
 # Double: Maximum downtrack error between planned location and current location
 # Units: m
-max_downtrack_error: 100.0
+max_downtrack_error: 10000.0
 
 # Double: The factor to multiply by the desired ACC headway to determine when we should exit ACC
 acc_exit_distance_factor: 1.5
 
 # Double: The poportional term in the acc PID controller
-acc_Kp: -1.75
+acc_Kp: -2.0
 
 # Double: The integral term in the acc PID controller
 acc_Ki: 0.0

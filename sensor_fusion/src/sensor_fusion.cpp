@@ -485,9 +485,9 @@ void SensorFusionApplication::publish_updates() {
         ROS_DEBUG_STREAM("Publish objects: " << list.objects.size());
         objects_pub_.publish(list);
     }
-    else
+    else {
         ROS_DEBUG_STREAM_THROTTLE(1.0,"No tracked_objects");
-
+    }
 }
 
 void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConstPtr& msg,const std::string& topic_name) {
