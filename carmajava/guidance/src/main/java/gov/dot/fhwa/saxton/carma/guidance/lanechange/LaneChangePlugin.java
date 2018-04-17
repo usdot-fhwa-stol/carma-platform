@@ -259,14 +259,14 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         double startCrosstrack = inputs.getCrosstrackDistance();                    
         RoutePointStamped startPoint = new RoutePointStamped(startDist, startCrosstrack, futureTime);
         // set segment index and segment start downtrack distance
-        int segIdx = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startCrosstrack).getPrevWaypoint().getWaypointId();
+        int segIdx = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDist).getPrevWaypoint().getWaypointId();
         startPoint.setSegmentIdx(segIdx);
         log.debug("The segment index of first RoutePointStamped is set to be " + segIdx);
         double segmentsDtd = 0;
-        for(int i = 0; i < segmentsDtd; i++) {
+        for(int i = 0; i < segIdx; i++) {
             segmentsDtd += pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(i).getLength();
         }
-        startPoint.setSegDowntrack(segmentsDtd);
+        startPoint.setSegDowntrack(startDist - segmentsDtd);
         log.debug("The segment dtd of first RoutePointStamped is set to be " + segmentsDtd);
 
         // Convert the future maneuver to a set of route points
