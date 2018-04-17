@@ -258,6 +258,16 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         // TODO Estimate starting crosstrack using trajectory being planned
         double startCrosstrack = inputs.getCrosstrackDistance();                    
         RoutePointStamped startPoint = new RoutePointStamped(startDist, startCrosstrack, futureTime);
+        // set segment index and segment start downtrack distance
+        int segIdx = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startCrosstrack).getPrevWaypoint().getWaypointId();
+        startPoint.setSegmentIdx(segIdx);
+        log.debug("The segment index of first RoutePointStamped is set to be " + segIdx);
+        double segmentsDtd = 0;
+        for(int i = 0; i < segmentsDtd; i++) {
+            segmentsDtd += pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(i).getLength();
+        }
+        startPoint.setSegDowntrack(segmentsDtd);
+        log.debug("The segment dtd of first RoutePointStamped is set to be " + segmentsDtd);
 
         // Convert the future maneuver to a set of route points
         Trajectory laneChangeTraj = new Trajectory(futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
