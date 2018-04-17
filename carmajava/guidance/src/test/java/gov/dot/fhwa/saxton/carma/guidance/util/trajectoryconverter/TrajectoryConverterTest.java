@@ -120,7 +120,7 @@ public class TrajectoryConverterTest {
   
   @Test
   public void testConvertToPath() {
-    final int MAX_POINTS_IN_PATH = 60;
+    final int MAX_POINTS_IN_PATH = 1000;
     final double TIME_STEP = 0.1;
     TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP, messageFactory);
     tc.setRoute(route);
