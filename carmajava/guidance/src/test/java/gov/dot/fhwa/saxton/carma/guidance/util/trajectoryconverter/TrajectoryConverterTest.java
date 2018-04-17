@@ -359,4 +359,170 @@ public class TrajectoryConverterTest {
     assertTrue(expecedfECEFPoint.almostEquals(pathECEF.get(pathECEF.size() - 1).getPoint(), 0.5));
     assertEquals(endingData.simTime, pathECEF.get(pathECEF.size() - 1).getStamp(), 0.0001);
   }
+
+  @Test
+  public void testMessageToPath2() {
+      route = (new FileStrategy("../route/src/test/resources/routes/tfhrc_circle.yaml", log)).load();
+      final int MAX_POINTS_IN_PATH = 60;
+      final double TIME_STEP = 0.1;
+      TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP, messageFactory);
+      tc.setRoute(route);
+      cav_msgs.Trajectory message = mock(cav_msgs.Trajectory.class);
+      cav_msgs.LocationECEF ecef = mock(LocationECEF.class);
+      when(ecef.getEcefX()).thenReturn(110449015);
+      when(ecef.getEcefY()).thenReturn(-484206432);
+      when(ecef.getEcefZ()).thenReturn(398858656);
+      when(ecef.getTimestamp()).thenReturn(System.currentTimeMillis());
+      when(message.getLocation()).thenReturn(ecef);
+      List<LocationOffsetECEF> offsets = new LinkedList<>();
+      LocationOffsetECEF offset1 = mock(LocationOffsetECEF.class);
+      when(offset1.getOffsetX()).thenReturn((short) -15);
+      when(offset1.getOffsetY()).thenReturn((short) -7);
+      when(offset1.getOffsetZ()).thenReturn((short) -5);
+      offsets.add(offset1);
+      when(message.getOffsets()).thenReturn(offsets);
+      long startTime = System.currentTimeMillis();
+      List<RoutePointStamped> resultPoints = tc.messageToPath(message);
+      long endTime = System.currentTimeMillis();
+      System.out.println("\n\n\n PathSize: " + resultPoints.size() + "\n MS: " + (endTime - startTime) + "\n\n\n");
+      for(RoutePointStamped rps : resultPoints) {
+          System.out.println(BigDecimal.valueOf(rps.getDowntrack()).toPlainString());
+          System.out.println(BigDecimal.valueOf(rps.getCrosstrack()).toPlainString());
+          System.out.println(BigDecimal.valueOf(rps.getStamp()).toPlainString());
+          System.out.println(rps.getSegDowntrack());
+          System.out.println(rps.getSegmentIdx());
+      }
+  }
+
+  @Test
+  public void testRightVehicle() {
+    final int MAX_POINTS_IN_PATH = 60;
+    final double TIME_STEP = 0.1;
+    TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP, messageFactory);
+
+    // Setup starting configuration
+    // Vehicle at very start of route
+
+    // Build trajectory
+
+    LongitudinalManeuver speedUp = mock(SpeedUp.class);
+    when(speedUp.getStartSpeed()).thenReturn(1.5379999876022339);
+    when(speedUp.getTargetSpeed()).thenReturn(11.176);
+    when(speedUp.getStartDistance()).thenReturn(19.100526357380396);
+    when(speedUp.getEndDistance()).thenReturn(47.99643274765064);
+
+    LongitudinalManeuver steadySpeed = mock(SteadySpeed.class);
+    when(steadySpeed.getStartSpeed()).thenReturn(11.176);
+    when(steadySpeed.getTargetSpeed()).thenReturn(11.176);
+    when(steadySpeed.getStartDistance()).thenReturn(47.99643274765064);
+    when(steadySpeed.getEndDistance()).thenReturn(72.83124334181946);
+    
+
+    Trajectory traj = new Trajectory(1.0, 73.0);
+    traj.addManeuver(speedUp);
+    traj.addManeuver(steadySpeed);
+    
+    Route rightVehRoute = (new FileStrategy("../route/src/test/resources/routes/TFHRC_south_lot_WB_right.yaml", log)).load();
+    rightVehRoute = Route.fromMessage(rightVehRoute.toMessage(messageFactory)); // Assign waypoint ids
+
+    tc.setRoute(rightVehRoute);
+
+   // tc.setRouteState(32.74732066557381, 1.170347594019404, 8, 4.235458558076061, 0);
+
+    // Call function
+    List<RoutePointStamped> tempPoints = 
+      tc.convertToPath(traj, 1523912542199L, 32.74732066557381, 1.170347594019404, 8, 4.235458558076061, 0, 60);
+    List<ECEFPointStamped> ecefPath;
+    ecefPath = tc.toECEFPoints(tempPoints);
+
+    System.out.println("\n\n");
+    int count = 0;
+    for(ECEFPointStamped p: ecefPath) {
+      System.out.println(gcc.cartesian2Geodesic( p.getPoint(), Transform.identity()));
+      count++;
+    }
+    System.out.println("\n\n");
+  }
+
+  @Test
+  public void testLeftVehicle() {
+    final int MAX_POINTS_IN_PATH = 60;
+    final double TIME_STEP = 0.1;
+    TrajectoryConverter tc = new TrajectoryConverter(MAX_POINTS_IN_PATH, TIME_STEP, messageFactory);
+
+    // Setup starting configuration
+    // Vehicle at very start of route
+
+    // Build trajectory
+
+    
+    LongitudinalManeuver steadySpeed = mock(SteadySpeed.class);
+    when(steadySpeed.getStartSpeed()).thenReturn(0.4690000116825104);
+    when(steadySpeed.getTargetSpeed()).thenReturn(0.4690000116825104);
+    when(steadySpeed.getStartDistance()).thenReturn(17.807940954420438);
+    when(steadySpeed.getEndDistance()).thenReturn(18.135950704881644);
+
+    LongitudinalManeuver speedUp = mock(SpeedUp.class);
+    when(speedUp.getStartSpeed()).thenReturn(0.4690000116825104);
+    when(speedUp.getTargetSpeed()).thenReturn(11.176);
+    when(speedUp.getStartDistance()).thenReturn(18.135950704881644);
+    when(speedUp.getEndDistance()).thenReturn(45.96435371904552);
+
+    LongitudinalManeuver steadySpeed2 = mock(SteadySpeed.class);
+    when(steadySpeed2.getStartSpeed()).thenReturn(11.176);
+    when(steadySpeed2.getTargetSpeed()).thenReturn(11.176);
+    when(steadySpeed2.getStartDistance()).thenReturn(45.96435371904552);
+    when(steadySpeed2.getEndDistance()).thenReturn(112.03655269176274);
+
+    LongitudinalManeuver steadySpeed3 = mock(SteadySpeed.class);
+    when(steadySpeed3.getStartSpeed()).thenReturn(11.176);
+    when(steadySpeed3.getTargetSpeed()).thenReturn(11.176);
+    when(steadySpeed3.getStartDistance()).thenReturn(112.03655269176274);
+    when(steadySpeed3.getEndDistance()).thenReturn(165.12255269176273);
+
+    LaneKeeping laneKeeping = mock(LaneKeeping.class);
+    when(laneKeeping.getEndingRelativeLane()).thenReturn(0);
+    when(laneKeeping.getStartDistance()).thenReturn(17.807940954420438);
+    when(laneKeeping.getEndDistance()).thenReturn(112.03655269176274);
+
+    // LaneChange laneChange1 = mock(LaneChange.class);
+    // when(laneChange1.getEndingRelativeLane()).thenReturn(1);
+    // when(laneChange1.getStartDistance()).thenReturn(40.0);
+    // when(laneChange1.getEndDistance()).thenReturn(70.0);
+
+    FutureLateralManeuver futureLaneChange1 = mock(FutureLateralManeuver.class);
+    when(futureLaneChange1.getEndingRelativeLane()).thenReturn(-1);
+    when(futureLaneChange1.getStartDistance()).thenReturn(112.03655269176274);
+    when(futureLaneChange1.getEndDistance()).thenReturn(165.12255269176273);
+    when(futureLaneChange1.getLateralManeuvers()).thenReturn(new LinkedList<>());  
+
+    Trajectory traj = new Trajectory(111.0, 166.0);
+    // traj.addManeuver(steadySpeed);
+    // traj.addManeuver(speedUp);
+    // traj.addManeuver(steadySpeed2);
+    traj.addManeuver(steadySpeed3);
+    //traj.addManeuver(laneKeeping);
+    traj.addManeuver(futureLaneChange1);
+    
+    Route leftVehRoute = (new FileStrategy("../route/src/test/resources/routes/TFHRC_south_lot_WB_left.yaml", log)).load();
+    leftVehRoute = Route.fromMessage(leftVehRoute.toMessage(messageFactory)); // Assign waypoint ids
+
+    tc.setRoute(leftVehRoute);
+
+   // tc.setRouteState(32.74732066557381, 1.170347594019404, 8, 4.235458558076061, 0);
+
+    // Call function
+    List<RoutePointStamped> tempPoints = 
+      tc.convertToPath(traj, 1523912553081L, 112.03655269176274, -1.0899588666798081, 0, 0.0, 1, 60);
+    List<ECEFPointStamped> ecefPath;
+    ecefPath = tc.toECEFPoints(tempPoints);
+
+    System.out.println("\n\n");
+    int count = 0;
+    for(ECEFPointStamped p: ecefPath) {
+      System.out.println(gcc.cartesian2Geodesic( p.getPoint(), Transform.identity()));
+      count++;
+    }
+    System.out.println("\n\n");
+  }
 }
