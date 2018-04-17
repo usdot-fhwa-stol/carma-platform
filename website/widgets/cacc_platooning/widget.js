@@ -63,6 +63,9 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                 var host_actual_gap = message.leader_downtrack_distance - hostDowntrackDistance;
                 var platoonStateText;
 
+                if (host_actual_gap < 0)
+                    host_actual_gap = 0;
+
                 switch (message.state) {
                     case platooningInfoState.STANDBY.value:
                         platoonStateText = platooningInfoState.STANDBY.text;
@@ -97,7 +100,7 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                 document.getElementById('divPlatoonId').innerHTML = 'Platoon ID: ' + message.platoon_id;
                 document.getElementById('divPlatoonState').innerHTML = 'State: ' + platoonStateText;
 
-                document.getElementById('divHostTitle').innerHTML =  'Host <br/> ' + message.host_platoon_position + ' out of ' + message.size;
+                document.getElementById('divHostTitle').innerHTML =  'Host <br/> ' + (message.host_platoon_position + 1) + ' out of ' + message.size;
                 document.getElementById('divLeaderTitle').innerHTML =  'Lead <br/>' + message.leader_id ;
 
                 document.getElementById('divHostCmdSpeed').innerHTML = host_cmd_speed_mph;
@@ -129,7 +132,7 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                                       );
                  $('head').append(appendToHeader);
 
-               var myDiv = $("<div id='divPlatoonId' class='divPlatoonStyle1'>Platoon ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx </div>"
+               var myDiv = $("<div style='left:250px; top: 330px; position: relative;'> <div id='divPlatoonId' class='divPlatoonStyle1'>Platoon ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx </div>"
                            + "<div id='divPlatoonState' class='divPlatoonStyle1'>State: xxxxxx </div>"
                            + "<div class='leftRelative'>"
                            + "    <img id='imgHostVehicle' src='images/SUV_64x38.png'/>"
@@ -146,7 +149,7 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                            + "    <img id='imgLeadVehicle' src='images/SUV_64x38.png' />"
                            + "    <div id='divLeaderTitle'>Lead<br/> DOT-##### </div>"
                            + "    <div id='divLeadCmdSpeed' class='numberCircle'>##</div>"
-                           + "</div>"
+                           + "</div> </div>"
                            );
 
                $(this.element).append(myDiv);

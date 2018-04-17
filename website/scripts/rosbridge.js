@@ -1309,6 +1309,11 @@ function checkRouteInfo() {
             insertNewTableRow('tblSecondA', 'Current Segment Lane Count', message.current_segment.waypoint.lane_count);
             insertNewTableRow('tblSecondA', 'Current Segment Req Lane', message.current_segment.waypoint.required_lane_index);
         }
+
+        //Display the lateset route name and timer.
+        var divRouteInfo = document.getElementById('divRouteInfo');
+        if (divRouteInfo != null || divRouteInfo != 'undefined')
+            divRouteInfo.innerHTML = selectedRoute.name + ' : ' + engaged_timer;
     });
 }
 
@@ -1675,6 +1680,7 @@ window.onload = function () {
 
         //TODO: Figure out how to focus to the top when div innerhtml changes. This doesn't seem to work.
         //divCapabilitiesMessage.addListener('change', function (){divCapabilitiesMessage.focus();}, false);
+
 
     } else {
         // Sorry! No Web Storage support..
