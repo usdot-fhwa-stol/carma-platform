@@ -74,7 +74,7 @@ do
 		a) APP=true;;
 		w) WEB=true;;
 		s) SCRIPTS=true;;
-		v) OVERWRITE_HOST_PARAMS=true;;
+		H) OVERWRITE_HOST_PARAMS=true;;
 		\?) echo "Unknown option: -$OPTARG" >&2; exit 1;;
 		:) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
 		*) echo "Unimplemented option: -$OPTARG" >&2; exit 1;;
@@ -242,14 +242,14 @@ if [ ${EVERYTHING} == true ] || [ ${PARAMS} == true ]; then
 	BACKUP_HOST_PARAMS="mv ${CARMA_DIR}/params/HostVehicleParams.yaml ${CARMA_DIR}/params/HostVehicleParamsTemp.yaml"
 	SET_HOST_PARAMS="rm ${CARMA_DIR}/params/HostVehicleParams.yaml; mv ${CARMA_DIR}/params/HostVehicleParamsTemp.yaml ${CARMA_DIR}/params/HostVehicleParams.yaml"
 	
-	if [ ${OVERWRITE_HOST_PARAMS} == true ]; then
+	if [ ${OVERWRITE_HOST_PARAMS} == false ]; then
 		# Backup host vehicle params
 		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${BACKUP_HOST_PARAMS}"
 	fi
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${PARAMS_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 	
-	if [ ${OVERWRITE_HOST_PARAMS} == true ]; then
+	if [ ${OVERWRITE_HOST_PARAMS} == false ]; then
 		# Reset to backup of host vehicle params
 		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SET_HOST_PARAMS}"
 	fi
