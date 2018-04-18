@@ -320,8 +320,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     // Get starting time in seconds
     double time = startMsg.getTimestamp() / 1000L;
     // Get starting route point
-    Transform ecefToSegment = startingSegment.getECEFToSegmentTransform();
-    Vector3 segmentPoint = ecefToSegment.apply(ecefPoint);
+    Transform ecefInSegment = startingSegment.getECEFToSegmentTransform().invert();
+    Vector3 segmentPoint = ecefInSegment.apply(ecefPoint);
     log.debug("messageToPath: segmentPoint = " + segmentPoint.toString());
     double downtrackOfSegment = route.lengthOfSegments(0, startIdx - 1);
     RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time);
@@ -339,13 +339,13 @@ public class TrajectoryConverter implements ITrajectoryConverter {
         ecefPoint.getZ() + ((double)offset.getOffsetZ() / CM_PER_M)
       );
       
-      segmentPoint = ecefToSegment.apply(ecefPoint);
+      segmentPoint = ecefInSegment.apply(ecefPoint);
       if (segmentPoint.getX() > currentSegment.length() && segmentIdx < route.getSegments().size() - 1) {
         downtrackOfSegment += currentSegment.length();
         segmentIdx++;
         currentSegment = route.getSegments().get(segmentIdx);
-        ecefToSegment = currentSegment.getECEFToSegmentTransform();
-        segmentPoint =  ecefToSegment.apply(ecefPoint);
+        ecefInSegment = currentSegment.getECEFToSegmentTransform().invert();
+        segmentPoint =  ecefInSegment.apply(ecefPoint);
       }
       routePoints.add(new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time));
     }
