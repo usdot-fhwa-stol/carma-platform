@@ -71,6 +71,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     private int                             targetLane_ = -1;
     private double                          startSpeed_ = 0.0;
     private double                          endSpeed_ = 0.0;
+    private double                          maxAccel_ = 2.5;
     private MobilityRequest                 plan_ = null;
     private FutureLongitudinalManeuver      futureLonMvr_ = null;
     private FutureLateralManeuver           futureLatMvr_ = null;
@@ -104,6 +105,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     public void onInitialize() {
         // Load Params
         this.EXPIRATION_TIME = pluginServiceLocator.getParameterSource().getInteger("~lane_change_nack_timeout", 500);
+        maxAccel_ = pluginServiceLocator.getParameterSource().getDouble("~vehicle_acceleration_limit", 2.5);
         log.info("Loaded param lane_change_nack_timeout: " + EXPIRATION_TIME);
 
         // Get light bar manager
@@ -380,7 +382,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             futureLatMvr_.addManeuver(laneChange);
 
             //fill the whole longitudinal space with a constant speed
-            SteadySpeed ss = new SteadySpeed(this);
+            SteadySpeed ss = new SteadySpeed(this);  
+            ss.setSpeeds(startSpeed_, startSpeed_);
+            ss.setMaxAccel(maxAccel_);
             planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
             futureLonMvr_.addManeuver(ss);
 
@@ -401,7 +405,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
 
         try {
             // fill the whole longitudinal space with a constant speed
-            SteadySpeed ss = new SteadySpeed(this);
+            SteadySpeed ss = new SteadySpeed(this);  
+            ss.setSpeeds(startSpeed_, startSpeed_);
+            ss.setMaxAccel(maxAccel_);
             planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
             futureLonMvr_.addManeuver(ss);
 
