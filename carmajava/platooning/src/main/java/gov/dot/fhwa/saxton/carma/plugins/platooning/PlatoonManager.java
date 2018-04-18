@@ -39,10 +39,13 @@ public class PlatoonManager implements Runnable {
     private   long                 memberInfoTimeout;
     private   boolean              isFollower;
     
+    
     // This platoon list will have different usages under leader/follower state
     protected List<PlatoonMember>  platoon             = Collections.synchronizedList(new ArrayList<>());
     protected String               currentPlatoonID    = UUID.randomUUID().toString();
     protected String               leaderID            = "";
+    
+    protected volatile int         platoonCurrentSize = 1;
     
     // The following variables are used for APF leader selection algorithm
     protected String               previousFunctionalLeaderID    = "";

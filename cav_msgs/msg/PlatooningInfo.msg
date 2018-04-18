@@ -9,9 +9,12 @@
 
 # Platoon state
 uint8    state
-uint8    STANDBY=0
-uint8    LEADER=1
-uint8    FOLLOWER=2
+uint8    DISABLED=0
+uint8    SEARCHING=1
+uint8    CONNECTING_TO_NEW_FOLLOWER=2
+uint8    CONNECTING_TO_NEW_LEADER=2
+uint8    LEADING=3
+uint8    FOLLOWING=4
 
 # Current platoon ID (GUID)
 string   platoon_id

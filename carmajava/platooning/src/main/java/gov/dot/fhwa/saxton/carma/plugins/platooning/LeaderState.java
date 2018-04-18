@@ -331,7 +331,8 @@ public class LeaderState implements IPlatooningState {
             // For INFO params, the string format is INFO|LEADER:xx,REAR_DTD:xx,SPEED:xx
             String infoParams = String.format(plugin.OPERATION_INFO_PARAMS,
                                 hostStaticId, plugin.getPlatoonManager().getPlatoonRearDowntrackDistance(),
-                                pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
+                                pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed(),
+                                plugin.getPlatoonManager().getPlatooningSize() + 1); // follower size + 1
             msg.setStrategyParams(infoParams);
         } else if(type.equals(plugin.OPERATION_STATUS_TYPE)) {
             // TODO Maneuver planner from plugin service locator may need to provide this data directly 
