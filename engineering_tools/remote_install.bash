@@ -8,7 +8,7 @@
 # The script requires that the recieving pc have an example folder called app_v0 which will be duplicated to preserve structure
 # The script will attempt to rebuild if no catkin install folder can be found
 # All included files needed for launch (not the primary launch file) have been placed in their respective install/share folders at build time
-# By default HostVehicleParams.yaml will not be overwritten. Use -v to overwrite it
+# By default HostVehicleParams.yaml will not be overwritten. Use -H to overwrite it
 ### Usage
 # Only deploy new code/html/launch files
 # remote_install.bash -n <username> -a
@@ -34,7 +34,7 @@
 # -a Copy App: A Flag which will cause everything except params, routes, and urdf files to be copied
 # -w Copy Web: A Flag which will cause the website (ui) files to be copied
 # -s Copy Scripts: A flag which will cause the scripts in engineering_tools to be copied
-# -v Overwrite the HostVehicleParams file on the target pc
+# -H Overwrite the HostVehicleParams file on the target pc
 
 
 usage() { echo "Usage: remote_install.bash -n <username> ";}
