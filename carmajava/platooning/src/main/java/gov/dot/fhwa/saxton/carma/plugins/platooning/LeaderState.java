@@ -272,6 +272,7 @@ public class LeaderState implements IPlatooningState {
                 boolean isTimeForHeartBeat = tsStart - lastHeartBeatTime >= plugin.getOperationInfoIntervalLength();
                 boolean isPlatoonNotFull = plugin.getPlatoonManager().getPlatooningSize() + 1 < plugin.getMaxPlatoonSize(); 
                 if(isTimeForHeartBeat && isPlatoonNotFull) {
+                    plugin.getPlatoonManager().platoonCurrentSize = plugin.getPlatoonManager().getPlatooningSize() + 1;
                     MobilityOperation infoOperation = plugin.getMobilityOperationPublisher().newMessage();
                     composeMobilityOperation(infoOperation, "INFO");
                     plugin.getMobilityOperationPublisher().publish(infoOperation);
