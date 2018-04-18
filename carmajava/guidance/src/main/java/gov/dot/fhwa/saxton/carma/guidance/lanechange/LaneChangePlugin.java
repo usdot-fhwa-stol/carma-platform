@@ -258,8 +258,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         // TODO this is a very simplistic estimate and could be improved
         long futureTime = System.currentTimeMillis() + (long)(1000.0*2.0*(startDist - curDist)/(startSpeed + curSpeed));
         log.info("Expected arrival time at lane change area = " + futureTime);
-        // TODO Estimate starting crosstrack using trajectory being planned
-        double startCrosstrack = inputs.getCrosstrackDistance();                    
+        
         RoutePointStamped startPoint = new RoutePointStamped(startDist, startCrosstrack, futureTime);
         // set segment index and segment start downtrack distance
         int segIdx = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDist).getPrevWaypoint().getWaypointId();
@@ -269,6 +268,12 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         for(int i = 0; i < segIdx; i++) {
             segmentsDtd += pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(i).getLength();
         }
+        
+        // Calculate starting crosstrack
+        // TODO make crosstrack calculation work for more than 2 lanes
+        double laneWidth = pluginServiceLocator.getRouteService().getSegments().get(segIdx).getWaypoint().getLaneWidth();
+        double startCrosstrack = -futureLatMvr_.getEndingRelativeLane() * (laneWidth / 2.0); // Assumes ending relative lane is -1 or 1
+        
         startPoint.setSegDowntrack(startDist - segmentsDtd);
         log.debug("The segment dtd of first RoutePointStamped is set to be " + segmentsDtd);
 
