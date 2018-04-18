@@ -57,7 +57,7 @@ WEB=false;
 SCRIPTS=false;
 OVERWRITE_HOST_PARAMS=false;
 
-while getopts n:h:bvpruelmawst:c: option
+while getopts n:h:bHpruelmawst:c: option
 do
 	case "${option}"
 	in
