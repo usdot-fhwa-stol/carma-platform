@@ -29,7 +29,7 @@
     float: left;
     position: absolute;
     top: 60px;
-    left: 100px;
+    left: 110px;
 }
 
 #divHostTitle {
@@ -40,6 +40,7 @@
     text-align: center;
     font-variant-caps: all-small-caps;
     font-size: 20px;
+    left: -10px;
 }
 
 #gaugeActualGap {
@@ -85,5 +86,21 @@
 }
 
 #divLeadCmdSpeed {
-    left: -10px;
+    left: -20px;
+}
+
+.SUVSideView  {
+  display: block;
+  width: 128px;
+  height: 76px;
+  background: url(SUVSideView.svg);
+  background-size: 128px 76px;
+}
+
+.SUVSideView_Green {
+  display: block;
+  width: 128px;
+  height: 76px;
+  background: url(SUVSideView_Green.svg);
+  background-size: 128px 76px;
 }
