@@ -382,9 +382,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             futureLatMvr_.addManeuver(laneChange);
 
             //fill the whole longitudinal space with a constant speed
-            SteadySpeed ss = new SteadySpeed(this);
-            double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(futureLonMvr_.getStartDistance()).getLimit();  
-            ss.setSpeeds(speedLimit, speedLimit);
+            SteadySpeed ss = new SteadySpeed(this);  
+            ss.setSpeeds(startSpeed_, startSpeed_);
             ss.setMaxAccel(maxAccel_);
             planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
             futureLonMvr_.addManeuver(ss);
@@ -406,9 +405,8 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
 
         try {
             // fill the whole longitudinal space with a constant speed
-            SteadySpeed ss = new SteadySpeed(this);
-            double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(futureLonMvr_.getStartDistance()).getLimit();  
-            ss.setSpeeds(speedLimit, speedLimit);
+            SteadySpeed ss = new SteadySpeed(this);  
+            ss.setSpeeds(startSpeed_, startSpeed_);
             ss.setMaxAccel(maxAccel_);
             planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
             futureLonMvr_.addManeuver(ss);
