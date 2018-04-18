@@ -71,6 +71,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     private int                             targetLane_ = -1;
     private double                          startSpeed_ = 0.0;
     private double                          endSpeed_ = 0.0;
+    private double                          maxAccel_ = 2.5;
     private MobilityRequest                 plan_ = null;
     private FutureLongitudinalManeuver      futureLonMvr_ = null;
     private FutureLateralManeuver           futureLatMvr_ = null;
@@ -95,7 +96,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         version.setName("Lane Change Plugin");
         version.setMajorRevision(1);
         version.setIntermediateRevision(0);
-        version.setMinorRevision(1);
+        version.setMinorRevision(2);        //Mike's changes for route converter + John's fix for NPE
         STATIC_ID = UUID.randomUUID().toString();
         pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
     }
@@ -104,6 +105,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     public void onInitialize() {
         // Load Params
         this.EXPIRATION_TIME = pluginServiceLocator.getParameterSource().getInteger("~lane_change_nack_timeout", 500);
+        maxAccel_ = pluginServiceLocator.getParameterSource().getDouble("~vehicle_acceleration_limit", 2.5);
         log.info("Loaded param lane_change_nack_timeout: " + EXPIRATION_TIME);
 
         // Get light bar manager
@@ -258,6 +260,16 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         // TODO Estimate starting crosstrack using trajectory being planned
         double startCrosstrack = inputs.getCrosstrackDistance();                    
         RoutePointStamped startPoint = new RoutePointStamped(startDist, startCrosstrack, futureTime);
+        // set segment index and segment start downtrack distance
+        int segIdx = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDist).getPrevWaypoint().getWaypointId();
+        startPoint.setSegmentIdx(segIdx);
+        log.debug("The segment index of first RoutePointStamped is set to be " + segIdx);
+        double segmentsDtd = 0;
+        for(int i = 0; i < segIdx; i++) {
+            segmentsDtd += pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(i).getLength();
+        }
+        startPoint.setSegDowntrack(startDist - segmentsDtd);
+        log.debug("The segment dtd of first RoutePointStamped is set to be " + segmentsDtd);
 
         // Convert the future maneuver to a set of route points
         Trajectory laneChangeTraj = new Trajectory(futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
@@ -370,7 +382,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             futureLatMvr_.addManeuver(laneChange);
 
             //fill the whole longitudinal space with a constant speed
-            SteadySpeed ss = new SteadySpeed(this);
+            SteadySpeed ss = new SteadySpeed(this);  
+            ss.setSpeeds(startSpeed_, startSpeed_);
+            ss.setMaxAccel(maxAccel_);
             planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
             futureLonMvr_.addManeuver(ss);
 
@@ -391,7 +405,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
 
         try {
             // fill the whole longitudinal space with a constant speed
-            SteadySpeed ss = new SteadySpeed(this);
+            SteadySpeed ss = new SteadySpeed(this);  
+            ss.setSpeeds(startSpeed_, startSpeed_);
+            ss.setMaxAccel(maxAccel_);
             planner.planManeuver(ss, futureLonMvr_.getStartDistance(), futureLonMvr_.getEndDistance());
             futureLonMvr_.addManeuver(ss);
 

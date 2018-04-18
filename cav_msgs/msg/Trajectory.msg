@@ -8,4 +8,5 @@
 cav_msgs/LocationECEF          location
 
 # a list of offsets describing current trajectory
+# TODO: document the units of measure!
 cav_msgs/LocationOffsetECEF[]  offsets

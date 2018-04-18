@@ -3,7 +3,7 @@
 
 # Booleans:  allow normal publishing of the indicated message types to their outbound topics (to be received by dsrc driver)
 publish_outbound_bsm: false
-publish_outbound_mobility_request: true
+publish_outbound_mobility_request: false
 publish_outbound_mobility_path: false
-publish_outbound_mobility_response: true
-publish_outbound_mobility_operation: true
+publish_outbound_mobility_response: false
+publish_outbound_mobility_operation: false
