@@ -8,6 +8,7 @@
 # The script requires that the recieving pc have an example folder called app_v0 which will be duplicated to preserve structure
 # The script will attempt to rebuild if no catkin install folder can be found
 # All included files needed for launch (not the primary launch file) have been placed in their respective install/share folders at build time
+# By default HostVehicleParams.yaml will not be overwritten. Use -v to overwrite it
 ### Usage
 # Only deploy new code/html/launch files
 # remote_install.bash -n <username> -a
@@ -33,6 +34,7 @@
 # -a Copy App: A Flag which will cause everything except params, routes, and urdf files to be copied
 # -w Copy Web: A Flag which will cause the website (ui) files to be copied
 # -s Copy Scripts: A flag which will cause the scripts in engineering_tools to be copied
+# -v Overwrite the HostVehicleParams file on the target pc
 
 
 usage() { echo "Usage: remote_install.bash -n <username> ";}
@@ -53,8 +55,9 @@ MOCK_DATA=false
 APP=false
 WEB=false;
 SCRIPTS=false;
+OVERWRITE_HOST_PARAMS=false;
 
-while getopts n:h:bpruelmawst:c: option
+while getopts n:h:bvpruelmawst:c: option
 do
 	case "${option}"
 	in
@@ -71,6 +74,7 @@ do
 		a) APP=true;;
 		w) WEB=true;;
 		s) SCRIPTS=true;;
+		v) OVERWRITE_HOST_PARAMS=true;;
 		\?) echo "Unknown option: -$OPTARG" >&2; exit 1;;
 		:) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
 		*) echo "Unimplemented option: -$OPTARG" >&2; exit 1;;
@@ -234,11 +238,21 @@ fi
 # If we want to copy params
 if [ ${EVERYTHING} == true ] || [ ${PARAMS} == true ]; then
 	echo "Trying to copy params"
-	# Delete old files
-	SCRIPT="rm -r ${CARMA_DIR}/params/*;"
-	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
+	# Set up scripts
+	BACKUP_HOST_PARAMS="mv ${CARMA_DIR}/params/HostVehicleParams.yaml ${CARMA_DIR}/params/HostVehicleParamsTemp.yaml"
+	SET_HOST_PARAMS="rm ${CARMA_DIR}/params/HostVehicleParams.yaml; mv ${CARMA_DIR}/params/HostVehicleParamsTemp.yaml ${CARMA_DIR}/params/HostVehicleParams.yaml"
+	
+	if [ ${OVERWRITE_HOST_PARAMS} == true ]; then
+		# Backup host vehicle params
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${BACKUP_HOST_PARAMS}"
+	fi
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${PARAMS_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
+	
+	if [ ${OVERWRITE_HOST_PARAMS} == true ]; then
+		# Reset to backup of host vehicle params
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SET_HOST_PARAMS}"
+	fi
 	# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/params/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/params/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/params/*;"
 fi
