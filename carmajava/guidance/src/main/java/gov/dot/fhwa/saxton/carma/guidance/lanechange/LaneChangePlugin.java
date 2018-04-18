@@ -271,7 +271,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         
         // Calculate starting crosstrack
         // TODO make crosstrack calculation work for more than 2 lanes
-        double laneWidth = pluginServiceLocator.getRouteService().getSegments().get(segIdx).getWaypoint().getLaneWidth();
+        double laneWidth = pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(segIdx).getWaypoint().getLaneWidth();
         double startCrosstrack = -futureLatMvr_.getEndingRelativeLane() * (laneWidth / 2.0); // Assumes ending relative lane is -1 or 1
         
         startPoint.setSegDowntrack(startDist - segmentsDtd);
