@@ -225,7 +225,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         }
         limit_buffer.setLocation(trajSeg.endLocation);
         mergedLimits.add(limit_buffer);
-        log.info("Found" + mergedLimits.size() + "speed limits in " + trajSeg.toString());
+        log.info("Found " + mergedLimits.size() + " speed limits in " + trajSeg.toString());
         for(SpeedLimit sl : mergedLimits) {
             log.info(sl.toString());
         }
