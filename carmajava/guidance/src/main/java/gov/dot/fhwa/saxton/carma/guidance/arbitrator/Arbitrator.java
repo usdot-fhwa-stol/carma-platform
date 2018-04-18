@@ -563,6 +563,8 @@ public class Arbitrator extends GuidanceComponent
       double trajectoryStart = downtrackDistance.get();
       double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
 
+      // Set last trajectory to null such that this re-plan will use current speed as entry speed
+      trajectory = null;
       trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
       trajectoryExecutor.abortTrajectory();
       trajectoryExecutor.runTrajectory(trajectory);
