@@ -340,7 +340,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       );
       
       segmentPoint = ecefToSegment.apply(ecefPoint);
-      if (segmentPoint.getX() > currentSegment.length()) {
+      if (segmentPoint.getX() > currentSegment.length() && segmentIdx < route.getSegments().size() - 1) {
         downtrackOfSegment += currentSegment.length();
         segmentIdx++;
         currentSegment = route.getSegments().get(segmentIdx);
