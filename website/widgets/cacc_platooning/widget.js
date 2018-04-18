@@ -46,7 +46,7 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
 
             // List out the expected state to handle.
             var platooningInfoState = {
-                STANDBY: { value: 0, text: 'STANDBY' },
+                SEARCHING: { value: 0, text: 'SEARCHING' },
                 LEADER: { value: 1, text: 'LEADER' },
                 FOLLOWER: { value: 2, text: 'FOLLOWER' },
                 //Add new ones here.
@@ -74,10 +74,14 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
 
                 var platoonStateText;
                 switch (message.state) {
-                    case platooningInfoState.STANDBY.value:
-                        platoonStateText = platooningInfoState.STANDBY.text;
+                    case platooningInfoState.SEARCHING.value:
+                        platoonStateText = platooningInfoState.SEARCHING.text;
                         document.getElementById('divHostTitle').innerHTML =  '';
                         document.getElementById('divLeaderTitle').innerHTML =  '';
+                        document.getElementById('imgHostVehicle').className='SUVSideView';
+                        document.getElementById('imgLeadVehicle').className='SUVSideView';
+                        host_actual_gap = 0;
+                        platoon_desired_gap = 0;
                         break;
                     case platooningInfoState.LEADER.value:
                         platoonStateText = platooningInfoState.LEADER.text;
@@ -99,9 +103,14 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                         document.getElementById('imgLeadVehicle').className='SUVSideView';
                         break;
                     default:
-                        platoonStateText = 'xxxxxx';
+                        platoonStateText = 'UNKNOWN (' + message.state + ')';
                         document.getElementById('divHostTitle').innerHTML =  '';
                         document.getElementById('divLeaderTitle').innerHTML =  '';
+                        document.getElementById('imgHostVehicle').className='SUVSideView';
+                        document.getElementById('imgLeadVehicle').className='SUVSideView';
+                        host_actual_gap = 0;
+                        platoon_desired_gap = 0;
+
                         break;
                 }
 
