@@ -191,9 +191,9 @@ public class YieldPlugin extends AbstractPlugin
         String planId = replanData.get().planId;
         Trajectory oldTraj = replanData.get().trajectoryToReplan;
         log.info(String.format(
-                "Yield plugin replanning trajectory [%.02f, %.02f) due to conflicts at [%.02f, %.02f]m t=[%.02f, %.02f] with plan=%s from vehicle=%s",
+                "Yield plugin replanning trajectory [%.02f, %.02f) due to conflicts at [%.02f, %.02f]m t=[%.02f, %.02f] with plan=%s",
                 trajectory.getStartLocation(), trajectory.getEndLocation(), conflict.getStartDowntrack(),
-                conflict.getEndDowntrack(), conflict.getStartTime(), conflict.getEndTime(), planId, "UNKNOWN"));
+                conflict.getEndDowntrack(), conflict.getStartTime(), conflict.getEndTime(), planId));
 
         List<LongitudinalManeuver> lonMvrs = new ArrayList<>();
 
