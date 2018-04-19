@@ -77,3 +77,7 @@ max_platoon_size: 10
 # Double: The time gap distance the candidate vehicle wants to achieve with the leader
 # Units: s
 follower_join_time_gap: 3.0
+
+# Double: Determine the absolute maximum cmd_speed adjustment value we can get from PID controller
+# Units: m/s
+platooning_cmd_max_adjustment: 10.0
