@@ -273,7 +273,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         double laneWidth = pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(segIdx).getWaypoint().getLaneWidth();
         double startCrosstrack = -futureLatMvr_.getEndingRelativeLane() * (laneWidth / 2.0); // Assumes ending relative lane is -1 or 1
         
-        RoutePointStamped startPoint = new RoutePointStamped(startDist, startCrosstrack, futureTime);
+        RoutePointStamped startPoint = new RoutePointStamped(startDist, startCrosstrack, futureTime / MS_PER_S);
         startPoint.setSegmentIdx(segIdx);
         startPoint.setSegDowntrack(startDist - segmentsDtd);
         

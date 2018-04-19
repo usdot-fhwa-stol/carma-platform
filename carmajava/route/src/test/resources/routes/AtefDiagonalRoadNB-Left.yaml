@@ -12,7 +12,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 1
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -27,7 +27,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 1
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
@@ -43,7 +43,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 1
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -58,7 +58,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -73,7 +73,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -88,7 +88,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 2
-    requiredLane: 0
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
