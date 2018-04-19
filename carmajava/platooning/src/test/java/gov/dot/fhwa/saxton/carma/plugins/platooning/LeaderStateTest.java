@@ -184,7 +184,7 @@ public class LeaderStateTest {
         MobilityHeader header = mock(MobilityHeader.class);
         when(header.getPlanId()).thenReturn("ABC");
         when(mockOperation.getHeader()).thenReturn(header);
-        when(mockOperation.getStrategyParams()).thenReturn(String.format(mockPlugin.OPERATION_INFO_PARAMS, "A", 20.0, 5.0));
+        when(mockOperation.getStrategyParams()).thenReturn(String.format(mockPlugin.OPERATION_INFO_PARAMS, "A", 20.0, 5.0, 1));
         when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(30.0);
         leaderState.onMobilityOperationMessage(mockOperation);
         verify(mockPlugin, times(0)).getMobilityRequestPublisher();
@@ -196,7 +196,7 @@ public class LeaderStateTest {
         MobilityHeader header = mock(MobilityHeader.class);
         when(header.getPlanId()).thenReturn("ABC");
         when(mockOperation.getHeader()).thenReturn(header);
-        when(mockOperation.getStrategyParams()).thenReturn(String.format(mockPlugin.OPERATION_INFO_PARAMS, "A", 50.0, 5.0));
+        when(mockOperation.getStrategyParams()).thenReturn(String.format(mockPlugin.OPERATION_INFO_PARAMS, "A", 50.0, 5.0, 1));
         when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(30.0);
         when(mockPlugin.getDesiredJoinTimeGap()).thenReturn(4.0);
         when(mockRouteService.getSpeedLimitAtLocation(30.0)).thenReturn(new SpeedLimit(30, 10.0));
