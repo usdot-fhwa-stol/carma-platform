@@ -177,7 +177,7 @@ public class ConflictManager implements IConflictManager {
     log.info("Inserting path with size " + path.size());
     int count = 0;
     for (RoutePointStamped routePoint: path) {
-      log.info("Inserting point " + count + ": " + routePoint.getPoint());
+      //log.info("Inserting point " + count + ": " + routePoint.getPoint());
       // Define bounds
       Point3D minBoundingPoint = new Point3D(
         routePoint.getDowntrack() - downtrackMargin,
@@ -189,7 +189,7 @@ public class ConflictManager implements IConflictManager {
         routePoint.getStamp() + timeMargin);
       // Insert point
       map.insert(new CartesianObject(Arrays.asList(minBoundingPoint, maxBoundingPoint)));
-      log.info("Inserted point");
+      //log.info("Inserted point");
       count++;
     }
     log.info("Done inserting");
