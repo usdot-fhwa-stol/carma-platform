@@ -206,6 +206,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             //create empty containers (future compound maneuvers) for the TBD maneuvers to be inserted into
             ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
             IManeuverInputs inputs = planner.getManeuverInputs();
+            // TODO This requires that all waypoints contain a requiredLaneIndex. At somepoint we should allow waypoints to not have a required lane.
             int startingLane = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDistance).getWaypoint().getRequiredLaneIndex();
             futureLatMvr_ = new FutureLateralManeuver(this,  targetLane_ - startingLane, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
             futureLonMvr_ = new FutureLongitudinalManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
