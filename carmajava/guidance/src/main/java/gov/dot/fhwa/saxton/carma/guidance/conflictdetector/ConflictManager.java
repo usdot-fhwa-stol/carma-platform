@@ -160,7 +160,10 @@ public class ConflictManager implements IConflictManager {
     }
     log.info("Preparing to insert points");
     // Insert points
+    long time0 = System.currentTimeMillis();
     insertPoints(path, vehiclesPath);
+    long time1 = System.currentTimeMillis();
+    log.debug("addPath: call to insertPoints took " + (time1-time0) + " ms.");
   }
 
   /**
