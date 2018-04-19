@@ -38,6 +38,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     protected Filter<Double> distanceGapController_;
     protected Pipeline<Double> speedController_;
     protected double desiredGap_ = 0.0;
+    protected double adjustmentCap = 10.0;
     protected AtomicDouble speedCmd_ = new AtomicDouble(0.0);
     
     public CommandGenerator(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
@@ -46,6 +47,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
         this.log_ = log;
         this.distanceGapController_ = new PidController(plugin_.getKpPID(), plugin_.getKiPID(), plugin_.getKdPID(), plugin_.getStandStillGap());
         this.speedController_ = new Pipeline<Double>(distanceGapController_);
+        this.adjustmentCap = Math.max(0, plugin.getCmdSpeedMaxAdjustment());
     }
 
     @Override
@@ -98,9 +100,17 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             distanceGapController_.changeSetpoint(desiredHostPosition);
             Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
             double output = speedController_.apply(signal).get().getData();
-            log_.debug("The output from controller is " + output);
-            speedCmd_.set(Math.max(output + leader.commandSpeed, 0));
-            log_.debug("A speed command is generated from pid controller: " + speedCmd_ + " m/s");
+            double adjSpeedCmd = output + leader.commandSpeed;
+            log_.debug("The output from controller is " + output + " and adjusted speed command is " + adjSpeedCmd);
+            if(adjSpeedCmd > leader.commandSpeed + this.adjustmentCap) {
+                adjSpeedCmd = leader.commandSpeed + this.adjustmentCap;
+                log_.debug("The adjusted cmd speed is higher than adjustment limit. Cap to " + adjSpeedCmd);
+            } else if(adjSpeedCmd < leader.commandSpeed - this.adjustmentCap) {
+                adjSpeedCmd = leader.commandSpeed - this.adjustmentCap;
+                log_.debug("The adjusted cmd speed is lower than adjustment limit. Cap to " + adjSpeedCmd);
+            }
+            speedCmd_.set(Math.max(adjSpeedCmd, 0));
+            log_.debug("A speed command is generated from command generator: " + speedCmd_.get() + " m/s");
         } else {
             // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
             speedCmd_.set(pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());

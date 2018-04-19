@@ -71,6 +71,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double kpPID                 = 1.5;
     protected double kiPID                 = 0.0;
     protected double kdPID                 = 0.1;
+    protected double cmdSpeedMaxAdjustment = 10.0;
     
     // following parameters are for leader selection
     protected double lowerBoundary         = 1.65;
@@ -130,6 +131,7 @@ public class PlatooningPlugin extends AbstractPlugin
         kpPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
         kiPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
         kdPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
+        cmdSpeedMaxAdjustment   = pluginServiceLocator.getParameterSource().getDouble("~platooning_cmd_max_adjustment", 10.0);
         statusTimeoutFactor     = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
         lowerBoundary           = pluginServiceLocator.getParameterSource().getDouble("~platooning_lower_boundary", 1.65);
         upperBoundary           = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
@@ -169,6 +171,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param longNegotiationTimeout = " + longNegotiationTimeout);
         log.debug("Load param maxPlatoonSize = " + maxPlatoonSize);
         log.debug("Load param followerJoinTimeGap = " + followerJoinTimeGap);
+        log.debug("Load param cmdSpeedMaxAdjustment = " + cmdSpeedMaxAdjustment);
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
         mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
@@ -474,5 +477,9 @@ public class PlatooningPlugin extends AbstractPlugin
     
     protected double getFollowerJoinTimeGap() {
         return followerJoinTimeGap;
+    }
+    
+    protected double getCmdSpeedMaxAdjustment() {
+        return cmdSpeedMaxAdjustment;
     }
 }
