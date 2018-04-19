@@ -80,6 +80,7 @@ function openTab(evt, name) {
             tabheader[i].style.width = '82%';
     }
 
+
 }
 
 // Get the element with id="defaultOpen" and click on it

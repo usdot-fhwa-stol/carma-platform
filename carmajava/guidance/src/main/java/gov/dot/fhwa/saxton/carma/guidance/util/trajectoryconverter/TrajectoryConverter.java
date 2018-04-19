@@ -173,7 +173,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     log.debug("PATH", "convertToPath entered: " + longitudinalManeuvers.size() + " long mvrs, " +
                 lateralManeuvers.size() + " lat mvrs, " + (complexManeuver == null ? "null" : "non-null") +
                 "complex mvr.");
-    log.debug("PATH", "    downtrack = " + downtrack + ", currentSegmentIdx = " + currentSegmentIdx +
+    log.debug("PATH", "    downtrack = " + downtrack + ", crosstrack = " + crosstrack + ", currentSegmentIdx = " + currentSegmentIdx +
                 ", segDowntrack = " + segDowntrack + ", lane = " + lane + ", maxPoints = " + maxPointsInPath +
                 ", currentTime = " + currentTime);
 
