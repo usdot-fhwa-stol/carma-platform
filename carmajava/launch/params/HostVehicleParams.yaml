@@ -6,7 +6,7 @@ vehicle_color: 'UNCONFIGURED-COLOR'
 
 # Double: Host vehicle height
 # Units: Meters
-vehicle_height: 5
+vehicle_height: 5.0
 
 # String: Host vehicle’s Unique ID that will be used in mobility messages.
 vehicle_id: 'UNCONFIGURED-ID'
