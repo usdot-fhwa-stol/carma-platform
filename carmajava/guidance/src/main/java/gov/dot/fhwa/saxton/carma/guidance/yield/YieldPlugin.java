@@ -357,7 +357,11 @@ public class YieldPlugin extends AbstractPlugin
     @Override // Primary Entry Point 2/2
     public void handleMobilityPathMessageWithConflict(MobilityPath msg, boolean hasConflict,
             ConflictSpace conflictSpace) {
-        handleConflictNotification(msg.getHeader().getPlanId(), msg.getHeader().getSenderId(), conflictSpace);
+        if (msg != null) {
+            handleConflictNotification(msg.getHeader().getPlanId(), msg.getHeader().getSenderId(), conflictSpace);
+        } else {
+            handleConflictNotification("VehicleAwareness", "UNSPECIFIED", conflictSpace);
+        }
     }
 }
 
