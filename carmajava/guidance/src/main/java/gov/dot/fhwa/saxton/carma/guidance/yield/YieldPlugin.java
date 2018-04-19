@@ -143,13 +143,13 @@ public class YieldPlugin extends AbstractPlugin
         minConflictAvoidanceTimegap = params.getDouble("~min_conflict_avoidance_timegap", 4.0);
         maxYieldAccelAuthority = params.getDouble("~max_acceleration_capability", 2.5)
                 * params.getDouble("~max_yield_accel_authority", 0.8);
-        maxYieldAccelAuthority = params.getDouble("~vehicle_response_lag", 1.4);
+        vehicleResponseLag = params.getDouble("~vehicle_response_lag", 1.4);
         pluginServiceLocator.getMobilityRouter().registerMobilityPathHandler(YIELD_STRATEGY, this);
         pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(YIELD_STRATEGY, this);
 
         log.info(String.format(
                 "Yield plugin inited with maxYieldAccelAuthority =%.02f, minConflictAvoidanceTimegap = %.02f",
-                minConflictAvoidanceTimegap, maxYieldAccelAuthority));
+                maxYieldAccelAuthority, minConflictAvoidanceTimegap));
     }
 
     @Override
@@ -257,7 +257,7 @@ public class YieldPlugin extends AbstractPlugin
             conflictAvoidanceStartDist = trajectory.getStartLocation();
             conflictAvoidanceStartSpeed = expectedEntrySpeed;
 
-            conflictAvoidanceStartTime = System.currentTimeMillis();
+            conflictAvoidanceStartTime = System.currentTimeMillis() / 1000.0;
 
             double spaceAvailableForConflictAvoidance = conflict.getStartDowntrack() - conflictAvoidanceStartDist
                     - (vehicleResponseLag * expectedEntrySpeed);
@@ -357,7 +357,11 @@ public class YieldPlugin extends AbstractPlugin
     @Override // Primary Entry Point 2/2
     public void handleMobilityPathMessageWithConflict(MobilityPath msg, boolean hasConflict,
             ConflictSpace conflictSpace) {
-        handleConflictNotification(msg.getHeader().getPlanId(), msg.getHeader().getSenderId(), conflictSpace);
+        if (msg != null) {
+            handleConflictNotification(msg.getHeader().getPlanId(), msg.getHeader().getSenderId(), conflictSpace);
+        } else {
+            handleConflictNotification("VehicleAwareness", "UNSPECIFIED", conflictSpace);
+        }
     }
 }
 
