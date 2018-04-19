@@ -266,6 +266,20 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         boolean conflictHandled = true;
         ConflictSpace conflictSpace = null;
 
+        ///// LOG PATH TODO remove when done testing
+        String pathLog = "The request which was processed was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp: otherPath) {
+            pathLog = pathLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", " + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(pathLog);
+
+        String hostLog = "The host path during request which was current was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp: hostPath) {
+            hostLog = hostLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", " + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(hostLog);
+        //// END LOG PATH
+
         if (!conflictSpaces.isEmpty()) {
             conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
@@ -379,6 +393,19 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         log.info("Analyzing the path message with " + otherTrajectory.size() + " points took: " + (tempEndTime - tempStartTime));
         log.debug("    Time to beginning of addMobilityPath was " + (tempTime1 - tempStartTime) + " ms");
         log.debug("    Time to run addMoblityPath = " + (tempTime2 - tempTime1) + " ms");
+        ///// LOG PATH TODO remove when done testing
+        String pathLog = "The path which was processed was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp: otherTrajectory) {
+            pathLog = pathLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", " + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(pathLog);
+
+        String hostLog = "The host path which was current was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp: hostTrajectory) {
+            hostLog = hostLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", " + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(hostLog);
+        //// END LOG PATH
         if (!conflictSpaces.isEmpty()) {
             ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
