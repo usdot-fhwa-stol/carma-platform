@@ -242,6 +242,8 @@ public class YieldPlugin extends AbstractPlugin
             double epsilon = minConflictAvoidanceTimegap;
             requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2);
 
+            log.debug(String.format("d=%.02f, v=%.02f, t=%.02f, epsilon=%.02f, a=%.02f", d, v , t, epsilon, requiredAcceleration));
+
             if (Math.abs(requiredAcceleration) <= maxYieldAccelAuthority) {
                 solved = true;
             }
@@ -265,6 +267,7 @@ public class YieldPlugin extends AbstractPlugin
             double t = timeAvailableForConflictAvoidance;
             double epsilon = minConflictAvoidanceTimegap;
             requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2);
+            log.debug(String.format("d=%.02f, v=%.02f, t=%.02f, epsilon=%.02f, a=%.02f", d, v , t, epsilon, requiredAcceleration));
         }
 
         if (Math.abs(requiredAcceleration) > maxYieldAccelAuthority) {
@@ -277,18 +280,26 @@ public class YieldPlugin extends AbstractPlugin
 
         // We solved it, implement solution
         for (LongitudinalManeuver mvr : lonMvrs) {
+            log.info(String.format("Yield plugin keeping longitudinal maneuver from [%.02f, %.02f)", mvr.getStartDistance(), mvr.getEndDistance()));
             trajectory.addManeuver(mvr);
         }
 
         double finalVelocity = conflictAvoidanceStartSpeed
                 + requiredAcceleration * (conflict.getStartTime() - conflictAvoidanceStartTime);
 
+        log.debug(String.format("conflictAvoidanceStartSpeed=%.02f, requiredAcceleration=%.02f, finalVelocity=%.02f, conflictAvoidanceStartTime=%.02f, conflictStartTime=%.02f",
+        conflictAvoidanceStartSpeed, requiredAcceleration, finalVelocity, conflictAvoidanceStartTime, conflict.getStartTime()));
+
         SlowDown conflictAvoidanceMvr = new SlowDown(this);
         conflictAvoidanceMvr.setSpeeds(conflictAvoidanceStartSpeed, finalVelocity);
         ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
         planner.planManeuver(conflictAvoidanceMvr, conflictAvoidanceStartDist);
+        log.info(String.format("Yield plugin planned slowdown maneuver from [%.02f, %.02f) with speeds [%.02f, %.02f]",
+        conflictAvoidanceStartDist, conflictAvoidanceMvr.getEndDistance(), conflictAvoidanceStartSpeed, finalVelocity));
         trajectory.addManeuver(conflictAvoidanceMvr);
         if (conflictAvoidanceMvr.getEndDistance() <= conflict.getEndDowntrack()) {
+            log.info(String.format("Yield plugin planning steady speed maneuver from [%.02f, %.02f) @ %.02f m/s",
+            conflictAvoidanceMvr.getEndDistance(), conflict.getEndDowntrack(), finalVelocity));
             SteadySpeed steady = new SteadySpeed(this);
             steady.setSpeeds(finalVelocity, finalVelocity);
             planner.planManeuver(steady, conflictAvoidanceMvr.getEndDistance(), conflict.getEndDowntrack());
@@ -298,6 +309,7 @@ public class YieldPlugin extends AbstractPlugin
         // Copy the unchanged lateral maneuvers
         double latMvrsEnd = Double.POSITIVE_INFINITY;
         for (LateralManeuver mvr : oldTraj.getLateralManeuvers()) {
+            log.info(String.format("Yield plugin keeping lateral maneuver from [%.02f, %.02f)", mvr.getStartDistance(), mvr.getEndDistance()));
             if (mvr.getEndDistance() < conflictAvoidanceStartDist) {
                 trajectory.addManeuver(mvr);
                 latMvrsEnd = mvr.getEndDistance();
@@ -310,6 +322,7 @@ public class YieldPlugin extends AbstractPlugin
             IGuidanceCommands gc = pluginServiceLocator.getManeuverPlanner().getGuidanceCommands();
             IManeuverInputs mi = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
             laneKeeping.planToTargetDistance(mi, gc, latMvrsEnd, conflict.getEndDowntrack());
+            log.info(String.format("Yield plugin backfilling with lane keeping maneuvers from [%.02f, %.02f)", latMvrsEnd, conflict.getEndDowntrack()));
         }
 
         return new TrajectoryPlanningResponse();
