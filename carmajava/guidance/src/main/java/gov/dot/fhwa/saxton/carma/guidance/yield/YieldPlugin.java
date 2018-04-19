@@ -257,7 +257,7 @@ public class YieldPlugin extends AbstractPlugin
             conflictAvoidanceStartDist = trajectory.getStartLocation();
             conflictAvoidanceStartSpeed = expectedEntrySpeed;
 
-            conflictAvoidanceStartTime = System.currentTimeMillis();
+            conflictAvoidanceStartTime = System.currentTimeMillis() / 1000.0;
 
             double spaceAvailableForConflictAvoidance = conflict.getStartDowntrack() - conflictAvoidanceStartDist
                     - (vehicleResponseLag * expectedEntrySpeed);
