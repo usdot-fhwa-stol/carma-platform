@@ -370,11 +370,15 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         List<RoutePointStamped> hostTrajectory = trajectoryExecutor.getHostPathPrediction();
         List<RoutePointStamped> otherTrajectory = trajectoryConverter.messageToPath(msg.getTrajectory());
         log.debug("handleMobilityPath: computed otherTrajectory of " + otherTrajectory.size() + " points. Adding to map.");
+        long tempTime1 = System.currentTimeMillis();
         conflictManager.addMobilityPath(otherTrajectory, msg.getHeader().getSenderId());
+        long tempTime2 = System.currentTimeMillis();
         log.debug("handleMobilityPath: back from call to addMobilityPath().");
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostTrajectory, otherTrajectory);
         long tempEndTime = System.currentTimeMillis();
         log.info("Analyzing the path message with " + otherTrajectory.size() + " points took: " + (tempEndTime - tempStartTime));
+        log.debug("    Time to beginning of addMobilityPath was " + (tempTime1 - tempStartTime) + " ms");
+        log.debug("    Time to run addMoblityPath = " + (tempTime2 - tempTime1) + " ms");
         if (!conflictSpaces.isEmpty()) {
             ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
