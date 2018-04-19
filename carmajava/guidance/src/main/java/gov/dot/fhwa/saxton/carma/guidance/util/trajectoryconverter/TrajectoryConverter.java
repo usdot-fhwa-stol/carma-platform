@@ -318,7 +318,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     // Build list of route points
     List<RoutePointStamped> routePoints = new ArrayList<>(trajMsg.getOffsets().size() + 1);
     // Get starting time in seconds
-    double time = startMsg.getTimestamp() / 1000L;
+    double time = startMsg.getTimestamp() / MS_PER_SEC;
     // Get starting route point
     Transform ecefInSegment = startingSegment.getECEFToSegmentTransform().invert();
     Vector3 segmentPoint = ecefInSegment.apply(ecefPoint);
