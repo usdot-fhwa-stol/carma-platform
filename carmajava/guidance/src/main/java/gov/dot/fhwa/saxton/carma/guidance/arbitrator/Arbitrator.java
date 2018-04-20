@@ -663,6 +663,12 @@ public class Arbitrator extends GuidanceComponent
     notifyTrajectoryFailure();
   }
 
+  public void requestNewPlan(double endDist) {
+    planningWindow = (endDist - downtrackDistance.get()) / planningWindowShrinkFactor;
+    log.warn("Using experimental replan method, replanning with window: " + planningWindow);
+    notifyTrajectoryFailure();
+  }
+
   @Override
   public Trajectory planSubtrajectoryRecursively(double startDist, double endDist) {
     if (recursionCount > RECURSION_LIMIT) {

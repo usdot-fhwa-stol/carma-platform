@@ -271,6 +271,11 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         return trajectoryExecutorWorker.getHostPathPrediction();
     }
 
+
+    public Trajectory getTotalTrajectory() {
+        return trajectoryExecutorWorker.getTotalTrajectory();
+    }
+
     /**
      * Get the currently executing trajectory from the TrajectoryExecutor
      * 

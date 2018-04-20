@@ -35,6 +35,7 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
@@ -74,6 +75,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private IPlugin defaultConflictHandler;
     private IConflictManager conflictManager;
     private ITrajectoryConverter trajectoryConverter;
+    private Arbitrator arbitrator;
     private String hostMobilityStaticId = "";
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
@@ -85,6 +87,11 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         this.trajectoryExecutor = trajectoryExecutor;
 
         stateMachine.registerStateChangeListener(this);
+    }
+
+
+    public void setArbitrator(Arbitrator arbitrator) {
+        this.arbitrator = arbitrator;
     }
 
     public void setPluginManager(PluginManager pluginManager) {
@@ -313,6 +320,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             }
         }
         
+        double currentTrajEnd = trajectoryExecutor.getTotalTrajectory().getEndLocation();
+        double requestEnd = otherPath.get(otherPath.size() - 1).getDowntrack();
+        if (requestEnd > currentTrajEnd) {
+            log.warn("Using experimental replan method to extend plan to " + requestEnd);
+            arbitrator.requestNewPlan(requestEnd);
+        }
     }
 
     /**
