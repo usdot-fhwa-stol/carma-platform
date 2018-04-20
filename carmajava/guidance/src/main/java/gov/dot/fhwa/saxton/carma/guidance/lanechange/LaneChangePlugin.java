@@ -144,23 +144,6 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     @Override
     public void loop() throws InterruptedException {
 
-        // If we are waiting on a plan to be nacked
-        if (plan_ != null) {
-            synchronized (planMutex_) {
-                if (plan_ != null) {
-                    // Check if enough time has passed without a NACK
-                    if (System.currentTimeMillis() - plan_.getHeader().getTimestamp() > EXPIRATION_TIME) {
-                        log.info("No rejection received for lane change with plan id: " + plan_.getHeader().getPlanId()
-                          + " Inserting lane change maneuver");
-                        // Add the actual lane change to the trajectory
-                        populateFutureManeuverWithLaneChange();
-                        // Done negotiating
-                        plan_ = null;
-                    }
-                }
-            }
-        }
-
         // Release control of light bar when lane change is done
         if (System.currentTimeMillis() - lastLaneChangeMsg_ > LANE_CHANGE_TIMEOUT && conductingLaneChange_ == true) {
             releaseControlAndTurnOff();
@@ -290,6 +273,29 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
 
         // Publish the request for lane change
         publishRequestMessage(inputs, targetLane, routePoints);
+
+        // Wait on the plan to be nacked before we return so that the trajectory won't be published to neighbors prematurely
+        long startWait = System.currentTimeMillis();
+        do {
+            try {
+                Thread.sleep(50);
+            }catch(Exception d) { }
+            if (plan_ != null) {
+                synchronized (planMutex_) {
+                    if (plan_ != null) {
+                        // Check if enough time has passed without a NACK
+                        if (System.currentTimeMillis() - plan_.getHeader().getTimestamp() > EXPIRATION_TIME) {
+                            log.info("No rejection received for lane change with plan id: " + plan_.getHeader().getPlanId()
+                                    + " Inserting lane change maneuver");
+                            // Add the actual lane change to the trajectory
+                            populateFutureManeuverWithLaneChange();
+                            // Done negotiating
+                            plan_ = null;
+                        }
+                    }
+                }
+            }
+        }while (System.currentTimeMillis() - startWait < EXPIRATION_TIME  &&  plan_ != null);
     }
 
 
