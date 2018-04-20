@@ -46,9 +46,12 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
 
             // List out the expected state to handle.
             var platooningInfoState = {
-                SEARCHING: { value: 0, text: 'SEARCHING' },
-                LEADER: { value: 1, text: 'LEADER' },
-                FOLLOWER: { value: 2, text: 'FOLLOWER' },
+                DISABLED: { value: 0, text: 'DISABLED' },
+                SEARCHING: { value: 1, text: 'SEARCHING' },
+                CONNECTING_TO_NEW_FOLLOWER: { value: 2, text: 'CONNECTING TO NEW FOLLOWER' },
+                CONNECTING_TO_NEW_LEADER: { value: 3, text: 'CONNECTING TO NEW LEADER' },
+                LEADER: { value: 4, text: 'LEADER' },
+                FOLLOWER: { value: 5, text: 'FOLLOWER' },
                 //Add new ones here.
             };
 
@@ -74,6 +77,15 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
 
                 var platoonStateText;
                 switch (message.state) {
+                    case platooningInfoState.DISABLED.value:
+                        platoonStateText = platooningInfoState.DISABLED.text;
+                        document.getElementById('divHostTitle').innerHTML =  '';
+                        document.getElementById('divLeaderTitle').innerHTML =  '';
+                        document.getElementById('imgHostVehicle').className='SUVSideView';
+                        document.getElementById('imgLeadVehicle').className='SUVSideView';
+                        host_actual_gap = 0;
+                        platoon_desired_gap = 0;
+                        break;
                     case platooningInfoState.SEARCHING.value:
                         platoonStateText = platooningInfoState.SEARCHING.text;
                         document.getElementById('divHostTitle').innerHTML =  '';
@@ -82,6 +94,12 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                         document.getElementById('imgLeadVehicle').className='SUVSideView';
                         host_actual_gap = 0;
                         platoon_desired_gap = 0;
+                        break;
+                    case platooningInfoState.CONNECTING_TO_NEW_FOLLOWER.value:
+                        platoonStateText = platooningInfoState.CONNECTING_TO_NEW_FOLLOWER.text;
+                        break;
+                    case platooningInfoState.CONNECTING_TO_NEW_LEADER.value:
+                        platoonStateText = platooningInfoState.CONNECTING_TO_NEW_LEADER.text;
                         break;
                     case platooningInfoState.LEADER.value:
                         platoonStateText = platooningInfoState.LEADER.text;
