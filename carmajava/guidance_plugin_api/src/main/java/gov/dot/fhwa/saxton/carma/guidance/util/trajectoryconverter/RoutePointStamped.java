@@ -41,6 +41,21 @@ public final class RoutePointStamped {
     this.point = new Point3D(downtrack, crosstrack, time);
   }
 
+  /**
+   * Constructor
+   * 
+   * @param downtrack The downtrack distance along the route
+   * @param crosstrack The cross track distance
+   * @param time Time in seconds since Jan 1, 1970 00:00:00 UTC
+   * @param segmentIdx The segment index
+   * @param segmentDowntrack The downtrack distance on the segment in m 
+   */
+  public RoutePointStamped(double downtrack, double crosstrack, double time, int segmentIdx, double segmentDowntrack) {
+    this.point = new Point3D(downtrack, crosstrack, time);
+    this.segmentIdx = segmentIdx;
+    this.segDowntrack = segmentDowntrack;
+  }
+
   public void setDowntrack(double downtrack) {
     this.point.setX(downtrack);
   }
