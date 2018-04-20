@@ -114,7 +114,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             SpeedLimit limit = pluginServiceLocator_.getRouteService().getSpeedLimitAtLocation(pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance());
             double localSpeedLimit = adjSpeedCmd;
             if(limit != null) {
-                adjSpeedCmd = limit.getLimit();
+                localSpeedLimit = limit.getLimit();
                 log_.debug("The local speed limit is " + localSpeedLimit + ", cap adjusted speed to speed limit if necessary");
             } else {
                 log_.warn("Cannot find local speed limit in current location" + pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance());
