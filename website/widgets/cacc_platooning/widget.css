@@ -3,6 +3,8 @@
     width: 580px;
     text-align: center;
     font-variant-caps: all-small-caps;
+    font-weight: bold;
+    font-size: 20px;
 }
 
 .leftRelative {
@@ -16,18 +18,18 @@
 
 .numberCircle {
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
+    width: 35px;
+    height: 35px;
     padding: 5px;
     background: #fff;
     border: 2px solid #666;
     color: #666;
     text-align: center;
-    font: 15px Arial, sans-serif;
+    font: 20px Arial, sans-serif;
     float: left;
     position: absolute;
-    top: 65px;
-    left: 100px;
+    top: 60px;
+    left: 110px;
 }
 
 #divHostTitle {
@@ -37,6 +39,8 @@
     width: 100%;
     text-align: center;
     font-variant-caps: all-small-caps;
+    font-size: 20px;
+    left: -10px;
 }
 
 #gaugeActualGap {
@@ -47,7 +51,7 @@
 
 #gaugeDesiredGap {
     position: absolute;
-    top: 13px;
+    top: 10px;
     left: 0px;
     z-index: -1;
 }
@@ -55,19 +59,21 @@
 #txtActualGap {
     float: left;
     position: absolute;
-    top: 80px;
+    top: 75px;
     width: 300px;
     text-align: center;
     font-variant-caps: all-small-caps;
+    font-size: 20px;
 }
 
 #txtDesiredGap {
     float: left;
     position: absolute;
-    top: 90px;
+    top: 95px;
     width: 300px;
     text-align: center;
     font-variant-caps: all-small-caps;
+    font-size: 20px;
 }
 
 #divLeaderTitle {
@@ -76,8 +82,25 @@
     width: 100%;
     text-align: center;
     font-variant-caps: all-small-caps;
+    font-size: 20px;
 }
 
 #divLeadCmdSpeed {
-    left: -10px;
+    left: -20px;
+}
+
+.SUVSideView  {
+  display: block;
+  width: 128px;
+  height: 76px;
+  background: url(SUVSideView.svg);
+  background-size: 128px 76px;
+}
+
+.SUVSideView_Green {
+  display: block;
+  width: 128px;
+  height: 76px;
+  background: url(SUVSideView_Green.svg);
+  background-size: 128px 76px;
 }

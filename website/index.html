@@ -18,9 +18,14 @@
 <head>
     <title>CAV Prototype I</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <link rel="stylesheet" type="text/css" href="styles/index.css"/>
+    <link rel="stylesheet" href="thirdparty/jqwidgets/styles/jqx.base.css" type="text/css" />
+
     <!-- START: favicon image references for different devices-->
     <link rel="apple-touch-icon" sizes="57x57" href="images/favicon/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="images/favicon/apple-icon-60x60.png">
@@ -40,6 +45,22 @@
     <meta name="msapplication-TileImage" content="images/favicon/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
     <!-- END: favicon -->
+
+    <script src = "thirdparty/jquery/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="thirdparty/jqwidgets/jqxcore.js"></script>
+    <script type="text/javascript" src="thirdparty/jqwidgets/jqxloader.js"></script>
+    <script type="text/javascript" src="thirdparty/jqwidgets/jqxbuttons.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#btnOk").jqxButton({
+                width: 150
+            });
+            $("#jqxLoader").jqxLoader({width: 150, height: 100, imagePosition: 'center', isModal: true});
+            $('#btnOk').on('click', function () {
+                $('#jqxLoader').jqxLoader('open');
+            });
+       });
+    </script>
 </head>
 <body>
 <noscript>
@@ -69,10 +90,11 @@
         <br /><br />
     </h2>
     <form action="scripts/launchPlatform.php" method="get">     
-            <input id="btnOk" type="submit" value="OK"> <br/> <br/>
+            <input id="btnOk" type="submit" value="OK"/> <br/> <br/>
             <input type="checkbox" id="cbRemoteLaunch" name="remotelaunch" value="true" checked="checked" class="regular-checkbox big-checkbox" />
             <label for="cbRemoteLaunch"></label>
             &nbsp; <span id="lblCheckBox">Remote Launch</span> &nbsp;
+            <div id="jqxLoader"></div>
     </form>
 </div>
 </body>

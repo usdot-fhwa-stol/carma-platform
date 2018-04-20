@@ -139,6 +139,7 @@ public class RouteSegment {
     Transform segmentToPoint = getECEFToSegmentTransform().invert().multiply(ecefToPoint); // Find the transform from the segment to this object
     Vector3 pntVec = segmentToPoint.getTranslation();
     Point3D pntPosition = new Point3D(pntVec.getX(), pntVec.getY(), pntVec.getZ());
+
     return pntPosition;
   }
 

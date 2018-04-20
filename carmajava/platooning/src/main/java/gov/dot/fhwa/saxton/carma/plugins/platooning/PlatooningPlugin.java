@@ -51,7 +51,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected final String MOBILITY_STRATEGY       = "Carma/Platooning";
     protected final String JOIN_AT_REAR_PARAMS     = "SIZE:%d,MAX_ACCEL:%.2f,DTD:%.2f";
     protected final String CANDIDATE_JOIN_PARAMS   = "DTD:%.2f";
-    protected final String OPERATION_INFO_PARAMS   = "INFO|LEADER:%s,REAR_DTD:%.2f,SPEED:%.2f";
+    protected final String OPERATION_INFO_PARAMS   = "INFO|LEADER:%s,REAR_DTD:%.2f,SPEED:%.2f,SIZE:%d";
     protected final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
     protected final String OPERATION_INFO_TYPE     = "INFO";
     protected final String OPERATION_STATUS_TYPE   = "STATUS";
@@ -71,6 +71,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double kpPID                 = 1.5;
     protected double kiPID                 = 0.0;
     protected double kdPID                 = 0.1;
+    protected double cmdSpeedMaxAdjustment = 10.0;
     
     // following parameters are for leader selection
     protected double lowerBoundary         = 1.65;
@@ -130,6 +131,7 @@ public class PlatooningPlugin extends AbstractPlugin
         kpPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
         kiPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
         kdPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", 0.1);
+        cmdSpeedMaxAdjustment   = pluginServiceLocator.getParameterSource().getDouble("~platooning_cmd_max_adjustment", 10.0);
         statusTimeoutFactor     = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
         lowerBoundary           = pluginServiceLocator.getParameterSource().getDouble("~platooning_lower_boundary", 1.65);
         upperBoundary           = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
@@ -169,6 +171,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param longNegotiationTimeout = " + longNegotiationTimeout);
         log.debug("Load param maxPlatoonSize = " + maxPlatoonSize);
         log.debug("Load param followerJoinTimeGap = " + followerJoinTimeGap);
+        log.debug("Load param cmdSpeedMaxAdjustment = " + cmdSpeedMaxAdjustment);
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
         mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
@@ -290,20 +293,39 @@ public class PlatooningPlugin extends AbstractPlugin
     }
     
     private void publishPlatooningInfo() {
-        if (platooningInfoPublisher != null && (!(this.state instanceof StandbyState))) {
+        if (platooningInfoPublisher != null) {
             PlatooningInfo info = platooningInfoPublisher.newMessage();
-            boolean isFollower = this.state instanceof FollowerState;
-            info.setState(isFollower ? PlatooningInfo.FOLLOWER : PlatooningInfo.LEADER);
-            info.setPlatoonId(this.platoonManager.currentPlatoonID);
-            info.setSize((byte) (isFollower ? 0 : this.platoonManager.getPlatooningSize() + 1));
-            info.setSizeLimit((byte) this.maxPlatoonSize);
-            info.setLeaderId(isFollower ? this.platoonManager.leaderID : pluginServiceLocator.getMobilityRouter().getHostMobilityId());
-            PlatoonMember currentLeader = this.platoonManager.getLeader();
-            info.setLeaderDowntrackDistance((float) (currentLeader == null ? pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() : currentLeader.vehiclePosition));
-            info.setLeaderCmdSpeed((float) (currentLeader == null ? pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed() : currentLeader.commandSpeed));
-            info.setHostPlatoonPosition((byte) (isFollower ? this.platoonManager.getPlatooningSize() : 0));
-            info.setHostCmdSpeed((float) (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
-            info.setDesiredGap((float) commandGenerator.desiredGap_);
+            if(this.state instanceof StandbyState) {
+                info.setState(PlatooningInfo.DISABLED);
+            } else if(this.state instanceof LeaderState) {
+                info.setState(platoonManager.getPlatooningSize() == 0 ? PlatooningInfo.SEARCHING : PlatooningInfo.LEADING);
+            } else if(this.state instanceof LeaderWaitingState) {
+                info.setState(PlatooningInfo.CONNECTING_TO_NEW_FOLLOWER);
+            } else if(this.state instanceof CandidateFollowerState) {
+                info.setState(PlatooningInfo.CONNECTING_TO_NEW_LEADER);
+            } else if(this.state instanceof FollowerState) {
+                info.setState(PlatooningInfo.FOLLOWING);
+            }
+            if(!(this.state instanceof StandbyState)) {
+                info.setPlatoonId(this.platoonManager.currentPlatoonID);
+                info.setSize((byte) this.platoonManager.platoonCurrentSize);
+                info.setSizeLimit((byte) this.maxPlatoonSize);
+                PlatoonMember currentLeader = this.platoonManager.getLeader();
+                if(currentLeader == null) {
+                    info.setLeaderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
+                    info.setLeaderDowntrackDistance((float) pluginServiceLocator.getRouteService().getCurrentDowntrackDistance());
+                    info.setLeaderCmdSpeed((float) pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
+                    info.setHostPlatoonPosition((byte) 0); // platoon position is indexed as 1 based 
+                    
+                } else {
+                    info.setLeaderId(currentLeader.staticId);
+                    info.setLeaderDowntrackDistance((float) currentLeader.vehiclePosition);
+                    info.setLeaderCmdSpeed((float) currentLeader.vehicleSpeed);
+                    info.setHostPlatoonPosition((byte) platoonManager.getPlatooningSize()); // platoon position is indexed as 1 based
+                }
+                info.setHostCmdSpeed((float) (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
+                info.setDesiredGap((float) commandGenerator.desiredGap_);
+            }
             platooningInfoPublisher.publish(info);
         }
     }
@@ -455,5 +477,9 @@ public class PlatooningPlugin extends AbstractPlugin
     
     protected double getFollowerJoinTimeGap() {
         return followerJoinTimeGap;
+    }
+    
+    protected double getCmdSpeedMaxAdjustment() {
+        return cmdSpeedMaxAdjustment;
     }
 }

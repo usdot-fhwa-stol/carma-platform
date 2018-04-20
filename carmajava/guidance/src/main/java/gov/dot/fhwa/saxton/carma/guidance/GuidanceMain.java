@@ -175,15 +175,15 @@ public class GuidanceMain extends SaxtonBaseNode {
   private void initConflictManager(ConnectedNode node, ILogger log) {
     // Load params
     ParameterTree params = node.getParameterTree();
-    double cellDowntrack = params.getDouble("conflict_map_cell_downtrack_size", 5.0);
-    double cellCrosstrack = params.getDouble("conflict_map_cell_crosstrack_size", 5.0);
-    double cellTime = params.getDouble("conflict_map_cell_time_size", 0.15);
+    double cellDowntrack = params.getDouble("~conflict_map_cell_downtrack_size", 5.0);
+    double cellCrosstrack = params.getDouble("~conflict_map_cell_crosstrack_size", 5.0);
+    double cellTime = params.getDouble("~conflict_map_cell_time_size", 0.15);
 
     double[] cellSize = { cellDowntrack, cellCrosstrack, cellTime };
 
-    double downtrackMargin = params.getDouble("conflict_map_collision_downtrack_margin", 2.5);
-    double crosstrackMargin = params.getDouble("conflict_map_collision_crosstrack_margin", 1.0);
-    double timeMargin = params.getDouble("conflict_map_collision_time_margin", 0.05);
+    double downtrackMargin = params.getDouble("~conflict_map_collision_downtrack_margin", 2.5);
+    double crosstrackMargin = params.getDouble("~conflict_map_collision_crosstrack_margin", 1.0);
+    double timeMargin = params.getDouble("~conflict_map_collision_time_margin", 0.05);
     // Echo params
     log.info("Param conflict_map_cell_downtrack_size: " + cellDowntrack);
     log.info("Param conflict_map_cell_crosstrack_size: " + cellCrosstrack);
