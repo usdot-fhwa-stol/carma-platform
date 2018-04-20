@@ -347,7 +347,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
         ecefInSegment = currentSegment.getECEFToSegmentTransform().invert();
         segmentPoint =  ecefInSegment.apply(ecefPoint);
       }
-      routePoints.add(new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time));
+      routePoints.add(new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time, segmentIdx, segmentPoint.getX()));
     }
     
     return routePoints;
