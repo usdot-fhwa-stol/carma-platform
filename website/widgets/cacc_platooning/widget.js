@@ -50,8 +50,8 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                 SEARCHING: { value: 1, text: 'SEARCHING' },
                 CONNECTING_TO_NEW_FOLLOWER: { value: 2, text: 'CONNECTING TO NEW FOLLOWER' },
                 CONNECTING_TO_NEW_LEADER: { value: 3, text: 'CONNECTING TO NEW LEADER' },
-                LEADER: { value: 4, text: 'LEADER' },
-                FOLLOWER: { value: 5, text: 'FOLLOWER' },
+                LEADING: { value: 4, text: 'LEADING' },
+                FOLLOWING: { value: 5, text: 'FOLLOWING' },
                 //Add new ones here.
             };
 
@@ -101,8 +101,8 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                     case platooningInfoState.CONNECTING_TO_NEW_LEADER.value:
                         platoonStateText = platooningInfoState.CONNECTING_TO_NEW_LEADER.text;
                         break;
-                    case platooningInfoState.LEADER.value:
-                        platoonStateText = platooningInfoState.LEADER.text;
+                    case platooningInfoState.LEADING.value:
+                        platoonStateText = platooningInfoState.LEADING.text;
 
                         var noFollowers = Math.max(message.size-1, 0);
 
@@ -113,8 +113,8 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
                         host_actual_gap = 0;
 
                         break;
-                    case platooningInfoState.FOLLOWER.value:
-                        platoonStateText = platooningInfoState.FOLLOWER.text;
+                    case platooningInfoState.FOLLOWING.value:
+                        platoonStateText = platooningInfoState.FOLLOWING.text;
                         document.getElementById('divHostTitle').innerHTML =  'Follower <br/> ' + (message.host_platoon_position + 1) + ' out of ' + message.size;
                         document.getElementById('divLeaderTitle').innerHTML =  'Leader <br/>' + message.leader_id ;
                         document.getElementById('imgHostVehicle').className='SUVSideView_Green';
