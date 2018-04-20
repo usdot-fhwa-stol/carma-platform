@@ -24,6 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.signals.PidController;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Signal;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
 /**
  * This class generates speed commands based on the latest information from plugin platoon list.
@@ -101,7 +102,8 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
             double output = speedController_.apply(signal).get().getData();
             double adjSpeedCmd = output + leader.commandSpeed;
-            log_.debug("The output from controller is " + output + " and adjusted speed command is " + adjSpeedCmd);
+            log_.debug("Adjusted Speed Cmd = " + adjSpeedCmd + "; Controller Output = " + output
+                     + "; Leader CmdSpeed= " + leader.commandSpeed + "; Adjustment Cap " + adjustmentCap);
             if(adjSpeedCmd > leader.commandSpeed + this.adjustmentCap) {
                 adjSpeedCmd = leader.commandSpeed + this.adjustmentCap;
                 log_.debug("The adjusted cmd speed is higher than adjustment limit. Cap to " + adjSpeedCmd);
@@ -109,7 +111,15 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
                 adjSpeedCmd = leader.commandSpeed - this.adjustmentCap;
                 log_.debug("The adjusted cmd speed is lower than adjustment limit. Cap to " + adjSpeedCmd);
             }
-            speedCmd_.set(Math.max(adjSpeedCmd, 0));
+            SpeedLimit limit = pluginServiceLocator_.getRouteService().getSpeedLimitAtLocation(pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance());
+            double localSpeedLimit = adjSpeedCmd;
+            if(limit != null) {
+                localSpeedLimit = limit.getLimit();
+                log_.debug("The local speed limit is " + localSpeedLimit + ", cap adjusted speed to speed limit if necessary");
+            } else {
+                log_.warn("Cannot find local speed limit in current location" + pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance());
+            }
+            speedCmd_.set(Math.min(Math.max(adjSpeedCmd, 0), localSpeedLimit));
             log_.debug("A speed command is generated from command generator: " + speedCmd_.get() + " m/s");
         } else {
             // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
