@@ -132,6 +132,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     trajectoryExecutor.setArbitrator(arbitrator);
     pluginManager.setArbitratorService(arbitrator);
     router.setPluginManager(pluginManager);
+    router.setArbitrator(arbitrator);
     vehicleAwareness.setPluginManager(pluginManager);
     vehicleAwareness.setTrajectoryExecutor(trajectoryExecutor);
 
