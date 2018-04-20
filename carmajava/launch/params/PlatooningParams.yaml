@@ -24,7 +24,7 @@ platooning_min_gap: 10.0
 
 # Double: The proportional term in the platoon speed PID controller
 # Units: 1
-platooning_Kp: 1.5
+platooning_Kp: 2.0
 
 # Double: The integral term in the platoon speed PID controller
 # Units: 1
