@@ -191,6 +191,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             IManeuverInputs inputs = planner.getManeuverInputs();
             // TODO This requires that all waypoints contain a requiredLaneIndex. At somepoint we should allow waypoints to not have a required lane.
             int startingLane = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDistance).getWaypoint().getRequiredLaneIndex();
+            log.info("Calculated startingLane= " + startingLane);
             futureLatMvr_ = new FutureLateralManeuver(this,  targetLane_ - startingLane, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
             futureLonMvr_ = new FutureLongitudinalManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
 

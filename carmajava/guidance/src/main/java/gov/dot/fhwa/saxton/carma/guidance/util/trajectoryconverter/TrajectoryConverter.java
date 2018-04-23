@@ -334,7 +334,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     Vector3 segmentPoint = ecefInSegment.apply(ecefPoint);
     log.debug("messageToPath: segmentPoint = " + segmentPoint.toString());
     double downtrackOfSegment = route.lengthOfSegments(0, startIdx - 1);
-    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time);
+    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time, startIdx, segDowntrack);
     log.debug("messageToPath: routePoint = " + routePoint.toString());
     routePoints.add(routePoint);
 
@@ -371,7 +371,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     }
 
     // Ensure path fits within message spec
-    List<RoutePointStamped> path = routePath.subList(0, cav_msgs.Trajectory.MAX_POINTS_IN_MESSAGE);
+    List<RoutePointStamped> path = routePath.subList(0, Math.min(routePath.size(), cav_msgs.Trajectory.MAX_POINTS_IN_MESSAGE));
 
     // Convert points to ecef
     List<ECEFPointStamped> ecefPoints = toECEFPoints(path);
