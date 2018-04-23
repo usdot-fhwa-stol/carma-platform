@@ -168,7 +168,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
    double downtrack, double crosstrack,
    int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath) {
-
+    // TODO !!! remove lane parameter and calculate when conversion occurs
     log.info("Converting trajectory to path");
     // If can't add points return an empty list
     if (maxPointsInPath <= 0) {

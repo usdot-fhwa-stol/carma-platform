@@ -270,7 +270,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         laneChangeTraj.addManeuver(futureLatMvr_);
 
         ITrajectoryConverter trajectoryConverter = pluginServiceLocator.getTrajectoryConverter();
-        List<RoutePointStamped> routePoints = trajectoryConverter.convertToPath(laneChangeTraj, startPoint);
+        List<RoutePointStamped> routePoints = trajectoryConverter.convertToPath(laneChangeTraj, startPoint, cav_msgs.Trajectory.MAX_POINTS_IN_MESSAGE);
 
         // Publish the request for lane change
         publishRequestMessage(inputs, targetLane, routePoints);
