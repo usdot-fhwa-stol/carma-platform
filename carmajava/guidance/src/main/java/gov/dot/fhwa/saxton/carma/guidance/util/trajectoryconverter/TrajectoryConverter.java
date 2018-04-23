@@ -103,6 +103,16 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   /**
+   * Returns the maximum number of points which can be a path output by this converter
+   * This number may not be equivalent to the maximum number of points allowed in a mobility path DSRC message
+   *
+   * @return The maximum number of points
+   */
+  public int getMaxPointsInPath() {
+    return this.maxPointsInPath;
+  }
+
+  /**
    * Update the segment index and current downtrack to be used for calculations
    * 
    * @param currentSegmentIdx the integer identifier of the current segment on the route
@@ -354,11 +364,14 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   @Override
-  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path) {
-    log.info("Converting path with " + path.size() + " points to message");
-    if (path.isEmpty()) {
+  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> routePath) {
+    log.info("Converting path with " + routePath.size() + " points to message");
+    if (routePath.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
+
+    // Ensure path fits within message spec
+    List<RoutePointStamped> path = routePath.subList(0, cav_msgs.Trajectory.MAX_POINTS_IN_MESSAGE);
 
     // Convert points to ecef
     List<ECEFPointStamped> ecefPoints = toECEFPoints(path);
