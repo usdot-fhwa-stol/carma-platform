@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # license removed for brevity
+#
+# ROS Node converts a mobility request or path message from a bag file to have an updated time stamp
+# This causes that message to appear as if it had just been received
+#
 import time
 import rospy
 

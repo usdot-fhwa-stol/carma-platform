@@ -15,17 +15,16 @@
   the License.
 -->
 <!--
-	saxton_cav.launch
+	lane_change_test.launch
 
-  A the ros launch file for the STOL CAV Prototype ROS Network.
-  Launches all the needed ros nodes and sets up the parameter server.
-  Also sets up all static transforms used by tf2 within the system.
+  A roslaunch file for helping to test the lane change plugin
+  This file can be launched right after guidance has entered the engaged state
+  The launch file has two arguments
+  1. bag: The path to the ros bag file which will be played. It is expected this file contains the topics
+  /saxton_cav/guidance/outgoing_mobility_request and /saxton_cav/guidance/outgoing_mobility_path 
+  Additionally the bag file should be from the same route being tested on
 
-  File is meant to be run on a configured vehicle pc.
-  Applies the appropriate arguments to the saxton_cav_src.launch file to launch on a vehicle
-  
-  Note: To ensure all ros processes are killed before launch use
-  pkill -f ros
+  2. start_time: The start time in seconds which the bag file should begin from. 
 -->
 <launch>
   <!-- Set Environment Variables -->
