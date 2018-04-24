@@ -115,7 +115,7 @@ public class PlatoonManager implements Runnable {
                 pm.vehiclePosition = dtDistance;
                 pm.vehicleSpeed = curSpeed;
                 pm.timestamp = System.currentTimeMillis();
-                log.debug("Receive and update CACC info on vehicel " + pm.staticId);
+                log.debug("Receive and update platooning info on vehicel " + pm.staticId);
                 log.debug("    Speed = "                             + pm.vehicleSpeed);
                 log.debug("    Location = "                          + pm.vehiclePosition);
                 log.debug("    CommandSpeed = "                      + pm.commandSpeed);
