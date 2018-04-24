@@ -30,27 +30,18 @@
 <launch>
   <!-- Set Environment Variables -->
   <env name="ROS_IP" value="192.168.88.10"/>
-  <!-- Override Required Paths -->
-  <arg name="CARMA_DIR" default="/opt/carma" doc="The path of the package directory"/>
-  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/params" doc="Directory of yaml parameter files"/>
-  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
-  <arg name="DATA_DIR"  default="$(arg CARMA_DIR)/app/mock_data" doc="Directory of driver simulation"/>
-  <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/app/engineering_tools" doc="The directory containing scripts for execution"/>
-  <!-- Disable Mock Drivers -->
-  <arg name="mock_can"            default="false" doc="True if using a simulated can driver"/>
-  <arg name="mock_dsrc"           default="false" doc="True if using a simulated dsrc driver"/>
-  <arg name="mock_srx_controller" default="false" doc="True if using a simulated srx controller driver"/>
-  <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
-  <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
-  <!-- Include the detailed launch file and pass in new arguments -->
-  <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true"/>
 
   <!-- Time Corrector Node -->
   <node pkg="carma" type="time_corrector_node.py" name="time_corrector_node"/>
 
   <!-- Play Ros bag -->
-  <arg name="request_topic" value="/saxton_cav/message/incoming_mobility_request:=/rosbag/incoming_mobility_request"/>
-  <arg name="path_topic" value="/saxton_cav/message/incoming_mobility_path:=/rosbag/incoming_mobility_path"/>
+  <arg name="bag" doc="The rosbag to play for simulating a lane change request"/>
+  <arg name="start_time" doc="The time in seconds to start the bag from"/>
+  <arg name="request_topic" value="/saxton_cav/guidance/outgoing_mobility_request"/>
+  <arg name="path_topic" value="/saxton_cav/guidance/outgoing_mobility_path"/>
 
-  <node name="player" pkg="rosbag" type="play" output="screen" args="$(arg bag) --topics request_topic path_topic"/>
+  <node name="player" pkg="rosbag" type="play" output="screen" args="$(arg bag) -s $(arg start_time) --topics $(arg request_topic) $(arg path_topic)">
+    <remap from="$(arg request_topic)" to="/rosbag/incoming_mobility_request"/>
+    <remap from="$(arg path_topic)" to="/rosbag/incoming_mobility_path"/>
+  </node>
 </launch>
