@@ -14,18 +14,22 @@
  * the License.
  */
 
-include 'guidance'
-include 'interfacemgr'
-include 'message'
-include 'negotiator'
-include 'roadway'
-include 'route'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'guidance_plugin_api'
-include 'rosutils'
-include 'speedharm'
-include 'lateral_control_driver'
-include 'platooning'
-include 'rsumetering'
+package gov.dot.fhwa.saxton.carma.rsumetering;
+
+import org.ros.message.Time;
+
+public interface IRSUMeterManager {
+
+  /**
+  * Sends a MobilityRequest message for broadcast
+  * @param msg - the message that is to be ssent
+  */
+  void publishMobilityRequest(cav_msgs.MobilityRequest msg);
+
+  /**
+   * Gets the current time
+   *
+   * @return The time
+   */
+  Time getTime();
+}
