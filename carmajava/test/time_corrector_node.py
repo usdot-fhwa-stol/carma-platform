@@ -55,7 +55,7 @@ class TimeCorrectorNode(object):
 
 if __name__ == '__main__':
     try:
-        TimeCorrectorNode()
+        tcn = TimeCorrectorNode()
         # prevent python from exiting until this node is stopped
         rospy.spin()
     except rospy.ROSInterruptException:
