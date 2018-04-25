@@ -13,6 +13,8 @@ from cav_msgs.msg import MobilityPath
 # Function to return current time
 current_time_millis = lambda: long(round(time.time() * 1000))
 
+MPS_PER_MPH = 0.44704
+
 # Node Class
 class TimeCorrectorNode(object):
     def __init__(self):
@@ -21,7 +23,8 @@ class TimeCorrectorNode(object):
 
         # Params
         self.dist_to_merge = rospy.get_param('~dist_to_merge')
-        self.speed_limit = rospy.get_param('~speed_limit')
+        # Convert mph to mps
+        self.speed_limit = rospy.get_param('~speed_limit') * MPS_PER_MPH
         
         # Publishers
         self.request_pub = rospy.Publisher('/saxton_cav/message/incoming_mobility_request', MobilityRequest, queue_size=10)

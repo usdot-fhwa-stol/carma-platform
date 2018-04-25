@@ -19,13 +19,20 @@
 
   A roslaunch file for helping to test the lane change plugin
   This file can be launched right after guidance has entered the engaged state
-  The launch file has two arguments
+  The launch file has four arguments
 
   1. bag: The path to the ros bag file which will be played. It is expected this file contains the topics
   /saxton_cav/guidance/outgoing_mobility_request and /saxton_cav/guidance/outgoing_mobility_path 
   Additionally the bag file should be from the same route being tested on
 
   2. start_time: The start time in seconds which the bag file should begin from. 
+
+  3. dist_to_merge: The expected distance to the lane change in m
+
+  4. speed_limit: The speed limit on this route in mph
+
+  An example of calling this file is as follows
+  roslaunch carma lane_change_test.launch bag:=/opt/carma/2018-04-24-15-08-20.bag start_time:=22.0 dist_to_merge:=40 speed_limit:=15
 -->
 <launch>
   <!-- Set Environment Variables -->
@@ -34,8 +41,8 @@
   <!-- Arguments -->
   <arg name="bag" doc="The rosbag to play for simulating a lane change request"/>
   <arg name="start_time" doc="The time in seconds to start the bag from"/>
-  <arg name="dist_to_merge" doc="The rosbag to play for simulating a lane change request"/>
-  <arg name="speed_limit" doc="The time in seconds to start the bag from"/>
+  <arg name="dist_to_merge" doc="The expected distance to the lane change in m"/>
+  <arg name="speed_limit" doc="The speed limit on this route in mph"/>
   <arg name="request_topic" value="/saxton_cav/guidance/outgoing_mobility_request"/>
   <arg name="path_topic" value="/saxton_cav/guidance/outgoing_mobility_path"/>
 
