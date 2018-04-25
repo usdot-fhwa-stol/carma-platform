@@ -62,13 +62,23 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     this.connectedNode = connectedNode;
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
     this.params = connectedNode.getParameterTree();
+    String routeFilePath = params.getString("~route_file");
+    double distToMergOnRamp = params.getDouble("~dist_to_merge_on_ramp");
+    String targetId = params.getString("~target_id");
+    double mergeDTD = params.getDouble("~merge_downtrack_distance");
+
+    log.info("LoadedParam route_file: " + routeFilePath);
+    log.info("LoadedParam dist_to_merge: " + distToMergOnRamp);
+    log.info("LoadedParam target_id: " + targetId);
+    log.info("LoadedParam merge_downtrack_distance: " + mergeDTD);
+
 
     // Topics
     // Publishers
     requestPub = connectedNode.newPublisher(outgoingRequestTopic, MobilityRequest._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
-    worker = new RSUMeterWorker(this, log);
+    worker = new RSUMeterWorker(this, log, routeFilePath, distToMerge, targetId, mergeWPId);
 
     // Subscribers
     operationSub = connectedNode.newSubscriber(incomingOperationTopic, MobilityOperation._TYPE);
