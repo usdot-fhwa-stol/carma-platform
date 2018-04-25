@@ -20,6 +20,7 @@
   A roslaunch file for helping to test the lane change plugin
   This file can be launched right after guidance has entered the engaged state
   The launch file has two arguments
+
   1. bag: The path to the ros bag file which will be played. It is expected this file contains the topics
   /saxton_cav/guidance/outgoing_mobility_request and /saxton_cav/guidance/outgoing_mobility_path 
   Additionally the bag file should be from the same route being tested on
@@ -30,15 +31,21 @@
   <!-- Set Environment Variables -->
   <env name="ROS_IP" value="192.168.88.10"/>
 
-  <!-- Time Corrector Node -->
-  <node pkg="carma" type="time_corrector_node.py" name="time_corrector_node"/>
-
-  <!-- Play Ros bag -->
+  <!-- Arguments -->
   <arg name="bag" doc="The rosbag to play for simulating a lane change request"/>
   <arg name="start_time" doc="The time in seconds to start the bag from"/>
+  <arg name="dist_to_merge" doc="The rosbag to play for simulating a lane change request"/>
+  <arg name="speed_limit" doc="The time in seconds to start the bag from"/>
   <arg name="request_topic" value="/saxton_cav/guidance/outgoing_mobility_request"/>
   <arg name="path_topic" value="/saxton_cav/guidance/outgoing_mobility_path"/>
 
+  <!-- Time Corrector Node -->
+  <node pkg="carma" type="time_corrector_node.py" name="time_corrector_node">
+    <param name="dist_to_merge" type="int" value="$(arg dist_to_merge)"/>
+    <param name="speed_limit" type="int" value="$(arg speed_limit)"/>
+  </node>
+
+  <!-- Play ROS bag -->
   <node name="player" pkg="rosbag" type="play" output="screen" args="$(arg bag) -s $(arg start_time) --topics $(arg request_topic) $(arg path_topic)">
     <remap from="$(arg request_topic)" to="/rosbag/incoming_mobility_request"/>
     <remap from="$(arg path_topic)" to="/rosbag/incoming_mobility_path"/>

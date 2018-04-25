@@ -10,43 +10,53 @@ import rospy
 from cav_msgs.msg import MobilityRequest
 from cav_msgs.msg import MobilityPath
 
-request_pub = rospy.Publisher('/saxton_cav/message/incoming_mobility_request', MobilityRequest, queue_size=10)
-path_pub = rospy.Publisher('/saxton_cav/message/incoming_mobility_path', MobilityPath, queue_size=10)
-
 # Function to return current time
-current_time_millis = lambda: int(round(time.time() * 1000))
+current_time_millis = lambda: long(round(time.time() * 1000))
 
-def request_message_cb(request):
+# Node Class
+class TimeCorrectorNode(object):
+    def __init__(self):
+        # Init nodes
+        rospy.init_node('time_corrector_node', anonymous=True)
 
-  request.header.sender_id = "time_corrector_node"
-  request.header.timestamp = current_time_millis()
-  request.expiration = current_time_millis() + 500
+        # Params
+        self.dist_to_merge = rospy.get_param('~dist_to_merge')
+        self.speed_limit = rospy.get_param('~speed_limit')
+        
+        # Publishers
+        self.request_pub = rospy.Publisher('/saxton_cav/message/incoming_mobility_request', MobilityRequest, queue_size=10)
+        self.path_pub = rospy.Publisher('/saxton_cav/message/incoming_mobility_path', MobilityPath, queue_size=10)
 
-  request_pub.publish(request)
+        # Subscribers
+        self.request_sub = rospy.Subscriber("/rosbag/incoming_mobility_request", MobilityRequest, self.request_message_cb)
+        self.path_sub = rospy.Subscriber("/rosbag/incoming_mobility_path", MobilityPath, self.path_message_cb)
 
-def path_message_cb(path):
 
-  path.header.sender_id = "time_corrector_node"
-  path.header.timestamp = current_time_millis()
+    # Function to handle request messages from bag file
+    def request_message_cb(self, request):
 
-  path_pub.publish(path)
+        # Estimate arrival time at lane change
+        current_time = current_time_millis()
+        futureTime = current_time + long(1000.0*(self.dist_to_merge / self.speed_limit))
+        # Update message
+        request.header.sender_id = "time_corrector_node"
+        request.header.timestamp = futureTime
+        request.expiration = futureTime + 500
 
-def time_corrector_node():
+        self.request_pub.publish(request)
 
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # node are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'listener' node so that multiple listeners can
-    # run simultaneously.
-    rospy.init_node('time_corrector_node', anonymous=True)
+    # Function to handle path messages from bag file
+    def path_message_cb(self, path):
 
-    rospy.Subscriber("/rosbag/incoming_mobility_request", MobilityRequest, request_message_cb)
-    rospy.Subscriber("/rosbag/incoming_mobility_path", MobilityPath, path_message_cb)
-    # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
+        path.header.sender_id = "time_corrector_node"
+        path.header.timestamp = current_time_millis()
+
+        self.path_pub.publish(path)
 
 if __name__ == '__main__':
     try:
-        time_corrector_node()
+        TimeCorrectorNode()
+        # prevent python from exiting until this node is stopped
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
