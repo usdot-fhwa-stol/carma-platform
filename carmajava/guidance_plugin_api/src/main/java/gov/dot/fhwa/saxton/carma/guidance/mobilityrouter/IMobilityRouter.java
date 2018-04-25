@@ -62,4 +62,10 @@ public interface IMobilityRouter {
      * Get the current vehicle's static mobility ID
      */
     public String getHostMobilityId();
+    
+    /**
+     * Set mobility router to handle mobility path messages or not
+     * @param handlePathMessage Whether mobility router should handle Path messages
+     */
+    public void setHandleMobilityPathCapability(boolean handlePathMessage);
 }

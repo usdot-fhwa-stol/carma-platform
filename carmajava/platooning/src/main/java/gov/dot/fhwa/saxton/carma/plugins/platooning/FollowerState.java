@@ -52,6 +52,7 @@ public class FollowerState implements IPlatooningState {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
+        this.pluginServiceLocator.getMobilityRouter().setHandleMobilityPathCapability(false);
         updateLightBar();
     }
 

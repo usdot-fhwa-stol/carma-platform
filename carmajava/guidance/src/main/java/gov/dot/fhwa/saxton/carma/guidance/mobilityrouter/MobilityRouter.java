@@ -77,6 +77,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ITrajectoryConverter trajectoryConverter;
     private Arbitrator arbitrator;
     private String hostMobilityStaticId = "";
+    private boolean handleMobilityPath;
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
      IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
@@ -85,7 +86,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
-
+        this.setHandleMobilityPathCapability(true);
         stateMachine.registerStateChangeListener(this);
     }
 
@@ -157,7 +158,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     @Override
     public void onCleanRestart() {
-        // NO-OP
+        this.setHandleMobilityPathCapability(true);
     }
 
     @Override
@@ -383,7 +384,8 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * or does not contain a conflict then no call is made.
      */
     private void handleMobilityPath(MobilityPath msg) {
-        if (stateMachine.getState() != GuidanceState.ENGAGED) {
+        if (stateMachine.getState() != GuidanceState.ENGAGED || !handleMobilityPath) {
+            log.debug("Ignoring mobility path message.");
             return;
         }
 
@@ -512,6 +514,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     default:
       throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
     }
+  }
+
+  @Override
+  public synchronized void setHandleMobilityPathCapability(boolean handlePathMessage) {
+      this.handleMobilityPath = handlePathMessage;
+      log.debug("handle Mobility Path flag is set to be " + handlePathMessage);
   }
 
 }
