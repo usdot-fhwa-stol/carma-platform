@@ -57,7 +57,7 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     // Take control of indicators
     log = LoggerManager.getLogger();
     this.lightBarManager = lightBarManager;
-    takeControlOfIndicators();
+    takeControlOfIndicators(Arrays.asList(LightBarIndicator.GREEN));
   }
 
   public String getComponentName() {
@@ -115,8 +115,7 @@ public class LightBarStateMachine implements ILightBarStateMachine {
   /**
    * Helper function to take control of the needed indicators
    */
-  private void takeControlOfIndicators() {
-    List<LightBarIndicator> indicators = new ArrayList<>(Arrays.asList(LightBarIndicator.GREEN));
+  private void takeControlOfIndicators(List<LightBarIndicator> indicators) {
     List<LightBarIndicator> deniedIndicators = lightBarManager.requestControl(indicators, this.getComponentName(), controlChangeHandler);
 
     for (LightBarIndicator indicator: deniedIndicators) {
@@ -129,7 +128,7 @@ public class LightBarStateMachine implements ILightBarStateMachine {
    */
   private void turnOffAllLights() {
     // Take control of all indicators and turn them off
-    lightBarManager.requestControl(ALL_INDICATORS, this.getComponentName(), controlChangeHandler);
+    takeControlOfIndicators(ALL_INDICATORS);
     lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.OFF, this.getComponentName());
   }
 }
