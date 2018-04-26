@@ -168,7 +168,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
 }
 
   @Override
-  public List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler) {
+  public synchronized List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler) {
     List<LightBarIndicator> deniedIndicators = new LinkedList<>();
     // Attempt to acquire control of all indicators
     for (LightBarIndicator indicator: indicators) {
@@ -396,7 +396,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
   }
 
   @Override
-  public void releaseControl(List<LightBarIndicator> indicators, String requestingComponent) {
+  public synchronized void releaseControl(List<LightBarIndicator> indicators, String requestingComponent) {
 
     for (LightBarIndicator indicator: indicators) {
       if (indicator == null) {
