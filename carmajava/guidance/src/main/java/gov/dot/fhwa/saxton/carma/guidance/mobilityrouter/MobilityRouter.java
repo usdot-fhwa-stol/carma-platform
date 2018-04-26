@@ -81,6 +81,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private String hostMobilityStaticId = "";
     private AtomicBoolean handleMobilityPath = new AtomicBoolean(true);
     private boolean isDisableMobilityPathCapabilityAcquired = false;
+    private Object mutex = new Object();
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
      IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
@@ -521,7 +522,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
   @Override
   public AtomicBoolean acquireDisableMobilityPathCapability() {
       if(!isDisableMobilityPathCapabilityAcquired) {
-          synchronized(this) {
+          synchronized(mutex) {
               if(!isDisableMobilityPathCapabilityAcquired) {
                   log.debug("Disable mobility path capability is acquired by some class");
                   isDisableMobilityPathCapabilityAcquired = true;
@@ -537,10 +538,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
   public void releaseDisableMobilityPathCapability(AtomicBoolean acquiredCapability) {
       // check if the caller acquired a reference before
       if(acquiredCapability == this.handleMobilityPath) {
-          isDisableMobilityPathCapabilityAcquired = false;
-          // change the reference of old boolean flag
-          handleMobilityPath = new AtomicBoolean(true);
-          log.debug("Disable mobility path capability is released");
+          synchronized(mutex) {             
+              isDisableMobilityPathCapabilityAcquired = false;
+              // change the reference of old boolean flag
+              handleMobilityPath = new AtomicBoolean(true);
+              log.debug("Disable mobility path capability lock is released");
+          }
       }
   }
   
