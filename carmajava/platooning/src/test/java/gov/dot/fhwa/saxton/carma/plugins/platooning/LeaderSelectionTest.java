@@ -30,8 +30,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 /**
- * This test is only for non-APF leader selection algorithm.
- * TODO More test cases should be added in order to test APF leader selection.
+ * This test is for both APF leader selection algorithm and pure leader following algorithm.
  */
 public class LeaderSelectionTest {
     
@@ -64,16 +63,20 @@ public class LeaderSelectionTest {
     }
     
     @Test
-    public void returnTheFirstVehicleWhenAPFDisabledInFollowerState() {
+    public void pureLeaderFollowingInFollowerState() {
         manager.changeFromLeaderToFollower("3", "A");
-        manager.platoon.add(new PlatoonMember("1", 5.0, 5.0, 50.0, System.currentTimeMillis()));
-        manager.platoon.add(new PlatoonMember("2", 5.0, 5.0, 60.0, System.currentTimeMillis()));
+        manager.platoon.add(new PlatoonMember("2", 5.0, 5.0, 30.0, System.currentTimeMillis()));
         manager.platoon.add(new PlatoonMember("3", 5.0, 5.0, 45.0, System.currentTimeMillis()));
         Collections.sort(manager.platoon, (a, b) -> (Double.compare(b.vehiclePosition, a.vehiclePosition)));
         PlatoonMember leader = manager.getLeader();
-        assertEquals("2", leader.staticId);
+        assertEquals("3", leader.staticId);
         assertEquals(5.0, leader.commandSpeed, 0.01);
         assertEquals(5.0, leader.vehicleSpeed, 0.01);
-        assertEquals(60.0, leader.vehiclePosition, 0.01);
+        assertEquals(45.0, leader.vehiclePosition, 0.01);
+    }
+    
+    @Test
+    public void caseZeroInAPF() {
+        when(mockPlugin.getAlgorithmType()).thenReturn(1);
     }
 }

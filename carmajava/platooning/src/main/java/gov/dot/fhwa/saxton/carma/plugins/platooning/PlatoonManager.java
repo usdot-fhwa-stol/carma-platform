@@ -210,9 +210,12 @@ public class PlatoonManager implements Runnable {
             leader = platoon.get(0);
             if(plugin.getAlgorithmType() == 1) {
                 int newLeaderIndex = allPredecessorFollowing();
-                leader = newLeaderIndex >= platoon.size() ? null : platoon.get(newLeaderIndex);
-                previousFunctionalLeaderIndex = newLeaderIndex >= platoon.size() ? -1 : newLeaderIndex;
-                previousFunctionalLeaderID = leader == null ? "" : leader.staticId;
+                try {
+                    leader = platoon.get(newLeaderIndex);
+                } catch (IndexOutOfBoundsException e) {
+                    log.warn("Cannot find the correct leader information based on the output of APF algorithm");
+                    log.warn(e.getMessage());
+                }
             }
             return leader;
         } else {
@@ -235,6 +238,17 @@ public class PlatoonManager implements Runnable {
      */
     private int allPredecessorFollowing() {
         int result = 0;
+        ///***** Case Zero *****///
+        // If we are the second vehicle in this platoon, we will always follow the leader vehicle
+        if(platoon.size() == 1) {
+            String leaderId = platoon.get(result).staticId;
+            log.debug("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
+            log.debug("APF output: " + leaderId);
+            previousFunctionalLeaderID = leaderId;
+            previousFunctionalLeaderIndex = result;
+            return result;
+        }
+        
         // If we do not have any leader in the previous time step, we follow the first vehicle as default 
         if(previousFunctionalLeaderID.equals("")) {
             ///***** Case One *****///
