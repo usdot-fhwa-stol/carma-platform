@@ -69,7 +69,7 @@ required_plugins:
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins:
-  - CACC Platooning Plugin
+  - Platooning Plugin
   - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
@@ -216,7 +216,7 @@ mobility_path_time_step: 0.01
 light_bar_priorities:
   - Light Bar State Machine
   - Lane Change Plugin
-  - CACC Platooning Plugin
+  - Platooning Plugin
   - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
