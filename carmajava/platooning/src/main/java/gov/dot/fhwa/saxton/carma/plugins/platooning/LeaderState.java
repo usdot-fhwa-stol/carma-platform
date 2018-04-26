@@ -34,7 +34,7 @@ public class LeaderState implements IPlatooningState {
     // This speedUpTime field is used when it sends out a JOIN request and is prepared to transit to CandidateFollower
     // state. This field describes how much time the CandidateFollower state need to keep at the speed limit
     // after speed-up, in order to close the gap with the rear vehicle in the target platoon in front of it.
-    private   double               timeAtHighSpeed           = 0.0;
+    private   double               timeAtHighSpeed       = 0.0;
     private   long                 lastHeartBeatTime     = 0;
     private   String               potentialNewPlatoonId = "";
 
@@ -42,6 +42,7 @@ public class LeaderState implements IPlatooningState {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
+        this.plugin.getHandleMobilityPath().set(false);
         // Update the light bar
         updateLightBar();
     }

@@ -112,12 +112,15 @@ public class PlatooningPlugin extends AbstractPlugin
     protected int requestControlLoopsCount = 0;
     protected IndicatorStatus lastAttemptedIndicatorStatus = IndicatorStatus.OFF;
     
+    // Control on MobilityRouter
+    protected AtomicBoolean handleMobilityPath = new AtomicBoolean(true);
+
     public PlatooningPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
         version.setName("Platooning Plugin");
         version.setMajorRevision(1);
         version.setIntermediateRevision(0);
-        version.setMinorRevision(0);
+        version.setMinorRevision(1);
     }
 
     @Override
@@ -180,6 +183,14 @@ public class PlatooningPlugin extends AbstractPlugin
         log.info("Platooning plugin is initialized.");
         // get light bar manager
         lightBarManager = pluginServiceLocator.getLightBarManager();
+        // get control on mobility path capability
+        AtomicBoolean tempCapability = pluginServiceLocator.getMobilityRouter().acquireDisableMobilityPathCapability();
+        if(tempCapability != null) {
+            this.handleMobilityPath = tempCapability;
+            log.debug("Acquired control on mobility router for handling mobility path");
+        } else {
+            log.warn("Try to acquire control on mobility router for handling mobility path but failed");
+        }
     }
 
     @Override
@@ -230,6 +241,8 @@ public class PlatooningPlugin extends AbstractPlugin
         // Turn off lights and release control
         lightBarManager.setIndicator(LIGHT_BAR_INDICATOR, IndicatorStatus.OFF, this.getVersionInfo().componentName());
         lightBarManager.releaseControl(Arrays.asList(LIGHT_BAR_INDICATOR), this.getVersionInfo().componentName());
+        // Release control on mobility router
+        pluginServiceLocator.getMobilityRouter().releaseDisableMobilityPathCapability(handleMobilityPath);
     }
     
     @Override
@@ -481,5 +494,9 @@ public class PlatooningPlugin extends AbstractPlugin
     
     protected double getCmdSpeedMaxAdjustment() {
         return cmdSpeedMaxAdjustment;
+    }
+    
+    protected AtomicBoolean getHandleMobilityPath() {
+        return handleMobilityPath;
     }
 }

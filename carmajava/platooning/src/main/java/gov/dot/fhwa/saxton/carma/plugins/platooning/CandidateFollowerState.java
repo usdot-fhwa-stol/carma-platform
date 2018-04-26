@@ -56,6 +56,7 @@ public class CandidateFollowerState implements IPlatooningState {
         this.speedUpStartDistance = Double.MAX_VALUE;
         this.speedUpEndDistance   = Double.MAX_VALUE;
         this.stateStartTime       = System.currentTimeMillis();
+        this.plugin.getHandleMobilityPath().set(false);
     }
 
     @Override

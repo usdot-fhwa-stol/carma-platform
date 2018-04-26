@@ -52,6 +52,7 @@ public class LeaderWaitingState implements IPlatooningState {
         this.pluginServiceLocator = pluginServiceLocator;
         this.applicantId          = applicantId;
         this.waitingStartTime     = System.currentTimeMillis();
+        this.plugin.getHandleMobilityPath().set(false);
     }
     
     @Override
