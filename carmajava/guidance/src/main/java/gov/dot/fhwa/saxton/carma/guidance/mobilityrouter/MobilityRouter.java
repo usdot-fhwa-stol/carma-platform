@@ -22,9 +22,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
+
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
@@ -77,7 +79,8 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ITrajectoryConverter trajectoryConverter;
     private Arbitrator arbitrator;
     private String hostMobilityStaticId = "";
-    private boolean handleMobilityPath;
+    private AtomicBoolean handleMobilityPath = new AtomicBoolean(true);
+    private boolean isDisableMobilityPathCapabilityAcquired = false;
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
      IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
@@ -86,7 +89,6 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
-        this.setHandleMobilityPathCapability(true);
         stateMachine.registerStateChangeListener(this);
     }
 
@@ -158,7 +160,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     @Override
     public void onCleanRestart() {
-        this.setHandleMobilityPathCapability(true);
+        this.handleMobilityPath.set(true);
     }
 
     @Override
@@ -384,7 +386,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * or does not contain a conflict then no call is made.
      */
     private void handleMobilityPath(MobilityPath msg) {
-        if (stateMachine.getState() != GuidanceState.ENGAGED || !handleMobilityPath) {
+        if (stateMachine.getState() != GuidanceState.ENGAGED || !handleMobilityPath.get()) {
             log.debug("Ignoring mobility path message.");
             return;
         }
@@ -517,9 +519,29 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
   }
 
   @Override
-  public synchronized void setHandleMobilityPathCapability(boolean handlePathMessage) {
-      this.handleMobilityPath = handlePathMessage;
-      log.debug("handle Mobility Path flag is set to be " + handlePathMessage);
+  public AtomicBoolean acquireDisableMobilityPathCapability() {
+      if(!isDisableMobilityPathCapabilityAcquired) {
+          synchronized(this) {
+              if(!isDisableMobilityPathCapabilityAcquired) {
+                  log.debug("Disable mobility path capability is acquired by some class");
+                  isDisableMobilityPathCapabilityAcquired = true;
+                  return handleMobilityPath;
+              }
+          }
+      }
+      return null;
   }
 
+
+  @Override
+  public void releaseDisableMobilityPathCapability(AtomicBoolean acquiredCapability) {
+      // check if the caller acquired a reference before
+      if(acquiredCapability == this.handleMobilityPath) {
+          isDisableMobilityPathCapabilityAcquired = false;
+          // change the reference of old boolean flag
+          handleMobilityPath = new AtomicBoolean(true);
+          log.debug("Disable mobility path capability is released");
+      }
+  }
+  
 }

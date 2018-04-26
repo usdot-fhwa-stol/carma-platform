@@ -45,7 +45,7 @@ public class StandbyState implements IPlatooningState {
         this.plugin               = plugin;
         this.log                  = log;
         this.pluginServiceLocator = pluginServiceLocator;
-        this.pluginServiceLocator.getMobilityRouter().setHandleMobilityPathCapability(true);
+        this.plugin.getHandleMobilityPath().set(true);
         updateLightBar();
     }
     

@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Interface for mobility message routing access to the Plugin instances.
  */
@@ -64,8 +66,13 @@ public interface IMobilityRouter {
     public String getHostMobilityId();
     
     /**
-     * Set mobility router to handle mobility path messages or not
-     * @param handlePathMessage Whether mobility router should handle Path messages
+     * Get the exclusive capability to disable or enable mobility router handling mobility path messages
      */
-    public void setHandleMobilityPathCapability(boolean handlePathMessage);
+    public AtomicBoolean acquireDisableMobilityPathCapability();
+    
+    /**
+     * Release the exclusive capability to disable/enable mobility router handling mobility path message
+     */
+    public void releaseDisableMobilityPathCapability(AtomicBoolean acquiredCapability);
+    
 }
