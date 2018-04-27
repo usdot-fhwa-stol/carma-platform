@@ -188,6 +188,7 @@ public class RouteSegment {
 
   /**
    * Gets the transform between an ECEF frame and a FRD frame located on the uptrack waypoint of this segment
+   * The transform describes the location and rotation of the FRD frame in the ecef frame
    * X-Axis: Along segment
    * Y-Axis: Right of segment
    * Z-Axis: Into ground (not necessarily toward earth center if there is a change in elevation)

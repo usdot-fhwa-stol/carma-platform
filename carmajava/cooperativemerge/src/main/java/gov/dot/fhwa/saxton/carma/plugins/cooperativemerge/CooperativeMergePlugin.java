@@ -17,22 +17,29 @@
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
 import org.ros.message.Duration;
-// import org.springframework.http.converter.HttpMessageConverter;
-// import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-// import org.springframework.web.client.RestClientException;
-// import org.springframework.web.client.RestTemplate;
+
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityOperationHandler;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Plugin implementing integration withe STOL I TO 22 Infrastructure Server
@@ -41,15 +48,23 @@ import java.util.List;
  * state and receive speed commands as may relate to whatever algorithm the server
  * is configured to run with.
  *///ICooperativeMergeInputs,
-public class CooperativeMergePlugin extends AbstractPlugin implements IStrategicPlugin {
+public class CooperativeMergePlugin extends AbstractPlugin implements IStrategicPlugin, MobilityRequestHandler, MobilityOperationHandler {
   protected String vehicleId = "";
-  protected String serverUrl = "";
-  protected boolean endSessionOnSuspend = true;
-  protected int serverVehicleId = 0;
-  protected long timestepDuration = 1000;
+  protected String rsuId = null;
+  protected UUID planId = null;
   protected double minimumManeuverLength = 10.0;
   protected double maxAccel = 2.0;
+  protected double lagTime = 0.1;
   protected long maneuverTimeout = 3000; //ms
+  protected IPublisher<MobilityRequest> mobilityRequestPub;
+  protected IPublisher<MobilityOperation> mobilityOperationPub;
+  protected IPublisher<MobilityResponse> mobilityResponsePub;
+
+  protected double meterDTD = 0;
+  
+  protected ICooperativeMergeState state = null;
+
+  protected ICooperativeMergeInputs cooperativeMergeInputs;
 
   // protected StatusUpdater statusUpdater = null;
   // protected Thread statusUpdaterThread = null;
@@ -62,7 +77,8 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
   // protected LocalDateTime lastUpdateTime = LocalDateTime.now();
   // protected RestTemplate restClient;
 
-  private static final String COOPERATIVE_MERGE_FLAG = "COOPERATIVE_MERGE";
+  public static final String COOPERATIVE_MERGE_FLAG = "COOPERATIVE_MERGE";
+  public static final String MOBILITY_STRATEGY = "Carma/CooperativeMerge";
 
   public CooperativeMergePlugin(PluginServiceLocator psl) {
     super(psl);
@@ -70,7 +86,12 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     version.setMajorRevision(1);
     version.setIntermediateRevision(0);
     version.setMinorRevision(0);
-
+    // Register Mobility Message Callbacks
+    pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
+    pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
+    maxAccel = 2.5; // TODO get this from somewhere
+    cooperativeMergeInputs = new CooperativeMergeInputs(maxAccel);
+    lagTime = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();
     //restClient = new RestTemplate();
   }
 
@@ -85,6 +106,9 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     log.info("LoadedParam: vehicle_id: " + vehicleId);
     log.info("LoadedParam: data_reporting_frequency: " + freq);
     log.info("LoadedParam: cooperative_merge_maneuver_timeout: " + maneuverTimeout);
+
+    mobilityRequestPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
+    mobilityRequestPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_operation", MobilityRequest._TYPE);
   }
 
   @Override
@@ -194,6 +218,23 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     return new TrajectoryPlanningResponse();
   }
 
+@Override // TODO Synchronize
+public void handleMobilityOperationMessage(MobilityOperation msg) {
+  if (state == null) {
+    return;
+  }
+  state.onMobilityOperationMessage(msg);
+}
+
+@Override // TODO Synchronize
+public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict,
+    ConflictSpace conflictSpace) {
+  if (state == null) {
+    return MobilityRequestResponse.NO_RESPONSE;
+  }
+  return state.onMobilityRequestMessage(msg);
+}
+
   // @Override
   // public double getSpeedCommand() {
   //   // if (commandReceiver.getLastCommand() != null) {
@@ -220,4 +261,91 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
   //   //   return Duration.fromMillis(0);
   //   // }
   // }
+
+  protected void setAvailable(boolean availability) {
+    this.setAvailability(availability);
+  }
+
+  protected void setState(ICooperativeMergeState newState) {
+    log.info("Transitioned from old state: " + state + " to new state: " + newState);
+    state = newState;
+  }
+
+  /**
+   * @return the vehicleId
+   */
+  public String getVehicleId() {
+    return vehicleId;
+  }
+
+  /**
+   * @return the rsuId
+   */
+  public String getRsuId() {
+    return rsuId;
+  }
+
+  /**
+   * @return the planId
+   */
+  public UUID getPlanId() {
+    return planId;
+  }
+
+  /**
+   * @param planId the planId to set
+   */
+  public void setPlanId(UUID planId) {
+    this.planId = planId;
+  }
+
+  /**
+   * @return the maxAccel
+   */
+  public double getMaxAccel() {
+    return maxAccel;
+  }
+
+  /**
+   * @return the lagTime
+   */
+  public double getLagTime() {
+    return lagTime;
+  }
+
+  /**
+   * @return the mobilityOperationPub
+   */
+  public IPublisher<MobilityOperation> getMobilityOperationPub() {
+    return mobilityOperationPub;
+  }
+
+  /**
+   * @return the mobilityRequestPub
+   */
+  public IPublisher<MobilityRequest> getMobilityRequestPub() {
+    return mobilityRequestPub;
+  }
+
+  /**
+   * @return the mobilityResponsePub
+   */
+  public IPublisher<MobilityResponse> getMobilityResponsePub() {
+    return mobilityResponsePub;
+  }
+
+  /**
+   * @return the minimumManeuverLength
+   */
+  public double getMinimumManeuverLength() {
+    return minimumManeuverLength;
+  }
+  
+  /**
+   * @return the cooperativeMergeInputs
+   */
+  public ICooperativeMergeInputs getCooperativeMergeInputs() {
+    return cooperativeMergeInputs;
+  }
+
 }
