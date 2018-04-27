@@ -272,8 +272,10 @@ public class PlatoonManager implements Runnable {
         ///***** Case Two *****///
         // If the distance headway between the subject vehicle and its predecessor is an issue
         // according to the "min_gap" and "max_gap" thresholds, then it should follow its predecessor
-        if(insufficientGapWithPredecessor(inputs.getDistanceToFrontVehicle())) {
-            log.debug("APF algorithm decides there is an issue with the gap with preceding vehicle. Case Two");
+        // The following line will not throw exception because the length of downtrack array is larger than two in this case
+        double timeHeadwayWithPredecessor = downtrackDistance[downtrackDistance.length - 2] - downtrackDistance[downtrackDistance.length - 1];
+        if(insufficientGapWithPredecessor(timeHeadwayWithPredecessor)) {
+            log.debug("APF algorithm decides there is an issue with the gap with preceding vehicle: " + timeHeadwayWithPredecessor + ". Case Two");
             return platoon.size() - 1;
         } else {
             // implementation of the main part of APF algorithm
@@ -291,6 +293,7 @@ public class PlatoonManager implements Runnable {
                 // if the previous leader is not the first vehicle
                 // get the time headway between every consecutive pair of vehicles from indexOfPreviousLeader
                 double[] partialTimeHeadways = getTimeHeadwayFromIndex(timeHeadways, previousFunctionalLeaderIndex);
+                log.debug("APF partial time headways array: " + Arrays.toString(partialTimeHeadways));
                 int closestLowerBoundaryViolation, closestMaximumSpacingViolation;
                 closestLowerBoundaryViolation = findLowerBoundaryViolationClosestToTheHostVehicle(partialTimeHeadways);
                 closestMaximumSpacingViolation = findMaximumSpacingViolationClosestToTheHostVehicle(partialTimeHeadways);
