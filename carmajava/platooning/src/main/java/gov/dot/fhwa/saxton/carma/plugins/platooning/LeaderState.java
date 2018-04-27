@@ -98,7 +98,7 @@ public class LeaderState implements IPlatooningState {
                 }
                 // Check if the applicant can join immediately without any accelerations
                 double desiredJoinDistance = plugin.getDesiredJoinTimeGap() * plugin.getManeuverInputs().getCurrentSpeed();
-                boolean isDistanceCloseEnough = (currentGap <= desiredJoinDistance);
+                boolean isDistanceCloseEnough = (currentGap <= desiredJoinDistance) || (currentGap <= plugin.getMaxGap());
                 if(isDistanceCloseEnough) {
                     log.debug("The applicant is close enough and it can join without accelerarion");
                     log.debug("Changing to LeaderWaitingState and waiting for " + msg.getHeader().getSenderId() + " to join");

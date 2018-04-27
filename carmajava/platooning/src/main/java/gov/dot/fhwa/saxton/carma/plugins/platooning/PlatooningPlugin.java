@@ -78,8 +78,8 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double upperBoundary         = 1.75;
     protected double maxSpacing            = 2.0;
     protected double minSpacing            = 1.9;
-    protected double minGap                = 12.0;
-    protected double maxGap                = 14.0;
+    protected double minGap                = 10.0;
+    protected double maxGap                = 15.0;
     protected int    algorithmType         = 1;
     
     // following parameters are for negotiation when a CAV want to join a platoon
@@ -140,8 +140,8 @@ public class PlatooningPlugin extends AbstractPlugin
         upperBoundary           = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
         maxSpacing              = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_spacing", 2.0);
         minSpacing              = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_spacing", 1.9);
-        minGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 12.0);
-        maxGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
+        minGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 10.0);
+        maxGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 15.0);
         statusIntervalLength    = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 100);
         algorithmType           = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
         maxJoinTime             = pluginServiceLocator.getParameterSource().getDouble("~max_join_time", 10.0);
