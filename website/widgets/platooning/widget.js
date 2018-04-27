@@ -1,9 +1,9 @@
 /***
 * Create a unique namespace for each plugin widget to minimize collision of same name variables or functions.
 ***/
-CarmaJS.registerNamespace("CarmaJS.WidgetFramework.CACCPlatooning");
+CarmaJS.registerNamespace("CarmaJS.WidgetFramework.Platooning");
 
-CarmaJS.WidgetFramework.CACCPlatooning = (function () {
+CarmaJS.WidgetFramework.Platooning = (function () {
         //Private variables
         var t_platooning_info = '/saxton_cav/guidance/platooning_info';
         var hostDowntrackDistance = 0;
@@ -17,7 +17,7 @@ CarmaJS.WidgetFramework.CACCPlatooning = (function () {
         //Currently the URL path from document or window are pointing to the page, not the actual folder location.
         //Therefore this needs to be hardcoded.
         //TODO: However, this could be set by widgetfw based on final install folder naming convention. Using _setOptions.
-        var installfoldername = 'widgets/cacc_platooning/';
+        var installfoldername = 'widgets/platooning/';
 
         //Private Functions
         /*
