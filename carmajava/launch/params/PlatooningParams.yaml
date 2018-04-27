@@ -16,7 +16,7 @@ platooning_status_timeout_factor: 2.5
 
 # Double: The desired time headway to the front vehicle within the platoon
 # Units: s
-platooning_desired_time_headway: 1.8
+platooning_desired_time_headway: 2.0
 
 # Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
 # Units: m
@@ -41,7 +41,7 @@ platooning_upper_boundary: 1.75
 platooning_max_spacing: 2.0
 platooning_min_spacing: 1.9
 # Units: m
-platooning_max_gap: 14.0
+platooning_max_gap: 15.0
 
 # Integer: The algorithm type used for leader selection in a platoon
 # When algorithm_type == 0, it means no leader selection algorithm
