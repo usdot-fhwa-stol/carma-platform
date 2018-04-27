@@ -190,7 +190,7 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
 
         <remap from="ui_instructions"
-               to="/$(arg TOP_NS)/ui_instructions"/>
+               to="/$(arg TOP_NS)/$(arg UI_NS)/ui_instructions"/>
       </node>
     </group>
 
@@ -413,7 +413,7 @@
         <remap from="mobility_ack_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
         <remap from="ui_instructions"
-               to="/$(arg TOP_NS)/ui_instructions"/>
+               to="/$(arg TOP_NS)/$(arg UI_NS)/ui_instructions"/>
 
         <!-- Mobility Router -->
         <remap from="incoming_mobility_request"
@@ -453,8 +453,6 @@
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="bsm"
              to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
-      <remap from="ui_instructions"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="state"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/state"/>               
       <remap from="ui_platoon_vehicle_info"
@@ -481,8 +479,6 @@
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
       <remap from="cmd_lateral"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
-      <remap from="ui_instructions"
-             to="/$(arg TOP_NS)/ui_instructions"/>
       <remap from="plugins/controlling_plugins"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
              

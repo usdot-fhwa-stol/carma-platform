@@ -27,9 +27,8 @@ import java.util.List;
  * Class which serves to coordinate light bar transitions
  * The behavior of this class can be overriden if plugins are given higher lighbar priority
  */
-public class LightBarStateMachine implements ILightBarStateMachine {
+public class LightBarStateMachine implements ILightBarStateMachine, ILightBarControlChangeHandler{
  
-  private ControlChangeHandler controlChangeHandler = new ControlChangeHandler();
   private final List<LightBarIndicator> ALL_INDICATORS = LightBarIndicator.getListOfAllIndicators();
   private final ILogger log;
   private final ILightBarManager lightBarManager;
@@ -101,22 +100,10 @@ public class LightBarStateMachine implements ILightBarStateMachine {
   }
 
   /**
-   * Helper class for processing changes in light control
-   */
-  private class ControlChangeHandler implements ILightBarControlChangeHandler{
-
-    @Override
-    public void controlLost(LightBarIndicator lostIndicator) {
-      log.info("Lost control of light bar indicator: " + lostIndicator);
-    }
-
-  }
-
-  /**
    * Helper function to take control of the needed indicators
    */
   private void takeControlOfIndicators(List<LightBarIndicator> indicators) {
-    List<LightBarIndicator> deniedIndicators = lightBarManager.requestControl(indicators, this.getComponentName(), controlChangeHandler);
+    List<LightBarIndicator> deniedIndicators = lightBarManager.requestControl(indicators, this.getComponentName(), this);
 
     for (LightBarIndicator indicator: deniedIndicators) {
         log.info("Failed to take control of light bar indicator: " + indicator);
@@ -130,5 +117,10 @@ public class LightBarStateMachine implements ILightBarStateMachine {
     // Take control of all indicators and turn them off
     takeControlOfIndicators(ALL_INDICATORS);
     lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.OFF, this.getComponentName());
+  }
+
+  @Override
+  public void controlLost(LightBarIndicator lostIndicator) {
+    log.info("Lost control of light bar indicator: " + lostIndicator);
   }
 }

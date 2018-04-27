@@ -268,6 +268,8 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
           log.warn(warningString);
           return false;
         }
+        statusMsg.setFlash(LightBarStatus.OFF);
+        statusMsg.setRightArrow(LightBarStatus.OFF);
         statusMsg.setLeftArrow(LightBarStatus.ON);
         break;
       case RIGHT_ARROW:
@@ -275,7 +277,9 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
           log.warn(warningString);
           return false;
         }
+        statusMsg.setFlash(LightBarStatus.OFF);
         statusMsg.setRightArrow(LightBarStatus.ON); 
+        statusMsg.setLeftArrow(LightBarStatus.OFF);
         break;
       case SOLID: 
         if (indicator != LightBarIndicator.GREEN) {
@@ -315,7 +319,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
       @Override
       public void onSuccess(SetLightsResponse msg) {
         log.info("Set light bar for " + requestingComponent + " for LightBarIndicator " + indicator + 
-        " with status" + status);
+        " with status " + status);
       }
 
       @Override

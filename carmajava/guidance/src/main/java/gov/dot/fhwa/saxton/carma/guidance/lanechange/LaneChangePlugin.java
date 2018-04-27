@@ -87,6 +87,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     private final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
     private ISubscriber<UIInstructions> uiInstructionsSubscriber_;
     private boolean conductingLaneChange_ = false;
+    private Object lightBarMutex =  new Object();
     private final long LANE_CHANGE_TIMEOUT = 500; // mili-seconds
     private long lastLaneChangeMsg_ = 0; // mili-seconds
 
@@ -118,17 +119,25 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         uiInstructionsSubscriber_ = pubSubService.getSubscriberForTopic( "ui_instructions", UIInstructions._TYPE);
         uiInstructionsSubscriber_.registerOnMessageCallback(
             (UIInstructions msg) -> {
-                if (msg.getMsg().equals("LEFT_LANE_CHANGE") && conductingLaneChange_ == false) {
+                if (msg.getMsg().equals("LEFT_LANE_CHANGE") && !conductingLaneChange_) {
+                    synchronized (lightBarMutex) {
+                        if (!conductingLaneChange_) {
+                            conductingLaneChange_ = true;
+                            lastLaneChangeMsg_ = System.currentTimeMillis();
+                            setLightBarStatus(IndicatorStatus.LEFT_ARROW);
+                        }
+                    }
 
-                    conductingLaneChange_ = true;
-                    lastLaneChangeMsg_ = System.currentTimeMillis();
-                    setLightBarStatus(IndicatorStatus.LEFT_ARROW);
-
-                } else if (msg.getMsg().equals("RIGHT_LANE_CHANGE") && conductingLaneChange_ == false) {
-
-                    conductingLaneChange_ = true;
-                    lastLaneChangeMsg_ = System.currentTimeMillis();
-                    setLightBarStatus(IndicatorStatus.RIGHT_ARROW);
+                } else if (msg.getMsg().equals("RIGHT_LANE_CHANGE") && !conductingLaneChange_) {
+                    log.info("Getting left message conduct = " + conductingLaneChange_);
+                    synchronized (lightBarMutex) {
+                        if (!conductingLaneChange_) {
+                            log.info("Setting lights conduct = " + conductingLaneChange_);
+                            conductingLaneChange_ = true;
+                            lastLaneChangeMsg_ = System.currentTimeMillis();
+                            setLightBarStatus(IndicatorStatus.RIGHT_ARROW);
+                        }
+                    }
                 }
         });
 
@@ -145,9 +154,14 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     public void loop() throws InterruptedException {
 
         // Release control of light bar when lane change is done
-        if (System.currentTimeMillis() - lastLaneChangeMsg_ > LANE_CHANGE_TIMEOUT && conductingLaneChange_ == true) {
-            releaseControlAndTurnOff();
-            conductingLaneChange_ = false;
+        if (System.currentTimeMillis() - lastLaneChangeMsg_ > LANE_CHANGE_TIMEOUT && conductingLaneChange_) {
+            synchronized(lightBarMutex) {
+                if (conductingLaneChange_) {
+                    log.info("Releasing control of light bar conducting lane change " + conductingLaneChange_);
+                    releaseControlAndTurnOff();
+                    conductingLaneChange_ = false;
+                }
+            }
         }
         //sleep a while
         Thread.sleep(SLEEP_TIME);
@@ -459,15 +473,17 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             return;
         }
         // Request control every time as we will release control when a lane change is done
-        List<LightBarIndicator> acquired = lightBarManager_.requestControl(Arrays.asList(LIGHT_BAR_INDICATOR), this.getVersionInfo().componentName(),
+        List<LightBarIndicator> deniedIndicators = lightBarManager_.requestControl(Arrays.asList(LIGHT_BAR_INDICATOR), this.getVersionInfo().componentName(),
             // Lost control of light call back
             (LightBarIndicator lostIndicator) -> {
                 log.info("Lost control of light bar indicator: " + LIGHT_BAR_INDICATOR);
          });
         // Check if the control request was successful. 
-        if (acquired.contains(LIGHT_BAR_INDICATOR)) {
+        if (!deniedIndicators.contains(LIGHT_BAR_INDICATOR)) {
             lightBarManager_.setIndicator(LIGHT_BAR_INDICATOR, status, this.getVersionInfo().componentName());
             log.info("Got control of light bar indicator: " + LIGHT_BAR_INDICATOR);
+        } else {
+            log.info("Failed to take control of light bar indicator: " + LIGHT_BAR_INDICATOR);
         }
     }
     
