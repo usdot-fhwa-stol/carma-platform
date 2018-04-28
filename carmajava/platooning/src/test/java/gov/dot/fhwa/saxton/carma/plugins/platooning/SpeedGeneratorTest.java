@@ -69,6 +69,9 @@ public class SpeedGeneratorTest {
         when(mockPlugin.getKdPID()).thenReturn(-0.5);
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         when(mockPlugin.getCmdSpeedMaxAdjustment()).thenReturn(10.0);
+        when(mockPlugin.getLastSpeedCmd()).thenReturn(10.0);
+        // Here we ignore the cap on max accel
+        when(mockPlugin.getMaxAccel()).thenReturn(100.0);
     }
     
     @Test

@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import java.util.Optional;
+
 import com.google.common.util.concurrent.AtomicDouble;
 
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -41,6 +43,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     protected double desiredGap_ = 0.0;
     protected double adjustmentCap = 10.0;
     protected AtomicDouble speedCmd_ = new AtomicDouble(0.0);
+    protected Optional<Double> lastCmdSpeed = Optional.empty();
     
     public CommandGenerator(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         this.plugin_ = plugin;
@@ -88,9 +91,12 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             double hostVehiclePosition = pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance();
             double hostVehicleSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
             log_.debug("The host vehicle speed is + " + hostVehicleSpeed + " and its position is " + hostVehiclePosition);
-            int vehiclesInFront = plugin_.getPlatoonManager().getPlatooningSize();
-            log_.debug("The host vehicle have " + vehiclesInFront + " vehicles in front of it");
-            desiredGap_ = Math.max(hostVehicleSpeed * plugin_.getTimeHeadway() * vehiclesInFront, plugin_.getStandStillGap());
+            // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
+            // vehiclesInFront should be 2, because platoon list size is 4 we can get vehiclesInFront = size - leaderIndex   
+            int leaderIndex = plugin_.getPlatoonManager().getMemberIndex(leader);
+            int vehiclesInFront = plugin_.getPlatoonManager().getPlatooningSize() - leaderIndex;
+            log_.debug("The host vehicle have " + vehiclesInFront + " vehicles between itself and its leader (includes the leader)");
+            desiredGap_ = Math.max(hostVehicleSpeed * plugin_.getTimeHeadway() * vehiclesInFront, plugin_.getStandStillGap() * vehiclesInFront);
             double desiredHostPosition = leaderCurrentPosition - this.desiredGap_;
             log_.debug("The desired host position and the setpoint for pid controller is " + desiredHostPosition);
             // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
@@ -104,6 +110,8 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             double adjSpeedCmd = output + leader.commandSpeed;
             log_.debug("Adjusted Speed Cmd = " + adjSpeedCmd + "; Controller Output = " + output
                      + "; Leader CmdSpeed= " + leader.commandSpeed + "; Adjustment Cap " + adjustmentCap);
+            // After we get a adjSpeedCmd, we apply three filters on it
+            // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap 
             if(adjSpeedCmd > leader.commandSpeed + this.adjustmentCap) {
                 adjSpeedCmd = leader.commandSpeed + this.adjustmentCap;
                 log_.debug("The adjusted cmd speed is higher than adjustment limit. Cap to " + adjSpeedCmd);
@@ -111,6 +119,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
                 adjSpeedCmd = leader.commandSpeed - this.adjustmentCap;
                 log_.debug("The adjusted cmd speed is lower than adjustment limit. Cap to " + adjSpeedCmd);
             }
+            // Second: we do not exceed the local speed limit
             SpeedLimit limit = pluginServiceLocator_.getRouteService().getSpeedLimitAtLocation(pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance());
             double localSpeedLimit = adjSpeedCmd;
             if(limit != null) {
@@ -119,7 +128,22 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             } else {
                 log_.warn("Cannot find local speed limit in current location" + pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance());
             }
-            speedCmd_.set(Math.min(Math.max(adjSpeedCmd, 0), localSpeedLimit));
+            double afterLocalSpeedCap = Math.min(Math.max(adjSpeedCmd, 0), localSpeedLimit);
+            // Third: we allow do not a large gap between two consecutive speed commands
+            log_.debug("The speed command before max accel cap but after local limit cap is: " + afterLocalSpeedCap + " m/s");
+            double afterMaxAccelCap = afterLocalSpeedCap;
+            if(!lastCmdSpeed.isPresent()) {
+                lastCmdSpeed = Optional.of(plugin_.getLastSpeedCmd());
+            }
+            double max = lastCmdSpeed.get() + (plugin_.getMaxAccel() * (CMD_TIMESTEP / 1000.0));
+            double min = lastCmdSpeed.get() - (plugin_.getMaxAccel() * (CMD_TIMESTEP / 1000.0));
+            if(afterLocalSpeedCap > max) {
+                afterMaxAccelCap = max; 
+            } else if (afterLocalSpeedCap < min) {
+                afterMaxAccelCap = min;
+            }
+            lastCmdSpeed = Optional.of(afterMaxAccelCap);
+            speedCmd_.set(afterMaxAccelCap);
             log_.debug("A speed command is generated from command generator: " + speedCmd_.get() + " m/s");
         } else {
             // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later

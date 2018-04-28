@@ -20,6 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,6 +51,7 @@ public class LeaderWaitingStateTest {
         mockInputs = mock(IManeuverInputs.class);
         when(plugin.getPlatoonManager()).thenReturn(mockManager);
         when(plugin.getManeuverInputs()).thenReturn(mockInputs);
+        when(plugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         leaderWaitingState = new LeaderWaitingState(plugin, log, pluginServiceLocator, "C");
     }
     

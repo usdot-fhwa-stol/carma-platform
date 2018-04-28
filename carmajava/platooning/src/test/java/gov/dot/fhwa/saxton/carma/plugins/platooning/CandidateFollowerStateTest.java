@@ -23,6 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -84,6 +86,7 @@ public class CandidateFollowerStateTest {
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
+        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         candidateFollowerState = new CandidateFollowerState(mockPlugin, mockLog, pluginServiceLocator, 5.0, "A", "E1B2");
     }
     

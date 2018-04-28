@@ -499,4 +499,8 @@ public class PlatooningPlugin extends AbstractPlugin
     protected AtomicBoolean getHandleMobilityPath() {
         return handleMobilityPath;
     }
+    
+    protected double getLastSpeedCmd() {
+        return cmdSpeedSub.getLastMessage() == null ? 0.0 : cmdSpeedSub.getLastMessage().getSpeed();  
+    }
 }

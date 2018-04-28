@@ -171,6 +171,7 @@ public class CandidateFollowerState implements IPlatooningState {
                             log.debug("The leader " + msg.getHeader().getSenderId() + " agreed on our join. Change to follower state.");
                             plugin.getPlatoonManager().changeFromLeaderToFollower(targetLeaderId, targetPlatoonId);
                             plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
+                            pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
                         } else {
                             // We change back to normal leader state and try to join other platoons
                             log.debug("The leader " + msg.getHeader().getSenderId() + " does not agree on our join. Change back to leader state.");

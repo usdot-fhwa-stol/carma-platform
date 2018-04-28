@@ -25,6 +25,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -67,8 +69,9 @@ public class StandbyStateTest {
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
-        standbyState         = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
+        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
+        standbyState         = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
     }
     
     @Test
