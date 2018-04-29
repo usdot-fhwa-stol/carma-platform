@@ -87,78 +87,9 @@ public class CandidateFollowerStateTest {
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
         when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
-        candidateFollowerState = new CandidateFollowerState(mockPlugin, mockLog, pluginServiceLocator, 5.0, "A", "E1B2");
+        candidateFollowerState = new CandidateFollowerState(mockPlugin, mockLog, pluginServiceLocator, "A", "E1B2");
     }
     
-    @Test
-    public void planTrajectoryToSpeedUp() {
-        Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
-        when(mockInputs.getCurrentSpeed()).thenReturn(0.0);
-        when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(0.0);
-        when(mockRouteService.getSpeedLimitAtLocation(0.0)).thenReturn(new SpeedLimit(100.0, 5.0));
-        when(mockPlugin.getMaxAccel()).thenReturn(2.5);
-        TrajectoryPlanningResponse tpr = candidateFollowerState.planTrajectory(traj, 0);
-        assertTrue(tpr.getRequests().isEmpty());
-        assertEquals(2, traj.getLongitudinalManeuvers().size());
-        assertEquals(0.0, traj.getLongitudinalManeuvers().get(0).getStartSpeed(), 0.001);
-        assertEquals(5.0, traj.getLongitudinalManeuvers().get(0).getTargetSpeed(), 0.001);
-        assertEquals(0.0, traj.getLongitudinalManeuvers().get(0).getStartDistance(), 0.001);
-        assertEquals(6.0, traj.getLongitudinalManeuvers().get(0).getEndDistance(), 0.001);
-        assertEquals(5.0, traj.getLongitudinalManeuvers().get(1).getStartSpeed(), 0.001);
-        assertEquals(5.0, traj.getLongitudinalManeuvers().get(1).getTargetSpeed(), 0.001);
-        assertEquals(6.0, traj.getLongitudinalManeuvers().get(1).getStartDistance(), 0.001);
-        assertEquals(31.0, traj.getLongitudinalManeuvers().get(1).getEndDistance(), 0.001);
-    }
-    
-    @Test
-    public void planTrajectoryToSpeedUpButWithoutEnoughSpace() {
-        Trajectory traj = new Trajectory(0, 30);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 30.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
-        when(mockInputs.getCurrentSpeed()).thenReturn(0.0);
-        when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(0.0);
-        when(mockRouteService.getSpeedLimitAtLocation(0.0)).thenReturn(new SpeedLimit(100.0, 5.0));
-        when(mockPlugin.getMaxAccel()).thenReturn(2.5);
-        TrajectoryPlanningResponse tpr = candidateFollowerState.planTrajectory(traj, 0);
-        assertEquals(1, tpr.getRequests().size());
-        assertEquals(46.5, tpr.getProposedTrajectoryEnd().get(), 0.001);
-    }
-    
-    @Test
-    public void planTrajectoryToSpeedUpButWithNonEmptyTrajectory() {
-        Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
-        when(mockInputs.getCurrentSpeed()).thenReturn(0.0);
-        when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(0.0);
-        when(mockRouteService.getSpeedLimitAtLocation(0.0)).thenReturn(new SpeedLimit(100.0, 5.0));
-        when(mockPlugin.getMaxAccel()).thenReturn(2.5);
-        SteadySpeed mockManeuver = mock(SteadySpeed.class);
-        when(mockManeuver.getStartDistance()).thenReturn(0.0);
-        when(mockManeuver.getEndDistance()).thenReturn(40.0);
-        when(mockManeuver.getStartSpeed()).thenReturn(3.0);
-        when(mockManeuver.getTargetSpeed()).thenReturn(3.0);
-        traj.addManeuver(mockManeuver);
-        TrajectoryPlanningResponse tpr = candidateFollowerState.planTrajectory(traj, 0);
-        assertEquals(1, tpr.getRequests().size());
-        assertTrue(tpr.higherPriorityRequested());
-    }
-    
-    @Test
-    public void planedTrajectoryButInterrupted() {
-        Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
-        when(mockInputs.getCurrentSpeed()).thenReturn(0.0);
-        when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(0.0);
-        when(mockRouteService.getSpeedLimitAtLocation(0.0)).thenReturn(new SpeedLimit(100.0, 5.0));
-        when(mockPlugin.getMaxAccel()).thenReturn(2.5);
-        TrajectoryPlanningResponse tpr = candidateFollowerState.planTrajectory(traj, 0);
-        Trajectory traj2 = new Trajectory(0, 60);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 60.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
-        TrajectoryPlanningResponse tpr2 = candidateFollowerState.planTrajectory(traj2, 0);
-        assertTrue(tpr2.getRequests().isEmpty());
-        ArgumentCaptor<LeaderState> newState = ArgumentCaptor.forClass(LeaderState.class);
-        verify(mockPlugin).setState(newState.capture());
-        assertEquals("PlatoonLeaderState", newState.getValue().toString());
-    }
-    
+    // Remove current test cases because the logic in candidate follower state is the same as cruising plugin
+    // TODO Add some test cases if necessary
 }

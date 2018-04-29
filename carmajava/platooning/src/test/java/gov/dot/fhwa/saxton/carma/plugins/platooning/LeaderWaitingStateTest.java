@@ -64,27 +64,11 @@ public class LeaderWaitingStateTest {
         when(type.getType()).thenReturn(PlanType.PLATOON_FOLLOWER_JOIN);
         when(request.getHeader()).thenReturn(header);
         when(request.getPlanType()).thenReturn(type);
-        when(request.getStrategyParams()).thenReturn("DTD:50.00");
+        when(request.getStrategyParams()).thenReturn("");
         when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(60.0);
         when(plugin.getDesiredJoinTimeGap()).thenReturn(4.0);
         when(mockInputs.getCurrentSpeed()).thenReturn(3.25);
         assertEquals(MobilityRequestResponse.ACK, leaderWaitingState.onMobilityRequestMessgae(request));
-    }
-    
-    @Test
-    public void onMobilityFollowerJoinRequestWithWrongDistance() {
-        MobilityRequest request = mock(MobilityRequest.class);
-        MobilityHeader header = mock(MobilityHeader.class);
-        PlanType type = mock(PlanType.class);
-        when(header.getSenderId()).thenReturn("C");
-        when(type.getType()).thenReturn(PlanType.PLATOON_FOLLOWER_JOIN);
-        when(request.getHeader()).thenReturn(header);
-        when(request.getPlanType()).thenReturn(type);
-        when(request.getStrategyParams()).thenReturn("DTD:45.00");
-        when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(60.0);
-        when(plugin.getDesiredJoinTimeGap()).thenReturn(4.0);
-        when(mockInputs.getCurrentSpeed()).thenReturn(3.25);
-        assertEquals(MobilityRequestResponse.NACK, leaderWaitingState.onMobilityRequestMessgae(request));
     }
     
 }

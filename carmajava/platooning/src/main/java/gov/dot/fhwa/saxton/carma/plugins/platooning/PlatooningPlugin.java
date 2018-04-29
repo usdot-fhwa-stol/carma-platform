@@ -50,7 +50,6 @@ public class PlatooningPlugin extends AbstractPlugin
     protected final String PLATOONING_FLAG         = "PLATOONING";
     protected final String MOBILITY_STRATEGY       = "Carma/Platooning";
     protected final String JOIN_AT_REAR_PARAMS     = "SIZE:%d,MAX_ACCEL:%.2f,DTD:%.2f";
-    protected final String CANDIDATE_JOIN_PARAMS   = "DTD:%.2f";
     protected final String OPERATION_INFO_PARAMS   = "INFO|LEADER:%s,REAR_DTD:%.2f,SPEED:%.2f,SIZE:%d";
     protected final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
     protected final String OPERATION_INFO_TYPE     = "INFO";
