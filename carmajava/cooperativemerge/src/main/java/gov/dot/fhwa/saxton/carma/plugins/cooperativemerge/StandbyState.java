@@ -16,6 +16,10 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+
+import org.jboss.netty.util.internal.ConcurrentHashMap;
 import org.ros.rosjava_geometry.Vector3;
 
 import cav_msgs.MobilityOperation;
@@ -39,15 +43,16 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
  */
 public class StandbyState implements ICooperativeMergeState {
   
-  protected static int LOOP_SLEEP_TIME   = 1000;
+  protected final static int LOOP_SLEEP_TIME = 1000; // ms
   
-  protected CooperativeMergePlugin   plugin;
-  protected ILogger        log;
-  protected PluginServiceLocator pluginServiceLocator;
+  protected final CooperativeMergePlugin plugin;
+  protected final ILogger log;
+  protected final PluginServiceLocator pluginServiceLocator;
+  protected final ConcurrentMap<String, RampMeterData> rampMeters = new ConcurrentHashMap<>();
   
   public StandbyState(CooperativeMergePlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
-    this.plugin         = plugin;
-    this.log          = log;
+    this.plugin               = plugin;
+    this.log                  = log;
     this.pluginServiceLocator = pluginServiceLocator;
   }
   
@@ -60,22 +65,22 @@ public class StandbyState implements ICooperativeMergeState {
 
   @Override
   public MobilityRequestResponse onMobilityRequestMessage(MobilityRequest msg) {
-    // TODO cache meter locations to improve performance
+    // TODO enhancement cache meter locations to improve performance
     // In standby state, the plugin waits to receive a message from a ramp metering rsu
     // Parse Strategy Params
-    String expectedString = "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f"; // TODO add distance to merge point
-    final String RADIUS_PARAM = "RADIUS";
-    final String MERGE_DIST_PARAM = "MERGE_DIST";
-    final String MERGE_LENGTH_PARAM = "MERGE_LENGTH";
-    final String INFO_TYPE = "INFO";
-    String paramsString = msg.getStrategyParams();
-    String[] paramsParts = paramsString.split("\\|");
-    String typeString = paramsParts[0];
-    String dataString = paramsParts[1];
-    String[] dataParts = dataString.split(",");
-    String[] radiusParts = dataParts[0].split(":");
-    String[] mergeDistParts = dataParts[1].split(":");
-    String[] mergeLengthParts = dataParts[2].split(":");
+    // Expected String "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";  // TODO add distance to merge point
+    final  String RADIUS_PARAM       = "RADIUS";
+    final  String MERGE_DIST_PARAM   = "MERGE_DIST";
+    final  String MERGE_LENGTH_PARAM = "MERGE_LENGTH";
+    final  String INFO_TYPE          = "INFO";
+    String paramsString              = msg.getStrategyParams();
+    String[] paramsParts             = paramsString.split("\\|");
+    String typeString                = paramsParts[0];
+    String dataString                = paramsParts[1];
+    String[] dataParts               = dataString.split(",");
+    String[] radiusParts             = dataParts[0].split(":");
+    String[] mergeDistParts          = dataParts[1].split(":");
+    String[] mergeLengthParts        = dataParts[2].split(":");
 
     // Validate Params
     if (!typeString.equals(INFO_TYPE) || !radiusParts[0].equals(RADIUS_PARAM)
@@ -86,28 +91,44 @@ public class StandbyState implements ICooperativeMergeState {
       return MobilityRequestResponse.NO_RESPONSE;
     }
 
-    String senderId = msg.getHeader().getSenderId();
+    // Get RSU Id
+    String rsuId = msg.getHeader().getSenderId();
 
-    double meterRadius = Double.parseDouble(radiusParts[1]);
-    double mergeDTD = Double.parseDouble(mergeDistParts[1]);
-    double mergeLength = Double.parseDouble(mergeLengthParts[1]);
+    // If this is our first time seeing this, RSU cache its information
+    if (!rampMeters.containsKey(rsuId)) {
+      double meterRadius       = Double.parseDouble(radiusParts[1]);
+      double mergeDTDFromMeter = Double.parseDouble(mergeDistParts[1]);
+      double mergeLength       = Double.parseDouble(mergeLengthParts[1]);
 
-    cav_msgs.LocationECEF meterLoc = msg.getLocation();
-    // TODO Probably would be good to add a function to route for doing this complicated process
-    Point3D meterPoint = new Point3D(meterLoc.getEcefX(), meterLoc.getEcefY(), meterLoc.getEcefZ());
-    Route route = Route.fromMessage(pluginServiceLocator.getRouteService().getCurrentRoute());
-    RouteSegment meterSeg = route.routeSegmentOfPoint(meterPoint, route.getSegments()); // TODO optimize this
-    // Get the point in location of the meter in segment frame
-    Vector3 meterPointInSeg = meterSeg.getECEFToSegmentTransform().invert().apply(new Vector3(meterPoint.getX(), meterPoint.getY(), meterPoint.getZ()));
-    double segmentDTD = route.lengthOfSegments(0, meterSeg.getDowntrackWaypoint().getWaypointId() - 1);
-    double meterDTD = segmentDTD + meterPointInSeg.getX();
+      cav_msgs.LocationECEF meterLoc = msg.getLocation();
+      // TODO Probably would be good to add a function to route for doing this complicated process which happens alot
+      Point3D      meterPoint = new Point3D(meterLoc.getEcefX(), meterLoc.getEcefY(), meterLoc.getEcefZ());
+      Route        route      = Route.fromMessage(pluginServiceLocator.getRouteService().getCurrentRoute());
+      RouteSegment meterSeg   = route.routeSegmentOfPoint(meterPoint, route.getSegments());                   // TODO optimize this
+      // Get the point in location of the meter in segment frame
+      Vector3 meterPointInSeg = meterSeg.getECEFToSegmentTransform().invert().apply(new Vector3(meterPoint.getX(), meterPoint.getY(), meterPoint.getZ()));
+      double  segmentDTD      = route.lengthOfSegments(0, meterSeg.getDowntrackWaypoint().getWaypointId() - 1);
+      double  meterDTD        = segmentDTD + meterPointInSeg.getX();
+      double mergeDTD = meterDTD + mergeDTDFromMeter;
 
-
+      // Thread safe atomic put
+      RampMeterData newMeterData = new RampMeterData(rsuId, meterDTD, mergeDTD, mergeLength, meterRadius);
+      rampMeters.putIfAbsent(rsuId, newMeterData);
+    }
+    
+    // Get current downtrack distance to see if we are near the ramp meter point
     double currentDTD = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+    // Get the data for the rsu which sent this message
+    RampMeterData rsuData = rampMeters.get(rsuId);
 
-    if (Math.abs(meterDTD - currentDTD) < meterRadius) {
+    if (rsuData == null) {
+
+      log.warn("RSU Data was not properly cached");
+      return MobilityRequestResponse.NO_RESPONSE;
+
+    } else if (Math.abs(rsuData.getRampMeterDTD() - currentDTD) < rsuData.getRadius()) {
       // Change to planning state
-      plugin.setState(new PlanningState(plugin, log, pluginServiceLocator, meterDTD, mergeDTD, mergeLength));
+      plugin.setState(new PlanningState(plugin, log, pluginServiceLocator, rsuData));
     }
     return MobilityRequestResponse.NO_RESPONSE;
   }

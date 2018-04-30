@@ -32,7 +32,6 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 public class CooperativeMergeManeuver extends ComplexManeuverBase {
 
   private ICooperativeMergeInputs commandInputs;
-  private Duration timeout = Duration.fromMillis(3000);
   private ArbitratorService arbitratorService;
 
   /**
@@ -77,13 +76,10 @@ public class CooperativeMergeManeuver extends ComplexManeuverBase {
   }
 
   @Override protected double generateSpeedCommand() throws IllegalStateException {
-    checkTimeout();
-
     return commandInputs.getSpeedCommand();
   }
 
   @Override protected double generateMaxAccelCommand() throws IllegalStateException {
-    checkTimeout();
 
     double maxAccel = commandInputs.getMaxAccelLimit();
 
@@ -94,40 +90,5 @@ public class CooperativeMergeManeuver extends ComplexManeuverBase {
       log_.warn("Truncated max acceleration above limit to limit value");
     }
     return maxAccel;
-  }
-
-  private void checkTimeout() throws IllegalStateException {
-    Duration timeElapsed = commandInputs.getTimeSinceLastUpdate();
-    if (timeElapsed.compareTo(timeout) > 0) {
-      if (arbitratorService == null) {
-        log_.error("Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
-        throw new IllegalStateException("Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
-      } else {
-        log_.warn("Timeout: " + timeout + " ElapsedTime: " + timeElapsed + ". Notifying arbitrator of failure.");
-        arbitratorService.notifyTrajectoryFailure();
-      }
-    }
-  }
-
-  /**
-   * Gets the command update timeout after which the maneuver will not execute a timestep
-   * @return the duration of the timeout
-   */
-  public Duration getTimeout() {
-    return timeout;
-  }
-
-  /**
-   * Sets the command update timeout after which the maneuver will not execute a timestep
-   */
-  public void setTimeout(Duration timeout) {
-    this.timeout = timeout;
-  }
-
-  /**
-   * Sets the arbitration service the maneuver will use to force a replan in the event of a timeout.
-   */
-  public void setArbitratorService(ArbitratorService arbitratorService) {
-    this.arbitratorService = arbitratorService;
   }
 }

@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
@@ -41,32 +42,20 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
  *///ICooperativeMergeInputs,
 public class CooperativeMergePlugin extends AbstractPlugin implements IStrategicPlugin, MobilityRequestHandler, MobilityOperationHandler {
   protected String vehicleId = "";
-  protected String rsuId = null;
-  protected UUID planId = null;
-  protected double minimumManeuverLength = 10.0;
-  protected double maxAccel = 2.0;
-  protected double lagTime = 0.1;
-  protected long maneuverTimeout = 3000; //ms
+  protected double minimumManeuverLength = 10.0; // m
+  protected double maxAccel = 2.5; // m/s^2
+  protected double lagTime = 0.1; // s
   protected IPublisher<MobilityRequest> mobilityRequestPub;
   protected IPublisher<MobilityOperation> mobilityOperationPub;
   protected IPublisher<MobilityResponse> mobilityResponsePub;
-
-  protected double meterDTD = 0;
   
+  protected final Object stateMutex = new Object();
   protected ICooperativeMergeState state = null;
 
   protected CooperativeMergeInputs cooperativeMergeInputs;
 
-  // protected StatusUpdater statusUpdater = null;
-  // protected Thread statusUpdaterThread = null;
-
-  // protected CommandReceiver commandReceiver = null;
-  // protected Thread commandReceiverThread = null;
-
-  // protected SessionManager sessionManager;
-  // protected VehicleDataManager vehicleDataManager;
-  // protected LocalDateTime lastUpdateTime = LocalDateTime.now();
-  // protected RestTemplate restClient;
+  protected long commsTimeoutMS = 500; //ms
+  protected long updatePeriod = 200; //ms
 
   public static final String COOPERATIVE_MERGE_FLAG = "COOPERATIVE_MERGE";
   public static final String MOBILITY_STRATEGY = "Carma/CooperativeMerge";
@@ -80,23 +69,21 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     // Register Mobility Message Callbacks
     pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
     pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
-    maxAccel = 2.5; // TODO get this from somewhere
+    maxAccel = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit();
     cooperativeMergeInputs = new CooperativeMergeInputs(maxAccel);
     lagTime = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();
-    //restClient = new RestTemplate();
   }
 
   @Override
   public void onInitialize() {
-    vehicleId = pluginServiceLocator.getParameterSource().getString("vehicle_id");
-    double freq = pluginServiceLocator.getParameterSource().getDouble("~data_reporting_frequency", 1.0);
-    timestepDuration = (long) (1000.0 / freq);
+    vehicleId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
+    double freq = pluginServiceLocator.getParameterSource().getDouble("~data_reporting_frequency", 5.0);
+    updatePeriod = (long) (1000.0 / freq);
 
-    maneuverTimeout = pluginServiceLocator.getParameterSource().getInteger("~cooperative_merge_maneuver_timeout", 3000);
+    commsTimeoutMS = pluginServiceLocator.getParameterSource().getInteger("~cooperative_merge_comms_timeout", 500);
 
-    log.info("LoadedParam: vehicle_id: " + vehicleId);
-    log.info("LoadedParam: data_reporting_frequency: " + freq);
-    log.info("LoadedParam: cooperative_merge_maneuver_timeout: " + maneuverTimeout);
+    log.info("LoadedParam: data_reporting_frequency: " + freq + " Hz");
+    log.info("LoadedParam: cooperative_merge_comms_timeout: " + commsTimeoutMS);
 
     mobilityRequestPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
     mobilityRequestPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_operation", MobilityRequest._TYPE);
@@ -104,67 +91,25 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
 
   @Override
   public void onResume() {
-
-    // if (statusUpdaterThread == null && statusUpdater == null) {
-    //   statusUpdater = new StatusUpdater(serverUrl, sessionManager.getServerSessionId(), restClient, timestepDuration,
-    //       vehicleDataManager);
-    //   statusUpdaterThread = new Thread(statusUpdater);
-    //   statusUpdaterThread.setName("SpeedHarm Status Updater");
-    //   statusUpdaterThread.start();
-    // }
-
-    // if (commandReceiverThread == null && commandReceiver == null) {
-    //   commandReceiver = new CommandReceiver(serverUrl, sessionManager.getServerSessionId(), restClient);
-    //   commandReceiverThread = new Thread(commandReceiver);
-    //   commandReceiverThread.setName("SpeedHarm Command Receiver");
-    //   commandReceiverThread.start();
-    // }
+    // Reset state
+    setState(new StandbyState(this, log, pluginServiceLocator));
   }
 
   @Override
   public void loop() throws InterruptedException {
-
-    if (state == null) {
-      log.warn("Requested to loop but state was null");
-      return;
+    synchronized(stateMutex) {
+      if (state == null) {
+        log.warn("Requested to loop but state was null");
+        return;
+      }
+  
+      state.loop();
     }
-
-    state.loop();
-    // long tsStart = System.currentTimeMillis();
-    // if (statusUpdater.lastUpdateTime != null) {
-    //   // If we've successfully communicated with the server recently, signal our availability
-    //   java.time.Duration timeSinceLastUpdate = java.time.Duration.between(statusUpdater.lastUpdateTime,
-    //       LocalDateTime.now());
-    //   if (timeSinceLastUpdate.toMillis() < 3 * timestepDuration) {
-    //     setAvailability(true);
-    //   } else {
-    //     setAvailability(false);
-    //   }
-    // }
-
-    // vehicleDataManager.setManeuverRunning(pluginServiceLocator.getArbitratorService()
-    //     .getCurrentlyExecutingManeuver(ManeuverType.COMPLEX) instanceof SpeedHarmonizationManeuver);
-
-    // long tsEnd = System.currentTimeMillis();
-    // long sleepDuration = Math.max(100 - (tsEnd - tsStart), 0);
-    // Thread.sleep(sleepDuration);
   }
 
   @Override
   public void onSuspend() {
-    // if (statusUpdaterThread != null && statusUpdater != null) {
-    //   statusUpdaterThread.interrupt();
-    //   statusUpdaterThread = null;
-    //   statusUpdater = null;
-    // }
-
-    // if (commandReceiverThread != null && commandReceiver != null) {
-    //   commandReceiverThread.interrupt();
-    //   commandReceiverThread = null;
-    //   commandReceiver = null;
-    // }
-
-    // sessionManager.endVehicleSession();
+    // NO-OP
   }
 
   @Override
@@ -174,66 +119,58 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
 
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
-    if (state == null) {
-      log.warn("Requested to plan trajectory but state was null");
-      return new TrajectoryPlanningResponse();
+    synchronized(stateMutex) {
+      if (state == null) {
+        log.warn("Requested to plan trajectory but state was null");
+        return new TrajectoryPlanningResponse();
+      }
+      return state.planTrajectory(traj, expectedStartSpeed);
     }
-    return state.planTrajectory(traj, expectedStartSpeed);
   }
 
-@Override // TODO Synchronize
-public void handleMobilityOperationMessage(MobilityOperation msg) {
-  if (state == null) {
-    log.warn("Requested to handle mobility operation message but state was null");
-    return;
+  @Override
+  public void handleMobilityOperationMessage(MobilityOperation msg) {
+    synchronized(stateMutex) {
+      if (state == null) {
+        log.warn("Requested to handle mobility operation message but state was null");
+        return;
+      }
+      state.onMobilityOperationMessage(msg);
+    }
   }
-  state.onMobilityOperationMessage(msg);
-}
 
-@Override // TODO Synchronize
-public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict,
-    ConflictSpace conflictSpace) {
-  if (state == null) {
-    log.warn("Requested to handle mobility request message but state was null");
-    return MobilityRequestResponse.NO_RESPONSE;
+  @Override
+  public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict,
+      ConflictSpace conflictSpace) {
+
+    synchronized(stateMutex) {
+      if (state == null) {
+        log.warn("Requested to handle mobility request message but state was null");
+        return MobilityRequestResponse.NO_RESPONSE;
+      }
+      return state.onMobilityRequestMessage(msg);
+    }
   }
-  return state.onMobilityRequestMessage(msg);
-}
 
-  // @Override
-  // public double getSpeedCommand() {
-  //   // if (commandReceiver.getLastCommand() != null) {
-  //   //   log.info("Using received command");
-  //   //   return commandReceiver.getLastCommand().getSpeed();
-  //   // } else {
-  //   //   log.info("Using previous vehicle speed");
-  //   //   return vehicleDataManager.getSpeed();
-  //   // }
-  // }
-
-  // @Override
-  // public double getMaxAccelLimit() {
-  //   return Math.min(Math.abs(maxAccel), 2.5);
-  // }
-
-  // @Override
-  // public Duration getTimeSinceLastUpdate() {
-  //   // if (commandReceiver != null && commandReceiver.getLastCommand() != null) {
-  //   //   LocalDateTime now = LocalDateTime.now();
-  //   //   long millis = java.time.Duration.between(commandReceiver.getLastCommand().getTimestamp(), now).toMillis();
-  //   //   return Duration.fromMillis(millis);
-  //   // } else {
-  //   //   return Duration.fromMillis(0);
-  //   // }
-  // }
-
+  /**
+   * Set the availability of this plugin for planning
+   * 
+   * @param availability The availability to set
+   */
   protected void setAvailable(boolean availability) {
     this.setAvailability(availability);
   }
 
+  /**
+   * Sets the state of this plugin
+   * 
+   * @param newState The state to transition to
+   */
   protected void setState(ICooperativeMergeState newState) {
     log.info("Transitioned from old state: " + state + " to new state: " + newState);
-    state = newState;
+    synchronized (stateMutex) {
+      state = newState;
+    }
   }
 
   /**
@@ -241,27 +178,6 @@ public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg,
    */
   public String getVehicleId() {
     return vehicleId;
-  }
-
-  /**
-   * @return the rsuId
-   */
-  public String getRsuId() {
-    return rsuId;
-  }
-
-  /**
-   * @return the planId
-   */
-  public UUID getPlanId() {
-    return planId;
-  }
-
-  /**
-   * @param planId the planId to set
-   */
-  public void setPlanId(UUID planId) {
-    this.planId = planId;
   }
 
   /**
@@ -313,4 +229,17 @@ public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg,
     return cooperativeMergeInputs;
   }
 
+  /**
+   * @return the commsTimeoutMS
+   */
+  public long getCommsTimeoutMS() {
+    return commsTimeoutMS;
+  }
+
+  /**
+   * @return the updatePeriod
+   */
+  public long getUpdatePeriod() {
+    return updatePeriod;
+  }
 }

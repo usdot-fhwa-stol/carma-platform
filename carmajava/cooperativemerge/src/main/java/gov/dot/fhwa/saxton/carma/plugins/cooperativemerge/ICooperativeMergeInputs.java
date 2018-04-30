@@ -46,11 +46,4 @@ public interface ICooperativeMergeInputs {
    * @return Acceleration command
    */
   double getMaxAccelLimit();
-
-  /**
-   * Returns the time since the providing object last received or calculated a new speed or acceleration command.
-   *
-   * @return Time of last update
-   */
-  Duration getTimeSinceLastUpdate();
 }

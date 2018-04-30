@@ -38,48 +38,47 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  */
 public class PlanningState implements ICooperativeMergeState {
   
-  protected static int LOOP_SLEEP_TIME   = 1000;
-  
-  protected CooperativeMergePlugin   plugin;
-  protected ILogger        log;
-  protected PluginServiceLocator pluginServiceLocator;
-  protected String MERGE_REQUEST_PARAMS = "MERGE|MAX_ACCEL:%.2f,LAG:%.2f,DIST:%.2f";
+  protected final CooperativeMergePlugin   plugin;
+  protected final ILogger        log;
+  protected final PluginServiceLocator pluginServiceLocator;
+  protected final RampMeterData rampMeterData;
+  protected final long requestTime;
+  protected final String planId;
+  protected String MERGE_REQUEST_PARAMS      = "MERGE|MAX_ACCEL:%.2f,LAG:%.2f,DIST:%.2f";
   protected AtomicBoolean replanningForMerge = new AtomicBoolean(false);
-  protected Object replanningMutex = new Object();
-  protected double rampMeterDTD;
-  protected double mergePointDTD;
-  protected double mergeLength;
   
-  public PlanningState(CooperativeMergePlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator,
-    double rampMeterDTD, double mergePointDTD, double mergeLength) {
+  public PlanningState(CooperativeMergePlugin plugin, ILogger log,
+    PluginServiceLocator pluginServiceLocator, RampMeterData rampMeterData) {
 
-    this.plugin         = plugin;
-    this.log          = log;
+    this.plugin               = plugin;
+    this.log                  = log;
     this.pluginServiceLocator = pluginServiceLocator;
-    this.rampMeterDTD = rampMeterDTD;
-    this.mergePointDTD = mergePointDTD;
-    this.mergeLength = mergeLength;
+    this.rampMeterData        = rampMeterData;
 
     // Notify meter of intention to merge
-    plugin.setPlanId(UUID.randomUUID()); // Set the plan id
+    this.planId = UUID.randomUUID().toString(); // Set the plan id
 
     MobilityRequest mergeRequest = plugin.mobilityRequestPub.newMessage();
     // Build Header
     mergeRequest.getHeader().setSenderId(plugin.getVehicleId());
-    mergeRequest.getHeader().setRecipientId(plugin.getRsuId());
-    mergeRequest.getHeader().setPlanId(plugin.getPlanId().toString());
-    mergeRequest.getHeader().setSenderBsmId("FFFFFF"); // TODO use real BSM Id
+    mergeRequest.getHeader().setRecipientId(rampMeterData.getRsuId());
+    mergeRequest.getHeader().setPlanId(planId);
+    mergeRequest.getHeader().setSenderBsmId("FFFFFFFF"); // TODO use real BSM Id
     mergeRequest.getHeader().setTimestamp(System.currentTimeMillis());
     // Fill out request
     mergeRequest.setStrategy(CooperativeMergePlugin.MOBILITY_STRATEGY);
     
-    String params = String.format(MERGE_REQUEST_PARAMS, plugin.getMaxAccel(), plugin.getLagTime(), 100.0); // TODO get distance to merge
+    double currentDTD = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getDistanceFromRouteStart();
+    double distanceToMerge = rampMeterData.getMergePointDTD() - currentDTD;
+
+    String params = String.format(MERGE_REQUEST_PARAMS, plugin.getMaxAccel(), plugin.getLagTime(), distanceToMerge); 
     mergeRequest.setStrategyParams(params);
     
     mergeRequest.setLocation(mergeRequest.getLocation()); // TODO get the location
     mergeRequest.setExpiration(System.currentTimeMillis() + 500);
     
     plugin.getMobilityRequestPub().publish(mergeRequest);
+    this.requestTime = System.currentTimeMillis();
     // TODO after request is sent we need a timeout and nack mechanism
   }
   
@@ -102,19 +101,19 @@ public class PlanningState implements ICooperativeMergeState {
     double currentDTD = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
     
     // TODO add logic for if we start inside the circle
-    if (currentDTD > rampMeterDTD) {
+    if (currentDTD > rampMeterData.getRampMeterDTD()) {
         log.warn("Did not change trajectory as we are already passed ramp meter point: " 
-          + rampMeterDTD + " with downtrack: " + currentDTD);
+          + rampMeterData.getRampMeterDTD() + " with downtrack: " + currentDTD);
         
         replanningForMerge.set(false);
         return tpr;
     }
 
-    double complexManeuverSize = (mergePointDTD + mergeLength) - currentDTD;
+    double complexManeuverSize = (rampMeterData.getMergePointDTD() + rampMeterData.getMergeLength()) - currentDTD;
     if (complexManeuverSize < plugin.getMinimumManeuverLength()) {
         log.warn(String.format("Failed to plan complex maneuver in trajectory: " + traj +
         ", downtrack: %.2f, merge point dtd: %.2f, length of merge: %.2f, min maneuver size: %.2f",
-        currentDTD, mergePointDTD, mergeLength, plugin.getMinimumManeuverLength()));
+        currentDTD, rampMeterData.getMergePointDTD(), rampMeterData.getMergeLength(), plugin.getMinimumManeuverLength()));
         
         replanningForMerge.set(false);
         return tpr;
@@ -134,9 +133,9 @@ public class PlanningState implements ICooperativeMergeState {
 
     // TODO add logic for if we start inside the circle
     // If the first available planning window is before the meter point we need higher planning priority
-    if (start > rampMeterDTD) {
+    if (start > rampMeterData.getRampMeterDTD()) {
         log.info("Requesting higher priority as current window is not sufficient. ramp meter point: " 
-          + rampMeterDTD + " downtrack: " + currentDTD + " window start: " + start + " window size: " + complexManeuverSize);
+          + rampMeterData.getRampMeterDTD() + " downtrack: " + currentDTD + " window start: " + start + " window size: " + complexManeuverSize);
         
         tpr.requestHigherPriority();
         return tpr;
@@ -159,7 +158,7 @@ public class PlanningState implements ICooperativeMergeState {
         rs.getSpeedLimitsInRange(start, end).first().getLimit());
 
     traj.setComplexManeuver(mergeManeuver);
-    plugin.setState(new ExecutionState(plugin, log, pluginServiceLocator, rampMeterDTD, mergePointDTD));
+    plugin.setState(new ExecutionState(plugin, log, pluginServiceLocator, rampMeterData, planId));
     return tpr;
   }
 
@@ -172,8 +171,8 @@ public class PlanningState implements ICooperativeMergeState {
   @Override
   public void onMobilityResponseMessage(MobilityResponse msg) {
     // Check if this response if for our proposed plan to merge
-    if (!msg.getHeader().getSenderId().equals(plugin.getRsuId())
-      || !msg.getHeader().getPlanId().equals(plugin.getPlanId().toString())) {
+    if (!msg.getHeader().getSenderId().equals(rampMeterData.getRsuId())
+      || !msg.getHeader().getPlanId().equals(planId)) {
         return;
       }
 
@@ -193,10 +192,21 @@ public class PlanningState implements ICooperativeMergeState {
   public void onMobilityOperationMessage(MobilityOperation msg) {
     // In standby state, it will ignore operation message since it is not actively operating
   }
+
+  // TODO
+  private void publishNack() {
+
+  }
   
   @Override
   public void loop() throws InterruptedException {
-    Thread.sleep(LOOP_SLEEP_TIME);
+    if (System.currentTimeMillis() - this.requestTime > plugin.getCommsTimeoutMS()) {
+      log.warn("RSU did not accept request to merge within timelimit");
+      publishNack();
+      plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+      return;
+    }
+    Thread.sleep(plugin.getUpdatePeriod());
   }
   
   @Override
