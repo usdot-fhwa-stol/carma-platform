@@ -25,6 +25,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IAccStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
+//TODO remove timeout functionality and put in plugin states
 /**
  * Maneuver which executes complex speed commands provided by an ISpeedHarmInputs object.
  */
@@ -87,7 +88,7 @@ public class CooperativeMergeManeuver extends ComplexManeuverBase {
     double maxAccel = commandInputs.getMaxAccelLimit();
 
     if (maxAccel < 0.0) {
-      throw new IllegalStateException("SpeedHarmonizationManeuver received negative maxAccel command: " + maxAccel);
+      throw new IllegalStateException(this.getClass().getSimpleName() + " received negative maxAccel command: " + maxAccel);
     } else if (maxAccel > maxAccel_) {
       maxAccel = maxAccel_;
       log_.warn("Truncated max acceleration above limit to limit value");
@@ -99,10 +100,10 @@ public class CooperativeMergeManeuver extends ComplexManeuverBase {
     Duration timeElapsed = commandInputs.getTimeSinceLastUpdate();
     if (timeElapsed.compareTo(timeout) > 0) {
       if (arbitratorService == null) {
-        log_.error("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
-        throw new IllegalStateException("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
+        log_.error("Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
+        throw new IllegalStateException("Timeout: " + timeout + " ElapsedTime: " + timeElapsed);
       } else {
-        log_.warn("SpeedHarmonizationManeuver timeout. Timeout: " + timeout + " ElapsedTime: " + timeElapsed + ". Notifying arbitrator of failure.");
+        log_.warn("Timeout: " + timeout + " ElapsedTime: " + timeElapsed + ". Notifying arbitrator of failure.");
         arbitratorService.notifyTrajectoryFailure();
       }
     }

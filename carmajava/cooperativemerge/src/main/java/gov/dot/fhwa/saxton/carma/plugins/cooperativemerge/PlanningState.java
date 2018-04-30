@@ -80,6 +80,7 @@ public class PlanningState implements ICooperativeMergeState {
     mergeRequest.setExpiration(System.currentTimeMillis() + 500);
     
     plugin.getMobilityRequestPub().publish(mergeRequest);
+    // TODO after request is sent we need a timeout and nack mechanism
   }
   
   @Override
@@ -156,7 +157,7 @@ public class PlanningState implements ICooperativeMergeState {
         end,
         0, 
         rs.getSpeedLimitsInRange(start, end).first().getLimit());
-    
+
     traj.setComplexManeuver(mergeManeuver);
     plugin.setState(new ExecutionState(plugin, log, pluginServiceLocator, rampMeterDTD, mergePointDTD));
     return tpr;
