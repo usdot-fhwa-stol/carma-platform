@@ -15,15 +15,15 @@
  */
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
+import org.ros.message.Duration;
+import org.ros.message.Time;
+
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ComplexManeuverBase;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IAccStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
-
-import org.ros.message.Duration;
-import org.ros.message.Time;
 
 /**
  * Maneuver which executes complex speed commands provided by an ISpeedHarmInputs object.

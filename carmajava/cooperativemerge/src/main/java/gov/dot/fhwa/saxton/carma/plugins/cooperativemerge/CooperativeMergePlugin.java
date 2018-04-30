@@ -16,16 +16,13 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
-import org.ros.message.Duration;
+import java.util.UUID;
 
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityOperationHandler;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
@@ -34,12 +31,6 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.utils.ComponentVersion;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Plugin implementing integration withe STOL I TO 22 Infrastructure Server

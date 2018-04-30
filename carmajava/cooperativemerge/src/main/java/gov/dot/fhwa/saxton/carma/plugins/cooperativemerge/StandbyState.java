@@ -16,9 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
-import java.util.List;
-
-import org.ros.internal.message.RawMessage;
 import org.ros.rosjava_geometry.Vector3;
 
 import cav_msgs.MobilityOperation;
@@ -26,8 +23,6 @@ import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
@@ -35,7 +30,6 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
-import std_msgs.Header;
 
 /**
  * TODO
@@ -59,13 +53,8 @@ public class StandbyState implements ICooperativeMergeState {
   
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-    RouteService rs = pluginServiceLocator.getRouteService();
+    // No need to plan trajectory in StandbyState
     TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-    // Check if the next trajectory includes a platooning window
-    if(!rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), CooperativeMergePlugin.COOPERATIVE_MERGE_FLAG)) {
-      log.info("In standby state, asked to plan a trajectory without available window, ignoring...");
-    }
-    
     return tpr;
   }
 
@@ -74,25 +63,34 @@ public class StandbyState implements ICooperativeMergeState {
     // TODO cache meter locations to improve performance
     // In standby state, the plugin waits to receive a message from a ramp metering rsu
     // Parse Strategy Params
-    String expectedString = "INFO|RADIUS:%.2f"; // TODO add distance to merge point
-    double mergeDTD = 0; // TODO
-    final String RADIUS_PARAM = "RADIUS:";
+    String expectedString = "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f"; // TODO add distance to merge point
+    final String RADIUS_PARAM = "RADIUS";
+    final String MERGE_DIST_PARAM = "MERGE_DIST";
+    final String MERGE_LENGTH_PARAM = "MERGE_LENGTH";
     final String INFO_TYPE = "INFO";
     String paramsString = msg.getStrategyParams();
     String[] paramsParts = paramsString.split("\\|");
     String typeString = paramsParts[0];
     String dataString = paramsParts[1];
-    String[] dataParts = dataString.split(":");
-    String dataType = dataParts[0];
+    String[] dataParts = dataString.split(",");
+    String[] radiusParts = dataParts[0].split(":");
+    String[] mergeDistParts = dataParts[1].split(":");
+    String[] mergeLengthParts = dataParts[2].split(":");
+
     // Validate Params
-    if (!typeString.equals(INFO_TYPE) || !dataParts.equals(RADIUS_PARAM)) {
+    if (!typeString.equals(INFO_TYPE) || !radiusParts[0].equals(RADIUS_PARAM)
+        || !mergeDistParts[0].equals(MERGE_DIST_PARAM)
+        || !mergeLengthParts[0].equals(MERGE_LENGTH_PARAM)) {
+        
       log.info("Received mobility request with invalid params for state. Params: " + paramsString);
       return MobilityRequestResponse.NO_RESPONSE;
     }
 
     String senderId = msg.getHeader().getSenderId();
 
-    double meterRadius = Double.parseDouble(dataParts[1]);
+    double meterRadius = Double.parseDouble(radiusParts[1]);
+    double mergeDTD = Double.parseDouble(mergeDistParts[1]);
+    double mergeLength = Double.parseDouble(mergeLengthParts[1]);
 
     cav_msgs.LocationECEF meterLoc = msg.getLocation();
     // TODO Probably would be good to add a function to route for doing this complicated process
@@ -109,7 +107,7 @@ public class StandbyState implements ICooperativeMergeState {
 
     if (Math.abs(meterDTD - currentDTD) < meterRadius) {
       // Change to planning state
-      plugin.setState(new PlanningState(plugin, log, pluginServiceLocator, meterDTD, mergeDTD));
+      plugin.setState(new PlanningState(plugin, log, pluginServiceLocator, meterDTD, mergeDTD, mergeLength));
     }
     return MobilityRequestResponse.NO_RESPONSE;
   }

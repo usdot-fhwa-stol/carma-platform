@@ -16,28 +16,19 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.ros.internal.message.RawMessage;
-import org.ros.rosjava_geometry.Vector3;
 
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
-import gov.dot.fhwa.saxton.carma.route.Route;
-import gov.dot.fhwa.saxton.carma.route.RouteSegment;
-import std_msgs.Header;
 
 /**
  * TODO
@@ -57,15 +48,17 @@ public class PlanningState implements ICooperativeMergeState {
   protected Object replanningMutex = new Object();
   protected double rampMeterDTD;
   protected double mergePointDTD;
+  protected double mergeLength;
   
   public PlanningState(CooperativeMergePlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator,
-    double rampMeterDTD, double mergePointDTD) {
+    double rampMeterDTD, double mergePointDTD, double mergeLength) {
 
     this.plugin         = plugin;
     this.log          = log;
     this.pluginServiceLocator = pluginServiceLocator;
     this.rampMeterDTD = rampMeterDTD;
     this.mergePointDTD = mergePointDTD;
+    this.mergeLength = mergeLength;
 
     // Notify meter of intention to merge
     plugin.setPlanId(UUID.randomUUID()); // Set the plan id
@@ -78,7 +71,7 @@ public class PlanningState implements ICooperativeMergeState {
     mergeRequest.getHeader().setSenderBsmId("FFFFFF"); // TODO use real BSM Id
     mergeRequest.getHeader().setTimestamp(System.currentTimeMillis());
     // Fill out request
-    mergeRequest.setStrategy(plugin.MOBILITY_STRATEGY);
+    mergeRequest.setStrategy(CooperativeMergePlugin.MOBILITY_STRATEGY);
     
     String params = String.format(MERGE_REQUEST_PARAMS, plugin.getMaxAccel(), plugin.getLagTime(), 100.0); // TODO get distance to merge
     mergeRequest.setStrategyParams(params);
@@ -116,12 +109,11 @@ public class PlanningState implements ICooperativeMergeState {
         return tpr;
     }
 
-    double lengthOfMergeRegion = 50; // TODO pass this in from rsu
-    double complexManeuverSize = (mergePointDTD + lengthOfMergeRegion) - currentDTD;
+    double complexManeuverSize = (mergePointDTD + mergeLength) - currentDTD;
     if (complexManeuverSize < plugin.getMinimumManeuverLength()) {
         log.warn(String.format("Failed to plan complex maneuver in trajectory: " + traj +
         ", downtrack: %.2f, merge point dtd: %.2f, length of merge: %.2f, min maneuver size: %.2f",
-        currentDTD, mergePointDTD, lengthOfMergeRegion, plugin.getMinimumManeuverLength()));
+        currentDTD, mergePointDTD, mergeLength, plugin.getMinimumManeuverLength()));
         
         replanningForMerge.set(false);
         return tpr;

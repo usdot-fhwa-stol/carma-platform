@@ -16,30 +16,16 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.ros.internal.message.RawMessage;
-import org.ros.rosjava_geometry.Vector3;
-
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
-import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
-import gov.dot.fhwa.saxton.carma.route.Route;
-import gov.dot.fhwa.saxton.carma.route.RouteSegment;
-import std_msgs.Header;
 
 /**
  * TODO
@@ -69,13 +55,12 @@ public class ExecutionState implements ICooperativeMergeState {
     this.pluginServiceLocator = pluginServiceLocator;
     this.rampMeterDTD = rampMeterDTD;
     this.mergePointDTD = mergePointDTD;
-      // TODO
   }
   
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-    // TODO currently does nothing
     TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+    //TODO log and warn if planning over complex maneuver
     return tpr;
   }
 
@@ -93,7 +78,15 @@ public class ExecutionState implements ICooperativeMergeState {
         return;
       }
 
-      // TODO nothing unless nack
+    if (msg.getIsAccepted()) {
+      log.warn("Unexpected MobilityResponse ACK received");
+      return;
+    }
+
+    // This is a NACK. We need to abort and replan
+    // TODO do we need more notifications here for the UI maybe?
+    log.warn("NACK received from RSU emergency replanning plan id: " + msg.getHeader().getPlanId());
+    pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
   }
   
   @Override
