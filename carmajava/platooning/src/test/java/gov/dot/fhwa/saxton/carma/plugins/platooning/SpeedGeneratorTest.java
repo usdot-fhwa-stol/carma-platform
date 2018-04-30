@@ -68,6 +68,7 @@ public class SpeedGeneratorTest {
         when(mockPlugin.getKiPID()).thenReturn(0.0);
         when(mockPlugin.getKdPID()).thenReturn(-0.5);
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
+        when(mockPlugin.getCmdSpeedMaxAdjustment()).thenReturn(10.0);
     }
     
     @Test

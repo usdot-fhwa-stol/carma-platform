@@ -210,14 +210,21 @@ public class PlatoonManager implements Runnable {
             leader = platoon.get(0);
             if(plugin.getAlgorithmType() == 1) {
                 int newLeaderIndex = allPredecessorFollowing();
-                leader = newLeaderIndex >= platoon.size() ? null : platoon.get(newLeaderIndex);
-                previousFunctionalLeaderIndex = newLeaderIndex >= platoon.size() ? -1 : newLeaderIndex;
-                previousFunctionalLeaderID = leader == null ? "" : leader.staticId;
+                if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
+                    leader = platoon.get(newLeaderIndex);
+                    log.debug("APF output: " + leader.staticId);
+                    previousFunctionalLeaderIndex = newLeaderIndex;
+                    previousFunctionalLeaderID = leader.staticId;
+                } else {
+                    // it might happened when the subject vehicle gets far away from the preceding vehicle
+                    // In that case, it is OK to follow the first vehicle as leader
+                    // TODO if we encounter any troubles, we will solve it by adding LEAVE request and also leave the platoon
+                    log.warn("Cannot find the correct leader information based on the output of APF algorithm: " + newLeaderIndex);
+                }
             }
             return leader;
-        } else {
-            return null;
         }
+        return null;
     }
     
     /**
@@ -234,15 +241,19 @@ public class PlatoonManager implements Runnable {
      * @return the index of the leader in the platoon list
      */
     private int allPredecessorFollowing() {
-        int result = 0;
-        // If we do not have any leader in the previous time step, we follow the first vehicle as default 
-        if(previousFunctionalLeaderID.equals("")) {
-            ///***** Case One *****///
-            log.debug("APF algorithm did not found a leader in previous time step. Case one!");
-            log.debug("APF follows the first vehicle in this platoon. Case one!");
-            return result;
+        IManeuverInputs inputs = this.plugin.getManeuverInputs();
+        ///***** Case Zero *****///
+        // If we are the second vehicle in this platoon, we will always follow the leader vehicle
+        if(platoon.size() == 1) {
+            log.debug("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
+            return 0;
         }
-        IManeuverInputs inputs = this.psl.getManeuverPlanner().getManeuverInputs();
+        ///***** Case One *****///
+        // If we do not have a leader in the previous time step, we follow the first vehicle as default 
+        if(previousFunctionalLeaderID.equals("")) {
+            log.debug("APF algorithm did not found a leader in previous time step. Case one");
+            return 0;
+        }
         // Generate an array of downtrack distance for every vehicles in this platoon including the host vehicle
         // The size of distance array is platoon.size() + 1, because the platoon list did not contain the host vehicle
         double[] downtrackDistance = new double[platoon.size() + 1];
@@ -250,6 +261,7 @@ public class PlatoonManager implements Runnable {
             downtrackDistance[i] = platoon.get(i).vehiclePosition; 
         }
         downtrackDistance[downtrackDistance.length - 1] = inputs.getDistanceFromRouteStart();
+        
         // Generate an array of speed for every vehicles in this platoon including the host vehicle
         // The size of speed array is platoon.size() + 1, because the platoon list did not contain the host vehicle
         double[] speed = new double[platoon.size() + 1];
@@ -257,40 +269,34 @@ public class PlatoonManager implements Runnable {
             speed[i] = platoon.get(i).vehicleSpeed;
         }
         speed[speed.length - 1] = inputs.getCurrentSpeed();
+        ///***** Case Two *****///
         // If the distance headway between the subject vehicle and its predecessor is an issue
-        // according to the "min_gap" and "max_gap" thresholds, then it should follow its predecessor.
-        if(insufficientGapWithPredecessor(inputs.getDistanceToFrontVehicle())) {
-            ///***** Case Two *****///
-            log.debug("APF algorithm decides there is an issue with the gap with predecessor. Case Two!");
-            log.debug("APF returns the predecessor as the leader. Case Two!");
-            result = platoon.size() - 1;
+        // according to the "min_gap" and "max_gap" thresholds, then it should follow its predecessor
+        // The following line will not throw exception because the length of downtrack array is larger than two in this case
+        double timeHeadwayWithPredecessor = downtrackDistance[downtrackDistance.length - 2] - downtrackDistance[downtrackDistance.length - 1];
+        if(insufficientGapWithPredecessor(timeHeadwayWithPredecessor)) {
+            log.debug("APF algorithm decides there is an issue with the gap with preceding vehicle: " + timeHeadwayWithPredecessor + ". Case Two");
+            return platoon.size() - 1;
         } else {
             // implementation of the main part of APF algorithm
             // calculate the time headway between every consecutive pair of vehicles
             double[] timeHeadways = calculateTimeHeadway(downtrackDistance, speed);
             log.debug("APF calculate time headways: " + Arrays.toString(timeHeadways));
-            log.debug("APF found the previous leader is " + previousFunctionalLeaderIndex);
+            log.debug("APF found the previous leader is " + previousFunctionalLeaderID);
             // if the previous leader is the first vehicle in the platoon
             if(previousFunctionalLeaderIndex == 0) {
-                result = determineLeaderBasedOnViolation(timeHeadways);
-                if(result == 0) {
-                    ///***** Case Zero *****///
-                    // If there are no headway violations, then the first vehicle will continue to act as leader
-                    // This should be the most regular case
-                    log.debug("APF did not found violations on lower boundary or maximum spacing. Case Zero.");
-                    log.debug("APF decides to continue follow the first vehicle.");
-                } else {
-                    ///***** Case Three *****///
-                    log.debug("APF found violations on lower boundary or maximum spacing. Case Three.");
-                    log.debug("APF decide " + result + " as the leader. Case Three!");
-                }
+                ///***** Case Three *****///
+                // If there is a violation, the return value is the desired leader index
+                log.debug("APF use violations on lower boundary or maximum spacing to choose leader. Case Three.");
+                return determineLeaderBasedOnViolation(timeHeadways);
             } else {
                 // if the previous leader is not the first vehicle
                 // get the time headway between every consecutive pair of vehicles from indexOfPreviousLeader
-                double[] temporaryTimeHeadways = getTimeHeadwayFromIndex(timeHeadways, previousFunctionalLeaderIndex);
+                double[] partialTimeHeadways = getTimeHeadwayFromIndex(timeHeadways, previousFunctionalLeaderIndex);
+                log.debug("APF partial time headways array: " + Arrays.toString(partialTimeHeadways));
                 int closestLowerBoundaryViolation, closestMaximumSpacingViolation;
-                closestLowerBoundaryViolation = findLowerBoundaryViolationClosestToTheHostVehicle(temporaryTimeHeadways);
-                closestMaximumSpacingViolation = findMaximumSpacingViolationClosestToTheHostVehicle(temporaryTimeHeadways);
+                closestLowerBoundaryViolation = findLowerBoundaryViolationClosestToTheHostVehicle(partialTimeHeadways);
+                closestMaximumSpacingViolation = findMaximumSpacingViolationClosestToTheHostVehicle(partialTimeHeadways);
                 // if there are no violations anywhere between the subject vehicle and the current leader,
                 // then depending on the time headways of the ENTIRE platoon, the subject vehicle may switch
                 // leader further downstream. This is because the subject vehicle has determined that there are
@@ -308,51 +314,44 @@ public class PlatoonManager implements Runnable {
                     // introduce a hysteresis where leaders are continually being switched.
                     boolean condition1 = timeHeadways[previousFunctionalLeaderIndex] > plugin.getUpperBoundary();
                     boolean condition2 = timeHeadways[previousFunctionalLeaderIndex - 1] < plugin.getMinSpacing();
+                    ///***** Case Four *****///
+                    //we may switch leader further downstream
                     if(condition1 && condition2) {
-                        ///***** Case Four *****///
-                        //we may switch leader further downstream
-                        log.debug("APF found two conditions for assigning leadership further downstream are satisfied. Case Four.");
-                        log.debug("APF decide " + result + " as the leader based on possible violations on all time headways. Case Four!");
-                        result = determineLeaderBasedOnViolation(timeHeadways);
+                        log.debug("APF found two conditions for assigning leadership further downstream are satisfied. Case Four");
+                        return determineLeaderBasedOnViolation(timeHeadways);
                     } else {
                         ///***** Case Five *****///
                         // We may not switch leadership to another vehicle further downstream because some criteria are not satisfied
                         log.debug("APF found two conditions for assigning leadership further downstream are noy satisfied. Case Five.");
-                        log.debug("APF returns the previous leader: " + previousFunctionalLeaderIndex + ". Case Five.");
-                        result = previousFunctionalLeaderIndex;
+                        log.debug("condition1: " + condition1 + " & condition2: " + condition2);
+                        return previousFunctionalLeaderIndex;
                     }
                 } else if(closestLowerBoundaryViolation != -1 && closestMaximumSpacingViolation == -1) {
                     // The rest four cases have roughly the same logic: locate the closest violation and assign leadership accordingly
                     ///***** Case Six *****///
                     log.debug("APF found closestLowerBoundaryViolation on partial time headways. Case Six.");
-                    result = previousFunctionalLeaderIndex - 1 + closestLowerBoundaryViolation;
-                    log.debug("APF decides to assign leader further upstream" + result + ". Case Six.");
+                    return previousFunctionalLeaderIndex - 1 + closestLowerBoundaryViolation;
                 } else if(closestLowerBoundaryViolation == -1 && closestMaximumSpacingViolation != -1) {
                     ///***** Case Seven *****///
                     log.debug("APF found closestMaximumSpacingViolation on partial time headways. Case Seven.");
-                    result = previousFunctionalLeaderIndex + closestMaximumSpacingViolation;
-                    log.debug("APF decides to assign leader further upstream" + result + ". Case Seven.");
+                    return previousFunctionalLeaderIndex + closestMaximumSpacingViolation;
                 } else {
                     log.debug("APF found closestMaximumSpacingViolation and closestLowerBoundaryViolation on partial time headways.");
                     if(closestLowerBoundaryViolation > closestMaximumSpacingViolation) {
                         ///***** Case Eight *****///
                         log.debug("closestLowerBoundaryViolation is higher than closestMaximumSpacingViolation on partial time headways. Case Eight.");
-                        result = previousFunctionalLeaderIndex - 1 + closestLowerBoundaryViolation;
-                        log.debug("APF decides to assign leader further upstream" + result + ". Case Eight.");
+                        return previousFunctionalLeaderIndex - 1 + closestLowerBoundaryViolation;
                     } else if(closestLowerBoundaryViolation < closestMaximumSpacingViolation) {
                         ///***** Case Nine *****///
                         log.debug("closestMaximumSpacingViolation is higher than closestLowerBoundaryViolation on partial time headways. Case Nine.");
-                        result = previousFunctionalLeaderIndex + closestMaximumSpacingViolation;
-                        log.debug("APF decides to assign leader further upstream" + result + ". Case Nine.");
+                        return previousFunctionalLeaderIndex + closestMaximumSpacingViolation;
                     } else {
-                        log.error("APF Leader selection cannot handle this case.");
-                        log.error("APF decides to assign the first vehicle as the leader by default.");
-                        result = 0;
+                        log.error("APF Leader selection parameter is wrong!");
+                        return 0;
                     }
                 }
             }
         }
-        return result;
     }
     
     // Check if we have enough gap with the front vehicle
@@ -378,7 +377,7 @@ public class PlatoonManager implements Runnable {
     
     // get the time headway between every consecutive pair of vehicles from start index
     private double[] getTimeHeadwayFromIndex(double[] timeHeadways, int start) {
-        return Arrays.stream(timeHeadways).skip(start).toArray();
+        return Arrays.copyOfRange(timeHeadways, start, timeHeadways.length);
     }
     
     private int findLowerBoundaryViolationClosestToTheHostVehicle(double[] timeHeadways) {
@@ -409,7 +408,8 @@ public class PlatoonManager implements Runnable {
             log.debug("APF found violation on closestMaximumSpacingViolation at " + closestMaximumSpacingViolation);
             return closestMaximumSpacingViolation + 1;
         } else {
-            return 0;  
+            log.debug("APF found no violations on both closestLowerBoundaryViolation and closestMaximumSpacingViolation");
+            return 0;
         }
     }
     
