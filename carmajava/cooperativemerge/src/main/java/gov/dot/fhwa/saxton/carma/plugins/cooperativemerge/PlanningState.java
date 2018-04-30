@@ -163,7 +163,7 @@ public class PlanningState implements ICooperativeMergeState {
         start, 
         end,
         0, 
-        pluginServiceLocator.getRouteService().getSpeedLimitsInRange(start, end).first().getLimit());
+        rs.getSpeedLimitsInRange(start, end).first().getLimit());
     
     traj.setComplexManeuver(mergeManeuver);
     plugin.setState(new ExecutionState(plugin, log, pluginServiceLocator, rampMeterDTD, mergePointDTD));
@@ -202,18 +202,12 @@ public class PlanningState implements ICooperativeMergeState {
   }
   
   @Override
-  public void run() {
-    try {
-      while(!Thread.currentThread().isInterrupted()) {
-        Thread.sleep(LOOP_SLEEP_TIME);
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
+  public void loop() throws InterruptedException {
+    Thread.sleep(LOOP_SLEEP_TIME);
   }
   
   @Override
   public String toString() {
-    return "StandbyState";
+    return this.getClass().getSimpleName();
   }
 }

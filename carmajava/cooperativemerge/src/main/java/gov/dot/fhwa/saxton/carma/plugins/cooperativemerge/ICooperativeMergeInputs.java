@@ -31,6 +31,14 @@ public interface ICooperativeMergeInputs {
   double getSpeedCommand();
 
   /**
+   * Returns the most recent steering command which the providing object would like to have executed.
+   * Units: radians
+   *
+   * @return Steering command
+   */
+  double getSteeringCommand();
+
+  /**
    * Returns the most recent acceleration command which the providing object would like to have executed.
    * Units: m/s^2
    * Acceleration limit should be positive

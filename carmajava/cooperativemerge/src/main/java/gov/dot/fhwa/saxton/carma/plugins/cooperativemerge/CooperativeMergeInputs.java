@@ -23,8 +23,9 @@ import org.ros.message.Duration;
  */
 public class CooperativeMergeInputs implements ICooperativeMergeInputs{
 
-  private double speedCommand;
-  private double maxAccel;
+  private double speedCommand; // m/s
+  private double steeringCommand; // rad
+  private double maxAccel; // m/s^2
   private Duration timeSinceLastUpdate;
 
   /**
@@ -63,6 +64,13 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
   @Override
   public Duration getTimeSinceLastUpdate() {
     return timeSinceLastUpdate;
+  }
+
+  /**
+   * @param steeringCommand the steeringCommand to set
+   */
+  public void setSteeringCommand(double steeringCommand) {
+    this.steeringCommand = steeringCommand;
   }
 
 }

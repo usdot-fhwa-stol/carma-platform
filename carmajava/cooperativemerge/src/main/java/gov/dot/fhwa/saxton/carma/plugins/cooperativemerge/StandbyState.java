@@ -125,18 +125,12 @@ public class StandbyState implements ICooperativeMergeState {
   }
   
   @Override
-  public void run() {
-    try {
-      while(!Thread.currentThread().isInterrupted()) {
-        Thread.sleep(LOOP_SLEEP_TIME);
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
+  public void loop() throws InterruptedException {
+    Thread.sleep(LOOP_SLEEP_TIME);
   }
   
   @Override
   public String toString() {
-    return "StandbyState";
+    return this.getClass().getSimpleName();
   }
 }

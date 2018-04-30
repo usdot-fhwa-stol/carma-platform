@@ -64,7 +64,7 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
   
   protected ICooperativeMergeState state = null;
 
-  protected ICooperativeMergeInputs cooperativeMergeInputs;
+  protected CooperativeMergeInputs cooperativeMergeInputs;
 
   // protected StatusUpdater statusUpdater = null;
   // protected Thread statusUpdaterThread = null;
@@ -133,7 +133,12 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
   @Override
   public void loop() throws InterruptedException {
 
+    if (state == null) {
+      log.warn("Requested to loop but state was null");
+      return;
+    }
 
+    state.loop();
     // long tsStart = System.currentTimeMillis();
     // if (statusUpdater.lastUpdateTime != null) {
     //   // If we've successfully communicated with the server recently, signal our availability
@@ -176,51 +181,19 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     // NO-OP
   }
 
-  private void planComplexManeuver(Trajectory traj, double start, double end) {
-    // SpeedHarmonizationManeuver maneuver = new SpeedHarmonizationManeuver(this, this,
-    //     pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
-    //     pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), AccStrategyManager.newAccStrategy(), start,
-    //     end, 1.0, // Dummy values for now. TODO: Replace
-    //     100.0);
-    //   maneuver.setTimeout(Duration.fromMillis(maneuverTimeout));
-
-    // boolean accepted = traj.setComplexManeuver(maneuver);
-    // log.info("Trajectory response to complex maneuver = " + accepted);
-  }
-
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
-    // List<IManeuver> maneuvers = traj.getManeuvers();
-    // double complexManeuverStartLocation = -1.0;
-    // if (!maneuvers.isEmpty()) {
-    //   // Get the location of the last maneuver in the list
-    //   complexManeuverStartLocation = maneuvers.get(maneuvers.size() - 1).getEndDistance();
-    //   log.info("planTrajectory(): IF: complexManeuverStartLocation = " + complexManeuverStartLocation);
-    // } else {
-    //   // Fill the whole trajectory if legal
-    //   complexManeuverStartLocation = traj.getStartLocation();
-    //   log.info("planTrajectory(): ELSE: complexManeuverStartLocation = " + complexManeuverStartLocation);
-    // }
-
-    // // Find the earliest window after the start location at which speedharm is enabled
-    // double[] planWindow = pluginServiceLocator.getRouteService().getAlgorithmEnabledWindowInRange(
-    //         complexManeuverStartLocation, traj.getEndLocation(), SPEED_HARM_FLAG);
-    // if (planWindow == null) {
-    //   log.info("Couldn't find plan window at start: " + complexManeuverStartLocation + " endOfWindow: " + traj.getEndLocation());
-    //   return new TrajectoryPlanningResponse();
-    // }
-
-    // if (Math.abs(planWindow[1] - planWindow[0]) > minimumManeuverLength) {
-    //   planComplexManeuver(traj, planWindow[0], planWindow[1]);
-    // } else {
-    //   log.warn("Unable to find sufficient window to plan Speed Harmonization maneuver");
-    // }
-    return new TrajectoryPlanningResponse();
+    if (state == null) {
+      log.warn("Requested to plan trajectory but state was null");
+      return new TrajectoryPlanningResponse();
+    }
+    return state.planTrajectory(traj, expectedStartSpeed);
   }
 
 @Override // TODO Synchronize
 public void handleMobilityOperationMessage(MobilityOperation msg) {
   if (state == null) {
+    log.warn("Requested to handle mobility operation message but state was null");
     return;
   }
   state.onMobilityOperationMessage(msg);
@@ -230,6 +203,7 @@ public void handleMobilityOperationMessage(MobilityOperation msg) {
 public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict,
     ConflictSpace conflictSpace) {
   if (state == null) {
+    log.warn("Requested to handle mobility request message but state was null");
     return MobilityRequestResponse.NO_RESPONSE;
   }
   return state.onMobilityRequestMessage(msg);
@@ -344,7 +318,7 @@ public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg,
   /**
    * @return the cooperativeMergeInputs
    */
-  public ICooperativeMergeInputs getCooperativeMergeInputs() {
+  public CooperativeMergeInputs getCooperativeMergeInputs() {
     return cooperativeMergeInputs;
   }
 

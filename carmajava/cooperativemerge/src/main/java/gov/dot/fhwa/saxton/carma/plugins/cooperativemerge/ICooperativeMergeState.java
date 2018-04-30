@@ -23,7 +23,7 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-public interface ICooperativeMergeState extends Runnable {
+public interface ICooperativeMergeState {
   
   /**
    * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if possible.
@@ -51,4 +51,13 @@ public interface ICooperativeMergeState extends Runnable {
    * @param msg response for the current plan from other vehicles
    */
   public void onMobilityResponseMessage(MobilityResponse msg);
+
+  /**
+   * Main execution loop for the state. Should be where the state spends the majority of its
+   * time while active.
+   * <p>
+   * If the state needs to run at a specific frequency, 
+   * it is the state's responsibility to insert the required timing logic.
+   */
+    void loop() throws InterruptedException;
 }
