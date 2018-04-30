@@ -69,9 +69,8 @@ public class CandidateFollowerState implements IPlatooningState {
         } else {
             // Plan a speed up maneuver to speed limit and a steady speed maneuver at the speed limit
             // TODO the following logic is from cruising plugin, I feel uncomfortable to re-use it here
-            RouteService routeService = pluginServiceLocator.getRouteService();
-            SortedSet<SpeedLimit> trajLimits = routeService.getSpeedLimitsInRange(traj.getStartLocation(), traj.getEndLocation());
-            trajLimits.add(routeService.getSpeedLimitAtLocation(traj.getEndLocation()));
+            SortedSet<SpeedLimit> trajLimits = rs.getSpeedLimitsInRange(traj.getStartLocation(), traj.getEndLocation());
+            trajLimits.add(rs.getSpeedLimitAtLocation(traj.getEndLocation()));
             // Merge segments with same speed limits
             List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();
             SpeedLimit limit_buffer = null;

@@ -17,28 +17,25 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
-import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.NoOpAccStrategyFactory;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManagementService;
@@ -90,6 +87,17 @@ public class CandidateFollowerStateTest {
         candidateFollowerState = new CandidateFollowerState(mockPlugin, mockLog, pluginServiceLocator, "A", "E1B2");
     }
     
-    // Remove current test cases because the logic in candidate follower state is the same as cruising plugin
-    // TODO Add some test cases if necessary
+    @Test
+    public void planManeuversAtSpeedLimit() {
+        Trajectory traj = new Trajectory(0, 50.0);
+        when(mockRouteService.isAlgorithmEnabledInRange(0, 50.0, "PLATOONING")).thenReturn(true);
+        SortedSet<SpeedLimit> limits = new TreeSet<>((a, b) -> (Double.compare(a.getLocation(), b.getLocation())));
+        limits.add(new SpeedLimit(20, 5));
+        limits.add(new SpeedLimit(25, 5));
+        when(mockRouteService.getSpeedLimitsInRange(0, 50.0)).thenReturn(limits);
+        when(mockRouteService.getSpeedLimitAtLocation(50.0)).thenReturn(new SpeedLimit(60, 10));
+        candidateFollowerState.planTrajectory(traj, 2.0);
+        assertEquals(3, traj.getLongitudinalManeuvers().size());
+        assertEquals(50.0, traj.getLongitudinalManeuvers().get(2).getEndDistance(), 0.1);
+    }
 }
