@@ -81,3 +81,12 @@ follower_join_time_gap: 3.0
 # Double: Determine the absolute maximum cmd_speed adjustment value we can get from PID controller
 # Units: m/s
 platooning_cmd_max_adjustment: 10.0
+
+# Boolean: Determine whether the output of platooning controller will be caped by platooning_cmd_max_adjustment
+diff_from_leader_cmd_cap: true
+
+# Boolean: Determine whether the output of platooning controller will be caped by max_Accel before it goes into vehicle controller
+max_accel_cap: true
+
+# Boolean: Determine whether the follower will still follow the speed limit in a platoon
+local_speed_limit_cap: true

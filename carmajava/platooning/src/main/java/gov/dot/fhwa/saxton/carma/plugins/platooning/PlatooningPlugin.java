@@ -92,6 +92,11 @@ public class PlatooningPlugin extends AbstractPlugin
     protected int    longNegotiationTimeout         = 25000;
     protected int    maxPlatoonSize                 = 10;
 
+    // following parameters are flags for different caps on platooning controller output
+    protected boolean speedLimitCapEnabled  = true;
+    protected boolean maxAccelCapEnabled    = true;
+    protected boolean leaderSpeedCapEnabled = true;
+    
     // platooning plug-in components
     protected IPlatooningState state                  = null;
     protected Thread           stateThread            = null;
@@ -150,6 +155,9 @@ public class PlatooningPlugin extends AbstractPlugin
         shortNegotiationTimeout = pluginServiceLocator.getParameterSource().getInteger("~short_negotiation_timeout", 5000);
         longNegotiationTimeout  = pluginServiceLocator.getParameterSource().getInteger("~long_negotiation_timeout", 25000);
         maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~max_platoon_size", 10);
+        speedLimitCapEnabled    = pluginServiceLocator.getParameterSource().getBoolean("~local_speed_limit_cap", true);
+        maxAccelCapEnabled      = pluginServiceLocator.getParameterSource().getBoolean("~max_accel_cap", true);
+        leaderSpeedCapEnabled   = pluginServiceLocator.getParameterSource().getBoolean("~diff_from_leader_cmd_cap", true);
         
         //log all loaded parameters
         log.debug("Load param maxAccel = " + maxAccel);
@@ -501,5 +509,17 @@ public class PlatooningPlugin extends AbstractPlugin
     
     protected double getLastSpeedCmd() {
         return cmdSpeedSub.getLastMessage() == null ? 0.0 : cmdSpeedSub.getLastMessage().getSpeed();  
+    }
+
+    protected boolean isSpeedLimitCapEnabled() {
+        return speedLimitCapEnabled;
+    }
+
+    protected boolean isMaxAccelCapEnabled() {
+        return maxAccelCapEnabled;
+    }
+
+    protected boolean isLeaderSpeedCapEnabled() {
+        return leaderSpeedCapEnabled;
     }
 }
