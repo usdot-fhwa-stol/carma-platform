@@ -67,7 +67,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * trajectory and signaling the failure on the /system_alert topic. Also responsible
  * for generating content for BSMs to be published by the host vehicle.
  */
-public class Tracking extends GuidanceComponent implements IStateChangeListener {
+public class Tracking extends GuidanceComponent implements IStateChangeListener, TrackingService {
 	
 	protected final int SECONDS_TO_MILLISECONDS = 1000;
 	protected final long SLEEP_DURATION = 100; // Frequency for J2735, 10Hz
@@ -663,5 +663,20 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener 
 	    } else {
 	    	return null;
 	    }
+    }
+
+    @Override
+    public String getCurrentBSMId() {
+        if(random_id != null) {
+            char[] hexChars = new char[random_id.length * 2];
+            for(int i = 0; i < random_id.length; i++) {
+                int firstFourBits = (0xF0 & random_id[i]) >>> 4;
+                int lastFourBits = 0xF & random_id[i];
+                hexChars[i * 2] = Integer.toHexString(firstFourBits).charAt(0);
+                hexChars[i * 2 + 1] = Integer.toHexString(lastFourBits).charAt(0);
+            }
+            return new String(hexChars);
+        }
+        return "";
     }
 }

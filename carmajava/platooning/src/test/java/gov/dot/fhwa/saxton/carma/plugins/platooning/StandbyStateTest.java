@@ -34,6 +34,7 @@ import org.mockito.ArgumentCaptor;
 import cav_msgs.MobilityRequest;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
@@ -68,7 +69,8 @@ public class StandbyStateTest {
                                                         mock(IPubSubService.class),       mock(ParameterSource.class),
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
-                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
+                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
+                                                        mock(TrackingService.class));
         when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         standbyState         = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
