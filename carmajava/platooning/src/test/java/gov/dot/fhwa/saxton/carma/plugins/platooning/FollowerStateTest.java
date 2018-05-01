@@ -21,6 +21,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -77,9 +79,11 @@ public class FollowerStateTest {
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
+        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
         when(mockPlugin.getCommandGenerator()).thenReturn(mockCmdGenerator);
+        
         followerState = new FollowerState(mockPlugin, mockLog, pluginServiceLocator);
     }
     

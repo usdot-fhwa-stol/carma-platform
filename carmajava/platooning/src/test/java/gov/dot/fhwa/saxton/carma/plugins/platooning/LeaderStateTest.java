@@ -25,6 +25,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -82,6 +84,7 @@ public class LeaderStateTest {
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         when(mockPlugin.getMaxPlatoonSize()).thenReturn(5);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
+        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         leaderState = new LeaderState(mockPlugin, mockLog, pluginServiceLocator);
     }
     

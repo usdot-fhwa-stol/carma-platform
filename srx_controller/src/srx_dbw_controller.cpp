@@ -78,6 +78,11 @@ void torc::SRXDBWController::connect(const std::string &recv_topic, const std::s
 void torc::SRXDBWController::close() {
     if(!running_) return;
     running_ = false;
+    // Turn off lights
+    LightParams_t lightsOff{};
+    setLights(LightID_t::Front, lightsOff);
+    setLights(LightID_t::Rear, lightsOff);
+    // Shutdown threads
     can_in_sub_.shutdown();
     cv_.notify_all();
     process_thread_->join();
@@ -89,6 +94,10 @@ void torc::SRXDBWController::disableRoboticControl() {
     ctrl_msg_.CommandMode = CommandMode_t::Disabled;
     ctrl_msg_.EnableDBW = false;
     sendSpeedCmd();
+    // Turn off lights
+    LightParams_t lightsOff{};
+    setLights(LightID_t::Front, lightsOff);
+    setLights(LightID_t::Rear, lightsOff);
 }
 
 void torc::SRXDBWController::setWrenchEffort(float effort) {

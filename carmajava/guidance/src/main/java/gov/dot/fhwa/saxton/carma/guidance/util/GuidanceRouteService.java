@@ -318,7 +318,7 @@ public class GuidanceRouteService implements RouteService {
   }
 
   @Override
-  public double getCurrentSegmentIndex() {
+  public int getCurrentSegmentIndex() {
     return routeState.getCurrentSegment().getPrevWaypoint().getWaypointId();
   }
 }

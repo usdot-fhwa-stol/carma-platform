@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This is a mandatory plugin for the Carma platform that manages all lane change activity within a given sub-trajectory,
@@ -86,9 +87,10 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     private ILightBarManager lightBarManager_;
     private final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
     private ISubscriber<UIInstructions> uiInstructionsSubscriber_;
-    private boolean conductingLaneChange_ = false;
+    private AtomicBoolean conductingLaneChange_ = new AtomicBoolean(false);
+    private Object lightBarMutex =  new Object();
     private final long LANE_CHANGE_TIMEOUT = 500; // mili-seconds
-    private long lastLaneChangeMsg_ = 0; // mili-seconds
+    private AtomicLong lastLaneChangeMsg_ = new AtomicLong(0); // mili-seconds
 
 
     public LaneChangePlugin(PluginServiceLocator psl) {
@@ -115,20 +117,25 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         requestPub_ = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_request", cav_msgs.MobilityRequest._TYPE);
 
         // get subscriber for the ui instructions and use to set light bar
-        uiInstructionsSubscriber_ = pubSubService.getSubscriberForTopic( "ui_instructions", UIInstructions._TYPE);
+        uiInstructionsSubscriber_ = pubSubService.getSubscriberForTopic("ui_instructions", UIInstructions._TYPE);
         uiInstructionsSubscriber_.registerOnMessageCallback(
             (UIInstructions msg) -> {
-                if (msg.getMsg().equals("LEFT_LANE_CHANGE") && conductingLaneChange_ == false) {
-
-                    conductingLaneChange_ = true;
-                    lastLaneChangeMsg_ = System.currentTimeMillis();
-                    setLightBarStatus(IndicatorStatus.LEFT_ARROW);
-
-                } else if (msg.getMsg().equals("RIGHT_LANE_CHANGE") && conductingLaneChange_ == false) {
-
-                    conductingLaneChange_ = true;
-                    lastLaneChangeMsg_ = System.currentTimeMillis();
-                    setLightBarStatus(IndicatorStatus.RIGHT_ARROW);
+                if (msg.getMsg().equals("LEFT_LANE_CHANGE")) {
+                    lastLaneChangeMsg_.set(System.currentTimeMillis());
+                    if (!conductingLaneChange_.get()) {
+                        synchronized (conductingLaneChange_) {
+                            setLightBarStatus(IndicatorStatus.LEFT_ARROW);
+                            conductingLaneChange_.set(true);
+                        }
+                    }
+                } else if (msg.getMsg().equals("RIGHT_LANE_CHANGE")) {
+                    lastLaneChangeMsg_.set(System.currentTimeMillis());
+                    if (!conductingLaneChange_.get()) {
+                        synchronized (conductingLaneChange_) {
+                            setLightBarStatus(IndicatorStatus.RIGHT_ARROW);
+                            conductingLaneChange_.set(true);
+                        }
+                    }
                 }
         });
 
@@ -145,9 +152,12 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     public void loop() throws InterruptedException {
 
         // Release control of light bar when lane change is done
-        if (System.currentTimeMillis() - lastLaneChangeMsg_ > LANE_CHANGE_TIMEOUT && conductingLaneChange_ == true) {
-            releaseControlAndTurnOff();
-            conductingLaneChange_ = false;
+        if (System.currentTimeMillis() - lastLaneChangeMsg_.get() > LANE_CHANGE_TIMEOUT && conductingLaneChange_.get()) {
+            synchronized(conductingLaneChange_) {
+                log.info("Releasing control of light bar conducting lane change " + conductingLaneChange_);
+                releaseControlAndTurnOff();
+                conductingLaneChange_.set(false);
+            }
         }
         //sleep a while
         Thread.sleep(SLEEP_TIME);
@@ -459,15 +469,17 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             return;
         }
         // Request control every time as we will release control when a lane change is done
-        List<LightBarIndicator> acquired = lightBarManager_.requestControl(Arrays.asList(LIGHT_BAR_INDICATOR), this.getVersionInfo().componentName(),
+        List<LightBarIndicator> deniedIndicators = lightBarManager_.requestControl(Arrays.asList(LIGHT_BAR_INDICATOR), this.getVersionInfo().componentName(),
             // Lost control of light call back
             (LightBarIndicator lostIndicator) -> {
                 log.info("Lost control of light bar indicator: " + LIGHT_BAR_INDICATOR);
          });
         // Check if the control request was successful. 
-        if (acquired.contains(LIGHT_BAR_INDICATOR)) {
+        if (!deniedIndicators.contains(LIGHT_BAR_INDICATOR)) {
             lightBarManager_.setIndicator(LIGHT_BAR_INDICATOR, status, this.getVersionInfo().componentName());
             log.info("Got control of light bar indicator: " + LIGHT_BAR_INDICATOR);
+        } else {
+            log.info("Failed to take control of light bar indicator: " + LIGHT_BAR_INDICATOR);
         }
     }
     
