@@ -26,6 +26,7 @@ import org.junit.Test;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
@@ -61,7 +62,8 @@ public class SpeedGeneratorTest {
                                        mock(IPubSubService.class),    mock(ParameterSource.class),
                                        new ManeuverPlanner(mock(IGuidanceCommands.class), mockManeuverInputs),
                                        mockRouteService, mock(IMobilityRouter.class), mock(IConflictDetector.class),
-                                       mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
+                                       mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
+                                       mock(TrackingService.class));
         when(mockPlugin.getTimeHeadway()).thenReturn(1.0);
         when(mockPlugin.getStandStillGap()).thenReturn(5.0);
         when(mockPlugin.getKpPID()).thenReturn(1.0);

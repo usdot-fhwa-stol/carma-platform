@@ -31,6 +31,7 @@ import org.junit.Test;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
@@ -76,7 +77,8 @@ public class CandidateFollowerStateTest {
                                                         mock(IPubSubService.class),       mock(ParameterSource.class),
                                                         planner,                          mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
-                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
+                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
+                                                        mock(TrackingService.class));
         when(mockFact.createLoggerForClass(any())).thenReturn(mockLog);
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
