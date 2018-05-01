@@ -345,7 +345,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         requestMsg.getHeader().setRecipientId(""); //Broadcast
         requestMsg.getHeader().setTimestamp(currentTime);
         requestMsg.getHeader().setPlanId(UUID.randomUUID().toString());
-        requestMsg.getHeader().setSenderBsmId("FFFFFFFF"); // TODO use real BSM id
+        requestMsg.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
         requestMsg.setExpiration(requestMsg.getHeader().getTimestamp() + EXPIRATION_TIME);
         
         return requestMsg;

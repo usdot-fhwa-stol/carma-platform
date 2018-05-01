@@ -677,6 +677,6 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
             }
             return new String(hexChars);
         }
-        return "";
+        return "00000000";
     }
 }

@@ -148,7 +148,7 @@ public class LeaderWaitingState implements IPlatooningState {
         // This message is for broadcast
         msg.getHeader().setRecipientId("");
         // TODO need to have a easy way to get bsmId in plugin
-        msg.getHeader().setSenderBsmId("FFFFFFFF");
+        msg.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());

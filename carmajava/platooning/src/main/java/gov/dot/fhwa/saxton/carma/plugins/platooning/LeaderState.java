@@ -181,7 +181,7 @@ public class LeaderState implements IPlatooningState {
                 request.getHeader().setPlanId(planId);
                 request.getHeader().setRecipientId(leaderId);
                 // TODO Need to have a easy way to get bsmId from plugin
-                request.getHeader().setSenderBsmId("FFFFFFFF");
+                request.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
                 request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
                 request.getHeader().setTimestamp(System.currentTimeMillis());
                 // TODO Need to have a easy way to get current XYZ location in ECEF
@@ -314,7 +314,7 @@ public class LeaderState implements IPlatooningState {
         // All platoon mobility operation message is just for broadcast
         msg.getHeader().setRecipientId("");
         // TODO Need to have a easy way to get bsmId from plugin
-        msg.getHeader().setSenderBsmId("FFFFFFFF");
+        msg.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());
