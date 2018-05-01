@@ -26,8 +26,16 @@ dependencies {
 
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_core:rosjava_geometry:0.3.5'
-  testCompile 'junit:junit:4.12'
   compile project(':guidance_plugin_api')
   compile project(':route')
+  compile project(':geometry')
+
+  testCompile 'org.mockito:mockito-core:2.+'
+  testCompile 'junit:junit:4.12'
 }
 
+test {
+    testLogging {
+        showStandardStreams = true
+    }
+}

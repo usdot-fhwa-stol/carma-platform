@@ -103,10 +103,21 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
     endDist_ = endDist;
     minExpectedSpeed_ = minExpectedSpeed;
     maxExpectedSpeed_ = maxExpectedSpeed;
-    minCompletionTime_ =
-      Time.fromMillis((long) (1000 * ((endDist_ - startDist_) / maxExpectedSpeed_)));
-    maxCompletionTime_ =
-      Time.fromMillis((long) (1000 * ((endDist_ - startDist_) / minExpectedSpeed_)));
+    
+    // Calculated expected times
+    if (minExpectedSpeed_ == 0.0) {
+      maxCompletionTime_ = Time.fromMillis((long) Integer.MAX_VALUE); // TODO using Integer because Time.fromMillis is badly implemented and will overflow on Long.MAX_VALUE
+    } else {
+      maxCompletionTime_ =
+        Time.fromMillis((long) (1000 * ((endDist_ - startDist_) / minExpectedSpeed_)));
+    }
+    if (maxExpectedSpeed_ == 0.0) {
+      minCompletionTime_ = Time.fromMillis((long) Integer.MAX_VALUE); // TODO using Integer because Time.fromMillis is badly implemented and will overflow on Long.MAX_VALUE
+    } else {
+      minCompletionTime_ =
+        Time.fromMillis((long) (1000 * ((endDist_ - startDist_) / maxExpectedSpeed_)));
+    }
+
     validateBoundsFeasibility();
   }
 

@@ -67,7 +67,7 @@ public class PlanningState implements ICooperativeMergeState {
     // Notify meter of intention to merge
     this.planId = UUID.randomUUID().toString(); // Set the plan id
 
-    MobilityRequest mergeRequest = plugin.mobilityRequestPub.newMessage();
+    MobilityRequest mergeRequest = plugin.getMobilityRequestPub().newMessage();
     // Build Header
     mergeRequest.getHeader().setSenderId(plugin.getVehicleId());
     mergeRequest.getHeader().setRecipientId(rampMeterData.getRsuId());

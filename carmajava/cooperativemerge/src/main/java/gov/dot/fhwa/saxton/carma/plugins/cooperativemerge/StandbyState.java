@@ -42,11 +42,14 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 public class StandbyState implements ICooperativeMergeState {
   
   protected final static int LOOP_SLEEP_TIME = 1000; // ms
+
+  protected final static double CM_PER_M = 100.0;
   
   protected final CooperativeMergePlugin plugin;
   protected final ILogger log;
   protected final PluginServiceLocator pluginServiceLocator;
   protected final ConcurrentMap<String, RampMeterData> rampMeters = new ConcurrentHashMap<>();
+  protected final static String EXPECTED_REQUEST_INFO_PARAMS = "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";
   
   /**
    * Constructor
@@ -72,7 +75,7 @@ public class StandbyState implements ICooperativeMergeState {
   public MobilityRequestResponse onMobilityRequestMessage(MobilityRequest msg) {
     // In standby state, the plugin waits to receive a message from a ramp metering rsu
     // Parse Strategy Params
-    // Expected String "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";
+    // Expecting EXPECTED_REQUEST_INFO_PARAMS
     final  String RADIUS_PARAM       = "RADIUS";
     final  String MERGE_DIST_PARAM   = "MERGE_DIST";
     final  String MERGE_LENGTH_PARAM = "MERGE_LENGTH";
@@ -106,14 +109,14 @@ public class StandbyState implements ICooperativeMergeState {
 
       cav_msgs.LocationECEF meterLoc = msg.getLocation();
       // TODO Probably would be good to add a function to route for doing this complicated process which happens alot
-      Point3D      meterPoint = new Point3D(meterLoc.getEcefX(), meterLoc.getEcefY(), meterLoc.getEcefZ());
+      Point3D      meterPoint = new Point3D(meterLoc.getEcefX() / CM_PER_M, meterLoc.getEcefY() / CM_PER_M, meterLoc.getEcefZ() / CM_PER_M);
       Route        route      = pluginServiceLocator.getRouteService().getCurrentRoute();
       RouteSegment meterSeg   = route.routeSegmentOfPoint(meterPoint, route.getSegments());                   // TODO optimize this
       // Get the point in location of the meter in segment frame
       Vector3 meterPointInSeg = meterSeg.getECEFToSegmentTransform().invert().apply(new Vector3(meterPoint.getX(), meterPoint.getY(), meterPoint.getZ()));
-      double  segmentDTD      = route.lengthOfSegments(0, meterSeg.getDowntrackWaypoint().getWaypointId() - 1);
+      double  segmentDTD      = route.lengthOfSegments(0, meterSeg.getUptrackWaypoint().getWaypointId() - 1);
       double  meterDTD        = segmentDTD + meterPointInSeg.getX();
-      double mergeDTD = meterDTD + mergeDTDFromMeter;
+      double  mergeDTD        = meterDTD + mergeDTDFromMeter;
 
       // Thread safe atomic put
       RampMeterData newMeterData = new RampMeterData(rsuId, meterDTD, mergeDTD, mergeLength, meterRadius);
