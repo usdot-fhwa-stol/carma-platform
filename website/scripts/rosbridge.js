@@ -1588,7 +1588,7 @@ function updateCommStatus() {
            // Set the colour to something else
            svgItem1.setAttribute('fill', '#4CAF50'); //green
 
-           //set back to black after 3 seconds.
+           //set back to black after 5 seconds.
           setTimeout(function(){
                // Set the colour to something else
                svgItem1.setAttribute('fill', '#000000'); //black
@@ -1612,7 +1612,7 @@ function updateCommStatus() {
            // Set the colour to something else
            svgItem2.setAttribute('fill', '#4CAF50'); //green
 
-           //set back to black after 3 seconds.
+           //set back to black after 5 seconds.
            setTimeout(function(){
                svgItem2.setAttribute('fill', '#000000'); //black
            }, 5000);
