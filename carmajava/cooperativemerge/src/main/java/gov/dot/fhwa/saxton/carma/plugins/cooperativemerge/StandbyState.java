@@ -65,10 +65,9 @@ public class StandbyState implements ICooperativeMergeState {
 
   @Override
   public MobilityRequestResponse onMobilityRequestMessage(MobilityRequest msg) {
-    // TODO enhancement cache meter locations to improve performance
     // In standby state, the plugin waits to receive a message from a ramp metering rsu
     // Parse Strategy Params
-    // Expected String "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";  // TODO add distance to merge point
+    // Expected String "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";
     final  String RADIUS_PARAM       = "RADIUS";
     final  String MERGE_DIST_PARAM   = "MERGE_DIST";
     final  String MERGE_LENGTH_PARAM = "MERGE_LENGTH";

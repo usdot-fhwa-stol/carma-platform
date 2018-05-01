@@ -24,11 +24,14 @@ import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
  * TODO
@@ -68,12 +71,20 @@ public class PlanningState implements ICooperativeMergeState {
     // Fill out request
     mergeRequest.setStrategy(CooperativeMergePlugin.MOBILITY_STRATEGY);
     
-    double currentDTD = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getDistanceFromRouteStart();
+    IManeuverInputs inputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
+
+    double currentDTD = inputs.getDistanceFromRouteStart();
+    double currentCrosstrack = inputs.getCrosstrackDistance();
+    double currentSegmentDTD = pluginServiceLocator.getRouteService().
     double distanceToMerge = rampMeterData.getMergePointDTD() - currentDTD;
 
     String params = String.format(MERGE_REQUEST_PARAMS, plugin.getMaxAccel(), plugin.getLagTime(), distanceToMerge); 
     mergeRequest.setStrategyParams(params);
     
+    ITrajectoryConverter tc = pluginServiceLocator.getTrajectoryConverter();
+
+    RoutePointStamped routePoint = new RoutePointStamped(currentDTD, crosstrack, time, segmentIdx, segmentDowntrack)
+    tc.pathToMessage(path);
     mergeRequest.setLocation(mergeRequest.getLocation()); // TODO get the location
     mergeRequest.setExpiration(System.currentTimeMillis() + 500);
     
