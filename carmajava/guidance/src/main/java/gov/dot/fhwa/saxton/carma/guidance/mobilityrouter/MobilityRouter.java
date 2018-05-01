@@ -37,6 +37,7 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
@@ -73,6 +74,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     private PluginManager pluginManager;
     private TrajectoryExecutor trajectoryExecutor;
+    private TrackingService trackingService;
     private String defaultConflictHandlerName = "";
     private IPlugin defaultConflictHandler;
     private IConflictManager conflictManager;
@@ -85,11 +87,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
      IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
-     TrajectoryExecutor trajectoryExecutor) {
+     TrajectoryExecutor trajectoryExecutor, TrackingService tracking) {
         super(stateMachine, pubSubService, node);
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
+        this.trackingService = tracking;
         stateMachine.registerStateChangeListener(this);
     }
 
@@ -194,7 +197,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             respMsg.getHeader().setPlanId(msg.getHeader().getPlanId());
             respMsg.getHeader().setRecipientId(msg.getHeader().getSenderId());
             respMsg.getHeader().setSenderId(hostMobilityStaticId);
-            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, should this field be set in Message node?
+            respMsg.getHeader().setSenderBsmId(trackingService.getCurrentBSMId());
             respMsg.getHeader().setTimestamp(System.currentTimeMillis());
 
             if (resp == MobilityRequestResponse.ACK) {
