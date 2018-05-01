@@ -198,6 +198,10 @@ public class PlatoonManager implements Runnable {
         return currentPlatoonID;
     }
     
+    protected int getMemberIndex(PlatoonMember member) {
+        return platoon.indexOf(member);
+    }
+    
     /**
      * This method contains will use the indicated algorithm to determine
      * which vehicle in the platoon will function as the leader.

@@ -50,7 +50,6 @@ public class PlatooningPlugin extends AbstractPlugin
     protected final String PLATOONING_FLAG         = "PLATOONING";
     protected final String MOBILITY_STRATEGY       = "Carma/Platooning";
     protected final String JOIN_AT_REAR_PARAMS     = "SIZE:%d,MAX_ACCEL:%.2f,DTD:%.2f";
-    protected final String CANDIDATE_JOIN_PARAMS   = "DTD:%.2f";
     protected final String OPERATION_INFO_PARAMS   = "INFO|LEADER:%s,REAR_DTD:%.2f,SPEED:%.2f,SIZE:%d";
     protected final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
     protected final String OPERATION_INFO_TYPE     = "INFO";
@@ -78,8 +77,8 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double upperBoundary         = 1.75;
     protected double maxSpacing            = 2.0;
     protected double minSpacing            = 1.9;
-    protected double minGap                = 12.0;
-    protected double maxGap                = 14.0;
+    protected double minGap                = 10.0;
+    protected double maxGap                = 15.0;
     protected int    algorithmType         = 1;
     
     // following parameters are for negotiation when a CAV want to join a platoon
@@ -93,6 +92,11 @@ public class PlatooningPlugin extends AbstractPlugin
     protected int    longNegotiationTimeout         = 25000;
     protected int    maxPlatoonSize                 = 10;
 
+    // following parameters are flags for different caps on platooning controller output
+    protected boolean speedLimitCapEnabled  = true;
+    protected boolean maxAccelCapEnabled    = true;
+    protected boolean leaderSpeedCapEnabled = true;
+    
     // platooning plug-in components
     protected IPlatooningState state                  = null;
     protected Thread           stateThread            = null;
@@ -140,8 +144,8 @@ public class PlatooningPlugin extends AbstractPlugin
         upperBoundary           = pluginServiceLocator.getParameterSource().getDouble("~platooning_upper_boundary", 1.75);
         maxSpacing              = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_spacing", 2.0);
         minSpacing              = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_spacing", 1.9);
-        minGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 12.0);
-        maxGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 14.0);
+        minGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_min_gap", 10.0);
+        maxGap                  = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_gap", 15.0);
         statusIntervalLength    = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_interval", 100);
         algorithmType           = pluginServiceLocator.getParameterSource().getInteger("~algorithm_type", 1);
         maxJoinTime             = pluginServiceLocator.getParameterSource().getDouble("~max_join_time", 10.0);
@@ -151,6 +155,9 @@ public class PlatooningPlugin extends AbstractPlugin
         shortNegotiationTimeout = pluginServiceLocator.getParameterSource().getInteger("~short_negotiation_timeout", 5000);
         longNegotiationTimeout  = pluginServiceLocator.getParameterSource().getInteger("~long_negotiation_timeout", 25000);
         maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~max_platoon_size", 10);
+        speedLimitCapEnabled    = pluginServiceLocator.getParameterSource().getBoolean("~local_speed_limit_cap", true);
+        maxAccelCapEnabled      = pluginServiceLocator.getParameterSource().getBoolean("~max_accel_cap", true);
+        leaderSpeedCapEnabled   = pluginServiceLocator.getParameterSource().getBoolean("~diff_from_leader_cmd_cap", true);
         
         //log all loaded parameters
         log.debug("Load param maxAccel = " + maxAccel);
@@ -498,5 +505,21 @@ public class PlatooningPlugin extends AbstractPlugin
     
     protected AtomicBoolean getHandleMobilityPath() {
         return handleMobilityPath;
+    }
+    
+    protected double getLastSpeedCmd() {
+        return cmdSpeedSub.getLastMessage() == null ? 0.0 : cmdSpeedSub.getLastMessage().getSpeed();  
+    }
+
+    protected boolean isSpeedLimitCapEnabled() {
+        return speedLimitCapEnabled;
+    }
+
+    protected boolean isMaxAccelCapEnabled() {
+        return maxAccelCapEnabled;
+    }
+
+    protected boolean isLeaderSpeedCapEnabled() {
+        return leaderSpeedCapEnabled;
     }
 }

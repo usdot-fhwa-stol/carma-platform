@@ -16,7 +16,7 @@ platooning_status_timeout_factor: 2.5
 
 # Double: The desired time headway to the front vehicle within the platoon
 # Units: s
-platooning_desired_time_headway: 1.8
+platooning_desired_time_headway: 2.0
 
 # Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
 # Units: m
@@ -41,7 +41,7 @@ platooning_upper_boundary: 1.75
 platooning_max_spacing: 2.0
 platooning_min_spacing: 1.9
 # Units: m
-platooning_max_gap: 14.0
+platooning_max_gap: 15.0
 
 # Integer: The algorithm type used for leader selection in a platoon
 # When algorithm_type == 0, it means no leader selection algorithm
@@ -81,3 +81,12 @@ follower_join_time_gap: 3.0
 # Double: Determine the absolute maximum cmd_speed adjustment value we can get from PID controller
 # Units: m/s
 platooning_cmd_max_adjustment: 10.0
+
+# Boolean: Determine whether the output of platooning controller will be caped by platooning_cmd_max_adjustment
+diff_from_leader_cmd_cap: true
+
+# Boolean: Determine whether the output of platooning controller will be caped by max_Accel before it goes into vehicle controller
+max_accel_cap: true
+
+# Boolean: Determine whether the follower will still follow the speed limit in a platoon
+local_speed_limit_cap: true
