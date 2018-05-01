@@ -190,7 +190,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
             IManeuverInputs inputs = planner.getManeuverInputs();
             // TODO This requires that all waypoints contain a requiredLaneIndex. At somepoint we should allow waypoints to not have a required lane.
-            int startingLane = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDistance).getWaypoint().getRequiredLaneIndex();
+            int startingLane = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDistance).getDowntrackWaypoint().getRequiredLaneIndex();
             futureLatMvr_ = new FutureLateralManeuver(this,  targetLane_ - startingLane, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
             futureLonMvr_ = new FutureLongitudinalManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
 
@@ -244,16 +244,16 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         log.info("Expected arrival time at lane change area = " + futureTime);
         
         // set segment index and segment start downtrack distance
-        int segIdx = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDist).getPrevWaypoint().getWaypointId();
+        int segIdx = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDist).getUptrackWaypoint().getWaypointId();
         log.debug("The segment index of first RoutePointStamped is set to be " + segIdx);
         double segmentsDtd = 0;
         for(int i = 0; i < segIdx; i++) {
-            segmentsDtd += pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(i).getLength();
+            segmentsDtd += pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(i).length();
         }
         
         // Calculate starting crosstrack
         // TODO make crosstrack calculation work for more than 2 lanes
-        double laneWidth = pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(segIdx).getWaypoint().getLaneWidth();
+        double laneWidth = pluginServiceLocator.getRouteService().getCurrentRoute().getSegments().get(segIdx).getDowntrackWaypoint().getLaneWidth();
         // If we change to the left lane, the start crosstrack should be positive
         double startCrosstrack = futureLatMvr_.getEndingRelativeLane() * (laneWidth / 2.0); // Assumes ending relative lane is -1 or 1
         

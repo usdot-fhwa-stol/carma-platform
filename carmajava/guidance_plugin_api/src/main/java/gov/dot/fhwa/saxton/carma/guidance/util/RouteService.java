@@ -16,8 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util;
 
-import cav_msgs.Route;
-import cav_msgs.RouteSegment;
+import gov.dot.fhwa.saxton.carma.route.Route;
+import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 import java.util.SortedSet;
 
 /**
@@ -42,9 +42,24 @@ public interface RouteService {
   RouteSegment getRouteSegmentAtLocation(double location);
 
   /**
-   * Get the current downtrack distance of the vehicle
+   * Get the current downtrack distance of the vehicle in m
    */
   double getCurrentDowntrackDistance();
+
+  /**
+   * Get the current crosstrack distance of the vehicle in m
+   */
+  double getCurrentCrosstrackDistance();
+
+  /**
+   * Get the current segment downtrack distance of the vehicle in m
+   */
+  double getCurrentSegmentDowntrack();
+
+  /**
+   * Get the current segment index
+   */
+  double getCurrentSegmentIndex();
 
   /**
    * Get the set of all speed limits on the route, sorted by location down the route
