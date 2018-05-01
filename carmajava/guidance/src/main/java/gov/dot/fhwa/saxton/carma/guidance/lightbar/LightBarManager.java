@@ -168,7 +168,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
 }
 
   @Override
-  public List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler) {
+  public synchronized List<LightBarIndicator> requestControl(List<LightBarIndicator> indicators, String requestingComponent, ILightBarControlChangeHandler lightBarChangeHandler) {
     List<LightBarIndicator> deniedIndicators = new LinkedList<>();
     // Attempt to acquire control of all indicators
     for (LightBarIndicator indicator: indicators) {
@@ -268,6 +268,8 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
           log.warn(warningString);
           return false;
         }
+        statusMsg.setFlash(LightBarStatus.OFF);
+        statusMsg.setRightArrow(LightBarStatus.OFF);
         statusMsg.setLeftArrow(LightBarStatus.ON);
         break;
       case RIGHT_ARROW:
@@ -275,7 +277,9 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
           log.warn(warningString);
           return false;
         }
+        statusMsg.setFlash(LightBarStatus.OFF);
         statusMsg.setRightArrow(LightBarStatus.ON); 
+        statusMsg.setLeftArrow(LightBarStatus.OFF);
         break;
       case SOLID: 
         if (indicator != LightBarIndicator.GREEN) {
@@ -315,7 +319,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
       @Override
       public void onSuccess(SetLightsResponse msg) {
         log.info("Set light bar for " + requestingComponent + " for LightBarIndicator " + indicator + 
-        " with status" + status);
+        " with status " + status);
       }
 
       @Override
@@ -396,7 +400,7 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
   }
 
   @Override
-  public void releaseControl(List<LightBarIndicator> indicators, String requestingComponent) {
+  public synchronized void releaseControl(List<LightBarIndicator> indicators, String requestingComponent) {
 
     for (LightBarIndicator indicator: indicators) {
       if (indicator == null) {
