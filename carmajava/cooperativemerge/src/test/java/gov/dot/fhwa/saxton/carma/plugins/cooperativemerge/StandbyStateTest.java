@@ -54,7 +54,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryCo
 import gov.dot.fhwa.saxton.carma.route.FileStrategy;
 import gov.dot.fhwa.saxton.carma.route.Route;
 
-// This test only focus on the behavior of IPlatooningState API.
+// This test only focus on the behavior of ICooperativeMergeState API.
 public class StandbyStateTest {
 
     protected CooperativeMergePlugin     mockPlugin;

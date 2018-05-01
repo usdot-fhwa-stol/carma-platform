@@ -72,7 +72,7 @@ import gov.dot.fhwa.saxton.carma.route.FileStrategy;
 import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-// This test only focus on the behavior of IPlatooningState API.
+// This test only focus on the behavior of ICooperativeMergeState API.
 public class PlanningStateTest {
 
     protected CooperativeMergePlugin     mockPlugin;
@@ -141,7 +141,7 @@ public class PlanningStateTest {
         ILoggerFactory mockLoggerFactory = mock(ILoggerFactory.class);
         when(mockLoggerFactory.createLoggerForClass(any(Class.class))).thenReturn(mockLog);
         LoggerManager.setLoggerFactory(mockLoggerFactory);
-        
+
         AccStrategyManager.setAccStrategyFactory(new BasicAccStrategyFactory(1.8, 2.5, 0, 0, 1.5, new Pipeline<>()));
     }
     
