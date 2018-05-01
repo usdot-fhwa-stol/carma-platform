@@ -15,7 +15,6 @@
  */
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
-import org.ros.message.Duration;
 import org.ros.message.Time;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
@@ -25,14 +24,12 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IAccStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 
-//TODO remove timeout functionality and put in plugin states
 /**
- * Maneuver which executes complex speed commands provided by an ISpeedHarmInputs object.
+ * Maneuver which executes complex speed and steering commands provided by an ICooperativeMergeInputs object.
  */
 public class CooperativeMergeManeuver extends ComplexManeuverBase {
 
   private ICooperativeMergeInputs commandInputs;
-  private ArbitratorService arbitratorService;
 
   /**
    * Constructor where user provides all relevant inputs
@@ -77,6 +74,10 @@ public class CooperativeMergeManeuver extends ComplexManeuverBase {
 
   @Override protected double generateSpeedCommand() throws IllegalStateException {
     return commandInputs.getSpeedCommand();
+  }
+
+  @Override protected double generateSteeringCommand() throws IllegalStateException {
+    return commandInputs.getSteeringCommand();
   }
 
   @Override protected double generateMaxAccelCommand() throws IllegalStateException {

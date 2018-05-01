@@ -16,9 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
@@ -34,12 +31,11 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 /**
- * Plugin implementing integration withe STOL I TO 22 Infrastructure Server
+ * Plugin implementing integration with a ramp metering RSU for cooperative merge application
  * <p>
- * Commmunicates via the internet with the Infrastructure Server to report vehicle
- * state and receive speed commands as may relate to whatever algorithm the server
- * is configured to run with.
- *///ICooperativeMergeInputs,
+ * Commmunicates via DSRC with a RSU functioning as a ramp meter. 
+ * The RSU will send speed and steering commands to the vehicle until the merge is complete.
+ */
 public class CooperativeMergePlugin extends AbstractPlugin implements IStrategicPlugin, MobilityRequestHandler, MobilityOperationHandler {
   protected String vehicleId = "";
   protected double minimumManeuverLength = 10.0; // m
@@ -69,6 +65,7 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     // Register Mobility Message Callbacks
     pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
     pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
+    
     maxAccel = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit();
     cooperativeMergeInputs = new CooperativeMergeInputs(maxAccel);
     lagTime = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();

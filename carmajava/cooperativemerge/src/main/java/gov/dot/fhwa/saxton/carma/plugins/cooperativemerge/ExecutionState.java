@@ -22,6 +22,7 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
@@ -30,10 +31,8 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 
 /**
- * TODO
- * The StandbyState is a state when the platooning algorithm is current disabled on the route.
- * It will transit to SingleVehiclePlatoonState when it knows the algorithm will be enabled in the next trajectory.
- * In this state, the plug-in will not insert any maneuvers into a trajectory and will ignore all negotiation messages.
+ * ExecutionState handles the execution of a cooperative merge for the CooperativeMergePlugin
+ * Speed and steering commands received from an rsu are sent to the complex maneuver for execution.
  */
 public class ExecutionState implements ICooperativeMergeState {
   
@@ -43,24 +42,43 @@ public class ExecutionState implements ICooperativeMergeState {
   protected final String OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f";
   protected final String planId;
   protected final RampMeterData rampMeterData;
+  protected final IComplexManeuver complexManeuver;
   protected boolean replanningForMerge = false;
   protected boolean executingMergeManeuver = false;
   protected AtomicLong lastCommandStamp = new AtomicLong(0);
-  
+
+  /**
+   * Constructor
+   * 
+   * @param plugin The cooperative merge plugin
+   * @param log The logger to use
+   * @param pluginServiceLocator Provides access to vehicle data
+   * @param rampMeterData The data on the rsu ramp meter providing commands to the vehicle
+   * @param planId The id of the current plan being communicated with the rsu
+   * @param complexManeuver The complex maneuver which is being executed
+   */
   public ExecutionState(CooperativeMergePlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator,
-    RampMeterData rampMeterData, String planId) {
+    RampMeterData rampMeterData, String planId, IComplexManeuver complexManeuver) {
 
     this.plugin               = plugin;
     this.log                  = log;
     this.pluginServiceLocator = pluginServiceLocator;
     this.rampMeterData        = rampMeterData;
     this.planId               = planId;
+    this.complexManeuver      = complexManeuver;
   }
   
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
     TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-    //TODO log and warn if planning over complex maneuver
+    // We should not be planning in this state
+
+    // If the trajectory we are asked to plan for is before the end of our complex maneuver an error must have occured
+    // Log a warning and do not plan
+    if (traj.getStartLocation() < complexManeuver.getEndDistance() - 0.5) {
+      log.warn("Asked to plan trajectory before end of complex maneuver. Aborting rsu control");
+      plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+    }
     return tpr;
   }
 
@@ -84,7 +102,6 @@ public class ExecutionState implements ICooperativeMergeState {
     }
 
     // This is a NACK. We need to abort and replan
-    // TODO do we need more notifications here for the UI maybe?
     log.warn("NACK received from RSU emergency replanning plan id: " + msg.getHeader().getPlanId());
     pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
   }
@@ -98,7 +115,6 @@ public class ExecutionState implements ICooperativeMergeState {
     }
 
     // Extract params and validate
-    // TODO is it better to fail fast here?
     try {
       // Expected String "COMMAND|SPEED:%.2f,STEERING_ANGLE:%.2f";
       final  String SPEED_PARAM    = "SPEED";

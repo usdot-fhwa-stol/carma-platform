@@ -15,10 +15,8 @@
  */
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
-import org.ros.message.Duration;
-
 /**
- * Specifies the data input interface for a SpeedHarmonizationManeuver. This keeps knowledge of the ROS network out of the remainder
+ * Specifies the data input interface for a CooperativeMergeManeuver.
  * of the package.
  */
 public class CooperativeMergeInputs implements ICooperativeMergeInputs{
@@ -26,7 +24,6 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
   private double speedCommand; // m/s
   private double steeringCommand; // rad
   private double maxAccel; // m/s^2
-  private Duration timeSinceLastUpdate;
 
   /**
    * Constructor
@@ -51,19 +48,7 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
 
   @Override
   public double getMaxAccelLimit() {
-    return getMaxAccelLimit();
-  }
-
-  /**
-   * @param timeSinceLastUpdate the timeSinceLastUpdate to set
-   */
-  public void setTimeSinceLastUpdate(Duration timeSinceLastUpdate) {
-    this.timeSinceLastUpdate = timeSinceLastUpdate;
-  }
-
-  @Override
-  public Duration getTimeSinceLastUpdate() {
-    return timeSinceLastUpdate;
+    return maxAccel;
   }
 
   /**
@@ -71,6 +56,11 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
    */
   public void setSteeringCommand(double steeringCommand) {
     this.steeringCommand = steeringCommand;
+  }
+
+  @Override
+  public double getSteeringCommand() {
+    return steeringCommand;
   }
 
 }

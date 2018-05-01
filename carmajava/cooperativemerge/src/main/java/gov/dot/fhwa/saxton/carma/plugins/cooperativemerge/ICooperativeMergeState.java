@@ -23,6 +23,9 @@ import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
+/**
+ * Interface for a state of the cooperative merge plugin
+ */
 public interface ICooperativeMergeState {
   
   /**

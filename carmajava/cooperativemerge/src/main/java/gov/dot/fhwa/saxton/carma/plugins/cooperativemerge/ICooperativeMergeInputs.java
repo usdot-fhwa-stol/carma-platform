@@ -18,8 +18,7 @@ package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 import org.ros.message.Duration;
 
 /**
- * Specifies the data input interface for a SpeedHarmonizationManeuver. This keeps knowledge of the ROS network out of the remainder
- * of the package.
+ * Specifies the data input interface for a CooperativeMergeManeuver.
  */
 public interface ICooperativeMergeInputs {
   /**

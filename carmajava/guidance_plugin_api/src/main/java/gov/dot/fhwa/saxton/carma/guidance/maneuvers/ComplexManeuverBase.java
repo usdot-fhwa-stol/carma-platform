@@ -23,6 +23,9 @@ import org.ros.message.Time;
 
 /**
  * Base class for all complex maneuver objects.
+ * 
+ * TODO: The lateral acceleration and yaw rate of a lateral maneuver are currently not handled by this class
+ *       Only the steering command is accounted for. See executeTimeStep() for implementation
  */
 public abstract class ComplexManeuverBase implements IComplexManeuver {
 
@@ -139,6 +142,12 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
       commands_.setSpeedCommand(speedCmdOverride, maxAccelCmd);
     }
 
+    // Apply lateral control
+    double steeringCommand = generateSteeringCommand();
+    double lateralAccel = 0.0; //TODO
+    double yawRate = 0.0; //TODO
+    commands_.setSteeringCommand(steeringCommand, lateralAccel, yawRate); 
+
     return false;
   }
 
@@ -155,6 +164,13 @@ public abstract class ComplexManeuverBase implements IComplexManeuver {
    * @return The max accel command
    */
   protected abstract double generateMaxAccelCommand();
+
+  /**
+   * Generates the next steering command. Steering commands are in radians and represent the steering angle of front axle.
+   *
+   * @return The steering command in rad
+   */
+  protected abstract double generateSteeringCommand();
 
   @Override public double getMaxExpectedSpeed() {
     return maxExpectedSpeed_;

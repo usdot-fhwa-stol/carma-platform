@@ -36,10 +36,8 @@ import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 /**
- * TODO
- * The StandbyState is a state when the platooning algorithm is current disabled on the route.
- * It will transit to SingleVehiclePlatoonState when it knows the algorithm will be enabled in the next trajectory.
- * In this state, the plug-in will not insert any maneuvers into a trajectory and will ignore all negotiation messages.
+ * Standby state of the CooperativeMergePlugin. 
+ * The plugin will remain in this state until a ramp metering rsu is detected
  */
 public class StandbyState implements ICooperativeMergeState {
   
@@ -50,6 +48,13 @@ public class StandbyState implements ICooperativeMergeState {
   protected final PluginServiceLocator pluginServiceLocator;
   protected final ConcurrentMap<String, RampMeterData> rampMeters = new ConcurrentHashMap<>();
   
+  /**
+   * Constructor
+   * 
+   * @param plugin The cooperative merge plugin
+   * @param log The logger to use
+   * @param pluginServiceLocator Used to access host vehicle data
+   */
   public StandbyState(CooperativeMergePlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
     this.plugin               = plugin;
     this.log                  = log;
@@ -102,7 +107,7 @@ public class StandbyState implements ICooperativeMergeState {
       cav_msgs.LocationECEF meterLoc = msg.getLocation();
       // TODO Probably would be good to add a function to route for doing this complicated process which happens alot
       Point3D      meterPoint = new Point3D(meterLoc.getEcefX(), meterLoc.getEcefY(), meterLoc.getEcefZ());
-      Route        route      = Route.fromMessage(pluginServiceLocator.getRouteService().getCurrentRoute());
+      Route        route      = pluginServiceLocator.getRouteService().getCurrentRoute();
       RouteSegment meterSeg   = route.routeSegmentOfPoint(meterPoint, route.getSegments());                   // TODO optimize this
       // Get the point in location of the meter in segment frame
       Vector3 meterPointInSeg = meterSeg.getECEFToSegmentTransform().invert().apply(new Vector3(meterPoint.getX(), meterPoint.getY(), meterPoint.getZ()));

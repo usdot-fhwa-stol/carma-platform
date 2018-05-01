@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -34,10 +35,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryCo
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
- * TODO
- * The StandbyState is a state when the platooning algorithm is current disabled on the route.
- * It will transit to SingleVehiclePlatoonState when it knows the algorithm will be enabled in the next trajectory.
- * In this state, the plug-in will not insert any maneuvers into a trajectory and will ignore all negotiation messages.
+ * State responsible for planning a complex maneuver for the CooperativeMergePlugin
  */
 public class PlanningState implements ICooperativeMergeState {
   
@@ -50,6 +48,14 @@ public class PlanningState implements ICooperativeMergeState {
   protected String MERGE_REQUEST_PARAMS      = "MERGE|MAX_ACCEL:%.2f,LAG:%.2f,DIST:%.2f";
   protected AtomicBoolean replanningForMerge = new AtomicBoolean(false);
   
+  /**
+   * Constructor
+   * 
+   * @param plugin The cooperative merge plugin
+   * @param log The logger to use
+   * @param pluginServiceLocator Used to access vehicle data
+   * @param rampMeterData The data of the rsu being communicated with
+   */
   public PlanningState(CooperativeMergePlugin plugin, ILogger log,
     PluginServiceLocator pluginServiceLocator, RampMeterData rampMeterData) {
 
@@ -72,10 +78,12 @@ public class PlanningState implements ICooperativeMergeState {
     mergeRequest.setStrategy(CooperativeMergePlugin.MOBILITY_STRATEGY);
     
     IManeuverInputs inputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
+    RouteService rs = pluginServiceLocator.getRouteService();
 
-    double currentDTD = inputs.getDistanceFromRouteStart();
-    double currentCrosstrack = inputs.getCrosstrackDistance();
-    double currentSegmentDTD = pluginServiceLocator.getRouteService().
+    double currentDTD = rs.getCurrentDowntrackDistance();
+    double currentCrosstrack = rs.getCurrentCrosstrackDistance();
+    double currentSegmentDTD = rs.getCurrentSegmentDowntrack();
+    int currentSegmentIdx = rs.getCurrentSegmentIndex();
     double distanceToMerge = rampMeterData.getMergePointDTD() - currentDTD;
 
     String params = String.format(MERGE_REQUEST_PARAMS, plugin.getMaxAccel(), plugin.getLagTime(), distanceToMerge); 
@@ -83,14 +91,16 @@ public class PlanningState implements ICooperativeMergeState {
     
     ITrajectoryConverter tc = pluginServiceLocator.getTrajectoryConverter();
 
-    RoutePointStamped routePoint = new RoutePointStamped(currentDTD, crosstrack, time, segmentIdx, segmentDowntrack)
-    tc.pathToMessage(path);
-    mergeRequest.setLocation(mergeRequest.getLocation()); // TODO get the location
+    RoutePointStamped routePoint = new RoutePointStamped(currentDTD, currentCrosstrack,
+     System.currentTimeMillis(), currentSegmentIdx, currentSegmentDTD);
+    
+    cav_msgs.Trajectory trajMsg = tc.pathToMessage(Arrays.asList(routePoint));
+    mergeRequest.setLocation(trajMsg.getLocation()); 
+
     mergeRequest.setExpiration(System.currentTimeMillis() + 500);
     
     plugin.getMobilityRequestPub().publish(mergeRequest);
     this.requestTime = System.currentTimeMillis();
-    // TODO after request is sent we need a timeout and nack mechanism
   }
   
   @Override
@@ -111,23 +121,24 @@ public class PlanningState implements ICooperativeMergeState {
 
     double currentDTD = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
     
-    // TODO add logic for if we start inside the circle
+    // TODO if needed add logic for if we start past the meter point
     if (currentDTD > rampMeterData.getRampMeterDTD()) {
-        log.warn("Did not change trajectory as we are already passed ramp meter point: " 
-          + rampMeterData.getRampMeterDTD() + " with downtrack: " + currentDTD);
-        
-        replanningForMerge.set(false);
-        return tpr;
+      log.warn("Did not change trajectory as we are already passed ramp meter point: " 
+        + rampMeterData.getRampMeterDTD() + " with downtrack: " + currentDTD);
+      
+      replanningForMerge.set(false);
+      return tpr;
     }
 
     double complexManeuverSize = (rampMeterData.getMergePointDTD() + rampMeterData.getMergeLength()) - currentDTD;
+    
     if (complexManeuverSize < plugin.getMinimumManeuverLength()) {
-        log.warn(String.format("Failed to plan complex maneuver in trajectory: " + traj +
-        ", downtrack: %.2f, merge point dtd: %.2f, length of merge: %.2f, min maneuver size: %.2f",
-        currentDTD, rampMeterData.getMergePointDTD(), rampMeterData.getMergeLength(), plugin.getMinimumManeuverLength()));
-        
-        replanningForMerge.set(false);
-        return tpr;
+      log.warn(String.format("Failed to plan complex maneuver in trajectory: " + traj +
+      ", downtrack: %.2f, merge point dtd: %.2f, length of merge: %.2f, min maneuver size: %.2f",
+      currentDTD, rampMeterData.getMergePointDTD(), rampMeterData.getMergeLength(), plugin.getMinimumManeuverLength()));
+      
+      replanningForMerge.set(false);
+      return tpr;
     }
 
     double start = traj.findEarliestLongitudinalWindowOfSize(complexManeuverSize);
@@ -136,40 +147,57 @@ public class PlanningState implements ICooperativeMergeState {
 
     // Check if the trajectory is long enough
     if (traj.getEndLocation() < end) {
-        log.info("Planned Trajectory ended before merge completion. Requesting longer trajectory to " + end);
-        
-        tpr.requestLongerTrajectory(end);
-        return tpr;
+      log.info("Planned Trajectory ended before merge completion. Requesting longer trajectory to " + end);
+      
+      tpr.requestLongerTrajectory(end);
+      return tpr;
     }
 
-    // TODO add logic for if we start inside the circle
+    // TODO if needed add logic for if we start past the ramp meter point
     // If the first available planning window is before the meter point we need higher planning priority
     if (start > rampMeterData.getRampMeterDTD()) {
-        log.info("Requesting higher priority as current window is not sufficient. ramp meter point: " 
-          + rampMeterData.getRampMeterDTD() + " downtrack: " + currentDTD + " window start: " + start + " window size: " + complexManeuverSize);
-        
-        tpr.requestHigherPriority();
-        return tpr;
+      log.info("Requesting higher priority as current window is not sufficient. ramp meter point: " 
+        + rampMeterData.getRampMeterDTD() + " downtrack: " + currentDTD + " window start: " + start + " window size: " + complexManeuverSize);
+      
+      tpr.requestHigherPriority();
+      return tpr;
     }
 
-    // TODO we need some check for slow down feasibility
+    // Evaluate if we will be able to stop before meter point
+    // Uses kinematic equation v_f^2 = v_i^2 + 2ad
+    // a = (v_f^2 - v_i^2) / 2d
+    // v_f in this case = 0.0
+    double deltaD = rampMeterData.getMergePointDTD() - currentDTD;
+    double requiredAccel = Double.NEGATIVE_INFINITY;
+    if (deltaD != 0) {
+      requiredAccel = -(currentSpeed * currentSpeed) / (2 * deltaD);
+    } else if (Math.abs(currentSpeed) < 0.1) {
+      requiredAccel = 0;
+    }
+
+    double maxAccel = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit();
+    if (Math.abs(requiredAccel) > maxAccel) {
+      log.warn("Cannot slow down in the needed space to stop. calculatedAccel: " + requiredAccel);
+      return tpr;
+    }
+    
 
     // At this point we should have a valid window in which to plan
 
     // Build complex maneuver and add it to the trajectory
     CooperativeMergeManeuver mergeManeuver = new CooperativeMergeManeuver(
-        plugin,
-        plugin.getCooperativeMergeInputs(),
-        pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
-        pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(),
-        AccStrategyManager.newAccStrategy(),
-        start, 
-        end,
-        0, 
-        rs.getSpeedLimitsInRange(start, end).first().getLimit());
+      plugin,
+      plugin.getCooperativeMergeInputs(),
+      pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
+      pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(),
+      AccStrategyManager.newAccStrategy(),
+      start, 
+      end,
+      0, 
+      rs.getSpeedLimitsInRange(start, end).first().getLimit());
 
     traj.setComplexManeuver(mergeManeuver);
-    plugin.setState(new ExecutionState(plugin, log, pluginServiceLocator, rampMeterData, planId));
+    plugin.setState(new ExecutionState(plugin, log, pluginServiceLocator, rampMeterData, planId, mergeManeuver));
     return tpr;
   }
 
@@ -204,9 +232,18 @@ public class PlanningState implements ICooperativeMergeState {
     // In standby state, it will ignore operation message since it is not actively operating
   }
 
-  // TODO
+  /**
+   * Helper function to publish a nack message to the rsu for the current plan
+   */
   private void publishNack() {
+    MobilityResponse response = plugin.mobilityResponsePub.newMessage();
 
+    response.getHeader().setSenderId(plugin.vehicleId);
+    response.getHeader().setSenderBsmId("FFFFFFFF"); // TODO use real bsm id
+    response.getHeader().setRecipientId(rampMeterData.getRsuId());
+    response.getHeader().setPlanId(this.planId);
+    response.getHeader().setTimestamp(System.currentTimeMillis());
+    response.setIsAccepted(false);
   }
   
   @Override
