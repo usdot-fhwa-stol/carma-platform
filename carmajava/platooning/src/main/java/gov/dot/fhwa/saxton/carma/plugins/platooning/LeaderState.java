@@ -1,5 +1,7 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import cav_msgs.MobilityHeader;
@@ -210,7 +212,8 @@ public class LeaderState implements IPlatooningState {
             String vehicleID = msg.getHeader().getSenderId();
             String statusParams = strategyParams.substring(plugin.OPERATION_STATUS_TYPE.length() + 1);
             log.info("Receive operation status message from vehicle: " + vehicleID + " with params: " + statusParams);
-            plugin.getPlatoonManager().memberUpdates(vehicleID, msg.getHeader().getPlanId(), statusParams);
+            plugin.getPlatoonManager().memberUpdates(vehicleID, msg.getHeader().getPlanId(),
+                                                     msg.getHeader().getSenderBsmId(), statusParams);
         } else {
             log.debug("Receive operation message but ignore it because isPlatoonInfoMsg = " + isPlatoonInfoMsg 
                     + ", isNotInNegotiation = " + isNotInNegotiation + " and isPlatoonStatusMsg = " + isPlatoonStatusMsg);
@@ -320,9 +323,17 @@ public class LeaderState implements IPlatooningState {
         msg.getHeader().setTimestamp(System.currentTimeMillis());
         msg.setStrategy(plugin.MOBILITY_STRATEGY);
         if(type.equals(plugin.OPERATION_INFO_TYPE)) {
-            // For INFO params, the string format is INFO|LEADER:xx,REAR_DTD:xx,SPEED:xx
-            String infoParams = String.format(plugin.OPERATION_INFO_PARAMS,
-                                hostStaticId, plugin.getPlatoonManager().getPlatoonRearDowntrackDistance(),
+            String rearBsmId = pluginServiceLocator.getTrackingService().getCurrentBSMId();
+            double platoonLength = plugin.
+            List<PlatoonMember> vehicleBehindInPlatoon = new ArrayList(plugin.getPlatoonManager().platoon);
+            if(vehicleBehindInPlatoon.size() > 0) {
+                rearBsmId = vehicleBehindInPlatoon.get(vehicleBehindInPlatoon.size() - 1).bsmId;
+                
+            }
+            // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
+            String infoParams = String.format(plugin.OPERATION_INFO_PARAMS_F,
+                                .getLastMemberBsmId(),
+                                (pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() - plugin.getPlatoonManager().getPlatoonRearDowntrackDistance()) + plugin.getVehicleLength(),
                                 pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed(),
                                 plugin.getPlatoonManager().getPlatooningSize() + 1); // follower size + 1
             msg.setStrategyParams(infoParams);

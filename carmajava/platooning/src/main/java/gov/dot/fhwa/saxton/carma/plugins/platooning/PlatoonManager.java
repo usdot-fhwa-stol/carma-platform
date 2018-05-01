@@ -67,7 +67,7 @@ public class PlatoonManager implements Runnable {
      * @param senderId Sender ID for the current info
      * @param params Strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
      */
-    protected synchronized void memberUpdates(String senderId, String platoonId, String params) {
+    protected synchronized void memberUpdates(String senderId, String platoonId, String senderBsmId, String params) {
         String[] inputsParams = params.split(",");
         // TODO we should get downtrack distance for other vehicle from either roadway environment or
         // from strategy params in the ECEF frame, but not directly from this string
@@ -86,10 +86,10 @@ public class PlatoonManager implements Runnable {
                 log.debug("It seems that the current leader is joining another platoon.");
                 log.debug("So the platoon ID is changed from " + this.currentPlatoonID + " to " + platoonId);
                 this.setCurrentPlatoonID(platoonId);
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
             } else if(this.currentPlatoonID.equals(platoonId) && isInFrontOfUs) {
                 log.debug("This STATUS messages is from our platoon in front of us. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
                 if(!platoon.isEmpty() && !this.leaderID.equals(platoon.get(0).staticId)) {
                     this.leaderID = platoon.get(0).staticId;
                     log.debug("Now the leader change to " + this.leaderID);
@@ -101,30 +101,32 @@ public class PlatoonManager implements Runnable {
             // If we are currently in any leader state, we only updates platoon member based on platoon ID
             if(currentPlatoonID.equals(platoonId)) {
                 log.debug("This STATUS messages is from our platoon. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
             }
         }
     }
     
-    private void updatesOrAddMemberInfo(String senderId, double cmdSpeed, double dtDistance, double curSpeed) {
+    private void updatesOrAddMemberInfo(String senderId, String senderBsmId, double cmdSpeed, double dtDistance, double curSpeed) {
         boolean isExisted = false;
         // update/add this info into the list
         for(PlatoonMember pm : platoon) {
             if(pm.staticId.equals(senderId)) {
+                pm.bsmId = senderBsmId;
                 pm.commandSpeed = cmdSpeed;
                 pm.vehiclePosition = dtDistance;
                 pm.vehicleSpeed = curSpeed;
                 pm.timestamp = System.currentTimeMillis();
                 log.debug("Receive and update platooning info on vehicel " + pm.staticId);
-                log.debug("    Speed = "                             + pm.vehicleSpeed);
-                log.debug("    Location = "                          + pm.vehiclePosition);
-                log.debug("    CommandSpeed = "                      + pm.commandSpeed);
+                log.debug("    BSM ID = "                                  + pm.bsmId);
+                log.debug("    Speed = "                                   + pm.vehicleSpeed);
+                log.debug("    Location = "                                + pm.vehiclePosition);
+                log.debug("    CommandSpeed = "                            + pm.commandSpeed);
                 isExisted = true;
                 break;
             }
         }
         if(!isExisted) {
-            PlatoonMember newMember = new PlatoonMember(senderId, cmdSpeed, curSpeed, dtDistance, System.currentTimeMillis());
+            PlatoonMember newMember = new PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, System.currentTimeMillis());
             platoon.add(newMember);
             Collections.sort(platoon, (a, b) -> (Double.compare(b.vehiclePosition, a.vehiclePosition)));
             log.debug("Add a new vehicle into our platoon list " + newMember.staticId);

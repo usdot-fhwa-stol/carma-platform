@@ -47,24 +47,24 @@ public class PlatoonManagerTest {
     @Test
     public void updateMemberInfoInLeaderState() {
         assertNull(manager.getLeader());
-        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "00000000", "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
         assertNull(manager.getLeader());
         assertEquals(1, manager.getPlatooningSize());
         assertEquals(50.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
-        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:60.00,SPEED:1.00");
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "00000000", "CMDSPEED:1.00,DTD:60.00,SPEED:1.00");
         assertEquals(1, manager.getPlatooningSize());
         assertEquals(60.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
-        manager.memberUpdates("B", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:70.00,SPEED:1.00");
+        manager.memberUpdates("B", manager.getCurrentPlatoonID(), "00000001", "CMDSPEED:1.00,DTD:70.00,SPEED:1.00");
         assertEquals(2, manager.getPlatooningSize());
         assertEquals(60.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
-        manager.memberUpdates("C", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:10.00,SPEED:1.00");
+        manager.memberUpdates("C", manager.getCurrentPlatoonID(), "00000002", "CMDSPEED:1.00,DTD:10.00,SPEED:1.00");
         assertEquals(3, manager.getPlatooningSize());
         assertEquals(10.0, manager.getPlatoonRearDowntrackDistance(), 0.01);
     }
     
     @Test
     public void removeExpiredMember() {
-        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
+        manager.memberUpdates("A", manager.getCurrentPlatoonID(), "00000000", "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
         assertEquals(1, manager.getPlatooningSize());
         manager.removeExpiredMember();
         assertEquals(1, manager.getPlatooningSize());
@@ -77,6 +77,5 @@ public class PlatoonManagerTest {
         manager.removeExpiredMember();
         assertEquals(0, manager.getPlatooningSize());
     }
-    
     
 }

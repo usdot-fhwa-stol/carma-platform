@@ -24,6 +24,7 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.PlatooningInfo;
+import cav_msgs.RoadwayEnvironment;
 import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
@@ -43,54 +44,52 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 public class PlatooningPlugin extends AbstractPlugin
-    implements IStrategicPlugin, MobilityOperationHandler, MobilityRequestHandler, MobilityResponseHandler {
+        implements IStrategicPlugin, MobilityOperationHandler, MobilityRequestHandler, MobilityResponseHandler {
     
     // TODO the plugin should use interface manager once rosjava multiple thread service call is fixed
-    protected final String SPEED_CMD_CAPABILITY    = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
-    protected final String PLATOONING_FLAG         = "PLATOONING";
-    protected final String MOBILITY_STRATEGY       = "Carma/Platooning";
-    protected final String JOIN_AT_REAR_PARAMS     = "SIZE:%d,MAX_ACCEL:%.2f,DTD:%.2f";
-    protected final String OPERATION_INFO_PARAMS   = "INFO|LEADER:%s,REAR_DTD:%.2f,SPEED:%.2f,SIZE:%d";
-    protected final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
-    protected final String OPERATION_INFO_TYPE     = "INFO";
-    protected final String OPERATION_STATUS_TYPE   = "STATUS";
-    
+    protected static final String SPEED_CMD_CAPABILITY    = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
+    protected static final String PLATOONING_FLAG         = "PLATOONING";
+    protected static final String MOBILITY_STRATEGY       = "Carma/Platooning";
+    protected static final String JOIN_AT_REAR_PARAMS     = "SIZE:%d,MAX_ACCEL:%.2f,DTD:%.2f";
+    protected static final String OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d";
+    protected static final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
+    protected static final String OPERATION_INFO_TYPE     = "INFO";
+    protected static final String OPERATION_STATUS_TYPE   = "STATUS";
+    protected static final int    STATUS_INTERVAL_LENGTH  = 100;   // ms
+    protected static final int    INFO_INTERVAL_LENGTH    = 3000;  // ms
+    protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
     protected IPublisher<MobilityOperation>   mobilityOperationPublisher;
     protected IPublisher<PlatooningInfo>      platooningInfoPublisher;
     protected ISubscriber<SpeedAccel>         cmdSpeedSub;
+    protected ISubscriber<RoadwayEnvironment> roadwaySub;
 
-    // following parameters are for general platooning algorithm
-    protected double maxAccel              = 2.5;
-    protected double minimumManeuverLength = 15.0;
-    protected double timeHeadway           = 1.8;
-    protected double standStillGap         = 7.0;
-    protected double kpPID                 = 1.5;
-    protected double kiPID                 = 0.0;
-    protected double kdPID                 = 0.1;
-    protected double cmdSpeedMaxAdjustment = 10.0;
+    // following parameters are for general platooning algorithm and negotiations
+    protected double maxAccel              = 2.5;  // m/s/s
+    protected double minimumManeuverLength = 15.0; // m
+    protected double timeHeadway           = 2.2;  // s
+    protected double standStillHeadway     = 10.0; // m
+    protected double kpPID                 = 1.5;  // 1
+    protected double kiPID                 = 0.0;  // 1
+    protected double kdPID                 = -0.1; // 1
+    protected double statusTimeoutFactor   = 2.5;  // 1
+    protected double desiredJoinTimeGap    = 4.0;  // s
+    protected double maxAllowedJoinTimeGap = 15.0; // s
+    protected double waitingStateTimeout   = 25.0; // s
+    protected double cmdSpeedMaxAdjustment = 10.0; // m/s
+    protected double vehicleLength         = 5.0;  // m
+    protected int    maxPlatoonSize        = 10;   // 1
+    protected int    algorithmType         = 0;    // N/A
     
-    // following parameters are for leader selection
-    protected double lowerBoundary         = 1.65;
-    protected double upperBoundary         = 1.75;
-    protected double maxSpacing            = 2.0;
-    protected double minSpacing            = 1.9;
-    protected double minGap                = 10.0;
-    protected double maxGap                = 15.0;
-    protected int    algorithmType         = 1;
-    
-    // following parameters are for negotiation when a CAV want to join a platoon
-    protected double maxJoinTime                    = 10.0;
-    protected double desiredJoinTimeGap             = 4.0;
-    protected double followerJoinTimeGap            = 3.0;
-    protected double statusTimeoutFactor            = 2.5;
-    protected int    statusIntervalLength           = 100;
-    protected int    infoIntervalLength             = 3000;
-    protected int    shortNegotiationTimeout        = 5000;
-    protected int    longNegotiationTimeout         = 25000;
-    protected int    maxPlatoonSize                 = 10;
+    // following parameters are mainly for APF leader selection
+    protected double lowerBoundary         = 1.65; // s
+    protected double upperBoundary         = 1.75; // s
+    protected double maxSpacing            = 2.0;  // s
+    protected double minSpacing            = 1.9;  // s
+    protected double minGap                = 10.0; // m
+    protected double maxGap                = 15.0; // m
 
     // following parameters are flags for different caps on platooning controller output
     protected boolean speedLimitCapEnabled  = true;
@@ -381,145 +380,12 @@ public class PlatooningPlugin extends AbstractPlugin
         lastAttemptedIndicatorStatus = status;
     }
     
-    // The following getters will be helpful on doing unit tests, because it will let the plugin's
-    // other components not depend on the actual platooning plug-in class. 
-    protected CommandGenerator getCommandGenerator() {
-        return commandGenerator;
-    }
-
-    protected PlatoonManager getPlatoonManager() {
-        return platoonManager;
-    }
-    
-    protected double getTimeHeadway() {
-        return timeHeadway;
-    }
-
-    protected double getStandStillGap() {
-        return standStillGap;
-    }
-
-    protected double getKpPID() {
-        return kpPID;
-    }
-
-    protected double getKiPID() {
-        return kiPID;
-    }
-
-    protected double getKdPID() {
-        return kdPID;
-    }
-    
-    protected double getMaxAccel() {
-        return maxAccel;
-    }
-    
     protected IManeuverInputs getManeuverInputs() {
         return pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
-    }
-    
-    protected double getLowerBoundary() {
-        return lowerBoundary;
-    }
-
-    protected double getUpperBoundary() {
-        return upperBoundary;
-    }
-
-    protected double getMaxSpacing() {
-        return maxSpacing;
-    }
-
-    protected double getMinSpacing() {
-        return minSpacing;
-    }
-
-    protected double getMinGap() {
-        return minGap;
-    }
-
-    protected double getMaxGap() {
-        return maxGap;
-    }
-    
-    protected int getAlgorithmType() {
-        return algorithmType;
-    }
-    
-    protected double getMaxJoinTime() {
-        return maxJoinTime;
-    }
-    
-    protected int getMaxPlatoonSize() {
-        return maxPlatoonSize;
-    }
-    
-    protected double getDesiredJoinTimeGap() {
-        return desiredJoinTimeGap;
-    }
-    
-    protected int getShortNegotiationTimeout() {
-        return shortNegotiationTimeout;
-    }
-
-    protected int getLongNegotiationTimeout() {
-        return longNegotiationTimeout;
-    }
-    
-    protected int getOperationInfoIntervalLength() {
-        return infoIntervalLength;
-    }
-    
-    protected int getOperationUpdatesIntervalLength() {
-        return statusIntervalLength;
-    }
-    
-    protected double getMinimumManeuverLength() {
-        return minimumManeuverLength;
-    }
-    
-    protected double getOperationUpdatesTimeoutFactor() {
-        return statusTimeoutFactor;
-    }
-    
-    protected IPublisher<MobilityRequest> getMobilityRequestPublisher() {
-        return mobilityRequestPublisher;
-    }
-
-    protected IPublisher<MobilityOperation> getMobilityOperationPublisher() {
-        return mobilityOperationPublisher;
-    }
-    
-    protected ISubscriber<SpeedAccel> getCmdSpeedSub() {
-        return cmdSpeedSub;
-    }
-    
-    protected double getFollowerJoinTimeGap() {
-        return followerJoinTimeGap;
-    }
-    
-    protected double getCmdSpeedMaxAdjustment() {
-        return cmdSpeedMaxAdjustment;
-    }
-    
-    protected AtomicBoolean getHandleMobilityPath() {
-        return handleMobilityPath;
     }
     
     protected double getLastSpeedCmd() {
         return cmdSpeedSub.getLastMessage() == null ? 0.0 : cmdSpeedSub.getLastMessage().getSpeed();  
     }
-
-    protected boolean isSpeedLimitCapEnabled() {
-        return speedLimitCapEnabled;
-    }
-
-    protected boolean isMaxAccelCapEnabled() {
-        return maxAccelCapEnabled;
-    }
-
-    protected boolean isLeaderSpeedCapEnabled() {
-        return leaderSpeedCapEnabled;
-    }
+    
 }
