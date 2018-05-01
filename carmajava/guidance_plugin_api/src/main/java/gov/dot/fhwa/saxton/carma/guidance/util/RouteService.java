@@ -59,7 +59,7 @@ public interface RouteService {
   /**
    * Get the current segment index
    */
-  double getCurrentSegmentIndex();
+  int getCurrentSegmentIndex();
 
   /**
    * Get the set of all speed limits on the route, sorted by location down the route
