@@ -25,6 +25,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -37,6 +39,7 @@ import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
@@ -78,10 +81,12 @@ public class LeaderStateTest {
                                                         mock(IPubSubService.class),       mock(ParameterSource.class),
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
-                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
+                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
+                                                        mock(TrackingService.class));
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         when(mockPlugin.getMaxPlatoonSize()).thenReturn(5);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
+        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         leaderState = new LeaderState(mockPlugin, mockLog, pluginServiceLocator);
     }
     

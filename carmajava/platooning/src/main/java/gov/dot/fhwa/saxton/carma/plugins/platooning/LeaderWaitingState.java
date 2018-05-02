@@ -52,6 +52,7 @@ public class LeaderWaitingState implements IPlatooningState {
         this.pluginServiceLocator = pluginServiceLocator;
         this.applicantId          = applicantId;
         this.waitingStartTime     = System.currentTimeMillis();
+        this.plugin.getHandleMobilityPath().set(false);
     }
     
     @Override
@@ -77,25 +78,10 @@ public class LeaderWaitingState implements IPlatooningState {
         boolean isTargetVehicle = msg.getHeader().getSenderId().equals(applicantId);
         boolean isCandidateJoin = msg.getPlanType().getType() == PlanType.PLATOON_FOLLOWER_JOIN;
         if(isTargetVehicle && isCandidateJoin) {
-            log.debug("Target vehicle " + applicantId + " is actually trying to join.");
-            // Evaluate if it is ready to join immediately
-            // TODO The current strategy string is in format: "DTD:xx", but we need to use location field 
-            double targetVehicleDtd = Double.parseDouble(msg.getStrategyParams().split(":")[1]);
-            log.debug("Target vehicle is at downtrack distance " + targetVehicleDtd);
-            double vehicleAtRearDtd = plugin.getPlatoonManager().getPlatoonRearDowntrackDistance();
-            log.debug("The current platoon rear vehicle is at downtrack distance " + vehicleAtRearDtd);
-            double desiredJoinDistance = plugin.getDesiredJoinTimeGap() * plugin.getManeuverInputs().getCurrentSpeed();
-            boolean isGapCloseEnough = (vehicleAtRearDtd - targetVehicleDtd) <= desiredJoinDistance;
-            if(isGapCloseEnough) {
-                log.debug("The target vehicle is close enough to join immediately.");
-                log.debug("Changing to PlatoonLeaderState and send ACK to target vehicle");
-                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
-                return MobilityRequestResponse.ACK;
-            } else {
-                log.debug("The gap is still not close enough: " + (vehicleAtRearDtd - targetVehicleDtd) + ". Change back to PlatoonLeaderState");
-                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
-                return MobilityRequestResponse.NACK;
-            }
+            log.debug("Target vehicle " + applicantId + " is actually joining.");
+            log.debug("Changing to PlatoonLeaderState and send ACK to target vehicle");
+            plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
+            return MobilityRequestResponse.ACK;
         } else {
             log.debug("Received platoon request with vehicle id = " + msg.getHeader().getSenderId());
             log.debug("The request type is " + msg.getPlanType().getType() + " and we choose to ignore");
@@ -162,7 +148,7 @@ public class LeaderWaitingState implements IPlatooningState {
         // This message is for broadcast
         msg.getHeader().setRecipientId("");
         // TODO need to have a easy way to get bsmId in plugin
-        msg.getHeader().setSenderBsmId("FFFFFFFF");
+        msg.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());

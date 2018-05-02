@@ -21,12 +21,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
@@ -72,14 +75,17 @@ public class FollowerStateTest {
                                                         mock(IPubSubService.class),       mock(ParameterSource.class),
                                                         planner,                          mockRouteService,
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
-                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
+                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
+                                                        mock(TrackingService.class));
         when(mockFact.createLoggerForClass(any())).thenReturn(mockLog);
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
+        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
         when(mockPlugin.getCommandGenerator()).thenReturn(mockCmdGenerator);
+        
         followerState = new FollowerState(mockPlugin, mockLog, pluginServiceLocator);
     }
     

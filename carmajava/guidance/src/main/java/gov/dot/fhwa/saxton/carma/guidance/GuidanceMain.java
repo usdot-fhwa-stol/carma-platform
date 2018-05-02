@@ -121,10 +121,10 @@ public class GuidanceMain extends SaxtonBaseNode {
         tracking, trajectoryConverter);
     LightBarManager lightBarManager = new LightBarManager(stateMachine, pubSubService, node);
     MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter,
-        trajectoryExecutor);
+        trajectoryExecutor, tracking);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
-        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager);
-    VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager);
+        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking);
+    VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager, tracking);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor, vehicleAwareness);
 
     tracking.setTrajectoryExecutor(trajectoryExecutor);
