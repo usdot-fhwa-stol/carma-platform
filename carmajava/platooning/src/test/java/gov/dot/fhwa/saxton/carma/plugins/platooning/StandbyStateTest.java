@@ -71,15 +71,15 @@ public class StandbyStateTest {
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
                                                         mock(TrackingService.class));
-        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
-        when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
-        standbyState         = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
+        mockPlugin.handleMobilityPath = new AtomicBoolean(true);
+        mockPlugin.platoonManager = mockManager;
+        standbyState = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
     }
     
     @Test
     public void planTrajectoryWithoutAnyWindow() {
         Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(false);
+        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(false);
         TrajectoryPlanningResponse tpr = standbyState.planTrajectory(traj, 0);
         assertTrue(tpr.getRequests().isEmpty());
         assertNull(traj.getComplexManeuver());
@@ -91,7 +91,7 @@ public class StandbyStateTest {
     @Test
     public void planTrajectoryWithAnOpenWindow() {
         Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
+        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(true);
         TrajectoryPlanningResponse tpr = standbyState.planTrajectory(traj, 0);
         assertNull(traj.getComplexManeuver());
         assertTrue(traj.getLongitudinalManeuvers().isEmpty());

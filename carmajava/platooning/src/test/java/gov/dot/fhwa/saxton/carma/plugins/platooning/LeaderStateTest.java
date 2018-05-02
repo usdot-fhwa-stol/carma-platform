@@ -84,17 +84,18 @@ public class LeaderStateTest {
                                                         mockRouter,                       mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
                                                         mock(TrackingService.class));
-        when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
-        when(mockPlugin.getMaxPlatoonSize()).thenReturn(5);
+        mockPlugin.platoonManager = mockManager;
+        mockPlugin.maxPlatoonSize = 5;
+        mockManager.currentPlatoonID = "ABC";
+        mockPlugin.handleMobilityPath = new AtomicBoolean(true);
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
-        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
         leaderState = new LeaderState(mockPlugin, mockLog, pluginServiceLocator);
     }
     
     @Test
     public void planTrajectoryWithoutAnyWindow() {
         Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(false);
+        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(false);
         TrajectoryPlanningResponse tpr = leaderState.planTrajectory(traj, 0);
         assertTrue(tpr.getRequests().isEmpty());
         assertNull(traj.getComplexManeuver());
@@ -108,7 +109,7 @@ public class LeaderStateTest {
     @Test
     public void planTrajectoryWithAnOpenWindow() {
         Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
+        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(true);
         TrajectoryPlanningResponse tpr = leaderState.planTrajectory(traj, 0);
         assertTrue(tpr.getRequests().isEmpty());
         assertNull(traj.getComplexManeuver());
@@ -135,13 +136,13 @@ public class LeaderStateTest {
         when(mockHeader.getSenderId()).thenReturn("1");
         when(unknownRequest.getPlanType()).thenReturn(mockType);
         when(unknownRequest.getHeader()).thenReturn(mockHeader);
-        when(unknownRequest.getStrategyParams()).thenReturn("SIZE:1,ACCEL:2.5,DTD:10.5");
-        when(mockManager.getPlatooningSize()).thenReturn(4);
+        when(unknownRequest.getStrategyParams()).thenReturn("SIZE:1,SPEED:2.50,DTD:10.50");
+        when(mockManager.getPlatooningSize()).thenReturn(5);
         assertEquals(MobilityRequestResponse.NACK, leaderState.onMobilityRequestMessgae(unknownRequest));
     }
     
     @Test
-    public void onJoinRequestWithDifferentGaps() {
+    public void onJoinRequestWithInMaxGap() {
         MobilityRequest unknownRequest = mock(MobilityRequest.class);
         PlanType mockType = mock(PlanType.class);
         MobilityHeader mockHeader = mock(MobilityHeader.class);
@@ -149,17 +150,11 @@ public class LeaderStateTest {
         when(mockHeader.getSenderId()).thenReturn("1");
         when(unknownRequest.getPlanType()).thenReturn(mockType);
         when(unknownRequest.getHeader()).thenReturn(mockHeader);
-        when(unknownRequest.getStrategyParams()).thenReturn("SIZE:1,ACCEL:2.5,DTD:10");
-        when(mockManager.getPlatooningSize()).thenReturn(0);
+        when(unknownRequest.getStrategyParams()).thenReturn("SIZE:1,SPEED:5.00,DTD:10.00");
+        when(mockManager.getPlatooningSize()).thenReturn(1);
         when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(50.0);
-        when(mockPlugin.getDesiredJoinTimeGap()).thenReturn(4.0);
-        when(mockInputs.getCurrentSpeed()).thenReturn(5.0);
-        when(mockRouteService.getSpeedLimitAtLocation(50.0)).thenReturn(new SpeedLimit(55, 10));
-        when(mockInputs.getResponseLag()).thenReturn(1.0);
-        when(mockPlugin.getMaxJoinTime()).thenReturn(6.0);
-        assertEquals(MobilityRequestResponse.NACK, leaderState.onMobilityRequestMessgae(unknownRequest));
-        verify(mockPlugin, times(0)).setState(any());
-        when(mockPlugin.getMaxJoinTime()).thenReturn(10.0);
+        mockPlugin.maxAllowedJoinGap = 50.0;
+        mockPlugin.maxAllowedJoinTimeGap = 15.0;
         assertEquals(MobilityRequestResponse.ACK, leaderState.onMobilityRequestMessgae(unknownRequest));
         ArgumentCaptor<LeaderWaitingState> newState = ArgumentCaptor.forClass(LeaderWaitingState.class);
         verify(mockPlugin).setState(newState.capture());
@@ -167,9 +162,47 @@ public class LeaderStateTest {
     }
     
     @Test
+    public void onJoinRequestOutOfMaxGapButInMaxTimeGap() {
+        MobilityRequest unknownRequest = mock(MobilityRequest.class);
+        PlanType mockType = mock(PlanType.class);
+        MobilityHeader mockHeader = mock(MobilityHeader.class);
+        when(mockType.getType()).thenReturn(PlanType.JOIN_PLATOON_AT_REAR);
+        when(mockHeader.getSenderId()).thenReturn("1");
+        when(unknownRequest.getPlanType()).thenReturn(mockType);
+        when(unknownRequest.getHeader()).thenReturn(mockHeader);
+        when(unknownRequest.getStrategyParams()).thenReturn("SIZE:1,SPEED:5.00,DTD:10.00");
+        when(mockManager.getPlatooningSize()).thenReturn(1);
+        when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(80.0);
+        mockPlugin.maxAllowedJoinGap = 50.0;
+        mockPlugin.maxAllowedJoinTimeGap = 15.0;
+        assertEquals(MobilityRequestResponse.ACK, leaderState.onMobilityRequestMessgae(unknownRequest));
+        ArgumentCaptor<LeaderWaitingState> newState = ArgumentCaptor.forClass(LeaderWaitingState.class);
+        verify(mockPlugin).setState(newState.capture());
+        assertEquals("LeaderWaitingState", newState.getValue().toString());
+    }
+    
+    @Test
+    public void onJoinRequestOutOfMaxTimeGap() {
+        MobilityRequest unknownRequest = mock(MobilityRequest.class);
+        PlanType mockType = mock(PlanType.class);
+        MobilityHeader mockHeader = mock(MobilityHeader.class);
+        when(mockType.getType()).thenReturn(PlanType.JOIN_PLATOON_AT_REAR);
+        when(mockHeader.getSenderId()).thenReturn("1");
+        when(unknownRequest.getPlanType()).thenReturn(mockType);
+        when(unknownRequest.getHeader()).thenReturn(mockHeader);
+        when(unknownRequest.getStrategyParams()).thenReturn("SIZE:1,SPEED:5.00,DTD:10.00");
+        when(mockManager.getPlatooningSize()).thenReturn(1);
+        when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(86.0);
+        mockPlugin.maxAllowedJoinGap = 50.0;
+        mockPlugin.maxAllowedJoinTimeGap = 15.0;
+        assertEquals(MobilityRequestResponse.NACK, leaderState.onMobilityRequestMessgae(unknownRequest));
+        verify(mockPlugin, times(0)).setState(any());
+    }
+    
+    @Test
     public void onStatusOperationMessage() {
         MobilityOperation mockOperation = mock(MobilityOperation.class);
-        when(mockOperation.getStrategyParams()).thenReturn(String.format(mockPlugin.OPERATION_STATUS_PARAMS, 5.0, 20.0, 5.0));
+        when(mockOperation.getStrategyParams()).thenReturn(String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS, 5.0, 20.0, 5.0));
         MobilityHeader header = mock(MobilityHeader.class);
         when(header.getSenderId()).thenReturn("1");
         when(header.getPlanId()).thenReturn("ABC");

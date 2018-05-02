@@ -6,14 +6,6 @@ platooning_max_accel: 2.5
 # Units: m
 platooning_min_maneuver_length: 15.0
 
-# Double: The desired time headway to the front vehicle within the platoon
-# Units: s
-platooning_desired_time_headway: 2.2
-
-# Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
-# Units: m
-platooning_stand_still_headway: 10.0
-
 # Double: The proportional term in the platoon speed PID controller
 # Units: 1
 platooning_Kp: 2.0
@@ -30,22 +22,6 @@ platooning_Kd: -0.1
 # Units: 1
 platooning_status_timeout_factor: 2.5
 
-# Double: The desired time gap for the candidate vehicle to join at rear
-# Units: s
-platooning_desired_join_timegap: 4.0
-
-# Double: The maximum time we allowed for candidate to accelerate in order to join
-# Units: s
-platooning_max_join_timegap: 15.0
-
-# Double: The timeout length for any waiting state
-# Units: s
-platooning_waiting_state_timeout: 25.0
-
-# Double: Determine the absolute maximum cmd_speed adjustment value we can get from PID controller
-# Units: m/s
-platooning_cmd_max_adjustment: 10.0
-
 # Integer: The maximum number of platoon member we allow
 # Units: 1
 platooning_max_size: 10
@@ -57,15 +33,47 @@ platooning_max_size: 10
 # When algorithm_type == 3, it means the PF* algorithm
 platooning_algorithm_type: 0
 
+# Double: The desired time headway to the front vehicle within the platoon
+# Units: s
+platooning_desired_time_headway: 2.0
+
+# Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
+# Units: m
+platooning_stand_still_headway: 12.0
+
+# Double: The maximum time gap we allowed for a candidate to accelerate in order to join
+# Units: s
+platooning_max_join_timegap: 15.0
+
+# Double: The max gap allowed for a candidate to accelerate in order to join
+# Units: m
+platooning_max_join_gap: 90.0
+
+# Double: The desired time gap for the candidate vehicle to join at rear
+# Units: s
+platooning_desired_join_timegap: 4.0
+
+# Double: The desired gap for the candidate vehicle to join at rear
+# Units: m
+platooning_desired_join_gap: 30.0
+
+# Double: The timeout length for any waiting state
+# Units: s
+platooning_waiting_state_timeout: 25.0
+
+# Double: Determine the absolute maximum cmd_speed adjustment value we can get from PID controller
+# Units: m/s
+platooning_cmd_max_adjustment: 10.0
+
 # Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
 # Units: s
-platooning_lower_boundary: 1.65
-platooning_upper_boundary: 1.75
-platooning_max_spacing: 2.0
-platooning_min_spacing: 1.9
+platooning_lower_boundary: 1.6
+platooning_upper_boundary: 1.7
+platooning_max_spacing: 4.0
+platooning_min_spacing: 3.9
 # Units: m
-platooning_max_gap: 15.0
-platooning_min_gap: 10.0
+platooning_max_gap: 22.0
+platooning_min_gap: 32.0
 
 # Boolean: Determine whether the output of platooning controller will be caped by platooning_cmd_max_adjustment
 platooning_max_cmd_speed_adjustment_cap: true

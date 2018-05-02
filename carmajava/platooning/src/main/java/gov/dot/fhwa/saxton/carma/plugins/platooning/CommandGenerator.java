@@ -53,12 +53,12 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
         this.plugin_ = plugin;
         this.pluginServiceLocator_ = pluginServiceLocator;
         this.log_ = log;
-        this.distanceGapController_ = new PidController(plugin_.getKpPID(), plugin_.getKiPID(), plugin_.getKdPID(), plugin_.getStandStillGap());
+        this.distanceGapController_ = new PidController(plugin_.kpPID, plugin_.kiPID, plugin_.kdPID, plugin_.standStillHeadway);
         this.speedController_ = new Pipeline<Double>(distanceGapController_);
-        this.adjustmentCap = Math.max(0, plugin.getCmdSpeedMaxAdjustment());
-        this.enableMaxAccelFilter = plugin.isMaxAccelCapEnabled();
-        this.enableLocalSpeedLimitFilter = plugin.isSpeedLimitCapEnabled();
-        this.enableMaxAdjustmentFilter = plugin.isLeaderSpeedCapEnabled();
+        this.adjustmentCap = Math.max(0, plugin.cmdSpeedMaxAdjustment);
+        this.enableMaxAccelFilter = plugin.maxAccelCapEnabled;
+        this.enableLocalSpeedLimitFilter = plugin.speedLimitCapEnabled;
+        this.enableMaxAdjustmentFilter = plugin.leaderSpeedCapEnabled;
     }
 
     @Override
@@ -83,14 +83,14 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     
     @Override
     public double getMaxAccelLimit() {
-        return plugin_.getMaxAccel();
+        return plugin_.maxAccel;
     }
     
     protected void generateSpeed(double timeStamp) {
         // Update speed commands based on the list of platoon members
         PlatoonMember leader = null;
-        if(plugin_.getPlatoonManager() != null) {
-            leader = plugin_.getPlatoonManager().getLeader();
+        if(plugin_.platoonManager != null) {
+            leader = plugin_.platoonManager.getLeader();
         }
         if(leader != null) {
             double leaderCurrentPosition = leader.vehiclePosition;
@@ -99,11 +99,11 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             double hostVehicleSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
             log_.debug("The host vehicle speed is + " + hostVehicleSpeed + " and its position is " + hostVehiclePosition);
             // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
-            // vehiclesInFront should be 2, because platoon list size is 4 we can get vehiclesInFront = size - leaderIndex   
-            int leaderIndex = plugin_.getPlatoonManager().getMemberIndex(leader);
-            int vehiclesInFront = plugin_.getPlatoonManager().getPlatooningSize() - leaderIndex;
-            log_.debug("The host vehicle have " + vehiclesInFront + " vehicles between itself and its leader (includes the leader)");
-            desiredGap_ = Math.max(hostVehicleSpeed * plugin_.getTimeHeadway() * vehiclesInFront, plugin_.getStandStillGap() * vehiclesInFront);
+            // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
+            int leaderIndex = plugin_.platoonManager.getIndexOf(leader);
+            int numOfVehiclesGaps = plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;
+            log_.debug("The host vehicle have " + numOfVehiclesGaps + " vehicles between itself and its leader (includes the leader)");
+            desiredGap_ = Math.max(hostVehicleSpeed * plugin_.timeHeadway * numOfVehiclesGaps, plugin_.standStillHeadway * numOfVehiclesGaps);
             double desiredHostPosition = leaderCurrentPosition - this.desiredGap_;
             log_.debug("The desired host position and the setpoint for pid controller is " + desiredHostPosition);
             // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
@@ -145,8 +145,8 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
                 if(!lastCmdSpeed.isPresent()) {
                     lastCmdSpeed = Optional.of(plugin_.getLastSpeedCmd());
                 }
-                double max = lastCmdSpeed.get() + (plugin_.getMaxAccel() * (CMD_TIMESTEP / 1000.0));
-                double min = lastCmdSpeed.get() - (plugin_.getMaxAccel() * (CMD_TIMESTEP / 1000.0));
+                double max = lastCmdSpeed.get() + (plugin_.maxAccel * (CMD_TIMESTEP / 1000.0));
+                double min = lastCmdSpeed.get() - (plugin_.maxAccel * (CMD_TIMESTEP / 1000.0));
                 if(adjSpeedCmd > max) {
                     adjSpeedCmd = max; 
                 } else if (adjSpeedCmd < min) {
@@ -159,7 +159,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             log_.debug("A speed command is generated from command generator: " + speedCmd_.get() + " m/s");
         } else {
             // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
-            speedCmd_.set(pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
+            speedCmd_.set(plugin_.getManeuverInputs().getCurrentSpeed());
             distanceGapController_.reset();
         }
     }
