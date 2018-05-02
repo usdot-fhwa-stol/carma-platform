@@ -18,13 +18,22 @@ package gov.dot.fhwa.saxton.carma.rsumetering;
 
 import org.ros.message.Time;
 
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+
 public interface IRSUMeterManager {
 
   /**
   * Sends a MobilityRequest message for broadcast
   * @param msg - the message that is to be ssent
   */
-  void publishMobilityRequest(cav_msgs.MobilityRequest msg);
+  void publishMobilityRequest(MobilityRequest msg);
+
+  /**
+  * Sends a MobilityOperation message for broadcast
+  * @param msg - the message that is to be ssent
+  */
+  void publishMobilityOperation(MobilityOperation msg);
 
   /**
    * Gets the current time

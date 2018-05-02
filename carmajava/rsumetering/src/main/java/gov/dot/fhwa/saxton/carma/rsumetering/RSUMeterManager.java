@@ -42,10 +42,12 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
   // Topics
   // Publishers
   private Publisher<MobilityRequest> requestPub;
+  private Publisher<MobilityOperation> operationPub;
   // Subscribers
   private Subscriber<MobilityOperation> operationSub;
 
   private String outgoingRequestTopic = "outgoing_mobility_request";
+  private String outgoingOperationTopic = "outgoing_mobility_operation";
   private String incomingOperationTopic = "incoming_mobility_operation";
 
   private SaxtonLogger log;
@@ -76,6 +78,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     // Topics
     // Publishers
     requestPub = connectedNode.newPublisher(outgoingRequestTopic, MobilityRequest._TYPE);
+    operationPub = connectedNode.newPublisher(outgoingOperationTopic, MobilityOperation._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
     worker = new RSUMeterWorker(this, log, routeFilePath, distToMerge, targetId, mergeWPId);
@@ -113,5 +116,10 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
 
   @Override public Time getTime() {
     return connectedNode.getCurrentTime();
+  }
+
+  @Override
+  public void publishMobilityOperation(MobilityOperation msg) {
+    operationPub.publish(msg);
   }
 }//SaxtonBaseNode
