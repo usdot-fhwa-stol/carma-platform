@@ -36,30 +36,18 @@ import gov.dot.fhwa.saxton.carma.rsumetering.IRSUMeteringState;
 /**
  * Struct for storing data about a RSU Ramp Metering infrastructure component
  */
-public class HoldingState implements IRSUMeteringState {
-  protected final RSUMeterWorker worker;
+public class HoldingState extends RSUMeteringStateBase {
   protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f";
   protected final static String STATUS_TYPE_PARAM = "STATUS";
   protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED"));
-  protected final static String COMMAND_PARAMS = "COMMAND|SPEED:%.2f,STEERING_ANGLE:%.2f";
-  protected final SaxtonLogger log;
   protected final double vehLagTime;
   protected final double vehMaxAccel;
   protected final String vehicleId;
   protected final String planId;
   protected double distToMerge;
-  protected final double commandPeriod = 0.1; // Time between commands being sent
-
-  protected AtomicDouble commandSpeed = new AtomicDouble(0); // TODO probably not safe to send 0 as default
-  protected AtomicDouble commandSteer = new AtomicDouble(0); 
-
-  protected AtomicBoolean readyToMerge = new AtomicBoolean(false);
-
-  protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
 
   public HoldingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId, double vehLagTime, double vehMaxAccel, double distToMerge) {
-    this.worker = worker;
-    this.log = log;
+    super(worker, log);
     this.vehLagTime = vehLagTime;
     this.vehMaxAccel = vehMaxAccel;
     this.distToMerge = distToMerge;
@@ -96,13 +84,33 @@ public class HoldingState implements IRSUMeteringState {
 
     // If we are already at the ramp meter or past it then hold there
     if (meterDist < 0.5) {
-      commandSpeed.set(0);
+      
+      updateCommands(0, vehMaxAccel, 0);
+
       if (speed < 0.1) {
         // Wait for a platoon to be incoming. Then transition to controlling state
         PlatoonData nextPlatoon = worker.getNextPlatoon();
         if (nextPlatoon != null) {
-          
-          worker.setState(new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+          long vehTimeTillMerge = worker.expectedTravelTime(mergeDist, speed, nextPlatoon.getSpeed(), vehLagTime, vehMaxAccel);
+          long vehicleArrivalTime = System.currentTimeMillis() + vehTimeTillMerge;
+
+          if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival()
+              && vehicleArrivalTime < nextPlatoon.getExpectedTimeOfArrival() + TIME_MARGIN) {
+
+            log.info("Releasing vehicle with expected arrival time of " + vehicleArrivalTime +
+             " and platoon arrival time of " + nextPlatoon.getExpectedTimeOfArrival());
+
+             worker.setState(new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+
+          } else if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival() + TIME_MARGIN) { // TODO have a time margin
+
+            log.warn("Vehicle cannot reach merge before platoon passes but will try anyway");
+            worker.setState(new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+
+          } else {
+            log.debug("Holding vehicle for platoon");
+          }
+
         }
       }
       return; 
@@ -112,13 +120,12 @@ public class HoldingState implements IRSUMeteringState {
 
     if (neededAccel < -vehMaxAccel) {
       // We can't stop before merge point so command stop and reevaluate when stopped
-      commandSpeed.set(0);
+      updateCommands(0, vehMaxAccel, 0);
       return;
     }
 
-    double targetSpeed = speed + neededAccel * commandPeriod;
-    
-    commandSpeed.set(targetSpeed);
+    // Request 0 speed but use max accel to limit behavior
+    updateCommands(0, neededAccel, 0);
   }
 
   @Override
@@ -138,24 +145,7 @@ public class HoldingState implements IRSUMeteringState {
   }
 
   @Override
-  public void loop() throws InterruptedException {
-    long startTime = System.currentTimeMillis();
-    publishSpeedCommand();
-    long endTime = System.currentTimeMillis();
-    Thread.sleep((long)(commandPeriod * 1000) - (endTime - startTime));
-  }
-
-  protected void publishSpeedCommand() {
-    MobilityOperation msg = messageFactory.newFromType(MobilityOperation._TYPE);
-
-    msg.getHeader().setPlanId(planId);
-    msg.getHeader().setSenderId(worker.getRsuId());
-    msg.getHeader().setRecipientId(vehicleId);
-    msg.getHeader().setTimestamp(System.currentTimeMillis());
-    
-    msg.setStrategy(RSUMeterWorker.COOPERATIVE_MERGE_STRATEGY);
-    msg.setStrategyParams(String.format(COMMAND_PARAMS, commandSpeed.get(), commandSteer.get()));
-  
-    worker.publishMobilityOperation(msg);
+  protected void onLoop() {
+    this.publishSpeedCommand(vehicleId, planId);
   }
 }

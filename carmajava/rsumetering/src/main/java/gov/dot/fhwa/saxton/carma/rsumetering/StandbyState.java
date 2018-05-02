@@ -30,16 +30,13 @@ import gov.dot.fhwa.saxton.carma.rsumetering.IRSUMeteringState;
 /**
  * Struct for storing data about a RSU Ramp Metering infrastructure component
  */
-public class StandbyState implements IRSUMeteringState {
-  protected final RSUMeterWorker worker;
+public class StandbyState extends RSUMeteringStateBase {
   protected final static String EXPECTED_REQUEST_PARAMS = "MERGE|MAX_ACCEL:%.2f,LAG:%.2f,DIST:%.2f";
   protected final static String MERGE_REQUEST_TYPE = "MERGE";
   protected final static List<String> MERGE_REQUEST_PARAMS = new ArrayList<>(Arrays.asList("MAX_ACCEL", "LAG", "DIST"));
-  protected final SaxtonLogger log;
 
   public StandbyState(RSUMeterWorker worker, SaxtonLogger log) {
-    this.worker = worker;
-    this.log = log;
+    super(worker, log);
   }
 
   @Override
@@ -87,7 +84,7 @@ public class StandbyState implements IRSUMeteringState {
   }
 
   @Override
-  public void loop() throws InterruptedException {
-    // TODO publish mobility request messages
+  protected void onLoop() {
+    // TODO publish mobility request broadcasts
   }
 }
