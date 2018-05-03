@@ -131,11 +131,17 @@ public class PlatoonManager implements Runnable {
     }
     
     protected synchronized int getTotalPlatooningSize() {
+        if(isFollower) {
+            return platoonSize;
+        }
         return platoon.size() + 1;
     }
     
     protected synchronized int getNumberOfVehicleInFront() {
-        return platoon.size();
+        if(isFollower) {
+            return platoon.size();
+        }
+        return 0;
     }
     
     protected synchronized double getPlatoonRearDowntrackDistance() {
@@ -143,6 +149,22 @@ public class PlatoonManager implements Runnable {
             return psl.getRouteService().getCurrentDowntrackDistance();
         }
         return this.platoon.get(this.platoon.size() - 1).vehiclePosition;
+    }
+    
+    protected synchronized String getPlatoonRearBsmId() {
+        if(this.platoon.size() == 0) {
+            return psl.getTrackingService().getCurrentBSMId();
+        }
+        return this.platoon.get(platoon.size() - 1).bsmId;
+    }
+    
+    // This method should only be called in the leader state
+    protected synchronized double getCurrentPlatoonLength() {
+        if(this.platoon.size() == 0) {
+            return plugin.vehicleLength;
+        } else {
+            return psl.getRouteService().getCurrentDowntrackDistance() - this.platoon.get(platoon.size() - 1).vehiclePosition + plugin.vehicleLength; 
+        }
     }
     
     protected synchronized void changeFromLeaderToFollower(String newPlatoonId) {
@@ -179,7 +201,12 @@ public class PlatoonManager implements Runnable {
             }
         }
         if(isFollower) {
-            this.leaderID = platoon.isEmpty() ? psl.getMobilityRouter().getHostMobilityId() : platoon.get(0).staticId;
+            if(platoon.isEmpty()) {
+                this.leaderID = psl.getMobilityRouter().getHostMobilityId();
+                this.platoonSize = 1;
+            } else {
+                this.leaderID = platoon.get(0).staticId; 
+            }
             log.debug("The first vehicle in our list is now " + this.leaderID);
         }
     }

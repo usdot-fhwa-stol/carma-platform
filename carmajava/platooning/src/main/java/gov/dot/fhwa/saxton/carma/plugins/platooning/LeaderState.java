@@ -158,7 +158,7 @@ public class LeaderState implements IPlatooningState {
                 log.debug("Publishing request to leader " + senderId + " with params " + request.getStrategyParams() + " and plan id = " + request.getHeader().getPlanId());
                 this.potentialNewPlatoonId = platoonId;
             } else {
-                log.debug("Ignore platoon with platoon id: " + platoonId + "because validation failure");
+                log.debug("Ignore platoon with platoon id: " + platoonId + " because it is not right in front of us");
             } 
         } else if(isPlatoonStatusMsg) {
             // If it is platoon status message, the params string is in format: STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
@@ -300,6 +300,7 @@ public class LeaderState implements IPlatooningState {
                 }
             }
         }
+        log.debug("Did not receive any enviorment message. We are not ready to join yet");
         return false;
     }
     
@@ -317,7 +318,8 @@ public class LeaderState implements IPlatooningState {
         if(type.equals(PlatooningPlugin.OPERATION_INFO_TYPE)) {
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
             String infoParams = String.format(PlatooningPlugin.OPERATION_INFO_PARAMS,
-                                //??????
+                                plugin.platoonManager.getPlatoonRearBsmId(),
+                                plugin.platoonManager.getCurrentPlatoonLength(),
                                 plugin.getManeuverInputs().getCurrentSpeed(),
                                 plugin.platoonManager.getTotalPlatooningSize());
             msg.setStrategyParams(infoParams);

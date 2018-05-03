@@ -119,7 +119,7 @@ public class FollowerState implements IPlatooningState {
             if(msg.getHeader().getSenderId().equals(plugin.platoonManager.leaderID)) {
                 String infoParams = strategyParams.substring(PlatooningPlugin.OPERATION_INFO_TYPE.length() + 1);
                 plugin.platoonManager.platoonSize = Integer.parseInt(infoParams.split(",")[3].split(":")[1]);
-                log.debug("Update from the lead: the current platoon size is " + plugin.platoonManager.platoonSize);
+                log.debug("Update from the lead: the current platoon size is " + plugin.platoonManager.getTotalPlatooningSize());
             }
         } else {
             log.debug("Ignore other operation messages with params: " + strategyParams);
