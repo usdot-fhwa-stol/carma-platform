@@ -137,7 +137,7 @@ public class LeaderState implements IPlatooningState {
                 request.getHeader().setPlanId(planId);
                 request.getHeader().setRecipientId(senderId);
                 // TODO Need to have a easy way to get bsmId from plugin
-                request.getHeader().setSenderBsmId("FFFFFFFF");
+                request.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
                 request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
                 request.getHeader().setTimestamp(System.currentTimeMillis());
                 // TODO Need to have a easy way to get current XYZ location in ECEF
