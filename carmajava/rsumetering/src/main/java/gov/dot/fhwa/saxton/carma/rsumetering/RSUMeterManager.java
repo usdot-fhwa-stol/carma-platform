@@ -27,6 +27,7 @@ import org.ros.message.Time;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.Publisher;
 import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import cav_msgs.MobilityOperation;
 
 /**
@@ -43,12 +44,19 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
   // Publishers
   private Publisher<MobilityRequest> requestPub;
   private Publisher<MobilityOperation> operationPub;
+  private Publisher<MobilityResponse> responsePub;
   // Subscribers
+  private Subscriber<MobilityRequest> requestSub;
   private Subscriber<MobilityOperation> operationSub;
+  private Subscriber<MobilityResponse> responseSub;
 
-  private String outgoingRequestTopic = "outgoing_mobility_request";
-  private String outgoingOperationTopic = "outgoing_mobility_operation";
-  private String incomingOperationTopic = "incoming_mobility_operation";
+  private final String outgoingRequestTopic = "outgoing_mobility_request";
+  private final String outgoingOperationTopic = "outgoing_mobility_operation";
+  private final String outgoingResponseTopic = "outgoing_mobility_response";
+
+  private final String incomingRequestTopic = "incoming_mobility_request";
+  private final String incomingOperationTopic = "incoming_mobility_operation";
+  private final String incomingResponseTopic = "incoming_mobility_response";
 
   private SaxtonLogger log;
   private ParameterTree params;
@@ -64,26 +72,49 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     this.connectedNode = connectedNode;
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), connectedNode.getLog());
     this.params = connectedNode.getParameterTree();
+    // Load Params
     String routeFilePath = params.getString("~route_file");
-    double distToMergOnRamp = params.getDouble("~dist_to_merge_on_ramp");
-    String targetId = params.getString("~target_id");
-    double mergeDTD = params.getDouble("~merge_downtrack_distance");
-
+    double distToMerg = params.getDouble("~dist_to_merge_along_ramp");
+    String rsuId = params.getString("~rsu_id");
+    double mainRouteMergeDTD = params.getDouble("~dist_to_merge_on_main_route");
+    double lengthOfMerge = params.getDouble("~length_of_merge");
+    double rampMeterRadius = params.getDouble("~ramp_meter_radius");
+    int targetLane = params.getInteger("~target_lane");
+    long timeMargin = params.getInteger("~arrival_time_margin");
+    // Echo Params
     log.info("LoadedParam route_file: " + routeFilePath);
-    log.info("LoadedParam dist_to_merge: " + distToMergOnRamp);
-    log.info("LoadedParam target_id: " + targetId);
-    log.info("LoadedParam merge_downtrack_distance: " + mergeDTD);
+    log.info("LoadedParam dist_to_merge_along_ramp: " + distToMerg);
+    log.info("LoadedParam rsu_id: " + rsuId);
+    log.info("LoadedParam dist_to_merge_on_main_route: " + mainRouteMergeDTD);
+    log.info("LoadedParam length_of_merge: " + lengthOfMerge);
+    log.info("LoadedParam ramp_meter_radius: " + rampMeterRadius);
+    log.info("LoadedParam target_lane: " + targetLane);
+    log.info("LoadedParam arrival_time_margin: " + timeMargin);
+
 
 
     // Topics
     // Publishers
     requestPub = connectedNode.newPublisher(outgoingRequestTopic, MobilityRequest._TYPE);
     operationPub = connectedNode.newPublisher(outgoingOperationTopic, MobilityOperation._TYPE);
+    responsePub = connectedNode.newPublisher(outgoingResponseTopic, MobilityResponse._TYPE);
 
     // Worker must be initialized after publishers but before subscribers
-    worker = new RSUMeterWorker(this, log, routeFilePath, distToMerge, targetId, mergeWPId);
+    worker = new RSUMeterWorker(this, log, routeFilePath, rsuId, distToMerg,
+     mainRouteMergeDTD, rampMeterRadius, targetLane, lengthOfMerge, timeMargin
+    );
 
     // Subscribers
+    requestSub = connectedNode.newSubscriber(incomingRequestTopic, MobilityRequest._TYPE);
+    requestSub.addMessageListener(
+      (MobilityRequest msg) -> {
+        try {
+          worker.handleMobilityRequestMsg(msg);
+        } catch (Throwable e) {
+          handleException(e);
+        }
+      });
+
     operationSub = connectedNode.newSubscriber(incomingOperationTopic, MobilityOperation._TYPE);
     operationSub.addMessageListener(
       (MobilityOperation msg) -> {
@@ -94,11 +125,21 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
         }
       });
 
+    responseSub = connectedNode.newSubscriber(incomingResponseTopic, MobilityResponse._TYPE);
+    responseSub.addMessageListener(
+      (MobilityResponse msg) -> {
+        try {
+          worker.handleMobilityResponseMsg(msg);
+        } catch (Throwable e) {
+          handleException(e);
+        }
+      });
+
     // This CancellableLoop will be canceled automatically when the node shuts down.
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       @Override
       protected void loop() throws InterruptedException {
-        Thread.sleep(1000);
+        worker.loop();
       }//loop
     });//executeCancellableLoop
     
@@ -121,5 +162,10 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
   @Override
   public void publishMobilityOperation(MobilityOperation msg) {
     operationPub.publish(msg);
+  }
+
+  @Override
+  public void publishMobilityResponse(MobilityResponse msg) {
+    responsePub.publish(msg);
   }
 }//SaxtonBaseNode

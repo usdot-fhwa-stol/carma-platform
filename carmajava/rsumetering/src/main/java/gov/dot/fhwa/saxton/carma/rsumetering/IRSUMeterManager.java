@@ -20,20 +20,27 @@ import org.ros.message.Time;
 
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 
 public interface IRSUMeterManager {
 
   /**
   * Sends a MobilityRequest message for broadcast
-  * @param msg - the message that is to be ssent
+  * @param msg - the message that is to be sent
   */
   void publishMobilityRequest(MobilityRequest msg);
 
   /**
   * Sends a MobilityOperation message for broadcast
-  * @param msg - the message that is to be ssent
+  * @param msg - the message that is to be sent
   */
   void publishMobilityOperation(MobilityOperation msg);
+
+  /**
+  * Sends a MobilityResponse message for broadcast
+  * @param msg - the message that is to be sent
+  */
+  public void publishMobilityResponse(MobilityResponse msg);
 
   /**
    * Gets the current time

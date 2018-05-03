@@ -23,15 +23,15 @@ import java.util.List;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import gov.dot.fhwa.saxton.carma.rsumetering.IRSUMeteringState;
 
 /**
- * Struct for storing data about a RSU Ramp Metering infrastructure component
+ * Entry state for rsu metering operation
+ * Waits for a vehicle to request to merge. If that vehicle is in a valid location control begins.
  */
 public class StandbyState extends RSUMeteringStateBase {
   protected final static String EXPECTED_REQUEST_PARAMS = "MERGE|MAX_ACCEL:%.2f,LAG:%.2f,DIST:%.2f";
+  protected final static String BROADCAST_MERGE_PARAMS = "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";
   protected final static String MERGE_REQUEST_TYPE = "MERGE";
   protected final static List<String> MERGE_REQUEST_PARAMS = new ArrayList<>(Arrays.asList("MAX_ACCEL", "LAG", "DIST"));
 
@@ -41,7 +41,7 @@ public class StandbyState extends RSUMeteringStateBase {
 
   @Override
   public boolean onMobilityRequestMessage(MobilityRequest msg) {
-    // TODO We can assume that any message passed to a state is intended for us
+
     String senderId = msg.getHeader().getSenderId();
     String planId = msg.getHeader().getPlanId();
     List<String> requestParams;
@@ -78,13 +78,24 @@ public class StandbyState extends RSUMeteringStateBase {
 
   @Override
   public void onMobilityResponseMessage(MobilityResponse msg) {
-    // TODO We can assume that any message passed to a state is intended for us
-
-    
+    // Do nothing
   }
 
   @Override
   protected void onLoop() {
-    // TODO publish mobility request broadcasts
+    publishMergeLocationRequests();
+  }
+
+  protected void publishMergeLocationRequests() {
+    MobilityRequest msg = messageFactory.newFromType(MobilityRequest._TYPE);
+
+    msg.getHeader().setRecipientId(worker.BROADCAST_ID);
+    msg.getHeader().setSenderId(worker.getRsuId());
+    msg.setStrategy(RSUMeterWorker.COOPERATIVE_MERGE_STRATEGY);
+    msg.setStrategyParams(
+      String.format(BROADCAST_MERGE_PARAMS, worker.getMeterRadius(), worker.getDistToMerg(), worker.getMergeLength())
+    );
+
+    worker.getManager().publishMobilityRequest(msg);
   }
 }

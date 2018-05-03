@@ -88,6 +88,6 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
       msg.setStrategyParams(String.format(COMMAND_PARAMS, speedCommand, maxAccelCommand, steerCommand));
     }
   
-    worker.publishMobilityOperation(msg);
+    worker.getManager().publishMobilityOperation(msg);
   }
 }

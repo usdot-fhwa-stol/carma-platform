@@ -29,9 +29,9 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
  * Struct for storing data about a RSU Ramp Metering infrastructure component
  */
 public class CommandingState extends RSUMeteringStateBase {
-  protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f";
+  protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d";
   protected final static String STATUS_TYPE_PARAM = "STATUS";
-  protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED"));
+  protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED", "LANE"));
   protected final double vehLagTime;
   protected final double vehMaxAccel;
   protected final String vehicleId;
@@ -73,18 +73,25 @@ public class CommandingState extends RSUMeteringStateBase {
     double meterDist = Double.parseDouble(params.get(0));
     double mergeDist = Double.parseDouble(params.get(1));
     double speed = Double.parseDouble(params.get(2));
-
+    int lane = Integer.parseInt(params.get(3));
     // Simply updating the command speed to the platoon speed may be enough to make this work
     // If it is not more complex logic can be added
     PlatoonData platoon = worker.getNextPlatoon();
+    
+    // Target steering command
+    double targetSteer = 0;
 
-    // TODO need to give the steering command when pasted merge point
-    updateCommands(platoon.getSpeed(), vehMaxAccel, 0);
+    // If we are not in our target lane and we are in the merge area, apply steering command
+    if (lane != worker.getTargetLane() && mergeDist < 0 && mergeDist < worker.getMergeLength()) {
+      // With fake lateral control a positive value results in right lane change and negative in left lane change
+      targetSteer = lane - worker.getTargetLane();
+    }
+    // Update vehicle commands
+    updateCommands(platoon.getSpeed(), vehMaxAccel, targetSteer);
   }
 
   @Override
   public void onMobilityResponseMessage(MobilityResponse msg) {
-    // TODO We can assume that any message passed to a state is intended for us
 
     if (!msg.getHeader().getSenderId().equals(vehicleId)
       || !msg.getHeader().getPlanId().equals(planId)) {
@@ -94,7 +101,6 @@ public class CommandingState extends RSUMeteringStateBase {
     if (!msg.getIsAccepted()) {
       log.warn("NACK received from vehicle: " + vehicleId + " for plan: " + planId);
       worker.setState(new StandbyState(worker, log));
-      // TODO might be worth echoing the nack
     }
   }
 

@@ -59,7 +59,9 @@ public class RSUMeterWorker {
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   protected final Route mainRoadRoute;
   protected final double distToMerg;
-  protected final double mergeDTD;
+  protected final double mainRouteMergeDTD;
+  protected final int targetLane;
+  protected final double mergeLength;
   protected final String BROADCAST_ID = "";
   protected final static String PLATOONING_STRATEGY = "Carma/Platooning";
   protected final static String COOPERATIVE_MERGE_STRATEGY = "Carma/CooperativeMerge";
@@ -67,17 +69,17 @@ public class RSUMeterWorker {
   protected final String INFO_TYPE_PARAM = "INFO";
   protected final List<String> INFO_STRATEGY_PARAMS = new ArrayList<>(Arrays.asList("REAR", "LENGTH", "SPEED", "SIZE"));
   
-
-  protected final int mergeWpId;
   protected final ConcurrentMap<String, PlatoonData> platoonMap = new ConcurrentHashMap<>();
   protected final ConcurrentMap<String, Location> bsmMap = new ConcurrentHashMap<>();
   protected final Object stateMutex = new Object();
   protected IRSUMeteringState state = null;
-  protected final String rsuId = "RSU_ID"; // TODO this should be read from param
+  protected final String rsuId;
   protected String platoonRearBSMId = null;
   protected final GeodesicCartesianConverter gcc =  new GeodesicCartesianConverter();
 
   protected final double meterRadius;
+
+  protected final long timeMargin;
   
 
   /**
@@ -88,12 +90,18 @@ public class RSUMeterWorker {
    * @param routeFilePath
    */
   RSUMeterWorker(IRSUMeterManager manager, SaxtonLogger log, String routeFilePath,
-   double distToMerg, int mergeWpId, double meterRadius) throws IllegalArgumentException {
-    this.manager = manager;
+    String rsuId, double distToMerg, double mainRouteMergeDTD, double meterRadius,
+    int targetLane, double mergeLength, long timeMargin) throws IllegalArgumentException {
+    
+      this.manager = manager;
     this.log = log;
     this.distToMerg = distToMerg;
-    this.mergeWpId = mergeWpId;
+    this.mainRouteMergeDTD = mainRouteMergeDTD;
     this.meterRadius = meterRadius;
+    this.targetLane = targetLane;
+    this.mergeLength = mergeLength;
+    this.rsuId = rsuId;
+    this.timeMargin = timeMargin;
 
     // Load route file
     log.info("RouteFile: " + routeFilePath);
@@ -108,33 +116,19 @@ public class RSUMeterWorker {
     loadedRoute.setRouteID(loadedRoute.getRouteName()); // Set route id
 
     mainRoadRoute = Route.fromMessage(loadedRoute.toMessage(messageFactory)); // Assign waypoint ids
-
-    this.mergeDTD = mainRoadRoute.lengthOfSegments(0, mergeWpId);
   }
 
+  // TODO with many vehicles the number of BSMs would grow very fast. Should clean them out every 5 seconds
   public void handleBSMMsg(BSM msg) {
 
     String bsmId = bsmIdFromBuffer(msg.getCoreData().getId());
 
-    boolean[] foundBSM = new boolean[1];
-
-    platoonMap.forEach(
-      (k, v) -> {
-        if (v.getRearBSMId().equals(bsmId)) {
-          foundBSM[0] = true;
-        }
-      }
-    );
-
-    // If this bsm is relevant for a tracked platoon store the location
-    if (foundBSM[0]) {
-      double lat = msg.getCoreData().getLatitude();
-      double lon = msg.getCoreData().getLongitude();
-      double alt = msg.getCoreData().getElev();
-  
-      Location loc = new Location(lat,lon,alt);
-      bsmMap.put(bsmId, loc);
-    }
+    double lat = msg.getCoreData().getLatitude();
+    double lon = msg.getCoreData().getLongitude();
+    double alt = msg.getCoreData().getElev();
+    
+    Location loc = new Location(lat,lon,alt);
+    bsmMap.put(bsmId, loc);
   }
 
   private String bsmIdFromBuffer(ChannelBuffer buffer) {
@@ -162,14 +156,28 @@ public class RSUMeterWorker {
    * The UI will then be notified. 
    */
   public void handleMobilityOperationMsg(MobilityOperation msg) {
-    // TODO need check to distinguish between platoon message and cooperative merge message
-    // TODO need full validation check as we will not be using the mobility router
-    // Check if this message is a broadcast info message from a platoon. If not return
-    if (!msg.getHeader().getRecipientId().equals(BROADCAST_ID) 
-      || !msg.getStrategy().equals(PLATOONING_STRATEGY) 
-      || !msg.getStrategyParams().contains(INFO_TYPE_PARAM)) {
+    // Validate message is for us
+    if (!(msg.getHeader().getRecipientId().equals(rsuId) 
+      || msg.getHeader().getRecipientId().equals(BROADCAST_ID))) {
       return;
     }
+
+    // If this message is an info broadcast from a platoon, update platoon info
+    if (msg.getStrategy().equals(PLATOONING_STRATEGY) 
+      && msg.getStrategyParams().contains(INFO_TYPE_PARAM)) {
+
+      updatePlatoonWithOperationMsg(msg);
+    }
+
+    // Pass on to state
+    synchronized(stateMutex) {
+      state.onMobilityOperationMessage(msg);
+    }
+
+  }
+
+  // Assumes msg has already been verified
+  private void updatePlatoonWithOperationMsg(MobilityOperation msg) {
 
     String strategyParams = msg.getStrategyParams();
     List<String> paramsArray;
@@ -180,14 +188,12 @@ public class RSUMeterWorker {
       return;
     }
     
-    double platoonSpeed = Double.parseDouble(paramsArray.get(2)); // TODO assign index to constant
+    double platoonSpeed = Double.parseDouble(paramsArray.get(2));
     String rearBsmId = paramsArray.get(0);
     Location rearLoc = bsmMap.get(rearBsmId);
-    // If we don't have a BSM for this rear vehicle add an incomplete set of data so we will grab the bsm later
+    // If we don't have a BSM for this rear vehicle then no value in tracking platoon
     if (rearLoc == null) {
-      // TODO think about robustness
-      PlatoonData newData = new PlatoonData(msg.getHeader().getSenderId(), 0, platoonSpeed, 0, rearBsmId);
-      platoonMap.put(newData.getLeaderId(), newData);
+      log.warn("Platoon detected before BSM data available");
       return;
     }
 
@@ -195,9 +201,16 @@ public class RSUMeterWorker {
     // Get downtrack distance of platoon rear
     double platoonRearDTD = getDowntrackDistanceFromLocation(rearLoc);
 
+    // If the platoon is passed the end of the merge region, we don't need to track it any more
+    if (platoonRearDTD > mainRouteMergeDTD + mergeLength) {
+      platoonMap.remove(msg.getHeader().getSenderId());
+      return;
+    }
 
-    // For this calculation we assume constant speed limit
-    double distanceLeft = mergeDTD - platoonRearDTD;
+    // At this point the platoon still needs to be tracked
+
+    // For this calculation we assume constant speed
+    double distanceLeft = mainRouteMergeDTD - platoonRearDTD;
     double deltaT = distanceLeft / platoonSpeed;
     long timeOfArrival = (long)(deltaT * MS_PER_S)  + msg.getHeader().getTimestamp();
     
@@ -205,11 +218,15 @@ public class RSUMeterWorker {
      platoonSpeed, timeOfArrival, rearBsmId);
      
     platoonMap.put(newData.getLeaderId(), newData);
-    // TODO we can drop the platoon if it has passed the merge point
   }
 
-  // TODO
   public void handleMobilityRequestMsg(MobilityRequest msg) {
+    // Validate message is for us
+    if (!(msg.getHeader().getRecipientId().equals(rsuId) 
+      || msg.getHeader().getRecipientId().equals(BROADCAST_ID))) {
+        return;
+      }
+
     synchronized(stateMutex) {
       if (state == null) {
         log.warn("Requested to handle mobility request message but state was null");
@@ -227,12 +244,18 @@ public class RSUMeterWorker {
     }
   }
 
-  public void handleMobilityResponseMsg(MobilityRequest msg) {
+  public void handleMobilityResponseMsg(MobilityResponse msg) {
+    // Validate message is for us
+    if (!(msg.getHeader().getRecipientId().equals(rsuId) 
+      || msg.getHeader().getRecipientId().equals(BROADCAST_ID))) {
+        return;
+      }
+
     synchronized(stateMutex) {
       if (state == null) {
         log.warn("Requested to handle mobility request message but state was null");
       }
-      state.onMobilityRequestMessage(msg);
+      state.onMobilityResponseMessage(msg);
     }
   }
 
@@ -285,6 +308,8 @@ public class RSUMeterWorker {
    * Helper function converts a location param string value into downtrack distance on a route
    * 
    * @param loc The location to map to a downtrack value
+   * 
+   * @return the downtrack distance
    */
   private double getDowntrackDistanceFromLocation(Location loc) {
     Point3D ecefPoint = gcc.geodesic2Cartesian(loc, Transform.identity());
@@ -307,10 +332,8 @@ public class RSUMeterWorker {
   }
 
   protected long expectedTravelTime(double dist, double speed, double maxSpeed, double lagTime, double maxAccel) {
-
-  // TODO we need to handle the case of speed > maxSpeed throw exception or something
-    // If the speed is at max
-    if (Math.abs(maxSpeed - speed) < 0.1) {
+    // If the speed is at or above max
+    if (speed > maxSpeed - 0.1) {
       double deltaT = dist / speed;
       return (long)(deltaT * MS_PER_S);
     } 
@@ -330,12 +353,6 @@ public class RSUMeterWorker {
     return (long)(totalTime * MS_PER_S);
   }
 
-  public void publishMobilityOperation(MobilityOperation msg) {
-    manager.publishMobilityOperation(msg);
-  }
-
-
-  // TODO using this would have limitations with multiple platoons
   public PlatoonData getNextPlatoon() {
     PlatoonData[] mostRecentPlatoon = new PlatoonData[1];
 
@@ -344,13 +361,26 @@ public class RSUMeterWorker {
       (k, v) -> {
         if (mostRecentPlatoon[0] == null) {
           mostRecentPlatoon[0] = v;
-        } else if (v.getExpectedTimeOfArrival() < mostRecentPlatoon[0].getExpectedTimeOfArrival()) {
+        } else if (v.getExpectedTimeOfArrival() < mostRecentPlatoon[0].getExpectedTimeOfArrival()
+          && v.getRearDTD() < mainRouteMergeDTD + mergeLength) { // TODO validate this check isn't duplicated later
           mostRecentPlatoon[0] = v;
         }
       }
     );
 
     return mostRecentPlatoon[0];
+  }
+
+  public void loop() throws InterruptedException {
+    // TODO this will likely cause dead lock due to internal thread.sleep. 
+    // Need to reavaluate state mutex usage
+    // Does this mean each state needs its own thread like platooning? 
+    synchronized(stateMutex) {
+      if (state == null) {
+        return;
+      }
+      state.loop();
+    }
   }
 
 
@@ -380,5 +410,33 @@ public class RSUMeterWorker {
    */
   public double getMeterRadius() {
     return meterRadius;
+  }
+
+  /**
+   * @return the targetLane
+   */
+  public int getTargetLane() {
+    return targetLane;
+  }
+
+  /**
+   * @return the mergeLength
+   */
+  public double getMergeLength() {
+    return mergeLength;
+  }
+
+  /**
+   * @return the manager
+   */
+  public IRSUMeterManager getManager() {
+    return manager;
+  }
+
+  /**
+   * @return the timeMargin
+   */
+  public long getTimeMargin() {
+    return timeMargin;
   }
 }

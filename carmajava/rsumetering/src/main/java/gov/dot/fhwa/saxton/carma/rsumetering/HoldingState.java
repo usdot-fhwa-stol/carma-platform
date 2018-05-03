@@ -37,9 +37,9 @@ import gov.dot.fhwa.saxton.carma.rsumetering.IRSUMeteringState;
  * Struct for storing data about a RSU Ramp Metering infrastructure component
  */
 public class HoldingState extends RSUMeteringStateBase {
-  protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f";
+  protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d";
   protected final static String STATUS_TYPE_PARAM = "STATUS";
-  protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED"));
+  protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED", "LANE"));
   protected final double vehLagTime;
   protected final double vehMaxAccel;
   protected final String vehicleId;
@@ -95,14 +95,14 @@ public class HoldingState extends RSUMeteringStateBase {
           long vehicleArrivalTime = System.currentTimeMillis() + vehTimeTillMerge;
 
           if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival()
-              && vehicleArrivalTime < nextPlatoon.getExpectedTimeOfArrival() + TIME_MARGIN) {
+              && vehicleArrivalTime < nextPlatoon.getExpectedTimeOfArrival() + worker.getTimeMargin()) {
 
             log.info("Releasing vehicle with expected arrival time of " + vehicleArrivalTime +
              " and platoon arrival time of " + nextPlatoon.getExpectedTimeOfArrival());
 
              worker.setState(new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
 
-          } else if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival() + TIME_MARGIN) { // TODO have a time margin
+          } else if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival() + worker.getTimeMargin()) {
 
             log.warn("Vehicle cannot reach merge before platoon passes but will try anyway");
             worker.setState(new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
@@ -130,8 +130,8 @@ public class HoldingState extends RSUMeteringStateBase {
 
   @Override
   public void onMobilityResponseMessage(MobilityResponse msg) {
-    // TODO We can assume that any message passed to a state is intended for us
 
+    // Check this message is for the current merge plan
     if (!msg.getHeader().getSenderId().equals(vehicleId)
       || !msg.getHeader().getPlanId().equals(planId)) {
         return;
@@ -140,7 +140,6 @@ public class HoldingState extends RSUMeteringStateBase {
     if (!msg.getIsAccepted()) {
       log.warn("NACK received from vehicle: " + vehicleId + " for plan: " + planId);
       worker.setState(new StandbyState(worker, log));
-      // TODO might be worth echoing the nack
     }
   }
 

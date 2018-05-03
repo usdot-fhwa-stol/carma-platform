@@ -17,7 +17,7 @@
 package gov.dot.fhwa.saxton.carma.rsumetering;
 
 /**
- * Struct for storing data about a RSU Ramp Metering infrastructure component
+ * Struct for storing data about a platoon 
  */
 public final class PlatoonData {
   protected final String leaderId; 
