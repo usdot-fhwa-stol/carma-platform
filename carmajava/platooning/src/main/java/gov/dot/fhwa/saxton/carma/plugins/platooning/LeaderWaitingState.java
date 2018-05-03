@@ -20,7 +20,6 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
-import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -60,7 +59,7 @@ public class LeaderWaitingState implements IPlatooningState {
         RouteService rs = pluginServiceLocator.getRouteService();
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // check if we have a platooning window, if not we change back to standby state
-        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), PlatooningPlugin.PLATOONING_FLAG)) {
             // as a leader, the actual plan job is delegated to its default cruising plug-in
             log.debug("Not insert any maneuvers in trajectory at LeaderWaitingState in " + traj.toString());
         } else {
@@ -93,12 +92,12 @@ public class LeaderWaitingState implements IPlatooningState {
     public void onMobilityOperationMessage(MobilityOperation msg) {
         // We still need to handle STATUS operation message from our platoon
         String strategyParams = msg.getStrategyParams();
-        boolean isPlatoonStatusMsg = strategyParams.startsWith(plugin.OPERATION_STATUS_TYPE);
+        boolean isPlatoonStatusMsg = strategyParams.startsWith(PlatooningPlugin.OPERATION_STATUS_TYPE);
         if(isPlatoonStatusMsg) {
             String vehicleID = msg.getHeader().getSenderId();
             String platoonId = msg.getHeader().getPlanId();
-            String statusParams = strategyParams.substring(plugin.OPERATION_STATUS_TYPE.length() + 1);
-            plugin.getPlatoonManager().memberUpdates(vehicleID, platoonId, statusParams);
+            String statusParams = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
+            plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
             log.debug("Received platoon status message from " + msg.getHeader().getSenderId());
         } else {
             log.debug("Received a mobility operation message with params " + msg.getStrategyParams() + " but ignored.");
@@ -119,17 +118,17 @@ public class LeaderWaitingState implements IPlatooningState {
             while(!Thread.currentThread().isInterrupted()) {
                 long tsStart = System.currentTimeMillis();
                 // Task 1
-                if(tsStart - this.waitingStartTime > plugin.getLongNegotiationTimeout()) {
+                if(tsStart - this.waitingStartTime > plugin.waitingStateTimeout * 1000) {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     log.info("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
                     plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 }
                 // Task 2
-                MobilityOperation status = plugin.getMobilityOperationPublisher().newMessage();
+                MobilityOperation status = plugin.mobilityOperationPublisher.newMessage();
                 composeMobilityOperationStatus(status);
-                plugin.getMobilityOperationPublisher().publish(status);
+                plugin.mobilityOperationPublisher.publish(status);
                 long tsEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(plugin.getOperationUpdatesIntervalLength() - (tsEnd - tsStart), 0);
+                long sleepDuration = Math.max(PlatooningPlugin.STATUS_INTERVAL_LENGTH - (tsEnd - tsStart), 0);
                 Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {
@@ -144,7 +143,7 @@ public class LeaderWaitingState implements IPlatooningState {
     
     // This method compose mobility operation STATUS message
     private void composeMobilityOperationStatus(MobilityOperation msg) {
-        msg.getHeader().setPlanId(plugin.getPlatoonManager().getCurrentPlatoonID());
+        msg.getHeader().setPlanId(plugin.platoonManager.currentPlatoonID);
         // This message is for broadcast
         msg.getHeader().setRecipientId("");
         // TODO need to have a easy way to get bsmId in plugin
@@ -152,13 +151,12 @@ public class LeaderWaitingState implements IPlatooningState {
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());
-        msg.setStrategy(plugin.MOBILITY_STRATEGY);
+        msg.setStrategy(PlatooningPlugin.MOBILITY_STRATEGY);
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
-        SpeedAccel lastCmdSpeed = plugin.getCmdSpeedSub().getLastMessage();
-        double cmdSpeed = lastCmdSpeed == null ? 0.0 : lastCmdSpeed.getSpeed();
+        double cmdSpeed = plugin.getLastSpeedCmd();
         double downtrackDistance = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
         double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
-        String params = String.format(plugin.OPERATION_STATUS_PARAMS, cmdSpeed, downtrackDistance, currentSpeed);
+        String params = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS, cmdSpeed, downtrackDistance, currentSpeed);
         msg.setStrategyParams(params);
     }
     

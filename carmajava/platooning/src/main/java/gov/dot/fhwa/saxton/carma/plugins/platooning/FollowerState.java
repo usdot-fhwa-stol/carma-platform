@@ -21,7 +21,6 @@ import java.util.Arrays;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
-import cav_msgs.SpeedAccel;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
@@ -52,7 +51,7 @@ public class FollowerState implements IPlatooningState {
         this.plugin = plugin;
         this.log = log;
         this.pluginServiceLocator = pluginServiceLocator;
-        this.plugin.getHandleMobilityPath().set(false);
+        this.plugin.handleMobilityPath.set(false);
         updateLightBar();
     }
 
@@ -61,11 +60,11 @@ public class FollowerState implements IPlatooningState {
         RouteService rs = pluginServiceLocator.getRouteService();
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // Check if we have a plan window
-        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), PlatooningPlugin.PLATOONING_FLAG)) {
             // Insert a PlatooningManeuver in the earliest legal window
-            double[] platooningWindow = rs.getAlgorithmEnabledWindowInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG);
+            double[] platooningWindow = rs.getAlgorithmEnabledWindowInRange(traj.getStartLocation(), traj.getEndLocation(), PlatooningPlugin.PLATOONING_FLAG);
             // Check if we have a long enough plan window
-            if(platooningWindow != null && Math.abs(platooningWindow[1] - platooningWindow[0]) < plugin.getMinimumManeuverLength()) {
+            if(platooningWindow != null && Math.abs(platooningWindow[1] - platooningWindow[0]) < plugin.minimumManeuverLength) {
                 log.warn("Cannot find a long enough window to plan a platooning complex maneuver in " + traj.toString());
                 log.debug("Change back to Standby state");
                 plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
@@ -74,7 +73,7 @@ public class FollowerState implements IPlatooningState {
                 log.debug("Found a long enough platoon window: " + Arrays.toString(platooningWindow) + " and start to plan a complex maneuver");
                 // TODO the last two are dummy variables, replace them later if possible
                 PlatooningManeuver maneuver = new PlatooningManeuver(
-                        plugin, plugin.getCommandGenerator(),
+                        plugin, plugin.commandGenerator,
                         pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
                         pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(),
                         AccStrategyManager.newAccStrategy(),
@@ -106,21 +105,21 @@ public class FollowerState implements IPlatooningState {
     public void onMobilityOperationMessage(MobilityOperation msg) {
         String strategyParams = msg.getStrategyParams();
         // In the current state, we care about the STATUS message
-        boolean isPlatoonStatusMsg = strategyParams.startsWith(plugin.OPERATION_STATUS_TYPE);
-        boolean isPlatoonInfoMsg = strategyParams.startsWith(plugin.OPERATION_INFO_TYPE);
+        boolean isPlatoonStatusMsg = strategyParams.startsWith(PlatooningPlugin.OPERATION_STATUS_TYPE);
+        boolean isPlatoonInfoMsg = strategyParams.startsWith(PlatooningPlugin.OPERATION_INFO_TYPE);
         // If it is platoon status message, the params string is in format:
         // STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
         if(isPlatoonStatusMsg) {
             String vehicleID = msg.getHeader().getSenderId();
             String platoonID = msg.getHeader().getPlanId();
-            String statusParams = strategyParams.substring(plugin.OPERATION_STATUS_TYPE.length() + 1);
+            String statusParams = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
             log.debug("Receive operation message from vehicle: " + vehicleID);
-            plugin.getPlatoonManager().memberUpdates(vehicleID, platoonID, statusParams);
+            plugin.platoonManager.memberUpdates(vehicleID, platoonID, msg.getHeader().getSenderBsmId(), statusParams);
         } else if(isPlatoonInfoMsg) {
             if(msg.getHeader().getSenderId().equals(plugin.platoonManager.leaderID)) {
-                String infoParams = strategyParams.substring(plugin.OPERATION_INFO_TYPE.length() + 1);
-                plugin.platoonManager.platoonCurrentSize = Integer.parseInt(infoParams.split(",")[3].split(":")[1]);
-                log.debug("Update from the lead: the current platoon size is " + plugin.platoonManager.platoonCurrentSize);
+                String infoParams = strategyParams.substring(PlatooningPlugin.OPERATION_INFO_TYPE.length() + 1);
+                plugin.platoonManager.platoonSize = Integer.parseInt(infoParams.split(",")[3].split(":")[1]);
+                log.debug("Update from the lead: the current platoon size is " + plugin.platoonManager.platoonSize);
             }
         } else {
             log.debug("Ignore other operation messages with params: " + strategyParams);
@@ -142,17 +141,17 @@ public class FollowerState implements IPlatooningState {
             while(!Thread.currentThread().isInterrupted()) {
                 long tsStart = System.currentTimeMillis();
                 // Job 1
-                MobilityOperation status = plugin.getMobilityOperationPublisher().newMessage();
+                MobilityOperation status = plugin.mobilityOperationPublisher.newMessage();
                 composeMobilityOperationStatus(status);
-                plugin.getMobilityOperationPublisher().publish(status);
+                plugin.mobilityOperationPublisher.publish(status);
                 // Job 2
                 // Get the number of vehicles in this platoon who is in front of us
-                int vehicleInFront = plugin.getPlatoonManager().getPlatooningSize(); 
+                int vehicleInFront = plugin.platoonManager.getNumberOfVehicleInFront(); 
                 if(vehicleInFront == 0) {
                     noLeaderUpdatesCounter++;
                     if(noLeaderUpdatesCounter >= LEADER_TIMEOUT_COUNTER_LIMIT) {
                         log.debug("noLeaderUpdatesCounter = " + noLeaderUpdatesCounter + " and change to leader state");
-                        plugin.getPlatoonManager().changeFromFollowerToLeader();
+                        plugin.platoonManager.changeFromFollowerToLeader();
                         plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                         // Because we need to abort current complex maneuver, we call arbitrator to re-plan
                         pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
@@ -162,7 +161,7 @@ public class FollowerState implements IPlatooningState {
                     noLeaderUpdatesCounter = 0;
                 }
                 long tsEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(plugin.getOperationUpdatesIntervalLength() - (tsEnd - tsStart), 0);
+                long sleepDuration = Math.max(PlatooningPlugin.STATUS_INTERVAL_LENGTH - (tsEnd - tsStart), 0);
                 Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {
@@ -177,7 +176,7 @@ public class FollowerState implements IPlatooningState {
     
     // This method compose mobility operation STATUS message
     private void composeMobilityOperationStatus(MobilityOperation msg) {
-        msg.getHeader().setPlanId(plugin.getPlatoonManager().getCurrentPlatoonID());
+        msg.getHeader().setPlanId(plugin.platoonManager.currentPlatoonID);
         // All platoon mobility operation message is just for broadcast
         msg.getHeader().setRecipientId("");
         // TODO Need to have a easy way to get bsmId from plugin
@@ -185,12 +184,10 @@ public class FollowerState implements IPlatooningState {
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());
-        msg.setStrategy(plugin.MOBILITY_STRATEGY);
-        // TODO Maneuver planner from plugin service locator may need to provide this data directly 
-        SpeedAccel lastCmdSpeedObject = plugin.getCmdSpeedSub().getLastMessage();
-        double cmdSpeed = lastCmdSpeedObject == null ? 0.0 : lastCmdSpeedObject.getSpeed();
+        msg.setStrategy(PlatooningPlugin.MOBILITY_STRATEGY);
+        double cmdSpeed = plugin.getLastSpeedCmd();
         // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
-        String statusParams = String.format(plugin.OPERATION_STATUS_PARAMS,
+        String statusParams = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
                                             cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
                                             pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         msg.setStrategyParams(statusParams);
@@ -203,4 +200,5 @@ public class FollowerState implements IPlatooningState {
     private void updateLightBar() {
         plugin.setLightBarStatus(IndicatorStatus.FLASH);
     }
+    
 }

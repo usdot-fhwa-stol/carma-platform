@@ -81,10 +81,10 @@ public class FollowerStateTest {
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
-        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
-        when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
+        mockPlugin.handleMobilityPath = new AtomicBoolean(true);
+        mockPlugin.platoonManager = mockManager;
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
-        when(mockPlugin.getCommandGenerator()).thenReturn(mockCmdGenerator);
+        mockPlugin.commandGenerator = mockCmdGenerator;
         
         followerState = new FollowerState(mockPlugin, mockLog, pluginServiceLocator);
     }
@@ -92,9 +92,9 @@ public class FollowerStateTest {
     @Test
     public void planComplexManeuver() {
         Trajectory traj = new Trajectory(0, 50.0);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
-        when(mockRouteService.getAlgorithmEnabledWindowInRange(0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(new double[]{0.0, 50.0});
-        when(mockPlugin.getMinimumManeuverLength()).thenReturn(15.0);
+        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(true);
+        when(mockRouteService.getAlgorithmEnabledWindowInRange(0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(new double[]{0.0, 50.0});
+        when(mockPlugin.minimumManeuverLength).thenReturn(15.0);
         TrajectoryPlanningResponse tpr = followerState.planTrajectory(traj, 0);
         assertEquals(0, tpr.getRequests().size());
         assertEquals(0.0, traj.getComplexManeuver().getStartDistance(), 0.001);

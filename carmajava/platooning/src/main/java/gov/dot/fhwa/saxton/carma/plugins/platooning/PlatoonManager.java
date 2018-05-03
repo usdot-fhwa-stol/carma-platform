@@ -36,9 +36,11 @@ public class PlatoonManager implements Runnable {
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
     protected PluginServiceLocator psl;
-    protected String               leaderID            = "";
-    protected String               currentPlatoonID    = UUID.randomUUID().toString();
-    protected boolean              isFollower          = false;
+    protected String               leaderID         = "";
+    protected String               currentPlatoonID = UUID.randomUUID().toString();
+    protected boolean              isFollower       = false;
+    // This field is only used by Follower State
+    protected int                  platoonSize      = 2;   
     
     // The first two variables are used for APF leader selection algorithm
     // The last one is used internally for removing expired entries 

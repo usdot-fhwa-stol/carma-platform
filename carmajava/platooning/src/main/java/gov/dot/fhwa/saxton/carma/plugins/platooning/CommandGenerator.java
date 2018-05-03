@@ -49,6 +49,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
     private boolean enableMaxAdjustmentFilter;
     private boolean enableLocalSpeedLimitFilter;
     
+    @SuppressWarnings("unchecked")
     public CommandGenerator(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         this.plugin_ = plugin;
         this.pluginServiceLocator_ = pluginServiceLocator;

@@ -8,7 +8,7 @@ platooning_min_maneuver_length: 15.0
 
 # Double: The proportional term in the platoon speed PID controller
 # Units: 1
-platooning_Kp: 2.0
+platooning_Kp: 1.5
 
 # Double: The integral term in the platoon speed PID controller
 # Units: 1

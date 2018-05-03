@@ -322,12 +322,13 @@ public class PlatooningPlugin extends AbstractPlugin
     }
     
     private void publishPlatooningInfo() {
+        //TODO verify all fields have the correct value
         if (platooningInfoPublisher != null) {
             PlatooningInfo info = platooningInfoPublisher.newMessage();
             if(this.state instanceof StandbyState) {
                 info.setState(PlatooningInfo.DISABLED);
             } else if(this.state instanceof LeaderState) {
-                info.setState(platoonManager.getPlatooningSize() == 0 ? PlatooningInfo.SEARCHING : PlatooningInfo.LEADING);
+                info.setState(platoonManager.getTotalPlatooningSize() == 1 ? PlatooningInfo.SEARCHING : PlatooningInfo.LEADING);
             } else if(this.state instanceof LeaderWaitingState) {
                 info.setState(PlatooningInfo.CONNECTING_TO_NEW_FOLLOWER);
             } else if(this.state instanceof CandidateFollowerState) {
@@ -337,7 +338,7 @@ public class PlatooningPlugin extends AbstractPlugin
             }
             if(!(this.state instanceof StandbyState)) {
                 info.setPlatoonId(this.platoonManager.currentPlatoonID);
-                info.setSize((byte) this.platoonManager.getPlatooningSize());
+                info.setSize((byte) this.platoonManager.getTotalPlatooningSize());
                 info.setSizeLimit((byte) this.maxPlatoonSize);
                 PlatoonMember currentLeader = this.platoonManager.getLeader();
                 if(currentLeader == null) {
@@ -350,7 +351,7 @@ public class PlatooningPlugin extends AbstractPlugin
                     info.setLeaderId(currentLeader.staticId);
                     info.setLeaderDowntrackDistance((float) currentLeader.vehiclePosition);
                     info.setLeaderCmdSpeed((float) currentLeader.vehicleSpeed);
-                    info.setHostPlatoonPosition((byte) platoonManager.getPlatooningSize()); // platoon position is indexed as 1 based
+                    info.setHostPlatoonPosition((byte) platoonManager.getTotalPlatooningSize()); // platoon position is indexed as 1 based
                 }
                 info.setHostCmdSpeed((float) (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
                 info.setDesiredGap((float) commandGenerator.desiredGap_);

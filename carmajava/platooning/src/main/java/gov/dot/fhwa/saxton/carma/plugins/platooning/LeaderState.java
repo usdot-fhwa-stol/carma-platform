@@ -1,6 +1,5 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,7 +8,8 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
-import cav_msgs.SpeedAccel;
+import cav_msgs.RoadwayEnvironment;
+import cav_msgs.RoadwayObstacle;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
@@ -81,7 +81,7 @@ public class LeaderState implements IPlatooningState {
             double applicantCurrentSpeed = Double.parseDouble(params.split(",")[1].split(":")[1]);
             double applicantCurrentDtd = Double.parseDouble(params.split(",")[2].split(":")[1]);
             // Check if we have enough room for that applicant
-            int currentPlatoonSize = plugin.platoonManager.getPlatooningSize();
+            int currentPlatoonSize = plugin.platoonManager.getTotalPlatooningSize();
             boolean hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= plugin.maxPlatoonSize;
             if(hasEnoughRoomInPlatoon) {
                 log.debug("The current platoon has enough room for the applicant with size " + applicantSize);
@@ -131,25 +131,40 @@ public class LeaderState implements IPlatooningState {
             String rearVehicleBsmId = strategyParams.split(",")[0].split(":")[1];
             // We are trying to validate is the platoon rear is right in front of the host vehicle
             if(isVehicleRightInFront(rearVehicleBsmId)) {
-                log.debug("Found a platoon with id = " + msg.getHeader().getPlanId() + " in front of us.");
+                log.debug("Found a platoon with id = " + platoonId + " in front of us.");
                 MobilityRequest request = plugin.mobilityRequestPublisher.newMessage();
-                MobilityMessageWorker.populateInitialJoinRequest(request);
+                String planId = UUID.randomUUID().toString();
+                request.getHeader().setPlanId(planId);
+                request.getHeader().setRecipientId(senderId);
+                // TODO Need to have a easy way to get bsmId from plugin
+                request.getHeader().setSenderBsmId("FFFFFFFF");
+                request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
+                request.getHeader().setTimestamp(System.currentTimeMillis());
+                // TODO Need to have a easy way to get current XYZ location in ECEF
+                request.getLocation().setEcefX(0);
+                request.getLocation().setEcefY(0);
+                request.getLocation().setEcefZ(0);
+                request.getLocation().setTimestamp(System.currentTimeMillis());
+                request.getPlanType().setType(PlanType.JOIN_PLATOON_AT_REAR);
+                request.setStrategy(PlatooningPlugin.MOBILITY_STRATEGY);
+                String strategyParamsString = String.format(PlatooningPlugin.JOIN_AT_REAR_PARAMS,
+                                                      plugin.platoonManager.getTotalPlatooningSize(),
+                                                      plugin.getManeuverInputs().getCurrentSpeed(), pluginServiceLocator.getRouteService().getCurrentDowntrackDistance());
+                request.setStrategyParams(strategyParamsString);
+                // TODO Need to populate the urgency later
+                request.setUrgency((short) 50);
                 this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), request.getHeader().getPlanId(), senderId);
                 plugin.mobilityRequestPublisher.publish(request);
                 log.debug("Publishing request to leader " + senderId + " with params " + request.getStrategyParams() + " and plan id = " + request.getHeader().getPlanId());
                 this.potentialNewPlatoonId = platoonId;
             } else {
-                log.debug("Ignore platoon with platoon id: " + msg.getHeader().getPlanId() + "because validation failure");
+                log.debug("Ignore platoon with platoon id: " + platoonId + "because validation failure");
             } 
         } else if(isPlatoonStatusMsg) {
             // If it is platoon status message, the params string is in format: STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
-            if(plugin.platoonManager.currentPlatoonID.equals(platoonId)) {
-                String statusParams = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
-                log.debug("Receive operation status message from vehicle: " + senderId + " with params: " + statusParams);
-                plugin.platoonManager.memberUpdates(senderId, msg.getHeader().getPlanId(), msg.getHeader().getSenderBsmId(), statusParams);
-            } else {
-                log.debug("Ignore operation status message from vehicle: " + senderId + " because it is not in our platoon");
-            }
+            String statusParams = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
+            log.debug("Receive operation status message from vehicle: " + senderId + " with params: " + statusParams);
+            plugin.platoonManager.memberUpdates(senderId, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
         } else {
             log.debug("Receive operation message but ignore it because isPlatoonInfoMsg = " + isPlatoonInfoMsg 
                     + ", isNotInNegotiation = " + isNotInNegotiation + " and isPlatoonStatusMsg = " + isPlatoonStatusMsg);
@@ -224,7 +239,7 @@ public class LeaderState implements IPlatooningState {
                     }
                 }
                 // Task 4
-                boolean hasFollower = plugin.platoonManager.getPlatooningSize() != 1; 
+                boolean hasFollower = plugin.platoonManager.getTotalPlatooningSize() > 1; 
                 if(hasFollower) {
                     MobilityOperation statusOperation = plugin.mobilityOperationPublisher.newMessage();
                     composeMobilityOperation(statusOperation, "STATUS");
@@ -246,8 +261,78 @@ public class LeaderState implements IPlatooningState {
     }
 
     private boolean isVehicleRightInFront(String rearVehicleBsmId) {
-        //log.debug("The current dtd headway from GPS is " + (platoonRearDtd - currentHostDtd) + " m");
-        return true;
+        RoadwayEnvironment env = plugin.roadwaySub.getLastMessage();
+        if(env != null) {
+            List<RoadwayObstacle> obs = env.getRoadwayObstacles();
+            double currentDtd = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+            double lastGap = Double.MAX_VALUE;
+            RoadwayObstacle vehicleRightInFront = null;
+            for(RoadwayObstacle ob : obs) {
+                if(ob.getPrimaryLane() == plugin.getManeuverInputs().getCurrentLane()) {
+                    if(ob.getDownTrack() - currentDtd < lastGap) {
+                        vehicleRightInFront = ob;
+                        lastGap = ob.getDownTrack() - currentDtd;
+                    }
+                }
+            }
+            if(vehicleRightInFront == null) {
+                log.debug("Sensor fusion does not detect any vehicle in front of us. We should be ready to speed up");
+                return true;
+            } else {
+                if(vehicleRightInFront.getObject() != null &&
+                   vehicleRightInFront.getObject().getBsmId() != null &&
+                   vehicleRightInFront.getObject().getBsmId().capacity() == 4) {
+                    byte[] temp_ID = new byte[4];
+                    for(int i = 0; i < vehicleRightInFront.getObject().getBsmId().capacity(); i++) {
+                        temp_ID[i] = vehicleRightInFront.getObject().getBsmId().getByte(i);
+                    }
+                    char[] hexChars = new char[temp_ID.length * 2];
+                    for(int i = 0; i < temp_ID.length; i++) {
+                        int firstFourBits = (0xF0 & temp_ID[i]) >>> 4;
+                        int lastFourBits = 0xF & temp_ID[i];
+                        hexChars[i * 2] = Integer.toHexString(firstFourBits).charAt(0);
+                        hexChars[i * 2 + 1] = Integer.toHexString(lastFourBits).charAt(0);
+                    }
+                    String bsmIdOfVehicleRightInFront = new String(hexChars);
+                    log.debug("Sensor fusion detected a CAV in front with BSM id = " + bsmIdOfVehicleRightInFront);
+                    log.debug("Our desired front vehicle bsm id = " + rearVehicleBsmId);
+                    return bsmIdOfVehicleRightInFront.equals(rearVehicleBsmId);
+                }
+            }
+        }
+        return false;
+    }
+    
+    // This method compose mobility operation INFO/STATUS message
+    private void composeMobilityOperation(MobilityOperation msg, String type) {
+        msg.getHeader().setPlanId(plugin.platoonManager.currentPlatoonID);
+        // All platoon mobility operation message is just for broadcast
+        msg.getHeader().setRecipientId("");
+        // TODO Need to have a easy way to get bsmId from plugin
+        msg.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
+        String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
+        msg.getHeader().setSenderId(hostStaticId);
+        msg.getHeader().setTimestamp(System.currentTimeMillis());
+        msg.setStrategy(PlatooningPlugin.MOBILITY_STRATEGY);
+        if(type.equals(PlatooningPlugin.OPERATION_INFO_TYPE)) {
+            // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
+            String infoParams = String.format(PlatooningPlugin.OPERATION_INFO_PARAMS,
+                                //??????
+                                plugin.getManeuverInputs().getCurrentSpeed(),
+                                plugin.platoonManager.getTotalPlatooningSize());
+            msg.setStrategyParams(infoParams);
+        } else if(type.equals(PlatooningPlugin.OPERATION_STATUS_TYPE)) {
+            double cmdSpeed = plugin.getLastSpeedCmd();
+            // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
+            String statusParams = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
+                                                cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
+                                                pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
+            msg.setStrategyParams(statusParams);
+        } else {
+            log.error("UNKNOW strategy param string!!!");
+            msg.setStrategyParams("");
+        }
+        log.debug("Composed a mobility operation message with params " + msg.getStrategyParams());
     }
     
     /**
