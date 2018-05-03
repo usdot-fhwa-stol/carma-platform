@@ -80,6 +80,7 @@ public class RSUMeterWorker {
   protected final long timeMargin;
   protected final long requestPeriod;
   protected final long commandPeriod;
+  protected final long commsTimeout;
   
 
   /**
@@ -97,11 +98,12 @@ public class RSUMeterWorker {
    * @param timeMargin The allowable time margin for a merge operation
    * @param requestPeriod The period of meter request broadcasts
    * @param commandPeriod The period of commands sent to a controlled vehicles 
+   * @param commsTimeout The time period of a comms timeout between the rsu and the vehicle
    */
   RSUMeterWorker(IRSUMeterManager manager, SaxtonLogger log, String routeFilePath,
     String rsuId, double distToMerge, double mainRouteMergeDTD, double meterRadius,
     int targetLane, double mergeLength, long timeMargin,
-    long requestPeriod, long commandPeriod) throws IllegalArgumentException {
+    long requestPeriod, long commandPeriod, long commsTimeout) throws IllegalArgumentException {
     
     this.manager = manager;
     this.log = log;
@@ -114,6 +116,7 @@ public class RSUMeterWorker {
     this.timeMargin = timeMargin;
     this.requestPeriod = requestPeriod;
     this.commandPeriod = commandPeriod;
+    this.commsTimeout = commsTimeout;
 
     // Load route file
     log.info("RouteFile: " + routeFilePath);
@@ -525,5 +528,12 @@ public class RSUMeterWorker {
    */
   public long getRequestPeriod() {
     return requestPeriod;
+  }
+
+  /**
+   * @return the commsTimeout
+   */
+  public long getCommsTimeout() {
+    return commsTimeout;
   }
 }

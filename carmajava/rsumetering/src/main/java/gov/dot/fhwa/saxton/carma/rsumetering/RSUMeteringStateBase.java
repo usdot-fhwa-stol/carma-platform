@@ -17,6 +17,8 @@
 package gov.dot.fhwa.saxton.carma.rsumetering;
 
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
 
@@ -35,18 +37,21 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
   protected final RSUMeterWorker worker;
   protected final SaxtonLogger log;
   protected final long loopPeriod; // Time in ms between loop spins
+  protected final long commsTimeout;
   private final Object commandMutex = new Object();
   private volatile double speedCommand = 0;
   private volatile double steerCommand = 0; 
   private volatile double maxAccelCommand = 0; 
+  private AtomicLong lastMessageTime = new AtomicLong(0);
   protected final static String COMMAND_PARAMS = "COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f";
 
   protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
 
-  public RSUMeteringStateBase(RSUMeterWorker worker, SaxtonLogger log, long loopPeriod) {
+  public RSUMeteringStateBase(RSUMeterWorker worker, SaxtonLogger log, long loopPeriod, long commsTimeout) {
     this.worker = worker;
     this.log = log;
     this.loopPeriod = loopPeriod;
+    this.commsTimeout = commsTimeout;
   }
 
   @Override
@@ -62,14 +67,36 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
   public final void loop() throws InterruptedException {
     long startTime = System.currentTimeMillis();
     onLoop();
+    checkTimeout();
     long endTime = System.currentTimeMillis();
     Thread.sleep(Math.max(loopPeriod - (endTime - startTime), 0));
+  }
+
+  /**
+   * Calls the onTimeout function if a timeout has occurred
+   */
+  private void checkTimeout() {
+    if (System.currentTimeMillis() - lastMessageTime.get() > commsTimeout) {
+      this.onTimeout();
+    }
   }
 
   /**
    * Function which will be called at a frequency equal to 1 / loopPeriod
    */
   protected abstract void onLoop();
+
+  /**
+   * Function which will be called when a timeout has occurred
+   */
+  protected abstract void onTimeout();
+
+  /**
+   * Resets the timeout count
+   */
+  protected final void resetTimeout() {
+    lastMessageTime.set(System.currentTimeMillis());
+  }
 
   /**
    * Function updates the command parameters in a thread sage manner

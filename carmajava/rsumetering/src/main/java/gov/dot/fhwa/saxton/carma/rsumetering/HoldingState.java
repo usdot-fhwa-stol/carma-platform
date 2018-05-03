@@ -48,12 +48,14 @@ public class HoldingState extends RSUMeteringStateBase {
    * @param distToMerge The distance to the merge point of the controlled vehicle. This value can be negative
    */
   public HoldingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId, double vehLagTime, double vehMaxAccel, double distToMerge) {
-    super(worker, log, worker.getCommandPeriod());
+    super(worker, log, worker.getCommandPeriod(), worker.getCommsTimeout());
     this.vehLagTime = vehLagTime;
     this.vehMaxAccel = vehMaxAccel;
     this.distToMerge = distToMerge;
     this.vehicleId = vehicleId;
     this.planId = planId;
+
+    this.resetTimeout();
   }
 
   @Override
@@ -79,6 +81,10 @@ public class HoldingState extends RSUMeteringStateBase {
       return;
     }
 
+    // Reset our comms timeout
+    resetTimeout();
+
+    // Extract data
     double meterDist = Double.parseDouble(params.get(0));
     double mergeDist = Double.parseDouble(params.get(1));
     double speed = Double.parseDouble(params.get(2));
@@ -147,5 +153,22 @@ public class HoldingState extends RSUMeteringStateBase {
   @Override
   protected void onLoop() {
     this.publishSpeedCommand(vehicleId, planId);
+  }
+
+  @Override
+  protected void onTimeout() {
+    log.warn("Timeout detected");
+    // Send nack
+    MobilityResponse msg = messageFactory.newFromType(MobilityResponse._TYPE);
+    msg.getHeader().setPlanId(planId);
+    msg.getHeader().setRecipientId(vehicleId);
+    msg.getHeader().setSenderId(worker.getRsuId());
+    msg.getHeader().setTimestamp(System.currentTimeMillis());
+
+    msg.setIsAccepted(false);
+    
+    worker.getManager().publishMobilityResponse(msg);
+    // Transition to standby state
+    worker.setState(new StandbyState(worker, log));
   }
 }

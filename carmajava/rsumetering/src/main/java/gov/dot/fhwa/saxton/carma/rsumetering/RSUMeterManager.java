@@ -85,6 +85,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     long commandFreq = params.getInteger("~command_freq");
     long requestPeriod = (long) (1000.0 / requestFreq);
     long commandPeriod = (long) (1000.0 / commandFreq);
+    long commsTimeout = params.getInteger("~comms_timeout");
     // Echo Params
     log.info("LoadedParam route_file: " + routeFilePath);
     log.info("LoadedParam dist_to_merge_along_ramp: " + distToMerg);
@@ -96,6 +97,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     log.info("LoadedParam arrival_time_margin: " + timeMargin);
     log.info("LoadedParam standby_state_request_freq: " + requestFreq);
     log.info("LoadedParam command_freq: " + commandPeriod);
+    log.info("LoadedParam comms_timeout: " + commsTimeout);
 
     // Topics
     // Publishers
@@ -106,7 +108,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     // Worker must be initialized after publishers but before subscribers
     worker = new RSUMeterWorker(this, log, routeFilePath, rsuId, distToMerg,
      mainRouteMergeDTD, rampMeterRadius, targetLane, lengthOfMerge, timeMargin,
-     requestPeriod, commandPeriod
+     requestPeriod, commandPeriod, commsTimeout
     );
 
     // Subscribers

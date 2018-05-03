@@ -36,7 +36,7 @@ public class StandbyState extends RSUMeteringStateBase {
   protected final static List<String> MERGE_REQUEST_PARAMS = new ArrayList<>(Arrays.asList("MAX_ACCEL", "LAG", "DIST"));
 
   public StandbyState(RSUMeterWorker worker, SaxtonLogger log) {
-    super(worker, log, worker.getRequestPeriod());
+    super(worker, log, worker.getRequestPeriod(), Long.MAX_VALUE);
   }
 
   @Override
@@ -57,7 +57,7 @@ public class StandbyState extends RSUMeteringStateBase {
     double vehicleDistToMerge = Double.parseDouble(requestParams.get(2));
 
 
-    double distToMeter = vehicleDistToMerge - worker.getDistToMerg();
+    double distToMeter = vehicleDistToMerge - worker.getDistToMerge();
 
     // Check if vehicle is close enough to control
     if (distToMeter > worker.getMeterRadius()) {
@@ -86,6 +86,11 @@ public class StandbyState extends RSUMeteringStateBase {
     publishMergeLocationRequests();
   }
 
+  @Override
+  protected void onTimeout() {
+    // Cannot timeout in this state
+  }
+
   protected void publishMergeLocationRequests() {
     MobilityRequest msg = messageFactory.newFromType(MobilityRequest._TYPE);
 
@@ -93,7 +98,7 @@ public class StandbyState extends RSUMeteringStateBase {
     msg.getHeader().setSenderId(worker.getRsuId());
     msg.setStrategy(RSUMeterWorker.COOPERATIVE_MERGE_STRATEGY);
     msg.setStrategyParams(
-      String.format(BROADCAST_MERGE_PARAMS, worker.getMeterRadius(), worker.getDistToMerg(), worker.getMergeLength())
+      String.format(BROADCAST_MERGE_PARAMS, worker.getMeterRadius(), worker.getDistToMerge(), worker.getMergeLength())
     );
 
     worker.getManager().publishMobilityRequest(msg);
