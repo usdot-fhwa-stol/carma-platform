@@ -27,24 +27,26 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.rsumetering.IRSUMeteringState;
 
 /**
- * Struct for storing data about a RSU Ramp Metering infrastructure component
+ * Abstract base class for RSU Metering states
+ * 
+ * Provides final methods for publishing commands to a controlled vehicle in a synchronous fashion
  */
 public abstract class RSUMeteringStateBase implements IRSUMeteringState {
   protected final RSUMeterWorker worker;
   protected final SaxtonLogger log;
-  protected long commandPeriod; // TODO Time in ms between commands being sent
-
-  private Object commandMutex = new Object();
-  private volatile double speedCommand = 0; // TODO probably not safe to send 0 as default
+  protected final long loopPeriod; // Time in ms between loop spins
+  private final Object commandMutex = new Object();
+  private volatile double speedCommand = 0;
   private volatile double steerCommand = 0; 
   private volatile double maxAccelCommand = 0; 
   protected final static String COMMAND_PARAMS = "COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f";
 
   protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
 
-  public RSUMeteringStateBase(RSUMeterWorker worker, SaxtonLogger log) {
+  public RSUMeteringStateBase(RSUMeterWorker worker, SaxtonLogger log, long loopPeriod) {
     this.worker = worker;
     this.log = log;
+    this.loopPeriod = loopPeriod;
   }
 
   @Override
@@ -61,11 +63,21 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
     long startTime = System.currentTimeMillis();
     onLoop();
     long endTime = System.currentTimeMillis();
-    Thread.sleep(commandPeriod - (endTime - startTime));
+    Thread.sleep(Math.max(loopPeriod - (endTime - startTime), 0));
   }
 
+  /**
+   * Function which will be called at a frequency equal to 1 / loopPeriod
+   */
   protected abstract void onLoop();
 
+  /**
+   * Function updates the command parameters in a thread sage manner
+   * 
+   * @param speed The speed command in m/s
+   * @param maxAccel The max acceleration command in m/s^2
+   * @param steer The steering angle in rad
+   */
   protected void updateCommands(double speed, double maxAccel, double steer) {
     synchronized(commandMutex) { // Synchronized to ensure commands are read as a set
       speedCommand = speed;
@@ -74,6 +86,12 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
     }
   }
 
+  /**
+   * Function publishes the current command inputs (speed, max accel, and steer)
+   * 
+   * @param vehicleId The vehicle to send the command to
+   * @param planId The plan id of the current merge operation
+   */
   protected void publishSpeedCommand(String vehicleId, String planId) {
     MobilityOperation msg = messageFactory.newFromType(MobilityOperation._TYPE);
 

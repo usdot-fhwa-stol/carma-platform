@@ -22,6 +22,9 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 
+/**
+ * Interface for an object which provides publishing capabilities for an RSU metering ndoe
+ */
 public interface IRSUMeterManager {
 
   /**

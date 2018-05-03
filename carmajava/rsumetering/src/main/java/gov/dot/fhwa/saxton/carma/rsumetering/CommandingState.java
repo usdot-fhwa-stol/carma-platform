@@ -26,7 +26,9 @@ import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 /**
- * Struct for storing data about a RSU Ramp Metering infrastructure component
+ * In this state the merging vehicle is being directly commanded by the rsu
+ * At the moment the logic is very simple.
+ * Set the target vehicle speed to the platoon speed and activate the lane change indicator when needed
  */
 public class CommandingState extends RSUMeteringStateBase {
   protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d";
@@ -38,8 +40,19 @@ public class CommandingState extends RSUMeteringStateBase {
   protected final String planId;
   protected double distToMerge;
 
-  public CommandingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId, double vehLagTime, double vehMaxAccel, double distToMerge) {
-    super(worker, log);
+  /**
+   * Constructor
+   * 
+   * @param worker The worker being represented by this state
+   * @param log A logger
+   * @param vehicleId The static id of the vehicle being controlled
+   * @param vehLagTime The lag time of the controlled vehicle's response
+   * @param vehMaxAccel The maximum acceleration limit allowed by the controlled vehicle
+   * @param distToMerge The distance to the merge point of the controlled vehicle. This value can be negative
+   */
+  public CommandingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId,
+   double vehLagTime, double vehMaxAccel, double distToMerge) {
+    super(worker, log, worker.getCommandPeriod());
     this.vehLagTime = vehLagTime;
     this.vehMaxAccel = vehMaxAccel;
     this.distToMerge = distToMerge;

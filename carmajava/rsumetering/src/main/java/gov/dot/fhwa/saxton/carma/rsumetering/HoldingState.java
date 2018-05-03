@@ -19,22 +19,13 @@ package gov.dot.fhwa.saxton.carma.rsumetering;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.google.common.util.concurrent.AtomicDouble;
-
-import org.ros.message.MessageFactory;
-import org.ros.node.NodeConfiguration;
-
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import gov.dot.fhwa.saxton.carma.rsumetering.IRSUMeteringState;
 
 /**
- * Struct for storing data about a RSU Ramp Metering infrastructure component
+ * State which holds a vehicle at the ramp metering location until it is time to release it
  */
 public class HoldingState extends RSUMeteringStateBase {
   protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d";
@@ -45,9 +36,19 @@ public class HoldingState extends RSUMeteringStateBase {
   protected final String vehicleId;
   protected final String planId;
   protected double distToMerge;
-
+  
+  /**
+   * Constructor
+   * 
+   * @param worker The worker being represented by this state
+   * @param log A logger
+   * @param vehicleId The static id of the vehicle being controlled
+   * @param vehLagTime The lag time of the controlled vehicle's response
+   * @param vehMaxAccel The maximum acceleration limit allowed by the controlled vehicle
+   * @param distToMerge The distance to the merge point of the controlled vehicle. This value can be negative
+   */
   public HoldingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId, double vehLagTime, double vehMaxAccel, double distToMerge) {
-    super(worker, log);
+    super(worker, log, worker.getCommandPeriod());
     this.vehLagTime = vehLagTime;
     this.vehMaxAccel = vehMaxAccel;
     this.distToMerge = distToMerge;

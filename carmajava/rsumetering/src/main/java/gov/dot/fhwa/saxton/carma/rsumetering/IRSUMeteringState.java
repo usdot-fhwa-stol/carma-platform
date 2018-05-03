@@ -21,7 +21,7 @@ import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 
 /**
- * Interface for a state of the cooperative merge plugin
+ * Interface for a state of the rsu metering node
  */
 public interface IRSUMeteringState {
   
@@ -48,8 +48,7 @@ public interface IRSUMeteringState {
    * Main execution loop for the state. Should be where the state spends the majority of its
    * time while active.
    * <p>
-   * If the state needs to run at a specific frequency, 
-   * it is the state's responsibility to insert the required timing logic.
+   * The loop will run at the frequency specified by the loopPeriod field
    */
     void loop() throws InterruptedException;
 }

@@ -29,9 +29,6 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
@@ -47,6 +44,7 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
  
+// TODO ADD TIMEOUT SYSTEM
 /**
  * Primary logic class for the RSUMeterManager node
  */
@@ -58,7 +56,7 @@ public class RSUMeterWorker {
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
   protected final Route mainRoadRoute;
-  protected final double distToMerg;
+  protected final double distToMerge;
   protected final double mainRouteMergeDTD;
   protected final int targetLane;
   protected final double mergeLength;
@@ -80,6 +78,8 @@ public class RSUMeterWorker {
   protected final double meterRadius;
 
   protected final long timeMargin;
+  protected final long requestPeriod;
+  protected final long commandPeriod;
   
 
   /**
@@ -87,21 +87,33 @@ public class RSUMeterWorker {
    * 
    * @param manager IRSUMeterManager responsible for providing timing and publishing capabilities
    * @param log Logging object
-   * @param routeFilePath
+   * @param routeFilePath The file path of the route which defines the main road (not the on ramp)
+   * @param rsuId The static id of this rsu
+   * @param distToMerge The distance in m from the ramp meter point to the start of the merge
+   * @param mainRouteMergeDTD The distance along the main road route in m of the start of the merge
+   * @param meterRadius The radius around the merge point where the rsu can take control of a vehicle
+   * @param targetLane The lane id which a merge is into
+   * @param mergeLength The length in m of the merge area
+   * @param timeMargin The allowable time margin for a merge operation
+   * @param requestPeriod The period of meter request broadcasts
+   * @param commandPeriod The period of commands sent to a controlled vehicles 
    */
   RSUMeterWorker(IRSUMeterManager manager, SaxtonLogger log, String routeFilePath,
-    String rsuId, double distToMerg, double mainRouteMergeDTD, double meterRadius,
-    int targetLane, double mergeLength, long timeMargin) throws IllegalArgumentException {
+    String rsuId, double distToMerge, double mainRouteMergeDTD, double meterRadius,
+    int targetLane, double mergeLength, long timeMargin,
+    long requestPeriod, long commandPeriod) throws IllegalArgumentException {
     
-      this.manager = manager;
+    this.manager = manager;
     this.log = log;
-    this.distToMerg = distToMerg;
+    this.distToMerge = distToMerge;
     this.mainRouteMergeDTD = mainRouteMergeDTD;
     this.meterRadius = meterRadius;
     this.targetLane = targetLane;
     this.mergeLength = mergeLength;
     this.rsuId = rsuId;
     this.timeMargin = timeMargin;
+    this.requestPeriod = requestPeriod;
+    this.commandPeriod = commandPeriod;
 
     // Load route file
     log.info("RouteFile: " + routeFilePath);
@@ -119,6 +131,13 @@ public class RSUMeterWorker {
   }
 
   // TODO with many vehicles the number of BSMs would grow very fast. Should clean them out every 5 seconds
+  // TODO set an initial state
+  /**
+   * Handles incoming BSM messages
+   * BSM messages are cached for later reference
+   * 
+   * @param msg The BSM message to process
+   */
   public void handleBSMMsg(BSM msg) {
 
     String bsmId = bsmIdFromBuffer(msg.getCoreData().getId());
@@ -131,6 +150,13 @@ public class RSUMeterWorker {
     bsmMap.put(bsmId, loc);
   }
 
+  /**
+   * Helper function to convert a channel buffer from a bsm message id into a hex string
+   * 
+   * @param buffer The bsm id bytes to convert
+   * 
+   * @return The hex string of this bsm id 
+   */
   private String bsmIdFromBuffer(ChannelBuffer buffer) {
     byte[] idArray = buffer.array();
 
@@ -151,9 +177,11 @@ public class RSUMeterWorker {
   }
 
   /**
-   * Handles control messages. 
-   * If the requested axleAngle is greater than the angleThreshold then it will be considered a request for a turn.
-   * The UI will then be notified. 
+   * Handles MobilityOperation messages
+   * 
+   * This function will cache platooning information and pass the messages onto the current state
+   * 
+   * @param msg The message to handle
    */
   public void handleMobilityOperationMsg(MobilityOperation msg) {
     // Validate message is for us
@@ -176,7 +204,11 @@ public class RSUMeterWorker {
 
   }
 
-  // Assumes msg has already been verified
+  /**
+   * Updates the cached platooning information based on the provided message
+   * 
+   * @param msg The platooning message to process
+   */
   private void updatePlatoonWithOperationMsg(MobilityOperation msg) {
 
     String strategyParams = msg.getStrategyParams();
@@ -220,6 +252,13 @@ public class RSUMeterWorker {
     platoonMap.put(newData.getLeaderId(), newData);
   }
 
+  /**
+   * Handles a MobilityRequest message
+   * 
+   * Requests are passed to the current state and the acceptance or rejection is broadcast back to the sending vehicle
+   * 
+   * @param msg The message to process
+   */
   public void handleMobilityRequestMsg(MobilityRequest msg) {
     // Validate message is for us
     if (!(msg.getHeader().getRecipientId().equals(rsuId) 
@@ -244,6 +283,13 @@ public class RSUMeterWorker {
     }
   }
 
+  /**
+   * Handle a MobilityResponse message
+   * 
+   * Messages are passed onto the current state
+   * 
+   * @param msg The message to be processed
+   */
   public void handleMobilityResponseMsg(MobilityResponse msg) {
     // Validate message is for us
     if (!(msg.getHeader().getRecipientId().equals(rsuId) 
@@ -260,6 +306,17 @@ public class RSUMeterWorker {
   }
 
 
+  /**
+   * Helper function to extract strategy params from a mobility message strategy string
+   * Params are expected to be of the form TYPE|KEY1:value1,KEY2:value2 etc.
+   * This will throw an exception if the provided paramsString does not match the expected type and keys
+   * 
+   * @param paramsString The strategy params string to process
+   * @param expectedType The expected type value in the strategy params. If this value is null the type will be assumed not to exist.
+   * @param keys A list of expected keys in the order they appear. Example ["KEY1", "KEY2"]
+   * 
+   * @return A list of string values associated with the provided keys. Example ["value1", "value2"]
+   */
   protected List<String> extractStrategyParams(String paramsString, String expectedType, List<String> keys) 
     throws IllegalArgumentException {
 
@@ -331,6 +388,19 @@ public class RSUMeterWorker {
     }
   }
 
+  /**
+   * Returns the expected travel time for a vehicle with the provided inputs
+   * 
+   * Time calculated as a speed up from current speed to max speed followed by a steady speed to completion
+   * 
+   * @param dist The distance to travel in m
+   * @param speed The current speed in m/s
+   * @param maxSpeed The max allowed speed in m/s
+   * @param lagTime The response time of the vehicle in s
+   * @param maxAccel The maximum acceleration capabilities of the vehicle
+   * 
+   * @return the expected travel time in ms
+   */
   protected long expectedTravelTime(double dist, double speed, double maxSpeed, double lagTime, double maxAccel) {
     // If the speed is at or above max
     if (speed > maxSpeed - 0.1) {
@@ -371,6 +441,9 @@ public class RSUMeterWorker {
     return mostRecentPlatoon[0];
   }
 
+  /**
+   * A loop which will spin as fast as possible
+   */
   public void loop() throws InterruptedException {
     // TODO this will likely cause dead lock due to internal thread.sleep. 
     // Need to reavaluate state mutex usage
@@ -399,10 +472,10 @@ public class RSUMeterWorker {
   }
 
   /**
-   * @return the distToMergOnRamp
+   * @return the distToMerge
    */
-  public double getDistToMerg() {
-    return distToMerg;
+  public double getDistToMerge() {
+    return distToMerge;
   }
 
   /**
@@ -438,5 +511,19 @@ public class RSUMeterWorker {
    */
   public long getTimeMargin() {
     return timeMargin;
+  }
+
+  /**
+   * @return the commandPeriod
+   */
+  public long getCommandPeriod() {
+    return commandPeriod;
+  }
+
+  /**
+   * @return the requestPeriod
+   */
+  public long getRequestPeriod() {
+    return requestPeriod;
   }
 }

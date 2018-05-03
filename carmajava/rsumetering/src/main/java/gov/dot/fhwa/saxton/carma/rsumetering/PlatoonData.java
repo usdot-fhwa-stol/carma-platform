@@ -35,6 +35,7 @@ public final class PlatoonData {
    * @param rearDTD The downtrack distance of the back of the platoon in m
    * @param speed The speed of the platoon in m/s
    * @param expectedTimeOfArrival The expected UTC time of arrival at the merge point in ms
+   * @param rearBSMId The BSM id of the rear vehicle in this platoon
    */
   public PlatoonData (String leaderId, double rearDTD, 
     double speed, long expectedTimeOfArrival, String rearBSMId) {

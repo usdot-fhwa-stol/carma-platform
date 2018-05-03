@@ -36,7 +36,7 @@ public class StandbyState extends RSUMeteringStateBase {
   protected final static List<String> MERGE_REQUEST_PARAMS = new ArrayList<>(Arrays.asList("MAX_ACCEL", "LAG", "DIST"));
 
   public StandbyState(RSUMeterWorker worker, SaxtonLogger log) {
-    super(worker, log);
+    super(worker, log, worker.getRequestPeriod());
   }
 
   @Override
