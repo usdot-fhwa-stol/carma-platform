@@ -105,6 +105,8 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             int numOfVehiclesGaps = plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;
             log_.debug("The host vehicle have " + numOfVehiclesGaps + " vehicles between itself and its leader (includes the leader)");
             desiredGap_ = Math.max(hostVehicleSpeed * plugin_.timeHeadway * numOfVehiclesGaps, plugin_.standStillHeadway * numOfVehiclesGaps);
+            log_.debug("The desired gap with the leader is " + desiredGap_);
+            log_.debug("Based on raw radar, the current gap with the front vehicle is " + plugin_.getManeuverInputs().getDistanceToFrontVehicle());
             double desiredHostPosition = leaderCurrentPosition - this.desiredGap_;
             log_.debug("The desired host position and the setpoint for pid controller is " + desiredHostPosition);
             // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
