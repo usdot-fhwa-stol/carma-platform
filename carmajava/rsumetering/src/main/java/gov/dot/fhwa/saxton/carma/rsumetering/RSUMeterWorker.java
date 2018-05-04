@@ -81,7 +81,7 @@ public class RSUMeterWorker {
   protected final ConcurrentMap<String, PlatoonData> platoonMap = new ConcurrentHashMap<>();
   protected final ConcurrentMap<String, BSM> bsmMap = new ConcurrentHashMap<>();
   protected final Object stateMutex = new Object();
-  protected AtomicReference<IRSUMeteringState> state; // Never null
+  protected AtomicReference<IRSUMeteringState> state = new AtomicReference<>(); // Never null
   protected final String rsuId;
   protected String platoonRearBSMId = null;
   protected final GeodesicCartesianConverter gcc =  new GeodesicCartesianConverter();
