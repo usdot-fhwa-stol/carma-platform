@@ -1,0 +1,43 @@
+# RSUMeteringParams.yaml
+# Defines the ros parameters which define an RSU Metering node's behavior
+
+# String: The static mobility message id of this rsu
+rsu_id: 'RSU-04E5'
+
+# String: The route file for the main road this rsu is metering for.
+route_file: '/opt/carma_1/src/CarmaPlatform/carmajava/route/src/test/resources/routes/glidepath_demo_east_bound.yaml'
+
+# Double: The distance from the ramp meter point to the start of the merge area.
+# Units: m
+dist_to_merge_along_ramp: 50.0
+
+# Double: The distance along the main road route to the merge area
+# Units: m
+dist_to_merge_on_main_route: 50.0
+
+# Double: The length of the merge area
+# Units: m
+length_of_merge: 50.0
+
+# Double: The distance around the ramp meter point where a vehicle can request to merge
+# Units: m
+ramp_meter_radius: 30.0
+
+# Integer: The lane index of the lane merging vehicles are trying to reach
+ramp_meter_radius: 1
+
+# Integer: The merge arrival time margin within which the merging vehicle is trying to arrive
+# Units: ms
+arrival_time_margin: 1000
+
+# Double: The frequency of broadcasts of ramp metering location in StandbyState
+# Units: Hz
+standby_state_request_freq: 2.0
+
+# Double: The frequency of commands being sent to the merging vehicle
+# Units: Hz
+command_freq: 10.0
+
+# Integer: The amount of time without communications with a merging vehicle to be considered a timeout
+# Units: ms
+comms_timeout: 100

@@ -81,8 +81,8 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     double rampMeterRadius = params.getDouble("~ramp_meter_radius");
     int targetLane = params.getInteger("~target_lane");
     long timeMargin = params.getInteger("~arrival_time_margin");
-    long requestFreq = params.getInteger("~standby_state_request_freq");
-    long commandFreq = params.getInteger("~command_freq");
+    double requestFreq = params.getDouble("~standby_state_request_freq");
+    double commandFreq = params.getDouble("~command_freq");
     long requestPeriod = (long) (1000.0 / requestFreq);
     long commandPeriod = (long) (1000.0 / commandFreq);
     long commsTimeout = params.getInteger("~comms_timeout");
