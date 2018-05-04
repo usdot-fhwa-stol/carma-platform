@@ -79,6 +79,27 @@
       </node>
     </group>
 
+    <!-- Interface Manager Package -->
+    <group ns="$(arg INTR_NS)">
+
+      <!-- Interface Manager Node -->
+      <node pkg="carma" type="interfacemgr" name="interface_mgr"
+            args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" required="true">
+
+        <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+        <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
+
+        <!-- Overwrite the interface manager startup delay"-->
+        <param name="driver_wait_time" type="int" value="3"/>
+
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="driver_discovery"
+               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+      </node>
+    </group>
+
     <!-- Message Package -->
     <group ns="$(arg MSG_NS)">
 
@@ -98,13 +119,8 @@
                to="/$(arg TOP_NS)/$(arg RSU_NS)/outgoing_mobility_response"/>
         <remap from="outgoing_mobility_operation"
                to="/$(arg TOP_NS)/$(arg RSU_NS)/outgoing_mobility_operation"/>
-
-        <!-- Remapping for obu driver -->
-        <remap from="outbound_binary_msg"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/dsrc_driver/outbound_binary_msg"/>
-
-        <remap from="inbound_binary_msg"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/dsrc_driver/inbound_binary_msg"/>
+        <remap from="get_drivers_with_capabilities"
+               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
       </node>
     </group>
 
