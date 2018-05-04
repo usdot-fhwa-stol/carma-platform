@@ -44,7 +44,9 @@
   <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
   <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
   <arg name="debug_mock_dsrc"      default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
-
+  <arg name="debug_mock_pinpoint"   default="false" doc="Set true to enable debugging on the Mock Pinpoint Driver"/>
+  <arg name="debug_mock_srx_controller" default="false" doc="Set true to enable debugging on the Mock SRX Controller Driver"/>
+  
   <!-- ROS Namespaces -->
   <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
   <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
