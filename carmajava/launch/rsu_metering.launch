@@ -36,6 +36,9 @@
 
   <!-- Data Files -->
   <arg name="dsrc_data_file"           default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
+  <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
+  <arg name="pinpoint_data_file"       default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
+
   <!-- Debug -->
   <!-- JVM Debug arguments -->
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
