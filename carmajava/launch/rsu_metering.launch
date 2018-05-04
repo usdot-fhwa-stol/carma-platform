@@ -82,7 +82,7 @@
 
       <!-- PinPoint and Controller Drivers are required by interface manager so they must be included here -->
       <!-- Simulated PinPoint Driver Node -->
-      <node if="$(arg mock_pinpoint)" pkg="carma" type="mock_drivers" name="pin_point_application"
+      <node pkg="carma" type="mock_drivers" name="pin_point_application"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_pinpoint)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
