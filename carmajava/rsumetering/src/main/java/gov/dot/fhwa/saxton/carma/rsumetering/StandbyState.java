@@ -23,6 +23,7 @@ import java.util.List;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
@@ -35,6 +36,7 @@ public class StandbyState extends RSUMeteringStateBase {
   protected final static String BROADCAST_MERGE_PARAMS = "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";
   protected final static String MERGE_REQUEST_TYPE = "MERGE";
   protected final static List<String> MERGE_REQUEST_PARAMS = new ArrayList<>(Arrays.asList("MAX_ACCEL", "LAG", "DIST"));
+  protected final static double CM_PER_M = 100.0;
 
   public StandbyState(RSUMeterWorker worker, SaxtonLogger log) {
     super(worker, log, worker.getRequestPeriod(), Long.MAX_VALUE);
@@ -101,6 +103,11 @@ public class StandbyState extends RSUMeteringStateBase {
     msg.setStrategyParams(
       String.format(BROADCAST_MERGE_PARAMS, worker.getMeterRadius(), worker.getDistToMerge(), worker.getMergeLength())
     );
+
+    Point3D meterECEF = worker.getMeterECEF();
+    msg.getLocation().setEcefX((int)(meterECEF.getX() * CM_PER_M));
+    msg.getLocation().setEcefY((int)(meterECEF.getY() * CM_PER_M));
+    msg.getLocation().setEcefZ((int)(meterECEF.getZ() * CM_PER_M));
 
     worker.getManager().publishMobilityRequest(msg);
   }

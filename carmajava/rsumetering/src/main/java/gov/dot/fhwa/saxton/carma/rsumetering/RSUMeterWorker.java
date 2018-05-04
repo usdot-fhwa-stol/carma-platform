@@ -67,6 +67,8 @@ public class RSUMeterWorker {
   protected final Route mainRoadRoute;
   protected final double distToMerge;
   protected final double mainRouteMergeDTD;
+  protected final Location meterLoc;
+  protected final Point3D meterECEF;
   protected final int targetLane;
   protected final double mergeLength;
   protected final String BROADCAST_ID = "";
@@ -108,11 +110,12 @@ public class RSUMeterWorker {
    * @param requestPeriod The period of meter request broadcasts
    * @param commandPeriod The period of commands sent to a controlled vehicles 
    * @param commsTimeout The time period of a comms timeout between the rsu and the vehicle
+   * @param meterLoc The location of the meter point on the earth
    */
   RSUMeterWorker(IRSUMeterManager manager, SaxtonLogger log, String routeFilePath,
     String rsuId, double distToMerge, double mainRouteMergeDTD, double meterRadius,
     int targetLane, double mergeLength, long timeMargin,
-    long requestPeriod, long commandPeriod, long commsTimeout) throws IllegalArgumentException {
+    long requestPeriod, long commandPeriod, long commsTimeout, Location meterLoc) throws IllegalArgumentException {
     
     this.manager = manager;
     this.log = log;
@@ -126,6 +129,8 @@ public class RSUMeterWorker {
     this.requestPeriod = requestPeriod;
     this.commandPeriod = commandPeriod;
     this.commsTimeout = commsTimeout;
+    this.meterLoc = meterLoc;
+    this.meterECEF = gcc.geodesic2Cartesian(meterLoc, Transform.identity());
 
     // Load route file
     log.info("RouteFile: " + routeFilePath);
@@ -501,5 +506,19 @@ public class RSUMeterWorker {
    */
   public long getCommsTimeout() {
     return commsTimeout;
+  }
+
+  /**
+   * @return the meterLoc
+   */
+  public Location getMeterLoc() {
+    return meterLoc;
+  }
+
+  /**
+   * @return the meterECEF
+   */
+  public Point3D getMeterECEF() {
+    return meterECEF;
   }
 }

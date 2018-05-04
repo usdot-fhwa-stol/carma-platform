@@ -21,6 +21,8 @@ import org.ros.concurrent.CancellableLoop;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.namespace.GraphName;
+
+import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.ros.message.Time;
@@ -86,6 +88,10 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     long requestPeriod = (long) (1000.0 / requestFreq);
     long commandPeriod = (long) (1000.0 / commandFreq);
     long commsTimeout = params.getInteger("~comms_timeout");
+    double meterLat = params.getDouble("~meter_point_latitude");
+    double meterLon = params.getDouble("~meter_point_longitude");
+    double meterAlt = params.getDouble("~meter_point_elevation");
+    Location meterLocation = new Location(meterLat, meterLon, meterAlt);
     // Echo Params
     log.info("LoadedParam route_file: " + routeFilePath);
     log.info("LoadedParam dist_to_merge_along_ramp: " + distToMerg);
@@ -98,6 +104,9 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     log.info("LoadedParam standby_state_request_freq: " + requestFreq);
     log.info("LoadedParam command_freq: " + commandPeriod);
     log.info("LoadedParam comms_timeout: " + commsTimeout);
+    log.info("LoadedParam meter_point_latitude: " + meterLat);
+    log.info("LoadedParam meter_point_longitude: " + meterLon);
+    log.info("LoadedParam meter_point_elevation: " + meterAlt);
 
     // Topics
     // Publishers
@@ -108,7 +117,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     // Worker must be initialized after publishers but before subscribers
     worker = new RSUMeterWorker(this, log, routeFilePath, rsuId, distToMerg,
      mainRouteMergeDTD, rampMeterRadius, targetLane, lengthOfMerge, timeMargin,
-     requestPeriod, commandPeriod, commsTimeout
+     requestPeriod, commandPeriod, commsTimeout, meterLocation
     );
 
     // Subscribers
