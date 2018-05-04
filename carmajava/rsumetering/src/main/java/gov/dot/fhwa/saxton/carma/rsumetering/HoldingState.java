@@ -107,12 +107,12 @@ public class HoldingState extends RSUMeteringStateBase {
             log.info("Releasing vehicle with expected arrival time of " + vehicleArrivalTime +
              " and platoon arrival time of " + nextPlatoon.getExpectedTimeOfArrival());
 
-             worker.setState(new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+             worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
 
           } else if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival() + worker.getTimeMargin()) {
 
             log.warn("Vehicle cannot reach merge before platoon passes but will try anyway");
-            worker.setState(new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
 
           } else {
             log.debug("Holding vehicle for platoon");
@@ -146,7 +146,7 @@ public class HoldingState extends RSUMeteringStateBase {
 
     if (!msg.getIsAccepted()) {
       log.warn("NACK received from vehicle: " + vehicleId + " for plan: " + planId);
-      worker.setState(new StandbyState(worker, log));
+      worker.setState(this, new StandbyState(worker, log));
     }
   }
 
@@ -169,6 +169,6 @@ public class HoldingState extends RSUMeteringStateBase {
     
     worker.getManager().publishMobilityResponse(msg);
     // Transition to standby state
-    worker.setState(new StandbyState(worker, log));
+    worker.setState(this, new StandbyState(worker, log));
   }
 }

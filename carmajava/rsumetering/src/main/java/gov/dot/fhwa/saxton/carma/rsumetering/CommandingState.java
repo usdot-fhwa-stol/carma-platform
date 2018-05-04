@@ -119,7 +119,7 @@ public class CommandingState extends RSUMeteringStateBase {
 
     if (!msg.getIsAccepted()) {
       log.warn("NACK received from vehicle: " + vehicleId + " for plan: " + planId);
-      worker.setState(new StandbyState(worker, log));
+      worker.setState(this, new StandbyState(worker, log));
     }
   }
 
@@ -142,6 +142,6 @@ public class CommandingState extends RSUMeteringStateBase {
     
     worker.getManager().publishMobilityResponse(msg);
     // Transition to standby state
-    worker.setState(new StandbyState(worker, log));
+    worker.setState(this, new StandbyState(worker, log));
   }
 }

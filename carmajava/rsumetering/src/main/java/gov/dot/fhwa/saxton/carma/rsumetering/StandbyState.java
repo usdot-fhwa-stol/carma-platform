@@ -67,7 +67,7 @@ public class StandbyState extends RSUMeteringStateBase {
       return false;
     }
 
-    worker.setState(new HoldingState(worker, log, senderId, planId, lagTime, maxAccel, vehicleDistToMerge));
+    worker.setState(this, new HoldingState(worker, log, senderId, planId, lagTime, maxAccel, vehicleDistToMerge));
     return true;
   }
 

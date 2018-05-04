@@ -31,26 +31,33 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.ros.message.MessageFactory;
+import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
 import org.ros.rosjava_geometry.Transform;
 
 import cav_msgs.BSM;
+import cav_msgs.BSMCoreData;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
  
-// TODO ADD TIMEOUT SYSTEM
 /**
  * Primary logic class for the RSUMeterManager node
+ * 
+ * This class handles tracking of platoons and vehicles on the road, but passes the communications and control logic to the current state object
  */
 public class RSUMeterWorker {
 
   protected final static double MS_PER_S = 1000.0; // Milli-seconds per second
+  protected final static long NANO_SEC_PER_MS = 1000000L; // Nano-seconds per milli-second
+  protected final static long BSM_ID_TIMEOUT = 3000L; // Timeout of a bsm id in ms
   protected final IRSUMeterManager manager;
   protected final SaxtonLogger log;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
@@ -63,14 +70,14 @@ public class RSUMeterWorker {
   protected final String BROADCAST_ID = "";
   protected final static String PLATOONING_STRATEGY = "Carma/Platooning";
   protected final static String COOPERATIVE_MERGE_STRATEGY = "Carma/CooperativeMerge";
-  protected final String PLATOON_INFO_PARAMS = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d"; // Sent every three seconds (TODO make faster)
+  protected final String PLATOON_INFO_PARAMS = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d"; // Sent every three seconds 
   protected final String INFO_TYPE_PARAM = "INFO";
   protected final List<String> INFO_STRATEGY_PARAMS = new ArrayList<>(Arrays.asList("REAR", "LENGTH", "SPEED", "SIZE"));
   
   protected final ConcurrentMap<String, PlatoonData> platoonMap = new ConcurrentHashMap<>();
-  protected final ConcurrentMap<String, Location> bsmMap = new ConcurrentHashMap<>();
+  protected final ConcurrentMap<String, BSM> bsmMap = new ConcurrentHashMap<>();
   protected final Object stateMutex = new Object();
-  protected IRSUMeteringState state = null;
+  protected AtomicReference<IRSUMeteringState> state; // Never null
   protected final String rsuId;
   protected String platoonRearBSMId = null;
   protected final GeodesicCartesianConverter gcc =  new GeodesicCartesianConverter();
@@ -131,10 +138,11 @@ public class RSUMeterWorker {
     loadedRoute.setRouteID(loadedRoute.getRouteName()); // Set route id
 
     mainRoadRoute = Route.fromMessage(loadedRoute.toMessage(messageFactory)); // Assign waypoint ids
+
+    // Set state this is required to maintain the state not null contract
+    state.set(new StandbyState(this, log));
   }
 
-  // TODO with many vehicles the number of BSMs would grow very fast. Should clean them out every 5 seconds
-  // TODO set an initial state
   /**
    * Handles incoming BSM messages
    * BSM messages are cached for later reference
@@ -150,7 +158,15 @@ public class RSUMeterWorker {
     double alt = msg.getCoreData().getElev();
     
     Location loc = new Location(lat,lon,alt);
-    bsmMap.put(bsmId, loc);
+    bsmMap.put(bsmId, msg);
+
+    // Remove the bsm if it's id has expired
+    // Since the header stamp is set by us not the sender there is no need to synchronize clocks
+    final Time cutoffTime = Time.fromMillis(System.currentTimeMillis() - BSM_ID_TIMEOUT);
+    
+    bsmMap.values().removeIf(bsmMsg -> {
+      return bsmMsg.getHeader().getStamp().compareTo(cutoffTime) < 0;
+    });
   }
 
   /**
@@ -201,9 +217,7 @@ public class RSUMeterWorker {
     }
 
     // Pass on to state
-    synchronized(stateMutex) {
-      state.onMobilityOperationMessage(msg);
-    }
+    state.get().onMobilityOperationMessage(msg);
 
   }
 
@@ -225,7 +239,8 @@ public class RSUMeterWorker {
     
     double platoonSpeed = Double.parseDouble(paramsArray.get(2));
     String rearBsmId = paramsArray.get(0);
-    Location rearLoc = bsmMap.get(rearBsmId);
+    BSMCoreData bsmData = bsmMap.get(rearBsmId).getCoreData();
+    Location rearLoc = new Location(bsmData.getLatitude(), bsmData.getLongitude(), bsmData.getElev());
     // If we don't have a BSM for this rear vehicle then no value in tracking platoon
     if (rearLoc == null) {
       log.warn("Platoon detected before BSM data available");
@@ -269,21 +284,16 @@ public class RSUMeterWorker {
         return;
       }
 
-    synchronized(stateMutex) {
-      if (state == null) {
-        log.warn("Requested to handle mobility request message but state was null");
-      }
-      boolean accepted = state.onMobilityRequestMessage(msg);
-      
-      MobilityResponse response = messageFactory.newFromType(MobilityResponse._TYPE);
-      response.getHeader().setRecipientId(msg.getHeader().getSenderId());
-      response.getHeader().setSenderId(rsuId);
-      response.getHeader().setTimestamp(System.currentTimeMillis());
-      response.getHeader().setPlanId(msg.getHeader().getPlanId());
-      response.setIsAccepted(accepted);
+    boolean accepted = state.get().onMobilityRequestMessage(msg);
+    
+    MobilityResponse response = messageFactory.newFromType(MobilityResponse._TYPE);
+    response.getHeader().setRecipientId(msg.getHeader().getSenderId());
+    response.getHeader().setSenderId(rsuId);
+    response.getHeader().setTimestamp(System.currentTimeMillis());
+    response.getHeader().setPlanId(msg.getHeader().getPlanId());
+    response.setIsAccepted(accepted);
 
-      manager.publishMobilityResponse(response);
-    }
+    manager.publishMobilityResponse(response);
   }
 
   /**
@@ -300,12 +310,7 @@ public class RSUMeterWorker {
         return;
       }
 
-    synchronized(stateMutex) {
-      if (state == null) {
-        log.warn("Requested to handle mobility request message but state was null");
-      }
-      state.onMobilityResponseMessage(msg);
-    }
+    state.get().onMobilityResponseMessage(msg);
   }
 
 
@@ -381,13 +386,17 @@ public class RSUMeterWorker {
 
   /**
    * Sets the state of this plugin
+   * The contact here is that the old state is always the state requesting the transition
+   * This function is thread safe as long as the contract is met
    * 
+   * @param callingState The state which is requesting the transition
    * @param newState The state to transition to
    */
-  protected void setState(IRSUMeteringState newState) {
-    log.info("Transitioned from old state: " + state + " to new state: " + newState);
-    synchronized (stateMutex) {
-      state = newState;
+  protected void setState(IRSUMeteringState callingState, IRSUMeteringState newState) {
+
+    // Only perform the transition if we are still in the expected calling state
+    if (state.compareAndSet(callingState, newState)) {
+      log.info("Transitioned from old state: " + callingState + " to new state: " + newState); 
     }
   }
 
@@ -435,7 +444,7 @@ public class RSUMeterWorker {
         if (mostRecentPlatoon[0] == null) {
           mostRecentPlatoon[0] = v;
         } else if (v.getExpectedTimeOfArrival() < mostRecentPlatoon[0].getExpectedTimeOfArrival()
-          && v.getRearDTD() < mainRouteMergeDTD + mergeLength) { // TODO validate this check isn't duplicated later
+          && v.getRearDTD() < mainRouteMergeDTD + mergeLength) { 
           mostRecentPlatoon[0] = v;
         }
       }
@@ -448,17 +457,8 @@ public class RSUMeterWorker {
    * A loop which will spin as fast as possible
    */
   public void loop() throws InterruptedException {
-    // TODO this will likely cause dead lock due to internal thread.sleep. 
-    // Need to reavaluate state mutex usage
-    // Does this mean each state needs its own thread like platooning? 
-    synchronized(stateMutex) {
-      if (state == null) {
-        return;
-      }
-      state.loop();
-    }
+    state.get().loop();
   }
-
 
   /**
    * @return the mainRoadRoute
