@@ -5,7 +5,7 @@
 rsu_id: 'RSU-04E5'
 
 # String: The route file for the main road this rsu is metering for.
-route_file: '/opt/carma_1/src/CarmaPlatform/carmajava/route/src/test/resources/routes/glidepath_demo_east_bound.yaml'
+route_file: '/opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routes/glidepath_demo_east_bound.yaml'
 
 # Double: The latitude of the meter point
 # Units: deg
