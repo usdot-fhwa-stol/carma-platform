@@ -41,6 +41,7 @@
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_rsu_metering" default="false" doc="Set true to enable debugging on the RSU Metering node"/>
+  <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
   <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
   <arg name="debug_mock_dsrc"      default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
 
@@ -49,6 +50,7 @@
   <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
   <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
   <arg name="RSU_NS" default="rsu" doc="Namespace of nodes in rsu metering package"/>
+  <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
 
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
