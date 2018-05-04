@@ -36,7 +36,7 @@ length_of_merge: 50.0
 ramp_meter_radius: 30.0
 
 # Integer: The lane index of the lane merging vehicles are trying to reach
-ramp_meter_radius: 1
+target_lane: 1
 
 # Integer: The merge arrival time margin within which the merging vehicle is trying to arrive
 # Units: ms
