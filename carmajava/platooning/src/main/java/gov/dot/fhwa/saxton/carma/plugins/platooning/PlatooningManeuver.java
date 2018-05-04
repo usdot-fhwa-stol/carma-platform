@@ -61,6 +61,10 @@ public class PlatooningManeuver extends ComplexManeuverBase {
         return commandInputs_.getMaxAccelLimit();
     }
 
+    @Override protected double generateSteeringCommand() throws IllegalStateException {
+        return 0.0; // Platooning does not do lateral control
+    }
+
     @Override
     public String toString() {
         return "PlatooningManeuver [startDist_=" + startDist_ + ", endDist_=" + endDist_ + ", minCompletionTime_="

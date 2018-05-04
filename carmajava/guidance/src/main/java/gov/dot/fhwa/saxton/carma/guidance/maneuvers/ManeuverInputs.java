@@ -69,6 +69,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     protected double distanceCrosstrack_ = 0.0; // m
     protected double currentSpeed_ = 0.0; // m/s
     protected double responseLag_ = 0.0; // sec
+    protected double maxAccel_ = 2.5; // m/s^2
     protected int currentLane_ = 0;
     protected String hostVehicleFrame_ = "host_vehicle";
     protected String vehicleFrontFrame_ = "vehicle_front";
@@ -89,7 +90,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     @Override
     public void onStartup() {
         // Setup the ACC Strategy factory for use by maneuvers
-        double maxAccel = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
+        maxAccel_ = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
         double vehicleResponseLag = node.getParameterTree().getDouble("~vehicle_response_lag", 1.4);
         double desiredTimeGap = node.getParameterTree().getDouble("~desired_acc_timegap", 1.0);
         double minStandoffDistance = node.getParameterTree().getDouble("~min_acc_standoff_distance", 5.0);
@@ -112,7 +113,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         Deadband deadbandFilter = new Deadband(desiredTimeGap, deadband);
 
         Pipeline<Double> accFilterPipeline = new Pipeline<>(deadbandFilter, timeGapController, movingAverageFilter);
-        BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel, vehicleResponseLag,
+        BasicAccStrategyFactory accFactory = new BasicAccStrategyFactory(desiredTimeGap, maxAccel_, vehicleResponseLag,
                 minStandoffDistance, exitDistanceFactor, accFilterPipeline);
         AccStrategyManager.setAccStrategyFactory(accFactory);
 
@@ -368,4 +369,9 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
     public double getCrosstrackDistance() {
         return distanceCrosstrack_;
     }
+
+	@Override
+	public double getMaxAccelLimit() {
+		return maxAccel_;
+	}
 }
