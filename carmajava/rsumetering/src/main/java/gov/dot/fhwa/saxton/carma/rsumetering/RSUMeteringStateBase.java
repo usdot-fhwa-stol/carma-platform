@@ -43,6 +43,7 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
   private volatile double steerCommand = 0; 
   private volatile double maxAccelCommand = 0; 
   private AtomicLong lastMessageTime = new AtomicLong(0);
+  private long lastCompletionTime = System.currentTimeMillis();
   protected final static String COMMAND_PARAMS = "COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f";
 
   protected final MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
@@ -65,11 +66,11 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
 
   @Override
   public final void loop() throws InterruptedException {
-    long startTime = System.currentTimeMillis();
     onLoop();
     checkTimeout();
-    long endTime = System.currentTimeMillis();
-    Thread.sleep(Math.max(loopPeriod - (endTime - startTime), 0));
+    long doneTime = System.currentTimeMillis();
+    Thread.sleep(Math.max(loopPeriod - (doneTime - lastCompletionTime), 0));
+    lastCompletionTime = System.currentTimeMillis(); // Used to take into consideration the callers spin rate when timing
   }
 
   /**

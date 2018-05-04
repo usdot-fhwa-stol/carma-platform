@@ -59,6 +59,7 @@ public class RSUMeterWorker {
   protected final static double MS_PER_S = 1000.0; // Milli-seconds per second
   protected final static long NANO_SEC_PER_MS = 1000000L; // Nano-seconds per milli-second
   protected final static long BSM_ID_TIMEOUT = 3000L; // Timeout of a bsm id in ms
+  protected final static long PLATOON_TIMEOUT = 4000L; // Timeout of a platooning info message
   protected final IRSUMeterManager manager;
   protected final SaxtonLogger log;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
@@ -160,14 +161,6 @@ public class RSUMeterWorker {
     
     Location loc = new Location(lat,lon,alt);
     bsmMap.put(bsmId, msg);
-
-    // Remove the bsm if it's id has expired
-    // Since the header stamp is set by us not the sender there is no need to synchronize clocks
-    final Time cutoffTime = Time.fromMillis(System.currentTimeMillis() - BSM_ID_TIMEOUT);
-    
-    bsmMap.values().removeIf(bsmMsg -> {
-      return bsmMsg.getHeader().getStamp().compareTo(cutoffTime) < 0;
-    });
   }
 
   /**
@@ -267,7 +260,7 @@ public class RSUMeterWorker {
     long timeOfArrival = (long)(deltaT * MS_PER_S)  + msg.getHeader().getTimestamp();
     
     PlatoonData newData = new PlatoonData(msg.getHeader().getSenderId(), platoonRearDTD,
-     platoonSpeed, timeOfArrival, rearBsmId);
+     platoonSpeed, timeOfArrival, rearBsmId, System.currentTimeMillis());
      
     platoonMap.put(newData.getLeaderId(), newData);
   }
@@ -404,6 +397,33 @@ public class RSUMeterWorker {
    */
   public void loop() throws InterruptedException {
     state.get().loop();
+    removeOldBSMS();
+    removeOldPlatoons();
+  }
+
+  /**
+   * Helper function removes platoon data from platoons which are no longer sending updates
+   */
+  private void removeOldPlatoons() {
+    // Remove the bsm if it's id has expired
+    final long cutoffTime = System.currentTimeMillis() - PLATOON_TIMEOUT;
+    
+    platoonMap.values().removeIf(platoon -> {
+      return platoon.getStamp() < cutoffTime;
+    });
+  }
+
+  /**
+   * Helper function which removes bsms which are no longer sending updates
+   */
+  private void removeOldBSMS() {
+    // Remove the bsm if it's id has expired
+    // Since the header stamp is set by us not the sender there is no need to synchronize clocks
+    final Time cutoffTime = Time.fromMillis(System.currentTimeMillis() - BSM_ID_TIMEOUT);
+    
+    bsmMap.values().removeIf(bsmMsg -> {
+      return bsmMsg.getHeader().getStamp().compareTo(cutoffTime) < 0;
+    });
   }
 
   /**

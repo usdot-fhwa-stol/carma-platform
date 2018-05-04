@@ -25,6 +25,7 @@ public final class PlatoonData {
   protected final double speed; // m/s
   protected final long expectedTimeOfArrival; // ms
   protected final String rearBSMId; 
+  protected final long stamp;
   protected final static double LOC_EPSILON_M = 0.1; // m
   protected final static double SPEED_EPSILON_MPS = 0.1; // m /s
 
@@ -36,14 +37,16 @@ public final class PlatoonData {
    * @param speed The speed of the platoon in m/s
    * @param expectedTimeOfArrival The expected UTC time of arrival at the merge point in ms
    * @param rearBSMId The BSM id of the rear vehicle in this platoon
+   * @param stamp The time stamp of this platoon data
    */
   public PlatoonData (String leaderId, double rearDTD, 
-    double speed, long expectedTimeOfArrival, String rearBSMId) {
+    double speed, long expectedTimeOfArrival, String rearBSMId, long stamp) {
     this.leaderId = leaderId;
     this.rearDTD = rearDTD;
     this.speed = speed;
     this.expectedTimeOfArrival = expectedTimeOfArrival;
     this.rearBSMId = rearBSMId;
+    this.stamp = stamp;
   }
   
   /**
@@ -79,6 +82,13 @@ public final class PlatoonData {
    */
   public String getRearBSMId() {
     return rearBSMId;
+  }
+  
+  /**
+   * @return the stamp
+   */
+  public long getStamp() {
+    return stamp;
   }
 
   /**
