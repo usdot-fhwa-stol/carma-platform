@@ -32,7 +32,7 @@
   <!-- Directory of Engineering Tools -->
   <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/../engineering_tools" doc="The directory containing scripts for execution"/>
   <!-- Simulation Usage -->
-  <arg name="mock_dsrc"           default="true" doc="True if using a simulated dsrc driver"/>
+  <arg name="mock_dsrc"           default="false" doc="True if using a simulated dsrc driver"/>
 
   <!-- Data Files -->
   <arg name="dsrc_data_file"           default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
