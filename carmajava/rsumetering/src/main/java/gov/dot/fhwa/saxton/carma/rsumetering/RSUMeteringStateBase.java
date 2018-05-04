@@ -106,6 +106,7 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
    * @param steer The steering angle in rad
    */
   protected void updateCommands(double speed, double maxAccel, double steer) {
+    maxAccel = Math.abs(maxAccel); // Max accel should always be positive in CARMA
     synchronized(commandMutex) { // Synchronized to ensure commands are read as a set
       speedCommand = speed;
       maxAccelCommand = maxAccel;

@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -32,6 +35,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
@@ -49,8 +53,10 @@ public class StandbyState implements ICooperativeMergeState {
   protected final ILogger log;
   protected final PluginServiceLocator pluginServiceLocator;
   protected final ConcurrentMap<String, RampMeterData> rampMeters = new ConcurrentHashMap<>();
-  protected final static String EXPECTED_REQUEST_INFO_PARAMS = "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";
-  
+  protected final String INFO_PARAM_TYPE = "INFO";
+  protected final List<String> REQUEST_PARAMS_KEYS = new ArrayList<>(Arrays.asList("RADIUS", "MERGE_DIST", "MERGE_LENGTH"));
+ 
+
   /**
    * Constructor
    * 
@@ -75,26 +81,12 @@ public class StandbyState implements ICooperativeMergeState {
   public MobilityRequestResponse onMobilityRequestMessage(MobilityRequest msg) {
     // In standby state, the plugin waits to receive a message from a ramp metering rsu
     // Parse Strategy Params
-    // Expecting EXPECTED_REQUEST_INFO_PARAMS
-    final  String RADIUS_PARAM       = "RADIUS";
-    final  String MERGE_DIST_PARAM   = "MERGE_DIST";
-    final  String MERGE_LENGTH_PARAM = "MERGE_LENGTH";
-    final  String INFO_TYPE          = "INFO";
-    String paramsString              = msg.getStrategyParams();
-    String[] paramsParts             = paramsString.split("\\|");
-    String typeString                = paramsParts[0];
-    String dataString                = paramsParts[1];
-    String[] dataParts               = dataString.split(",");
-    String[] radiusParts             = dataParts[0].split(":");
-    String[] mergeDistParts          = dataParts[1].split(":");
-    String[] mergeLengthParts        = dataParts[2].split(":");
-
-    // Validate Params
-    if (!typeString.equals(INFO_TYPE) || !radiusParts[0].equals(RADIUS_PARAM)
-        || !mergeDistParts[0].equals(MERGE_DIST_PARAM)
-        || !mergeLengthParts[0].equals(MERGE_LENGTH_PARAM)) {
-        
-      log.info("Received mobility request with invalid params for state. Params: " + paramsString);
+    // Expecting "INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f";
+    List<String> params;
+    try {
+      params = MobilityHelper.extractStrategyParams(msg.getStrategyParams(), INFO_PARAM_TYPE, REQUEST_PARAMS_KEYS);
+    } catch (IllegalArgumentException e) {
+      log.error("Received mobility request with invalid params. Exception: " + e);
       return MobilityRequestResponse.NO_RESPONSE;
     }
 
@@ -103,9 +95,9 @@ public class StandbyState implements ICooperativeMergeState {
 
     // If this is our first time seeing this, RSU cache its information
     if (!rampMeters.containsKey(rsuId)) {
-      double meterRadius       = Double.parseDouble(radiusParts[1]);
-      double mergeDTDFromMeter = Double.parseDouble(mergeDistParts[1]);
-      double mergeLength       = Double.parseDouble(mergeLengthParts[1]);
+      double meterRadius       = Double.parseDouble(params.get(0));
+      double mergeDTDFromMeter = Double.parseDouble(params.get(1));
+      double mergeLength       = Double.parseDouble(params.get(2));
 
       cav_msgs.LocationECEF meterLoc = msg.getLocation();
       // TODO Probably would be good to add a function to route for doing this complicated process which happens alot

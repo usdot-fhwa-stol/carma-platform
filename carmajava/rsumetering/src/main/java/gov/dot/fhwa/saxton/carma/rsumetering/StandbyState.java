@@ -23,6 +23,7 @@ import java.util.List;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 /**
@@ -46,7 +47,7 @@ public class StandbyState extends RSUMeteringStateBase {
     String planId = msg.getHeader().getPlanId();
     List<String> requestParams;
     try {
-      requestParams = worker.extractStrategyParams(msg.getStrategyParams(), MERGE_REQUEST_TYPE, MERGE_REQUEST_PARAMS);
+      requestParams = MobilityHelper.extractStrategyParams(msg.getStrategyParams(), MERGE_REQUEST_TYPE, MERGE_REQUEST_PARAMS);
     } catch (IllegalArgumentException e) {
       log.warn("Bad request strategy string received. Generated exception: " + e);
       return false;

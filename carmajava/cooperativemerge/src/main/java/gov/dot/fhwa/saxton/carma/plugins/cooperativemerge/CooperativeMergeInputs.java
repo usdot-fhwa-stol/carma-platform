@@ -23,16 +23,12 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
 
   private double speedCommand; // m/s
   private double steeringCommand; // rad
-  private double maxAccel; // m/s^2
+  private double maxAccel = 2.5; // m/s^2
 
   /**
    * Constructor
-   * 
-   * @param maxAccel The maximum acceleration allowed in m/s^2
    */
-  public CooperativeMergeInputs(double maxAccel) {
-    this.maxAccel = maxAccel;
-  }
+  public CooperativeMergeInputs() {}
 
   /**
    * @param speedCommand the speedCommand to set
@@ -49,6 +45,13 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
   @Override
   public double getMaxAccelLimit() {
     return maxAccel;
+  }
+
+  /**
+   * @param maxAccel the maxAccel to set in m/s^2
+   */
+  public void setMaxAccel(double maxAccel) {
+    this.maxAccel = maxAccel;
   }
 
   /**

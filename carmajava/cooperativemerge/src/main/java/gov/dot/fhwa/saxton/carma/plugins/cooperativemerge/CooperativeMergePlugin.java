@@ -66,8 +66,7 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
     pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
     
-    maxAccel = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit();
-    cooperativeMergeInputs = new CooperativeMergeInputs(maxAccel);
+    cooperativeMergeInputs = new CooperativeMergeInputs();
     lagTime = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();
   }
 

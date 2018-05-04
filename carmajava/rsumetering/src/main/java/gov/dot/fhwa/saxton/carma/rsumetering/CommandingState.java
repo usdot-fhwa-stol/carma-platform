@@ -23,6 +23,7 @@ import java.util.List;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 /**
@@ -79,7 +80,7 @@ public class CommandingState extends RSUMeteringStateBase {
     // Extract params
     List<String> params;
     try {
-      params = worker.extractStrategyParams(msg.getStrategyParams(), STATUS_TYPE_PARAM, OPERATION_PARAMS);
+      params = MobilityHelper.extractStrategyParams(msg.getStrategyParams(), STATUS_TYPE_PARAM, OPERATION_PARAMS);
     } catch (IllegalArgumentException e) {
       log.warn("Received operation message with bad params. Exception: " + e);
       return;

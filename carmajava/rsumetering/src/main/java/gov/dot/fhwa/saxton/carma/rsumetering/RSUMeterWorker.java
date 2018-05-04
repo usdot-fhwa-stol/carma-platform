@@ -21,6 +21,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.rsumetering.IRSUMeteringState;
 import gov.dot.fhwa.saxton.carma.rsumetering.PlatoonData;
+import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.route.FileStrategy;
 import gov.dot.fhwa.saxton.carma.route.Route;
@@ -231,7 +232,7 @@ public class RSUMeterWorker {
     String strategyParams = msg.getStrategyParams();
     List<String> paramsArray;
     try {
-      paramsArray = extractStrategyParams(strategyParams, INFO_TYPE_PARAM, INFO_STRATEGY_PARAMS);
+      paramsArray = MobilityHelper.extractStrategyParams(strategyParams, INFO_TYPE_PARAM, INFO_STRATEGY_PARAMS);
     } catch(IllegalArgumentException e) {
       log.warn("Bad operations strategy string received. Generated exception: " + e);
       return;
@@ -240,12 +241,13 @@ public class RSUMeterWorker {
     double platoonSpeed = Double.parseDouble(paramsArray.get(2));
     String rearBsmId = paramsArray.get(0);
     BSMCoreData bsmData = bsmMap.get(rearBsmId).getCoreData();
-    Location rearLoc = new Location(bsmData.getLatitude(), bsmData.getLongitude(), bsmData.getElev());
     // If we don't have a BSM for this rear vehicle then no value in tracking platoon
-    if (rearLoc == null) {
+    if (bsmData == null) {
       log.warn("Platoon detected before BSM data available");
       return;
     }
+
+    Location rearLoc = new Location(bsmData.getLatitude(), bsmData.getLongitude(), bsmData.getElev());
 
 
     // Get downtrack distance of platoon rear
@@ -311,62 +313,6 @@ public class RSUMeterWorker {
       }
 
     state.get().onMobilityResponseMessage(msg);
-  }
-
-
-  /**
-   * Helper function to extract strategy params from a mobility message strategy string
-   * Params are expected to be of the form TYPE|KEY1:value1,KEY2:value2 etc.
-   * This will throw an exception if the provided paramsString does not match the expected type and keys
-   * 
-   * @param paramsString The strategy params string to process
-   * @param expectedType The expected type value in the strategy params. If this value is null the type will be assumed not to exist.
-   * @param keys A list of expected keys in the order they appear. Example ["KEY1", "KEY2"]
-   * 
-   * @return A list of string values associated with the provided keys. Example ["value1", "value2"]
-   */
-  protected List<String> extractStrategyParams(String paramsString, String expectedType, List<String> keys) 
-    throws IllegalArgumentException {
-
-    String dataString = paramsString;
-
-    // If we expect a data type extract and validate it
-    if (expectedType != null) {
-      String[] paramsParts  = paramsString.split("\\|");
-
-      // Check the correct type string was provided
-      if (paramsParts.length != 2
-        || !paramsParts[0].equals(expectedType)) {
-        throw new IllegalArgumentException("Invalid type. Expected: " + expectedType + " String: " + paramsString);
-      }
-
-      dataString = paramsParts[1]; // Get data string
-    }
-
-    Pattern pattern = Pattern.compile("(?<=(^|,))(.*?)(?=(,|$))"); // Reg ex grabs everything between two commas or the start and end of a string
-    Matcher matcher = pattern.matcher(dataString);
-
-    List<String> dataList = new ArrayList<>(keys.size());
-
-    // Iterate expected number of times and extract values
-    for (int i = 0; i < keys.size(); i++) {
-      // If we can't extract a value the input string is badly formatted
-      if (!matcher.find()) {
-        throw new IllegalArgumentException("Failed to find pattern match between commas. String: " + paramsString);
-      }
-
-      String[] dataParts = matcher.group().split(":");
-
-      // Check if the key is correct
-      if (dataParts.length != 2
-       || !dataParts[0].equals(keys.get(i))) {
-        throw new IllegalArgumentException("Invalid key. Expected: " + keys.get(i) + " String: " + paramsString);
-      }
-
-      dataList.add(dataParts[1]);
-    }
-
-    return dataList;
   }
 
   /**

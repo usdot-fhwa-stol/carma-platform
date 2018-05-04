@@ -22,6 +22,7 @@ import java.util.List;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 /**
@@ -75,7 +76,7 @@ public class HoldingState extends RSUMeteringStateBase {
     // Extract params
     List<String> params;
     try {
-      params = worker.extractStrategyParams(msg.getStrategyParams(), STATUS_TYPE_PARAM, OPERATION_PARAMS);
+      params = MobilityHelper.extractStrategyParams(msg.getStrategyParams(), STATUS_TYPE_PARAM, OPERATION_PARAMS);
     } catch (IllegalArgumentException e) {
       log.warn("Received operation message with bad params. Exception: " + e);
       return;
@@ -132,7 +133,7 @@ public class HoldingState extends RSUMeteringStateBase {
     }
 
     // Request 0 speed but use max accel to limit behavior
-    updateCommands(0, neededAccel, 0);
+    updateCommands(0,  neededAccel, 0);
   }
 
   @Override
