@@ -69,6 +69,7 @@ required_plugins:
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins:
+  - Cooperative Merge Plugin
   - Platooning Plugin
   - Yield Plugin
   - Speed Harmonization Plugin
@@ -221,6 +222,7 @@ light_bar_priorities:
   - Speed Harmonization Plugin
   - Route Following Plugin
   - Cruising Plugin
+  - Cooperative Merge Plugin
 
 # Integer: The amount of time for the light bar to consider a communication timeout
 # Units: mili-seconds
