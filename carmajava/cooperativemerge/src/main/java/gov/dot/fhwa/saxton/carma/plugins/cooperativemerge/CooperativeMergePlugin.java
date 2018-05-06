@@ -86,8 +86,8 @@ public class CooperativeMergePlugin extends AbstractPlugin
     log.info("LoadedParam: cooperative_merge_comms_timeout: " + commsTimeoutMS);
 
     mobilityRequestPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
-    mobilityOperationPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_operation", MobilityRequest._TYPE);
-    mobilityResponsePub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_response", MobilityRequest._TYPE);
+    mobilityOperationPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
+    mobilityResponsePub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_response", MobilityResponse._TYPE);
   }
 
   @Override
