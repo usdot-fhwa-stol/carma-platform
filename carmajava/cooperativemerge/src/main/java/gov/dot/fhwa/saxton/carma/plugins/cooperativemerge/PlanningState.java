@@ -107,14 +107,13 @@ public class PlanningState implements ICooperativeMergeState {
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
     RouteService rs = pluginServiceLocator.getRouteService();
     TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-    // Check if the next trajectory includes a platooning window
+    // Check if the next trajectory includes a cooperative merge window
     if(!rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), CooperativeMergePlugin.COOPERATIVE_MERGE_FLAG)) {
       log.info("Asked to plan a trajectory without available window, ignoring...");
       replanningForMerge.set(false);
       return tpr;
     }
 
-    // New Stuff
     if (!replanningForMerge.get()) {
       return tpr;
     }
@@ -167,7 +166,7 @@ public class PlanningState implements ICooperativeMergeState {
     // Uses kinematic equation v_f^2 = v_i^2 + 2ad
     // a = (v_f^2 - v_i^2) / 2d
     // v_f in this case = 0.0
-    double deltaD = rampMeterData.getMergePointDTD() - currentDTD;
+    double deltaD = rampMeterData.getRampMeterDTD() - currentDTD;
     double requiredAccel = Double.NEGATIVE_INFINITY;
     if (deltaD != 0) {
       requiredAccel = -(currentSpeed * currentSpeed) / (2 * deltaD);
@@ -194,7 +193,7 @@ public class PlanningState implements ICooperativeMergeState {
       start, 
       end,
       0, 
-      rs.getSpeedLimitsInRange(start, end).first().getLimit());
+      rs.getSpeedLimitsInRange(start, end).last().getLimit());
 
     traj.setComplexManeuver(mergeManeuver);
     plugin.setState(new ExecutionState(plugin, log, pluginServiceLocator, rampMeterData, planId, mergeManeuver));
