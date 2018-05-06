@@ -103,6 +103,9 @@ public class ExecutionState implements ICooperativeMergeState {
 
     // This is a NACK. We need to abort and replan
     log.warn("NACK received from RSU emergency replanning plan id: " + msg.getHeader().getPlanId());
+    // Return to standby state
+    plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+    // Replan
     pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
   }
   
