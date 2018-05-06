@@ -52,5 +52,5 @@ command_freq: 10.0
 
 # Integer: The amount of time without communications with a merging vehicle to be considered a timeout
 # Units: ms
-comms_timeout: 100
+comms_timeout: 500
 
