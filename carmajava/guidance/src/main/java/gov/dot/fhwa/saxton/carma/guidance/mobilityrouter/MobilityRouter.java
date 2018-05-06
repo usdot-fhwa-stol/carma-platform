@@ -327,12 +327,12 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             }
         }
         
-        double currentTrajEnd = trajectoryExecutor.getTotalTrajectory().getEndLocation();
-        double requestEnd = otherPath.get(otherPath.size() - 1).getDowntrack();
-        if (requestEnd > currentTrajEnd) {
-            log.warn("Using experimental replan method to extend plan to " + requestEnd);
-            arbitrator.requestNewPlan(requestEnd);
-        }
+        // double currentTrajEnd = trajectoryExecutor.getTotalTrajectory().getEndLocation();
+        // double requestEnd = otherPath.get(otherPath.size() - 1).getDowntrack();
+        // if (requestEnd > currentTrajEnd) {
+        //     log.warn("Using experimental replan method to extend plan to " + requestEnd);
+        //     arbitrator.requestNewPlan(requestEnd);
+        // }
     }
 
     /**

@@ -238,12 +238,14 @@ public class RSUMeterWorker {
     
     double platoonSpeed = Double.parseDouble(paramsArray.get(2));
     String rearBsmId = paramsArray.get(0);
-    BSMCoreData bsmData = bsmMap.get(rearBsmId).getCoreData();
+    BSM cachedMsg = bsmMap.get(rearBsmId);
     // If we don't have a BSM for this rear vehicle then no value in tracking platoon
-    if (bsmData == null) {
+    if (cachedMsg == null) {
       log.warn("Platoon detected before BSM data available");
       return;
     }
+
+    BSMCoreData bsmData = cachedMsg.getCoreData();
 
     Location rearLoc = new Location(bsmData.getLatitude(), bsmData.getLongitude(), bsmData.getElev());
 

@@ -83,7 +83,7 @@ public class ExecutionState implements ICooperativeMergeState {
     // Log a warning and do not plan
     if (traj.getStartLocation() < complexManeuver.getEndDistance() - 0.5) {
       log.warn("Asked to plan trajectory before end of complex maneuver. Aborting rsu control");
-      plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+      plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
     }
     return tpr;
   }
@@ -175,7 +175,7 @@ public class ExecutionState implements ICooperativeMergeState {
   public void loop() throws InterruptedException {
     // Check if this plugin is controlling the vehicle
     IManeuver currentManeuver = pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.LONGITUDINAL);
-    if (currentManeuver.getPlanner().equals(plugin)) {
+    if (currentManeuver != null && currentManeuver.getPlanner().equals(plugin)) {
       // If in control publish status updates
       publishOperationStatus();
       executingMergeManeuver = true;
@@ -185,14 +185,14 @@ public class ExecutionState implements ICooperativeMergeState {
         log.warn("RSU did not send operation message with command within timelimit");
         
         // Return to standby state and replan trajectory
-        plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+        plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
         pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
         return;
       }
     } else if (executingMergeManeuver) { // We were in control but no longer are
       executingMergeManeuver = false;
       // Return to standby state
-      plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+      plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
       return;
     }
     // Sleep

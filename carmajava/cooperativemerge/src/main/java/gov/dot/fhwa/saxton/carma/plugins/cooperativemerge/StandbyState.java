@@ -127,7 +127,7 @@ public class StandbyState implements ICooperativeMergeState {
 
     } else if (Math.abs(rsuData.getRampMeterDTD() - currentDTD) < rsuData.getRadius()) {
       // Change to planning state
-      plugin.setState(new PlanningState(plugin, log, pluginServiceLocator, rsuData));
+      plugin.setState(this, new PlanningState(plugin, log, pluginServiceLocator, rsuData));
     }
     return MobilityRequestResponse.NO_RESPONSE;
   }
