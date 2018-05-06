@@ -24,6 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityOperationHandler;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityResponseHandler;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -36,8 +37,10 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
  * Commmunicates via DSRC with a RSU functioning as a ramp meter. 
  * The RSU will send speed and steering commands to the vehicle until the merge is complete.
  */
-public class CooperativeMergePlugin extends AbstractPlugin implements IStrategicPlugin, MobilityRequestHandler, MobilityOperationHandler {
-  protected String vehicleId = "";
+public class CooperativeMergePlugin extends AbstractPlugin 
+  implements IStrategicPlugin, MobilityRequestHandler, MobilityOperationHandler, MobilityResponseHandler {
+  
+    protected String vehicleId = "";
   protected double minimumManeuverLength = 10.0; // m
   protected double maxAccel = 2.5; // m/s^2
   protected double lagTime = 0.1; // s
@@ -65,6 +68,7 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     // Register Mobility Message Callbacks
     pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
     pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
+    pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
     
     cooperativeMergeInputs = new CooperativeMergeInputs();
     lagTime = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();
@@ -82,7 +86,8 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
     log.info("LoadedParam: cooperative_merge_comms_timeout: " + commsTimeoutMS);
 
     mobilityRequestPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
-    mobilityRequestPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_operation", MobilityRequest._TYPE);
+    mobilityOperationPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_operation", MobilityRequest._TYPE);
+    mobilityResponsePub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_response", MobilityRequest._TYPE);
   }
 
   @Override
@@ -237,5 +242,16 @@ public class CooperativeMergePlugin extends AbstractPlugin implements IStrategic
    */
   public long getUpdatePeriod() {
     return updatePeriod;
+  }
+
+  @Override
+  public void handleMobilityResponseMessage(MobilityResponse msg) {
+    synchronized(stateMutex) {
+      if (state == null) {
+        log.warn("Requested to handle mobility response message but state was null");
+        return;
+      }
+      state.onMobilityResponseMessage(msg);
+    }
   }
 }
