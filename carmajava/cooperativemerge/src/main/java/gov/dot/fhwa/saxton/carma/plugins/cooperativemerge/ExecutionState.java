@@ -72,6 +72,8 @@ public class ExecutionState implements ICooperativeMergeState {
     this.rampMeterData        = rampMeterData;
     this.planId               = planId;
     this.complexManeuver      = complexManeuver;
+    // Set message stamp for timeout
+    lastCommandStamp.set(System.currentTimeMillis());
   }
   
   @Override
