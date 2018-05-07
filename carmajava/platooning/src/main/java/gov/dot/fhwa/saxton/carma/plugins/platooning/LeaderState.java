@@ -273,11 +273,13 @@ public class LeaderState implements IPlatooningState {
             log.debug("Found objects from roadway:");
             for(RoadwayObstacle ob : obs) {
                 log.debug("Found obstacle in lane " + ob.getPrimaryLane() + " and its dtd is " + ob.getDownTrack());
-                log.debug("The found obstacle type is " + ob.getConnectedVehicleType().toString());
-                if(ob.getObject() != null) {
+                if(ob.getConnectedVehicleType() != null) {
+                    log.debug("The found obstacle type is " + ob.getConnectedVehicleType().toString());
+                }
+                if(ob.getObject() != null && ob.getObject().getBsmId() != null) {
                     log.debug("The BSM id is of size " + ob.getObject().getBsmId().capacity());
-                    for(int i = 0; i < vehicleRightInFront.getObject().getBsmId().capacity(); i++) {
-                        log.debug("The content at " + i + " is " + vehicleRightInFront.getObject().getBsmId().getByte(i));
+                    for(int i = 0; i < ob.getObject().getBsmId().capacity(); i++) {
+                        log.debug("The content at " + i + " is " + ob.getObject().getBsmId().getByte(i));
                     }
                 } else {
                     log.debug("But we did not found an associated external object");
