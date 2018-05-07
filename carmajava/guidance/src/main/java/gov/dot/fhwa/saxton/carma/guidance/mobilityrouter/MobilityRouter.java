@@ -165,6 +165,10 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     @Override
     public void onCleanRestart() {
         this.handleMobilityPath.set(true);
+        requestMap = Collections.synchronizedMap(new HashMap<>());
+        ackList = Collections.synchronizedList(new LinkedList<>());
+        operationMap = Collections.synchronizedMap(new HashMap<>());
+        pathMap = Collections.synchronizedMap(new HashMap<>());
     }
 
     @Override
