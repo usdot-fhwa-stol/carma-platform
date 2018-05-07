@@ -83,9 +83,9 @@ public class CandidateFollowerStateTest {
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
-        when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
+        mockPlugin.platoonManager = mockManager;
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
-        when(mockPlugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
+        mockPlugin.handleMobilityPath = new AtomicBoolean(true);
         candidateFollowerState = new CandidateFollowerState(mockPlugin, mockLog, pluginServiceLocator, "A", "E1B2");
     }
     
