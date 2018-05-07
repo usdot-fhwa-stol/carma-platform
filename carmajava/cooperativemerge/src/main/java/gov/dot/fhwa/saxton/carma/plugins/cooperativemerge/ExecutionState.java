@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import cav_msgs.MobilityOperation;
@@ -29,6 +32,7 @@ import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 
 /**
  * ExecutionState handles the execution of a cooperative merge for the CooperativeMergePlugin
@@ -40,6 +44,8 @@ public class ExecutionState implements ICooperativeMergeState {
   protected final ILogger        log;
   protected final PluginServiceLocator pluginServiceLocator;
   protected final String OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f";
+  protected final String COMMAND_PARAM_TYPE = "COMMAND";
+  protected final List<String> COMMAND_PARAM_KEYS = new ArrayList<>(Arrays.asList("SPEED", "ACCEL", "STEERING_ANGLE"));
   protected final String planId;
   protected final RampMeterData rampMeterData;
   protected final IComplexManeuver complexManeuver;
@@ -66,6 +72,8 @@ public class ExecutionState implements ICooperativeMergeState {
     this.rampMeterData        = rampMeterData;
     this.planId               = planId;
     this.complexManeuver      = complexManeuver;
+    // Set message stamp for timeout
+    lastCommandStamp.set(System.currentTimeMillis());
   }
   
   @Override
@@ -77,7 +85,7 @@ public class ExecutionState implements ICooperativeMergeState {
     // Log a warning and do not plan
     if (traj.getStartLocation() < complexManeuver.getEndDistance() - 0.5) {
       log.warn("Asked to plan trajectory before end of complex maneuver. Aborting rsu control");
-      plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+      plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
     }
     return tpr;
   }
@@ -104,7 +112,7 @@ public class ExecutionState implements ICooperativeMergeState {
     // This is a NACK. We need to abort and replan
     log.warn("NACK received from RSU emergency replanning plan id: " + msg.getHeader().getPlanId());
     // Return to standby state
-    plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+    plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
     // Replan
     pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
   }
@@ -118,42 +126,27 @@ public class ExecutionState implements ICooperativeMergeState {
     }
 
     // Extract params and validate
+    // Expected String "COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f" 
+    // Extract params
+    List<String> params;
     try {
-      // Expected String "COMMAND|SPEED:%.2f,STEERING_ANGLE:%.2f";
-      final  String SPEED_PARAM    = "SPEED";
-      final  String STEERING_PARAM = "STEERING_ANGLE";
-      final  String TYPE           = "COMMAND";
-      String paramsString          = msg.getStrategyParams();
-      String[] paramsParts         = paramsString.split("\\|");
-      String typeString            = paramsParts[0];
-      String dataString            = paramsParts[1];
-      String[] dataParts           = dataString.split(",");
-      String speedPart             = dataParts[0];
-      String steeringPart          = dataParts[1];
-      String[] speedParts          = speedPart.split(":");
-      String[] steeringParts       = steeringPart.split(":");
-
-      if (!typeString.equals(TYPE) || !speedParts[0].equals(SPEED_PARAM)
-          || !steeringParts[0].equals(STEERING_PARAM)) {
-        log.error("MobilityOperationMessage received from RSU with bad prams: " + paramsString);
-        pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
-        return;
-      }
-
-      // Params are valid so extract speed
-      double targetSpeed = Double.parseDouble(speedParts[1]);
-      double targetSteer = Double.parseDouble(steeringParts[1]);
-
-      plugin.getCooperativeMergeInputs().setSpeedCommand(targetSpeed);
-      plugin.getCooperativeMergeInputs().setSteeringCommand(targetSteer);
-
-      lastCommandStamp.set(System.currentTimeMillis());
-
-    } catch (IndexOutOfBoundsException e) {
-      log.error("MobilityOperationMessage received from RSU with bad prams: " +  msg.getStrategyParams());
+      params = MobilityHelper.extractStrategyParams(msg.getStrategyParams(), COMMAND_PARAM_TYPE, COMMAND_PARAM_KEYS);
+    } catch (IllegalArgumentException e) {
+      log.error("Received operation message with bad params. Exception: " + e);
       pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
       return;
     }
+
+    // Params are valid so extract speed
+    double targetSpeed = Double.parseDouble(params.get(0));
+    double maxAccel = Double.parseDouble(params.get(1));
+    double targetSteer = Double.parseDouble(params.get(2));
+
+    plugin.getCooperativeMergeInputs().setSpeedCommand(targetSpeed);
+    plugin.getCooperativeMergeInputs().setMaxAccel(maxAccel);
+    plugin.getCooperativeMergeInputs().setSteeringCommand(targetSteer);
+
+    lastCommandStamp.set(System.currentTimeMillis());
   }
 
   /**
@@ -187,7 +180,7 @@ public class ExecutionState implements ICooperativeMergeState {
   public void loop() throws InterruptedException {
     // Check if this plugin is controlling the vehicle
     IManeuver currentManeuver = pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.LONGITUDINAL);
-    if (currentManeuver.getPlanner().equals(plugin)) {
+    if (currentManeuver != null && currentManeuver.getPlanner().equals(plugin)) {
       // If in control publish status updates
       publishOperationStatus();
       executingMergeManeuver = true;
@@ -197,14 +190,14 @@ public class ExecutionState implements ICooperativeMergeState {
         log.warn("RSU did not send operation message with command within timelimit");
         
         // Return to standby state and replan trajectory
-        plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+        plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
         pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
         return;
       }
     } else if (executingMergeManeuver) { // We were in control but no longer are
       executingMergeManeuver = false;
       // Return to standby state
-      plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+      plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
       return;
     }
     // Sleep

@@ -105,6 +105,9 @@ public class PlanningState implements ICooperativeMergeState {
   
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+
+    log.info("Entered planTrajectory");
+
     RouteService rs = pluginServiceLocator.getRouteService();
     TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
     // Check if the next trajectory includes a cooperative merge window
@@ -114,11 +117,16 @@ public class PlanningState implements ICooperativeMergeState {
       return tpr;
     }
 
+    log.info("planTrajectory algorithm enabled");
+
     if (!replanningForMerge.get()) {
+      log.info("Ignoring request to plan when not communicating with rsu");
       return tpr;
     }
 
     double currentDTD = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+
+    log.info("We are replanning for merge");
     
     // TODO if needed add logic for if we start past the meter point
     if (currentDTD > rampMeterData.getRampMeterDTD()) {
@@ -128,6 +136,8 @@ public class PlanningState implements ICooperativeMergeState {
       replanningForMerge.set(false);
       return tpr;
     }
+
+    log.info("Valid downtrack location for ramp meter approach");
 
     double complexManeuverSize = (rampMeterData.getMergePointDTD() + rampMeterData.getMergeLength()) - currentDTD;
     
@@ -139,6 +149,8 @@ public class PlanningState implements ICooperativeMergeState {
       replanningForMerge.set(false);
       return tpr;
     }
+
+    log.info("Large enough maneuver");
 
     double start = traj.findEarliestLongitudinalWindowOfSize(complexManeuverSize);
     double end = start + complexManeuverSize;
@@ -152,6 +164,8 @@ public class PlanningState implements ICooperativeMergeState {
       return tpr;
     }
 
+    log.info("Long enough trajectory");
+
     // TODO if needed add logic for if we start past the ramp meter point
     // If the first available planning window is before the meter point we need higher planning priority
     if (start > rampMeterData.getRampMeterDTD()) {
@@ -161,6 +175,8 @@ public class PlanningState implements ICooperativeMergeState {
       tpr.requestHigherPriority();
       return tpr;
     }
+
+    log.info("Starting before ramp meter point");
 
     // Evaluate if we will be able to stop before meter point
     // Uses kinematic equation v_f^2 = v_i^2 + 2ad
@@ -179,6 +195,8 @@ public class PlanningState implements ICooperativeMergeState {
       log.warn("Cannot slow down in the needed space to stop. calculatedAccel: " + requiredAccel);
       return tpr;
     }
+
+    log.info("Enough space to slow down");
     
 
     // At this point we should have a valid window in which to plan
@@ -196,7 +214,9 @@ public class PlanningState implements ICooperativeMergeState {
       rs.getSpeedLimitsInRange(start, end).last().getLimit());
 
     traj.setComplexManeuver(mergeManeuver);
-    plugin.setState(new ExecutionState(plugin, log, pluginServiceLocator, rampMeterData, planId, mergeManeuver));
+
+    log.info("Added complex maneuver to trajectory. " + mergeManeuver);
+    plugin.setState(this, new ExecutionState(plugin, log, pluginServiceLocator, rampMeterData, planId, mergeManeuver));
     return tpr;
   }
 
@@ -208,6 +228,8 @@ public class PlanningState implements ICooperativeMergeState {
   
   @Override
   public void onMobilityResponseMessage(MobilityResponse msg) {
+    log.info("RESPONSE planId: " + msg.getHeader().getPlanId()+ " senderId: " + msg.getHeader().getSenderId() + " targetId: " + msg.getHeader().getRecipientId() + " accepted: " + msg.getIsAccepted());
+    log.info("RESPONSE expected planId: " + planId + "rsuid: " + rampMeterData.getRsuId() + " targetId: " + plugin.getVehicleId());
     // Check if this response if for our proposed plan to merge
     if (!msg.getHeader().getSenderId().equals(rampMeterData.getRsuId())
       || !msg.getHeader().getPlanId().equals(planId)) {
@@ -218,6 +240,7 @@ public class PlanningState implements ICooperativeMergeState {
       if (!replanningForMerge.get()) {
         // If the request was accepted it is time to replan
         if (msg.getIsAccepted()) {
+            log.info("Starting replanning process");
             plugin.setAvailable(true);
             replanningForMerge.set(true);
             pluginServiceLocator.getArbitratorService().requestNewPlan();
@@ -237,7 +260,7 @@ public class PlanningState implements ICooperativeMergeState {
   private void publishNack() {
     MobilityResponse response = plugin.mobilityResponsePub.newMessage();
 
-    response.getHeader().setSenderId(plugin.vehicleId);
+    response.getHeader().setSenderId(plugin.getVehicleId());
     response.getHeader().setSenderBsmId("FFFFFFFF"); // TODO use real bsm id
     response.getHeader().setRecipientId(rampMeterData.getRsuId());
     response.getHeader().setPlanId(this.planId);
@@ -250,7 +273,7 @@ public class PlanningState implements ICooperativeMergeState {
     if (System.currentTimeMillis() - this.requestTime > plugin.getCommsTimeoutMS()) {
       log.warn("RSU did not accept request to merge within timelimit");
       publishNack();
-      plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
+      plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
       return;
     }
     Thread.sleep(plugin.getUpdatePeriod());

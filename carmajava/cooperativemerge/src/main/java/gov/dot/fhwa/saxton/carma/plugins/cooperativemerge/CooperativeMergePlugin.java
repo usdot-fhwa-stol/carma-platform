@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
@@ -40,7 +42,6 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 public class CooperativeMergePlugin extends AbstractPlugin 
   implements IStrategicPlugin, MobilityRequestHandler, MobilityOperationHandler, MobilityResponseHandler {
   
-    protected String vehicleId = "";
   protected double minimumManeuverLength = 10.0; // m
   protected double maxAccel = 2.5; // m/s^2
   protected double lagTime = 0.1; // s
@@ -49,7 +50,7 @@ public class CooperativeMergePlugin extends AbstractPlugin
   protected IPublisher<MobilityResponse> mobilityResponsePub;
   
   protected final Object stateMutex = new Object();
-  protected ICooperativeMergeState state = null;
+  protected AtomicReference<ICooperativeMergeState> state = new AtomicReference<>(null);
 
   protected CooperativeMergeInputs cooperativeMergeInputs;
 
@@ -70,14 +71,13 @@ public class CooperativeMergePlugin extends AbstractPlugin
     pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
     pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
     
-    maxAccel = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit();
-    cooperativeMergeInputs = new CooperativeMergeInputs(maxAccel);
+    cooperativeMergeInputs = new CooperativeMergeInputs();
     lagTime = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();
+    setState(null, new StandbyState(this, log, pluginServiceLocator));
   }
 
   @Override
   public void onInitialize() {
-    vehicleId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
     double freq = pluginServiceLocator.getParameterSource().getDouble("~data_reporting_frequency", 5.0);
     updatePeriod = (long) (1000.0 / freq);
 
@@ -87,26 +87,21 @@ public class CooperativeMergePlugin extends AbstractPlugin
     log.info("LoadedParam: cooperative_merge_comms_timeout: " + commsTimeoutMS);
 
     mobilityRequestPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
-    mobilityOperationPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_operation", MobilityRequest._TYPE);
-    mobilityResponsePub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_response", MobilityRequest._TYPE);
+    mobilityOperationPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
+    mobilityResponsePub = pluginServiceLocator.getPubSubService().getPublisherForTopic("outgoing_mobility_response", MobilityResponse._TYPE);
   }
 
   @Override
   public void onResume() {
     // Reset state
-    setState(new StandbyState(this, log, pluginServiceLocator));
+    synchronized(state) {
+      setState(state.get(), new StandbyState(this, log, pluginServiceLocator));
+    }
   }
 
   @Override
   public void loop() throws InterruptedException {
-    synchronized(stateMutex) {
-      if (state == null) {
-        log.warn("Requested to loop but state was null");
-        return;
-      }
-  
-      state.loop();
-    }
+    state.get().loop();
   }
 
   @Override
@@ -121,37 +116,19 @@ public class CooperativeMergePlugin extends AbstractPlugin
 
   @Override
   public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
-    synchronized(stateMutex) {
-      if (state == null) {
-        log.warn("Requested to plan trajectory but state was null");
-        return new TrajectoryPlanningResponse();
-      }
-      return state.planTrajectory(traj, expectedStartSpeed);
-    }
+    return state.get().planTrajectory(traj, expectedStartSpeed);
   }
 
   @Override
   public void handleMobilityOperationMessage(MobilityOperation msg) {
-    synchronized(stateMutex) {
-      if (state == null) {
-        log.warn("Requested to handle mobility operation message but state was null");
-        return;
-      }
-      state.onMobilityOperationMessage(msg);
-    }
+      state.get().onMobilityOperationMessage(msg);
   }
 
   @Override
   public MobilityRequestResponse handleMobilityRequestMessage(MobilityRequest msg, boolean hasConflict,
       ConflictSpace conflictSpace) {
 
-    synchronized(stateMutex) {
-      if (state == null) {
-        log.warn("Requested to handle mobility request message but state was null");
-        return MobilityRequestResponse.NO_RESPONSE;
-      }
-      return state.onMobilityRequestMessage(msg);
-    }
+      return state.get().onMobilityRequestMessage(msg);
   }
 
   /**
@@ -165,21 +142,26 @@ public class CooperativeMergePlugin extends AbstractPlugin
 
   /**
    * Sets the state of this plugin
+   * The contact here is that the old state is always the state requesting the transition
+   * This function is thread safe as long as the contract is met
    * 
+   * @param callingState The state which is requesting the transition
    * @param newState The state to transition to
    */
-  protected void setState(ICooperativeMergeState newState) {
-    log.info("Transitioned from old state: " + state + " to new state: " + newState);
-    synchronized (stateMutex) {
-      state = newState;
+  protected void setState(ICooperativeMergeState callingState, ICooperativeMergeState newState) {
+
+    // Only perform the transition if we are still in the expected calling state
+    if (state.compareAndSet(callingState, newState)) {
+      log.info("Transitioned from old state: " + callingState + " to new state: " + newState); 
     }
   }
+
 
   /**
    * @return the vehicleId
    */
   public String getVehicleId() {
-    return vehicleId;
+    return pluginServiceLocator.getMobilityRouter().getHostMobilityId();
   }
 
   /**
@@ -252,7 +234,7 @@ public class CooperativeMergePlugin extends AbstractPlugin
         log.warn("Requested to handle mobility response message but state was null");
         return;
       }
-      state.onMobilityResponseMessage(msg);
+      state.get().onMobilityResponseMessage(msg);
     }
   }
 }

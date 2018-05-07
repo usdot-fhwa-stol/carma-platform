@@ -33,63 +33,18 @@ mainClassName = 'org.ros.RosRun'
    version number changes.
 */
 
-repositories {
-    jcenter()
-}
-
-apply from: 'https://raw.githubusercontent.com/passsy/gradle-GitVersioner/master/git-versioner.gradle'
-
-sourceSets {
-        main {
-                java {
-                        srcDirs= ["$projectDir/src/main/java"]
-                }
-                resources {
-                        srcDirs= ["$projectDir/src/main/resources"]
-                }
-        }
-}
-
 dependencies {
+  /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
-  compile 'org.ros.rosjava_core:rosjava_geometry:0.3.5'
-  compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
-  compile 'org.reflections:reflections:0.9.11'
-
-  compile project(':guidance_plugin_api')
-  compile project(':speedharm')
+    /* Example of a local subproject dependency */
+    /* compile project(':sibling_gradle_project') */
+  testCompile 'junit:junit:4.12'
+  /* Local subproject dependency */
   compile project(':rosutils')
   compile project(':route')
-  compile project(':platooning')
-  compile project(':cooperativemerge')
-  compile name: 'saxton-utils-2.0.0'
   compile project(':geometry')
-
-  testCompile 'org.mockito:mockito-core:2.+'
-  testCompile 'junit:junit:4.12'
-}
-
-task writeVersionFile << {
-    println "Updating build number to: " + gitVersion.version
-    println "Updating build suffix to: " + gitVersion.shortBranch
-
-    // Make sure the resources folder exists
-    def resourcesFolder = new File("$projectDir/src/main/resources")
-    if (!resourcesFolder.exists()) {
-        resourcesFolder.mkdirs()
-    }
-
-    // Write the file
-    def file = new File("$projectDir/src/main/resources/version")
-    file.createNewFile();
-    
-    file.text="$gitVersion.version\n$gitVersion.shortBranch\n"
-}
-
-compileJava {
-    dependsOn writeVersionFile
 }
 
 installApp {
@@ -97,3 +52,4 @@ installApp {
         delete 'build/scripts'
     }
 }
+

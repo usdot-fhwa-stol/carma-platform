@@ -49,6 +49,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
@@ -127,7 +128,8 @@ public class PlanningStateTest {
                                                         mock(IPubSubService.class),       mock(ParameterSource.class),
                                                         mockManeuverPlanner,      mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
-                                                        mockTrajectoryConverter, mock(ILightBarManager.class));
+                                                        mockTrajectoryConverter, mock(ILightBarManager.class),
+                                                        mock(TrackingService.class));
         when(mockPlugin.getCommsTimeoutMS()).thenReturn(500L);
 
         when(mockPlugin.getVehicleId()).thenReturn(VEHICLE_ID);
@@ -159,7 +161,7 @@ public class PlanningStateTest {
         final PlanningState planningState = new PlanningState(mockPlugin, mockLog, pluginServiceLocator, rampMeterData);
         final Trajectory traj =  new Trajectory(0, 650);
 
-        mockPlugin.setState(planningState);
+        mockPlugin.setState(null, planningState);
 
         MobilityResponse msg = messageFactory.newFromType(MobilityResponse._TYPE);
 
@@ -192,7 +194,8 @@ public class PlanningStateTest {
 
         // Verify set state value. Two times to account for init state
         ArgumentCaptor<ICooperativeMergeState> newState = ArgumentCaptor.forClass(ICooperativeMergeState.class);
-        verify(mockPlugin, times(2)).setState(newState.capture());
+        ArgumentCaptor<ICooperativeMergeState> oldState = ArgumentCaptor.forClass(ICooperativeMergeState.class);
+        verify(mockPlugin, times(2)).setState(oldState.capture(), newState.capture());
 
         // Check we are now in the planning state
         assertEquals("ExecutionState", newState.getValue().toString());
