@@ -39,6 +39,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
@@ -103,7 +104,8 @@ public class StandbyStateTest {
                                                         mock(IPubSubService.class),       mock(ParameterSource.class),
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
-                                                        mockTrajectoryConverter, mock(ILightBarManager.class));
+                                                        mockTrajectoryConverter,          mock(ILightBarManager.class),
+                                                        mock(TrackingService.class));
         when(mockPlugin.getCommsTimeoutMS()).thenReturn(500L);
 
         when(mockPlugin.getVehicleId()).thenReturn(VEHICLE_ID);
@@ -119,7 +121,7 @@ public class StandbyStateTest {
     public void testOnMobilityRequestWithCloseRSU() {
         // Init state
         StandbyState standbyState = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
-        mockPlugin.setState(standbyState);
+        mockPlugin.setState(null, standbyState);
 
         when(mockTrajectoryConverter.pathToMessage(any())).thenReturn(messageFactory.newFromType(cav_msgs.Trajectory._TYPE));
 
@@ -131,7 +133,7 @@ public class StandbyStateTest {
         double radius = 100;
         double mergeDist = 500;
         double mergeLength = 100;
-        String params = String.format(StandbyState.EXPECTED_REQUEST_INFO_PARAMS, radius, mergeDist, mergeLength);
+        String params = String.format("INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f", radius, mergeDist, mergeLength);
         msg.setStrategyParams(params);
 
         GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
@@ -144,7 +146,8 @@ public class StandbyStateTest {
 
         // Verify set state value. Two times to account for init state
         ArgumentCaptor<ICooperativeMergeState> newState = ArgumentCaptor.forClass(ICooperativeMergeState.class);
-        verify(mockPlugin, times(2)).setState(newState.capture());
+        ArgumentCaptor<ICooperativeMergeState> oldState = ArgumentCaptor.forClass(ICooperativeMergeState.class);
+        verify(mockPlugin, times(2)).setState(oldState.capture(), newState.capture());
 
         // Check we are now in the planning state
         assertEquals("PlanningState", newState.getValue().toString());
@@ -154,7 +157,7 @@ public class StandbyStateTest {
     public void testOnMobilityRequestWithFarRSU() {
         // Init state
         StandbyState standbyState = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
-        mockPlugin.setState(standbyState);
+        mockPlugin.setState(null, standbyState);
 
         when(mockTrajectoryConverter.pathToMessage(any())).thenReturn(messageFactory.newFromType(cav_msgs.Trajectory._TYPE));
 
@@ -166,7 +169,7 @@ public class StandbyStateTest {
         double radius = 100;
         double mergeDist = 500;
         double mergeLength = 100;
-        String params = String.format(StandbyState.EXPECTED_REQUEST_INFO_PARAMS, radius, mergeDist, mergeLength);
+        String params = String.format("INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f", radius, mergeDist, mergeLength);
         msg.setStrategyParams(params);
 
         GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
@@ -179,7 +182,8 @@ public class StandbyStateTest {
 
         // Verify set state value. Two times to account for init state
         ArgumentCaptor<ICooperativeMergeState> newState = ArgumentCaptor.forClass(ICooperativeMergeState.class);
-        verify(mockPlugin, times(1)).setState(newState.capture());
+        ArgumentCaptor<ICooperativeMergeState> oldState = ArgumentCaptor.forClass(ICooperativeMergeState.class);
+        verify(mockPlugin, times(1)).setState(oldState.capture(), newState.capture());
 
         // Check we are now in the planning state
         assertEquals("StandbyState", newState.getValue().toString());
