@@ -50,7 +50,7 @@ public class SlowDown extends LongitudinalManeuver {
 
         //compute the distance to be covered during a linear (in time) speed change, assuming perfect vehicle response
         double idealLength = (startSpeed_*deltaV + 0.5*deltaV*deltaV) / workingAccel_;
-
+        
         //compute the time it will take to perform this ideal speed change
         deltaT_ = deltaV / workingAccel_;
 

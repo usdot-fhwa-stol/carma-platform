@@ -173,6 +173,7 @@ public class GuidanceStateMachine {
             }
         };
         Thread pubThread = new Thread(pubLoop);
+        pubThread.setName(this.getClass().getSimpleName() + "PubThread");
         pubThread.start();
     }
     

@@ -87,7 +87,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
     
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       @Override protected void loop() throws InterruptedException {
-        if (systemReady) {
+        if (systemReady && false) {
             //This is a test for Mobility Introduction message
             MobilityRequest requestMsg = mobReqOutPub.newMessage();
             requestMsg.getHeader().setSenderId("DOT-45100");
@@ -95,7 +95,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             requestMsg.getHeader().setSenderBsmId("10ABCDEF");
             requestMsg.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
             requestMsg.getHeader().setTimestamp(System.currentTimeMillis());
-            requestMsg.setStrategy("Carma/Platooning");
+            requestMsg.setStrategy("FakeStrategy");
             requestMsg.getPlanType().setType((byte) 0);
             requestMsg.setUrgency((short) 999);
             requestMsg.getLocation().setEcefX(555555);
@@ -148,7 +148,7 @@ public class NegotiatorMgr extends SaxtonBaseNode{
             op.getHeader().setSenderBsmId("10ABCDEF");
             op.getHeader().setPlanId("11111111-2222-3333-AAAA-111111111111");
             op.getHeader().setTimestamp(System.currentTimeMillis());
-            op.setStrategy("Carma/Platooning");
+            op.setStrategy("FakeStrategy");
             op.setStrategyParams("STATUS|CMDSPEED:10.01,DTD:50.02,SPEED:10.01");
             mobOperPub.publish(op);
         }

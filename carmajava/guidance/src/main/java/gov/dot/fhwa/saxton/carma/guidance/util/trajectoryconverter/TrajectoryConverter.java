@@ -22,6 +22,8 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
@@ -65,16 +67,21 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   private int currentSegmentIdx;
   private double currentSegDowntrack;
   private int lane;
+  private final MessageFactory messageFactory;
+  private ILogger log;
 
   /**
    * Constructor
    * 
    * @param maxPointsInPath The maximum number of points which will be included in a path
    * @param timeStep The size in seconds of the time step separating each point in a path. 
+   * @param messageFactory A factory for creating ros messages
    */
-  public TrajectoryConverter(int maxPointsInPath, double timeStep) {
+  public TrajectoryConverter(int maxPointsInPath, double timeStep, MessageFactory messageFactory) {
     this.maxPointsInPath = maxPointsInPath;
     this.timeStep = timeStep;
+    this.messageFactory = messageFactory;
+    this.log = LoggerManager.getLogger();
   }
 
   /**
@@ -102,6 +109,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
    * @param currentSegDowntrack the current progress down that segment in double-valued meters
    */
   public void setRouteState(double downtrack, double crosstrack, int currentSegmentIdx, double currentSegDowntrack, int lane) {
+    log.debug("PATH", "setRouteState called with downtrack = " + downtrack + ", currentSegmentIdx = " +
+              currentSegmentIdx + ", currentSegDowntrack = " +  currentSegDowntrack + ", lane = " + lane);
     this.downtrack = downtrack;
     this.crosstrack = crosstrack;
     this.currentSegmentIdx = currentSegmentIdx;
@@ -149,16 +158,28 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
    double downtrack, double crosstrack,
    int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath) {
+
+    log.info("Converting trajectory to path");
+    // If can't add points return an empty list
+    if (maxPointsInPath <= 0) {
+      return new LinkedList<>(); 
+    }
     // Convert time to seconds
     final double currentTime = startTimeMS * SEC_PER_MS;
     // Get maneuvers
     List<LongitudinalManeuver> longitudinalManeuvers = traj.getLongitudinalManeuvers();
     List<LateralManeuver> lateralManeuvers = traj.getLateralManeuvers();
     IComplexManeuver complexManeuver = traj.getComplexManeuver();
+    log.debug("PATH", "convertToPath entered: " + longitudinalManeuvers.size() + " long mvrs, " +
+                lateralManeuvers.size() + " lat mvrs, " + (complexManeuver == null ? "null" : "non-null") +
+                "complex mvr.");
+    log.debug("PATH", "    downtrack = " + downtrack + ", crosstrack = " + crosstrack + ", currentSegmentIdx = " + currentSegmentIdx +
+                ", segDowntrack = " + segDowntrack + ", lane = " + lane + ", maxPoints = " + maxPointsInPath +
+                ", currentTime = " + currentTime);
 
     // Starting simulation configuration
     List<RoutePointStamped> path =  new LinkedList<RoutePointStamped>();
-    final double startTime = currentTime; 
+    //final double startTime = currentTime; 
     final double startingDowntrack = downtrack;
     final double startingSegDowntrack = segDowntrack;
     final int startingSegIdx = route.getSegments().get(currentSegmentIdx).getUptrackWaypoint().getWaypointId();  
@@ -179,9 +200,10 @@ public class TrajectoryConverter implements ITrajectoryConverter {
 
       // If this maneuver is happening or will happen add it to the path
       if (maneuver.getEndDistance() > longitudinalSimData.downtrack) {
+        log.debug("PATH", "convertToPath adding long mvr #" + i);
         longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData, maxPointsInPath);
         // Ensure there are no overlapping points in time
-        if (oldPathEndPoint != null && oldPathEndPoint.getStamp() == path.get(oldPathSize).getStamp()){
+        if (oldPathEndPoint != null && path.size() > oldPathSize && oldPathEndPoint.getStamp() == path.get(oldPathSize).getStamp()){
           path.remove(oldPathSize);
         }
         oldPathSize = path.size();
@@ -193,7 +215,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     ////
     int currentPoint = 0;
     double currentCrosstrack = crosstrack;
-    int currentLane = lane;
+    //int currentLane = lane; // This variable is not used meaningfully
     for (int i = 0; i < lateralManeuvers.size(); i++) {
       if (currentPoint >= path.size()) {
         break;
@@ -207,6 +229,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       }
       // If this maneuver is happening or will happen add it to the path
       if (maneuver.getEndDistance() > path.get(currentPoint).getDowntrack()) {
+        log.debug("PATH", "convertToPath adding lat mvr #" + i);
         // If no lane change occurs we will maintain the current crosstrack
         if (maneuver.getEndingRelativeLane() == 0) {
           while (currentPoint < path.size() && maneuver.getEndDistance() > path.get(currentPoint).getDowntrack()) {
@@ -225,7 +248,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
             currentPoint++;
           }
           currentCrosstrack = y_1;
-          currentLane += maneuver.getEndingRelativeLane();
+          //currentLane += maneuver.getEndingRelativeLane();
         }
       }
     }
@@ -275,44 +298,64 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   
   @Override
   public List<RoutePointStamped> messageToPath(cav_msgs.Trajectory trajMsg, int currentSegmentIdx, double segDowntrack) {
+    log.info("Converting message with " + (trajMsg.getOffsets().size() + 1) +" points to path");
+    log.debug("messageToPath: entering with currentSegmentIdx = " + currentSegmentIdx + ", segDowntrack = " + segDowntrack);
+
     // Get segments within DSRC range
     List<RouteSegment> segments = route.findRouteSubsection(currentSegmentIdx, segDowntrack, DISTANCE_BACKWARD_TO_SEARCH, DISTANCE_FORWARD_TO_SEARCH);
-    // Get starting location
+    log.debug("messageToPath: segments is " + segments.size() + " elements long.");
+
+    // Get starting location in m
     cav_msgs.LocationECEF startMsg = trajMsg.getLocation();
-    Vector3 ecefPoint = new Vector3(startMsg.getEcefX(), startMsg.getEcefY(), startMsg.getEcefZ());
+    Vector3 ecefPoint = new Vector3((double)startMsg.getEcefX() / CM_PER_M, (double)startMsg.getEcefY()  / CM_PER_M, (double)startMsg.getEcefZ()  / CM_PER_M);
+    
+    //Point3D ecef3d = new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ());
     // Get starting segment and remaining segments to search
     RouteSegment startingSegment = route.routeSegmentOfPoint(new Point3D(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), segments);
     int startIdx = startingSegment.getUptrackWaypoint().getWaypointId();
-
-    segments = segments.subList(startIdx, segments.size() - 1);
-
+    log.debug("messageToPath: initial ecefPoint = " + ecefPoint.toString() + ", corresponding to startIdx = " + startIdx);
+    
     // Build list of route points
     List<RoutePointStamped> routePoints = new ArrayList<>(trajMsg.getOffsets().size() + 1);
-    // Get starting time
-    double time = startMsg.getTimestamp() / 1000L;
+    // Get starting time in seconds
+    double time = startMsg.getTimestamp() / MS_PER_SEC;
     // Get starting route point
-    Transform ecefToSegment = startingSegment.getECEFToSegmentTransform();
-    Vector3 segmentPoint = ecefToSegment.apply(new Vector3(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()));
-    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time);
+    Transform ecefInSegment = startingSegment.getECEFToSegmentTransform().invert();
+    Vector3 segmentPoint = ecefInSegment.apply(ecefPoint);
+    log.debug("messageToPath: segmentPoint = " + segmentPoint.toString());
+    double downtrackOfSegment = route.lengthOfSegments(0, startIdx - 1);
+    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time);
+    log.debug("messageToPath: routePoint = " + routePoint.toString());
     routePoints.add(routePoint);
+
+    RouteSegment currentSegment = startingSegment;
+    int segmentIdx = startIdx;
     // Iterate over offsets
     for (LocationOffsetECEF offset: trajMsg.getOffsets()) {
       time += this.timeStep;
       ecefPoint = new Vector3(
-        ecefPoint.getX() + offset.getOffsetX(),
-        ecefPoint.getY() + offset.getOffsetY(),
-        ecefPoint.getZ() + offset.getOffsetZ()
+        ecefPoint.getX() + ((double)offset.getOffsetX() / CM_PER_M),
+        ecefPoint.getY() + ((double)offset.getOffsetY() / CM_PER_M),
+        ecefPoint.getZ() + ((double)offset.getOffsetZ() / CM_PER_M)
       );
-      segmentPoint = ecefToSegment.apply(ecefPoint);
       
-      routePoints.add(new RoutePointStamped(segmentPoint.getX(), segmentPoint.getY(), time));
+      segmentPoint = ecefInSegment.apply(ecefPoint);
+      if (segmentPoint.getX() > currentSegment.length() && segmentIdx < route.getSegments().size() - 1) {
+        downtrackOfSegment += currentSegment.length();
+        segmentIdx++;
+        currentSegment = route.getSegments().get(segmentIdx);
+        ecefInSegment = currentSegment.getECEFToSegmentTransform().invert();
+        segmentPoint =  ecefInSegment.apply(ecefPoint);
+      }
+      routePoints.add(new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time, segmentIdx, segmentPoint.getX()));
     }
     
     return routePoints;
   }
 
   @Override
-  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory) {
+  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path) {
+    log.info("Converting path with " + path.size() + " points to message");
     if (path.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
@@ -411,7 +454,8 @@ public class TrajectoryConverter implements ITrajectoryConverter {
    */
   private LongitudinalSimulationData addKinematicMotionToPath(
     final double startX, final double endX, final double startV, final double endV,
-     List<RoutePointStamped> path,final LongitudinalSimulationData startingData, int maxPointsInPath) {
+    List<RoutePointStamped> path,final LongitudinalSimulationData startingData, int maxPointsInPath) {
+
       final double deltaX = endX - startX;
       final double deltaV = endV - startV;
       final double startVSqr = startV * startV;
@@ -476,7 +520,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       }
   
       return new LongitudinalSimulationData(currentSimTime - timeStep, currentDowntrack - distanceChange, currentSegDowntrack - distanceChange, segmentIdx);  
-     }
+  }
 
   /**
    * Calculates the coefficients {a_0, a_1, a_2, a_3} of a cubic polynomial

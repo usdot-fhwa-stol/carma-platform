@@ -52,6 +52,7 @@ public class LeaderWaitingState implements IPlatooningState {
         this.pluginServiceLocator = pluginServiceLocator;
         this.applicantId          = applicantId;
         this.waitingStartTime     = System.currentTimeMillis();
+        this.plugin.getHandleMobilityPath().set(false);
     }
     
     @Override
@@ -78,21 +79,9 @@ public class LeaderWaitingState implements IPlatooningState {
         boolean isCandidateJoin = msg.getPlanType().getType() == PlanType.PLATOON_FOLLOWER_JOIN;
         if(isTargetVehicle && isCandidateJoin) {
             log.debug("Target vehicle " + applicantId + " is actually joining.");
-            // Evaluate if it is ready to join immediately
-            // TODO The current strategy string is in format: "DTD:xx", but we need to use location field 
-            double targetVehicleDtd = Double.parseDouble(msg.getStrategyParams().split(":")[1]);
-            log.debug("Target vehicle is at downtrack distance " + targetVehicleDtd);
-            double vehicleAtRearDtd = plugin.getPlatoonManager().getPlatoonRearDowntrackDistance();
-            log.debug("The current platoon rear vehicle is at downtrack distance " + vehicleAtRearDtd);
-            boolean isGapCloseEnough = (vehicleAtRearDtd - targetVehicleDtd) <= plugin.getDesiredJoinDistance();
-            if(isGapCloseEnough) {
-                log.debug("The target vehicle is close enough to join immediately.");
-                log.debug("Changing to PlatoonLeaderState and send ACK to target vehicle");
-                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
-                return MobilityRequestResponse.ACK;
-            } else {
-                return MobilityRequestResponse.NACK;
-            }
+            log.debug("Changing to PlatoonLeaderState and send ACK to target vehicle");
+            plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
+            return MobilityRequestResponse.ACK;
         } else {
             log.debug("Received platoon request with vehicle id = " + msg.getHeader().getSenderId());
             log.debug("The request type is " + msg.getPlanType().getType() + " and we choose to ignore");
@@ -108,7 +97,7 @@ public class LeaderWaitingState implements IPlatooningState {
         if(isPlatoonStatusMsg) {
             String vehicleID = msg.getHeader().getSenderId();
             String platoonId = msg.getHeader().getPlanId();
-            String statusParams = strategyParams.split("|")[1];
+            String statusParams = strategyParams.substring(plugin.OPERATION_STATUS_TYPE.length() + 1);
             plugin.getPlatoonManager().memberUpdates(vehicleID, platoonId, statusParams);
             log.debug("Received platoon status message from " + msg.getHeader().getSenderId());
         } else {
@@ -133,7 +122,7 @@ public class LeaderWaitingState implements IPlatooningState {
                 if(tsStart - this.waitingStartTime > plugin.getLongNegotiationTimeout()) {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     log.info("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
-                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                    plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 }
                 // Task 2
                 MobilityOperation status = plugin.getMobilityOperationPublisher().newMessage();
@@ -159,7 +148,7 @@ public class LeaderWaitingState implements IPlatooningState {
         // This message is for broadcast
         msg.getHeader().setRecipientId("");
         // TODO need to have a easy way to get bsmId in plugin
-        msg.getHeader().setSenderBsmId("FFFFFFFF");
+        msg.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());

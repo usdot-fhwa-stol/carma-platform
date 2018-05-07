@@ -1,5 +1,8 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedSet;
 import java.util.UUID;
 
 import cav_msgs.MobilityOperation;
@@ -7,6 +10,7 @@ import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
 import cav_msgs.SpeedAccel;
+import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SimpleManeuverFactory;
@@ -16,6 +20,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
 
 /**
  * The CandidateFollowerState is a state which platooning algorithm is enabled on the current trajectory
@@ -31,29 +36,25 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  */
 public class CandidateFollowerState implements IPlatooningState {
 
-    protected static double LONGER_TRAJ_BUFFER_FACTOR = 1.5;
+    protected static final double SPEED_EPSILON = 0.1;
+    protected static final double LONGER_TRAJ_BUFFER_FACTOR = 1.5;
     
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
-    protected double               speedUpTime;
     protected String               targetLeaderId;
     protected String               targetPlatoonId;
     private   PlatoonPlan          currentPlan;
-    private   boolean              hasPlannedManeuvers;
     private   long                 stateStartTime;
-    private   double               speedUpEndDistance;
 
-    public CandidateFollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, double speedUpTime, String targetId, String newPlatoonId) {
+    public CandidateFollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, String targetId, String newPlatoonId) {
         this.plugin               = plugin;
         this.log                  = log;
         this.pluginServiceLocator = pluginServiceLocator;
-        this.speedUpTime          = speedUpTime;
         this.targetLeaderId       = targetId;
         this.targetPlatoonId      = newPlatoonId;
-        this.hasPlannedManeuvers  = false;
-        this.speedUpEndDistance   = Double.MAX_VALUE;
         this.stateStartTime       = System.currentTimeMillis();
+        this.plugin.getHandleMobilityPath().set(false);
     }
 
     @Override
@@ -65,65 +66,79 @@ public class CandidateFollowerState implements IPlatooningState {
             log.debug("There is no platoon window in " + traj.toString() + " . Change back to standby state");
             // TODO Send out mobility request message to inform its LEAVE and delegate the leader job properly
             plugin.setState(new StandbyState(plugin, log, pluginServiceLocator));
-            // If we have already planned a speed up trajectory, it will be interrupted 
-            if(hasPlannedManeuvers) {
-                // TODO Maybe need to inform the front waiting leader to abort current plan and stop waiting
-                log.warn("We have planned a speed up but the plan is interrupted due to no avaliable plan window");
-            }
         } else {
-            if(hasPlannedManeuvers) {
-                // If we are in this block, it means the current plan is interrupted, we change back to normal leader state
-                // TODO Maybe need to inform the front waiting leader to abort current plan and stop waiting
-                log.debug("We have planned a speed up but the plan is interrupted due to a re-plan event");
-                log.debug("Change back to PlatoonLeaderState and try to join another platoon");
-                plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
-            } else {
-                // Plan a speed up maneuver to speed limit and a steady speed maneuver at the speed limit if necessary
-                if(speedUpTime > 0) {
-                    SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory(plugin);
-                    double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
-                    double speedLimit = rs.getSpeedLimitAtLocation(rs.getCurrentDowntrackDistance()).getLimit();
-                    LongitudinalManeuver speedUp = maneuverFactory.createManeuver(currentSpeed, speedLimit);
-                    speedUp.setSpeeds(currentSpeed, speedLimit);
-                    speedUp.setMaxAccel(plugin.getMaxAccel());
-                    pluginServiceLocator.getManeuverPlanner().planManeuver(speedUp, traj.getStartLocation());
-                    double speedUpEndDtd = speedUp.getEndDistance();
-                    log.debug("Planned a speedUp maneuver " + speedUp.toString());
-                    // Calculate how far the host vehicle should stay on the speed limit based on the required time
-                    this.speedUpEndDistance = speedUpEndDtd + (speedLimit * this.speedUpTime);
-                    log.debug("If we plan a steady speed maneuver to catch up the gap, we need trajectory to end at " + this.speedUpEndDistance);
-                    if(this.speedUpEndDistance > traj.getEndLocation()) {
-                        log.debug("steadySpeedManeuverEnd exceeds the end of current trajectory, requesting a longer one.");
-                        double totalDistanceNeeded = LONGER_TRAJ_BUFFER_FACTOR * (this.speedUpEndDistance - traj.getStartLocation());
-                        log.debug("Request to extend the trajectory to " + traj.getStartLocation() + totalDistanceNeeded);
-                        tpr.requestLongerTrajectory(traj.getStartLocation() + totalDistanceNeeded);
-                    } else {
-                        LongitudinalManeuver steadySpeed = maneuverFactory.createManeuver(speedLimit, speedLimit);
-                        steadySpeed.setSpeeds(speedLimit, speedLimit);
-                        steadySpeed.setMaxAccel(plugin.getMaxAccel());
-                        pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed, speedUpEndDtd);
-                        ((SteadySpeed) steadySpeed).overrideEndDistance(this.speedUpEndDistance);
-                        log.debug("Planned steady speed maneuver " + steadySpeed.toString());
-                        boolean isSpeedUpInserted = traj.addManeuver(speedUp);
-                        boolean isSteadySpeedInserted = traj.addManeuver(steadySpeed);
-                        if(isSpeedUpInserted && isSteadySpeedInserted) {
-                            log.debug("Inserted a speed up and a steady speed maneuver to close the gap.");
-                            this.hasPlannedManeuvers = true;
-                        } else {
-                            log.debug("Insertion of speed up maneuver and steady speed maneuver fails:");
-                            log.debug("isSpeedUpInserted = " + isSpeedUpInserted + ", isSteadySpeedInserted = " + isSteadySpeedInserted);
-                            log.debug("Assuming the space has been used in the trajectory and requesting a higher priority");
-                            tpr.requestHigherPriority();
-                        }
-                    }
+            // Plan a speed up maneuver to speed limit and a steady speed maneuver at the speed limit
+            // TODO the following logic is from cruising plugin, I feel uncomfortable to re-use it here
+            // TODO the following logic should be moved to route service
+            SortedSet<SpeedLimit> trajLimits = rs.getSpeedLimitsInRange(traj.getStartLocation(), traj.getEndLocation());
+            trajLimits.add(rs.getSpeedLimitAtLocation(traj.getEndLocation()));
+            // Merge segments with same speed limits
+            List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();
+            SpeedLimit limit_buffer = null;
+            for (SpeedLimit limit : trajLimits) {
+                // Merge segments with same speed
+                if (limit_buffer == null) {
+                    limit_buffer = limit;
                 } else {
-                    log.debug("We do not need to speed up to join the front platoon because we are already close enough");
-                    this.hasPlannedManeuvers = true;
+                    if (Math.abs(limit_buffer.getLimit() - limit.getLimit()) < SPEED_EPSILON) {
+                        limit_buffer.setLocation(limit.getLocation());
+                    } else {
+                        mergedLimits.add(limit_buffer);
+                        limit_buffer = limit;
+                    }
                 }
+            }
+            limit_buffer.setLocation(traj.getEndLocation());
+            mergedLimits.add(limit_buffer);
+            
+            // Plan trajectory to follow all speed limits in this trajectory segment
+            double newManeuverStartSpeed = expectedEntrySpeed;
+            double newManeuverStartLocation = traj.getStartLocation();
+            for (SpeedLimit limit : mergedLimits) {
+                newManeuverStartSpeed = planManeuvers(traj, newManeuverStartLocation, limit.getLocation(), newManeuverStartSpeed, limit.getLimit());
+                newManeuverStartLocation = limit.getLocation();
             }
         }
         return tpr;
     }
+
+    private double planManeuvers(Trajectory t, double startDist, double endDist, double startSpeed, double endSpeed) {
+        ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
+        SimpleManeuverFactory maneuverFactory = new SimpleManeuverFactory(plugin);
+        log.info(String.format("Platooning is trying to plan maneuver {start=%.2f,end=%.2f,startSpeed=%.2f,endSpeed=%.2f} to close the gap",
+                 startDist, endDist, startSpeed, endSpeed));
+        double maneuverEnd = startDist;
+        double adjustedEndSpeed = startSpeed;
+        LongitudinalManeuver maneuver = maneuverFactory.createManeuver(startSpeed, endSpeed);
+        maneuver.setSpeeds(startSpeed, endSpeed);
+        maneuver.setMaxAccel(plugin.getMaxAccel());
+        if(planner.canPlan(maneuver, startDist, endDist)) {
+            planner.planManeuver(maneuver, startDist);
+            if(maneuver instanceof SteadySpeed) {
+                ((SteadySpeed) maneuver).overrideEndDistance(endDist);
+            }
+            if(maneuver.getEndDistance() > endDist) {
+                adjustedEndSpeed = planner.planManeuver(maneuver, startDist, endDist);
+            } else {
+                adjustedEndSpeed = maneuver.getTargetSpeed();
+            }
+            maneuverEnd = maneuver.getEndDistance();
+            t.addManeuver(maneuver);
+            log.info(String.format("Platooning has planned maneuver from [%.2f, %.2f) m/s over [%.2f, %.2f) m to close the gap", startSpeed, adjustedEndSpeed, startDist, maneuverEnd));
+        }
+        
+        // Insert a steady speed maneuver to fill whatever's left
+        if(maneuverEnd < endDist) {
+          LongitudinalManeuver steady = maneuverFactory.createManeuver(adjustedEndSpeed, adjustedEndSpeed);
+            steady.setSpeeds(adjustedEndSpeed, adjustedEndSpeed);
+            steady.setMaxAccel(plugin.getMaxAccel());
+            planner.planManeuver(steady, maneuverEnd);
+            ((SteadySpeed) steady).overrideEndDistance(endDist);
+            t.addManeuver(steady);
+            log.info(String.format("Platooning planned a STEADY-SPEED maneuver at %.2f m/s over [%.2f, %.2f) m to close the gap", adjustedEndSpeed, maneuverEnd, endDist));
+        }
+        return adjustedEndSpeed;
+      }
 
     @Override
     public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg) {
@@ -141,7 +156,7 @@ public class CandidateFollowerState implements IPlatooningState {
         if(isPlatoonStatusMsg) {
             String vehicleID = msg.getHeader().getSenderId();
             String platoonId = msg.getHeader().getPlanId();
-            String statusParams = strategyParams.split("|")[1];
+            String statusParams = strategyParams.substring(plugin.OPERATION_STATUS_TYPE.length() + 1);
             plugin.getPlatoonManager().memberUpdates(vehicleID, platoonId, statusParams);
             log.debug("Received platoon status message from " + msg.getHeader().getSenderId());
         } else {
@@ -154,22 +169,25 @@ public class CandidateFollowerState implements IPlatooningState {
         // Waiting on response for the current Candidate-Join plan
         if(this.currentPlan != null) {
             synchronized(currentPlan) {
-                boolean isForCurrentPlan = msg.getHeader().getPlanId().equals(this.currentPlan.planId);
-                boolean isFromTargetVehicle = msg.getHeader().getSenderId().equals(this.targetLeaderId);
-                if(isForCurrentPlan && isFromTargetVehicle) {
-                    if(msg.getIsAccepted()) {
-                        // We change to follower state and start to actually follow that leader
-                        // The platoon manager also need to change the platoon Id to the one that the target leader is using 
-                        log.debug("The leader " + msg.getHeader().getSenderId() + " agreed on our join. Change to follower state.");
-                        plugin.getPlatoonManager().changeFromLeaderToFollower(targetLeaderId, targetPlatoonId);
-                        plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
+                if(this.currentPlan != null) {
+                    boolean isForCurrentPlan = msg.getHeader().getPlanId().equals(this.currentPlan.planId);
+                    boolean isFromTargetVehicle = msg.getHeader().getSenderId().equals(this.targetLeaderId);
+                    if(isForCurrentPlan && isFromTargetVehicle) {
+                        if(msg.getIsAccepted()) {
+                            // We change to follower state and start to actually follow that leader
+                            // The platoon manager also need to change the platoon Id to the one that the target leader is using 
+                            log.debug("The leader " + msg.getHeader().getSenderId() + " agreed on our join. Change to follower state.");
+                            plugin.getPlatoonManager().changeFromLeaderToFollower(targetLeaderId, targetPlatoonId);
+                            plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
+                            pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+                        } else {
+                            // We change back to normal leader state and try to join other platoons
+                            log.debug("The leader " + msg.getHeader().getSenderId() + " does not agree on our join. Change back to leader state.");
+                            plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
+                        }
                     } else {
-                        // We change back to normal leader state and try to join other platoons
-                        log.debug("The leader " + msg.getHeader().getSenderId() + " does not agree on our join. Change back to leader state.");
-                        plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
-                    }
-                } else {
-                    log.debug("Ignore received response message because it is not for the current plan.");
+                        log.debug("Ignore received response message because it is not for the current plan.");
+                    }    
                 }
             }
         } else {
@@ -192,27 +210,34 @@ public class CandidateFollowerState implements IPlatooningState {
                 boolean isCurrentStateTimeout = (tsStart - this.stateStartTime) > plugin.getLongNegotiationTimeout();
                 if(isCurrentStateTimeout) {
                     log.debug("The current candidate follower state is timeout. Change back to leader state.");
-                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
+                    plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 }
                 // Task 2
                 if(this.currentPlan != null) {
                     synchronized (currentPlan) {
-                        boolean isPlanTimeout = (tsStart - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout();
-                        if(isPlanTimeout) {
-                            this.currentPlan = null;
+                        if(this.currentPlan != null) {
+                            boolean isPlanTimeout = (tsStart - this.currentPlan.planStartTime) > plugin.getShortNegotiationTimeout();
+                            if(isPlanTimeout) {
+                                this.currentPlan = null;
+                                log.debug("The current plan did not receive any response. Abort and change to leader state.");
+                                plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
+                            }    
                         }
                     }
-                    log.debug("The current plan did not receive any response. Abort and change to leader state.");
-                    plugin.setState(new PlatoonLeaderState(plugin, log, pluginServiceLocator));
-                    
                 }
                 // Task 3
-                if(pluginServiceLocator.getRouteService().getCurrentDowntrackDistance() >= speedUpEndDistance) {
+                double desiredJoinGap = plugin.getDesiredJoinTimeGap() * plugin.getManeuverInputs().getCurrentSpeed();
+                double maxJoinGap = Math.max(plugin.getMaxGap(), desiredJoinGap);
+                double currentGap = plugin.getManeuverInputs().getDistanceToFrontVehicle();
+                log.debug("Based on desired join time gap, the desired join distance gap is " + desiredJoinGap + " ms");
+                log.debug("Since we have max allowed gap as " + plugin.getMaxGap() + " m then max join gap became " + maxJoinGap + " m");
+                log.debug("The current gap from radar is " + currentGap + " m");
+                if(currentGap <= maxJoinGap && this.currentPlan == null) {
                     MobilityRequest request = plugin.getMobilityRequestPublisher().newMessage();
                     String planId = UUID.randomUUID().toString();
                     request.getHeader().setPlanId(planId);
                     request.getHeader().setRecipientId(targetLeaderId);
-                    request.getHeader().setSenderBsmId("FFFFFFFF");
+                    request.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
                     request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
                     request.getHeader().setTimestamp(System.currentTimeMillis());
                     // TODO Need to have a easy way to get current location in ECEF
@@ -222,8 +247,7 @@ public class CandidateFollowerState implements IPlatooningState {
                     request.getLocation().setTimestamp(System.currentTimeMillis());
                     request.getPlanType().setType(PlanType.PLATOON_FOLLOWER_JOIN);
                     request.setStrategy(plugin.MOBILITY_STRATEGY);
-                    request.setStrategyParams(String.format(plugin.CANDIDATE_JOIN_PARAMS,
-                                              pluginServiceLocator.getRouteService().getCurrentDowntrackDistance()));
+                    request.setStrategyParams("");
                     // TODO Maybe need to add some params (vehicle IDs) into strategy string
                     // TODO Maybe need to populate the urgency later
                     request.setUrgency((short) 50);
@@ -258,7 +282,7 @@ public class CandidateFollowerState implements IPlatooningState {
         // All platoon mobility operation message is just for broadcast
         msg.getHeader().setRecipientId("");
         // TODO Need to have a easy way to get bsmId from plugin
-        msg.getHeader().setSenderBsmId("FFFFFFFF");
+        msg.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
         String hostStaticId = pluginServiceLocator.getMobilityRouter().getHostMobilityId();
         msg.getHeader().setSenderId(hostStaticId);
         msg.getHeader().setTimestamp(System.currentTimeMillis());

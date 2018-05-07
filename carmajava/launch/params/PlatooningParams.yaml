@@ -16,15 +16,15 @@ platooning_status_timeout_factor: 2.5
 
 # Double: The desired time headway to the front vehicle within the platoon
 # Units: s
-platooning_desired_time_headway: 1.8
+platooning_desired_time_headway: 2.0
 
 # Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
 # Units: m
-platooning_min_gap: 7.0
+platooning_min_gap: 10.0
 
-# Double: The poportional term in the platoon speed PID controller
+# Double: The proportional term in the platoon speed PID controller
 # Units: 1
-platooning_Kp: 1.5
+platooning_Kp: 2.0
 
 # Double: The integral term in the platoon speed PID controller
 # Units: 1
@@ -32,7 +32,7 @@ platooning_Ki: 0.0
 
 # Double: The derivative term in the platoon speed PID controller
 # Units: 1
-platooning_Kd: 0.1
+platooning_Kd: -0.1
 
 # Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
 # Units: s
@@ -41,8 +41,7 @@ platooning_upper_boundary: 1.75
 platooning_max_spacing: 2.0
 platooning_min_spacing: 1.9
 # Units: m
-platooning_min_gap: 12.0
-platooning_max_gap: 14.0
+platooning_max_gap: 15.0
 
 # Integer: The algorithm type used for leader selection in a platoon
 # When algorithm_type == 0, it means no leader selection algorithm
@@ -53,11 +52,11 @@ algorithm_type: 0
 
 # Double: The maximum time we allowed for candidate to accelerate in order to join
 # Units: s
-max_join_time: 10.0
+max_join_time: 15.0
 
-# Double: The desired distance for the candidate vehicle to join at rear
-# Units: m
-desired_join_distance: 13.0
+# Double: The desired time gap for the candidate vehicle to join at rear
+# Units: s
+desired_join_time_gap: 4.0
 
 # Integer: The time interval between two mobility INFO message
 # Units: ms
@@ -74,3 +73,20 @@ long_negotiation_timeout: 25000
 # Integer: The maximum number of platoon member we allow
 # Units: 1
 max_platoon_size: 10
+
+# Double: The time gap distance the candidate vehicle wants to achieve with the leader
+# Units: s
+follower_join_time_gap: 3.0
+
+# Double: Determine the absolute maximum cmd_speed adjustment value we can get from PID controller
+# Units: m/s
+platooning_cmd_max_adjustment: 10.0
+
+# Boolean: Determine whether the output of platooning controller will be caped by platooning_cmd_max_adjustment
+diff_from_leader_cmd_cap: true
+
+# Boolean: Determine whether the output of platooning controller will be caped by max_Accel before it goes into vehicle controller
+max_accel_cap: true
+
+# Boolean: Determine whether the follower will still follow the speed limit in a platoon
+local_speed_limit_cap: true

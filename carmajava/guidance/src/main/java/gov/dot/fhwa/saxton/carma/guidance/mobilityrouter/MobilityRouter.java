@@ -22,21 +22,25 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
+
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
+import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
+import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarStateMachine;
-import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarEvent;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManager;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
@@ -54,7 +58,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * Also handles publication of ACK/NACK responses to inbound MobilityRequest messages based on plugin
  * handler return codes.
  */
-public class MobilityRouter extends GuidanceComponent implements IMobilityRouter {
+public class MobilityRouter extends GuidanceComponent implements IMobilityRouter, IStateChangeListener {
 
     private final String componentName = "MobilityRouter";
     //private IPublisher<MobilityRequest> bsmPublisher;
@@ -64,25 +68,37 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ISubscriber<MobilityPath> pathSub;
     private IPublisher<MobilityResponse> ackPub;
     private Map<String, LinkedList<MobilityRequestHandler>> requestMap = Collections.synchronizedMap(new HashMap<>());
-    private Map<String, LinkedList<MobilityResponseHandler>> ackMap = Collections.synchronizedMap(new HashMap<>());
+    private List<MobilityResponseHandler> ackList = Collections.synchronizedList(new LinkedList<>());
     private Map<String, LinkedList<MobilityOperationHandler>> operationMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityPathHandler>> pathMap = Collections.synchronizedMap(new HashMap<>());
 
     private PluginManager pluginManager;
     private TrajectoryExecutor trajectoryExecutor;
+    private TrackingService trackingService;
     private String defaultConflictHandlerName = "";
     private IPlugin defaultConflictHandler;
     private IConflictManager conflictManager;
     private ITrajectoryConverter trajectoryConverter;
+    private Arbitrator arbitrator;
     private String hostMobilityStaticId = "";
+    private AtomicBoolean handleMobilityPath = new AtomicBoolean(true);
+    private boolean isDisableMobilityPathCapabilityAcquired = false;
+    private Object mutex = new Object();
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
      IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
-     TrajectoryExecutor trajectoryExecutor) {
+     TrajectoryExecutor trajectoryExecutor, TrackingService tracking) {
         super(stateMachine, pubSubService, node);
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
+        this.trackingService = tracking;
+        stateMachine.registerStateChangeListener(this);
+    }
+
+
+    public void setArbitrator(Arbitrator arbitrator) {
+        this.arbitrator = arbitrator;
     }
 
     public void setPluginManager(PluginManager pluginManager) {
@@ -106,7 +122,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         ackSub = pubSubService.getSubscriberForTopic("incoming_mobility_response", MobilityResponse._TYPE);
         operationSub = pubSubService.getSubscriberForTopic("incoming_mobility_operation", MobilityOperation._TYPE);
         pathSub = pubSubService.getSubscriberForTopic("incoming_mobility_path", MobilityPath._TYPE);
-        ackPub = pubSubService.getPublisherForTopic("outbound_mobility_response", MobilityResponse._TYPE);
+        ackPub = pubSubService.getPublisherForTopic("outgoing_mobility_response", MobilityResponse._TYPE);
 
         requestSub.registerOnMessageCallback(this::handleMobilityRequest);
         ackSub.registerOnMessageCallback(this::handleMobilityResponse);
@@ -148,7 +164,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     @Override
     public void onCleanRestart() {
-        // NO-OP
+        this.handleMobilityPath.set(true);
     }
 
     @Override
@@ -157,7 +173,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
     
     private boolean isBroadcast(MobilityHeader header) {
-        return header.getSenderId().equals("");
+        return header.getRecipientId().equals("");
     }
 
     /**
@@ -181,7 +197,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             respMsg.getHeader().setPlanId(msg.getHeader().getPlanId());
             respMsg.getHeader().setRecipientId(msg.getHeader().getSenderId());
             respMsg.getHeader().setSenderId(hostMobilityStaticId);
-            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, should this field be set in Message node?
+            respMsg.getHeader().setSenderBsmId(trackingService.getCurrentBSMId());
             respMsg.getHeader().setTimestamp(System.currentTimeMillis());
 
             if (resp == MobilityRequestResponse.ACK) {
@@ -254,16 +270,32 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Handling incoming mobility request message: " + msg.getHeader().getPlanId() + " with strategy " + msg.getStrategy());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
         List<RoutePointStamped> otherPath = trajectoryConverter.messageToPath(msg.getTrajectory());
         List<RoutePointStamped> hostPath = trajectoryExecutor.getHostPathPrediction();
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostPath, otherPath);
+        boolean conflictHandled = true;
+        ConflictSpace conflictSpace = null;
+
+        ///// LOG PATH TODO remove when done testing
+        String pathLog = "The request which was processed was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp: otherPath) {
+            pathLog = pathLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", " + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(pathLog);
+
+        String hostLog = "The host path during request which was current was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp: hostPath) {
+            hostLog = hostLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", " + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(hostLog);
+        //// END LOG PATH
 
         if (!conflictSpaces.isEmpty()) {
-            ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
+            conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
             msg.getHeader().getPlanId(),
             conflictSpace.getStartDowntrack(),
@@ -271,26 +303,35 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             conflictSpace.getLane(),
             conflictSpace.getStartTime(),
             conflictSpace.getEndTime()));
+            conflictHandled = false;
+        }
 
-            boolean conflictHandled = false;
-            for (Entry<String, LinkedList<MobilityRequestHandler>> entry : requestMap.entrySet()) {
-                if (entry.getKey().endsWith(msg.getStrategy())) {
-                    log.info("Firing message handlers registered for " + entry.getKey());
-                    for (MobilityRequestHandler handler : entry.getValue()) {
-                        log.info("Firing mobility request handler: " + handler.getClass().getSimpleName());
-                        fireMobilityRequestCallback(handler, msg, true, conflictSpace);
-                        conflictHandled = true;
-                    }
+        for (Entry<String, LinkedList<MobilityRequestHandler>> entry : requestMap.entrySet()) {
+            if (entry.getKey().endsWith(msg.getStrategy())) {
+                log.info("Firing message handlers registered for " + entry.getKey());
+                for (MobilityRequestHandler handler : entry.getValue()) {
+                    log.info("Firing mobility request handler: " + handler.getClass().getSimpleName());
+                    fireMobilityRequestCallback(handler, msg, conflictSpace != null, conflictSpace);
+                    conflictHandled = true;
                 }
             }
+        }
 
-            if (!conflictHandled && defaultConflictHandler != null) {
+        if(!conflictHandled) {
+            if(defaultConflictHandler != null && conflictSpace != null) {
                 // Handle in default conflict handler
                 log.info("No pre-registered handlers for the conflict were detected, defaulting to: " + defaultConflictHandler.getVersionInfo());
                 fireMobilityRequestCallback(((MobilityRequestHandler) defaultConflictHandler), msg, true, conflictSpace);
             } else {
                 throw new RosRuntimeException("Unhandled mobility path conflict detected and no default conflict handler available!!!");
             }
+        }
+        
+        double currentTrajEnd = trajectoryExecutor.getTotalTrajectory().getEndLocation();
+        double requestEnd = otherPath.get(otherPath.size() - 1).getDowntrack();
+        if (requestEnd > currentTrajEnd) {
+            log.warn("Using experimental replan method to extend plan to " + requestEnd);
+            arbitrator.requestNewPlan(requestEnd);
         }
     }
 
@@ -304,19 +345,14 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility ack message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())){
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())){
             log.info("Message not destined for us, ignoring...");
             return;
         }
 
-        for (Entry<String, LinkedList<MobilityResponseHandler>> entry : ackMap.entrySet()) {
-            if (entry.getKey().endsWith(msg.getHeader().getPlanId())) {
-                log.info("Firing message handlers registered for " + entry.getKey());
-                for (MobilityResponseHandler handler : entry.getValue()) {
-                    log.info("Firing mobility response handler: " + handler.getClass().getSimpleName());
-                    fireMobilityResponseCallback(handler, msg);
-                }
-            }
+        for (MobilityResponseHandler handler : ackList) {
+            log.info("Firing message handler for " + handler.getClass().getSimpleName() + "with planId = " + msg.getHeader().getPlanId());
+            fireMobilityResponseCallback(handler, msg);
         }
     }
 
@@ -330,7 +366,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
         log.info("Processing incoming mobility operation message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
@@ -354,22 +390,43 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * or does not contain a conflict then no call is made.
      */
     private void handleMobilityPath(MobilityPath msg) {
-        if (stateMachine.getState() != GuidanceState.ENGAGED) {
+        if (stateMachine.getState() != GuidanceState.ENGAGED || !handleMobilityPath.get()) {
+            log.debug("Ignoring mobility path message.");
             return;
         }
 
         log.info("Processing incoming mobility path message: " + msg.getHeader().getPlanId());
 
-        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) || !isBroadcast(msg.getHeader())) {
+        if (!msg.getHeader().getRecipientId().equals(hostMobilityStaticId) && !isBroadcast(msg.getHeader())) {
             log.info("Message not destined for us, ignoring...");
             return;
         }
-
+        long tempStartTime = System.currentTimeMillis();
         List<RoutePointStamped> hostTrajectory = trajectoryExecutor.getHostPathPrediction();
         List<RoutePointStamped> otherTrajectory = trajectoryConverter.messageToPath(msg.getTrajectory());
+        log.debug("handleMobilityPath: computed otherTrajectory of " + otherTrajectory.size() + " points. Adding to map.");
+        long tempTime1 = System.currentTimeMillis();
         conflictManager.addMobilityPath(otherTrajectory, msg.getHeader().getSenderId());
+        long tempTime2 = System.currentTimeMillis();
+        log.debug("handleMobilityPath: back from call to addMobilityPath().");
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostTrajectory, otherTrajectory);
+        long tempEndTime = System.currentTimeMillis();
+        log.info("Analyzing the path message with " + otherTrajectory.size() + " points took: " + (tempEndTime - tempStartTime));
+        log.debug("    Time to beginning of addMobilityPath was " + (tempTime1 - tempStartTime) + " ms");
+        log.debug("    Time to run addMoblityPath = " + (tempTime2 - tempTime1) + " ms");
+        ///// LOG PATH TODO remove when done testing
+        String pathLog = "The path which was processed was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp: otherTrajectory) {
+            pathLog = pathLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", " + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(pathLog);
 
+        String hostLog = "The host path which was current was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp: hostTrajectory) {
+            hostLog = hostLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", " + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(hostLog);
+        //// END LOG PATH
         if (!conflictSpaces.isEmpty()) {
             ConflictSpace conflictSpace = conflictSpaces.get(0); // Only use the first because the new trajectory will modify and change the others
             log.info(String.format("Conflict detected in path %s, startDist = %.02f, endDist = %.02f, lane = %d, startTime = %.02f, endTime = %.02f",
@@ -388,36 +445,109 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     @Override
 	public void registerMobilityRequestHandler(String strategyId, MobilityRequestHandler handler) {
         log.info("Mobility Request handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
-        if (!requestMap.containsKey(strategyId)) {
-            requestMap.put(strategyId, new LinkedList<MobilityRequestHandler>());
+        synchronized (requestMap) {
+            if (!requestMap.containsKey(strategyId)) {
+                requestMap.put(strategyId, new LinkedList<MobilityRequestHandler>());
+            }
+            if(!requestMap.get(strategyId).contains(handler)) {
+                requestMap.get(strategyId).add(handler);
+            }
         }
-        requestMap.get(strategyId).add(handler);
     }
 
     @Override
-    public void registerMobilityResponseHandler(String strategyId, MobilityResponseHandler handler) {
-        log.info("Mobility Response handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
-        if (!ackMap.containsKey(strategyId)) {
-            ackMap.put(strategyId, new LinkedList<MobilityResponseHandler>());
+    public void registerMobilityResponseHandler(MobilityResponseHandler handler) {
+        log.info("Mobility Response handler: " + handler.getClass().getSimpleName() + " registered");
+        synchronized(ackList) {
+            if(!ackList.contains(handler)) {
+                ackList.add(handler);
+            }
         }
-        ackMap.get(strategyId).add(handler);
     }
 
     @Override
     public void registerMobilityOperationHandler(String strategyId, MobilityOperationHandler handler) {
         log.info("Mobility Operation handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
-        if (!operationMap.containsKey(strategyId)) {
-            operationMap.put(strategyId, new LinkedList<MobilityOperationHandler>());
+        synchronized(operationMap) {
+            if (!operationMap.containsKey(strategyId)) {
+                operationMap.put(strategyId, new LinkedList<MobilityOperationHandler>());
+            }
+            if(!operationMap.get(strategyId).contains(handler)) {
+                operationMap.get(strategyId).add(handler);
+            }
         }
-        operationMap.get(strategyId).add(handler);
     }
 
     @Override
     public void registerMobilityPathHandler(String strategyId, MobilityPathHandler handler) {
         log.info("Mobility Path handler: " + handler.getClass().getSimpleName() + " registered for " + strategyId);
-        if (!pathMap.containsKey(strategyId)) {
-            pathMap.put(strategyId, new LinkedList<MobilityPathHandler>());
+        synchronized(pathMap) {
+            if (!pathMap.containsKey(strategyId)) {
+                pathMap.put(strategyId, new LinkedList<MobilityPathHandler>());
+            }
+            if(!pathMap.get(strategyId).contains(handler)) {
+                pathMap.get(strategyId).add(handler);
+            }
         }
-        pathMap.get(strategyId).add(handler);
     }
+
+  @Override
+  public void onStateChange(GuidanceAction action) {
+    log.debug("GUIDANCE_STATE", getComponentName() + " received action: " + action);
+    switch (action) {
+    case INTIALIZE:
+      jobQueue.add(this::onStartup);
+      jobQueue.add(this::onSystemReady);
+      break;
+    case ACTIVATE:
+      jobQueue.add(this::onActive);
+      break;
+    case DEACTIVATE:
+      jobQueue.add(this::onDeactivate);
+      break;
+    case ENGAGE:
+      jobQueue.add(this::onEngaged);
+      break;
+    case SHUTDOWN:
+      jobQueue.add(this::onShutdown);
+      break;
+    case PANIC_SHUTDOWN:
+      jobQueue.add(this::onPanic);
+      break;
+    case RESTART:
+      jobQueue.add(this::onCleanRestart);
+      break;
+    default:
+      throw new RosRuntimeException(getComponentName() + "received unknow instruction from guidance state machine.");
+    }
+  }
+
+  @Override
+  public AtomicBoolean acquireDisableMobilityPathCapability() {
+      if(!isDisableMobilityPathCapabilityAcquired) {
+          synchronized(mutex) {
+              if(!isDisableMobilityPathCapabilityAcquired) {
+                  log.debug("Disable mobility path capability is acquired by some class");
+                  isDisableMobilityPathCapabilityAcquired = true;
+                  return handleMobilityPath;
+              }
+          }
+      }
+      return null;
+  }
+
+
+  @Override
+  public void releaseDisableMobilityPathCapability(AtomicBoolean acquiredCapability) {
+      // check if the caller acquired a reference before
+      if(acquiredCapability == this.handleMobilityPath) {
+          synchronized(mutex) {             
+              isDisableMobilityPathCapabilityAcquired = false;
+              // change the reference of old boolean flag
+              handleMobilityPath = new AtomicBoolean(true);
+              log.debug("Disable mobility path capability lock is released");
+          }
+      }
+  }
+  
 }

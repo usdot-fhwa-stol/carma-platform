@@ -190,7 +190,7 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
 
         <remap from="ui_instructions"
-               to="/$(arg TOP_NS)/ui_instructions"/>
+               to="/$(arg TOP_NS)/$(arg UI_NS)/ui_instructions"/>
       </node>
     </group>
 
@@ -363,12 +363,6 @@
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="new_plan_inbound"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
-        <remap from="plan_status"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/plan_status"/>
-        <remap from="roadway_environment"
-               to="/$(arg TOP_NS)/$(arg RD_NS)/roadway_environment"/>
 
         <!-- Arbitrator Thread-->
         <remap from="route_state"
@@ -381,12 +375,14 @@
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
         
         <!-- Tracking Thread-->
+        <!-- Params -->
         <remap from="vehicle_length"
                to="/$(arg TOP_NS)/vehicle_length"/>
         <remap from="vehicle_width"
                to="/$(arg TOP_NS)/vehicle_width"/>
         <remap from="vehicle_id"
                to="/$(arg TOP_NS)/vehicle_id"/>
+        <!-- Topics and Services -->
         <remap from="heading"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
         <remap from="nav_sat_fix"
@@ -411,17 +407,23 @@
         <remap from="route"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
-        <!-- Negotiation Receiver Plugin -->
-        <remap from="new_plan"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/new_plan"/>
-               
         <!-- Lane Change Plugin -->
         <remap from="mobility_intro_outbound"
                to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
         <remap from="mobility_ack_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
         <remap from="ui_instructions"
-               to="/$(arg TOP_NS)/ui_instructions"/>
+               to="/$(arg TOP_NS)/$(arg UI_NS)/ui_instructions"/>
+
+        <!-- Mobility Router -->
+        <remap from="incoming_mobility_request"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_request"/>
+        <remap from="incoming_mobility_response"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_response"/>
+        <remap from="incoming_mobility_operation"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_operation"/>
+        <remap from="incoming_mobility_path"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_path"/>
                
       </node>
     </group>
@@ -451,8 +453,6 @@
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="bsm"
              to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
-      <remap from="ui_instructions"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_instructions"/>
       <remap from="state"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/state"/>               
       <remap from="ui_platoon_vehicle_info"
@@ -479,11 +479,11 @@
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
       <remap from="cmd_lateral"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
-      <remap from="ui_instructions"
-             to="/$(arg TOP_NS)/ui_instructions"/>
       <remap from="plugins/controlling_plugins"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
-             
+      <remap from="get_drivers_with_capabilities"
+             to="/saxton_cav/interface_manager/get_drivers_with_capabilities"/>
+
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>

@@ -68,6 +68,20 @@ CarmaJS.WidgetFramework = (function () {
                    //console.log ('getPluginsActivated: No plugins activated.');
                }
 
+                pluginsActivated.sort(function(a, b) {
+                  var nameA = a.id.toUpperCase(); // ignore upper and lowercase
+                  var nameB = b.id.toUpperCase(); // ignore upper and lowercase
+                  if (nameA < nameB) {
+                    return -1;
+                  }
+                  if (nameA > nameB) {
+                    return 1;
+                  }
+
+                  // names must be equal
+                  return 0;
+                });
+
                return pluginsActivated;
         };
 

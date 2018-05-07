@@ -51,18 +51,21 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     protected TrajectoryConverter trajectoryConverter;
     protected TrajectoryExecutor trajectoryExecutor;
     protected IConflictDetector conflictDetector;
+    protected TrackingService trackingService;
     protected String conflictHandlerName = "Yield Plugin";
     protected MobilityPathHandler conflictHandler;
     protected String mobilitySenderId = "UNKNOWN";
-    protected String currentBsmId = "";
     protected static final String BROADCAST_RECIPIENT_ID = "";
     protected IPublisher<MobilityPath> pathPub;
     protected PluginManager pluginManager;
 
     public VehicleAwareness(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
-            TrajectoryConverter converter, IConflictDetector conflictDetector) {
+            TrajectoryConverter converter, IConflictDetector conflictDetector, TrackingService tracking) {
         super(stateMachine, pubSubService, node);
         stateMachine.registerStateChangeListener(this);
+        this.trajectoryConverter = converter;
+        this.conflictDetector = conflictDetector;
+        this.trackingService = tracking;
     }
 
     /*
@@ -115,9 +118,11 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     }
 
     protected synchronized void rollTrajectoryBuffer() {
-        currentTrajectory = nextTrajectory;
-        nextTrajectory = null;
-        publishMobilityPath();
+        if (nextTrajectory != null) { // Don't roll if this is the first trajectory
+            currentTrajectory = nextTrajectory;
+            nextTrajectory = null;
+            publishMobilityPath();
+        }
     }
 
     @Override
@@ -151,10 +156,13 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         if (currentTrajectory != null) {
             pathPrediction.addAll(trajectoryConverter.convertToPath(currentTrajectory));
         }
+        log.debug("PATH", "getPathPrediction added " + pathPrediction.size() + " points from currentTrajectory.");
         if (nextTrajectory != null && !pathPrediction.isEmpty()) {
             RoutePointStamped lastPoint = pathPrediction.get(pathPrediction.size() - 1);
             pathPrediction.addAll(trajectoryConverter.convertToPath(nextTrajectory, lastPoint, maxPointsPerMessage - pathPrediction.size()));
+            log.debug("PATH", "    adding more points from nextTrajectory...");
         }
+        log.debug("PATH", "    getPathPrediction returning pathPrediction of size " + pathPrediction.size());
 
         return pathPrediction;
     }
@@ -184,8 +192,8 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
             } else {
                 log.info("Conflict detected! Handling by delegating to: " + conflictHandlerName);
                 // Just pass it null for now
-                new Thread(() -> conflictHandler.handleMobilityPathMessageWithConflict(null, true, conflicts.get(0)))
-                        .start();
+                new Thread(() -> conflictHandler.handleMobilityPathMessageWithConflict(null, true, conflicts.get(0)),
+                 "HandleMobilityPathMessageWithConflictCallback").start();
             }
         } else {
             log.info("No conflicts detected in trajectory.");
@@ -201,7 +209,6 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         log.info("Notified of a forced replan, cleaning invalid trajectories!");
         currentTrajectory = null;
         nextTrajectory = null;
-        publishMobilityPath();
     }
 
     /**
@@ -230,12 +237,12 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         pathMsg.getHeader().setPlanId(UUID.randomUUID().toString());
 
         // TODO: Figure out how to get currentBsmId, I don't think we need this yet though
-        pathMsg.getHeader().setSenderBsmId(currentBsmId);
-        pathMsg.setTrajectory(trajectoryConverter.pathToMessage(pathPrediction, factory));
+        pathMsg.getHeader().setSenderBsmId(trackingService.getCurrentBSMId());
+        pathMsg.setTrajectory(trajectoryConverter.pathToMessage(pathPrediction));
 
         pathPub.publish(pathMsg);
-        log.info(String.format("Publication complete for planId=%s containing %d points",
-                pathMsg.getHeader().getPlanId(), (pathMsg.getTrajectory().getOffsets().size() + 1)));
+        log.info(String.format("Publication complete for planId=%s containing %d points from a pathPrediction with %d points",
+                pathMsg.getHeader().getPlanId(), (pathMsg.getTrajectory().getOffsets().size() + 1), pathPrediction.size()));
     }
 
     @Override

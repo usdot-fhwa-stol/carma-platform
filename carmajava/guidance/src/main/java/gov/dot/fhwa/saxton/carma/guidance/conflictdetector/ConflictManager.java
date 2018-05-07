@@ -25,6 +25,8 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashM
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMapFactory;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.SimpleHashStrategy;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.route.Route;
@@ -73,6 +75,7 @@ public class ConflictManager implements IConflictManager {
   private final IMobilityTimeProvider timeProvider;
   // Route
   private Route route;
+  ILogger log;
 
   /**
    * Constructor
@@ -91,6 +94,7 @@ public class ConflictManager implements IConflictManager {
     this.crosstrackMargin = crosstrackMargin;
     this.timeMargin = timeMargin;
     this.timeProvider = timeProvider;
+    this.log = LoggerManager.getLogger();
   }
 
   /**
@@ -113,25 +117,31 @@ public class ConflictManager implements IConflictManager {
 
   @Override
   public boolean addMobilityPath(List<RoutePointStamped> path, String vehicleStaticId) {
+    log.info("Adding mobility path");
     if (path == null || path.isEmpty() || vehicleStaticId == null) {
       return false;
     }
-    addPath(path, vehicleStaticId, mobilityPathSpatialMaps);
+    synchronized (mobilityPathSpatialMaps) {
+      addPath(path, vehicleStaticId, mobilityPathSpatialMaps);
+    }
     return true;
   }
 
   @Override
   public boolean addRequestedPath(List<RoutePointStamped> path, String planId, String vehicleId) {
+    log.info("Adding requested path");
     if (path == null || path.isEmpty() || planId == null || vehicleId == null) {
       return false;
     }
-    addPath(path, planId, requestedPathSpatialMaps);
-    planIdMap.put(planId, vehicleId);
+    synchronized (requestedPathSpatialMaps) {
+      addPath(path, planId, requestedPathSpatialMaps);
+      planIdMap.put(planId, vehicleId);
+    }
     return true;
   }
   
   /**
-   * Helper function fro adding paths to a map of spatial hash maps
+   * Helper function for adding paths to a map of spatial hash maps
    * 
    * @param path The path to add for future conflict detection
    * @param key The key to use for identifying this path
@@ -139,15 +149,21 @@ public class ConflictManager implements IConflictManager {
    * @return True if the path could be added. False if not.
    */
   private void addPath(List<RoutePointStamped> path, String key, Map<String, NSpatialHashMap> map) {
+    log.info("addPath");
     // Get current path for this vehicle
     NSpatialHashMap vehiclesPath = map.get(key);
     // If not current path for this vehicle add it 
     if (vehiclesPath == null) {
+      log.info("Creating new spatial hash map");
       vehiclesPath =  NSpatialHashMapFactory.buildSpatialHashMap(cellSize);
       map.put(key, vehiclesPath);
     }
+    log.info("Preparing to insert points");
     // Insert points
+    long time0 = System.currentTimeMillis();
     insertPoints(path, vehiclesPath);
+    long time1 = System.currentTimeMillis();
+    log.debug("addPath: call to insertPoints took " + (time1-time0) + " ms.");
   }
 
   /**
@@ -158,7 +174,10 @@ public class ConflictManager implements IConflictManager {
    */
   private void insertPoints(List<RoutePointStamped> path, NSpatialHashMap map) {
     // Add points to spatial map
+    log.info("Inserting path with size " + path.size());
+    int count = 0;
     for (RoutePointStamped routePoint: path) {
+      //log.info("Inserting point " + count + ": " + routePoint.getPoint());
       // Define bounds
       Point3D minBoundingPoint = new Point3D(
         routePoint.getDowntrack() - downtrackMargin,
@@ -170,23 +189,31 @@ public class ConflictManager implements IConflictManager {
         routePoint.getStamp() + timeMargin);
       // Insert point
       map.insert(new CartesianObject(Arrays.asList(minBoundingPoint, maxBoundingPoint)));
+      //log.info("Inserted point");
+      count++;
     }
+    log.info("Done inserting");
   }
   
   @Override
   public boolean removeMobilityPath(String vehicleStaticId) {
-    return mobilityPathSpatialMaps.remove(vehicleStaticId) != null;
+    synchronized (mobilityPathSpatialMaps) {
+      return mobilityPathSpatialMaps.remove(vehicleStaticId) != null;
+    }
   }
 
   @Override
   public boolean removeRequestedPath(String planId) {
-    planIdMap.remove(planId);
-    return requestedPathSpatialMaps.remove(planId) != null;
+    synchronized (requestedPathSpatialMaps) {
+      planIdMap.remove(planId);
+      return requestedPathSpatialMaps.remove(planId) != null;
+    }
   }
 
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath) {
-    if (hostPath == null || hostPath.isEmpty()) {
+    log.info("Getting any conflicts with host path");
+    if (hostPath == null || hostPath.isEmpty() || route == null) {
       return new LinkedList<>();
     }
     // Prepare to store conflicts
@@ -261,31 +288,33 @@ public class ConflictManager implements IConflictManager {
     final int TIME_IDX = 2, MAX_IDX = 1;
     List<String> conflictingVehicles =  new LinkedList<>();
     // Directly access iterator for safe removal while iterating
-    for(Iterator<Entry<String, NSpatialHashMap>> i = mapContainer.entrySet().iterator(); i.hasNext();) {
-      Entry<String, NSpatialHashMap> entry = i.next();
-      String id = entry.getKey();
-      NSpatialHashMap map = entry.getValue();
+    synchronized (mapContainer) {
+      for(Iterator<Entry<String, NSpatialHashMap>> i = mapContainer.entrySet().iterator(); i.hasNext();) {
+        Entry<String, NSpatialHashMap> entry = i.next();
+        String id = entry.getKey();
+        NSpatialHashMap map = entry.getValue();
 
-      // If the maximum time of the current map is before the minimum time being evaluated
-      // it should be skipped and removed from future consideration
-      if (minTime > map.getBounds()[TIME_IDX][MAX_IDX]) {
-        i.remove();
-        // If this is the a requested path disassociate the plan and vehicle ids
-        if (mapContainer == requestedPathSpatialMaps) {
-          planIdMap.remove(id);
-        }
-        continue;
-      }
-      // If this map contains the point being evaluated collisions must be checked for
-      if (map.surrounds(routePoint.getPoint())) {
-        if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
-          // Get the vehicle id and add it to list of conflicting ids
+        // If the maximum time of the current map is before the minimum time being evaluated
+        // it should be skipped and removed from future consideration
+        if (minTime > map.getBounds()[TIME_IDX][MAX_IDX]) {
+          i.remove();
+          // If this is the a requested path disassociate the plan and vehicle ids
           if (mapContainer == requestedPathSpatialMaps) {
-            conflictingVehicles.add(planIdMap.get(id));
-          } else {
-            conflictingVehicles.add(id);
+            planIdMap.remove(id);
           }
           continue;
+        }
+        // If this map contains the point being evaluated collisions must be checked for
+        if (map.surrounds(routePoint.getPoint())) {
+          if (!map.getCollisions(routePoint.getPoint()).isEmpty()) {
+            // Get the vehicle id and add it to list of conflicting ids
+            if (mapContainer == requestedPathSpatialMaps) {
+              conflictingVehicles.add(planIdMap.get(id));
+            } else {
+              conflictingVehicles.add(id);
+            }
+            continue;
+          }
         }
       }
     }
@@ -294,6 +323,7 @@ public class ConflictManager implements IConflictManager {
 
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath) {
+    log.info("Getting conflicts between two paths");
     if (hostPath == null || otherPath == null || hostPath.isEmpty() || otherPath.isEmpty()) {
       return new LinkedList<>();
     }

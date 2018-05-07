@@ -563,6 +563,8 @@ public class Arbitrator extends GuidanceComponent
       double trajectoryStart = downtrackDistance.get();
       double trajectoryEnd = getNextTrajectoryEndpoint(trajectoryStart);
 
+      // Set last trajectory to null such that this re-plan will use current speed as entry speed
+      trajectory = null;
       trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
       trajectoryExecutor.abortTrajectory();
       trajectoryExecutor.runTrajectory(trajectory);
@@ -658,6 +660,12 @@ public class Arbitrator extends GuidanceComponent
   @Override
   public void requestNewPlan() {
     planningWindow /= planningWindowShrinkFactor; // Offset for the planning window size decrease involved
+    notifyTrajectoryFailure();
+  }
+
+  public void requestNewPlan(double endDist) {
+    planningWindow = (endDist - downtrackDistance.get()) / planningWindowShrinkFactor;
+    log.warn("Using experimental replan method, replanning with window: " + planningWindow);
     notifyTrajectoryFailure();
   }
 

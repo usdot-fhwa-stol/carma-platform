@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.mobilityrouter;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Interface for mobility message routing access to the Plugin instances.
  */
@@ -32,13 +34,11 @@ public interface IMobilityRouter {
 
     /**
      * Register a callback to be executed when a mobility ack message is received and is either directed
-     * at the host vehicle or is a broadcast message. This callback will be executed if the strategy argument
-     * matches the end of the message's strategy field.
+     * at the host vehicle or is a broadcast message.
      * 
-     * @param strategy The strategy value for which this callback is relevant
      * @param handler The {@link MobilityResponseHandler} to invoke upon receiving a relevant event
      */
-    public void registerMobilityResponseHandler(String strategy, MobilityResponseHandler handler);
+    public void registerMobilityResponseHandler(MobilityResponseHandler handler);
 
     /**
      * Register a callback to be executed when a mobility operation message is received and is either directed
@@ -64,4 +64,15 @@ public interface IMobilityRouter {
      * Get the current vehicle's static mobility ID
      */
     public String getHostMobilityId();
+    
+    /**
+     * Get the exclusive capability to disable or enable mobility router handling mobility path messages
+     */
+    public AtomicBoolean acquireDisableMobilityPathCapability();
+    
+    /**
+     * Release the exclusive capability to disable/enable mobility router handling mobility path message
+     */
+    public void releaseDisableMobilityPathCapability(AtomicBoolean acquiredCapability);
+    
 }
