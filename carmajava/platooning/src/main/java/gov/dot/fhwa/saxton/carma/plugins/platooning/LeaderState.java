@@ -270,7 +270,18 @@ public class LeaderState implements IPlatooningState {
             
             double lastGap = Double.MAX_VALUE;
             RoadwayObstacle vehicleRightInFront = null;
+            log.debug("Found objects from roadway:");
             for(RoadwayObstacle ob : obs) {
+                log.debug("Found obstacle in lane " + ob.getPrimaryLane() + " and its dtd is " + ob.getDownTrack());
+                log.debug("The found obstacle type is " + ob.getConnectedVehicleType().toString());
+                if(ob.getObject() != null) {
+                    log.debug("The BSM id is of size " + ob.getObject().getBsmId().capacity());
+                    for(int i = 0; i < vehicleRightInFront.getObject().getBsmId().capacity(); i++) {
+                        log.debug("The content at " + i + " is " + vehicleRightInFront.getObject().getBsmId().getByte(i));
+                    }
+                } else {
+                    log.debug("But we did not found an associated external object");
+                }
                 if(ob.getPrimaryLane() == plugin.getManeuverInputs().getCurrentLane()) {
                     if(ob.getDownTrack() - currentDtd < lastGap) {
                         vehicleRightInFront = ob;
@@ -353,5 +364,5 @@ public class LeaderState implements IPlatooningState {
             plugin.setLightBarStatus(IndicatorStatus.OFF);
         }
     }
-
+    
 }
