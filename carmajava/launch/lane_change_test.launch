@@ -48,8 +48,8 @@
 
   <!-- Time Corrector Node -->
   <node pkg="carma" type="time_corrector_node.py" name="time_corrector_node">
-    <param name="dist_to_merge" type="int" value="$(arg dist_to_merge)"/>
-    <param name="speed_limit" type="int" value="$(arg speed_limit)"/>
+    <param name="dist_to_merge" type="double" value="$(arg dist_to_merge)"/>
+    <param name="speed_limit" type="double" value="$(arg speed_limit)"/>
   </node>
 
   <!-- Play ROS bag -->
