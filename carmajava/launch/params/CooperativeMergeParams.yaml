@@ -1,0 +1,10 @@
+# CooperativeMergeParams.yaml
+# Defines the ros parameters which define the behavior of the CooperativeMergePlugin
+
+# Double: The frequency of broadcasts of vehicle location during a merge
+# Units: Hz
+data_reporting_frequency: 10.0
+
+# Integer: The amount of time without communications with a commanding rsu to be considered a timeout
+# Units: ms
+cooperative_merge_comms_timeout: 100000

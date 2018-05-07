@@ -50,20 +50,21 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     protected TrajectoryConverter trajectoryConverter;
     protected TrajectoryExecutor trajectoryExecutor;
     protected IConflictDetector conflictDetector;
+    protected TrackingService trackingService;
     protected String conflictHandlerName = "Yield Plugin";
     protected MobilityPathHandler conflictHandler;
     protected String mobilitySenderId = "UNKNOWN";
-    protected String currentBsmId = "";
     protected static final String BROADCAST_RECIPIENT_ID = "";
     protected IPublisher<MobilityPath> pathPub;
     protected PluginManager pluginManager;
 
     public VehicleAwareness(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
-            TrajectoryConverter converter, IConflictDetector conflictDetector) {
+            TrajectoryConverter converter, IConflictDetector conflictDetector, TrackingService tracking) {
         super(stateMachine, pubSubService, node);
         stateMachine.registerStateChangeListener(this);
         this.trajectoryConverter = converter;
         this.conflictDetector = conflictDetector;
+        this.trackingService = tracking;
     }
 
     /*
@@ -245,7 +246,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         pathMsg.getHeader().setPlanId(UUID.randomUUID().toString());
 
         // TODO: Figure out how to get currentBsmId, I don't think we need this yet though
-        pathMsg.getHeader().setSenderBsmId(currentBsmId);
+        pathMsg.getHeader().setSenderBsmId(trackingService.getCurrentBSMId());
         pathMsg.setTrajectory(trajectoryConverter.pathToMessage(pathPrediction));
 
         pathPub.publish(pathMsg);

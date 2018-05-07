@@ -22,9 +22,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
+
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityPath;
@@ -36,6 +38,7 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.VehicleAwareness;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictManager;
@@ -72,6 +75,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     private PluginManager pluginManager;
     private TrajectoryExecutor trajectoryExecutor;
+    private TrackingService trackingService;
     private String defaultConflictHandlerName = "";
     private IPlugin defaultConflictHandler;
     private IConflictManager conflictManager;
@@ -79,16 +83,19 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private Arbitrator arbitrator;
     private String hostMobilityStaticId = "";
     private VehicleAwareness vehicleAwareness;
+    private AtomicBoolean handleMobilityPath = new AtomicBoolean(true);
+    private boolean isDisableMobilityPathCapabilityAcquired = false;
+    private Object mutex = new Object();
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
-     IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter, 
-     VehicleAwareness vehicleAwareness, TrajectoryExecutor trajectoryExecutor) {
+     IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
+     VehicleAwareness vehicleAwareness, TrajectoryExecutor trajectoryExecutor, TrackingService tracking) {
         super(stateMachine, pubSubService, node);
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
         this.vehicleAwareness = vehicleAwareness;
-
+        this.trackingService = tracking;
         stateMachine.registerStateChangeListener(this);
     }
 
@@ -160,7 +167,11 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
 
     @Override
     public void onCleanRestart() {
-        // NO-OP
+        this.handleMobilityPath.set(true);
+        requestMap = Collections.synchronizedMap(new HashMap<>());
+        ackList = Collections.synchronizedList(new LinkedList<>());
+        operationMap = Collections.synchronizedMap(new HashMap<>());
+        pathMap = Collections.synchronizedMap(new HashMap<>());
     }
 
     @Override
@@ -193,7 +204,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             respMsg.getHeader().setPlanId(msg.getHeader().getPlanId());
             respMsg.getHeader().setRecipientId(msg.getHeader().getSenderId());
             respMsg.getHeader().setSenderId(hostMobilityStaticId);
-            //respMsg.getHeader().setSenderBsmId(...); We don't have this data here, should this field be set in Message node?
+            respMsg.getHeader().setSenderBsmId(trackingService.getCurrentBSMId());
             respMsg.getHeader().setTimestamp(System.currentTimeMillis());
 
             if (resp == MobilityRequestResponse.ACK) {
@@ -323,11 +334,14 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             }
         }
         
-        double currentTrajEnd = trajectoryExecutor.getTotalTrajectory().getEndLocation();
-        double requestEnd = otherPath.get(otherPath.size() - 1).getDowntrack();
-        if (requestEnd > currentTrajEnd) {
-            log.warn("Using experimental replan method to extend plan to " + requestEnd);
-            arbitrator.requestNewPlan(requestEnd);
+        if(trajectoryExecutor != null && trajectoryExecutor.getTotalTrajectory() != null) {
+            double currentTrajEnd = trajectoryExecutor.getTotalTrajectory().getEndLocation();
+            double requestEnd = otherPath.get(otherPath.size() - 1).getDowntrack();
+            if (requestEnd > currentTrajEnd) {
+                log.warn("Using experimental replan method to extend plan to " + requestEnd);
+                // requestEnd will be caped to the end of the route in arbitrator
+                arbitrator.requestNewPlan(requestEnd);
+            }
         }
     }
 
@@ -386,7 +400,8 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * or does not contain a conflict then no call is made.
      */
     private void handleMobilityPath(MobilityPath msg) {
-        if (stateMachine.getState() != GuidanceState.ENGAGED) {
+        if (stateMachine.getState() != GuidanceState.ENGAGED || !handleMobilityPath.get()) {
+            log.debug("Ignoring mobility path message.");
             return;
         }
 
@@ -517,4 +532,32 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     }
   }
 
+  @Override
+  public AtomicBoolean acquireDisableMobilityPathCapability() {
+      if(!isDisableMobilityPathCapabilityAcquired) {
+          synchronized(mutex) {
+              if(!isDisableMobilityPathCapabilityAcquired) {
+                  log.debug("Disable mobility path capability is acquired by some class");
+                  isDisableMobilityPathCapabilityAcquired = true;
+                  return handleMobilityPath;
+              }
+          }
+      }
+      return null;
+  }
+
+
+  @Override
+  public void releaseDisableMobilityPathCapability(AtomicBoolean acquiredCapability) {
+      // check if the caller acquired a reference before
+      if(acquiredCapability == this.handleMobilityPath) {
+          synchronized(mutex) {             
+              isDisableMobilityPathCapabilityAcquired = false;
+              // change the reference of old boolean flag
+              handleMobilityPath = new AtomicBoolean(true);
+              log.debug("Disable mobility path capability lock is released");
+          }
+      }
+  }
+  
 }

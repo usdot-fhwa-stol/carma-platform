@@ -143,7 +143,6 @@ public class Arbitrator extends GuidanceComponent
     log.info("STARTUP", "Arbitrator running!");
     routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
     routeStateSubscriber.registerOnMessageCallback((msg) -> {
-      log.info("Received RouteState:" + msg);
       downtrackDistance.set(msg.getDownTrack());
       receivedDtdUpdate.set(true);
     });

@@ -21,12 +21,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
@@ -72,23 +75,26 @@ public class FollowerStateTest {
                                                         mock(IPubSubService.class),       mock(ParameterSource.class),
                                                         planner,                          mockRouteService,
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
-                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
+                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
+                                                        mock(TrackingService.class));
         when(mockFact.createLoggerForClass(any())).thenReturn(mockLog);
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
-        when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
+        mockPlugin.handleMobilityPath = new AtomicBoolean(true);
+        mockPlugin.platoonManager = mockManager;
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
-        when(mockPlugin.getCommandGenerator()).thenReturn(mockCmdGenerator);
+        mockPlugin.commandGenerator = mockCmdGenerator;
+        
         followerState = new FollowerState(mockPlugin, mockLog, pluginServiceLocator);
     }
     
     @Test
     public void planComplexManeuver() {
         Trajectory traj = new Trajectory(0, 50.0);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
-        when(mockRouteService.getAlgorithmEnabledWindowInRange(0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(new double[]{0.0, 50.0});
-        when(mockPlugin.getMinimumManeuverLength()).thenReturn(15.0);
+        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(true);
+        when(mockRouteService.getAlgorithmEnabledWindowInRange(0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(new double[]{0.0, 50.0});
+        when(mockPlugin.minimumManeuverLength).thenReturn(15.0);
         TrajectoryPlanningResponse tpr = followerState.planTrajectory(traj, 0);
         assertEquals(0, tpr.getRequests().size());
         assertEquals(0.0, traj.getComplexManeuver().getStartDistance(), 0.001);

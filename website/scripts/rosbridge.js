@@ -40,6 +40,9 @@ var t_can_engine_speed = 'engine_speed';
 var t_can_speed = 'speed';
 var t_guidance_state = 'state';
 var t_incoming_bsm = 'bsm';
+var t_inbound_binary_msg = '';
+var t_outbound_binary_msg = '';
+var t_get_drivers_with_capabilities = 'get_drivers_with_capabilities';
 var t_driver_discovery = 'driver_discovery';
 var t_lateral_control_driver = 'cmd_lateral';
 var t_ui_instructions = 'ui_instructions';
@@ -1519,6 +1522,105 @@ function mapOtherVehicles() {
     });
 }
 
+
+/*
+    Get the drivers for inbound and oubound.
+    Update the signal icon on the status bar based on the binary incoming and outgoing messages.
+*/
+function showCommStatus() {
+
+      //Get the drivers for inbound and outbound
+      //rosservice call /saxton_cav/interface_manager/get_drivers_with_capabilities "['inbound_binary_msg','outbound_binary_msg']"
+      //  driver_data: [/saxton_cav/drivers/dsrc/comms/inbound_binary_msg, /saxton_cav/drivers/dsrc/comms/outbound_binary_msg]
+      var serviceClient = new ROSLIB.Service({
+          ros: ros,
+          name: '/saxton_cav/interface_manager/get_drivers_with_capabilities', //t_get_drivers_with_capabilities
+          serviceType: 'cav_srvs/GetDriversWithCapabilities'
+      });
+
+      var driverlist = ['inbound_binary_msg', 'outbound_binary_msg'];
+
+      // Then we create a Service Request.
+      var request = new ROSLIB.ServiceRequest({
+        capabilities: driverlist
+      });
+
+      // Call the service and get back the results in the callback.
+      serviceClient.callService(request, function (result) {
+
+          if (result.driver_data.length != 2)
+          {
+            console.log('getCommsDriver() returned less than 2 drivers: ' + result.driver_data.length);
+            return;
+          }
+
+          t_inbound_binary_msg = result.driver_data[0];
+          t_outbound_binary_msg = result.driver_data[1];
+
+          //Update the comms status
+          updateCommStatus();
+      });
+}
+/*
+    Update the signal icon on the status bar based on the binary incoming and outgoing messages.
+*/
+function updateCommStatus() {
+
+    // Get the Object by ID
+    var a = document.getElementById('objOBUBroadcast');
+    // Get the SVG document inside the Object tag
+    var svgDoc = a.contentDocument;
+
+    if (t_outbound_binary_msg != null && t_outbound_binary_msg != '')
+    {
+
+       //Subscribe to Topic
+       var listenerClientOutboundMsg = new ROSLIB.Topic({
+           ros: ros,
+           name: t_outbound_binary_msg,
+           messageType: 'cav_msgs/ByteArray'
+       });
+
+       listenerClientOutboundMsg.subscribe(function (message) {
+
+           // Get one of the SVG items by ID;
+           var svgItem1 = svgDoc.getElementById('signal-right');
+           // Set the colour to something else
+           svgItem1.setAttribute('fill', '#4CAF50'); //green
+
+           //set back to black after 5 seconds.
+          setTimeout(function(){
+               // Set the colour to something else
+               svgItem1.setAttribute('fill', '#000000'); //black
+          }, 5000);
+       });
+    }
+
+    if (t_inbound_binary_msg != null && t_inbound_binary_msg != '')
+    {
+       //Subscribe to Topic
+        var listenerClientInboundMsg = new ROSLIB.Topic({
+            ros: ros,
+            name: t_inbound_binary_msg,
+            messageType: 'cav_msgs/ByteArray'
+        });
+
+        listenerClientInboundMsg.subscribe(function (message) {
+
+           // Get one of the SVG items by ID;
+           var svgItem2 = svgDoc.getElementById('signal-left');
+           // Set the colour to something else
+           svgItem2.setAttribute('fill', '#4CAF50'); //green
+
+           //set back to black after 5 seconds.
+           setTimeout(function(){
+               svgItem2.setAttribute('fill', '#000000'); //black
+           }, 5000);
+
+        });
+    }
+}
+
 /*
  Changes the string into Camel Case.
 */
@@ -1553,6 +1655,7 @@ function showStatusandLogs() {
     checkLateralControlDriver();
     showUIInstructions();
     mapOtherVehicles();
+    showCommStatus();
 }
 
 /*

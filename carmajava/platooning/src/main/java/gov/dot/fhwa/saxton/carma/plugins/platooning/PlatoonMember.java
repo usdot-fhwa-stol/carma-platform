@@ -24,6 +24,8 @@ public class PlatoonMember {
     
     // Static ID is permanent ID for each vehicle
     protected String staticId;
+    // Current BSM Id for each CAV
+    protected String bsmId;
     // Vehicle real time command speed in m/s
     protected double commandSpeed;
     // Actual vehicle speed in m/s
@@ -33,8 +35,9 @@ public class PlatoonMember {
     // The local time stamp when the host vehicle update any informations of this member
     protected long   timestamp;
 
-    public PlatoonMember(String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp) {
+    public PlatoonMember(String staticId, String bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp) {
         this.staticId        = staticId;
+        this.bsmId           = bsmId;
         this.commandSpeed    = commandSpeed;
         this.vehicleSpeed    = vehicleSpeed;
         this.vehiclePosition = vehiclePosition;
@@ -43,7 +46,8 @@ public class PlatoonMember {
 
     @Override
     public String toString() {
-        return "PlatoonMember [staticId=" + staticId + ", commandSpeed=" + commandSpeed + ", vehicleSpeed="
-                + vehicleSpeed + ", vehiclePosition=" + vehiclePosition + ", timestamp=" + timestamp + "]";
+        return "PlatoonMember [staticId=" + staticId + ", bsmId=" + bsmId + ", commandSpeed=" + commandSpeed
+                + ", vehicleSpeed=" + vehicleSpeed + ", vehiclePosition=" + vehiclePosition + ", timestamp=" + timestamp + "]";
     }
+    
 }

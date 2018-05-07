@@ -11,7 +11,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -27,7 +27,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -43,7 +43,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -59,7 +59,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -75,7 +75,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -91,7 +91,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -107,7 +107,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -123,7 +123,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -139,7 +139,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -155,7 +155,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -171,7 +171,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -187,7 +187,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -203,7 +203,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -219,7 +219,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -235,7 +235,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 15
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -251,7 +251,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -267,7 +267,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -283,7 +283,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -299,7 +299,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -315,7 +315,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -331,7 +331,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -347,7 +347,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -363,7 +363,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -379,7 +379,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -395,7 +395,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -411,7 +411,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -427,7 +427,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -443,7 +443,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -459,7 +459,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
@@ -475,7 +475,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 10
+    upperSpeedLimit: 25
     laneCount: 1
     nearestMileMarker: 1.0
     roadType: SECONDARY    
