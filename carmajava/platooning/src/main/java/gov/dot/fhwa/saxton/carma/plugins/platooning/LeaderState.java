@@ -28,8 +28,6 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  * in front of it and keep broadcasting heart-beat mobility operation INFO message to inform its existence.
  */
 public class LeaderState implements IPlatooningState {
-
-    private static final double DTD_EPSILON = 5.0; // m
     
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
@@ -262,11 +260,12 @@ public class LeaderState implements IPlatooningState {
 
     private boolean isVehicleRightInFront(String rearVehicleBsmId, double downtrack) {
         double currentDtd = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
-        if(downtrack > currentDtd + DTD_EPSILON) {
+        if(downtrack > currentDtd) {
             log.debug("Found a platoon in front. We are able to join");
             return true;
         } else {
             log.debug("Ignoring platoon from our back.");
+            log.debug("The front platoon dtd is " + downtrack + " and we are current at " + currentDtd);
             return false;
         }
 //        RoadwayEnvironment env = plugin.roadwaySub.getLastMessage();
