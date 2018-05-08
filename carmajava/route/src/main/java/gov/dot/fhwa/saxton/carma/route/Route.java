@@ -73,6 +73,7 @@ public class Route {
     routeMsg.setRouteID(routeID);
     routeMsg.setRouteName(routeName);
     routeMsg.setValid(valid);
+    // TODO set header stamp and frame id
 
     List<cav_msgs.RouteSegment> routeSegmentMsgs = new LinkedList<>();
     for (int i = 0; i < segments.size(); i++) {
