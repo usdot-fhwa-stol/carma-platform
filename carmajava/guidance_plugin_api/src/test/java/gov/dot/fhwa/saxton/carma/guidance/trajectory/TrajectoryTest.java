@@ -239,7 +239,7 @@ public class TrajectoryTest {
     assertEquals(-1.0, loc, 0.01);
   }
 
-  @Teststart
+  @Test
   public void testGetNextLateralManeuverAfterEmpty() {
     IManeuver m = traj.getNextManeuverAfter(0.0, ManeuverType.LATERAL);
     assertEquals(null, m);
@@ -363,6 +363,39 @@ public class TrajectoryTest {
     when(complexManeuver.getEndDistance()).thenReturn(30.0);
     assertFalse(traj.setComplexManeuver(complexManeuver));
     assertEquals(20.0, traj.getEndLocation(), 0.001);
+  }
+
+  @Test
+  public void testCopyManeuvers() {
+    traj.addManeuver(createLongitudinalManeuver(0, 5));
+    traj.addManeuver(createLongitudinalManeuver(7, 10));
+    traj.addManeuver(createLongitudinalManeuver(15, 20));
+
+    Trajectory tmp = new Trajectory(0, 20);
+    tmp.copyManeuvers(traj, 0, 20);
+    assertEquals(3, tmp.getManeuvers().size());
+  }
+
+  @Test
+  public void testCopyManeuvers1() {
+    traj.addManeuver(createLongitudinalManeuver(0, 5));
+    traj.addManeuver(createLongitudinalManeuver(7, 10));
+    traj.addManeuver(createLongitudinalManeuver(15, 20));
+
+    Trajectory tmp = new Trajectory(0, 20);
+    tmp.copyManeuvers(traj, 1, 19);
+    assertEquals(1, tmp.getManeuvers().size());
+  }
+
+  @Test
+  public void testCopyManeuversFail() {
+    traj.addManeuver(createLongitudinalManeuver(0, 5));
+    traj.addManeuver(createLongitudinalManeuver(7, 10));
+    traj.addManeuver(createLongitudinalManeuver(15, 20));
+
+    Trajectory tmp = new Trajectory(30, 40);
+    boolean res = tmp.copyManeuvers(traj, 0, 20);
+    assertFalse(res);
   }
 
   protected Trajectory traj;

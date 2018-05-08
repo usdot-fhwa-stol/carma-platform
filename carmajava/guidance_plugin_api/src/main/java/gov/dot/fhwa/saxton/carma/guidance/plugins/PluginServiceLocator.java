@@ -18,31 +18,50 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 
 /**
  * Service collection for the Plugin interface. Provides access to the generic, ROS agnostic interfaces
  * the plugins can use to interact with platform systems and other Guidance sub-components.
  */
 public class PluginServiceLocator {
+    
     private final ArbitratorService arbitratorService;
     private final PluginManagementService pluginManagementService;
     private final ParameterSource parameterSource;
     private final IPubSubService IPubSubService;
     private final ManeuverPlanner maneuverPlanner;
     private final RouteService routeService;
+    private final IMobilityRouter mobilityRouter;
+    private final IConflictDetector conflictDetector;
+    private final ITrajectoryConverter trajectoryConverter;
+    private final ILightBarManager lightBarManager;
+    private final TrackingService trackingService;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
         PluginManagementService pluginManagementService, IPubSubService iPubSubService,
-        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService) {
+        ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService,
+        IMobilityRouter mobilityRouter, IConflictDetector conflictDetector,
+        ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager, TrackingService trackingService) {
+            
         this.arbitratorService = arbitratorService;
         this.IPubSubService = iPubSubService;
         this.pluginManagementService = pluginManagementService;
         this.parameterSource = parameterSource;
         this.maneuverPlanner = maneuverPlanner;
         this.routeService = routeService;
+        this.mobilityRouter = mobilityRouter;
+        this.conflictDetector = conflictDetector;
+        this.trajectoryConverter = trajectoryConverter;
+        this.lightBarManager = lightBarManager;
+        this.trackingService = trackingService;
     }
 
     /**
@@ -80,7 +99,45 @@ public class PluginServiceLocator {
         return maneuverPlanner;
     }
 
+    /**
+     * Get the {@link RouteService} instance available to the plugins.
+     */
     public RouteService getRouteService() {
         return routeService;
+    }
+
+    /**
+     * Get the {@link MobilityRouter} instance available to the plugins.
+     */
+    public IMobilityRouter getMobilityRouter() {
+        return mobilityRouter;
+    }
+    
+    /**
+     * Get the {@link IConflictDetector} instance available to the plugins
+     */
+    public IConflictDetector getConflictDetector() {
+        return conflictDetector;
+    }
+
+    /**
+     * Get the {@link ITrajectoryConverter} instance available to the plugins
+     */
+    public ITrajectoryConverter getTrajectoryConverter() {
+        return trajectoryConverter;
+    }
+
+    /**
+     * Get the {@link ILightBarManager} instance available to the plugins
+     */
+    public ILightBarManager getLightBarManager() {
+        return this.lightBarManager;
+    }
+
+    /**
+     * Get the {@link TrackingService} instance available to the plugins
+     */
+    public TrackingService getTrackingService() {
+        return trackingService;
     }
 }

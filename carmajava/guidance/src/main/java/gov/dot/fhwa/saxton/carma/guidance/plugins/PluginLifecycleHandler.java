@@ -59,6 +59,7 @@ public class PluginLifecycleHandler {
         }
 
         t = new Thread(new PluginWorker(tasks));
+        t.setName(plugin.getVersionInfo().componentName() + "DoInitializePluginWorkerThread");
         t.start();
     }
 
@@ -167,6 +168,7 @@ public class PluginLifecycleHandler {
             e.printStackTrace();
         }
         t = new Thread(new PluginWorker(tasks));
+        t.setName(plugin.getVersionInfo().componentName() + "DoSuspendPluginWorkerThread");
         t.start();
     }
 

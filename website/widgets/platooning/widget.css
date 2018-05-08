@@ -1,0 +1,106 @@
+.divPlatoonStyle1 {
+    position: relative;
+    width: 580px;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.leftRelative {
+    float: left;
+    position: relative;
+}
+
+.divWidth {
+    left: 300px;
+}
+
+.numberCircle {
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    padding: 5px;
+    background: #fff;
+    border: 2px solid #666;
+    color: #666;
+    text-align: center;
+    font: 20px Arial, sans-serif;
+    float: left;
+    position: absolute;
+    top: 60px;
+    left: 110px;
+}
+
+#divHostTitle {
+    float: left;
+    position: absolute;
+    top: 60px;
+    width: 100%;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+    font-size: 20px;
+    left: -10px;
+}
+
+#gaugeActualGap {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+#gaugeDesiredGap {
+    position: absolute;
+    top: 10px;
+    left: 0px;
+    z-index: -1;
+}
+
+#txtActualGap {
+    float: left;
+    position: absolute;
+    top: 75px;
+    width: 300px;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+    font-size: 20px;
+}
+
+#txtDesiredGap {
+    float: left;
+    position: absolute;
+    top: 95px;
+    width: 300px;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+    font-size: 20px;
+}
+
+#divLeaderTitle {
+    position: absolute;
+    top: 60px;
+    width: 100%;
+    text-align: center;
+    font-variant-caps: all-small-caps;
+    font-size: 20px;
+}
+
+#divLeadCmdSpeed {
+    left: -20px;
+}
+
+.SUVSideView  {
+  display: block;
+  width: 128px;
+  height: 76px;
+  background: url(SUVSideView.svg);
+  background-size: 128px 76px;
+}
+
+.SUVSideView_Green {
+  display: block;
+  width: 128px;
+  height: 76px;
+  background: url(SUVSideView_Green.svg);
+  background-size: 128px 76px;
+}

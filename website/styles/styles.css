@@ -139,17 +139,30 @@ div.tab {
     overflow: auto;
     background-color: #336699;
     color: white;
-    scrollbar-base-color: gold;
     font-family: sans-serif;
     padding: 10px;
 }
+
+/*** scrollbar ***/
+::-webkit-scrollbar {
+    width: 1.5em;
+}
+
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: gray;
+  outline: 3px solid slategrey;
+}
+
 
 /*** Checkbox and Radiobutton Style ****/
 
 *, *::before, *::after {
     box-sizing: border-box;
 }
-
 
 .container {
     position: relative;
@@ -225,6 +238,8 @@ input:disabled + label { /* Disabled format */
     position: relative;
     left: 0px;
 }
+
+
 /*** Message Box ***/
 div.message_box {
     display: block;
@@ -374,7 +389,9 @@ div.message_box {
 /* Modal Button */
 .btnModal{
     height: 50px;
-    width: 110px;
+    width: auto;
+    padding-left: 10px;
+    padding-right: 10px;
     background-color:#336699;
     color: white;
     border-radius: 15px;
@@ -512,10 +529,8 @@ div.message_box {
 
 /* RouteInfo in Driver View */
 #divRouteInfo {
-    position: relative;
-    top: 0%;
     color: black;
-    font-size: 45px;
+    font-size: 25px;
     font-weight: bold;
     text-align: center;
 }

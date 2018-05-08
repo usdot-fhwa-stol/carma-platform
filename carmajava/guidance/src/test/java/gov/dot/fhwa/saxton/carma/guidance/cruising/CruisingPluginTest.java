@@ -37,7 +37,10 @@ import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.Tracking;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin.TrajectorySegment;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLongitudinalManeuver;
@@ -47,6 +50,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.NoOpAccStrategyFactory;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginManagementService;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
@@ -58,6 +62,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.plugins.speedharm.SpeedHarmonizationManeuver;
 
 public class CruisingPluginTest {
@@ -79,9 +84,13 @@ public class CruisingPluginTest {
         AccStrategyManager.setAccStrategyFactory(noOpAccStrategyFactory);
         
         routeService = mock(GuidanceRouteService.class);
+        ParameterSource mockParameterSource = mock(ParameterSource.class);
+        when(mockParameterSource.getDouble("~cruising_target_multiplier", 1.0)).thenReturn(1.0);
         PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),
-                mock(PluginManagementService.class), mock(IPubSubService.class), mock(ParameterSource.class),
-                new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService);
+                mock(PluginManagementService.class), mock(IPubSubService.class), mockParameterSource,
+                new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService,
+                mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class),
+                mock(ILightBarManager.class), mock(Tracking.class));
         cruise = new CruisingPlugin(psl);
         cruise.onInitialize();
         cruise.maxAccel_ = 2.5;
@@ -149,6 +158,7 @@ public class CruisingPluginTest {
         Trajectory t = new Trajectory(0.0, 100.0);
         SpeedHarmonizationManeuver mockshm = mock(SpeedHarmonizationManeuver.class);
         when(mockshm.getStartDistance()).thenReturn(40.0);
+        when(mockshm.getEndDistance()).thenReturn(100.0);
         t.setComplexManeuver(mockshm);
         List<TrajectorySegment> gaps = cruise.findTrajectoryGaps(t, 1.0);
         assertEquals(1, gaps.size());

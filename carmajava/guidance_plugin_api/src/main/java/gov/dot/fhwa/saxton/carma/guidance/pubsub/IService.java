@@ -27,22 +27,13 @@ import gov.dot.fhwa.saxton.carma.rosutils.*;
  */
 public interface IService<T, S> {
     /**
-     * Perform an asynchronous call for the service, executing the callback after the response is received or upon
-     * call failure.
-     *
-     * @param request  The message for the request
-     * @returns An awaitable future containing an {@link RosServiceResponse} indicating the status of the call
-     */
-    RosServiceResult<S> callAsync(T request);
-
-    /**
      * Perform a synchronous call for the service, waiting until the response is returned and executing the appropriate
      * callback.
      * 
      * @param request The message for the request
      * @param callback The callback to execute on message failure or success
      */
-    void callSync(T request, OnServiceResponseCallback<S> callback);
+    void call(T request, OnServiceResponseCallback<S> callback);
 
     /**
     * Generate a new (empty) request-type message instance to have it's fields populated before transmission.

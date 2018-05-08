@@ -16,11 +16,14 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import cav_msgs.MobilityAck;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
-public interface IPlatooningState {
+public interface IPlatooningState extends Runnable {
     
     /**
      * Execute the plugin's planning algorithm and generate maneuvers in the supplied trajectory if possible.
@@ -31,25 +34,22 @@ public interface IPlatooningState {
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed);
     
     /**
-     * Callback method to handle negotiation requests which may result in state changing
-     * @param plan the detailed negotiation proposal from another vehicle
+     * Callback method to handle mobility requests which may result in
+     * state changing, trajectory re-plan and platooning info updates. 
+     * @param msg the detailed proposal from other vehicles
+     * @return simple yes/no response to the incoming proposal
      */
-    public boolean onReceiveNegotiationRequest(String plan);
+    public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg);
     
     /**
-     * Infinite loop method for different platooning state  
+     * Callback method to handle mobility operation.
+     * @param msg the necessary operational info from other vehicles
      */
-    public default void loop() throws InterruptedException {
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
-        }
-    };
+    public void onMobilityOperationMessage(MobilityOperation msg);
     
     /**
-     * Callback method when we received a response on host vehicle plan
+     * Callback method to handle mobility response.
+     * @param msg response for the current plan from other vehicles
      */
-    public void onReceivePlanResponse(MobilityAck ack);
+    public void onMobilityResponseMessage(MobilityResponse msg);
 }

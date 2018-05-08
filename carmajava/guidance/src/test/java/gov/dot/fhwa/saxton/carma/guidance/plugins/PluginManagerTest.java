@@ -22,6 +22,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
 import org.junit.After;
 import org.junit.Before;
@@ -33,9 +34,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
+import gov.dot.fhwa.saxton.carma.guidance.Tracking;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -149,7 +154,9 @@ public class PluginManagerTest {
         psl = mock(PluginServiceLocator.class);
         ConnectedNode node = mock(ConnectedNode.class);
         pm = new PluginManager(mock(GuidanceStateMachine.class), mock(IPubSubService.class), 
-        mock(IGuidanceCommands.class), mock(IManeuverInputs.class), mock(GuidanceRouteService.class), node);
+        mock(IGuidanceCommands.class), mock(IManeuverInputs.class), mock(GuidanceRouteService.class), node,
+        mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class),
+        mock(ILightBarManager.class), mock(Tracking.class));
         pluginClasses = new ArrayList<>();
         plugins = new ArrayList<>();
     }

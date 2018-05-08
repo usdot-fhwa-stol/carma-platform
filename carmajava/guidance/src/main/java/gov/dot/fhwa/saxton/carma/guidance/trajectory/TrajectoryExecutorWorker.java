@@ -16,14 +16,24 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
+import cav_msgs.ActiveManeuvers;
+import cav_msgs.Route;
+import cav_msgs.RouteState;
 
 /**
  * Guidance package TrajectoryExecutorWorker
@@ -47,6 +57,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected Arbitrator arbitrator;
   protected int timeStepsWithoutTraj = 0;
   protected static final int MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY = 3;
+  protected TrajectoryConverter trajectoryConverter;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -61,10 +72,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   }
 
   public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz,
-      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
+      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub, TrajectoryConverter trajectoryConverter) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
     this.activeManeuversPub = activeManeuversPub;
+    this.trajectoryConverter = trajectoryConverter;
   }
 
   public void setArbitrator(Arbitrator arbitrator) {
@@ -89,7 +101,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       log.info("Finished downtrack distance update with no trajectory.");
       return;
     } else {
-      if (downtrackDistance > currentTrajectory.get().getEndLocation()) {
+      if (downtrackDistance >= currentTrajectory.get().getEndLocation()) {
         swapTrajectories();
       }
     }
@@ -102,13 +114,15 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   /**
    * Abort the current and queued trajectories and the currently executing maneuvers
+   * 
+   * Synchronized to prevent race condition with loop function
    */
-  public void abortTrajectory() {
+  public synchronized void abortTrajectory() {
     log.debug("TrajectoryWorker aborting currently executing trajectory.");
     currentTrajectory.set(null);
     nextTrajectory.set(null);
     currentLateralManeuver = null;
-    currentLongitudinalManeuver = null;
+    currentLongitudinalManeuver =  null;
     currentComplexManeuver = null;
   }
 
@@ -234,8 +248,12 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   /**
    * Periodic loop method for iterating, this is where maneuvers get executed
+   * 
+   * Synchronized to prevent race conditions with onCleanRestart and abortTrajectory functions
    */
-  public void loop() {
+  public synchronized void loop() {
+    activeManeuversMsg = activeManeuversPub.newMessage();
+
     if (currentTrajectory.get() != null) {
       currentLongitudinalManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
       currentLateralManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
@@ -248,6 +266,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
           log.warn("Maneuver " + currentComplexManeuver.getClass().getSimpleName() + " planned by "
               + currentComplexManeuver.getPlanner() + " attempted to run after its end distance.");
         }
+        activeManeuversMsg.setLongitudinalStartDist(currentComplexManeuver.getStartDistance());
+        activeManeuversMsg.setLongitudinalEndDist(currentComplexManeuver.getEndDistance());
+        activeManeuversMsg.setLongitudinalManeuver(currentComplexManeuver.getClass().getSimpleName());
+        activeManeuversMsg
+            .setLongitudinalPlugin(currentComplexManeuver.getPlanner().getVersionInfo().componentName());
       } else {
         if (currentLongitudinalManeuver != null) {
           try {
@@ -256,6 +279,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
             log.warn("Maneuver " + currentLongitudinalManeuver.getClass().getSimpleName() + " planned by "
                 + currentLongitudinalManeuver.getPlanner() + " attempted to run after its end distance.");
           }
+          activeManeuversMsg.setLongitudinalStartDist(currentLongitudinalManeuver.getStartDistance());
+          activeManeuversMsg.setLongitudinalEndDist(currentLongitudinalManeuver.getEndDistance());
+          activeManeuversMsg.setLongitudinalManeuver(currentLongitudinalManeuver.getClass().getSimpleName());
+          activeManeuversMsg
+              .setLongitudinalPlugin(currentLongitudinalManeuver.getPlanner().getVersionInfo().componentName());
         }
         if (currentLateralManeuver != null) {
           try {
@@ -264,9 +292,15 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
             log.warn("Maneuver " + currentLateralManeuver.getClass().getSimpleName() + " planned by "
                 + currentLateralManeuver.getPlanner() + " attempted to run after its end distance.");
           }
+          activeManeuversMsg.setLateralStartDist(currentLateralManeuver.getStartDistance());
+          activeManeuversMsg.setLateralEndDist(currentLateralManeuver.getEndDistance());
+          activeManeuversMsg.setLateralManeuver(currentLateralManeuver.getClass().getSimpleName());
+          activeManeuversMsg.setLateralPlugin(currentLateralManeuver.getPlanner().getVersionInfo().componentName());
         }
       }
     }
+
+    activeManeuversPub.publish(activeManeuversMsg);
   }
 
   @Override
@@ -327,9 +361,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   }
 
   /**
-   * Force a clean restart operation on this worker componet
+   * Force a clean restart operation on this worker component
+   * 
+   * Synchronized to prevent race condition with loop function
    */
-  public void cleanRestart() {
+  public synchronized void cleanRestart() {
     downtrackDistance = 0.0;
     currentTrajectory = new AtomicReference<>();
     nextTrajectory = new AtomicReference<>();
@@ -351,5 +387,33 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     for (PctCallback callback : tmpCallbacks) {
       callback.called = false;
     }
+  }
+
+  public Trajectory getTotalTrajectory() {
+    if (nextTrajectory.get() == null) {
+      return currentTrajectory.get(); 
+    } else {
+      Trajectory cur = currentTrajectory.get();
+      Trajectory next = nextTrajectory.get();
+      double startDtd = cur.getStartLocation();
+      double endDtd = next.getEndLocation();
+
+      Trajectory out = new Trajectory(startDtd, endDtd);
+      out.copyManeuvers(cur, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+      out.copyManeuvers(next, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+      return out;
+    }
+  }
+
+  /**
+   * Convert the current trajectory to a timestamped list of points along the route frame
+   */
+  public List<RoutePointStamped> getHostPathPrediction() {
+    Trajectory traj = currentTrajectory.get();
+    if (traj == null) {
+      return new ArrayList<>();
+    }
+    return trajectoryConverter.convertToPath(traj);
   }
 }

@@ -59,6 +59,20 @@ public class RouteSegment {
     this.ecefToUptrackWP = getSegmentAllignedFRDFrame();
   }
 
+    /**
+   * Constructor for use in the fromMessage function
+   * @param uptrackWP The uptrack waypoint for the segment to be built.
+   * @param downtrackWP The downtrack waypoint for the segment to be built.
+   * @param ecefToUptrackWP A precalculated transform to the FRD frame of this segment
+   */
+  private RouteSegment(RouteWaypoint uptrackWP, RouteWaypoint downtrackWP, Transform ecefToUptrackWP) {
+    this.uptrackWP = uptrackWP;
+    this.downtrackWP = downtrackWP;
+    this.lineSegment = new LineSegment3D(this.uptrackWP.getECEFPoint(), this.downtrackWP.getECEFPoint());
+    this.length = this.lineSegment.length();
+    this.ecefToUptrackWP = ecefToUptrackWP;
+  }
+
   /**
    * Calculates the crosstrack distance from the provided GPS location to this route segment
    * Uses flat earth model
@@ -96,25 +110,39 @@ public class RouteSegment {
   }
 
     /**
-   * Calculates the crosstrack distance from the provided GPS location to this route segment
+   * Calculates the crosstrack distance from the provided ECEF point to the route segment
    * Uses flat earth model
    *
    * @param point The gps location to be compared
    * @return The calculated cross track distance in meters
    */
   public double crossTrackDistance(Point3D point) {
-    return this.lineSegment.crossTrackDistance(point);
+    return ecefPointInSegmentFrame(point).getY();
   }
 
   /**
-   * Calculates the downtrack distance from the provided GPS location to this route segment start
+   * Calculates the downtrack distance from the provided ECEF point to the route segment start
    * Uses flat earth model
    *
    * @param point The gps location to be compared
    * @return The calculated down track distance in meters
    */
   public double downTrackDistance(Point3D point) {
-    return this.lineSegment.downtrackDistance(point);
+    return ecefPointInSegmentFrame(point).getX();
+  }
+
+  /**
+   * Helper function to convert a point from the ECEF frame into the route segment FRD frame
+   * 
+   * @param ecefPoint A point located in an ecef frame
+   */
+  private Point3D ecefPointInSegmentFrame(Point3D ecefPoint) {
+    Transform ecefToPoint = new Transform(new Vector3(ecefPoint.getX(), ecefPoint.getY(), ecefPoint.getZ()), Quaternion.identity());
+    Transform segmentToPoint = getECEFToSegmentTransform().invert().multiply(ecefToPoint); // Find the transform from the segment to this object
+    Vector3 pntVec = segmentToPoint.getTranslation();
+    Point3D pntPosition = new Point3D(pntVec.getX(), pntVec.getY(), pntVec.getZ());
+
+    return pntPosition;
   }
 
   /**
@@ -162,6 +190,7 @@ public class RouteSegment {
 
   /**
    * Gets the transform between an ECEF frame and a FRD frame located on the uptrack waypoint of this segment
+   * The transform describes the location and rotation of the FRD frame in the ecef frame
    * X-Axis: Along segment
    * Y-Axis: Right of segment
    * Z-Axis: Into ground (not necessarily toward earth center if there is a change in elevation)
@@ -208,12 +237,6 @@ public class RouteSegment {
    * @return The lane index
    */
   public int determinePrimaryLane(double crossTrack) {
-    // TODO develop a standard for this
-    // Code for route going through lane center
-    // int segLane = this.getDowntrackWaypoint().getLaneIndex();
-    // double laneWidth = this.getDowntrackWaypoint().getLaneWidth();
-    // return (int) ((double)segLane - ((crossTrack - (laneWidth / 2.0)) / laneWidth));
-    //int segLane = this.getDowntrackWaypoint().getLaneIndex();
 
     // Code for route going through road centerline
     RouteWaypoint wp = this.getDowntrackWaypoint();
@@ -272,7 +295,13 @@ public class RouteSegment {
     routeSegMsg.setLength(length);
     routeSegMsg.setPrevWaypoint(uptrackWP.toMessage(factory, downtrackWPIndex - 1));
     routeSegMsg.setWaypoint(downtrackWP.toMessage(factory, downtrackWPIndex));
-
+    routeSegMsg.getFRDPose().getPosition().setX(ecefToUptrackWP.getTranslation().getX());
+    routeSegMsg.getFRDPose().getPosition().setY(ecefToUptrackWP.getTranslation().getY());
+    routeSegMsg.getFRDPose().getPosition().setZ(ecefToUptrackWP.getTranslation().getZ());
+    routeSegMsg.getFRDPose().getOrientation().setX(ecefToUptrackWP.getRotationAndScale().getX());
+    routeSegMsg.getFRDPose().getOrientation().setY(ecefToUptrackWP.getRotationAndScale().getY());
+    routeSegMsg.getFRDPose().getOrientation().setZ(ecefToUptrackWP.getRotationAndScale().getZ());
+    routeSegMsg.getFRDPose().getOrientation().setW(ecefToUptrackWP.getRotationAndScale().getW());
     return routeSegMsg;
   }
 
@@ -281,8 +310,12 @@ public class RouteSegment {
    * @param segmentMsg The ros message
    * @return The route segment object
    */
-  public static RouteSegment fromMessage(cav_msgs.RouteSegment segmentMsg){
-    return new RouteSegment(RouteWaypoint.fromMessage(segmentMsg.getPrevWaypoint()),RouteWaypoint.fromMessage(segmentMsg.getWaypoint()));
+  public static RouteSegment fromMessage(cav_msgs.RouteSegment segmentMsg) {
+    return new RouteSegment(
+      RouteWaypoint.fromMessage(segmentMsg.getPrevWaypoint()),
+      RouteWaypoint.fromMessage(segmentMsg.getWaypoint()), 
+      Transform.fromPoseMessage(segmentMsg.getFRDPose())
+      );
   }
 
   @Override public String toString() {

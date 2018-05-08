@@ -60,7 +60,7 @@ public class RouteTest {
    */
   @Test
   public void testFindRouteSubsection() throws Exception {
-    FileStrategy fS = new FileStrategy("src/test/resources/routefiles/colonial_farm_rd_outbound.yaml", log);
+    FileStrategy fS = new FileStrategy("src/test/resources/routes/colonial_farm_rd_outbound.yaml", log);
     Route route = Route.fromMessage(fS.load().toMessage(messageFactory)); // Load route with waypoint ids assigned.
     assertTrue(route != null);
 

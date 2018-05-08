@@ -28,6 +28,7 @@ import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
 import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
 
 import sensor_msgs.NavSatFix;
 import sensor_msgs.NavSatStatus;
@@ -61,7 +62,8 @@ public class RouteWorker {
     { 0, 1, 1, 1 }, /*SYSTEM_FAILURE  */
     { 0, 1, 1, 1 }, /*SYSTEM_NOT_READY*/
     { 0, 1, 3, 3 }, /*ROUTE_STARTED   */
-    { 0, 1, 1, 1 }, /*ROUTE_ABORTED   */ };
+    { 0, 1, 1, 1 }, /*ROUTE_ABORTED   */
+  };
 
   // Current state
   protected int currentStateIndex = 0;
@@ -70,7 +72,8 @@ public class RouteWorker {
   protected HashMap<String, Route> availableRoutes = new HashMap<>();
   protected RouteSegment currentSegment;
   protected int currentSegmentIndex = 0;
-  protected Location hostVehicleLocation = new Location();
+  protected final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+  //protected Location hostVehicleLocation = new Location();
 
   protected int currentWaypointIndex = 0;
   protected double downtrackDistance = 0;
@@ -81,15 +84,25 @@ public class RouteWorker {
   protected int recievedLeftRouteEvents = 0;
   protected double currentSegmentDowntrack = 0;
 
+  protected String earthFrame = "earth";
+  protected String hostVehicleFrame = "host_vehicle";
+  protected int currentLane = 0;
+  protected int laneChangeCount = 0;
+  protected Transform earthToHostVehicle = null;
+  protected Point3D hostVehicleInECEF = null;
+
   /**
    * Constructor initializes a route worker object with the provided logging tool
    *
    * @param log The logger to be used
    */
-  public RouteWorker(IRouteManager manager, Log log, int requiredLeftRouteCount) {
+  public RouteWorker(IRouteManager manager, Log log, int requiredLeftRouteCount,
+   String earthFrameId, String hostVehicleFrameId) {
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.routeManager = manager;
     this.requiredLeftRouteCount = requiredLeftRouteCount;
+    this.earthFrame = earthFrameId;
+    this.hostVehicleFrame = hostVehicleFrameId;
   }
 
   /**
@@ -98,10 +111,13 @@ public class RouteWorker {
    * @param manager negotiation manager which is used to publish data
    * @param log     the logger
    */
-  public RouteWorker(IRouteManager manager, Log log, String database_path, int requiredLeftRouteCount) {
+  public RouteWorker(IRouteManager manager, Log log, String database_path, int requiredLeftRouteCount,
+   String earthFrameId, String hostVehicleFrameId) {
     this.routeManager = manager;
     this.log = new SaxtonLogger(this.getClass().getSimpleName(), log);
     this.requiredLeftRouteCount = requiredLeftRouteCount;
+    this.earthFrame = earthFrameId;
+    this.hostVehicleFrame = hostVehicleFrameId;
     // Load route files from database
     log.info("RouteDatabasePath: " + database_path);
     File folder = new File(database_path);
@@ -138,6 +154,8 @@ public class RouteWorker {
     routeStateSeq = 0;
     recievedLeftRouteEvents = 0;
     currentSegmentDowntrack = 0;
+    currentLane = 0;
+    laneChangeCount = 0;
   }
 
   /**
@@ -218,7 +236,7 @@ public class RouteWorker {
    * @return indication of vehicle in next segment
    */
   protected boolean atNextSegment() {
-    return currentSegment.downTrackDistance(hostVehicleLocation) > currentSegment.length();
+    return currentSegment.downTrackDistance(hostVehicleInECEF) > currentSegment.length();
   }
 
   /**
@@ -272,6 +290,10 @@ public class RouteWorker {
     if (getCurrentState() == WorkerState.FOLLOWING_ROUTE) {
       return StartActiveRouteResponse.ALREADY_FOLLOWING_ROUTE;
     }
+    if (hostVehicleInECEF == null) {
+      log.warn("Tried to start a route before transforms were published");
+      return StartActiveRouteResponse.INVALID_STARTING_LOCATION;
+    }
     int startingIndex = getValidStartingWPIndex();
     log.info("Starting waypoint index = " + startingIndex);
     if (startingIndex == -1) {
@@ -296,15 +318,14 @@ public class RouteWorker {
       return -1;
     }
     double maxJoinDistance = activeRoute.getMaxJoinDistance();
-    log.debug("getValidStartingWPIndex: lat = " + hostVehicleLocation.getLatitude() + ", lon = " + hostVehicleLocation.getLongitude());
-    GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
-    Point3D hostInECEF = gcc.geodesic2Cartesian(hostVehicleLocation, Transform.identity());
+    Location hostLocation =  gcc.cartesian2Geodesic(hostVehicleInECEF, Transform.identity());
+    log.debug("getValidStartingWPIndex: lat = " + hostLocation.getLatitude() + ", lon = " + hostLocation.getLongitude());
     
     int count = 0;
     for (RouteSegment seg: activeRoute.getSegments()) {      
       RouteWaypoint wp = seg.getDowntrackWaypoint();
-      double crossTrack = seg.crossTrackDistance(hostInECEF);
-      double downTrack = seg.downTrackDistance(hostInECEF);
+      double crossTrack = seg.crossTrackDistance(hostVehicleInECEF);
+      double downTrack = seg.downTrackDistance(hostVehicleInECEF);
 
       if (0.0 <= downTrack && downTrack <= seg.length()
           && wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack()) {
@@ -331,7 +352,7 @@ public class RouteWorker {
         // Insert a starting waypoint at the current vehicle location which is connected to the route
         RouteWaypoint downtrackWP = activeRoute.getWaypoints().get(index);
         RouteWaypoint startingWP = new RouteWaypoint(downtrackWP); // Deep copy of downtrack waypoint
-        startingWP.setLocation(new Location(hostVehicleLocation)); // Don't want waypoint and vehicle to reference same location object
+        startingWP.setLocation(gcc.cartesian2Geodesic(hostVehicleInECEF, Transform.identity())); // Don't want waypoint and vehicle to reference same location object
         activeRoute.insertWaypoint(startingWP, index);
         index = index + 1; //Update downtrack waypoint index
       } else if (index == -1) { // If can't join route
@@ -348,8 +369,9 @@ public class RouteWorker {
     currentSegmentIndex = index - 1;
     currentSegment = activeRoute.getSegments().get(currentSegmentIndex);
     currentWaypointIndex = index; // The current waypoint should be the downtrack one
-    downtrackDistance = Math.max(0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment.downTrackDistance(hostVehicleLocation));
-    crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
+    downtrackDistance = Math.max(0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment.downTrackDistance(hostVehicleInECEF));
+    crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleInECEF);
+    currentLane = currentSegment.determinePrimaryLane(crossTrackDistance);
 
     handleEvent(WorkerEvent.ROUTE_STARTED);
     return true;
@@ -369,41 +391,29 @@ public class RouteWorker {
     return cav_srvs.AbortActiveRouteResponse.NO_ERROR;
   }
 
-
   /**
-   * Function to be used as a callback for the arrival of NavSatFix messages
-   *
-   * @param msg The received message
+   * Function to be executed on regular intervals
    */
-  protected void handleNavSatFixMsg(NavSatFix msg) {
-    switch (msg.getStatus().getStatus()) {
-      case NavSatStatus.STATUS_NO_FIX:
-        log.warn("Gps data with no fix received by route");
-        return;
-      case NavSatStatus.STATUS_FIX:
-        hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
-        break;
-      case NavSatStatus.STATUS_SBAS_FIX:
-        //TODO: Handle this variant
-        hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
-        break;
-      case NavSatStatus.STATUS_GBAS_FIX:
-        //TODO: Handle this variant
-        hostVehicleLocation
-          .setLocationData(msg.getLatitude(), msg.getLongitude(), 0); // Used to be msg.getAltitude()
-        break;
-      default:
-        //TODO: Handle this variant maybe throw exception?
-        log.warn("Unknown nav sat fix status type: " + msg.getStatus().getStatus());
-        return;
+  public void loop() {
+    // Update vehicle position with most recent transform
+    earthToHostVehicle = routeManager.getTransform(earthFrame, hostVehicleFrame, Time.fromMillis(0));
+    if (earthToHostVehicle == null) {
+      return;
     }
+    Vector3 transInECEF = earthToHostVehicle.getTranslation();
+    hostVehicleInECEF = new Point3D(transInECEF.getX(), transInECEF.getY(), transInECEF.getZ());
 
+    // If in route following state, update route progress
     if (getCurrentState() != WorkerState.FOLLOWING_ROUTE || activeRoute == null) {
       return;
     }
+    updateRouteProgress();
+  }
 
+  /**
+   * Function updates the progress along the route
+   */
+  private void updateRouteProgress() {
     // Loop to find current segment. This allows for small breaks in gps data
     while (atNextSegment()) { // TODO this might be problematic on tight turns
       currentSegmentIndex++;
@@ -419,11 +429,26 @@ public class RouteWorker {
     }
 
     // Update downtrack distance
-    currentSegmentDowntrack = currentSegment.downTrackDistance(hostVehicleLocation);
+    Vector3 transInECEF = earthToHostVehicle.getTranslation();
+    Point3D pointInECEF = new Point3D(transInECEF.getX(), transInECEF.getY(), transInECEF.getZ());
+    currentSegmentDowntrack = currentSegment.downTrackDistance(hostVehicleInECEF);
     downtrackDistance = Math.max(0.0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegmentDowntrack);
 
     // Update crosstrack distance
-    crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleLocation);
+    crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleInECEF);
+
+    // Update current lane
+    int tempLane = currentSegment.determinePrimaryLane(crossTrackDistance);
+    if (tempLane != currentLane) {
+      if (laneChangeCount >= requiredLeftRouteCount) {
+        currentLane = tempLane;
+        laneChangeCount = 0;
+      } else {
+        laneChangeCount++;
+      }
+    } else {
+      laneChangeCount = 0;
+    }
 
     log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
     log.debug("Downtrack Waypoint: " + currentWaypointIndex);
@@ -525,7 +550,7 @@ public class RouteWorker {
       if (currentSegment != null) {
         routeState.setSegmentDownTrack(currentSegmentDowntrack);
         routeState.setCurrentSegment(currentSegment.toMessage(messageFactory, currentWaypointIndex));
-        routeState.setLaneIndex((byte) currentSegment.determinePrimaryLane(crossTrackDistance));
+        routeState.setLaneIndex((byte) currentLane);
       }
     }
 

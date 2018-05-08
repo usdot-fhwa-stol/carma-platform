@@ -21,9 +21,6 @@ public interface IPlatooningCommandInputs {
     // Get the latest generated speed command
     public double getLastSpeedCommand();
     
-    // Get the corresponding max accel limit
+    // Get the corresponding max acceleration limit
     public double getMaxAccelLimit();
-    
-    // Check if the vehicle status are time out
-    public boolean isTimeout();
 }

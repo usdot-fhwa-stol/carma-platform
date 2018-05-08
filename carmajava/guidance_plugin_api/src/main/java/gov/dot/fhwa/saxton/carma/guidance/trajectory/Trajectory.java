@@ -57,6 +57,26 @@ public class Trajectory {
   }
 
   /**
+   * Deep copy constructor for Trajectory instances
+   */
+  public Trajectory(Trajectory traj) {
+    startLocation = traj.startLocation;
+    endLocation = traj.endLocation;
+
+    lateralManeuvers = IntervalTreeFactory.buildIntervalTree();
+    longitudinalManeuvers = IntervalTreeFactory.buildIntervalTree();
+
+    for (LateralManeuver m : traj.lateralManeuvers.toSortedList()) {
+      lateralManeuvers.insert(new Interval<LateralManeuver>(m, m.getStartDistance(), m.getEndDistance()));
+    }
+    for (LongitudinalManeuver m : traj.longitudinalManeuvers.toSortedList()) {
+      longitudinalManeuvers.insert(new Interval<LongitudinalManeuver>(m, m.getStartDistance(), m.getEndDistance()));
+    }
+
+    complexManeuver = traj.complexManeuver;
+  }
+
+  /**
    * Get the location along the route that this Trajectory will start at
    */
   public double getStartLocation() {
@@ -386,8 +406,8 @@ public class Trajectory {
   /**
    * Get the trajectory's stored lateral maneuvers in sorted order by start location
    */
-  public List<ISimpleManeuver> getLateralManeuvers() {
-    List<ISimpleManeuver> out = new ArrayList<>();
+  public List<LateralManeuver> getLateralManeuvers() {
+    List<LateralManeuver> out = new ArrayList<>();
     out.addAll(lateralManeuvers.toSortedList());
 
     return out;
@@ -398,6 +418,48 @@ public class Trajectory {
    */
   public List<LongitudinalManeuver> getLongitudinalManeuvers() {
     return longitudinalManeuvers.toSortedList();
+  }
+
+  /**
+   * Copy all maneuvers (of any type) between the specified distances into the current trajectory
+   * 
+   * @param src The trajectory to look at for maneuvers to copy
+   * @param startDowntrack The start location for the maneuvers to be copied. All maneuvers that start after 
+   * this location downtrack will be added.
+   * @param endDowntrack The end location for the maneuvers to the copied, maneuvers that end after this location
+   * will be ignored in the copying process.
+   * @return A boolean value indicating the success or failure of this operation, if false no modification occurs
+   */
+  public boolean copyManeuvers(Trajectory src, double startDowntrack, double endDowntrack) {
+    Trajectory tmp = new Trajectory(this); // Temporary copy to ensure that failed operations don't destroy the trajectory
+    
+    boolean success = true;
+    List<IManeuver> toBeCopied = new ArrayList<>();
+    for (IManeuver mvr : src.getManeuvers()) {
+      if (mvr.getStartDistance() >= startDowntrack && mvr.getEndDistance() <= endDowntrack) {
+        toBeCopied.add(mvr);
+        if (mvr instanceof ISimpleManeuver) {
+          success = tmp.addManeuver((ISimpleManeuver) mvr);
+        } else {
+          success = tmp.setComplexManeuver((IComplexManeuver) mvr);
+        }
+
+        if (!success) {
+          return false;
+        }
+      }
+    }
+
+    // Successfully copied all maneuvers into the temporary copy, proceed to execute for real
+    for (IManeuver mvr : toBeCopied) {
+      if (mvr instanceof ISimpleManeuver) {
+        this.addManeuver((ISimpleManeuver) mvr);
+      } else {
+        this.setComplexManeuver((IComplexManeuver) mvr);
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -438,4 +500,10 @@ public class Trajectory {
 
     return out;
   }
+
+  @Override
+  public String toString() {
+    return "Trajectory [startLocation=" + startLocation + ", endLocation=" + endLocation + "]";
+  }
+
 }

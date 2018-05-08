@@ -20,16 +20,19 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import cav_msgs.ActiveManeuvers;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
+import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -45,7 +48,8 @@ public class TrajectoryExecutorWorkerTest {
     
     MockitoAnnotations.initMocks(this);
     IPublisher<cav_msgs.ActiveManeuvers> pub = (IPublisher<cav_msgs.ActiveManeuvers>) mock(IPublisher.class);
-    tew = new TrajectoryExecutorWorker(guidanceCommands, 10.0, pub);
+    when(pub.newMessage()).thenReturn(mock(ActiveManeuvers.class));
+    tew = new TrajectoryExecutorWorker(guidanceCommands, 10.0, pub, null);
   }
 
   private ISimpleManeuver newManeuver(double start, double end, ManeuverType type, boolean running) {
@@ -53,12 +57,18 @@ public class TrajectoryExecutorWorkerTest {
       ISimpleManeuver m1 = mock(LongitudinalManeuver.class);
       when(m1.getStartDistance()).thenReturn(start);
       when(m1.getEndDistance()).thenReturn(end);
+      IPlugin planner = mock(IPlugin.class);
+      when(planner.getVersionInfo()).thenReturn(mock(ComponentVersion.class));
+      when(m1.getPlanner()).thenReturn(planner);
 
       return m1;
     } else {
       ISimpleManeuver m1 = mock(LateralManeuver.class);
       when(m1.getStartDistance()).thenReturn(start);
       when(m1.getEndDistance()).thenReturn(end);
+      IPlugin planner = mock(IPlugin.class);
+      when(planner.getVersionInfo()).thenReturn(mock(ComponentVersion.class));
+      when(m1.getPlanner()).thenReturn(planner);
 
       return m1;
     }
@@ -237,6 +247,9 @@ public class TrajectoryExecutorWorkerTest {
     IComplexManeuver m3 = mock(IComplexManeuver.class);
     when(m3.getStartDistance()).thenReturn(0.0);
     when(m3.getEndDistance()).thenReturn(30.0);
+    IPlugin planner = mock(IPlugin.class);
+    when(planner.getVersionInfo()).thenReturn(mock(ComponentVersion.class));
+    when(m3.getPlanner()).thenReturn(planner);
 
     t.setComplexManeuver(m3);
 
@@ -270,6 +283,9 @@ public class TrajectoryExecutorWorkerTest {
     IComplexManeuver m3 = mock(IComplexManeuver.class);
     when(m3.getStartDistance()).thenReturn(20.0);
     when(m3.getEndDistance()).thenReturn(30.0);
+    IPlugin planner = mock(IPlugin.class);
+    when(planner.getVersionInfo()).thenReturn(mock(ComponentVersion.class));
+    when(m3.getPlanner()).thenReturn(planner);
 
     t.addManeuver(m1);
     t.addManeuver(m2);

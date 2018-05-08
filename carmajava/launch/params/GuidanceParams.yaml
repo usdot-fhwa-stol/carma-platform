@@ -65,13 +65,15 @@ required_plugins:
   - gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin
   - gov.dot.fhwa.saxton.carma.guidance.routefollowing.RouteFollowingPlugin
   - gov.dot.fhwa.saxton.carma.guidance.lanechange.LaneChangePlugin
-
+  - gov.dot.fhwa.saxton.carma.guidance.yield.YieldPlugin
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
-arbitrator_plugins: 
+arbitrator_plugins:
+  - Cooperative Merge Plugin
+  - Platooning Plugin
+  - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
-  - Negotiation Receiver Plugin
   - Cruising Plugin
 
 # Double: Time that it takes the host vehicle to respond to a new speed command
@@ -82,13 +84,18 @@ vehicle_response_lag: 1.4
 # Units: m/s/s
 vehicle_acceleration_limit: 2.5
 
+# Double: A multiplier applied to the actual speed limit which will result in the cruising plugin's target speed
+# Max: 1.0
+# Min: 0.0
+cruising_target_multiplier: 0.7
+
 # Double: Time headway to control to with ACC
 # Units: seconds
-desired_acc_timegap: 2.0
+desired_acc_timegap: 0.0
 
 # Double: Minimum distance between vehicle and front vehicle at any point
 # Units: m
-min_acc_standoff_distance: 5.0
+min_acc_standoff_distance: 0.0
 
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
@@ -97,19 +104,20 @@ shutdown_wait_time: 5000
 # Double: Time to plan for after a complex trajectory to allow for our speed to steady after a complex trajectory
 # Units: seconds
 post_complex_trajectory_steadying_period: 2.0
+
 # Double: Maximum speed error between cmd_speed and actual vehicle speed
 # Units: m
-max_speed_error: 100.0
+max_speed_error: 10000.0
 
 # Double: Maximum downtrack error between planned location and current location
 # Units: m
-max_downtrack_error: 100.0
+max_downtrack_error: 10000.0
 
 # Double: The factor to multiply by the desired ACC headway to determine when we should exit ACC
 acc_exit_distance_factor: 1.5
 
 # Double: The poportional term in the acc PID controller
-acc_Kp: 1.75
+acc_Kp: -2.0
 
 # Double: The integral term in the acc PID controller
 acc_Ki: 0.0
@@ -140,6 +148,11 @@ lane_change_safety_factor: 2.0
 # Units: seconds
 lane_change_notification_time: 4.0
 
+# Double: The amount of time the lane change plugin will wait for an external NACK before considering it safe to change lanes
+# Units: miliseconds
+lane_change_nack_timeout: 450
+
+##### DEPRECATED
 ##### The following are used by the NegotiationReceiverPlugin
 
 # should we include the acceleration distance in the total tactic length?
@@ -150,3 +163,82 @@ slow_speed_fraction: 0.6
 
 # the assumed gap, sec, between the following & merging vehicles and the forward vehicle
 initial_time_gap: 1.0
+
+##### End NegotiationReceiverPlugin Params
+
+# String: The id of the frame which represents the point which downtrack distance is measured from
+acc_host_vehicle_frame_id: 'host_vehicle'
+
+# String: The id of the frame which represents the front grill of the vehicle with x facing forward
+acc_vehicle_front_frame_id: 'vehicle_front'
+
+# String: The component name of the Plugin which will handle mobility path and request conflicts
+# Note: This string must match the Versionable.getVersionInfo().componentName() value of the plugin
+default_mobility_conflict_handler: 'Yield Plugin'
+
+# Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
+# Units: meters
+# Dimension should be larger than 1 car length
+conflict_map_cell_downtrack_size: 5.0
+
+# Double: The size of a the crosstrack dimension of a cell in the collision systems spatial hash map
+# Units: meters
+# Dimension should be larger than 1 car width
+conflict_map_cell_crosstrack_size: 2.5
+
+# Double: The size of a the time dimension of a cell in the collision systems spatial hash map
+# Units: seconds
+# Dimension should be larger than one timestep in a MobilityPath
+conflict_map_cell_time_size: 0.15
+
+# Double: The margin around a MobilityPath point
+# in the downtrack dimension in which a collision will be considered to have occured
+# Units: meters
+conflict_map_collision_downtrack_margin: 2.5
+
+# Double: The margin around a MobilityPath point
+# in the crosstrack dimension in which a collision will be considered to have occured
+# Units: meters
+conflict_map_collision_crosstrack_margin: 1.0
+
+# Double: The margin around a MobilityPath point
+# in the time dimension in which a collision will be considered to have occured
+# Units: seconds
+conflict_map_collision_time_margin: 0.05
+
+# Integer: The maximum number of points allowed in a MobilityPath message
+mobility_path_max_points: 60
+
+# Double: The timestep between points in a MobilityPath 
+# Units: seconds
+mobility_path_time_step: 0.01
+
+# Plugin or guidance component name: The priority which components are given for control of the light bar
+light_bar_priorities:
+  - Light Bar State Machine
+  - Lane Change Plugin
+  - Platooning Plugin
+  - Yield Plugin
+  - Speed Harmonization Plugin
+  - Route Following Plugin
+  - Cruising Plugin
+  - Cooperative Merge Plugin
+
+# Integer: The amount of time for the light bar to consider a communication timeout
+# Units: mili-seconds
+light_bar_comms_timeout: 1000
+
+# Integer: The number of milliseconds between MobilityPath message publications coming out of guidance
+# Units: milliseconds
+mobility_path_publish_interval:  3000
+
+# Integer: The maximum number of points of path prediction to include in each MobilityPath message
+max_points_per_mobility_path: 60
+
+# Double: The minimum timegap to accept for resolution of spatial and temporal conflicts in plans
+# Units: seconds
+min_conflict_avoidance_timegap: 4.0
+
+# Double: The percentage of the vehicle's maximum acceleration capability to allow the yield plugin to use
+# for conflict avoidance
+max_yield_accel_authority: 0.8

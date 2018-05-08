@@ -8,6 +8,7 @@
 # The script requires that the recieving pc have an example folder called app_v0 which will be duplicated to preserve structure
 # The script will attempt to rebuild if no catkin install folder can be found
 # All included files needed for launch (not the primary launch file) have been placed in their respective install/share folders at build time
+# By default HostVehicleParams.yaml will not be overwritten. Use -H to overwrite it
 ### Usage
 # Only deploy new code/html/launch files
 # remote_install.bash -n <username> -a
@@ -33,6 +34,7 @@
 # -a Copy App: A Flag which will cause everything except params, routes, and urdf files to be copied
 # -w Copy Web: A Flag which will cause the website (ui) files to be copied
 # -s Copy Scripts: A flag which will cause the scripts in engineering_tools to be copied
+# -H Overwrite the HostVehicleParams file on the target pc
 
 
 usage() { echo "Usage: remote_install.bash -n <username> ";}
@@ -53,8 +55,9 @@ MOCK_DATA=false
 APP=false
 WEB=false;
 SCRIPTS=false;
+OVERWRITE_HOST_PARAMS=false;
 
-while getopts n:h:bpruelmawst:c: option
+while getopts n:h:bHpruelmawst:c: option
 do
 	case "${option}"
 	in
@@ -71,6 +74,7 @@ do
 		a) APP=true;;
 		w) WEB=true;;
 		s) SCRIPTS=true;;
+		H) OVERWRITE_HOST_PARAMS=true;;
 		\?) echo "Unknown option: -$OPTARG" >&2; exit 1;;
 		:) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
 		*) echo "Unimplemented option: -$OPTARG" >&2; exit 1;;
@@ -179,6 +183,7 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 	FULL_VERSION_ID="${VERSION}.$(sed -n 1p version)-$(sed -n 2p version)"
 	FULL_VERSION_ID="$(echo "${FULL_VERSION_ID}" | tr \( \- | tr -d \) )" # Replace bad characters ( and )
 	echo "Version appears to be: ${FULL_VERSION_ID}"
+	rm version
 
 	# Helper function for determining the index of a substring in a string
 	substring_index () {
@@ -214,7 +219,13 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 	# SSH into the remote mechine and create a copy of the directory pointed to by the app symlink
 	# Then create symlink from app -> app_version
 	# Then delete the contents of the app/bin directory to ensure clean copy
-	SCRIPT="cp -r \$(readlink -f ${APP_DIR}) ${TARGET}; rm -r ${APP_DIR}; ln -s ${TARGET} ${APP_DIR}; rm -r ${APP_DIR}/bin/*;"
+	SCRIPT="export APP_LINK_DIR=\$(readlink -f ${APP_DIR});
+					if [ \${APP_LINK_DIR} != ${TARGET} ];
+						then cp -r \${APP_LINK_DIR} ${TARGET};
+					fi; 
+					rm -r ${APP_DIR}; 
+					ln -s ${TARGET} ${APP_DIR};
+					rm -r ${APP_DIR}/bin/*;"
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 
 	# Copy the entire contents of install to the remote machine using current symlink
@@ -227,8 +238,21 @@ fi
 # If we want to copy params
 if [ ${EVERYTHING} == true ] || [ ${PARAMS} == true ]; then
 	echo "Trying to copy params"
+	# Set up scripts
+	BACKUP_HOST_PARAMS="mv ${CARMA_DIR}/params/HostVehicleParams.yaml ${CARMA_DIR}/params/HostVehicleParamsTemp.yaml"
+	SET_HOST_PARAMS="rm ${CARMA_DIR}/params/HostVehicleParams.yaml; mv ${CARMA_DIR}/params/HostVehicleParamsTemp.yaml ${CARMA_DIR}/params/HostVehicleParams.yaml"
+	
+	if [ ${OVERWRITE_HOST_PARAMS} == false ]; then
+		# Backup host vehicle params
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${BACKUP_HOST_PARAMS}"
+	fi
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${PARAMS_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
+	
+	if [ ${OVERWRITE_HOST_PARAMS} == false ]; then
+		# Reset to backup of host vehicle params
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SET_HOST_PARAMS}"
+	fi
 	# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/params/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/params/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/params/*;"
 fi
@@ -236,6 +260,9 @@ fi
 # If we want to copy routes
 if [ ${EVERYTHING} == true ] || [ ${ROUTES} == true ]; then
 	echo "Trying to copy routes..."
+	# Delete old files
+	SCRIPT="rm -r ${CARMA_DIR}/routes/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${ROUTES_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 		# Update permissions script
@@ -245,6 +272,9 @@ fi
 # If we want to copy urdf
 if [ ${EVERYTHING} == true ] || [ ${URDF} == true ]; then
 	echo "Trying to copy urdf..."
+	# Delete old files
+	SCRIPT="rm -r ${CARMA_DIR}/urdf/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the entire folder to the remote machine
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${URDF_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
 		# Update permissions script
@@ -252,11 +282,16 @@ if [ ${EVERYTHING} == true ] || [ ${URDF} == true ]; then
 fi
 
 # If we want to copy launch file
-if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then
-	echo "Trying to copy launch ..."
-	# Copy the launch file to the remote machine using current symlink
-	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
-	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == true ]; then
+	if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then 
+		echo "Trying to copy launch ..."
+		# Delete old files
+		SCRIPT="rm -r ${APP_DIR}/launch/*;"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
+		# Copy the launch file to the remote machine using current symlink
+		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	fi
 	# Create symlink to launch file so that roslaunch will work when package is sourced
 	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
 	SCRIPT_1="rm ${SYMLINK_LOCATION}/saxton_cav.launch; ln -s  ${APP_DIR}/launch/saxton_cav.launch ${SYMLINK_LOCATION};"
@@ -269,6 +304,9 @@ fi
 # If we want to copy mock data files
 if [ ${EVERYTHING} == true ] || [ ${MOCK_DATA} == true ]; then
 	echo "Trying to copy mock_data ..."
+	# Delete old files
+	SCRIPT="rm -r ${APP_DIR}/mock_data/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${MOCK_DATA_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/mock_data/"
 	# Update permissions script
@@ -278,15 +316,21 @@ fi
 # If we want to copy website  files
 if [ ${EVERYTHING} == true ] || [ ${WEB} == true ]; then
 	echo "Trying to copy website ..."
+	# Delete old files
+	SCRIPT="rm -r ${APP_DIR}/html/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${WEBSITE_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/html/"
 	# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/html/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/html/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/html/*;"
 fi
 
-# If we want to copy mock data files
+# If we want to copy script files
 if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
 	echo "Trying to copy scripts from engineering tools ..."
+	# Delete old files
+	SCRIPT="rm -r ${APP_DIR}/engineering_tools/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SCRIPTS_DIR}" ${USERNAME}@${HOST}:"${APP_DIR}"
 	# Update permissions script

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from __future__ import print_function
 import json
@@ -12,7 +12,8 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 version_id = "v0.1" # Version string for cli client
 running = True # Running flag for program will execute main loop as long as true
-base_url = "http://35.153.64.44:8081" # Base url of server, defaults to localhost.
+base_url = "http://35.153.64.44:8081" # Base url of for AWS server, defaults to localhost.
+#base_url = "http://localhost:8081" # Base url of VM localhost.
 rel_url = ""
 
 # Constants

@@ -17,63 +17,37 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 /**
- * This class record the latest knowledge(status and constraints) for each platoon member
+ * This class describes the latest knowledge for a platoon member.
+ * This class will not be used to store the host vehicle status.
  */
 public class PlatoonMember {
     
-    // Member ID indicates the position of this vehicle in the current platoon
-    // When its ID is 0, it means it is the leader. 1 means it is the second vehicle in the platoon
-    private int memberId;
     // Static ID is permanent ID for each vehicle
-    private String staticId;
-    // Vehicle command speed in m/s after any possible ACC override
-    private double commandSpeed;
-    // The actual vehicle speed in m/s
-    private double vehicleSpeed;
-    // The vehicle position from Mobility message
-    private double vehiclePosition;
+    protected String staticId;
+    // Current BSM Id for each CAV
+    protected String bsmId;
+    // Vehicle real time command speed in m/s
+    protected double commandSpeed;
+    // Actual vehicle speed in m/s
+    protected double vehicleSpeed;
+    // Vehicle current down track distance on the current route in m
+    protected double vehiclePosition;
+    // The local time stamp when the host vehicle update any informations of this member
+    protected long   timestamp;
 
-    public PlatoonMember(int memberId, String staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition) {    
-        this.memberId = memberId;
-        this.staticId = staticId;
-        this.commandSpeed = commandSpeed;
-        this.vehicleSpeed = vehicleSpeed;
+    public PlatoonMember(String staticId, String bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp) {
+        this.staticId        = staticId;
+        this.bsmId           = bsmId;
+        this.commandSpeed    = commandSpeed;
+        this.vehicleSpeed    = vehicleSpeed;
         this.vehiclePosition = vehiclePosition;
+        this.timestamp       = timestamp;
     }
 
-    protected int getMemberId() {
-        return memberId;
-    }
-
-    protected void setMemberId(int memberId) {
-        this.memberId = memberId;
-    }
-
-    protected String getStaticId() {
-        return staticId;
-    }
-
-    protected double getCommandSpeed() {
-        return commandSpeed;
+    @Override
+    public String toString() {
+        return "PlatoonMember [staticId=" + staticId + ", bsmId=" + bsmId + ", commandSpeed=" + commandSpeed
+                + ", vehicleSpeed=" + vehicleSpeed + ", vehiclePosition=" + vehiclePosition + ", timestamp=" + timestamp + "]";
     }
     
-    protected void setCommandSpeed(double commandSpeed) {
-        this.commandSpeed = commandSpeed;
-    }
-    
-    protected double getVehicleSpeed() {
-        return vehicleSpeed;
-    }
-    
-    protected void setVehicleSpeed(double vehicleSpeed) {
-        this.vehicleSpeed = vehicleSpeed;
-    }
-    
-    protected double getVehiclePosition() {
-        return vehiclePosition;
-    }
-    
-    protected void setVehiclePosition(double vehiclePosition) {
-        this.vehiclePosition = vehiclePosition;
-    }
 }

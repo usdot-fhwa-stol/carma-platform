@@ -1,0 +1,22 @@
+/* Lane */
+#divLaneTracking {
+ position: absolute;
+ top: 355px;
+ left: 100px;
+    font-size: 25px;
+    font-weight: bold;
+    /*text-align: center;
+    justify-content: center;*/
+}
+
+/* Remaining Distance to Next Speed Limit */
+#divLaneDistRemaining {
+ position: absolute;
+ top: 450px;
+ left: 600px;
+ color: black;
+ font-variant-caps: all-small-caps;
+ font-size: 20px;
+ font-weight: bold;
+}
+

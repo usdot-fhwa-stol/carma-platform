@@ -2,8 +2,8 @@
 # Defines the ros parameters that are required by the Message node
 
 # Booleans:  allow normal publishing of the indicated message types to their outbound topics (to be received by dsrc driver)
-publish_outbound_bsm: false
-publish_outbound_mobility_intro: true
-publish_outbound_mobility_greeting: true
-publish_outbound_mobility_ack: true
-publish_outbound_mobility_plan: true
+publish_outbound_bsm: true
+publish_outbound_mobility_request: true
+publish_outbound_mobility_path: true
+publish_outbound_mobility_response: true
+publish_outbound_mobility_operation: true

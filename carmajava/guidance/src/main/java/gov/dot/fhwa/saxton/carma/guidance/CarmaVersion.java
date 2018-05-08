@@ -17,9 +17,7 @@
 package gov.dot.fhwa.saxton.carma.guidance;
 
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+
 import java.io.InputStream;
 import java.util.Scanner;
 
@@ -39,7 +37,7 @@ public class CarmaVersion {
 
         String name =       "Carma Platform";
         int major =         2;
-        int intermediate =  4;
+        int intermediate =  5;
         int minor =         0;
         // Don't touch this, automatically updated
         int build = 0;

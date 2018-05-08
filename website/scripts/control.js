@@ -80,6 +80,7 @@ function openTab(evt, name) {
             tabheader[i].style.width = '82%';
     }
 
+
 }
 
 // Get the element with id="defaultOpen" and click on it
@@ -121,18 +122,24 @@ function createRadioElement(container, radioId, radioTitle, itemCount, groupName
 /*
 * Adds a new checkbox onto the container.
 */
-function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, groupName, isChecked, isRequired) {
+function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, groupName, isChecked, isRequired, funcName) {
+
+    var alreadyExists = document.getElementById(checkboxId);
+
+    if (alreadyExists != null)
+        return;
 
     var newInput = document.createElement('input');
     newInput.type = 'checkbox';
     newInput.name = groupName;
-    newInput.id = 'cb' + checkboxId.toString();
+    newInput.id = 'cb' + checkboxId;
     newInput.checked = isChecked;
-    newInput.onclick = function () { activatePlugin(newInput.id.toString()) };
+    newInput.onclick = function () { eval(funcName) (newInput.id) }; //e.g. function () { activatePlugin(newInput.id) };
+    newInput.setAttribute('title', checkboxTitle);
 
     var newLabel = document.createElement('label');
-    newLabel.id = 'lbl' + checkboxId.toString();
-    newLabel.htmlFor = newInput.id.toString();
+    newLabel.id = 'lbl' + checkboxId;
+    newLabel.htmlFor = newInput.id;
 
     if (isRequired == true)
         newLabel.innerHTML = '<span style="color:#FF0000">* </span>'
@@ -143,33 +150,57 @@ function createCheckboxElement(container, checkboxId, checkboxTitle, itemCount, 
     container.appendChild(newInput);
     container.appendChild(newLabel);
 
-    //var newDiv = document.createElement('div');
-    //newDiv.id = 'div' + checkboxId.toString();
-
-    // Add the new elements to the container
-    //container.appendChild(newDiv);
-    //newDiv.appendChild(newInput);
-    //newDiv.appendChild(newLabel);
-
 }
 
 /*
 * Get list of plugins selected by user and return count.
 */
-function getCheckboxesSelected() {
-    var cbResults = 'Selected Items: ';
+function getCheckboxesSelected(container) {
+
+    if (container == null || container == 'undefined')
+        return;
+
+    //var cbResults = 'Selected Items: ';
     var count = 0;
-    var allInputs = document.getElementsByTagName('input');
+    var pluginList = [];
+
+    var allInputs = container.getElementsByTagName('input');
+
     for (var i = 0, max = allInputs.length; i < max; i++) {
         if (allInputs[i].type === 'checkbox') {
             if (allInputs[i].checked == true) {
-                cbResults += allInputs[i].id + '; ';
+                //cbResults += allInputs[i].id + '; ';
+                pluginList.push (allInputs[i]);
                 count++;
             }
         }
     }
 
-    return count;
+    return pluginList;
+}
+
+/*
+    Find the checkbox by Id within the DIV
+*/
+function checkboxExistsById(container, id) {
+    if (container == null || container == 'undefined')
+        return;
+
+    //var cbResults = 'Selected Items: ';
+    var count = 0;
+    var pluginList = [];
+
+    var allInputs = container.getElementsByTagName('input');
+
+    for (var i = 0, max = allInputs.length; i < max; i++) {
+        if (allInputs[i].type === 'checkbox') {
+            if (allInputs[i].id == id)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /*
@@ -245,24 +276,6 @@ function clearTable(tableName) {
     }
 }
 
-/*
-    Set the values of the speedometer
-*/
-function setSpeedometer(speed) {
-    var maxMPH = 160;
-    var deg = (speed / maxMPH) * 180;
-    document.getElementById('percent').innerHTML = speed;
-    var element = document.getElementsByClassName('gauge-c')[0];
-
-    element.style.webkitTransform = 'rotate(' + deg + 'deg)';
-    element.style.mozTransform = 'rotate(' + deg + 'deg)';
-    element.style.msTransform = 'rotate(' + deg + 'deg)';
-    element.style.oTransform = 'rotate(' + deg + 'deg)';
-    element.style.transform = 'rotate(' + deg + 'deg)';
-
-}
-
-
 /* Open the modal UIInstructions when there's no acknowledgement needed. */
 function showModalNoAck(icon) {
 
@@ -336,9 +349,6 @@ function showModal(showWarning, modalMessage, restart) {
         }
     }
 
-    //stop the timer when alert occurs;
-    clearInterval(routeTimer);
-
     //display the modal
     modal.style.display = 'block';
 
@@ -364,44 +374,38 @@ function showModal(showWarning, modalMessage, restart) {
     modalBody.innerHTML = '<p>' + modalMessage + '</p>';
 
     isModalPopupShowing = true; //flag that modal popup for an alert is currently being shown to the user.
-
-
 }
 
 /*
-    Count up Timer for when Guidance is started.
+    Count up Timer for when Guidance is engaged.
 */
 
 function countUpTimer() {
 
     // Get todays date and time
     var now = new Date().getTime();
-    // Get from session
-    var startDateTime = sessionStorage.getItem('startDateTime');
-    // Find the distance between now an the count down date
-    var distance = now - startDateTime;
+    // Find the elapsed time
+    var elapsedTime = now - startDateTime.value;
+
+    //engaged_timer = '00h 00m 00s';
+
+    if (elapsedTime < 0)
+    {
+        //console.log('elapsedTime is negative');
+        return;
+    }
 
     // Time calculations for days, hours, minutes and seconds
-    // var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    // var days = Math.floor(elapsedTime / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((elapsedTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
 
-    //Display the route name
-    var divRouteInfo = document.getElementById('divRouteInfo');
-
-    if (divRouteInfo != null) {
-        if (guidance_engaged == true) {
-            divRouteInfo.innerHTML = route_name + ': ' + pad(hours, 2) + 'h '
-                + pad(minutes, 2) + 'm ' + pad(seconds, 2) + 's ';
-        }
-        else {
-            divRouteInfo.innerHTML = route_name + ': 00h 00m 00s';
-        }
+    if (isGuidance.engaged == true) {
+        engaged_timer = pad(hours, 2) + 'h '
+            + pad(minutes, 2) + 'm ' + pad(seconds, 2) + 's ';
     }
-    else {
-        divRouteInfo.innerHTML = 'No Route Selected : 00h 00m 00s';
-    }
+    //console.log('engaged_timer: ' + engaged_timer);
 }
 
 /*
@@ -430,18 +434,18 @@ function closeModal(action) {
     //alert('modal action:' + action);
 
     switch (action) {
-        case 'RESTART':
+       case 'RESTART':
             //Clear session variables except SystemReady (assumes interface manager still have driver's ready)
-            sessionStorage.removeItem('isGuidanceEngaged');
-            sessionStorage.removeItem('routeName');
+            isGuidance.remove();
+            selectedRoute.remove();
+            startDateTime.remove(); //resets the startDatetime
+            clearInterval(timer); //stops the execution
+            timer = null;
+            engaged_timer = '00h 00m 00s';
+             
             sessionStorage.removeItem('routePlanCoordinates');
             sessionStorage.removeItem('routeSpeedLimitDist');
-            sessionStorage.removeItem('startDateTime');
 
-            //Clear global variables
-            guidance_engaged = false;
-            guidance_active = false;
-            route_name = 'No Route Selected';
             ready_counter = 0;
             ready_max_trial = 10;
             sound_counter = 0;
@@ -449,10 +453,10 @@ function closeModal(action) {
             host_instructions = '';
 
             //clear sections
-            setSpeedometer(0);
-            document.getElementById('divSpeedCmdValue').innerHTML = '0';
             document.getElementById('divCapabilitiesMessage').innerHTML = 'Please select a route.';
             clearTable('tblSecondA');
+
+            CarmaJS.WidgetFramework.closeWidgets();
 
             // Get the element with id="defaultOpen" and click on it
             // This needs to be outside a funtion to work.
@@ -463,18 +467,15 @@ function closeModal(action) {
 
             //Evaluate next step
             evaluateNextStep();
-            break;
 
+            break;
         case 'LOGOUT':
             shutdown();
             break;
-
         default:
             //no action
             break;
     }
-
-
 }
 
 function shutdown()

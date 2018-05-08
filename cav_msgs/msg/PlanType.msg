@@ -10,13 +10,14 @@ uint8 type
 uint8       UNKNOWN = 0
 uint8       CHANGE_LANE_LEFT = 1
 uint8       CHANGE_LANE_RIGHT = 2
-uint8       JOIN_PLATOON = 3
-# the rest is not defined in J2735 specification
-uint8       SEARCHING_FOR_PLATOON = 4
-uint8       JOIN_PLATOON_REAR = 5
-uint8       DEPART_PLATOON = 6
-uint8       SLOWDOWN = 7
-uint8       SPEEDUP = 8
-uint8       PASSING = 9 #includes lane change and speedup
-# ideas for future additions: 
-# pulling onto shoulder, need multi-lane change, join platoon in middle, merging platoons
+uint8       JOIN_PLATOON_AT_REAR = 3
+uint8       PLATOON_FOLLOWER_JOIN = 4
+
+# ideas for future additions:
+# uint8       SEARCHING_FOR_PLATOON = 5
+# uint8       DEPART_PLATOON = 6
+# uint8       SLOWDOWN = 7
+# uint8       SPEEDUP = 8
+# uint8       PASSING = 9 
+# pulling onto shoulder, need multi-lane change
+# join platoon in middle, merging platoons

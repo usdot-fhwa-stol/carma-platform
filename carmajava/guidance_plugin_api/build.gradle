@@ -35,9 +35,11 @@ dependencies {
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
   compile 'org.ros.rosjava_messages:std_msgs:0.5.10'
   compile 'commons-logging:commons-logging:1.2'
+  compile project(':geometry')
   /* compile 'gov.dot.fhwa.saxton.utils:1.0-SNAPSHOT' */
   compile name: 'saxton-utils-2.0.0'
   compile project(':rosutils')
+  compile project(':route')
 
   testCompile 'org.mockito:mockito-core:2.+'
   testCompile 'junit:junit:4.12'

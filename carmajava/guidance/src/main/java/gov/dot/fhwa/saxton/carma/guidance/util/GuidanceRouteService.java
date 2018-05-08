@@ -16,14 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util;
 
-import cav_msgs.Route;
-import cav_msgs.RouteSegment;
-import cav_msgs.RouteState;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
+import gov.dot.fhwa.saxton.carma.route.Route;
+import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 
 /**
  * Concrete implementation of RouteService responsible for handling processing of
@@ -31,14 +34,16 @@ import java.util.TreeSet;
  */
 public class GuidanceRouteService implements RouteService {
   protected IPubSubService pubSubService;
-  protected ISubscriber<Route> routeSubscriber;
+  protected ISubscriber<cav_msgs.Route> routeSubscriber;
   protected Route currentRoute;
   protected RouteSegment currentSegment;
-  protected volatile double downtrackDistance;
-  protected ISubscriber<RouteState> routeStateSubscriber;
+  protected volatile cav_msgs.RouteState routeState;
+  protected ISubscriber<cav_msgs.RouteState> routeStateSubscriber;
   protected SortedSet<SpeedLimit> limits;
   protected SortedSet<AlgorithmFlags> disabledAlgorithms;
   protected SortedSet<RequiredLane> requiredLanes;
+  protected List<Consumer<cav_msgs.Route>> routeCallbacks = Collections.synchronizedList(new ArrayList<>());
+  protected List<Consumer<cav_msgs.RouteState>> routeStateCallbacks = Collections.synchronizedList(new ArrayList<>());
 
   public GuidanceRouteService(IPubSubService pubSubService) {
     this.pubSubService = pubSubService;
@@ -48,14 +53,18 @@ public class GuidanceRouteService implements RouteService {
     limits = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
     disabledAlgorithms = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
 
-    routeSubscriber = pubSubService.getSubscriberForTopic("route", Route._TYPE);
+    routeSubscriber = pubSubService.getSubscriberForTopic("route", cav_msgs.Route._TYPE);
     routeSubscriber.registerOnMessageCallback(this::processRoute);
 
-    routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
+    routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", cav_msgs.RouteState._TYPE);
     routeStateSubscriber.registerOnMessageCallback((state) -> {
       if (currentRoute != null) {
-        downtrackDistance = state.getDownTrack();
-        currentSegment = getRouteSegmentAtLocation(downtrackDistance);
+        routeState = state;
+        currentSegment = getRouteSegmentAtLocation(state.getDownTrack());
+
+        for (Consumer<cav_msgs.RouteState> callback : routeStateCallbacks) {
+          callback.accept(state);
+        }
       }
     });
 
@@ -68,8 +77,8 @@ public class GuidanceRouteService implements RouteService {
   /**
    * Process the new route data to extract the limits and algorithm data
    */
-  public void processRoute(Route newRoute) {
-    currentRoute = newRoute;
+  public void processRoute(cav_msgs.Route newRoute) {
+    currentRoute = Route.fromMessage(newRoute);
 
     limits = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
     disabledAlgorithms = new TreeSet<>((a, b) -> Double.compare(a.getLocation(), b.getLocation()));
@@ -77,15 +86,15 @@ public class GuidanceRouteService implements RouteService {
 
     double dtdAccum = 0;
     for (RouteSegment seg : currentRoute.getSegments()) {
-      dtdAccum += seg.getLength();
+      dtdAccum += seg.length();
 
-      SpeedLimit segmentLimit = new SpeedLimit(dtdAccum, convertMphToMps(seg.getWaypoint().getSpeedLimit()));
+      SpeedLimit segmentLimit = new SpeedLimit(dtdAccum, convertMphToMps(seg.getDowntrackWaypoint().getUpperSpeedLimit()));
       limits.add(segmentLimit);
 
-      AlgorithmFlags segmentFlags = new AlgorithmFlags(dtdAccum, seg.getWaypoint().getDisabledGuidanceAlgorithms());
+      AlgorithmFlags segmentFlags = new AlgorithmFlags(dtdAccum, seg.getDowntrackWaypoint().getDisabledGuidanceAlgorithms());
       disabledAlgorithms.add(segmentFlags);
 
-      RequiredLane requiredLane = new RequiredLane(dtdAccum, seg.getWaypoint().getRequiredLaneIndex());
+      RequiredLane requiredLane = new RequiredLane(dtdAccum, seg.getDowntrackWaypoint().getRequiredLaneIndex());
       requiredLanes.add(requiredLane);
     }
 
@@ -101,6 +110,10 @@ public class GuidanceRouteService implements RouteService {
     }
 
     requiredLanes = requiredLaneChanges;
+
+    for (Consumer<cav_msgs.Route> callback : routeCallbacks) {
+      callback.accept(newRoute);
+    }
   }
 
   @Override
@@ -108,7 +121,7 @@ public class GuidanceRouteService implements RouteService {
     double dtdAccum = 0;
     RouteSegment out = null;
     for (RouteSegment segment : currentRoute.getSegments()) {
-      dtdAccum += segment.getLength();
+      dtdAccum += segment.length();
 
       if (dtdAccum > location) {
         out = segment;
@@ -131,7 +144,7 @@ public class GuidanceRouteService implements RouteService {
 
   @Override
   public double getCurrentDowntrackDistance() {
-    return downtrackDistance;
+    return routeState.getDownTrack();
   }
 
   @Override
@@ -278,5 +291,34 @@ public class GuidanceRouteService implements RouteService {
     }
 
     return out;
+  }
+
+  /**
+   * Register a callback to be invoked upon receipt of a new Route setting from the user
+   */
+  public void registerNewRouteCallback(Consumer<cav_msgs.Route> callback) {
+    routeCallbacks.add(callback);
+  }
+
+  /**
+   * Register a callback to be invoked upon receipt of a new RouteState value
+   */
+  public void registerNewRouteStateCallback(Consumer<cav_msgs.RouteState> callback) {
+    routeStateCallbacks.add(callback);
+  }
+
+  @Override
+  public double getCurrentCrosstrackDistance() {
+    return routeState.getCrossTrack();
+  }
+
+  @Override
+  public double getCurrentSegmentDowntrack() {
+    return routeState.getSegmentDownTrack();
+  }
+
+  @Override
+  public int getCurrentSegmentIndex() {
+    return routeState.getCurrentSegment().getPrevWaypoint().getWaypointId();
   }
 }
