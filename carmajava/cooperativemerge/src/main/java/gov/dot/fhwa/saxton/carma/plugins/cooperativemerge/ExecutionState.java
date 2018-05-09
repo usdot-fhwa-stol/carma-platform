@@ -43,7 +43,7 @@ public class ExecutionState implements ICooperativeMergeState {
   protected final CooperativeMergePlugin   plugin;
   protected final ILogger        log;
   protected final PluginServiceLocator pluginServiceLocator;
-  protected final String OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f";
+  protected final String OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d";
   protected final String COMMAND_PARAM_TYPE = "COMMAND";
   protected final List<String> COMMAND_PARAM_KEYS = new ArrayList<>(Arrays.asList("SPEED", "ACCEL", "STEERING_ANGLE"));
   protected final String planId;
@@ -167,7 +167,8 @@ public class ExecutionState implements ICooperativeMergeState {
     String params = String.format(OPERATION_PARAMS, 
       rampMeterData.getRampMeterDTD() - currentDTD, 
       rampMeterData.getMergePointDTD() - currentDTD,
-      pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed()
+      pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed(),
+      pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentLane()
     );
 
     msg.setStrategyParams(params);
