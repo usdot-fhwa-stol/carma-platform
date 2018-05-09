@@ -179,7 +179,7 @@ public class ExecutionState implements ICooperativeMergeState {
   @Override
   public void loop() throws InterruptedException {
     // Check if this plugin is controlling the vehicle
-    IManeuver currentManeuver = pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.LONGITUDINAL);
+    IManeuver currentManeuver = pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.COMPLEX);
     if (currentManeuver != null && currentManeuver.getPlanner().equals(plugin)) {
       // If in control publish status updates
       publishOperationStatus();
