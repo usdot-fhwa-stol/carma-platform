@@ -15,19 +15,9 @@
   the License.
 -->
 <!--
-	saxton_cav.launch
+	playback.launch
 
-  A the ros launch file for the STOL CAV Prototype ROS Network.
-  Launches all the needed ros nodes and sets up the parameter server.
-  Also sets up all static transforms used by tf2 within the system.
-
-  Use:
-  First delete the generated build/scripts folder in all java packages.
-  roslaunch carma saxton_cav.launch
-  After using source devel/setup.bash from workspace root.
-
-  If using simulated drivers they are activated using ros arguments as shown below.
-  roslaunch carma saxton_cav.launch mock_can:=true can_data_file:=/path/to/file.csv
+  A launch file for playing bag a rosbag file with visualization
 -->
 <launch>
 
@@ -50,7 +40,7 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
   <!-- RViz Node -->
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carma)/launch/rviz/playback.rviz"/>  
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carma)/launch/rviz/playback.rviz"/>
 
   <!-- Topic Visualization Node -->
   <node pkg="carma" type="topic_viz_node.py" name="topic_viz_node"/>
