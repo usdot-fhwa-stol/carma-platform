@@ -69,7 +69,8 @@ required_plugins:
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins:
-  - CACC Platooning Plugin
+  - Cooperative Merge Plugin
+  - Platooning Plugin
   - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
@@ -86,15 +87,15 @@ vehicle_acceleration_limit: 2.5
 # Double: A multiplier applied to the actual speed limit which will result in the cruising plugin's target speed
 # Max: 1.0
 # Min: 0.0
-cruising_target_multiplier: 0.9
+cruising_target_multiplier: 0.7
 
 # Double: Time headway to control to with ACC
 # Units: seconds
-desired_acc_timegap: 1.8
+desired_acc_timegap: 0.0
 
 # Double: Minimum distance between vehicle and front vehicle at any point
 # Units: m
-min_acc_standoff_distance: 5.0
+min_acc_standoff_distance: 0.0
 
 # Long: Time to wait after guidance is set to shutdown before killing the node, allows time for cleanup
 # Units: milliseconds
@@ -149,7 +150,7 @@ lane_change_notification_time: 4.0
 
 # Double: The amount of time the lane change plugin will wait for an external NACK before considering it safe to change lanes
 # Units: miliseconds
-lane_change_nack_timeout: 1000
+lane_change_nack_timeout: 450
 
 ##### DEPRECATED
 ##### The following are used by the NegotiationReceiverPlugin
@@ -216,11 +217,12 @@ mobility_path_time_step: 0.01
 light_bar_priorities:
   - Light Bar State Machine
   - Lane Change Plugin
-  - CACC Platooning Plugin
+  - Platooning Plugin
   - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
   - Cruising Plugin
+  - Cooperative Merge Plugin
 
 # Integer: The amount of time for the light bar to consider a communication timeout
 # Units: mili-seconds

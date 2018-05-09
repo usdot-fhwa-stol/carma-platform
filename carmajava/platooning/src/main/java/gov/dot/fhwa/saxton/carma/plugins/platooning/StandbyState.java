@@ -45,6 +45,7 @@ public class StandbyState implements IPlatooningState {
         this.plugin               = plugin;
         this.log                  = log;
         this.pluginServiceLocator = pluginServiceLocator;
+        this.plugin.handleMobilityPath.set(true);
         updateLightBar();
     }
     
@@ -53,7 +54,7 @@ public class StandbyState implements IPlatooningState {
         RouteService rs = pluginServiceLocator.getRouteService();
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // Check if the next trajectory includes a platooning window
-        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin.PLATOONING_FLAG)) {
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), PlatooningPlugin.PLATOONING_FLAG)) {
             log.debug("In standby state, find an avaliable plan window in " + traj.toString());
             plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
             // Request to re-plan with new leader state

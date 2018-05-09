@@ -143,7 +143,6 @@ public class Arbitrator extends GuidanceComponent
     log.info("STARTUP", "Arbitrator running!");
     routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
     routeStateSubscriber.registerOnMessageCallback((msg) -> {
-      log.info("Received RouteState:" + msg);
       downtrackDistance.set(msg.getDownTrack());
       receivedDtdUpdate.set(true);
     });
@@ -660,6 +659,12 @@ public class Arbitrator extends GuidanceComponent
   @Override
   public void requestNewPlan() {
     planningWindow /= planningWindowShrinkFactor; // Offset for the planning window size decrease involved
+    notifyTrajectoryFailure();
+  }
+
+  public void requestNewPlan(double endDist) {
+    planningWindow = (endDist - downtrackDistance.get()) / planningWindowShrinkFactor;
+    log.warn("Using experimental replan method, replanning with window: " + planningWindow);
     notifyTrajectoryFailure();
   }
 

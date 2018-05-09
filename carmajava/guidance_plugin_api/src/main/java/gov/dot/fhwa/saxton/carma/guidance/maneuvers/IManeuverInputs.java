@@ -63,4 +63,10 @@ public interface IManeuverInputs {
      * @return the index of the vehicles current lane
      */
     int getCurrentLane();
+
+    /**
+     * Get the maximum acceleration achievable by the vehicle controller
+     * @return the maximum acceleration in m/s^2
+     */
+    double getMaxAccelLimit();
 }

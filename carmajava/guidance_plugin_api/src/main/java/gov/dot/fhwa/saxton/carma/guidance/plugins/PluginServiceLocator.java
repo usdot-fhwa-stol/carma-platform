@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
@@ -31,6 +32,7 @@ import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
  * the plugins can use to interact with platform systems and other Guidance sub-components.
  */
 public class PluginServiceLocator {
+    
     private final ArbitratorService arbitratorService;
     private final PluginManagementService pluginManagementService;
     private final ParameterSource parameterSource;
@@ -41,12 +43,13 @@ public class PluginServiceLocator {
     private final IConflictDetector conflictDetector;
     private final ITrajectoryConverter trajectoryConverter;
     private final ILightBarManager lightBarManager;
+    private final TrackingService trackingService;
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
         PluginManagementService pluginManagementService, IPubSubService iPubSubService,
         ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService,
         IMobilityRouter mobilityRouter, IConflictDetector conflictDetector,
-        ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager) {
+        ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager, TrackingService trackingService) {
             
         this.arbitratorService = arbitratorService;
         this.IPubSubService = iPubSubService;
@@ -58,6 +61,7 @@ public class PluginServiceLocator {
         this.conflictDetector = conflictDetector;
         this.trajectoryConverter = trajectoryConverter;
         this.lightBarManager = lightBarManager;
+        this.trackingService = trackingService;
     }
 
     /**
@@ -128,5 +132,12 @@ public class PluginServiceLocator {
      */
     public ILightBarManager getLightBarManager() {
         return this.lightBarManager;
+    }
+
+    /**
+     * Get the {@link TrackingService} instance available to the plugins
+     */
+    public TrackingService getTrackingService() {
+        return trackingService;
     }
 }

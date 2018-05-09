@@ -97,6 +97,10 @@ public class SpeedHarmonizationManeuver extends ComplexManeuverBase {
     return maxAccel;
   }
 
+  @Override protected double generateSteeringCommand() throws IllegalStateException {
+    return 0.0; // Speed harm does not do lateral control
+  }
+
   private void checkTimeout() throws IllegalStateException {
     Duration timeElapsed = speedHarmInputs_.getTimeSinceLastUpdate();
     if (timeElapsed.compareTo(timeout) > 0) {
