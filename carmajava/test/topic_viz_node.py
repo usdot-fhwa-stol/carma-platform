@@ -29,6 +29,7 @@ class TopicVizNode(object):
     
     # Constants
     self.CM_PER_M = 100.0
+    self.MS_PER_S = 1000.0
     self.MOBILITY_TIMESTEP = 0.1
 
     # Init nodes
@@ -78,18 +79,11 @@ class TopicVizNode(object):
   def pointsMarkerFromOffsets(self, msg_stamp, startPoint, offsets, timestep, color):
 
     pointsMarker = Marker()
-    pointsMarker.header.stamp = msg_stamp
+    pointsMarker.header.stamp = rospy.Time.from_sec(msg_stamp / self.MS_PER_S)
     pointsMarker.header.frame_id = "earth"
     # TODO set id so that multiple paths can be shown at once
     pointsMarker.type = Marker.POINTS
     pointsMarker.action = Marker.ADD
-    pointsMarker.pose.position.x = startPoint.ecef_x
-    pointsMarker.pose.position.y = startPoint.ecef_y
-    pointsMarker.pose.position.z = startPoint.ecef_z
-    pointsMarker.pose.orientation.x = 0
-    pointsMarker.pose.orientation.y = 0
-    pointsMarker.pose.orientation.z = 0
-    pointsMarker.pose.orientation.w = 1
     pointsMarker.scale.x = 1.0
     pointsMarker.scale.y = 1.0
     pointsMarker.scale.z = 1.0
@@ -97,19 +91,33 @@ class TopicVizNode(object):
     pointsMarker.color.g = color[1]
     pointsMarker.color.b = color[2]
     pointsMarker.color.a = color[3]
-    pointsMarker.lifetime = 0 # TODO
+    #pointsMarker.lifetime = 0 #TODO
 
     points = []
 
+    x = startPoint.ecef_x / self.CM_PER_M
+    y = startPoint.ecef_y / self.CM_PER_M
+    z = startPoint.ecef_z / self.CM_PER_M
+
+    firstPoint = Point()
+    firstPoint.x = x
+    firstPoint.y = y
+    firstPoint.z = z
+
+    points.append(firstPoint)
+
     for offset in offsets:
       point = Point()
-      point.x = offset.offset_x
-      point.y = offset.offset_y
-      point.z = offset.offset_z
+      x = x + (offset.offset_x / self.CM_PER_M)
+      y = y + (offset.offset_y / self.CM_PER_M)
+      z = z + (offset.offset_z / self.CM_PER_M)
+      point.x = x
+      point.y = y
+      point.z = z
 
       points.append(point)
 
-    pointsMarker.points = point
+    pointsMarker.points = points
 
     return pointsMarker
 
