@@ -110,7 +110,7 @@ public class CommandingState extends RSUMeteringStateBase {
     double targetSteer = 0;
 
     // If we are not in our target lane and we are in the merge area, apply steering command
-    if (lane != worker.getTargetLane() && mergeDist < 0 && mergeDist < worker.getMergeLength()) {
+    if (lane != worker.getTargetLane() && mergeDist < 0 && Math.abs(mergeDist) < worker.getMergeLength()) {
       // With fake lateral control a positive value results in right lane change and negative in left lane change
       targetSteer = lane - worker.getTargetLane();
     }
