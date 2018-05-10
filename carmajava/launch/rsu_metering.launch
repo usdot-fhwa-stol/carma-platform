@@ -168,7 +168,7 @@
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="incoming_bsm"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/bsm"/>
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
         <remap from="incoming_mobility_request"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_request"/>
         <remap from="incoming_mobility_response"

@@ -49,7 +49,6 @@ public class CooperativeMergePlugin extends AbstractPlugin
   protected IPublisher<MobilityOperation> mobilityOperationPub;
   protected IPublisher<MobilityResponse> mobilityResponsePub;
   
-  protected final Object stateMutex = new Object();
   protected AtomicReference<ICooperativeMergeState> state = new AtomicReference<>(null);
 
   protected CooperativeMergeInputs cooperativeMergeInputs;
@@ -229,12 +228,6 @@ public class CooperativeMergePlugin extends AbstractPlugin
 
   @Override
   public void handleMobilityResponseMessage(MobilityResponse msg) {
-    synchronized(stateMutex) {
-      if (state == null) {
-        log.warn("Requested to handle mobility response message but state was null");
-        return;
-      }
-      state.get().onMobilityResponseMessage(msg);
-    }
+    state.get().onMobilityResponseMessage(msg);
   }
 }
