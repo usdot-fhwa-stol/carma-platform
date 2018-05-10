@@ -170,7 +170,9 @@ public class RSUMeterWorker {
     double alt = msg.getCoreData().getElev();
     
     Location loc = new Location(lat,lon,alt);
-    log.debug("BSM Received Id: " + bsmId + " lat: " + lat + " lon: " + lon + " elev: " + alt);
+    if (!bsmMap.containsKey(bsmId)) {
+      log.debug("New BSM Id: " + bsmId + " lat: " + lat + " lon: " + lon + " elev: " + alt);
+    }
     bsmMap.put(bsmId, msg);
   }
 
