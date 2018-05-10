@@ -160,6 +160,11 @@ public class RSUMeterWorker {
 
     String bsmId = bsmIdFromBuffer(msg.getCoreData().getId());
 
+    if (bsmId == null) {
+      log.warn("Null BSM Id ");
+      return;
+    }
+
     double lat = msg.getCoreData().getLatitude();
     double lon = msg.getCoreData().getLongitude();
     double alt = msg.getCoreData().getElev();
@@ -177,11 +182,17 @@ public class RSUMeterWorker {
    * @return The hex string of this bsm id 
    */
   private String bsmIdFromBuffer(ChannelBuffer buffer) {
-    byte[] idArray = buffer.array();
 
-    if (idArray.length != 4) {
-      log.warn("Tried to process bsm id of less than 4 bytes: " + idArray);
+    int capacity =  buffer.capacity();
+
+    if (capacity != 4) {
+      log.warn("Tried to process bsm id of less than 4 bytes: " + buffer);
       return null;
+    }
+
+    byte[] idArray = new byte[4];
+    for(int i = 0; i < capacity; i++) {
+      idArray[i] = buffer.getByte(i);
     }
 
     // Convert bsm id array to string
