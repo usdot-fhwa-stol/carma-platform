@@ -200,7 +200,9 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
             ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
             IManeuverInputs inputs = planner.getManeuverInputs();
             // TODO This requires that all waypoints contain a requiredLaneIndex. At somepoint we should allow waypoints to not have a required lane.
+            // TODO using the downtrack waypoint to get arround route following having an incorrect start point
             int startingLane = pluginServiceLocator.getRouteService().getRouteSegmentAtLocation(startDistance).getDowntrackWaypoint().getRequiredLaneIndex();
+            log.info("Calculated startingLane= " + startingLane);
             futureLatMvr_ = new FutureLateralManeuver(this,  targetLane_ - startingLane, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
             futureLonMvr_ = new FutureLongitudinalManeuver(this, inputs, startDistance, startSpeed_, endDistance, endSpeed_);
 
@@ -279,7 +281,7 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         laneChangeTraj.addManeuver(futureLatMvr_);
 
         ITrajectoryConverter trajectoryConverter = pluginServiceLocator.getTrajectoryConverter();
-        List<RoutePointStamped> routePoints = trajectoryConverter.convertToPath(laneChangeTraj, startPoint);
+        List<RoutePointStamped> routePoints = trajectoryConverter.convertToPath(laneChangeTraj, startPoint, cav_msgs.Trajectory.MAX_POINTS_IN_MESSAGE);
 
         // Publish the request for lane change
         publishRequestMessage(inputs, targetLane, routePoints);

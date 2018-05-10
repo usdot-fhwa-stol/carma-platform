@@ -264,14 +264,6 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         }
     }
 
-  /**
-   * Convert the current trajectory to a timestamped list of points along the route frame
-   */
-    public List<RoutePointStamped> getHostPathPrediction() {
-        return trajectoryExecutorWorker.getHostPathPrediction();
-    }
-
-
     public Trajectory getTotalTrajectory() {
         return trajectoryExecutorWorker.getTotalTrajectory();
     }
