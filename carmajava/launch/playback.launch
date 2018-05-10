@@ -24,6 +24,8 @@
   <!-- Path to Unified Robot Description Format URDF file -->
   <arg name="URDF_FILE" default="$(find carma)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
 
+  <!-- Needed Params -->
+  <arg name="vehicle_id" doc="The bag file to be used to run this test"/>
   <!-- Setup Ros Bag -->
   <arg name="bag" doc="The bag file to be used to run this test"/>
   <arg name="all_topics" default="true" doc="Set to true to play back all topics"/>
@@ -33,6 +35,8 @@
   <arg unless="$(arg all_topics)" name="actual_topics" value=" --topics $(arg topics) "/>
 
   <param name="use_sim_time" value="true"/>
+
+  <param name="/saxton_cav/vehicle_id" value="$(arg vehicle_id)"/>
 
   <!-- Load Robot Description Model-->
   <!-- TODO take out transforms when urdf is commited Vehicle Transforms -->

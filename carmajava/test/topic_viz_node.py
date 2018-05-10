@@ -31,6 +31,16 @@ class TopicVizNode(object):
     self.CM_PER_M = 100.0
     self.MS_PER_S = 1000.0
     self.MOBILITY_TIMESTEP = 0.1
+    self.colors = [
+      [1,0,0,1], # Red
+      [1,0.65,0,1], # Orange
+      [0,0,1,1], # Blue
+      [1,1,0,1], # Yellow
+      [0,1,1,1], # Cyan
+      [1,0,1,1]  # Magenta
+    ]
+
+    self.host_color = [0,1,0,1] # Green
 
     # Init nodes
     rospy.init_node("topic_viz_node", anonymous=True)
@@ -48,30 +58,36 @@ class TopicVizNode(object):
     self.route_sub = rospy.Subscriber("/saxton_cav/route/route", Route, self.route_cb)
     # Mobility Path
     self.request_viz_pub = rospy.Publisher("/mobility_request_viz", Marker, queue_size=10)
-    self.path_sub = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath, self.path_message_cb)
+    self.path_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath, self.path_message_cb)
+    self.path_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_path", MobilityPath, self.path_message_cb)
     # Mobility Request
     self.path_viz_pub = rospy.Publisher("/mobility_path_viz", Marker, queue_size=10)
-    self.request_sub = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_request", MobilityRequest, self.request_message_cb)
+    self.request_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_request", MobilityRequest, self.request_message_cb)
+    self.request_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_request", MobilityRequest, self.request_message_cb)
+    # Host Id
+    self.host_veh_id = rospy.get_param("/saxton_cav/vehicle_id")
+    
+    self.id_color_map = dict({})
 
   # Function to convert request messages 
   def request_message_cb(self, request):
-    print("\n\nRequest\n\n")
     msg_stamp = request.header.timestamp
     startPoint = request.trajectory.location
     offsets = request.trajectory.offsets
-    blue = [0.0, 0.0, 1.0, 1.0] #RGBA
-    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, blue)
+
+    color = self.getColorForId(request.header.sender_id)
+    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color)
 
     self.path_viz_pub.publish(pointMarker)
 
   # Function to convert path messages 
   def path_message_cb(self, path):
-    print("\n\nPath\n\n")
     msg_stamp = path.header.timestamp
     startPoint = path.trajectory.location
     offsets = path.trajectory.offsets
-    green = [0.0, 1.0, 0.0, 1.0] #RGBA
-    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, green)
+
+    color = self.getColorForId(path.header.sender_id)
+    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color)
 
     self.path_viz_pub.publish(pointMarker)
   
@@ -83,14 +99,15 @@ class TopicVizNode(object):
     pointsMarker.header.frame_id = "earth"
     # TODO set id so that multiple paths can be shown at once
     pointsMarker.type = Marker.POINTS
-    pointsMarker.action = Marker.ADD
-    pointsMarker.scale.x = 1.0
-    pointsMarker.scale.y = 1.0
-    pointsMarker.scale.z = 1.0
+    pointsMarker.action = Marker.MODIFY
+    pointsMarker.scale.x = 0.5
+    pointsMarker.scale.y = 0.5
+ #   pointsMarker.scale.z = 1.0
     pointsMarker.color.r = color[0]
     pointsMarker.color.g = color[1]
     pointsMarker.color.b = color[2]
     pointsMarker.color.a = color[3]
+    pointsMarker.frame_locked = True
     #pointsMarker.lifetime = 0 #TODO
 
     points = []
@@ -121,6 +138,21 @@ class TopicVizNode(object):
 
     return pointsMarker
 
+  # Helper function assigns a color to messages from a specific id
+  def getColorForId(self, id):
+    if (id == self.host_veh_id):
+      return self.host_color
+    if (self.id_color_map.has_key(id)):
+      return self.id_color_map.get(id)
+    else:
+      numIds = len(self.id_color_map)
+      if numIds < len(self.colors):
+        colorForId = self.colors[numIds]
+      else:
+        colorForId = [1,1,1,1] # White default
+      self.id_color_map[id] = colorForId
+      return colorForId
+  
   # Function to convert external object messages 
   def external_objects_cb(self, obj):
     print("\n\nObjects\n\n")
