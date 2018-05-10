@@ -87,11 +87,11 @@ vehicle_acceleration_limit: 2.5
 # Double: A multiplier applied to the actual speed limit which will result in the cruising plugin's target speed
 # Max: 1.0
 # Min: 0.0
-cruising_target_multiplier: 0.7
+cruising_target_multiplier: 1.0
 
 # Double: Time headway to control to with ACC
 # Units: seconds
-desired_acc_timegap: 0.0
+desired_acc_timegap: 0.5
 
 # Double: Minimum distance between vehicle and front vehicle at any point
 # Units: m
@@ -206,12 +206,12 @@ conflict_map_collision_crosstrack_margin: 1.0
 # Units: seconds
 conflict_map_collision_time_margin: 0.05
 
-# Integer: The maximum number of points allowed in a MobilityPath message
-mobility_path_max_points: 60
+# Integer: The maximum number of points allowed to be in one path during a collision check in guidance
+collision_check_max_points: 300
 
 # Double: The timestep between points in a MobilityPath 
 # Units: seconds
-mobility_path_time_step: 0.01
+mobility_path_time_step: 0.1
 
 # Plugin or guidance component name: The priority which components are given for control of the light bar
 light_bar_priorities:

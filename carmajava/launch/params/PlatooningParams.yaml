@@ -8,7 +8,7 @@ platooning_min_maneuver_length: 15.0
 
 # Double: The proportional term in the platoon speed PID controller
 # Units: 1
-platooning_Kp: 1.5
+platooning_Kp: 0.2
 
 # Double: The integral term in the platoon speed PID controller
 # Units: 1
@@ -16,7 +16,7 @@ platooning_Ki: 0.0
 
 # Double: The derivative term in the platoon speed PID controller
 # Units: 1
-platooning_Kd: -0.1
+platooning_Kd: 0.0
 
 # Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
 # Units: 1
@@ -31,7 +31,7 @@ platooning_max_size: 10
 # When algorithm_type == 1, it means the APF algorithm
 # When algorithm_type == 2, it means the PF algorithm
 # When algorithm_type == 3, it means the PF* algorithm
-platooning_algorithm_type: 0
+platooning_algorithm_type: 1
 
 # Double: The desired time headway to the front vehicle within the platoon
 # Units: s
@@ -67,13 +67,13 @@ platooning_cmd_max_adjustment: 10.0
 
 # Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
 # Units: s
-platooning_lower_boundary: 1.6
-platooning_upper_boundary: 1.7
+platooning_lower_boundary: 1.0
+platooning_upper_boundary: 1.4
 platooning_max_spacing: 4.0
-platooning_min_spacing: 3.9
+platooning_min_spacing: 3.0
 # Units: m
-platooning_max_gap: 22.0
-platooning_min_gap: 32.0
+platooning_max_gap: 16.0
+platooning_min_gap: 12.0
 
 # Boolean: Determine whether the output of platooning controller will be caped by platooning_cmd_max_adjustment
 platooning_max_cmd_speed_adjustment_cap: true
@@ -82,4 +82,4 @@ platooning_max_cmd_speed_adjustment_cap: true
 platooning_max_accel_cap: true
 
 # Boolean: Determine whether the follower will still follow the speed limit in a platoon
-platooning_local_speed_limit_cap: true
+platooning_local_speed_limit_cap: false

@@ -80,7 +80,6 @@ public class RouteTest {
     }
   }
 
-
       /**
    * Tests the movement of a host vehicle along a route
    * @throws Exception

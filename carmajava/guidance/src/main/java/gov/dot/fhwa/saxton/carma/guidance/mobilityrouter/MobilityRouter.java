@@ -37,6 +37,7 @@ import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
+import gov.dot.fhwa.saxton.carma.guidance.VehicleAwareness;
 import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
@@ -81,17 +82,19 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private ITrajectoryConverter trajectoryConverter;
     private Arbitrator arbitrator;
     private String hostMobilityStaticId = "";
+    private VehicleAwareness vehicleAwareness;
     private AtomicBoolean handleMobilityPath = new AtomicBoolean(true);
     private boolean isDisableMobilityPathCapabilityAcquired = false;
     private Object mutex = new Object();
 
     public MobilityRouter(GuidanceStateMachine stateMachine, IPubSubService pubSubService, ConnectedNode node,
      IConflictManager conflictManager, ITrajectoryConverter trajectoryConverter,
-     TrajectoryExecutor trajectoryExecutor, TrackingService tracking) {
+     VehicleAwareness vehicleAwareness, TrajectoryExecutor trajectoryExecutor, TrackingService tracking) {
         super(stateMachine, pubSubService, node);
         this.conflictManager = conflictManager;
         this.trajectoryConverter = trajectoryConverter;
         this.trajectoryExecutor = trajectoryExecutor;
+        this.vehicleAwareness = vehicleAwareness;
         this.trackingService = tracking;
         stateMachine.registerStateChangeListener(this);
     }
@@ -279,7 +282,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             return;
         }
         List<RoutePointStamped> otherPath = trajectoryConverter.messageToPath(msg.getTrajectory());
-        List<RoutePointStamped> hostPath = trajectoryExecutor.getHostPathPrediction();
+        List<RoutePointStamped> hostPath = vehicleAwareness.getPathPrediction();
         List<ConflictSpace> conflictSpaces = conflictManager.getConflicts(hostPath, otherPath);
         boolean conflictHandled = true;
         ConflictSpace conflictSpace = null;
@@ -409,7 +412,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             return;
         }
         long tempStartTime = System.currentTimeMillis();
-        List<RoutePointStamped> hostTrajectory = trajectoryExecutor.getHostPathPrediction();
+        List<RoutePointStamped> hostTrajectory = vehicleAwareness.getPathPrediction();
         List<RoutePointStamped> otherTrajectory = trajectoryConverter.messageToPath(msg.getTrajectory());
         log.debug("handleMobilityPath: computed otherTrajectory of " + otherTrajectory.size() + " points. Adding to map.");
         long tempTime1 = System.currentTimeMillis();
