@@ -94,8 +94,9 @@ public class HoldingState extends RSUMeteringStateBase {
     if (meterDist < 0.5) {
       
       updateCommands(0, vehMaxAccel, 0);
-
+      log.info("Vehicle at meter point");
       if (speed < 0.1) {
+        log.info("Vehicle at meter point and stopped");
         // Wait for a platoon to be incoming. Then transition to controlling state
         PlatoonData nextPlatoon = worker.getNextPlatoon();
         if (nextPlatoon != null) {
@@ -106,7 +107,7 @@ public class HoldingState extends RSUMeteringStateBase {
               && vehicleArrivalTime < nextPlatoon.getExpectedTimeOfArrival() + worker.getTimeMargin()) {
 
             log.info("Releasing vehicle with expected arrival time of " + vehicleArrivalTime +
-             " and platoon arrival time of " + nextPlatoon.getExpectedTimeOfArrival());
+             " for platoon " + nextPlatoon);
 
              worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
 

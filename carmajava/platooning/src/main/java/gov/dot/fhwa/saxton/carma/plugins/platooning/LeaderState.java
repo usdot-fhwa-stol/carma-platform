@@ -28,7 +28,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  * in front of it and keep broadcasting heart-beat mobility operation INFO message to inform its existence.
  */
 public class LeaderState implements IPlatooningState {
-
+    
     protected PlatooningPlugin     plugin;
     protected ILogger              log;
     protected PluginServiceLocator pluginServiceLocator;
@@ -260,62 +260,68 @@ public class LeaderState implements IPlatooningState {
 
     private boolean isVehicleRightInFront(String rearVehicleBsmId, double downtrack) {
         double currentDtd = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
-        if(downtrack < currentDtd) {
+        if(downtrack > currentDtd) {
+            log.debug("Found a platoon in front. We are able to join");
+            return true;
+        } else {
             log.debug("Ignoring platoon from our back.");
+            log.debug("The front platoon dtd is " + downtrack + " and we are current at " + currentDtd);
             return false;
         }
-        RoadwayEnvironment env = plugin.roadwaySub.getLastMessage();
-        if(env != null) {
-            List<RoadwayObstacle> obs = env.getRoadwayObstacles();
-            
-            double lastGap = Double.MAX_VALUE;
-            RoadwayObstacle vehicleRightInFront = null;
-            log.debug("Found objects from roadway:");
-            for(RoadwayObstacle ob : obs) {
-                log.debug("Found obstacle in lane " + ob.getPrimaryLane() + " and its dtd is " + ob.getDownTrack());
-                log.debug("The found obstacle type is " + ob.getConnectedVehicleType().toString());
-                if(ob.getObject() != null) {
-                    log.debug("The BSM id is of size " + ob.getObject().getBsmId().capacity());
-                    for(int i = 0; i < vehicleRightInFront.getObject().getBsmId().capacity(); i++) {
-                        log.debug("The content at " + i + " is " + vehicleRightInFront.getObject().getBsmId().getByte(i));
-                    }
-                } else {
-                    log.debug("But we did not found an associated external object");
-                }
-                if(ob.getPrimaryLane() == plugin.getManeuverInputs().getCurrentLane()) {
-                    if(ob.getDownTrack() - currentDtd < lastGap) {
-                        vehicleRightInFront = ob;
-                        lastGap = ob.getDownTrack() - currentDtd;
-                    }
-                }
-            }
-            if(vehicleRightInFront == null) {
-                log.debug("Sensor fusion does not detect any vehicle in front of us. We should be ready to speed up");
-                return true;
-            } else {
-                if(vehicleRightInFront.getObject() != null &&
-                   vehicleRightInFront.getObject().getBsmId() != null &&
-                   vehicleRightInFront.getObject().getBsmId().capacity() == 4) {
-                    byte[] temp_ID = new byte[4];
-                    for(int i = 0; i < vehicleRightInFront.getObject().getBsmId().capacity(); i++) {
-                        temp_ID[i] = vehicleRightInFront.getObject().getBsmId().getByte(i);
-                    }
-                    char[] hexChars = new char[temp_ID.length * 2];
-                    for(int i = 0; i < temp_ID.length; i++) {
-                        int firstFourBits = (0xF0 & temp_ID[i]) >>> 4;
-                        int lastFourBits = 0xF & temp_ID[i];
-                        hexChars[i * 2] = Integer.toHexString(firstFourBits).charAt(0);
-                        hexChars[i * 2 + 1] = Integer.toHexString(lastFourBits).charAt(0);
-                    }
-                    String bsmIdOfVehicleRightInFront = new String(hexChars);
-                    log.debug("Sensor fusion detected a CAV in front with BSM id = " + bsmIdOfVehicleRightInFront);
-                    log.debug("Our desired front vehicle bsm id = " + rearVehicleBsmId);
-                    return bsmIdOfVehicleRightInFront.equals(rearVehicleBsmId);
-                }
-            }
-        }
-        log.debug("Did not receive any enviorment message. We are not ready to join yet");
-        return false;
+//        RoadwayEnvironment env = plugin.roadwaySub.getLastMessage();
+//        if(env != null) {
+//            List<RoadwayObstacle> obs = env.getRoadwayObstacles();
+//            
+//            double lastGap = Double.MAX_VALUE;
+//            RoadwayObstacle vehicleRightInFront = null;
+//            log.debug("Found objects from roadway:");
+//            for(RoadwayObstacle ob : obs) {
+//                log.debug("Found obstacle in lane " + ob.getPrimaryLane() + " and its dtd is " + ob.getDownTrack());
+//                if(ob.getConnectedVehicleType() != null) {
+//                    log.debug("The found obstacle type is " + ob.getConnectedVehicleType().toString());
+//                }
+//                if(ob.getObject() != null && ob.getObject().getBsmId() != null) {
+//                    log.debug("The BSM id is of size " + ob.getObject().getBsmId().capacity());
+//                    for(int i = 0; i < ob.getObject().getBsmId().capacity(); i++) {
+//                        log.debug("The content at " + i + " is " + ob.getObject().getBsmId().getByte(i));
+//                    }
+//                } else {
+//                    log.debug("But we did not found an associated external object");
+//                }
+//                if(ob.getPrimaryLane() == plugin.getManeuverInputs().getCurrentLane()) {
+//                    if(ob.getDownTrack() - currentDtd < lastGap) {
+//                        vehicleRightInFront = ob;
+//                        lastGap = ob.getDownTrack() - currentDtd;
+//                    }
+//                }
+//            }
+//            if(vehicleRightInFront == null) {
+//                log.debug("Sensor fusion does not detect any vehicle in front of us. We should be ready to speed up");
+//                return true;
+//            } else {
+//                if(vehicleRightInFront.getObject() != null &&
+//                   vehicleRightInFront.getObject().getBsmId() != null &&
+//                   vehicleRightInFront.getObject().getBsmId().capacity() == 4) {
+//                    byte[] temp_ID = new byte[4];
+//                    for(int i = 0; i < vehicleRightInFront.getObject().getBsmId().capacity(); i++) {
+//                        temp_ID[i] = vehicleRightInFront.getObject().getBsmId().getByte(i);
+//                    }
+//                    char[] hexChars = new char[temp_ID.length * 2];
+//                    for(int i = 0; i < temp_ID.length; i++) {
+//                        int firstFourBits = (0xF0 & temp_ID[i]) >>> 4;
+//                        int lastFourBits = 0xF & temp_ID[i];
+//                        hexChars[i * 2] = Integer.toHexString(firstFourBits).charAt(0);
+//                        hexChars[i * 2 + 1] = Integer.toHexString(lastFourBits).charAt(0);
+//                    }
+//                    String bsmIdOfVehicleRightInFront = new String(hexChars);
+//                    log.debug("Sensor fusion detected a CAV in front with BSM id = " + bsmIdOfVehicleRightInFront);
+//                    log.debug("Our desired front vehicle bsm id = " + rearVehicleBsmId);
+//                    return bsmIdOfVehicleRightInFront.equals(rearVehicleBsmId);
+//                }
+//            }
+//        }
+//        log.debug("Did not receive any enviorment message. We are not ready to join yet");
+//        return false;
     }
     
     // This method compose mobility operation INFO/STATUS message

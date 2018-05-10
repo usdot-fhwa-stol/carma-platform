@@ -43,10 +43,11 @@ import java.util.List;
 import java.util.SortedSet;
 
 /**
- * Basic plugin for following necessary lane changes in the currently selected route
+ * Basic plugin for following necessary lane changes in the currently selected
+ * route
  * <p>
- * Delegates planning of the lane change maneuver(s) themselves to the LaneChange plugin
- * by use of the ITacticalPlugin interface.
+ * Delegates planning of the lane change maneuver(s) themselves to the
+ * LaneChange plugin by use of the ITacticalPlugin interface.
  */
 public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPlugin {
 
@@ -74,7 +75,8 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         laneChangeRateFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_rate_factor", 0.75);
         laneChangeDelayFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_delay_factor", 1.5);
         laneChangeSafetyFactor = pluginServiceLocator.getParameterSource().getDouble("~lane_change_safety_factor", 1.5);
-        laneChangeNotificationTime = pluginServiceLocator.getParameterSource().getDouble("~lane_change_notification_time", 4.0);
+        laneChangeNotificationTime = pluginServiceLocator.getParameterSource()
+                .getDouble("~lane_change_notification_time", 4.0);
         log.info("Route Following plugin initialized");
     }
 
@@ -84,11 +86,12 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
                 .getTacticalPluginByName(LANE_CHANGE_PLUGIN_NAME);
 
         if (laneChangePlugin == null) {
-            // No lane change plugin was found registered withe the platform, RouteFollowing cannot operate
+            // No lane change plugin was found registered withe the platform, RouteFollowing
+            // cannot operate
             throw new RuntimeException(
                     "Route following plugin unable to locate necessary lane change tactical plugin.\nPlease install a lane change plugin.");
         }
-        log.info("Route Following Plugin using Lane Change Plugin: "  + laneChangePlugin.getVersionInfo());
+        log.info("Route Following Plugin using Lane Change Plugin: " + laneChangePlugin.getVersionInfo());
 
         routeService = pluginServiceLocator.getRouteService();
         log.info("Route Following plugin resumed");
@@ -113,18 +116,19 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
     private void planLaneKeepingManeuver(Trajectory traj, double startDist, double endDist) {
         log.info(String.format("Planning lane keeping maneuver planning between: [%.02f, %.02f)", startDist, endDist));
         LaneKeeping laneKeepingManeuver = new LaneKeeping(this);
-        laneKeepingManeuver.planToTargetDistance(pluginServiceLocator.getManeuverPlanner().getManeuverInputs(), 
-        pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), startDist, endDist);
+        laneKeepingManeuver.planToTargetDistance(pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
+                pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), startDist, endDist);
         traj.addManeuver(laneKeepingManeuver);
     }
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
         log.info("Route Following Plugin planning trajectory!");
-        // TODO: Implement planning logic to handle planning around other lateral maneuvers that may already be planned!
+        // TODO: Implement planning logic to handle planning around other lateral
+        // maneuvers that may already be planned!
         SortedSet<RequiredLane> requiredLanes = routeService.getRequiredLanesInRange(traj.getStartLocation(),
                 traj.getEndLocation());
-        
+
         RequiredLane laneChangeAfterTraj = routeService.getRequiredLaneAtLocation(traj.getEndLocation());
         if (laneChangeAfterTraj != null) {
             requiredLanes.add(laneChangeAfterTraj); // Handle the end point of the trajectory
@@ -137,18 +141,20 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
         }
         log.info("Changes: " + changes);
 
-        // Ensure that we have enough space after the current trajectory to complete the NEXT lane change
+        // Ensure that we have enough space after the current trajectory to complete the
+        // NEXT lane change
         if (!requiredLanes.isEmpty()) {
             RequiredLane laneChangeAtTrajEnd = (RequiredLane) requiredLanes.toArray()[requiredLanes.size() - 1];
 
             if (laneChangeAtTrajEnd.getLocation() > traj.getEndLocation()) {
                 double speedLimit = routeService.getSpeedLimitAtLocation(laneChangeAtTrajEnd.getLocation()).getLimit();
-                double distanceRequiredForLaneChange = speedLimit * (laneChangeDelayFactor
-                        + laneChangeRateFactor + laneChangeSafetyFactor + laneChangeNotificationTime);
+                double distanceRequiredForLaneChange = speedLimit * (laneChangeDelayFactor + laneChangeRateFactor
+                        + laneChangeSafetyFactor + laneChangeNotificationTime);
                 double distanceAvailableForLaneChange = laneChangeAtTrajEnd.getLocation() - traj.getEndLocation();
 
                 if (distanceAvailableForLaneChange < distanceRequiredForLaneChange) {
-                    // Tell the arbitrator the next trajectory wont be able to execute the whole lane change, so roll
+                    // Tell the arbitrator the next trajectory wont be able to execute the whole
+                    // lane change, so roll
                     // that maneuver into this one.
                     log.warn("Next lane change maneuver would be impossible. Requesting longer trajectory to address!");
                     log.info("Requesting trajectory extension to: " + laneChangeAtTrajEnd.getLocation());
@@ -186,22 +192,61 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
 
             double laneChangeEndLocation = laneChangeStartLocation + distanceForLaneChange;
             if (laneChangeEndLocation > traj.getEndLocation()) {
-                // If we don't have enough room in the trajectory to execute our "best effort" attempt, request a longer trajectory
+                // If we don't have enough room in the trajectory to execute our "best effort"
+                // attempt, request a longer trajectory
                 log.warn("Current lane change maneuver would be impossible. Requesting longer trajectory to address!");
                 log.info("Requesting trajectory extension to: " + laneChangeEndLocation + speedLimit * 0.5);
                 TrajectoryPlanningResponse requestForLongerTrajectory = new TrajectoryPlanningResponse();
-                // Request enough space to execute the maneuver plus a little bit of breathing room
+                // Request enough space to execute the maneuver plus a little bit of breathing
+                // room
                 requestForLongerTrajectory.requestLongerTrajectory(laneChangeEndLocation + speedLimit * 0.5);
                 return requestForLongerTrajectory;
             }
 
+            // Check for existing maneuvers in the middle of the to-be-planned maneuver
+            List<IManeuver> mvrsAtStart = traj.getManeuversAt(laneChangeStartLocation);
+            List<IManeuver> mvrsAtEnd = traj.getManeuversAt(laneChangeEndLocation);
+
+            double endOfMvrsAtStart = laneChangeStartLocation;
+            for (IManeuver m : mvrsAtStart) {
+                if (m.getEndDistance() > endOfMvrsAtStart) {
+                    endOfMvrsAtStart = m.getEndDistance();
+                }
+            }
+            // Need to update if additional maneuver types are introduced
+            IManeuver nextLonMvr = traj.getNextManeuverAfter(endOfMvrsAtStart, ManeuverType.LONGITUDINAL);
+            IManeuver nextLatMvr = traj.getNextManeuverAfter(endOfMvrsAtStart, ManeuverType.LATERAL);
+            IManeuver nextCmplxMvr = traj.getNextManeuverAfter(endOfMvrsAtStart, ManeuverType.COMPLEX);
+
+            double startOfMvrsAtEnd = laneChangeEndLocation;
+            for (IManeuver m : mvrsAtEnd) {
+                if (m.getEndDistance() < startOfMvrsAtEnd) {
+                    startOfMvrsAtEnd = m.getStartDistance();
+                }
+            }
+
+            boolean maneuverInMiddleOfLaneChange = (nextLonMvr != null && nextLonMvr.getStartDistance() < startOfMvrsAtEnd)
+                    || (nextLatMvr != null && nextLatMvr.getStartDistance() < startOfMvrsAtEnd)
+                    || (nextCmplxMvr != null && nextCmplxMvr.getStartDistance() < startOfMvrsAtEnd);
+            boolean maneuverAtStartOfLaneChange = !mvrsAtStart.isEmpty();
+
             // Compute the distance required and command the lane change plugin to plan
             double startSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeStartLocation).getLimit();
             double endSpeedLimit = routeService.getSpeedLimitAtLocation(laneChangeEndLocation).getLimit();
-            log.info(String.format("Delegating to Lane Change Plugin with params = {laneId=%d,startLimit=%.02f,endLimit=%.02f,start=%.02f,end=%.02f}",
-            targetLane.getLaneId(), startSpeedLimit, endSpeedLimit, laneChangeStartLocation, laneChangeEndLocation));
-            ((LaneChangePlugin)laneChangePlugin).setLaneChangeParameters(targetLane.getLaneId(), startSpeedLimit, endSpeedLimit);
-            laneChangePlugin.planSubtrajectory(traj, laneChangeStartLocation, laneChangeEndLocation);
+            if (maneuverAtStartOfLaneChange || maneuverInMiddleOfLaneChange) {
+                log.warn(String.format(
+                        "Unable to delegate to Lane Change Plugin with params = {laneId=%d,startLimit=%.02f,endLimit=%.02f,start=%.02f,end=%.02f}, due to maneuvers planned in space needed!",
+                        targetLane.getLaneId(), startSpeedLimit, endSpeedLimit, laneChangeStartLocation,
+                        laneChangeEndLocation));
+            } else {
+                log.info(String.format(
+                        "Delegating to Lane Change Plugin with params = {laneId=%d,startLimit=%.02f,endLimit=%.02f,start=%.02f,end=%.02f}",
+                        targetLane.getLaneId(), startSpeedLimit, endSpeedLimit, laneChangeStartLocation,
+                        laneChangeEndLocation));
+                ((LaneChangePlugin) laneChangePlugin).setLaneChangeParameters(targetLane.getLaneId(), startSpeedLimit,
+                        endSpeedLimit);
+                laneChangePlugin.planSubtrajectory(traj, laneChangeStartLocation, laneChangeEndLocation);
+            }
         }
 
         // Now that all lane changes have been planned, backfill with lane keeping
@@ -210,7 +255,8 @@ public class RouteFollowingPlugin extends AbstractPlugin implements IStrategicPl
             IManeuver m = traj.getNextManeuverAfter(windowStart, ManeuverType.LATERAL);
             double windowEnd = (m != null ? m.getStartDistance() : traj.getEndLocation());
 
-            // Ensure we don't try to plan over a complex maneuver at the end of a trajectory
+            // Ensure we don't try to plan over a complex maneuver at the end of a
+            // trajectory
             if (traj.getComplexManeuver() != null) {
                 if (windowEnd > traj.getComplexManeuver().getStartDistance()) {
                     // Cap it to the end of the complex maneuver and then finish planning

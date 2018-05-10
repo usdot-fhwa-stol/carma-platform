@@ -30,6 +30,7 @@ import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.Publisher;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
+import cav_msgs.BSM;
 import cav_msgs.MobilityOperation;
 
 /**
@@ -51,6 +52,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
   private Subscriber<MobilityRequest> requestSub;
   private Subscriber<MobilityOperation> operationSub;
   private Subscriber<MobilityResponse> responseSub;
+  private Subscriber<BSM> bsmSub;
 
   private final String outgoingRequestTopic = "outgoing_mobility_request";
   private final String outgoingOperationTopic = "outgoing_mobility_operation";
@@ -59,6 +61,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
   private final String incomingRequestTopic = "incoming_mobility_request";
   private final String incomingOperationTopic = "incoming_mobility_operation";
   private final String incomingResponseTopic = "incoming_mobility_response";
+  private final String incomingBSMTopic = "incoming_bsm";
 
   private SaxtonLogger log;
   private ParameterTree params;
@@ -146,6 +149,16 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
       (MobilityResponse msg) -> {
         try {
           worker.handleMobilityResponseMsg(msg);
+        } catch (Throwable e) {
+          handleException(e);
+        }
+      });
+
+    bsmSub = connectedNode.newSubscriber(incomingBSMTopic, BSM._TYPE);
+    bsmSub.addMessageListener(
+      (BSM msg) -> {
+        try {
+          worker.handleBSMMsg(msg);
         } catch (Throwable e) {
           handleException(e);
         }

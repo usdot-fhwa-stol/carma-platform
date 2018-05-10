@@ -165,6 +165,7 @@ public class RSUMeterWorker {
     double alt = msg.getCoreData().getElev();
     
     Location loc = new Location(lat,lon,alt);
+    log.debug("BSM Received Id: " + bsmId + " lat: " + lat + " lon: " + lon + " elev: " + alt);
     bsmMap.put(bsmId, msg);
   }
 
@@ -241,7 +242,7 @@ public class RSUMeterWorker {
     BSM cachedMsg = bsmMap.get(rearBsmId);
     // If we don't have a BSM for this rear vehicle then no value in tracking platoon
     if (cachedMsg == null) {
-      log.warn("Platoon detected before BSM data available");
+      log.warn("Platoon detected before BSM data available. Expected BSM Id: " + rearBsmId);
       return;
     }
 
@@ -255,7 +256,8 @@ public class RSUMeterWorker {
 
     // If the platoon is passed the end of the merge region, we don't need to track it any more
     if (platoonRearDTD > mainRouteMergeDTD + mergeLength) {
-      platoonMap.remove(msg.getHeader().getSenderId());
+      PlatoonData removedPlatoon = platoonMap.remove(msg.getHeader().getSenderId());
+      log.debug("Platoon removed as it is past the merge point. " + removedPlatoon);
       return;
     }
 
@@ -269,6 +271,7 @@ public class RSUMeterWorker {
     PlatoonData newData = new PlatoonData(msg.getHeader().getSenderId(), platoonRearDTD,
      platoonSpeed, timeOfArrival, rearBsmId, System.currentTimeMillis());
      
+    log.debug("Platoon added " + newData);
     platoonMap.put(newData.getLeaderId(), newData);
   }
 

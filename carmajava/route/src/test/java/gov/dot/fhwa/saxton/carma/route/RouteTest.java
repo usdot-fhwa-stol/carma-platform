@@ -79,4 +79,25 @@ public class RouteTest {
       assertEquals(i, subRoute.get(i - solutionMinIndex).getUptrackWaypoint().getWaypointId());
     }
   }
+
+      /**
+   * Tests the movement of a host vehicle along a route
+   * @throws Exception
+   */
+  @Test
+  public void testGetLength() throws Exception {
+    FileStrategy fS = new FileStrategy("src/test/resources/routes/Merge.yaml", log);
+    Route route = Route.fromMessage(fS.load().toMessage(messageFactory)); // Load route with waypoint ids assigned.
+
+    double lengthStartToMeter = route.lengthOfSegments(0, 120 - 95);
+    double lengthStartToMerge = route.lengthOfSegments(0, 140 - 95);
+    double mergeToEndMerge = route.lengthOfSegments(140 - 95, 152 - 95);
+    double meterToMerge = route.lengthOfSegments(120 - 95, 140- 95);
+    System.out.println("\n\n");
+    System.out.println("start to meter: " + lengthStartToMeter);
+    System.out.println("start to merge: " + lengthStartToMerge);
+    System.out.println(" length of merge: " + mergeToEndMerge);
+    System.out.println(" meter to merge: " + meterToMerge);
+    System.out.println("\n\n");
+  }
 }
