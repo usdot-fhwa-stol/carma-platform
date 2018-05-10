@@ -96,8 +96,16 @@ public class CommandingState extends RSUMeteringStateBase {
     int lane = Integer.parseInt(params.get(3));
     // Simply updating the command speed to the platoon speed may be enough to make this work
     // If it is not more complex logic can be added
+
     PlatoonData platoon = worker.getNextPlatoon();
-    
+    double newCommandSpeed;
+    // Check if we have a platoon still
+    if (platoon == null) {
+      log.warn("No future platoon seen. Platoon may have already passed merge point. Continuing to merge without conflict");
+      newCommandSpeed = this.getSpeedCommand();
+    } else {
+      newCommandSpeed = platoon.getSpeed();
+    }
     // Target steering command
     double targetSteer = 0;
 
@@ -107,7 +115,7 @@ public class CommandingState extends RSUMeteringStateBase {
       targetSteer = lane - worker.getTargetLane();
     }
     // Update vehicle commands
-    updateCommands(platoon.getSpeed(), vehMaxAccel, targetSteer);
+    updateCommands(newCommandSpeed, vehMaxAccel, targetSteer);
   }
 
   @Override
