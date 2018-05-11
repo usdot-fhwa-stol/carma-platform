@@ -57,58 +57,49 @@ class TopicVizNode(object):
     self.route_viz_pub = rospy.Publisher("/route_viz", PoseArray, queue_size=10, latch=True)
     self.route_sub = rospy.Subscriber("/saxton_cav/route/route", Route, self.route_cb)
     # Mobility Path
-    self.request_viz_pub = rospy.Publisher("/mobility_request_viz", Marker, queue_size=10)
-    self.path_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath, self.path_message_cb)
-    self.path_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_path", MobilityPath, self.path_message_cb)
+    self.request_viz_pub = rospy.Publisher("/mobility_request_viz_outbound", MarkerArray, queue_size=10)
+    self.request_viz_pub = rospy.Publisher("/mobility_request_viz_inbound", MarkerArray, queue_size=10)
+    self.path_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath, self.path_message_outbound_cb)
+    self.path_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_path", MobilityPath, self.path_message_inbound_cb)
     # Mobility Request
-    self.path_viz_pub = rospy.Publisher("/mobility_path_viz", Marker, queue_size=10)
-    self.request_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_request", MobilityRequest, self.request_message_cb)
-    self.request_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_request", MobilityRequest, self.request_message_cb)
+    self.path_viz_outbound_pub = rospy.Publisher("/mobility_path_viz_outbound", MarkerArray, queue_size=10)
+    self.path_viz_inbound_pub = rospy.Publisher("/mobility_path_viz_inbound", MarkerArray, queue_size=10)
+    self.request_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_request", MobilityRequest, self.request_message_outbound_cb)
+    self.request_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_request", MobilityRequest, self.request_message_inbound_cb)
     # Host Id
     self.host_veh_id = rospy.get_param("/saxton_cav/vehicle_id")
     
     self.id_color_map = dict({})
 
+  # TODO add inbound 
+
   # Function to convert request messages 
-  def request_message_cb(self, request):
+  def request_message_outbound_cb(self, request):
     msg_stamp = request.header.timestamp
     startPoint = request.trajectory.location
     offsets = request.trajectory.offsets
 
     color = self.getColorForId(request.header.sender_id)
-    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color)
+    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color, 0)
 
-    self.path_viz_pub.publish(pointMarker)
+    self.path_viz_outbound_pub.publish(pointMarker)
 
   # Function to convert path messages 
-  def path_message_cb(self, path):
+  def path_message_outbound_cb(self, path):
     msg_stamp = path.header.timestamp
     startPoint = path.trajectory.location
     offsets = path.trajectory.offsets
 
     color = self.getColorForId(path.header.sender_id)
-    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color)
+    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color, 1000)
 
-    self.path_viz_pub.publish(pointMarker)
+    self.path_viz_outbound_pub.publish(pointMarker)
   
   # Helper function converts a list of points in the ecef frame to poses
-  def pointsMarkerFromOffsets(self, msg_stamp, startPoint, offsets, timestep, color):
+  def pointsMarkerFromOffsets(self, msg_stamp, startPoint, offsets, timestep, color, id_offset):
 
-    pointsMarker = Marker()
-    pointsMarker.header.stamp = rospy.Time.from_sec(msg_stamp / self.MS_PER_S)
-    pointsMarker.header.frame_id = "earth"
-    # TODO set id so that multiple paths can be shown at once
-    pointsMarker.type = Marker.POINTS
-    pointsMarker.action = Marker.MODIFY
-    pointsMarker.scale.x = 0.5
-    pointsMarker.scale.y = 0.5
- #   pointsMarker.scale.z = 1.0
-    pointsMarker.color.r = color[0]
-    pointsMarker.color.g = color[1]
-    pointsMarker.color.b = color[2]
-    pointsMarker.color.a = color[3]
-    pointsMarker.frame_locked = True
-    #pointsMarker.lifetime = 0 #TODO
+    markerArray = MarkerArray()
+    markers = []
 
     points = []
 
@@ -116,28 +107,53 @@ class TopicVizNode(object):
     y = startPoint.ecef_y / self.CM_PER_M
     z = startPoint.ecef_z / self.CM_PER_M
 
-    firstPoint = Point()
-    firstPoint.x = x
-    firstPoint.y = y
-    firstPoint.z = z
+    count = 0
 
+    firstPoint = self.getCubeMarker(x,y,z,color,0.5,msg_stamp,"earth", len(self.id_color_map) + id_offset + count)
+
+    markers.append(firstPoint)
     points.append(firstPoint)
 
     for offset in offsets:
-      point = Point()
       x = x + (offset.offset_x / self.CM_PER_M)
       y = y + (offset.offset_y / self.CM_PER_M)
       z = z + (offset.offset_z / self.CM_PER_M)
-      point.x = x
-      point.y = y
-      point.z = z
 
-      points.append(point)
+      marker = self.getCubeMarker(x,y,z,color,0.5,msg_stamp,"earth", len(self.id_color_map) + id_offset + count )
+      markers.append(marker)
 
-    pointsMarker.points = points
+      count = count + 1
+
+    markerArray.markers = markers
+
+    return markerArray
+
+
+  def getCubeMarker(self,x,y,z,color,scale,stamp,frame_id, marker_id):
+    pointsMarker = Marker()
+    pointsMarker.header.stamp = rospy.Time.from_sec(stamp / self.MS_PER_S)
+    pointsMarker.header.frame_id = frame_id
+    # TODO set id so that multiple paths can be shown at once
+    pointsMarker.type = Marker.CUBE
+    pointsMarker.action = Marker.ADD
+    pointsMarker.scale.x = scale
+    pointsMarker.scale.y = scale
+    pointsMarker.scale.z = scale
+    pointsMarker.color.r = color[0]
+    pointsMarker.color.g = color[1]
+    pointsMarker.color.b = color[2]
+    pointsMarker.color.a = color[3]
+    #pointsMarker.frame_locked = True
+    pointsMarker.id = marker_id
+    pointsMarker.lifetime = rospy.Time.from_sec(3.0)
+
+    pointsMarker.pose.position.x = x
+    pointsMarker.pose.position.y = y
+    pointsMarker.pose.position.z = z
+    pointsMarker.pose.orientation.w = 1.0 #required
 
     return pointsMarker
-
+    
   # Helper function assigns a color to messages from a specific id
   def getColorForId(self, id):
     if (id == self.host_veh_id):
@@ -227,3 +243,57 @@ if __name__ == "__main__":
     # firstPoint.color.b = 1.0
     # firstPoint.color.a = 1.0
     # firstPoint.lifetime = rospy.rostime.Duration(0.1) # The sphere will last 0.1 seconds
+
+
+
+#     # Helper function converts a list of points in the ecef frame to poses
+#   def pointsMarkerFromOffsets(self, msg_stamp, startPoint, offsets, timestep, color, offset):
+
+#     markerArray = MarkerArray()
+#     markers = []
+
+#     pointsMarker = Marker()
+#     pointsMarker.header.stamp = rospy.Time.from_sec(msg_stamp / self.MS_PER_S)
+#     pointsMarker.header.frame_id = "earth"
+#     # TODO set id so that multiple paths can be shown at once
+#     pointsMarker.type = Marker.POINTS
+#     pointsMarker.action = Marker.ADD
+#     pointsMarker.scale.x = 0.5
+#     pointsMarker.scale.y = 0.5
+#  #   pointsMarker.scale.z = 1.0
+#     pointsMarker.color.r = color[0]
+#     pointsMarker.color.g = color[1]
+#     pointsMarker.color.b = color[2]
+#     pointsMarker.color.a = color[3]
+#     pointsMarker.frame_locked = True
+#     pointsMarker.id = len(self.id_color_map) + offset
+#     #pointsMarker.lifetime = 0 #TODO
+
+#     points = []
+
+#     x = startPoint.ecef_x / self.CM_PER_M
+#     y = startPoint.ecef_y / self.CM_PER_M
+#     z = startPoint.ecef_z / self.CM_PER_M
+
+#     firstPoint = Point()
+#     firstPoint.x = x
+#     firstPoint.y = y
+#     firstPoint.z = z
+
+#     markers.add(firstPoint)
+#     points.append(firstPoint)
+
+#     for offset in offsets:
+#       point = Point()
+#       x = x + (offset.offset_x / self.CM_PER_M)
+#       y = y + (offset.offset_y / self.CM_PER_M)
+#       z = z + (offset.offset_z / self.CM_PER_M)
+#       point.x = x
+#       point.y = y
+#       point.z = z
+
+#       points.append(point)
+
+#     pointsMarker.points = points
+
+#     return pointsMarker
