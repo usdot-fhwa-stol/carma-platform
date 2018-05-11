@@ -13,7 +13,7 @@ from geometry_msgs.msg import Transform
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
-
+import tf2_ros
 
 from cav_msgs.msg import MobilityRequest
 from cav_msgs.msg import MobilityPath
@@ -44,10 +44,12 @@ class TopicVizNode(object):
 
     # Init nodes
     rospy.init_node("topic_viz_node", anonymous=True)
-    
-    # Publishers
 
-    # Subscribers
+    # TF
+    self.tfBuffer = tf2_ros.Buffer()
+    self.listener = tf2_ros.TransformListener(self.tfBuffer)
+
+    # Pub-Sub
     # External Objects
     self.objects_viz_pub = rospy.Publisher("/external_obj_viz", MarkerArray, queue_size=10)
     self.objects_sub = rospy.Subscriber("/saxton_cav/sensor_fusion/filtered/tracked_objects", ExternalObjectList, self.external_objects_cb)
@@ -57,45 +59,52 @@ class TopicVizNode(object):
     self.route_viz_pub = rospy.Publisher("/route_viz", PoseArray, queue_size=10, latch=True)
     self.route_sub = rospy.Subscriber("/saxton_cav/route/route", Route, self.route_cb)
     # Mobility Path
-    self.request_viz_pub = rospy.Publisher("/mobility_request_viz_outbound", MarkerArray, queue_size=10)
-    self.request_viz_pub = rospy.Publisher("/mobility_request_viz_inbound", MarkerArray, queue_size=10)
-    self.path_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath, self.path_message_outbound_cb)
-    self.path_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_path", MobilityPath, self.path_message_inbound_cb)
-    # Mobility Request
     self.path_viz_outbound_pub = rospy.Publisher("/mobility_path_viz_outbound", MarkerArray, queue_size=10)
     self.path_viz_inbound_pub = rospy.Publisher("/mobility_path_viz_inbound", MarkerArray, queue_size=10)
+    self.path_sub_outbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath, self.path_message_outbound_cb)
+    self.path_sub_inbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_path", MobilityPath, self.path_message_inbound_cb)
+    # Mobility Request
+    self.request_viz_outbound_pub = rospy.Publisher("/mobility_request_viz_outbound", MarkerArray, queue_size=10)
+    self.request_viz_inbound_pub = rospy.Publisher("/mobility_request_viz_inbound", MarkerArray, queue_size=10)
     self.request_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_request", MobilityRequest, self.request_message_outbound_cb)
     self.request_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_request", MobilityRequest, self.request_message_inbound_cb)
     # Host Id
     self.host_veh_id = rospy.get_param("/saxton_cav/vehicle_id")
     
+    # Color map for path / request messages
     self.id_color_map = dict({})
 
-  # TODO add inbound 
+    # Location of map frame in earth
+    self.mapInEarth = None
+
+  # Helper function for processing path or request messages
+  def process_msg_with_traj(self, msg, id_offset, pub):
+    msg_stamp = msg.header.timestamp
+    startPoint = msg.trajectory.location
+    offsets = msg.trajectory.offsets
+
+    color = self.getColorForId(msg.header.sender_id)
+    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color, id_offset)
+
+    pub.publish(pointMarker)
 
   # Function to convert request messages 
   def request_message_outbound_cb(self, request):
-    msg_stamp = request.header.timestamp
-    startPoint = request.trajectory.location
-    offsets = request.trajectory.offsets
+    self.process_msg_with_traj(request, 0, self.request_viz_outbound_pub)
 
-    color = self.getColorForId(request.header.sender_id)
-    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color, 0)
-
-    self.path_viz_outbound_pub.publish(pointMarker)
+  # Function to convert request messages 
+  def request_message_inbound_cb(self, request):
+    self.process_msg_with_traj(request, 0, self.request_viz_inbound_pub)
 
   # Function to convert path messages 
   def path_message_outbound_cb(self, path):
-    msg_stamp = path.header.timestamp
-    startPoint = path.trajectory.location
-    offsets = path.trajectory.offsets
+    self.process_msg_with_traj(path, 1000, self.path_viz_outbound_pub)
 
-    color = self.getColorForId(path.header.sender_id)
-    pointMarker = self.pointsMarkerFromOffsets(msg_stamp, startPoint, offsets, self.MOBILITY_TIMESTEP, color, 1000)
-
-    self.path_viz_outbound_pub.publish(pointMarker)
+# Function to convert path messages 
+  def path_message_inbound_cb(self, path):
+    self.process_msg_with_traj(path, 1000, self.path_viz_inbound_pub)
   
-  # Helper function converts a list of points in the ecef frame to poses
+  #Helper function converts a list of points in the ecef frame to poses
   def pointsMarkerFromOffsets(self, msg_stamp, startPoint, offsets, timestep, color, id_offset):
 
     markerArray = MarkerArray()
@@ -204,19 +213,7 @@ class TopicVizNode(object):
       poses.append(seg.FRD_pose)
     posesArray.poses = poses
     self.route_viz_pub.publish(posesArray)
-    
-  # TODO remove
-  def poseFromTransform(self, transform):
-    pose = Pose()
-    pose.position.x = transform.translation.x
-    pose.position.y = transform.translation.y
-    pose.position.y = transform.translation.z
-    pose.orientation.x = transform.rotation.x
-    pose.orientation.y = transform.rotation.y
-    pose.orientation.z = transform.rotation.z
-    pose.orientation.w = transform.rotation.w
 
-    return pose
 
 if __name__ == "__main__":
   try:
@@ -227,73 +224,74 @@ if __name__ == "__main__":
     pass
 
 
-    # firstPoint = Marker()
-    # firstPoint.header.stamp = msg_stamp
-    # firstPoint.header.frame_id = "earth"
-    # firstPoint.type = Marker.SPHERE
-    # firstPoint.action = Marker.ADD
-    # firstPoint.pose.position.x = startPoint.ecef_x
-    # firstPoint.pose.position.y = startPoint.ecef_x
-    # firstPoint.pose.position.z = startPoint.ecef_x
-    # firstPoint.scale.x = 1.0
-    # firstPoint.scale.y = 1.0
-    # firstPoint.scale.z = 1.0
-    # firstPoint.color.r = 0.0
-    # firstPoint.color.g = 0.0
-    # firstPoint.color.b = 1.0
-    # firstPoint.color.a = 1.0
-    # firstPoint.lifetime = rospy.rostime.Duration(0.1) # The sphere will last 0.1 seconds
+  # Old code using line strips
+  #   # Helper function converts a list of points in the ecef frame to poses
+  # def pointsMarkerFromOffsets(self, msg_stamp, startPoint, offsets, timestep, color, id_offset):
+
+  #   # Get transform to rviz fixed frame (map)
+  #   if (self.mapInEarth is None):
+  #     try:
+  #       self.mapInEarth = self.tfBuffer.lookup_transform("map", "earth", rospy.Time(0))
+  #     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+  #       return
+    
 
 
+  #   pointsMarker = Marker()
+  #   pointsMarker.header.stamp = rospy.Time.from_sec(msg_stamp / self.MS_PER_S)
+  #   pointsMarker.header.frame_id = "map"
+  #   # TODO set id so that multiple paths can be shown at once
+  #   pointsMarker.type = Marker.LINE_STRIP
+  #   pointsMarker.action = Marker.ADD
+  #   pointsMarker.scale.x = 0.5
+  #   pointsMarker.scale.y = 0.5
+  #   pointsMarker.scale.z = 1.0
+  #   pointsMarker.pose = self.poseFromTransform(self.mapInEarth.transform)
+  #   pointsMarker.color.r = color[0]
+  #   pointsMarker.color.g = color[1]
+  #   pointsMarker.color.b = color[2]
+  #   pointsMarker.color.a = color[3]
+  #   #pointsMarker.frame_locked = True
+  #   pointsMarker.id = len(self.id_color_map) + id_offset
+  #   #pointsMarker.lifetime = 0 #TODO
 
-#     # Helper function converts a list of points in the ecef frame to poses
-#   def pointsMarkerFromOffsets(self, msg_stamp, startPoint, offsets, timestep, color, offset):
+  #   points = []
 
-#     markerArray = MarkerArray()
-#     markers = []
+  #   x = startPoint.ecef_x / self.CM_PER_M
+  #   y = startPoint.ecef_y / self.CM_PER_M
+  #   z = startPoint.ecef_z / self.CM_PER_M
 
-#     pointsMarker = Marker()
-#     pointsMarker.header.stamp = rospy.Time.from_sec(msg_stamp / self.MS_PER_S)
-#     pointsMarker.header.frame_id = "earth"
-#     # TODO set id so that multiple paths can be shown at once
-#     pointsMarker.type = Marker.POINTS
-#     pointsMarker.action = Marker.ADD
-#     pointsMarker.scale.x = 0.5
-#     pointsMarker.scale.y = 0.5
-#  #   pointsMarker.scale.z = 1.0
-#     pointsMarker.color.r = color[0]
-#     pointsMarker.color.g = color[1]
-#     pointsMarker.color.b = color[2]
-#     pointsMarker.color.a = color[3]
-#     pointsMarker.frame_locked = True
-#     pointsMarker.id = len(self.id_color_map) + offset
-#     #pointsMarker.lifetime = 0 #TODO
+  #   firstPoint = Point()
+  #   firstPoint.x = x
+  #   firstPoint.y = y
+  #   firstPoint.z = z
 
-#     points = []
+  #   points.append(firstPoint)
 
-#     x = startPoint.ecef_x / self.CM_PER_M
-#     y = startPoint.ecef_y / self.CM_PER_M
-#     z = startPoint.ecef_z / self.CM_PER_M
+  #   for offset in offsets:
+  #     point = Point()
+  #     x = x + (offset.offset_x / self.CM_PER_M)
+  #     y = y + (offset.offset_y / self.CM_PER_M)
+  #     z = z + (offset.offset_z / self.CM_PER_M)
+  #     point.x = x
+  #     point.y = y
+  #     point.z = z
 
-#     firstPoint = Point()
-#     firstPoint.x = x
-#     firstPoint.y = y
-#     firstPoint.z = z
+  #     points.append(point)
 
-#     markers.add(firstPoint)
-#     points.append(firstPoint)
+  #   pointsMarker.points = points
 
-#     for offset in offsets:
-#       point = Point()
-#       x = x + (offset.offset_x / self.CM_PER_M)
-#       y = y + (offset.offset_y / self.CM_PER_M)
-#       z = z + (offset.offset_z / self.CM_PER_M)
-#       point.x = x
-#       point.y = y
-#       point.z = z
+  #   return pointsMarker
 
-#       points.append(point)
+  #
+  # def poseFromTransform(self, transform):
+  #   pose = Pose()
+  #   pose.position.x = transform.translation.x
+  #   pose.position.y = transform.translation.y
+  #   pose.position.z = transform.translation.z
+  #   pose.orientation.x = transform.rotation.x
+  #   pose.orientation.y = transform.rotation.y
+  #   pose.orientation.z = transform.rotation.z
+  #   pose.orientation.w = transform.rotation.w
 
-#     pointsMarker.points = points
-
-#     return pointsMarker
+  #   return pose
