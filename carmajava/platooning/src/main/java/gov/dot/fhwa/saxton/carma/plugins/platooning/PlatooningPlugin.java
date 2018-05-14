@@ -345,13 +345,13 @@ public class PlatooningPlugin extends AbstractPlugin
                     info.setLeaderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
                     info.setLeaderDowntrackDistance((float) pluginServiceLocator.getRouteService().getCurrentDowntrackDistance());
                     info.setLeaderCmdSpeed((float) pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
-                    info.setHostPlatoonPosition((byte) 0); // platoon position is indexed as 1 based 
+                    info.setHostPlatoonPosition((byte) 0); // platoon position is indexed as 0 based 
                     
                 } else {
                     info.setLeaderId(currentLeader.staticId);
                     info.setLeaderDowntrackDistance((float) currentLeader.vehiclePosition);
                     info.setLeaderCmdSpeed((float) currentLeader.vehicleSpeed);
-                    info.setHostPlatoonPosition((byte) platoonManager.getTotalPlatooningSize()); // platoon position is indexed as 1 based
+                    info.setHostPlatoonPosition((byte) platoonManager.getNumberOfVehicleInFront()); // platoon position is indexed as 0 based
                 }
                 info.setHostCmdSpeed((float) (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
                 info.setDesiredGap((float) commandGenerator.desiredGap_);
