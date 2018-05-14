@@ -24,7 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
  */
 public class SlowDown extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
-
+    private static final double MIN_ACCEL_ = 0.1;
     public SlowDown(IPlugin planner) {
         super(planner);
     }
@@ -106,21 +106,28 @@ public class SlowDown extends LongitudinalManeuver {
 
     @Override
     public double generateSpeedCommand() throws IllegalStateException {
-        //compute command based on linear interpolation on time
-        //Note that commands will begin changing immediately, although the actual speed will not change much until
-        // the response lag has passed. Thus, we will hit the target speed command sooner than we pass the end distance.
-        long currentTime = System.currentTimeMillis();
-        double factor = 0.001 * (double)(currentTime - startTime_) / deltaT_;
-        if (factor < 0.0) {
-            log_.error("SlowDown.executeTimeStep computed illegal factor of = " + factor + ". Throwing exception");
-            throw new ArithmeticException("SlowDown.executeTimeStep using an illegal interpolation factor.");
-        }
-        if (factor > 1.0) {
-            factor = 1.0;
-        }
-        double cmd = startSpeed_ + factor*(endSpeed_ - startSpeed_);
-        log_.debug("SlowDown.executeTimeStep computed speed command (prior to accOverride) of " + cmd);
+        // The target speed will always be out ending speed but the working acceleration will be adjusted for smooth approach. 
+        // TODO make api clearer for workingAccel_ It is not intuitive we are doing this
 
-        return cmd;
+        double currentSpeed = inputs_.getCurrentSpeed();
+        double currentSpeedSqr = currentSpeed * currentSpeed;
+        double targetSpeedSqr = endSpeed_ * endSpeed_;
+        double remainingDistance = endDist_ - inputs_.getDistanceFromRouteStart();
+        // If we have slightly passed the end point just continue as before
+        if (remainingDistance < 0) {
+            return endSpeed_;
+        }
+
+        double neededAccel = Math.abs((targetSpeedSqr - currentSpeedSqr) / (2 * remainingDistance));
+
+        if (neededAccel > inputs_.getMaxAccelLimit()) {
+            workingAccel_ = inputs_.getMaxAccelLimit();
+        } else if (neededAccel > MIN_ACCEL_) {
+            workingAccel_ = neededAccel;
+        } else {
+            workingAccel_ = MIN_ACCEL_;
+        }
+
+        return endSpeed_; // Always target our ending speed
     }
 }
