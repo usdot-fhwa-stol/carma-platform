@@ -22,6 +22,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.ros.exception.RosRuntimeException;
@@ -61,6 +64,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
 public class MobilityRouter extends GuidanceComponent implements IMobilityRouter, IStateChangeListener {
 
     private final String componentName = "MobilityRouter";
+    private final int NUMTHREADS = 8;
     //private IPublisher<MobilityRequest> bsmPublisher;
     private ISubscriber<MobilityRequest> requestSub;
     private ISubscriber<MobilityResponse> ackSub;
@@ -71,6 +75,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
     private List<MobilityResponseHandler> ackList = Collections.synchronizedList(new LinkedList<>());
     private Map<String, LinkedList<MobilityOperationHandler>> operationMap = Collections.synchronizedMap(new HashMap<>());
     private Map<String, LinkedList<MobilityPathHandler>> pathMap = Collections.synchronizedMap(new HashMap<>());
+    private ExecutorService executor = Executors.newFixedThreadPool(NUMTHREADS);
 
     private PluginManager pluginManager;
     private TrajectoryExecutor trajectoryExecutor;
@@ -169,6 +174,19 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         ackList = Collections.synchronizedList(new LinkedList<>());
         operationMap = Collections.synchronizedMap(new HashMap<>());
         pathMap = Collections.synchronizedMap(new HashMap<>());
+        executor.shutdown();
+        try {
+            if(!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+                if(!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                    log.warn("Mobility Router Executor is not shut down correctly.");
+                }
+            }
+        } catch (InterruptedException ie) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        executor = Executors.newFixedThreadPool(NUMTHREADS);
     }
 
     @Override
@@ -193,7 +211,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * @param conflictSpace The spatial data describing the conflict
      */
     private void fireMobilityRequestCallback(MobilityRequestHandler handler, MobilityRequest msg, boolean hasConflict, ConflictSpace conflictSpace) {
-        new Thread(() -> {
+        executor.execute(() -> {
             MobilityRequestResponse resp = handler.handleMobilityRequestMessage(msg, hasConflict, conflictSpace);
 
             // Initialize the response message
@@ -216,8 +234,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
                 respMsg.setIsAccepted(false);
                 ackPub.publish(respMsg);
             } // else don't send a response
-        },
-        "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName()).start();
+        });
     }
 
     /**
@@ -227,8 +244,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * @param msg The MobilityResponse message being handled
      */
     private void fireMobilityResponseCallback(MobilityResponseHandler handler, MobilityResponse msg) {
-        new Thread(() -> handler.handleMobilityResponseMessage(msg),
-                "MobilityResponseHandlerCallback:" + handler.getClass().getSimpleName()).start();
+        executor.execute(() -> handler.handleMobilityResponseMessage(msg));
     }
 
     /**
@@ -238,8 +254,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      * @param msg The MobilityOperation message being handled
      */
     private void fireMobilityOperationCallback(MobilityOperationHandler handler, MobilityOperation msg) {
-        new Thread(() -> handler.handleMobilityOperationMessage(msg),
-                "MobilityOperationHandlerCallback:" + handler.getClass().getSimpleName()).start();
+        executor.execute(() -> handler.handleMobilityOperationMessage(msg));
     }
 
     /**
@@ -252,10 +267,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
      */
     private void fireMobilityPathCallback(MobilityPathHandler handler, MobilityPath msg, boolean hasConflict,
 			ConflictSpace conflictSpace) {
-        new Thread(() -> {
-            handler.handleMobilityPathMessageWithConflict(msg, hasConflict, conflictSpace);
-        },
-        "MobilityRequestHandlerCallback:" + handler.getClass().getSimpleName()).start();
+        executor.execute(() -> handler.handleMobilityPathMessageWithConflict(msg, hasConflict, conflictSpace));
 	}
 
 

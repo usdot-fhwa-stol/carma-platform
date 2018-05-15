@@ -18,6 +18,8 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import java.util.List;
 import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import cav_msgs.MobilityOperation;
@@ -58,6 +60,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected static final int    STATUS_INTERVAL_LENGTH  = 100;   // ms
     protected static final int    INFO_INTERVAL_LENGTH    = 3000;  // ms
     protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
+    protected static final int    OPERATION_QUEUE_SIZE    = 10;
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
@@ -110,6 +113,9 @@ public class PlatooningPlugin extends AbstractPlugin
     
     // initialize a lock for handle mobility messages
     protected Object sharedLock = new Object();
+    
+    // use a queue to handle Mobility Operation
+    protected BlockingQueue<MobilityOperation> operationQueue = new LinkedBlockingQueue<>();
 
     // Light Bar Control
     protected final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
@@ -288,8 +294,24 @@ public class PlatooningPlugin extends AbstractPlugin
     
     @Override
     public void handleMobilityOperationMessage(MobilityOperation msg) {
-        synchronized (this.sharedLock) {
-            this.state.onMobilityOperationMessage(msg);
+        // handle INFO message for sure
+        if(msg.getStrategyParams().startsWith(OPERATION_INFO_TYPE)) {
+            synchronized (this.sharedLock) {
+                this.state.onMobilityOperationMessage(msg);
+            }
+        } else {
+            // put STATUS message in a queue and handle if queue is not full
+            operationQueue.add(msg);
+            if(operationQueue.size() > OPERATION_QUEUE_SIZE) {
+                MobilityOperation ignoredMessage = operationQueue.poll();
+                if(ignoredMessage != null) {
+                    log.warn("Operation message is dropped one message from " + ignoredMessage.getHeader().getSenderId());
+                }
+                return;
+            }
+            synchronized (this.sharedLock) {
+                this.state.onMobilityOperationMessage(operationQueue.poll());
+            }
         }
     }
     
