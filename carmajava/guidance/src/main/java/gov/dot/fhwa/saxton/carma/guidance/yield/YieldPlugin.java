@@ -144,8 +144,6 @@ public class YieldPlugin extends AbstractPlugin
         maxYieldAccelAuthority = params.getDouble("~max_acceleration_capability", 2.5)
                 * params.getDouble("~max_yield_accel_authority", 0.8);
         vehicleResponseLag = params.getDouble("~vehicle_response_lag", 1.4);
-        pluginServiceLocator.getMobilityRouter().registerMobilityPathHandler(YIELD_STRATEGY, this);
-        pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(YIELD_STRATEGY, this);
 
         log.info(String.format(
                 "Yield plugin inited with maxYieldAccelAuthority =%.02f, minConflictAvoidanceTimegap = %.02f",
@@ -155,6 +153,8 @@ public class YieldPlugin extends AbstractPlugin
     @Override
     public void onResume() {
         setAvailability(true);
+        pluginServiceLocator.getMobilityRouter().registerMobilityPathHandler(YIELD_STRATEGY, this);
+        pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(YIELD_STRATEGY, this);
         log.info("Yield plugin resumed");
     }
 
