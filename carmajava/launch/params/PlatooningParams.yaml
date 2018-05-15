@@ -30,7 +30,7 @@ platooning_max_size: 10
 # When algorithm_type == 0, it means no leader selection algorithm
 # When algorithm_type == 1, it means the APF algorithm
 # When algorithm_type == 2, it means the PF algorithm
-# When algorithm_type == 3, it means the PF* algorithm
+# When algorithm_type == 3, it means the PF* algorithm (not avaiable)
 platooning_algorithm_type: 1
 
 # Double: The desired time headway to the front vehicle within the platoon
