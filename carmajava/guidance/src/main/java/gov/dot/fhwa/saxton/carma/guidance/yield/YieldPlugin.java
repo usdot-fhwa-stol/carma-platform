@@ -80,6 +80,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LaneKeeping;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityPathHandler;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
@@ -105,6 +106,7 @@ public class YieldPlugin extends AbstractPlugin
     private double minConflictAvoidanceTimegap = 4.0; // Seconds
     private double maxYieldAccelAuthority = 2.0; // Meters per Second per Second
     private double vehicleResponseLag = 1.4; // Seconds
+    private static final double SPEED_EPSILON = 0.01;
 
     private class ReplanData {
         Trajectory trajectoryToReplan;
@@ -112,24 +114,32 @@ public class YieldPlugin extends AbstractPlugin
         String planId;
     }
 
-    // For now, there are two states.  One in which there is no trajectory stored, and one in which there is.  Initially we are
-    // in the former state - call it state 0.  That is also the start state.  To transition out of this state, we must receive a
-    // call to handleMobilityPathMessageWithConflict() or handleMobilityRequestMessage().  In either case we are passed a
-    // trajectory (and a collision point?, and other information?).  We store this trajectory (and other information) in class
-    // variables, and if successful, transition from state 0 to state 1 by changing the value of the class variable state_ to 1.
+    // For now, there are two states. One in which there is no trajectory stored,
+    // and one in which there is. Initially we are
+    // in the former state - call it state 0. That is also the start state. To
+    // transition out of this state, we must receive a
+    // call to handleMobilityPathMessageWithConflict() or
+    // handleMobilityRequestMessage(). In either case we are passed a
+    // trajectory (and a collision point?, and other information?). We store this
+    // trajectory (and other information) in class
+    // variables, and if successful, transition from state 0 to state 1 by changing
+    // the value of the class variable state_ to 1.
 
-    // To transition back to state 0, we must receive a call to planTrajectory().  If planTrajectory() is called while in state 0,
-    // nothing happens.  It returns.  If it is called in state 1, then this is where the real work is done.  As described above, a
-    // new trajectory is created, replacing the old one, where the collision is avoided by having our vehicle arrive behind the
-    // collision point or region at the collision time (the details of which are TBD).
+    // To transition back to state 0, we must receive a call to planTrajectory(). If
+    // planTrajectory() is called while in state 0,
+    // nothing happens. It returns. If it is called in state 1, then this is where
+    // the real work is done. As described above, a
+    // new trajectory is created, replacing the old one, where the collision is
+    // avoided by having our vehicle arrive behind the
+    // collision point or region at the collision time (the details of which are
+    // TBD).
 
     /* Variables */
     protected int state_ = 0;
     protected AtomicReference<Optional<ReplanData>> replanData = new AtomicReference<>(Optional.empty());
 
     // Constructor
-    public YieldPlugin
-(PluginServiceLocator pluginServiceLocator) {
+    public YieldPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
         version.setName("Yield Plugin");
         version.setMajorRevision(1);
@@ -186,7 +196,8 @@ public class YieldPlugin extends AbstractPlugin
             return new TrajectoryPlanningResponse();
         }
 
-        // Else, assume we've caused this replan and handle the conflict as best we know how
+        // Else, assume we've caused this replan and handle the conflict as best we know
+        // how
         ConflictSpace conflict = replanData.get().conflictSpace;
         String planId = replanData.get().planId;
         Trajectory oldTraj = replanData.get().trajectoryToReplan;
@@ -242,7 +253,8 @@ public class YieldPlugin extends AbstractPlugin
             double epsilon = minConflictAvoidanceTimegap;
             requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2);
 
-            log.debug(String.format("Evaluating candidate solution: d=%.02f, v=%.02f, t=%.02f, epsilon=%.02f, a=%.02f", d, v , t, epsilon, requiredAcceleration));
+            log.debug(String.format("Evaluating candidate solution: d=%.02f, v=%.02f, t=%.02f, epsilon=%.02f, a=%.02f",
+                    d, v, t, epsilon, requiredAcceleration));
 
             if (Math.abs(requiredAcceleration) <= maxYieldAccelAuthority) {
                 log.debug("Candidate solution acceptable.");
@@ -270,7 +282,9 @@ public class YieldPlugin extends AbstractPlugin
             double t = timeAvailableForConflictAvoidance;
             double epsilon = minConflictAvoidanceTimegap;
             requiredAcceleration = 2 * (d - (v * (t + epsilon))) / Math.pow(t + epsilon, 2);
-            log.debug(String.format("Evaluating last effort solution from start of trajectory: d=%.02f, v=%.02f, t=%.02f, epsilon=%.02f, a=%.02f", d, v , t, epsilon, requiredAcceleration));
+            log.debug(String.format(
+                    "Evaluating last effort solution from start of trajectory: d=%.02f, v=%.02f, t=%.02f, epsilon=%.02f, a=%.02f",
+                    d, v, t, epsilon, requiredAcceleration));
         }
 
         if (Math.abs(requiredAcceleration) > maxYieldAccelAuthority) {
@@ -279,33 +293,52 @@ public class YieldPlugin extends AbstractPlugin
             throw new RosRuntimeException(String.format(
                     "Yield plugin unable to solve conflict at [%.02f, %.02f]m within acceleration constraints maxYieldAccelAuthority=%.02fm/s/s, requiredAccel=%.02fm/s/s",
                     conflict.getStartDowntrack(), conflict.getEndDowntrack(), maxYieldAccelAuthority,
-                    requiredAcceleration)); // TODO: Improve robustness of algo to return NACK if is request or look for alternative type of soln (lane change, etc.)
+                    requiredAcceleration)); // TODO: Improve robustness of algo to return NACK if is request or look for
+                                            // alternative type of soln (lane change, etc.)
         } else {
             log.info("Overall solution within acceleration constraints!");
         }
 
         // We solved it, implement solution
         for (LongitudinalManeuver mvr : lonMvrs) {
-            log.info(String.format("Yield plugin keeping longitudinal maneuver from [%.02f, %.02f)", mvr.getStartDistance(), mvr.getEndDistance()));
+            log.info(String.format("Yield plugin keeping longitudinal maneuver from [%.02f, %.02f)",
+                    mvr.getStartDistance(), mvr.getEndDistance()));
             trajectory.addManeuver(mvr);
         }
 
         double finalVelocity = conflictAvoidanceStartSpeed
                 + requiredAcceleration * (conflict.getStartTime() - conflictAvoidanceStartTime);
 
-        log.debug(String.format("conflictAvoidanceStartSpeed=%.02f, requiredAcceleration=%.02f, finalVelocity=%.02f, conflictAvoidanceStartTime=%.02f, conflictStartTime=%.02f",
-        conflictAvoidanceStartSpeed, requiredAcceleration, finalVelocity, conflictAvoidanceStartTime, conflict.getStartTime()));
+        log.debug(String.format(
+                "conflictAvoidanceStartSpeed=%.02f, requiredAcceleration=%.02f, finalVelocity=%.02f, conflictAvoidanceStartTime=%.02f, conflictStartTime=%.02f",
+                conflictAvoidanceStartSpeed, requiredAcceleration, finalVelocity, conflictAvoidanceStartTime,
+                conflict.getStartTime()));
 
-        SlowDown conflictAvoidanceMvr = new SlowDown(this);
-        conflictAvoidanceMvr.setSpeeds(conflictAvoidanceStartSpeed, finalVelocity);
+        LongitudinalManeuver conflictAvoidanceMvr;
+        // Use delta-v because even small accel changes may be significant over large distances or time
+        double deltaV = finalVelocity - conflictAvoidanceStartSpeed;
+        if (deltaV < -SPEED_EPSILON) {
+            // Plan a slow-down maneuver
+            conflictAvoidanceMvr = new SlowDown(this);
+            conflictAvoidanceMvr.setSpeeds(conflictAvoidanceStartSpeed, finalVelocity);
+        } else if (deltaV > SPEED_EPSILON) {
+            conflictAvoidanceMvr = new SpeedUp(this);
+            conflictAvoidanceMvr.setSpeeds(conflictAvoidanceStartSpeed, finalVelocity);
+        } else {
+            conflictAvoidanceMvr = new SteadySpeed(this);
+            // Ensure we don't cause an arithmetic error
+            conflictAvoidanceMvr.setSpeeds(conflictAvoidanceStartSpeed, conflictAvoidanceStartSpeed);
+        }
+
         ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
         planner.planManeuver(conflictAvoidanceMvr, conflictAvoidanceStartDist);
-        log.info(String.format("Yield plugin planned slowdown maneuver from [%.02f, %.02f) with speeds [%.02f, %.02f]",
-        conflictAvoidanceStartDist, conflictAvoidanceMvr.getEndDistance(), conflictAvoidanceStartSpeed, finalVelocity));
+        log.info(String.format("Yield plugin planned %s maneuver from [%.02f, %.02f) with speeds [%.02f, %.02f]",
+                conflictAvoidanceMvr.getClass().getSimpleName(), conflictAvoidanceStartDist, conflictAvoidanceMvr.getEndDistance(), conflictAvoidanceMvr.getStartSpeed(),
+                conflictAvoidanceMvr.getTargetSpeed()));
         trajectory.addManeuver(conflictAvoidanceMvr);
         if (conflictAvoidanceMvr.getEndDistance() <= conflict.getEndDowntrack()) {
             log.info(String.format("Yield plugin planning steady speed maneuver from [%.02f, %.02f) @ %.02f m/s",
-            conflictAvoidanceMvr.getEndDistance(), conflict.getEndDowntrack(), finalVelocity));
+                    conflictAvoidanceMvr.getEndDistance(), conflict.getEndDowntrack(), finalVelocity));
             SteadySpeed steady = new SteadySpeed(this);
             steady.setSpeeds(finalVelocity, finalVelocity);
             planner.planManeuver(steady, conflictAvoidanceMvr.getEndDistance(), conflict.getEndDowntrack());
@@ -315,7 +348,8 @@ public class YieldPlugin extends AbstractPlugin
         // Copy the unchanged lateral maneuvers
         double latMvrsEnd = Double.POSITIVE_INFINITY;
         for (LateralManeuver mvr : oldTraj.getLateralManeuvers()) {
-            log.info(String.format("Yield plugin keeping lateral maneuver from [%.02f, %.02f)", mvr.getStartDistance(), mvr.getEndDistance()));
+            log.info(String.format("Yield plugin keeping lateral maneuver from [%.02f, %.02f)", mvr.getStartDistance(),
+                    mvr.getEndDistance()));
             if (mvr.getEndDistance() < conflictAvoidanceStartDist) {
                 trajectory.addManeuver(mvr);
                 latMvrsEnd = mvr.getEndDistance();
@@ -328,7 +362,8 @@ public class YieldPlugin extends AbstractPlugin
             IGuidanceCommands gc = pluginServiceLocator.getManeuverPlanner().getGuidanceCommands();
             IManeuverInputs mi = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
             laneKeeping.planToTargetDistance(mi, gc, latMvrsEnd, conflict.getEndDowntrack());
-            log.info(String.format("Yield plugin backfilling with lane keeping maneuvers from [%.02f, %.02f)", latMvrsEnd, conflict.getEndDowntrack()));
+            log.info(String.format("Yield plugin backfilling with lane keeping maneuvers from [%.02f, %.02f)",
+                    latMvrsEnd, conflict.getEndDowntrack()));
         }
 
         return new TrajectoryPlanningResponse();
