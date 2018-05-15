@@ -20,7 +20,7 @@ platooning_Kd: 0.0
 
 # Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
 # Units: 1
-platooning_status_timeout_factor: 2.5
+platooning_status_timeout_factor: 3.0
 
 # Integer: The maximum number of platoon member we allow
 # Units: 1
