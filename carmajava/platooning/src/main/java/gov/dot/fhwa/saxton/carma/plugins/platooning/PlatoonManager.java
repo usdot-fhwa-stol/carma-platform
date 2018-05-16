@@ -178,6 +178,9 @@ public class PlatoonManager implements Runnable {
         this.isFollower = false;
         this.platoon = Collections.synchronizedList(new ArrayList<>());
         this.leaderID = psl.getMobilityRouter().getHostMobilityId();
+        this.currentPlatoonID = UUID.randomUUID().toString();
+        this.previousFunctionalLeaderID = "";
+        this.previousFunctionalLeaderIndex = -1;
         log.debug("The platoon manager is changed from follower state to leader state.");
     }
     
