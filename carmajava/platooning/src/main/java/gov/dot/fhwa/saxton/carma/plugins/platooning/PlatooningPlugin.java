@@ -305,7 +305,7 @@ public class PlatooningPlugin extends AbstractPlugin
             if(operationQueue.size() > OPERATION_QUEUE_SIZE) {
                 MobilityOperation ignoredMessage = operationQueue.poll();
                 if(ignoredMessage != null) {
-                    log.warn("Operation message is dropped one message from " + ignoredMessage.getHeader().getSenderId());
+                    log.warn("Operation message queue is dropped one message from " + ignoredMessage.getHeader().getSenderId());
                 }
                 return;
             }
