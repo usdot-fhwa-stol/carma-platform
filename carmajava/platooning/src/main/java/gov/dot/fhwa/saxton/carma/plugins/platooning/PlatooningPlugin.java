@@ -60,7 +60,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected static final int    STATUS_INTERVAL_LENGTH  = 100;   // ms
     protected static final int    INFO_INTERVAL_LENGTH    = 3000;  // ms
     protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
-    protected static final int    OPERATION_QUEUE_SIZE    = 10;
+    protected static final int    OPERATION_QUEUE_SIZE    = 8;
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
