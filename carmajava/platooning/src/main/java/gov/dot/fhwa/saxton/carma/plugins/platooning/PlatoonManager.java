@@ -251,6 +251,7 @@ public class PlatoonManager implements Runnable {
                     log.debug("Based on the output of APF algorithm we start to follow our predecessor.");
                 }
             } else if(plugin.algorithmType == 2) {
+                // Number 2 indicates PF algorithm and it will always return the vehicle in its immediate front
                 leader = platoon.get(platoon.size() - 1);
                 log.debug("PF algorithm require us to follow our current predecessor");
             }
