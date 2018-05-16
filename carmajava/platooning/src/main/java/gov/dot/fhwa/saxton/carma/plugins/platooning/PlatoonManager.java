@@ -247,11 +247,16 @@ public class PlatoonManager implements Runnable {
                     previousFunctionalLeaderIndex = newLeaderIndex;
                     previousFunctionalLeaderID = leader.staticId;
                 } else {
-                    // it might happened when the subject vehicle gets far away from the preceding vehicle
-                    // In that case, it is OK to follow the first vehicle as leader
-                    // TODO if we encounter any troubles, we will solve it by adding LEAVE request and then leave the platoon
-                    log.warn("Cannot find the correct leader information based on the output of APF algorithm: " + newLeaderIndex);
+                    // it might happened when the subject vehicle gets far away from the preceding vehicle so we follow the one in front
+                    leader = platoon.get(platoon.size() - 1);
+                    previousFunctionalLeaderIndex = platoon.size() - 1;
+                    previousFunctionalLeaderID = leader.staticId;
+                    log.debug("Based on the output of APF algorithm we start to follow our predecessor.");
                 }
+            } else if(plugin.algorithmType == 2) {
+                // Number 2 indicates PF algorithm and it will always return the vehicle in its immediate front
+                leader = platoon.get(platoon.size() - 1);
+                log.debug("PF algorithm require us to follow our current predecessor");
             }
             return leader;
         }
