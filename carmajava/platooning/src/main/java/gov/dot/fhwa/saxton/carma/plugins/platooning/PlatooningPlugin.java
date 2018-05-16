@@ -142,7 +142,7 @@ public class PlatooningPlugin extends AbstractPlugin
         kiPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
         kdPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", -0.1);
         integratorMaxCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_max_cap", 0.0);
-        integratorMinCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_max_cap", 0.0);
+        integratorMinCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_min_cap", 0.0);
         statusTimeoutFactor     = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
         vehicleLength           = pluginServiceLocator.getParameterSource().getDouble("vehicle_width", 5.0);
         maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~platooning_max_size", 10);
