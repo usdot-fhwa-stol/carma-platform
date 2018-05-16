@@ -64,7 +64,7 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
 public class MobilityRouter extends GuidanceComponent implements IMobilityRouter, IStateChangeListener {
 
     private final String componentName = "MobilityRouter";
-    private final int NUMTHREADS = 8;
+    private final int NUMTHREADS = 10;
     //private IPublisher<MobilityRequest> bsmPublisher;
     private ISubscriber<MobilityRequest> requestSub;
     private ISubscriber<MobilityResponse> ackSub;
