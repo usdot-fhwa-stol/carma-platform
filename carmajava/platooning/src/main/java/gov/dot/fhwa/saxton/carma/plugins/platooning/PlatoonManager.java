@@ -53,7 +53,7 @@ public class PlatoonManager implements Runnable {
         this.plugin            = plugin;
         this.log               = log;
         this.psl               = psl;
-        this.memberInfoTimeout = (long) (PlatooningPlugin.STATUS_INTERVAL_LENGTH * plugin.statusTimeoutFactor);
+        this.memberInfoTimeout = (long) (plugin.statusMessageInterval * plugin.statusTimeoutFactor);
         this.leaderID          = psl.getMobilityRouter().getHostMobilityId();
     }
     

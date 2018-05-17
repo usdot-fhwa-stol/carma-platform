@@ -1,6 +1,5 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.List;
 import java.util.UUID;
 
 import cav_msgs.MobilityHeader;
@@ -8,8 +7,6 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
-import cav_msgs.RoadwayEnvironment;
-import cav_msgs.RoadwayObstacle;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
@@ -245,7 +242,7 @@ public class LeaderState implements IPlatooningState {
                     log.debug("Published platoon STATUS operation message");
                 }
                 long tsEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(PlatooningPlugin.STATUS_INTERVAL_LENGTH - (tsEnd - tsStart), 0);
+                long sleepDuration = Math.max(plugin.statusMessageInterval - (tsEnd - tsStart), 0);
                 Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {
