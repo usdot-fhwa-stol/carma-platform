@@ -18,6 +18,8 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import java.util.List;
 import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import cav_msgs.MobilityOperation;
@@ -58,6 +60,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected static final int    STATUS_INTERVAL_LENGTH  = 100;   // ms
     protected static final int    INFO_INTERVAL_LENGTH    = 3000;  // ms
     protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
+    protected static final int    OPERATION_QUEUE_SIZE    = 8;
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
@@ -72,6 +75,8 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double kpPID                 = 1.5;  // 1
     protected double kiPID                 = 0.0;  // 1
     protected double kdPID                 = -0.1; // 1
+    protected double integratorMaxCap      = 0.0;  // 1
+    protected double integratorMinCap      = 0.0;  // 1
     protected double statusTimeoutFactor   = 2.5;  // 1
     protected double vehicleLength         = 5.0;  // m
     protected int    maxPlatoonSize        = 10;   // 1
@@ -110,6 +115,9 @@ public class PlatooningPlugin extends AbstractPlugin
     
     // initialize a lock for handle mobility messages
     protected Object sharedLock = new Object();
+    
+    // use a queue to handle Mobility Operation
+    protected BlockingQueue<MobilityOperation> operationQueue = new LinkedBlockingQueue<>();
 
     // Light Bar Control
     protected final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
@@ -139,6 +147,8 @@ public class PlatooningPlugin extends AbstractPlugin
         kpPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
         kiPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
         kdPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", -0.1);
+        integratorMaxCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_max_cap", 10000.0);
+        integratorMinCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_min_cap", -10000.0);
         statusTimeoutFactor     = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
         vehicleLength           = pluginServiceLocator.getParameterSource().getDouble("vehicle_width", 5.0);
         maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~platooning_max_size", 10);
@@ -165,6 +175,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param maxAccel = " + maxAccel);
         log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
         log.debug("Load param for speed PID controller: [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
+        log.debug("Load param for speed PID controller: integratorMaxCap = " + integratorMaxCap + ", integratorMinCap = " + integratorMinCap);
         log.debug("Load param messageTimeoutFactor = " + statusTimeoutFactor);
         log.debug("Load param vehicleLength = " + vehicleLength);
         log.debug("Load param maxPlatoonSize = " + maxPlatoonSize);
@@ -288,8 +299,24 @@ public class PlatooningPlugin extends AbstractPlugin
     
     @Override
     public void handleMobilityOperationMessage(MobilityOperation msg) {
-        synchronized (this.sharedLock) {
-            this.state.onMobilityOperationMessage(msg);
+        // handle INFO message for sure
+        if(msg.getStrategyParams().startsWith(OPERATION_INFO_TYPE)) {
+            synchronized (this.sharedLock) {
+                this.state.onMobilityOperationMessage(msg);
+            }
+        } else {
+            // put STATUS message in a queue and handle if queue is not full
+            operationQueue.add(msg);
+            if(operationQueue.size() > OPERATION_QUEUE_SIZE) {
+                MobilityOperation ignoredMessage = operationQueue.poll();
+                if(ignoredMessage != null) {
+                    log.warn("Operation message queue is dropped one message from " + ignoredMessage.getHeader().getSenderId());
+                }
+                return;
+            }
+            synchronized (this.sharedLock) {
+                this.state.onMobilityOperationMessage(operationQueue.poll());
+            }
         }
     }
     

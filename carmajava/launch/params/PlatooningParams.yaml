@@ -18,9 +18,17 @@ platooning_Ki: 0.0
 # Units: 1
 platooning_Kd: 0.0
 
+# Double: The integrator max cap before it is multiplied by Ki
+# Units: 1
+platooning_integrator_max_cap: 10000.0
+
+# Double: The integrator min cap before it is multiplied by Ki
+# Units: 1
+platooning_integrator_min_cap: -10000.0
+
 # Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
 # Units: 1
-platooning_status_timeout_factor: 2.5
+platooning_status_timeout_factor: 3.0
 
 # Integer: The maximum number of platoon member we allow
 # Units: 1
@@ -30,7 +38,7 @@ platooning_max_size: 10
 # When algorithm_type == 0, it means no leader selection algorithm
 # When algorithm_type == 1, it means the APF algorithm
 # When algorithm_type == 2, it means the PF algorithm
-# When algorithm_type == 3, it means the PF* algorithm
+# When algorithm_type == 3, it means the PF* algorithm (not implemented)
 platooning_algorithm_type: 1
 
 # Double: The desired time headway to the front vehicle within the platoon
