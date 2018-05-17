@@ -206,12 +206,12 @@ conflict_map_collision_crosstrack_margin: 1.0
 # Units: seconds
 conflict_map_collision_time_margin: 0.05
 
-# Integer: The maximum number of points allowed in a MobilityPath message
-mobility_path_max_points: 60
+# Integer: The maximum number of points allowed to be in one path during a collision check in guidance
+collision_check_max_points: 300
 
 # Double: The timestep between points in a MobilityPath 
 # Units: seconds
-mobility_path_time_step: 0.01
+mobility_path_time_step: 0.1
 
 # Plugin or guidance component name: The priority which components are given for control of the light bar
 light_bar_priorities:

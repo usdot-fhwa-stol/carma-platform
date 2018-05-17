@@ -85,3 +85,6 @@ install(DIRECTORY
 install(DIRECTORY
         route/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/route)
+install(DIRECTORY
+        test
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/test)
