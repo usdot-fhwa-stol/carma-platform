@@ -57,7 +57,6 @@ public class PlatooningPlugin extends AbstractPlugin
     protected static final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
     protected static final String OPERATION_INFO_TYPE     = "INFO";
     protected static final String OPERATION_STATUS_TYPE   = "STATUS";
-    protected static final int    STATUS_INTERVAL_LENGTH  = 100;   // ms
     protected static final int    INFO_INTERVAL_LENGTH    = 3000;  // ms
     protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
     protected static final int    OPERATION_QUEUE_SIZE    = 8;
@@ -81,6 +80,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double vehicleLength         = 5.0;  // m
     protected int    maxPlatoonSize        = 10;   // 1
     protected int    algorithmType         = 0;    // N/A
+    protected int    statusMessageInterval = 100;   // ms
     
     // following parameters are for platoon forming and operation
     protected double timeHeadway           = 2.0;  // s
@@ -153,6 +153,7 @@ public class PlatooningPlugin extends AbstractPlugin
         vehicleLength           = pluginServiceLocator.getParameterSource().getDouble("vehicle_width", 5.0);
         maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~platooning_max_size", 10);
         algorithmType           = pluginServiceLocator.getParameterSource().getInteger("~platooning_algorithm_type", 0);
+        statusMessageInterval   = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_time_interval", 100);
         timeHeadway             = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 2.0);
         standStillHeadway       = pluginServiceLocator.getParameterSource().getDouble("~platooning_stand_still_headway", 12.0);
         maxAllowedJoinTimeGap   = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_join_timegap", 15.0);
@@ -197,6 +198,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param speedLimitCapEnabled = " + speedLimitCapEnabled);
         log.debug("Load param maxAccelCapEnabled = " + maxAccelCapEnabled);
         log.debug("Load param leaderSpeedCapEnabled = " + leaderSpeedCapEnabled);
+        log.debug("Load param statusMessageInterval = " + statusMessageInterval);
         
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
@@ -288,7 +290,7 @@ public class PlatooningPlugin extends AbstractPlugin
                 requestControlLoopsCount = 0;
             }
         }
-        Thread.sleep(STATUS_INTERVAL_LENGTH);
+        Thread.sleep(this.statusMessageInterval);
     }
 
     @Override

@@ -128,7 +128,7 @@ public class LeaderWaitingState implements IPlatooningState {
                 composeMobilityOperationStatus(status);
                 plugin.mobilityOperationPublisher.publish(status);
                 long tsEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(PlatooningPlugin.STATUS_INTERVAL_LENGTH - (tsEnd - tsStart), 0);
+                long sleepDuration = Math.max(plugin.statusMessageInterval - (tsEnd - tsStart), 0);
                 Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {

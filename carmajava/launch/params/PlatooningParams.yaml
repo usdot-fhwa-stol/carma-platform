@@ -91,3 +91,7 @@ platooning_max_accel_cap: true
 
 # Boolean: Determine whether the follower will still follow the speed limit in a platoon
 platooning_local_speed_limit_cap: false
+
+# Integer: This is the time interval length between two STATUS messages
+# Units: ms
+platooning_status_time_interval: 100
