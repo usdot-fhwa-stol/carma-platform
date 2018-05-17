@@ -1713,4 +1713,3 @@ waypoints:
     rightMostLaneMarking: SOLID_WHITE
     disabledGuidanceAlgorithms: [''] 
     requiredLaneIndex: 0
-
