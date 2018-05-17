@@ -72,6 +72,8 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double kpPID                 = 1.5;  // 1
     protected double kiPID                 = 0.0;  // 1
     protected double kdPID                 = -0.1; // 1
+    protected double integratorMaxCap      = 0.0;  // 1
+    protected double integratorMinCap      = 0.0;  // 1
     protected double statusTimeoutFactor   = 2.5;  // 1
     protected double vehicleLength         = 5.0;  // m
     protected int    maxPlatoonSize        = 10;   // 1
@@ -139,6 +141,8 @@ public class PlatooningPlugin extends AbstractPlugin
         kpPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
         kiPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
         kdPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", -0.1);
+        integratorMaxCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_max_cap", 10000.0);
+        integratorMinCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_min_cap", -10000.0);
         statusTimeoutFactor     = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
         vehicleLength           = pluginServiceLocator.getParameterSource().getDouble("vehicle_width", 5.0);
         maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~platooning_max_size", 10);
@@ -165,6 +169,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param maxAccel = " + maxAccel);
         log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
         log.debug("Load param for speed PID controller: [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
+        log.debug("Load param for speed PID controller: integratorMaxCap = " + integratorMaxCap + ", integratorMinCap = " + integratorMinCap);
         log.debug("Load param messageTimeoutFactor = " + statusTimeoutFactor);
         log.debug("Load param vehicleLength = " + vehicleLength);
         log.debug("Load param maxPlatoonSize = " + maxPlatoonSize);

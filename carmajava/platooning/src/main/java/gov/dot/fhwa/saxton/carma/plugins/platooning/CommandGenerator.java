@@ -55,6 +55,9 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
         this.pluginServiceLocator_ = pluginServiceLocator;
         this.log_ = log;
         this.distanceGapController_ = new PidController(plugin_.kpPID, plugin_.kiPID, plugin_.kdPID, plugin_.standStillHeadway);
+        if(plugin_.integratorMaxCap > plugin_.integratorMinCap) {
+            ((PidController) this.distanceGapController_).setIntegratorRange(plugin_.integratorMinCap, plugin_.integratorMaxCap);
+        }
         this.speedController_ = new Pipeline<Double>(distanceGapController_);
         this.adjustmentCap = Math.max(0, plugin.cmdSpeedMaxAdjustment);
         this.enableMaxAccelFilter = plugin.maxAccelCapEnabled;
