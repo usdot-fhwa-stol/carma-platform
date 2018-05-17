@@ -94,4 +94,4 @@ platooning_local_speed_limit_cap: false
 
 # Integer: This is the time interval length between two STATUS messages
 # Units: ms
-platooning_status_time_interval: 25
+platooning_status_time_interval: 100
