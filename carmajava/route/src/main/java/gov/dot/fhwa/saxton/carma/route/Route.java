@@ -403,6 +403,7 @@ public class Route {
   public RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
     double maxCrosstrackAllowed = 0.0;
     double prevMaxCrosstrack = 0.0;
+    RouteSegment bestSegment = segments.get(0); // Default to starting segment if no match is found
 
     for (RouteSegment seg : segments) {
       RouteWaypoint wp = seg.getDowntrackWaypoint();
@@ -417,13 +418,15 @@ public class Route {
         if (Math.abs(crossTrack) <= maxCrosstrackAllowed) {
           return seg;
         }
+        bestSegment = seg;
       }
 
       prevMaxCrosstrack = maxCrosstrackAllowed;
     }
 
-    //couldn't find a matching segment, so guess that we are uptrack of the route start
-    return segments.get(0);
+    //couldn't find a matching segment, so use the first segment within the downtrack range of. 
+    // Or the starting segment assuming we are before the route
+    return bestSegment;
   }
 
   @Override
