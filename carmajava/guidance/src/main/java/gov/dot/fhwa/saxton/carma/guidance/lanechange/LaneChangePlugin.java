@@ -3,13 +3,10 @@ package gov.dot.fhwa.saxton.carma.guidance.lanechange;
 import cav_msgs.*;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
-import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.LightBarIndicator;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.*;
-import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
-import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestHandler;
 import cav_msgs.MobilityResponse;
 import cav_msgs.MobilityRequest;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityResponseHandler;
@@ -18,17 +15,12 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.ITacticalPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnMessageCallback;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
-import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -76,19 +68,16 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
     private MobilityRequest                 plan_ = null;
     private FutureLongitudinalManeuver      futureLonMvr_ = null;
     private FutureLateralManeuver           futureLatMvr_ = null;
-    private LaneChange                      laneChangeMvr_ = null;
-    private final String                    STATIC_ID;
     private final String                    MOBILITY_STRATEGY = "Carma/LaneChange";
     private IPublisher<MobilityRequest>     requestPub_;
     private String                          mostRecentPlanId_ = "";
-    private final long                      MS_PER_S = 1000L;
+    private final double                    MS_PER_S = 1000.0;
     private final Object                    planMutex_ = new Object();
     // Light bar control variables
     private ILightBarManager lightBarManager_;
     private final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
     private ISubscriber<UIInstructions> uiInstructionsSubscriber_;
     private AtomicBoolean conductingLaneChange_ = new AtomicBoolean(false);
-    private Object lightBarMutex =  new Object();
     private final long LANE_CHANGE_TIMEOUT = 500; // mili-seconds
     private AtomicLong lastLaneChangeMsg_ = new AtomicLong(0); // mili-seconds
 
@@ -99,7 +88,6 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
         version.setMajorRevision(1);
         version.setIntermediateRevision(0);
         version.setMinorRevision(2);        //Mike's changes for route converter + John's fix for NPE
-        STATIC_ID = UUID.randomUUID().toString();
         pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
     }
 
@@ -244,7 +232,6 @@ public class LaneChangePlugin extends AbstractPlugin implements ITacticalPlugin,
      */
     private void plan(double startDist, double endDist, int targetLane, double startSpeed, double endSpeed)
                         throws IllegalStateException {
-        boolean planAvailable = false;
         ManeuverPlanner planner = pluginServiceLocator.getManeuverPlanner();
         IManeuverInputs inputs = planner.getManeuverInputs();
         double curDist = inputs.getDistanceFromRouteStart();

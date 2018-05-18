@@ -144,7 +144,7 @@ public class LeaderState implements IPlatooningState {
                     request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
                     request.getHeader().setTimestamp(currentTime);
                     RoutePointStamped currentLocation = new RoutePointStamped(plugin.getManeuverInputs().getDistanceFromRouteStart(),
-                    plugin.getManeuverInputs().getCrosstrackDistance(), currentTime / 1000);
+                    plugin.getManeuverInputs().getCrosstrackDistance(), currentTime / 1000.0);
                     cav_msgs.Trajectory currentLocationMsg = pluginServiceLocator.getTrajectoryConverter().pathToMessage(Arrays.asList(currentLocation));
                     request.setLocation(currentLocationMsg.getLocation());
                     request.getPlanType().setType(PlanType.JOIN_PLATOON_AT_REAR);
