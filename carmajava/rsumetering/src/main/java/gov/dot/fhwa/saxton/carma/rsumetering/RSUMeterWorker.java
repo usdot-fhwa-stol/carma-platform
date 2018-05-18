@@ -87,6 +87,8 @@ public class RSUMeterWorker {
   protected final GeodesicCartesianConverter gcc =  new GeodesicCartesianConverter();
 
   protected final double meterRadius;
+  protected final double minApproachAccel;
+  protected final double targetApproachSpeed;
 
   protected final long timeMargin;
   protected final long requestPeriod;
@@ -111,11 +113,14 @@ public class RSUMeterWorker {
    * @param commandPeriod The period of commands sent to a controlled vehicles 
    * @param commsTimeout The time period of a comms timeout between the rsu and the vehicle
    * @param meterLoc The location of the meter point on the earth
+   * @param minApproachAccel The minimum acceleration of the vehicle when approaching the meter point which ensures comfort based on controller behavior. Always Positive
+   * @param targetApproachSpeed The speed which the vehicle will have right as it rolls to the meter point stop bar. Should be just above crawl speed
    */
   RSUMeterWorker(IRSUMeterManager manager, SaxtonLogger log, String routeFilePath,
     String rsuId, double distToMerge, double mainRouteMergeDTD, double meterRadius,
     int targetLane, double mergeLength, long timeMargin,
-    long requestPeriod, long commandPeriod, long commsTimeout, Location meterLoc) throws IllegalArgumentException {
+    long requestPeriod, long commandPeriod, long commsTimeout, Location meterLoc,
+    double minApproachAccel, double targetApproachSpeed) throws IllegalArgumentException {
     
     this.manager = manager;
     this.log = log;
@@ -131,6 +136,8 @@ public class RSUMeterWorker {
     this.commsTimeout = commsTimeout;
     this.meterLoc = meterLoc;
     this.meterECEF = gcc.geodesic2Cartesian(meterLoc, Transform.identity());
+    this.minApproachAccel = minApproachAccel;
+    this.targetApproachSpeed = targetApproachSpeed;
 
     // Load route file
     log.info("RouteFile: " + routeFilePath);
@@ -538,5 +545,19 @@ public class RSUMeterWorker {
    */
   public Point3D getMeterECEF() {
     return meterECEF;
+  }
+
+  /**
+   * @return the minApproachAccel
+   */
+  public double getMinApproachAccel() {
+    return minApproachAccel;
+  }
+
+  /**
+   * @return the targetApproachSpeed
+   */
+  public double getTargetApproachSpeed() {
+    return targetApproachSpeed;
   }
 }

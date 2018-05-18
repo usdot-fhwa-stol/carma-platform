@@ -45,7 +45,7 @@ public class HoldingState extends RSUMeteringStateBase {
    * @param log A logger
    * @param vehicleId The static id of the vehicle being controlled
    * @param vehLagTime The lag time of the controlled vehicle's response
-   * @param vehMaxAccel The maximum acceleration limit allowed by the controlled vehicle
+   * @param vehMaxAccel The maximum acceleration limit allowed by the controlled vehicle. Always positive
    * @param distToMerge The distance to the merge point of the controlled vehicle. This value can be negative
    */
   public HoldingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId, double vehLagTime, double vehMaxAccel, double distToMerge) {
@@ -124,13 +124,20 @@ public class HoldingState extends RSUMeteringStateBase {
       }
       return; 
     }
-    
-    double neededAccel = -(speed * speed) / (2 * meterDist);
+
+    double targetSpeed = worker.getTargetApproachSpeed();
+
+    double neededAccel = ((targetSpeed * targetSpeed) - (speed * speed)) / (2 * meterDist);
 
     if (neededAccel < -vehMaxAccel) {
       // We can't stop before merge point so command stop and reevaluate when stopped
       updateCommands(0, vehMaxAccel, 0);
       return;
+    }
+
+    // Ensure out maximum acceleration never falls below a comfortable threshold
+    if (neededAccel < -worker.getMinApproachAccel()) {
+      neededAccel = worker.getMinApproachAccel();
     }
 
     // Request 0 speed but use max accel to limit behavior
