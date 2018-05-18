@@ -56,8 +56,8 @@ comms_timeout: 500
 
 # Double: The minimum acceleration of the vehicle when approaching the meter point which ensures comfort based on controller behavior. Always Positive
 # Units: m/s^2
-minApproachAccel: 0.5
+min_approach_accel: 0.5
 
 # Double: The speed which the vehicle will have right as it rolls to the meter point stop bar. Should be just above crawl speed
 # Units: m/s
-targetSpeedBeforeStop: 2.2352
+target_speed_before_stop: 2.2352
