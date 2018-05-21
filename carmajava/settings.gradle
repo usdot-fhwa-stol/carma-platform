@@ -17,7 +17,6 @@
 include 'guidance'
 include 'interfacemgr'
 include 'message'
-include 'negotiator'
 include 'roadway'
 include 'route'
 include 'template'

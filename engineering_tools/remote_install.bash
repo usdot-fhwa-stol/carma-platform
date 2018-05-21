@@ -110,8 +110,7 @@ LOCAL_CARMA_DIR=${PWD}
 echo "Installing to ${HOST} as user: ${USERNAME}..."
 
 # Define paths for files to copy from src
-LAUNCH_FILE="${LOCAL_CARMA_DIR}/carmajava/launch/saxton_cav.launch"
-SRC_LAUNCH_FILE="${LOCAL_CARMA_DIR}/carmajava/launch/saxton_cav_src.launch"
+LAUNCH_DIR="${LOCAL_CARMA_DIR}/carmajava/launch"
 PARAMS_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/params"
 ROUTES_DIR="${LOCAL_CARMA_DIR}/carmajava/route/src/test/resources/routes"
 URDF_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/urdf"
@@ -288,15 +287,13 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == tru
 		# Delete old files
 		SCRIPT="rm -r ${APP_DIR}/launch/*;"
 		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
-		# Copy the launch file to the remote machine using current symlink
-		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
-		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+		# Copy the launch files to the remote machine using current symlink
+		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${LAUNCH_DIR}/*.launch ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
 	fi
 	# Create symlink to launch file so that roslaunch will work when package is sourced
 	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
-	SCRIPT_1="rm ${SYMLINK_LOCATION}/saxton_cav.launch; ln -s  ${APP_DIR}/launch/saxton_cav.launch ${SYMLINK_LOCATION};"
-	SCRIPT_2="rm ${SYMLINK_LOCATION}/saxton_cav_src.launch; ln -s  ${APP_DIR}/launch/saxton_cav_src.launch ${SYMLINK_LOCATION};"
-	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2}"
+	SCRIPT_1="rm ${SYMLINK_LOCATION}/*.launch; ln -s  ${APP_DIR}/launch/* ${SYMLINK_LOCATION};"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2} ${SCRIPT_3}"
 		# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/launch/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/launch/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/launch/*;"
 fi

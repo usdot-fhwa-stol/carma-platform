@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.UUID;
 
 import cav_msgs.MobilityHeader;
@@ -8,8 +8,6 @@ import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import cav_msgs.PlanType;
-import cav_msgs.RoadwayEnvironment;
-import cav_msgs.RoadwayObstacle;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
@@ -17,6 +15,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
  * The PlatoonLeaderState is a state which platooning algorithm is enabled on the current trajectory
@@ -137,17 +136,17 @@ public class LeaderState implements IPlatooningState {
                     log.debug("Found a platoon with id = " + platoonId + " in front of us.");
                     MobilityRequest request = plugin.mobilityRequestPublisher.newMessage();
                     String planId = UUID.randomUUID().toString();
+                    long currentTime = System.currentTimeMillis();
                     request.getHeader().setPlanId(planId);
                     request.getHeader().setRecipientId(senderId);
                     // TODO Need to have a easy way to get bsmId from plugin
                     request.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
                     request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
-                    request.getHeader().setTimestamp(System.currentTimeMillis());
-                    // TODO Need to have a easy way to get current XYZ location in ECEF
-                    request.getLocation().setEcefX(0);
-                    request.getLocation().setEcefY(0);
-                    request.getLocation().setEcefZ(0);
-                    request.getLocation().setTimestamp(System.currentTimeMillis());
+                    request.getHeader().setTimestamp(currentTime);
+                    RoutePointStamped currentLocation = new RoutePointStamped(plugin.getManeuverInputs().getDistanceFromRouteStart(),
+                    plugin.getManeuverInputs().getCrosstrackDistance(), currentTime / 1000.0);
+                    cav_msgs.Trajectory currentLocationMsg = pluginServiceLocator.getTrajectoryConverter().pathToMessage(Arrays.asList(currentLocation));
+                    request.setLocation(currentLocationMsg.getLocation());
                     request.getPlanType().setType(PlanType.JOIN_PLATOON_AT_REAR);
                     request.setStrategy(PlatooningPlugin.MOBILITY_STRATEGY);
                     String strategyParamsString = String.format(PlatooningPlugin.JOIN_AT_REAR_PARAMS,
@@ -245,7 +244,7 @@ public class LeaderState implements IPlatooningState {
                     log.debug("Published platoon STATUS operation message");
                 }
                 long tsEnd = System.currentTimeMillis();
-                long sleepDuration = Math.max(PlatooningPlugin.STATUS_INTERVAL_LENGTH - (tsEnd - tsStart), 0);
+                long sleepDuration = Math.max(plugin.statusMessageInterval - (tsEnd - tsStart), 0);
                 Thread.sleep(sleepDuration);
             }
         } catch (InterruptedException e) {

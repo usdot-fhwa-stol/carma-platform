@@ -137,4 +137,25 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
   
     worker.getManager().publishMobilityOperation(msg);
   }
+
+  /**
+   * @return the maxAccelCommand
+   */
+  public double getMaxAccelCommand() {
+    return maxAccelCommand;
+  }
+
+  /**
+   * @return the speedCommand
+   */
+  public double getSpeedCommand() {
+    return speedCommand;
+  }
+  
+  /**
+   * @return the steerCommand
+   */
+  public double getSteerCommand() {
+    return steerCommand;
+  }
 }

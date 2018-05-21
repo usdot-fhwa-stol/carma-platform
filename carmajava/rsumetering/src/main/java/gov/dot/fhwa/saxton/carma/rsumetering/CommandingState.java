@@ -96,18 +96,26 @@ public class CommandingState extends RSUMeteringStateBase {
     int lane = Integer.parseInt(params.get(3));
     // Simply updating the command speed to the platoon speed may be enough to make this work
     // If it is not more complex logic can be added
+
     PlatoonData platoon = worker.getNextPlatoon();
-    
+    double newCommandSpeed;
+    // Check if we have a platoon still
+    if (platoon == null) {
+      log.warn("No future platoon seen. Platoon may have already passed merge point. Continuing to merge without conflict");
+      newCommandSpeed = this.getSpeedCommand();
+    } else {
+      newCommandSpeed = platoon.getSpeed();
+    }
     // Target steering command
     double targetSteer = 0;
 
     // If we are not in our target lane and we are in the merge area, apply steering command
-    if (lane != worker.getTargetLane() && mergeDist < 0 && mergeDist < worker.getMergeLength()) {
+    if (lane != worker.getTargetLane() && mergeDist < 0 && Math.abs(mergeDist) < worker.getMergeLength()) {
       // With fake lateral control a positive value results in right lane change and negative in left lane change
       targetSteer = lane - worker.getTargetLane();
     }
     // Update vehicle commands
-    updateCommands(platoon.getSpeed(), vehMaxAccel, targetSteer);
+    updateCommands(newCommandSpeed, vehMaxAccel, targetSteer);
   }
 
   @Override

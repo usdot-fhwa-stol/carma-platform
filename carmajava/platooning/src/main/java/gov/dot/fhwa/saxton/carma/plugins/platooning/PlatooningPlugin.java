@@ -18,6 +18,8 @@ package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import java.util.List;
 import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import cav_msgs.MobilityOperation;
@@ -55,9 +57,9 @@ public class PlatooningPlugin extends AbstractPlugin
     protected static final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
     protected static final String OPERATION_INFO_TYPE     = "INFO";
     protected static final String OPERATION_STATUS_TYPE   = "STATUS";
-    protected static final int    STATUS_INTERVAL_LENGTH  = 100;   // ms
     protected static final int    INFO_INTERVAL_LENGTH    = 3000;  // ms
     protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
+    protected static final int    OPERATION_QUEUE_SIZE    = 8;
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
@@ -72,10 +74,13 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double kpPID                 = 1.5;  // 1
     protected double kiPID                 = 0.0;  // 1
     protected double kdPID                 = -0.1; // 1
+    protected double integratorMaxCap      = 0.0;  // 1
+    protected double integratorMinCap      = 0.0;  // 1
     protected double statusTimeoutFactor   = 2.5;  // 1
     protected double vehicleLength         = 5.0;  // m
     protected int    maxPlatoonSize        = 10;   // 1
     protected int    algorithmType         = 0;    // N/A
+    protected int    statusMessageInterval = 100;   // ms
     
     // following parameters are for platoon forming and operation
     protected double timeHeadway           = 2.0;  // s
@@ -110,6 +115,9 @@ public class PlatooningPlugin extends AbstractPlugin
     
     // initialize a lock for handle mobility messages
     protected Object sharedLock = new Object();
+    
+    // use a queue to handle Mobility Operation
+    protected BlockingQueue<MobilityOperation> operationQueue = new LinkedBlockingQueue<>();
 
     // Light Bar Control
     protected final LightBarIndicator LIGHT_BAR_INDICATOR = LightBarIndicator.YELLOW;
@@ -139,10 +147,13 @@ public class PlatooningPlugin extends AbstractPlugin
         kpPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kp", 1.5);
         kiPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Ki", 0.0);
         kdPID                   = pluginServiceLocator.getParameterSource().getDouble("~platooning_Kd", -0.1);
+        integratorMaxCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_max_cap", 10000.0);
+        integratorMinCap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_integrator_min_cap", -10000.0);
         statusTimeoutFactor     = pluginServiceLocator.getParameterSource().getDouble("~platooning_status_timeout_factor", 2.5);
         vehicleLength           = pluginServiceLocator.getParameterSource().getDouble("vehicle_width", 5.0);
         maxPlatoonSize          = pluginServiceLocator.getParameterSource().getInteger("~platooning_max_size", 10);
         algorithmType           = pluginServiceLocator.getParameterSource().getInteger("~platooning_algorithm_type", 0);
+        statusMessageInterval   = pluginServiceLocator.getParameterSource().getInteger("~platooning_status_time_interval", 100);
         timeHeadway             = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_headway", 2.0);
         standStillHeadway       = pluginServiceLocator.getParameterSource().getDouble("~platooning_stand_still_headway", 12.0);
         maxAllowedJoinTimeGap   = pluginServiceLocator.getParameterSource().getDouble("~platooning_max_join_timegap", 15.0);
@@ -165,6 +176,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param maxAccel = " + maxAccel);
         log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
         log.debug("Load param for speed PID controller: [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
+        log.debug("Load param for speed PID controller: integratorMaxCap = " + integratorMaxCap + ", integratorMinCap = " + integratorMinCap);
         log.debug("Load param messageTimeoutFactor = " + statusTimeoutFactor);
         log.debug("Load param vehicleLength = " + vehicleLength);
         log.debug("Load param maxPlatoonSize = " + maxPlatoonSize);
@@ -186,6 +198,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.debug("Load param speedLimitCapEnabled = " + speedLimitCapEnabled);
         log.debug("Load param maxAccelCapEnabled = " + maxAccelCapEnabled);
         log.debug("Load param leaderSpeedCapEnabled = " + leaderSpeedCapEnabled);
+        log.debug("Load param statusMessageInterval = " + statusMessageInterval);
         
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
@@ -277,7 +290,7 @@ public class PlatooningPlugin extends AbstractPlugin
                 requestControlLoopsCount = 0;
             }
         }
-        Thread.sleep(STATUS_INTERVAL_LENGTH);
+        Thread.sleep(this.statusMessageInterval);
     }
 
     @Override
@@ -288,8 +301,24 @@ public class PlatooningPlugin extends AbstractPlugin
     
     @Override
     public void handleMobilityOperationMessage(MobilityOperation msg) {
-        synchronized (this.sharedLock) {
-            this.state.onMobilityOperationMessage(msg);
+        // handle INFO message for sure
+        if(msg.getStrategyParams().startsWith(OPERATION_INFO_TYPE)) {
+            synchronized (this.sharedLock) {
+                this.state.onMobilityOperationMessage(msg);
+            }
+        } else {
+            // put STATUS message in a queue and handle if queue is not full
+            operationQueue.add(msg);
+            if(operationQueue.size() > OPERATION_QUEUE_SIZE) {
+                MobilityOperation ignoredMessage = operationQueue.poll();
+                if(ignoredMessage != null) {
+                    log.warn("Operation message queue is dropped one message from " + ignoredMessage.getHeader().getSenderId());
+                }
+                return;
+            }
+            synchronized (this.sharedLock) {
+                this.state.onMobilityOperationMessage(operationQueue.poll());
+            }
         }
     }
     
@@ -345,13 +374,13 @@ public class PlatooningPlugin extends AbstractPlugin
                     info.setLeaderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
                     info.setLeaderDowntrackDistance((float) pluginServiceLocator.getRouteService().getCurrentDowntrackDistance());
                     info.setLeaderCmdSpeed((float) pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
-                    info.setHostPlatoonPosition((byte) 0); // platoon position is indexed as 1 based 
+                    info.setHostPlatoonPosition((byte) 0); // platoon position is indexed as 0 based 
                     
                 } else {
                     info.setLeaderId(currentLeader.staticId);
                     info.setLeaderDowntrackDistance((float) currentLeader.vehiclePosition);
                     info.setLeaderCmdSpeed((float) currentLeader.vehicleSpeed);
-                    info.setHostPlatoonPosition((byte) platoonManager.getTotalPlatooningSize()); // platoon position is indexed as 1 based
+                    info.setHostPlatoonPosition((byte) platoonManager.getNumberOfVehicleInFront()); // platoon position is indexed as 0 based
                 }
                 info.setHostCmdSpeed((float) (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
                 info.setDesiredGap((float) commandGenerator.desiredGap_);

@@ -45,7 +45,6 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryCon
  */
 public class VehicleAwareness extends GuidanceComponent implements IStateChangeListener {
     protected long pathPublishInterval = 3000;
-    protected int maxPointsPerMessage = 60;
     protected Trajectory currentTrajectory = null;
     protected Trajectory nextTrajectory = null;
     protected TrajectoryConverter trajectoryConverter;
@@ -91,12 +90,11 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     public void onStartup() {
         log.info("Loading config params and initing publisher");
         pathPublishInterval = node.getParameterTree().getInteger("~mobility_path_publish_interval", 3000);
-        maxPointsPerMessage = node.getParameterTree().getInteger("~mobility_path_max_points", 60);
         mobilitySenderId = node.getParameterTree().getString("~vehicle_id", "UNKNOWN");
         conflictHandlerName = node.getParameterTree().getString("~default_mobility_conflict_handler", "Yield Plugin");
         log.info(String.format(
-                "VehicleAwareness init'd with pathPublishInterval=%d, maxPointsPerMessage=%d, mobilitySenderId=%s, conflictHandlerName=%s",
-                pathPublishInterval, maxPointsPerMessage, mobilitySenderId, conflictHandlerName));
+                "VehicleAwareness init'd with pathPublishInterval=%d, mobilitySenderId=%s, conflictHandlerName=%s",
+                pathPublishInterval, mobilitySenderId, conflictHandlerName));
         pathPub = pubSubService.getPublisherForTopic("outgoing_mobility_path", MobilityPath._TYPE);
     }
 
@@ -150,16 +148,27 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
     /**
      * Convert the back and front buffer trajectories into a single set of Route-frame points for
      * conversion and publication in the MobilityPath message.
+     * Generates a path predication with the maximum number of points allowed for collision detection
      */
-    private synchronized List<RoutePointStamped> getPathPrediction() {
+    public synchronized List<RoutePointStamped> getPathPrediction() {
+        return getPathPrediction(trajectoryConverter.getMaxPointsInPath());
+    }
+
+    /**
+     * Convert the back and front buffer trajectories into a single set of Route-frame points for
+     * conversion and publication in the MobilityPath message.
+     * 
+     * @param maxPointsInPath The maximum number of points in a generated path
+     */
+    private synchronized List<RoutePointStamped> getPathPrediction(int maxPointsInPath) {
         List<RoutePointStamped> pathPrediction = new ArrayList<>();
         if (currentTrajectory != null) {
-            pathPrediction.addAll(trajectoryConverter.convertToPath(currentTrajectory));
+            pathPrediction.addAll(trajectoryConverter.convertToPath(currentTrajectory, maxPointsInPath));
         }
         log.debug("PATH", "getPathPrediction added " + pathPrediction.size() + " points from currentTrajectory.");
         if (nextTrajectory != null && !pathPrediction.isEmpty()) {
             RoutePointStamped lastPoint = pathPrediction.get(pathPrediction.size() - 1);
-            pathPrediction.addAll(trajectoryConverter.convertToPath(nextTrajectory, lastPoint, maxPointsPerMessage - pathPrediction.size()));
+            pathPrediction.addAll(trajectoryConverter.convertToPath(nextTrajectory, lastPoint, maxPointsInPath - pathPrediction.size()));
             log.debug("PATH", "    adding more points from nextTrajectory...");
         }
         log.debug("PATH", "    getPathPrediction returning pathPrediction of size " + pathPrediction.size());
@@ -215,7 +224,7 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
      * Collects the current path prediction of the vehicle and publishes that as a MobilityPath message
      */
     private synchronized void publishMobilityPath() {
-        publishMobilityPath(getPathPrediction());
+        publishMobilityPath(getPathPrediction(cav_msgs.Trajectory.MAX_POINTS_IN_MESSAGE));
     }
 
     /**

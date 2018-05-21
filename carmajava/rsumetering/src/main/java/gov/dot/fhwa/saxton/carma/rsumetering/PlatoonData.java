@@ -112,7 +112,7 @@ public final class PlatoonData {
 
   @Override
   public String toString() {
-    final String fields = "PlatoonData{ leaderId: %s, rearDTD: %0.2f, speed: %0.2f, timeOfArrival: %d, rearBSMId: %s, msgStamp: %d}";
+    final String fields = "PlatoonData{ leaderId: %s, rearDTD: %.2f, speed: %.2f, timeOfArrival: %d, rearBSMId: %s, msgStamp: %d}";
     return String.format(fields, leaderId, rearDTD, speed, expectedTimeOfArrival, rearBSMId, stamp);
   }
 }

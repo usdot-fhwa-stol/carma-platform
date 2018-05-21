@@ -49,10 +49,6 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 
-import cav_msgs.LightBarStatus;
-
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -120,11 +116,10 @@ public class GuidanceMain extends SaxtonBaseNode {
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands,
         tracking, trajectoryConverter);
     LightBarManager lightBarManager = new LightBarManager(stateMachine, pubSubService, node);
-    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter,
-        trajectoryExecutor, tracking);
+    VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager, tracking);
+    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter, vehicleAwareness, trajectoryExecutor, tracking);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
         routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking);
-    VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager, tracking);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor, vehicleAwareness);
 
     tracking.setTrajectoryExecutor(trajectoryExecutor);
@@ -207,13 +202,13 @@ public class GuidanceMain extends SaxtonBaseNode {
   private void initTrajectoryConverter(ConnectedNode node, ILogger log) {
     // Load params
     ParameterTree params = node.getParameterTree();
-    int maxPoints = params.getInteger("mobility_path_max_points", 60);
-    double timeStep = params.getDouble("mobility_path_time_step", 0.1);
+    int maxCollisionPoints = params.getInteger("~collision_check_max_points", 300);
+    double timeStep = params.getDouble("~mobility_path_time_step", 0.1);
     // Echo params
-    log.info("Param mobility_path_max_points: " + maxPoints);
+    log.info("Param collision_check_max_points: " + maxCollisionPoints);
     log.info("Param mobility_path_time_step: " + timeStep);
     // Build trajectory converter
-    trajectoryConverter = new TrajectoryConverter(maxPoints, timeStep, messageFactory);
+    trajectoryConverter = new TrajectoryConverter(maxCollisionPoints, timeStep, messageFactory);
   }
 
   @Override

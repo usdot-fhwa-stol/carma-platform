@@ -64,7 +64,6 @@
   <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
   <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
   <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
-  <arg name="debug_negotiator"      default="false" doc="Set true to enable debugging on the Negotiator node"/>
   <arg name="debug_route"           default="false" doc="Set true to enable debugging on the Route node"/>
   <arg name="debug_mock_pinpoint"   default="false" doc="Set true to enable debugging on the Mock Pinpoint Driver"/>
   <arg name="debug_mock_srx_controller" default="false" doc="Set true to enable debugging on the Mock SRX Controller Driver"/>
@@ -76,7 +75,6 @@
   <!-- ROS Namespaces -->
   <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
   <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
-  <arg name="NEGTR_NS"  default="negotiator" doc="Namespace of nodes in negotiator package"/>
   <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
   <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
   <arg name="RD_NS"     default="roadway" doc="Namespace of nodes in roadway package"/>
@@ -323,31 +321,6 @@
       </node>
     </group>
 
-    <!-- Negotiator Package -->
-    <group ns="$(arg NEGTR_NS)">
-
-      <!-- Negotiator Node -->
-      <node pkg="carma" type="negotiator" name="negotiator_mgr"
-            args="gov.dot.fhwa.saxton.carma.negotiator.NegotiatorMgr">
-
-        <env if="$(arg debug_negotiator)" name="NEGOTIATOR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-        <rosparam command="load" file="$(arg PARAM_DIR)/NegotiatorParams.yaml"/>
-        <remap from="system_alert"
-               to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="mobility_ack_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_ack"/>
-        <remap from="mobility_greeting_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_greeting"/>
-        <remap from="mobility_intro_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_intro"/>
-        <remap from="mobility_plan_inbound"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_plan"/>
-        <remap from="plan_status"
-               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plan_status"/>
-               
-      </node>
-    </group>
-
     <!-- Guidance Package -->
     <group ns="$(arg GUIDE_NS)">
       <!-- Guidance Main Node -->
@@ -409,8 +382,6 @@
                to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
         <!-- Lane Change Plugin -->
-        <remap from="mobility_intro_outbound"
-               to="/$(arg TOP_NS)/$(arg NEGTR_NS)/mobility_intro_outbound"/>
         <remap from="mobility_ack_inbound"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/mobility_ack"/>
         <remap from="ui_instructions"
