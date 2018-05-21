@@ -37,8 +37,8 @@ public class CarmaVersion {
 
         String name =       "Carma Platform";
         int major =         2;
-        int intermediate =  5;
-        int minor =         2;
+        int intermediate =  6;
+        int minor =         0;
         // Don't touch this, automatically updated
         int build = 0;
         String suffix = "";
