@@ -60,6 +60,7 @@ public class CommandingState extends RSUMeteringStateBase {
     this.vehicleId = vehicleId;
     this.planId = planId;
 
+    updateCommands(0, vehMaxAccel, 0); // Ensure next command is consistent with entry configuration
     this.resetTimeout();
   }
 

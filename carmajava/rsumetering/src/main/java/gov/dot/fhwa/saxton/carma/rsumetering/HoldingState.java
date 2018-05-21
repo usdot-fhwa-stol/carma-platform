@@ -91,7 +91,7 @@ public class HoldingState extends RSUMeteringStateBase {
     double speed = Double.parseDouble(params.get(2));
 
     // If we are already at the ramp meter or past it then hold there
-    if (meterDist < 0.5) {
+    if (meterDist < 1.0) {
       
       updateCommands(0, vehMaxAccel, 0);
       log.info("Vehicle at meter point");
@@ -109,13 +109,13 @@ public class HoldingState extends RSUMeteringStateBase {
             log.info("Releasing vehicle with expected arrival time of " + vehicleArrivalTime +
              " for platoon " + nextPlatoon);
 
-             worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
 
           } else if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival() + worker.getTimeMargin()) {
 
             log.warn("Vehicle cannot reach merge before platoon passes but will try anyway");
             worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
-
+          
           } else {
             log.debug("Holding vehicle for platoon");
           }
@@ -129,6 +129,8 @@ public class HoldingState extends RSUMeteringStateBase {
 
     double neededAccel = ((targetSpeed * targetSpeed) - (speed * speed)) / (2 * meterDist);
 
+    log.debug("Needed accel: " + neededAccel);
+
     if (neededAccel < -vehMaxAccel) {
       // We can't stop before merge point so command stop and reevaluate when stopped
       updateCommands(0, vehMaxAccel, 0);
@@ -136,12 +138,12 @@ public class HoldingState extends RSUMeteringStateBase {
     }
 
     // Ensure out maximum acceleration never falls below a comfortable threshold
-    if (neededAccel < -worker.getMinApproachAccel()) {
+    if (neededAccel > -worker.getMinApproachAccel()) {
       neededAccel = worker.getMinApproachAccel();
     }
 
     // Request 0 speed but use max accel to limit behavior
-    updateCommands(0,  neededAccel, 0);
+    updateCommands(0, neededAccel, 0);
   }
 
   @Override

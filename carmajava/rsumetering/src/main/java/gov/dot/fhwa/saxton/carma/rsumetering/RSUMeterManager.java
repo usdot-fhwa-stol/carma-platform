@@ -107,7 +107,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     log.info("LoadedParam target_lane: " + targetLane);
     log.info("LoadedParam arrival_time_margin: " + timeMargin);
     log.info("LoadedParam standby_state_request_freq: " + requestFreq);
-    log.info("LoadedParam command_freq: " + commandPeriod);
+    log.info("LoadedParam command_freq: " + commandFreq);
     log.info("LoadedParam comms_timeout: " + commsTimeout);
     log.info("LoadedParam meter_point_latitude: " + meterLat);
     log.info("LoadedParam meter_point_longitude: " + meterLon);
