@@ -72,11 +72,11 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private static final String WRENCH_EFFORT_CONTROL_CAPABILITY = "control/cmd_longitudinal_effort";
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
-    private final PluginServiceLocator pluginServiceLocator;
+    private final IManeuverInputs maneuverInputs;
 
-    GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node, PluginServiceLocator pluginServiceLocator) {
+    GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node, IManeuverInputs maneuverInputs) {
         super(stateMachine, iPubSubService, node);
-        this.pluginServiceLocator = pluginServiceLocator;
+        this.maneuverInputs = maneuverInputs;
         this.jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }
@@ -333,10 +333,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 // TODO This is a special case fix for the 2013 Cadillac SRX TORC speed controller
                 // If the vehicle wants to stand still (0 mph) we will command with wrench effort instead
                 // This should be refactored or removed once the STOL TO 26 demo is complete
-                IManeuverInputs maneuverInputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
                 final double SIX_MPH = 2.68224;
                 if (Math.abs(cachedSpeed) < 0.00001
-                    && Math.abs(cachedMaxAccel) - 2.5 < 0.00001 && maneuverInputs.getCurrentSpeed() < SIX_MPH) {
+                    && Math.abs(cachedMaxAccel) - maneuverInputs.getMaxAccelLimit() < 0.00001 && maneuverInputs.getCurrentSpeed() < SIX_MPH) {
                     
                     std_msgs.Float32 effortMsg = wrenchEffortPublisher.newMessage();
 
