@@ -109,12 +109,12 @@ public class HoldingState extends RSUMeteringStateBase {
             log.info("Releasing vehicle with expected arrival time of " + vehicleArrivalTime +
              " for platoon " + nextPlatoon);
 
-            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge, nextPlatoon.getSpeed()));
 
           } else if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival() + worker.getTimeMargin()) {
 
             log.warn("Vehicle cannot reach merge before platoon passes but will try anyway");
-            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge, nextPlatoon.getSpeed()));
           
           } else {
             log.debug("Holding vehicle for platoon");

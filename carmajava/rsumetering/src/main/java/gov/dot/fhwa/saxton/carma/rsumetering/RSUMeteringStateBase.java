@@ -39,9 +39,9 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
   protected final long loopPeriod; // Time in ms between loop spins
   protected final long commsTimeout;
   private final Object commandMutex = new Object();
-  private volatile double speedCommand = 0;
+  private volatile double speedCommand = 5;
   private volatile double steerCommand = 0; 
-  private volatile double maxAccelCommand = 0; 
+  private volatile double maxAccelCommand = 2.5; 
   private AtomicLong lastMessageTime = new AtomicLong(0);
   private long lastCompletionTime = System.currentTimeMillis();
   protected final static String COMMAND_PARAMS = "COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f";

@@ -211,7 +211,7 @@ public class LeaderState implements IPlatooningState {
             while(!Thread.currentThread().isInterrupted()) {
                 long tsStart = System.currentTimeMillis();
                 // Task 1
-                boolean isTimeForHeartBeat = tsStart - lastHeartBeatTime >= PlatooningPlugin.INFO_INTERVAL_LENGTH;
+                boolean isTimeForHeartBeat = tsStart - lastHeartBeatTime >= plugin.infoMessageInterval;
                 if(isTimeForHeartBeat) {
                     MobilityOperation infoOperation = plugin.mobilityOperationPublisher.newMessage();
                     composeMobilityOperation(infoOperation, "INFO");

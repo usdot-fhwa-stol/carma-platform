@@ -50,9 +50,10 @@ public class CommandingState extends RSUMeteringStateBase {
    * @param vehLagTime The lag time of the controlled vehicle's response
    * @param vehMaxAccel The maximum acceleration limit allowed by the controlled vehicle
    * @param distToMerge The distance to the merge point of the controlled vehicle. This value can be negative
+   * @param initialTargetSpeed The initial speed we are trying to achieve
    */
   public CommandingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId,
-   double vehLagTime, double vehMaxAccel, double distToMerge) {
+   double vehLagTime, double vehMaxAccel, double distToMerge, double initialTargetSpeed) {
     super(worker, log, worker.getCommandPeriod(), worker.getCommsTimeout());
     this.vehLagTime = vehLagTime;
     this.vehMaxAccel = vehMaxAccel;
@@ -60,7 +61,7 @@ public class CommandingState extends RSUMeteringStateBase {
     this.vehicleId = vehicleId;
     this.planId = planId;
 
-    updateCommands(0, vehMaxAccel, 0); // Ensure next command is consistent with entry configuration
+    updateCommands(initialTargetSpeed, vehMaxAccel, 0); // Ensure next command is consistent with entry configuration
     this.resetTimeout();
   }
 

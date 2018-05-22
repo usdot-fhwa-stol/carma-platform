@@ -38,6 +38,8 @@ import std_msgs.Float32;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
 import org.xbill.DNS.tests.primary;
@@ -73,6 +75,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
     private final IManeuverInputs maneuverInputs;
+    AtomicBoolean usingWrenchEffort = new AtomicBoolean(false); // TODO remove if wrench effort override is removed
 
     GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node, IManeuverInputs maneuverInputs) {
         super(stateMachine, iPubSubService, node);
@@ -334,7 +337,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 // If the vehicle wants to stand still (0 mph) we will command with wrench effort instead
                 // This should be refactored or removed once the STOL TO 26 demo is complete
                 final double SIX_MPH = 2.68224;
-                if (Math.abs(cachedSpeed) < 0.00001
+                if (Math.abs(cachedSpeed) < 0.1
                     && Math.abs(cachedMaxAccel) - maneuverInputs.getMaxAccelLimit() < 0.00001 && maneuverInputs.getCurrentSpeed() < SIX_MPH) {
                     
                     std_msgs.Float32 effortMsg = wrenchEffortPublisher.newMessage();
@@ -342,8 +345,16 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                     effortMsg.setData(-100.0f);
 
                     wrenchEffortPublisher.publish(effortMsg);
+                    usingWrenchEffort.set(true);
 
                 } else {
+                    if (usingWrenchEffort.compareAndSet(true, false)) {
+                        // TODO remove this conditional if wrench effort override is removed
+                        std_msgs.Float32 effortMsg = wrenchEffortPublisher.newMessage();
+                        effortMsg.setData(0.0f);
+                        wrenchEffortPublisher.publish(effortMsg);
+                        return;
+                    }
                     msg.setSpeed(speedCommand.get());
                     msg.setMaxAccel(maxAccel.get());
                     speedAccelPublisher.publish(msg);
