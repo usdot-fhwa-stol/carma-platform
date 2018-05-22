@@ -130,10 +130,16 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
     msg.getHeader().setTimestamp(System.currentTimeMillis());
     
     msg.setStrategy(RSUMeterWorker.COOPERATIVE_MERGE_STRATEGY);
-    
+
+    double speed, accel, steer; // Cache current commands
+
     synchronized (commandMutex) {
-      msg.setStrategyParams(String.format(COMMAND_PARAMS, speedCommand, maxAccelCommand, steerCommand));
+      speed = speedCommand;
+      accel = maxAccelCommand;
+      steer = steerCommand;
     }
+    
+    msg.setStrategyParams(String.format(COMMAND_PARAMS, speed, accel, steer));
   
     worker.getManager().publishMobilityOperation(msg);
   }

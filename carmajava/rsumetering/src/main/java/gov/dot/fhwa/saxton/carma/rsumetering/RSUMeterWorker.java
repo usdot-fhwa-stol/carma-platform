@@ -30,6 +30,7 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -405,21 +406,20 @@ public class RSUMeterWorker {
   }
 
   public PlatoonData getNextPlatoon() {
-    PlatoonData[] mostRecentPlatoon = new PlatoonData[1];
+    PlatoonData mostRecentPlatoon = null;
 
     // Find the platoon with the earliest time of arrival
-    platoonMap.forEach(
-      (k, v) -> {
-        if (mostRecentPlatoon[0] == null) {
-          mostRecentPlatoon[0] = v;
-        } else if (v.getExpectedTimeOfArrival() < mostRecentPlatoon[0].getExpectedTimeOfArrival()
-          && v.getRearDTD() < mainRouteMergeDTD + mergeLength) { 
-          mostRecentPlatoon[0] = v;
-        }
+    // Use of .forEach is avoided to ensure sequential execution
+    for (PlatoonData platoon : platoonMap.values()) {
+      if (mostRecentPlatoon == null) {
+        mostRecentPlatoon = platoon;
+      } else if (platoon.getExpectedTimeOfArrival() < mostRecentPlatoon.getExpectedTimeOfArrival()
+        && platoon.getRearDTD() < mainRouteMergeDTD + mergeLength) { 
+        mostRecentPlatoon = platoon;
       }
-    );
+    }
 
-    return mostRecentPlatoon[0];
+    return mostRecentPlatoon;
   }
 
   /**
