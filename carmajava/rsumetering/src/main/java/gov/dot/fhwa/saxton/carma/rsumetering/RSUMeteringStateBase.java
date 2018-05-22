@@ -70,7 +70,7 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
     checkTimeout();
     long doneTime = System.currentTimeMillis();
     Thread.sleep(Math.max(loopPeriod - (doneTime - lastCompletionTime), 0));
-    lastCompletionTime = System.currentTimeMillis(); // Used to take into consideration the callers spin rate when timing
+    lastCompletionTime = System.currentTimeMillis(); // Used to take into consideration the caller's spin rate when timing
   }
 
   /**
