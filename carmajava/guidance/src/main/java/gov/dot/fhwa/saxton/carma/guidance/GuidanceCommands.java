@@ -31,10 +31,13 @@ import geometry_msgs.TwistStamped;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
+import std_msgs.Float32;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.ros.exception.RosRuntimeException;
 import org.ros.node.ConnectedNode;
+import org.xbill.DNS.tests.primary;
 
 /**
 * GuidanceCommands is the guidance sub-component responsible for maintaining consistent control of the vehicle.
@@ -49,6 +52,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private IPublisher<SpeedAccel> speedAccelPublisher;
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
     private IPublisher<cav_msgs.LateralControl> lateralControlPublisher;
+    private IPublisher<std_msgs.Float32> wrenchEffortPublisher;
     private IService<SetLightsRequest, SetLightsResponse> setLightsService;
     private ISubscriber<TwistStamped> velocitySubscriber;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
@@ -62,6 +66,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private static final String SPEED_CMD_CAPABILITY = "control/cmd_speed";
     private static final String ENABLE_ROBOTIC_CAPABILITY = "control/enable_robotic";
     private static final String LATERAL_CONTROL_CAPABILITY = "control/cmd_lateral";
+    private static final String WRENCH_EFFORT_CONTROL_CAPABILITY = "control/cmd_longitudinal_effort";
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
 
@@ -98,6 +103,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         List<String> reqdCapabilities = new ArrayList<>();
         reqdCapabilities.add(SPEED_CMD_CAPABILITY);
         reqdCapabilities.add(ENABLE_ROBOTIC_CAPABILITY);
+        reqdCapabilities.add(WRENCH_EFFORT_CONTROL_CAPABILITY);
         req.setCapabilities(reqdCapabilities);
 
         // Work around to pass a final object into our anonymous inner class so we can get the
@@ -126,6 +132,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         // Verify that the message returned drivers that we can use
         String speedCmdTopic = null;
         String roboticEnableTopic = null;
+        String wrenchEffortTopic = null;
         if (drivers[0] != null) {
             for (String topicName : drivers[0].getDriverData()) {
                 if (topicName.endsWith(SPEED_CMD_CAPABILITY)) {
@@ -134,14 +141,19 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 if (topicName.endsWith(ENABLE_ROBOTIC_CAPABILITY)) {
                     roboticEnableTopic = topicName;
                 }
+                if (topicName.endsWith(WRENCH_EFFORT_CONTROL_CAPABILITY)) {
+                    wrenchEffortTopic = topicName;
+                }
             }
         }
 
-        if (speedCmdTopic != null && roboticEnableTopic != null) {
+        if (speedCmdTopic != null && roboticEnableTopic != null && wrenchEffortTopic != null) {
             // Open the publication channel to the driver and start sending it commands
             log.info("CONTROLS", "GuidanceCommands connecting to " + speedCmdTopic + " and " + roboticEnableTopic);
 
             speedAccelPublisher = pubSubService.getPublisherForTopic(speedCmdTopic, SpeedAccel._TYPE);
+
+            wrenchEffortPublisher = pubSubService.getPublisherForTopic(wrenchEffortTopic, Float32._TYPE);
 
             try {
                 enableRoboticService = pubSubService.getServiceForTopic(roboticEnableTopic, SetEnableRobotic._TYPE);
@@ -310,17 +322,34 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         if (currentState.get() == GuidanceState.ENGAGED) {
             synchronized (this) {
                 SpeedAccel msg = speedAccelPublisher.newMessage();
-                msg.setSpeed(speedCommand.get());
-                msg.setMaxAccel(maxAccel.get());
-                speedAccelPublisher.publish(msg);
+                double cachedSpeed = speedCommand.get();
+                double cachedMaxAccel = maxAccel.get();
+    
+                // TODO This is a special case fix for the 2013 Cadillac SRX TORC speed controller
+                // If the vehicle wants to stand still (0 mph) we will command with wrench effort instead
+                // This should be refactored or removed once the STOL TO 26 demo is complete
+                if (Math.abs(cachedSpeed) < 0.00001
+                    && Math.abs(cachedMaxAccel) - 2.5 < 0.00001) {
+                    
+                    std_msgs.Float32 effortMsg = wrenchEffortPublisher.newMessage();
 
-                cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
-                lateralMsg.setAxleAngle(steeringCommand.get());
-                lateralMsg.setMaxAccel(lateralAccel.get());
-                lateralMsg.setMaxAxleAngleRate(yawRate.get());
-                lateralControlPublisher.publish(lateralMsg);
-                log.trace("Published longitudinal & lateral cmd message after "
-                        + (System.currentTimeMillis() - iterStartTime) + "ms.");
+                    effortMsg.setData(-100.0f);
+
+                    wrenchEffortPublisher.publish(effortMsg);
+
+                } else {
+                    msg.setSpeed(speedCommand.get());
+                    msg.setMaxAccel(maxAccel.get());
+                    speedAccelPublisher.publish(msg);
+
+                    cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+                    lateralMsg.setAxleAngle(steeringCommand.get());
+                    lateralMsg.setMaxAccel(lateralAccel.get());
+                    lateralMsg.setMaxAxleAngleRate(yawRate.get());
+                    lateralControlPublisher.publish(lateralMsg);
+                    log.trace("Published longitudinal & lateral cmd message after "
+                            + (System.currentTimeMillis() - iterStartTime) + "ms.");
+                }
             }
         } else if (currentState.get() == GuidanceState.ACTIVE || currentState.get() == GuidanceState.INACTIVE) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
@@ -393,7 +422,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             break;
         default:
             throw new RosRuntimeException(
-                    getComponentName() + "received unknow instruction from guidance state machine.");
+                    getComponentName() + "received unknown instruction from guidance state machine.");
         }
     }
 }
