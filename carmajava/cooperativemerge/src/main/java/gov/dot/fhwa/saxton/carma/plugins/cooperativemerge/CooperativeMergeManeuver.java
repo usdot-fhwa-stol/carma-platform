@@ -44,31 +44,35 @@ public class CooperativeMergeManeuver extends ComplexManeuverBase {
    * @param maxCompletionTime The maximum anticipated execution time
    * @param minExpectedSpeed The minimum expected speed
    * @param maxExpectedSpeed The maximum expected speed
+   * @param maxAccel The maximum acceleration ever allowed in this maneuver in m/s^2
    */
   public CooperativeMergeManeuver(IPlugin planner, ICooperativeMergeInputs commandInputs, IManeuverInputs inputs, IGuidanceCommands commands,
     IAccStrategy accStrategy, double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime,
-    double minExpectedSpeed, double maxExpectedSpeed) {
+    double minExpectedSpeed, double maxExpectedSpeed, double maxAccel) {
 
     super(planner, inputs, commands, accStrategy, startDist, endDist, minCompletionTime, maxCompletionTime,
       minExpectedSpeed, maxExpectedSpeed);
-    
+
+    this.maxAccel_ = maxAccel;
     this.commandInputs = commandInputs;
   }
   protected CooperativeMergeManeuver(IPlugin planner, ICooperativeMergeInputs commandInputs,
           IManeuverInputs currentState, IGuidanceCommands commandsOutputs, IAccStrategy accStrategy,
-          double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime) {
+          double startDist, double endDist, Time minCompletionTime, Time maxCompletionTime, double maxAccel) {
       super(planner, currentState, commandsOutputs, accStrategy,
               startDist, endDist, minCompletionTime, maxCompletionTime);
       
+      this.maxAccel_ = maxAccel;
       this.commandInputs = commandInputs;
   }
 
   protected CooperativeMergeManeuver(IPlugin planner, ICooperativeMergeInputs commandInputs,
           IManeuverInputs currentState, IGuidanceCommands commandsOutputs, IAccStrategy accStrategy,
-          double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed) {
+          double startDist, double endDist, double minExpectedSpeed, double maxExpectedSpeed, double maxAccel) {
       super(planner, currentState, commandsOutputs, accStrategy,
               startDist, endDist, minExpectedSpeed, maxExpectedSpeed);
       
+      this.maxAccel_ = maxAccel;
       this.commandInputs = commandInputs;
   }
 

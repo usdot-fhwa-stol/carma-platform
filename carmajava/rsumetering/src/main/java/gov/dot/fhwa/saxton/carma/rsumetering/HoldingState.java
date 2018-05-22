@@ -133,7 +133,7 @@ public class HoldingState extends RSUMeteringStateBase {
 
     if (neededAccel < -vehMaxAccel) {
       // We can't stop before merge point so command stop and reevaluate when stopped
-      updateCommands(0, vehMaxAccel, 0);
+      updateCommands(targetSpeed, vehMaxAccel, 0);
       return;
     }
 
@@ -143,7 +143,7 @@ public class HoldingState extends RSUMeteringStateBase {
     }
 
     // Request 0 speed but use max accel to limit behavior
-    updateCommands(0, neededAccel, 0);
+    updateCommands(targetSpeed, neededAccel, 0);
   }
 
   @Override
