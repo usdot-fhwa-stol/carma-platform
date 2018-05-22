@@ -5,38 +5,38 @@
 rsu_id: 'RSU-04E5'
 
 # String: The route file for the main road this rsu is metering for.
-route_file: '/opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routes/tfhrc_circle.yaml'
+route_file: '/opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routes/Merge.yaml'
 
 # Double: The latitude of the meter point
 # Units: deg
-meter_point_latitude: 38.95627
+meter_point_latitude: 39.47566943
 
 # Double: The longitude of the meter point
 # Units: deg
-meter_point_longitude: -77.1505
+meter_point_longitude: -76.17075442
 
 # Double: The elevation of the meter point
 # Units: m
-meter_point_elevation: 70.0
+meter_point_elevation: 7.0
 
 # Double: The distance from the ramp meter point to the start of the merge area.
 # Units: m
-dist_to_merge_along_ramp: 50.0
+dist_to_merge_along_ramp: 200.0
 
 # Double: The distance along the main road route to the merge area
 # Units: m
-dist_to_merge_on_main_route: 100.0
+dist_to_merge_on_main_route: 900.0
 
 # Double: The length of the merge area
 # Units: m
-length_of_merge: 50.0
+length_of_merge: 240.0
 
 # Double: The distance around the ramp meter point where a vehicle can request to merge
 # Units: m
-ramp_meter_radius: 40.0
+ramp_meter_radius: 150.0
 
 # Integer: The lane index of the lane merging vehicles are trying to reach
-target_lane: 1
+target_lane: 0
 
 # Integer: The merge arrival time margin within which the merging vehicle is trying to arrive
 # Units: ms
@@ -52,7 +52,7 @@ command_freq: 10.0
 
 # Integer: The amount of time without communications with a merging vehicle to be considered a timeout
 # Units: ms
-comms_timeout: 500
+comms_timeout: 10000
 
 # Double: The minimum acceleration of the vehicle when approaching the meter point which ensures comfort based on controller behavior. Always Positive
 # Units: m/s^2
