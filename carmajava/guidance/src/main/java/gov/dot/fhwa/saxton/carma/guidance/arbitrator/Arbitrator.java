@@ -481,8 +481,8 @@ public class Arbitrator extends GuidanceComponent
     });
 
     trajectoryExecutor.runTrajectory(trajectory);
-    vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
     arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
+    vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
   }
 
   /**
@@ -507,8 +507,8 @@ public class Arbitrator extends GuidanceComponent
 
       trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
       trajectoryExecutor.runTrajectory(trajectory);
-      vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
       arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
+      vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
     } else {
       log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
     }
@@ -567,8 +567,8 @@ public class Arbitrator extends GuidanceComponent
       trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
       trajectoryExecutor.abortTrajectory();
       trajectoryExecutor.runTrajectory(trajectory);
-      vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
       arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
+      vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
     } else {
       log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
     }
