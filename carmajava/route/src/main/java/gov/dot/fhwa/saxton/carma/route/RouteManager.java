@@ -304,7 +304,9 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
     if(!shutdownInitiated_) {
         this.connectedNode.shutdown();
         shutdownInitiated_ = true;
-        log.info("SHUTDOWN", "Shutdown method called but ignored");
+    } else {
+        log.info("SHUTDOWN", "Shutdown method called but shuwdown process was already initilized");
     }
   }
-}//AbstractNodeMain
+  
+}
