@@ -35,7 +35,6 @@ public class CommandingState extends RSUMeteringStateBase {
   protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d";
   protected final static String STATUS_TYPE_PARAM = "STATUS";
   protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED", "LANE"));
-  protected final double vehLagTime;
   protected final double vehMaxAccel;
   protected final String vehicleId;
   protected final String planId;
@@ -47,15 +46,13 @@ public class CommandingState extends RSUMeteringStateBase {
    * @param worker The worker being represented by this state
    * @param log A logger
    * @param vehicleId The static id of the vehicle being controlled
-   * @param vehLagTime The lag time of the controlled vehicle's response
    * @param vehMaxAccel The maximum acceleration limit allowed by the controlled vehicle
    * @param distToMerge The distance to the merge point of the controlled vehicle. This value can be negative
    * @param initialTargetSpeed The initial speed we are trying to achieve
    */
-  public CommandingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId,
-   double vehLagTime, double vehMaxAccel, double distToMerge, double initialTargetSpeed) {
+  public CommandingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId, 
+    double vehMaxAccel, double distToMerge, double initialTargetSpeed) {
     super(worker, log, worker.getCommandPeriod(), worker.getCommsTimeout());
-    this.vehLagTime = vehLagTime;
     this.vehMaxAccel = vehMaxAccel;
     this.distToMerge = distToMerge;
     this.vehicleId = vehicleId;

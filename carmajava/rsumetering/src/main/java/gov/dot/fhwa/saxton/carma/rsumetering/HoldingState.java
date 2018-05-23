@@ -33,6 +33,7 @@ public class HoldingState extends RSUMeteringStateBase {
   protected final static String STATUS_TYPE_PARAM = "STATUS";
   protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED", "LANE"));
   protected final double vehLagTime;
+  protected final double combinedLagTime;
   protected final double vehMaxAccel;
   protected final String vehicleId;
   protected final String planId;
@@ -51,6 +52,7 @@ public class HoldingState extends RSUMeteringStateBase {
   public HoldingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId, double vehLagTime, double vehMaxAccel, double distToMerge) {
     super(worker, log, worker.getCommandPeriod(), worker.getCommsTimeout());
     this.vehLagTime = vehLagTime;
+    this.combinedLagTime = worker.getDriverLagTime() + worker.getCommsLagTime() + vehLagTime;
     this.vehMaxAccel = vehMaxAccel;
     this.distToMerge = distToMerge;
     this.vehicleId = vehicleId;
@@ -100,7 +102,7 @@ public class HoldingState extends RSUMeteringStateBase {
         // Wait for a platoon to be incoming. Then transition to controlling state
         PlatoonData nextPlatoon = worker.getNextPlatoon();
         if (nextPlatoon != null) {
-          long vehTimeTillMerge = worker.expectedTravelTime(mergeDist, speed, nextPlatoon.getSpeed(), vehLagTime, vehMaxAccel);
+          long vehTimeTillMerge = worker.expectedTravelTime(mergeDist, speed, nextPlatoon.getSpeed(), combinedLagTime, vehMaxAccel);
           long vehicleArrivalTime = System.currentTimeMillis() + vehTimeTillMerge;
 
           if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival()
@@ -109,12 +111,12 @@ public class HoldingState extends RSUMeteringStateBase {
             log.info("Releasing vehicle with expected arrival time of " + vehicleArrivalTime +
              " for platoon " + nextPlatoon);
 
-            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge, nextPlatoon.getSpeed()));
+            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehMaxAccel, distToMerge, nextPlatoon.getSpeed()));
 
           } else if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival() + worker.getTimeMargin()) {
 
             log.warn("Vehicle cannot reach merge before platoon passes but will try anyway");
-            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge, nextPlatoon.getSpeed()));
+            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehMaxAccel, distToMerge, nextPlatoon.getSpeed()));
           
           } else {
             log.debug("Holding vehicle for platoon");
