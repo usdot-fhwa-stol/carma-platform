@@ -109,7 +109,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             log_.debug("The host vehicle have " + numOfVehiclesGaps + " vehicles between itself and its leader (includes the leader)");
             desiredGap_ = Math.max(hostVehicleSpeed * plugin_.timeHeadway * numOfVehiclesGaps, plugin_.standStillHeadway * numOfVehiclesGaps);
             log_.debug("The desired gap with the leader is " + desiredGap_);
-            log_.debug("Based on raw radar, the current gap with the front vehicle is " + plugin_.getManeuverInputs().getDistanceToFrontVehicle());
+            log_.info("Based on raw radar, the current gap with the front vehicle is " + plugin_.getManeuverInputs().getDistanceToFrontVehicle());
             double desiredHostPosition = leaderCurrentPosition - this.desiredGap_;
             log_.debug("The desired host position and the setpoint for pid controller is " + desiredHostPosition);
             // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
@@ -121,7 +121,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
             double output = speedController_.apply(signal).get().getData();
             double adjSpeedCmd = output + leader.commandSpeed;
-            log_.debug("Adjusted Speed Cmd = " + adjSpeedCmd + "; Controller Output = " + output
+            log_.info("Adjusted Speed Cmd = " + adjSpeedCmd + "; Controller Output = " + output
                      + "; Leader CmdSpeed= " + leader.commandSpeed + "; Adjustment Cap " + adjustmentCap);
             // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
             // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
@@ -162,7 +162,7 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
                 log_.debug("The speed command after max accel cap is: " + adjSpeedCmd + " m/s");
             }
             speedCmd_.set(adjSpeedCmd);
-            log_.debug("A speed command is generated from command generator: " + speedCmd_.get() + " m/s");
+            log_.info("A speed command is generated from command generator: " + speedCmd_.get() + " m/s");
         } else {
             // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
             speedCmd_.set(plugin_.getManeuverInputs().getCurrentSpeed());
