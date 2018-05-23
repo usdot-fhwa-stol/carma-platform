@@ -62,7 +62,7 @@ import org.ros.exception.ServiceNotFoundException;
 public class MessageConsumer extends SaxtonBaseNode {
 
 	protected boolean driversReady = false;
-	protected volatile boolean shudownInitialized = false;
+	protected volatile boolean shutdownInitialized = false;
 
 	// Publishers
 	protected Publisher<ByteArray> outboundPub_; //outgoing byte array after encode
@@ -140,8 +140,8 @@ public class MessageConsumer extends SaxtonBaseNode {
                 @Override
                 public void onNewMessage(SystemAlert message) {
                     if(message.getType() == SystemAlert.FATAL || message.getType() == SystemAlert.SHUTDOWN) {
-                        if(!shudownInitialized) {
-                            shudownInitialized = true;
+                        if(!shutdownInitialized) {
+                            shutdownInitialized = true;
                             connectedNode_.shutdown();
                         }
                     } else if(message.getType() == SystemAlert.DRIVERS_READY) {
@@ -313,8 +313,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 	protected void handleException(Throwable e) {
 		String msg = "Uncaught exception in " + connectedNode_.getName() + " caught by handleException";
 		publishSystemAlert(AlertSeverity.FATAL, msg, e);
-		if(!this.shudownInitialized) {
-		    shudownInitialized = true;
+		if(!this.shutdownInitialized) {
+		    shutdownInitialized = true;
 		    connectedNode_.shutdown();
 		}
 	}
