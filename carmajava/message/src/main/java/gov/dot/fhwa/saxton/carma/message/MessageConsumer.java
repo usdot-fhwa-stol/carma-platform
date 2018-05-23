@@ -101,9 +101,6 @@ public class MessageConsumer extends SaxtonBaseNode {
     protected boolean publishOutboundMobilityPath_ = true;
     protected boolean publishOutboundMobilityResponse_ = true;
     protected boolean publishOutboundMobilityOperation_ = true;
-	
-    //DEBUG
-    protected long startUpTime = System.currentTimeMillis();
     
 	@Override
 	public GraphName getDefaultNodeName() {
@@ -302,14 +299,6 @@ public class MessageConsumer extends SaxtonBaseNode {
                         }
                     }
 			        
-			    }
-			    if(System.currentTimeMillis() - startUpTime > 40000) {
-			        log_.debug("!!!!!!!!!!!!!!!!!!!!");
-			        log_.debug("!!!!!!!!!!!!!!!!!!!!");
-			        log_.debug("!!!!!!!!!!!!!!!!!!!!");
-			        log_.debug("!!!!!!!!!!!!!!!!!!!!");
-			        startUpTime = System.currentTimeMillis();
-			        publishSystemAlert(AlertSeverity.SHUTDOWN, "empty", null);
 			    }
 			}
 		});
