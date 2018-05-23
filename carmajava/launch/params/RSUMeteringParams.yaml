@@ -61,3 +61,11 @@ min_approach_accel: 0.5
 # Double: The speed which the vehicle will have right as it rolls to the meter point stop bar. Should be just above crawl speed
 # Units: m/s
 target_speed_before_stop: 2.2352
+
+# Double:The lag time in seconds for the driver to hit the accelerator
+# Units: s
+driver_lag_time: 1.5
+
+# Double: The lag time in seconds for the communications between a platoon -> rsu -> merge vehicle
+# Units: s
+comms_lag_time: 0.5
