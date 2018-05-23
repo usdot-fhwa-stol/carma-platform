@@ -39,6 +39,7 @@ public class SaxtonLogger {
   private String emptyTag = "NONE";
   private File file = null;
   private String fileName;
+  private boolean reduceLog = false;
   private final String debugLevel = "DEBUG";
   private final String infoLevel = "INFO";
   private final String warnLevel = "WARN";
@@ -71,7 +72,6 @@ public class SaxtonLogger {
   public SaxtonLogger(String className, Log connectedNodeLog) {
     this.saxtonLog = connectedNodeLog;
     this.source = className;
-
     try {
       //Initial setup requires performing 2 commands on the terminal.
       //1) sudo mkdir -p /opt/carma/logs and
@@ -82,8 +82,8 @@ public class SaxtonLogger {
       file = new File("/opt/carma/logs/" + fileName); //TODO: Will see later if needed to be stored in param.
       file.getParentFile().mkdirs();
       br.close();
+      this.reduceLog = Boolean.parseBoolean(System.getenv("REDUCE_SAXTON_LOG"));
     } catch (Exception e) {
-
       //Ignore but do log it.
       saxtonLog.info("SaxtonLogger main function caught an exception: ", e);
     }
@@ -97,32 +97,39 @@ public class SaxtonLogger {
   public void debug(String message) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.debug(messageToStore);
-    //writeToFile(" | " + debugLevel + messageToStore);
+    if(!this.reduceLog) {
+        writeToFile(" | " + debugLevel + messageToStore);
+    }
   }
 
   public void debug(String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.debug(messageToStore, t);
-    //writeToFile(" | " + debugLevel + messageToStore, t);
+    if(!this.reduceLog) {
+        writeToFile(" | " + debugLevel + messageToStore, t);
+    }
   }
 
   public void debug(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.debug(messageToStore);
-    //writeToFile(" | " + debugLevel + messageToStore);
+    if(!this.reduceLog) {
+        writeToFile(" | " + debugLevel + messageToStore);
+    }
   }
 
   public void debug(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.debug(messageToStore, t);
-    //writeToFile(" | " + debugLevel + messageToStore, t);
+    if(!this.reduceLog) {
+        writeToFile(" | " + debugLevel + messageToStore, t);
+    }
   }
 
   public void info(String message) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.info(messageToStore);
     writeToFile(" | " + infoLevel + messageToStore);
-
   }
 
   public void info(String message, Throwable t) {
@@ -135,7 +142,6 @@ public class SaxtonLogger {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.info(messageToStore);
     writeToFile(" | " + infoLevel + messageToStore);
-
   }
 
   public void info(String tag, String message, Throwable t) {
@@ -219,25 +225,33 @@ public class SaxtonLogger {
   public void trace(String message) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.trace(messageToStore);
-    //writeToFile(" | " + traceLevel + messageToStore);
+    if(!this.reduceLog) {
+        writeToFile(" | " + traceLevel + messageToStore);
+    }
   }
 
   public void trace(String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + emptyTag + " | " + message;
     saxtonLog.trace(messageToStore, t);
-    //writeToFile(" | " + traceLevel + messageToStore, t);
+    if(!this.reduceLog) {
+        writeToFile(" | " + traceLevel + messageToStore, t);
+    }
   }
 
   public void trace(String tag, String message) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.trace(messageToStore);
-    //writeToFile(" | " + traceLevel + messageToStore);
+    if(!this.reduceLog) {
+        writeToFile(" | " + traceLevel + messageToStore);
+    }
   }
 
   public void trace(String tag, String message, Throwable t) {
     String messageToStore = " | " + getSource() + " | " + tag + " | " + message;
     saxtonLog.trace(messageToStore, t);
-    //writeToFile(" | " + traceLevel + messageToStore, t);
+    if(!this.reduceLog) {
+        writeToFile(" | " + traceLevel + messageToStore, t);
+    }
   }
 
 
