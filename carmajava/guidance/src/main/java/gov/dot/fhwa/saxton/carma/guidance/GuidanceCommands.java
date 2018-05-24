@@ -292,7 +292,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     * @param accel The maximum allowable acceleration in attaining and maintaining that speed
     */
     @Override
-    public synchronized void setSpeedCommand(double speed, double accel) {
+    public void setSpeedCommand(double speed, double accel) {
+        // TODO This method should be synchronized. Remove it to test its impact on timing
         if (speed > MAX_SPEED_CMD_M_S) {
             log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
                     + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
@@ -308,7 +309,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
 
     @Override
-    public synchronized void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
+    public void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
+        // TODO This method should be synchronized. Remove it to test its impact on timing
         axleAngle = Math.max(axleAngle, -Math.PI / 2.0);
         axleAngle = Math.min(axleAngle, Math.PI / 2.0);
 
@@ -322,11 +324,11 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
     @Override
     public void timingLoop() throws InterruptedException {
+        // TODO This method should be synchronized. Remove it to test its impact on timing
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
 
         if (currentState.get() == GuidanceState.ENGAGED) {
-            synchronized (this) {
                 SpeedAccel msg = speedAccelPublisher.newMessage();
                 double cachedSpeed = speedCommand.get();
                 double cachedMaxAccel = maxAccel.get();
@@ -358,7 +360,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                     log.trace("Published longitudinal & lateral cmd message after "
                             + (System.currentTimeMillis() - iterStartTime) + "ms.");
                 }
-            }
         } else if (currentState.get() == GuidanceState.ACTIVE || currentState.get() == GuidanceState.INACTIVE) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             double current_speed = 0.0;
