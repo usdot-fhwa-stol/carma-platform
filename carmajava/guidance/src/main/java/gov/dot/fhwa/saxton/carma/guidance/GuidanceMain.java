@@ -109,8 +109,8 @@ public class GuidanceMain extends SaxtonBaseNode {
         state.getLaneIndex()));
 
     GuidanceStateHandler stateHandler = new GuidanceStateHandler(stateMachine, pubSubService, node);
-    GuidanceCommands guidanceCommands = new GuidanceCommands(stateMachine, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
+    GuidanceCommands guidanceCommands = new GuidanceCommands(stateMachine, pubSubService, node, maneuverInputs);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
 
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands,

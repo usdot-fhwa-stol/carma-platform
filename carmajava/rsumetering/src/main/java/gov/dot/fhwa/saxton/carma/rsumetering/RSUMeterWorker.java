@@ -30,6 +30,7 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -94,6 +95,9 @@ public class RSUMeterWorker {
   protected final long requestPeriod;
   protected final long commandPeriod;
   protected final long commsTimeout;
+
+  protected final double driverLagTime;
+  protected final double commsLagTime;
   
 
   /**
@@ -115,12 +119,14 @@ public class RSUMeterWorker {
    * @param meterLoc The location of the meter point on the earth
    * @param minApproachAccel The minimum acceleration of the vehicle when approaching the meter point which ensures comfort based on controller behavior. Always Positive
    * @param targetApproachSpeed The speed which the vehicle will have right as it rolls to the meter point stop bar. Should be just above crawl speed
+   * @param driverLagTime The lag time in seconds for the driver to hit the accelerator
+   * @param commsLagTime The lag time in seconds for the communications between a platoon -> rsu -> merge vehicle
    */
   RSUMeterWorker(IRSUMeterManager manager, SaxtonLogger log, String routeFilePath,
     String rsuId, double distToMerge, double mainRouteMergeDTD, double meterRadius,
     int targetLane, double mergeLength, long timeMargin,
     long requestPeriod, long commandPeriod, long commsTimeout, Location meterLoc,
-    double minApproachAccel, double targetApproachSpeed) throws IllegalArgumentException {
+    double minApproachAccel, double targetApproachSpeed, double driverLagTime, double commsLagTime) throws IllegalArgumentException {
     
     this.manager = manager;
     this.log = log;
@@ -138,6 +144,8 @@ public class RSUMeterWorker {
     this.meterECEF = gcc.geodesic2Cartesian(meterLoc, Transform.identity());
     this.minApproachAccel = minApproachAccel;
     this.targetApproachSpeed = targetApproachSpeed;
+    this.driverLagTime = driverLagTime;
+    this.commsLagTime = commsLagTime;
 
     // Load route file
     log.info("RouteFile: " + routeFilePath);
@@ -391,9 +399,12 @@ public class RSUMeterWorker {
     
     // Account for speed up
 
-    double timeToSpeedUp = ((maxSpeed - speed) / maxAccel) + lagTime;
+    double deltaV = (maxSpeed - speed);
+    double timeToSpeedUp = (deltaV / maxAccel);
 
-    double distCoveredInSpeedUp = 0.5 * (maxSpeed + speed) * timeToSpeedUp;
+
+
+    double distCoveredInSpeedUp = 0.5 * deltaV * timeToSpeedUp + speed * timeToSpeedUp;
     double distRemaining = dist - distCoveredInSpeedUp;
 
     double timeAtMaxSpeed = distRemaining / maxSpeed;
@@ -401,25 +412,24 @@ public class RSUMeterWorker {
     double totalTime = timeToSpeedUp + timeAtMaxSpeed;
 
 
-    return (long)(totalTime * MS_PER_S);
+    return (long)((totalTime + lagTime) * MS_PER_S);
   }
 
   public PlatoonData getNextPlatoon() {
-    PlatoonData[] mostRecentPlatoon = new PlatoonData[1];
+    PlatoonData mostRecentPlatoon = null;
 
     // Find the platoon with the earliest time of arrival
-    platoonMap.forEach(
-      (k, v) -> {
-        if (mostRecentPlatoon[0] == null) {
-          mostRecentPlatoon[0] = v;
-        } else if (v.getExpectedTimeOfArrival() < mostRecentPlatoon[0].getExpectedTimeOfArrival()
-          && v.getRearDTD() < mainRouteMergeDTD + mergeLength) { 
-          mostRecentPlatoon[0] = v;
-        }
+    // Use of .forEach is avoided to ensure sequential execution
+    for (PlatoonData platoon : platoonMap.values()) {
+      if (mostRecentPlatoon == null) {
+        mostRecentPlatoon = platoon;
+      } else if (platoon.getExpectedTimeOfArrival() < mostRecentPlatoon.getExpectedTimeOfArrival()
+        && platoon.getRearDTD() < mainRouteMergeDTD + mergeLength) { 
+        mostRecentPlatoon = platoon;
       }
-    );
+    }
 
-    return mostRecentPlatoon[0];
+    return mostRecentPlatoon;
   }
 
   /**
@@ -559,5 +569,19 @@ public class RSUMeterWorker {
    */
   public double getTargetApproachSpeed() {
     return targetApproachSpeed;
+  }
+
+  /**
+   * @return the driverLagTime
+   */
+  public double getDriverLagTime() {
+    return driverLagTime;
+  }
+
+  /**
+   * @return the commsLagTime
+   */
+  public double getCommsLagTime() {
+    return commsLagTime;
   }
 }

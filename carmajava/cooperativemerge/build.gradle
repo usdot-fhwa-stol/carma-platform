@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Michael McConnell.
+ * Copyright (C) 2018 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 /* 
  Dependencies can be on external maven artifacts (such as rosjava_core
- here) or on sibling subprojects. Fpr external maven artifact dependencies
+ here) or on sibling subprojects. For external maven artifact dependencies
  it's convenient to use an open ranged dependency, but restrict it to
  cover the patch version only to avoid breakages due to api changes
  which usually occur on minor and major version numbers.

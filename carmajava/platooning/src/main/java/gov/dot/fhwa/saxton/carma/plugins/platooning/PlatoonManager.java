@@ -243,7 +243,7 @@ public class PlatoonManager implements Runnable {
                 int newLeaderIndex = allPredecessorFollowing();
                 if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
                     leader = platoon.get(newLeaderIndex);
-                    log.debug("APF output: " + leader.staticId);
+                    log.info("APF output: " + leader.staticId);
                     previousFunctionalLeaderIndex = newLeaderIndex;
                     previousFunctionalLeaderID = leader.staticId;
                 } else {
@@ -251,12 +251,12 @@ public class PlatoonManager implements Runnable {
                     leader = platoon.get(platoon.size() - 1);
                     previousFunctionalLeaderIndex = platoon.size() - 1;
                     previousFunctionalLeaderID = leader.staticId;
-                    log.debug("Based on the output of APF algorithm we start to follow our predecessor.");
+                    log.info("Based on the output of APF algorithm we start to follow our predecessor.");
                 }
             } else if(plugin.algorithmType == 2) {
                 // Number 2 indicates PF algorithm and it will always return the vehicle in its immediate front
                 leader = platoon.get(platoon.size() - 1);
-                log.debug("PF algorithm require us to follow our current predecessor");
+                log.info("PF algorithm require us to follow our current predecessor");
             }
             return leader;
         }

@@ -265,13 +265,17 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 	@Override
 	public void onShutdown() {
 		super.onShutdown();
-		getTransformClient.close();
+		if(getTransformClient != null) {
+		    getTransformClient.close();
+		}
 	}
 
 	@Override
 	public void onPanic() {
 		super.onPanic();
-		getTransformClient.close();
+		if(getTransformClient != null) {
+		    getTransformClient.close();
+		}
 	}
 	
 	@Override

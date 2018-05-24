@@ -97,6 +97,9 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     Location meterLocation = new Location(meterLat, meterLon, meterAlt);
     double minApproachAccel = params.getDouble("~min_approach_accel");
     double targetSpeedBeforeStop = params.getDouble("~target_speed_before_stop");
+    double driverLagTime = params.getDouble("~driver_lag_time");
+    double commsLagTime = params.getDouble("~comms_lag_time");
+
     // Echo Params
     log.info("LoadedParam route_file: " + routeFilePath);
     log.info("LoadedParam dist_to_merge_along_ramp: " + distToMerg);
@@ -107,13 +110,15 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     log.info("LoadedParam target_lane: " + targetLane);
     log.info("LoadedParam arrival_time_margin: " + timeMargin);
     log.info("LoadedParam standby_state_request_freq: " + requestFreq);
-    log.info("LoadedParam command_freq: " + commandPeriod);
+    log.info("LoadedParam command_freq: " + commandFreq);
     log.info("LoadedParam comms_timeout: " + commsTimeout);
     log.info("LoadedParam meter_point_latitude: " + meterLat);
     log.info("LoadedParam meter_point_longitude: " + meterLon);
     log.info("LoadedParam meter_point_elevation: " + meterAlt);
     log.info("LoadedParam min_approach_accel: " + minApproachAccel);
     log.info("LoadedParam target_speed_before_stop: " + targetSpeedBeforeStop);
+    log.info("LoadedParam driver_lag_time: " + driverLagTime);
+    log.info("LoadedParam comms_lag_time: " + commsLagTime);
 
     // Topics
     // Publishers
@@ -125,7 +130,7 @@ public class RSUMeterManager extends SaxtonBaseNode implements IRSUMeterManager 
     worker = new RSUMeterWorker(this, log, routeFilePath, rsuId, distToMerg,
      mainRouteMergeDTD, rampMeterRadius, targetLane, lengthOfMerge, timeMargin,
      requestPeriod, commandPeriod, commsTimeout, meterLocation,
-     minApproachAccel, targetSpeedBeforeStop
+     minApproachAccel, targetSpeedBeforeStop, driverLagTime, commsLagTime
     );
 
     // Subscribers
