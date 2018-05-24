@@ -96,7 +96,7 @@ public class CommandingState extends RSUMeteringStateBase {
     // Simply updating the command speed to the platoon speed may be enough to make this work
     // If it is not more complex logic can be added
 
-    PlatoonData platoon = worker.getNextPlatoon();
+    PlatoonData platoon = worker.getNextPlatoon(vehicleId);
     double newCommandSpeed;
     // Check if we have a platoon still
     if (platoon == null) {
