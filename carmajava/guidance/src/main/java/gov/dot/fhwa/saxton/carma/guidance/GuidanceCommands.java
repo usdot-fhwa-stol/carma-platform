@@ -268,8 +268,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     * @param accel The maximum allowable acceleration in attaining and maintaining that speed
     */
     @Override
-    public void setSpeedCommand(double speed, double accel) {
-        // TODO This method should be synchronized. Remove it to test its impact on timing
+    public synchronized void setSpeedCommand(double speed, double accel) {
         if (speed > MAX_SPEED_CMD_M_S) {
             log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
                     + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
@@ -285,8 +284,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
 
     @Override
-    public void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
-        // TODO This method should be synchronized. Remove it to test its impact on timing
+    public synchronized void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
         axleAngle = Math.max(axleAngle, -Math.PI / 2.0);
         axleAngle = Math.min(axleAngle, Math.PI / 2.0);
 
@@ -300,23 +298,24 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
     @Override
     public void timingLoop() throws InterruptedException {
-        // TODO This method should be synchronized. Remove it to test its impact on timing
         // Iterate ensuring smooth speed command output
         long iterStartTime = System.currentTimeMillis();
 
         if (currentState.get() == GuidanceState.ENGAGED) {
-            SpeedAccel msg = speedAccelPublisher.newMessage();
-            msg.setSpeed(speedCommand.get());
-            msg.setMaxAccel(maxAccel.get());
-            speedAccelPublisher.publish(msg);
+            synchronized (this) {
+                SpeedAccel msg = speedAccelPublisher.newMessage();
+                msg.setSpeed(speedCommand.get());
+                msg.setMaxAccel(maxAccel.get());
+                speedAccelPublisher.publish(msg);
 
-            cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
-            lateralMsg.setAxleAngle(steeringCommand.get());
-            lateralMsg.setMaxAccel(lateralAccel.get());
-            lateralMsg.setMaxAxleAngleRate(yawRate.get());
-            lateralControlPublisher.publish(lateralMsg);
-            log.trace("Published longitudinal & lateral cmd message after "
-                    + (System.currentTimeMillis() - iterStartTime) + "ms.");
+                cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+                lateralMsg.setAxleAngle(steeringCommand.get());
+                lateralMsg.setMaxAccel(lateralAccel.get());
+                lateralMsg.setMaxAxleAngleRate(yawRate.get());
+                lateralControlPublisher.publish(lateralMsg);
+                log.trace("Published longitudinal & lateral cmd message after "
+                        + (System.currentTimeMillis() - iterStartTime) + "ms.");
+            }
         } else if (currentState.get() == GuidanceState.ACTIVE || currentState.get() == GuidanceState.INACTIVE) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             double current_speed = 0.0;
