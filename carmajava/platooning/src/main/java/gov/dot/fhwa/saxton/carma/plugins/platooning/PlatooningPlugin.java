@@ -175,33 +175,33 @@ public class PlatooningPlugin extends AbstractPlugin
 
 
         //log all loaded parameters
-        log.debug("Load param maxAccel = " + maxAccel);
-        log.debug("Load param minimumManeuverLength = " + minimumManeuverLength);
-        log.debug("Load param for speed PID controller: [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
-        log.debug("Load param for speed PID controller: integratorMaxCap = " + integratorMaxCap + ", integratorMinCap = " + integratorMinCap);
-        log.debug("Load param messageTimeoutFactor = " + statusTimeoutFactor);
-        log.debug("Load param vehicleLength = " + vehicleLength);
-        log.debug("Load param maxPlatoonSize = " + maxPlatoonSize);
-        log.debug("Load param algorithmType = " + algorithmType);
-        log.debug("Load param timeHeadway = " + timeHeadway);
-        log.debug("Load param standStillHeadway = " + standStillHeadway);
-        log.debug("Load param maxAllowedJoinTimeGap = " + maxAllowedJoinTimeGap);
-        log.debug("Load param maxAllowedJoinGap = " + maxAllowedJoinGap);
-        log.debug("Load param desiredJoinTimeGap = " + desiredJoinTimeGap);
-        log.debug("Load param desiredJoinGap = " + desiredJoinGap);
-        log.debug("Load param waitingStateTimeout = " + waitingStateTimeout);
-        log.debug("Load param cmdSpeedMaxAdjustment = " + cmdSpeedMaxAdjustment);
-        log.debug("Load param lowerBoundary = " + lowerBoundary);        
-        log.debug("Load param upperBoundary = " + upperBoundary);        
-        log.debug("Load param maxSpacing = " + maxSpacing);
-        log.debug("Load param minSpacing = " + minSpacing);  
-        log.debug("Load param minGap = " + minGap);
-        log.debug("Load param maxGap = " + maxGap);
-        log.debug("Load param speedLimitCapEnabled = " + speedLimitCapEnabled);
-        log.debug("Load param maxAccelCapEnabled = " + maxAccelCapEnabled);
-        log.debug("Load param leaderSpeedCapEnabled = " + leaderSpeedCapEnabled);
-        log.debug("Load param statusMessageInterval = " + statusMessageInterval);
-        log.debug("Load param infoMessageInterval = " + infoMessageInterval);
+        log.info("Load param maxAccel = " + maxAccel);
+        log.info("Load param minimumManeuverLength = " + minimumManeuverLength);
+        log.info("Load param for speed PID controller: [p = " + kpPID + ", i = " + kiPID + ", d = " + kdPID + "]");
+        log.info("Load param for speed PID controller: integratorMaxCap = " + integratorMaxCap + ", integratorMinCap = " + integratorMinCap);
+        log.info("Load param messageTimeoutFactor = " + statusTimeoutFactor);
+        log.info("Load param vehicleLength = " + vehicleLength);
+        log.info("Load param maxPlatoonSize = " + maxPlatoonSize);
+        log.info("Load param algorithmType = " + algorithmType);
+        log.info("Load param timeHeadway = " + timeHeadway);
+        log.info("Load param standStillHeadway = " + standStillHeadway);
+        log.info("Load param maxAllowedJoinTimeGap = " + maxAllowedJoinTimeGap);
+        log.info("Load param maxAllowedJoinGap = " + maxAllowedJoinGap);
+        log.info("Load param desiredJoinTimeGap = " + desiredJoinTimeGap);
+        log.info("Load param desiredJoinGap = " + desiredJoinGap);
+        log.info("Load param waitingStateTimeout = " + waitingStateTimeout);
+        log.info("Load param cmdSpeedMaxAdjustment = " + cmdSpeedMaxAdjustment);
+        log.info("Load param lowerBoundary = " + lowerBoundary);        
+        log.info("Load param upperBoundary = " + upperBoundary);        
+        log.info("Load param maxSpacing = " + maxSpacing);
+        log.info("Load param minSpacing = " + minSpacing);  
+        log.info("Load param minGap = " + minGap);
+        log.info("Load param maxGap = " + maxGap);
+        log.info("Load param speedLimitCapEnabled = " + speedLimitCapEnabled);
+        log.info("Load param maxAccelCapEnabled = " + maxAccelCapEnabled);
+        log.info("Load param leaderSpeedCapEnabled = " + leaderSpeedCapEnabled);
+        log.info("Load param statusMessageInterval = " + statusMessageInterval);
+        log.info("Load param infoMessageInterval = " + infoMessageInterval);
         
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);

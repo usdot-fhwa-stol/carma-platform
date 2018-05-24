@@ -24,9 +24,6 @@ import cav_srvs.GetDriversWithCapabilitiesResponse;
 import cav_srvs.SetEnableRobotic;
 import cav_srvs.SetEnableRoboticRequest;
 import cav_srvs.SetEnableRoboticResponse;
-import cav_srvs.SetLights;
-import cav_srvs.SetLightsRequest;
-import cav_srvs.SetLightsResponse;
 import geometry_msgs.TwistStamped;
 
 import com.google.common.util.concurrent.AtomicDouble;
@@ -58,7 +55,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private IService<SetEnableRoboticRequest, SetEnableRoboticResponse> enableRoboticService;
     private IPublisher<cav_msgs.LateralControl> lateralControlPublisher;
     private IPublisher<std_msgs.Float32> wrenchEffortPublisher;
-    private IService<SetLightsRequest, SetLightsResponse> setLightsService;
     private ISubscriber<TwistStamped> velocitySubscriber;
     private AtomicDouble speedCommand = new AtomicDouble(0.0);
     private AtomicDouble maxAccel = new AtomicDouble(0.0);
@@ -273,14 +269,12 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     public void onShutdown() {
         super.onShutdown();
         enableRoboticService.close();
-        setLightsService.close();
     }
 
     @Override
     public void onPanic() {
         super.onPanic();
         enableRoboticService.close();
-        setLightsService.close();
     }
 
     /**
@@ -348,13 +342,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                     usingWrenchEffort.set(true);
 
                 } else {
-                    if (usingWrenchEffort.compareAndSet(true, false)) {
-                        // TODO remove this conditional if wrench effort override is removed
-                        std_msgs.Float32 effortMsg = wrenchEffortPublisher.newMessage();
-                        effortMsg.setData(0.0f);
-                        wrenchEffortPublisher.publish(effortMsg);
-                        return;
-                    }
                     msg.setSpeed(speedCommand.get());
                     msg.setMaxAccel(maxAccel.get());
                     speedAccelPublisher.publish(msg);
