@@ -358,6 +358,7 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
             }
         }
 
+        // TODO improve message handling for requests that don't contain a meaningful trajectory
         if (trajectoryExecutor != null && trajectoryExecutor.getTotalTrajectory() != null) {
             double currentTrajEnd = trajectoryExecutor.getTotalTrajectory().getEndLocation();
             double requestEnd = otherPath.get(otherPath.size() - 1).getDowntrack();
