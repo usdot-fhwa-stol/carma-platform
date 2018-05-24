@@ -248,13 +248,17 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     @Override
     public void onShutdown() {
         super.onShutdown();
-        enableRoboticService.close();
+        if(enableRoboticService != null) {
+            enableRoboticService.close();
+        }
     }
 
     @Override
     public void onPanic() {
         super.onPanic();
-        enableRoboticService.close();
+        if(enableRoboticService != null) {
+            enableRoboticService.close();
+        }
     }
 
     /**
