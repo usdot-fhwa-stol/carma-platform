@@ -5,7 +5,7 @@
 rsu_id: 'RSU-04E5'
 
 # String: The route file for the main road this rsu is metering for.
-route_file: '/opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routes/Merge.yaml'
+route_file: '/opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routes/AIHPMerge.yaml'
 
 # Double: The latitude of the meter point
 # Units: deg
@@ -25,7 +25,7 @@ dist_to_merge_along_ramp: 200.0
 
 # Double: The distance along the main road route to the merge area
 # Units: m
-dist_to_merge_on_main_route: 900.0
+dist_to_merge_on_main_route: 2819.8863850529215
 
 # Double: The length of the merge area
 # Units: m
