@@ -95,3 +95,7 @@ platooning_local_speed_limit_cap: false
 # Integer: This is the time interval length between two STATUS messages
 # Units: ms
 platooning_status_time_interval: 100
+
+# Integer: This is the time interval length between two INFO messages when platoon leader
+# Units: ms
+platooning_info_time_interval: 200

@@ -39,9 +39,9 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
   protected final long loopPeriod; // Time in ms between loop spins
   protected final long commsTimeout;
   private final Object commandMutex = new Object();
-  private volatile double speedCommand = 0;
+  private volatile double speedCommand = 5;
   private volatile double steerCommand = 0; 
-  private volatile double maxAccelCommand = 0; 
+  private volatile double maxAccelCommand = 2.5; 
   private AtomicLong lastMessageTime = new AtomicLong(0);
   private long lastCompletionTime = System.currentTimeMillis();
   protected final static String COMMAND_PARAMS = "COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f";
@@ -70,7 +70,7 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
     checkTimeout();
     long doneTime = System.currentTimeMillis();
     Thread.sleep(Math.max(loopPeriod - (doneTime - lastCompletionTime), 0));
-    lastCompletionTime = System.currentTimeMillis(); // Used to take into consideration the callers spin rate when timing
+    lastCompletionTime = System.currentTimeMillis(); // Used to take into consideration the caller's spin rate when timing
   }
 
   /**
@@ -130,10 +130,16 @@ public abstract class RSUMeteringStateBase implements IRSUMeteringState {
     msg.getHeader().setTimestamp(System.currentTimeMillis());
     
     msg.setStrategy(RSUMeterWorker.COOPERATIVE_MERGE_STRATEGY);
-    
+
+    double speed, accel, steer; // Cache current commands
+
     synchronized (commandMutex) {
-      msg.setStrategyParams(String.format(COMMAND_PARAMS, speedCommand, maxAccelCommand, steerCommand));
+      speed = speedCommand;
+      accel = maxAccelCommand;
+      steer = steerCommand;
     }
+    
+    msg.setStrategyParams(String.format(COMMAND_PARAMS, speed, accel, steer));
   
     worker.getManager().publishMobilityOperation(msg);
   }

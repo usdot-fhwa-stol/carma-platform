@@ -33,6 +33,7 @@ public class HoldingState extends RSUMeteringStateBase {
   protected final static String STATUS_TYPE_PARAM = "STATUS";
   protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED", "LANE"));
   protected final double vehLagTime;
+  protected final double combinedLagTime;
   protected final double vehMaxAccel;
   protected final String vehicleId;
   protected final String planId;
@@ -51,6 +52,7 @@ public class HoldingState extends RSUMeteringStateBase {
   public HoldingState(RSUMeterWorker worker, SaxtonLogger log, String vehicleId, String planId, double vehLagTime, double vehMaxAccel, double distToMerge) {
     super(worker, log, worker.getCommandPeriod(), worker.getCommsTimeout());
     this.vehLagTime = vehLagTime;
+    this.combinedLagTime = worker.getDriverLagTime() + worker.getCommsLagTime() + vehLagTime;
     this.vehMaxAccel = vehMaxAccel;
     this.distToMerge = distToMerge;
     this.vehicleId = vehicleId;
@@ -91,7 +93,7 @@ public class HoldingState extends RSUMeteringStateBase {
     double speed = Double.parseDouble(params.get(2));
 
     // If we are already at the ramp meter or past it then hold there
-    if (meterDist < 0.5) {
+    if (meterDist < 1.0) {
       
       updateCommands(0, vehMaxAccel, 0);
       log.info("Vehicle at meter point");
@@ -100,7 +102,7 @@ public class HoldingState extends RSUMeteringStateBase {
         // Wait for a platoon to be incoming. Then transition to controlling state
         PlatoonData nextPlatoon = worker.getNextPlatoon();
         if (nextPlatoon != null) {
-          long vehTimeTillMerge = worker.expectedTravelTime(mergeDist, speed, nextPlatoon.getSpeed(), vehLagTime, vehMaxAccel);
+          long vehTimeTillMerge = worker.expectedTravelTime(mergeDist, speed, nextPlatoon.getSpeed(), combinedLagTime, vehMaxAccel);
           long vehicleArrivalTime = System.currentTimeMillis() + vehTimeTillMerge;
 
           if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival()
@@ -109,13 +111,13 @@ public class HoldingState extends RSUMeteringStateBase {
             log.info("Releasing vehicle with expected arrival time of " + vehicleArrivalTime +
              " for platoon " + nextPlatoon);
 
-             worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
+            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehMaxAccel, distToMerge, nextPlatoon.getSpeed()));
 
           } else if (vehicleArrivalTime > nextPlatoon.getExpectedTimeOfArrival() + worker.getTimeMargin()) {
 
             log.warn("Vehicle cannot reach merge before platoon passes but will try anyway");
-            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehLagTime, vehMaxAccel, distToMerge));
-
+            worker.setState(this, new CommandingState(worker, log, vehicleId, planId, vehMaxAccel, distToMerge, nextPlatoon.getSpeed()));
+          
           } else {
             log.debug("Holding vehicle for platoon");
           }
@@ -129,19 +131,21 @@ public class HoldingState extends RSUMeteringStateBase {
 
     double neededAccel = ((targetSpeed * targetSpeed) - (speed * speed)) / (2 * meterDist);
 
+    log.debug("Needed accel: " + neededAccel);
+
     if (neededAccel < -vehMaxAccel) {
       // We can't stop before merge point so command stop and reevaluate when stopped
-      updateCommands(0, vehMaxAccel, 0);
+      updateCommands(targetSpeed, vehMaxAccel, 0);
       return;
     }
 
     // Ensure out maximum acceleration never falls below a comfortable threshold
-    if (neededAccel < -worker.getMinApproachAccel()) {
+    if (neededAccel > -worker.getMinApproachAccel()) {
       neededAccel = worker.getMinApproachAccel();
     }
 
     // Request 0 speed but use max accel to limit behavior
-    updateCommands(0,  neededAccel, 0);
+    updateCommands(targetSpeed, neededAccel, 0);
   }
 
   @Override

@@ -211,7 +211,8 @@ public class PlanningState implements ICooperativeMergeState {
       start, 
       end,
       0, 
-      rs.getSpeedLimitsInRange(start, end).last().getLimit());
+      rs.getSpeedLimitsInRange(start, end).last().getLimit(),
+      pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit());
 
     traj.setComplexManeuver(mergeManeuver);
 

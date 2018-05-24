@@ -154,7 +154,8 @@ public class ExecutionStateTest {
             0, 
             600,
             0, 
-            20);
+            20,
+            2.5);
       
 
         final ExecutionState executionState = new ExecutionState(mockPlugin, mockLog, pluginServiceLocator, rampMeterData, planId, mergeManeuver);

@@ -57,7 +57,6 @@ public class PlatooningPlugin extends AbstractPlugin
     protected static final String OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%.2f,DTD:%.2f,SPEED:%.2f";
     protected static final String OPERATION_INFO_TYPE     = "INFO";
     protected static final String OPERATION_STATUS_TYPE   = "STATUS";
-    protected static final int    INFO_INTERVAL_LENGTH    = 3000;  // ms
     protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
     protected static final int    OPERATION_QUEUE_SIZE    = 8;
 
@@ -81,6 +80,7 @@ public class PlatooningPlugin extends AbstractPlugin
     protected int    maxPlatoonSize        = 10;   // 1
     protected int    algorithmType         = 0;    // N/A
     protected int    statusMessageInterval = 100;   // ms
+    protected int    infoMessageInterval   = 200;  // ms
     
     // following parameters are for platoon forming and operation
     protected double timeHeadway           = 2.0;  // s
@@ -171,7 +171,9 @@ public class PlatooningPlugin extends AbstractPlugin
         speedLimitCapEnabled    = pluginServiceLocator.getParameterSource().getBoolean("~platooning_local_speed_limit_cap", true);
         maxAccelCapEnabled      = pluginServiceLocator.getParameterSource().getBoolean("~platooning_max_accel_cap", true);
         leaderSpeedCapEnabled   = pluginServiceLocator.getParameterSource().getBoolean("~platooning_max_cmd_speed_adjustment_cap", true);
-        
+        infoMessageInterval     = pluginServiceLocator.getParameterSource().getInteger("~platooning_info_time_interval", 200);
+
+
         //log all loaded parameters
         log.info("Load param maxAccel = " + maxAccel);
         log.info("Load param minimumManeuverLength = " + minimumManeuverLength);
@@ -189,16 +191,17 @@ public class PlatooningPlugin extends AbstractPlugin
         log.info("Load param desiredJoinGap = " + desiredJoinGap);
         log.info("Load param waitingStateTimeout = " + waitingStateTimeout);
         log.info("Load param cmdSpeedMaxAdjustment = " + cmdSpeedMaxAdjustment);
-        log.info("Load param lowerBoundary = " + lowerBoundary);
-        log.info("Load param upperBoundary = " + upperBoundary);
+        log.info("Load param lowerBoundary = " + lowerBoundary);        
+        log.info("Load param upperBoundary = " + upperBoundary);        
         log.info("Load param maxSpacing = " + maxSpacing);
-        log.info("Load param minSpacing = " + minSpacing);
+        log.info("Load param minSpacing = " + minSpacing);  
         log.info("Load param minGap = " + minGap);
         log.info("Load param maxGap = " + maxGap);
         log.info("Load param speedLimitCapEnabled = " + speedLimitCapEnabled);
         log.info("Load param maxAccelCapEnabled = " + maxAccelCapEnabled);
         log.info("Load param leaderSpeedCapEnabled = " + leaderSpeedCapEnabled);
         log.info("Load param statusMessageInterval = " + statusMessageInterval);
+        log.info("Load param infoMessageInterval = " + infoMessageInterval);
         
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
