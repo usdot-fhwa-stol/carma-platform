@@ -1,5 +1,6 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
@@ -20,6 +21,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
  * The CandidateFollowerState is a state which platooning algorithm is enabled on the current trajectory
@@ -234,16 +236,16 @@ public class CandidateFollowerState implements IPlatooningState {
                 if(currentGap <= maxJoinGap && this.currentPlan == null) {
                     MobilityRequest request = plugin.mobilityRequestPublisher.newMessage();
                     String planId = UUID.randomUUID().toString();
+                    long currentTime = System.currentTimeMillis();
                     request.getHeader().setPlanId(planId);
                     request.getHeader().setRecipientId(targetLeaderId);
                     request.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
                     request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
-                    request.getHeader().setTimestamp(System.currentTimeMillis());
-                    // TODO Need to have a easy way to get current location in ECEF
-                    request.getLocation().setEcefX(0);
-                    request.getLocation().setEcefY(0);
-                    request.getLocation().setEcefZ(0);
-                    request.getLocation().setTimestamp(System.currentTimeMillis());
+                    request.getHeader().setTimestamp(currentTime);
+                    RoutePointStamped currentLocation = new RoutePointStamped(plugin.getManeuverInputs().getDistanceFromRouteStart(),
+                    plugin.getManeuverInputs().getCrosstrackDistance(), currentTime / 1000.0);
+                    cav_msgs.Trajectory currentLocationMsg = pluginServiceLocator.getTrajectoryConverter().pathToMessage(Arrays.asList(currentLocation));
+                    request.setLocation(currentLocationMsg.getLocation());
                     request.getPlanType().setType(PlanType.PLATOON_FOLLOWER_JOIN);
                     request.setStrategy(PlatooningPlugin.MOBILITY_STRATEGY);
                     request.setStrategyParams("");

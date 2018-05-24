@@ -37,7 +37,6 @@ import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceResponseListener;
-import sensor_msgs.NavSatFix;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -80,6 +79,8 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   protected RouteWorker routeWorker;
   // Used
   protected ServiceClient<cav_srvs.GetTransformRequest, cav_srvs.GetTransformResponse> getTransformClient;
+  
+  protected boolean shutdownInitiated_ = false;
 
   @Override public GraphName getDefaultNodeName() {
     return GraphName.of("route_manager");
@@ -225,7 +226,7 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
   @Override protected void handleException(Throwable e) {
     String msg = "Uncaught exception in " + connectedNode.getName() + " caught by handleException";
     publishSystemAlert(AlertSeverity.FATAL, msg, e);
-    connectedNode.shutdown();
+    this.shutdown();
   }
 
   @Override public void publishActiveRoute(cav_msgs.Route route) {
@@ -300,6 +301,12 @@ public class RouteManager extends SaxtonBaseNode implements IRouteManager {
 
   @Override public void shutdown() {
     log.info("SHUTDOWN", "Shutdown method called");
-    this.connectedNode.shutdown();
+    if(!shutdownInitiated_) {
+        this.connectedNode.shutdown();
+        shutdownInitiated_ = true;
+    } else {
+        log.info("SHUTDOWN", "Shutdown method called but shuwdown process was already initilized");
+    }
   }
-}//AbstractNodeMain
+  
+}
