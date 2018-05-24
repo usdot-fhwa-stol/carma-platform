@@ -151,7 +151,7 @@ public class YieldPlugin extends AbstractPlugin
     public void onInitialize() {
         ParameterSource params = pluginServiceLocator.getParameterSource();
         minConflictAvoidanceTimegap = params.getDouble("~min_conflict_avoidance_timegap", 4.0);
-        maxYieldAccelAuthority = params.getDouble("~max_acceleration_capability", 2.5)
+        maxYieldAccelAuthority = params.getDouble("~vehicle_acceleration_limit", 2.5)
                 * params.getDouble("~max_yield_accel_authority", 0.8);
         vehicleResponseLag = params.getDouble("~vehicle_response_lag", 1.4);
 

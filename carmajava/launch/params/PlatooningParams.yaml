@@ -1,6 +1,6 @@
 # Double: Maximum acceleration for platooning plugin
 # Units: m/s/s
-platooning_max_accel: 2.5
+platooning_max_accel: 2.0
 
 # Double: The minimum length of platooning complex maneuver length
 # Units: m

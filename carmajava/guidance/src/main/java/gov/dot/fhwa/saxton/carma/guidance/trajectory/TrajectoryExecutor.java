@@ -90,7 +90,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
 
     @Override
     public void onStartup() {
-        maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
+        maxAccel = node.getParameterTree().getDouble("~vehicle_acceleration_limit");
         sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
         routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
