@@ -415,12 +415,15 @@ public class RSUMeterWorker {
     return (long)((totalTime + lagTime) * MS_PER_S);
   }
 
-  public PlatoonData getNextPlatoon() {
+  public PlatoonData getNextPlatoon(String ignoredPlatoon) {
     PlatoonData mostRecentPlatoon = null;
 
     // Find the platoon with the earliest time of arrival
     // Use of .forEach is avoided to ensure sequential execution
     for (PlatoonData platoon : platoonMap.values()) {
+      if (platoon.getLeaderId().equals(ignoredPlatoon)) {
+        continue;
+      }
       if (mostRecentPlatoon == null) {
         mostRecentPlatoon = platoon;
       } else if (platoon.getExpectedTimeOfArrival() < mostRecentPlatoon.getExpectedTimeOfArrival()
