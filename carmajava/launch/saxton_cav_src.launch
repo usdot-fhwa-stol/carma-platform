@@ -61,6 +61,8 @@
   <!-- Debug -->
   <!-- JVM Debug arguments -->
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
+  <!-- JVM Logging Options -->
+  <arg name="JVM_LOG_OPTS" default="-Djava.util.logging.config.file=/opt/carma_1/src/CarmaPlatform/carmajava/launch/logging/log-config.properties"/>
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
   <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
@@ -329,6 +331,8 @@
       <node pkg="carma" type="guidance" name="guidance_main"
             args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
 
+        <!-- TODO -->
+        <env name="GUIDANCE_OPTS" value="$(arg JVM_LOG_OPTS)"/>
         <env if="$(arg debug_guidance)" name="GUIDANCE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
