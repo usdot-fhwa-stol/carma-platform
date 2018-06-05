@@ -30,7 +30,7 @@ public class RouteValidator {
   private SaxtonLogger log;
   private static final double MIN_ANGLE_BETWEEN_SEGMENTS_RAD = Math.PI / 2.0;
   private static final double MIN_SEGMENT_LENGTH_M = 1.0;
-  private static final double MAX_SEGMENT_LENGTH_M = 1000.0;
+  private static final double MAX_SEGMENT_LENGTH_M = 100000.0; // TODO this should be 1km. Changed for TO 26 demo
   private static final int    MIN_LANE_COUNT = 1;
   private static final double MIN_LANE_WIDTH = 2.0; // Highway lane standard is 3.7m, but might be smaller on side roads
   private static final int    MIN_SPEED_LIMIT_MPH = 0;
