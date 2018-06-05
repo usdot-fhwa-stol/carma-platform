@@ -100,7 +100,7 @@ public class HoldingState extends RSUMeteringStateBase {
       if (speed < 0.1) {
         log.info("Vehicle at meter point and stopped");
         // Wait for a platoon to be incoming. Then transition to controlling state
-        PlatoonData nextPlatoon = worker.getNextPlatoon();
+        PlatoonData nextPlatoon = worker.getNextPlatoon(vehicleId);
         if (nextPlatoon != null) {
           long vehTimeTillMerge = worker.expectedTravelTime(mergeDist, speed, nextPlatoon.getSpeed(), combinedLagTime, vehMaxAccel);
           long vehicleArrivalTime = System.currentTimeMillis() + vehTimeTillMerge;
