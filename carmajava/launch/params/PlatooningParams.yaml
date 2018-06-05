@@ -1,6 +1,6 @@
 # Double: Maximum acceleration for platooning plugin
 # Units: m/s/s
-platooning_max_accel: 2.0
+platooning_max_accel: 2.5
 
 # Double: The minimum length of platooning complex maneuver length
 # Units: m
@@ -8,7 +8,7 @@ platooning_min_maneuver_length: 15.0
 
 # Double: The proportional term in the platoon speed PID controller
 # Units: 1
-platooning_Kp: 0.2
+platooning_Kp: 0.05
 
 # Double: The integral term in the platoon speed PID controller
 # Units: 1
@@ -16,7 +16,7 @@ platooning_Ki: 0.0
 
 # Double: The derivative term in the platoon speed PID controller
 # Units: 1
-platooning_Kd: 0.0
+platooning_Kd: 0.08
 
 # Double: The integrator max cap before it is multiplied by Ki
 # Units: 1
@@ -43,11 +43,11 @@ platooning_algorithm_type: 1
 
 # Double: The desired time headway to the front vehicle within the platoon
 # Units: s
-platooning_desired_time_headway: 2.0
+platooning_desired_time_headway: 1.64
 
 # Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
 # Units: m
-platooning_stand_still_headway: 12.0
+platooning_stand_still_headway: 15.0
 
 # Double: The maximum time gap we allowed for a candidate to accelerate in order to join
 # Units: s
@@ -75,13 +75,13 @@ platooning_cmd_max_adjustment: 10.0
 
 # Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
 # Units: s
-platooning_lower_boundary: 1.0
-platooning_upper_boundary: 1.4
+platooning_lower_boundary: 1.1
+platooning_upper_boundary: 1.5
 platooning_max_spacing: 4.0
 platooning_min_spacing: 3.0
 # Units: m
-platooning_max_gap: 16.0
-platooning_min_gap: 12.0
+platooning_max_gap: 14.0
+platooning_min_gap: 10.0
 
 # Boolean: Determine whether the output of platooning controller will be caped by platooning_cmd_max_adjustment
 platooning_max_cmd_speed_adjustment_cap: true
