@@ -178,5 +178,9 @@
                
       </node>
     </group>
+    <!-- TODO Remove after TO 26 Demo is complete -->
+    <node pkg="rosbag" type="record" name="rosbag_node"
+      args="record -o /opt/carma/log/ /saxton_cav/message/incoming_mobility_operation /saxton_cav/message/incoming_bsm"
+    />
   </group>
 </launch>
