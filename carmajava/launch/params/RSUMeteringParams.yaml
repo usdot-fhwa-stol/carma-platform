@@ -1,42 +1,59 @@
 # RSUMeteringParams.yaml
 # Defines the ros parameters which define an RSU Metering node's behavior
+# TODO take out NB and SB references from TO 26 demo
 
 # String: The static mobility message id of this rsu
 rsu_id: 'RSU-04E5'
 
 # String: The route file for the main road this rsu is metering for.
-route_file: '/opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routes/AIHPMerge.yaml'
+# NB: NB_Platoon_65MPH.yaml
+# SB: SB_Platoon_65mph.yaml
+route_file: '/opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routes/NB_Platoon_65MPH.yaml'
 
 # Double: The latitude of the meter point
 # Units: deg
-meter_point_latitude: 39.47566943
+# NB: 38.6496235
+# SB: 38.6538602
+meter_point_latitude: 38.6496235
 
 # Double: The longitude of the meter point
 # Units: deg
-meter_point_longitude: -76.17075442
+# NB: -77.2836859
+# SB: -77.2810006
+meter_point_longitude: -77.2836859
 
 # Double: The elevation of the meter point
 # Units: m
-meter_point_elevation: 7.0
+# NB: 30.0
+# SB: 30.0
+meter_point_elevation: 30.0
 
 # Double: The distance from the ramp meter point to the start of the merge area.
 # Units: m
-dist_to_merge_along_ramp: 200.0
+# NB: 255.422
+# SB: 259.08
+dist_to_merge_along_ramp: 255.422
 
 # Double: The distance along the main road route to the merge area
 # Units: m
-dist_to_merge_on_main_route: 2819.8863850529215
+# NB 20492.592390628626
+# SB: 13560.895810337028
+dist_to_merge_on_main_route: 20492.592390628626 
 
 # Double: The length of the merge area
 # Units: m
-length_of_merge: 240.0
+# NB: 293.0
+# SB: 479.58451
+length_of_merge: 293.0
 
 # Double: The distance around the ramp meter point where a vehicle can request to merge
 # Units: m
 ramp_meter_radius: 150.0
 
 # Integer: The lane index of the lane merging vehicles are trying to reach
-target_lane: 0
+# NB: 1
+# SB: 1
+target_lane: 1
 
 # Integer: The merge arrival time margin within which the merging vehicle is trying to arrive
 # Units: ms

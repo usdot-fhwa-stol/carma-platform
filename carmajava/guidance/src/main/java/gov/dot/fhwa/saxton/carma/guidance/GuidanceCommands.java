@@ -292,8 +292,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     * @param accel The maximum allowable acceleration in attaining and maintaining that speed
     */
     @Override
-    public void setSpeedCommand(double speed, double accel) {
-        // TODO This method should be synchronized. Remove it to test its impact on timing
+    public synchronized void setSpeedCommand(double speed, double accel) {
         if (speed > MAX_SPEED_CMD_M_S) {
             log.warn("GuidanceCommands attempted to set speed command (" + speed + " m/s) higher than maximum limit of "
                     + MAX_SPEED_CMD_M_S + " m/s. Capping to speed limit.");
@@ -309,8 +308,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     }
 
     @Override
-    public void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
-        // TODO This method should be synchronized. Remove it to test its impact on timing
+    public synchronized void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
         axleAngle = Math.max(axleAngle, -Math.PI / 2.0);
         axleAngle = Math.min(axleAngle, Math.PI / 2.0);
 
@@ -330,36 +328,40 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
 
         if (currentState.get() == GuidanceState.ENGAGED) {
                 SpeedAccel msg = speedAccelPublisher.newMessage();
-                double cachedSpeed = speedCommand.get();
-                double cachedMaxAccel = maxAccel.get();
+                
+                double cachedSpeed = 0;
+                double cachedMaxAccel = 0;
+                synchronized(this) {
+                    cachedSpeed = speedCommand.get();
+                    cachedMaxAccel = maxAccel.get();
+                }
     
                 // TODO This is a special case fix for the 2013 Cadillac SRX TORC speed controller
                 // If the vehicle wants to stand still (0 mph) we will command with wrench effort instead
                 // This should be refactored or removed once the STOL TO 26 demo is complete
                 final double SIX_MPH = 2.68224;
                 if (Math.abs(cachedSpeed) < 0.1
-                    && Math.abs(cachedMaxAccel) - maneuverInputs.getMaxAccelLimit() < 0.00001 && maneuverInputs.getCurrentSpeed() < SIX_MPH) {
-                    
+                    && Math.abs(cachedMaxAccel) - maneuverInputs.getMaxAccelLimit() < 0.00001
+                    && maneuverInputs.getCurrentSpeed() < SIX_MPH) {
                     std_msgs.Float32 effortMsg = wrenchEffortPublisher.newMessage();
-
                     effortMsg.setData(-100.0f);
-
                     wrenchEffortPublisher.publish(effortMsg);
                     usingWrenchEffort.set(true);
-
                 } else {
                     msg.setSpeed(speedCommand.get());
                     msg.setMaxAccel(maxAccel.get());
                     speedAccelPublisher.publish(msg);
-
-                    cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+                }
+                
+                cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();
+                synchronized(this) {
                     lateralMsg.setAxleAngle(steeringCommand.get());
                     lateralMsg.setMaxAccel(lateralAccel.get());
                     lateralMsg.setMaxAxleAngleRate(yawRate.get());
-                    lateralControlPublisher.publish(lateralMsg);
-                    log.trace("Published longitudinal & lateral cmd message after "
-                            + (System.currentTimeMillis() - iterStartTime) + "ms.");
                 }
+                lateralControlPublisher.publish(lateralMsg);
+                log.trace("Published longitudinal & lateral cmd message after "
+                        + (System.currentTimeMillis() - iterStartTime) + "ms.");
         } else if (currentState.get() == GuidanceState.ACTIVE || currentState.get() == GuidanceState.INACTIVE) {
             SpeedAccel msg = speedAccelPublisher.newMessage();
             double current_speed = 0.0;
@@ -396,7 +398,6 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         }
 
         lastTimestep = iterEndTime;
-
         Thread.sleep(Math.max(sleepDurationMillis - (iterEndTime - iterStartTime), 0));
     }
 
