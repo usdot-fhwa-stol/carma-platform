@@ -36,6 +36,7 @@
   <arg name="URDF_FILE" default="$(arg CARMA_DIR)/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
   <arg name="DATA_DIR"  default="$(arg CARMA_DIR)/app/mock_data" doc="Directory of driver simulation"/>
   <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/app/engineering_tools" doc="The directory containing scripts for execution"/>
+  <arg name="log_config" default="$(PARAM_DIR)/log-config.properties" doc="The location of the logging config file"/>
   <!-- Disable Mock Drivers -->
   <arg name="mock_can"            default="false" doc="True if using a simulated can driver"/>
   <arg name="mock_dsrc"           default="false" doc="True if using a simulated dsrc driver"/>

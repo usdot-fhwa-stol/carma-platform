@@ -62,7 +62,8 @@
   <!-- JVM Debug arguments -->
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
   <!-- JVM Logging Options -->
-  <arg name="JVM_LOG_OPTS" default="-Djava.util.logging.config.file=/opt/carma_1/src/CarmaPlatform/carmajava/launch/logging/log-config.properties"/>
+  <arg name="log_config" default="/opt/carma/src/CarmaPlatform/carmajava/launch/params/log-config.properties" doc="The location of the logging configuration file"/>
+  <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
   <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
   <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
   <!-- Set to true to enable debugging on the specified node -->
