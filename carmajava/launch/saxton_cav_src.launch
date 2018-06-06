@@ -30,8 +30,6 @@
   roslaunch carma saxton_cav.launch mock_can:=false can_data_file:=/path/to/file.csv
 -->
 <launch>
-  <!-- Set Environment Variables -->
-  <env name="REDUCE_SAXTON_LOG" value="true"/>
   <!-- Constants -->
   <!-- Directory of Parameter Files -->
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
