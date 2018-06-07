@@ -1,0 +1,8 @@
+<launch>
+    <arg name="truck_can_device" default="can0" />
+    <node name="truck_can" pkg="truck_dbw_controller" type="truck_dbw_controller_node" output="screen">
+        <remap from="received_messages" to="$(arg truck_can_device)/received_messages" />
+        <param name="socketcan_selection" value="0" />
+        <param name="socketcan_device" value="$(arg truck_can_device)" />
+    </node>
+</launch>
