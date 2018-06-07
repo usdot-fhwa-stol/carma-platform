@@ -85,6 +85,9 @@
   <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
   <arg name="UI_NS"     default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
 
+  <!-- TODO Remove after TO 26 demo -->
+  <arg name="use_rosbag" default="false" doc="Record a rosbag for the to 26 demo"/>
+
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
 
@@ -463,8 +466,9 @@
       </include>
     </group>
     <!-- TODO Remove after TO 26 Demo is complete -->
+    <arg name="log_folder" value="$(eval with open('/opt/carma/logname.txt') as f:\n\t contents = f.read())"/>
     <node pkg="rosbag" type="record" name="rosbag_node"
-      args="record -o /opt/carma/log/ record -o /opt/carma/log/ /saxton_cav/sensor_fusion/filtered/nav_sax_fix /saxton_cav/sensor_fusion/filtered/heading /saxton_cav/drivers/srx_can/can/speed /saxton_cav/sensor_fusion/filtered/velocity /saxton_cav/sensor_fusion/filtered/acceleration /saxton_cav/drivers/srx_objects/f_lrr/sensor/objects /saxton_cav/drivers/srx_can/can/brake_position /saxton_cav/guidance/plugins/controlling_plugins /saxton_cav/drivers/srx_controller/control/cmd_speed /saxton_cav/message/incoming_mobility_request /saxton_cav/message/incoming_mobility_response /saxton_cav/message/incoming_mobility_operation /saxton_cav/message/incoming_mobility_path     /saxton_cav/guidance/outgoing_mobility_request /saxton_cav/guidance/outgoing_mobility_response /saxton_cav/guidance/outgoing_mobility_operation /saxton_cav/guidance/outgoing_mobility_path /saxton_cav/message/incoming_bsm"
+      args="record -o /opt/carma/logs/$(arg log_folder)/ /saxton_cav/sensor_fusion/filtered/nav_sax_fix /saxton_cav/sensor_fusion/filtered/heading /saxton_cav/drivers/srx_can/can/speed /saxton_cav/sensor_fusion/filtered/velocity /saxton_cav/sensor_fusion/filtered/acceleration /saxton_cav/drivers/srx_objects/f_lrr/sensor/objects /saxton_cav/drivers/srx_can/can/brake_position /saxton_cav/guidance/plugins/controlling_plugins /saxton_cav/drivers/srx_controller/control/cmd_speed /saxton_cav/message/incoming_mobility_request /saxton_cav/message/incoming_mobility_response /saxton_cav/message/incoming_mobility_operation /saxton_cav/message/incoming_mobility_path     /saxton_cav/guidance/outgoing_mobility_request /saxton_cav/guidance/outgoing_mobility_response /saxton_cav/guidance/outgoing_mobility_operation /saxton_cav/guidance/outgoing_mobility_path /saxton_cav/message/incoming_bsm"
       if="$(arg use_rosbag)" />
   </group>
 </launch>
