@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">.
   <name>can_msgs</name>
-  <version>0.7.6</version>
+  <version>0.7.5</version>
   <description>CAN related message types.</description>
 
   <maintainer email="mathias.luedtke@ipa.fraunhofer.de">Mathias Lüdtke</maintainer>

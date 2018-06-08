@@ -3,7 +3,7 @@
 #include <linux/can.h>
 #include <linux/can/error.h>
 #include <linux/can/raw.h>
-
+#include <iostream>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/conversion.hpp>
 
@@ -55,7 +55,8 @@ class SocketCANInterface::SocketCANInterfacePimpl
     /**
      * @brief Async reads socketcan descriptor
      */
-    void start_async_reading() {
+    void start_async_reading() 
+    {
         if (is_open_)
             can_stream_descriptor_->async_read_some(boost::asio::buffer(&rx_, sizeof(rx_)),
                                                     [this](const boost::system::error_code &error,
@@ -70,27 +71,36 @@ class SocketCANInterface::SocketCANInterfacePimpl
      * @param error
      * @param bytes_transferred
      */
-    void handle_async_read(const boost::system::error_code &error, size_t bytes_transferred) {
-        if (!error || bytes_transferred < sizeof(rx_)) {
+    void handle_async_read(const boost::system::error_code &error, size_t bytes_transferred) 
+    {
+        if (!error || bytes_transferred < sizeof(rx_)) 
+        {
             std::shared_ptr<cav::CANFrameStamped> frameStamped = std::make_shared<cav::CANFrameStamped>();
-            frameStamped->id = rx_.can_id;
             frameStamped->dlc = rx_.can_dlc;
             frameStamped->is_error = (rx_.can_id & CAN_ERR_FLAG) != 0;
             frameStamped->is_rtr = (rx_.can_id & CAN_RTR_FLAG) != 0;
             frameStamped->is_extended = (rx_.can_id & CAN_EFF_FLAG) != 0;
+            frameStamped->id = rx_.can_id & ( frameStamped->is_extended ? CAN_EFF_MASK : CAN_SFF_MASK ) ;
+
             std::copy(std::begin(rx_.data),std::begin(rx_.data)+rx_.can_dlc,frameStamped->data.begin());
+
             ::timeval tv;
             ::ioctl(socket_, SIOCGSTAMP, &tv);
             start_async_reading();
 
             frameStamped->stamp = boost::posix_time::from_time_t(tv.tv_sec);
             frameStamped->stamp += boost::posix_time::microseconds(tv.tv_usec);
-            if (frameStamped->is_error & CAN_ERR_FLAG) {
+            if (frameStamped->is_error & CAN_ERR_FLAG) 
+            {
                 onErrorFrameReceived(frameStamped);
-            } else {
+            } 
+            else 
+            {
                 onFrameReceived(frameStamped);
             }
-        } else {
+        } 
+        else 
+        {
             close(error);
         }
     }
@@ -124,7 +134,8 @@ public:
 
     SocketCANInterfacePimpl(const SocketCANInterface &) = delete;
 
-    virtual ~SocketCANInterfacePimpl() {
+    virtual ~SocketCANInterfacePimpl() 
+    {
         close();
     }
 
@@ -133,8 +144,10 @@ public:
      * @brief Opens a SocketCAN device with device_name
      * @param device_name
      */
-    void open(const std::string &device_name) {
-        if (is_open_) {
+    void open(const std::string &device_name) 
+    {
+        if (is_open_) 
+        {
             throw std::runtime_error("SocketCAN Interface is already open");
         }
 
@@ -142,7 +155,8 @@ public:
         sockaddr_can addr;
         ifreq ifr;
 
-        if ((socket_ = ::socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+        if ((socket_ = ::socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) 
+        {
             throw std::system_error(errno, std::generic_category(), "Unable to open socket");
         }
 
@@ -153,7 +167,8 @@ public:
         addr.can_ifindex = ifr.ifr_ifindex;
 
         int err;
-        if ((err = ::bind(socket_, (struct sockaddr *) &addr, sizeof(addr))) < 0) {
+        if ((err = ::bind(socket_, (struct sockaddr *) &addr, sizeof(addr))) < 0) 
+        {
             ::close(socket_);
             throw std::system_error(errno, std::generic_category(), "Failed to bind socket");
         }
@@ -178,7 +193,8 @@ public:
     /**
      * @brief closes the internal socket and the ios_thread
      */
-    void close() {
+    void close() 
+    {
         close(boost::system::error_code());
     }
 
@@ -186,53 +202,59 @@ public:
      * @brief closes the internal socket and the ios_thread
      * @param ec - the error to pass to the onClosed signal
      */
-    void close(const boost::system::error_code &ec) {
+    void close(const boost::system::error_code &ec) 
+    {
         if(!is_open_) return;
+
         is_open_ = false;
         can_stream_descriptor_->close();
         ios_->stop();
-        if (std::this_thread::get_id() != ios_thread_->get_id()) {
+        if (std::this_thread::get_id() != ios_thread_->get_id()) 
+        {
             ios_thread_->join();
         }
         onClosed(ec);
     }
 
-
     /**
      * @brief resets filters to accept all can frames
      */
-    void removeFilters() {
+    void removeFilters() 
+    {
         if (!is_open_) return;
 
         ::can_filter rfilter[1];
-        rfilter[0].can_id = 0x7FF;
+        rfilter[0].can_id = 0x0CFFFFFF;
         rfilter[0].can_mask = 0x0;
         ::setsockopt(socket_, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
-
     }
 
     /**
      * @brief Sets the appropriate can filter
      * @param can_ids
      */
-    void setFilters(const std::vector<uint16_t> &can_ids) {
+    void setFilters(const std::vector<uint32_t> &can_ids) 
+    {
         if (!is_open_) return;
 
         std::vector<::can_filter> rfilter(can_ids.size());
-        for (size_t i = 0; i < can_ids.size(); i++) {
-            rfilter[i].can_id = can_ids[i] & 0x7FF;
-            rfilter[i].can_mask = CAN_SFF_MASK;
+        for (size_t i = 0; i < can_ids.size(); i++) 
+        {
+            rfilter[i].can_id = (can_ids[i] & 0x0CFFFFFF) | CAN_EFF_FLAG;
+            rfilter[i].can_mask = (CAN_EFF_FLAG | CAN_RTR_FLAG | CAN_EFF_MASK);
         }
 
-        ::setsockopt(socket_, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter[0], sizeof(can_filter) * rfilter.size());
+        ::setsockopt(socket_, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
     }
 
     /**
      * @brief Writes the frame to the can device
      * @param frame
      */
-    void write(can_frame &frame) {
+    void write(can_frame &frame) 
+    {
         if (!is_open_) return;
+
         boost::system::error_code ec;
         boost::asio::write(*can_stream_descriptor_, boost::asio::buffer(&frame, sizeof(frame)), boost::asio::transfer_all(), ec);
         if(ec)
@@ -241,13 +263,14 @@ public:
         }
     }
 
-
     /**
      * @brief Returns whether the device is open or not
      * @return
      */
-    inline bool is_open() { return is_open_; }
-
+    inline bool is_open() 
+    { 
+        return is_open_; 
+    }
 };
 
 
@@ -255,40 +278,64 @@ public:
 SocketCANInterface::SocketCANInterface() :
         pimpl_(new SocketCANInterface::SocketCANInterfacePimpl(onFrameReceived,onErrorFrameReceived,onClosed,onOpen,onError))
 {
+
 }
 
 
 SocketCANInterface::SocketCANInterface(const std::string &device_name) :
         pimpl_(new SocketCANInterface::SocketCANInterfacePimpl(device_name,onFrameReceived,onErrorFrameReceived,onClosed,onOpen,onError))
 {
+
 }
 
-SocketCANInterface::~SocketCANInterface() {
+SocketCANInterface::~SocketCANInterface() 
+{
 }
 
-void SocketCANInterface::close() {
+void SocketCANInterface::close() 
+{
     pimpl_->close();
 }
 
-void SocketCANInterface::removeFilters() {
+void SocketCANInterface::removeFilters() 
+{
     pimpl_->removeFilters();
 
 }
 
-void SocketCANInterface::setFilters(const std::vector<uint16_t> &can_ids) {
+void SocketCANInterface::setFilters(const std::vector<uint32_t> &can_ids) 
+{
     pimpl_->setFilters(can_ids);
 }
 
-void SocketCANInterface::write(const CANFrameStamped& frame) {
+void SocketCANInterface::write(const CANFrameStamped& frame) 
+{
     can_frame out;
-    memcpy(&out.data[0],&frame.data[0],frame.dlc);
-    out.can_dlc = frame.dlc;
+    
     out.can_id = frame.id;
+
+    if (frame.is_extended) 
+    {
+        out.can_id |= CAN_EFF_FLAG;
+    }
+    if (frame.is_rtr) 
+    {
+        out.can_id |= CAN_RTR_FLAG;
+        out.can_dlc = 0;
+    } 
+    else 
+    {
+        out.can_dlc = frame.dlc;
+        memcpy(&out.data[0], &frame.data[0], frame.dlc);
+    }
 
     pimpl_->write(out);
 }
 
-bool SocketCANInterface::is_open() { return pimpl_->is_open(); }
+bool SocketCANInterface::is_open() 
+{ 
+    return pimpl_->is_open(); 
+}
 
 
 }//namespace cav
