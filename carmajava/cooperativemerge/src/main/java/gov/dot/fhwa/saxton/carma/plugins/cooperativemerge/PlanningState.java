@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import cav_msgs.MobilityOperation;
 import cav_msgs.MobilityRequest;
@@ -46,7 +47,9 @@ public class PlanningState implements ICooperativeMergeState {
   protected final long requestTime;
   protected final String planId;
   protected String MERGE_REQUEST_PARAMS      = "MERGE|MAX_ACCEL:%.2f,LAG:%.2f,DIST:%.2f";
+  protected final long PLANNING_DELAY_TIME = 250; //ms
   protected AtomicBoolean replanningForMerge = new AtomicBoolean(false);
+  protected AtomicLong replanStartTime = new AtomicLong(0);
   
   /**
    * Constructor
@@ -101,6 +104,7 @@ public class PlanningState implements ICooperativeMergeState {
     
     plugin.getMobilityRequestPub().publish(mergeRequest);
     this.requestTime = System.currentTimeMillis();
+    this.replanStartTime.set(System.currentTimeMillis());
   }
   
   @Override
@@ -244,7 +248,7 @@ public class PlanningState implements ICooperativeMergeState {
             log.info("Starting replanning process");
             plugin.setAvailable(true);
             replanningForMerge.set(true);
-            pluginServiceLocator.getArbitratorService().requestNewPlan();
+            replanStartTime.set(System.currentTimeMillis());
         }
       }
     }
@@ -277,6 +281,14 @@ public class PlanningState implements ICooperativeMergeState {
       plugin.setState(this, new StandbyState(plugin, log, pluginServiceLocator));
       return;
     }
+
+    // If we are trying to replan and enough time has passed request a new plan
+    if (replanningForMerge.get() && System.currentTimeMillis() - replanStartTime.get() > PLANNING_DELAY_TIME) {
+      log.info("Requesting a new plan after delay: " + PLANNING_DELAY_TIME);
+      replanStartTime.set(System.currentTimeMillis()); // Avoid fast duplicate calls for replan
+      pluginServiceLocator.getArbitratorService().requestNewPlan();
+    }
+
     Thread.sleep(plugin.getUpdatePeriod());
   }
   
