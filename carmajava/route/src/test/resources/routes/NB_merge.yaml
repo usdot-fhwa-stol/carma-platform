@@ -11,7 +11,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -26,7 +26,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -41,7 +41,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -56,7 +56,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -71,7 +71,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -86,7 +86,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -101,7 +101,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -116,7 +116,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -131,7 +131,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -146,7 +146,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -161,7 +161,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -176,7 +176,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -191,7 +191,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -206,7 +206,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -221,7 +221,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -236,7 +236,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -251,7 +251,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -266,7 +266,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -281,7 +281,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -297,7 +297,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -312,7 +312,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -327,13 +327,13 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 20
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
-
+# End slow speed
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.6505269
@@ -342,7 +342,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -357,7 +357,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -372,7 +372,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -387,7 +387,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -402,7 +402,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -417,7 +417,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -432,7 +432,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -447,7 +447,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -462,7 +462,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 3
     requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
@@ -477,7 +477,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 3
     requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
@@ -492,7 +492,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 3
     requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
@@ -507,7 +507,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 3
     requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
@@ -522,7 +522,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 3
     requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
@@ -537,7 +537,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 3
     requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
@@ -552,7 +552,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 3
     requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
@@ -567,7 +567,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -582,7 +582,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -597,7 +597,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -612,7 +612,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -627,7 +627,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -642,7 +642,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -657,7 +657,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -672,7 +672,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -687,7 +687,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -702,7 +702,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -717,7 +717,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -732,7 +732,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -747,7 +747,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -762,7 +762,7 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -777,13 +777,13 @@ waypoints:
     minCrossTrack: -50.0
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 65
+    upperSpeedLimit: 70
     laneCount: 1
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
-
+# End of high speed
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.6572341919

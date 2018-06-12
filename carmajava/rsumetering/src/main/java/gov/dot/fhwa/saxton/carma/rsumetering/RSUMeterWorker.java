@@ -312,8 +312,8 @@ public class RSUMeterWorker {
    */
   public void handleMobilityRequestMsg(MobilityRequest msg) {
     // Validate message is for us
-    if (!(msg.getHeader().getRecipientId().equals(rsuId) 
-      || msg.getHeader().getRecipientId().equals(BROADCAST_ID))) {
+    // We ignore broadcast request messages as well for this algorithm
+    if (!msg.getHeader().getRecipientId().equals(rsuId)) {
         return;
       }
 
