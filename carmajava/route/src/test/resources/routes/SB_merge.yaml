@@ -227,7 +227,7 @@ waypoints:
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
-# new Merge Point
+
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.6536007
