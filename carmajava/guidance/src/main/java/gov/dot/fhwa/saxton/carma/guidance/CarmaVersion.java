@@ -38,10 +38,10 @@ public class CarmaVersion {
         String name =       "Carma Platform";
         int major =         2;
         int intermediate =  6;
-        int minor =         6;
+        int minor =         7;
         // Don't touch this, automatically updated
         int build = 0;
-        String suffix = "ROSLOG";
+        String suffix = "";
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         InputStream versionFileStream = classLoader.getResourceAsStream("version");
