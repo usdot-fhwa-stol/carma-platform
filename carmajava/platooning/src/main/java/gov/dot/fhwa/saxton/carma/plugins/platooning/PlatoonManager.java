@@ -240,18 +240,23 @@ public class PlatoonManager implements Runnable {
             leader = platoon.get(0);
             if(plugin.algorithmType == 1) {
                 // TODO The following method needs to move into a single strategy class
-                int newLeaderIndex = allPredecessorFollowing();
-                if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
-                    leader = platoon.get(newLeaderIndex);
-                    log.info("APF output: " + leader.staticId);
-                    previousFunctionalLeaderIndex = newLeaderIndex;
-                    previousFunctionalLeaderID = leader.staticId;
-                } else {
-                    // it might happened when the subject vehicle gets far away from the preceding vehicle so we follow the one in front
+                try {
+                    int newLeaderIndex = allPredecessorFollowing();
+                    if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
+                        leader = platoon.get(newLeaderIndex);
+                        log.info("APF output: " + leader.staticId);
+                        previousFunctionalLeaderIndex = newLeaderIndex;
+                        previousFunctionalLeaderID = leader.staticId;
+                    } else {
+                        // it might happened when the subject vehicle gets far away from the preceding vehicle so we follow the one in front
+                        leader = platoon.get(platoon.size() - 1);
+                        previousFunctionalLeaderIndex = platoon.size() - 1;
+                        previousFunctionalLeaderID = leader.staticId;
+                        log.info("Based on the output of APF algorithm we start to follow our predecessor.");
+                    }
+                } catch(Exception e) {
+                    log.error("Platooning is unstable. Follow the current predecessor");
                     leader = platoon.get(platoon.size() - 1);
-                    previousFunctionalLeaderIndex = platoon.size() - 1;
-                    previousFunctionalLeaderID = leader.staticId;
-                    log.info("Based on the output of APF algorithm we start to follow our predecessor.");
                 }
             } else if(plugin.algorithmType == 2) {
                 // Number 2 indicates PF algorithm and it will always return the vehicle in its immediate front
