@@ -70,7 +70,7 @@ public class CooperativeMergePlugin extends AbstractPlugin
     pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
     pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
     
-    cooperativeMergeInputs = new CooperativeMergeInputs();
+    cooperativeMergeInputs = new CooperativeMergeInputs(pluginServiceLocator.getManeuverPlanner().getManeuverInputs());
     lagTime = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getResponseLag();
     setState(null, new StandbyState(this, log, pluginServiceLocator));
   }

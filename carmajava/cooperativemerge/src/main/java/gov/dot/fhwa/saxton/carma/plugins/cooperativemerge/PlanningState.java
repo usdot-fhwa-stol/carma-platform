@@ -27,6 +27,7 @@ import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.AccStrategyManager;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
@@ -221,7 +222,6 @@ public class PlanningState implements ICooperativeMergeState {
     traj.setComplexManeuver(mergeManeuver);
 
     log.info("Added complex maneuver to trajectory. " + mergeManeuver);
-    plugin.setState(this, new ExecutionState(plugin, log, pluginServiceLocator, rampMeterData, planId, mergeManeuver));
     return tpr;
   }
 
@@ -287,6 +287,15 @@ public class PlanningState implements ICooperativeMergeState {
       log.info("Requesting a new plan after delay: " + PLANNING_DELAY_TIME);
       replanStartTime.set(System.currentTimeMillis()); // Avoid fast duplicate calls for replan
       pluginServiceLocator.getArbitratorService().requestNewPlan();
+    }
+
+    boolean maneuverStarted = pluginServiceLocator.getArbitratorService()
+        .getCurrentlyExecutingManeuver(ManeuverType.COMPLEX) instanceof CooperativeMergeManeuver;
+
+    if (maneuverStarted) {
+      log.info("Complex maneuver started changing state");
+      CooperativeMergeManeuver maneuver = (CooperativeMergeManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.COMPLEX);
+      plugin.setState(this, new ExecutionState(plugin, log, pluginServiceLocator, rampMeterData, planId, maneuver));
     }
 
     Thread.sleep(plugin.getUpdatePeriod());
