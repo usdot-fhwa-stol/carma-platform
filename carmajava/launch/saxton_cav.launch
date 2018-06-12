@@ -42,6 +42,9 @@
   <arg name="mock_srx_controller" default="false" doc="True if using a simulated srx controller driver"/>
   <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
   <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
+  <!-- TODO Remove after TO 26 demo -->
+  <arg name="use_rosbag" default="true" doc="Record a rosbag for the to 26 demo"/>
+
   <!-- Include the detailed launch file and pass in new arguments -->
   <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true"/>
 </launch>
