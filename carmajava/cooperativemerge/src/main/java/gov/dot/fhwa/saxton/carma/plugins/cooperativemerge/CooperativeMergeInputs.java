@@ -23,10 +23,10 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
  */
 public class CooperativeMergeInputs implements ICooperativeMergeInputs{
 
-  private final double UNSET_VALUE = -1.0;
-  private volatile double speedCommand = UNSET_VALUE; // m/s
-  private volatile double steeringCommand = UNSET_VALUE; // rad
-  private volatile double maxAccel = UNSET_VALUE; // m/s^2
+  private volatile double speedCommand; // m/s
+  private volatile double steeringCommand; // rad
+  private volatile double maxAccel; // m/s^2
+  private volatile boolean commandsSet = false;
   private final IManeuverInputs maneuverInputs;
 
   /**
@@ -44,6 +44,7 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
    * @param steeringCommand the steeringCommand to set in rad
    */
   public synchronized void setCommands(double speed, double maxAccel, double steer) {
+    this.commandsSet = true;
     this.speedCommand = speed;
     this.maxAccel = maxAccel;
     this.steeringCommand = steer;
@@ -51,7 +52,7 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
 
   @Override
   public synchronized double getSpeedCommand() {
-    if (speedCommand == UNSET_VALUE) {
+    if (!commandsSet) {
       return maneuverInputs.getCurrentSpeed();
     }
     return speedCommand;
@@ -59,7 +60,7 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
 
   @Override
   public synchronized double getMaxAccelLimit() {
-    if (maxAccel == UNSET_VALUE) {
+    if (!commandsSet) {
       return maneuverInputs.getMaxAccelLimit();
     }
     return maxAccel;
@@ -67,7 +68,7 @@ public class CooperativeMergeInputs implements ICooperativeMergeInputs{
 
   @Override
   public synchronized double getSteeringCommand() {
-    if (steeringCommand == UNSET_VALUE) {
+    if (!commandsSet) {
       return 0.0;
     }
     return steeringCommand;
