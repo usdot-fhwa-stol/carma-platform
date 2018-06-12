@@ -94,6 +94,10 @@ public class CandidateFollowerState implements IPlatooningState {
             
             // Plan trajectory to follow all speed limits in this trajectory segment
             double newManeuverStartSpeed = expectedEntrySpeed;
+            if(mergedLimits.size() > 0) {
+                newManeuverStartSpeed = Math.min(mergedLimits.get(0).getLimit(), newManeuverStartSpeed);
+                log.warn("Current speed is exceeding the local speed limit!!!");
+            }
             double newManeuverStartLocation = traj.getStartLocation();
             for (SpeedLimit limit : mergedLimits) {
                 newManeuverStartSpeed = planManeuvers(traj, newManeuverStartLocation, limit.getLocation(), newManeuverStartSpeed, limit.getLimit());
