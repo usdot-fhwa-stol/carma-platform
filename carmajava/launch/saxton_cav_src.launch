@@ -30,8 +30,6 @@
   roslaunch carma saxton_cav.launch mock_can:=false can_data_file:=/path/to/file.csv
 -->
 <launch>
-  <!-- Set Environment Variables -->
-  <env name="REDUCE_SAXTON_LOG" value="true"/>
   <!-- Constants -->
   <!-- Directory of Parameter Files -->
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
@@ -61,6 +59,11 @@
   <!-- Debug -->
   <!-- JVM Debug arguments -->
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
+  <!-- JVM Logging Options -->
+  <arg name="log_config" default="/opt/carma/src/CarmaPlatform/carmajava/launch/params/log-config.properties" doc="The location of the logging configuration file"/>
+  <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
+  <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
+  <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
   <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
@@ -331,7 +334,7 @@
       <!-- Guidance Main Node -->
       <node pkg="carma" type="guidance" name="guidance_main"
             args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
-
+          
         <env if="$(arg debug_guidance)" name="GUIDANCE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
         <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
