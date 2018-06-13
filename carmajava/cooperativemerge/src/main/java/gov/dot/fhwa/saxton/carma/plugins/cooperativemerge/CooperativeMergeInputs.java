@@ -15,54 +15,62 @@
  */
 package gov.dot.fhwa.saxton.carma.plugins.cooperativemerge;
 
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
+
 /**
  * Specifies the data input interface for a CooperativeMergeManeuver.
  * of the package.
  */
 public class CooperativeMergeInputs implements ICooperativeMergeInputs{
 
-  private double speedCommand; // m/s
-  private double steeringCommand; // rad
-  private double maxAccel = 2.5; // m/s^2
+  private volatile double speedCommand; // m/s
+  private volatile double steeringCommand; // rad
+  private volatile double maxAccel; // m/s^2
+  private volatile boolean commandsSet = false;
+  private final IManeuverInputs maneuverInputs;
 
   /**
    * Constructor
    */
-  public CooperativeMergeInputs() {}
+  public CooperativeMergeInputs(IManeuverInputs maneuverInputs) {
+    this.maneuverInputs = maneuverInputs;
+  }
 
   /**
-   * @param speedCommand the speedCommand to set
+   * Synchronized set of current commands
+   * 
+   * @param speedCommand the speedCommand to set in m/s
+   * @param maxAccel the maxAccel to set in m/s^2
+   * @param steeringCommand the steeringCommand to set in rad
    */
-  public void setSpeedCommand(double speedCommand) {
-    this.speedCommand = speedCommand;
+  public synchronized void setCommands(double speed, double maxAccel, double steer) {
+    this.commandsSet = true;
+    this.speedCommand = speed;
+    this.maxAccel = maxAccel;
+    this.steeringCommand = steer;
   }
 
   @Override
-  public double getSpeedCommand() {
+  public synchronized double getSpeedCommand() {
+    if (!commandsSet) {
+      return maneuverInputs.getCurrentSpeed();
+    }
     return speedCommand;
   }
 
   @Override
-  public double getMaxAccelLimit() {
+  public synchronized double getMaxAccelLimit() {
+    if (!commandsSet) {
+      return maneuverInputs.getMaxAccelLimit();
+    }
     return maxAccel;
   }
 
-  /**
-   * @param maxAccel the maxAccel to set in m/s^2
-   */
-  public void setMaxAccel(double maxAccel) {
-    this.maxAccel = maxAccel;
-  }
-
-  /**
-   * @param steeringCommand the steeringCommand to set
-   */
-  public void setSteeringCommand(double steeringCommand) {
-    this.steeringCommand = steeringCommand;
-  }
-
   @Override
-  public double getSteeringCommand() {
+  public synchronized double getSteeringCommand() {
+    if (!commandsSet) {
+      return 0.0;
+    }
     return steeringCommand;
   }
 
