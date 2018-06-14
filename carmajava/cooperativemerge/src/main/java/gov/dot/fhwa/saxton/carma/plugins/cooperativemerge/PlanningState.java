@@ -50,6 +50,7 @@ public class PlanningState implements ICooperativeMergeState {
   protected String MERGE_REQUEST_PARAMS      = "MERGE|MAX_ACCEL:%.2f,LAG:%.2f,DIST:%.2f";
   protected final long PLANNING_DELAY_TIME = 250; //ms
   protected AtomicBoolean replanningForMerge = new AtomicBoolean(false);
+  protected AtomicBoolean awaitingDelay = new AtomicBoolean(false);
   protected AtomicLong replanStartTime = new AtomicLong(0);
   
   /**
@@ -248,6 +249,7 @@ public class PlanningState implements ICooperativeMergeState {
             log.info("Starting replanning process");
             plugin.setAvailable(true);
             replanningForMerge.set(true);
+            awaitingDelay.set(true);
             replanStartTime.set(System.currentTimeMillis());
         }
       }
@@ -283,9 +285,10 @@ public class PlanningState implements ICooperativeMergeState {
     }
 
     // If we are trying to replan and enough time has passed request a new plan
-    if (replanningForMerge.get() && System.currentTimeMillis() - replanStartTime.get() > PLANNING_DELAY_TIME) {
+    if (replanningForMerge.get() && awaitingDelay.get() && System.currentTimeMillis() - replanStartTime.get() > PLANNING_DELAY_TIME) {
       log.info("Requesting a new plan after delay: " + PLANNING_DELAY_TIME);
       replanStartTime.set(System.currentTimeMillis()); // Avoid fast duplicate calls for replan
+      awaitingDelay.set(false);// TODO this if statement is unstable logic needs to be thought about
       pluginServiceLocator.getArbitratorService().requestNewPlan();
     }
 

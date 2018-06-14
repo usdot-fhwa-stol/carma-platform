@@ -463,8 +463,8 @@ waypoints:
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 70
-    laneCount: 3
-    requiredLaneIndex: 1
+    laneCount: 1
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -478,8 +478,8 @@ waypoints:
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 70
-    laneCount: 3
-    requiredLaneIndex: 1
+    laneCount: 1
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -493,8 +493,8 @@ waypoints:
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 70
-    laneCount: 3
-    requiredLaneIndex: 1
+    laneCount: 1
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -508,8 +508,8 @@ waypoints:
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 70
-    laneCount: 3
-    requiredLaneIndex: 1
+    laneCount: 1
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -523,8 +523,8 @@ waypoints:
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 70
-    laneCount: 3
-    requiredLaneIndex: 1
+    laneCount: 1
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -538,8 +538,8 @@ waypoints:
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 70
-    laneCount: 3
-    requiredLaneIndex: 1
+    laneCount: 1
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -553,8 +553,8 @@ waypoints:
     maxCrossTrack: 50.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 70
-    laneCount: 3
-    requiredLaneIndex: 1
+    laneCount: 1
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
