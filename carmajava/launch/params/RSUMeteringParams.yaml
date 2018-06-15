@@ -42,9 +42,9 @@ dist_to_merge_on_main_route: 20492.592390628626
 
 # Double: The length of the merge area
 # Units: m
-# NB: 293.0
-# SB: 479.58451
-length_of_merge: 293.0
+# NB: 155.753
+# SB: 47.244 # old 479.58451
+length_of_merge: 155.753
 
 # Double: The distance around the ramp meter point where a vehicle can request to merge
 # Units: m
