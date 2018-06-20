@@ -81,7 +81,7 @@ target_speed_before_stop: 2.2352
 
 # Double:The lag time in seconds for the driver to hit the accelerator
 # Units: s
-driver_lag_time: 1.7
+driver_lag_time: 1.3
 
 # Double: The lag time in seconds for the communications between a platoon -> rsu -> merge vehicle
 # Units: s
