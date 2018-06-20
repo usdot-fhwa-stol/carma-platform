@@ -50,69 +50,66 @@ inline double deg2rad(double deg) { return deg*PI/180.0;}
 inline double rad2deg(double rad) { return rad*180.0/PI;}
 
 PinPointApplication::PinPointApplication(int argc, char **argv) : cav::DriverApplication(argc, argv, "pinpoint"),
-                                                                  latest_filter_accuracy_(),
-                                                                  latest_velocity_(),
-                                                                  latest_quaternion_covariance_() {
+                                                                  latest_filter_accuracy_(), latest_velocity_(),
+                                                                  latest_quaternion_covariance_() 
+{
     cav_msgs::DriverStatus status;
     status.status = cav_msgs::DriverStatus::OFF;
     status.position = true;
     setStatus(status);
 }
 
+void PinPointApplication::initialize() 
+{
 
-void PinPointApplication::initialize() {
-
-    //CAV platform requires that the position api falls under the /pinpoint/position namespace
+    // CAV platform requires that the position api falls under the /pinpoint/position namespace
     position_api_nh_.reset(new ros::NodeHandle("~position"));
 
     tf_buffer_.reset(new tf2_ros::Buffer());
     tf_listener_.reset(new tf2_ros::TransformListener(*tf_buffer_));
 
-    //Pinpoint address
+    // Pinpoint address
     pnh_->param<std::string>("address", config_.address, "10.26.4.73");
     pnh_->param<std::string>("loc_port", config_.loc_port, "9501");
 
-    //Frames
+    // Frames
     pnh_->param<std::string>("odom_frame", odom_frame, "odom");
     pnh_->param<std::string>("base_link_frame", base_link_frame, "base_link");
     pnh_->param<std::string>("sensor_frame", sensor_frame, "pinpoint");
 
     pnh_->param<bool>("publish_tf", publish_tf, false);
 
-    //Setup connection handlers
+    // Setup connection handlers
     pinpoint_.onConnect.connect([this]() { onConnectHandler(); });
     pinpoint_.onDisconnect.connect([this]() { onDisconnectHandler(); });
 
     server.setCallback([this](pinpoint::pinpointConfig& cfg, uint32_t level){ dynReconfigCB(cfg,level);});
 
-    //Setup the API publishers
+    // Setup the API publishers
     std::string node_name = ros::this_node::getName();
     api_.clear();
 
-    //Velocity
+    // Velocity
     velocity_pub_ = position_api_nh_->advertise<geometry_msgs::TwistStamped>("velocity", 1);
     api_.push_back(velocity_pub_.getTopic());
 
     pinpoint_.onVelocityChanged.connect([this](torc::PinPointVelocity const &vel) { onVelocityChangedHandler(vel); });
 
-
-    //GlobalPose
-
+    // GlobalPose
     global_pose_pub_ = position_api_nh_->advertise<sensor_msgs::NavSatFix>("nav_sat_fix", 1);
     api_.push_back(global_pose_pub_.getTopic());
 
     pinpoint_.onGlobalPoseChanged
             .connect([this](torc::PinPointGlobalPose const &pose) { onGlobalPoseChangedHandler(pose); });
 
-    //LocalPose
-
+    // LocalPose
     local_pose_pub_ = position_api_nh_->advertise<nav_msgs::Odometry>("odometry", 1);
     api_.push_back(local_pose_pub_.getTopic());
 
     pinpoint_.onLocalPoseChanged
             .connect([this](torc::PinPointLocalPose const &pose) { onLocalPoseChangedHandler(pose); });
 
-    //Other non-published pinpoint data
+    // Other non-published pinpoint data
     pinpoint_.onFilterAccuracyChanged
             .connect([this](torc::PinPointFilterAccuracy const &acc) { onFilterAccuracyChangedHandler(acc); });
 
@@ -121,21 +118,19 @@ void PinPointApplication::initialize() {
                 onQuaternionCovarianceChangedHandler(quat);
             });
 
-
     pinpoint_.onStatusConditionChanged
             .connect([this](torc::PinPointLocalizationClient::PinPointStatusCode const &code) {
                 onStatusConditionChangedHandler(code);
             });
 
-
-    //Initialize time
+    // Initialize time
     last_heartbeat_time_ = ros::Time::now();
     pinpoint_.onHeartbeat.connect([this](){
         std::lock_guard<std::mutex> lock(heartbeat_mutex_);
         last_heartbeat_time_ = ros::Time::now();
     });
 
-    //Heading
+    // Heading
     heading_pub_ = position_api_nh_->advertise<cav_msgs::HeadingStamped>("heading", 1);
     api_.push_back(heading_pub_.getTopic());
 
@@ -145,18 +140,21 @@ void PinPointApplication::initialize() {
     spin_rate = 50;
 }
 
-
-void PinPointApplication::onConnectHandler() {
+void PinPointApplication::onConnectHandler() 
+{
     ROS_INFO_STREAM("PinPoint Connected");
+
     cav_msgs::DriverStatus status = getStatus();
     status.status = cav_msgs::DriverStatus::OPERATIONAL;
     setStatus(status);
 }
 
-void PinPointApplication::onDisconnectHandler() {
+void PinPointApplication::onDisconnectHandler() 
+{
     cav_msgs::DriverStatus status = getStatus();
     status.status = cav_msgs::DriverStatus::OFF;
     setStatus(status);
+
     ROS_WARN_STREAM("PinPoint Disconnected");
 }
 
@@ -164,24 +162,27 @@ void PinPointApplication::onDisconnectHandler() {
  *
  * Translates torc PinPoint Velocity into base_link_frame and publishes topic
  */
-void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity &vel) {
+void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity &vel) 
+{
     geometry_msgs::TwistStamped msg;
 
     msg.header.frame_id = base_link_frame;
-    try {
+    try 
+    {
         msg.header.stamp.fromNSec(vel.time * static_cast<uint64_t>(1000));
-    }catch(std::runtime_error e)
+    }
+    catch(std::runtime_error e)
     {
         ROS_WARN_STREAM("onVelocityChangedHandler through exception in ros::TimeBase::fromNSec(), time : " << vel.time);
         return;
     }
 
-
     geometry_msgs::TransformStamped tf;
-
-    try {
+    try 
+    {
         tf = tf_buffer_->lookupTransform(base_link_frame,sensor_frame,msg.header.stamp);
-    }catch(tf2::TransformException e)
+    }
+    catch(tf2::TransformException e)
     {
         ROS_WARN_STREAM_THROTTLE(5,"Exception looking up transform: " << e.what());
         return;
@@ -211,22 +212,22 @@ void PinPointApplication::onVelocityChangedHandler(const torc::PinPointVelocity 
     latest_velocity_ = msg;
 }
 
-
 /**
  * Publishes nav_sat_fix messages from PinPoint globalPose structure
  *
  * Publishes cav_msgs/HeadingStamped msg from the PinPoint globalPose
  *
  */
-void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalPose &pose) {
-
-
+void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalPose &pose) 
+{
     /// <a href="http://docs.ros.org/api/sensor_msgs/html/msg/NavSatFix.html">http://docs.ros.org/api/sensor_msgs/html/msg/NavSatFix.html</a>
     sensor_msgs::NavSatFix msg;
     msg.header.frame_id = sensor_frame;
-    try {
+    try 
+    {
         msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
-    }catch(std::runtime_error e)
+    }
+    catch(std::runtime_error e)
     {
         ROS_WARN_STREAM("onGlobalPoseChangedHandler threw exception in ros::TimeBase::fromNSec(), time : " << pose.time);
         return;
@@ -247,38 +248,40 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
 
     cav_msgs::HeadingStamped heading;
     heading.header = msg.header;
-    heading.header.frame_id = "0"; //no frame
+    heading.header.frame_id = "0"; // no frame
 
-
-    //Convert yaw [-180,180] to  [0,360] degrees east of north
+    // Convert yaw [-180,180] to  [0,360] degrees east of north
     heading.heading = pose.yaw < 0 ? 360 + pose.yaw : pose.yaw;
 
     heading_pub_.publish(heading);
-
 }
 
-void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPose &pose) {
+void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPose &pose) 
+{
     geometry_msgs::TransformStamped tf;
 
     nav_msgs::Odometry msg;
     msg.header.frame_id = odom_frame;
-    try {
+    try 
+    {
         msg.header.stamp.fromNSec(pose.time * static_cast<uint64_t>(1000));
-    }catch(std::runtime_error e)
+    }
+    catch(std::runtime_error e)
     {
         ROS_WARN_STREAM("onLocalPoseChangedHandler threw exception in ros::TimeBase::fromNSec(), time : " << pose.time);
         return;
     }
     msg.child_frame_id = base_link_frame;
 
-    try {
+    try 
+    {
         tf = tf_buffer_->lookupTransform(base_link_frame,sensor_frame,msg.header.stamp);
-    }catch(tf2::TransformException e)
+    }
+    catch(tf2::TransformException e)
     {
         ROS_WARN_STREAM_THROTTLE(5,"Exception looking up transform: " << e.what());
         return;
     }
-
 
     geometry_msgs::PoseStamped pinpoint_pose;
     pinpoint_pose.header.frame_id = sensor_frame;
@@ -316,7 +319,8 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
 
     local_pose_pub_.publish(msg);
 
-    if (publish_tf) {
+    if (publish_tf) 
+    {
         static tf2_ros::TransformBroadcaster br;
         geometry_msgs::TransformStamped transformStamped;
 
@@ -329,85 +333,87 @@ void PinPointApplication::onLocalPoseChangedHandler(const torc::PinPointLocalPos
         transformStamped.transform.rotation = msg.pose.pose.orientation;
         br.sendTransform(transformStamped);
     }
-
 }
 
-
-void PinPointApplication::onFilterAccuracyChangedHandler(const torc::PinPointFilterAccuracy &acc) {
+void PinPointApplication::onFilterAccuracyChangedHandler(const torc::PinPointFilterAccuracy &acc) 
+{
     latest_filter_accuracy_ = acc;
 }
 
-void PinPointApplication::onQuaternionCovarianceChangedHandler(const torc::PinPointQuaternionCovariance &quat) {
+void PinPointApplication::onQuaternionCovarianceChangedHandler(const torc::PinPointQuaternionCovariance &quat) 
+{
     latest_quaternion_covariance_ = quat;
 }
 
-
-void PinPointApplication::onStatusConditionChangedHandler(
-        const torc::PinPointLocalizationClient::PinPointStatusCode &code) {
-
-    //Check to see if we are already tracking this code
+void PinPointApplication::onStatusConditionChangedHandler(const torc::PinPointLocalizationClient::PinPointStatusCode &code) 
+{
+    // Check to see if we are already tracking this code
     auto it = code_map_.find(code.code);
-    if (it == code_map_.end()) {
-
-        //If the code is not tracked we need to create a DiagnostHelper object for it
-        //and add it to our sotre
+    if (it == code_map_.end()) 
+    {
+        // If the code is not tracked we need to create a DiagnostHelper object for it and add it to our sotre
         StatusMessageDiagnosticHelper stat;
         stat.code = code.code;
         stat.condition = code.condition;
         code_map_[code.code] = stat;
 
-        //Then we add it to the diagnostic_updater callbacks
+        // Then we add it to the diagnostic_updater callbacks
         updater_.add(code_map_[code.code].codeAsString(), &code_map_[code.code],
                      &StatusMessageDiagnosticHelper::processDiagnostics);
     }
 
-    //update the condition
+    // update the condition
     code_map_[code.code].condition = code.condition;
 
-    //For the driverstatus state we need to know if we are in error or warning
-    //we maintain two sets of the
-    if (code.condition == torc::StatusCondition::Error) {
+    // For the driverstatus state we need to know if we are in error or warning we maintain two sets of the
+    if (code.condition == torc::StatusCondition::Error) 
+    {
         warning_set_.erase(code.code);
         error_set_.insert(code.code);
-    } else if (code.condition == torc::StatusCondition::Warning) {
+    } 
+    else if (code.condition == torc::StatusCondition::Warning) 
+    {
         warning_set_.insert(code.code);
         error_set_.erase(code.code);
-    } else {
+    } 
+    else 
+    {
         warning_set_.erase(code.code);
         error_set_.erase(code.code);
     }
 
 
-    //We assume status is unchanged if either of the sets
-    //contain items then we set status accordingly
+    // We assume status is unchanged if either of the sets contain items then we set status accordingly
     cav_msgs::DriverStatus status = getStatus();
-    if (error_set_.size() > 0) {
+    if (error_set_.size() > 0) 
+    {
         status.status = cav_msgs::DriverStatus::FAULT;
         setStatus(status);
-    } else if (warning_set_.size() > 0)
+    } 
+    else if (warning_set_.size() > 0)
     {
         status.status = cav_msgs::DriverStatus::DEGRADED;
         setStatus(status);
-    } else
+    } 
+    else
     {
         status.status = cav_msgs::DriverStatus::OPERATIONAL;
         setStatus(status);
     }
-
 }
 
-
-void PinPointApplication::pre_spin() {
-
-    //If we are not connected
+void PinPointApplication::pre_spin() 
+{
+    // If we are not connected
     if(!connecting_ && !pinpoint_.connected())
     {
         connecting_ = true;
         if(connect_thread_)
+        {
             connect_thread_->join();
+        }
 
-        //We don't want to block the spin thread because the driver
-        //application maintains driver status topic
+        // We don't want to block the spin thread because the driver application maintains driver status topic
         connect_thread_.reset( new std::thread([this]()
                                                {
 
@@ -421,10 +427,9 @@ void PinPointApplication::pre_spin() {
                                                    connecting_ = false;
                                                }));
     }
-    else if(pinpoint_.connected()) //If we are connected lets make sure we are getting updates
+    else if(pinpoint_.connected()) // If we are connected lets make sure we are getting updates
     {
         ros::Time last;
-
         {
             std::lock_guard<std::mutex> lock(heartbeat_mutex_);
             last = last_heartbeat_time_;
@@ -433,7 +438,6 @@ void PinPointApplication::pre_spin() {
         try
         {
             ros::Duration time = ros::Time::now() - last;
-
 
             if(time.sec > 1 && time.sec % 5 == 0)
             {
@@ -452,17 +456,18 @@ void PinPointApplication::pre_spin() {
                 pinpoint_.Close();
             }
 
-        }catch(std::runtime_error e)
+        }
+        catch(std::runtime_error e)
         {
             ROS_WARN_STREAM("pre_spin threw exception in ros::TimeBase::fromNSec(), ex: " << e.what());
             return;
         }
     }
-
 }
 
-void PinPointApplication::post_spin() {
-    //We don't have anything to do
+void PinPointApplication::post_spin() 
+{
+    // We don't have anything to do
 }
 
 void PinPointApplication::dynReconfigCB(pinpoint::pinpointConfig& cfg, uint32_t level)
