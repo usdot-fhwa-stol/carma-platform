@@ -169,7 +169,8 @@ public:
         NoHeadingUpdates = 12,
         BadHeadingAgreement = 13,
         BadMeasurementTime = 14,
-        IrregularTimeStep = 15
+        IrregularTimeStep = 15,
+        BadWssScaleFactor = 16
     };
 
 
