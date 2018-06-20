@@ -46,13 +46,6 @@ public interface ArbitratorService {
     void requestNewPlan();
 
     /**
-     * Request the arbitrator to plan and execute a new trajectory.
-     * 
-     * @params endDist The distance downtrack at which to end the trajectory
-     */
-    void requestNewPlan(double endDist);
-
-    /**
      * Plan the specified region of the input trajectory as though it were a normal trajectory unto itself.
      * <p>
      * Planning outside startDist and endDist is not allowed. Recursion is only allowed up to a fixed depth

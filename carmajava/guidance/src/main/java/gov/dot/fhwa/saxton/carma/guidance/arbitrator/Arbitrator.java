@@ -662,7 +662,6 @@ public class Arbitrator extends GuidanceComponent
     notifyTrajectoryFailure();
   }
 
-  @Override
   public void requestNewPlan(double endDist) {
     planningWindow = (endDist - downtrackDistance.get()) / planningWindowShrinkFactor;
     log.warn("Using experimental replan method, replanning with window: " + planningWindow);
