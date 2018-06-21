@@ -109,8 +109,11 @@
              to="/$(arg TOP_NS)/system_alert"/>
 
       <!-- DSRC OBU Driver Node -->
+      <!--
       <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
+      -->
       <!-- Simulated DSRC Driver Node -->
+      <!--
       <node if="$(arg mock_dsrc)" pkg="carma" type="mock_drivers" name="dsrc"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
@@ -120,6 +123,7 @@
         <param name="data_file_path" type="string" value="$(arg dsrc_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/DSRCOBUParams.yaml"/>
       </node>
+      -->
 
       <!-- PinPoint Driver Node -->
       <node unless="$(arg mock_pinpoint)" pkg="pinpoint" type="pinpoint_node" name="pin_point_application">
@@ -137,10 +141,13 @@
       </node>
 
       <!-- SRX CAN Driver Node -->
+      <!--
       <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
         <arg name="srx_can_can_device" value="can2" />
       </include>
+      -->
       <!-- Simulated CAN Driver Node -->
+      <!--
       <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
@@ -150,6 +157,11 @@
         <param name="data_file_path" type="string" value="$(arg can_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       </node>
+      -->      
+
+      <!--Truck CAN Driver Node-->
+      <include file="$(find truck_can_driver)/launch/truck_can_client_cav_socketcan.launch">      
+      </include>
 
       <!--SRX Controller Driver Node-->
       <!--
@@ -175,10 +187,13 @@
       </include>
 
       <!-- SRX Radar Driver Node -->
+      <!--
       <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
         <arg name="srx_objects_can_device" value="can0"/>
       </include>
+      -->
       <!-- Simulated Radar Driver Node -->
+      <!--
       <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
@@ -188,6 +203,7 @@
         <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
       </node>
+      -->
 
       <!--Lateral Controller Driver Node-->
       <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
@@ -478,11 +494,11 @@
       <remap from="robot_status"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_can/control/get_status"/>
       <remap from="acc_engaged"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/acc_engaged"/>
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_can_client_device/can/acc_engaged"/>
       <remap from="engine_speed"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/engine_speed"/>
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_can_client_device/can/engine_speed"/>
       <remap from="speed"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/speed"/>
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_can_client_device/can/speed"/>
       <remap from="driver_discovery"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
       <remap from="cmd_lateral"
