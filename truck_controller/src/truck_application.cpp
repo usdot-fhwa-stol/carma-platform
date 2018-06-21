@@ -36,8 +36,8 @@
 
 namespace carma
 {
-    const double max_commanded_speed = 35.76; // (m/s)
-    const double max_commanded_accel = 2.5; // (m/s)/s
+    const double max_commanded_speed = 112.654; // (km/h)
+    const double max_commanded_accel = 12.6; // (km/h)/s
 }
 
 TruckApplication::TruckApplication(int argc, char **argv, const std::string &name) : DriverApplication(argc, argv, name)
@@ -60,9 +60,9 @@ void TruckApplication::initialize()
     pnh_->param<bool>("clear_faults_at_start", clear_faults_enabled_, false); // Set (clear_faults_enabled_ = false) as default
 
     // Initialize and Setup Pid Param
-    pnh_->param<double>("k_p", k_p_, 0.1);
-    pnh_->param<double>("k_i", k_i_, 0.01);
-    pnh_->param<double>("k_d", k_d_, 0.005);
+    pnh_->param<double>("k_p", k_p_, 7.5);
+    pnh_->param<double>("k_i", k_i_, 3.0);
+    pnh_->param<double>("k_d", k_d_, 0.0);
 
     set_PidParam_.setF(k_p_,k_i_,k_d_);
 

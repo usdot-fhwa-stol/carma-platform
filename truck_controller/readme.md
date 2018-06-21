@@ -1,13 +1,13 @@
 Controller API ( inherits ROS Driver Capabilities )
 -------------------
 ### Parameters
-~k_p ( double, default : 0.1 )
+~k_p ( double, default : 7.5 )
 : proportional gain constant for closed loop control
 
-~k_i ( double, default : 0.01 )
+~k_i ( double, default : 3 )
 : integral gain constant for closed loop control
 
-~k_d ( double, default : 0.005 )
+~k_d ( double, default : 0 )
 : derivative gain constant for closed loop control
 
 ~enabled_at_start ( bool, default: false )
@@ -25,7 +25,7 @@ received_messages ( can_msgs/Frame )
 > We listen to this topic for messages from the dbw module
 
 ~/control/cmd_speed (cav_msgs/SpeedAccel )
-> Messages received on this topic are converted to closed loop speed commands to the sent_messages topic. The units used are m/s and m/s^2.
+> Messages received on this topic are converted to closed loop speed commands to the sent_messages topic. The units used for speed is km/h limited to a max of 112.654 (70 mph). The units used for accel is (km/h)/s limited to 12.6 (3.5 m/s^2).
 
 ~/control/cmd_longitudinal_effort
 > Messages received on this topic are converted to open loop effort commands sent to the sent_messages topic. The effort is bounded [-100, 100].

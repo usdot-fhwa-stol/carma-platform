@@ -4,5 +4,8 @@
         <remap from="received_messages" to="$(arg truck_can_device)/received_messages" />
         <param name="socketcan_selection" value="0" />
         <param name="socketcan_device" value="$(arg truck_can_device)" />
+        <param name="k_p" value="7.5" />
+        <param name="k_i" value="3" />
+        <param name="k_d" value="0" />
     </node>
 </launch>

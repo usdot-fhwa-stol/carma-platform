@@ -813,19 +813,19 @@ struct PropB_31_Message
         // Byte 1.1 - 2.8: Proportional Gain Component Numerator
         uint16_t prop_gain_num = static_cast<uint16_t>(static_cast<int32_t>(proportional_gain_comp_numerator) + 32768);
         data[0] = static_cast<uint8_t>(prop_gain_num) & 0xFF;
-        data[1] = (static_cast<uint8_t>(prop_gain_num) >> 8) & 0xFF;
+        data[1] = static_cast<uint8_t>(((prop_gain_num) >> 8) & 0xFF);
         // Byte 3.1 - 4.8: Integrator Gain Component Numerator
         uint16_t intr_gain_num = static_cast<uint16_t>(static_cast<int32_t>(integrator_gain_comp_numerator) + 32768);
         data[2] = static_cast<uint8_t>(intr_gain_num) & 0xFF;
-        data[3] = (static_cast<uint8_t>(intr_gain_num) >> 8) & 0xFF;
+        data[3] = static_cast<uint8_t>(((intr_gain_num) >> 8) & 0xFF);
         // Byte 5.1 - 6.8: Derivative Gain Component Numerator
         uint16_t derv_gain_num = static_cast<uint16_t>(static_cast<int32_t>(derivative_gain_comp_numerator) + 32768);
         data[4] = static_cast<uint8_t>(derv_gain_num) & 0xFF;
-        data[5] = (static_cast<uint8_t>(derv_gain_num) >> 8) & 0xFF;
+        data[5] = static_cast<uint8_t>(((derv_gain_num) >> 8) & 0xFF);
         // Byte 7.1 - 8.8: PID Shared Divisor
         uint16_t pid_div = static_cast<uint16_t>(static_cast<int32_t>(pid_shared_divisor) + 32768);
         data[6] = static_cast<uint8_t>(pid_div) & 0xFF;
-        data[7] = (static_cast<uint8_t>(pid_div) >> 8) & 0xFF;
+        data[7] = static_cast<uint8_t>(((pid_div) >> 8) & 0xFF);
         
         // Create the CAN Frame
         cav::CANFrameStamped can_frame;

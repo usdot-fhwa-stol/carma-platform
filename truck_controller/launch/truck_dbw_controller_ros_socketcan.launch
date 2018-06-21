@@ -4,6 +4,9 @@
         <param name="socketcan_selection" value="1" />
         <param name="ros_socketcan_topic_recv" value="$(arg truck_can_device)/received_messages" />
         <param name="ros_socketcan_topic_send" value="$(arg truck_can_device)/sent_messages" />
+        <param name="k_p" value="7.5" />
+        <param name="k_i" value="3" />
+        <param name="k_d" value="0" />
     </node>
     <node name="truck_can_socketcan" pkg="socketcan_bridge" type="socketcan_bridge_node" output="screen">
         <param name="can_device" value="$(arg truck_can_device)" />

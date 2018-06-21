@@ -41,6 +41,7 @@
 
 #include <boost/endian/conversion.hpp>
 #include <boost/signals2/signal.hpp>
+#include <boost/math/special_functions/trunc.hpp>
 
 #include <limits>
 
@@ -156,7 +157,7 @@ public:
             double max = std::max({p, i, d});
             if (max != 0.0)
             {
-                int max_div = boost::math::iround(std::numeric_limits<int16_t>::max() / max);
+                int max_div = boost::math::itrunc(std::numeric_limits<int16_t>::max() / max);
                 divisor = (int16_t) std::min<int>(max_div, std::numeric_limits<int16_t>::max());
             } else
             {
