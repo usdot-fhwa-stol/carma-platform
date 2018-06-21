@@ -89,7 +89,7 @@ target_link_libraries(ros_socketcan_interface
 # )
 
 ## Mark executables and/or libraries for installation
- install(TARGETS driver_application cav_socketcan_interface
+ install(TARGETS driver_application cav_socketcan_interface ros_socketcan_interface
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
