@@ -638,7 +638,7 @@ private:
             0x0CFFF6FF,     // PropB_F6 FEEDBACK - PGN 65526 from All Modules
             0x0CFFED27,     // PropB_ED FEEDBACK - PGN 65517 from Control SW (39)
             0x0CFFFCFF,     // PropB_FC FEEDBACK - PGN 65532 from All Modules
-            0x0CEA2127,
+            0x0CEA2127,     // TP Request - Only Recv Not Handled
         };
 
     std::shared_ptr<cav::CANInterface> device_; // Device to send and receive messages on

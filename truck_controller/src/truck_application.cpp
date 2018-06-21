@@ -82,6 +82,11 @@ void TruckApplication::initialize()
     last_sent_front_lights_msg_         = time_now ;
     last_sent_rear_lights_msg_          = time_now ;
 
+    // Initialize robotic control info stream print flag
+    disable_robotic_printed_flag_ = false;
+    robotic_wrench_control_active_ = false;
+    robotic_speed_control_active_ = false;
+
     //Initialize the dbw controller
     initializeDBWController();
 
@@ -142,35 +147,51 @@ void TruckApplication::sendCommands()
     auto time_now = ros::Time::now();
     if((time_now - last_sent_control_mode_message_) > ros::Duration(truck_dbw_send_rates_.send_control_mode_message))
     {
+        // Initialize control to false - willl overwrite if active
+        robotic_wrench_control_active_ = false;
+        robotic_speed_control_active_ = false;
+
         if (!robotic_enabled_)
         {
-            // Reset All Other vales since we are disabling ACC
+            // Reset All Other values since we are disabling ACC
             set_ContolMessage_.wrench_effort = 0.0;
             set_ContolMessage_.speed_control = 0.0;
             set_ContolMessage_.max_accel = 0.0;
             set_ContolMessage_.mode = TruckDBWController::CommandMode::DisableACCSystem;
 
             truck_dbw_ctrl_->sendDisableRoboticControl();
+            disable_robotic_printed_flag_ = false;
         }
-        else if(time_now - control_message_recv_time > ros::Duration(0.3) && set_ContolMessage_.mode != TruckDBWController::CommandMode::DisableACCSystem)
+        else if((time_now - control_message_recv_time) > ros::Duration(0.3) && set_ContolMessage_.mode != TruckDBWController::CommandMode::DisableACCSystem)
         {
-            ROS_WARN_STREAM("Have not received a command on either control topic, disabling robotic");
+            ROS_WARN_STREAM("Command message timeout on both control topics - Disabling Robotic");
             set_ContolMessage_.mode = TruckDBWController::CommandMode::DisableACCSystem;
             truck_dbw_ctrl_->sendDisableRoboticControl();
+            disable_robotic_printed_flag_ = false;
         }
         else if (set_ContolMessage_.mode == TruckDBWController::CommandMode::RoboticWrenchEffortControl)
         {
             ROS_INFO_STREAM("Sending wrench " << set_ContolMessage_.wrench_effort);
             truck_dbw_ctrl_->sendWrenchEffortCommand(set_ContolMessage_.wrench_effort);
+            disable_robotic_printed_flag_ = false;
+
+            robotic_wrench_control_active_ = true;
         }
         else if (set_ContolMessage_.mode == TruckDBWController::CommandMode::RoboticSpeedControl)
         {
             ROS_INFO_STREAM("Sending speed " << set_ContolMessage_.speed_control << " " << set_ContolMessage_.max_accel);
             truck_dbw_ctrl_->sendSpeedAccelCommand(set_ContolMessage_.speed_control, set_ContolMessage_.max_accel);
+            disable_robotic_printed_flag_ = false;
+
+            robotic_speed_control_active_ = true;
         }
         else
         {
-            ROS_INFO_STREAM("Disabling robotic");
+            if(!disable_robotic_printed_flag_)
+            {
+                ROS_INFO_STREAM("No control command - Disabling Robotic");
+                disable_robotic_printed_flag_ = true;
+            }
             truck_dbw_ctrl_->sendDisableRoboticControl();
         }
 
@@ -343,6 +364,28 @@ bool TruckApplication::enableRobotic(cav_srvs::SetEnableRoboticRequest &req, cav
     return true;
 }
 
+void TruckApplication::updateControlStatus(const ros::WallTimerEvent &) 
+{
+    cav_msgs::RobotEnabled msg;
+    msg.robot_active = static_cast<cav_msgs::RobotEnabled::_robot_enabled_type>(robotic_wrench_control_active_ || robotic_speed_control_active_);
+    msg.robot_enabled   = robotic_enabled_;
+
+    // Not populating any of the fields below
+    msg.torque = 0;
+    msg.torque_validity = false;
+
+    msg.brake_decel = 0;
+    msg.brake_decel_validity = false;
+
+    msg.throttle_effort = 0;
+    msg.throttle_effort_validity = false;
+
+    msg.braking_effort = 0;
+    msg.braking_effort_validity = false;
+
+    robotic_status_pub_.publish(msg);
+}
+
 /**
  * @brief Helper function to convert the ros message type EngineBrakeMode to the equivalent TruckDBWController::EngineBrakeMsgModeEnum
  * type
@@ -355,13 +398,10 @@ TruckDBWController::EngineBrakeMsgModeEnum toEngineBrakeMsg(cav_msgs::EngineBrak
     {
         case cav_msgs::EngineBrakeMode::PASS_THRU :
             return TruckDBWController::EngineBrakeMsgModeEnum::PassThrough;
-
         case cav_msgs::EngineBrakeMode::BYPASS :
             return TruckDBWController::EngineBrakeMsgModeEnum::TorcBypass;
-
         case cav_msgs::EngineBrakeMode::NO_MODE_CHANGE:
             return TruckDBWController::EngineBrakeMsgModeEnum::NoChange;
-
         case cav_msgs::EngineBrakeMode::MODE_ERROR :
         default:
             return TruckDBWController::EngineBrakeMsgModeEnum::Error;
@@ -381,17 +421,13 @@ TruckDBWController::EngineBrakeCommandEnum toEngineBrakeCommand(cav_msgs::Engine
     {
         case cav_msgs::EngineBrakeCommand::DISABLE:
             return TruckDBWController::EngineBrakeCommandEnum::DisableEngineBraking;
-
         case cav_msgs::EngineBrakeCommand::ENABLE:
             return TruckDBWController::EngineBrakeCommandEnum::EnableEngineBraking;
-
         case cav_msgs::EngineBrakeCommand::NO_CMD_CHANGE:
             return TruckDBWController::EngineBrakeCommandEnum::NoChange;
-
         case cav_msgs::EngineBrakeCommand::CMD_ERROR:
         default:
             return TruckDBWController::EngineBrakeCommandEnum::Error;
-
     }
 }
 
@@ -466,7 +502,8 @@ bool TruckApplication::clearFaults(cav_srvs::ClearFaultsRequest &req, cav_srvs::
 
     if(tmp != clear_faults_enabled_)
     {
-        std::cout << "Clearing Faults: " << (clear_faults_enabled_ ? "true" : "false") << std::endl;
+        bool on_off = (clear_faults_enabled_ ? "true" : "false");
+        ROS_WARN_STREAM("Clearing Faults: " << on_off);
     }
 
     return true;
@@ -535,7 +572,6 @@ void TruckApplication::initializeDBWController() {
     {
         ROS_WARN("No CAN Device configured");
     }
-
 }
 
 
@@ -551,7 +587,7 @@ void TruckApplication::setupSubscribersPublishers()
                                                                                   });
     api_.push_back(wrench_effort_subscriber_.getTopic());
 
-    speed_accel_subscriber_ = control_message_nh_->subscribe<cav_msgs::SpeedAccel>("cmd_speed", 1,
+    speed_accel_subscriber_ = control_message_nh_->subscribe<cav_msgs::SpeedAccel>("cmd_speed_accel", 1,
                                                                                    [this](const cav_msgs::SpeedAccelConstPtr &msg)
                                                                                    {
                                                                                      if(msg->speed >= 0 && msg->max_accel >= 0)
@@ -577,6 +613,10 @@ void TruckApplication::setupSubscribersPublishers()
                                                                                    });
     api_.push_back(speed_accel_subscriber_.getTopic());
 
+    // Advertise Publisher
+    robotic_status_pub_ = control_message_nh_->advertise<cav_msgs::RobotEnabled>("robotic_status", 1);
+    api_.push_back(robotic_status_pub_.getTopic());
+
     // Advertise Services
     enable_robotic_service_ = control_message_nh_->advertiseService("enable_robotic", &TruckApplication::enableRobotic, this);
     api_.push_back(enable_robotic_service_.getService());
@@ -592,6 +632,10 @@ void TruckApplication::setupSubscribersPublishers()
 
     clear_faults_service_ = control_message_nh_->advertiseService("clear_faults", &TruckApplication::clearFaults, this);
     api_.push_back(clear_faults_service_.getService());
+
+    // Creat Publisher Timer
+    status_publisher_timer_ = nh_->createWallTimer(ros::WallDuration(ros::Rate(2)),&TruckApplication::updateControlStatus, this);
+    status_publisher_timer_.start();
 
 }
 void TruckApplication::setupRecvItems()
@@ -787,9 +831,4 @@ void TruckApplication::setupRecvItems()
                                                                        stat.add("nvram_settings_crc",recv_SettingsCrc_->getData().nvram_settings_crc);
                                                                        stat.add("ram_settings_crc",recv_SettingsCrc_->getData().ram_settings_crc);
                                                                    }));
-
-
-
-//    std::unique_ptr<StatusUpdater<TruckDBWController::SettingsCrc>> recv_SettingsCr
-
 }

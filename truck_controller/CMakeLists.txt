@@ -7,10 +7,14 @@ set(CMAKE_CXX_STANDARD 11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cav_driver_utils
-  sensor_msgs
+  cav_msgs
+  cav_srvs
   geometry_msgs
   roscpp
+  std_msgs
+  cav_driver_utils
+  can_msgs
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -152,9 +156,9 @@ target_link_libraries( ${PROJECT_NAME}_node
         ${catkin_LIBRARIES}
         )
 
-
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 catkin_add_gtest(truck_can_test tests/test.cpp)
+
 #############
 ## Install ##
 #############
@@ -171,18 +175,19 @@ catkin_add_gtest(truck_can_test tests/test.cpp)
 
 ## Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}_node
-  # ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
 )
 
 install(DIRECTORY
   launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  PATTERN ".svn" EXCLUDE
 )
-
-#install(DIRECTORY
-#        cfg
-#        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#        PATTERN ".svn" EXCLUDE
-#        )

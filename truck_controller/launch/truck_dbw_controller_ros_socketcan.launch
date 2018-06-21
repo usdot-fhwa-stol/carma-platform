@@ -9,6 +9,5 @@
         <param name="can_device" value="$(arg truck_can_device)" />
         <remap from="received_messages" to="$(arg truck_can_device)/received_messages" />
         <remap from="sent_messages" to="$(arg truck_can_device)/sent_messages" />
-        <!-- <rosparam param="can_ids">['1e5','140','1e9','230','17d','3e9','0be','3d1','0c9','120','18e','1f5']</rosparam> -->
     </node>
 </launch>

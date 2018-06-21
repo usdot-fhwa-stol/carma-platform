@@ -54,7 +54,7 @@ void ROSSocketCANBridge::recv_cb(const can_msgs::FrameConstPtr &msg)
 
 ROSSocketCANBridge::ROSSocketCANBridge(const std::string &recv_topic, const std::string &out_topic)
 {
-    std::cout << "RosBridgeConstruct: " << recv_topic << " " << out_topic << std::endl;
+    ROS_INFO_STREAM("RosBridgeConstruct: " << recv_topic << " " << out_topic);
     async_nh_.reset(new ros::NodeHandle(nh_.getNamespace()));
     async_nh_->setCallbackQueue(&async_q_);
     if(!recv_topic.empty())

@@ -17,6 +17,9 @@ Controller API ( inherits ROS Driver Capabilities )
 sent_messages ( can_msgs/Frame )
 > CAN frames sent to vehicle dbw module, this should be advertised by a a node communicating with CAN hardware
 
+~control/robot_status (cav_msgs/RobotEnabled )
+> publishes the Robot status of the controller driver, robot_active is set when the Truck Controller reports active control through wrench effort or speed commands, robot_enabled is set when the robotic_enabled flag is set through the enable_robotic service
+
 ### Subscribed Topics
 received_messages ( can_msgs/Frame )
 > We listen to this topic for messages from the dbw module

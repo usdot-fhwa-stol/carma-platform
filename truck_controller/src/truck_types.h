@@ -120,7 +120,7 @@ struct TruckRosRecvRates
         recv_brake_fault_checks(2.000),
         recv_emergency_fault_checks(2.000),
         recv_led_status_echo(2.000),
-        recv_settings_crc (500.00)
+        recv_settings_crc (500.00)  // No strict timeout set - use large value
     {
 
     }
