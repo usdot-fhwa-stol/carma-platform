@@ -45,21 +45,24 @@ public class CandidateFollowerState implements IPlatooningState {
     protected PluginServiceLocator pluginServiceLocator;
     protected String               targetLeaderId;
     protected String               targetPlatoonId;
+    private   double               trajectoryEndLocation;
     private   PlatoonPlan          currentPlan;
     private   long                 stateStartTime;
 
-    public CandidateFollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, String targetId, String newPlatoonId) {
-        this.plugin               = plugin;
-        this.log                  = log;
-        this.pluginServiceLocator = pluginServiceLocator;
-        this.targetLeaderId       = targetId;
-        this.targetPlatoonId      = newPlatoonId;
-        this.stateStartTime       = System.currentTimeMillis();
+    public CandidateFollowerState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, String targetId, String newPlatoonId, double trajectoryEnd) {
+        this.plugin                = plugin;
+        this.log                   = log;
+        this.pluginServiceLocator  = pluginServiceLocator;
+        this.targetLeaderId        = targetId;
+        this.targetPlatoonId       = newPlatoonId;
+        this.trajectoryEndLocation = trajectoryEnd;
+        this.stateStartTime        = System.currentTimeMillis();
         this.plugin.handleMobilityPath.set(false);
     }
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+        this.trajectoryEndLocation = traj.getEndLocation();
         RouteService rs = pluginServiceLocator.getRouteService();
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // If there is no platooning window, we set plugin to Standby state
@@ -184,7 +187,7 @@ public class CandidateFollowerState implements IPlatooningState {
                             log.debug("The leader " + msg.getHeader().getSenderId() + " agreed on our join. Change to follower state.");
                             plugin.platoonManager.changeFromLeaderToFollower(targetPlatoonId);
                             plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
-                            pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+                            pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                         } else {
                             // We change back to normal leader state and try to join other platoons
                             log.debug("The leader " + msg.getHeader().getSenderId() + " does not agree on our join. Change back to leader state.");
