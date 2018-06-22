@@ -303,11 +303,11 @@ struct PropB_10_Message
         data[0] = static_cast<uint8_t>(wrench_eff) & 0xFF;
         data[1] = static_cast<uint8_t>(wrench_eff >> 8) & 0xFF;
         // Byte 3.1 - 4.8: Speed Control
-        int16_t spd_ctrl = static_cast<int16_t>(speed_control / 0.03125);   // 0.03125 km/h per bit
+        int16_t spd_ctrl = static_cast<int16_t>((speed_control * 3.6) / 0.03125);   // 0.03125 km/h per bit // 1 m/s = 3.6 km/h
         data[2] = static_cast<uint8_t>(spd_ctrl) & 0xFF;
         data[3] = static_cast<uint8_t>(spd_ctrl >> 8) & 0xFF;
         // Byte 5.1 - 6.8: Max Accel
-        int16_t max_acc  = static_cast<int16_t>(max_accel / 0.03125);   // 0.03125 (km/h)/s per bit
+        int16_t max_acc  = static_cast<int16_t>((max_accel* 3.6) / 0.03125);   // 0.03125 (km/h)/s per bit // 1 m/s = 3.6 km/h
         data[4] = static_cast<uint8_t>(max_acc) & 0xFF;
         data[5] = static_cast<uint8_t>(max_acc >> 8) & 0xFF;
         // Byte 7.1 - 7.2: Robotic Override Enable

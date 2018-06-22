@@ -25,7 +25,7 @@ received_messages ( can_msgs/Frame )
 > We listen to this topic for messages from the dbw module
 
 ~/control/cmd_speed (cav_msgs/SpeedAccel )
-> Messages received on this topic are converted to closed loop speed commands to the sent_messages topic. The units used for speed is km/h limited to a max of 112.654 (70 mph). The units used for accel is (km/h)/s limited to 12.6 (3.5 m/s^2).
+> Messages received on this topic are converted to closed loop speed commands to the sent_messages topic. The units used for speed is m/s limited to a max of 31.25 (~70 mph). The units used for accel is (m/s)/s limited to 3.5.
 
 ~/control/cmd_longitudinal_effort
 > Messages received on this topic are converted to open loop effort commands sent to the sent_messages topic. The effort is bounded [-100, 100].

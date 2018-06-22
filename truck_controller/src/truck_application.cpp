@@ -36,8 +36,8 @@
 
 namespace carma
 {
-    const double max_commanded_speed = 112.654; // (km/h)
-    const double max_commanded_accel = 12.6; // (km/h)/s
+    const double max_commanded_speed = 31.25; // (m/s)
+    const double max_commanded_accel = 3.5; // (m/s)/s
 }
 
 TruckApplication::TruckApplication(int argc, char **argv, const std::string &name) : DriverApplication(argc, argv, name)
