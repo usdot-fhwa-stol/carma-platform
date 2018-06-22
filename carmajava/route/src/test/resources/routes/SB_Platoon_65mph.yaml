@@ -1,6 +1,6 @@
 !gov.dot.fhwa.saxton.carma.route.Route
 routeName: SB Platoon 65 MPH
-maxJoinDistance: 40.0
+maxJoinDistance: 0.0
 waypoints:
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
