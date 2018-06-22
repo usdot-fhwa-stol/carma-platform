@@ -1,6 +1,6 @@
 !gov.dot.fhwa.saxton.carma.route.Route
 routeName: SB Merge 65MPH
-maxJoinDistance: 0.0
+maxJoinDistance: 40.0
 waypoints:
     # First Waypoint added to make length match that of platoon route
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
