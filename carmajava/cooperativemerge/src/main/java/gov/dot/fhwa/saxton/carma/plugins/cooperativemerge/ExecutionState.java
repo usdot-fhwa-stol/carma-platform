@@ -141,6 +141,7 @@ public class ExecutionState implements ICooperativeMergeState {
     double targetSpeed = Double.parseDouble(params.get(0));
     double maxAccel = Double.parseDouble(params.get(1));
     double targetSteer = Double.parseDouble(params.get(2));
+    targetSteer = 0;
 
     plugin.getCooperativeMergeInputs().setCommands(targetSpeed, maxAccel, targetSteer);
 
