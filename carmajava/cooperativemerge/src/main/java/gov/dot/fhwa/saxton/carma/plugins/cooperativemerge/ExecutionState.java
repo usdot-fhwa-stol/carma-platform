@@ -141,6 +141,7 @@ public class ExecutionState implements ICooperativeMergeState {
     double targetSpeed = Double.parseDouble(params.get(0));
     double maxAccel = Double.parseDouble(params.get(1));
     double targetSteer = Double.parseDouble(params.get(2));
+    targetSteer = 0;//TODO this is a temporary override as TO26 I-95 routes files do not match lane geometry
 
     plugin.getCooperativeMergeInputs().setCommands(targetSpeed, maxAccel, targetSteer);
 
