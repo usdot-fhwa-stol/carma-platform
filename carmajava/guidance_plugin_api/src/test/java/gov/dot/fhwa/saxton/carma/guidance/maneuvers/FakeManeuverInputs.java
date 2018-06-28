@@ -142,4 +142,10 @@ public class FakeManeuverInputs implements IManeuverInputs {
         // TODO Auto-generated method stub
         return 0;
     }
+
+
+	@Override
+	public double getMaxAccelLimit() {
+		return ACCEL;
+	}
 }

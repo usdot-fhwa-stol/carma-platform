@@ -614,8 +614,8 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     Eigen::Transform<double, 3, Eigen::Affine> ned_odom_tf_eig;
     ned_odom_tf_eig = Eigen::Translation3d(ned_odom_tf.transform.translation.x, ned_odom_tf.transform.translation.y,
                                            ned_odom_tf.transform.translation.z)
-                      * Eigen::Quaterniond(ned_odom_tf.transform.rotation.x, ned_odom_tf.transform.rotation.y,
-                                           ned_odom_tf.transform.rotation.z, ned_odom_tf.transform.rotation.w);
+                      * Eigen::Quaterniond(ned_odom_tf.transform.rotation.w, ned_odom_tf.transform.rotation.x, ned_odom_tf.transform.rotation.y,
+                                           ned_odom_tf.transform.rotation.z);
 
     Eigen::Quaterniond out_rot;
     Eigen::Vector3d out_pose;

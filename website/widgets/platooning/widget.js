@@ -75,12 +75,15 @@ CarmaJS.WidgetFramework.Platooning = (function () {
                 if (platoon_desired_gap < 0)
                     platoon_desired_gap = 0;
 
+                document.getElementById('divHostTitle').innerHTML =  '';
+                document.getElementById('divLeaderTitle').innerHTML =  '';
+                document.getElementById('imgHostVehicle').className='SUVSideView';
+                document.getElementById('imgLeadVehicle').className='SUVSideView';
+
                 var platoonStateText;
                 switch (message.state) {
                     case platooningInfoState.DISABLED.value:
                         platoonStateText = platooningInfoState.DISABLED.text;
-                        document.getElementById('divHostTitle').innerHTML =  '';
-                        document.getElementById('divLeaderTitle').innerHTML =  '';
                         document.getElementById('imgHostVehicle').className='SUVSideView';
                         document.getElementById('imgLeadVehicle').className='SUVSideView';
                         host_actual_gap = 0;
@@ -88,8 +91,6 @@ CarmaJS.WidgetFramework.Platooning = (function () {
                         break;
                     case platooningInfoState.SEARCHING.value:
                         platoonStateText = platooningInfoState.SEARCHING.text;
-                        document.getElementById('divHostTitle').innerHTML =  '';
-                        document.getElementById('divLeaderTitle').innerHTML =  '';
                         document.getElementById('imgHostVehicle').className='SUVSideView';
                         document.getElementById('imgLeadVehicle').className='SUVSideView';
                         host_actual_gap = 0;
@@ -122,10 +123,6 @@ CarmaJS.WidgetFramework.Platooning = (function () {
                         break;
                     default:
                         platoonStateText = 'UNKNOWN (' + message.state + ')';
-                        document.getElementById('divHostTitle').innerHTML =  '';
-                        document.getElementById('divLeaderTitle').innerHTML =  '';
-                        document.getElementById('imgHostVehicle').className='SUVSideView';
-                        document.getElementById('imgLeadVehicle').className='SUVSideView';
                         host_actual_gap = 0;
                         platoon_desired_gap = 0;
 
@@ -221,9 +218,9 @@ CarmaJS.WidgetFramework.Platooning = (function () {
               //*** Draw the guages and labels ***
               //console.log('drawGuages!!!');
               //Top linear guage is the actual gap with ticker labels.
-              var majorTicks = { size: '17%', interval: 10 },
-                  minorTicks = { size: '12%', interval: 5, style: { 'stroke-width': 1, stroke: '#aaaaaa' } },
-                  labels = { interval: 10, position: 'near' };
+              var majorTicks = { size: '17%', interval: 20 },
+                  minorTicks = { size: '12%', interval: 10, style: { 'stroke-width': 1, stroke: '#aaaaaa' } },
+                  labels = { interval: 20, position: 'near' };
 
               $('#gaugeActualGap').jqxLinearGauge({
                   orientation: 'horizontal',
@@ -234,7 +231,7 @@ CarmaJS.WidgetFramework.Platooning = (function () {
                   ticksMinor: minorTicks,
                   ticksPosition: 'near', //show tick marks upwards.
                   min: 0,
-                  max: 50,
+                  max: 160,
                   pointer: { size: '10%' },
                   colorScheme: 'scheme06', //black
                   background: { visible: false },
@@ -248,9 +245,9 @@ CarmaJS.WidgetFramework.Platooning = (function () {
               });
 
               //Bottom linear guage is the desired gap with tickers but with no labels.
-              var majorTicks2 = { size: '15%', interval: 5 },
-                  minorTicks2 = { size: '10%', interval: 1, style: { 'stroke-width': 1, stroke: '#aaaaaa' } },
-                  labels2 = { interval: 1, position: 'near', visible: false };
+              var majorTicks2 = { size: '15%', interval: 10 },
+                  minorTicks2 = { size: '10%', interval: 5, style: { 'stroke-width': 1, stroke: '#aaaaaa' } },
+                  labels2 = { interval: 5, position: 'near', visible: false };
 
               $('#gaugeDesiredGap').jqxLinearGauge({
                   orientation: 'horizontal',
@@ -261,7 +258,7 @@ CarmaJS.WidgetFramework.Platooning = (function () {
                   ticksMinor: minorTicks2,
                   ticksPosition: 'far', //show the tick marks downwards.
                   min: 0,
-                  max: 50,
+                  max: 160,
                   pointer: { size: '10%' },
                   colorScheme: 'scheme02', //green
                   background: { visible: false },

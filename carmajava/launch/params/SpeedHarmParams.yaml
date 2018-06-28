@@ -3,7 +3,8 @@
 
 # String: Infrastructure server URL base
 # Units: URL
-infrastructure_server_url: http://35.153.64.44:8081/rest
+infrastructure_server_url: http://35.153.64.44:8081/rest #For AWS server setup
+#infrastructure_server_url: http://localhost:8081/rest #For local VM setup
 
 # Double: The rate at which the Speed Harmonization Plugin will report it's status to the server
 # Units: Hz
