@@ -4,7 +4,7 @@ Automated Script to process bag files
 
 	Some notes: 
 
-	The bag file and route.txt must be in the same folder as the shell script and the text file.
+	A new script can be run within the folder of the vehicle. This script depends on only_one.sh, which depends on topics.txt, meaning all three must be in the same directory. Please make sure that there exist bag files within each subdirectory. This means that the bag file must be within its corresponding subdirectory. 
 
 	To omit certain topics from being processed, you can comment it out by putting # before the line in topics.txt.
 	
@@ -35,6 +35,24 @@ Automated Script to process bag files
 		
 	To call the script:
 
-		bash ./only_one.sh <bag_file_filename>
+		bash ./all_mine.sh <date_of_test>
+	
+		For Example:
+			If the date that the test was conducted is June 29, 2018, then it should be denoted as 20180629
+			
+
+		The processed files will be placed in a newly created directory and will be denoted VEHICLE_DATEOFTEST
+		
+		So the directory will look something like this if all_mine.sh was run inside the white directory
+		
+		Black
+		Green
+		Grey
+		Silver
+		White
+		White_20180629 <-- newly created directory.
+		
+
+
 
 
