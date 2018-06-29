@@ -27,5 +27,9 @@ for folder in */ ; do
 		cd ../
 	else
 		echo "A bag file was not found"
+		sleep 1s
+		rm ./topics.txt
+		rm ./only_one.sh
+		cd ../
 	fi
 done
