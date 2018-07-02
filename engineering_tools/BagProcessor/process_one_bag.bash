@@ -12,7 +12,6 @@ done < "$file"
 command=${command%?}""
 command=${command%?}""
 command=${command%?}";"
-echo $command
 mkdir $folder
 mv ./$1 ./$folder
 mv route.txt ./$folder
