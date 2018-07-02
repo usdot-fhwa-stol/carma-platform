@@ -50,8 +50,8 @@ Automated Script to process bag files
 		--Green
 		--Grey
 		--Silver
-		--White
 		--White_20180627 <-- resulting directory
+		--White
 		----process_bags.bash
 		----process_one_bag
 		----topics.txt
