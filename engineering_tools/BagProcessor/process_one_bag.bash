@@ -7,11 +7,12 @@ command=""
 file=topics.txt
 while read -r line; do
     [[ "$line" =~ ^#.*$ ]] && continue
-    command=$command${line}" "
+    command=$command"rostopic echo -p "${line}" & "
 done < "$file"
 command=${command%?}""
 command=${command%?}""
 command=${command%?}";"
+echo $command
 mkdir $folder
 mv ./$1 ./$folder
 mv route.txt ./$folder
