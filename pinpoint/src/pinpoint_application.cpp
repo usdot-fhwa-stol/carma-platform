@@ -373,6 +373,7 @@ void PinPointApplication::onStatusConditionChangedHandler(const torc::PinPointLo
     {
         warning_set_.erase(code.code);
         error_set_.insert(code.code);
+        ROS_WARN_STREAM("Error detected, code = " << static_cast<uint16_t>(code.code));
     } 
     else if (code.condition == torc::StatusCondition::Warning) 
     {
@@ -392,6 +393,7 @@ void PinPointApplication::onStatusConditionChangedHandler(const torc::PinPointLo
     {
         status.status = cav_msgs::DriverStatus::FAULT;
         setStatus(status);
+        ROS_WARN_STREAM("Publishing FAULT status. " << error_set_.size() << " errors.");
     } 
     else if (warning_set_.size() > 0)
     {
