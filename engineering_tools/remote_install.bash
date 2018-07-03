@@ -51,13 +51,15 @@ PARAMS=false
 ROUTES=false
 URDF=false
 LAUNCH=false
+FOLDER_EV=false
+FOLDER=""
 MOCK_DATA=false
 APP=false
 WEB=false;
 SCRIPTS=false;
 OVERWRITE_HOST_PARAMS=false;
 
-while getopts n:h:bHpruelmawst:c: option
+while getopts n:h:bHpruelv:mawst:c: option
 do
 	case "${option}"
 	in
@@ -70,6 +72,7 @@ do
 		e) EXECUTABLES=true;;
 		l) LAUNCH=true;;
 		c) CATKIN_WS=${OPTARG};;
+		v) FOLDER=${OPTARG};;
 		m) MOCK_DATA=true;;
 		a) APP=true;;
 		w) WEB=true;;
@@ -125,8 +128,68 @@ APP_DIR="${CARMA_DIR}/app"
 # If copy executables, params, routes, urdf, or launch is set then don't copy everything
 if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ] || \
    [ ${URDF} == true ] || [ ${LAUNCH} == true ] || [ ${MOCK_DATA} == true ] || \
-	 [ ${APP} == true ] || [ ${WEB} == true ] || [ ${SCRIPTS} == true ]; then
+	 [ ${APP} == true ] || [ ${WEB} == true ] || [ ${SCRIPTS} == true ] || [[ $(echo -n $FOLDER | wc -m) -gt 0 ]]; then
 	EVERYTHING=false
+fi
+
+echo $EVERYTHING
+
+if [[ $(echo -n $FOLDER | wc -m) -gt 0 ]]; then
+	FOLDER_EV=true
+	echo "Trying to copy params"
+	vehicle_param_files=( $FOLDER/*.yaml )
+	# Set up scripts
+	BACKUP_HOST_PARAMS="mv ${CARMA_DIR}/params/HostVehicleParams.yaml ${CARMA_DIR}/params/HostVehicleParamsTemp.yaml"
+	SET_HOST_PARAMS="rm ${CARMA_DIR}/params/HostVehicleParams.yaml; mv ${CARMA_DIR}/params/HostVehicleParamsTemp.yaml ${CARMA_DIR}/params/HostVehicleParams.yaml"
+	
+	if [ ${OVERWRITE_HOST_PARAMS} == false ]; then
+		# Backup host vehicle params
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${BACKUP_HOST_PARAMS}"
+	fi
+	# Copy the entire folder to the remote machine
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${PARAMS_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_param_files[0]}" ${USERNAME}@${HOST}:"${CARMA_DIR}/params/"
+
+	if [ ${OVERWRITE_HOST_PARAMS} == false ]; then
+		# Reset to backup of host vehicle params
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SET_HOST_PARAMS}"
+	fi
+	# Update permissions script
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/params/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/params/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/params/*;"
+	echo "Trying to copy urdf..."
+	vehicle_urdf_files=( $FOLDER/*.urdf )
+	# Delete old files
+	SCRIPT="rm -r ${CARMA_DIR}/urdf/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
+	# Copy the entire folder to the remote machine
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${URDF_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_urdf_files[0]}" ${USERNAME}@${HOST}:"${CARMA_DIR}/urdf/"
+		# Update permissions script
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/urdf/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/urdf/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/urdf/*;"
+	echo "Trying to copy launch ..."
+	vehicle_launch_files=( $FOLDER/*.launch )
+	# Delete old files
+	SCRIPT="rm -r ${APP_DIR}/launch/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
+	# Copy the launch files to the remote machine using current symlink
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_launch_files[0]}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_launch_files[1]}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	# Create symlink to launch file so that roslaunch will work when package is sourced
+	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
+	SCRIPT_1="rm ${SYMLINK_LOCATION}/*.launch; ln -s  ${APP_DIR}/launch/* ${SYMLINK_LOCATION};"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2} ${SCRIPT_3}"
+		# Update permissions script
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/launch/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/launch/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/launch/*;"
+	echo "Trying to copy website ..."
+	vehicle_js_files=( $FOLDER/*.js )
+	# Delete old files
+	SCRIPT="rm -r ${APP_DIR}/html/*;"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
+	# Copy the launch file to the remote machine using current symlink
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${WEBSITE_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/html/"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_js_files[0]}" ${USERNAME}@${HOST}:"${APP_DIR}/html/scripts"
+	# Update permissions script
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/html/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/html/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/html/*;"
 fi
 
 # If want to copy all contents which will end up in APP_DIR
@@ -145,7 +208,7 @@ UG_PERMISSIONS="ug+rwx"
 O_PERMISSIONS="o+rx"
 
 # If we want to copy the executables
-if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
+if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ] || [ ${FOLDER_EV} == true ]; then
 	echo "Trying to copy executables..."
 	# Check if we have a current install to copy
 	if [ ! -d ${INSTALL_DIR} ]; then
@@ -257,7 +320,7 @@ if [ ${EVERYTHING} == true ] || [ ${PARAMS} == true ]; then
 fi
 
 # If we want to copy routes
-if [ ${EVERYTHING} == true ] || [ ${ROUTES} == true ]; then
+if [ ${EVERYTHING} == true ] || [ ${ROUTES} == true ] || [ ${FOLDER_EV} == true ]; then
 	echo "Trying to copy routes..."
 	# Delete old files
 	SCRIPT="rm -r ${CARMA_DIR}/routes/*;"
@@ -299,7 +362,7 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == tru
 fi
 
 # If we want to copy mock data files
-if [ ${EVERYTHING} == true ] || [ ${MOCK_DATA} == true ]; then
+if [ ${EVERYTHING} == true ] || [ ${MOCK_DATA} == true ] || [ ${FOLDER_EV} == true ]; then
 	echo "Trying to copy mock_data ..."
 	# Delete old files
 	SCRIPT="rm -r ${APP_DIR}/mock_data/*;"
@@ -323,7 +386,7 @@ if [ ${EVERYTHING} == true ] || [ ${WEB} == true ]; then
 fi
 
 # If we want to copy script files
-if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ]; then
+if [ ${EVERYTHING} == true ] || [ ${SCRIPTS} == true ] || [ ${FOLDER_EV} == true ]; then
 	echo "Trying to copy scripts from engineering tools ..."
 	# Delete old files
 	SCRIPT="rm -r ${APP_DIR}/engineering_tools/*;"
