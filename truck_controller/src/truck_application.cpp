@@ -542,7 +542,7 @@ void TruckApplication::initializeDBWController() {
 void TruckApplication::setupSubscribersPublishers()
 {
     // Subscribe to Incoming messages
-    wrench_effort_subscriber_ = control_message_nh_->subscribe<std_msgs::Float32>("cmd_wrench_effort", 1,
+    wrench_effort_subscriber_ = control_message_nh_->subscribe<std_msgs::Float32>("cmd_longitudinal_effort", 1,
                                                                                   [this](const std_msgs::Float32ConstPtr &msg)
                                                                                   {
                                                                                     control_message_recv_time = ros::Time::now();
