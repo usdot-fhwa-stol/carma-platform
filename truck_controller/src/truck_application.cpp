@@ -614,7 +614,7 @@ void TruckApplication::setupSubscribersPublishers()
     api_.push_back(speed_accel_subscriber_.getTopic());
 
     // Advertise Publisher
-    robotic_status_pub_ = control_message_nh_->advertise<cav_msgs::RobotEnabled>("robotic_status", 1);
+    robotic_status_pub_ = control_message_nh_->advertise<cav_msgs::RobotEnabled>("robot_status", 1);
     api_.push_back(robotic_status_pub_.getTopic());
 
     // Advertise Services
