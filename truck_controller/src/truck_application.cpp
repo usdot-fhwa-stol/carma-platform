@@ -587,7 +587,7 @@ void TruckApplication::setupSubscribersPublishers()
                                                                                   });
     api_.push_back(wrench_effort_subscriber_.getTopic());
 
-    speed_accel_subscriber_ = control_message_nh_->subscribe<cav_msgs::SpeedAccel>("cmd_speed_accel", 1,
+    speed_accel_subscriber_ = control_message_nh_->subscribe<cav_msgs::SpeedAccel>("cmd_speed", 1,
                                                                                    [this](const cav_msgs::SpeedAccelConstPtr &msg)
                                                                                    {
                                                                                      if(msg->speed >= 0 && msg->max_accel >= 0)
