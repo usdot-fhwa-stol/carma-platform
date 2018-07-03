@@ -120,7 +120,7 @@ struct TruckRosRecvRates
         recv_brake_fault_checks(2.000),
         recv_emergency_fault_checks(2.000),
         recv_led_status_echo(2.000),
-        recv_settings_crc (500.00)
+        recv_settings_crc (500.00)  // No strict timeout set - use large value
     {
 
     }
@@ -227,6 +227,7 @@ inline bool checkMessageCrc(std::array<uint8_t, 8> data, uint8_t size)
     }
     else
     {
+        //std::cout << "Expected: " << static_cast<uint16_t>(crc8.checksum()) << ", Got: " << static_cast<uint16_t>(data[size - 1]) << std::endl;
         return false;   // False: if CRCs mismatch
     }
 }
@@ -303,11 +304,11 @@ struct PropB_10_Message
         data[0] = static_cast<uint8_t>(wrench_eff) & 0xFF;
         data[1] = static_cast<uint8_t>(wrench_eff >> 8) & 0xFF;
         // Byte 3.1 - 4.8: Speed Control
-        int16_t spd_ctrl = static_cast<int16_t>(speed_control / 0.03125);   // 0.03125 km/h per bit
+        int16_t spd_ctrl = static_cast<int16_t>((speed_control * 3.6) / 0.03125);   // 0.03125 km/h per bit // 1 m/s = 3.6 km/h
         data[2] = static_cast<uint8_t>(spd_ctrl) & 0xFF;
         data[3] = static_cast<uint8_t>(spd_ctrl >> 8) & 0xFF;
         // Byte 5.1 - 6.8: Max Accel
-        int16_t max_acc  = static_cast<int16_t>(max_accel / 0.03125);   // 0.03125 (km/h)/s per bit
+        int16_t max_acc  = static_cast<int16_t>((max_accel* 3.6) / 0.03125);   // 0.03125 (km/h)/s per bit // 1 m/s = 3.6 km/h
         data[4] = static_cast<uint8_t>(max_acc) & 0xFF;
         data[5] = static_cast<uint8_t>(max_acc >> 8) & 0xFF;
         // Byte 7.1 - 7.2: Robotic Override Enable
@@ -504,8 +505,8 @@ struct PropB_20_Message
     {
         std::cout << "\tis_valid: " << is_valid << std::endl;
         std::cout << "\tsystem_air_pressure: "                      << system_air_pressure                            << std::endl;
-        std::cout << "\robotic_truck_applied_brake_pressure: "      << robotic_truck_applied_brake_pressure           << std::endl;
-        std::cout << "\robotic_trailer_applied_brake_pressure: "    << robotic_trailer_applied_brake_pressure         << std::endl;
+        std::cout << "\trobotic_truck_applied_brake_pressure: "     << robotic_truck_applied_brake_pressure           << std::endl;
+        std::cout << "\trobotic_trailer_applied_brake_pressure: "   << robotic_trailer_applied_brake_pressure         << std::endl;
         std::cout << "\tcmd_brake_application_level: "              << cmd_brake_application_level                    << std::endl;
         std::cout << "\treserved_propb_20: "                        << reserved_propb_20                              << std::endl;
         std::cout << "\taxiomatic_health_status: "                  << static_cast<uint16_t>(axiomatic_health_status) << std::endl;
@@ -567,8 +568,8 @@ struct PropB_21_Message
     {
         std::cout << "\tis_valid: " << is_valid << std::endl;
         std::cout << "\tsystem_air_pressure: "                      << system_air_pressure                            << std::endl;
-        std::cout << "\robotic_truck_applied_brake_pressure: "      << robotic_truck_applied_brake_pressure           << std::endl;
-        std::cout << "\robotic_trailer_applied_brake_pressure: "    << robotic_trailer_applied_brake_pressure         << std::endl;
+        std::cout << "\trobotic_truck_applied_brake_pressure: "     << robotic_truck_applied_brake_pressure           << std::endl;
+        std::cout << "\trobotic_trailer_applied_brake_pressure: "   << robotic_trailer_applied_brake_pressure         << std::endl;
         std::cout << "\tcmd_brake_application_level: "              << cmd_brake_application_level                    << std::endl;
         std::cout << "\treserved_propb_21: "                        << reserved_propb_21                              << std::endl;
         std::cout << "\taxiomatic_health_status: "                  << static_cast<uint16_t>(axiomatic_health_status) << std::endl;
@@ -813,19 +814,19 @@ struct PropB_31_Message
         // Byte 1.1 - 2.8: Proportional Gain Component Numerator
         uint16_t prop_gain_num = static_cast<uint16_t>(static_cast<int32_t>(proportional_gain_comp_numerator) + 32768);
         data[0] = static_cast<uint8_t>(prop_gain_num) & 0xFF;
-        data[1] = (static_cast<uint8_t>(prop_gain_num) >> 8) & 0xFF;
+        data[1] = static_cast<uint8_t>(((prop_gain_num) >> 8) & 0xFF);
         // Byte 3.1 - 4.8: Integrator Gain Component Numerator
         uint16_t intr_gain_num = static_cast<uint16_t>(static_cast<int32_t>(integrator_gain_comp_numerator) + 32768);
         data[2] = static_cast<uint8_t>(intr_gain_num) & 0xFF;
-        data[3] = (static_cast<uint8_t>(intr_gain_num) >> 8) & 0xFF;
+        data[3] = static_cast<uint8_t>(((intr_gain_num) >> 8) & 0xFF);
         // Byte 5.1 - 6.8: Derivative Gain Component Numerator
         uint16_t derv_gain_num = static_cast<uint16_t>(static_cast<int32_t>(derivative_gain_comp_numerator) + 32768);
         data[4] = static_cast<uint8_t>(derv_gain_num) & 0xFF;
-        data[5] = (static_cast<uint8_t>(derv_gain_num) >> 8) & 0xFF;
+        data[5] = static_cast<uint8_t>(((derv_gain_num) >> 8) & 0xFF);
         // Byte 7.1 - 8.8: PID Shared Divisor
         uint16_t pid_div = static_cast<uint16_t>(static_cast<int32_t>(pid_shared_divisor) + 32768);
         data[6] = static_cast<uint8_t>(pid_div) & 0xFF;
-        data[7] = (static_cast<uint8_t>(pid_div) >> 8) & 0xFF;
+        data[7] = static_cast<uint8_t>(((pid_div) >> 8) & 0xFF);
         
         // Create the CAN Frame
         cav::CANFrameStamped can_frame;
@@ -1451,44 +1452,31 @@ struct Light_Status_Message
         unsigned char data[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         if(message_id == 0x50A)
         {
-			// Byte 1.1 - 1.4: Takedown 
+			// Byte 1.1 - 1.4: Flashing
             data[0] = static_cast<uint8_t>(flashing) | 0xF0;
 			data[1] = 0xFF;
 			data[2] = 0xFF;
 			data[3] = 0xFF;
 			data[4] = 0xFF;
-            // Byte 6.1 - 6.4: Flashing
+            // Byte 6.1 - 6.4: Right Blinker
             data[5] = static_cast<uint8_t>(right_blinker) | 0xF0;
 			data[6] = 0xFF;
-            // Byte 8.1 - 8.4: Left Blinker
+            // Byte 8.1 - 8.8: Left Blinker and Takedown
             data[7] = static_cast<uint8_t>(left_blinker) | (static_cast<uint8_t>(take_down) << 4);
-            // Byte 8.5 - 8.8: Right Blinker
-            //data[7] &= (static_cast<uint8_t>(right_blinker) << 4) & 0xF0;
-
-            // NOT USED
-            //data[4] = static_cast<uint8_t>(green_flasher);
-            // NOT USED
-            //data[5] = static_cast<uint8_t>(green_solid);
         }
         if(message_id == 0x50B)
         {
-            // Byte 1.5 - 1.8: Flashing
+            // Byte 1.5 - 1.8: Left Blinker
             data[0] = (static_cast<uint8_t>(left_blinker) << 4) | 0x0F;
-            // Byte 2.1 - 2.4: Left Blinker
+            // Byte 2.1 - 2.8: Right Blinker and Takedown
             data[1] = static_cast<uint8_t>(right_blinker) | (static_cast<uint8_t>(take_down) << 4);
 			data[2] = 0xFF;
 			data[3] = 0xFF;
 			data[4] = 0xFF;
-            // Byte 2.5 - 2.8: Right Blinker
-            //data[1] &= (static_cast<uint8_t>(right_blinker) << 4) & 0xF0;
-            // Byte 6.5 - 6.8: Takedown 
+            // Byte 6.5 - 6.8: Flashing
             data[5] = (static_cast<uint8_t>(flashing) << 4) | 0x0F;
 			data[6] = 0xFF;
 			data[7] = 0xFF;
-            // NOT USED
-            //data[4] = static_cast<uint8_t>(green_flasher);
-            // NOT USED
-            //data[5] = static_cast<uint8_t>(green_solid);
         }
         
         // Create the CAN Frame

@@ -184,7 +184,7 @@ void TruckDBWController::process(const std::shared_ptr<cav::CANFrameStamped cons
     }
 
     // Switch Statement to Properly hand Msg based on ID
-    switch(msg->id | 0xFF)  // TODO : Look into this
+    switch(msg->id | 0xFF)  // TODO : Switch back to address checking instead of masking out
     {
         case 0x0CFF11FF: // PropB_11 FEEDBACK - PGN 65297 from Throttle Controller (90)
         {
@@ -278,6 +278,7 @@ void TruckDBWController::process(const std::shared_ptr<cav::CANFrameStamped cons
         }
         case 0x0CEA21FF:
         {
+            // Only Recv - Not Handled
             break;
         }
         default:

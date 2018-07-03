@@ -7,19 +7,19 @@
 
 TEST(TruckMessageParsingTest, test1)
 {
-    std::array<uint8_t, 8> propb_11_data = {0x0A,0x00,0x64,0x00,0x10,0x00,0x1D,0x93};
+    std::array<uint8_t, 8> propb_11_data = {0x0A,0x00,0x64,0x00,0x10,0x00,0x1D,0xA5};
     truck::PropB_11_Message propb_11;
     propb_11.setData(propb_11_data);
     //propb_11.printData();
     EXPECT_FLOAT_EQ(0.25, propb_11.getGenAccelPedalPercent());
     EXPECT_FLOAT_EQ(2.5, propb_11.getExpAccelPedalPercent());
-    EXPECT_FLOAT_EQ(16 * 0.025, propb_11.getPhyAccelPedalPercent());
+    EXPECT_FLOAT_EQ(0.4, propb_11.getPhyAccelPedalPercent());
     EXPECT_EQ(1, static_cast<uint16_t>(propb_11.getRoboticModeStateStatus()));
     EXPECT_EQ(3, propb_11.getReservedPropB11());
     EXPECT_EQ(1, propb_11.getRollingCounter());
-    EXPECT_EQ(0x93, propb_11.getCheckValue());
+    EXPECT_EQ(0xA5, propb_11.getCheckValue());
 
-    std::array<uint8_t, 8> propb_12_data = {0x0A,0x00,0x64,0x00,0x10,0x00,0x17,0x96};
+    std::array<uint8_t, 8> propb_12_data = {0x0A,0x00,0x64,0x00,0x10,0x00,0x17,0x56};
     truck::PropB_12_Message propb_12;
     propb_12.setData(propb_12_data);
     //propb_12.printData();
@@ -29,31 +29,33 @@ TEST(TruckMessageParsingTest, test1)
     EXPECT_EQ(3, propb_12.getReservedPropB12());
     EXPECT_EQ(1, static_cast<uint16_t>(propb_12.getControlTypeCmdModeEcho()));
     EXPECT_EQ(1, propb_12.getRollingCounter());
-    EXPECT_EQ(0x96, propb_12.getCheckValue());
+    EXPECT_EQ(0x56, propb_12.getCheckValue());
 
-    std::array<uint8_t, 8> propb_20_data = {0x0A,0x00,0x01,0x20,0x18,0xCC,0xFF,0xFF};
+    std::array<uint8_t, 8> propb_20_data = {0x0A,0x00,0x01,0x00,0x01,0x20,0x18,0xB5};
     truck::PropB_20_Message propb_20;
     propb_20.setData(propb_20_data);
     //propb_20.printData();
     EXPECT_FLOAT_EQ(0.5, propb_20.getSystemAirPres());
-    EXPECT_FLOAT_EQ(0.8, propb_20.getRoboticAppliedBrakePres());
-    EXPECT_FLOAT_EQ(3.2, propb_20.getCmdBrakeAppliedLevel());
+    EXPECT_FLOAT_EQ(0.8, propb_20.getRoboticTruckAppliedBrakePres());
+    EXPECT_FLOAT_EQ(192, propb_20.getRoboticTrailerAppliedBrakePres());
+    EXPECT_FLOAT_EQ(51.2, propb_20.getCmdBrakeAppliedLevel());
     EXPECT_EQ(2, static_cast<uint16_t>(propb_20.getAxiomaticHealthStatus()));
     EXPECT_EQ(1, propb_20.getRollingCounter());
-    EXPECT_EQ(0xCC, propb_20.getCheckValue());
+    EXPECT_EQ(0xB5, propb_20.getCheckValue());
 
-    std::array<uint8_t, 8> propb_21_data = {0x0A,0x00,0x01,0x20,0x18,0xCC,0xFF,0xFF};
+    std::array<uint8_t, 8> propb_21_data = {0x0A,0x00,0x01,0x00,0x01,0x20,0x18,0xB5};
     truck::PropB_21_Message propb_21;
     propb_21.setData(propb_21_data);
     //propb_21.printData();
     EXPECT_FLOAT_EQ(0.5, propb_21.getSystemAirPres());
-    EXPECT_FLOAT_EQ(0.8, propb_21.getRoboticAppliedBrakePres());
-    EXPECT_FLOAT_EQ(3.2, propb_21.getCmdBrakeAppliedLevel());
+    EXPECT_FLOAT_EQ(0.8, propb_21.getRoboticTruckAppliedBrakePres());
+    EXPECT_FLOAT_EQ(192, propb_21.getRoboticTrailerAppliedBrakePres());
+    EXPECT_FLOAT_EQ(51.2, propb_21.getCmdBrakeAppliedLevel());
     EXPECT_EQ(2, static_cast<uint16_t>(propb_21.getAxiomaticHealthStatus()));
     EXPECT_EQ(1, propb_21.getRollingCounter());
-    EXPECT_EQ(0xCC, propb_21.getCheckValue());
+    EXPECT_EQ(0xB5, propb_21.getCheckValue());
 
-    std::array<uint8_t, 8> propb_27_data = {0x55,0xD5,0x1F,0xF9,0xFF,0xFF,0xFF,0xFF};
+    std::array<uint8_t, 8> propb_27_data = {0x55,0xD5,0x1F,0xDE,0xFF,0xFF,0xFF,0xFF};
     truck::PropB_27_Message propb_27;
     propb_27.setData(propb_27_data);
     //propb_27.printData();
@@ -66,7 +68,7 @@ TEST(TruckMessageParsingTest, test1)
     EXPECT_EQ(1, static_cast<uint16_t>(propb_27.getPhyEngineBrakeLevelCmd()));
     EXPECT_EQ(63, propb_27.getReservedPropB27());
     EXPECT_EQ(1, propb_27.getRollingCounter());
-    EXPECT_EQ(0xF9, propb_27.getCheckValue());
+    EXPECT_EQ(0xDE, propb_27.getCheckValue());
 
     std::array<uint8_t, 8> propb_30_data = {0x10,0x00,0x0A,0x00,0xF6,0xFF,0x04,0x00};
     truck::PropB_30_Message propb_30;
@@ -81,10 +83,10 @@ TEST(TruckMessageParsingTest, test1)
     truck::PropB_31_Message propb_31;
     propb_31.setData(propb_31_data);
     //propb_31.printData();
-    EXPECT_EQ(16 + 32768, propb_31.getProportionalGainCompNum());
-    EXPECT_EQ(10 + 32768, propb_31.getIntegratorGainCompNum());
+    EXPECT_EQ(16 - 32768, propb_31.getProportionalGainCompNum());
+    EXPECT_EQ(10 - 32768, propb_31.getIntegratorGainCompNum());
     EXPECT_EQ(-10 + 32768, propb_31.getDerivativeGainCompNum());
-    EXPECT_EQ(4 + 32768, propb_31.getPIDSharedDivisor());
+    EXPECT_EQ(4 - 32768, propb_31.getPIDSharedDivisor());
 
     std::array<uint8_t, 8> propb_F0_data = {0x80,0x00,0x80,0x00,0xF6,0xFF,0x10,0x00};
     truck::PropB_F0_Message propb_F0;

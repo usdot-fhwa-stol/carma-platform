@@ -41,6 +41,7 @@
 
 #include <boost/endian/conversion.hpp>
 #include <boost/signals2/signal.hpp>
+#include <boost/math/special_functions/trunc.hpp>
 
 #include <limits>
 
@@ -156,7 +157,7 @@ public:
             double max = std::max({p, i, d});
             if (max != 0.0)
             {
-                int max_div = boost::math::iround(std::numeric_limits<int16_t>::max() / max);
+                int max_div = boost::math::itrunc(std::numeric_limits<int16_t>::max() / max);
                 divisor = (int16_t) std::min<int>(max_div, std::numeric_limits<int16_t>::max());
             } else
             {
@@ -638,7 +639,7 @@ private:
             0x0CFFF6FF,     // PropB_F6 FEEDBACK - PGN 65526 from All Modules
             0x0CFFED27,     // PropB_ED FEEDBACK - PGN 65517 from Control SW (39)
             0x0CFFFCFF,     // PropB_FC FEEDBACK - PGN 65532 from All Modules
-            0x0CEA2127,
+            0x0CEA2127,     // TP Request - Only Recv Not Handled
         };
 
     std::shared_ptr<cav::CANInterface> device_; // Device to send and receive messages on

@@ -104,6 +104,7 @@ private:
     void updateSettingsCrc(TruckDBWController::SettingsCrc signal_data);
 
     bool enableRobotic(cav_srvs::SetEnableRoboticRequest &req, cav_srvs::SetEnableRoboticResponse &res);
+    void updateControlStatus(const ros::WallTimerEvent &);  // Publishes a topic containing the robotic status
     bool engineBrakeControl(cav_srvs::EngineBrakeControlRequest &req, cav_srvs::EngineBrakeControlResponse &res);
     bool getLightStatus(cav_srvs::GetLightsRequest &req, cav_srvs::GetLightsResponse &res);
     bool setLightStatus(cav_srvs::SetLightsRequest &req, cav_srvs::SetLightsResponse &res);
@@ -115,11 +116,14 @@ private:
     std::shared_ptr<ros::NodeHandle> control_message_nh_;
     ros::Subscriber wrench_effort_subscriber_;
     ros::Subscriber speed_accel_subscriber_;
+    ros::Publisher robotic_status_pub_;
     ros::ServiceServer enable_robotic_service_;
     ros::ServiceServer engine_brake_service_;
     ros::ServiceServer get_lights_service_;
     ros::ServiceServer set_lights_service_;
     ros::ServiceServer clear_faults_service_;
+
+    ros::WallTimer status_publisher_timer_;
 
     std::unique_ptr<diagnostic_updater::Updater> updater_;
 
@@ -128,6 +132,10 @@ private:
     double k_d_;
     bool robotic_enabled_; // Disables or Enables Robotic Command
     bool clear_faults_enabled_; // Enables Clear Faults Message to be sent
+
+    bool disable_robotic_printed_flag_; // Tracks robotic stream info print
+    bool robotic_wrench_control_active_;    // Tracks if robotic wrench is currently being commanded
+    bool robotic_speed_control_active_;     // Tracks if robotic speed is currently being commanded
 
     // stores the api that is returned to the base DriverApplication class
     std::vector<std::string> api_;
