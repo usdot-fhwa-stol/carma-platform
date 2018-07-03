@@ -355,7 +355,7 @@
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
         <remap from="robot_enabled"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_can/control/enable_robotic"/>
+               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_controller/control/enable_robotic"/>
         
         <!-- GuidanceStateHandler Thread-->
         <remap from="route_event"
@@ -451,9 +451,9 @@
       <remap from="set_guidance_active"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
       <remap from="cmd_speed"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_can/control/cmd_speed_accel"/>
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_controller/control/cmd_speed_accel"/>
       <remap from="robot_status"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_can/control/get_status"/>
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_controller/control/get_status"/>
       <remap from="acc_engaged"
              to="/$(arg TOP_NS)/$(arg DRIVER_NS)/truck_can_client_device/can/acc_engaged"/>
       <remap from="engine_speed"
