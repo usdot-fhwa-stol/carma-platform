@@ -405,15 +405,4 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
       return out;
     }
   }
-
-  /**
-   * Convert the current trajectory to a timestamped list of points along the route frame
-   */
-  public List<RoutePointStamped> getHostPathPrediction() {
-    Trajectory traj = currentTrajectory.get();
-    if (traj == null) {
-      return new ArrayList<>();
-    }
-    return trajectoryConverter.convertToPath(traj);
-  }
 }

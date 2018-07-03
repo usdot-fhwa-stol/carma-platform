@@ -24,7 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
  */
 public class SpeedUp extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
-
+    private static final double MIN_ACCEL_ = 0.1;
     public SpeedUp(IPlugin planner) {
         super(planner);
     }
@@ -35,7 +35,7 @@ public class SpeedUp extends LongitudinalManeuver {
     @Override
     public void plan(IManeuverInputs inputs, IGuidanceCommands commands, double startDist) throws IllegalStateException, ArithmeticException {
         super.plan(inputs, commands, startDist);
-
+        // TODO update planning for new speed method
         //verify proper speed relationships
         if (endSpeed_ <= startSpeed_) {
             log_.error("Speedup.plan called with startSpeed = " + startSpeed_ + " , endSpeed = " + endSpeed_ + ". Throwing exception.");
@@ -67,7 +67,7 @@ public class SpeedUp extends LongitudinalManeuver {
     @Override
     public double planToTargetDistance(IManeuverInputs inputs, IGuidanceCommands commands, double startDist, double endDist) {
         super.planToTargetDistance(inputs, commands, startDist, endDist);
-
+        // TODO update planning for new speed method
         //verify proper speed and distance relationships
         if (endSpeed_ <= startSpeed_) {
             log_.error("SpeedUp.planToTargetDistance entered with startSpeed = " + startSpeed_ + ", endSpeed = " + endSpeed_ + ". Throwing exception.");
@@ -109,21 +109,31 @@ public class SpeedUp extends LongitudinalManeuver {
     
     @Override
     public double generateSpeedCommand() throws IllegalStateException {
-        //compute command based on linear interpolation on time steps
-        //Note that commands will begin changing immediately, although the actual speed will not change much until
-        // the response lag has passed. Thus, we will hit the target speed command sooner than we pass the end distance.
-        long currentTime = System.currentTimeMillis();
-        double factor = 0.001 * (double)(currentTime - startTime_) / deltaT_;
-        if (factor < 0.0) {
-            log_.error("SpeedUp.executeTimeStep computed illegal factor of = " + factor + ". Throwing exception");
-            throw new ArithmeticException("SpeedUp.executeTimeStep using an illegal interpolation factor.");
-        }
-        if (factor > 1.0) {
-            factor = 1.0;
-        }
-        double cmd = startSpeed_ + factor*(endSpeed_ - startSpeed_);
-        log_.debug("SpeedUp.executeTimeStep computed speed command (prior to accOverride) of " + cmd);
+        // The target speed will always be out ending speed but the working acceleration will be adjusted for smooth approach. 
+        // TODO make api clearer for workingAccel_ It is not intuitive we are doing this
 
-        return cmd;
+        double currentSpeed = inputs_.getCurrentSpeed();
+        double currentSpeedSqr = currentSpeed * currentSpeed;
+        double targetSpeedSqr = endSpeed_ * endSpeed_;
+        double remainingDistance = endDist_ - inputs_.getDistanceFromRouteStart();
+        // If we have slightly passed the end point just continue as before
+        if (remainingDistance < 0) {
+            return endSpeed_;
+        }
+
+        double neededAccel = Math.abs((targetSpeedSqr - currentSpeedSqr) / (2 * remainingDistance));
+
+        if (neededAccel > inputs_.getMaxAccelLimit()) {
+          workingAccel_ = inputs_.getMaxAccelLimit();
+        } else if (neededAccel > MIN_ACCEL_) {
+          workingAccel_ = neededAccel;
+        } else {
+            workingAccel_ = MIN_ACCEL_;
+        }
+
+        return endSpeed_; // Always target our ending speed
+
     }
+
+    
 }
