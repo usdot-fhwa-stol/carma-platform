@@ -159,6 +159,11 @@ target_link_libraries( ${PROJECT_NAME}_node
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 catkin_add_gtest(truck_can_test tests/test.cpp)
 
+target_link_libraries( truck_can_test
+        ${Boost_LIBRARIES} 
+        ${catkin_LIBRARIES}
+        )
+
 #############
 ## Install ##
 #############
@@ -191,3 +196,4 @@ install(DIRECTORY
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   PATTERN ".svn" EXCLUDE
 )
+

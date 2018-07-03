@@ -1,6 +1,6 @@
 <launch>
     <arg name="truck_can_device" default="can0" />
-    <node name="truck_can" pkg="truck_dbw_controller" type="truck_dbw_controller_node" output="screen">
+    <node name="truck_controller" pkg="truck_dbw_controller" type="truck_dbw_controller_node" output="screen">
         <param name="socketcan_selection" value="1" />
         <param name="ros_socketcan_topic_recv" value="$(arg truck_can_device)/received_messages" />
         <param name="ros_socketcan_topic_send" value="$(arg truck_can_device)/sent_messages" />

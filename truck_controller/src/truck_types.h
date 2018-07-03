@@ -227,6 +227,7 @@ inline bool checkMessageCrc(std::array<uint8_t, 8> data, uint8_t size)
     }
     else
     {
+        //std::cout << "Expected: " << static_cast<uint16_t>(crc8.checksum()) << ", Got: " << static_cast<uint16_t>(data[size - 1]) << std::endl;
         return false;   // False: if CRCs mismatch
     }
 }
@@ -504,8 +505,8 @@ struct PropB_20_Message
     {
         std::cout << "\tis_valid: " << is_valid << std::endl;
         std::cout << "\tsystem_air_pressure: "                      << system_air_pressure                            << std::endl;
-        std::cout << "\robotic_truck_applied_brake_pressure: "      << robotic_truck_applied_brake_pressure           << std::endl;
-        std::cout << "\robotic_trailer_applied_brake_pressure: "    << robotic_trailer_applied_brake_pressure         << std::endl;
+        std::cout << "\trobotic_truck_applied_brake_pressure: "     << robotic_truck_applied_brake_pressure           << std::endl;
+        std::cout << "\trobotic_trailer_applied_brake_pressure: "   << robotic_trailer_applied_brake_pressure         << std::endl;
         std::cout << "\tcmd_brake_application_level: "              << cmd_brake_application_level                    << std::endl;
         std::cout << "\treserved_propb_20: "                        << reserved_propb_20                              << std::endl;
         std::cout << "\taxiomatic_health_status: "                  << static_cast<uint16_t>(axiomatic_health_status) << std::endl;
@@ -567,8 +568,8 @@ struct PropB_21_Message
     {
         std::cout << "\tis_valid: " << is_valid << std::endl;
         std::cout << "\tsystem_air_pressure: "                      << system_air_pressure                            << std::endl;
-        std::cout << "\robotic_truck_applied_brake_pressure: "      << robotic_truck_applied_brake_pressure           << std::endl;
-        std::cout << "\robotic_trailer_applied_brake_pressure: "    << robotic_trailer_applied_brake_pressure         << std::endl;
+        std::cout << "\trobotic_truck_applied_brake_pressure: "     << robotic_truck_applied_brake_pressure           << std::endl;
+        std::cout << "\trobotic_trailer_applied_brake_pressure: "   << robotic_trailer_applied_brake_pressure         << std::endl;
         std::cout << "\tcmd_brake_application_level: "              << cmd_brake_application_level                    << std::endl;
         std::cout << "\treserved_propb_21: "                        << reserved_propb_21                              << std::endl;
         std::cout << "\taxiomatic_health_status: "                  << static_cast<uint16_t>(axiomatic_health_status) << std::endl;
@@ -1451,44 +1452,31 @@ struct Light_Status_Message
         unsigned char data[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         if(message_id == 0x50A)
         {
-			// Byte 1.1 - 1.4: Takedown 
+			// Byte 1.1 - 1.4: Flashing
             data[0] = static_cast<uint8_t>(flashing) | 0xF0;
 			data[1] = 0xFF;
 			data[2] = 0xFF;
 			data[3] = 0xFF;
 			data[4] = 0xFF;
-            // Byte 6.1 - 6.4: Flashing
+            // Byte 6.1 - 6.4: Right Blinker
             data[5] = static_cast<uint8_t>(right_blinker) | 0xF0;
 			data[6] = 0xFF;
-            // Byte 8.1 - 8.4: Left Blinker
+            // Byte 8.1 - 8.8: Left Blinker and Takedown
             data[7] = static_cast<uint8_t>(left_blinker) | (static_cast<uint8_t>(take_down) << 4);
-            // Byte 8.5 - 8.8: Right Blinker
-            //data[7] &= (static_cast<uint8_t>(right_blinker) << 4) & 0xF0;
-
-            // NOT USED
-            //data[4] = static_cast<uint8_t>(green_flasher);
-            // NOT USED
-            //data[5] = static_cast<uint8_t>(green_solid);
         }
         if(message_id == 0x50B)
         {
-            // Byte 1.5 - 1.8: Flashing
+            // Byte 1.5 - 1.8: Left Blinker
             data[0] = (static_cast<uint8_t>(left_blinker) << 4) | 0x0F;
-            // Byte 2.1 - 2.4: Left Blinker
+            // Byte 2.1 - 2.8: Right Blinker and Takedown
             data[1] = static_cast<uint8_t>(right_blinker) | (static_cast<uint8_t>(take_down) << 4);
 			data[2] = 0xFF;
 			data[3] = 0xFF;
 			data[4] = 0xFF;
-            // Byte 2.5 - 2.8: Right Blinker
-            //data[1] &= (static_cast<uint8_t>(right_blinker) << 4) & 0xF0;
-            // Byte 6.5 - 6.8: Takedown 
+            // Byte 6.5 - 6.8: Flashing
             data[5] = (static_cast<uint8_t>(flashing) << 4) | 0x0F;
 			data[6] = 0xFF;
 			data[7] = 0xFF;
-            // NOT USED
-            //data[4] = static_cast<uint8_t>(green_flasher);
-            // NOT USED
-            //data[5] = static_cast<uint8_t>(green_solid);
         }
         
         // Create the CAN Frame
