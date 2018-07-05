@@ -15,107 +15,49 @@
   the License.
 -->
 <!--
-	saxton_cav_src.launch
+	drivers.launch
 
-  A the ros launch file for the STOL CAV Prototype ROS Network.
-  Launches all the needed ros nodes and sets up the parameter server.
-  Also sets up all static transforms used by tf2 within the system.
+This file is used for vehicle configurations. The arguments from saxton_cav.launch should pass on to saxton_cav_src.launch, which should then pass those arguments to this file. The arguments in the saxton_cav.launch file will override all of the default values of the arguments being passed, so you should be making changes to the saxton_cav.launch to configure it to your vehicle. 
 
-  Use:
-  First delete the generated build/scripts folder in all java packages.
-  roslaunch carma saxton_cav.launch
-  After using source devel/setup.bash from workspace root.
-
-  If not using simulated drivers they are activated using ros arguments as shown below.
-  roslaunch carma saxton_cav.launch mock_can:=false can_data_file:=/path/to/file.csv
+If not using simulated drivers they are activated if the respective mock arguments being passed in are false. These lines below activate the respective actual driver if the respective mock argument being passed is false.
+  
 -->
+
 <launch>
-	<!-- Directory of Parameter Files -->
+
+  <!-- Directory of Parameter Files -->
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
-  <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
-  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
-  <!-- Simulated Driver Arguments -->
-  <!-- Directory of Simulation Files -->
-  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
-  <!-- Directory of Engineering Tools -->
-  <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/../engineering_tools" doc="The directory containing scripts for execution"/>
+
   <!-- Simulation Usage -->
-  <arg name="mock_can"            default="true" doc="True if using a simulated can driver"/>
-  <arg name="mock_dsrc"           default="true" doc="True if using a simulated dsrc driver"/>
-  <arg name="mock_srx_controller" default="true" doc="True if using a simulated srx controller driver"/>
-  <arg name="mock_pinpoint"       default="true" doc="True if using a simulated pinpoint driver"/>
-  <arg name="mock_radar"          default="true" doc="True if using a simulated radar driver"/>
-  <arg name="mock_lateral_controller"    default="true" doc="True if using a simulated lateral controller"/>
+  <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
+  <arg name="mock_dsrc"           	default="true" doc="True if using a simulated dsrc driver"/>
+  <arg name="mock_srx_controller" 	default="true" doc="True if using a simulated srx controller driver"/>
+  <arg name="mock_pinpoint"       	default="true" doc="True if using a simulated pinpoint driver"/>
+  <arg name="mock_radar"          	default="true" doc="True if using a simulated radar driver"/>
+  <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
 
-  <!-- Data Files -->
-  <arg name="can_data_file"            default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
-  <arg name="dsrc_data_file"           default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
-  <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
-  <arg name="pinpoint_data_file"       default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
-  <arg name="radar_data_file"          default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
-  <arg name="cellular_data_file"       default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
-
-  <!-- Debug -->
-  <!-- JVM Debug arguments -->
-  <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
-  <!-- JVM Logging Options -->
-  <arg name="log_config" default="/opt/carma/src/CarmaPlatform/carmajava/launch/params/log-config.properties" doc="The location of the logging configuration file"/>
-  <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
-  <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
-  <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
-  <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
-  <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
-  <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
-  <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
-  <arg name="debug_route"           default="false" doc="Set true to enable debugging on the Route node"/>
-  <arg name="debug_mock_pinpoint"   default="false" doc="Set true to enable debugging on the Mock Pinpoint Driver"/>
-  <arg name="debug_mock_srx_controller" default="false" doc="Set true to enable debugging on the Mock SRX Controller Driver"/>
-  <arg name="debug_mock_can"        default="false" doc="Set true to enable debugging on the Mock CAN Driver"/>
-  <arg name="debug_mock_dsrc"      default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
-  <arg name="debug_mock_radar"      default="false" doc="Set true to enable debugging on the Mock Radar Driver"/>
-  <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
-
-  <!-- ROS Namespaces -->
-  <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
-  <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
-  <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
-  <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
-  <arg name="RD_NS"     default="roadway" doc="Namespace of nodes in roadway package"/>
-  <arg name="RT_NS"     default="route" doc="Namespace of nodes in route package"/>
-  <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
-  <arg name="UI_NS"     default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
-
-      <remap from="system_alert"
-             to="/$(arg TOP_NS)/system_alert"/>
-
-      <!-- DSRC OBU Driver Node -->
-      <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
+  <!-- DSRC OBU Driver Node -->
+    <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
       
+  <!-- PinPoint Driver Node -->
+    <node unless="$(arg mock_pinpoint)" pkg="pinpoint" type="pinpoint_node" name="pin_point_application">
+      <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
+    </node>
 
-      <!-- PinPoint Driver Node -->
-      <node unless="$(arg mock_pinpoint)" pkg="pinpoint" type="pinpoint_node" name="pin_point_application">
-        <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
-      </node>
-     
+  <!-- SRX CAN Driver Node -->
+    <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
+      <arg name="srx_can_can_device" value="can2" />
+    </include>
 
-      <!-- SRX CAN Driver Node -->
-      <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
-        <arg name="srx_can_can_device" value="can2" />
-      </include>
+  <!--SRX Controller Driver Node-->
+    <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
+      <arg name="srx_controller_can_device" value="can1"/>
+    </include>
       
-
-      <!--SRX Controller Driver Node-->
-      <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
-        <arg name="srx_controller_can_device" value="can1"/>
-      </include>
-      
-
-      <!-- SRX Radar Driver Node -->
-      <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
-        <arg name="srx_objects_can_device" value="can0"/>
-      </include>
-      
+  <!-- SRX Radar Driver Node -->
+    <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
+      <arg name="srx_objects_can_device" value="can0"/>
+    </include>
 	
 </launch>
