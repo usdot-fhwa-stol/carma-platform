@@ -237,3 +237,15 @@ min_conflict_avoidance_timegap: 4.0
 # Double: The percentage of the vehicle's maximum acceleration capability to allow the yield plugin to use
 # for conflict avoidance
 max_yield_accel_authority: 0.8
+
+# Double: The percentage of the lateral conflict margin by which to bias the host vehicle's position to the right
+# Units: percent
+conflict_detection_lateral_bias: 0.0
+
+# Double: The percentage of the longitudinal conflict margin by which to bias the host vehicle's position to the front
+# Units: percent
+conflict_detection_longitudinal_bias: -0.5
+
+# Double: The percentage of the time conflict margin by which to bias the host vehicle's position forward in time
+# Units: percent
+conflict_detection_temporal_bias: 0.0
