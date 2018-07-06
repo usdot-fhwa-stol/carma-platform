@@ -142,8 +142,7 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
       </node>
       <!--Truck CAN Driver Node-->
-      <include unless="$(arg mock_can)" file="$(find truck_can_driver)/launch/truck_can_client_cav_socketcan.launch">
-      </include>
+      <include file="$(find truck_can_driver)/launch/truck_can_client_cav_socketcan.launch"/>
       <!-- SRX CAN Driver Node -->
 <!--       <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
         <arg name="srx_can_can_device" value="can2" />
@@ -160,8 +159,7 @@
       </node> -->
 
       <!--Truck Controller Driver Node-->
-      <include file="$(find truck_dbw_controller)/launch/truck_dbw_controller_cav_socketcan.launch">
-      </include>
+      <include file="$(find truck_dbw_controller)/launch/truck_dbw_controller_cav_socketcan.launch"/>
       <!--SRX Controller Driver Node-->
 <!--       <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
         <arg name="srx_controller_can_device" value="can1"/>
@@ -177,12 +175,14 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
       </node> -->
 
+      <!--Truck Radar Driver Node-->
+      <include file="$(find delphi_esr_driver)/launch/delphi_esr_driver.launch"/>
       <!-- SRX Radar Driver Node -->
-      <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
+      <!--<include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
         <arg name="srx_objects_can_device" value="can0"/>
-      </include>
+      </include> -->
       <!-- Simulated Radar Driver Node -->
-      <node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
+      <!--<node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
 
         <env if="$(arg debug_mock_radar)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
@@ -190,7 +190,7 @@
         <param name="simulated_driver" type="string" value="radar"/>
         <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
-      </node>
+      </node>-->
 
       <!--Lateral Controller Driver Node-->
       <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
