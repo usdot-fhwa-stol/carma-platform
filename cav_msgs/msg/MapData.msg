@@ -29,13 +29,13 @@ cav_msgs/IntersectionGeometry[] intersections
 
 # road_segments RoadSegmentList OPTIONAL,
 # -- All roadway descriptions
+cav_msgs/RoadSegmentList road_segments
 
 #DataParameters OPTIONAL,
-data_parameters
+cav_msgs/DataParameters data_parameters
 
 #RestrictionClassList OPTIONAL,
-restriction_list
-
+cav_msgs/RestrictionClassList restriction_list
 
 #RegionalExtension { SEQUENCE (SIZE(1..4)) OF {REGION.Reg-MapData}} OPTIONAL} OPTIONAL
-regional
+# regional # TODO: Discuss implementation
