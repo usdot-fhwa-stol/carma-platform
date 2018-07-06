@@ -46,11 +46,11 @@ cav_msgs/ConnectingLane connecting_lane
 
 cav_msgs/IntersectionReferenceID remote_intersection
 
-#SignalGroupID ::= INTEGER (0..255)
+# SignalGroupID ::= INTEGER (0..255)
 uint8 signal_group
 
-RestrictionClassID ::= INTEGER (0..255)
-uint8 RestrictionClassID user_class
+# RestrictionClassID ::= INTEGER (0..255)
+uint8 user_class
 
 # LaneConnectionID ::= INTEGER (0..255)
 uint8 connection_id

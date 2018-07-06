@@ -12,3 +12,4 @@
 # }
 #
 # TODO: Discuss how to implement RegionalExtension types.
+uint8 regional_extension

@@ -1,5 +1,5 @@
 #
-# Node-XY-22b.msg
+# NodeXY22b.msg
 #
 # J2735 2016 message format.
 #

@@ -1,5 +1,5 @@
 #
-# LaneAttributes-Sidewalk.msg
+# LaneAttributesSidewalk.msg
 #
 # J2735 2016 message format.
 #

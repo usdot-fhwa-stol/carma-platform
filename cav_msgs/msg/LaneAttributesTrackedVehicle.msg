@@ -1,5 +1,5 @@
 #
-# LaneAttributes-TrackedVehicle.msg
+# LaneAttributesTrackedVehicle.msg
 #
 # J2735 2016 message format.
 #

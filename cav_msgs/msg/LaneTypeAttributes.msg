@@ -18,11 +18,11 @@
 # parking LaneAttributes-Parking, -- parking and stopping lanes
 # }
 
-cav_msgs/LaneAttributes-Vehicle vehicle
-cav_msgs/LaneAttributes-Crosswalk crosswalk
-cav_msgs/LaneAttributes-Bike bikeLane
-cav_msgs/LaneAttributes-Sidewalk sidewalk
-cav_msgs/LaneAttributes-Barrier median
-cav_msgs/LaneAttributes-Striping striping
-cav_msgs/LaneAttributes-TrackedVehicle trackedVehicle
-cav_msgs/LaneAttributes-Parking parking
+cav_msgs/LaneAttributesVehicle vehicle
+cav_msgs/LaneAttributesCrosswalk crosswalk
+cav_msgs/LaneAttributesBike bikeLane
+cav_msgs/LaneAttributesSidewalk sidewalk
+cav_msgs/LaneAttributesBarrier median
+cav_msgs/LaneAttributesStriping striping
+cav_msgs/LaneAttributesTrackedVehicle trackedVehicle
+cav_msgs/LaneAttributesParking parking

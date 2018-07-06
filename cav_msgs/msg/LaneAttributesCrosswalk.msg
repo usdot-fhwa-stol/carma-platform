@@ -1,5 +1,5 @@
 #
-# LaneAttributes-Crosswalk.msg
+# LaneAttributesCrosswalk.msg
 #
 # J2735 2016 message format.
 #

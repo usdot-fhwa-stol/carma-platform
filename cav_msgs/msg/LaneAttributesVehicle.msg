@@ -1,5 +1,5 @@
 #
-# LaneAttributes-Vehicle.msg
+# LaneAttributesVehicle.msg
 #
 # J2735 2016 message format.
 #
@@ -23,4 +23,14 @@
 #       -- e.g. to inform about a lane for e-cars
 # } (SIZE (8,...))
 
-uint8  lane_attributes_vehicle
+uint8 lane_attributes_vehicle
+
+uint8 ISVEHICLEREVOCABLELANE=0
+uint8 ISVEHICLEFLYOVERLANE=1
+uint8 HOVLANEUSEONLY=2
+uint8 RESTRICTEDTOBUSUSE=3
+uint8 RESTRICTEDTOTAXIUSE=4
+uint8 RESTRICTEDFROMPUBLICUSE=5
+uint8 HASIRBEACONCOVERAGE=6
+uint8 PERMISSIONONREQUEST=7
+

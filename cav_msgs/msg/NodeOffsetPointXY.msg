@@ -24,11 +24,11 @@
 # }
 #
 
-cav_msgs/Node-XY-20b node-XY1
-cav_msgs/Node-XY-22b node-XY2
-cav_msgs/Node-XY-24b node-XY3
-cav_msgs/Node-XY-26b node-XY4
-cav_msgs/Node-XY-28b node-XY5
-cav_msgs/Node-XY-32b node-XY6
-cav_msgs/Node-LLmD-64b node-LatLon
+cav_msgs/NodeXY20b node_xy1
+cav_msgs/NodeXY22b node_xy2
+cav_msgs/NodeXY24b node_xy3
+cav_msgs/NodeXY26b node_xy4
+cav_msgs/NodeXY28b node_xy5
+cav_msgs/NodeXY32b node_xy6
+cav_msgs/NodeLLmD64b node_latlon
 # cav_msgs/RegionalExtension regional # TODO: Discuss on how to implement

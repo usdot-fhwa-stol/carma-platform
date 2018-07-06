@@ -1,5 +1,5 @@
 #
-# LaneAttributes-Bike.msg
+# LaneAttributesBike.msg
 #
 # J2735 2016 message format.
 #
