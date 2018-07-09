@@ -1,5 +1,5 @@
 <launch>
-    <arg name="device_name" default="can2" />
+    <arg name="device_name" default="can0" />
     <arg name="velocity_topic" default="velocity" />
     <arg name="sensor_frame" default="delphi" />
     <node name="delphi_esr" pkg="delphi_esr_driver" type="delphi_esr_driver_node" output="screen">

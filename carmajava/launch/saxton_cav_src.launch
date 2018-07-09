@@ -141,12 +141,15 @@
         <param name="data_file_path" type="string" value="$(arg pinpoint_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
       </node>
-      <!--Truck CAN Driver Node-->
+	  
+      <!-- Truck CAN Driver Node -->
       <include file="$(find truck_can_driver)/launch/truck_can_client_cav_socketcan.launch"/>
+	  
       <!-- SRX CAN Driver Node -->
 <!--       <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
         <arg name="srx_can_can_device" value="can2" />
-      </include> -->
+      </include>
+-->
       <!-- Simulated CAN Driver Node -->
 <!--       <node if="$(arg mock_can)" pkg="carma" type="mock_drivers" name="srx_can"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
@@ -156,14 +159,17 @@
         <param name="simulated_driver" type="string" value="can"/>
         <param name="data_file_path" type="string" value="$(arg can_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
-      </node> -->
+      </node>
+-->
 
-      <!--Truck Controller Driver Node-->
+      <!-- Truck Controller Driver Node -->
       <include file="$(find truck_dbw_controller)/launch/truck_dbw_controller_cav_socketcan.launch"/>
-      <!--SRX Controller Driver Node-->
+	  
+      <!-- SRX Controller Driver Node -->
 <!--       <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
         <arg name="srx_controller_can_device" value="can1"/>
-      </include> -->
+      </include>
+-->
       <!-- Simulated SRX Controller Driver Node -->
 <!--       <node if="$(arg mock_srx_controller)" pkg="carma" type="mock_drivers" name="srx_controller"
             args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
@@ -173,24 +179,12 @@
         <param name="simulated_driver" type="string" value="srx_controller"/>
         <param name="data_file_path" type="string" value="$(arg srx_controller_data_file)"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
-      </node> -->
+      </node>
+-->
 
-      <!--Truck Radar Driver Node-->
+      <!-- Truck Delphi Radar Driver Node -->
       <include file="$(find delphi_esr_driver)/launch/delphi_esr_driver.launch"/>
-      <!-- SRX Radar Driver Node -->
-      <!--<include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
-        <arg name="srx_objects_can_device" value="can0"/>
-      </include> -->
-      <!-- Simulated Radar Driver Node -->
-      <!--<node if="$(arg mock_radar)" pkg="carma" type="mock_drivers" name="srx_objects"
-            args="gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode">
-
-        <env if="$(arg debug_mock_radar)" name="MOCK_DRIVERS_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
-        <param name="simulated_driver" type="string" value="radar"/>
-        <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
-        <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
-      </node>-->
+	  <!-- Need add mock radar back -->
 
       <!--Lateral Controller Driver Node-->
       <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
@@ -473,9 +467,6 @@
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>
     </group>
-    <!-- TODO Remove after TO 26 Demo is complete -->
-    <node pkg="rosbag" type="record" name="rosbag_node"
-      args="record -o /opt/carma/logs/ /saxton_cav/sensor_fusion/filtered/nav_sat_fix /saxton_cav/sensor_fusion/filtered/heading /saxton_cav/drivers/srx_can/can/speed /saxton_cav/sensor_fusion/filtered/velocity /saxton_cav/sensor_fusion/filtered/acceleration /saxton_cav/drivers/srx_objects/f_lrr/sensor/objects /saxton_cav/drivers/srx_can/can/brake_position /saxton_cav/guidance/plugins/controlling_plugins /saxton_cav/drivers/srx_controller/control/cmd_speed /saxton_cav/message/incoming_mobility_request /saxton_cav/message/incoming_mobility_response /saxton_cav/message/incoming_mobility_operation /saxton_cav/message/incoming_mobility_path /saxton_cav/guidance/outgoing_mobility_request /saxton_cav/guidance/outgoing_mobility_response /saxton_cav/guidance/outgoing_mobility_operation /saxton_cav/guidance/outgoing_mobility_path /saxton_cav/message/incoming_bsm"
-      if="$(arg use_rosbag)" />
+
   </group>
 </launch>
