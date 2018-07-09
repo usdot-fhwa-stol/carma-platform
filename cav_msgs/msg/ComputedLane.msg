@@ -81,4 +81,4 @@ uint16 rotateXY
 int16 scale_x_axis
 int16 scale_y_axis
 
-# regional SEQUENCE (SIZE(1..4)) OF RegionalExtension {{REGION.Reg-ComputedLane}} OPTIONAL, #TODO: Discuss implementation
+# regional #TODO: RegionalExtensions are not yet implemented in asn1c

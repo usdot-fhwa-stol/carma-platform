@@ -58,8 +58,7 @@ cav_msgs/LaneList lane_set
 # -- preempt or priority zones
 cav_msgs/PreemptPriorityList preempt_priority_data
 
-# TODO: Discuss how to implement RegionalExtension types.
-# regional SEQUENCE (SIZE(1..4)) OF
-# RegionalExtension {{REGION.Reg-IntersectionGeometry}} OPTIONAL,
+#TODO: RegionalExtensions are not yet implemented in asn1c
+# regional SEQUENCE (SIZE(1..4)) OF RegionalExtension {{REGION.Reg-IntersectionGeometry}} OPTIONAL,
 # ...
 # }

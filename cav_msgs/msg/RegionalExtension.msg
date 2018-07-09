@@ -15,4 +15,4 @@
 # regExtValue REG-EXT-ID-AND-TYPE.&Type( {Set} {@regionId} )
 # }
 
-# TODO: Discuss how to implement
+# regional #TODO: RegionalExtensions are not yet implemented in asn1c

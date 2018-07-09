@@ -44,5 +44,5 @@ float32 ELEVATION_UNAVAILABLE = -409.6
 float32 ELEVATION_MAX = 6143.9
 float32 ELEVATION_MIN = -409.5
 
-# TODO: Discuss if this is needed since it seems a complicated and not sure how to breakdown.
+#TODO: RegionalExtensions are not yet implemented in asn1c
 # regional SEQUENCE (SIZE(1..4)) OF RegionalExtension {{REGION.Reg-Position3D}} OPTIONAL,

@@ -31,4 +31,4 @@ cav_msgs/NodeXY26b node_xy4
 cav_msgs/NodeXY28b node_xy5
 cav_msgs/NodeXY32b node_xy6
 cav_msgs/NodeLLmD64b node_latlon
-# cav_msgs/RegionalExtension regional # TODO: Discuss on how to implement
+# regional #TODO: RegionalExtensions are not yet implemented in asn1c

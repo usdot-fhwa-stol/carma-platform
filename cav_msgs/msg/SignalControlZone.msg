@@ -11,5 +11,4 @@
 # ...
 # }
 #
-# TODO: Discuss how to implement RegionalExtension types.
-uint8 regional_extension
+# regional_extension  #TODO: RegionalExtensions are not yet implemented in asn1c

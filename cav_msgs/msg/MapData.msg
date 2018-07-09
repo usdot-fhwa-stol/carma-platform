@@ -38,4 +38,4 @@ cav_msgs/DataParameters data_parameters
 cav_msgs/RestrictionClassList restriction_list
 
 #RegionalExtension { SEQUENCE (SIZE(1..4)) OF {REGION.Reg-MapData}} OPTIONAL} OPTIONAL
-# regional # TODO: Discuss implementation
+# regional #TODO: RegionalExtensions are not yet implemented in asn1c

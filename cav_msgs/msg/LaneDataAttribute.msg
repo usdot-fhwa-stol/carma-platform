@@ -66,4 +66,4 @@ int16 lane_angle
 # SpeedLimitList ::= SEQUENCE (SIZE(1..9)) OF RegulatorySpeedLimit
 cav_msgs/SpeedLimitList speed_limits
 
-# regional SEQUENCE (SIZE(1..4)) OF RegionalExtension {{REGION.Reg-LaneDataAttribute}} //TODO: Discuss how to implement.
+# regional #TODO: RegionalExtensions are not yet implemented in asn1c

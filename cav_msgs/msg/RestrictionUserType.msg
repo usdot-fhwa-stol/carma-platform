@@ -20,4 +20,4 @@
 
 cav_msgs/RestrictionAppliesTo basicType
 
-#regional #TODO: Discuss implementation.
+#regional #TODO: RegionalExtensions are not yet implemented in asn1c

@@ -47,4 +47,4 @@ cav_msgs/LaneDataAttributeList data
 float32 dWitdh
 float32 dElevation
 
-# regional //TODO: Discuss how to implement.
+# regional #TODO: RegionalExtensions are not yet implemented in asn1c

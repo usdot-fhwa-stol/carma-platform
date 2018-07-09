@@ -18,5 +18,5 @@ cav_msgs/LaneSharing shared_with
 cav_msgs/LaneTypeAttributes laneType
 
 # regional RegionalExtension {{REGION.Reg-LaneAttributes}} OPTIONAL
-# TODO: Discuss how to implement
+#TODO: RegionalExtensions are not yet implemented in asn1c
 
