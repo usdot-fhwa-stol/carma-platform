@@ -58,6 +58,7 @@ uint8 revision
 cav_msgs/IntersectionStatusObject status
 
 #MinuteOfTheYear OPTIONAL ::= INTEGER (0..527040)
+# -- The value 527040 shall be used for invalid
 uint32 moy
 
 #DSecond ::= INTEGER (0..65535)
