@@ -8,7 +8,7 @@
 #
 # The DE_AdvisorySpeedType data element relates the type of travel to which a given speed refers. This element is
 # typically used as part of an AdvisorySpeed data frame for signal phase and timing data.
-
+#
 # AdvisorySpeedType ::= ENUMERATED {
 # none (0),
 # greenwave (1),

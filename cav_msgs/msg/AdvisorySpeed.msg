@@ -9,7 +9,6 @@
 # The DF_AdvisorySpeed data frame is used to convey a recommended traveling approach speed to an intersection
 # from the message issuer to various travelers and vehicle types. Besides support for various eco-driving applications, this
 # allows transmitting recommended speeds for specialty vehicles such as transit buses.
-
 # AdvisorySpeed ::= SEQUENCE {
 # type AdvisorySpeedType,
 # -- the type of advisory which this is.
@@ -34,7 +33,7 @@
 # ...
 # }
 
-cav_msg/AdvisorySpeedType type
+cav_msgs/AdvisorySpeedType type
 
 # SpeedAdvice ::= INTEGER (0..500)
 # This data element represents the recommended velocity of an object, typically a vehicle speed along a roadway,
@@ -44,7 +43,7 @@ cav_msg/AdvisorySpeedType type
 #-- the value 500 shall be used to indicate that speed is unavailable
 float32 speed
 
-cav_msg/SpeedConfidence confidence
+cav_msgs/SpeedConfidence confidence
 
 # ZoneLength ::= INTEGER (0..10000)
 # -- Unit = 1 meter, 0 = unknown,

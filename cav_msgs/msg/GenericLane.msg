@@ -7,7 +7,7 @@
 # @version 0.1
 #
 # GenericLane ::= SEQUENCE {
-
+#
 # laneID LaneID ::= INTEGER (0..255)
 # -- The unique ID number assigned
 # -- to this lane object

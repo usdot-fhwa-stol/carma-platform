@@ -10,7 +10,7 @@
 # the lane object is always described from the stop line outwards away from the intersection. Therefore, the ingress
 # direction is from the end of the path to the stop line and the egress direction is from the stop line outwards. It should be
 # noted that some lane objects are not used for travel and that some lane objects allow bi-directional travel.
-
+#
 # LaneDirection ::= BIT STRING {
 # -- With bits as defined:
 # -- Allowed directions of travel in the lane object
