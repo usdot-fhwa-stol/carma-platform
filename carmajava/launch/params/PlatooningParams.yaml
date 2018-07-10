@@ -75,7 +75,7 @@ platooning_waiting_state_timeout: 25.0
 platooning_cmd_max_adjustment: 10.0
 
 # Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
-# The first two parameter are also used by LPF algorithm to determine whether the host vehicle should change the current leader
+# The first two parameters are also used by LPF truck platooning algorithm to determine whether the host vehicle should change the current leader
 # Units: s
 platooning_lower_boundary: 0.4
 platooning_upper_boundary: 0.7
@@ -102,6 +102,6 @@ platooning_status_time_interval: 100
 # Units: ms
 platooning_info_time_interval: 200
 
-# Double: The desired time gap to the front vehicle within the platoon
+# Double: The desired time gap to the front vehicle
 # Units: s
 platooning_desired_time_gap: 1.0

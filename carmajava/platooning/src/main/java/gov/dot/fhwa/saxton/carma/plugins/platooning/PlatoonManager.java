@@ -270,11 +270,25 @@ public class PlatoonManager implements Runnable {
         return null;
     }
     
+    /**
+     * This is the implementation of leader predecessor following algorithm for truck platooning.
+     * In most case, the algorithm uses the first vehicle as functional leader but try to maintain
+     * a desired gap with the immediate front vehicle. If the gap to the front vehicle is smaller then
+     * gap lower boundary, the algorithm will choose the immediate front vehicle as the functional leader.
+     * The gap upper boundary is a hysteresis to prevent the host vehicle from continually switching back 
+     * and forth between two leaders.
+     * @return the functional leader from platoon list
+     */
     private PlatoonMember leaderPredecessorFollowing() {
-        double currentTimeGap = plugin.getManeuverInputs().getDistanceToFrontVehicle() / plugin.getManeuverInputs().getCurrentSpeed(); 
+        double currentGap = plugin.getManeuverInputs().getDistanceToFrontVehicle();
+        if(!Double.isFinite(currentGap)) {
+            previousFunctionalLeaderIndex = 0;
+            return platoon.get(0);
+        }
+        double currentTimeGap =  currentGap / plugin.getManeuverInputs().getCurrentSpeed(); 
         // if we are not following the front vehicle in the last time step
         if(previousFunctionalLeaderIndex == -1 || previousFunctionalLeaderIndex == 0) {
-            // if the current time gap is small then the lower gap boundary, we follow the immediate front vehicle
+            // if the current time gap is smaller then the lower gap boundary, we follow the immediate front vehicle
             if(currentTimeGap < plugin.lowerBoundary) {
                 previousFunctionalLeaderIndex = platoon.size() - 1;
                 return platoon.get(platoon.size() - 1);

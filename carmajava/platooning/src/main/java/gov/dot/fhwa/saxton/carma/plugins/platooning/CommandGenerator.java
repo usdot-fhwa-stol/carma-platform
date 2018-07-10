@@ -27,7 +27,6 @@ import gov.dot.fhwa.saxton.carma.guidance.signals.Pipeline;
 import gov.dot.fhwa.saxton.carma.guidance.signals.Signal;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
-import rosgraph_msgs.Log;
 
 /**
  * This class generates speed commands based on the latest information from plugin platoon list.
@@ -98,17 +97,17 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             leader = plugin_.platoonManager.getLeader();
         }
         if(leader != null) {
-            double output = 0.0;
+            double controllerOutput = 0.0;
             // for truck platooning, we decide to use radar to maintain a time gap between vehicles 
             if(plugin_.algorithmType == 4) {
                 double currentGap = plugin_.getManeuverInputs().getDistanceToFrontVehicle();
-                // if there is a error from radar reading
-                if(Double.isNaN(currentGap) || Double.isInfinite(currentGap)) {
+                // if there is an error from radar reading
+                if(!Double.isFinite(currentGap)) {
                     log_.warn("We lost the track of front vehicle. Using leader command speed");
                 } else {
                     distanceGapController_.changeSetpoint(plugin_.desiredTimeGap * plugin_.getManeuverInputs().getCurrentSpeed());
                     Signal<Double> signal = new Signal<Double>(currentGap, timeStamp);
-                    output = speedController_.apply(signal).get().getData();
+                    controllerOutput = speedController_.apply(signal).get().getData();
                 }
             } else {
                 double leaderCurrentPosition = leader.vehiclePosition;
@@ -133,10 +132,10 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
                 // The command speed of leader vehicle will act as the baseline for our speed control
                 distanceGapController_.changeSetpoint(desiredHostPosition);
                 Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
-                output = speedController_.apply(signal).get().getData();
+                controllerOutput = speedController_.apply(signal).get().getData();
             }
-            double adjSpeedCmd = output + leader.commandSpeed;
-            log_.info("Adjusted Speed Cmd = " + adjSpeedCmd + "; Controller Output = " + output
+            double adjSpeedCmd = controllerOutput + leader.commandSpeed;
+            log_.info("Adjusted Speed Cmd = " + adjSpeedCmd + "; Controller Output = " + controllerOutput
                      + "; Leader CmdSpeed= " + leader.commandSpeed + "; Adjustment Cap " + adjustmentCap);
             // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
             // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
