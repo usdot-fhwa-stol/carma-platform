@@ -30,6 +30,8 @@
 # }
 
 #MinuteOfTheYear OPTIONAL ::= INTEGER (0..527040)
+# -- The value 527040 shall be used for invalid
+
 uint32 time_stamp
 
 # name DescriptiveName OPTIONAL := IA5String (SIZE(1..63))
