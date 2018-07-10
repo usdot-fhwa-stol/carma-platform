@@ -26,4 +26,5 @@ export ROS_HOME=/opt/carma/.ros
 rm /opt/carma/launch.pid
 
 # Launch platform
-roslaunch --pid=/opt/carma/launch.pid carma saxton_cav.launch
+rosBagRecord=$1
+roslaunch --pid=/opt/carma/launch.pid carma saxton_cav.launch use_rosbag:=$rosBagRecord
