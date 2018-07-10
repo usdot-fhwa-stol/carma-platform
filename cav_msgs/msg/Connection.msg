@@ -47,6 +47,10 @@ cav_msgs/ConnectingLane connecting_lane
 cav_msgs/IntersectionReferenceID remote_intersection
 
 # SignalGroupID ::= INTEGER (0..255)
+# -- The value 0 shall be used when the ID is
+# -- not available or known
+# -- the value 255 is reserved to indicate a
+# -- permanent green movement state
 uint8 signal_group
 
 # RestrictionClassID ::= INTEGER (0..255)
