@@ -190,7 +190,8 @@
             <arg name="mock_can" value="$(arg mock_can)" />
             <arg name="mock_srx_controller" value="$(arg mock_srx_controller)" />
             <arg name="mock_radar" value="$(arg mock_radar)" />
-
+	    <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
+            <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
           </include>
 
       </group>
