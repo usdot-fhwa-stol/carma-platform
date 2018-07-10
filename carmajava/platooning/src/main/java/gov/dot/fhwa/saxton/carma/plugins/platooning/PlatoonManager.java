@@ -42,7 +42,7 @@ public class PlatoonManager implements Runnable {
     // This field is only used by Follower State
     protected int                  platoonSize      = 2;   
     
-    // The first two variables are used for APF leader selection algorithm
+    // The first two variables are used for APF and LPF leader selection algorithm
     // The last one is used internally for removing expired entries 
     private String               previousFunctionalLeaderID    = "";
     private int                  previousFunctionalLeaderIndex = -1;
@@ -262,10 +262,37 @@ public class PlatoonManager implements Runnable {
                 // Number 2 indicates PF algorithm and it will always return the vehicle in its immediate front
                 leader = platoon.get(platoon.size() - 1);
                 log.info("PF algorithm require us to follow our current predecessor");
+            } else if(plugin.algorithmType == 4) {
+                leader = leaderPredecessorFollowing();
             }
             return leader;
         }
         return null;
+    }
+    
+    private PlatoonMember leaderPredecessorFollowing() {
+        double currentTimeGap = plugin.getManeuverInputs().getDistanceToFrontVehicle() / plugin.getManeuverInputs().getCurrentSpeed(); 
+        // if we are not following the front vehicle in the last time step
+        if(previousFunctionalLeaderIndex == -1 || previousFunctionalLeaderIndex == 0) {
+            // if the current time gap is small then the lower gap boundary, we follow the immediate front vehicle
+            if(currentTimeGap < plugin.lowerBoundary) {
+                previousFunctionalLeaderIndex = platoon.size() - 1;
+                return platoon.get(platoon.size() - 1);
+            } else {
+                previousFunctionalLeaderIndex = 0;
+                return platoon.get(0);
+            }
+        } else {
+            // if the current time gap becomes higher then upper gap boundary, we start follow the first vehicle
+            if(currentTimeGap > plugin.upperBoundary) {
+                previousFunctionalLeaderIndex = 0;
+                return platoon.get(0);
+            } else {
+                // if the current time gap is still not large enough, we continue follow the immediate front vehicle
+                previousFunctionalLeaderIndex = platoon.size() - 1;
+                return platoon.get(platoon.size() - 1);
+            }
+        }
     }
     
     /**
