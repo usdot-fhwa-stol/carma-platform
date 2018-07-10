@@ -24,6 +24,15 @@
 # }
 #
 
+uint8 choice
+uint8 NODE_XY1=0
+uint8 NODE_XY2=1
+uint8 NODE_XY3=2
+uint8 NODE_XY4=3
+uint8 NODE_XY5=4
+uint8 NODE_XY6=5
+uint8 NODE_LATLON=6
+
 cav_msgs/NodeXY20b node_xy1
 cav_msgs/NodeXY22b node_xy2
 cav_msgs/NodeXY24b node_xy3

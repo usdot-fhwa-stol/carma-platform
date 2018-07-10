@@ -17,6 +17,11 @@
 # 		large DrivenLineOffsetLg
 # 		},
 
+
+uint8 choice
+uint8 SMALL=0
+uint8 LARGE=1
+
 # The DrivenLineOffsetSmall data element is an integer value expressing the offset in a defined axis from a reference
 # lane number from which a computed lane is offset.
 # DrivenLineOffsetSm ::= INTEGER (-2047..2047)

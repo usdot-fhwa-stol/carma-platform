@@ -52,7 +52,6 @@
 # -- the value 255 is reserved for future use
 uint16 reference_lane_id
 
-# TODO: How CHOICE needs to be implemented?
 # The DrivenLineOffsetSmall data element is an integer value expressing the offset in a defined axis from a reference
 # lane number from which a computed lane is offset.
 # DrivenLineOffsetSm ::= INTEGER (-2047..2047)

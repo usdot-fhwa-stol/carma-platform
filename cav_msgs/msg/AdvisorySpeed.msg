@@ -54,7 +54,7 @@ cav_msgs/SpeedConfidence confidence
 uint16 distance
 
 # RestrictionClassID ::= INTEGER (0..255)
-uint8 class
+uint8 restriction_class_id
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c
 

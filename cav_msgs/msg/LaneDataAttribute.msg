@@ -31,6 +31,14 @@
 # ...
 # }
 
+uint8 choice
+uint8 PATH_END_POINT_ANGLE=0
+uint8 LANE_CROWN_POINT_CENTER=1
+uint8 LANE_CROWN_POINT_LEFT=2
+uint8 LANE_CROWN_POINT_RIGHT=3
+uint8 LANE_ANGLE=4
+uint8 SPEED_LIMITS=5
+
 # DeltaAngle ::= INTEGER (-150..150)
 # -- With an angle range from
 # -- negative 150 to positive 150
