@@ -13,6 +13,7 @@
 std_msgs/Header header
 
 #MinuteOfTheYear OPTIONAL ::= INTEGER (0..527040)
+# -- The value 527040 shall be used for invalid
 uint32 time_stamp
 
 #MsgCount ::= INTEGER (0..127)
