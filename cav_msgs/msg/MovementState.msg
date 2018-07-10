@@ -49,6 +49,10 @@
 string movement_name
 
 # SignalGroupID ::= INTEGER (0..255)
+# -- The value 0 shall be used when the ID is
+# -- not available or known
+# -- the value 255 is reserved to indicate a
+# -- permanent green movement state
 uint8 signal_group
 
 # state-time-speed MovementEventList
