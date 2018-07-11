@@ -17,7 +17,42 @@ duration=$((rosbag info $bagfile | grep duration) | awk -F'[()]' '{gsub(/[^0-9 ]
 echo $duration
 if [[ $duration == "" ]]
 then
-	echo "The bag file's duration was less than 60 seconds, so it was not processed"
+	echo "The bag file's duration was less than 60 seconds"
+	duration=$((rosbag info $bagfile | grep duration) | grep -o '[0-9].\+')
+	duration=${duration%?}""
+	duration=${duration%?}""
+	duration=${duration%?}""
+	echo $duration
+	if [[ $duration -gt $filter ]]
+	then
+		sleep 2s
+		mkdir $folder
+		mv ./$1 ./$folder
+		mv route.txt ./$folder
+		cd $folder
+		roscore &
+		sleep 5s
+		xterm -e "$command" &
+		sleep 12s
+		rosbag play -r 10 $bagfile
+		sleep 5s
+		killall rostopic
+		if [[ -s output/nav_sat_fix.csv ]]
+		then
+    			echo "nav_sat_fix did not work"
+    			folder=$(basename "$1" .bag)
+    			cat route.txt | grep Downtrack: > position.csv;
+    			mv position.csv $folder
+		else
+    			echo "nav_sat_fix worked!"
+		fi
+		killall roscore
+		killall rosmaster
+		mv ./$1 ../
+		mv route.txt ../
+	else
+		echo "The bag file's duration was only $duration seconds, so it was not processed"
+	fi
 else
 	if [[ $duration -gt $filter ]]
 	then
