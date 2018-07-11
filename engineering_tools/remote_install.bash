@@ -325,7 +325,7 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == tru
 	fi
 	# Create symlink to launch file so that roslaunch will work when package is sourced
 	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
-	SCRIPT_1="ln -s  ${APP_DIR}/launch/* ${SYMLINK_LOCATION};"
+	SCRIPT_1="rm ${SYMLINK_LOCATION}/*.launch; ln -s  ${APP_DIR}/launch/* ${SYMLINK_LOCATION};"
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2} ${SCRIPT_3}"
 		# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/launch/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/launch/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/launch/*;"
