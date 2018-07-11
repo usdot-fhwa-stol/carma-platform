@@ -91,9 +91,12 @@ public class ConflictManager implements IConflictManager {
    *                         will be considered in collision
    * @param timeMargin       The time margin in seconds within which a point will
    *                         be considered in collision
-   * @param lateralBias      The percentage of the crosstrack margin to bias the host vehicle's bounding box to the right
-   * @param longitudinalBias The percentage of the downtrack margin to bias the host vehicle's bounding box to the front
-   * @param temporalBias     The percentage of the time margin to bias the host vehicle's bounding box to the future
+   * @param lateralBias      The percentage of the crosstrack margin to bias the
+   *                         host vehicle's bounding box to the right
+   * @param longitudinalBias The percentage of the downtrack margin to bias the
+   *                         host vehicle's bounding box to the front
+   * @param temporalBias     The percentage of the time margin to bias the host
+   *                         vehicle's bounding box to the future
    * @param timeProvider     The object responsible to determining the time used
    *                         in mobility messages
    */
@@ -327,10 +330,20 @@ public class ConflictManager implements IConflictManager {
         // If this map contains the point being evaluated collisions must be checked for
         RoutePointStamped transformed = new RoutePointStamped(
             routePoint.getDowntrack() + (downtrackMargin * longitudinalBias),
-            routePoint.getCrosstrack() + (crosstrackMargin * lateralBias), 
+            routePoint.getCrosstrack() + (crosstrackMargin * lateralBias),
             routePoint.getStamp() + (timeMargin * temporalBias));
+
+        Point3D minBoundingPoint = new Point3D(transformed.getDowntrack() - downtrackMargin,
+            transformed.getCrosstrack() - crosstrackMargin, transformed.getStamp() - timeMargin);
+        Point3D maxBoundingPoint = new Point3D(transformed.getDowntrack() + downtrackMargin,
+            transformed.getCrosstrack() + crosstrackMargin, transformed.getStamp() + timeMargin);
+
+        List<Point3D> pointCloud = new ArrayList<>();
+        pointCloud.add(minBoundingPoint);
+        pointCloud.add(maxBoundingPoint);
+        CartesianObject boundingBox = new CartesianObject(pointCloud);
         if (map.surrounds(transformed.getPoint())) {
-          if (!map.getCollisions(transformed.getPoint()).isEmpty()) {
+          if (!map.getCollisions(boundingBox).isEmpty()) {
             // Get the vehicle id and add it to list of conflicting ids
             if (mapContainer == requestedPathSpatialMaps) {
               conflictingVehicles.add(planIdMap.get(id));
@@ -363,11 +376,26 @@ public class ConflictManager implements IConflictManager {
     RoutePointStamped prevPoint = null;
 
     for (RoutePointStamped routePoint : hostPath) {
+      RoutePointStamped transformed = new RoutePointStamped(
+          routePoint.getDowntrack() + (downtrackMargin * longitudinalBias),
+          routePoint.getCrosstrack() + (crosstrackMargin * lateralBias),
+          routePoint.getStamp() + (timeMargin * temporalBias));
+
+      Point3D minBoundingPoint = new Point3D(transformed.getDowntrack() - downtrackMargin,
+          transformed.getCrosstrack() - crosstrackMargin, transformed.getStamp() - timeMargin);
+      Point3D maxBoundingPoint = new Point3D(transformed.getDowntrack() + downtrackMargin,
+          transformed.getCrosstrack() + crosstrackMargin, transformed.getStamp() + timeMargin);
+
       // Get lane
-      lane = route.getSegments().get(routePoint.getSegmentIdx()).determinePrimaryLane(routePoint.getCrosstrack());
+      lane = route.getSegments().get(transformed.getSegmentIdx()).determinePrimaryLane(transformed.getCrosstrack());
+
+      List<Point3D> pointCloud = new ArrayList<>();
+      pointCloud.add(minBoundingPoint);
+      pointCloud.add(maxBoundingPoint);
+      CartesianObject boundingBox = new CartesianObject(pointCloud);
 
       // Update conflicts
-      if (!otherPathMap.getCollisions(routePoint.getPoint()).isEmpty()) {
+      if (!otherPathMap.getCollisions(boundingBox).isEmpty()) {
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
           currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane,
