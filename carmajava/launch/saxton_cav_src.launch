@@ -41,6 +41,9 @@
   <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
   <!-- Directory of Engineering Tools -->
   <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/../engineering_tools" doc="The directory containing scripts for execution"/>
+  <!-- Directory containing additional carma launch files such as the drivers.launch file -->
+  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
+  
   <!-- Simulation Usage -->
   <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
   <arg name="mock_dsrc"           	default="true" doc="True if using a simulated dsrc driver"/>
@@ -170,8 +173,8 @@
         <!--Lateral Controller Driver Node-->
           <node if="$(arg mock_lateral_controller)" pkg="carma" type="lateral_control_driver" name="lateral_controller"
             args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
-		
-	    <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+            <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
             <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
           </node>
@@ -183,14 +186,14 @@
           <remap from="system_alert"
             to="/$(arg TOP_NS)/system_alert"/>
 
-          <include file="$(find carma)/launch/drivers.launch">
+          <include file="$(arg LAUNCH_DIR)/drivers.launch">
 
             <arg name="mock_dsrc" value="$(arg mock_dsrc)" />
             <arg name="mock_pinpoint" value="$(arg mock_pinpoint)" />
             <arg name="mock_can" value="$(arg mock_can)" />
             <arg name="mock_srx_controller" value="$(arg mock_srx_controller)" />
             <arg name="mock_radar" value="$(arg mock_radar)" />
-	    <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
+            <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
             <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
           </include>
 
