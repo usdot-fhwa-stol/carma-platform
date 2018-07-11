@@ -127,6 +127,7 @@ APP_DIR="${CARMA_DIR}/app"
 # If copy executables, params, routes, urdf, or launch is set then don't copy everything
 if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ] || \
    [ ${URDF} == true ] || [ ${LAUNCH} == true ] || [ ${MOCK_DATA} == true ] || \
+	 [ ${OVERWRITE_HOST_PARAMS} == true ] || \
 	 [ ${APP} == true ] || [ ${WEB} == true ] || [ ${SCRIPTS} == true ] || [[ $(echo -n $FOLDER | wc -m) -gt 0 ]]; then
 	EVERYTHING=false
 fi

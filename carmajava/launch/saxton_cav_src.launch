@@ -170,8 +170,8 @@
         <!--Lateral Controller Driver Node-->
           <node if="$(arg mock_lateral_controller)" pkg="carma" type="lateral_control_driver" name="lateral_controller"
             args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
-		
-	    <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+            <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
             <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
           </node>
@@ -190,7 +190,7 @@
             <arg name="mock_can" value="$(arg mock_can)" />
             <arg name="mock_srx_controller" value="$(arg mock_srx_controller)" />
             <arg name="mock_radar" value="$(arg mock_radar)" />
-	    <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
+            <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
             <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
           </include>
 
