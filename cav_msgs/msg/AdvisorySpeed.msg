@@ -56,7 +56,7 @@ cav_msgs/SpeedConfidence confidence
 # -- when used for measuring queues)
 uint16 distance
 uint16 DISTANCE_UNKNOWN=0
-bool distance exists
+bool distance_exists
 
 # RestrictionClassID ::= INTEGER (0..255)
 uint8 restriction_class_id
