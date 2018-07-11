@@ -36,12 +36,14 @@ platooning_max_size: 10
 
 # Integer: The algorithm type used for leader selection in a platoon
 # When algorithm_type == 0, it means no leader selection algorithm
-# When algorithm_type == 1, it means the APF algorithm
-# When algorithm_type == 2, it means the PF algorithm
-# When algorithm_type == 3, it means the PF* algorithm (not implemented)
+# When algorithm_type == 1, it means APF algorithm
+# When algorithm_type == 2, it means PF algorithm
+# When algorithm_type == 3, it means PF* algorithm (not implemented)
+# When algorithm_typr == 4, it means LPF algorithm (this is only for truck platooning)
 platooning_algorithm_type: 1
 
 # Double: The desired time headway to the front vehicle within the platoon
+# This parameter will be omitted if the platooning algorithm type is LPF
 # Units: s
 platooning_desired_time_headway: 0.84
 
@@ -74,6 +76,7 @@ platooning_waiting_state_timeout: 25.0
 platooning_cmd_max_adjustment: 10.0
 
 # Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
+# The first two parameters are also used by LPF truck platooning algorithm to determine whether the host vehicle should change the current leader
 # Units: s
 platooning_lower_boundary: 0.4
 platooning_upper_boundary: 0.7
@@ -99,3 +102,8 @@ platooning_status_time_interval: 100
 # Integer: This is the time interval length between two INFO messages when platoon leader
 # Units: ms
 platooning_info_time_interval: 200
+
+# Double: The desired time gap to the front vehicle
+# This parameter will be omitted if the platooning algorithm type is not LPF
+# Units: s
+platooning_desired_time_gap: 1.0

@@ -97,31 +97,45 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
             leader = plugin_.platoonManager.getLeader();
         }
         if(leader != null) {
-            double leaderCurrentPosition = leader.vehiclePosition;
-            log_.info("The current leader position is " + leaderCurrentPosition);
-            double hostVehiclePosition = pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance();
-            double hostVehicleSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
-            log_.info("The host vehicle speed is + " + hostVehicleSpeed + " and its position is " + hostVehiclePosition);
-            // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
-            // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
-            int leaderIndex = plugin_.platoonManager.getIndexOf(leader);
-            int numOfVehiclesGaps = plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;
-            log_.info("The host vehicle have " + numOfVehiclesGaps + " vehicles between itself and its leader (includes the leader)");
-            desiredGap_ = Math.max(hostVehicleSpeed * plugin_.timeHeadway * numOfVehiclesGaps, plugin_.standStillHeadway * numOfVehiclesGaps);
-            log_.info("The desired gap with the leader is " + desiredGap_);
-            log_.info("Based on raw radar, the current gap with the front vehicle is " + plugin_.getManeuverInputs().getDistanceToFrontVehicle());
-            double desiredHostPosition = leaderCurrentPosition - this.desiredGap_;
-            log_.info("The desired host position and the setpoint for pid controller is " + desiredHostPosition);
-            // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
-            // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
-            // A positive error implies that that the two vehicles are too far and a negative error implies that the two vehicles are too close
-            // The summation of the leader vehicle command speed and the output of PD controller will be used as speed commands
-            // The command speed of leader vehicle will act as the baseline for our speed control
-            distanceGapController_.changeSetpoint(desiredHostPosition);
-            Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
-            double output = speedController_.apply(signal).get().getData();
-            double adjSpeedCmd = output + leader.commandSpeed;
-            log_.info("Adjusted Speed Cmd = " + adjSpeedCmd + "; Controller Output = " + output
+            double controllerOutput = 0.0;
+            // for truck platooning, we decide to use radar to maintain a time gap between vehicles
+            if(plugin_.algorithmType == PlatooningPlugin.LPF_ALGORITHM) {
+                double currentGap = plugin_.getManeuverInputs().getDistanceToFrontVehicle();
+                // if there is an error from radar reading
+                if(!Double.isFinite(currentGap)) {
+                    log_.warn("We lost the track of front vehicle. Using leader command speed");
+                } else {
+                    distanceGapController_.changeSetpoint(plugin_.desiredTimeGap * plugin_.getManeuverInputs().getCurrentSpeed());
+                    Signal<Double> signal = new Signal<Double>(currentGap, timeStamp);
+                    controllerOutput = speedController_.apply(signal).get().getData();
+                }
+            } else {
+                double leaderCurrentPosition = leader.vehiclePosition;
+                log_.info("The current leader position is " + leaderCurrentPosition);
+                double hostVehiclePosition = pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance();
+                double hostVehicleSpeed = pluginServiceLocator_.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
+                log_.info("The host vehicle speed is + " + hostVehicleSpeed + " and its position is " + hostVehiclePosition);
+                // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
+                // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
+                int leaderIndex = plugin_.platoonManager.getIndexOf(leader);
+                int numOfVehiclesGaps = plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;
+                log_.info("The host vehicle have " + numOfVehiclesGaps + " vehicles between itself and its leader (includes the leader)");
+                desiredGap_ = Math.max(hostVehicleSpeed * plugin_.timeHeadway * numOfVehiclesGaps, plugin_.standStillHeadway * numOfVehiclesGaps);
+                log_.info("The desired gap with the leader is " + desiredGap_);
+                log_.info("Based on raw radar, the current gap with the front vehicle is " + plugin_.getManeuverInputs().getDistanceToFrontVehicle());
+                double desiredHostPosition = leaderCurrentPosition - this.desiredGap_;
+                log_.info("The desired host position and the setpoint for pid controller is " + desiredHostPosition);
+                // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
+                // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
+                // A positive error implies that that the two vehicles are too far and a negative error implies that the two vehicles are too close
+                // The summation of the leader vehicle command speed and the output of PD controller will be used as speed commands
+                // The command speed of leader vehicle will act as the baseline for our speed control
+                distanceGapController_.changeSetpoint(desiredHostPosition);
+                Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
+                controllerOutput = speedController_.apply(signal).get().getData();
+            }
+            double adjSpeedCmd = controllerOutput + leader.commandSpeed;
+            log_.info("Adjusted Speed Cmd = " + adjSpeedCmd + "; Controller Output = " + controllerOutput
                      + "; Leader CmdSpeed= " + leader.commandSpeed + "; Adjustment Cap " + adjustmentCap);
             // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
             // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap

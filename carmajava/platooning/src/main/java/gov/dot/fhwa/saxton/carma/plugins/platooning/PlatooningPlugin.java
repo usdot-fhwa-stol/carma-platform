@@ -59,6 +59,10 @@ public class PlatooningPlugin extends AbstractPlugin
     protected static final String OPERATION_STATUS_TYPE   = "STATUS";
     protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
     protected static final int    OPERATION_QUEUE_SIZE    = 8;
+    protected static final int    LF_ALGORITHM            = 0;
+    protected static final int    APF_ALGORITHM           = 1;
+    protected static final int    PF_ALGORITHM            = 2;
+    protected static final int    LPF_ALGORITHM           = 4;
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;
@@ -100,6 +104,9 @@ public class PlatooningPlugin extends AbstractPlugin
     protected double minGap                = 22.0; // m
     protected double maxGap                = 32.0; // m
 
+    // this parameters are for truck LPF algorithm
+    protected double desiredTimeGap        = 1.0; // s
+    
     // following parameters are flags for different caps on platooning controller output
     protected boolean speedLimitCapEnabled  = true;
     protected boolean maxAccelCapEnabled    = true;
@@ -172,7 +179,7 @@ public class PlatooningPlugin extends AbstractPlugin
         maxAccelCapEnabled      = pluginServiceLocator.getParameterSource().getBoolean("~platooning_max_accel_cap", true);
         leaderSpeedCapEnabled   = pluginServiceLocator.getParameterSource().getBoolean("~platooning_max_cmd_speed_adjustment_cap", true);
         infoMessageInterval     = pluginServiceLocator.getParameterSource().getInteger("~platooning_info_time_interval", 200);
-
+        desiredTimeGap          = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_gap", 1.0);
 
         //log all loaded parameters
         log.info("Load param maxAccel = " + maxAccel);
@@ -202,6 +209,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.info("Load param leaderSpeedCapEnabled = " + leaderSpeedCapEnabled);
         log.info("Load param statusMessageInterval = " + statusMessageInterval);
         log.info("Load param infoMessageInterval = " + infoMessageInterval);
+        log.info("Load param desiredTimeGap = " + desiredTimeGap);
         
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
