@@ -53,19 +53,23 @@ uint8 connection_id
 # -- known path, often against traffic flow direction
 # -- when used for measuring queues)
 uint16 queue_length
+bool queue_length_exists
 
 # ZoneLength ::= INTEGER (0..10000)
 uint16 available_storage_length
+bool available_storage_length_exists
 
 # WaitOnStopline ::= BOOLEAN --- True or False
 # -- If "true", the vehicles on this specific connecting
 # -- maneuver have to stop on the stop-line
 # -- and not to enter the collision area
 bool wait_on_stop
+bool wait_on_stop_exists
 
 # PedestrianBicycleDetect ::= BOOLEAN
 # -- true if ANY Pedestrians or Bicyclists are
 # -- detected crossing the target lane or lanes
 bool ped_bicycle_detect
+bool ped_bicycle_detect_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

@@ -31,11 +31,13 @@
 
 #MinuteOfTheYear OPTIONAL ::= INTEGER (0..527040)
 uint32 time_stamp
+bool time_stamp_exists
 
 # name DescriptiveName OPTIONAL := IA5String (SIZE(1..63))
 # -- often for debug use only
 # -- but at times used to name ped crossings
 string name
+bool name_exists
 
 cav_msgs/IntersectionStateList intersections
 

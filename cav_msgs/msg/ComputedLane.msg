@@ -70,14 +70,18 @@ cav_msgs/OffsetYaxis offset_y_axis
 #  -- the true north is 0, positive is clockwise
 #  -- the values 240 to 254 shall not be sent
 #  -- the value 255 (0xFF) indicates an invalid value
-
+# NOTE: use invalid value to indicate unavailability as well.
 uint16 rotateXY
+uint16 ROTATEXY_INVALID=255
+bool rotatexy_exists
 
 # Scale-B12 ::= INTEGER (-2048..2047)
 # A 12-bit signed scaling factor supporting scales from zero (which is not used) to >200%.
 # In this data element, the value zero is taken to represent a value of one (scale 1:1).
-
 int16 scale_x_axis
+bool scale_x_axis_exists
+
 int16 scale_y_axis
+bool scale_y_axis_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

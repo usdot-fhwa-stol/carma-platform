@@ -21,4 +21,6 @@
 # }
 
 cav_msgs/NodeOffsetPointXY delta
+
 cav_msgs/NodeAttributeSetXY attributes
+bool attributes_exists

@@ -45,12 +45,16 @@
 cav_msgs/ConnectingLane connecting_lane
 
 cav_msgs/IntersectionReferenceID remote_intersection
+bool remote_intersection_exists
 
 # SignalGroupID ::= INTEGER (0..255)
 uint8 signal_group
+bool signal_group_exists
 
 # RestrictionClassID ::= INTEGER (0..255)
 uint8 user_class
+bool user_class_exists
 
 # LaneConnectionID ::= INTEGER (0..255)
 uint8 connection_id
+bool connection_id_exists

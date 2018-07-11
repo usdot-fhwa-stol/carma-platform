@@ -40,14 +40,22 @@
 # -- Note that this is NOT expressed in GPS time
 # -- or in local time
 uint16 start_time
+bool start_time_exists
+
 uint16 min_end_time
+bool min_end_time_exists
+
 uint16 max_end_time
+bool max_end_time_exists
+
 uint16 likely_time
+bool likely_time_exists
 
 #TimeIntervalConfidence ::= INTEGER (0..15)
 uint8 confidence
+bool confidence_exists
 
 # TimeMark ::= INTEGER (0..36001)
 uint16 next_time
-
+bool next_time_exists
 

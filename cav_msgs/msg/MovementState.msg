@@ -47,6 +47,7 @@
 # -- often for debug use only
 # -- but at times used to name ped crossings
 string movement_name
+bool movement_name_exists
 
 # SignalGroupID ::= INTEGER (0..255)
 uint8 signal_group
@@ -55,5 +56,6 @@ uint8 signal_group
 cav_msgs/MovementEventList state_time_speed
 
 cav_msgs/ManeuverAssistList maneuver_assist_list
+bool maneuver_assist_list_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

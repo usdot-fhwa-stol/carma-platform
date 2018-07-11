@@ -39,6 +39,12 @@
 # ...
 # }
 
+# name DescriptiveName OPTIONAL := IA5String (SIZE(1..63))
+# -- often for debug use only
+# -- but at times used to name ped crossings
+string name
+bool name_exists
+
 cav_msgs/RoadSegmentReferenceID id
 
 #MsgCount ::= INTEGER (0..127)
@@ -48,8 +54,10 @@ cav_msgs/Position3D ref_point
 
 # LaneWidth OPTIONAL ::= INTEGER (0..32767) -- units of 1 cm
 uint16 lane_width
+bool lane_width_exists
 
 cav_msgs/SpeedLimitList speed_limits
+bool speed_limits_exists
 
 cav_msgs/RoadLaneSetList road_lane_set
 

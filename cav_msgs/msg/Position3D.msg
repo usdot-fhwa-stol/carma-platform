@@ -38,11 +38,13 @@ float64 LONGITUDE_MIN = -179.9999999
 #  -- Providing a range of -409.5 to + 6143.9 meters
 #  -- The value -4096 shall be used when Unknown is to be sent
 #  -- Convert to meter with factor 0.1 when field is used
-float32 elev
+float32 elevation
+bool elevation_exists
 
 float32 ELEVATION_UNAVAILABLE = -409.6
 float32 ELEVATION_MAX = 6143.9
 float32 ELEVATION_MIN = -409.5
+
 
 #TODO: RegionalExtensions are not yet implemented in asn1c
 # regional SEQUENCE (SIZE(1..4)) OF RegionalExtension {{REGION.Reg-Position3D}} OPTIONAL,
