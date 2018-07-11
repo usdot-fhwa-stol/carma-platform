@@ -59,6 +59,10 @@ public class PlatooningPlugin extends AbstractPlugin
     protected static final String OPERATION_STATUS_TYPE   = "STATUS";
     protected static final int    NEGOTIATION_TIMEOUT     = 5000;  // ms
     protected static final int    OPERATION_QUEUE_SIZE    = 8;
+    protected static final int    LF_ALGORITHM            = 0;
+    protected static final int    APF_ALGORITHM           = 1;
+    protected static final int    PF_ALGORITHM            = 2;
+    protected static final int    LPF_ALGORITHM           = 4;
 
     // initialize pubs/subs
     protected IPublisher<MobilityRequest>     mobilityRequestPublisher;

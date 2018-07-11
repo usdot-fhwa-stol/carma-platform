@@ -43,6 +43,7 @@ platooning_max_size: 10
 platooning_algorithm_type: 1
 
 # Double: The desired time headway to the front vehicle within the platoon
+# This parameter will be omitted if the platooning algorithm type is LPF
 # Units: s
 platooning_desired_time_headway: 0.84
 
@@ -103,5 +104,6 @@ platooning_status_time_interval: 100
 platooning_info_time_interval: 200
 
 # Double: The desired time gap to the front vehicle
+# This parameter will be omitted if the platooning algorithm type is not LPF
 # Units: s
 platooning_desired_time_gap: 1.0

@@ -98,8 +98,8 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
         }
         if(leader != null) {
             double controllerOutput = 0.0;
-            // for truck platooning, we decide to use radar to maintain a time gap between vehicles 
-            if(plugin_.algorithmType == 4) {
+            // for truck platooning, we decide to use radar to maintain a time gap between vehicles
+            if(plugin_.algorithmType == PlatooningPlugin.LPF_ALGORITHM) {
                 double currentGap = plugin_.getManeuverInputs().getDistanceToFrontVehicle();
                 // if there is an error from radar reading
                 if(!Double.isFinite(currentGap)) {

@@ -238,7 +238,7 @@ public class PlatoonManager implements Runnable {
         if(isFollower && platoon.size() != 0) {
             // return the first vehicle in the platoon as default if no valid algorithm applied
             leader = platoon.get(0);
-            if(plugin.algorithmType == 1) {
+            if(plugin.algorithmType == PlatooningPlugin.APF_ALGORITHM) {
                 // TODO The following method needs to move into a single strategy class
                 try {
                     int newLeaderIndex = allPredecessorFollowing();
@@ -258,11 +258,11 @@ public class PlatoonManager implements Runnable {
                     log.error("Platooning is unstable. Follow the current predecessor");
                     leader = platoon.get(platoon.size() - 1);
                 }
-            } else if(plugin.algorithmType == 2) {
+            } else if(plugin.algorithmType == PlatooningPlugin.PF_ALGORITHM) {
                 // Number 2 indicates PF algorithm and it will always return the vehicle in its immediate front
                 leader = platoon.get(platoon.size() - 1);
                 log.info("PF algorithm require us to follow our current predecessor");
-            } else if(plugin.algorithmType == 4) {
+            } else if(plugin.algorithmType == PlatooningPlugin.LPF_ALGORITHM) {
                 leader = leaderPredecessorFollowing();
             }
             return leader;
