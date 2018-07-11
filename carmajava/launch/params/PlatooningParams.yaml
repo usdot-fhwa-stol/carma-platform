@@ -107,3 +107,7 @@ platooning_info_time_interval: 200
 # This parameter will be omitted if the platooning algorithm type is not LPF
 # Units: s
 platooning_desired_time_gap: 1.0
+
+# Double: The minimum space between two consecutive vehicles from bumper to bumper
+# Units: m
+platooning_stand_still_gap: 10.0
