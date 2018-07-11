@@ -106,6 +106,7 @@ public class PlatooningPlugin extends AbstractPlugin
 
     // this parameters are for truck LPF algorithm
     protected double desiredTimeGap        = 1.0; // s
+    protected double platooningMinGap      = 10.0; //m
     
     // following parameters are flags for different caps on platooning controller output
     protected boolean speedLimitCapEnabled  = true;
@@ -180,6 +181,7 @@ public class PlatooningPlugin extends AbstractPlugin
         leaderSpeedCapEnabled   = pluginServiceLocator.getParameterSource().getBoolean("~platooning_max_cmd_speed_adjustment_cap", true);
         infoMessageInterval     = pluginServiceLocator.getParameterSource().getInteger("~platooning_info_time_interval", 200);
         desiredTimeGap          = pluginServiceLocator.getParameterSource().getDouble("~platooning_desired_time_gap", 1.0);
+        platooningMinGap        = pluginServiceLocator.getParameterSource().getDouble("~platooning_stand_still_gap", 10.0);
 
         //log all loaded parameters
         log.info("Load param maxAccel = " + maxAccel);
@@ -210,6 +212,7 @@ public class PlatooningPlugin extends AbstractPlugin
         log.info("Load param statusMessageInterval = " + statusMessageInterval);
         log.info("Load param infoMessageInterval = " + infoMessageInterval);
         log.info("Load param desiredTimeGap = " + desiredTimeGap);
+        log.info("Load param platooningMinGap = " + platooningMinGap);
         
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
