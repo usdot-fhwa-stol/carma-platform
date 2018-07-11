@@ -315,10 +315,14 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == tru
 	if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then 
 		echo "Trying to copy launch ..."
 		# Delete old files
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/launch/saxton_cav.launch ${APP_DIR}/"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/launch/drivers.launch ${APP_DIR}/"
 		SCRIPT="rm -r ${APP_DIR}/launch/*;"
 		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 		# Copy the launch files to the remote machine using current symlink
 		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${LAUNCH_DIR}/*.launch ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/saxton_cav.launch ${APP_DIR}/launch/"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/drivers.launch ${APP_DIR}/launch/"
 	fi
 	# Create symlink to launch file so that roslaunch will work when package is sourced
 	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
@@ -344,10 +348,12 @@ fi
 if [ ${EVERYTHING} == true ] || [ ${WEB} == true ]; then
 	echo "Trying to copy website ..."
 	# Delete old files
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/html/scripts/carma.config.js ${APP_DIR}/"
 	SCRIPT="rm -r ${APP_DIR}/html/*;"
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${WEBSITE_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/html/"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/carma.config.js ${APP_DIR}/html/scripts"
 	# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/html/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/html/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/html/*;"
 fi
