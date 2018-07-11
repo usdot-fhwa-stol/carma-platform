@@ -35,11 +35,11 @@ Automated Script to process bag files
 		
 	To call the script:
 
-		bash ./process_bags.bash <date_of_test>
+		bash ./process_bags.bash <date_of_test> OPT<number_of_seconds_filter>
 	
 		For Example:
 			If the date that the test was conducted is June 27, 2018, then it should be denoted as 20180627
-			
+			The second optional argument takes in a number that will exclude processsing any log files with a duration less than it. The default value will be 0.
 
 		The processed files will be placed in a newly created directory and will be denoted VEHICLE_DATEOFTEST
 		
