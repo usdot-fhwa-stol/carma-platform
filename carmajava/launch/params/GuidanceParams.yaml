@@ -244,7 +244,7 @@ conflict_detection_lateral_bias: 0.0
 
 # Double: The percentage of the longitudinal conflict margin by which to bias the host vehicle's position to the front
 # Units: percent
-conflict_detection_longitudinal_bias: -0.5
+conflict_detection_longitudinal_bias: -0.25
 
 # Double: The percentage of the time conflict margin by which to bias the host vehicle's position forward in time
 # Units: percent
