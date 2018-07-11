@@ -105,7 +105,8 @@ public class CommandGenerator implements Runnable, IPlatooningCommandInputs {
                 if(!Double.isFinite(currentGap)) {
                     log_.warn("We lost the track of front vehicle. Using leader command speed");
                 } else {
-                    distanceGapController_.changeSetpoint(plugin_.desiredTimeGap * plugin_.getManeuverInputs().getCurrentSpeed());
+                    desiredGap_ = Math.max(plugin_.platooningMinGap, plugin_.desiredTimeGap * plugin_.getManeuverInputs().getCurrentSpeed());
+                    distanceGapController_.changeSetpoint(desiredGap_);
                     Signal<Double> signal = new Signal<Double>(currentGap, timeStamp);
                     controllerOutput = speedController_.apply(signal).get().getData();
                 }
