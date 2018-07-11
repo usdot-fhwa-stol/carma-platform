@@ -41,6 +41,9 @@
   <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
   <!-- Directory of Engineering Tools -->
   <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/../engineering_tools" doc="The directory containing scripts for execution"/>
+  <!-- Directory containing additional carma launch files such as the drivers.launch file -->
+  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
+  
   <!-- Simulation Usage -->
   <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
   <arg name="mock_dsrc"           	default="true" doc="True if using a simulated dsrc driver"/>
@@ -183,7 +186,7 @@
           <remap from="system_alert"
             to="/$(arg TOP_NS)/system_alert"/>
 
-          <include file="$(find carma)/launch/drivers.launch">
+          <include file="$(arg LAUNCH_DIR)/drivers.launch">
 
             <arg name="mock_dsrc" value="$(arg mock_dsrc)" />
             <arg name="mock_pinpoint" value="$(arg mock_pinpoint)" />
