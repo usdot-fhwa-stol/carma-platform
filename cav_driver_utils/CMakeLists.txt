@@ -24,7 +24,7 @@ find_package(Boost REQUIRED system)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES driver_application cav_socketcan_interface
+  LIBRARIES driver_application cav_socketcan_interface ros_socketcan_interface
   CATKIN_DEPENDS bondcpp cav_msgs cav_srvs roscpp std_msgs
 #  DEPENDS system_lib
 )
