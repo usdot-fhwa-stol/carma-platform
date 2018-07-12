@@ -19,7 +19,7 @@ struct CANFrameStamped
     bool is_extended;
     bool is_error;
     uint8_t dlc;
-    std::array<uint8_t,8>data;
+    std::array<uint8_t,8> data;
 
     void setData(uint64_t d)
     {
@@ -93,7 +93,7 @@ public:
      * an onFrameReceived event
      * @param can_ids
      */
-    virtual void setFilters(const std::vector<uint16_t> &can_ids) = 0;
+    virtual void setFilters(const std::vector<uint32_t> &can_ids) = 0;
 
     /**
      * @brief writes the frame out to the can bus
