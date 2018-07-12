@@ -48,7 +48,9 @@
 # name DescriptiveName OPTIONAL := IA5String (SIZE(1..63))
 # -- often for debug use only
 # -- but at times used to name ped crossings
+# NOTE: As optional field, blank value can note that it's not set in carma.
 string name
+bool name_exists
 
 cav_msgs/IntersectionReferenceID id
 
@@ -58,8 +60,10 @@ uint8 revision
 cav_msgs/IntersectionStatusObject status
 
 #MinuteOfTheYear OPTIONAL ::= INTEGER (0..527040)
-# -- The value 527040 shall be used for invalid
+# The value of 527040 shall be used for invalid
 uint32 moy
+uint32 MOY_INVALID=527040
+bool moy_exists
 
 #DSecond ::= INTEGER (0..65535)
 #  -- Integer values from 0 to 59999 represent the milliseconds within a minute
@@ -68,14 +72,19 @@ uint32 moy
 #  -- The value of 65535 shall represent an unavailable value in the range of the minute
 #  -- Unit is milliseconds
 uint32 time_stamp
+uint32 TIME_STAMP_UNAVAILABLE=65535
+bool time_stamp_exists
 
-# 	enabledLanes EnabledLaneList
+# enabledLanes EnabledLaneList
+# This is a list therefore can be empty list in ROS.
 cav_msgs/EnabledLaneList enabled_lanes
+bool enabled_lanes_exists
 
 # 	states MovementList
 cav_msgs/MovementList states
 
 # 	maneuverAssistList ManeuverAssistList
 cav_msgs/ManeuverAssistList maneuever_assist_list
+bool maneuever_assist_list_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

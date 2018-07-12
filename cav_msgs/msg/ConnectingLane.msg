@@ -20,7 +20,15 @@
 # -- not available or not known
 # -- the value 255 is reserved for future use
 uint16 lane
+uint16 LANE_UNAVAILABLE=0
 
 # -- the permitted maneuvers for this lane
+# AllowedManeuvers ::= BIT STRING {
+# -- With bits as defined:
+# -- Allowed maneuvers at path end (stop line)
+# -- *** All maneuvers with bits not set are therefore prohibited ! ***
+# -- A value of zero shall be used for unknown, indicating no Maneuver
 cav_msgs/AllowedManeuvers maneuver
+bool maneuver_exists
+
 
