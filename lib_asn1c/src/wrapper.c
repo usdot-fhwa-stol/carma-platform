@@ -21,6 +21,7 @@
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityResponseMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_MapMessage.h"
 #include "MessageFrame.h"
 
 /**
@@ -846,8 +847,8 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPa
 		int temp_offsets_Z[60] = {0};
 		for(int i = 0; i < count; i++) {
 			temp_offsets_X[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetX;
-			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetY;
-			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetZ;
+			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetY;
+			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetZ;
 		}
 		(*env) -> SetIntArrayRegion(env, offsets_X, 0, count, temp_offsets_X);
 		(*env) -> SetIntArrayRegion(env, offsets_Y, 0, count, temp_offsets_Y);
@@ -1206,3 +1207,84 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityOp
 	}
 }
 
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage_decodeMap
+  (JNIEnv *env, jobject obj, jbyteArray encodedArray, jobject plain_map, jintArray intersectionGeometry) {
+
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedArray); /* Number of bytes in encoded mobility path */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedArray, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+	    buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+	if(rval.code == RC_OK) {
+
+
+
+		jclass map_data_class = (*env) -> GetObjectClass(env, plain_map);
+		jmethodID mid_setMsgCount = (*env) -> GetMethodID(env, map_data_class, "setMsgIssueRevision", "(B)V");
+		jbyte msgCount = message -> value.choice.MapData.msgIssueRevision;
+		(*env) -> CallVoidMethod(env, plain_map, mid_setMsgCount, msgCount);
+
+		// In current decoder, we assume we have only one intersection in this list
+		if(message -> value.choice.MapData.intersections && message -> value.choice.MapData.intersections -> list.count == 1) {
+			// TODO need fix the size
+			int intersectionData[9] = {0};
+			intersectionData[8] = 1;
+			intersectionData[0] = message -> value.choice.MapData.intersections -> list.array[0] -> id.id;
+			intersectionData[1] = message -> value.choice.MapData.intersections -> list.array[0] -> revision;
+			intersectionData[2] = message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.lat;
+			intersectionData[3] = message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.Long;
+			if(message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.elevation) {
+				intersectionData[4] = *message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.elevation;
+				intersectionData[5] = 1;
+			}
+			if(message -> value.choice.MapData.intersections -> list.array[0] -> laneWidth) {
+				intersectionData[6] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneWidth;
+				intersectionData[7] = 1;
+			}
+			(*env) -> SetIntArrayRegion(env, intersectionGeometry, 0, 9, intersectionData);
+		}
+
+		int laneIDData[255];
+		// Initialize lane ID with invalid value to indicate the end
+		for(int i = 0; i < 255; i++) {
+					laneIDData[i] = -1;
+		}
+		int ingressApproachData[255] = {0};
+		int egressApproachData[255] = {0};
+		int laneDirectionData[255] = {0};
+		int nodeOffsetData[63][3] = {0};
+
+		int numOfLanes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.count;
+		for(int i = 0; i < numOfLanes; i++) {
+			laneIDData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> laneID;
+			if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> ingressApproach) {
+				ingressApproachData[i] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> ingressApproach;
+			} else {
+				ingressApproachData[i] = -1;
+			}
+			if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> egressApproach) {
+				egressApproachData[i] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> egressApproach;
+			} else {
+				egressApproachData[i] = -1;
+			}
+			laneDirectionData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i]->laneAttributes.directionalUse.buf[0];
+			int numOfNodes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.count;
+			for(int j = 0; j < numOfNodes; j++) {
+				int offsetType = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.present;
+				switch(offsetType) {
+				    case 1:
+
+				}
+			}
+		}
+
+		return 0;
+	} else {
+		return -1;
+	}
+}
