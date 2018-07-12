@@ -89,78 +89,45 @@ void torc::PinPointLocalizationClient::processMessage(torc::MessageType msg_type
                 }
                 case 6: // global pose signal emit
                 {
-                    //TAUS 2.0
-                    // struct PinPointGlobalPose pose;
-                    // pose.time = UNPACK_UINT64(&msg[0]);
-                    // pose.latitude = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[8]);
-                    // pose.longitude = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[12]);
-                    // pose.altitude = (float) UNPACK_INT32(&msg[16]) / (float) 1000.0;
-                    // pose.roll = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[20]);
-                    // pose.pitch = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[22]);
-                    // pose.yaw = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[24]);
-
-                    //TAUS 3.0
                     struct PinPointGlobalPose pose;
 
                     pose.time = UNPACK_UINT64(&msg[0]);
                     pose.latitude = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[8]);
                     pose.longitude = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[12]);
-                    pose.altitude = UNPACK_FLOAT(&msg[16]);
-                    pose.roll = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[20]);
-                    pose.pitch = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[24]);
-                    pose.yaw = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[28]);
+                    pose.altitude = (float) UNPACK_INT32(&msg[16]) / (float) 1000.0;
+                    pose.roll = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[20]);
+                    pose.pitch = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[22]);
+                    pose.yaw = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[24]);
 
                     onGlobalPoseChanged(pose);
                     break;
                 }
                 case 7:// local pose emit
                 {
-                    //TAUS 2.0
-                    // struct PinPointLocalPose pose;
-                    // pose.time = UNPACK_UINT64(&msg[0]);
-                    // pose.north = (float) UNPACK_INT32(&msg[8]) / (float) 1000.0;
-                    // pose.east = (float) UNPACK_INT32(&msg[12]) / (float) 1000.0;
-                    // pose.down = (float) UNPACK_INT32(&msg[16]) / (float) 1000.0;
-                    // pose.roll = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[20]);
-                    // pose.pitch = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[22]);
-                    // pose.yaw = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[24]);
-
-                    //TAUS 3.0
                     struct PinPointLocalPose pose;
 
                     pose.time = UNPACK_UINT64(&msg[0]);
-                    pose.north = UNPACK_DOUBLE(&msg[8]);
-                    pose.east =  UNPACK_DOUBLE(&msg[16]);
-                    pose.down =  UNPACK_DOUBLE(&msg[24]);
-                    pose.roll = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[32]);
-                    pose.pitch = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[36]);
-                    pose.yaw = (180.0f / two_to_thirty_one) * (float) UNPACK_INT32(&msg[40]);
+                    pose.north = (float) UNPACK_INT32(&msg[8]) / (float) 1000.0;
+                    pose.east = (float) UNPACK_INT32(&msg[12]) / (float) 1000.0;
+                    pose.down = (float) UNPACK_INT32(&msg[16]) / (float) 1000.0;
+                    pose.roll = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[20]);
+                    pose.pitch = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[22]);
+                    pose.yaw = (180.0f / two_to_fifteenth) * (float) UNPACK_INT16(&msg[24]);
 
                     onLocalPoseChanged(pose);
                     break;
                 }
                 case 8: // velocity emit
                 {
-                    //TAUS 2.0
-                    // struct PinPointVelocity velocity;
-                    // velocity.time = UNPACK_UINT64(&msg[0]);
-                    // velocity.forward_vel = (float) UNPACK_INT24(&msg[8]) / (float) 1000.0;
-                    // velocity.right_vel = (float) UNPACK_INT24(&msg[11]) / (float) 1000.0;
-                    // velocity.down_vel = (float) UNPACK_INT24(&msg[14]) / (float) 1000.0;
-                    // velocity.roll_rate = (float) UNPACK_INT24(&msg[17]) / (float) 1000.0;
-                    // velocity.pitch_rate = (float) UNPACK_INT24(&msg[20]) / (float) 1000.0;
-                    // velocity.yaw_rate = (float) UNPACK_INT24(&msg[23]) / (float) 1000.0;
-
-                    //TAUS 3.0
                     struct PinPointVelocity velocity;
 
                     velocity.time = UNPACK_UINT64(&msg[0]);
-                    velocity.forward_vel = UNPACK_FLOAT(&msg[8]);
-                    velocity.right_vel = UNPACK_FLOAT(&msg[12]);
-                    velocity.down_vel = UNPACK_FLOAT(&msg[16]);
-                    velocity.roll_rate = UNPACK_FLOAT(&msg[20]);
-                    velocity.pitch_rate = UNPACK_FLOAT(&msg[24]);
-                    velocity.yaw_rate = UNPACK_FLOAT(&msg[28]);
+                    velocity.forward_vel = (float) UNPACK_INT24(&msg[8]) / (float) 1000.0;
+                    velocity.right_vel = (float) UNPACK_INT24(&msg[11]) / (float) 1000.0;
+                    velocity.down_vel = (float) UNPACK_INT24(&msg[14]) / (float) 1000.0;
+                    velocity.roll_rate = (float) UNPACK_INT24(&msg[17]) / (float) 1000.0;
+                    velocity.pitch_rate = (float) UNPACK_INT24(&msg[20]) / (float) 1000.0;
+                    velocity.yaw_rate = (float) UNPACK_INT24(&msg[23]) / (float) 1000.0;
 
                     onVelocityChanged(velocity);
                     break;
@@ -187,7 +154,7 @@ void torc::PinPointLocalizationClient::processMessage(torc::MessageType msg_type
                     onQuaternionCovarianceChanged(quat);
                     break;
                 }
-                case 10: //filter accuracy emit
+                case 10: // filter accuracy emmit
                 {
                     struct PinPointFilterAccuracy acc;
 
