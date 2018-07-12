@@ -23,13 +23,15 @@
 # }
 
 # RoadRegulatorID ::= INTEGER (0..65535)
-uint16 road_regulator_id
+uint16 region
+bool region_exists
 
 # RoadSegmentID ::= INTEGER (0..65535)
 # -- The values zero to 255 shall be used for testing only
 # -- Note that the value assigned to an RoadSegment will be
 # -- unique within a given regional ID only during its use
-uint16 road_segment_id
+uint16 id
+bool id_exists
 
 
 

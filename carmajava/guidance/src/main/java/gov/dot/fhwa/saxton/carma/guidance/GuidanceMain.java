@@ -180,6 +180,10 @@ public class GuidanceMain extends SaxtonBaseNode {
     double downtrackMargin = params.getDouble("~conflict_map_collision_downtrack_margin", 2.5);
     double crosstrackMargin = params.getDouble("~conflict_map_collision_crosstrack_margin", 1.0);
     double timeMargin = params.getDouble("~conflict_map_collision_time_margin", 0.05);
+
+    double lateralBias = params.getDouble("~conflict_detection_lateral_bias", 0.0);
+    double longitudinalBias = params.getDouble("~conflict_detection_longitudinal_bias", 0.0);
+    double temporalBias = params.getDouble("~conflict_detection_temporal_bias", 0.0);
     // Echo params
     log.info("Param conflict_map_cell_downtrack_size: " + cellDowntrack);
     log.info("Param conflict_map_cell_crosstrack_size: " + cellCrosstrack);
@@ -188,10 +192,14 @@ public class GuidanceMain extends SaxtonBaseNode {
     log.info("Param conflict_map_collision_crosstrack_margin: " + crosstrackMargin);
     log.info("Param conflict_map_collision_time_margin: " + timeMargin);
 
+    log.info("Param conflict_detection_lateral_bias: " + lateralBias);
+    log.info("Param conflict_detection_longitudinal_bias: " + longitudinalBias);
+    log.info("Param conflict_detection_temporal_bias: " + temporalBias);
     // Set time strategy
     IMobilityTimeProvider timeProvider = new SystemUTCTimeProvider();
     // Build conflict manager
-    conflictManager = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    conflictManager = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, lateralBias,
+    longitudinalBias, temporalBias, timeProvider);
   }
 
   /**

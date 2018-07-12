@@ -17,7 +17,6 @@
 #-- as part of the dynamic map contents.
 
 # LaneID ::= INTEGER (0..255)
-# -- the value 0 shall be used when the lane ID is
-# -- not available or not known
+# -- the value 0 shall be used when the lane ID is not available or not known
 # -- the value 255 is reserved for future use
 uint16[] lane_id_list

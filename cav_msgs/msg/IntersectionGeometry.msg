@@ -13,12 +13,14 @@
 # name DescriptiveName OPTIONAL ::= IA5String (SIZE(1..63))
 # -- For debug use only
 string name
+bool name_exists
 
 # id IntersectionReferenceID,
 # -- A globally unique value set,
 # -- consisting of a regionID and
 # -- intersection ID assignment
 cav_msgs/IntersectionReferenceID id
+bool id_exists
 
 # revision MsgCount  ::= INTEGER (0..127)
 # -- Required default values about lane descriptions follow
@@ -33,6 +35,7 @@ cav_msgs/Position3D ref_point
 # -- Reference width used by all subsequent
 # -- lanes unless a new width is given
 uint16 lane_width
+bool lane_width_exists
 
 # speedLimits SpeedLimitList OPTIONAL
 # -- Reference regulatory speed limits
@@ -43,6 +46,7 @@ uint16 lane_width
 # -- into units of m/s
 # -- Complete details regarding each lane type in this intersection
 cav_msgs/SpeedLimitList speed_limits
+bool speed_limits_exists
 
 # laneSet LaneList,
 # -- Data about one or more lanes
@@ -57,6 +61,7 @@ cav_msgs/LaneList lane_set
 # -- data about one or more regional
 # -- preempt or priority zones
 cav_msgs/PreemptPriorityList preempt_priority_data
+bool preempt_priority_data_exists
 
 #TODO: RegionalExtensions are not yet implemented in asn1c
 # regional SEQUENCE (SIZE(1..4)) OF RegionalExtension {{REGION.Reg-IntersectionGeometry}} OPTIONAL,

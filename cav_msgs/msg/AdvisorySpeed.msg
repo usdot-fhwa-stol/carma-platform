@@ -35,14 +35,17 @@
 
 cav_msgs/AdvisorySpeedType type
 
-# SpeedAdvice ::= INTEGER (0..500)
+# SpeedAdvice ::= INTEGER (0..500) OPTIONAL
 # This data element represents the recommended velocity of an object, typically a vehicle speed along a roadway,
 # expressed in unsigned units of 0.1 meters per second.
 #-- LSB units are 0.1 m/s^2
 #-- the value 499 shall be used for values at or greater than 49.9 m/s
 #-- the value 500 shall be used to indicate that speed is unavailable
 float32 speed
+float32 SPEED_UNAVAILABLE = 500
+bool speed_exists
 
+# SpeedConfidence is an enum already with 0 as unavailable.
 cav_msgs/SpeedConfidence confidence
 
 # ZoneLength ::= INTEGER (0..10000)
@@ -52,9 +55,12 @@ cav_msgs/SpeedConfidence confidence
 # -- known path, often against traffic flow direction
 # -- when used for measuring queues)
 uint16 distance
+uint16 DISTANCE_UNKNOWN=0
+bool distance_exists
 
 # RestrictionClassID ::= INTEGER (0..255)
 uint8 restriction_class_id
+bool restriction_class_id_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c
 

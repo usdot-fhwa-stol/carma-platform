@@ -15,6 +15,7 @@ std_msgs/Header header
 #MinuteOfTheYear OPTIONAL ::= INTEGER (0..527040)
 # -- The value 527040 shall be used for invalid
 uint32 time_stamp
+bool time_stamp_exists
 
 #MsgCount ::= INTEGER (0..127)
 uint8 msg_issue_revision
@@ -24,19 +25,24 @@ cav_msgs/LayerType layer_type
 
 #LayerID OPTIONAL ::= INTEGER (0..100)
 uint8 layer_id
+bool layer_id_exists
 
 #IntersectionGeometryList OPTIONAL ::= SEQUENCE (SIZE(1..32)) OF IntersectionGeometry
 cav_msgs/IntersectionGeometry[] intersections
+bool intersections_exists
 
 # road_segments RoadSegmentList OPTIONAL,
 # -- All roadway descriptions
 cav_msgs/RoadSegmentList road_segments
+bool road_segments_exists
 
 #DataParameters OPTIONAL,
 cav_msgs/DataParameters data_parameters
+bool data_parameters_exists
 
 #RestrictionClassList OPTIONAL,
 cav_msgs/RestrictionClassList restriction_list
+bool restriction_list_exists
 
 #RegionalExtension { SEQUENCE (SIZE(1..4)) OF {REGION.Reg-MapData}} OPTIONAL} OPTIONAL
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

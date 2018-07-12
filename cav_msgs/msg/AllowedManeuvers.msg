@@ -44,3 +44,4 @@
 # } (SIZE(12))
 
 uint16 allowed_maneuvers
+uint16 MANEUVER_UNAVAILABLE=0
