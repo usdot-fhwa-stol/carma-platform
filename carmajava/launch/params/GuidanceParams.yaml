@@ -194,7 +194,7 @@ conflict_map_collision_downtrack_margin: 5.0
 # Double: The margin around a MobilityPath point
 # in the crosstrack dimension in which a collision will be considered to have occured
 # Units: meters
-conflict_map_collision_crosstrack_margin: 3.0
+conflict_map_collision_crosstrack_margin: 1.2
 
 # Double: The margin around a MobilityPath point
 # in the time dimension in which a collision will be considered to have occured
