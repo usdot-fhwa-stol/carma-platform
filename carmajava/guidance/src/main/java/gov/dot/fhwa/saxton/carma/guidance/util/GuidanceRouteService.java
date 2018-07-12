@@ -86,6 +86,9 @@ public class GuidanceRouteService implements RouteService {
 
     double dtdAccum = 0;
     for (RouteSegment seg : currentRoute.getSegments()) {
+      RequiredLane requiredLane = new RequiredLane(dtdAccum, seg.getDowntrackWaypoint().getRequiredLaneIndex());
+      requiredLanes.add(requiredLane);
+
       dtdAccum += seg.length();
 
       SpeedLimit segmentLimit = new SpeedLimit(dtdAccum, convertMphToMps(seg.getDowntrackWaypoint().getUpperSpeedLimit()));
@@ -94,8 +97,6 @@ public class GuidanceRouteService implements RouteService {
       AlgorithmFlags segmentFlags = new AlgorithmFlags(dtdAccum, seg.getDowntrackWaypoint().getDisabledGuidanceAlgorithms());
       disabledAlgorithms.add(segmentFlags);
 
-      RequiredLane requiredLane = new RequiredLane(dtdAccum, seg.getDowntrackWaypoint().getRequiredLaneIndex());
-      requiredLanes.add(requiredLane);
     }
 
     // Remove duplicates to find out where lane changes must occur
