@@ -2,6 +2,8 @@
 result=${PWD##*/}
 under="_"  
 date=$1
+filter=${2:-0}
+echo $filter
 newfolder=$result$under$date
 cd ../
 mkdir $newfolder
@@ -16,7 +18,7 @@ for folder in */ ; do
 	then 
 		files=( ./*.bag )
 		bagfile="${files[0]}"
-		bash ./process_one_bag.bash $bagfile
+		bash ./process_one_bag.bash $bagfile $filter
 		sleep 1s
 		for infolder in */ ; do
 			mv $infolder ../../$newfolder		
