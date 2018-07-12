@@ -224,7 +224,12 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     // Process Lateral Maneuvers
     ////
     int currentPoint = 0;
-    double currentCrosstrack = crosstrack;
+    RouteSegment curSegment = route.getSegments().get(currentSegmentIdx);
+    double laneCount = curSegment.getDowntrackWaypoint().getLaneCount();
+    double laneWidth1 = curSegment.getDowntrackWaypoint().getLaneWidth();
+    double routeLineRelToLeftRoadEdge = (laneCount * laneWidth1 * 0.5);
+    double crosstrackRelToLeftRoadEdge = laneWidth1 * (laneCount - lane - 0.5);
+    double currentCrosstrack = crosstrackRelToLeftRoadEdge - routeLineRelToLeftRoadEdge;
     //int currentLane = lane; // This variable is not used meaningfully
     for (int i = 0; i < lateralManeuvers.size(); i++) {
       if (currentPoint >= path.size()) {
