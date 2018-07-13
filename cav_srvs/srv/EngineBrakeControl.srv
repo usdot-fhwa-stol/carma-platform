@@ -1,0 +1,11 @@
+# EngineBrakeControl.srv
+
+# Request - engine brake control
+
+cav_msgs/EngineBrakeMode set_engine_brake_mode
+cav_msgs/EngineBrakeCommand set_engine_brake_cmd
+cav_msgs/EngineBrakeLevel set_engine_brake_level
+
+---
+
+# Response

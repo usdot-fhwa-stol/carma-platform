@@ -17,6 +17,7 @@ can_msgs::Frame toROSFrame(const CANFrameStamped& msg)
 
     std::copy(msg.data.begin(),msg.data.end(),fr.data.begin());
 
+    return fr;
 }
 
 CANFrameStamped fromROSFrame(const can_msgs::Frame& msg)
@@ -31,9 +32,12 @@ CANFrameStamped fromROSFrame(const can_msgs::Frame& msg)
     fr.is_error = msg.is_error;
 
     std::copy(msg.data.begin(),msg.data.end(),fr.data.begin());
+
+    return fr;
 }
 
-void ROSSocketCANBridge::recv_cb(const can_msgs::FrameConstPtr &msg) {
+void ROSSocketCANBridge::recv_cb(const can_msgs::FrameConstPtr &msg) 
+{
     if(filters_.empty() || filters_.count(msg->id) != 0)
     {
         std::shared_ptr<CANFrameStamped> data(new CANFrameStamped(fromROSFrame(*msg)));
@@ -50,6 +54,7 @@ void ROSSocketCANBridge::recv_cb(const can_msgs::FrameConstPtr &msg) {
 
 ROSSocketCANBridge::ROSSocketCANBridge(const std::string &recv_topic, const std::string &out_topic)
 {
+    ROS_INFO_STREAM("RosBridgeConstruct: " << recv_topic << " " << out_topic);
     async_nh_.reset(new ros::NodeHandle(nh_.getNamespace()));
     async_nh_->setCallbackQueue(&async_q_);
     if(!recv_topic.empty())
@@ -66,7 +71,8 @@ ROSSocketCANBridge::ROSSocketCANBridge(const std::string &recv_topic, const std:
     spinner_->start();
 }
 
-void ROSSocketCANBridge::setFilters(const std::vector<uint16_t> &can_ids) {
+void ROSSocketCANBridge::setFilters(const std::vector<uint32_t> &can_ids) 
+{
     filters_.clear();
     filters_.reserve(can_ids.size());
     for(auto &it : can_ids)
@@ -75,20 +81,23 @@ void ROSSocketCANBridge::setFilters(const std::vector<uint16_t> &can_ids) {
     }
 }
 
-void ROSSocketCANBridge::removeFilters() {
+void ROSSocketCANBridge::removeFilters() 
+{
     filters_.clear();
 }
 
-void ROSSocketCANBridge::close() {
+void ROSSocketCANBridge::close() 
+{
     async_nh_.reset(nullptr);
 }
 
-void ROSSocketCANBridge::write(const CANFrameStamped &frame) {
-    if(write_)
-        out_pub_.publish(toROSFrame(frame));
+void ROSSocketCANBridge::write(const CANFrameStamped &frame) 
+{
+    out_pub_.publish(toROSFrame(frame));
 }
 
-bool ROSSocketCANBridge::is_open() {
+bool ROSSocketCANBridge::is_open() 
+{
     return async_nh_ != nullptr;
 }
 

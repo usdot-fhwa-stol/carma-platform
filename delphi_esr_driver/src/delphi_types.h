@@ -191,8 +191,8 @@ struct DelphiRX4F1
     bool blockage_disable;
     bool use_angle_misalignment;
     bool clear_faults;
-    bool lr_only_trasmit;
-    bool mr_only_transmit;
+    bool lr_transmit;
+    bool mr_transmit;
     int32_t short_track_roc;
     TurnSignalStatus turn_signal_status;
     SensorModeCommand radiate_command;
@@ -218,8 +218,8 @@ struct DelphiRX4F1
             use_angle_misalignment(false),
             clear_faults(false),
             high_yaw_angle(0),
-            lr_only_trasmit(false),
-            mr_only_transmit(false),
+            lr_transmit(true),
+            mr_transmit(true),
             short_track_roc(0)
 
 

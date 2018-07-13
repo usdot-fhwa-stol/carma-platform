@@ -173,6 +173,13 @@ public class VehicleAwareness extends GuidanceComponent implements IStateChangeL
         }
         log.debug("PATH", "    getPathPrediction returning pathPrediction of size " + pathPrediction.size());
 
+        String hostLog = "The host path during request which was current was as follows (downtrack, crosstrack, time, segmentIdx, segmentDowntrack)\n";
+        for (RoutePointStamped rp : pathPrediction) {
+            hostLog = hostLog + rp.getDowntrack() + ", " + rp.getCrosstrack() + ", " + rp.getStamp() + ", "
+                    + rp.getSegmentIdx() + ", " + rp.getSegDowntrack() + "\n";
+        }
+        log.debug(hostLog);
+
         return pathPrediction;
     }
 

@@ -171,7 +171,7 @@ public:
             uint64_t data = 0;
             data |= ((uint64_t)(rx1.scan_index_ack) << can_bit(8));
 
-            int8_t lat_mount_offset = (int8_t)(rx1.alignment_angle_offset/0.015625);
+            int8_t lat_mount_offset = (int8_t)(rx1.lateral_mounting_offset/0.015625);
             data |= ((uint64_t)(lat_mount_offset) << can_bit(40));
 
             int8_t angle_misalign = (int8_t)(rx1.angle_misalignment/0.0625);
@@ -207,10 +207,10 @@ public:
             if(rx1.clear_faults)
                 data |= ((uint64_t)(0x01) << can_bit(22));
 
-            if(rx1.lr_only_trasmit)
+            if(rx1.lr_transmit)
                 data |= ((uint64_t)(0x01) << can_bit(24));
 
-            if(rx1.mr_only_transmit)
+            if(rx1.mr_transmit)
                 data |= ((uint64_t)(0x01) << can_bit(25));
 
             data |= ((uint64_t)(rx1.high_yaw_angle&can_mask<uint64_t>(6)) << can_bit(16));
@@ -234,7 +234,7 @@ private:
     /**
      * @brief Pertinent CAN Ids on the bus
      */
-    std::vector<uint16_t> can_ids =
+    std::vector<uint32_t> can_ids =
             {
                     0x4E0,
                     0x4E1,

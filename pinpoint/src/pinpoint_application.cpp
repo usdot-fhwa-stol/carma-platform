@@ -236,6 +236,9 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     msg.longitude = pose.longitude;
     msg.latitude = pose.latitude;
 
+    // TODO Remove this line
+    ROS_INFO_STREAM("Lat: " << pose.latitude << " Lon: " << pose.longitude << " Alt: " << pose.altitude);
+
     msg.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
     msg.position_covariance = {latest_filter_accuracy_.position.east * latest_filter_accuracy_.position.east, 0.0, 0.0,
                                0.0, latest_filter_accuracy_.position.north * latest_filter_accuracy_.position.north,
@@ -370,6 +373,7 @@ void PinPointApplication::onStatusConditionChangedHandler(const torc::PinPointLo
     {
         warning_set_.erase(code.code);
         error_set_.insert(code.code);
+        ROS_WARN_STREAM("Error detected, code = " << static_cast<uint16_t>(code.code));
     } 
     else if (code.condition == torc::StatusCondition::Warning) 
     {
@@ -389,6 +393,7 @@ void PinPointApplication::onStatusConditionChangedHandler(const torc::PinPointLo
     {
         status.status = cav_msgs::DriverStatus::FAULT;
         setStatus(status);
+        ROS_WARN_STREAM("Publishing FAULT status. " << error_set_.size() << " errors.");
     } 
     else if (warning_set_.size() > 0)
     {

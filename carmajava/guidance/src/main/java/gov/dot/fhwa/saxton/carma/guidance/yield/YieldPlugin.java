@@ -290,11 +290,12 @@ public class YieldPlugin extends AbstractPlugin
         if (Math.abs(requiredAcceleration) > maxYieldAccelAuthority) {
             log.error("Overall solution unacceptable, throwing error!");
             // Nothing we can do, throw control to driver
-            throw new RosRuntimeException(String.format(
+            log.error(String.format(
                     "Yield plugin unable to solve conflict at [%.02f, %.02f]m within acceleration constraints maxYieldAccelAuthority=%.02fm/s/s, requiredAccel=%.02fm/s/s",
                     conflict.getStartDowntrack(), conflict.getEndDowntrack(), maxYieldAccelAuthority,
                     requiredAcceleration)); // TODO: Improve robustness of algo to return NACK if is request or look for
                                             // alternative type of soln (lane change, etc.)
+            requiredAcceleration = maxYieldAccelAuthority; // Attempt a best effort max accel yield maneuver
         } else {
             log.info("Overall solution within acceleration constraints!");
         }

@@ -201,6 +201,10 @@ int SensorFusionApplication::run() {
     pnh_->param<std::string>("ned_frame_name",ned_frame_name_,"ned");
     pnh_->param<bool>("use_interface_mgr",use_interface_mgr_,false);
 
+    // TODO remove once the truck pinpoint altitude values are correct
+    pnh_->param<bool>("use_altitude_override",use_altitude_override_, false);
+    pnh_->param<double>("altitude_override",altitude_override_, 0.0);
+
     bool use_sim_time;
     nh_->param<bool>("/use_sim_time", use_sim_time, false);
 
@@ -682,8 +686,15 @@ void SensorFusionApplication::heading_cb(const ros::MessageEvent<cav_msgs::Headi
 }
 
 void SensorFusionApplication::navsatfix_cb(const ros::MessageEvent<sensor_msgs::NavSatFix> &event) {
+
     std::string name = event.getPublisherName();
-    navsatfix_map_[name] = event.getMessage();
+    // TODO remove once Truck pinpoint is fixed
+    boost::shared_ptr<sensor_msgs::NavSatFix> msg = event.getMessage();
+    if (use_altitude_override_) {
+        msg.get()->altitude = altitude_override_;
+    }
+
+    navsatfix_map_[name] = msg;
 }
 
 void SensorFusionApplication::odom_cb(const ros::MessageEvent<nav_msgs::Odometry> &event) {
