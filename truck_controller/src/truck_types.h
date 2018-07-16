@@ -227,7 +227,7 @@ inline bool checkMessageCrc(std::array<uint8_t, 8> data, uint8_t size)
     }
     else
     {
-        //std::cout << "Expected: " << static_cast<uint16_t>(crc8.checksum()) << ", Got: " << static_cast<uint16_t>(data[size - 1]) << std::endl;
+        std::cout << "Expected: " << static_cast<uint16_t>(crc8.checksum()) << ", Got: " << static_cast<uint16_t>(data[size - 1]) << std::endl;
         return false;   // False: if CRCs mismatch
     }
 }
