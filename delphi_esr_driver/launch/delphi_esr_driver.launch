@@ -1,0 +1,10 @@
+<launch>
+    <arg name="device_name" default="can2" />
+    <arg name="velocity_topic" default="velocity" />
+    <arg name="sensor_frame" default="delphi" />
+    <node name="delphi_esr" pkg="delphi_esr_driver" type="delphi_esr_driver_node" output="screen">
+        <param name="device_name" value="$(arg device_name)" />
+        <param name="velocity_topic" value="$(arg velocity_topic)" />
+        <param name="sensor_frame" value="$(arg sensor_frame)" />
+    </node>
+</launch>

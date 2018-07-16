@@ -143,7 +143,6 @@ public class Arbitrator extends GuidanceComponent
     log.info("STARTUP", "Arbitrator running!");
     routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
     routeStateSubscriber.registerOnMessageCallback((msg) -> {
-      log.info("Received RouteState:" + msg);
       downtrackDistance.set(msg.getDownTrack());
       receivedDtdUpdate.set(true);
     });
@@ -482,8 +481,8 @@ public class Arbitrator extends GuidanceComponent
     });
 
     trajectoryExecutor.runTrajectory(trajectory);
-    vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
     arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
+    vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
   }
 
   /**
@@ -508,8 +507,8 @@ public class Arbitrator extends GuidanceComponent
 
       trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
       trajectoryExecutor.runTrajectory(trajectory);
-      vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
       arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
+      vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
     } else {
       log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
     }
@@ -568,8 +567,8 @@ public class Arbitrator extends GuidanceComponent
       trajectory = planTrajectory(trajectoryStart, trajectoryEnd);
       trajectoryExecutor.abortTrajectory();
       trajectoryExecutor.runTrajectory(trajectory);
-      vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
       arbitratorStateMachine.processEvent(ArbitratorEvent.FINISHED_TRAJECTORY_PLANNING);
+      vehicleAwareness.notifyNewTrajectoryPlanned(trajectory);
     } else {
       log.warn("Arbitrator has detected route completion, but Guidance has not yet received ROUTE_COMPLETE");
     }
@@ -663,6 +662,7 @@ public class Arbitrator extends GuidanceComponent
     notifyTrajectoryFailure();
   }
 
+  @Override
   public void requestNewPlan(double endDist) {
     planningWindow = (endDist - downtrackDistance.get()) / planningWindowShrinkFactor;
     log.warn("Using experimental replan method, replanning with window: " + planningWindow);

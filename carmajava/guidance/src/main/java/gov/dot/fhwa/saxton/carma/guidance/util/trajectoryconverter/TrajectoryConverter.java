@@ -103,6 +103,16 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   /**
+   * Returns the maximum number of points which can be a path output by this converter
+   * This number may not be equivalent to the maximum number of points allowed in a mobility path DSRC message
+   *
+   * @return The maximum number of points
+   */
+  public int getMaxPointsInPath() {
+    return this.maxPointsInPath;
+  }
+
+  /**
    * Update the segment index and current downtrack to be used for calculations
    * 
    * @param currentSegmentIdx the integer identifier of the current segment on the route
@@ -158,7 +168,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   public List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
    double downtrack, double crosstrack,
    int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath) {
-
+    // TODO !!! remove lane parameter and calculate when conversion occurs
     log.info("Converting trajectory to path");
     // If can't add points return an empty list
     if (maxPointsInPath <= 0) {
@@ -324,7 +334,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     Vector3 segmentPoint = ecefInSegment.apply(ecefPoint);
     log.debug("messageToPath: segmentPoint = " + segmentPoint.toString());
     double downtrackOfSegment = route.lengthOfSegments(0, startIdx - 1);
-    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time);
+    RoutePointStamped routePoint = new RoutePointStamped(segmentPoint.getX() + downtrackOfSegment, segmentPoint.getY(), time, startIdx, segDowntrack);
     log.debug("messageToPath: routePoint = " + routePoint.toString());
     routePoints.add(routePoint);
 
@@ -354,11 +364,14 @@ public class TrajectoryConverter implements ITrajectoryConverter {
   }
 
   @Override
-  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path) {
-    log.info("Converting path with " + path.size() + " points to message");
-    if (path.isEmpty()) {
+  public cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> routePath) {
+    log.info("Converting path with " + routePath.size() + " points to message");
+    if (routePath.isEmpty()) {
       return messageFactory.newFromType(cav_msgs.Trajectory._TYPE);
     }
+
+    // Ensure path fits within message spec
+    List<RoutePointStamped> path = routePath.subList(0, Math.min(routePath.size(), cav_msgs.Trajectory.MAX_POINTS_IN_MESSAGE));
 
     // Convert points to ecef
     List<ECEFPointStamped> ecefPoints = toECEFPoints(path);

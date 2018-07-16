@@ -49,9 +49,9 @@ public class LeaderWaitingStateTest {
         pluginServiceLocator = mock(PluginServiceLocator.class);
         mockManager = mock(PlatoonManager.class);
         mockInputs = mock(IManeuverInputs.class);
-        when(plugin.getPlatoonManager()).thenReturn(mockManager);
+        plugin.platoonManager = mockManager;
         when(plugin.getManeuverInputs()).thenReturn(mockInputs);
-        when(plugin.getHandleMobilityPath()).thenReturn(new AtomicBoolean(true));
+        plugin.handleMobilityPath = new AtomicBoolean(true);
         leaderWaitingState = new LeaderWaitingState(plugin, log, pluginServiceLocator, "C");
     }
     
@@ -66,7 +66,7 @@ public class LeaderWaitingStateTest {
         when(request.getPlanType()).thenReturn(type);
         when(request.getStrategyParams()).thenReturn("");
         when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(60.0);
-        when(plugin.getDesiredJoinTimeGap()).thenReturn(4.0);
+        when(plugin.desiredJoinTimeGap).thenReturn(4.0);
         when(mockInputs.getCurrentSpeed()).thenReturn(3.25);
         assertEquals(MobilityRequestResponse.ACK, leaderWaitingState.onMobilityRequestMessgae(request));
     }
