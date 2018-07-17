@@ -56,6 +56,7 @@ If not using simulated drivers they are activated if the respective mock argumen
   <!-- Truck Delphi Radar Driver Node -->
   <include file="$(find delphi_esr_driver)/launch/delphi_esr_driver.launch">
     <arg name="device_name" default="can0" />
+    <arg name="sensor_frame" default="f_lrr_frame"/>
   </include>
 	
 </launch>
