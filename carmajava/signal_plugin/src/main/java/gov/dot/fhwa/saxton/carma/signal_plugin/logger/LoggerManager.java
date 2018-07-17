@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.logger;
+package gov.dot.fhwa.saxton.carma.signal_plugin.logger;
 
 import gov.dot.fhwa.saxton.glidepath.appcommon.GlidepathVersion;
 import org.apache.logging.log4j.Level;

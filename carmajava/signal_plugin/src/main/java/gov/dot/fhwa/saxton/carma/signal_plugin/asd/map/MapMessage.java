@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.asd.map;
+package gov.dot.fhwa.saxton.carma.signal_plugin.asd.map;
 
 import gov.dot.fhwa.saxton.glidepath.asd.IAsdMessage;
 import gov.dot.fhwa.saxton.glidepath.asd.Lane;

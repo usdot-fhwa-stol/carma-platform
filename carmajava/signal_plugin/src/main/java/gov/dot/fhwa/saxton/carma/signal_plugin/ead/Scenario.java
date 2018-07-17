@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 public enum Scenario {
 	RAMP_UP,		//initial acceleration to operating speed at beginning of test run

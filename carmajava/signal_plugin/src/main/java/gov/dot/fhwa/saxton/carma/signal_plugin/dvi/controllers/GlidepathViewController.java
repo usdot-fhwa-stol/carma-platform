@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.dvi.controllers;
+package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.controllers;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

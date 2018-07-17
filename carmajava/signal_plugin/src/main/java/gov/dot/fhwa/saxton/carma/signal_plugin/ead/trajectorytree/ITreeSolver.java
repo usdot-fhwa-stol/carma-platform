@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead.trajectorytree;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
 import java.util.List;
 

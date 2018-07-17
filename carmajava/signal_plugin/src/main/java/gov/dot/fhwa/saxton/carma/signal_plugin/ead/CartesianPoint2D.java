@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 // represents a point in a Cartesian coordinate system in 2D space
 

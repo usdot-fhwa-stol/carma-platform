@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.dvi.simulated.testconsumers;
+package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testconsumers;
 
 import gov.dot.fhwa.saxton.glidepath.IConsumerInitializer;
 import gov.dot.fhwa.saxton.glidepath.IConsumerTask;

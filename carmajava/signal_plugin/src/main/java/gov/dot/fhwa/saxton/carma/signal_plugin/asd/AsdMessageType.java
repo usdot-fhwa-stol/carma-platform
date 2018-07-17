@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.asd;
+package gov.dot.fhwa.saxton.carma.signal_plugin.asd;
 
 /**
  * Enum defining the type of Asd Message (MAP or SPAT)

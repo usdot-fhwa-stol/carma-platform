@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.appcommon;
+package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
 public enum SignalPhase {
 	GREEN(0),

@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.asd.spat;
+package gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat;
 
 import gov.dot.fhwa.saxton.glidepath.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.glidepath.logger.ILogger;

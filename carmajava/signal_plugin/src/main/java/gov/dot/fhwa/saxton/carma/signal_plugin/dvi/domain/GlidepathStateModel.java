@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.dvi.domain;
+package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain;
 
 import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementHolder;
 import gov.dot.fhwa.saxton.glidepath.appcommon.utils.GlidepathApplicationContext;

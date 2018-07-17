@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.dvi;
+package gov.dot.fhwa.saxton.carma.signal_plugin.dvi;
 
 import gov.dot.fhwa.saxton.glidepath.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.glidepath.dvi.services.DviExecutorService;

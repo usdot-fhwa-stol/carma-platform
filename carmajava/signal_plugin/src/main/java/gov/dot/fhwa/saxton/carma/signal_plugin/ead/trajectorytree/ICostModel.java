@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead.trajectorytree;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
 /**
  * Interface defining the functions needed for a cost model to be used with an ITreeSolver

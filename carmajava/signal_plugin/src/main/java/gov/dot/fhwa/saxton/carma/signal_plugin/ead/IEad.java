@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 // Interface to any of the possible EAD algorithm classes that we may choose to use.
 

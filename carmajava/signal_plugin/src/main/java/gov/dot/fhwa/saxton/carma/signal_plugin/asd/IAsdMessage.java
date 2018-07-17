@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.asd;
+package gov.dot.fhwa.saxton.carma.signal_plugin.asd;
 
 /**
  * Interface for a concrete ASD message

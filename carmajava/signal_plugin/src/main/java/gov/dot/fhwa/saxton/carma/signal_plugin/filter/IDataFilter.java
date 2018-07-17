@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.filter;
+package gov.dot.fhwa.saxton.carma.signal_plugin.filter;
 
 /**
  * Interface to a data filtering class that is intended to be used on sequentially generated data points

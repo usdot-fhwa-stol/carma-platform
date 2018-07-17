@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.appcommon.utils;
+package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils;
 
 import gov.dot.fhwa.saxton.glidepath.IConsumerInitializer;
 import gov.dot.fhwa.saxton.glidepath.asd.spat.SpatMessage;

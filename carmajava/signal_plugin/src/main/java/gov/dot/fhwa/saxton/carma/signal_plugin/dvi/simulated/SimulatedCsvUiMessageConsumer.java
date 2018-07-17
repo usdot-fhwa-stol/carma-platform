@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.dvi.simulated;
+package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated;
 
 import gov.dot.fhwa.saxton.glidepath.dvi.SpeedControl;
 import gov.dot.fhwa.saxton.glidepath.dvi.domain.DviUIMessage;

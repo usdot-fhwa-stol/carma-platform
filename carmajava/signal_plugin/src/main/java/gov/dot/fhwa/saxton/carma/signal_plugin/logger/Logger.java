@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.logger;
+package gov.dot.fhwa.saxton.carma.signal_plugin.logger;
 
 /**
  * Created by rushk1 on 10/9/2014.

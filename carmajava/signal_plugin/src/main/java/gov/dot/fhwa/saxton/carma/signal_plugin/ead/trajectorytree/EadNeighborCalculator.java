@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead.trajectorytree;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
 import gov.dot.fhwa.saxton.glidepath.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.glidepath.appcommon.utils.GlidepathApplicationContext;

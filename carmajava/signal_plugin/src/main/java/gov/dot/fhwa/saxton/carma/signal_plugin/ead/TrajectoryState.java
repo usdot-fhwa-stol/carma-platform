@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 /**
  * Defines the states to be used by the Trajectory class.

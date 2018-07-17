@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 /**
  * Creates a concrete IEad class based on provided class name.

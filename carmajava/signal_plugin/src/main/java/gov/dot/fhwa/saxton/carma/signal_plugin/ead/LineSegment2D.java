@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.ead;
+package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 // Represents a finite line segment between two adjacent points in a Cartesian coordinate system in 2D.
 // Calculations are based on http://geomalgorithms.com/a02-_lines.html

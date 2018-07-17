@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.appcommon.utils;
+package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils;
 
 /**
  * Facilitates the parsing of smaller-than-byte values out of a byte array.

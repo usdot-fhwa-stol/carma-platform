@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.asd.spat;
+package gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat;
 
 /**
  * Defines a SPAT LaneSet object

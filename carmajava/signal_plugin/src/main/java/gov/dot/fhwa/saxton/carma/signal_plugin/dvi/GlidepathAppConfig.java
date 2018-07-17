@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.dvi;
+package gov.dot.fhwa.saxton.carma.signal_plugin.dvi;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;

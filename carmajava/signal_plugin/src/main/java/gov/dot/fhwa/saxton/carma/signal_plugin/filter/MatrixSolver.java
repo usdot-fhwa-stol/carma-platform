@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.glidepath.filter;
+package gov.dot.fhwa.saxton.carma.signal_plugin.filter;
 
 /**
  * A quick & simple solver of matrix equations of the form AX = B,
