@@ -28,7 +28,7 @@ public class BasicAccStrategyFactory implements IAccStrategyFactory {
   protected double minStandoffDistance;
   protected double exitDistanceFactor;
   protected Pipeline<Double> filterPipeline;
-  protected static BasicAccStrategy strat;
+  protected volatile static BasicAccStrategy strat;
 
   public BasicAccStrategyFactory(double desiredTimeGap, double maxAccel, double vehicleResponseDelay, double minStandoffDistance, double exitDistanceFactor, Pipeline<Double> filterPipeline) {
     this.vehicleResponseDelay = vehicleResponseDelay;

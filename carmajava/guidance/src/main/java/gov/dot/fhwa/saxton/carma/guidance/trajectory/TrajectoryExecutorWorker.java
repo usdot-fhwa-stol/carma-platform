@@ -389,14 +389,20 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     }
   }
 
-  /**
-   * Convert the current trajectory to a timestamped list of points along the route frame
-   */
-  public List<RoutePointStamped> getHostPathPrediction() {
-    Trajectory traj = currentTrajectory.get();
-    if (traj == null) {
-      return new ArrayList<>();
+  public Trajectory getTotalTrajectory() {
+    if (nextTrajectory.get() == null) {
+      return currentTrajectory.get(); 
+    } else {
+      Trajectory cur = currentTrajectory.get();
+      Trajectory next = nextTrajectory.get();
+      double startDtd = cur.getStartLocation();
+      double endDtd = next.getEndLocation();
+
+      Trajectory out = new Trajectory(startDtd, endDtd);
+      out.copyManeuvers(cur, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+      out.copyManeuvers(next, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+      return out;
     }
-    return trajectoryConverter.convertToPath(traj);
   }
 }

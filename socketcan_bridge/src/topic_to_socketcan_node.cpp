@@ -27,6 +27,7 @@
 
 #include <ros/ros.h>
 #include <socketcan_bridge/topic_to_socketcan.h>
+#include <socketcan_bridge/socketcan_recover_ctrl.h>
 #include <socketcan_interface/threading.h>
 #include <socketcan_interface/string.h>
 #include <string>
@@ -56,6 +57,10 @@ int main(int argc, char *argv[])
 
   socketcan_bridge::TopicToSocketCAN to_socketcan_bridge(&nh, &nh_param, driver);
   to_socketcan_bridge.setup();
+
+
+  // Recovery service
+  socketcan_bridge::SocketCANRecoverCtrl recover_ctrl(&nh, &nh_param, driver);
 
   ros::spin();
 

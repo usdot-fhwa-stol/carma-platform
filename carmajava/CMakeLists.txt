@@ -80,11 +80,11 @@ install(DIRECTORY
         mock_drivers/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/mock_drivers)
 install(DIRECTORY
-        negotiator/build
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/negotiator)
-install(DIRECTORY
         roadway/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/roadway)
 install(DIRECTORY
         route/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/route)
+install(DIRECTORY
+        test
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/test)

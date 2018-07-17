@@ -52,9 +52,21 @@ public class FakeManeuverInputForSpeedHarm implements IManeuverInputs {
     return frontVehicleSpeed;
   }
 
-@Override
-public int getCurrentLane() {
+  @Override
+  public int getCurrentLane() {
     // TODO Auto-generated method stub
     return 0;
-}
+  }
+
+  @Override
+  public double getCrosstrackDistance() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  public double getMaxAccelLimit() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
 }

@@ -25,6 +25,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -32,6 +34,7 @@ import org.mockito.ArgumentCaptor;
 import cav_msgs.MobilityRequest;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
@@ -66,15 +69,17 @@ public class StandbyStateTest {
                                                         mock(IPubSubService.class),       mock(ParameterSource.class),
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
-                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class));
-        standbyState         = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
-        when(mockPlugin.getPlatoonManager()).thenReturn(mockManager);
+                                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
+                                                        mock(TrackingService.class));
+        mockPlugin.handleMobilityPath = new AtomicBoolean(true);
+        mockPlugin.platoonManager = mockManager;
+        standbyState = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
     }
     
     @Test
     public void planTrajectoryWithoutAnyWindow() {
         Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(false);
+        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(false);
         TrajectoryPlanningResponse tpr = standbyState.planTrajectory(traj, 0);
         assertTrue(tpr.getRequests().isEmpty());
         assertNull(traj.getComplexManeuver());
@@ -86,7 +91,7 @@ public class StandbyStateTest {
     @Test
     public void planTrajectoryWithAnOpenWindow() {
         Trajectory traj = new Trajectory(0, 50);
-        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, mockPlugin.PLATOONING_FLAG)).thenReturn(true);
+        when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(true);
         TrajectoryPlanningResponse tpr = standbyState.planTrajectory(traj, 0);
         assertNull(traj.getComplexManeuver());
         assertTrue(traj.getLongitudinalManeuvers().isEmpty());

@@ -41,16 +41,14 @@ import gov.dot.fhwa.saxton.utils.ComponentVersion;
 
 import org.apache.commons.logging.Log;
 import org.ros.exception.ServiceException;
+import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
+import org.ros.node.NodeConfiguration;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 
-import cav_msgs.LightBarStatus;
-
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -85,6 +83,8 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected boolean initialized = false;
 
   ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
+  protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+  protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -109,18 +109,17 @@ public class GuidanceMain extends SaxtonBaseNode {
         state.getLaneIndex()));
 
     GuidanceStateHandler stateHandler = new GuidanceStateHandler(stateMachine, pubSubService, node);
-    GuidanceCommands guidanceCommands = new GuidanceCommands(stateMachine, pubSubService, node);
     ManeuverInputs maneuverInputs = new ManeuverInputs(stateMachine, pubSubService, node);
+    GuidanceCommands guidanceCommands = new GuidanceCommands(stateMachine, pubSubService, node, maneuverInputs);
     Tracking tracking = new Tracking(stateMachine, pubSubService, node);
 
     TrajectoryExecutor trajectoryExecutor = new TrajectoryExecutor(stateMachine, pubSubService, node, guidanceCommands,
         tracking, trajectoryConverter);
     LightBarManager lightBarManager = new LightBarManager(stateMachine, pubSubService, node);
-    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter,
-        trajectoryExecutor);
+    VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager, tracking);
+    MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter, vehicleAwareness, trajectoryExecutor, tracking);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
-        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager);
-    VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager);
+        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor, vehicleAwareness);
 
     tracking.setTrajectoryExecutor(trajectoryExecutor);
@@ -128,6 +127,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     trajectoryExecutor.setArbitrator(arbitrator);
     pluginManager.setArbitratorService(arbitrator);
     router.setPluginManager(pluginManager);
+    router.setArbitrator(arbitrator);
     vehicleAwareness.setPluginManager(pluginManager);
     vehicleAwareness.setTrajectoryExecutor(trajectoryExecutor);
 
@@ -171,15 +171,19 @@ public class GuidanceMain extends SaxtonBaseNode {
   private void initConflictManager(ConnectedNode node, ILogger log) {
     // Load params
     ParameterTree params = node.getParameterTree();
-    double cellDowntrack = params.getDouble("conflict_map_cell_downtrack_size", 5.0);
-    double cellCrosstrack = params.getDouble("conflict_map_cell_crosstrack_size", 5.0);
-    double cellTime = params.getDouble("conflict_map_cell_time_size", 0.15);
+    double cellDowntrack = params.getDouble("~conflict_map_cell_downtrack_size", 5.0);
+    double cellCrosstrack = params.getDouble("~conflict_map_cell_crosstrack_size", 5.0);
+    double cellTime = params.getDouble("~conflict_map_cell_time_size", 0.15);
 
     double[] cellSize = { cellDowntrack, cellCrosstrack, cellTime };
 
-    double downtrackMargin = params.getDouble("conflict_map_collision_downtrack_margin", 2.5);
-    double crosstrackMargin = params.getDouble("conflict_map_collision_crosstrack_margin", 1.0);
-    double timeMargin = params.getDouble("conflict_map_collision_time_margin", 0.05);
+    double downtrackMargin = params.getDouble("~conflict_map_collision_downtrack_margin", 2.5);
+    double crosstrackMargin = params.getDouble("~conflict_map_collision_crosstrack_margin", 1.0);
+    double timeMargin = params.getDouble("~conflict_map_collision_time_margin", 0.05);
+
+    double lateralBias = params.getDouble("~conflict_detection_lateral_bias", 0.0);
+    double longitudinalBias = params.getDouble("~conflict_detection_longitudinal_bias", 0.0);
+    double temporalBias = params.getDouble("~conflict_detection_temporal_bias", 0.0);
     // Echo params
     log.info("Param conflict_map_cell_downtrack_size: " + cellDowntrack);
     log.info("Param conflict_map_cell_crosstrack_size: " + cellCrosstrack);
@@ -188,10 +192,14 @@ public class GuidanceMain extends SaxtonBaseNode {
     log.info("Param conflict_map_collision_crosstrack_margin: " + crosstrackMargin);
     log.info("Param conflict_map_collision_time_margin: " + timeMargin);
 
+    log.info("Param conflict_detection_lateral_bias: " + lateralBias);
+    log.info("Param conflict_detection_longitudinal_bias: " + longitudinalBias);
+    log.info("Param conflict_detection_temporal_bias: " + temporalBias);
     // Set time strategy
     IMobilityTimeProvider timeProvider = new SystemUTCTimeProvider();
     // Build conflict manager
-    conflictManager = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    conflictManager = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, lateralBias,
+    longitudinalBias, temporalBias, timeProvider);
   }
 
   /**
@@ -202,14 +210,13 @@ public class GuidanceMain extends SaxtonBaseNode {
   private void initTrajectoryConverter(ConnectedNode node, ILogger log) {
     // Load params
     ParameterTree params = node.getParameterTree();
-    int maxPoints = params.getInteger("mobility_path_max_points", 60);
-    double timeStep = params.getDouble("mobility_path_time_step", 0.1);
+    int maxCollisionPoints = params.getInteger("~collision_check_max_points", 300);
+    double timeStep = params.getDouble("~mobility_path_time_step", 0.1);
     // Echo params
-    log.info("Param mobility_path_max_points: " + maxPoints);
+    log.info("Param collision_check_max_points: " + maxCollisionPoints);
     log.info("Param mobility_path_time_step: " + timeStep);
-
     // Build trajectory converter
-    trajectoryConverter = new TrajectoryConverter(maxPoints, timeStep);
+    trajectoryConverter = new TrajectoryConverter(maxCollisionPoints, timeStep, messageFactory);
   }
 
   @Override

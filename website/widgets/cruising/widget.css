@@ -2,19 +2,19 @@
 /* Black Rounded Border Sign */
 #divSpeedCmd {
     position: absolute;
-    top: 23%;
-    left: 20%;
+    top: 21%;
+    left: 25%;
 }
 
 #divSpeedLimit {
     position: absolute;
-    top: 23%;
-    left: 75%;
+    top: 21%;
+    left: 80%;
 }
 
 .sign-black-border-outer {
-    width:200px;
-    height:225px;
+    width:125px;
+    height:150px;
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     border-radius: 10px;
@@ -45,31 +45,32 @@
     left: 50%;
     transform: translate(-50%, -50%);
     color: black;
-    font-size: 45px;
+    font-size: 25px;
     font-family: sans-serif;
     font-weight: bold;
 }
 
 .sign-black-border-value {
     position: relative;
-    top: 23%;
+    top: 25%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: black;
-    font-size: 75px;
+    font-size: 50px;
     font-family: sans-serif;
     font-weight: bold;
 }
 
 /* Remaining Distance to Next Speed Limit */
 #divSLDistRemaining {
- position: relative;
- top: 300px;
+ position: absolute;
+ top: 330px;
+ left: 575px;
  color: black;
- font-size: 25px;
+ font-variant-caps: all-small-caps;
+ font-size: 20px;
  font-weight: bold;
- text-align: center;
- justify-content: center;
+
 }
 
 /* Speedometer */
@@ -77,11 +78,11 @@
     width: 400px;
     height: 200px;
     position: absolute;
-    top: 35%;
-    left: 55%;
+    top: 235px;
+    left: 725px;
     overflow: hidden;
     text-align: center;
-    transform: translate(-50%, -50%);
+    justify-content: center;
 }
 
 .gauge-a {
@@ -133,5 +134,4 @@
     margin-right: auto;
     transition: all 1s ease-out;
 }
-
 

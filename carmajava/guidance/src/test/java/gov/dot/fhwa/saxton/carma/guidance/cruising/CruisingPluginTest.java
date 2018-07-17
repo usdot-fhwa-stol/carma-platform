@@ -37,6 +37,7 @@ import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.IGuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
+import gov.dot.fhwa.saxton.carma.guidance.Tracking;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.cruising.CruisingPlugin.TrajectorySegment;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
@@ -89,7 +90,7 @@ public class CruisingPluginTest {
                 mock(PluginManagementService.class), mock(IPubSubService.class), mockParameterSource,
                 new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService,
                 mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class),
-                mock(ILightBarManager.class));
+                mock(ILightBarManager.class), mock(Tracking.class));
         cruise = new CruisingPlugin(psl);
         cruise.onInitialize();
         cruise.maxAccel_ = 2.5;

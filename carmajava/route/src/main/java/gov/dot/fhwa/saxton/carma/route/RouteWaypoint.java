@@ -37,6 +37,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
  * Each waypoint has a latitude and longitude and contains the road specifications for that location.
  * Such specifications include speedlimit, number of lanes, lane closures, needed maneuvers, nearest mile markers, and required lanes.
  * Lane indices will run right to left. Such that the right most lane will be lane 0.
+ * Crosstrack sign convention is that positive indicates an offset to the right of segment centerline.
  */
 public class RouteWaypoint {
   protected int waypointId; // The waypoint id is only set when a waypoint is published. It corresponds to the waypoint index. It is not used internally
