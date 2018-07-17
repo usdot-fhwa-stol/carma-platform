@@ -1,10 +1,10 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated;
 
-import gov.dot.fhwa.saxton.glidepath.dvi.SpeedControl;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.DviUIMessage;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.GlidepathStateModel;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.SpeedControl;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviUIMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathStateModel;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;

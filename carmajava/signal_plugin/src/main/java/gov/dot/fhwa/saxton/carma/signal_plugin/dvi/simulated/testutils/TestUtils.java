@@ -1,8 +1,8 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testutils;
 
 
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.MotionStatus;
-import gov.dot.fhwa.saxton.glidepath.appcommon.*;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.MotionStatus;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.*;
 
 import static gov.dot.fhwa.saxton.glidepath.appcommon.DataElementKey.*;
 

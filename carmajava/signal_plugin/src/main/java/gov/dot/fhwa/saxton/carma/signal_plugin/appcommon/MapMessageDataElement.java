@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
-import gov.dot.fhwa.saxton.glidepath.asd.map.MapMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
 
 public class MapMessageDataElement extends DataElement {
 

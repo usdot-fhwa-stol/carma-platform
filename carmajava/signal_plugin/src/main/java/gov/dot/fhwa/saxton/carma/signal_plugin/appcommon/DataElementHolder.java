@@ -1,8 +1,8 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
-import gov.dot.fhwa.saxton.glidepath.xgv.XgvStatus;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.XgvStatus;
 
 import java.util.*;
 

@@ -1,11 +1,11 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.SignalPhase;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.DviUIMessage;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.GlidepathState;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.GlidepathStateModel;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.MotionStatus;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviUIMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathState;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathStateModel;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.MotionStatus;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;

@@ -2,8 +2,8 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 // Interface to any of the possible EAD algorithm classes that we may choose to use.
 
-import gov.dot.fhwa.saxton.glidepath.asd.IntersectionData;
-import gov.dot.fhwa.saxton.glidepath.ead.trajectorytree.ITreeSolver;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ITreeSolver;
 
 import java.util.List;
 

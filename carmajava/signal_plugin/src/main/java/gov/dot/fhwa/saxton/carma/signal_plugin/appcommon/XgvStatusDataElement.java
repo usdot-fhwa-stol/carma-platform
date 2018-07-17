@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
-import gov.dot.fhwa.saxton.glidepath.xgv.XgvStatus;
+import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.XgvStatus;
 
 /**
  * Surrounds an XgvStatus object in a DataElement container

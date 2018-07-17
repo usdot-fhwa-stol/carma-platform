@@ -1,9 +1,9 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.asd.map;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.glidepath.asd.AsdMessageType;
-import gov.dot.fhwa.saxton.glidepath.asd.IAsdMessage;
-import gov.dot.fhwa.saxton.glidepath.asd.UdpForwardConsumer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.AsdMessageType;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IAsdMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.UdpForwardConsumer;
 
 import java.util.List;
 

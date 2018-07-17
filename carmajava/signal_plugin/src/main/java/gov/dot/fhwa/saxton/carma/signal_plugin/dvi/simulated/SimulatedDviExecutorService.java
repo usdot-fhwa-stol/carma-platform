@@ -1,8 +1,8 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated;
 
-import gov.dot.fhwa.saxton.glidepath.dvi.GlidepathAppConfig;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.DviParameters;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.DviUIMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviParameters;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviUIMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

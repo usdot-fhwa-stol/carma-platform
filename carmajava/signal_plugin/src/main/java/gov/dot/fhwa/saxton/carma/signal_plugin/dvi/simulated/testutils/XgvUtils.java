@@ -1,12 +1,12 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testutils;
 
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementHolder;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 import static gov.dot.fhwa.saxton.glidepath.appcommon.DataElementKey.*;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.XgvStatusDataElement;
-import gov.dot.fhwa.saxton.glidepath.xgv.XgvStatus;
-import gov.dot.fhwa.saxton.glidepath.xgv.messages.ReportDiscreteDevicesMessage.XgvGearState;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.XgvStatusDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.XgvStatus;
+import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.messages.ReportDiscreteDevicesMessage.XgvGearState;
 
 import java.util.Random;
 

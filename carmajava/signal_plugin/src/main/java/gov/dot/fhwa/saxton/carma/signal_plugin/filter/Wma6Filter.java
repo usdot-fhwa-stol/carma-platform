@@ -1,7 +1,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.filter;
 
 
-import gov.dot.fhwa.saxton.glidepath.filter.IDataFilter;
+import gov.dot.fhwa.saxton.carma.signal_plugin.filter.IDataFilter;
 
 /**
  * A weighted moving average filter using 6 historical points.  Weights are linear starting with

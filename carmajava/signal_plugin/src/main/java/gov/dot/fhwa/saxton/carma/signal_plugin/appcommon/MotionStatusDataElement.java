@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.MotionStatus;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.MotionStatus;
 
 public class MotionStatusDataElement extends DataElement {
 

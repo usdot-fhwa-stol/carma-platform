@@ -1,9 +1,9 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElement;
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementHolder;
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementKey;
-import gov.dot.fhwa.saxton.glidepath.appcommon.DoubleDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
 
 import java.util.Random;
 import static gov.dot.fhwa.saxton.glidepath.appcommon.Constants.*;

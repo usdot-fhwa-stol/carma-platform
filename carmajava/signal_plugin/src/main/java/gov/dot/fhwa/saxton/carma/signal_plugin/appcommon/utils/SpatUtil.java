@@ -1,9 +1,9 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils;
 
-import gov.dot.fhwa.saxton.glidepath.IConsumerInitializer;
-import gov.dot.fhwa.saxton.glidepath.asd.spat.SpatMessage;
-import gov.dot.fhwa.saxton.glidepath.dvi.simulated.testconsumers.SpatUtilConsumer;
-import gov.dot.fhwa.saxton.glidepath.appcommon.*;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerInitializer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testconsumers.SpatUtilConsumer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.*;
 
 public class SpatUtil {
 

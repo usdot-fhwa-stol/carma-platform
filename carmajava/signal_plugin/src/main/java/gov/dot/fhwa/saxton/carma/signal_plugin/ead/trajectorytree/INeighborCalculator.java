@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
-import gov.dot.fhwa.saxton.glidepath.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
 
 import java.util.List;
 

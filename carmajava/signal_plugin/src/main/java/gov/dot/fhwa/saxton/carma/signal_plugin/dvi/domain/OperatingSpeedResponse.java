@@ -1,7 +1,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain;
 
 
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.AjaxResponse;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.AjaxResponse;
 
 public class OperatingSpeedResponse extends AjaxResponse {
 

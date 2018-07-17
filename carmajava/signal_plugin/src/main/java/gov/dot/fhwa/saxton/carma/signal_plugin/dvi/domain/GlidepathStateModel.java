@@ -1,9 +1,9 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementHolder;
-import gov.dot.fhwa.saxton.glidepath.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 import java.io.RandomAccessFile;
 

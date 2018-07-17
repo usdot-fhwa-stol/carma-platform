@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.logger;
 
-import gov.dot.fhwa.saxton.glidepath.logger.LogEntry;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LogEntry;
 
 /**
  * Created by rushk1 on 10/9/2014.

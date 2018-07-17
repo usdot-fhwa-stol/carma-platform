@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.utils.GlidepathApplicationContext;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 
 /**

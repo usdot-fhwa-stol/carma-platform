@@ -1,8 +1,8 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testconsumers;
 
-import gov.dot.fhwa.saxton.glidepath.IConsumerInitializer;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerInitializer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 /**
  * Skeleton XgvConsumerInitializer

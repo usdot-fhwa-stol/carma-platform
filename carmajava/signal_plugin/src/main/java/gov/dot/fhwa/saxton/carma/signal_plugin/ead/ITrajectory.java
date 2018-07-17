@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementHolder;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 
 /**
  * Interface for an EAD wrapper

@@ -1,8 +1,8 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testconsumers;
 
-import gov.dot.fhwa.saxton.glidepath.IConsumerInitializer;
-import gov.dot.fhwa.saxton.glidepath.IConsumerTask;
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementHolder;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerInitializer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerTask;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 
 import java.io.IOException;
 

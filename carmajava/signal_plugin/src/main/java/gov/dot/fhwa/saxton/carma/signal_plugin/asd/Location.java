@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.asd;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.Constants;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
 
 
 /**

@@ -6,10 +6,10 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated;
 //
 //import java.util.concurrent.Callable;
 //import java.util.concurrent.ExecutorService;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.GlidepathState;
-import gov.dot.fhwa.saxton.glidepath.dvi.domain.GlidepathStateModel;
-import gov.dot.fhwa.saxton.glidepath.dvi.simulated.SimulatedCsvUiMessageConsumer;
-import gov.dot.fhwa.saxton.glidepath.dvi.simulated.SimulatedDviExecutorService;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathState;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathStateModel;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.SimulatedCsvUiMessageConsumer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.SimulatedDviExecutorService;
 
 import java.util.concurrent.Executors;
 //import java.util.concurrent.Future;

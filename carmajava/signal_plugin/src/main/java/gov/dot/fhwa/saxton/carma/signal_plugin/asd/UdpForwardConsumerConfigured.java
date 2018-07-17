@@ -10,15 +10,15 @@
  */
 package gov.dot.fhwa.saxton.carma.signal_plugin.asd;
 
-import gov.dot.fhwa.saxton.glidepath.IConsumerInitializer;
-import gov.dot.fhwa.saxton.glidepath.IConsumerTask;
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementHolder;
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementKey;
-import gov.dot.fhwa.saxton.glidepath.appcommon.IAsdListDataElement;
-import gov.dot.fhwa.saxton.glidepath.appcommon.IntDataElement;
-import gov.dot.fhwa.saxton.glidepath.dvi.simulated.testconsumers.SpatUtilConsumer;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerInitializer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerTask;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IAsdListDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testconsumers.SpatUtilConsumer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 

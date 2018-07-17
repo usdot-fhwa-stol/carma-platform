@@ -1,9 +1,9 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.glidepath.dvi.services.DviExecutorService;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services.DviExecutorService;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;

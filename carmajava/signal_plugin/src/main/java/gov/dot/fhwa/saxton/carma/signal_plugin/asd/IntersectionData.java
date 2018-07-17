@@ -1,8 +1,8 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.asd;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.SignalPhase;
-import gov.dot.fhwa.saxton.glidepath.asd.map.MapMessage;
-import gov.dot.fhwa.saxton.glidepath.asd.spat.ISpatMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.ISpatMessage;
 
 /**
  * Collector for all data relative to a single intersections that needs to be passed through the system.

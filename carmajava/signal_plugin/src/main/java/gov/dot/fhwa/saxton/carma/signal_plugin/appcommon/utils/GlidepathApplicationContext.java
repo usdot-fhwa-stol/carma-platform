@@ -1,7 +1,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils;
 
-import gov.dot.fhwa.saxton.glidepath.dvi.GlidepathAppConfig;
-import gov.dot.fhwa.saxton.glidepath.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;

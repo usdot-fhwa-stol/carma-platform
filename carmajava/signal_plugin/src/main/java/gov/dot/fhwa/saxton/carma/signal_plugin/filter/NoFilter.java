@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.filter;
 
-import gov.dot.fhwa.saxton.glidepath.filter.IDataFilter;
+import gov.dot.fhwa.saxton.carma.signal_plugin.filter.IDataFilter;
 
 /**
  * This class is a simple substitution for accessing the raw speed data stream directly, 

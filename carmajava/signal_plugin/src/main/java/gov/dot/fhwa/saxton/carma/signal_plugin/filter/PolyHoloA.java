@@ -1,7 +1,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.filter;
 
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 /**
  * Fits a polynomial of order 2 to smooth the raw data, using 15 historical data points.

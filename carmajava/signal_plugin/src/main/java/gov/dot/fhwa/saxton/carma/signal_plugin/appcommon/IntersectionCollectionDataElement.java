@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
-import gov.dot.fhwa.saxton.glidepath.asd.IntersectionCollection;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionCollection;
 
 public class IntersectionCollectionDataElement extends DataElement {
 

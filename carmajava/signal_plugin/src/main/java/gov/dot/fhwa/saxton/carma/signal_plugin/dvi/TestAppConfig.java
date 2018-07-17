@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi;
 
-import gov.dot.fhwa.saxton.glidepath.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;

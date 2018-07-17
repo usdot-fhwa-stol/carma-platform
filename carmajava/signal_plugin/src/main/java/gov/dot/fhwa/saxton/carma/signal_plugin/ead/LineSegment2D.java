@@ -3,8 +3,8 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 // Represents a finite line segment between two adjacent points in a Cartesian coordinate system in 2D.
 // Calculations are based on http://geomalgorithms.com/a02-_lines.html
 
-import gov.dot.fhwa.saxton.glidepath.ead.CartesianPoint2D;
-import gov.dot.fhwa.saxton.glidepath.ead.CartesianVector2D;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.CartesianPoint2D;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.CartesianVector2D;
 
 public class LineSegment2D {
 	

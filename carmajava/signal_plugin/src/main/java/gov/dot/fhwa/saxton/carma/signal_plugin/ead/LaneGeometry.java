@@ -1,10 +1,10 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.Constants;
-import gov.dot.fhwa.saxton.glidepath.asd.Lane;
-import gov.dot.fhwa.saxton.glidepath.asd.Location;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Lane;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Location;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 import java.util.Vector;
 

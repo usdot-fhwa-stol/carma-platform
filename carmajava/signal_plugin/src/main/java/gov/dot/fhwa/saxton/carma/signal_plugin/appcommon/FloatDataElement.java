@@ -1,7 +1,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElement;
 
 public class FloatDataElement extends DataElement {
 

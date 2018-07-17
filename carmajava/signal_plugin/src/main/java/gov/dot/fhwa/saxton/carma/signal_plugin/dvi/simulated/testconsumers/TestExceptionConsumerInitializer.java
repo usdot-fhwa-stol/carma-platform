@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testconsumers;
 
-import gov.dot.fhwa.saxton.glidepath.IConsumerInitializer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerInitializer;
 
 /**
  * An initializer that throws an exception

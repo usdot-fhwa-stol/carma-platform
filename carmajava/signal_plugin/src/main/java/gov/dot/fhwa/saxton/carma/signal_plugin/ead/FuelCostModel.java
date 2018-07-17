@@ -1,9 +1,9 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
-import gov.dot.fhwa.saxton.glidepath.ead.trajectorytree.ICostModel;
-import gov.dot.fhwa.saxton.glidepath.ead.trajectorytree.Node;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ICostModel;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 /**
  * Cost model for use in the trajectory tree solution. Computes a cost between neighboring nodes

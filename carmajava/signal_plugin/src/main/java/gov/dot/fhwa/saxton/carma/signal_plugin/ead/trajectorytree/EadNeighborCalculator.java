@@ -1,11 +1,11 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.SignalPhase;
-import gov.dot.fhwa.saxton.glidepath.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.glidepath.asd.IntersectionData;
-import gov.dot.fhwa.saxton.glidepath.dvi.IGlidepathAppConfig;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 import java.util.ArrayList;
 import java.util.List;

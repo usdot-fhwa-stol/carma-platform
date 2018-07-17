@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
-import gov.dot.fhwa.saxton.glidepath.asd.IAsdMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IAsdMessage;
 
 import java.util.List;
 

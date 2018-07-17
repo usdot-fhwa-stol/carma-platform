@@ -1,12 +1,12 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat;
 
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementHolder;
-import gov.dot.fhwa.saxton.glidepath.appcommon.DataElementKey;
-import gov.dot.fhwa.saxton.glidepath.appcommon.DoubleDataElement;
-import gov.dot.fhwa.saxton.glidepath.appcommon.PhaseDataElement;
-import gov.dot.fhwa.saxton.glidepath.appcommon.utils.UnpackUtils;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.PhaseDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.UnpackUtils;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import javassist.bytecode.ByteArray;
 import org.joda.time.DateTime;
 

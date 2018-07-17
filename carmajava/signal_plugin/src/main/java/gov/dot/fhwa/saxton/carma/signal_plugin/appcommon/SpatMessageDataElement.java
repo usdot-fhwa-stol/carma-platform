@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
-import gov.dot.fhwa.saxton.glidepath.asd.spat.ISpatMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.ISpatMessage;
 
 /**
  * Date Element containing a SPAT message

@@ -1,7 +1,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.asd;
 
-import gov.dot.fhwa.saxton.glidepath.asd.map.MapMessage;
-import gov.dot.fhwa.saxton.glidepath.asd.spat.SpatMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 
 /**
  * Factory class to create a concrete IAsdMessage interface class

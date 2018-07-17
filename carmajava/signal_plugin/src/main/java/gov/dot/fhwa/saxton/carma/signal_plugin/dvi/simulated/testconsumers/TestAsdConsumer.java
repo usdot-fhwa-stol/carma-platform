@@ -1,13 +1,13 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.simulated.testconsumers;
 
-import gov.dot.fhwa.saxton.glidepath.IConsumerInitializer;
-import gov.dot.fhwa.saxton.glidepath.IConsumerTask;
-import gov.dot.fhwa.saxton.glidepath.appcommon.*;
-import gov.dot.fhwa.saxton.glidepath.appcommon.utils.ConversionUtils;
-import gov.dot.fhwa.saxton.glidepath.asd.IAsdMessage;
-import gov.dot.fhwa.saxton.glidepath.asd.spat.SpatMessage;
-import gov.dot.fhwa.saxton.glidepath.logger.ILogger;
-import gov.dot.fhwa.saxton.glidepath.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerInitializer;
+import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerTask;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.*;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.ConversionUtils;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IAsdMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
+import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
