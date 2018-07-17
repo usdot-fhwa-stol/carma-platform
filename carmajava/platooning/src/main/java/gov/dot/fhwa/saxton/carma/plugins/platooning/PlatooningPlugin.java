@@ -437,7 +437,15 @@ public class PlatooningPlugin extends AbstractPlugin
     protected IManeuverInputs getManeuverInputs() {
         return pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
     }
-    
+
+    protected double getMinimumManeuverLength() {
+        return this.minimumManeuverLength;
+    }
+
+    protected double getDesiredJoinTimeGap() {
+        return this.desiredJoinTimeGap;
+    }
+
     protected double getLastSpeedCmd() {
         if(cmdSpeedSub != null && cmdSpeedSub.getLastMessage() != null) {
             return cmdSpeedSub.getLastMessage().getSpeed();
