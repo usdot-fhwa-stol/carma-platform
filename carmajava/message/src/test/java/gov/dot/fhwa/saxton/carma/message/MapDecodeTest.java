@@ -89,7 +89,7 @@ public class MapDecodeTest {
             laneType[i] = laneTypeTemp[i];
         }
         assertArrayEquals(laneType, laneTypeData);
-        // TODO The nodeOffsetData array has two many data, I only verified the result manually 
+        // TODO The nodeOffsetData array has too many data fields, I only verified the result manually 
     }
     
 }

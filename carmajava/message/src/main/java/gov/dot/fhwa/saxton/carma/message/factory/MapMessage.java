@@ -29,8 +29,7 @@ public class MapMessage implements IMessage<MapData>{
     
     /**
      * This is the declaration for native method. It will take encoded MAP byte array as input.
-     * It will decode the message and set other byte array inputs values.
-     * @param laneTypeData 
+     * It will decode the message and set other byte array inputs values. 
      * @return -1 means decode failed; 0 means decode is successful
      */
     public native int decodeMap(byte[] encodedArray, Object map_object, int[] intersectionData, int[] laneIDData,

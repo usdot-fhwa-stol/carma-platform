@@ -1229,7 +1229,6 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage
 
 		// In current decoder, we assume we have only one intersection in this list
 		if(message -> value.choice.MapData.intersections && message -> value.choice.MapData.intersections -> list.count == 1) {
-			// TODO need fix the size
 			int intersectionData[9] = {0};
 			intersectionData[8] = 1;
 			intersectionData[0] = message -> value.choice.MapData.intersections -> list.array[0] -> id.id;
@@ -1246,8 +1245,6 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage
 			}
 			(*env) -> SetIntArrayRegion(env, intersectionGeometry, 0, 9, intersectionData);
 		}
-
-		//TODO Copy all following C arrays to Java arrays and compile to test their value
 
 		// the MAP message allowed up to 255 lanes in each intersection
 		int laneIDData[255];
