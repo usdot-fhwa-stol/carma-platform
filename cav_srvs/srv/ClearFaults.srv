@@ -1,0 +1,12 @@
+# ClearFaults.srv
+
+# Request
+
+uint8 clear_faults
+
+uint8 DISABLE = 0
+uint8 ENABLE = 1
+
+---
+
+# Response

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<package>
+
+  <name>truck_dbw_controller</name>
+  <version>1.0.0</version>
+  <description>The truck dbw controller package</description>
+
+  <maintainer email="support@torcrobotics.com">Torc Robotics</maintainer>
+  <license>BSD</license>
+  <author email="taylor@torc.ai">Zachary Taylor</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>can_msgs</build_depend>
+  <build_depend>cav_driver_utils</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>can_msgs</run_depend>
+  <run_depend>cav_driver_utils</run_depend>
+  
+</package>

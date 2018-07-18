@@ -1,0 +1,9 @@
+<launch>
+    <node name="jausNM" pkg="xgv_controller" type="jausNM_node" output="screen">
+        <param name="node_manager_config_file" value="$(find xgv_controller)/etc/nodeManager.conf" />
+    </node>
+    <node name="xgv_controller" pkg="xgv_controller" type="xgv_controller_node" output="screen">
+        <param name="subsystem_id" value="2" />
+        <param name="node_id" value="1" />
+    </node>
+</launch>

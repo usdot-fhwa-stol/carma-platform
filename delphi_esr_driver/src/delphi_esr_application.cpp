@@ -220,14 +220,12 @@ void DelphiESRApplication::initialize() {
         rx1_.radiate_command = delphi::SensorModeCommand::Radiate;
 
         pnh_->param<float>("lateral_mounting_offset", rx1_.lateral_mounting_offset,rx1_.lateral_mounting_offset);
-        pnh_->param<float>("alignment_angle_offset", rx1_.alignment_angle_offset,rx1_.alignment_angle_offset);
         pnh_->param<float>("angle_misalignment", rx1_.angle_misalignment,rx1_.angle_misalignment);
         pnh_->param<bool>("mmr_upside_down", rx1_.mmr_upside_down,rx1_.mmr_upside_down);
         pnh_->param<bool>("blockage_disable", rx1_.blockage_disable,rx1_.blockage_disable);
         pnh_->param<bool>("use_angle_misalignment", rx1_.use_angle_misalignment,rx1_.use_angle_misalignment);
-        pnh_->param<bool>("lr_only_trasmit", rx1_.lr_only_trasmit,rx1_.lr_only_trasmit);
-        pnh_->param<bool>("mr_only_transmit", rx1_.mr_only_transmit,rx1_.mr_only_transmit);
-        pnh_->param<int32_t>("short_track_roc", rx1_.short_track_roc,rx1_.short_track_roc);
+        pnh_->param<bool>("lr_transmit", rx1_.lr_transmit,rx1_.lr_transmit);
+        pnh_->param<bool>("mr_transmit", rx1_.mr_transmit,rx1_.mr_transmit);
         int32_t temp;
         if(pnh_->getParam("maximum_tracks",temp))
             rx1_.maximum_tracks = static_cast<uint8_t>(temp);
@@ -246,7 +244,6 @@ void DelphiESRApplication::initialize() {
     pnh_->param<std::string>("sensor_frame", sensor_frame_,"delphi");
     objects_pub_=pnh_->advertise<cav_msgs::ExternalObjectList>("sensor/objects",10);
     api_.push_back(objects_pub_.getTopic());
-
 
     std::string can_device_name;
     pnh_->param<std::string>("device_name", can_device_name, "can0");

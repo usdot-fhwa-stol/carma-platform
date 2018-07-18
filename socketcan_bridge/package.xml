@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>socketcan_bridge</name>
-  <version>0.7.6</version>
+  <version>0.7.5</version>
   <description>Provides nodes to convert messages from SocketCAN to a ROS Topic and vice versa.</description>
 
   <maintainer email="mathias.luedtke@ipa.fraunhofer.de">Mathias Lüdtke</maintainer>

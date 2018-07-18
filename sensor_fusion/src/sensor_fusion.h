@@ -111,6 +111,11 @@ private:
     std::unordered_map<std::string, std::unique_ptr<bond::Bond>> bond_map_;
     bool use_interface_mgr_;
     std::string inertial_frame_name_, body_frame_name_, ned_frame_name_;
+
+    // TODO remove once Truck pinpoint is fixed
+    bool use_altitude_override_;
+    double altitude_override_;
+
     /**
      * @brief This function is the bond call back for on_broken event    *
      * @param node_name name of the node this callback is firing for
