@@ -17,6 +17,9 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 public class MapMessage implements IMessage<MapData>{
     
     protected static final int MAX_NODE_LIST_SIZE = 63;
+    protected static final int INTERSECTION_DATA_SIZE = 9;
+    protected static final int MAX_LANE_LIST_SIZE = 255;
+    protected static final int NODE_OFFSETS_DATA_SIZE = 189;
 
     protected SaxtonLogger log;
     protected MessageFactory messageFactory;
@@ -46,24 +49,26 @@ public class MapMessage implements IMessage<MapData>{
     
     @Override
     public MessageContainer encode(Message plainMessage) {
-        // This class currently does not support encode MAP message 
+        // This parser currently does not support encode MAP messages 
         throw new UnsupportedOperationException();
     }
 
     @Override
     public MessageContainer decode(ByteArray binaryMessage) {
+        // Copy binary message from ChannelBuffer to byte array
         ChannelBuffer buffer = binaryMessage.getContent();
         byte[] encodedMsg = new byte[buffer.capacity()];
         for (int i = 0; i < buffer.capacity(); i++) {
             encodedMsg[i] = buffer.getByte(i);
         }
-        int[] intersectionData = new int[9];
-        int[] laneIDData = new int[255];
-        int[] ingressApproachData = new int[255];
-        int[] egressApproachData = new int[255];
-        int[] laneDirectionData = new int[255];
-        int[] laneTypeData = new int[255];
-        int[][] nodeOffsetData = new int[255][189];
+        // Initialize empty arrays to hold MAP data
+        int[] intersectionData = new int[INTERSECTION_DATA_SIZE];
+        int[] laneIDData = new int[MAX_LANE_LIST_SIZE];
+        int[] ingressApproachData = new int[MAX_LANE_LIST_SIZE];
+        int[] egressApproachData = new int[MAX_LANE_LIST_SIZE];
+        int[] laneDirectionData = new int[MAX_LANE_LIST_SIZE];
+        int[] laneTypeData = new int[MAX_LANE_LIST_SIZE];
+        int[][] nodeOffsetData = new int[MAX_LANE_LIST_SIZE][NODE_OFFSETS_DATA_SIZE];
         MapData map = messageFactory.newFromType(MapData._TYPE);
         int res = decodeMap(encodedMsg, map, intersectionData, laneIDData, ingressApproachData,
                                     egressApproachData, laneDirectionData, laneTypeData, nodeOffsetData);
@@ -71,6 +76,9 @@ public class MapMessage implements IMessage<MapData>{
             log.warn("MapMessage cannot be decoded.");
             return new MessageContainer("MAP", null);
         }
+        // Copy data from arrays into the ROS MAP message
+        // IntersectionData array: {intersectionId, revision, lat, long, elevation, elevationExist, laneWidth, laneWidthExist, intersectionExist}
+        // TODO Current version only support one intersection in each MAP message 
         map.setIntersectionsExists(intersectionData[8] == 1);
         if(map.getIntersectionsExists()) {
             IntersectionGeometry intersection = messageFactory.newFromType(IntersectionGeometry._TYPE);
@@ -86,7 +94,9 @@ public class MapMessage implements IMessage<MapData>{
             if(intersection.getLaneWidthExists()) {
                 intersection.setLaneWidth((short) intersectionData[6]);
             }
+            // Copy lane data to each JAVA lane object
             for(int i = 0; i < laneIDData.length; i++) {
+                // -1 lane ID indicates no more lanes in this intersection
                 if(laneIDData[i] == -1) {
                     break;
                 }
@@ -100,16 +110,22 @@ public class MapMessage implements IMessage<MapData>{
                 if(lane.getEgressApproachExists()) {
                     lane.setEgressApproach((byte) egressApproachData[i]);
                 }
-                // TODO maybe we need to fix this value
+                // 0b11 means {ingressPath, egressPath}, 0b10 means {ingressPath}, 0b01 means {egressPath} and 0b00 means an empty set
+                // In asn1c library, it uses the first two bits of a byte to represent a bit string of length 2
                 lane.getLaneAttributes().getDirectionalUse().setLaneDirection((byte) (laneDirectionData[i] >> 6));
+                // In asn1c library, the lane type enum starts from 1 
                 lane.getLaneAttributes().getLaneType().setChoice((byte) (laneTypeData[i] - 1));
+                // Current version only supports the choice of NODE_SET_XY
                 lane.getNodeList().setChoice(NodeListXY.NODE_SET_XY);
+                // Add all valid node offsets into the corresponding lane
                 for(int j = 0; j < MAX_NODE_LIST_SIZE - 1; j++) {
-                    int nodeType = nodeOffsetData[i][j * 3]; 
+                    int nodeType = nodeOffsetData[i][j * 3];
+                    // 0 node type indicates no more nodes in this lane
                     if(nodeType == 0) {
                         break;
                     }
                     NodeXY node = messageFactory.newFromType(NodeXY._TYPE);
+                    // set node offset point choice value based on its node type
                     switch(nodeType) {
                     case 1:
                         node.getDelta().setChoice(NodeOffsetPointXY.NODE_XY1);
