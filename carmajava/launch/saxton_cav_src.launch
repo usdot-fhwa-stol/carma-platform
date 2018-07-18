@@ -464,7 +464,7 @@
     </group>
     <!-- Record Rosbag of all topics excluding /rosout since that only contains logs -->
     <node pkg="rosbag" type="record" name="rosbag_node"
-      args="record -o /opt/carma/logs/ -a -x '/rosout'"
+      args="record -o /opt/carma/logs/ -a -x '/rosout(.*)'"
       if="$(arg use_rosbag)" />
   </group>
 </launch>
