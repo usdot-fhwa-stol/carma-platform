@@ -20,7 +20,6 @@ bool name_exists
 # -- consisting of a regionID and
 # -- intersection ID assignment
 cav_msgs/IntersectionReferenceID id
-bool id_exists
 
 # revision MsgCount  ::= INTEGER (0..127)
 # -- Required default values about lane descriptions follow
