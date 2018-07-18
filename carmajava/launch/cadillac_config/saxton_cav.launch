@@ -49,7 +49,7 @@
   <arg name="mock_radar"          	default="false" doc="True if using a simulated radar driver"/>
   <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
 
-  <!-- TODO Remove after TO 26 demo -->
+  <!-- Rosbag Flag -->
   <arg name="use_rosbag" default="true" doc="Record a rosbag for the to 26 demo"/>
 
   <!-- Include the detailed launch file and pass in new arguments -->
