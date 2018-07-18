@@ -123,7 +123,6 @@
 
             <param name="simulated_driver" type="string" value="dsrc"/>
             <param name="data_file_path" type="string" value="$(arg dsrc_data_file)"/>
-            <rosparam command="load" file="$(arg PARAM_DIR)/DSRCOBUParams.yaml"/>
       	  </node>
 
         <!-- Simulated PinPoint Driver Node -->
@@ -134,7 +133,6 @@
 
             <param name="simulated_driver" type="string" value="pinpoint"/>
             <param name="data_file_path" type="string" value="$(arg pinpoint_data_file)"/>
-            <rosparam command="load" file="$(arg PARAM_DIR)/PinPointParams.yaml"/>
           </node>
 		
         <!-- Simulated CAN Driver Node -->
@@ -145,7 +143,6 @@
 
             <param name="simulated_driver" type="string" value="can"/>
             <param name="data_file_path" type="string" value="$(arg can_data_file)"/>
-            <rosparam command="load" file="$(arg PARAM_DIR)/SRXCANParams.yaml"/>
       	  </node>
 
         <!-- Simulated SRX Controller Driver Node -->
@@ -156,7 +153,6 @@
 
             <param name="simulated_driver" type="string" value="srx_controller"/>
             <param name="data_file_path" type="string" value="$(arg srx_controller_data_file)"/>
-            <rosparam command="load" file="$(arg PARAM_DIR)/SRXControllerParams.yaml"/>
           </node>
 		 
         <!-- Simulated Radar Driver Node -->
@@ -167,7 +163,6 @@
 
             <param name="simulated_driver" type="string" value="radar"/>
             <param name="data_file_path" type="string" value="$(arg radar_data_file)"/>
-            <rosparam command="load" file="$(arg PARAM_DIR)/SRXRadarParams.yaml"/>
           </node>
 
         <!--Lateral Controller Driver Node-->
