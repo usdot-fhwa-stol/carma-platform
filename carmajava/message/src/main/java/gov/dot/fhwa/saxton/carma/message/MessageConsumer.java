@@ -72,6 +72,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 	protected Publisher<MobilityResponse> mobilityResponsePub_; //incoming mobility response message after decoded
 	protected Publisher<MobilityOperation> mobilityOperationPub_; //incoming mobility operation message after decoded
 	protected Publisher<MapData> mapPub_; //incoming MAP message after decoded
+	protected Publisher<SPAT> spatPub_; //incoming MAP message after decoded
 	
 	// Subscribers
 	protected Subscriber<SystemAlert> alertSub_;
@@ -214,9 +215,10 @@ public class MessageConsumer extends SaxtonBaseNode {
 		mobilityResponsePub_ = connectedNode_.newPublisher("incoming_mobility_response", MobilityResponse._TYPE);
 		mobilityOperationPub_ = connectedNode_.newPublisher("incoming_mobility_operation", MobilityOperation._TYPE);
 		mapPub_ = connectedNode_.newPublisher("incoming_map", MapData._TYPE);
+		spatPub_ = connectedNode_.newPublisher("incoming_spat", SPAT._TYPE);
 		if(bsmPub_ == null || outboundPub_ == null || mobilityReqPub_ == null ||
 		   mobilityPathPub_ == null || mobilityResponsePub_ == null ||
-		   mobilityOperationPub_ == null || mapPub_ == null) {
+		   mobilityOperationPub_ == null || mapPub_ == null || spatPub_ == null) {
 		    log_.error("Cannot initialize necessary publishers.");
 		    handleException(new RosRuntimeException("Cannot initialize necessary publishers."));
 		}
@@ -228,6 +230,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		messageCounters.registerEntry("MobilityResponse");
 		messageCounters.registerEntry("MobilityOperation");
 		messageCounters.registerEntry("MAP");
+		messageCounters.registerEntry("SPAT");
 		
 		//initialize Subs
 		bsmSub_ = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);
@@ -278,6 +281,8 @@ public class MessageConsumer extends SaxtonBaseNode {
 						break;
 	                case "MAP":
 	                    mapPub_.publish((MapData) decodedMessage.getMessage());
+	                case "SPAT":
+	                    spatPub_.publish((SPAT) decodedMessage.getMessage());
 	                default:
 	                    log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	                }
