@@ -37,6 +37,10 @@ public class SPATDecodeTest {
         int[][] movementStatesData = new int[255][145];
         int res = message.decodeSPAT(byteMessage, intersectionData, movementStatesData);
         assertEquals(0, res);
+        // TODO Because we do not know the expect values, we can only evaluate data roughly
         System.out.println(Arrays.toString(intersectionData));
+        System.out.println(Arrays.toString(movementStatesData[0]));
+        System.out.println(Arrays.toString(movementStatesData[1]));
+        System.out.println(Arrays.toString(movementStatesData[2]));
     }
 }

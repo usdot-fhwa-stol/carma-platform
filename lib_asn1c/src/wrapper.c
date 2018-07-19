@@ -1353,6 +1353,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_SPATMessag
 			intersectionData[0] = *message->value.choice.SPAT.timeStamp;
 			intersectionData[1] = 1;
 		}
+		// In current decoder, we assume we have only one intersection in this list
 		intersectionData[2] = message->value.choice.SPAT.intersections.list.array[0]->id.id;
 		intersectionData[3] = message->value.choice.SPAT.intersections.list.array[0]->revision;
 		if(message->value.choice.SPAT.intersections.list.array[0]->moy) {
@@ -1364,6 +1365,54 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_SPATMessag
 			intersectionData[7] = 1;
 		}
 		(*env) -> SetIntArrayRegion(env, intersection, 0, 8, intersectionData);
+
+		// each intersection allows up to 255 state
+	    // each state may contain up to 16 movement events plus one phase state enum
+		// each movement event contains 9 integer data fields
+		// each state needs 9 * 16 + 1 = 145 space
+		int statesData[255][145];
+		for(int i = 0; i < 255; i++) {
+			for(int j = 0; j < 145; j++) {
+				statesData[i][j] = -1;
+			}
+		}
+		int numOfStates = message->value.choice.SPAT.intersections.list.array[0]->states.list.count;
+		for(int i = 0; i < numOfStates; i++) {
+			statesData[i][0] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->signalGroup;
+			int numOfEvent = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.count;
+			for(int j = 0; j < numOfEvent; j++) {
+				statesData[i][j * 9 + 1] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->eventState;
+				if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing) {
+					statesData[i][j * 9 + 9] = 1;
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->startTime) {
+						statesData[i][j * 9 + 2] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->startTime;
+						statesData[i][j * 9 + 3] = 1;
+					} else {
+						statesData[i][j * 9 + 3] = 0;
+					}
+					statesData[i][j * 9 + 4] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->minEndTime;
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->maxEndTime) {
+						statesData[i][j * 9 + 5] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->maxEndTime;
+						statesData[i][j * 9 + 6] = 1;
+					} else {
+						statesData[i][j * 9 + 6] = 0;
+					}
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->nextTime) {
+						statesData[i][j * 9 + 7] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->nextTime;
+						statesData[i][j * 9 + 8] = 1;
+					} else {
+						statesData[i][j * 9 + 8] = 0;
+					}
+				} else {
+					statesData[i][j * 9 + 9] = 0;
+				}
+			}
+		}
+		for(int i = 0; i < 255; i++) {
+			jintArray events = (*env) -> GetObjectArrayElement(env, movementState, i);
+			(*env) -> SetIntArrayRegion(env, events, 0, 145, statesData[i]);
+			(*env) -> DeleteLocalRef(env, events);
+		}
 		return 0;
 	} else {
 		return -1;
