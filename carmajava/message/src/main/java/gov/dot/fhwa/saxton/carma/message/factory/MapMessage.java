@@ -170,9 +170,9 @@ public class MapMessage implements IMessage<MapData>{
                 intersection.getLaneSet().getLaneList().add(lane);
             }
             map.getIntersections().add(intersection);
-            map.getHeader().setFrameId("0");
-            map.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
         }
+        map.getHeader().setFrameId("0");
+        map.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
         return new MessageContainer("MAP", map);
     }
 

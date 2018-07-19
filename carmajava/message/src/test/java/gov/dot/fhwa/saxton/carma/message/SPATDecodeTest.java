@@ -43,4 +43,5 @@ public class SPATDecodeTest {
         System.out.println(Arrays.toString(movementStatesData[1]));
         System.out.println(Arrays.toString(movementStatesData[2]));
     }
+    
 }
