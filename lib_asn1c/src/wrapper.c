@@ -22,6 +22,7 @@
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityResponseMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MapMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_SPATMessage.h"
 #include "MessageFrame.h"
 
 /**
@@ -1367,7 +1368,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_SPATMessag
 		(*env) -> SetIntArrayRegion(env, intersection, 0, 8, intersectionData);
 
 		// each intersection allows up to 255 state
-	    // each state may contain up to 16 movement events plus one phase state enum
+		// each state may contain up to 16 movement events plus one phase state enum
 		// each movement event contains 9 integer data fields
 		// each state needs 9 * 16 + 1 = 145 space
 		int statesData[255][145];

@@ -72,7 +72,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 	protected Publisher<MobilityResponse> mobilityResponsePub_; //incoming mobility response message after decoded
 	protected Publisher<MobilityOperation> mobilityOperationPub_; //incoming mobility operation message after decoded
 	protected Publisher<MapData> mapPub_; //incoming MAP message after decoded
-	protected Publisher<SPAT> spatPub_; //incoming MAP message after decoded
+	protected Publisher<SPAT> spatPub_; //incoming SPAT message after decoded
 	
 	// Subscribers
 	protected Subscriber<SystemAlert> alertSub_;

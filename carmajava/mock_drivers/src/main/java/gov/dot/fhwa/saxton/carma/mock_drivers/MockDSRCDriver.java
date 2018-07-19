@@ -136,7 +136,8 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // Convert the string to a byte array
       byte[] rawBytes = DatatypeConverter.parseHexBinary(currentByteString);
       
-      // Publish map message every 3 seconds
+      // Publish SPAT message every 3 seconds
+      // This binary array is only for local integration testing
       message_counter++;
       if(message_counter % 30 == 0) {
           rawBytes = new byte[]{0, 19, 28, 68, 99, 8, 0, -127, 47, 104, 0, 0, 12, 45, 64, 16, 2, 4, 52, 43, 63, -84, 10, 0, 32, 35, 33, 89, 73, 95, -100};
