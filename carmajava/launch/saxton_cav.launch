@@ -53,5 +53,7 @@
   <arg name="use_rosbag" default="true" doc="Record a rosbag for the to 26 demo"/>
 
   <!-- Include the detailed launch file and pass in new arguments -->
-  <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true"/>
+  <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true">
+  	<arg name="ip_address" value="$(env ROS_IP)" />
+  </include>
 </launch>

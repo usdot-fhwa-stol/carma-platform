@@ -36,12 +36,17 @@ If not using simulated drivers they are activated if the respective mock argumen
   <arg name="mock_pinpoint"       	default="true" doc="True if using a simulated pinpoint driver"/>
   <arg name="mock_radar"          	default="true" doc="True if using a simulated radar driver"/>
   <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
-
+  <arg name="ip_address"   		default="0.0.0.0" doc="True if using a simulated lateral controller"/>
+  
   <!-- DSRC OBU Driver Node -->
-  <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
-    
+  <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch">
+    <arg name="dsrc_address" value="$(arg ip_address)" />
+  </include>
+
   <!-- PinPoint Driver Node -->
-  <include unless="$(arg mock_pinpoint)" file="$(find pinpoint)/launch/pinpoint.launch"/>
+  <include unless="$(arg mock_pinpoint)" file="$(find pinpoint)/launch/pinpoint.launch">
+    <arg name="pinpoint_address" value="$(arg ip_address)" />
+  </include>
 
   <!-- SRX CAN Driver Node -->
   <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">

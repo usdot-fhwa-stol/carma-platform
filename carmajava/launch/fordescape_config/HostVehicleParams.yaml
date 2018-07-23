@@ -2,24 +2,24 @@
 # Defines the ros parameters which define the host vehicle's characteristics
 
 # String: Host vehicle color
-vehicle_color: 'UNCONFIGURED-COLOR'
+vehicle_color: 'BLACK'
 
 # Double: Host vehicle height
 # Units: Meters
 vehicle_height: 5.0
 
 # String: Host vehicle’s Unique ID that will be used in mobility messages.
-vehicle_id: 'UNCONFIGURED-ID'
+vehicle_id: 'DOT-ESCAPE'
 
 # Double: Host vehicle length
 # Units: Meters
 vehicle_length: 15.0
 
 # String: Host vehicle make
-vehicle_make: 'UNCONFIGURED-MAKE'
+vehicle_make: 'FORD'
 
 # String: Host vehicle model
-vehicle_model: 'UNCONFIGURED-MODEL'
+vehicle_model: 'ESCAPE'
 
 # Double: Host vehicle width
 # Units: Meters
