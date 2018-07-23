@@ -54,6 +54,6 @@
 
   <!-- Include the detailed launch file and pass in new arguments -->
   <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true">
-  	<arg name="ip_address" value="$(env ROS_IP)" />
+    <arg name="ip_address" value="$(env ROS_IP)" />
   </include>
 </launch>
