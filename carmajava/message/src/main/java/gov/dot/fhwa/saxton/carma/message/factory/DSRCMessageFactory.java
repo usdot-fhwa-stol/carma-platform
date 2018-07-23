@@ -28,6 +28,12 @@ public class DSRCMessageFactory {
             return new BSMMessage(node, log, factory);
         case "MobilityRequest":
             return new MobilityRequestMessage(log, factory);
+        case "MobilityPath":
+            return new MobilityPathMessage(log, factory);
+        case "MobilityResponse":
+            return new MobilityResponseMessage(log, factory);
+        case "MobilityOperation":
+            return new MobilityOperationMessage(factory, log);
         default:
             return null;
         }

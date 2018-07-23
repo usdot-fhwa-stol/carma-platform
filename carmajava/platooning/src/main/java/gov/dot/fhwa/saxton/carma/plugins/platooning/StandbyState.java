@@ -16,9 +16,12 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
-import cav_msgs.MobilityIntro;
-import cav_msgs.NewPlan;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.lightbar.IndicatorStatus;
+import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.MobilityRequestResponse;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -26,41 +29,68 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
  * The StandbyState is a state when the platooning algorithm is current disabled on the route.
- * It will transit to LeaderState when it knows the algorithm will be enabled in the next trajectory.
- * In this state, the pulgin will not insert any maneuvers into a trajectory and ignore all negotiation messages.
+ * It will transit to SingleVehiclePlatoonState when it knows the algorithm will be enabled in the next trajectory.
+ * In this state, the plug-in will not insert any maneuvers into a trajectory and will ignore all negotiation messages.
  */
 public class StandbyState implements IPlatooningState {
     
-    protected PlatooningPlugin plugin_;
-    protected ILogger log_;
-    protected PluginServiceLocator pluginServiceLocator_;
+    protected static int LOOP_SLEEP_TIME   = 1000;
+    protected static int REPLAN_DELAY_TIME = 50;
+    
+    protected PlatooningPlugin     plugin;
+    protected ILogger              log;
+    protected PluginServiceLocator pluginServiceLocator;
     
     public StandbyState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
-        plugin_ = plugin;
-        log_ = log;
-        pluginServiceLocator_ = pluginServiceLocator;
+        this.plugin               = plugin;
+        this.log                  = log;
+        this.pluginServiceLocator = pluginServiceLocator;
+        this.plugin.handleMobilityPath.set(true);
+        updateLightBar();
     }
     
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        RouteService rs = pluginServiceLocator_.getRouteService();
+        RouteService rs = pluginServiceLocator.getRouteService();
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // Check if the next trajectory includes a platooning window
-        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), plugin_.PLATOONING_FLAG)) {
-            log_.info("In standby state, find an avaliable plan window and change to leader state in " + traj.toString());
-            plugin_.setState(new LeaderState(plugin_, log_, pluginServiceLocator_));
-            // Request to replan with new state and give enough time for plugin state transition
-            tpr.requestDelayedReplan(100);
+        if(rs.isAlgorithmEnabledInRange(traj.getStartLocation(), traj.getEndLocation(), PlatooningPlugin.PLATOONING_FLAG)) {
+            log.debug("In standby state, find an avaliable plan window in " + traj.toString());
+            plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
+            // Request to re-plan with new leader state
+            log.debug("Change to leader state and request to re-plan");
+            tpr.requestDelayedReplan(REPLAN_DELAY_TIME);
         } else {
-            log_.info("In standby state, asked to plan a trajectory without available winodw, ignoring " + traj.toString());
+            log.debug("In standby state, asked to plan a trajectory without available winodw, ignoring...");
         }
         return tpr;
     }
 
     @Override
-    public void onReceiveNegotiationMessage(NewPlan plan) {
-        // ignore NewPlan message in the standby state
-        log_.info("Ignore new plan message because the plugin is current in standby state");
+    public MobilityRequestResponse onMobilityRequestMessgae(MobilityRequest msg) {
+        // In standby state, the plugin is not responsible for replying to any request messages
+        return MobilityRequestResponse.NO_RESPONSE;
+    }
+    
+    @Override
+    public void onMobilityResponseMessage(MobilityResponse msg) {
+        // In standby state, it will not send out any requests so it will also ignore all responses
+    }
+    
+    @Override
+    public void onMobilityOperationMessage(MobilityOperation msg) {
+        // In standby state, it will ignore operation message since it is not actively operating
+    }
+    
+    @Override
+    public void run() {
+        try {
+            while(!Thread.currentThread().isInterrupted()) {
+                Thread.sleep(LOOP_SLEEP_TIME);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
     
     @Override
@@ -68,13 +98,12 @@ public class StandbyState implements IPlatooningState {
         return "StandbyState";
     }
 
-    @Override
-    public MobilityIntro getNewOutboundIntroMessage() {
-        return null;
+    /**
+     * Helper function to update the light bar
+     */
+    private void updateLightBar() {
+        // Set the light bar off
+        plugin.setLightBarStatus(IndicatorStatus.OFF);
     }
 
-    @Override
-    public void checkCurrentState() {
-        // We can only transit to other state from current state when the coming trajectory has an available window, so No-Op
-    }
 }

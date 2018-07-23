@@ -152,7 +152,10 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
 	        				alertType = "SHUTDOWN - ";
 	        			}
 	        			log_.warn("SHUTDOWN", "InterfaceMgr SHUTTING DOWN after receipt of alert: " + alertType + msg.getDescription());
-	        			connectedNode.shutdown();
+	        			if(!isShutdownUnderway()) {
+	        			    shutdownInitiated_ = true;
+	                        connectedNode.shutdown();
+	        			}
 	        		}
             	}catch (Exception e) {
             		handleException(e);

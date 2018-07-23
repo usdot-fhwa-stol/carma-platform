@@ -21,7 +21,7 @@ import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 /**
  * A simple implementation of the NSpacialHashStrategy
  * 
- * The conversion is simply an int truncation of a points coordinates divided by the corresponding cell dimension
+ * The conversion is simply an long truncation of a points coordinates divided by the corresponding cell dimension
  */
 public class SimpleHashStrategy implements NSpatialHashStrategy{
   private final double[] cellDims;
@@ -40,9 +40,9 @@ public class SimpleHashStrategy implements NSpatialHashStrategy{
     if (point.getNumDimensions() != cellDims.length) {
       return null;
     }
-    final int[] key =  new int[point.getNumDimensions()];
+    final long[] key =  new long[point.getNumDimensions()];
     for (int i = 0; i < point.getNumDimensions(); i++) {
-      key[i] = (int)(point.getDim(i)/cellDims[i]);
+      key[i] = (long)(point.getDim(i)/cellDims[i]);
     }
     return new NSpatialHashKey(key);
   }

@@ -16,7 +16,10 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceCommands;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IComplexManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LateralManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -69,10 +72,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   }
 
   public TrajectoryExecutorWorker(GuidanceCommands commands, double maneuverTickFrequencyHz,
-      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub) {
+      IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub, TrajectoryConverter trajectoryConverter) {
     this.commands = commands;
     this.maneuverTickFrequencyHz = maneuverTickFrequencyHz;
     this.activeManeuversPub = activeManeuversPub;
+    this.trajectoryConverter = trajectoryConverter;
   }
 
   public void setArbitrator(Arbitrator arbitrator) {
@@ -110,13 +114,15 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   /**
    * Abort the current and queued trajectories and the currently executing maneuvers
+   * 
+   * Synchronized to prevent race condition with loop function
    */
-  public void abortTrajectory() {
+  public synchronized void abortTrajectory() {
     log.debug("TrajectoryWorker aborting currently executing trajectory.");
     currentTrajectory.set(null);
     nextTrajectory.set(null);
     currentLateralManeuver = null;
-    currentLongitudinalManeuver = null;
+    currentLongitudinalManeuver =  null;
     currentComplexManeuver = null;
   }
 
@@ -242,8 +248,10 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
 
   /**
    * Periodic loop method for iterating, this is where maneuvers get executed
+   * 
+   * Synchronized to prevent race conditions with onCleanRestart and abortTrajectory functions
    */
-  public void loop() {
+  public synchronized void loop() {
     activeManeuversMsg = activeManeuversPub.newMessage();
 
     if (currentTrajectory.get() != null) {
@@ -353,9 +361,11 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   }
 
   /**
-   * Force a clean restart operation on this worker componet
+   * Force a clean restart operation on this worker component
+   * 
+   * Synchronized to prevent race condition with loop function
    */
-  public void cleanRestart() {
+  public synchronized void cleanRestart() {
     downtrackDistance = 0.0;
     currentTrajectory = new AtomicReference<>();
     nextTrajectory = new AtomicReference<>();
@@ -379,10 +389,20 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     }
   }
 
-  /**
-   * Convert the current trajectory to a timestamped list of points along the route frame
-   */
-  public List<RoutePointStamped> getHostPathPrediction() {
-    return trajectoryConverter.convertToPath(currentTrajectory.get());
+  public Trajectory getTotalTrajectory() {
+    if (nextTrajectory.get() == null) {
+      return currentTrajectory.get(); 
+    } else {
+      Trajectory cur = currentTrajectory.get();
+      Trajectory next = nextTrajectory.get();
+      double startDtd = cur.getStartLocation();
+      double endDtd = next.getEndLocation();
+
+      Trajectory out = new Trajectory(startDtd, endDtd);
+      out.copyManeuvers(cur, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+      out.copyManeuvers(next, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+      return out;
+    }
   }
 }

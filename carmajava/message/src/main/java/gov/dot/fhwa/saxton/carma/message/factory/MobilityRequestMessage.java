@@ -94,7 +94,7 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
         binaryMsg.setMessageType("MobilityRequest");
         binaryMsg.getHeader().setFrameId("0");
         binaryMsg.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
-        return new MessageContainer("MobilityRequest", binaryMsg);
+        return new MessageContainer("ByteArray", binaryMsg);
     }
 
     @Override
@@ -116,6 +116,7 @@ public class MobilityRequestMessage implements IMessage<MobilityRequestMessage>{
         int[][] offsets = new int[3][60];
         byte[] expiration = new byte[19];
         // fill with character 'zero'
+        Arrays.fill(timestamp, (byte) 48);
         Arrays.fill(trajectoryStartTime, (byte) 48);
         Arrays.fill(expiration, (byte) 48);
         // fill with unavailable data 

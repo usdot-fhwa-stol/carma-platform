@@ -68,6 +68,20 @@ CarmaJS.WidgetFramework = (function () {
                    //console.log ('getPluginsActivated: No plugins activated.');
                }
 
+                pluginsActivated.sort(function(a, b) {
+                  var nameA = a.id.toUpperCase(); // ignore upper and lowercase
+                  var nameB = b.id.toUpperCase(); // ignore upper and lowercase
+                  if (nameA < nameB) {
+                    return -1;
+                  }
+                  if (nameA > nameB) {
+                    return 1;
+                  }
+
+                  // names must be equal
+                  return 0;
+                });
+
                return pluginsActivated;
         };
 
@@ -202,7 +216,7 @@ CarmaJS.WidgetFramework = (function () {
                      //Widget install path should come from the Plugin.name without the "Plugin", and replacing the spaces with underscore(s).
                      //e.g. "Speed Harmonization Plugin" widget folder path should be speed_harmonization
                      //e.g. widgets/route_following
-                     var widgetInstallPath = 'widgets/' + id.substring(0, id.indexOf('_Plugin')).replace('cb','').toLowerCase(); //negotiation_receiver
+                     var widgetInstallPath = 'widgets/' + id.substring(0, id.indexOf('_Plugin')).replace('cb','').toLowerCase();
 
                      var pluginItem = {id: cbId, title: cbTitle,  namespace: widgetNamespace, folderpath: widgetInstallPath, isWidgetShown: false};
 

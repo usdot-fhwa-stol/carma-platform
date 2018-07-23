@@ -36,6 +36,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutorWorker;
 import gov.dot.fhwa.saxton.carma.guidance.util.ExecutionTimer;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -65,14 +66,14 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
     protected long sleepDurationMillis = 100;
 
     public TrajectoryExecutor(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node,
-            GuidanceCommands commands, Tracking tracking) {
+            GuidanceCommands commands, Tracking tracking, TrajectoryConverter trajectoryConverter) {
         super(stateMachine, iPubSubService, node);
         this.commands = commands;
         this.tracking_ = tracking;
 
         IPublisher<cav_msgs.ActiveManeuvers> activeManeuversPub = pubSubService.getPublisherForTopic("plugins/controlling_plugins", cav_msgs.ActiveManeuvers._TYPE);
         double maneuverTickFreq = Math.max(node.getParameterTree().getDouble("~maneuver_tick_freq", 10.0), 1.0);
-        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, activeManeuversPub);
+        trajectoryExecutorWorker = new TrajectoryExecutorWorker(commands, maneuverTickFreq, activeManeuversPub, trajectoryConverter);
         
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
@@ -89,7 +90,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
 
     @Override
     public void onStartup() {
-        maxAccel = node.getParameterTree().getDouble("~max_acceleration_capability");
+        maxAccel = node.getParameterTree().getDouble("~vehicle_acceleration_limit");
         sleepDurationMillis = (long) (1000.0 / node.getParameterTree().getDouble("~trajectory_executor_frequency"));
 
         routeStateSubscriber = pubSubService.getSubscriberForTopic("route_state", RouteState._TYPE);
@@ -263,11 +264,8 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
         }
     }
 
-  /**
-   * Convert the current trajectory to a timestamped list of points along the route frame
-   */
-    public List<RoutePointStamped> getHostPathPrediction() {
-        return trajectoryExecutorWorker.getHostPathPrediction();
+    public Trajectory getTotalTrajectory() {
+        return trajectoryExecutorWorker.getTotalTrajectory();
     }
 
     /**

@@ -30,7 +30,8 @@ public class PidController implements Filter<Double> {
     private final double Kd;
     private double setpoint = 0;
     private double integrator = 0;
-    private double integratorMax = Double.POSITIVE_INFINITY;
+    private double integratorMax = Double.MAX_VALUE;
+    private double integratorMin = Double.MIN_VALUE;
     private Optional<Signal<Double>> lastError = Optional.empty();
 
 
@@ -78,13 +79,17 @@ public class PidController implements Filter<Double> {
             double dt = signal.getTimestamp() - lastError.get().getTimestamp();
 
             if (Ki > 0) {
-                integrator += Math.min(error * dt, integratorMax);
+                // double type will not overflow from positive to negative
+                integrator += error * dt;
+                if(integrator > this.integratorMax) {
+                    integrator = this.integratorMax;
+                } else if(integrator < this.integratorMin) {
+                    integrator = this.integratorMin;
+                }
                 output += Ki * integrator;
             }
 
-            if (Kd > 0) {
-                output += Kd * (error - lastError.get().getData()) / dt;
-            }
+            output += Kd * (error - lastError.get().getData()) / dt;
         }
 
         lastError = Optional.of(new Signal<>(error, signal.getTimestamp()));
@@ -92,8 +97,14 @@ public class PidController implements Filter<Double> {
         return Optional.of(new Signal<>(output, signal.getTimestamp()));
     }
 
+    public void setIntegratorRange(double min, double max) {
+        this.integratorMax = max;
+        this.integratorMin = min;
+    }
+    
     @Override public void reset() {
         integrator = 0;
         lastError = Optional.empty();
     }
+    
 }

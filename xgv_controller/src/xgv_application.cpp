@@ -37,8 +37,16 @@
 
 XGVApplication::XGVApplication(int argc, char **argv) :
     DriverApplication(argc,argv,"xgv_controller"), 
-    cmd_mode_(cav::CommandMode_t::None)
+    cmd_mode_(cav::CommandMode_t::None),
+    timeout_(1.0)
 {
+    cav_msgs::DriverStatus status;
+    status.lon_controller = static_cast<unsigned char>(true);
+    status.status = cav_msgs::DriverStatus::OFF;
+
+    setStatus(status);
+
+    spin_rate = 50;
 
 }
 
@@ -66,17 +74,20 @@ void XGVApplication::initialize()
 
     xgv_client_->connect();
 
-    {
-        //Set up the effort controller. This manages the cmd_longitudinal_effort topic
-        effort_controller_.reset(new cav::LongitudinalEffortController());
-        auto& v = effort_controller_->get_api();
-        api_.insert(api_.end(),v.begin(),v.end());
-        effort_controller_->onNewCommand.connect([this](const cav::LongitudinalEffortController::Command&)
-                                                 {
-                                                     cmd_mode_ = cav::CommandMode_t::Wrench;
-                                                 });
-
-    }
+    //todo: disabling wrench effort control until the abrupt halting issue is resolved
+//
+//    {
+//        //Set up the effort controller. This manages the cmd_longitudinal_effort topic
+//        effort_controller_.reset(new cav::LongitudinalEffortController());
+//        auto& v = effort_controller_->get_api();
+//        api_.insert(api_.end(),v.begin(),v.end());
+//        effort_controller_->onNewCommand.connect([this](const cav::LongitudinalEffortController::Command&)
+//                                                 {
+//                                                    if(!active_robotic_status_provider_->getEnabled()) return;
+//                                                    cmd_mode_ = cav::CommandMode_t::Wrench;
+//                                                 });
+//
+//    }
 
     {
         //Set up the speed controller. This manages the cmd_speed topic
@@ -85,6 +96,7 @@ void XGVApplication::initialize()
         api_.insert(api_.end(),v.begin(),v.end());
         speed_controller_->onNewCommand.connect([this](const cav::LongitudinalSpeedController::Command& cmd)
                                                 {
+                                                    if(!active_robotic_status_provider_->getEnabled()) return;
                                                     if(cmd.speed < 0 || cmd.max_accel < 0)
                                                     {
                                                         ROS_ERROR_STREAM("Invalid command received: speed: " << cmd.speed << ", max_accel: " << cmd.max_accel);
@@ -132,22 +144,30 @@ void XGVApplication::initialize()
         api_.insert(api_.end(),v.begin(),v.end());
         enable_robotic_service_->onEnabledChanged.connect([this](bool new_value)
                                                           {
-                                                              ROS_INFO_STREAM("Robotic_enabled set to: " << (new_value ? "true" : "false"));
-                                                              if(!new_value)
-                                                              {
-                                                                  cmd_mode_ = cav::CommandMode_t::DisableRobotic;
-                                                              }
+                                                                ROS_INFO_STREAM("Robotic_enabled set to: " << (new_value ? "true" : "false"));
+
+                                                                if(!new_value)
+                                                                {
+                                                                    cmd_mode_ = cav::CommandMode_t::DisableRobotic;
+                                                                }
                                                             
-                                                                if(active_robotic_status_provider_)
-                                                                    active_robotic_status_provider_->setEnabled(new_value);
+                                                                active_robotic_status_provider_->setEnabled(new_value);
                                                           });
     }
 
+    last_recv_update_ = ros::Time::now();
     //Connect the vehicleMode signal so that we know when the robot is robot active
     xgv_client_->vehicleModeReceivedSignal.connect([this](const XGVJausClient::VehicleModeEventArgs& args)
                                                    {
-                                                      ROS_DEBUG_STREAM_NAMED("vehicle_mode","Received VehicleMode Event: " << std::endl << args);
-                                                      active_robotic_status_provider_->setActive(args.safetyMode == XGVJausClient::SafetyMode::DriveByWire);
+                                                        cav_msgs::DriverStatus status;
+                                                        status.lon_controller = static_cast<unsigned char>(true);
+                                                        status.status = cav_msgs::DriverStatus::OPERATIONAL;
+
+                                                        setStatus(status);
+                                                        last_recv_update_ = ros::Time::now();
+
+                                                        ROS_DEBUG_STREAM_NAMED("vehicle_mode","Received VehicleMode Event: " << std::endl << args);
+                                                        active_robotic_status_provider_->setActive(args.safetyMode == XGVJausClient::SafetyMode::DriveByWire);
                                                    });
 
     xgv_client_->wrenchEffortReceivedSignal.connect([this](const XGVJausClient::WrenchEffortSignalArgs& state)
@@ -156,23 +176,23 @@ void XGVApplication::initialize()
                                                     });
 
 
-
-    cav_msgs::DriverStatus status;
-    status.lon_controller = static_cast<unsigned char>(true);
-    status.status = cav_msgs::DriverStatus::OPERATIONAL;
-
-    setStatus(status);
-
-    spin_rate = 50;
-
-
 }
 
 
 void XGVApplication::pre_spin()
 {
+    if(ros::Time::now()-last_recv_update_ > timeout_)
+    {
+        ROS_WARN_STREAM_THROTTLE(1,"Haven't received vehicle mode update from XGV in " << ros::Time::now() - last_recv_update_);
+        cav_msgs::DriverStatus status;
+        status.lon_controller = static_cast<unsigned char>(true);
+        status.status = cav_msgs::DriverStatus::FAULT;
+
+        setStatus(status);
+    }
+
     active_robotic_status_provider_->publishState();
-    cmd_mode_ = cmd_mode_ == cav::CommandMode_t::DisableRobotic ? cav::CommandMode_t::DisableRobotic : cav::CommandMode_t::None;
+    cmd_mode_ = !active_robotic_status_provider_->getEnabled() ? cav::CommandMode_t::DisableRobotic : cav::CommandMode_t::None;
 }
 
 
@@ -184,15 +204,16 @@ void XGVApplication::post_spin()
         {
             case cav::CommandMode_t::None:
                 break;
-            case cav::CommandMode_t::Wrench:
-                xgv_client_->setWrenchEffort(effort_controller_->command.effort);
-                break;
+            //todo: disabling wrench effort until abrupt stopping behaviour is resolved
+//            case cav::CommandMode_t::Wrench:
+//                xgv_client_->setWrenchEffort(effort_controller_->command.effort);
+//                break;
             case cav::CommandMode_t::ClosedLoop:
                 xgv_client_->setSpeedAccel(speed_controller_->command.speed,speed_controller_->command.max_accel);
                 break;
         }
     }
-    else if(cmd_mode_ == cav::CommandMode_t::DisableRobotic)
+    else
     {
         xgv_client_->disableRoboticControl();
     }

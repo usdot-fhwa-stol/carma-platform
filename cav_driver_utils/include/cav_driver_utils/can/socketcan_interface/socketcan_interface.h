@@ -13,7 +13,6 @@ class SocketCANInterface : public CANInterface {
 public:
 
     SocketCANInterface();
-
     explicit SocketCANInterface(const std::string &device_name);
 
     SocketCANInterface(const SocketCANInterface &) = delete;
@@ -36,7 +35,7 @@ public:
      * an onFrameReceived event. Sets the can_filter on the socketcan driver
      * @param can_ids
      */
-    virtual void setFilters(const std::vector<uint16_t> &can_ids);
+    virtual void setFilters(const std::vector<uint32_t> &can_ids);
 
     /**
      * @brief writes the frame out to the can bus

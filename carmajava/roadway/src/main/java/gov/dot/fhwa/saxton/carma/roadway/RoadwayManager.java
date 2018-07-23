@@ -16,13 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.roadway;
 
-import cav_msgs.*;
+import cav_msgs.RoadwayEnvironment;
 import cav_srvs.GetTransformRequest;
 import cav_srvs.GetTransformResponse;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
+import gov.dot.fhwa.saxton.carma.route.Route;
+import gov.dot.fhwa.saxton.carma.route.RouteSegment;
+import java.util.LinkedList;
+import java.util.List;
 import org.ros.exception.RemoteException;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -54,6 +58,7 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
   // Publishers
   protected Publisher<tf2_msgs.TFMessage> tfPub;
   protected Publisher<cav_msgs.RoadwayEnvironment> roadwayEnvPub;
+  protected Publisher<geometry_msgs.PoseArray> posesPub;
   // Subscribers
   protected Subscriber<cav_msgs.Route> routeSub;
   protected Subscriber<cav_msgs.RouteState> routeStateSub;
@@ -92,7 +97,8 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
 
     roadwayEnvPub =
       connectedNode.newPublisher("roadway_environment", cav_msgs.RoadwayEnvironment._TYPE);
-
+    posesPub = connectedNode.newPublisher("/route_poses", geometry_msgs.PoseArray._TYPE);
+    posesPub.setLatchMode(true);
     // Safer to initialize EnvironmentWorker after publishers and before subscribers
     // This means any future modifications which attempt to publish data shortly after initialization will be valid
     environmentWorker = new EnvironmentWorker(this, connectedNode.getLog(), earthFrameId,
@@ -114,6 +120,18 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     routeSub = connectedNode.newSubscriber("route", cav_msgs.Route._TYPE);
       routeSub.addMessageListener((cav_msgs.Route message) -> {
         try {
+          Route r = Route.fromMessage(message);
+          geometry_msgs.PoseArray array = posesPub.newMessage();
+          array.getHeader().setFrameId("earth");
+          array.getHeader().setStamp(connectedNode.getCurrentTime());
+          List<geometry_msgs.Pose> poses = new LinkedList<>();
+          for (RouteSegment seg: r.getSegments()) {
+            geometry_msgs.Pose pose = connectedNode.getTopicMessageFactory().newFromType(geometry_msgs.Pose._TYPE);
+            pose = seg.getECEFToSegmentTransform().toPoseMessage(pose);
+            poses.add(pose);
+          }
+          array.setPoses(poses);
+          posesPub.publish(array);
           environmentWorker.handleRouteMsg(message);
         } catch (Throwable e) {
           handleException(e);

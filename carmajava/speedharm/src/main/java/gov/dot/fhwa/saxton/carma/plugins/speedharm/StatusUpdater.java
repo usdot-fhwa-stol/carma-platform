@@ -64,8 +64,8 @@ public class StatusUpdater implements Runnable {
       vsu.setAutomatedControlState(vehicleDataManager.getAutomatedControl());
       vsu.setDistanceToNearestRadarObject(vehicleDataManager.getRange());
       vsu.setHeading(vehicleDataManager.getHeading());
-      vsu.setLat(vehicleDataManager.getLongitude());
-      vsu.setLon(vehicleDataManager.getLatitude());
+      vsu.setLat(vehicleDataManager.getLatitude());
+      vsu.setLon(vehicleDataManager.getLongitude());
       vsu.setRelativeSpeedOfNearestRadarObject(vehicleDataManager.getRangeRate());
       vsu.setSpeed(vehicleDataManager.getSpeed());
       vsu.setAccel(vehicleDataManager.getAccel());

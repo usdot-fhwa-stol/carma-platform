@@ -53,6 +53,9 @@ class XGVApplication : public cav::DriverApplication
     std::unique_ptr<cav::ActiveRoboticStatusProvider> active_robotic_status_provider_;
     cav::CommandMode_t cmd_mode_;
     std::vector<std::string> api_;
+
+    ros::Time last_recv_update_;
+    ros::Duration timeout_;
 public:
     XGVApplication(int argc, char **argv);
 

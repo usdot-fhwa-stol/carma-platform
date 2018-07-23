@@ -38,4 +38,10 @@ public class FakeGuidanceCommands implements IGuidanceCommands {
     public double getAccelCmd() {
         return accelCmd_;
     }
+
+    @Override
+    public void setSteeringCommand(double axleAngle, double lateralAccel, double yawRate) {
+        // TODO Auto-generated method stub
+        
+    }
 }

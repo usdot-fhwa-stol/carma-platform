@@ -68,6 +68,7 @@ public class RosServiceChannel<T, S> implements IServiceChannel<T, S> {
         this.serviceClient = serviceClient;
         this.tasks = new LinkedBlockingQueue<>();
         this.workerThread = new Thread(new ServiceWorker());
+        this.workerThread.setName(this.getClass().getSimpleName() + "ServiceWorkerThread");
         workerThread.start();
     }
 

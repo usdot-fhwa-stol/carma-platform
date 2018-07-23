@@ -16,7 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point2D;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 
 /**
@@ -40,6 +39,21 @@ public final class RoutePointStamped {
    */
   public RoutePointStamped(double downtrack, double crosstrack, double time) {
     this.point = new Point3D(downtrack, crosstrack, time);
+  }
+
+  /**
+   * Constructor
+   * 
+   * @param downtrack The downtrack distance along the route
+   * @param crosstrack The cross track distance
+   * @param time Time in seconds since Jan 1, 1970 00:00:00 UTC
+   * @param segmentIdx The segment index
+   * @param segmentDowntrack The downtrack distance on the segment in m 
+   */
+  public RoutePointStamped(double downtrack, double crosstrack, double time, int segmentIdx, double segmentDowntrack) {
+    this.point = new Point3D(downtrack, crosstrack, time);
+    this.segmentIdx = segmentIdx;
+    this.segDowntrack = segmentDowntrack;
   }
 
   public void setDowntrack(double downtrack) {
@@ -85,4 +99,10 @@ public final class RoutePointStamped {
   public int getSegmentIdx(){
     return segmentIdx;
   }
+
+  @Override
+  public String toString() {
+    return "RoutePointStamped [point=" + point + ", segmentIdx=" + segmentIdx + ", segDowntrack=" + segDowntrack + "]";
+  }
+  
 }
