@@ -30,8 +30,8 @@
 <launch>
 
   <!-- Set Environment Variables -->
-  <env name="ROS_IP" value="192.168.0.4"/>
-  <env name="ROS_MASTER_URI" value="http://192.168.0.4:11311/"/>
+  <env name="ROS_IP" value="192.168.88.10"/>
+
   <!-- Override Required Paths -->
   <arg name="CARMA_DIR" default="/opt/carma" doc="The path of the package directory"/>
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/params" doc="Directory of yaml parameter files"/>
