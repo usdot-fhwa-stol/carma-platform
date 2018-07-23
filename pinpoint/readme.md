@@ -1,7 +1,7 @@
 Controller API ( inherits ROS Driver Capabilities )
 -------------------
 ### Parameters
-~address (string, default: "192.168.0.5")
+~address (string, default: "192.168.88.29")
 : ipv4 address for PinPoint localization server
 
 ~loc_port (string, default: "9501")
