@@ -29,6 +29,12 @@ public interface IManeuverInputs {
     double getDistanceFromRouteStart();
 
     /**
+     * Provides the vehicle's current crosstrack distance on the route
+     * @return distance, m
+     */
+    double getCrosstrackDistance();
+
+    /**
      * Provides the vehicle's current speed.
      * @return current speed, m/s
      */
@@ -57,4 +63,10 @@ public interface IManeuverInputs {
      * @return the index of the vehicles current lane
      */
     int getCurrentLane();
+
+    /**
+     * Get the maximum acceleration achievable by the vehicle controller
+     * @return the maximum acceleration in m/s^2
+     */
+    double getMaxAccelLimit();
 }

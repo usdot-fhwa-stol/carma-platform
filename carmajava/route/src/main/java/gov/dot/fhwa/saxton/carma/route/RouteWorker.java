@@ -86,8 +86,10 @@ public class RouteWorker {
 
   protected String earthFrame = "earth";
   protected String hostVehicleFrame = "host_vehicle";
-  Transform earthToHostVehicle = null;
-  Point3D hostVehicleInECEF = null;
+  protected int currentLane = 0;
+  protected int laneChangeCount = 0;
+  protected Transform earthToHostVehicle = null;
+  protected Point3D hostVehicleInECEF = null;
 
   /**
    * Constructor initializes a route worker object with the provided logging tool
@@ -152,6 +154,8 @@ public class RouteWorker {
     routeStateSeq = 0;
     recievedLeftRouteEvents = 0;
     currentSegmentDowntrack = 0;
+    currentLane = 0;
+    laneChangeCount = 0;
   }
 
   /**
@@ -367,6 +371,7 @@ public class RouteWorker {
     currentWaypointIndex = index; // The current waypoint should be the downtrack one
     downtrackDistance = Math.max(0, activeRoute.lengthOfSegments(0, currentSegmentIndex - 1) + currentSegment.downTrackDistance(hostVehicleInECEF));
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleInECEF);
+    currentLane = currentSegment.determinePrimaryLane(crossTrackDistance);
 
     handleEvent(WorkerEvent.ROUTE_STARTED);
     return true;
@@ -432,8 +437,21 @@ public class RouteWorker {
     // Update crosstrack distance
     crossTrackDistance = currentSegment.crossTrackDistance(hostVehicleInECEF);
 
-    log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
-    log.debug("Downtrack Waypoint: " + currentWaypointIndex);
+    // Update current lane
+    int tempLane = currentSegment.determinePrimaryLane(crossTrackDistance);
+    if (tempLane != currentLane) {
+      if (laneChangeCount >= requiredLeftRouteCount) {
+        currentLane = tempLane;
+        laneChangeCount = 0;
+      } else {
+        laneChangeCount++;
+      }
+    } else {
+      laneChangeCount = 0;
+    }
+
+    log.info("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
+    log.info("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
       recievedLeftRouteEvents++;
@@ -532,7 +550,7 @@ public class RouteWorker {
       if (currentSegment != null) {
         routeState.setSegmentDownTrack(currentSegmentDowntrack);
         routeState.setCurrentSegment(currentSegment.toMessage(messageFactory, currentWaypointIndex));
-        routeState.setLaneIndex((byte) currentSegment.determinePrimaryLane(crossTrackDistance));
+        routeState.setLaneIndex((byte) currentLane);
       }
     }
 

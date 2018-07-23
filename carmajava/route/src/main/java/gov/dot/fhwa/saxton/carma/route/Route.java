@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.route;
 
+import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
@@ -72,6 +73,7 @@ public class Route {
     routeMsg.setRouteID(routeID);
     routeMsg.setRouteName(routeName);
     routeMsg.setValid(valid);
+    // TODO set header stamp and frame id
 
     List<cav_msgs.RouteSegment> routeSegmentMsgs = new LinkedList<>();
     for (int i = 0; i < segments.size(); i++) {
@@ -344,9 +346,9 @@ public class Route {
    * 
    * @param startingIndex The index of the route segment which will be the starting point for the search. 
    *                      This segment will always be included in the returned list
-   * @param segmentDowntrack The distance along the specified segment to start the calculation from
-   * @param distBackward The distance in m uptrack of the starting segment which will be included
-   * @param distForward The distance in m downtrack of the starting segment which will be included
+   * @param segmentDowntrack The distance along the specified segment to start the calculation from, m
+   * @param distBackward The distance in m uptrack of the starting segment which will be included, m
+   * @param distForward The distance in m downtrack of the starting segment which will be included, m
    */
   public List<RouteSegment> findRouteSubsection(int startingIndex, double segmentDowntrack, double distBackward, double distForward) {
     List<RouteSegment> subList = new LinkedList<>();
@@ -379,9 +381,20 @@ public class Route {
   }
 
   /**
-   * Get the route segment in the list which the provided point should be considered in
+   * Get the route segment in the list which the provided point should be considered in.
    * If the point cannot be matched with any segments in the provided subsection,
-   * it will be assigned to the first or last segment based on location.
+   * it will be assigned to the first segment.
+   *
+   * In general, two adjacent segments will have some angle between them (their common waypoint will form
+   * a turn in the route so that they don't lie on a straight line). If we think of our point as being "in"
+   * a segment if it is within a bounding box described by the start & end waypoints of that segment and its
+   * min & max crosstrack allowed, then we have a wedge between the two bounding boxes on the outside of the
+   * turn (on the inside of the turn the bounding boxes overlap). If our point is in this outside wedge it
+   * will not be considered within either segment, thus be assigned to the first one. Clearly, this is not
+   * what we desire. To avoid getting found if in this wedge, we extend the length of the bounding box of
+   * each segment uptrack by the amount of allowed crosstrack error of the previous segment. This will
+   * cause additional overlap in some areas, which is okay, since it will still give preference to the uptrack
+   * segment in any overlap situation.
    * 
    * @param point The 3d point to match with a segment
    * @param segments The subsection of a route which will be searched against
@@ -389,27 +402,36 @@ public class Route {
    * @return The matching route segment
    */
   public RouteSegment routeSegmentOfPoint(Point3D point, List<RouteSegment> segments) {
-    int count = 0;
-    RouteSegment bestSegment = segments.get(0);
-    for (RouteSegment seg: segments) {      
+    double maxCrosstrackAllowed = 0.0;
+    double prevMaxCrosstrack = 0.0;
+    RouteSegment bestSegment = segments.get(0); // Default to starting segment if no match is found
+
+    for (RouteSegment seg : segments) {
       RouteWaypoint wp = seg.getDowntrackWaypoint();
+      maxCrosstrackAllowed = Math.max(Math.abs(wp.getMinCrossTrack()), Math.abs(wp.getMaxCrossTrack())); //either could be negative
+
+      //find where the point in question lies relative to the segment
       double crossTrack = seg.crossTrackDistance(point);
       double downTrack = seg.downTrackDistance(point);
 
-      if (-0.0 < downTrack && downTrack <= seg.length()) { 
-        if (wp.getMinCrossTrack() < crossTrack && crossTrack < wp.getMaxCrossTrack())
+      //check if it's in the extended bounding box
+      if (-prevMaxCrosstrack < downTrack && downTrack <= seg.length()) {
+        if (Math.abs(crossTrack) <= maxCrosstrackAllowed) {
           return seg;
-        
-        bestSegment = seg;
-      } else if (count == segments.size() - 1 && downTrack > seg.length()) {
+        }
         bestSegment = seg;
       }
-      count++;
+
+      prevMaxCrosstrack = maxCrosstrackAllowed;
     }
+
+    //couldn't find a matching segment, so use the first segment within the downtrack range of. 
+    // Or the starting segment assuming we are before the route
     return bestSegment;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "Route{ name: " + routeName + " id: " + routeID + " }";
   }
 }

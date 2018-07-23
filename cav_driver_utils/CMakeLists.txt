@@ -9,7 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   can_msgs
   roscpp
   std_msgs
-
 )
 
 find_package(Boost REQUIRED system)
@@ -54,11 +53,12 @@ add_dependencies(driver_application ${catkin_EXPORTED_TARGETS})
    ${catkin_LIBRARIES}
  )
 
-
 add_library(cav_socketcan_interface
         src/socketcan_interface/socketcan_interface.cpp
         include/cav_driver_utils/can/socketcan_interface/socketcan_interface.h
         )
+
+add_dependencies(cav_socketcan_interface ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(cav_socketcan_interface
         ${Boost_LIBRARIES})
@@ -67,6 +67,8 @@ add_library(ros_socketcan_interface
         src/ros_socketcan_bridge/ros_socketcan_bridge.cpp
         include/cav_driver_utils/can/ros_socketcan_bridge/ros_socketcan_bridge.h
         )
+
+add_dependencies(ros_socketcan_interface ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(ros_socketcan_interface
         ${Boost_LIBRARIES})
@@ -86,11 +88,11 @@ target_link_libraries(ros_socketcan_interface
 # )
 
 ## Mark executables and/or libraries for installation
- install(TARGETS driver_application cav_socketcan_interface
-   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
+install(TARGETS driver_application cav_socketcan_interface ros_socketcan_interface
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+# RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/driver_application/

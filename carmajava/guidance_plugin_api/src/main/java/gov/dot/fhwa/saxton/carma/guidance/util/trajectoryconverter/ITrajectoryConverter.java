@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.ros.message.MessageFactory;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -59,8 +58,10 @@ public interface ITrajectoryConverter {
    * Then any complex maneuvers are added to the path
    * Finally all points are converted into the ECEF frame
    * 
+   * Uses the TrajectoryConverter's configured max path size
+   * 
    * @param traj The trajectory to convert
-   * @param currentTimeMs The starting time for this path in ms 
+   * @param startTimeMs The starting time for this path in ms
    * @param downtrack Current downtrack distance on route
    * @param crosstrack Current crosstrack on route
    * @param currentSegmentIdx The current route segment index
@@ -69,9 +70,32 @@ public interface ITrajectoryConverter {
    * 
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
-  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMS,
+  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMs,
   double downtrack, double crosstrack,
   int currentSegmentIdx, double segDowntrack, int lane);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * @param traj The trajectory to convert
+   * @param startTimeMs The starting time for this path in ms
+   * @param downtrack Current downtrack distance on route, m
+   * @param crosstrack Current crosstrack on route, m
+   * @param currentSegmentIdx The current route segment index
+   * @param segDowntrack The current downtrack distance relative to the current segment start, m
+   * @param lane The current lane index
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, long startTimeMs,
+   double downtrack, double crosstrack,
+   int currentSegmentIdx, double segDowntrack, int lane, int maxPointsInPath);
 
   /**
    * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
@@ -88,6 +112,55 @@ public interface ITrajectoryConverter {
    * @return A list of downtrack, crosstrack points associated with time stamps and segments
    */
   List<RoutePointStamped> convertToPath(Trajectory traj);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * Uses the TrajectoryConverter's configured max path size
+   * 
+   * @param traj The trajectory to convert
+   * @param startPoint the point one timestep prior to the beginning of this trajectory
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, RoutePointStamped startPoint);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * @param traj The trajectory to convert
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, int maxPointsInPath);
+
+  /**
+   * Converts the provided trajectory and starting configuration into a list of (downtrack, crosstrack) points with associated time stamps
+   * 
+   * This function determines all the point downtrack distances using simple longitudinal maneuvers and kinematic equations.
+   * Then the longitudinal maneuvers are used to shift the crosstrack values of each point
+   * Then any complex maneuvers are added to the path
+   * Finally all points are converted into the ECEF frame
+   * 
+   * @param traj The trajectory to convert
+   * @param startPoint the point one timestep prior to the beginning of this trajectory
+   * @param maxPointsInPath The maximum number of points to include in the path, not to exceed the configured value
+   * 
+   * @return A list of downtrack, crosstrack points associated with time stamps and segments
+   */
+  List<RoutePointStamped> convertToPath(Trajectory traj, RoutePointStamped startPoint, int maxPointsInPath);
+
   /**
    * Helper function for converting a List of RoutePoint2DStamped into List of ECEFPointStamped
    * 
@@ -102,7 +175,7 @@ public interface ITrajectoryConverter {
    * 
    * @param trajMsg The message to be converted
    * @param currentSegmentIdx The current route segment index
-   * @param segDowntrack the downtrack distance along the segment
+   * @param segDowntrack the downtrack distance along the segment, m
    * 
    * @return The path described as points along a route
    */
@@ -123,11 +196,24 @@ public interface ITrajectoryConverter {
    * Function converts a path to a cav_msgs.Trajectory message using the provided message factory
    * 
    * @param path The list of ecef points and times which defines the path
-   * @param messageFactory The message factory which will be used to build this message
    * 
    * @return A cav_msgs.Trajectory message. This message will be empty if the path was empty
    */
-  cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path, MessageFactory messageFactory);
+  cav_msgs.Trajectory pathToMessage(List<RoutePointStamped> path);
+
+  /**
+   * Function which converts and individual Simple Longitudinal Maneuver to a path based on starting configuration
+   * This function is used internally in the convertToPath function
+   * 
+   * Uses the TrajectoryConverter's configured max path size
+   * 
+   * @param maneuver The maneuver to convert
+   * @param path The list which will store the generated points
+   * @param startingData The starting configuration of the vehicle
+   */
+  LongitudinalSimulationData addLongitudinalManeuverToPath(
+    final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
+    final LongitudinalSimulationData startingData);
 
   /**
    * Function which converts and individual Simple Longitudinal Maneuver to a path based on starting configuration
@@ -136,9 +222,9 @@ public interface ITrajectoryConverter {
    * @param maneuver The maneuver to convert
    * @param path The list which will store the generated points
    * @param startingData The starting configuration of the vehicle
-   * @param route The route the vehicle is on
+   * @param maxPointsInPath The maximum number of points to compute, not to exceed the configured value
    */
   LongitudinalSimulationData addLongitudinalManeuverToPath(
     final LongitudinalManeuver maneuver, List<RoutePointStamped> path,
-    final LongitudinalSimulationData startingData);
+    final LongitudinalSimulationData startingData, final int maxPointsInPath);
 }

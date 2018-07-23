@@ -22,6 +22,7 @@ import cav_msgs.RouteSegment;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
@@ -35,6 +36,7 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
   protected List<SpeedLimit> speedLimits;
   protected List<IManeuver> offendingManeuvers;
   private static final double DISTANCE_EPSILON = 0.0001;
+  private static final double GENERAL_VEHICLE_LAG = 1.5;
   protected ILogger log = LoggerManager.getLogger();
 
   public LocalSpeedLimitConstraint(Route route) {
@@ -126,6 +128,15 @@ public class LocalSpeedLimitConstraint implements TrajectoryValidationConstraint
       }
 
       return;
+    }
+    
+    // Special case for steady speed maneuver
+    if(lonMvr instanceof SteadySpeed) {
+        // check if this steady speed maneuver is inserted because of vehicle nature lag
+        // such that the vehicle is not able to perform any decelerations within a short distance
+        if(lonMvr.getEndDistance() - lonMvr.getStartDistance() <= GENERAL_VEHICLE_LAG * lonMvr.getStartSpeed()) {
+            return;
+        }
     }
 
     SpeedLimit start = getLimitAtDistance(lonMvr.getStartDistance());

@@ -87,11 +87,6 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                     }
                     //insertNewTableRow('tblSecondA', 'total_dist_next_lane_change', total_dist_next_lane_change);
                 }
-
-                //Display the lateset route name and timer.
-                var divRouteInfo = document.getElementById('divRouteInfo');
-                if (divRouteInfo != null || divRouteInfo != 'undefined')
-                    divRouteInfo.innerHTML = selectedRoute.name + ' : ' + engaged_timer;
             });
         };
 
@@ -183,7 +178,7 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
 
                 if (addNew == true || SVG.get('svgEditorBackground') == null) {
                     //Check if SVG is supported
-                    draw = SVG('divLaneTracking').size(600, 190).viewbox(0, 0, 600, 190).attr({
+                    draw = SVG('divLaneTracking').size(600, 100).viewbox(0, 0, 600, 100).attr({
                         preserveAspectRatio: 'xMidYMid meet'
                         , id: 'svgEditorBackground'
                     }); //static to fit available space.
@@ -207,8 +202,8 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
 
 
                 var y1 = 0; //static height;
-                var y2 = 189;//static height;
-                var lanewidth = 109; //static lane width
+                var y2 = 100;//static height;
+                var lanewidth = 80; //static lane width
                 var firstline_x = 0; //default
 
                 //e1_line.x1 = Starting point (currently hardcoded, cannot find the proper calc or pattern)
@@ -238,12 +233,12 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
 
                 //x = e1_line.x1 - 10px (which is 10 px on each side); 81-71 = 10px
                 //width = ((109 *#oflane) + 20px)
-                var rect = draw.rect(456, 189).attr({
+                var rect = draw.rect(425, 180).attr({
                     id: 'r' + rect_index //NOTE: if removed, it adds new rect after the first.
                     , x: firstline_x - 10 //225 //adjusted based on # of lanes
                     , y: 0
                     , width: (lanewidth * totallanes) + 20 //129 //adjusted based on # of lanes
-                    , height: 189
+                    , height: y2
                     , style: 'fill:gray; stroke: none;'
                 });
 
@@ -287,10 +282,10 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                         else
                             targetlanestyle = 'fill:cornflowerblue; fill-opacity:1.00;'; //Blue
 
-                        //static width 109 and heigh 217
-                        var rect_target = draw.rect(109, 217).attr({
+                        //static width  and height
+                        var rect_target = draw.rect(lanewidth-5, 200).attr({
                             id: 'rect_target_lane'
-                            , x: line_x
+                            , x: line_x + 2.5 // spacing
                             , y: 0
                             , style: targetlanestyle
                         });
@@ -309,13 +304,13 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
 
                         //To calculate image x position = e#_line.x1 - 19px
                         //TODO: Convert to svg to change colors.
-                        var image = draw.image(installfoldername + 'SUV.png', 145.136, 157.036);
+                        var image = draw.image(installfoldername + 'SUV.png', lanewidth, y2);
                         // another option is to reuse what's already in carma/images.and just have 'images/SUV.png'
 
                         image.attr({
                             id: 'r' + rect_index + '_image'
-                            , x: line_x - 19
-                            , y: 19.6868
+                            , x: line_x
+                            , y: 5
                             , visibility: 'visible'
                         });
                     }
@@ -324,14 +319,18 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
                 //Display OFF ROAD when less than 0 or >= totallanes
                 if (currentlaneid < 0 || currentlaneid >= totallanes) {
                     var text = draw.text(function (add) {
-                        add.tspan('OFF ROAD').fill('#b32400').style('font-weight:bold;font-size:20px;') /* red font */
+                        add.tspan('OFF ROAD').fill('#b32400').style('font-weight:bold;font-size:15px;') /* red font */
                     });
 
                     //center accordingly to # of lanes.
-                    if (totallanes == 3 || totallanes == 1)
-                        text.center(290, 95);
+                    if ( totallanes == 1)
+                        text.center(275, lanewidth - 25);
+                    else if (totallanes == 2)
+                        text.center(260 + 35, lanewidth - 25);
+                    else if (totallanes == 3)
+                        text.center(250 + 35, lanewidth - 25);
                     else
-                        text.center(305, 95);
+                        text.center(235 + 35, lanewidth - 25);
                 }
 
                 //increment rect at the end
@@ -369,24 +368,10 @@ CarmaJS.WidgetFramework.RouteFollowing = (function () {
            }
         });
 
-        $.widget("CarmaJS.rfRouteInfo", {
-           _create: function() {
-              var myDiv = $(" <div id='divRouteInfo'>No Route Selected : 00h 00m 00s</div>");
-              $(this.element).append(myDiv);
-           },
-           _destroy: function () {
-                this.element.empty();
-                this._super();
-           }
-        });
-
         /*** Public Functions ***
         This is the main call to setup the different widgets available in this plugin.
         ***/
         var loadCustomWidget = function(container) {
-
-            //Generate the  widget and calling its private method(s) below.
-            container.rfRouteInfo();
 
             container.rfLaneTracking();
             container.rfLaneTracking("showActiveRoute", null);

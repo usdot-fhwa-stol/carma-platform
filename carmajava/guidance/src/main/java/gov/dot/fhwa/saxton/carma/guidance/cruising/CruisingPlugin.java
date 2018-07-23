@@ -66,8 +66,8 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     // !!!!!!!!!!
     version.setName("Cruising Plugin");
     version.setMajorRevision(1);
-    version.setIntermediateRevision(0);
-    version.setMinorRevision(2);
+    version.setIntermediateRevision(1);
+    version.setMinorRevision(0);
   }
 
   @Override
@@ -194,7 +194,9 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
   
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
-        for (TrajectorySegment ts : findTrajectoryGaps(traj, expectedEntrySpeed)) {
+        SpeedLimit startSpeedLimit = routeService.getSpeedLimitAtLocation(traj.getStartLocation());
+        double speedLimit = startSpeedLimit != null ? startSpeedLimit.getLimit() : expectedEntrySpeed;
+        for (TrajectorySegment ts : findTrajectoryGaps(traj, Math.min(speedLimit, expectedEntrySpeed))) {
             planTrajectoryGap(ts, traj);
         }
         return new TrajectoryPlanningResponse();
@@ -225,7 +227,7 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
         }
         limit_buffer.setLocation(trajSeg.endLocation);
         mergedLimits.add(limit_buffer);
-        log.info("Found" + mergedLimits.size() + "speed limits in " + trajSeg.toString());
+        log.info("Found " + mergedLimits.size() + " speed limits in " + trajSeg.toString());
         for(SpeedLimit sl : mergedLimits) {
             log.info(sl.toString());
         }

@@ -66,8 +66,12 @@ public:
      */
     PinPointApplication(int argc, char** argv);
 
-    ~PinPointApplication() {
-        if(connect_thread_) connect_thread_->join();
+    ~PinPointApplication() 
+    {
+        if(connect_thread_) 
+        {
+            connect_thread_->join();
+        }
     }
 
 private:
@@ -105,7 +109,6 @@ private:
     inline virtual std::vector<std::string>& get_api() override  { return api_; }
     std::vector<std::string> api_;
 
-
     //ROS
     ros::Publisher velocity_pub_,global_pose_pub_,local_pose_pub_,heading_pub_;
     std::shared_ptr<ros::NodeHandle> position_api_nh_;
@@ -124,8 +127,6 @@ private:
 
     ros::Time last_heartbeat_time_;
     std::mutex heartbeat_mutex_;
-
-
 
     //PinPoint event handlers
     torc::PinPointLocalizationClient pinpoint_;
@@ -198,14 +199,11 @@ private:
      */
     void onStatusConditionChangedHandler(const torc::PinPointLocalizationClient::PinPointStatusCode& code );
 
-
     torc::PinPointFilterAccuracy latest_filter_accuracy_;
     torc::PinPointQuaternionCovariance latest_quaternion_covariance_;
     geometry_msgs::TwistStamped latest_velocity_;
 
-
     //Diagnostic Updater
-
     /**
      * @brief This is a helper class for the Diagnostic Updater
      *
@@ -226,10 +224,11 @@ private:
         {
             switch(condition)
             {
-                case torc::StatusCondition::Clear:return "Clear";
-                case torc::StatusCondition::Info:return "Info";
-                case torc::StatusCondition::Warning:return "Warning";
-                case torc::StatusCondition::Error:return "Error";
+                case torc::StatusCondition::Clear: return "Clear";
+                case torc::StatusCondition::Info: return "Info";
+                case torc::StatusCondition::Warning: return "Warning";
+                case torc::StatusCondition::Error: return "Error";
+                default: return "Unknown Condition";
             }
         }
 
@@ -256,6 +255,8 @@ private:
                 case torc::PinPointLocalizationClient::StatusCode::BadHeadingAgreement: return "BadHeadingAgreement";
                 case torc::PinPointLocalizationClient::StatusCode::BadMeasurementTime: return "BadMeasurementTime";
                 case torc::PinPointLocalizationClient::StatusCode::IrregularTimeStep: return "IrregularTimeStep";
+                case torc::PinPointLocalizationClient::StatusCode::BadWssScaleFactor: return "BadWssScaleFactor";
+                default: return "Unknown Code";
             }
         }
 
@@ -269,19 +270,31 @@ private:
             switch(condition)
             {
                 case torc::StatusCondition::Clear:
-                case torc::StatusCondition::Info:
+                {
                     level = diagnostic_msgs::DiagnosticStatus::OK;
                     break;
+                }
+                case torc::StatusCondition::Info:
+                {
+                    level = diagnostic_msgs::DiagnosticStatus::OK;
+                    break;
+                }
                 case torc::StatusCondition::Warning:
+                {
                     level = diagnostic_msgs::DiagnosticStatus::WARN;
                     break;
+                }
                 case torc::StatusCondition::Error:
+                default:
+                {
                     level = diagnostic_msgs::DiagnosticStatus::ERROR;
                     break;
+                }
             }
 
             stat.addf(codeAsString(), conditionAsString().c_str());
-            stat.summaryf(level,"StatusCode: %s, Condition: %s", codeAsString().c_str(), conditionAsString().c_str());
+            stat.summaryf(level, "StatusCode: %s, Condition: %s", codeAsString().c_str(), conditionAsString().c_str());
+            //std::cout << "Code: " << codeAsString().c_str() << ", Condition: " << conditionAsString().c_str() << std::endl;
         }
     };
 

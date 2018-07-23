@@ -302,5 +302,4 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
             throw new RosRuntimeException(getComponentName() + " received unknown instruction from guidance state machine.");
         }
     }
-    
 }

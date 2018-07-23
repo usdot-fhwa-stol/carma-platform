@@ -22,5 +22,9 @@ export ROS_MASTER_URI=http://192.168.0.4:11311/
 # Set ros to run from /opt/carma instead of home directory
 export ROS_HOME=/opt/carma/.ros
 
+# Remove bad launch.pid file if it exists
+rm /opt/carma/launch.pid
+
 # Launch platform
-roslaunch --pid=/opt/carma/launch.pid carma saxton_cav.launch
+rosBagRecord=$1
+roslaunch --pid=/opt/carma/launch.pid carma saxton_cav.launch use_rosbag:=$rosBagRecord

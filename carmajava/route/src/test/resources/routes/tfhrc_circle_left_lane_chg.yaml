@@ -12,7 +12,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0 # The maximum cross track distance in meters of a vehicle relative to the route
     lowerSpeedLimit: 0 # The lower speed limit in miles per hour
     upperSpeedLimit: 10 # The upper speed limit in miles per hour
-    laneCount: 1 # The number of lanes
+    laneCount: 2 # The number of lanes
+    requiredLaneIndex: 0 # Required lane index
     interiorLaneMarkings: SOLID_WHITE # The type of lane markings found in interior lanes
     leftMostLaneMarking: SOLID_YELLOW # The type of lane marking found on the left side of the left most lane
     rightMostLaneMarking: SOLID_WHITE # The type of lane marking foun on the right side of the right most lane
@@ -26,7 +27,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -40,7 +42,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -54,7 +57,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -68,7 +72,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -127,7 +132,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -141,7 +147,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -155,7 +162,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -169,7 +177,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -183,7 +192,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -197,7 +207,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -211,7 +222,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -225,7 +237,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -239,7 +252,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -253,7 +267,8 @@ waypoints: # The list of waypoints in the route
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 10
-    laneCount: 1
+    laneCount: 2
+    requiredLaneIndex: 1
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE

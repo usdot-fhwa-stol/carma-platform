@@ -38,6 +38,13 @@
 #include <openjaus/openJaus.h>
 #include <mutex>
 
+enum XGVGearValues : JausByte {
+    XGVGearPark = 0,
+    XGVGearLow = 1,
+    XGVGearDrive = 127,
+    XGVGearNeutral = 128,
+    XGVGearReverse = 255
+};
 
 /**
  * @brief translates a JausByte to the XGVClient::ControlMode
@@ -477,15 +484,15 @@ private:
 
         if(jausAddressEqual(reportDiscreteDevices->source, self->primitive_driver_addr_.get()))
         {
-            if(reportDiscreteDevices->gear == (JausByte)0)
+            if(reportDiscreteDevices->gear == XGVGearPark)
                 self->xgv_current_gear_ = Gear::Park;
-            else if(reportDiscreteDevices->gear == (JausByte)1)
+            else if(reportDiscreteDevices->gear == XGVGearLow)
                 self->xgv_current_gear_ = Gear::Low;
-            else if(reportDiscreteDevices->gear <= (JausByte)127)
+            else if(reportDiscreteDevices->gear <= XGVGearDrive)
                 self->xgv_current_gear_ = Gear::Drive;
-            else if(reportDiscreteDevices->gear == (JausByte)128)
+            else if(reportDiscreteDevices->gear == XGVGearNeutral)
                 self->xgv_current_gear_ = Gear::Neutral;
-            else if(reportDiscreteDevices->gear <= (JausByte)255)
+            else if(reportDiscreteDevices->gear <= XGVGearReverse)
                 self->xgv_current_gear_ = Gear::Reverse;
             else
                 self->xgv_current_gear_ = Gear::Unknown;

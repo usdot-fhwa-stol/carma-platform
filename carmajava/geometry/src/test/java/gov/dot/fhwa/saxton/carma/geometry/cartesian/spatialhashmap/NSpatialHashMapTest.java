@@ -71,10 +71,10 @@ public class NSpatialHashMapTest {
     CartesianObject obj2 = new CartesianObject(points);
 
     map.insert(obj);
-    NSpatialHashKey key1 = new NSpatialHashKey(new int[]{2,2});
-    NSpatialHashKey key2 = new NSpatialHashKey(new int[]{3,2});
-    NSpatialHashKey key3 = new NSpatialHashKey(new int[]{2,1});
-    NSpatialHashKey key4 = new NSpatialHashKey(new int[]{3,1});
+    NSpatialHashKey key1 = new NSpatialHashKey(new long[]{2,2});
+    NSpatialHashKey key2 = new NSpatialHashKey(new long[]{3,2});
+    NSpatialHashKey key3 = new NSpatialHashKey(new long[]{2,1});
+    NSpatialHashKey key4 = new NSpatialHashKey(new long[]{3,1});
     assertTrue(map.getKeys().contains(key1));
     assertTrue(map.getKeys().contains(key2));
     assertTrue(map.getKeys().contains(key3));
@@ -122,7 +122,7 @@ public class NSpatialHashMapTest {
     obj = new CartesianObject(points);
 
     map.insert(obj);
-    key1 = new NSpatialHashKey(new int[]{2,2});
+    key1 = new NSpatialHashKey(new long[]{2,2});
     assertTrue(map.getKeys().contains(key1));
     assertTrue(key1.equals(new SimpleHashStrategy(cellSizes).getKey(new Point2D(4,4))));
 
@@ -138,7 +138,7 @@ public class NSpatialHashMapTest {
     obj = new CartesianObject(points);
     map.insert(obj);
 
-    key1 = new NSpatialHashKey(new int[]{2,2,2});
+    key1 = new NSpatialHashKey(new long[]{2,2,2});
     assertTrue(map.getKeys().contains(key1));
 
     // Test wrong dimension
