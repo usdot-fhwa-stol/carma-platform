@@ -4,18 +4,12 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicat
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services.DviExecutorService;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.ComponentScan;
 
 import java.io.*;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@ComponentScan
-@EnableAutoConfiguration
 public class SpeedControl {
 
     public static void main(String[] args) {
@@ -43,14 +37,11 @@ public class SpeedControl {
         LoggerManager.useLog4J2(useLog4j2);
 
 
-        ConfigurableApplicationContext context = SpringApplication.run(SpeedControl.class, args);
-
         // set our context for non spring managed classes
-        GlidepathApplicationContext.getInstance().setApplicationContext(context);
         GlidepathAppConfig config = ((GlidepathAppConfig) GlidepathApplicationContext.getInstance().getAppConfig());
 
         //SimulatedDviExecutorService service = context.getBean(SimulatedDviExecutorService.class);
-        DviExecutorService service = context.getBean(DviExecutorService.class);
+        DviExecutorService service = new DviExecutorService();
 
         LoggerManager.setRealTimeOutput(config.getLogRealTimeOutput());
         ILogger logger = LoggerManager.getLogger(SpeedControl.class);

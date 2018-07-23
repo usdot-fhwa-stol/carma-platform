@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import static gov.dot.fhwa.saxton.glidepath.appcommon.SignalPhase.GREEN;
-import static gov.dot.fhwa.saxton.glidepath.appcommon.SignalPhase.NONE;
+import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.GREEN;
+import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE;
 
 /**
  * This class describes the speed trajectory for the Glidepath vehicle in any given situation.

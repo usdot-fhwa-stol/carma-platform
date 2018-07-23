@@ -10,7 +10,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.dot.fhwa.saxton.glidepath.appcommon.Constants.MPS_TO_MPH;
+import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants.MPS_TO_MPH;
 
 /**
  * Calculates the viable neighbors for a node in the solution tree for the EAD model.

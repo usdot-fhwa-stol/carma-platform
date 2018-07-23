@@ -7,7 +7,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 import java.io.RandomAccessFile;
 
-import static gov.dot.fhwa.saxton.glidepath.dvi.domain.GlidepathState.*;
+import static gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathState.*;
 
 /**
  * Maintains and transitions to glidepath states

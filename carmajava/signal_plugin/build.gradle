@@ -33,6 +33,9 @@ dependencies {
     /* compile project(':sibling_gradle_project') */
     compile project(':guidance_plugin_api')
     compile name: 'saxton-utils-2.0.0'
+    compile 'joda-time:joda-time:2.10'
+    compile 'org.apache.commons:commons-csv:1.5'
+    compile 'org.javassist:javassist:3.23.1-GA'
 
     testCompile 'org.mockito:mockito-core:2.+'
     testCompile 'junit:junit:4.12'

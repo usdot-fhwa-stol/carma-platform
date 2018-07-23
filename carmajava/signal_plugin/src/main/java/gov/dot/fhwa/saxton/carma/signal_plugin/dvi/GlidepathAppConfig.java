@@ -18,7 +18,7 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
     }
 
     public int getIntValue(String property)   {
-        return params.getIntger("~/" + property);
+        return params.getInteger("~/" + property);
     }
     
     public String getProperty(String name) {
@@ -33,7 +33,7 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
      * @return int
      */
     public int getDefaultIntValue(String property, int defaultValue)   {
-        params.getInteger("~/" + property, defaultValue);
+        return params.getInteger("~/" + property, defaultValue);
     }
 
 
