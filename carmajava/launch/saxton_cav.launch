@@ -28,21 +28,30 @@
   pkill -f ros
 -->
 <launch>
+
   <!-- Set Environment Variables -->
-  <env name="ROS_IP" value="192.168.0.4"/>
-  <env name="ROS_MASTER_URI" value="http://192.168.0.4:11311/"/>
+  <env name="ROS_IP" value="192.168.88.10"/>
+
   <!-- Override Required Paths -->
   <arg name="CARMA_DIR" default="/opt/carma" doc="The path of the package directory"/>
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/params" doc="Directory of yaml parameter files"/>
   <arg name="URDF_FILE" default="$(arg CARMA_DIR)/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
   <arg name="DATA_DIR"  default="$(arg CARMA_DIR)/app/mock_data" doc="Directory of driver simulation"/>
   <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/app/engineering_tools" doc="The directory containing scripts for execution"/>
+  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/app/bin/share/carma" doc="Directory containing additional carma launch files such as driver.launch"/>
+  <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging config file"/>
+
   <!-- Disable Mock Drivers -->
-  <arg name="mock_can"            default="false" doc="True if using a simulated can driver"/>
-  <arg name="mock_dsrc"           default="false" doc="True if using a simulated dsrc driver"/>
-  <arg name="mock_srx_controller" default="false" doc="True if using a simulated srx controller driver"/>
-  <arg name="mock_pinpoint"       default="false" doc="True if using a simulated pinpoint driver"/>
-  <arg name="mock_radar"          default="false" doc="True if using a simulated radar driver"/>
+  <arg name="mock_can"            	default="false" doc="True if using a simulated can driver"/>
+  <arg name="mock_dsrc"           	default="false" doc="True if using a simulated dsrc driver"/>
+  <arg name="mock_srx_controller" 	default="false" doc="True if using a simulated srx controller driver"/>
+  <arg name="mock_pinpoint"       	default="false" doc="True if using a simulated pinpoint driver"/>
+  <arg name="mock_radar"          	default="false" doc="True if using a simulated radar driver"/>
+  <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
+
+  <!-- Rosbag Flag -->
+  <arg name="use_rosbag" default="true" doc="Record a rosbag for the to 26 demo"/>
+
   <!-- Include the detailed launch file and pass in new arguments -->
   <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true"/>
 </launch>
