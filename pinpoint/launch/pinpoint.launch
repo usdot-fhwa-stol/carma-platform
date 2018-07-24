@@ -15,7 +15,7 @@
 -->
 <!-- Launch file for the pinpoint driver -->
 <launch>
-  <arg name="pinpoint_address" default="192.168.88.29" doc="Pinpoint device ip address"/>
+  <arg name="address" default="192.168.88.29" doc="Pinpoint device ip address"/>
   <arg name="loc_port" default="9501" doc="The localization port the pinpoint is sending data to"/>
   <arg name="odom_frame" default="odom" doc="The name of the local planning frame"/>
   <arg name="base_link_frame" default="base_link" doc="The name of the robot base frame"/>
