@@ -51,13 +51,14 @@ PARAMS=false
 ROUTES=false
 URDF=false
 LAUNCH=false
+FOLDER=""
 MOCK_DATA=false
 APP=false
 WEB=false;
 SCRIPTS=false;
 OVERWRITE_HOST_PARAMS=false;
 
-while getopts n:h:bHpruelmawst:c: option
+while getopts n:h:bHpruelv:mawst:c: option
 do
 	case "${option}"
 	in
@@ -70,6 +71,7 @@ do
 		e) EXECUTABLES=true;;
 		l) LAUNCH=true;;
 		c) CATKIN_WS=${OPTARG};;
+		v) FOLDER=${OPTARG};;
 		m) MOCK_DATA=true;;
 		a) APP=true;;
 		w) WEB=true;;
@@ -110,8 +112,7 @@ LOCAL_CARMA_DIR=${PWD}
 echo "Installing to ${HOST} as user: ${USERNAME}..."
 
 # Define paths for files to copy from src
-LAUNCH_FILE="${LOCAL_CARMA_DIR}/carmajava/launch/saxton_cav.launch"
-SRC_LAUNCH_FILE="${LOCAL_CARMA_DIR}/carmajava/launch/saxton_cav_src.launch"
+LAUNCH_DIR="${LOCAL_CARMA_DIR}/carmajava/launch"
 PARAMS_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/params"
 ROUTES_DIR="${LOCAL_CARMA_DIR}/carmajava/route/src/test/resources/routes"
 URDF_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/urdf"
@@ -126,8 +127,47 @@ APP_DIR="${CARMA_DIR}/app"
 # If copy executables, params, routes, urdf, or launch is set then don't copy everything
 if [ ${EXECUTABLES} == true ] || [ ${PARAMS} == true ] || [ ${ROUTES} == true ] || \
    [ ${URDF} == true ] || [ ${LAUNCH} == true ] || [ ${MOCK_DATA} == true ] || \
-	 [ ${APP} == true ] || [ ${WEB} == true ] || [ ${SCRIPTS} == true ]; then
+	 [ ${APP} == true ] || [ ${WEB} == true ] || [ ${SCRIPTS} == true ] || [[ $(echo -n $FOLDER | wc -m) -gt 0 ]]; then
 	EVERYTHING=false
+fi
+
+
+#If the variable FOLDER has a string length of greater than 0, then we copy over the 5 configuration files. By default, the variable FOLDER is set to the empty string, and its value is only changed if -v is called when running this file. 
+ 
+if [[ $(echo -n $FOLDER | wc -m) -gt 0 ]]; then
+
+
+	echo "Trying to copy vehicle config params"
+	vehicle_param_files=( $FOLDER/*.yaml )
+	#copy the HostVehicleParams.yaml file
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_param_files[0]}" ${USERNAME}@${HOST}:"${CARMA_DIR}/params/"
+	# Update permissions script
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/params/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/params/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/params/*;"
+
+
+	echo "Trying to copy vehicle config urdf..."
+	vehicle_urdf_files=( $FOLDER/*.urdf )
+	# Copy the urdf file into the urdf folder
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_urdf_files[0]}" ${USERNAME}@${HOST}:"${CARMA_DIR}/urdf/"
+	# Update permissions script
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/urdf/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/urdf/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/urdf/*;"
+	
+
+	echo "Trying to copy vehicle config launch files..."
+	vehicle_launch_files=( $FOLDER/*.launch )
+	# Copy the launch files to the remote machine using current symlink
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_launch_files[0]}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_launch_files[1]}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+	# Update permissions script
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/launch/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/launch/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/launch/*;"
+	
+
+	echo "Trying to copy carma_config for vehicle configuration..."
+	vehicle_js_files=( $FOLDER/*.js )
+	# Copy the carma_config script to the scripts folder
+	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${vehicle_js_files[0]}" ${USERNAME}@${HOST}:"${APP_DIR}/html/scripts"
+	# Update permissions script
+	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/html/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/html/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/html/*;"
 fi
 
 # If want to copy all contents which will end up in APP_DIR
@@ -269,34 +309,24 @@ if [ ${EVERYTHING} == true ] || [ ${ROUTES} == true ]; then
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/routes/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/routes/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/routes/*;"
 fi
 
-# If we want to copy urdf
-if [ ${EVERYTHING} == true ] || [ ${URDF} == true ]; then
-	echo "Trying to copy urdf..."
-	# Delete old files
-	SCRIPT="rm -r ${CARMA_DIR}/urdf/*;"
-	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
-	# Copy the entire folder to the remote machine
-	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${URDF_DIR}" ${USERNAME}@${HOST}:"${CARMA_DIR}"
-		# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${CARMA_DIR}/urdf/*; chmod -R ${UG_PERMISSIONS} ${CARMA_DIR}/urdf/*; chmod -R ${O_PERMISSIONS} ${CARMA_DIR}/urdf/*;"
-fi
-
 # If we want to copy launch file
 if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == true ]; then
 	if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then 
 		echo "Trying to copy launch ..."
 		# Delete old files
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/launch/saxton_cav.launch ${APP_DIR}/"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/launch/drivers.launch ${APP_DIR}/"
 		SCRIPT="rm -r ${APP_DIR}/launch/*;"
 		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
-		# Copy the launch file to the remote machine using current symlink
-		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
-		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${SRC_LAUNCH_FILE}" ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+		# Copy the launch files to the remote machine using current symlink
+		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${LAUNCH_DIR}/*.launch ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/saxton_cav.launch ${APP_DIR}/launch/"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/drivers.launch ${APP_DIR}/launch/"
 	fi
 	# Create symlink to launch file so that roslaunch will work when package is sourced
 	SYMLINK_LOCATION="${APP_DIR}/bin/share/carma"
-	SCRIPT_1="rm ${SYMLINK_LOCATION}/saxton_cav.launch; ln -s  ${APP_DIR}/launch/saxton_cav.launch ${SYMLINK_LOCATION};"
-	SCRIPT_2="rm ${SYMLINK_LOCATION}/saxton_cav_src.launch; ln -s  ${APP_DIR}/launch/saxton_cav_src.launch ${SYMLINK_LOCATION};"
-	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2}"
+	SCRIPT_1="rm ${SYMLINK_LOCATION}/*.launch; ln -s  ${APP_DIR}/launch/* ${SYMLINK_LOCATION};"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2} ${SCRIPT_3}"
 		# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/launch/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/launch/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/launch/*;"
 fi
@@ -317,10 +347,12 @@ fi
 if [ ${EVERYTHING} == true ] || [ ${WEB} == true ]; then
 	echo "Trying to copy website ..."
 	# Delete old files
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/html/scripts/carma.config.js ${APP_DIR}/"
 	SCRIPT="rm -r ${APP_DIR}/html/*;"
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 	# Copy the launch file to the remote machine using current symlink
 	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${WEBSITE_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/html/"
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/carma.config.js ${APP_DIR}/html/scripts"
 	# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/html/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/html/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/html/*;"
 fi

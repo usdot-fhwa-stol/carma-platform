@@ -1,30 +1,14 @@
 # Double: Maximum acceleration for platooning plugin
-# Units: m/s^2
+# Units: m/s/s
 platooning_max_accel: 2.5
 
 # Double: The minimum length of platooning complex maneuver length
 # Units: m
 platooning_min_maneuver_length: 15.0
 
-# Integer: The desired time interval between two platoon mobility operation messages from the same vehicle
-# Units: ms
-platooning_status_interval: 100
-
-# Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
-# Units: 1
-platooning_status_timeout_factor: 2.5
-
-# Double: The desired time headway to the front vehicle within the platoon
-# Units: s
-platooning_desired_time_headway: 2.0
-
-# Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
-# Units: m
-platooning_min_gap: 10.0
-
 # Double: The proportional term in the platoon speed PID controller
 # Units: 1
-platooning_Kp: 2.0
+platooning_Kp: 0.05
 
 # Double: The integral term in the platoon speed PID controller
 # Units: 1
@@ -32,61 +16,98 @@ platooning_Ki: 0.0
 
 # Double: The derivative term in the platoon speed PID controller
 # Units: 1
-platooning_Kd: -0.1
+platooning_Kd: 0.08
 
-# Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
-# Units: s
-platooning_lower_boundary: 1.65
-platooning_upper_boundary: 1.75
-platooning_max_spacing: 2.0
-platooning_min_spacing: 1.9
-# Units: m
-platooning_max_gap: 15.0
+# Double: The integrator max cap before it is multiplied by Ki
+# Units: 1
+platooning_integrator_max_cap: 10000.0
 
-# Integer: The algorithm type used for leader selection in a platoon
-# When algorithm_type == 0, it means no leader selection algorithm
-# When algorithm_type == 1, it means the APF algorithm
-# When algorithm_type == 2, it means the PF algorithm
-# When algorithm_type == 3, it means the PF* algorithm
-algorithm_type: 0
+# Double: The integrator min cap before it is multiplied by Ki
+# Units: 1
+platooning_integrator_min_cap: -10000.0
 
-# Double: The maximum time we allowed for candidate to accelerate in order to join
-# Units: s
-max_join_time: 15.0
-
-# Double: The desired time gap for the candidate vehicle to join at rear
-# Units: s
-desired_join_time_gap: 4.0
-
-# Integer: The time interval between two mobility INFO message
-# Units: ms
-operation_info_interval_length: 3000
-
-# Integer: The timeout length for a YES/NO negotiation process
-# Units: ms
-short_negotiation_timeout: 5000
-
-# Integer: The timeout length for a long negotitaion process (waiting on Follower to speed up and join)
-# Units: ms
-long_negotiation_timeout: 25000
+# Double: The factor to determine message timeout. Timeout = platooning_status_interval * platooning_status_timeout_factor
+# Units: 1
+platooning_status_timeout_factor: 3.0
 
 # Integer: The maximum number of platoon member we allow
 # Units: 1
-max_platoon_size: 10
+platooning_max_size: 10
 
-# Double: The time gap distance the candidate vehicle wants to achieve with the leader
+# Integer: The algorithm type used for leader selection in a platoon
+# When algorithm_type == 0, it means no leader selection algorithm
+# When algorithm_type == 1, it means APF algorithm
+# When algorithm_type == 2, it means PF algorithm
+# When algorithm_type == 3, it means PF* algorithm (not implemented)
+# When algorithm_typr == 4, it means LPF algorithm (this is only for truck platooning)
+platooning_algorithm_type: 1
+
+# Double: The desired time headway to the front vehicle within the platoon
+# This parameter will be omitted if the platooning algorithm type is LPF
 # Units: s
-follower_join_time_gap: 3.0
+platooning_desired_time_headway: 0.84
+
+# Double: The minimum space between two consecutive vehicles from the center of one bounding box to the center of another bounding box
+# Units: m
+platooning_stand_still_headway: 15.0
+
+# Double: The maximum time gap we allowed for a candidate to accelerate in order to join
+# Units: s
+platooning_max_join_timegap: 15.0
+
+# Double: The max gap allowed for a candidate to accelerate in order to join
+# Units: m
+platooning_max_join_gap: 90.0
+
+# Double: The desired time gap for the candidate vehicle to join at rear
+# Units: s
+platooning_desired_join_timegap: 4.0
+
+# Double: The desired gap for the candidate vehicle to join at rear
+# Units: m
+platooning_desired_join_gap: 30.0
+
+# Double: The timeout length for any waiting state
+# Units: s
+platooning_waiting_state_timeout: 25.0
 
 # Double: Determine the absolute maximum cmd_speed adjustment value we can get from PID controller
 # Units: m/s
 platooning_cmd_max_adjustment: 10.0
 
+# Double: These variables are the the time or distance boundaries at which switching in leadership must occur in the APF algorithm
+# The first two parameters are also used by LPF truck platooning algorithm to determine whether the host vehicle should change the current leader
+# Units: s
+platooning_lower_boundary: 0.4
+platooning_upper_boundary: 0.7
+platooning_max_spacing: 4.0
+platooning_min_spacing: 3.0
+# Units: m
+platooning_max_gap: 14.0
+platooning_min_gap: 10.0
+
 # Boolean: Determine whether the output of platooning controller will be caped by platooning_cmd_max_adjustment
-diff_from_leader_cmd_cap: true
+platooning_max_cmd_speed_adjustment_cap: true
 
 # Boolean: Determine whether the output of platooning controller will be caped by max_Accel before it goes into vehicle controller
-max_accel_cap: true
+platooning_max_accel_cap: true
 
 # Boolean: Determine whether the follower will still follow the speed limit in a platoon
-local_speed_limit_cap: true
+platooning_local_speed_limit_cap: false
+
+# Integer: This is the time interval length between two STATUS messages
+# Units: ms
+platooning_status_time_interval: 100
+
+# Integer: This is the time interval length between two INFO messages when platoon leader
+# Units: ms
+platooning_info_time_interval: 200
+
+# Double: The desired time gap to the front vehicle
+# This parameter will be omitted if the platooning algorithm type is not LPF
+# Units: s
+platooning_desired_time_gap: 1.0
+
+# Double: The minimum space between two consecutive vehicles from bumper to bumper
+# Units: m
+platooning_stand_still_gap: 10.0
