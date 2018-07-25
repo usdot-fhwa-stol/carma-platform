@@ -96,7 +96,34 @@ public class GeodesicCartesianConverterTest {
     loc = gcConvertor.cartesian2Geodesic(point, tf);
     solution = new Location(90, 0, 30);
     assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
+// TODO NEW -----
+    // Test altitude change
+    point = new Point3D(0, 0, 0);
+    // The location of the ecef frame in the desired frame
+    tf = new Transform(new Vector3(0,0,6356782), Quaternion.identity());
+    loc = gcConvertor.cartesian2Geodesic(point, tf);
+    solution = new Location(90, 0, 30);
+    assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
 
+
+    Transform hostInBaseLink = new Transform(new Vector3(1.524, 0.0, -0.3556), new Quaternion(1.0, 0.0, 0.0, -1.03411553555e-13));
+
+    Transform mapInEarth = new Transform(new Vector3(1178560.13006, -4786930.86843, 4033296.49897), new Quaternion(0.55783250982, 0.711831079304, 0.263230968008, -0.335900078903));
+
+    Transform odomInMap = new Transform(new Vector3(1195.83171134, -874.162787034, 7.90023773302), new Quaternion(0.0103026125862, 0.013543380725, -0.89042302604, -0.454815641453));
+
+    Transform baseLinkInOdom = new Transform(new Vector3(1344.19604492, 573.833007812, 18.4290008546), new Quaternion(0.521438406167, 0.853121326139, 0.0157684293929, -0.00611130880506));
+
+    Transform hostInEarth = mapInEarth.multiply(odomInMap).multiply(baseLinkInOdom).multiply(hostInBaseLink);
+
+    System.out.println("\n\n\n HostInEarth = " + hostInEarth + "\n");
+    Vector3 vec = hostInEarth.getTranslation();
+    Point3D p = new Point3D(vec.getX(), vec.getY(), vec.getZ());
+    System.out.println(gcConvertor.cartesian2Geodesic(p, Transform.identity()));
+    System.out.println(gcConvertor.cartesian2Geodesic(new Point3D(0,0,0), hostInEarth));
+    System.out.println("\n\n");
+
+// TODO end NEW ----
     // Test complex transform with frame located at north pole rotated 90 degrees around ecef z axis
     // The point being transformed is located at the equator/prime meridian
     point = new Point3D(0, -6378137, -6356752);
@@ -107,6 +134,7 @@ public class GeodesicCartesianConverterTest {
     loc = gcConvertor.cartesian2Geodesic(point, tf);
     solution = new Location(0, 0, 0);
     assertTrue(loc.almostEqual(solution, 0.0001, 1.0)); // Check accuracy to within about 1m
+    
   }
 
   /**

@@ -2,3 +2,4 @@ sample id,brake deceleration (m/s^2),robot enabled,torque (Nm),hardware id,diagn
 0,0.123,TRUE,0.143,afv45,0,system is ok,none,0
 1,1.123,TRUE,1.143,afv45,0,system is ok,none,0
 2,2.123,TRUE,2.143,afv45,1,system warning,external warning,45
+3,3.123,TRUE,2.143,afv45,0,Primed,Primed,True

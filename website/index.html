@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <!--
   Copyright (C) 2018 LEIDOS.
 
@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="thirdparty/jqwidgets/styles/jqx.base.css" type="text/css" />
 
     <!-- START: favicon image references for different devices-->
+
     <link rel="apple-touch-icon" sizes="57x57" href="images/favicon/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="images/favicon/apple-icon-60x60.png">
     <link rel="apple-touch-icon" sizes="72x72" href="images/favicon/apple-icon-72x72.png">
@@ -91,9 +92,12 @@
     </h2>
     <form action="scripts/launchPlatform.php" method="get">     
             <input id="btnOk" type="submit" value="OK"/> <br/> <br/>
-            <input type="checkbox" id="cbRemoteLaunch" name="remotelaunch" value="true" checked="checked" class="regular-checkbox big-checkbox" />
+            <input type="checkbox" onchange="document.getElementById('rosBagEnabler').disabled = !this.checked;" style="vertical-align: middle" id="cbRemoteLaunch" name="remotelaunch" value="true" checked="checked" class="regular-checkbox big-checkbox" />
             <label for="cbRemoteLaunch"></label>
-            &nbsp; <span id="lblCheckBox">Remote Launch</span> &nbsp;
+            &nbsp; <span id="lblCheckBox">Remote Launch</span> &nbsp; <br />
+	    <input type="checkbox" style="vertical-align: middle" id="rosBagEnabler" name="rosbagrecorder" value="true" checked="checked" class="regular-checkbox big-checkbox" />
+            <label for="rosBagEnabler"></label>
+            &nbsp; <span id="lblCheckBox">Record ROSbag</span> &nbsp;
             <div id="jqxLoader"></div>
     </form>
 </div>

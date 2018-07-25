@@ -85,7 +85,6 @@ enum class StatusCondition : uint8_t
     Info = 1,
     Warning = 2,
     Error = 3
-
 };
 
 /**

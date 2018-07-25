@@ -121,7 +121,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -137,7 +137,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -153,7 +153,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -169,7 +169,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -185,7 +185,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -201,7 +201,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -218,7 +218,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -234,7 +234,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE
@@ -250,7 +250,7 @@ waypoints:
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
-    upperSpeedLimit: 25
+    upperSpeedLimit: 15
     laneCount: 2
     requiredLaneIndex: 0
     interiorLaneMarkings: SOLID_WHITE

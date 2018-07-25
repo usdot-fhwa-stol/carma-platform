@@ -1,0 +1,30 @@
+# HostVehicleParams.yaml
+# Defines the ros parameters which define the host vehicle's characteristics
+
+# String: Host vehicle color
+vehicle_color: 'TRUCK-COLOR'
+
+# Double: Host vehicle height
+# Units: Meters# TODO
+vehicle_height: 1.7018 
+
+# String: Host vehicle’s Unique ID that will be used in mobility messages.
+vehicle_id: 'DOT-TRUCK'
+
+# Double: Host vehicle length
+# Units: Meters
+vehicle_length: 8.74
+
+# String: Host vehicle make
+vehicle_make: 'Truck'
+
+# String: Host vehicle model
+vehicle_model: 'Truck'
+
+# Double: Host vehicle width
+# Units: Meters
+vehicle_width: 2.362
+
+# Integer: Host vehicle year
+# Units: Year#TODO
+vehicle_year: 2013 

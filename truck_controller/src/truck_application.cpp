@@ -578,7 +578,7 @@ void TruckApplication::initializeDBWController() {
 void TruckApplication::setupSubscribersPublishers()
 {
     // Subscribe to Incoming messages
-    wrench_effort_subscriber_ = control_message_nh_->subscribe<std_msgs::Float32>("cmd_wrench_effort", 1,
+    wrench_effort_subscriber_ = control_message_nh_->subscribe<std_msgs::Float32>("cmd_longitudinal_effort", 1,
                                                                                   [this](const std_msgs::Float32ConstPtr &msg)
                                                                                   {
                                                                                     control_message_recv_time = ros::Time::now();
@@ -587,7 +587,7 @@ void TruckApplication::setupSubscribersPublishers()
                                                                                   });
     api_.push_back(wrench_effort_subscriber_.getTopic());
 
-    speed_accel_subscriber_ = control_message_nh_->subscribe<cav_msgs::SpeedAccel>("cmd_speed_accel", 1,
+    speed_accel_subscriber_ = control_message_nh_->subscribe<cav_msgs::SpeedAccel>("cmd_speed", 1,
                                                                                    [this](const cav_msgs::SpeedAccelConstPtr &msg)
                                                                                    {
                                                                                      if(msg->speed >= 0 && msg->max_accel >= 0)
@@ -614,7 +614,7 @@ void TruckApplication::setupSubscribersPublishers()
     api_.push_back(speed_accel_subscriber_.getTopic());
 
     // Advertise Publisher
-    robotic_status_pub_ = control_message_nh_->advertise<cav_msgs::RobotEnabled>("robotic_status", 1);
+    robotic_status_pub_ = control_message_nh_->advertise<cav_msgs::RobotEnabled>("robot_status", 1);
     api_.push_back(robotic_status_pub_.getTopic());
 
     // Advertise Services
