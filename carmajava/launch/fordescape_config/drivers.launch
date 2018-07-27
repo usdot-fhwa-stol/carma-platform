@@ -47,19 +47,14 @@ If not using simulated drivers they are activated if the respective mock argumen
     <arg name="address" value="192.168.0.5" />
   </include>
 
-  <!-- SRX CAN Driver Node -->
-  <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
-    <arg name="srx_can_can_device" value="can2" />
-  </include>
-
-  <!--SRX Controller Driver Node-->
-  <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
-    <arg name="srx_controller_can_device" value="can1"/>
+  <!--XGV Controller Driver Node-->
+  <include unless="$(arg mock_srx_controller)" file="$(find xgv_controller)/launch/xgv_controller.launch">
   </include>
       
   <!-- SRX Radar Driver Node -->
-  <include unless="$(arg mock_radar)" file="$(find srx_objects)/launch/srx_objects_socketcan.launch">
-    <arg name="srx_objects_can_device" value="can0"/>
+  <include unless="$(arg mock_radar)" file="$(find delphi_esr_driver)/launch/delphi_esr_driver.launch">
+    <arg name="device_name" value="can0"/>
+    <arg name="sensor_frame" default="f_lrr_frame"/>
   </include>
 	
 </launch>
