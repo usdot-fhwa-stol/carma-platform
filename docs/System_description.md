@@ -65,7 +65,7 @@ and are specifically used for communicating future intent.
 
 Finally, the CARMA platform includes a user interface (UI) that is visible on a web browser.  The 
 intent is that the CARMA vehicle has a tablet computer mounted to its dashboard and connected to 
-the guidance PC via Wifi.  The PC hosts the web server for this purpose.  The UI allows the 
+the guidance PC via Wi-Fi.  The PC hosts the web server for this purpose.  The UI allows the 
 vehicle’s operator to select a route to drive, select which of the third-party plugins to activate, 
 select what information to display on the tablet, and command the vehicle’s automated controls to 
 engage.  As an automated route is underway, the UI also displays a variety of status information to 
