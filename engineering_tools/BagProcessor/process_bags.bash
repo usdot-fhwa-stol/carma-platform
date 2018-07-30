@@ -21,7 +21,7 @@ for folder in */ ; do
 		bash ./process_one_bag.bash $bagfile $filter
 		sleep 1s
 		for infolder in */ ; do
-			mv $infolder ../../$newfolder		
+			mv $infolder/ ../../$newfolder/		
 		done
 		sleep 1s
 		rm ./topics.txt
