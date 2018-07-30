@@ -16,3 +16,4 @@
 /saxton_cav/sensor_fusion/filtered/velocity > velocity.csv
 /saxton_cav/sensor_fusion/filtered/nav_sat_fix > nav_sat_fix.csv
 /saxton_cav/sensor_fusion/filtered/acceleration > acceleration.csv
+/clock > clock_offset.csv

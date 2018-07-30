@@ -33,10 +33,11 @@ then
 		mv route.txt ./$folder
 		cd $folder
 		roscore &
+		rosparam set /use_sim_time true
 		sleep 5s
 		xterm -e "$command" &
 		sleep $(($topic_count/3 + 5))'s'
-		rosbag play --clock -r 5 $bagfile
+		rosbag play -r 5 $bagfile --clock
 		sleep $(($topic_count/5 + 5))'s'
 		killall rostopic
 		if [[ -s output/nav_sat_fix.csv ]]
@@ -66,10 +67,11 @@ else
 		mv route.txt ./$folder
 		cd $folder
 		roscore &
+		rosparam set /use_sim_time true
 		sleep 5s
 		xterm -e "$command" &
                 sleep $(($topic_count/3 + 5))'s'
-		rosbag play -r 5 $bagfile
+		rosbag play -r 5 $bagfile --clock
 		sleep $(($topic_count/5 + 5))'s'
 		killall rostopic
 		if [[ -s output/nav_sat_fix.csv ]]
