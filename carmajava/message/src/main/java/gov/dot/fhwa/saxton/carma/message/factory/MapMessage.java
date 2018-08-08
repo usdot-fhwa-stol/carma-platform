@@ -3,7 +3,6 @@ package gov.dot.fhwa.saxton.carma.message.factory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.ros.internal.message.Message;
 import org.ros.message.MessageFactory;
-import org.ros.message.Time;
 
 import cav_msgs.ByteArray;
 import cav_msgs.GenericLane;
@@ -118,7 +117,7 @@ public class MapMessage implements IMessage<MapData>{
                 // Current version only supports the choice of NODE_SET_XY
                 lane.getNodeList().setChoice(NodeListXY.NODE_SET_XY);
                 // Add all valid node offsets into the corresponding lane
-                for(int j = 0; j < MAX_NODE_LIST_SIZE - 1; j++) {
+                for(int j = 0; j < MAX_NODE_LIST_SIZE; j++) {
                     int nodeType = nodeOffsetData[i][j * 3];
                     // 0 node type indicates no more nodes in this lane
                     if(nodeType == 0) {
@@ -172,7 +171,6 @@ public class MapMessage implements IMessage<MapData>{
             map.getIntersections().add(intersection);
         }
         map.getHeader().setFrameId("0");
-        map.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
         return new MessageContainer("MAP", map);
     }
 

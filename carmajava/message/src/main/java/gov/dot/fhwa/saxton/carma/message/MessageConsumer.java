@@ -280,7 +280,9 @@ public class MessageConsumer extends SaxtonBaseNode {
 								((MobilityOperation) decodedMessage.getMessage()).getHeader().getPlanId());
 						break;
 	                case "MAP":
-	                    mapPub_.publish((MapData) decodedMessage.getMessage());
+	                    MapData map = (MapData) decodedMessage.getMessage();
+	                    map.getHeader().setStamp(connectedNode_.getCurrentTime());
+	                    mapPub_.publish(map);
 	                case "SPAT":
 	                    spatPub_.publish((SPAT) decodedMessage.getMessage());
 	                default:
