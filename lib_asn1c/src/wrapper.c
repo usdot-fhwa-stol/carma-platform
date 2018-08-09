@@ -21,6 +21,8 @@
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityResponseMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_MapMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_SPATMessage.h"
 #include "MessageFrame.h"
 
 /**
@@ -846,8 +848,8 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPa
 		int temp_offsets_Z[60] = {0};
 		for(int i = 0; i < count; i++) {
 			temp_offsets_X[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetX;
-			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetY;
-			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetZ;
+			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetY;
+			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetZ;
 		}
 		(*env) -> SetIntArrayRegion(env, offsets_X, 0, count, temp_offsets_X);
 		(*env) -> SetIntArrayRegion(env, offsets_Y, 0, count, temp_offsets_Y);
@@ -1206,3 +1208,214 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityOp
 	}
 }
 
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage_decodeMap
+  (JNIEnv *env, jobject obj, jbyteArray encodedArray, jobject plain_map, jintArray intersectionGeometry,
+   jintArray laneId, jintArray ingressApproach, jintArray egressApproach, jintArray laneDirection, jintArray laneType, jobjectArray nodeXY) {
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedArray); /* Number of bytes in encoded mobility path */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedArray, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+	    buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+	if(rval.code == RC_OK) {
+
+		jclass map_data_class = (*env) -> GetObjectClass(env, plain_map);
+		jmethodID mid_setMsgCount = (*env) -> GetMethodID(env, map_data_class, "setMsgIssueRevision", "(B)V");
+		jbyte msgCount = message -> value.choice.MapData.msgIssueRevision;
+		(*env) -> CallVoidMethod(env, plain_map, mid_setMsgCount, msgCount);
+
+		// In current decoder, we assume we have only one intersection in this list
+		if(message -> value.choice.MapData.intersections && message -> value.choice.MapData.intersections -> list.count >= 1) {
+			int intersectionData[9] = {0};
+			intersectionData[8] = 1;
+			intersectionData[0] = message -> value.choice.MapData.intersections -> list.array[0] -> id.id;
+			intersectionData[1] = message -> value.choice.MapData.intersections -> list.array[0] -> revision;
+			intersectionData[2] = message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.lat;
+			intersectionData[3] = message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.Long;
+			if(message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.elevation) {
+				intersectionData[4] = *message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.elevation;
+				intersectionData[5] = 1;
+			}
+			if(message -> value.choice.MapData.intersections -> list.array[0] -> laneWidth) {
+				intersectionData[6] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneWidth;
+				intersectionData[7] = 1;
+			}
+			(*env) -> SetIntArrayRegion(env, intersectionGeometry, 0, 9, intersectionData);
+
+			// the MAP message allowed up to 255 lanes in each intersection
+			int laneIDData[255];
+			// Initialize lane ID with invalid value to indicate the end
+			for(int i = 0; i < 255; i++) {
+				laneIDData[i] = -1;
+			}
+			int ingressApproachData[255] = {0};
+			int egressApproachData[255] = {0};
+			int laneDirectionData[255] = {0};
+			int laneTypeData[255] = {0};
+			// each node needs three data fields for X, Y and type
+			// each lane has up to 63 nodes, so 63 * 3 = 189
+			int nodeOffsetData[255][189] = {0};
+			int numOfLanes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.count;
+			for(int i = 0; i < numOfLanes; i++) {
+				laneIDData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> laneID;
+				if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> ingressApproach) {
+					ingressApproachData[i] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> ingressApproach;
+				} else {
+					ingressApproachData[i] = -1;
+				}
+				if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> egressApproach) {
+					egressApproachData[i] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> egressApproach;
+				} else {
+					egressApproachData[i] = -1;
+				}
+				laneDirectionData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i]->laneAttributes.directionalUse.buf[0];
+				laneTypeData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i]->laneAttributes.laneType.present;
+				int numOfNodes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.count;
+				for(int j = 0; j < numOfNodes; j++) {
+					int offsetType = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.present;
+					switch(offsetType) {
+					case NodeOffsetPointXY_PR_node_XY1:
+						nodeOffsetData[i][j * 3] = 1;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY1.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY1.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY2:
+						nodeOffsetData[i][j * 3] = 2;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY2.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY2.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY3:
+						nodeOffsetData[i][j * 3] = 3;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY3.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY3.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY4:
+						nodeOffsetData[i][j * 3] = 4;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY4.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY4.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY5:
+						nodeOffsetData[i][j * 3] = 5;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY5.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY5.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY6:
+						nodeOffsetData[i][j * 3] = 6;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY6.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY6.y;
+						break;
+					case NodeOffsetPointXY_PR_node_LatLon:
+						nodeOffsetData[i][j * 3] = 7;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_LatLon.lat;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_LatLon.lon;
+						break;
+					default:
+						break;
+					}
+				}
+			}
+			(*env) -> SetIntArrayRegion(env, laneId, 0, 255, laneIDData);
+			(*env) -> SetIntArrayRegion(env, ingressApproach, 0, 255, ingressApproachData);
+			(*env) -> SetIntArrayRegion(env, egressApproach, 0, 255, egressApproachData);
+			(*env) -> SetIntArrayRegion(env, laneDirection, 0, 255, laneDirectionData);
+			(*env) -> SetIntArrayRegion(env, laneType, 0, 255, laneTypeData);
+			for(int i = 0; i < numOfLanes; i++) {
+				jintArray laneNodes = (*env) -> GetObjectArrayElement(env, nodeXY, i);
+				int numOfNodes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.count;
+				(*env) -> SetIntArrayRegion(env, laneNodes, 0, 189, nodeOffsetData[i]);
+				(*env) -> DeleteLocalRef(env, laneNodes);
+			}
+		}
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_SPATMessage_decodeSPAT
+    (JNIEnv *env, jobject obj, jbyteArray encodedArray, jintArray intersection, jobjectArray movementState) {
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedArray); /* Number of bytes in encoded mobility path */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedArray, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+		buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+	if(rval.code == RC_OK) {
+		int intersectionData[8] = {0};
+		if(message->value.choice.SPAT.timeStamp) {
+			intersectionData[0] = *message->value.choice.SPAT.timeStamp;
+			intersectionData[1] = 1;
+		}
+		// In current decoder, we assume we have only one intersection in this list
+		intersectionData[2] = message->value.choice.SPAT.intersections.list.array[0]->id.id;
+		intersectionData[3] = message->value.choice.SPAT.intersections.list.array[0]->revision;
+		if(message->value.choice.SPAT.intersections.list.array[0]->moy) {
+			intersectionData[4] = *message->value.choice.SPAT.intersections.list.array[0]->moy;
+			intersectionData[5] = 1;
+		}
+		if(message->value.choice.SPAT.intersections.list.array[0]->timeStamp) {
+			intersectionData[6] = *message->value.choice.SPAT.intersections.list.array[0]->timeStamp;
+			intersectionData[7] = 1;
+		}
+		(*env) -> SetIntArrayRegion(env, intersection, 0, 8, intersectionData);
+
+		// each intersection allows up to 255 state
+		// each state may contain up to 16 movement events plus one phase state enum
+		// each movement event contains 9 integer data fields
+		// each state needs 9 * 16 + 1 = 145 space
+		int statesData[255][145];
+		for(int i = 0; i < 255; i++) {
+			for(int j = 0; j < 145; j++) {
+				statesData[i][j] = -1;
+			}
+		}
+		int numOfStates = message->value.choice.SPAT.intersections.list.array[0]->states.list.count;
+		for(int i = 0; i < numOfStates; i++) {
+			statesData[i][0] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->signalGroup;
+			int numOfEvent = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.count;
+			for(int j = 0; j < numOfEvent; j++) {
+				statesData[i][j * 9 + 1] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->eventState;
+				if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing) {
+					statesData[i][j * 9 + 9] = 1;
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->startTime) {
+						statesData[i][j * 9 + 2] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->startTime;
+						statesData[i][j * 9 + 3] = 1;
+					} else {
+						statesData[i][j * 9 + 3] = 0;
+					}
+					statesData[i][j * 9 + 4] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->minEndTime;
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->maxEndTime) {
+						statesData[i][j * 9 + 5] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->maxEndTime;
+						statesData[i][j * 9 + 6] = 1;
+					} else {
+						statesData[i][j * 9 + 6] = 0;
+					}
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->nextTime) {
+						statesData[i][j * 9 + 7] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->nextTime;
+						statesData[i][j * 9 + 8] = 1;
+					} else {
+						statesData[i][j * 9 + 8] = 0;
+					}
+				} else {
+					statesData[i][j * 9 + 9] = 0;
+				}
+			}
+		}
+		for(int i = 0; i < 255; i++) {
+			jintArray events = (*env) -> GetObjectArrayElement(env, movementState, i);
+			(*env) -> SetIntArrayRegion(env, events, 0, 145, statesData[i]);
+			(*env) -> DeleteLocalRef(env, events);
+		}
+		return 0;
+	} else {
+		return -1;
+	}
+}
