@@ -3,6 +3,7 @@ killall roscore || echo "roscore was not running."
 killall rosmaster || echo "rosmaster was not running."
 bagfile=$1
 filter=$2
+rosplay=$3
 folder=$(basename "$bagfile" .bag);
 command=""
 file=topics.txt
@@ -37,7 +38,7 @@ then
 		sleep 5s
 		xterm -e "$command" &
 		sleep $(($topic_count/3 + 5))'s'
-		rosbag play -r 5 $bagfile --clock
+		rosbag play -r $rosplay $bagfile --clock
 		sleep $(($topic_count/5 + 5))'s'
 		killall rostopic
 		if [[ -s output/nav_sat_fix.csv ]]
@@ -71,7 +72,7 @@ else
 		sleep 5s
 		xterm -e "$command" &
                 sleep $(($topic_count/3 + 5))'s'
-		rosbag play -r 5 $bagfile --clock
+		rosbag play -r $rosplay $bagfile --clock
 		sleep $(($topic_count/5 + 5))'s'
 		killall rostopic
 		if [[ -s output/nav_sat_fix.csv ]]
