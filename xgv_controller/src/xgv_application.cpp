@@ -74,20 +74,21 @@ void XGVApplication::initialize()
 
     xgv_client_->connect();
 
-    //todo: disabling wrench effort control until the abrupt halting issue is resolved
-//
-//    {
-//        //Set up the effort controller. This manages the cmd_longitudinal_effort topic
-//        effort_controller_.reset(new cav::LongitudinalEffortController());
-//        auto& v = effort_controller_->get_api();
-//        api_.insert(api_.end(),v.begin(),v.end());
-//        effort_controller_->onNewCommand.connect([this](const cav::LongitudinalEffortController::Command&)
-//                                                 {
-//                                                    if(!active_robotic_status_provider_->getEnabled()) return;
-//                                                    cmd_mode_ = cav::CommandMode_t::Wrench;
-//                                                 });
-//
-//    }
+    
+    //TODO: Fix wrench effort control abrupt halting issue
+    //This feature cannot be disabled as it is required for CARMA to launch
+   {
+       //Set up the effort controller. This manages the cmd_longitudinal_effort topic
+       effort_controller_.reset(new cav::LongitudinalEffortController());
+       auto& v = effort_controller_->get_api();
+       api_.insert(api_.end(),v.begin(),v.end());
+       effort_controller_->onNewCommand.connect([this](const cav::LongitudinalEffortController::Command&)
+                                                {
+                                                   if(!active_robotic_status_provider_->getEnabled()) return;
+                                                   cmd_mode_ = cav::CommandMode_t::Wrench;
+                                                });
+
+   }
 
     {
         //Set up the speed controller. This manages the cmd_speed topic
