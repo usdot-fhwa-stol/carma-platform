@@ -23,4 +23,3 @@ bool region_exists
 # -- a unique mapping to the intersection
 # -- in question within the above region of use
 uint16 id
-bool id_exists

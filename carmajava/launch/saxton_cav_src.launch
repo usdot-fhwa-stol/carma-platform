@@ -182,7 +182,6 @@
             to="/$(arg TOP_NS)/system_alert"/>
 
           <include file="$(arg LAUNCH_DIR)/drivers.launch">
-
             <arg name="mock_dsrc" value="$(arg mock_dsrc)" />
             <arg name="mock_pinpoint" value="$(arg mock_pinpoint)" />
             <arg name="mock_can" value="$(arg mock_can)" />
