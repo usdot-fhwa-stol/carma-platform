@@ -341,6 +341,7 @@
         <rosparam command="load" file="$(arg PARAM_DIR)/SpeedHarmParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/PlatooningParams.yaml"/>
         <rosparam command="load" file="$(arg PARAM_DIR)/CooperativeMergeParams.yaml"/>
+        <rosparam command="load" file="$(arg PARAM_DIR)/SignalParams.yaml"/>
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>

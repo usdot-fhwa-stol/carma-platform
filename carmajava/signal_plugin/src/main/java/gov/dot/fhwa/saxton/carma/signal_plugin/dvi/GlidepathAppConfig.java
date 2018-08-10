@@ -1,11 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
-
-import javax.inject.Inject;
-import java.util.Map;
+import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 
 /**
  * AppConfig using dvi.properties instead of application.properties
@@ -14,21 +9,20 @@ import java.util.Map;
  *
  * Using a dvi.properties file in the same directory as the jar overrides the default properties set inside the jar.
  */
-@Configuration
-@PropertySource( value = { "classpath:/dvi.properties", "file:dvi.properties" }, ignoreResourceNotFound = true )
 public class GlidepathAppConfig implements IGlidepathAppConfig {
-    @Inject
-    Environment env;
     
-    Map<String, String> properties;
+    private ParameterSource params;
+
+    public GlidepathAppConfig(ParameterSource params) {
+        this.params = params;
+    }
 
     public int getIntValue(String property)   {
-        String value = env.getProperty(property);
-        return Integer.parseInt(value);
+        return params.getIntger("~/" + property);
     }
     
     public String getProperty(String name) {
-    	return env.getProperty(name);
+    	return params.getString("~/" + name);
     }
 
     /**
@@ -39,18 +33,7 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
      * @return int
      */
     public int getDefaultIntValue(String property, int defaultValue)   {
-        String value = env.getProperty(property);
-        if (value == null)   {
-            return defaultValue;
-        }
-
-        int result = 0;
-        try   {
-            result = Integer.parseInt(value);
-        }
-        catch(Exception e)   {}
-
-        return result;
+        params.getInteger("~/" + property, defaultValue);
     }
 
 
@@ -63,7 +46,7 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
     }
 
     public String getGpsHost() {
-        return env.getProperty("gps.host");
+        return getProperty("gps.host");
     }
 
     public int getGpsPort() {
@@ -83,7 +66,7 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
     }
 
     public String getXgvIpAddress() {
-        return env.getProperty("xgv.ipaddress");
+        return getProperty("xgv.ipaddress");
     }
 
     public int getXgvNodeId() { return getIntValue("xgv.nodeid"); }
@@ -127,7 +110,7 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
     }
 
     public String getUcrIpAddress() {
-        return env.getProperty("ucr.ipaddress");
+        return getProperty("ucr.ipaddress");
     }
 
     public int getXgvInitTimeout() {
@@ -135,52 +118,32 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
     }
 
     public boolean getUcrEnabled() {
-        return Boolean.parseBoolean(env.getProperty("ucr.enabled"));
+        return Boolean.parseBoolean(getProperty("ucr.enabled"));
     }
 
     public double getMaxAccel() {
         return Double.parseDouble(getProperty("maximumAccel")); }
 
-    public String getCanDeviceName() { return env.getProperty("can.candevice"); }
+    public String getCanDeviceName() { return getProperty("can.candevice"); }
 
-    public String getNativeLib() { return env.getProperty("can.lib"); }
+    public String getNativeLib() { return getProperty("can.lib"); }
 
     public double getDefaultSpeed() {
         return Double.parseDouble(getProperty("defaultspeed"));
     }
 
     public boolean getBooleanValue(String property)   {
-        boolean bValue = false;
-
-        String value = getProperty(property);
-        if (value == null || value.isEmpty())  {
-            bValue = false;
-        }
-        else   {
-            bValue = Boolean.parseBoolean(value);
-        }
-
-        return bValue;
+        return params.getBoolean("~/" + property);
     }
 
     @Override
     public double getDoubleValue(String property) {
-        return Double.parseDouble(env.getProperty(property));
+        return params.getDouble("~/" + property);
     }
 
     @Override
     public double getDoubleDefaultValue(String property, double defaultValue) {
-        String value = env.getProperty(property);
-
-        if (value == null) {
-            return defaultValue;
-        } else {
-            try {
-                return Double.parseDouble(value);
-            } catch (NumberFormatException nfe) {
-                return defaultValue;
-            }
-        }
+        return params.getDouble("~/" + property, defaultValue);
     }
 
     @Override
