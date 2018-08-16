@@ -30,9 +30,11 @@ import cav_srvs.GetSystemVersionResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceV2IService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.V2IService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
@@ -102,6 +104,14 @@ public class GuidanceMain extends SaxtonBaseNode {
     GuidanceRouteService routeService = new GuidanceRouteService(pubSubService);
     routeService.init();
 
+
+    int commsReliabilityCheckThreshold = node.getParameterTree().getInteger("~v2i_comms_reliability_check_threshold", 5);
+    double commsReliabilityPct =  node.getParameterTree().getDouble("~v2i_comms_reliability_percent", 0.75);
+    double commsReliabilityExpectedV2IMsgsPerSec = node.getParameterTree().getDouble("~v2i_comms_expected_msgs_per_sec", 1.1);
+    long expiryTimeoutMs = node.getParameterTree().getInteger("~v2i_comms_data_expiry_timeout", 1000);
+    GuidanceV2IService v2iService = new GuidanceV2IService(pubSubService, commsReliabilityCheckThreshold, commsReliabilityPct, commsReliabilityExpectedV2IMsgsPerSec, expiryTimeoutMs);
+    v2iService.init();
+
     routeService.registerNewRouteCallback((route) -> trajectoryConverter.setRoute(Route.fromMessage(route)));
     routeService.registerNewRouteCallback((route) -> conflictManager.setRoute(Route.fromMessage(route)));
     routeService.registerNewRouteStateCallback((state) -> trajectoryConverter.setRouteState(state.getDownTrack(),
@@ -119,7 +129,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager, tracking);
     MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter, vehicleAwareness, trajectoryExecutor, tracking);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
-        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking);
+        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking, v2iService);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor, vehicleAwareness);
 
     tracking.setTrajectoryExecutor(trajectoryExecutor);
