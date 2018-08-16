@@ -6,7 +6,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Location;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.ISpatMessage;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;

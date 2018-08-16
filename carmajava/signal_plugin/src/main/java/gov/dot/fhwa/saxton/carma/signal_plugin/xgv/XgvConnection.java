@@ -4,7 +4,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.BitStreamPacker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.BitStreamUnpacker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.AccelerationManager;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;

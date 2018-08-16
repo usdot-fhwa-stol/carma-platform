@@ -1,6 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi;
 
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 
 import java.util.HashMap;
 import java.util.Map;

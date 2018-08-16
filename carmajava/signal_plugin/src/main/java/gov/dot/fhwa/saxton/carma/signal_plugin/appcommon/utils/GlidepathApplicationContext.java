@@ -1,7 +1,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils;
 
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 
 /**
  * Wrapper to always return a reference to the Spring Application Context from

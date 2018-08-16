@@ -3,7 +3,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.xgv.messages;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.BitStreamPacker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.BitStreamUnpacker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 
 import java.util.Arrays;
 

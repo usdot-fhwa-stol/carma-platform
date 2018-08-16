@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerTask;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services.ConsumerFactory;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services.DviExecutorService;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;

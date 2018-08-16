@@ -3,7 +3,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services;
 import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerTask;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.*;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviParameters;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviUIMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathState;

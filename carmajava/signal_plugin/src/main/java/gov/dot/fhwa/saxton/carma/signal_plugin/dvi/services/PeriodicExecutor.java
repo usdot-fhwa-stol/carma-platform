@@ -10,7 +10,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionCollection;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviParameters;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathState;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathStateModel;

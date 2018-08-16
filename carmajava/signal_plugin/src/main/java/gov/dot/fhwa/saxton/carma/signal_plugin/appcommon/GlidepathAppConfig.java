@@ -1,4 +1,4 @@
-package gov.dot.fhwa.saxton.carma.signal_plugin.dvi;
+package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 
