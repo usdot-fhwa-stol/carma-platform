@@ -1,14 +1,13 @@
+package gov.dot.fhwa.saxton.carma.guidance.util;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.TimeZone;
-import java.util.concurrent.ConcurrentHashMap;
 import java.time.LocalDateTime;
 import cav_msgs.IntersectionGeometry;
 import cav_msgs.IntersectionState;
@@ -23,7 +22,7 @@ public class GuidanceV2IService implements V2IService {
     private int commsReliabilityCheckThreshold = 5;
     private double commsReliabilityPct = 0.75;
     private double commsReliabilityExpectedV2IMsgsPerSec = 1.1;
-    private int expiryTimeoutMs = 1000;
+    private long expiryTimeoutMs = 1000;
     private Thread expiryCheckThread;
     private List<V2IDataCallback> callbacks = Collections.synchronizedList(new ArrayList<>());
 
@@ -31,12 +30,20 @@ public class GuidanceV2IService implements V2IService {
     private final Map<Integer, DsrcCommsCheck> commsChecks = Collections.synchronizedMap(new HashMap<>());
 
     private IPubSubService pubSub;
+    private ILogger log = LoggerManager.getLogger();
 
-    public GuidanceV2IService(IPubSubService pubSub) {
+    public GuidanceV2IService(IPubSubService pubSub, int commsReliabilityCheckThreshold, double commsReliabilityPct, double commsReliabilityExpectedV2IMsgsPerSec, long expiryTimeoutMs) {
         this.pubSub = pubSub;
+        this.commsReliabilityCheckThreshold = commsReliabilityCheckThreshold;
+        this.commsReliabilityPct = commsReliabilityPct;
+        this.commsReliabilityExpectedV2IMsgsPerSec = commsReliabilityExpectedV2IMsgsPerSec;
+        this.expiryTimeoutMs = expiryTimeoutMs;
     }
 
     public void init() {
+        log.infof("GuidanceV2IService init'd with commsReliabilityCheckThreshold=%d, commsReliabilityPct=%.02f, commsReliabilityExpectedV2IMsgsPerSec=%.02f, expiryTimeoutMs=%d",
+        commsReliabilityCheckThreshold, commsReliabilityPct, commsReliabilityExpectedV2IMsgsPerSec, expiryTimeoutMs);
+
         mapSub = pubSub.getSubscriberForTopic("map_data", MapData._TYPE);
 
         mapSub.registerOnMessageCallback((map) -> {
@@ -88,9 +95,14 @@ public class GuidanceV2IService implements V2IService {
                         expireIntersectionData(id);
                     }
                 }
-                Thread.sleep(expiryTimeoutMs);
+                try {
+					Thread.sleep(expiryTimeoutMs);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
             }
         });
+        expiryCheckThread.start();
     }
 
     private void fireCallbacks() {
