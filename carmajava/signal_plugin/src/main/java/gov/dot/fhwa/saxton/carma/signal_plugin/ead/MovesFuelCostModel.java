@@ -50,7 +50,7 @@ public class MovesFuelCostModel implements ICostModel {
      *                   if false then idleCost will only be applied if speed is zero
      */
     public MovesFuelCostModel(double rollingTermA, double rotatingTermB, double dragTermC, double vehicleMassInTons,
-        double fixedMassFactor,Map<Integer,List<Double>> baseRateTable) {
+        double fixedMassFactor, String baseRateTablePath) {
         //assign injected params for mass, rolling resistance, drag coefficient, frontal area, air density, idle cost
         this.rollingTermA = rollingTermA;
         this.rotatingTermB = rotatingTermB;

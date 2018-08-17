@@ -31,17 +31,12 @@ public class EadAStar implements IEad {
     protected double                    coarseSpeedInc_;            //speed increment for coarse planning, m/s
     protected double                    fineTimeInc_;               //time increment for detailed planning, sec
     protected double                    fineSpeedInc_;              //speed increment for detailed planning, m/s
-    protected double                    vehicleMass_;               //mass of the vehicle, kg
-    protected double                    rollingRes_;                //coefficient of rolling resistance
-    protected double                    dragCoef_;                  //drag coefficient
-    protected double                    frontalArea_;               //vehicle frontal cross-section area, m^2
-    protected double                    airDensity_;                //air density, kg/m^3
-    protected double                    idlePower_;                 //brake power wasted at idle under no load, J/s
-    protected boolean                   useIdleMin_;                //should we use idle power as min for all situations?
-                                                                    // if not then it will only be used when speed = 0
+                                                                    
     protected double                    maxDistanceError_;          //max allowable deviation from plan, m
     protected boolean                   replanNeeded_ = true;       //do we need to replan the trajectory?
 
+    protected String                    desiredFuelCostModel_;
+    protected ICostModelFactory         costModelFactory_;
     protected ICostModel                costModel_;                 //model of cost to travel between nodes in the tree
     protected INeighborCalculator       neighborCalc_;              //calculates neighboring nodes to build the tree
     protected ITreeSolver               solver_;                    //the tree solver
@@ -58,21 +53,14 @@ public class EadAStar implements IEad {
         coarseSpeedInc_ = config.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0);
         fineTimeInc_ = config.getDoubleDefaultValue("ead.fine_time_inc", 2.0);
         fineSpeedInc_ = config.getDoubleDefaultValue("ead.fine_speed_inc", 1.0);
-        //params for fuel cost model
-        vehicleMass_ = config.getDoubleValue("ead.vehicleMass");
-        rollingRes_ = config.getDoubleDefaultValue("ead.rollingResistanceOverride", 0.0);
-        dragCoef_ = config.getDoubleValue("ead.dragCoefficient");
-        frontalArea_ = config.getDoubleValue("ead.frontalArea");
-        airDensity_ = config.getDoubleValue("ead.airDensity");
-        idlePower_ = config.getDoubleValue("ead.idleCost");
-        useIdleMin_ = config.getBooleanValue("ead.useIdleMin");
+        desiredFuelCostModel_ = config.getProperty("ead.desiredCostModel");
 
         //set the max distance error to be half the typical distance between nodes a nominal speed
         double speedLimit = (double)config.getMaximumSpeed() / Constants.MPS_TO_MPH;
         maxDistanceError_ = 0.5*speedLimit*fineTimeInc_;
 
-        costModel_ = new FuelCostModel(vehicleMass_, rollingRes_, dragCoef_, frontalArea_, airDensity_,
-                                        idlePower_, useIdleMin_);
+        costModelFactory_ = new DefaultCostModelFactory(config);
+        costModel_ = costModelFactory_.getCostModel(desiredFuelCostModel_);
         neighborCalc_ = new EadNeighborCalculator();
     }
 

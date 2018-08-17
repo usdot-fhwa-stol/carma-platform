@@ -202,7 +202,7 @@ ead.acceptableStopDistance: 6.0
 # A string identifying the fuel cost model which will be used for computing cost between nodes
 # DEFAULT: The fuel cost model use in the origional Glidepath Phase 2 whitepaper
 # MOVES_2010: The fuel cost model based on the EPA 2010 MOVES brief on vehicle efficiency
-ead.DesiredCostModel: 'MOVES_2010'
+ead.desiredCostModel: 'MOVES_2010'
 
 # TODO make cost model destinction clear
 # ----- cost model params for AStar tree
