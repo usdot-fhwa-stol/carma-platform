@@ -1,5 +1,11 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +38,7 @@ public class MovesFuelCostModel implements ICostModel {
     private final Map<Integer,List<Double>> baseRateTable;
     private final int BASE_RATE_ENERGY_COL = 4;
     private final double ROAD_GRADE = 0.0; // By default we assume the road is flat. 0.0 in rad
+    private final int EXPECTED_BASE_RATE_TABLE_LENGTH = 7;
 
     private int numCosts = 0;
     protected static ILogger log = LoggerManager.getLogger(FuelCostModel.class);
@@ -57,7 +64,45 @@ public class MovesFuelCostModel implements ICostModel {
         this.dragTermC = dragTermC;
         this.vehicleMassInTons = vehicleMassInTons;
         this.fixedMassFactor = fixedMassFactor;
-        this.baseRateTable = baseRateTable;
+        this.baseRateTable = loadTable(baseRateTablePath); // Load the base rates table
+    }
+
+    private Map<Integer,List<Double>> loadTable(String baseRateTablePath) {
+        String line = "";
+        String delimiter = ",";
+        boolean firstLine = true;
+        Map<Integer,List<Double>> map = new HashMap<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(baseRateTablePath))) {
+
+            while ((line = br.readLine()) != null) {
+
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                String[] data = line.split(delimiter);
+
+                if (data.length != EXPECTED_BASE_RATE_TABLE_LENGTH) {
+                    // TODO throw exception
+                }
+
+                Integer key = Integer.parseInt(data[0]);
+
+                List<Double> values = new ArrayList<>();
+
+                for (int i = 1; i < data.length; i++) {
+                    values.add(Double.parseDouble(data[i]));
+                }
+
+                map.put(key, values);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            // TODO handle load failure
+        }
+        return map;
     }
 
 
