@@ -204,8 +204,7 @@ ead.acceptableStopDistance: 6.0
 # MOVES_2010: The fuel cost model based on the EPA 2010 MOVES brief on vehicle efficiency
 ead.desiredCostModel: 'MOVES_2010'
 
-# TODO make cost model destinction clear
-# ----- cost model params for AStar tree
+# ----- DEFAULT cost model params for AStar tree
 
 # drag coef Based on 0.84*Ac per http://ecomodder.com/wiki/index.php/Vehicle_Coefficient_of_Drag_List
 ead.dragCoefficient: 0.5
