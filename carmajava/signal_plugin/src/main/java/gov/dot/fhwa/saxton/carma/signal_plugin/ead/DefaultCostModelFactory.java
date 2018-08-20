@@ -16,6 +16,8 @@
 
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
+import java.io.IOException;
+
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ICostModel;
 
@@ -36,7 +38,7 @@ public class DefaultCostModelFactory implements ICostModelFactory{
   /**
    * Create a new instance of IAccStrategy
    */
-  public ICostModel getCostModel(String desiredModelName) {
+  public ICostModel getCostModel(String desiredModelName) throws IllegalArgumentException {
     switch(desiredModelName) {
       case "DEFAULT":
         double vehicleMass = config.getDoubleValue("ead.vehicleMass");
@@ -56,7 +58,12 @@ public class DefaultCostModelFactory implements ICostModelFactory{
         double fixedMassFactor = config.getDoubleValue("ead.MOVES.fixedMassFactor");
         String baseRateTablePath = config.getProperty("ead.MOVES.baseRateTablePath");
 
-        return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath);
+        try {
+          return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath);
+        } catch (IOException e) {
+          throw new IllegalArgumentException(e.getMessage());
+        }
+        
       default:
         throw new IllegalArgumentException("Provided cost model name is not valid: " + desiredModelName);
     }
