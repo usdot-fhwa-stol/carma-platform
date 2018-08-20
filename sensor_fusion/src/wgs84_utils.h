@@ -54,9 +54,8 @@ namespace wgs84_utils
                        const wgs84_coordinate& wgs84_ref,
                        const Eigen::Vector3d& odom_pose_ref,
                        const Eigen::Quaternion<double>& odom_rot_ref,
-                       const Eigen::Transform<double,3,Eigen::Affine>& ned_odom_tf,
+                       const Eigen::Transform<double, 3, Eigen::Affine>& ned_odom_tf,
                        Eigen::Vector3d& out_pose,
                        Eigen::Quaternion<double>& out_rot
     );
-
 }

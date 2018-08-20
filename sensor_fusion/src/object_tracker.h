@@ -32,6 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "timer.h"
 
 #include <eigen3/Eigen/Geometry>
@@ -51,6 +52,7 @@
 #include <unordered_map>
 #include <queue>
 
+#include <ros/ros.h>
 
 namespace torc
 {
@@ -58,7 +60,8 @@ namespace torc
 /**
  * @brief This class represents a tracked object.
  */
-struct TrackedObject {
+struct TrackedObject 
+{
     enum PresenceVector
     {
         pv_ID = 1 << 0,
@@ -80,61 +83,76 @@ struct TrackedObject {
                       linear_velocity(Eigen::Vector3d::Zero()),
                       orientation(Eigen::Quaterniond::Identity()),
                       angular_velocity(Eigen::Vector3d::Zero())
-
     {
+
     }
+
     std::unordered_map<size_t, boost::shared_array<uint8_t>> src_data;
 
-    float object_life;
-    uint16_t presence_vector;
-    size_t id; //1
-    Eigen::Vector3d position; //2
-    Eigen::Vector3d dimensions;//4 //axis-aligned with orientation
-    Eigen::Quaterniond orientation;//8
-    Eigen::Vector3d linear_velocity;//16
-    Eigen::Vector3d angular_velocity;//32
-    double confidence;//64
+    float       object_life;
+    uint16_t    presence_vector;
+    size_t      id;                         // 1
+    Eigen::Vector3d     position;           // 2
+    Eigen::Vector3d     dimensions;         // 4 // axis-aligned with orientation
+    Eigen::Quaterniond  orientation;        // 8
+    Eigen::Vector3d     linear_velocity;    // 16
+    Eigen::Vector3d     angular_velocity;   // 32
+    double      confidence;                 // 64
 
-    double distanceToSquared(const TrackedObject &other) const {
+    double distanceToSquared(const TrackedObject &other) const 
+    {
         return (position - other.position).squaredNorm();
     }
 
     double tracked_score;
+
 private:
     friend class ObjectTracker;
     size_t src_id;
-
-};
-
+}; // End TrackedObject struct
 
 /**
  * @brief This class tracks objects from multiple sources
  */
-class ObjectTracker {
+class ObjectTracker 
+{
     static constexpr double pi = boost::math::constants::pi<double>();
+
 public:
     typedef boost::posix_time::ptime TimeStampType;
 
-    struct {
+    struct 
+    {
         /**
          * @brief the decay to apply to object life time. this value is a linear constant to decay the life by
          */
-        double life_time_decay;
+        double tracker_life_time_decay;
+
+        /**
+         * @brief the decay divider used to quickly remove unmatched tracks when processing
+         */
+        double tracker_life_time_divider;
+
+        /**
+         * @brief the life time threshold used to purge old tracks if they have life times less than
+         */
+        double tracker_life_time_threshold;
+
+        /**
+         * @brief the distance an object must be away to be considered unassociated (new)
+         */
+        double tracker_out_of_range_dist;
+
+        /**
+         * @brief the distance from an unassociated object (new object) that is used to group other new objects
+         */
+        double tracker_unassociated_group_dist;
 
         /**
          * @brief the score (distance) to consider objects to be paired
          */
-        double score_threshold;
+        double tracker_score_threshold;
 
-        /**
-         * @brief The expected max_velocity of an object this is used for associating new dynamic tracks
-         */
-        double max_velocity;
-
-        /**
-         * @brief The score required for a track to be accepted as a track
-         */
-        double minimum_tracker_score;
     } config;
 
 private:
@@ -142,7 +160,8 @@ private:
     /**
      * @brief helper class that is used for internal tracks and measurements
      */
-    struct ObjectTrackerSensorObjects {
+    struct ObjectTrackerSensorObjects 
+    {
         size_t src_id;
         TimeStampType time_stamp;
         std::vector<TrackedObject> objects;
@@ -159,11 +178,16 @@ private:
      * @param obj
      * @param delta_time
      */
-    void update(TrackedObject &obj, double delta_time) {
-        obj.position += obj.linear_velocity * delta_time;
-        obj.object_life -= config.life_time_decay * delta_time;
-        obj.confidence -= config.life_time_decay *delta_time;
-        if (obj.confidence < 0) obj.confidence = 0;
+    void update(TrackedObject &obj, double delta_time) 
+    {
+        obj.position    += obj.linear_velocity    * delta_time;
+        obj.object_life -= config.tracker_life_time_decay * delta_time;
+        obj.confidence  -= config.tracker_life_time_decay * delta_time;
+
+        if (obj.confidence < 0) 
+        {
+            obj.confidence = 0;
+        }
     }
 
     /**
@@ -172,33 +196,35 @@ private:
      * @param measurement
      * @param dt
      */
-    void correct(TrackedObject &track, const TrackedObject &measurement, double dt) {
-
+    void correct(TrackedObject &track, const TrackedObject &measurement, double dt) 
+    {
         Eigen::Vector3d position_error = measurement.position - track.position;
         Eigen::Vector3d old_position = track.position;
 
-        //tracked_score can't exceed 1.0, we want more smoothing the lower the score
-        //a smothing of 1.0 is max smoothing
+        // Tracked_score can't exceed 1.0, more smoothing = lower score. Max Smoothing: 1.0
         double smoothing = track.tracked_score;
 
-        //since smoothing < 1.0 alpha inverse proportional to smoothing
-        double alpha = 1-smoothing*smoothing;
+        // Since smoothing < 1.0 alpha inverse proportional to smoothing
+        double alpha = 1 - smoothing * smoothing;
 
-        //beta is proportional to smoothing
-        double beta = (1-smoothing)*(1-smoothing);
+        // Beta is proportional to smoothing
+        double beta = (1 - smoothing) * (1 - smoothing);
 
-        //if alpha is close to 1 our tracked score is almost nothing
-        //so we wait the track less
+        // If alpha is close to 1, our tracked score is almost nothing so we wait the track less
         track.position += position_error * alpha;
 
-        //Use velocity if the sensor gives it to us
-        if (measurement.presence_vector & TrackedObject::pv_LinearVelocity) {
+        // Use velocity if the sensor gives it to us
+        if (measurement.presence_vector & TrackedObject::pv_LinearVelocity) 
+        {
             track.linear_velocity = measurement.linear_velocity;
-        } else {
-            track.linear_velocity += (beta*position_error) / dt;
+        } 
+        else 
+        {
+            track.linear_velocity += (beta * position_error) / dt;
         }
 
-        if (measurement.presence_vector & TrackedObject::pv_Dimensions) {
+        if (measurement.presence_vector & TrackedObject::pv_Dimensions) 
+        {
             track.dimensions = measurement.dimensions;
         }
 
@@ -216,154 +242,140 @@ private:
             track.orientation.setIdentity();
         }
 
-        //angular velocity
+        // Angular Velocity
         if (measurement.presence_vector & TrackedObject::pv_AngularVelocity)
         {
             track.angular_velocity = measurement.angular_velocity;
         }
         else
         {
-            //calculate angular_velocity by change in orientation
+            // Calculate angular_velocity by change in orientation
             auto r = track.orientation * old_orientation.inverse();
             double theta = 2 * std::acos(r.w());
             if (theta > pi)
+            {
                 theta -= 2 * pi;
+            }
 
             Eigen::AngleAxisd a(r);
             Eigen::Vector3d v = a.axis();
             track.angular_velocity = (theta / dt) * (v.normalized());
         }
 
-        //reset object_life to 1.0
+        // Reset object_life to 1.0
         track.object_life = 1.0;
 
-        //tracked score is an attempt to get a smoother score based on previous confidence the new confidence and the previous
-        //tracked_score , tracked_score does not deteriorate directly unless track_confidence gets really low
-        //tracked_score also starts at 0 so has to grow before we trust it
+        /* Tracked score is an attempt to get a smoother score based on previous confidence the new confidence and the previous
+         * tracked_score , tracked_score does not deteriorate directly unless track_confidence gets really low
+         * tracked_score also starts at 0 so has to grow before we trust it */
         track.tracked_score = (track.tracked_score + track.confidence + measurement.confidence) / 3.0;
         track.confidence = measurement.confidence;
-
-
     }
 
     /**
      * @brief Process sensor measurments
      *
-     * The algorithm is as follows:
-     *
-     * Update the objects in the sensor_track for dt from previous measurement to new measurement
-     *
-     * Remove expired tracks
-     *
-     * Find best candidates for tracks
-     * Objects in measurement come from one sensor. Assuming these objects can't pair with more than one track for the
-     * sensor
-     *
+     * Loop through Measurement and compare to current tracked objects
+     * - Get Candidates for updating
+     * - Check within range of tracked to ignore
+     * - Check outside of range of tracked to add to new
+     * Loop through Tracked Objects and Either Update or Decay
+     * Add New Tracks
      *
      * @param measurement
      * @param sensor_track
      */
-    void processObjects(const ObjectTrackerSensorObjects &measurement, ObjectTrackerSensorObjects &sensor_track) {
-        if (measurement.time_stamp < sensor_track.time_stamp) return;
+    void processObjects(const ObjectTrackerSensorObjects &measurement, ObjectTrackerSensorObjects &sensor_track) 
+    {
+        if (measurement.time_stamp < sensor_track.time_stamp)
+        {
+            return;
+        }
 
-        //Data structures used for processing
+        // Data structures used for processing
         std::vector<TrackedObject> unassociated_tracks;
-        const std::vector<TrackedObject> &measured_objects = measurement.objects;
-        std::deque<size_t> measurement_index_q;
-        boost::push_back(measurement_index_q,boost::irange<size_t>(0,measured_objects.size()));
-
         std::vector<TrackedObject> &tracked_objects = sensor_track.objects;
+        const std::vector<TrackedObject> &measured_objects = measurement.objects;
 
-        //Get delta time
-        double delta_time = (double)(measurement.time_stamp - sensor_track.time_stamp).total_microseconds()/(double)1000000UL;
-
-        //Propagate tracked objects to measurement time_stamp
-        std::for_each(tracked_objects.begin(), tracked_objects.end(), [this, delta_time](TrackedObject &o) {
-            update(o, delta_time);
-        });
-        //Delete old tracks
+        double delta_time = (double)(measurement.time_stamp - sensor_track.time_stamp).total_microseconds() / (double)1000000UL;
+        std::for_each(tracked_objects.begin(), tracked_objects.end(), [this, delta_time](TrackedObject &o) { update(o, delta_time); });
+        
+        // Delete old tracks
         purgeExpiredTracks(tracked_objects);
 
-        std::vector<size_t> best_candidates(tracked_objects.size(), measured_objects.size());
-        Eigen::MatrixXd score_matrix = Eigen::MatrixXd::Zero(measured_objects.size(), tracked_objects.size());
+        std::vector<double> track_best_score(tracked_objects.size(), std::numeric_limits<double>::infinity());
+        std::vector<size_t> track_best_candidate(tracked_objects.size(), measured_objects.size());
 
-        //Iterate through each measured object looking for the best candidate in sensor_tracks
-        while(!measurement_index_q.empty())
+        // Loop through all New Measurement objects
+        for(size_t measurement_idx = 0; measurement_idx < measured_objects.size(); measurement_idx++)
         {
-            size_t measured_objects_idx = measurement_index_q.front();
-            measurement_index_q.pop_front();
-
-            auto &measured_object = measured_objects[measured_objects_idx];
-            double best_score = std::numeric_limits<double>::infinity();
-            size_t best_candidate = tracked_objects.size();
-
-            //Find best nearest tracked object
-            for (size_t candidate_idx = 0; candidate_idx < tracked_objects.size(); candidate_idx++)
+            bool measurement_out_of_range = true;   // Variable to track if measurement is next to a tracked object
+            // Loop through all Known Tracked Objects
+            for(size_t track_idx = 0; track_idx < tracked_objects.size(); track_idx++)
             {
-                double distSquared = measured_object.distanceToSquared(tracked_objects[candidate_idx]);
-                score_matrix(measured_objects_idx, candidate_idx) = distSquared;
+                double distSquared = measured_objects[measurement_idx].distanceToSquared(tracked_objects[track_idx]);   // Calculate Distance between measurement object and tracked object
 
-                //if we already selected this candidate with another closer measurement ignore this one
-                if(best_candidates[candidate_idx] < measured_objects.size() &&
-                        score_matrix(best_candidates[candidate_idx],candidate_idx) < distSquared ) continue;
-
-                //set best candidate
-                if (distSquared < best_score) {
-                    best_score = distSquared;
-                    best_candidate = candidate_idx;
-                }
-            }
-
-            //No track association
-            if (best_candidate >= tracked_objects.size()) {
-                unassociated_tracks.push_back(measured_object);
-                continue;
-            }
-
-            //Do we have a track close enough that may not be tracked very well
-            if(best_score > config.score_threshold && tracked_objects[best_candidate].tracked_score < config.minimum_tracker_score)
-            {
-                //is the score (distance squared) greater than the max allowed velocity
-                if(best_score > (config.max_velocity*config.max_velocity*delta_time))
+                // Check if Measurement is within range of a tracked object -> Group them together (Make measurement a candidate)
+                if(distSquared < config.tracker_out_of_range_dist)   // Default: 5.0
                 {
-                    unassociated_tracks.push_back(measured_object);
-                    continue;
+                    measurement_out_of_range = false;
+                    // Check for best candidate and compare to current
+                    if(distSquared < track_best_score[track_idx])
+                    {
+                        track_best_score[track_idx] = distSquared;
+                        track_best_candidate[track_idx] = measurement_idx;
+                    }
                 }
             }
-
-            //Do we have a closer candidate
-            if (best_candidates[best_candidate] < measured_objects.size()) {
-                float last_score = score_matrix(best_candidates[best_candidate], best_candidate);
-                if (last_score > best_score) {
-                    size_t last_idx = best_candidates[best_candidate];
-                    measurement_index_q.push_back(last_idx);
-                    best_candidates[best_candidate] = measured_objects_idx;
-                } else {
-                    unassociated_tracks.push_back(measured_object);
+            // check if Meaurement is out of range from all known tracked objects
+            if(measurement_out_of_range)
+            {
+                bool near_unassociated = false; // Variable to track if measurement is near a new track (current unassociated)
+                // Loop through known unassociated object list (new objects being added)
+                for(size_t unassociated_idx = 0; unassociated_idx < unassociated_tracks.size(); unassociated_idx++)
+                {
+                    double distToUnassociated = measured_objects[measurement_idx].distanceToSquared(unassociated_tracks[unassociated_idx]); // Calculate distance between measurement and unassociated object (new object)
+                    if(distToUnassociated < config.tracker_unassociated_group_dist)    // Default: 2.0
+                    {
+                        near_unassociated = true;   // Set if within range of unassociated object
+                    }
                 }
-            } else {
-                best_candidates[best_candidate] = measured_objects_idx;
+                if(!near_unassociated)
+                {
+                    unassociated_tracks.push_back(measured_objects[measurement_idx]);   // If measurement is not near New Object -> Make new Object
+                }
             }
         }
 
-        //correct tracks
-        for(int i = 0; i < best_candidates.size(); i++) {
-            if (best_candidates[i] < measured_objects.size()) {
-                correct(tracked_objects[i], measured_objects[best_candidates[i]],delta_time);
+        // Loop through all Known Tracked Objects
+        for(size_t track_idx = 0; track_idx < tracked_objects.size(); track_idx++)
+        {   
+            // Check if tracked objects have candidates (must have one measurement within range)
+            if(track_best_candidate[track_idx] < measured_objects.size())
+            {
+                // We want to update the tracked object to be the best candidate of new measurements (this resets object life)
+                correct(tracked_objects[track_idx], measured_objects[track_best_candidate[track_idx]], delta_time);
+            }
+            else
+            {
+                // to help with decay we speed up decay when a traked object no longer has a new measurement within range
+                tracked_objects[track_idx].object_life /= config.tracker_life_time_divider;  // Default: 2.0
             }
         }
 
-        //add unassociated tracks
-        for (auto &new_object : unassociated_tracks) {
+        //ROS_INFO_STREAM("New Measurements: " << measured_objects.size() << " Current Tracked: " << tracked_objects.size() << " Purged: " << before_purge_track_size << " -> " << tracked_objects.size() << " New Tracks: " << unassociated_tracks.size());
+
+        // Add unassociated tracks that were added 
+        for (auto &new_object : unassociated_tracks) 
+        {
             new_object.object_life = 1.0;
             new_object.tracked_score = 0.0;
             new_object.id = last_id_++;
             tracked_objects.push_back(new_object);
         }
 
-        //update time stamp
+        // Update time stamp
         sensor_track.time_stamp = measurement.time_stamp;
-
     }
 
     /**
@@ -372,9 +384,14 @@ private:
      */
     void purgeExpiredTracks(std::vector<TrackedObject>& objs)
     {
-        objs.erase(std::remove_if(objs.begin(),objs.end(),[](const TrackedObject &obj) { return obj.object_life <= 0.0;}), objs.end());
+        for(size_t i = 0; i < objs.size(); i++)
+        {
+            if(objs[i].object_life <= config.tracker_life_time_threshold)  // Default: 0.1
+            {
+                objs.erase(objs.begin() + i);
+            }
+        }
     }
-
 
     /**
      * @brief Gets the nearest neighbours between two disjoint sets
@@ -382,9 +399,9 @@ private:
      * @param second
      * @return
      */
-    std::unordered_map<size_t ,size_t > getDisjointNeighbours(const std::vector<TrackedObject>& first, const std::vector<TrackedObject>& second)
+    std::unordered_map<size_t, size_t> getDisjointNeighbours(const std::vector<TrackedObject>& first, const std::vector<TrackedObject>& second)
     {
-        std::unordered_map<size_t ,size_t > out;
+        std::unordered_map<size_t, size_t> out;
 
         for(size_t i = 0; i < first.size(); i++)
         {
@@ -399,7 +416,6 @@ private:
                     best_score = distSquared;
                 }
             }
-
             out[i] = best_candidate;
         }
 
@@ -411,18 +427,18 @@ private:
         TrackedObject obj;
         for(auto& it : list)
         {
-            obj.position += it.tracked_score*it.position;
-            obj.linear_velocity += it.tracked_score*it.linear_velocity;
-            obj.angular_velocity += it.tracked_score*it.angular_velocity;
-            obj.tracked_score += it.tracked_score;
-            obj.src_data[it.src_id] = it.src_data[it.src_id];
+            obj.position            += it.tracked_score * it.position;
+            obj.linear_velocity     += it.tracked_score * it.linear_velocity;
+            obj.angular_velocity    += it.tracked_score * it.angular_velocity;
+            obj.tracked_score       += it.tracked_score;
+            obj.src_data[it.src_id]  = it.src_data[it.src_id];
         }
 
-        obj.position /= obj.tracked_score;
-        obj.linear_velocity /= obj.tracked_score;
-        obj.angular_velocity /= obj.tracked_score;
-        obj.tracked_score /= list.size();
-        obj.confidence = obj.tracked_score;
+        obj.position            /= obj.tracked_score;
+        obj.linear_velocity     /= obj.tracked_score;
+        obj.angular_velocity    /= obj.tracked_score;
+        obj.tracked_score       /= list.size();
+        obj.confidence           = obj.tracked_score;
 
         if (!obj.linear_velocity.isZero())
         {
@@ -437,12 +453,10 @@ private:
             obj.orientation.setIdentity();
         }
 
-        obj.presence_vector = TrackedObject::pv_ID | TrackedObject::pv_Position 
-                              | TrackedObject::pv_Orientation | TrackedObject::pv_LinearVelocity 
-                              | TrackedObject::pv_AngularVelocity | TrackedObject::pv_Confidence;
+        obj.presence_vector = TrackedObject::pv_ID | TrackedObject::pv_Position | TrackedObject::pv_Orientation | 
+                              TrackedObject::pv_LinearVelocity | TrackedObject::pv_AngularVelocity | TrackedObject::pv_Confidence;
 
         return obj;
-
     }
 
     /**
@@ -452,13 +466,16 @@ private:
     ObjectTrackerSensorObjects mergeTracks()
     {
         ObjectTrackerSensorObjects merged_sensor;
-        if(internal_tracks_.empty()) return merged_sensor;
+        if(internal_tracks_.empty()) 
+        {
+            ROS_INFO_STREAM("Internal Tracks Empty! Using Merged");
+            return merged_sensor;
+        }
 
         std::vector<TrackedObject> out_track;
-
         std::vector<std::vector<TrackedObject>> neighbours_track;
 
-        //We want to get to the latest time_stamp
+        // We want to get to the latest time_stamp
         TimeStampType latest = internal_tracks_.begin()->second.time_stamp;
         for(auto& it : internal_tracks_)
         {
@@ -468,38 +485,29 @@ private:
             }
         }
 
-        //iterate through the internal sensor tracks
+        // Iterate through the internal sensor tracks
         for(auto& it : internal_tracks_)
         {
-            //work on a copy of the objects
+            // Work on a copy of the objects
             std::vector<TrackedObject> current_objects = it.second.objects;
-            double delta_time = (double)(latest - it.second.time_stamp).total_microseconds()/(double)1000000UL;
-            std::for_each(current_objects.begin(),current_objects.end(),[this,delta_time](TrackedObject& obj)
-            {
-                update(obj,delta_time);
-            });
+            double delta_time = (double)(latest - it.second.time_stamp).total_microseconds() / (double)1000000UL;
+            std::for_each(current_objects.begin(), current_objects.end(), [this, delta_time](TrackedObject& obj) { update(obj, delta_time); });
 
-            //todo: should we be expiring tracks here?
-            purgeExpiredTracks(current_objects);
-
-            //Remove freshly seen tracks from our processed list (ie tracked_score = 0.0)
-            current_objects.erase(std::remove_if(current_objects.begin(),current_objects.end(),[](const TrackedObject &obj) { return obj.tracked_score<= 0.0;}), current_objects.end());
+            // Remove freshly seen tracks from our processed list (ie tracked_score = 0.0)
+            current_objects.erase(std::remove_if(current_objects.begin(), current_objects.end(), [](const TrackedObject &obj) { return obj.tracked_score <= 0.0; }), current_objects.end());
 
             auto nearest_neighbours = getDisjointNeighbours(current_objects, out_track);
             for(auto& neighbour_pair : nearest_neighbours)
             {
-                if(neighbour_pair.second < out_track.size() &&
-                   current_objects[neighbour_pair.first].distanceToSquared(out_track[neighbour_pair.second]) < config.score_threshold)
+                if(neighbour_pair.second < out_track.size() && current_objects[neighbour_pair.first].distanceToSquared(out_track[neighbour_pair.second]) < config.tracker_score_threshold)
                 {
                     neighbours_track[neighbour_pair.second].push_back(current_objects[neighbour_pair.first]);
                     out_track[neighbour_pair.second] = computeMeanObject(neighbours_track[neighbour_pair.second]);
                     out_track[neighbour_pair.second].src_id = 0;
-                    //ID's are unique no two internal tracks will have the same id. We can use the min of the IDs so that
-                    //we are consistent between timesteps regardless of ordering
-                    out_track[neighbour_pair.second].id = std::min_element(neighbours_track[neighbour_pair.second].begin(),
-                                                                           neighbours_track[neighbour_pair.second].end(),
-                                                                           [](const torc::TrackedObject& a, const torc::TrackedObject& b) {return a.id < b.id;}
-                                                                          )->id;
+
+                    // ID's are unique no two internal tracks will have the same id. We can use the min of the IDs so that we are consistent between timesteps regardless of ordering
+                    out_track[neighbour_pair.second].id = std::min_element(neighbours_track[neighbour_pair.second].begin(), neighbours_track[neighbour_pair.second].end(),
+                                                                           [](const torc::TrackedObject& a, const torc::TrackedObject& b) { return a.id < b.id; } )->id;
                 }
                 else
                 {
@@ -508,7 +516,6 @@ private:
                     out_track.push_back(current_objects[neighbour_pair.first]);
                 }
             }
-
         }
 
         merged_sensor.src_id = 0;
@@ -520,81 +527,75 @@ private:
 
 public:
 
-    std::unique_ptr<ObjectTrackerSensorObjects> tracked_sensor;
-    explicit ObjectTracker(std::shared_ptr<cav::Timer> timer = std::make_shared<cav::Timer>()) : timer_(timer),config(),tracked_sensor(new ObjectTrackerSensorObjects()) {
-        tracked_sensor->time_stamp = timer_->getTime();
+    std::unique_ptr<ObjectTrackerSensorObjects> tracked_sensor_;
+    explicit ObjectTracker(std::shared_ptr<cav::Timer> timer = std::make_shared<cav::Timer>()) : timer_(timer), config(), tracked_sensor_(new ObjectTrackerSensorObjects()) 
+    {
+        tracked_sensor_->time_stamp = timer_->getTime();
     }
 
     void reset()
     {
-        tracked_sensor.reset(new ObjectTrackerSensorObjects());
-        tracked_sensor->time_stamp = timer_->getTime();
+        tracked_sensor_.reset(new ObjectTrackerSensorObjects());
+        internal_tracks_.clear();
+        tracked_sensor_->time_stamp = timer_->getTime();
     }
 
     virtual~ObjectTracker() {}
 
     template<class InputIterator>
-    void addObjects(InputIterator begin,
-                    InputIterator end,
-                    size_t src_id,
-                    TimeStampType time_stamp)
+    void addObjects(InputIterator begin, InputIterator end, size_t src_id, TimeStampType time_stamp)
     {
         ObjectTrackerSensorObjects objs;
         objs.src_id = src_id;
         objs.time_stamp = time_stamp;
-        objs.objects.insert(objs.objects.begin(),begin,end);
-        std::for_each(objs.objects.begin(),objs.objects.end(),[src_id](TrackedObject&obj){obj.src_id=src_id;});
+        objs.objects.insert(objs.objects.begin(), begin, end);
+        std::for_each(objs.objects.begin(), objs.objects.end(), [src_id](TrackedObject&obj){ obj.src_id = src_id; });
         process_q_.emplace_back(std::move(objs));
     }
 
-    size_t process() {
-        if (process_q_.empty()) return 0;
-        //Sort measurements from lowest time_stamp
-        std::sort(process_q_.begin(),
-                  process_q_.end(),
-                  [](const ObjectTrackerSensorObjects &left,
-                     const ObjectTrackerSensorObjects &right) {
-                      return left.time_stamp < right.time_stamp;
-                  });
+    size_t process() 
+    {
+        if (process_q_.empty()) 
+        {
+            return 0;   // There are no new trackes to process
+        }
 
-        //Process measurements
-        std::for_each(process_q_.begin(),
-                      process_q_.end(),
-                      [this](const ObjectTrackerSensorObjects &obj) {
-                          auto internal_track = internal_tracks_.find(obj.src_id);
+        // Sort measurements from lowest time_stamp
+        std::sort(process_q_.begin(), process_q_.end(), [](const ObjectTrackerSensorObjects &left, const ObjectTrackerSensorObjects &right) { return left.time_stamp < right.time_stamp; });
 
-                          //have we started tracking this sensor yet
-                          if (internal_track == internal_tracks_.end()) {
-                              ObjectTrackerSensorObjects new_internal_track;
-                              new_internal_track.src_id = obj.src_id;
-                              new_internal_track.time_stamp = obj.time_stamp;
-                              auto ret = internal_tracks_.insert(std::make_pair(obj.src_id, new_internal_track));
-                              internal_track = ret.first;
-                          }
-
-                          processObjects(obj, internal_track->second);
-
-                      });
-
+        // Process new measurements
+        for(auto& obj : process_q_)
+        {
+            auto internal_track = internal_tracks_.find(obj.src_id);
+            if (internal_track == internal_tracks_.end()) 
+            {
+                ObjectTrackerSensorObjects new_internal_track;
+                new_internal_track.src_id = obj.src_id;
+                new_internal_track.time_stamp = obj.time_stamp;
+                auto ret = internal_tracks_.insert(std::make_pair(obj.src_id, new_internal_track));
+                internal_track = ret.first;
+            }
+            processObjects(obj, internal_track->second);    // This will combine new measurements into known list from an individual sensor
+        }
 
         size_t size = process_q_.size();
         process_q_.clear();
-        ObjectTrackerSensorObjects merged_measurement = mergeTracks();
-        //We want the tracked_score to be 0 so we get ID association but dont do any "real" tracking
-        if(tracked_sensor->objects.empty())
+
+        ObjectTrackerSensorObjects merged_measurement = mergeTracks();  // This will Merge all of the new measurement tracks together (from multiple sensors)
+
+        if(tracked_sensor_->objects.empty())
         {
-            tracked_sensor->src_id = merged_measurement.src_id;
-            tracked_sensor->time_stamp = merged_measurement.time_stamp;
+           tracked_sensor_->src_id = merged_measurement.src_id;
+           tracked_sensor_->time_stamp = merged_measurement.time_stamp;
         }
         else
         {
-            std::for_each(tracked_sensor->objects.begin(),tracked_sensor->objects.end(),[](TrackedObject& obj){obj.tracked_score = 0.0;});
+           std::for_each(tracked_sensor_->objects.begin(), tracked_sensor_->objects.end(), [](TrackedObject& obj){ obj.tracked_score = 0.0; });
         }
 
-        processObjects(merged_measurement,*tracked_sensor);
+        processObjects(merged_measurement, *tracked_sensor_);   // This will combined the grouped new measurements with the known tracked objects
+
         return size;
-
     }
-
-};
-}
+}; // End ObjectTracker class
+} // End torc namespace

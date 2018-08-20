@@ -1,1 +1,11 @@
-odometry_topics: [""]
+# String: The Frame Id of a coordinate frame which is used for local planning
+inertial_frame_name: "odom"
+
+# String: The Frame Id of a coordinate frame which represents the host vehicle's back axel
+body_frame_name: "base_link"
+
+# String: The Frame Id of a coordinate frame which is North Ead Down (NED) aligned 
+ned_frame_name: "map"
+
+# Boolean: True if sensor fusion will use the interface manager to find drivers
+use_interface_mgr: true
