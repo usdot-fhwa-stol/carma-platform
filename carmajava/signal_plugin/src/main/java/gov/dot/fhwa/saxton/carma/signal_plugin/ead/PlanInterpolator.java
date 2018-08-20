@@ -25,12 +25,16 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 /**
  * A MotionInterpolator is responsible for interpolating the position of the host vehicle between two or more nodes in a plan
  * The returned list of RoutePointStamped objects can be used to check conflicts with the CARMA conflict detection system
+ * 
+ * NOTE: Returned route points do not have valid lane, crosstrack, or route segment index
  */
 public class PlanInterpolator implements IMotionInterpolator {
 
   @Override
   public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double timeStep) {
     Node prevNode = null;
+    List<RoutePointStamped> points = new LinkedList<>();
+    final double timeStep_sqr = timeStep * timeStep;
 
     for (Node n: trajectory) {
       if (prevNode == null) {
@@ -38,23 +42,34 @@ public class PlanInterpolator implements IMotionInterpolator {
         continue;
       }
 
-      double t_0 = prevNode.getTimeAsDouble();
-      double dt = n.getTimeAsDouble() - prevNode.getTimeAsDouble();
-      double dv = n.getSpeedAsDouble() - prevNode.getSpeedAsDouble();
-      double dx = n.getDistanceAsDouble() - prevNode.getDistanceAsDouble();
+      final double t_0 = prevNode.getTimeAsDouble();
+      final double x_0 = prevNode.getDistanceAsDouble();
+      final double v_0 = prevNode.getSpeedAsDouble();
 
-      double a = dv / dt;
+      final double t_f = n.getTimeAsDouble();
 
+      final double dt =  t_f - x_0;
+      final double dv = n.getSpeedAsDouble() - v_0;
+      final double a = dv / dt; // Assume constant acceleration
+      final double half_a = a * 0.5;
+      final double dvPerTimestep = a*timeStep;
+      
+      double v = v_0;
+      double x = x_0;
       double t = t_0;
-      List<RoutePointStamped> points = new LinkedList<>();
-      while (t < t_0) {
 
-        RoutePointStamped rp = new RoutePointStamped(downtrack, crosstrack, time)
+      while (t <= t_f) {
+
+        points.add(new RoutePointStamped(x, 0, t)); // TODO crosstrack
+        x += half_a * timeStep_sqr + v * timeStep;
+        v += dvPerTimestep;
         t += timeStep;
       }
+
+      prevNode = n;
     }
 
-    return null;
+    return points;
   }
 
 }

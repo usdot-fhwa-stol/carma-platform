@@ -30,11 +30,13 @@ public interface IMotionInterpolator {
   /**
    * Interpolates the vehicle position between each pair of nodes in a vehicle's path.
    * The returned list is in the RoutePointStamped format for use with conflict detection systems provided by CARMA
+   * NOTE: The lane and route segment values in this list will not be set
+   * TODO: Should the crosstrack be set or always 0?
    * 
    * @param path A time sorted list of nodes which define the host vehicle's desired trajectory
    * @param timeStep The time gap between each point in the output list
    * 
-   * @return A list of route point stamped
+   * @return A list of route point stamped. The lanes and route segment values will not be set.
    */
   public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double timeStep);
 }
