@@ -30,12 +30,22 @@ public class DefaultCostModelFactory implements ICostModelFactory{
 
   private final IGlidepathAppConfig config;
 
+  /**
+   * Constructor
+   * 
+   * @param config A IGlidepathAppConfig config allowing parameters for requested cost models to be loaded
+   */
   public DefaultCostModelFactory(IGlidepathAppConfig config) {
     this.config = config;
   }
 
   /**
    * Create a new instance of ICostModel
+   * 
+   * @param desiredModelName The name identifying the model to be used
+   * @throws IllegalArgumentException Exception thrown when the specified model cannot be instantiated
+   * 
+   * @return An initialized ICostModel object
    */
   public ICostModel getCostModel(String desiredModelName) throws IllegalArgumentException {
     switch(desiredModelName) {
