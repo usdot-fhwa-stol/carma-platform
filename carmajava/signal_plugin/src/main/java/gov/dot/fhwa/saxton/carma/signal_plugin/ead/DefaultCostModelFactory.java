@@ -22,10 +22,9 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ICostModel;
 
 /**
- * TODO Factory-pattern class for IAccStrategy objects
+ * Factory-pattern class for ICostModel objects
  * <p>
- * Used in conjunction with {@link AccStrategyManager} to provide access to ACC functions
- * inside {@link IManeuver} instances.
+ * Used by the Signal Plugin to determine which cost model is being used for the A-Star search
  */
 public class DefaultCostModelFactory implements ICostModelFactory{
 
@@ -36,7 +35,7 @@ public class DefaultCostModelFactory implements ICostModelFactory{
   }
 
   /**
-   * Create a new instance of IAccStrategy
+   * Create a new instance of ICostModel
    */
   public ICostModel getCostModel(String desiredModelName) throws IllegalArgumentException {
     switch(desiredModelName) {
