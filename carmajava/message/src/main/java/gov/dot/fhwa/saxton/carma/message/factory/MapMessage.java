@@ -5,6 +5,7 @@ import org.ros.internal.message.Message;
 import org.ros.message.MessageFactory;
 
 import cav_msgs.ByteArray;
+import cav_msgs.Connection;
 import cav_msgs.GenericLane;
 import cav_msgs.IntersectionGeometry;
 import cav_msgs.MapData;
@@ -19,6 +20,7 @@ public class MapMessage implements IMessage<MapData>{
     protected static final int INTERSECTION_DATA_SIZE = 9;
     protected static final int MAX_LANE_LIST_SIZE = 255;
     protected static final int NODE_OFFSETS_DATA_SIZE = 189;
+    protected static final int CONNECTION_DATA_SIZE = 32;
 
     protected SaxtonLogger log;
     protected MessageFactory messageFactory;
@@ -44,7 +46,7 @@ public class MapMessage implements IMessage<MapData>{
      * @return -1 means decode failed; 0 means decode is successful
      */
     public native int decodeMap(byte[] encodedArray, Object map_object, int[] intersectionData, int[] laneIDData,
-            int[] ingressApproachData, int[] egressApproachData, int[] laneDirectionData, int[] laneTypeData, int[][] nodeOffsetData);
+            int[] ingressApproachData, int[] egressApproachData, int[] laneDirectionData, int[] laneTypeData, int[][] nodeOffsetData, int[][] connectsToData);
     
     @Override
     public MessageContainer encode(Message plainMessage) {
@@ -68,9 +70,10 @@ public class MapMessage implements IMessage<MapData>{
         int[] laneDirectionData = new int[MAX_LANE_LIST_SIZE];
         int[] laneTypeData = new int[MAX_LANE_LIST_SIZE];
         int[][] nodeOffsetData = new int[MAX_LANE_LIST_SIZE][NODE_OFFSETS_DATA_SIZE];
+        int[][] connectsToData = new int[MAX_LANE_LIST_SIZE][CONNECTION_DATA_SIZE];
         MapData map = messageFactory.newFromType(MapData._TYPE);
         int res = decodeMap(encodedMsg, map, intersectionData, laneIDData, ingressApproachData,
-                                    egressApproachData, laneDirectionData, laneTypeData, nodeOffsetData);
+                            egressApproachData, laneDirectionData, laneTypeData, nodeOffsetData, connectsToData);
         if (res == -1) {
             log.warn("MapMessage cannot be decoded.");
             return new MessageContainer("MAP", null);
@@ -165,6 +168,20 @@ public class MapMessage implements IMessage<MapData>{
                         break;
                     }
                     lane.getNodeList().getNodes().getNodeSetXy().add(node);
+                }
+                for(int j = 0; j < CONNECTION_DATA_SIZE; j += 2) {
+                    if(connectsToData[i][j] == -1) {
+                        break;
+                    } else {
+                        Connection connection = messageFactory.newFromType(Connection._TYPE);
+                        connection.getConnectingLane().setLane((short) connectsToData[i][j]);
+                        connection.setSignalGroupExists(connectsToData[i][j + 1] != -1);
+                        if(connection.getSignalGroupExists()) {
+                            connection.setSignalGroup((byte) connectsToData[i][j + 1]);
+                        }
+                        lane.setConnectsToExists(true);
+                        lane.getConnectsTo().getConnectToList().add(connection);
+                    }
                 }
                 intersection.getLaneSet().getLaneList().add(lane);
             }
