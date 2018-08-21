@@ -7,7 +7,6 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.XgvStatus;
 import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.messages.ReportDiscreteDevicesMessage;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.Date;
 
@@ -16,7 +15,6 @@ import java.util.Date;
  */
 public class DviUIMessage {
 
-    private SimpMessagingTemplate template;
     private static ILogger logger = LoggerManager.getLogger(DviUIMessage.class);
 
     private GlidepathState glidepathState;

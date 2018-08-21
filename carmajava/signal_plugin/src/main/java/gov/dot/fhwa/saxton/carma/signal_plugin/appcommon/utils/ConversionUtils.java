@@ -6,7 +6,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
 
 import java.util.Random;
-import static gov.dot.fhwa.saxton.glidepath.appcommon.Constants.*;
+import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants.*;
 
 
 /**

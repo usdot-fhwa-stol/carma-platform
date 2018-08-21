@@ -75,7 +75,7 @@ public class CarmaLoggerProxy implements ILogger {
 	@Override
 	public LogEntry info(String tag, String message, Object extra) {
 		logger.info(tag, message);
-		return generateLogEntry(LogEntry.Level.INFO, tag, message, info);
+		return generateLogEntry(LogEntry.Level.INFO, tag, message, extra);
 	}
 
 	@Override

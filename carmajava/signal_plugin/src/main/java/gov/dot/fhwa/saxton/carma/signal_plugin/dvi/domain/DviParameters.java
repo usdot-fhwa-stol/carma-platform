@@ -4,8 +4,6 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicat
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * DviParameters
@@ -14,8 +12,6 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class DviParameters {
-    private static Logger logger = LoggerFactory.getLogger(DviParameters.class);
-
     /**
      * speeds currently mph, we convert to metric for non-UI components
      */

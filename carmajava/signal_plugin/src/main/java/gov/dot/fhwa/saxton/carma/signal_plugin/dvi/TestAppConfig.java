@@ -1,7 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.dvi;
 
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
-import org.springframework.context.annotation.Configuration;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +8,6 @@ import java.util.Map;
 /**
  * AppConfig override for unit testing purposes.
  */
-@Configuration
 public class TestAppConfig implements IGlidepathAppConfig {
 
     private Map<String, String> properties = new HashMap<>();

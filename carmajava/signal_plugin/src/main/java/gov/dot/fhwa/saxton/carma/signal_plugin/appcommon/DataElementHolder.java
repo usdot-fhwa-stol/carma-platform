@@ -6,7 +6,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.XgvStatus;
 
 import java.util.*;
 
-import static gov.dot.fhwa.saxton.glidepath.appcommon.DataElementKey.*;
+import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey.*;
 
 public class DataElementHolder {
 
