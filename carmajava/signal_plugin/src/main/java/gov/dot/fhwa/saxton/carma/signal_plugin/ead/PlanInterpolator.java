@@ -36,8 +36,11 @@ public class PlanInterpolator implements IMotionInterpolator {
     List<RoutePointStamped> points = new LinkedList<>();
     final double timeStep_sqr = timeStep * timeStep;
 
+    // Iterate over list of nodes
     for (Node n: trajectory) {
       if (prevNode == null) {
+        // Add the first node to the list and store it as the prev node
+        points.add(new RoutePointStamped(n.getDistanceAsDouble(), 0, n.getTimeAsDouble()));
         prevNode = n;
         continue;
       }
@@ -48,7 +51,7 @@ public class PlanInterpolator implements IMotionInterpolator {
 
       final double t_f = n.getTimeAsDouble();
 
-      final double dt =  t_f - x_0;
+      final double dt =  t_f - t_0;
       final double dv = n.getSpeedAsDouble() - v_0;
       final double a = dv / dt; // Assume constant acceleration
       final double half_a = a * 0.5;
@@ -58,12 +61,13 @@ public class PlanInterpolator implements IMotionInterpolator {
       double x = x_0;
       double t = t_0;
 
-      while (t <= t_f) {
+      // Interpolate between current node and previous node
+      while (t < t_f) {
 
-        points.add(new RoutePointStamped(x, 0, t)); // TODO crosstrack
         x += half_a * timeStep_sqr + v * timeStep;
         v += dvPerTimestep;
         t += timeStep;
+        points.add(new RoutePointStamped(x, 0, t)); // Add new interpolated node to list
       }
 
       prevNode = n;
