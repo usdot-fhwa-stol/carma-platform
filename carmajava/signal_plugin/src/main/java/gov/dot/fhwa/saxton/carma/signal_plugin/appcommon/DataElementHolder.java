@@ -2,7 +2,6 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
-import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.XgvStatus;
 
 import java.util.*;
 
@@ -119,26 +118,6 @@ public class DataElementHolder {
         return getDoubleElement( SPEED );
     }
 
-    /**
-     * Get the XgvStatus object if it exists, null otherwise
-     *
-     * @return XgvStatus or null
-     */
-    public XgvStatus getXgvStatus()   {
-        XgvStatus xgvStatus = null;
-
-        DataElement element = dataElements.get(XGV_STATUS);
-
-        if (element != null && element instanceof XgvStatusDataElement)   {
-            xgvStatus = ((XgvStatusDataElement) element).value();
-
-        }
-
-        return xgvStatus;
-
-    }
-
-
     public void putAll(DataElementHolder newData)   {
         dataElements.putAll(newData.dataElements);
     }
@@ -231,12 +210,6 @@ public class DataElementHolder {
             else if (value instanceof PhaseDataElement)   {
                 strValue = ((PhaseDataElement) value).value().toString();
             }
-            else if (value instanceof XgvStatusDataElement)   {
-                strValue = ((XgvStatusDataElement) value).value().toString();
-            }
-            else if (value instanceof MotionStatusDataElement)   {
-                strValue = ((MotionStatusDataElement) value).value().toString();
-            }
             else if (value instanceof IntDataElement)   {
                 strValue = Integer.toString(getIntElement(key));
             }
@@ -269,12 +242,6 @@ public class DataElementHolder {
             }
             else if (value instanceof PhaseDataElement)   {
                 strValue = ((PhaseDataElement) value).value().toString();
-            }
-            else if (value instanceof XgvStatusDataElement)   {
-                strValue = ((XgvStatusDataElement) value).value().toString();
-            }
-            else if (value instanceof MotionStatusDataElement)   {
-                strValue = ((MotionStatusDataElement) value).value().toString();
             }
 
             sb.append("\n        " + key + ": " + strValue);
