@@ -1,13 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin;
 
 import java.util.ArrayList;
-<<<<<<< Updated upstream
-import java.util.List;
-
-import cav_msgs.MapData;
-import cav_msgs.SPAT;
-import geometry_msgs.Twist;
-=======
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +19,6 @@ import cav_msgs.NodeOffsetPointXY;
 import cav_msgs.NodeXY;
 import cav_msgs.Position3D;
 import cav_msgs.SPAT;
->>>>>>> Stashed changes
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
@@ -38,20 +30,6 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-<<<<<<< Updated upstream
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntersectionCollectionDataElement;
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IAsdListDataElement;;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IAsdMessage;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionCollection;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
-import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
-import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IEad;
-import sensor_msgs.NavSatFix;;
-=======
 import gov.dot.fhwa.saxton.carma.guidance.util.IntersectionData;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
@@ -69,7 +47,6 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IEad;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import sensor_msgs.NavSatFix;
->>>>>>> Stashed changes
 
 /**
  * Top level class in the Signal Plugin that does trajectory planning through
