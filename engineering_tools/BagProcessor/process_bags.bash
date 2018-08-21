@@ -3,6 +3,7 @@ result=${PWD##*/}
 under="_"  
 date=$1
 filter=${2:-0}
+rosplay=${3:-5}
 echo $filter
 newfolder=$result$under$date
 cd ../
@@ -18,10 +19,10 @@ for folder in */ ; do
 	then 
 		files=( ./*.bag )
 		bagfile="${files[0]}"
-		bash ./process_one_bag.bash $bagfile $filter
+		bash ./process_one_bag.bash $bagfile $filter $rosplay
 		sleep 1s
 		for infolder in */ ; do
-			mv $infolder ../../$newfolder		
+			mv $infolder/ ../../$newfolder/		
 		done
 		sleep 1s
 		rm ./topics.txt

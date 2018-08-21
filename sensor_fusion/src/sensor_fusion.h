@@ -90,7 +90,6 @@ public:
         dyn_cfg_server_.reset(new dynamic_reconfigure::Server<sensor_fusion::SensorFusionConfig>());
     }
 
-
     /**
      * @brief Main process function
      * @return 0 on Success
@@ -100,24 +99,29 @@ public:
 private:
 
     std::unique_ptr<dynamic_reconfigure::Server<sensor_fusion::SensorFusionConfig>> dyn_cfg_server_;
+
     sensor_fusion::SensorFusionConfig config_;
+
     std::unique_ptr<torc::ObjectTracker> tracker_;
+
     tf2_ros::Buffer tf2_buffer_;
+
     ros::Timer update_services_timer_;
+
     std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+
     cav::TwistHistoryBuffer twist_history_buffer_;
 
     std::unique_ptr<ros::NodeHandle> nh_, pnh_;
+
     std::unordered_map<std::string, std::unique_ptr<bond::Bond>> bond_map_;
+
     bool use_interface_mgr_;
+
     std::string inertial_frame_name_, body_frame_name_, ned_frame_name_;
 
-    // TODO remove once Truck pinpoint is fixed
-    bool use_altitude_override_;
-    double altitude_override_;
-
     /**
-     * @brief This function is the bond call back for on_broken event    *
+     * @brief This function is the bond call back for on_broken event
      * @param node_name name of the node this callback is firing for
      *
      * When a bond is broken , we clear our record of the bond destroying our reference to the bond
@@ -139,7 +143,6 @@ private:
         ROS_DEBUG_STREAM("Bonded to " << node_name);
     }
 
-
     /**
      * @brief Callback for dynamic_reconfigure. This is called by the dynamic_reconfigure server.
      *
@@ -147,7 +150,6 @@ private:
      * @param level
      */
     void dyn_recfg_cb(sensor_fusion::SensorFusionConfig &cfg, uint32_t level);
-
 
     /**
      * @brief Handles the call to the interface manager to receive api of the given node
@@ -171,7 +173,7 @@ private:
     void update_subscribed_services();
 
 
-    ros::Publisher odom_pub_, navsatfix_pub_, heading_pub_, velocity_pub_, objects_pub_, vehicles_pub_;
+    ros::Publisher odom_pub_, navsatfix_pub_, heading_pub_, velocity_pub_, objects_pub_;
 
     /**
      * @brief Publishes the filtered updates
@@ -183,7 +185,6 @@ private:
      */
     void publish_updates();
 
-
     /**
      * The following callbacks are attached to ROS topics with their provided type
      *
@@ -191,7 +192,6 @@ private:
      * These callbacks currently for the skeleton only store the message in a map
      * to be used later
      */
-
     std::unordered_map<std::string, nav_msgs::OdometryConstPtr> odom_map_;
     void odom_cb(const ros::MessageEvent<nav_msgs::Odometry>& event);
 
@@ -205,7 +205,7 @@ private:
     void velocity_cb(const ros::MessageEvent<geometry_msgs::TwistStamped>& event);
 
     std::deque<std::pair<std::string, cav_msgs::ExternalObjectListConstPtr>> objects_cb_q_;
-    void objects_cb(const cav_msgs::ExternalObjectListConstPtr &objList,const std::string&);
+    void objects_cb(const cav_msgs::ExternalObjectListConstPtr &objList, const std::string&);
 
     void bsm_cb(const cav_msgs::BSMConstPtr& msg);
 };

@@ -43,7 +43,6 @@ uint16 start_time
 bool start_time_exists
 
 uint16 min_end_time
-bool min_end_time_exists
 
 uint16 max_end_time
 bool max_end_time_exists

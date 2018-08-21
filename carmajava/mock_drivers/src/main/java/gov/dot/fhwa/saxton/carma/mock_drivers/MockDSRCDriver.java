@@ -136,19 +136,12 @@ public class MockDSRCDriver extends AbstractMockDriver {
       // Convert the string to a byte array
       byte[] rawBytes = DatatypeConverter.parseHexBinary(currentByteString);
       
-      // Publish mobility Req message every 3 seconds
+      // Publish SPAT message every 3 seconds
+      // This binary array is only for local integration testing
       message_counter++;
       if(message_counter % 30 == 0) {
-          rawBytes = new byte[]{0, -16, -128, -122, 77, -72, -109, -22, 45, 104, -43, -117, 6, 23, 66,
-                  -35, -42, 44, 32, -62, -121, 18, 44, 102, 44, 88, -79, 98, -59, -117, 21,
-                  -84, -103, 50, 100, -75, -101, 54, 108, -42, -63, -125, 6, 10, -42, 44, 88,
-                  -79, 98, -59, -117, 22, 44, 88, -79, 96, -63, -125, 6, 12, 24, 48, 96, -63,
-                  -117, 38, 109, 26, -74, 110, -31, -56, 66, -36, 60, 60, -74, -31, 95, 67,
-                  102, 30, -101, -9, -18, -45, -69, 61, -48, -7, -45, 10, -111, 43, -90, 22,
-                  -44, 94, 76, 49, 12, -54, -63, -125, 6, 12, 24, 48, 96, -63, -125, 6, 12,
-                  24, 48, 96, -63, -125, 2, 118, -32, -46, -114, -59, -45, 85, -52, 22, 32,
-                  -125, 74, 59, 39, 76, 91, 46, 97, 116};
-          recvMsg.setMessageType("MobilityRequest");
+          rawBytes = new byte[]{0, 19, 28, 68, 99, 8, 0, -127, 47, 104, 0, 0, 12, 45, 64, 16, 2, 4, 52, 43, 63, -84, 10, 0, 32, 35, 33, 89, 73, 95, -100};
+          recvMsg.setMessageType("SPAT");
       }
       
       

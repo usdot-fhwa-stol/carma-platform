@@ -39,36 +39,36 @@
  * @param tie_point
  * @return
  */
-double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie_point) {
+double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie_point) 
+{
     double a = EARTH_RADIUS_METERS;
     double e_sq = 0.00669438;
-    double s_sq = pow(sin(tie_point.lat*DEG2RAD), 2);
+    double s_sq = pow(sin(tie_point.lat * DEG2RAD), 2);
 
-    double R_m = a*(1.0-e_sq)/pow(sqrt(1.0-e_sq*s_sq), 3);
+    double R_m = a * (1.0 - e_sq) / pow(sqrt(1.0 - e_sq * s_sq), 3);
 
     double meters_per_rad_lat = R_m + tie_point.elevation;
 
     return meters_per_rad_lat;
 }
 
-
 /**
  * @brief gets the meters per radian of longitude at a global coordinate
  * @param tie_point
  * @return
  */
-double wgs84_utils::calcMetersPerRadLon(const wgs84_utils::wgs84_coordinate &tie_point) {
+double wgs84_utils::calcMetersPerRadLon(const wgs84_utils::wgs84_coordinate &tie_point) 
+{
     double a = EARTH_RADIUS_METERS;
     double e_sq = 0.00669438;
-    double s_sq = pow(sin(tie_point.lat*DEG2RAD), 2);
+    double s_sq = pow(sin(tie_point.lat * DEG2RAD), 2);
 
-    double R_n = a/(sqrt(1.0-e_sq*s_sq));
+    double R_n = a / (sqrt(1.0 - e_sq * s_sq));
 
-    double meters_per_rad_lon = (R_n + tie_point.elevation) * cos(tie_point.lat*DEG2RAD);
+    double meters_per_rad_lon = (R_n + tie_point.elevation) * cos(tie_point.lat * DEG2RAD);
 
     return meters_per_rad_lon;
 }
-
 
 /**
  * @brief Converts a global coordinate in NED to a local coordinate frame in FLU based on a reference global/local pair
@@ -84,7 +84,7 @@ void wgs84_utils::convertToOdom(const wgs84_utils::wgs84_coordinate &src,
                                 const wgs84_utils::wgs84_coordinate &wgs84_ref,
                                 const Eigen::Vector3d &odom_pose_ref,
                                 const Eigen::Quaternion<double>& odom_rot_ref,
-                                const Eigen::Transform<double,3,Eigen::Affine>& ned_odom_tf,
+                                const Eigen::Transform<double, 3, Eigen::Affine>& ned_odom_tf,
                                 Eigen::Vector3d &out_pose,
                                 Eigen::Quaternion<double> &out_rot)
 {
@@ -93,22 +93,22 @@ void wgs84_utils::convertToOdom(const wgs84_utils::wgs84_coordinate &src,
     double delta_elev = src.elevation - wgs84_ref.elevation;
     double delta_heading = src.heading - wgs84_ref.heading;
 
-    //calculate translation
+    // Calculate translation
     Eigen::Vector3d ned_offset;
-    ned_offset[0] = delta_lat*DEG2RAD*calcMetersPerRadLat(wgs84_ref);
-    ned_offset[1] = delta_lon*DEG2RAD*calcMetersPerRadLon(wgs84_ref);
+    ned_offset[0] = delta_lat * DEG2RAD * calcMetersPerRadLat(wgs84_ref);
+    ned_offset[1] = delta_lon * DEG2RAD * calcMetersPerRadLon(wgs84_ref);
     ned_offset[2] = -delta_elev;
 
-    auto ned_pose = ned_odom_tf.inverse()*odom_pose_ref;
+    auto ned_pose = ned_odom_tf.inverse() * odom_pose_ref;
     ned_pose += ned_offset;
     out_pose = ned_odom_tf*ned_pose;
 
-    //Calculate orientation
+    // Calculate orientation
 
     Eigen::Quaternion<double> q_offset;
-    q_offset = Eigen::AngleAxisd(delta_heading*DEG2RAD,Eigen::Vector3d::UnitZ());
-
+    q_offset = Eigen::AngleAxisd(delta_heading * DEG2RAD, Eigen::Vector3d::UnitZ());
+ 
     Eigen::Quaternion<double> neu_odom_rot(ned_odom_tf.rotation());
 
-    out_rot =  neu_odom_rot*q_offset*odom_rot_ref;
+    out_rot =  neu_odom_rot * q_offset * odom_rot_ref;
 }
