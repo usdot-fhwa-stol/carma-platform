@@ -3,7 +3,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services;
 import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerTask;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.*;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviParameters;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.DviUIMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.GlidepathState;
@@ -16,10 +16,6 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.XgvStatus;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.List;
@@ -30,8 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * The executor service that manages the device read cycles
  *
  */
-@Service
-public class DviExecutorService implements Callable<Boolean>, DisposableBean {
+public class DviExecutorService implements Callable<Boolean> {
 
     private static ILogger logger = LoggerManager.getLogger(DviExecutorService.class);
 
@@ -41,11 +36,7 @@ public class DviExecutorService implements Callable<Boolean>, DisposableBean {
 
     private AtomicBoolean bRecordData = new AtomicBoolean(true);
 
-    @Autowired
-    private GlidepathAppConfig appConfig;
-
-    @Autowired
-    private SimpMessagingTemplate template;
+    private IGlidepathAppConfig appConfig;
 
     private List<IConsumerTask> consumers;
 
@@ -81,6 +72,8 @@ public class DviExecutorService implements Callable<Boolean>, DisposableBean {
         // set maximum speed from configuration
         DviParameters dviParameters = DviParameters.getInstance();
         dviParameters.setMaximumSpeed(appConfig.getMaximumSpeed());
+
+        appConfig = GlidepathApplicationContext.getInstance().getAppConfig();
 
         readCycle = appConfig.getPeriodicDelay();
         uiRefresh = appConfig.getUiRefresh();
@@ -268,7 +261,6 @@ public class DviExecutorService implements Callable<Boolean>, DisposableBean {
         return new Boolean(true);
     }
 
-    @Override
     public void destroy()   {
         stop();
 
@@ -315,14 +307,7 @@ public class DviExecutorService implements Callable<Boolean>, DisposableBean {
      * @param uiMessage
      */
     public synchronized void setDviUiMessage(DviUIMessage uiMessage)   {
-        logger.debug(ILogger.TAG_EXECUTOR,  "Setting DomainObject from consumer: " + uiMessage.toString());
-        if (refreshCounter >= uiRefresh - 1)   {
-            template.convertAndSend("/topic/dvitopic", uiMessage);
-            refreshCounter = 0;
-        }
-        else   {
-            refreshCounter += 1;
-        }
+        // NO-OP
     }
 
     /**

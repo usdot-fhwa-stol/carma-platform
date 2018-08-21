@@ -18,7 +18,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IAsdListDataElement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntDataElement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapConsumer;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import org.joda.time.DateTime;

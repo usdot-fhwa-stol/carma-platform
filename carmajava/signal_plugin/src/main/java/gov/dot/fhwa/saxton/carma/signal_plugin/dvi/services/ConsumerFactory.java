@@ -3,7 +3,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerTask;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 
 import java.util.ArrayList;
 import java.util.List;

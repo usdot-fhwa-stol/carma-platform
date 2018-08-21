@@ -6,49 +6,36 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.IConsumerTask;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services.ConsumerFactory;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.services.DviExecutorService;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.domain.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
-import javax.inject.Inject;
-
-@RestController
 public class DviController {
 
-    @Inject
     GlidepathAppConfig appConfig;
 
-    @Autowired
     DviExecutorService dviService;
 
     private static ILogger logger = LoggerManager.getLogger(DviController.class);
 
     private final AtomicLong counter = new AtomicLong();
 
-    @RequestMapping("/initialize")
-    public AjaxResponse initialize(@RequestParam(value="device", required=false, defaultValue="all") String name) {
+    public AjaxResponse initialize(String name) {
 
         boolean bResult = dviService.start();
         return new AjaxResponse(bResult, "The DviExecutorService has started...");
     }
 
-    @RequestMapping("/terminate")
-    public AjaxResponse terminate(@RequestParam(value="device", required=false, defaultValue="all") String name) {
+    public AjaxResponse terminate(String name) {
         dviService.stop();
         return new AjaxResponse(true, "The DviExecutorService has stopped.");
     }
 
-
-    @RequestMapping("/setDviParameters")
-    public OperatingSpeedResponse setOperatingSpeed(@RequestParam(value="operatingSpeed", required=true) String operatingSpeed,
-                                                    @RequestParam(value="logFilePrefix", required=true) String logFilePrefix)   {
+    public OperatingSpeedResponse setOperatingSpeed(String operatingSpeed,
+                                                    String logFilePrefix)   {
 
         // this is the beginning of starting eco drive
         // if the user clicked EcoDrive GO button without clicking Record Data, start recording data now to ensure
@@ -74,8 +61,7 @@ public class DviController {
     }
 
 
-    @RequestMapping("/setEcoDrive")
-    public AjaxResponse setEcoDrive(@RequestParam(value="ecoDrive", required=true) boolean ecoDrive) {
+    public AjaxResponse setEcoDrive(boolean ecoDrive) {
         boolean bResult = false;
 
         if (!ecoDrive)   {
@@ -91,8 +77,7 @@ public class DviController {
         return new AjaxResponse(true, statusMessage);
     }
 
-    @RequestMapping("/ajaxStringList")
-    public ConsumerListResponse ajaxAction(@RequestParam(value="action", required=true) String action) {
+    public ConsumerListResponse ajaxAction(String action) {
         boolean bResult = false;
 
         List<String> consumers = null;
@@ -113,9 +98,7 @@ public class DviController {
         return new ConsumerListResponse(true, statusMessage, consumers);
     }
 
-
-    @RequestMapping("/ajaxAddConsumers")
-    public AjaxResponse ajaxAddConsumer(@RequestParam(value="consumers[]", required=true) String[] consumers ) {
+    public AjaxResponse ajaxAddConsumer(String[] consumers ) {
         boolean bResult = false;
 
         List<IConsumerTask> consumerList = new ArrayList<IConsumerTask>();
@@ -133,8 +116,7 @@ public class DviController {
         return new AjaxResponse(true, statusMessage);
     }
 
-    @RequestMapping("/setLogging")
-    public AjaxResponse setLogging(@RequestParam(value="logging", required=true) boolean flag) {
+    public AjaxResponse setLogging(boolean flag) {
         boolean bResult = false;
 
         //  stop logging, shutdown executor, move logs and respond to ajax request
