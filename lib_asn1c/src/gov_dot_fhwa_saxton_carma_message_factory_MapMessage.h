@@ -7,13 +7,23 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#undef gov_dot_fhwa_saxton_carma_message_factory_MapMessage_MAX_NODE_LIST_SIZE
+#define gov_dot_fhwa_saxton_carma_message_factory_MapMessage_MAX_NODE_LIST_SIZE 63L
+#undef gov_dot_fhwa_saxton_carma_message_factory_MapMessage_INTERSECTION_DATA_SIZE
+#define gov_dot_fhwa_saxton_carma_message_factory_MapMessage_INTERSECTION_DATA_SIZE 9L
+#undef gov_dot_fhwa_saxton_carma_message_factory_MapMessage_MAX_LANE_LIST_SIZE
+#define gov_dot_fhwa_saxton_carma_message_factory_MapMessage_MAX_LANE_LIST_SIZE 255L
+#undef gov_dot_fhwa_saxton_carma_message_factory_MapMessage_NODE_OFFSETS_DATA_SIZE
+#define gov_dot_fhwa_saxton_carma_message_factory_MapMessage_NODE_OFFSETS_DATA_SIZE 189L
+#undef gov_dot_fhwa_saxton_carma_message_factory_MapMessage_CONNECTION_DATA_SIZE
+#define gov_dot_fhwa_saxton_carma_message_factory_MapMessage_CONNECTION_DATA_SIZE 32L
 /*
  * Class:     gov_dot_fhwa_saxton_carma_message_factory_MapMessage
  * Method:    decodeMap
- * Signature: ([BLjava/lang/Object;[I[I[I[I[I[I[[I)I
+ * Signature: ([BLjava/lang/Object;[I[I[I[I[I[I[[I[[I)I
  */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage_decodeMap
-  (JNIEnv *, jobject, jbyteArray, jobject, jintArray, jintArray, jintArray, jintArray, jintArray, jintArray, jobjectArray);
+  (JNIEnv *, jobject, jbyteArray, jobject, jintArray, jintArray, jintArray, jintArray, jintArray, jintArray, jobjectArray, jobjectArray);
 
 #ifdef __cplusplus
 }

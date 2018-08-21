@@ -44,8 +44,9 @@ public class MapDecodeTest {
         int[] laneDirectionData = new int[255];
         int[] laneTypeData = new int[255];
         int[][] nodeOffsetData = new int[255][189];
+        int[][] connectsToData = new int[255][32];
         int res = message.decodeMap(byteMessage, mapData, intersectionData, laneIDData, ingressApproachData,
-                                    egressApproachData, laneDirectionData, laneTypeData, nodeOffsetData);
+                                    egressApproachData, laneDirectionData, laneTypeData, nodeOffsetData, connectsToData);
         // verify the decode is successful
         assertEquals(0, res);
         // intersectionId = 9709, revision = 3, lat = 389549844, long = -771493239
@@ -91,6 +92,7 @@ public class MapDecodeTest {
         assertArrayEquals(laneType, laneTypeData);
         // TODO The nodeOffsetData array has too many data fields, I only verified the result manually
         System.out.println(Arrays.toString(nodeOffsetData[0]));
+        System.out.println(Arrays.deepToString(connectsToData));
     }
     
 }

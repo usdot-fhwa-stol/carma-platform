@@ -1210,7 +1210,7 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityOp
 
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage_decodeMap
   (JNIEnv *env, jobject obj, jbyteArray encodedArray, jobject plain_map, jintArray intersectionGeometry,
-   jintArray laneId, jintArray ingressApproach, jintArray egressApproach, jintArray laneDirection, jintArray laneType, jobjectArray nodeXY) {
+   jintArray laneId, jintArray ingressApproach, jintArray egressApproach, jintArray laneDirection, jintArray laneType, jobjectArray nodeXY, jobjectArray connectsTo) {
 	asn_dec_rval_t rval; /* Decoder return value */
 	MessageFrame_t *message = 0; /* Construct MessageFrame */
 
@@ -1259,6 +1259,12 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage
 			// each node needs three data fields for X, Y and type
 			// each lane has up to 63 nodes, so 63 * 3 = 189
 			int nodeOffsetData[255][189] = {0};
+			int connectionsData[255][32] = {0};
+			for(int i = 0; i < 255; i++) {
+				for(int j = 0; j < 32; j++) {
+					connectionsData[i][j] = -1;
+				}
+			}
 			int numOfLanes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.count;
 			for(int i = 0; i < numOfLanes; i++) {
 				laneIDData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> laneID;
@@ -1317,6 +1323,19 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage
 						break;
 					}
 				}
+				if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo) {
+					int numOfConnection = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo -> list.count;
+					for(int j = 0; j < numOfConnection; j++) {
+						connectionsData[i][j * 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo -> list.array[j] -> connectingLane.lane;
+						if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo -> list.array[j] -> signalGroup) {
+							connectionsData[i][j * 2 + 1] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo -> list.array[j] -> signalGroup;
+						} else {
+							connectionsData[i][j * 2 + 1] = -1;
+						}
+					}
+				} else {
+					connectionsData[i][0] = -1;
+				}
 			}
 			(*env) -> SetIntArrayRegion(env, laneId, 0, 255, laneIDData);
 			(*env) -> SetIntArrayRegion(env, ingressApproach, 0, 255, ingressApproachData);
@@ -1325,9 +1344,11 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage
 			(*env) -> SetIntArrayRegion(env, laneType, 0, 255, laneTypeData);
 			for(int i = 0; i < numOfLanes; i++) {
 				jintArray laneNodes = (*env) -> GetObjectArrayElement(env, nodeXY, i);
-				int numOfNodes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.count;
+				jintArray connections = (*env) -> GetObjectArrayElement(env, connectsTo, i);
 				(*env) -> SetIntArrayRegion(env, laneNodes, 0, 189, nodeOffsetData[i]);
+				(*env) -> SetIntArrayRegion(env, connections, 0, 32, connectionsData[i]);
 				(*env) -> DeleteLocalRef(env, laneNodes);
+				(*env) -> DeleteLocalRef(env, connections);
 			}
 		}
 		return 0;
