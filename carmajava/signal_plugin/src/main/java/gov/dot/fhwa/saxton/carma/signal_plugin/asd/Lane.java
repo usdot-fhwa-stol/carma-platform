@@ -59,6 +59,10 @@ public class Lane {
 		int northCm = 10*north;
 		addNodeCm(ref, eastCm, northCm);
 	}
+
+	public void addNodeLatLon(Location node) {
+		node_.add(node);
+	}
 	
 	/**
 	 * always : returns an array of nodes that describe the centerline of the lane extending away from the reference point

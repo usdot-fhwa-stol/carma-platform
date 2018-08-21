@@ -76,6 +76,10 @@ public class EadAStar implements IEad {
         neighborCalc_ = new EadNeighborCalculator();
     }
 
+    public List<Node> getCurrentPath() {
+        return currentPath_;
+    }
+
     @Override
     public void initialize(long timestep, ITreeSolver solver) {
         timeStep_ = (double)timestep / 1000.0;

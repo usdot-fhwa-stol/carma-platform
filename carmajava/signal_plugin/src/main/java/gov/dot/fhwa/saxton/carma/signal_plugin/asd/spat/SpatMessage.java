@@ -280,6 +280,27 @@ public class SpatMessage implements ISpatMessage {
         return version;
     }
 
+    // CARMA setters needed for type conversion
+    public void setContentVersion(int version) {
+        this.version = version;
+    }
+
+    public void setIntersectionId(int id) {
+        this.intersectionId = id;
+    }
+
+    public void setMovements(List<Movement> movements) {
+        this.movements = movements;
+    }
+
+    public void setTimeStamp(DateTime timeStamp) {
+        this.timestamp = timeStamp;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
 
     public void dumpSpatMessage()    {
 
