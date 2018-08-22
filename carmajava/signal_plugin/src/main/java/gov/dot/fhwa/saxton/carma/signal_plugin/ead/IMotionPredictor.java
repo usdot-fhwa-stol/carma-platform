@@ -29,17 +29,17 @@ public interface IMotionPredictor {
 
   /**
    * Predicts the continued motion of a vehicle based on the historical trajectory
-   * 
    * The result is a set of points separated by a fixed time step describing the anticipated motion of the vehicle along the route
    * 
-   * TODO It is assumed that the provided trajectory is described in terms of the route
+   * NOTE: Currently it is assumed position the input and output data are described in the same frame
+   * 
    * @param objId A unique id which corresponds to the specific object the provided historical trajectory describes. 
    *           The id can be used for multi-object and or state-full implementations.
    * @param objTrajectory A time sorted list of nodes describing the historical behavior of the vehicle
    * @param timeStep The timestep by which the RoutePointStamped output list will be separated
    * @param timeDuration The amount of time to project motion forward for
    * 
-   * @return A list of RoutePointStamped which can be plugged into the conflict detection system provided by carma
+   * @return A list of RoutePointStamped which can be plugged into the conflict detection system provided by CARMA. The returned list is exclusive of the history data.
    */
 
   public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double timeStep, double timeDuration);

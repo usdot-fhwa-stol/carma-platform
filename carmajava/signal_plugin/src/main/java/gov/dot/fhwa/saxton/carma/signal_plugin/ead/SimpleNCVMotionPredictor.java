@@ -23,11 +23,28 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
- * A MotionInterpolator is responsible for interpolating the position of the host vehicle between two or more nodes in a plan
+ * The SimpleNCVMotionPredictor provides an implementation of IMotionPredictor using simple linear regression to predict future detected vehicle motions.
  * The returned list of RoutePointStamped objects can be used to check conflicts with the CARMA conflict detection system
+ * 
+ * Simple Linear Regression
+ * 
+ * Equation of a line -> y = a*x + b
+ * Where 
+ * x is the independent variable
+ * y is the dependent variable
+ * a is the slope of the line
+ * b is the intercept of the line
+ * 
+ * The simple linear regression equation is as follows
+ * 
+ * b = (Ey * E(x^2) - Ex * E(xy)) / (n * E(x^2) - (Ex)^2);
+ * a = (n * E(xy) - Ex * Ey) / (n * E(x^2) - (Ex)^2);
+ * 
+ * Where
+ * n = number of samples in data set
+ * E represents the summation symbol Sigma
  */
 public class SimpleNCVMotionPredictor implements IMotionPredictor {
-
 
    @Override
   public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double timeStep, double timeDuration) {
@@ -70,7 +87,7 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
     double startTime = objTrajectory.get(objTrajectory.size() - 1).getTimeAsDouble();
     double t = timeStep + startTime; 
     double endTime = timeDuration + startTime;
-    while (t < endTime) {
+    while (t <= endTime) {
 
       projection.add(new RoutePointStamped(t * slope + intercept, 0, t));
       t += timeStep;
