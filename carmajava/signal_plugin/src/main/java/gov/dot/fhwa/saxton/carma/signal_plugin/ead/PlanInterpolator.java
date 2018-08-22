@@ -52,6 +52,12 @@ public class PlanInterpolator implements IMotionInterpolator {
       final double t_f = n.getTimeAsDouble();
 
       final double dt =  t_f - t_0;
+      
+      if (dt < timeStep) {
+        throw new IllegalArgumentException("interpolateMotion timestep size of "
+         + timeStep + " is less than gab between nodes " + prevNode + " " + n);
+      }
+
       final double dv = n.getSpeedAsDouble() - v_0;
       final double a = dv / dt; // Assume constant acceleration
       final double half_a = a * 0.5;
