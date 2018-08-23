@@ -63,10 +63,6 @@ public class PlanInterpolator implements IMotionInterpolator {
 
       final double a = dv / dt; // Assume constant acceleration
       final double two_a_x = 2 * a * distanceStep;
-      
-      // double v = v_0;
-      // double x = x_0;
-      // double t = t_0;
 
       double v_old = v_0;
       double v = Math.sqrt(v_old * v_old + two_a_x);
