@@ -15,7 +15,7 @@ ned_frame_name: "map"
 use_interface_mgr: true
 
 # Boolean: True if sensor fusion will override the altitude value provided in the nav_sat_fix topics from drivers
-use_altitude_override: true
+use_altitude_override: false
 
 # Double: The altitude in m to set as the override value when use_altitude_override is true
 altitude_override: 200.0

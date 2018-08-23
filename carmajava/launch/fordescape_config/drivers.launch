@@ -20,7 +20,7 @@
 This file is used for vehicle configurations. The arguments from saxton_cav.launch should pass on to saxton_cav_src.launch, which should then pass those arguments to this file. The arguments in the saxton_cav.launch file will override all of the default values of the arguments being passed, so you should be making changes to the saxton_cav.launch to configure it to your vehicle. 
 
 If not using simulated drivers they are activated if the respective mock arguments being passed in are false. These lines below activate the respective actual driver if the respective mock argument being passed is false.
-
+  
 -->
 
 <launch>
@@ -36,26 +36,24 @@ If not using simulated drivers they are activated if the respective mock argumen
   <arg name="mock_pinpoint"       	default="true" doc="True if using a simulated pinpoint driver"/>
   <arg name="mock_radar"          	default="true" doc="True if using a simulated radar driver"/>
   <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
-
+  
   <!-- DSRC OBU Driver Node -->
-  <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
-      
+  <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch">
+    <arg name="dsrc_address" value="192.168.0.41" />
+  </include>
+
   <!-- PinPoint Driver Node -->
-  <include unless="$(arg mock_pinpoint)" file="$(find pinpoint)/launch/pinpoint.launch"/>
-
-  <!-- Truck CAN Driver Node -->
-  <include file="$(find truck_can_driver)/launch/truck_can_client_cav_socketcan.launch">
-    <arg name="truck_can_client_device" default="can1" />
+  <include unless="$(arg mock_pinpoint)" file="$(find pinpoint)/launch/pinpoint.launch">
+    <arg name="address" value="192.168.0.5" />
   </include>
 
-  <!-- Truck Controller Driver Node -->
-  <include file="$(find truck_dbw_controller)/launch/truck_dbw_controller_cav_socketcan.launch">
-    <arg name="truck_can_device" default="can2" />
+  <!--XGV Controller Driver Node-->
+  <include unless="$(arg mock_srx_controller)" file="$(find xgv_controller)/launch/xgv_controller.launch">
   </include>
-
-  <!-- Truck Delphi Radar Driver Node -->
-  <include file="$(find delphi_esr_driver)/launch/delphi_esr_driver.launch">
-    <arg name="device_name" default="can0" />
+      
+  <!-- SRX Radar Driver Node -->
+  <include unless="$(arg mock_radar)" file="$(find delphi_esr_driver)/launch/delphi_esr_driver.launch">
+    <arg name="device_name" value="can0"/>
     <arg name="sensor_frame" default="f_lrr_frame"/>
   </include>
 	

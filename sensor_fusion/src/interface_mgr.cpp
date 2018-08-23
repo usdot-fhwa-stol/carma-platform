@@ -46,26 +46,25 @@
  * This by no means shows the complete interaction with an interface manager. *
  */
 
-bool getDriversWithCapabilities(cav_srvs::GetDriversWithCapabilitiesRequest& req,
-                                cav_srvs::GetDriversWithCapabilitiesResponse& res)
+bool getDriversWithCapabilities(cav_srvs::GetDriversWithCapabilitiesRequest& req, cav_srvs::GetDriversWithCapabilitiesResponse& res)
 {
 
     std::unordered_map<std::string,std::string> map;
-    map["position/odometry"] = "/pinpoint/position/odometry";
-    map["position/heading"] = "/pinpoint/position/heading";
+    map["position/odometry"]    = "/pinpoint/position/odometry";
+    map["position/heading"]     = "/pinpoint/position/heading";
     map["position/nav_sat_fix"] = "/pinpoint/position/nav_sat_fix";
-    map["position/velocity"] = "/pinpoint/position/velocity";
-    map["sensor/objects"] = "/srx_objects/f_lrr/sensor/objects";    
+    map["position/velocity"]    = "/pinpoint/position/velocity";
+    map["sensor/objects"]       = "/srx_objects/f_lrr/sensor/objects";    // "/delphi_esr/sensor/objects"; USE FOR TRUCK/XGV
     for(auto it : req.capabilities)
     {
         ROS_INFO_STREAM("Received request for: " << it);     
-        if(map.find(it) != map.end())   
+        if(map.find(it) != map.end())
+        {   
             res.driver_data.push_back(map[it]);
+        }
     }
 
     return true;
-
-
 }
 
 int main(int argc,char** argv)

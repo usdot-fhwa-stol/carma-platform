@@ -25,7 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.ros.message.MessageFactory;
 
@@ -33,12 +32,8 @@ import cav_msgs.LocationECEF;
 import cav_msgs.LocationOffsetECEF;
 import cav_msgs.MobilityHeader;
 import cav_msgs.MobilityPath;
-import cav_msgs.MobilityRequest;
-import cav_msgs.PlanType;
 import cav_msgs.Trajectory;
-import gov.dot.fhwa.saxton.carma.message.factory.MessageContainer;
 import gov.dot.fhwa.saxton.carma.message.factory.MobilityPathMessage;
-import gov.dot.fhwa.saxton.carma.message.factory.MobilityRequestMessage;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 public class MobilityPathTest {
