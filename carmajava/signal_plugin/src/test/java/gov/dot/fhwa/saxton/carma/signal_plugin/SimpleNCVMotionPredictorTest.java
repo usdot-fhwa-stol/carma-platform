@@ -82,7 +82,7 @@ public class SimpleNCVMotionPredictorTest {
     // 2 Node list with 0 acceleration
     n1 = new Node(10.0, 0.0, 5.0);
     Node n2 = new Node(15.0, 1.0, 5.0);
-    points = motionPredictor.predictMotion("1", Arrays.asList(n1,n2), 0.2, 1.0);
+    points = motionPredictor.predictMotion("1", Arrays.asList(n1,n2), 1.0, 1.0);
 
     assertEquals(5, points.size());
     assertTrue(routePointAlmostEqual(new RoutePointStamped(16.0, 0.0, 1.2), points.get(0), 0.0001));
@@ -97,17 +97,16 @@ public class SimpleNCVMotionPredictorTest {
     Node n3 = new Node(80.0, 8.0, 10.0);
     Node n4 = new Node(110.0, 12.0, 5.0);
     Node n5 = new Node(130.0, 16.0, 5.0); // Finish building list
-    points = motionPredictor.predictMotion("1",Arrays.asList(n1,n2,n3,n4,n5), 1.0, 8.0);
+    points = motionPredictor.predictMotion("1",Arrays.asList(n1,n2,n3,n4,n5), 10.0, 8.0);
 
-    assertEquals(8,points.size());
-    assertTrue(routePointAlmostEqual(new RoutePointStamped(143.75, 0.0, 17.0), points.get(0), 0.0001)); // Inclusive first node
-    assertTrue(routePointAlmostEqual(new RoutePointStamped(151.5, 0.0, 18.0), points.get(1), 0.0001)); // Inclusive first node
-    assertTrue(routePointAlmostEqual(new RoutePointStamped(159.25, 0.0, 19.0), points.get(2), 0.0001)); // Inclusive first node
-    assertTrue(routePointAlmostEqual(new RoutePointStamped(167, 0.0, 20.0), points.get(3), 0.0001)); // Inclusive first node
-    assertTrue(routePointAlmostEqual(new RoutePointStamped(174.75, 0.0, 21.0), points.get(4), 0.0001)); // Inclusive first node
-    assertTrue(routePointAlmostEqual(new RoutePointStamped(182.5, 0.0, 22.0), points.get(5), 0.0001)); // Inclusive first node
-    assertTrue(routePointAlmostEqual(new RoutePointStamped(190.25, 0.0, 23.0), points.get(6), 0.0001)); // Inclusive first node
-    assertTrue(routePointAlmostEqual(new RoutePointStamped(198, 0.0, 24.0), points.get(7), 0.0001)); // Inclusive first node
+    assertEquals(7,points.size());
+    assertTrue(routePointAlmostEqual(new RoutePointStamped(140, 0.0, 16.41975), points.get(0), 0.0001));
+    assertTrue(routePointAlmostEqual(new RoutePointStamped(150, 0.0, 17.69547), points.get(1), 0.0001));
+    assertTrue(routePointAlmostEqual(new RoutePointStamped(160, 0.0, 18.97119), points.get(2), 0.0001));
+    assertTrue(routePointAlmostEqual(new RoutePointStamped(170, 0.0, 20.24691), points.get(3), 0.0001));
+    assertTrue(routePointAlmostEqual(new RoutePointStamped(180, 0.0, 21.52263), points.get(4), 0.0001));
+    assertTrue(routePointAlmostEqual(new RoutePointStamped(190, 0.0, 22.79835), points.get(5), 0.0001));
+    assertTrue(routePointAlmostEqual(new RoutePointStamped(200, 0.0, 24.07407), points.get(6), 0.0001));
   }
 
   /**

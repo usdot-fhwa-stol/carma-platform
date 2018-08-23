@@ -47,7 +47,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 public class SimpleNCVMotionPredictor implements IMotionPredictor {
 
    @Override
-  public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double timeStep, double timeDuration) {
+  public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double distanceStep, double timeDuration) {
 
     List<RoutePointStamped> projection = new LinkedList<>();
 
@@ -56,41 +56,43 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
       return projection; 
     }
 
-    double sumTime = 0; // Independent variable is time
-    double sumDist = 0; // Dependant variable is distance
-    double sumSqrTime = 0;
-    double sumTimexDist = 0;
+    double sumDist = 0; // Since we are using distance steps the independent variable will be distance
+    double sumTime = 0; // Since we are using distance steps the dependent variable will be time
+    double sumSqrDist = 0;
+    double sumDistxTime = 0;
 
     // Calculate sums for regression
     for (Node n: objTrajectory) {
       
       double d = n.getDistanceAsDouble();
       double t = n.getTimeAsDouble();
-      double t_sqr = t * t;
+      double d_sqr = d * d;
       double td = t * d; 
 
       sumDist += d;
       sumTime += t;
-      sumSqrTime += t_sqr;
-      sumTimexDist += td; 
+      sumSqrDist += d_sqr;
+      sumDistxTime += td; 
     }
 
     // Compute intercept and slope
     double count = objTrajectory.size();
-    double denominator = (count * sumSqrTime - sumTime * sumTime);
+    double denominator = (count * sumSqrDist - sumDist * sumDist);
 
-    double intercept = (sumDist * sumSqrTime - sumTime * sumTimexDist) / denominator;
-    double slope = (count * sumTimexDist - sumTime * sumDist) / denominator;
+    double intercept = (sumTime * sumSqrDist - sumDist * sumDistxTime) / denominator;
+    double slope = (count * sumDistxTime - sumDist * sumTime) / denominator;
 
     // Generate projection using regression model
     // Set start time as the last timestamp in the provided history plus the timestep 
-    double startTime = objTrajectory.get(objTrajectory.size() - 1).getTimeAsDouble();
-    double t = timeStep + startTime; 
-    double endTime = timeDuration + startTime;
-    while (t <= endTime) {
+    double startDist = objTrajectory.get(objTrajectory.size() - 1).getDistanceAsDouble();
+    double d = startDist;
+    double endTime = timeDuration + objTrajectory.get(objTrajectory.size() - 1).getTimeAsDouble();
+    double endDistance = (endTime - intercept) / slope;
 
-      projection.add(new RoutePointStamped(t * slope + intercept, 0, t));
-      t += timeStep;
+    while (d < endDistance) {
+
+      d += distanceStep;
+      projection.add(new RoutePointStamped(d, 0, d * slope + intercept));
     }
 
     return projection;
