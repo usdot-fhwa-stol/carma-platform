@@ -70,7 +70,7 @@ public class PlanInterpolator implements IMotionInterpolator {
 
       double v_old = v_0;
       double v = Math.sqrt(v_old * v_old + two_a_x);
-      double t = t_0 + (v_old - v) / a;
+      double t = t_0 + (v - v_old) / a;
       double x = x_0 + distanceStep;
 
       // Interpolate between current node and previous node
@@ -79,7 +79,7 @@ public class PlanInterpolator implements IMotionInterpolator {
         points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
         v_old = v;
         v = Math.sqrt(v_old * v_old + two_a_x);
-        t += (v_old - v) / a;
+        t += (v - v_old) / a;
         x += distanceStep;
       }
 
