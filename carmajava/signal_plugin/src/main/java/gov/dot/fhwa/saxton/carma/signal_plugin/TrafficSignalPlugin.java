@@ -61,11 +61,11 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import sensor_msgs.NavSatFix;
 
 /**
- * Top level class in the Signal Plugin that does trajectory planning through
+ * Top level class in the Traffic Signal Plugin that does trajectory planning through
  * signalized intersections. This is a port of the functionality developed under
  * the STOL I contract TO 17 and STOL II contract TO 13, Glidepath project.
  */
-public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
+public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlugin {
 
     private ISubscriber<NavSatFix> gpsSub;
     private ISubscriber<TwistStamped> velocitySub;
@@ -79,9 +79,9 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
 
-    public SignalPlugin(PluginServiceLocator psl) {
+    public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
-        version.setName("Signal Plugin");
+        version.setName("Traffic Signal Plugin");
         version.setMajorRevision(1);
         version.setIntermediateRevision(0);
         version.setMinorRevision(0);
@@ -91,7 +91,7 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
     public void onInitialize() {
         // load params
 
-        log.info("STARTUP", "SignalPlugin has been initialize.");
+        log.info("STARTUP", "TrafficSignalPlugin has been initialized.");
         // log the key params here
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
         setAvailability(false);
