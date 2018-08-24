@@ -32,7 +32,7 @@ public interface INodeCollisionChecker {
    * 
    * @param trajectory A time sorted list of nodes which define the host vehicle's desired trajectory
    * 
-   * @return True if a collision was found between the nodes in the list. False otherwise
+   * @return True if a collision was found between a pair of nodes in the list. False otherwise
    */
   public boolean hasCollision(List<Node> trajectory);
 }
