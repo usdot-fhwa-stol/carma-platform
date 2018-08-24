@@ -49,31 +49,6 @@ import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE
  * a red light.
  */
 public class Trajectory implements ITrajectory {
-
-	/**
-	 * Default constructor that will generate its own EAD model to be used if the @param trajectoryfile
-	 * is not specified.
-	 * @throws Exception
-	 */
-	public Trajectory() throws Exception {
-		IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
-		assert(config != null);
-
-		//get the desired EAD variant from the config file and instantiate it
-		String eadClass = config.getProperty("ead.modelclass");
-		if (eadClass == null) {
-			eadClass = "default";
-		}
-		IEad ead = EadFactory.newInstance(eadClass);
-		if (ead == null) {
-			log_.errorf("TRAJ", "Could not instantiate the EAD model %s", eadClass);
-			throw new Exception("Could not instantiate an EAD model.");
-		}
-		log_.debug("TRAJ", "Ready to construct EAD object.");
-
-		constructObject(ead);
-	}
-
 	/**
 	 * Constructor that allows the parent to inject a particular EAD model (which could be overridden
 	 * if the @param trajectoryfile is specified.
