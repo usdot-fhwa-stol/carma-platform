@@ -593,7 +593,7 @@ public class Trajectory implements ITrajectory {
 	 * @param vehicleLoc - current location of the vehicle
 	 * @return distance to stop bar of the nearest intersection
 	 */
-	private double updateIntersections(List<IntersectionData> inputIntersections, Location vehicleLoc) throws Exception {
+	public double updateIntersections(List<IntersectionData> inputIntersections, Location vehicleLoc) throws Exception {
 		double dtsb = Double.MAX_VALUE;
 		//if (intersections_ == null) {
 		//	log_.debug("TRAJ", "Entering updateIntersections. intersections_ object is null.");

@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin;
 
 import java.util.ArrayList;
@@ -10,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.joda.time.DateTime;
 
 import cav_msgs.Connection;
-import cav_msgs.ConnectsToList;
 import cav_msgs.GenericLane;
 import cav_msgs.IntersectionState;
 import cav_msgs.MovementState;
@@ -18,9 +33,7 @@ import cav_msgs.NodeListXY;
 import cav_msgs.NodeOffsetPointXY;
 import cav_msgs.NodeXY;
 import cav_msgs.Position3D;
-import cav_msgs.SPAT;
 import geometry_msgs.TwistStamped;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
@@ -43,7 +56,6 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.LaneSet;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.Movement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
-import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IEad;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import sensor_msgs.NavSatFix;
@@ -74,9 +86,6 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         version.setIntermediateRevision(0);
         version.setMinorRevision(0);
     }
-
-    // TODO: this is a skeleton! Unless otherwise noted, all comments below are PDL
-    // that need to be expanded to working code
 
     @Override
     public void onInitialize() {
@@ -181,11 +190,7 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         SpatMessage cnvSpat = new SpatMessage();
 
         cnvSpat.setContentVersion(state.getRevision());
-        if (state.getId().getIdExists()) {
-            cnvSpat.setIntersectionId(state.getId().getId());
-        } else {
-            cnvSpat.setIntersectionId(0);
-        }
+        cnvSpat.setIntersectionId(state.getId().getId());
 
         cnvSpat.setStatus(state.getStatus().getIntersectionStatusObject());
         cnvSpat.setTimeStamp(DateTime.now()); // TODO: Improve estimation of data age
@@ -197,17 +202,18 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
             for (GenericLane lane : data.getIntersectionGeometry().getLaneSet().getLaneList()) {
                 // Detect based on connectsTo
                 if (lane.getConnectsToExists()) {
-                    Connection connectsTo = lane.getConnectsTo().getConnectToList();
-                    if (connectsTo.getSignalGroupExists()) {
-                        if (connectsTo.getSignalGroup() == movementData.getSignalGroup()
-                                && connectsTo.getConnectingLane().getManeuverExists()
-                                && connectsTo.getConnectingLane().getManeuver().getAllowedManeuvers() == 0) {
-                            LaneSet lanes = new LaneSet(lane.getLaneId(), 0x01); // TODO: Detect maneuvers other than
-                                                                                 // straight
-                            m.addLaneSet(lanes);
+                    for (Connection connectsTo : lane.getConnectsTo().getConnectToList()) {
+                        if (connectsTo.getSignalGroupExists()) {
+                            if (connectsTo.getSignalGroup() == movementData.getSignalGroup()
+                                    && connectsTo.getConnectingLane().getManeuverExists()
+                                    && connectsTo.getConnectingLane().getManeuver().getAllowedManeuvers() == 0) {
+                                LaneSet lanes = new LaneSet(lane.getLaneId(), 0x01); // TODO: Detect maneuvers other
+                                                                                     // than
+                                                                                     // straight
+                                m.addLaneSet(lanes);
+                            }
                         }
                     }
-
                 }
             }
 
@@ -225,11 +231,49 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
 
     private void handleNewIntersectionData(List<IntersectionData> data) {
         synchronized (intersections) {
+            boolean phaseChanged = false;
             boolean newIntersection = false;
             for (IntersectionData datum : data) {
                 if (!intersections.containsKey(datum.getIntersectionId())) {
                     intersections.put(datum.getIntersectionId(), datum);
                     newIntersection = true;
+                } else {
+                    // If it is in the list, check to see if this has changed the phase
+                    IntersectionData old = intersections.get(datum.getIntersectionId());
+
+                    /**
+                     * This code is looking like it's O(bad) asymptotic complexity in the worst
+                     * case, but I'm not sure it's an issue as we're unlikely to experience very
+                     * large numbers of mevements in a single intersection. But in the event
+                     * performance is an issue this might be a likely culprit to investigate.
+                     * 
+                     * -KR
+                     */
+
+                    // Walk through all the movements to compare
+                    phaseChangeCheckLoop: for (MovementState oldMov : old.getIntersectionState().getStates()
+                            .getMovementList()) {
+                        for (MovementState newMov : datum.getIntersectionState().getStates().getMovementList()) {
+                            if (oldMov.getSignalGroup() == newMov.getSignalGroup()) {
+                                // If we find a shared movement, check the movement events for sameness
+
+                                // ASSUMPTION: Phase states within a movement will always be reported in the same order
+                                // There is no ID for an individual movement event within a movement, so I can only 
+                                // compare different messages based on positional similarity.
+                                for (int i = 0; i < oldMov.getStateTimeSpeed().getMovementEventList().size(); i++) {
+                                    if (i >= newMov.getStateTimeSpeed().getMovementEventList().size()
+                                            || (oldMov.getStateTimeSpeed().getMovementEventList().get(i)
+                                                    .getEventState() != newMov.getStateTimeSpeed()
+                                                            .getMovementEventList().get(i).getEventState())) {
+                                        // Phase change detected, a replan will be needed
+                                        phaseChanged = true;
+                                        break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop
+                                    }
+
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -249,26 +293,33 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
                 }
             }
 
-            if ((newIntersection || deletedIntersection) && checkIntersectionMaps()) {
+            if ((phaseChanged || newIntersection || deletedIntersection) && checkIntersectionMaps()) {
                 triggerNewPlan();
             }
         }
     }
 
-    private boolean checkIntersectionMaps() {
-        for (IntersectionData datum : intersections.values()) {
-            MapMessage map = convertMapMessage(datum);
-            map.get
+    private double computeDtsb() {
+        Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
+
+        try {
+            return glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
+        } catch (Exception e) {
+            log.warn("DTSB computation failed!");
         }
-        return false;
+
+        return -1;
+    }
+
+    private boolean checkIntersectionMaps() {
+        double dtsb = computeDtsb();
+        return dtsb > 0 && dtsb < Double.MAX_VALUE;
     }
 
     @Override
     public void onResume() {
         log.info("SignalPlugin has resumed.");
-        pluginServiceLocator.getV2IService().registerV2IDataCallback((data) -> {
-
-        });
+        pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
     }
 
     @Override
@@ -307,7 +358,26 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
         // CHECK TRAJECTORY LENGTH
+        double dtsb = computeDtsb();
 
+        if (dtsb > 0 && dtsb < Double.MAX_VALUE) {
+            // DTSB computation successful, check to see if we can plan up to stop bar
+            if (traj.getStartLocation() + dtsb > traj.getEndLocation()) {
+                // Not enough distance to allow for proper glidepath execution
+                TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+                tpr.requestLongerTrajectory(traj.getStartLocation() + (dtsb * 1.1)); // allow for some extra slack
+                return tpr;
+            }
+        }
+
+        // CHECK PLANNING PRIORITY
+        if (!traj.getLongitudinalManeuvers().isEmpty()) {
+                TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+                tpr.requestHigherPriority();
+                return tpr;
+        }
+
+        // CONVERT DATA ELEMENTS
         DataElementHolder state = new DataElementHolder();
         DoubleDataElement curSpeedElement;
         DoubleDataElement curAccelElement;
@@ -350,49 +420,55 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         List<Node> eadResult = ead.getCurrentPath();
 
         // OPTIMIZE NODES
-        List<Node> optimizedOutput = new ArrayList<>();
+        // List<Node> optimizedOutput = new ArrayList<>();
 
-        if (eadResult.size() > 2) {
+        /*if (eadResult.size() > 2) {
             Node prev = eadResult.get(0);
             optimizedOutput.add(prev);
             for (int i = 1; i < eadResult.size(); i++) {
                 Node cur = eadResult.get(i);
                 if (Math.abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) >= speedCommandQuantizationFactor
-                    || i == eadResult.size() - 1) {
+                        || i == eadResult.size() - 1) {
                     // If speed is above quantization threshold or point is last in series
                     optimizedOutput.add(cur);
                     prev = cur;
                 }
             }
-        }
+        } */
 
         // CONVERT AND INSERT MANEUVERS
         double startDist = traj.getStartLocation();
         Node prev = null;
-        for (Node cur : optimizedOutput) {
+        for (Node cur : eadResult) {
             if (prev == null) {
                 prev = cur;
             } else {
                 if (prev.getSpeedAsDouble() < cur.getSpeedAsDouble()) {
                     SpeedUp speedUp = new SpeedUp(this);
                     speedUp.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
-                    pluginServiceLocator.getManeuverPlanner().planManeuver(speedUp, startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
+                    pluginServiceLocator.getManeuverPlanner().planManeuver(speedUp,
+                            startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(speedUp);
                 } else if (prev.getSpeedAsDouble() > cur.getSpeedAsDouble()) {
                     SlowDown slowDown = new SlowDown(this);
                     slowDown.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
-                    pluginServiceLocator.getManeuverPlanner().planManeuver(slowDown, startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
+                    pluginServiceLocator.getManeuverPlanner().planManeuver(slowDown,
+                            startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(slowDown);
-                } else if (Math.abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) < speedCommandQuantizationFactor) {
+                } else if (Math
+                        .abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) < speedCommandQuantizationFactor) {
                     SteadySpeed steadySpeed = new SteadySpeed(this);
 
                     if (cur.getSpeedAsDouble() > speedCommandQuantizationFactor) {
                         steadySpeed.setSpeeds(cur.getSpeedAsDouble(), cur.getSpeedAsDouble());
-                        pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed, startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
+                        pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
+                                startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     } else {
-                        // We're coming to a stop, so plan an indefinite length stop maneuver, to be overridden by replan later
+                        // We're coming to a stop, so plan an indefinite length stop maneuver, to be
+                        // overridden by replan later
                         steadySpeed.setSpeeds(0.0, 0.0);
-                        pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed, startDist + prev.getDistanceAsDouble(), traj.getEndLocation());
+                        pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
+                                startDist + prev.getDistanceAsDouble(), traj.getEndLocation());
                         break;
                     }
 
@@ -406,110 +482,4 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         setAvailability(false);
         return new TrajectoryPlanningResponse();
     }
-
-    /**
-     * Repackages all of the MAP & SPAT messages received from the ASD into a single list of intersections
-     * that is usable by the Trajectory class.  All of this activity is done in the holder object whose
-     * reference is passed in.
-     * @param holder - data holder that contains all of the affected data elements
-     */
-    private void packageAsdMessages(DataElementHolder holder) {
-        IntersectionCollection collection = new IntersectionCollection();
-    
-        //loop through all MAP messages in the holder
-        List<IAsdMessage> mapList = ((IAsdListDataElement)holder.get(DataElementKey.MAP_LIST)).value();
-        if (mapList != null) {
-            for (IAsdMessage msg : mapList) {
-                //get its intersections ID
-                int id = msg.getIntersectionId();
-                //search for this ID in the existing list
-                int index = -1;
-                if (collection.intersections != null  &&  collection.intersections.size() > 0) {
-                    for (int i = 0; i < collection.intersections.size(); ++i) {
-                        if (id ==  collection.intersections.get(i).intersectionId) {
-                            index = i;
-                            break;
-                        }
-                    }
-                }
-                //if the ID isn't already represented in the collection then
-                if (index < 0) {
-                    //add it
-                    IntersectionData inter = new IntersectionData();
-                    inter.intersectionId = id;
-                    inter.map = (MapMessage)msg;
-                    if (collection.intersections == null) {
-                        collection.intersections = new ArrayList<IntersectionData>();
-                    }
-                    collection.intersections.add(inter);
-                //else (we have info on this intersections already)
-                }else {
-                    //if this one's version is more recent than the MAP already present, replace it
-                    int existingVersion = collection.intersections.get(index).map.getContentVersion();
-                    MapMessage mapMsg = (MapMessage)msg;
-                    int newVersion = mapMsg.getContentVersion();
-                    if (newVersion > existingVersion  || (newVersion == 0  &&  existingVersion != 0)) { //allows for wrap-around
-                        log.debug("Ready to replace the existing mapMsg with new version.");
-                        collection.intersections.get(index).map = mapMsg;
-                    }
-                }
-            }
-        }
-        log.debug("packageAsdMessages - map messages complete.");
-
-        //loop through all SPAT messages in the holder
-        List<IAsdMessage> spatList = ((IAsdListDataElement)holder.get(DataElementKey.SPAT_LIST)).value();
-        if (spatList != null) {
-            log.debug("spatList contains " + spatList.size() + " items.");
-            for (IAsdMessage msg : spatList) {
-                //get its intersections ID
-                int id = msg.getIntersectionId();
-                //search for this ID in the existing list
-                int index = -1;
-                if (collection.intersections != null  &&  collection.intersections.size() > 0) {
-                    for (int i = 0; i < collection.intersections.size(); ++i) {
-                        if (id == collection.intersections.get(i).intersectionId) {
-                            index = i;
-                            break;
-                        }
-                    }
-                }
-                SpatMessage spatMsg = (SpatMessage)msg;
-
-                //if the ID isn't already represented in the collection then
-                if (index < 0) {
-                    //add it
-                    IntersectionData inter = new IntersectionData();
-                    inter.intersectionId = id;
-                    inter.spat = spatMsg;
-                    if (collection.intersections == null) {
-                        collection.intersections = new ArrayList<IntersectionData>();
-                    }
-                    collection.intersections.add(inter);
-                }else {
-                    //if this one's version number is larger (with wrapping), replace it
-                    int existingVersion;
-                    SpatMessage prevSpat = (SpatMessage)collection.intersections.get(index).spat;
-                    if (prevSpat == null) {
-                        existingVersion = -1;
-                    }else {
-                        existingVersion = prevSpat.getContentVersion();
-                    }
-                    int newVersion = spatMsg.getContentVersion();
-                    if (newVersion > existingVersion  ||  (newVersion == 0  &&  existingVersion != 0)) {
-                        collection.intersections.get(index).spat = spatMsg;
-                    }
-                }
-            }
-        }
-        log.debug("packageAsdMessages - spat messages complete.");
-
-        //remove the MAP & SPAT lists from the data holder
-        holder.remove(DataElementKey.MAP_LIST);
-        holder.remove(DataElementKey.SPAT_LIST);
-
-        //add the new intersections collection to the holder
-        holder.put(DataElementKey.INTERSECTION_COLLECTION, new IntersectionCollectionDataElement(collection));
-    }
-
 }

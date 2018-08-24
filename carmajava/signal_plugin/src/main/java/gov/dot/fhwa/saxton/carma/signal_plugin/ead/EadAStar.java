@@ -76,6 +76,10 @@ public class EadAStar implements IEad {
         neighborCalc_ = new EadNeighborCalculator();
     }
 
+    public EadAStaer(NeighborCalculator calculator) {
+        
+    }
+
     public List<Node> getCurrentPath() {
         return currentPath_;
     }
