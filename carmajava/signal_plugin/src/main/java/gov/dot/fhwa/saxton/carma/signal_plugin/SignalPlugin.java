@@ -118,10 +118,22 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         }
     }
 
+    /**
+     * Add node offset to Lane object
+     * 
+     * @param lane Lane to add the offset to
+     * @param x X value of the offset in meters
+     * @param y Y value of the offset in meters
+     */
     private void addNodeOffset(Lane lane, Location ref, float x, float y) {
         lane.addNodeCm(ref, (int) (x * 100), (int) (y * 100));
     }
 
+    /**
+     * Convert IntersectionData instance into old Glidepath app object
+     * @param data The {@class IntersectionData} instance to be converted
+     * @return The map data from input converted into a Glidepath formatted object
+     */
     private MapMessage convertMapMessage(IntersectionData data) {
         MapMessage map = new MapMessage();
         map.setContentVersion(data.getIntersectionGeometry().getRevision());
@@ -185,6 +197,11 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         return map;
     }
 
+    /**
+     * Convert IntersectionData instance into old Glidepath app object
+     * @param data The {@class IntersectionData} instance to be converted
+     * @return The SPAT data from input converted into a Glidepath formatted object
+     */
     private SpatMessage convertSpatMessage(IntersectionData data) {
         IntersectionState state = data.getIntersectionState();
         SpatMessage cnvSpat = new SpatMessage();
@@ -224,11 +241,17 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         return cnvSpat;
     }
 
+    /**
+     * Trigger a new plan from arbitrator to accommodate for Glidepath planning
+     */
     private void triggerNewPlan() {
         setAvailability(true);
         pluginServiceLocator.getArbitratorService().requestNewPlan();
     }
 
+    /**
+     * Callback receiver for new intersection data from {@link V2IService}
+     */
     private void handleNewIntersectionData(List<IntersectionData> data) {
         synchronized (intersections) {
             boolean phaseChanged = false;
@@ -299,6 +322,11 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         }
     }
 
+    /**
+     * Compute the DTSB value if we're on a known MAP message
+     * 
+     * @return -1 if DTSB check fails for any reason, Double.MAX_VALUE if we're not on a MAP message
+     */
     private double computeDtsb() {
         Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
 
@@ -311,6 +339,11 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         return -1;
     }
 
+    /**
+     * Check to see if we're on a MAP message
+     * 
+     * @return true, if we're on a MAP message, false O.W.
+     */
     private boolean checkIntersectionMaps() {
         double dtsb = computeDtsb();
         return dtsb > 0 && dtsb < Double.MAX_VALUE;
