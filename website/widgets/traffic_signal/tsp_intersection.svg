@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000px" height="670px" viewBox="0 0 1000 670" preserveAspectRatio="xMidYMid meet" >
+  <rect id="svgEditorBackground" x="0" y="0" width="1000" height="670" style="fill:none; stroke: none;"/>
+  <defs id="svgEditorDefs">
+    <linearGradient gradientUnits="objectBoundingBox" id="lgrd2-fire" spreadMethod="pad" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop offset="0%" style="stop-color:rgb(255,255,0);stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:rgb(255,0,0);stop-opacity:1"/>
+    </linearGradient>
+    <pattern height="10" id="hatch-black-45" patternTransform="rotate(45) scale(0.4)" patternUnits="userSpaceOnUse" viewBox="0 0 10 10" width="10" x="0" y="0">
+      <line style="stroke:black;stroke-width:1px;" x1="0" x2="10" y1="5" y2="5"/>
+    </pattern>
+    <filter filterUnits="objectBoundingBox" height="200%" id="dropshadow" width="200%">
+      <feGaussianBlur in="SourceAlpha" result="shadow" stdDeviation="5"/>
+      <feOffset dx="10" dy="10" in="shadow" result="shadowoffset"/>
+      <feFlood flood-color="rgba(0,0,0,0.6)"/>
+      <feComposite in2="shadowoffset" operator="in"/>
+      <feMerge result="dropshadowresult">
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  
+  <text style="fill:black;font-family:Arial;font-size:20px;" x="70.5856" y="7.19791" id="e14_texte" transform="matrix(1.12135 0 0 0.654636 0.899216 60.6235)">LANE</text>
+  <text style="fill:black;font-family:Arial;font-size:20px;" x="139.483" y="6.26791" id="e1_texte" transform="matrix(1.12135 0 0 0.654636 0.899216 60.6235)">DIST (m)</text>
+  
+  <text style="fill:black;font-family:Arial;font-size:20px;" x="281.066" y="300.064" id="e4_texte" transform="matrix(1.12135 0 0 0.654636 0.899216 60.6235)"/>
+  
+  
+  
+  <line id="e9_line" x1="22.568780899151278" y1="103.17586517285707" x2="288.18688964854096" y2="102.09585571240785" style="stroke:cornflowerblue;fill:none;stroke-width:1px;"/>
+  
+  <line id="e2_line" x1="23.490797042950106" y1="20.43481635999086" x2="293.4198303223691" y2="19.356828689092424" style="stroke:cornflowerblue;fill:none;stroke-width:1px;"/>
+  <line id="e3_line" x1="21.49279403696866" y1="45.43486785840395" x2="295.72982788096283" y2="45.43386077832582" style="stroke:cornflowerblue;fill:none;stroke-width:1px;"/>
+  <text style="fill:black;font-family:Arial;font-size:20px;" x="-15.9298" y="-99.5639" id="e8_texte" transform="matrix(1.2973 0 0 0.63 46.8398 99.792)">INTERSECTION 9999</text>
+  <text style="fill:black;font-family:Arial;font-size:20px;" x="149" y="179" id="e10_texte"/>
+  
+  <text style="fill:black;font-family:Arial;font-size:20px;" x="95.8305" y="90.4178" id="e9_texte" >15</text>
+  <text style="fill:black;font-family:Arial;font-size:20px;" x="166.564" y="89.3398" id="e11_texte" >10</text>
+  
+  
+  
+<rect x="-32.96342086777761" y="-349.1820678722714" style="stroke: black; stroke-width: 4px; stroke-linecap: round; stroke-linejoin: round;fill:none;filter:url(#dropshadow);" id="e2_display" width="417.146" height="273.457" rx="20" ry="20" transform="matrix(0.726736 0 0 0.409962 31.7599 148.185)"/></svg>
