@@ -46,6 +46,7 @@ import std_msgs.Header;
 import tf2_msgs.TFMessage;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -142,6 +143,14 @@ public class EnvironmentWorker {
     for (cav_msgs.ExternalObject obj: objects) {
       roadwayObstacles.add(buildObstacleFromMsg(obj, earthToOdom));
     }
+    roadwayObstacles.sort(new Comparator<RoadwayObstacle>() {
+      // Used for sorting in ascending order of
+      // roll number
+      public int compare(RoadwayObstacle a, RoadwayObstacle b)
+      {
+          return a.rollno - b.rollno;
+      }
+    });
     cav_msgs.RoadwayEnvironment roadwayMsg = messageFactory.newFromType(cav_msgs.RoadwayEnvironment._TYPE);
     roadwayMsg.setRoadwayObstacles(roadwayObstacles);
     roadwayMgr.publishRoadwayEnvironment(roadwayMsg);

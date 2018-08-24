@@ -17,7 +17,9 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import java.util.List;
+import java.util.Queue;
 
+import cav_msgs.RoadwayObstacle;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
@@ -28,6 +30,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 public interface IMotionPredictor {
 
   /**
+   * TODO use of queue vs list in description
    * Predicts the continued motion of a vehicle based on the historical trajectory
    * The result is a set of points describing the anticipated motion of the vehicle along the route
    * 
@@ -42,5 +45,5 @@ public interface IMotionPredictor {
    * @return A list of RoutePointStamped which can be plugged into the conflict detection system provided by CARMA. The returned list is exclusive of the history data.
    */
 
-  public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double distanceStep, double timeDuration);
+  public List<RoutePointStamped> predictMotion(String objId, Queue<RoadwayObstacle> objTrajectory, double distanceStep, double timeDuration);
 }

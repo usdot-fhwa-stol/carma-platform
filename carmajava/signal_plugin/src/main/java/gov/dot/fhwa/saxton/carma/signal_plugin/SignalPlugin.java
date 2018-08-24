@@ -3,6 +3,9 @@ package gov.dot.fhwa.saxton.carma.signal_plugin;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ros.message.Time;
+import org.ros.rosjava_geometry.Transform;
+
 import cav_msgs.MapData;
 import cav_msgs.SPAT;
 import geometry_msgs.Twist;
@@ -219,6 +222,19 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
 
         //add the new intersections collection to the holder
         holder.put(DataElementKey.INTERSECTION_COLLECTION, new IntersectionCollectionDataElement(collection));
+    }
+
+    /**
+     * TODO
+     * Gets the transform of between the requested frames
+     * The transform describes the location of the child frame in the parent frame
+     * 
+     * @param parentFrame Frame Id of parent frame
+     * @param childFrame Frame Id of child frame
+     * @param stamp The time which this transform should correspond to
+     */
+    private Transform getTransform(String parentFrame, String childFrame, Time stamp) {
+        return null;
     }
 
 }
