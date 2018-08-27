@@ -267,7 +267,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     /**
                      * This code is looking like it's O(bad) asymptotic complexity in the worst
                      * case, but I'm not sure it's an issue as we're unlikely to experience very
-                     * large numbers of mevements in a single intersection. But in the event
+                     * large numbers of movements in a single intersection. But in the event
                      * performance is an issue this might be a likely culprit to investigate.
                      * 
                      * -KR
@@ -395,7 +395,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         if (dtsb > 0 && dtsb < Double.MAX_VALUE) {
             // DTSB computation successful, check to see if we can plan up to stop bar
-            if (traj.getStartLocation() + dtsb > traj.getEndLocation()) {
+            if (traj.getStartLocation() + (dtsb * 1.1) > traj.getEndLocation()) {
                 // Not enough distance to allow for proper glidepath execution
                 TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
                 tpr.requestLongerTrajectory(traj.getStartLocation() + (dtsb * 1.1)); // allow for some extra slack
@@ -451,6 +451,14 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // GET NODES OUT OF EADASTAR
         List<Node> eadResult = ead.getCurrentPath();
+
+        /*
+         * Optimization has been decided against due to complexities in trajectory behavior.
+         * Will be re-explored if performance issues arise as a result of the way a trajectory
+         * is constructed out of many small maneuvers
+         * 
+         * - KR
+         */
 
         // OPTIMIZE NODES
         // List<Node> optimizedOutput = new ArrayList<>();
