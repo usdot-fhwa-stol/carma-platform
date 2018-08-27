@@ -143,14 +143,7 @@ public class EnvironmentWorker {
     for (cav_msgs.ExternalObject obj: objects) {
       roadwayObstacles.add(buildObstacleFromMsg(obj, earthToOdom));
     }
-    roadwayObstacles.sort(new Comparator<RoadwayObstacle>() {
-      // Used for sorting in ascending order of
-      // roll number
-      public int compare(RoadwayObstacle a, RoadwayObstacle b)
-      {
-          return a.rollno - b.rollno;
-      }
-    });
+
     cav_msgs.RoadwayEnvironment roadwayMsg = messageFactory.newFromType(cav_msgs.RoadwayEnvironment._TYPE);
     roadwayMsg.setRoadwayObstacles(roadwayObstacles);
     roadwayMgr.publishRoadwayEnvironment(roadwayMsg);
