@@ -18,11 +18,11 @@ uint8 FLASHING_GREEN=4
 uint8 FLASHING_YELLOW=5
 uint8 FLASHING_RED=6
 
-# remaining time in seconds
+# remaining time in seconds of the current state
 uint16 remaining_time
 
 # lane id when passing thru the intersection
 uint16 lane_id
 
-# remaining distance in meters of the current state
+# remaining distance in meters of the intersection
 float32 remaining_distance
