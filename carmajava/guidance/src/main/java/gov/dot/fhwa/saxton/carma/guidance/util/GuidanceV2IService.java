@@ -44,7 +44,7 @@ public class GuidanceV2IService implements V2IService {
         log.infof("GuidanceV2IService init'd with commsReliabilityCheckThreshold=%d, commsReliabilityPct=%.02f, commsReliabilityExpectedV2IMsgsPerSec=%.02f, expiryTimeoutMs=%d",
         commsReliabilityCheckThreshold, commsReliabilityPct, commsReliabilityExpectedV2IMsgsPerSec, expiryTimeoutMs);
 
-        mapSub = pubSub.getSubscriberForTopic("map_data", MapData._TYPE);
+        mapSub = pubSub.getSubscriberForTopic("incoming_map", MapData._TYPE);
 
         mapSub.registerOnMessageCallback((map) -> {
             for (IntersectionGeometry geometry : map.getIntersections()) {
@@ -68,7 +68,7 @@ public class GuidanceV2IService implements V2IService {
             }
         });
 
-        spatSub = pubSub.getSubscriberForTopic("spat", SPAT._TYPE);
+        spatSub = pubSub.getSubscriberForTopic("incoming_spat", SPAT._TYPE);
         spatSub.registerOnMessageCallback((spat) -> {
             for (IntersectionState state : spat.getIntersections().getIntersectionStateList()) {
                 LocalDateTime msgTs = LocalDateTime.now(); // TODO: Improve methodology for determining data age

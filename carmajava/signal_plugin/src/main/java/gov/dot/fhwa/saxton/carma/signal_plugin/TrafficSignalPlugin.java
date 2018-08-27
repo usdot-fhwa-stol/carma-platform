@@ -95,7 +95,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // log the key params here
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
         setAvailability(false);
-        gpsSub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("~nav_sat_fix", NavSatFix._TYPE);
+        gpsSub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
         gpsSub.registerOnMessageCallback((msg) -> {
             curPos.set(msg);
             if (checkIntersectionMaps()) {
@@ -103,7 +103,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             }
         });
 
-        velocitySub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("~velocity", TwistStamped._TYPE);
+        velocitySub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("velocity", TwistStamped._TYPE);
         velocitySub.registerOnMessageCallback((msg) -> {
             curVel.set(msg);
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
