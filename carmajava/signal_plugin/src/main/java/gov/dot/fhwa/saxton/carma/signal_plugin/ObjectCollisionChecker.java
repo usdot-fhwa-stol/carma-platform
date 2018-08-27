@@ -13,6 +13,7 @@ import org.ros.message.Time;
 
 import cav_msgs.RoadwayObstacle;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
@@ -45,9 +46,18 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   private final long maxHistoricalDataAge; // ms
   private final double distanceStep; // m
   private final double timeDuration; // s
-  private final double timeRange; // s
-  private final double distanceBuffer; // m
+  private final double downtrackBuffer; // m
   private final double crosstrackBuffer; // m
+
+  private final double timeMargin; //s
+  private final double downtrackMargin;
+  private final double crosstrackMargin;
+
+  private final double longitudinalBias;
+  private final double lateralBias;
+  private final double temporalBias;
+
+
   private final long NCVReplanPeriod; // ms
   private final double MS_PER_S = 1000.0;
   private Long ncvDetectionTime = null;
@@ -64,9 +74,18 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.distanceStep = psl.getParameterSource().getDouble("ead.NCVHandling.collision.distanceStep");
     this.timeDuration = psl.getParameterSource().getDouble("ead.NCVHandling.collision.timeDuration");
     this.NCVReplanPeriod = (long) ((timeDuration / 2.0) * MS_PER_S); // Always replan after half of the ncv prediction has elapsed
-    this.timeRange = psl.getParameterSource().getDouble("ead.NCVHandling.collision.timeRange");
-    this.distanceBuffer = psl.getParameterSource().getDouble("ead.NCVHandling.collision.distanceBuffer");
+
+    this.downtrackBuffer = psl.getParameterSource().getDouble("ead.NCVHandling.collision.downtrackBuffer");
     this.crosstrackBuffer = psl.getParameterSource().getDouble("ead.NCVHandling.collision.crosstrackBuffer");
+    
+    // The downtrack and crosstrack margins are half the vehicle dimension plus the amount of buffer
+    this.downtrackMargin = (psl.getParameterSource().getDouble("vehicle_length") / 2.0) + this.downtrackBuffer;
+    this.crosstrackMargin = (psl.getParameterSource().getDouble("vehicle_width") / 2.0) + this.crosstrackBuffer;
+    this.timeMargin = psl.getParameterSource().getDouble("ead.NCVHandling.collision.timeMargin");
+
+    this.longitudinalBias = psl.getParameterSource().getDouble("ead.NCVHandling.collision.longitudinalBias");
+    this.lateralBias = psl.getParameterSource().getDouble("ead.NCVHandling.collision.lateralBias");
+    this.temporalBias = psl.getParameterSource().getDouble("ead.NCVHandling.collision.temporalBias");
 
     this.motionInterpolator = motionInterpolator;
     
@@ -169,7 +188,13 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     // Check the proposed trajectory against all tracked objects for collisions
     for (Entry<Integer, List<RoutePointStamped>> objPrediction: trackedLaneObjectsPredictions.entrySet()) {
       // Check for conflicts against each object and return true if any conflict is found
-      if (!conflictDetector.getConflicts(routePlan, objPrediction.getValue()).isEmpty()) { // TODO we need to pass in the appropriate object bounds
+      List<ConflictSpace> conflictSpaces = conflictDetector.getConflicts(
+        routePlan, objPrediction.getValue(),
+        downtrackMargin, crosstrackMargin, timeMargin,
+        longitudinalBias, lateralBias, temporalBias
+      );
+      
+      if (!conflictSpaces.isEmpty()) {
         return true;
       }
     }
