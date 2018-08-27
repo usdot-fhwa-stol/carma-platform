@@ -90,7 +90,8 @@ public class GuidanceV2IService implements V2IService {
 
         expiryCheckThread = new Thread(() -> {
             while (!Thread.interrupted())  {
-                for (int id : intersections.keySet()) {
+                List<Integer> keys = new ArrayList<>(intersections.keySet());
+                for (int id : keys) {
                     if (!commsChecks.get(id).isReliable()) {
                         expireIntersectionData(id);
                     }
