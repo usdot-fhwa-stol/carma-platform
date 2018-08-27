@@ -20,12 +20,14 @@ import geometry_msgs.Twist;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
@@ -49,30 +51,36 @@ import sensor_msgs.NavSatFix;;
  */
 public class ObjectCollisionChecker implements INodeCollisionChecker {
 
-  private IEad eadAlgorithm;
-  private ISubscriber<MapData> mapSub;
-  private ISubscriber<SPAT> spatSub;
-  private ISubscriber<NavSatFix> gpsSub;
-  private ISubscriber<TwistStamped> velSub;
+  IConflictDetector conflictDetector;
+
+  // Tracked objects
+  Map<Integer, PriorityQueue<RoadwayObstacle>> trackedLaneObjectsHistory = new HashMap<>();  
+  Map<Integer, List<RoutePointStamped>> trackedLaneObjectsPredictions = new HashMap<>();
 
   private SaxtonLogger log;
-  private Transform hostVehicleToVehicleFront;
   private RouteService routeService;
 
-  public ObjectCollisionChecker(PluginServiceLocator psl, SaxtonLogger log, String hostVehicleFrame, String vehicleFrontFrame) {
-    psl.getRouteService();
+  private final int objectHistoricalSampleCount;
+  private final double distanceStep;
+  private final double timeDuration;
+  private final double timeRange;
+  private final double distanceBuffer;
+  private final double crosstrackBuffer;
+
+  public ObjectCollisionChecker(PluginServiceLocator psl, SaxtonLogger log) {
+    routeService = psl.getRouteService();
+    psl.getParameterSource().getString("ead.NCVHandling.objectMotionPredictorModel");
+    psl.getParameterSource().getInteger("ead.NCVHandling.objectHistoricalSampleCount");
+    psl.getParameterSource().getDouble("ead.NCVHandling.collision.distanceStep");
+    psl.getParameterSource().getDouble("ead.NCVHandling.collision.timeDuration");
+    psl.getParameterSource().getDouble("ead.NCVHandling.collision.timeRange");
+    psl.getParameterSource().getDouble("ead.NCVHandling.collision.distanceBuffer");
+    psl.getParameterSource().getDouble("ead.NCVHandling.collision.crosstrackBuffer");
   }
 
   public void updateObjects(List<RoadwayObstacle> obstacles) {
-    if (hostVehicleToVehicleFront == null) {
-      // Transform is static so we only need it once
-      hostVehicleToVehicleFront = plugin.getTransform(hostVehicleFrame, vehicleFrontFrame, Time.fromMillis(0));
-      if (hostVehicleToVehicleFront == null)
-          return;
-    }
 
-    Map<Integer, PriorityQueue<RoadwayObstacle>> trackedLaneObjects = new HashMap<>(); 
-
+    // Iterate over detected objects and keep only those in front of us in the same lane. 
     int currentLane = routeService.getCurrentRouteSegment().determinePrimaryLane(routeService.getCurrentCrosstrackDistance());
     for (RoadwayObstacle obs : obstacles) {
 
@@ -83,7 +91,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       // Add it to the set of tracked object histories
       if (inLane && frontObjectDistToCenters > -0.0) {
 
-        if (!trackedLaneObjects.containsKey(obs.getObject().getId())) {
+        if (!trackedLaneObjectsHistory.containsKey(obs.getObject().getId())) {
           // Sort object history as time sorted priority queue
           PriorityQueue<RoadwayObstacle> objectHistory = new PriorityQueue<RoadwayObstacle>(new Comparator<RoadwayObstacle> (){
             public int compare(RoadwayObstacle r1, RoadwayObstacle r2) {
@@ -91,10 +99,10 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
               return r1.getObject().getHeader().getStamp().compareTo(r2.getObject().getHeader().getStamp());
             }
           });
-          trackedLaneObjects.put(obs.getObject().getId(), objectHistory);
+          trackedLaneObjectsHistory.put(obs.getObject().getId(), objectHistory);
         }
 
-        PriorityQueue<RoadwayObstacle> objHistory = trackedLaneObjects.get(obs.getObject().getId());
+        PriorityQueue<RoadwayObstacle> objHistory = trackedLaneObjectsHistory.get(obs.getObject().getId());
         
         // Add new historical data and remove old data to maintain queue size if needed
         objHistory.add(obs);
@@ -109,16 +117,27 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
     double distanceStep, timeDuration; //TODO
 
-    // TODO we have predicted the motion of each in lane object but not we need to store that for checks against
+    // Predict and cache the motion of each object
     IMotionPredictor motionPredictor; // TODO
-    for (Entry<Integer, PriorityQueue<RoadwayObstacle>> e: trackedLaneObjects.entrySet()) {
-      motionPredictor.predictMotion(e.getKey().toString(), e.getValue(), distanceStep, timeDuration);
+    for (Entry<Integer, PriorityQueue<RoadwayObstacle>> e: trackedLaneObjectsHistory.entrySet()) {
+      trackedLaneObjectsPredictions.put(
+        e.getKey(), 
+        motionPredictor.predictMotion(e.getKey().toString(), e.getValue(), distanceStep, timeDuration)
+      );
     }
-    
   }
 
   @Override
   public boolean hasCollision(List<Node> trajectory) {
+    
+    List<RoutePointStamped> hostPlan; // TODO
+    for (Entry<Integer, List<RoutePointStamped>> objPrediction: trackedLaneObjectsPredictions.entrySet()) {
+      // Check for conflicts against each object and return true if any conflict is found
+      if (!conflictDetector.getConflicts(hostPlan, objPrediction.getValue()).isEmpty()) {
+        return true;
+      }
+    }
+
     return false;
   }
 }
