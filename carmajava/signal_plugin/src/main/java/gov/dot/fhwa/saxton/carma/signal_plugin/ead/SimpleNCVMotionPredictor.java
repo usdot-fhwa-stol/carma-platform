@@ -83,16 +83,26 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
     double slope = (count * sumDistxTime - sumDist * sumTime) / denominator;
 
     // Generate projection using regression model
-    // Set start time as the last timestamp in the provided history plus the timestep 
+    // Set endtime as the last timestamp in the provided history plus the time duration 
     double startDist = objTrajectory.get(objTrajectory.size() - 1).getDistanceAsDouble();
     double d = startDist;
-    double endTime = timeDuration + objTrajectory.get(objTrajectory.size() - 1).getTimeAsDouble();
+    double t = objTrajectory.get(objTrajectory.size() - 1).getTimeAsDouble();
+    double endTime = timeDuration + t;
     double endDistance = (endTime - intercept) / slope;
 
-    while (d < endDistance) {
+    if (slope > 1.0) { // If the s/m is greater than 1 m/s (2.23694 mph) then assume the vehicle is stopped
+      // Use small time increments instead of distance steps
+      while (t < endTime) {
 
-      d += distanceStep;
-      projection.add(new RoutePointStamped(d, 0, d * slope + intercept));
+        t += 0.1;
+        projection.add(new RoutePointStamped(d, 0, t)); // Assume that the vehicle is stationary
+      }
+    } else { // Vehicle is in motion so use distance steps
+      while (d < endDistance) {
+
+        d += distanceStep;
+        projection.add(new RoutePointStamped(d, 0, d * slope + intercept));
+      }
     }
 
     return projection;
