@@ -25,7 +25,12 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
- *
+ * The ObjectCollisionChecker will provide collision checking functionality for the Traffic Signal Plugin
+ * The historical descriptions of detected in lane objects are cached and used to predict future object motion
+ * The object motion predictions are used for collision checking to prevent the plugin from planning a path through a detected object
+ * Additionally, when an upcoming collision is detected based on new data, a total replan will be requested
+ * After a replan occurs additional replans will be requested at time increments equal to half the prediction period or when a new collision is identified
+ * This system is capable of handling multiple in lane objects, but makes the assumption that lane id's will not change between the host vehicle and the detected objects.
  */
 public class ObjectCollisionChecker implements INodeCollisionChecker {
 
@@ -35,7 +40,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   Map<Integer, PriorityQueue<RoadwayObstacle>> trackedLaneObjectsHistory = new HashMap<>();  
   Map<Integer, List<RoutePointStamped>> trackedLaneObjectsPredictions = new HashMap<>();
 
-  AtomicReference<List<RoutePointStamped>> interpolatedHostPlan;
+  AtomicReference<List<RoutePointStamped>> interpolatedHostPlan; // Current Host Plan
 
   private SaxtonLogger log;
   private RouteService routeService;
@@ -50,8 +55,8 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   private final double crosstrackBuffer; // m
 
   private final double timeMargin; //s
-  private final double downtrackMargin;
-  private final double crosstrackMargin;
+  private final double downtrackMargin; // m
+  private final double crosstrackMargin; // m
 
   private final double longitudinalBias;
   private final double lateralBias;
@@ -59,9 +64,17 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
 
   private final long NCVReplanPeriod; // ms
-  private final double MS_PER_S = 1000.0;
-  private Long ncvDetectionTime = null;
+  private final double MS_PER_S = 1000.0; // ms
+  private Long ncvDetectionTime = null; // ms
 
+  /**
+   * Constructor
+   * 
+   * @param psl The plugin service locator used to load parameters and route details
+   * @param log The logger to be used
+   * @param modelFactory The factory used for getting an IMotionPredictor to predict object trajectories
+   * @param motionInterpolator The host vehicle motion interpolator which will interpolate vehicle plans as needed
+   */
   public ObjectCollisionChecker(PluginServiceLocator psl, SaxtonLogger log,
     IMotionPredictorModelFactory modelFactory, IMotionInterpolator motionInterpolator) {
     this.routeService = psl.getRouteService();
@@ -91,6 +104,15 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     
   }
 
+  /**
+   * Function to be called when new objects are detected by host vehicle sensors
+   * This will update object histories and predictions
+   * If a collision is detected based on new predictions then a replan will be requested
+   * 
+   * Note: This function assumes this data will be provided at a fixed rate which is below half the prediction period 
+   * 
+   * @param obstacles The list of detected objects in route space around the vehicle
+   */
   public void updateObjects(List<RoadwayObstacle> obstacles) {
 
     // Iterate over detected objects and keep only those in front of us in the same lane. 
@@ -171,6 +193,12 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     }
   }
 
+  /**
+   * Helper function to remove expired data elements from an objects historical data
+   * 
+   * @param objHistory Objects historical data
+   * @param minObjStamp The earliest time which a data element can have without being removed
+   */
   private void removeExpiredData(PriorityQueue<RoadwayObstacle> objHistory, Time minObjStamp) {
 
     Time oldestObjStamp = objHistory.peek().getObject().getHeader().getStamp();
@@ -180,10 +208,23 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     }
   }
 
+  /**
+   * Sets the current host vehicle plan which will be used for collision checks
+   * The provided host plan will be interpolated using the provided IMotionInterpolator
+   * 
+   * @param hostPlan The host plan to set as the current plan
+   */
   public void setHostPlan(List<Node> hostPlan) {
     interpolatedHostPlan.set(motionInterpolator.interpolateMotion(hostPlan, distanceStep));
   }
 
+  /**
+   * Helper function to check collisions between predicted object trajectories and the provided plan
+   * 
+   * @param routePlan The plan to check for collisions with
+   * 
+   * @return True if a collision was found. False otherwise
+   */
   private boolean checkCollision(List<RoutePointStamped> routePlan) {
     // Check the proposed trajectory against all tracked objects for collisions
     for (Entry<Integer, List<RoutePointStamped>> objPrediction: trackedLaneObjectsPredictions.entrySet()) {
