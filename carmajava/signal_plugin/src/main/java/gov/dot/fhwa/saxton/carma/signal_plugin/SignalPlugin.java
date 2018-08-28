@@ -20,7 +20,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntersectionCollectionDataElement;
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IAsdListDataElement;;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IAsdListDataElement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IAsdMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionCollection;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;

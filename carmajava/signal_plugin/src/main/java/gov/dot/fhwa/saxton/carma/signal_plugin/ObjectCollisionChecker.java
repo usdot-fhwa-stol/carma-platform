@@ -1,5 +1,6 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -164,7 +165,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
       trackedLaneObjectsPredictions.put(
         e.getKey(), 
-        motionPredictor.predictMotion(e.getKey().toString(), e.getValue(), distanceStep, timeDuration)
+        motionPredictor.predictMotion(e.getKey().toString(), new ArrayList<>(e.getValue()), distanceStep, timeDuration)
       );
     }
 

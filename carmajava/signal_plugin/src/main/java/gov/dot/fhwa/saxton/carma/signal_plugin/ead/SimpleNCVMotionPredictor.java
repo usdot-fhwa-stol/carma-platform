@@ -19,8 +19,8 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 import java.util.LinkedList;
 import java.util.List;
 
+import cav_msgs.RoadwayObstacle;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
-import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
  * The SimpleNCVMotionPredictor provides an implementation of IMotionPredictor using simple linear regression to predict future detected vehicle motions.
@@ -47,7 +47,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 public class SimpleNCVMotionPredictor implements IMotionPredictor {
 
    @Override
-  public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double distanceStep, double timeDuration) {
+  public List<RoutePointStamped> predictMotion(String objId, List<RoadwayObstacle> objTrajectory, double distanceStep, double timeDuration) {
 
     List<RoutePointStamped> projection = new LinkedList<>();
 
@@ -62,10 +62,10 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
     double sumDistxTime = 0;
 
     // Calculate sums for regression
-    for (Node n: objTrajectory) {
+    for (RoadwayObstacle n: objTrajectory) {
       
-      double d = n.getDistanceAsDouble();
-      double t = n.getTimeAsDouble();
+      double d = n.getDownTrack();
+      double t = n.getObject().getHeader().getStamp().toSeconds();
       double d_sqr = d * d;
       double td = t * d; 
 
@@ -84,9 +84,9 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
 
     // Generate projection using regression model
     // Set endtime as the last timestamp in the provided history plus the time duration 
-    double startDist = objTrajectory.get(objTrajectory.size() - 1).getDistanceAsDouble();
+    double startDist = objTrajectory.get(objTrajectory.size() - 1).getDownTrack();
     double d = startDist;
-    double t = objTrajectory.get(objTrajectory.size() - 1).getTimeAsDouble();
+    double t = objTrajectory.get(objTrajectory.size() - 1).getObject().getHeader().getStamp().toSeconds();
     double endTime = timeDuration + t;
     double endDistance = (endTime - intercept) / slope;
 

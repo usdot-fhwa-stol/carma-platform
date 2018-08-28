@@ -17,6 +17,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin;
 import java.io.IOException;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IMotionPredictor;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.SimpleNCVMotionPredictor;
 /**
 * Factory-pattern class for IMotionPredictor objects
 * <p>
@@ -44,8 +45,7 @@ public class DefaultMotionPredictorFactory implements IMotionPredictorModelFacto
  public IMotionPredictor getMotionPredictor(String desiredPredictorName) throws IllegalArgumentException {
    switch(desiredPredictorName) {
      case "SIMPLE_LINEAR_REGRESSION":
-      //return new 
-        return null; //TODO
+        return new SimpleNCVMotionPredictor();
      case "UCR_NEURAL_NET": // TODO implement
       throw new IllegalArgumentException("UCR_NEURAL_NET has not yet been implemented ");
        
