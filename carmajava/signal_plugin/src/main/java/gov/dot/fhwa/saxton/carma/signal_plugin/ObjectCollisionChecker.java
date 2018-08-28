@@ -228,10 +228,18 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   private boolean checkCollision(List<RoutePointStamped> routePlan) {
     // Check the proposed trajectory against all tracked objects for collisions
     for (Entry<Integer, List<RoutePointStamped>> objPrediction: trackedLaneObjectsPredictions.entrySet()) {
+      List<RoutePointStamped> objPlan = objPrediction.getValue();
+      double dynamicTimeMargin = timeMargin;
+      // Compute an estimated time margin to ensure overlap of collision bounds
+      if (objPrediction.getValue().size() > 1) {
+        // TODO this assumes linear regression used for motion prediction resulting in constant slope
+        // The time margin should be half delta t plus a small bit of overlap
+        dynamicTimeMargin = ((objPlan.get(1).getStamp() - objPlan.get(0).getStamp()) / 2.0) + 0.0001;
+      }
       // Check for conflicts against each object and return true if any conflict is found
       List<ConflictSpace> conflictSpaces = conflictDetector.getConflicts(
-        routePlan, objPrediction.getValue(),
-        downtrackMargin, crosstrackMargin, timeMargin,
+        routePlan, objPlan,
+        downtrackMargin, crosstrackMargin, dynamicTimeMargin,
         longitudinalBias, lateralBias, temporalBias
       );
       
