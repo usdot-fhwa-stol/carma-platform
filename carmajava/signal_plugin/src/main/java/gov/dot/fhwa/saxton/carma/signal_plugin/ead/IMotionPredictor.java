@@ -41,6 +41,5 @@ public interface IMotionPredictor {
    * 
    * @return A list of RoutePointStamped which can be plugged into the conflict detection system provided by CARMA. The returned list is exclusive of the history data.
    */
-
   public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double distanceStep, double timeDuration);
 }
