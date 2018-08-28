@@ -46,7 +46,6 @@ import std_msgs.Header;
 import tf2_msgs.TFMessage;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -143,7 +142,6 @@ public class EnvironmentWorker {
     for (cav_msgs.ExternalObject obj: objects) {
       roadwayObstacles.add(buildObstacleFromMsg(obj, earthToOdom));
     }
-
     cav_msgs.RoadwayEnvironment roadwayMsg = messageFactory.newFromType(cav_msgs.RoadwayEnvironment._TYPE);
     roadwayMsg.setRoadwayObstacles(roadwayObstacles);
     roadwayMgr.publishRoadwayEnvironment(roadwayMsg);
