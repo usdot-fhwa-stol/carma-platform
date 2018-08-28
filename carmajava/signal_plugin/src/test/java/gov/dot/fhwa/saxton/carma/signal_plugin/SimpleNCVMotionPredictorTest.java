@@ -34,9 +34,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.ros.message.MessageFactory;
+import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
 import org.ros.rosjava_geometry.Transform;
 
+import cav_msgs.RoadwayObstacle;
 import sensor_msgs.NavSatFix;
 import sensor_msgs.NavSatStatus;
 
@@ -45,11 +47,13 @@ import static org.junit.Assert.assertTrue;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
- * Runs unit tests for the RouteWorker class
+ * Runs unit tests for the SimpleNCVMotionPredictor class
  */
 public class SimpleNCVMotionPredictorTest {
 
   Log log;
+  NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+  MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
   @Before
   public void setUp() throws Exception {
@@ -71,17 +75,17 @@ public class SimpleNCVMotionPredictorTest {
 
 
     // Empty list will return empty list
-    List<RoutePointStamped> points = motionPredictor.predictMotion("1", new ArrayList<Node>(), 0.2, 1.0);
+    List<RoutePointStamped> points = motionPredictor.predictMotion("1", new ArrayList<RoadwayObstacle>(), 0.2, 1.0);
     assertTrue(points.isEmpty());
 
     // A single node will return an empty list
-    Node n1 = new Node(10.0, 0.0, 5.0);
+    RoadwayObstacle n1 = newRoadwayObstacle(10.0, 0.0, 5.0);
     points = motionPredictor.predictMotion("1", Arrays.asList(n1), 0.2, 1.0);
     assertTrue(points.isEmpty());
 
     // 2 Node list with 0 acceleration
-    n1 = new Node(10.0, 0.0, 5.0);
-    Node n2 = new Node(15.0, 1.0, 5.0);
+    n1 = newRoadwayObstacle(10.0, 0.0, 5.0);
+    RoadwayObstacle n2 = newRoadwayObstacle(15.0, 1.0, 5.0);
     points = motionPredictor.predictMotion("1", Arrays.asList(n1,n2), 1.0, 1.0);
 
     assertEquals(5, points.size());
@@ -92,11 +96,11 @@ public class SimpleNCVMotionPredictorTest {
     assertTrue(routePointAlmostEqual(new RoutePointStamped(20.0, 0.0, 2.0), points.get(4), 0.0001));
 
     // 5 Node list with complex motion
-    n1 = new Node(10.0, 0.0, 5.0);
-    n2 = new Node(40.0, 4.0, 10.0);
-    Node n3 = new Node(80.0, 8.0, 10.0);
-    Node n4 = new Node(110.0, 12.0, 5.0);
-    Node n5 = new Node(130.0, 16.0, 5.0); // Finish building list
+    n1 = newRoadwayObstacle(10.0, 0.0, 5.0);
+    n2 = newRoadwayObstacle(40.0, 4.0, 10.0);
+    RoadwayObstacle n3 = newRoadwayObstacle(80.0, 8.0, 10.0);
+    RoadwayObstacle n4 = newRoadwayObstacle(110.0, 12.0, 5.0);
+    RoadwayObstacle n5 = newRoadwayObstacle(130.0, 16.0, 5.0); // Finish building list
     points = motionPredictor.predictMotion("1",Arrays.asList(n1,n2,n3,n4,n5), 10.0, 8.0);
 
     assertEquals(7,points.size());
@@ -121,5 +125,17 @@ public class SimpleNCVMotionPredictorTest {
       log.info(r1  + " and " + r2 + " are not equal within " + epsilon);
     }
     return result;
+  }
+
+  /** 
+   * Helper function acts as constructor for RoadwayObstacle
+   */
+  RoadwayObstacle newRoadwayObstacle(double dist, double time, double speed) {
+    RoadwayObstacle ro = messageFactory.newFromType(RoadwayObstacle._TYPE);
+    ro.getObject().getHeader().setStamp(Time.fromMillis((long)(time * 1000)));
+    ro.setDownTrack(dist);
+    ro.getObject().getVelocity().getTwist().getLinear().setX(speed);
+
+    return ro;
   }
 }

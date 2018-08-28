@@ -45,6 +45,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
@@ -78,7 +79,7 @@ public class CandidateFollowerStateTest {
                                                         planner,                          mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-                                                        mock(TrackingService.class));
+                                                        mock(TrackingService.class), mock(ITimeProvider.class));
         when(mockFact.createLoggerForClass(any())).thenReturn(mockLog);
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();

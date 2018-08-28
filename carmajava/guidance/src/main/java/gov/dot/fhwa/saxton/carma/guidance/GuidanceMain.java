@@ -31,7 +31,9 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+import gov.dot.fhwa.saxton.carma.guidance.util.ROSTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
@@ -118,8 +120,9 @@ public class GuidanceMain extends SaxtonBaseNode {
     LightBarManager lightBarManager = new LightBarManager(stateMachine, pubSubService, node);
     VehicleAwareness vehicleAwareness = new VehicleAwareness(stateMachine, pubSubService, node, trajectoryConverter, conflictManager, tracking);
     MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter, vehicleAwareness, trajectoryExecutor, tracking);
+    ITimeProvider timeProvider = new ROSTimeProvider(node);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
-        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking);
+        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking, timeProvider);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor, vehicleAwareness);
 
     tracking.setTrajectoryExecutor(trajectoryExecutor);

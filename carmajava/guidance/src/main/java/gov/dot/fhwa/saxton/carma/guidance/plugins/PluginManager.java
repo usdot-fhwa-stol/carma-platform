@@ -36,6 +36,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
@@ -94,7 +95,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
     public PluginManager(GuidanceStateMachine stateMachine, IPubSubService pubSubManager, 
     IGuidanceCommands commands, IManeuverInputs maneuverInputs, RouteService routeService,
     ConnectedNode node, IMobilityRouter router, IConflictDetector conflictDetector,
-     ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager, TrackingService trackingService) {
+     ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager,
+     TrackingService trackingService, ITimeProvider timeProvider) {
         super(stateMachine, pubSubManager, node);
         this.executor = new PluginExecutor();
 
@@ -104,7 +106,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pubSubService, 
                 new RosParameterSource(node.getParameterTree()), 
                 new ManeuverPlanner(commands, maneuverInputs), 
-                routeService, router , conflictDetector, trajectoryConverter, lightBarManager, trackingService);
+                routeService, router , conflictDetector, trajectoryConverter, lightBarManager,
+                trackingService, timeProvider);
     }
 
     /**
@@ -124,7 +127,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pluginServiceLocator.getConflictDetector(),
                 pluginServiceLocator.getTrajectoryConverter(),
                 pluginServiceLocator.getLightBarManager(),
-                pluginServiceLocator.getTrackingService());
+                pluginServiceLocator.getTrackingService(),
+                pluginServiceLocator.getTimeProvider());
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }

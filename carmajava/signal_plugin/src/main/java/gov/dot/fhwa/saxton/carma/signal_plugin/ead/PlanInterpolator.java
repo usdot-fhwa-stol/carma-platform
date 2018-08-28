@@ -58,7 +58,7 @@ public class PlanInterpolator implements IMotionInterpolator {
       
       if (dx < distanceStep) {
         throw new IllegalArgumentException("interpolateMotion distance step size of "
-         + distanceStep + " is less than gab between nodes " + prevNode + " " + n);
+         + distanceStep + " is greater than gab between nodes " + prevNode + " " + n);
       }
 
       final double a = dv / dt; // Assume constant acceleration

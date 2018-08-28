@@ -17,6 +17,7 @@ import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
@@ -41,11 +42,12 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   Map<Integer, PriorityQueue<RoadwayObstacle>> trackedLaneObjectsHistory = new HashMap<>();  
   Map<Integer, List<RoutePointStamped>> trackedLaneObjectsPredictions = new HashMap<>();
 
-  AtomicReference<List<RoutePointStamped>> interpolatedHostPlan; // Current Host Plan
+  private final AtomicReference<List<RoutePointStamped>> interpolatedHostPlan = new AtomicReference<>(new LinkedList<>()); // Current Host Plan
 
-  private SaxtonLogger log;
-  private RouteService routeService;
-  private ArbitratorService arbitratorService;
+  private final SaxtonLogger log;
+  private final RouteService routeService;
+  private final ArbitratorService arbitratorService;
+  private final ITimeProvider timeProvider;
 
   private final IMotionPredictor motionPredictor;
   private final IMotionInterpolator motionInterpolator;
@@ -78,8 +80,10 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    */
   public ObjectCollisionChecker(PluginServiceLocator psl, SaxtonLogger log,
     IMotionPredictorModelFactory modelFactory, IMotionInterpolator motionInterpolator) {
+    this.log = log;
     this.routeService = psl.getRouteService();
     this.arbitratorService = psl.getArbitratorService();
+    this.timeProvider = psl.getTimeProvider();
 
     String predictionModel = psl.getParameterSource().getString("ead.NCVHandling.objectMotionPredictorModel");
     this.motionPredictor = modelFactory.getMotionPredictor(predictionModel);
@@ -151,7 +155,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
     // Predict and cache the motion of each object
     // Also remove expired data and identify expired objects
-    final Time minObjStamp = Time.fromMillis(System.currentTimeMillis() - maxHistoricalDataAge);
+    final Time minObjStamp = Time.fromMillis(timeProvider.getCurrentTimeMillis() - maxHistoricalDataAge);
     List<Integer> expiredObjIds = new LinkedList<>(); // List of objects which are expired and marked for removal
 
     for (Entry<Integer, PriorityQueue<RoadwayObstacle>> e: trackedLaneObjectsHistory.entrySet()) {
@@ -179,11 +183,11 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
 
     if (collisionDetected) { // Any time there is a detected collision force a replan
-      ncvDetectionTime = System.currentTimeMillis();
+      ncvDetectionTime = timeProvider.getCurrentTimeMillis();
       arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
 
-    } else if (ncvDetectionTime != null && System.currentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
-      ncvDetectionTime = System.currentTimeMillis();
+    } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
+      ncvDetectionTime = timeProvider.getCurrentTimeMillis();
       arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
 
     } else if (inLaneObjectCount == 0) { // If no in lane objects were detected the ncv is no longer an issue. The assumption being made here is that sensor fusion has already filtered our incoming object data.
@@ -202,10 +206,10 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    */
   private void removeExpiredData(PriorityQueue<RoadwayObstacle> objHistory, Time minObjStamp) {
 
-    Time oldestObjStamp = objHistory.peek().getObject().getHeader().getStamp();
-    while (oldestObjStamp != null && oldestObjStamp.compareTo(minObjStamp) < 0) {
+    RoadwayObstacle obs = objHistory.peek();
+    while (obs != null && obs.getObject().getHeader().getStamp().compareTo(minObjStamp) < 0) {
       objHistory.poll();
-      oldestObjStamp = objHistory.peek().getObject().getHeader().getStamp();
+      obs = objHistory.peek();
     }
   }
 
