@@ -27,7 +27,7 @@ public class DefaultMotionPredictorFactory implements IMotionPredictorModelFacto
   /**
   * Constructor
   * 
-  * @param config A IGlidepathAppConfig config allowing parameters for requested cost models to be loaded
+  * @param config A IGlidepathAppConfig config allowing parameters for requested prediction models to be loaded
   */
  public DefaultMotionPredictorFactory(IGlidepathAppConfig config) {
    this.config = config;
@@ -44,9 +44,10 @@ public class DefaultMotionPredictorFactory implements IMotionPredictorModelFacto
  public IMotionPredictor getMotionPredictor(String desiredPredictorName) throws IllegalArgumentException {
    switch(desiredPredictorName) {
      case "SIMPLE_LINEAR_REGRESSION":
+      //return new 
         return null; //TODO
-     case "UCR_NEURAL_NET":
-       return null; //TODO
+     case "UCR_NEURAL_NET": // TODO implement
+      throw new IllegalArgumentException("UCR_NEURAL_NET has not yet been implemented ");
        
      default:
        throw new IllegalArgumentException("Provided motion predictor model name is not valid: " + desiredPredictorName);
