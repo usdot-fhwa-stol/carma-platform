@@ -79,7 +79,8 @@ public class Trajectory implements ITrajectory {
 		log_.infof("TRAJ", "time step = %d ms, respecting timeouts = %b", timeStepSize_, respectTimeouts_);
 
 		//get constraint parameters from the config file
-		speedLimit_ = config.getMaximumSpeed()/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
+		// TODO use a dynamic speed limit rather than the first speed limit on the route
+		speedLimit_ = config.getMaximumSpeed(0.0)/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
 		maxJerk_ = Double.valueOf(config.getProperty("maximumJerk"));
 		accelLimiter_ = config.getBooleanValue("ead.accelLimiter");
 		jerkLimiter_ = config.getBooleanValue("ead.jerkLimiter");
