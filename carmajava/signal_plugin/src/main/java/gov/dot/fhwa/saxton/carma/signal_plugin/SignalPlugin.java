@@ -224,17 +224,4 @@ public class SignalPlugin extends AbstractPlugin implements IStrategicPlugin {
         holder.put(DataElementKey.INTERSECTION_COLLECTION, new IntersectionCollectionDataElement(collection));
     }
 
-    /**
-     * TODO
-     * Gets the transform of between the requested frames
-     * The transform describes the location of the child frame in the parent frame
-     * 
-     * @param parentFrame Frame Id of parent frame
-     * @param childFrame Frame Id of child frame
-     * @param stamp The time which this transform should correspond to
-     */
-    private Transform getTransform(String parentFrame, String childFrame, Time stamp) {
-        return null;
-    }
-
 }
