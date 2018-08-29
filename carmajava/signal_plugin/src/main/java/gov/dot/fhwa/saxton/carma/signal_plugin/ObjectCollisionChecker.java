@@ -17,7 +17,9 @@ import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
@@ -36,7 +38,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
  */
 public class ObjectCollisionChecker implements INodeCollisionChecker {
 
-  IConflictDetector conflictDetector;
+  private final IConflictDetector conflictDetector;
 
   // Tracked objects
   Map<Integer, PriorityQueue<RoadwayObstacle>> trackedLaneObjectsHistory = new HashMap<>();  
@@ -44,7 +46,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
   private final AtomicReference<List<RoutePointStamped>> interpolatedHostPlan = new AtomicReference<>(new LinkedList<>()); // Current Host Plan
 
-  private final SaxtonLogger log;
+  private final ILogger log;
   private final RouteService routeService;
   private final ArbitratorService arbitratorService;
   private final ITimeProvider timeProvider;
@@ -74,16 +76,16 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    * Constructor
    * 
    * @param psl The plugin service locator used to load parameters and route details
-   * @param log The logger to be used
    * @param modelFactory The factory used for getting an IMotionPredictor to predict object trajectories
    * @param motionInterpolator The host vehicle motion interpolator which will interpolate vehicle plans as needed
    */
-  public ObjectCollisionChecker(PluginServiceLocator psl, SaxtonLogger log,
+  public ObjectCollisionChecker(PluginServiceLocator psl,
     IMotionPredictorModelFactory modelFactory, IMotionInterpolator motionInterpolator) {
-    this.log = log;
+    this.log = LoggerManager.getLogger();
     this.routeService = psl.getRouteService();
     this.arbitratorService = psl.getArbitratorService();
     this.timeProvider = psl.getTimeProvider();
+    this.conflictDetector = psl.getConflictDetector();
 
     String predictionModel = psl.getParameterSource().getString("ead.NCVHandling.objectMotionPredictorModel");
     this.motionPredictor = modelFactory.getMotionPredictor(predictionModel);

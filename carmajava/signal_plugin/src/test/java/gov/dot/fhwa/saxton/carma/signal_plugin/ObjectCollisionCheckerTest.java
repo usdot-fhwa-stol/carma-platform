@@ -16,39 +16,33 @@
 
 package gov.dot.fhwa.saxton.carma.signal_plugin;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
-import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
-import gov.dot.fhwa.saxton.carma.guidance.TrackingService;
-import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
-import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
-import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
+import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
+import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
-import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
+import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IMotionInterpolator;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
-import gov.dot.fhwa.saxton.carma.signal_plugin.ead.SimpleNCVMotionPredictor;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
-import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -56,11 +50,8 @@ import org.junit.Test;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
-import org.ros.rosjava_geometry.Transform;
 
 import cav_msgs.RoadwayObstacle;
-import sensor_msgs.NavSatFix;
-import sensor_msgs.NavSatStatus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -72,14 +63,17 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
  */
 public class ObjectCollisionCheckerTest {
 
-  SaxtonLogger log;
+  SaxtonLoggerProxyFactory loggerFactory;
+  ILogger log;
   NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
   @Before
   public void setUp() throws Exception {
-    log = new SaxtonLogger("ObjectCollisionChecker", LogFactory.getLog(ObjectCollisionChecker.class));
-    log.info("Setting up tests for ObjectCollisionChecker");
+    loggerFactory = new SaxtonLoggerProxyFactory(LogFactory.getLog(ObjectCollisionCheckerTest.class));
+    LoggerManager.setLoggerFactory(loggerFactory);
+    log = LoggerManager.getLogger();
+    log.info("Setting up tests for PlanInterpolator");
   }
 
   @After
@@ -87,7 +81,7 @@ public class ObjectCollisionCheckerTest {
   }
 
   /**
-   * Tests the linear regression of measured vehicle position vs time.
+   * Tests basic ncv collision detection in the ObjectCollisionChecker
    * @throws Exception
    */
   @Test
@@ -100,24 +94,27 @@ public class ObjectCollisionCheckerTest {
     ParameterSource             ps = mock(ParameterSource.class);
     RouteService                rs = mock(RouteService.class);
     ITimeProvider               tp = mock(ITimeProvider.class);
-    IConflictDetector           cd = mock(IConflictDetector.class);
+    IMobilityTimeProvider mobilityTimeProvider = mock(IMobilityTimeProvider.class);
+    ArbitratorService           as = mock(ArbitratorService.class);
+    Route                       route = mock(Route.class);
+    RouteSegment mockSegment = mock(RouteSegment.class);
+    List<RouteSegment> routeSegments = new ArrayList<>(Collections.nCopies(200, mockSegment)); // Create route full of the mocked segment
+    when(route.getSegments()).thenReturn(routeSegments);
+    when(mockSegment.determinePrimaryLane(anyDouble())).thenReturn(0);
 
-    // TODO how do we check that the conflict was found
+    // Create conflict manager using default guidance settings
+
+    ConflictManager cm = new ConflictManager(new double[] {10.0, 6.0, 0.2}, 5.0, 1.2, 0.1,
+      0.0, -0.25, 0.0, mobilityTimeProvider);
+
+    cm.setRoute(route);
 
     when(psl.getParameterSource()).thenReturn(ps);
     when(psl.getRouteService()).thenReturn(rs);
     when(psl.getTimeProvider()).thenReturn(tp);
-    when(psl.getConflictDetector()).thenReturn(cd);
+    when(psl.getConflictDetector()).thenReturn(cm);
+    when(psl.getArbitratorService()).thenReturn(as);
 
-    // PluginServiceLocator psl = new PluginServiceLocator(mock(ArbitratorService.class),    mock(PluginManagementService.class),
-    //                                                 mock(IPubSubService.class),       mock(ParameterSource.class),
-    //                                                 mock(ManeuverPlanner.class),      mockRouteService,
-    //                                                 mock(IMobilityRouter.class),      mock(IConflictDetector.class),
-    //                                                 mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-    //                                                 mock(TrackingService.class));
-
-
-    
     when(ps.getString("ead.NCVHandling.objectMotionPredictorModel")).thenReturn("SIMPLE_LINEAR_REGRESSION");
     when(ps.getInteger("ead.NCVHandling.collision.maxObjectHistoricalDataAge")).thenReturn(3000);
     when(ps.getDouble("ead.NCVHandling.collision.distanceStep")).thenReturn(2.5);
@@ -129,7 +126,7 @@ public class ObjectCollisionCheckerTest {
     when(ps.getDouble("ead.NCVHandling.collision.lateralBias")).thenReturn(0.0);
     when(ps.getDouble("ead.NCVHandling.collision.temporalBias")).thenReturn(0.0);
 
-    ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, log, motionPredictorFactory, planInterpolator);
+    ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator);
 
     // Check no collisions without object data
     // Note: Nodes in this test are defined using double constructor
@@ -139,61 +136,67 @@ public class ObjectCollisionCheckerTest {
 
     // Return the current lane id as 0 with crosstrack 0.0
     when(rs.getCurrentCrosstrackDistance()).thenReturn(0.0);
-    RouteSegment mockSegment = mock(RouteSegment.class);
     when(rs.getCurrentRouteSegment()).thenReturn(mockSegment);
-    when(mockSegment.determinePrimaryLane(0.0)).thenReturn(0);
+    double currentDowntrack = 0.0;
+    when(rs.getCurrentDowntrackDistance()).thenReturn(currentDowntrack);
 
-    when(tp.getCurrentTimeMillis()).thenReturn(510L); // The current time is 0.51
+    long currentTime = 510L; // The current time is 0.51
+    when(tp.getCurrentTimeMillis()).thenReturn(currentTime);
+    when(mobilityTimeProvider.getCurrentTimeMillis()).thenReturn(currentTime);
 
     // Add one obstacle in current lane
-    RoadwayObstacle ro = newRoadwayObstacle(2.5, 0.5, 5.0); // Object with stamp at 0.5
+    RoadwayObstacle ro = newRoadwayObstacle(0, 2.5, 0.5, 5.0); // Object id 0 with stamp at 0.5
     ro.setPrimaryLane((byte)0);
     occ.updateObjects(Arrays.asList(ro));
 
-    assertEquals(1, occ.trackedLaneObjectsHistory.size());
-    assertEquals(1, occ.trackedLaneObjectsPredictions.size());
+    assertEquals(1, occ.trackedLaneObjectsHistory.size()); // Object id is being tracked
+    assertEquals(1, occ.trackedLaneObjectsPredictions.size()); // Object id is being tracked
+    assertEquals(1, occ.trackedLaneObjectsHistory.get(0).size()); // 1 history element 
+    assertEquals(0, occ.trackedLaneObjectsPredictions.get(0).size()); // 0 predictions
+
+    // Check that the collision is not found since there is no prediction
+    assertFalse(occ.hasCollision(Arrays.asList(n1,n2)));
+
+    currentTime = 610L; // The current time is 0.61
+
+    // Obstacle is sampled a second time
+    RoadwayObstacle ro2 = newRoadwayObstacle(0, 3.0, 0.6, 5.0); // Object id 0 with stamp at 0.6
+    ro.setPrimaryLane((byte)0);
+    occ.updateObjects(Arrays.asList(ro2));
+
+    assertEquals(1, occ.trackedLaneObjectsHistory.size()); // Object id is being tracked
+    assertEquals(1, occ.trackedLaneObjectsPredictions.size()); // Object id is being tracked
+    assertEquals(2, occ.trackedLaneObjectsHistory.get(0).size()); // 1 history element 
+    assertEquals(7, occ.trackedLaneObjectsPredictions.get(0).size()); // 1 predictions
 
     // Check that the collision is found
     assertTrue(occ.hasCollision(Arrays.asList(n1,n2)));
 
+    // Set the host plan with collisions
+    occ.setHostPlan(Arrays.asList(n1,n2));
+    // Obstacle is sampled a third time
+    ro2 = newRoadwayObstacle(0, 3.5, 0.7, 5.0); // Object id 0 with stamp at 0.6
+    ro.setPrimaryLane((byte)0);
 
-    // // Empty list will return empty list
-    // List<RoutePointStamped> points = motionPredictor.predictMotion("1", new ArrayList<Node>(), 0.2, 1.0);
-    // assertTrue(points.isEmpty());
+    currentTime = 710L; // The current time is 0.71
+    occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
+    
+    verify(as, times(1)).requestNewPlan(); // Verify replan occurred
 
-    // // A single node will return an empty list
-    // Node n1 = new Node(10.0, 0.0, 5.0);
-    // points = motionPredictor.predictMotion("1", Arrays.asList(n1), 0.2, 1.0);
-    // assertTrue(points.isEmpty());
+    // Set the host plan without collisions
+    n1 = new Node(0.0, 4.0, 0.0);
+    n2 = new Node(0.0, 5.0, 0.0);
+    occ.setHostPlan(Arrays.asList(n1,n2));
 
-    // // 2 Node list with 0 acceleration
-    // n1 = new Node(10.0, 0.0, 5.0);
-    // Node n2 = new Node(15.0, 1.0, 5.0);
-    // points = motionPredictor.predictMotion("1", Arrays.asList(n1,n2), 1.0, 1.0);
+    // Obstacle is sampled a fourth time
+    ro2 = newRoadwayObstacle(0, 4, 0.8, 5.0); // Object id 0 with stamp at 0.6
+    ro.setPrimaryLane((byte)0);
 
-    // assertEquals(5, points.size());
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(16.0, 0.0, 1.2), points.get(0), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(17.0, 0.0, 1.4), points.get(1), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(18.0, 0.0, 1.6), points.get(2), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(19.0, 0.0, 1.8), points.get(3), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(20.0, 0.0, 2.0), points.get(4), 0.0001));
+    currentTime = 810L; // The current time is 0.81
+    occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
+    
+    verify(as, times(1)).requestNewPlan(); // Verify replan did not occur
 
-    // // 5 Node list with complex motion
-    // n1 = new Node(10.0, 0.0, 5.0);
-    // n2 = new Node(40.0, 4.0, 10.0);
-    // Node n3 = new Node(80.0, 8.0, 10.0);
-    // Node n4 = new Node(110.0, 12.0, 5.0);
-    // Node n5 = new Node(130.0, 16.0, 5.0); // Finish building list
-    // points = motionPredictor.predictMotion("1",Arrays.asList(n1,n2,n3,n4,n5), 10.0, 8.0);
-
-    // assertEquals(7,points.size());
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(140, 0.0, 16.41975), points.get(0), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(150, 0.0, 17.69547), points.get(1), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(160, 0.0, 18.97119), points.get(2), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(170, 0.0, 20.24691), points.get(3), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(180, 0.0, 21.52263), points.get(4), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(190, 0.0, 22.79835), points.get(5), 0.0001));
-    // assertTrue(routePointAlmostEqual(new RoutePointStamped(200, 0.0, 24.07407), points.get(6), 0.0001));
   }
 
   /**
@@ -213,8 +216,9 @@ public class ObjectCollisionCheckerTest {
   /** 
    * Helper function acts as constructor for RoadwayObstacle
    */
-  RoadwayObstacle newRoadwayObstacle(double dist, double time, double speed) {
+  RoadwayObstacle newRoadwayObstacle(int id, double dist, double time, double speed) {
     RoadwayObstacle ro = messageFactory.newFromType(RoadwayObstacle._TYPE);
+    ro.getObject().setId(id);
     ro.getObject().getHeader().setStamp(Time.fromMillis((long)(time * 1000)));
     ro.setDownTrack(dist);
     ro.getObject().getVelocity().getTwist().getLinear().setX(speed);
