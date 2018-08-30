@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.joda.time.DateTime;
@@ -33,6 +34,10 @@ import cav_msgs.NodeListXY;
 import cav_msgs.NodeOffsetPointXY;
 import cav_msgs.NodeXY;
 import cav_msgs.Position3D;
+import cav_msgs.UIInstructions;
+import cav_srvs.AbortActiveRoute;
+import cav_srvs.AbortActiveRouteRequest;
+import cav_srvs.AbortActiveRouteResponse;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
@@ -41,6 +46,7 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.IntersectionData;
@@ -61,6 +67,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import sensor_msgs.NavSatFix;
+import std_msgs.Bool;
 
 /**
  * Top level class in the Traffic Signal Plugin that does trajectory planning through
@@ -71,6 +78,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     private ISubscriber<NavSatFix> gpsSub;
     private ISubscriber<TwistStamped> velocitySub;
+    private IService<AbortActiveRouteRequest, AbortActiveRouteResponse> goButtonService; 
     private Map<Integer, IntersectionData> intersections = Collections
             .synchronizedMap(new HashMap<Integer, IntersectionData>());
     private AtomicReference<NavSatFix> curPos = new AtomicReference<>();
@@ -80,6 +88,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private EadAStar ead;
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
+    private AtomicBoolean motionAuthorized = new AtomicBoolean(false);
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -113,6 +122,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             curVel.set(msg);
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
         });
+
+        // goButtonService = pluginServiceLocator.getPubSubService().getServiceForTopic("ead_go", AbortActiveRoute._TYPE);
+        // goButtonService. // TODO make service server
 
         ead = new EadAStar();
         try {
