@@ -26,15 +26,10 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.*;
 
 import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.GREEN;
@@ -43,15 +38,14 @@ import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE
 /**
  * This class describes the speed trajectory for the Glidepath vehicle in any given situation.
  * Its primary purpose is to invoke the EAD algorithm, but also manages alternative methods of
- * determining speed commands (which may replace or override the EAD in any given time step),
- * such as using commands from a pre-determined data file, ensuring that the vehicle is stopped
+ * determining speed commands (which may replace or override the EAD in any given time step), 
+ * ensuring that the vehicle is stopped
  * at a red light, and providing emergency override (failsafe) commands to prevent running of
  * a red light.
  */
 public class Trajectory implements ITrajectory {
 	/**
-	 * Constructor that allows the parent to inject a particular EAD model (which could be overridden
-	 * if the @param trajectoryfile is specified.
+	 * Constructor that allows the parent to inject a particular EAD model
 	 * @param eadModel
 	 * @throws Exception
 	 */
@@ -61,17 +55,14 @@ public class Trajectory implements ITrajectory {
 
 	/** Creates all of the persistent attributes of the new Trajectory object.
 	 * Connects to the EAD algorithm library and initializes it for first use.
-	 * config param ead.trajectoryfile not empty : initialize file for reading
-	 * config param ead.trajectoryfile is empty  : pass max accel, max jerk, speed limit & time step duration into the EAD library for future reference
 	 * @param eadModel - the EAD object that will be used to compute the trajectory
 	 * @throws IOException if any of the needed config parameters cannot be read
 	 * @throws Exception if there is an error initializing or executing the EAD model
 	 */
 	protected void constructObject(IEad eadModel) throws Exception {
-		//determine if we are going to use the EAD library or read a trajectory from a data file
+		//Get application context
 		IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
 		assert(config != null);
-		csvFilename_ = config.getProperty("ead.trajectoryfile");
 		timeStepSize_ = (long)config.getPeriodicDelay();
 		
 		//determine if we will be using the timeouts or allowed to run slow (for testing)
@@ -121,29 +112,19 @@ public class Trajectory implements ITrajectory {
 		log_.infof("TRAJ", "maxCmdAdj = %.2f, cmdAccelGain = %.4f, cmdSpeedGain = %.4f, cmdBias = %.4f",
 					maxCmdAdj_, cmdAccelGain_, cmdSpeedGain_, cmdBias_);
 		
-		//if a trajectory filename is specified then use the file
-		if (csvFilename_ != null  &&  csvFilename_.length() > 0) {
-			log_.debugf("TRAJ", "Attempting to use trajectory file %s", csvFilename_);
-	        startCsvFile();
-	        ead_ = null;
+		ead_ = eadModel;
 
-	    //else prepare to use an EAD object
-		}else {
-			ead_ = eadModel;
-
-			//pass config parameters to the EAD library
-			try {
-				ead_.initialize(timeStepSize_, new AStarSolver());
-			} catch (Exception e) {
-				log_.errorf("TRAJ", "Exception thrown by EAD library initialize(). maxJerk = %f, speedLimit = %f",
-						maxJerk_, speedLimit_);
-				throw e;
-			}
-			
-			csvParser_ = null;
-			log_.infof("TRAJ", "2. EADlib initialized. speedLimit = %.2f, maxJerk = %.2f",
-					speedLimit_, maxJerk_);
+		//pass config parameters to the EAD library
+		try {
+			ead_.initialize(timeStepSize_, new AStarSolver());
+		} catch (Exception e) {
+			log_.errorf("TRAJ", "Exception thrown by EAD library initialize(). maxJerk = %f, speedLimit = %f",
+					maxJerk_, speedLimit_);
+			throw e;
 		}
+		
+		log_.infof("TRAJ", "2. EADlib initialized. speedLimit = %.2f, maxJerk = %.2f",
+				speedLimit_, maxJerk_);
 		
 		// Get operating speed override - if this is non-zero it will be used for OS regardless of user input! Intended for testing only!
 		osOverride_ = 0.0;
@@ -217,20 +198,19 @@ public class Trajectory implements ITrajectory {
 	 * for the current time step based on various combinations of config parameters and
 	 * previous handling of intersections description data.
 	 *
-	 * config param ead.trajectoryfile not empty : return speed commands from specified file,
-	 * config param ead.trajectoryfile is empty && (state contains valid MAP message || valid MAP previously received) &&
+	 * (state contains valid MAP message || valid MAP previously received) &&
 	 * 		intersections geometry fully decomposed  &&  vehicle position is associated with a lane  &&
 	 * 			signal is red/yellow && (-W < DTSB < 0) : command = 0, computed DTSB
 	 * 			signal is green || (DTSB > 0) : speed command from EAD library, computed DTSB
 	 * 		intersections not fully decomposed  ||  vehicle cannot be associated with a single lane :
 	 * 			command = operating speed, DTSB = very large
-	 * 	config param ead.trajectoryfile is empty  &&  no valid MAP has ever been received :
+	 * 	    &&  no valid MAP has ever been received :
 	 * 			command = operating speed, DTSB = very large
 	 * 
 	 * Note: DTSB = distance to stop bar; in situations when vehicle can't associate an intersections and lane
 	 * 		(e.g. out of DSRC radio range of any intersections) then we still want the vehicle to operate under
 	 * 		automated control, so will set the speed command to the operating speed.
-	 * 		W = width of the intersections's stop box.
+	 * 		W = width of the intersection's stop box.
 	 * 
 	 * @param stateData contains current SPEED, OPERATING_SPEED, ACCELERATION, LATITUDE (vehicle), LONGITUDE (vehicle),
 	 *        list of known intersections (including MAP & SPAT data for each). It may
@@ -362,12 +342,6 @@ public class Trajectory implements ITrajectory {
 				cmd = 0.0;
 				break;
 
-			//case Speed File
-			case SPEED_FILE:
-				//read the next command from the file
-				cmd = getCommandFromCsv();
-				break;
-
 			//case Cruising - set command = operating speed
 			case CRUISING:
 				cmd = operSpeed;
@@ -493,14 +467,8 @@ public class Trajectory implements ITrajectory {
 			case DISENGAGED:
 				//if DVI engage command was received then
 				if (motionAuthorized_) {
-					//if speed file has been defined then
-					if (csvFilename_ != null  &&  csvFilename_.length() > 0) {
-						//switch to speed file state
-						state_ = TrajectoryState.SPEED_FILE;
-					}else {
-						//switch to cruising
-						state_ = TrajectoryState.CRUISING;
-					}
+					//switch to cruising
+					state_ = TrajectoryState.CRUISING;
 				}
 				break;
 
@@ -549,7 +517,7 @@ public class Trajectory implements ITrajectory {
 					restarting_ = true;
 				}
 
-			//default (including speed file, which will never transition to anything else)
+			//default (which will never transition to anything else)
 			default:
 				//no state change
 
@@ -970,51 +938,6 @@ public class Trajectory implements ITrajectory {
 	}
 
 	/**
-	 * Opens file specified by csvFilename_ and set up an iterator on it
-	 */
-	private void startCsvFile() throws IOException {
-		try  {
-		    File csv = new File(csvFilename_);
-		    csvParser_ = CSVParser.parse(csv, Charset.forName("UTF-8"), CSVFormat.RFC4180);
-		    csvIter_ = csvParser_.iterator();
-		    log_.warnf("TRAJ", "Opened trajectory file %s", csvFilename_);
-		} catch (IOException e) {
-			log_.errorf("TRAJ", "Cannot open CSV test file %s", csvFilename_);
-			throw e;
-		}
-	}
-
-	/**
-	 * csv file has records remaining : get speed command from next record
-	 * csv file is on last record : rewind the file and get speed command from its first record
-	 */
-	private double getCommandFromCsv() {
-		double cmd;
-		try  {
-			//read the next record from the file for our command
-			CSVRecord rec = csvIter_.next();
-			//double time = Double.parseDouble(rec.get(0).trim()); //don't need this now, but it's in the data file
-			cmd = Double.parseDouble(rec.get(1).trim());
-			//dist = Double.parseDouble(rec.get(2).trim());
-			//laneId = Integer.parseInt(rec.get(3).trim());
-		} catch (Exception e) {
-			//use the last command on the file for one more time step while we rewind the file
-			cmd = prevCmd_;
-			log_.info("TRAJ", "No more commands in trajectory file. Preparing to rewind.");
-
-			//close the file, open it again, and start all over
-			try {
-				csvParser_.close();
-				startCsvFile();
-			} catch (IOException e1) {
-				log_.error("TRAJ", "Failed to re-open the trajectory file: " + e1.toString());
-				e1.printStackTrace();
-			}
-		}
-		return cmd;
-	}
-
-	/**
 	 * desiredSpeed > growth allowed by max accel or max jerk : limited to max allowed growth
 	 * desiredSpeed < decay allowed by max decel or max jerk : limited to max allowed decay
 	 * desiredSpeed within limits : desiredSpeed
@@ -1230,9 +1153,6 @@ public class Trajectory implements ITrajectory {
 	private double				curAccel_;			//current acceleration (smoothed), m/s^2
 	private SignalPhase			phase_;				//the signal's current phase
 	private double				timeRemaining_;		//time remaining in the current signal phase, sec
-	private String				csvFilename_;		//name of the CSV file used for dummy trajectory data
-	private CSVParser			csvParser_;			//parser to read the CSV trajectory file
-	private Iterator<CSVRecord> csvIter_;			//iterator to be used on a CSV trajectory file
 	private IntersectionGeometry intersectionGeom_;	//vehicle's relationship to the nearest intersection, if on its map
 	private MapMessage			map_;				//the MAP message that describes the nearest intersection (we may not be on it)
 	private IEad				ead_;				//the EAD model that computes the speed commands

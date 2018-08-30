@@ -141,14 +141,6 @@ xgv.nodeid: 1
 #----- EAD
 #-----
 
-# ead.trajectoryfile names a CSV file with trajectory data to read instead of using the algorithm
-# if no file is specified (right of :  is whitespace) then the EAD algorithm will be used
-ead.trajectoryfile: 
-#ead.trajectoryfile: testdata/trajectory_step_7_20_12.csv
-#ead.trajectoryfile: testdata/ftp0.csv
-#ead.trajectoryfile: testdata/trajectory_const25mph.csv
-#ead.trajectoryfile: testdata/trajectory_step_25_20_10_0.csv
-
 # concrete type of ITrajectory to instantiate, missing value defaults to simulated
 ead.trajectoryclass: 'gov.dot.fhwa.saxton.glidepath.ead.Trajectory'
 #ead.trajectoryclass: gov.dot.fhwa.saxton.glidepath.ead.SimulatedTrajectory
