@@ -138,7 +138,7 @@ public class Trajectory implements ITrajectory {
 		}
 		
 		//initialize other members
-		state_ = TrajectoryState.DISENGAGED;
+		state_ = TrajectoryState.EAD_IN_MOTION;
 		intersections_ = new ArrayList<>();
 		completedIntersections_ = new HashSet<>();
 		intersectionsChanged_ = false;
@@ -337,11 +337,6 @@ public class Trajectory implements ITrajectory {
 
 		switch(state_) {
 
-			//case Disengaged - return command = 0
-			case DISENGAGED:
-				cmd = 0.0;
-				break;
-
 			//case EadInMotion - we are on an intersection's map
 			case EAD_IN_MOTION:
 				//get speed command from EAD (assume it will handle position in stop box w/red light)
@@ -458,15 +453,6 @@ public class Trajectory implements ITrajectory {
 		//depending on the current state, check for transition
 		switch(prevState) {
 
-			//case disengaged
-			case DISENGAGED:
-				//if DVI engage command was received then
-				if (motionAuthorized_) {
-					//switch to cruising
-					// TODO state_ = TrajectoryState.CRUISING;
-				}
-				break;
-
 			//case EAD in motion
 			case EAD_IN_MOTION:
 				//if speed has been zero for N consecutive time steps then
@@ -483,7 +469,7 @@ public class Trajectory implements ITrajectory {
 			//case EAD stopped (this state only occurs while waiting at a red light)
 			// this is the one state where motionAuthorized_ and stopConfirmed_ may not have opposite values.
 			case EAD_STOPPED:
-				//if DVI has re-engaged automation and the current intersections's signal is green then
+				//if DVI has re-engaged automation and the current intersection's signal is green then
 				if (motionAuthorized_  &&  phase_ == GREEN) {
 					//set state to EAD in motion
 					state_ = TrajectoryState.EAD_IN_MOTION;
