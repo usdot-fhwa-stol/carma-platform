@@ -21,7 +21,6 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
  */
 public enum TrajectoryState {
     DISENGAGED,
-    CRUISING,
     EAD_IN_MOTION,
     EAD_STOPPED
 }

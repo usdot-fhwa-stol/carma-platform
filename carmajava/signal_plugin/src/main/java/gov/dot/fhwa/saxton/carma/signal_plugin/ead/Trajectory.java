@@ -342,11 +342,6 @@ public class Trajectory implements ITrajectory {
 				cmd = 0.0;
 				break;
 
-			//case Cruising - set command = operating speed
-			case CRUISING:
-				cmd = operSpeed;
-				break;
-
 			//case EadInMotion - we are on an intersection's map
 			case EAD_IN_MOTION:
 				//get speed command from EAD (assume it will handle position in stop box w/red light)
@@ -468,20 +463,7 @@ public class Trajectory implements ITrajectory {
 				//if DVI engage command was received then
 				if (motionAuthorized_) {
 					//switch to cruising
-					state_ = TrajectoryState.CRUISING;
-				}
-				break;
-
-			//case cruising
-			case CRUISING:
-				//if there is at least one intersection known then
-				if (intersections_.size() > 0) {
-					//if our position is on one of the approach lanes of the nearest intersections
-					// and we have reliable spat data for that intersection then
-					if (approachLaneId_ >= 0  &&  spatReliableOnNearest_  &&  curSpeed_ > SPEED_NOISE) {
-						//set state to EAD in motion
-						state_ = TrajectoryState.EAD_IN_MOTION;
-					}
+					// TODO state_ = TrajectoryState.CRUISING;
 				}
 				break;
 
@@ -495,13 +477,6 @@ public class Trajectory implements ITrajectory {
 					stopConfirmed_ = true;
 					motionAuthorized_ = false;
 					restarting_ = false;
-
-				//else we are no longer approaching or passing through an intersections then
-				// (updateIntersection may have removed our current intersections because we passed through it)
-				// (if we are passing through a stop box approachLaneId_ will be < 0 and dtsb will be < 0)
-				}else if (approachLaneId_ < 0  &&  dtsb >= 0.0) {
-					//set state back to cruising
-					state_ = TrajectoryState.CRUISING;
 				}
 				break;
 
@@ -547,7 +522,7 @@ public class Trajectory implements ITrajectory {
 	 * NOTE that, for failsafe and state transition purposes, we are not considered in EAD mode (in an intersection)
 	 * unless we are on an approach lane to the nearest intersections. It is possible that a more distant
 	 * intersections has a farther reaching map and we are on an approach lane to that one already but not on the
-	 * map for the nearest intersection yet. In that case, we act as if we are still CRUISING (not in an intersection).
+	 * map for the nearest intersection yet. In that case we should still consider ourselves not on an intersection
 	 *
 	 * @param inputIntersections - list of intersections sensed by the vehicle in this time step
 	 * @param vehicleLoc - current location of the vehicle
