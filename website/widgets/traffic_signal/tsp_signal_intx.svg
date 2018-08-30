@@ -59,9 +59,9 @@
 <text style="fill:black;font-family:Arial;font-size:20px;" x="281.066" y="300.064" id="e4_texte" transform="matrix(1.12135 0 0 0.654636 0.899216 60.6235)"/>
 <line id="e2_line" x1="17.467520931423905" y1="525.0269775390625" x2="287.3961384088409" y2="523.9500122070312" style="stroke:cornflowerblue;fill:none;stroke-width:1px;" transform="matrix(0.872134 0 0 0.872134 31.0773 -43.2765)"/>
 <line id="e3_line" x1="15.469519832791093" y1="550.0280151367188" x2="289.70613596743465" y2="550.0269775390625" style="stroke:cornflowerblue;fill:none;stroke-width:1px;" transform="matrix(0.872134 0 0 0.872134 31.0773 -43.2765)"/>
-<text style="fill:black;font-family:Arial;font-size:20px;" x="-20.5727" y="703.762" id="e8_texte" transform="matrix(1.13142 0 0 0.549443 71.9278 43.7552)">INTERSECTION 9999</text>
+<text style="fill:black;font-family:Arial;font-size:20px;" x="-20.5727" y="703.762" id="svgIntxHeaderText" transform="matrix(1.13142 0 0 0.549443 71.9278 43.7552)">INTERSECTION XXXX</text>
 <text style="fill:black;font-family:Arial;font-size:20px;" x="149" y="179" id="e10_texte"/>
-<text style="fill:black;font-family:Arial;font-size:20px;" x="83.3095" y="591.802" id="e9_texte" transform="matrix(0.872134 0 0 0.872134 31.0773 -43.2765)">15</text>
-<text style="fill:black;font-family:Arial;font-size:20px;" x="181.333" y="590.724" id="e11_texte" transform="matrix(0.872134 0 0 0.872134 31.0773 -43.2765)">10</text>
+<text style="fill:black;font-family:Arial;font-size:20px;" x="83.3095" y="591.802" id="svgLaneIdText" transform="matrix(0.872134 0 0 0.872134 31.0773 -43.2765)">XXX</text>
+<text style="fill:black;font-family:Arial;font-size:20px;" x="181.333" y="590.724" id="svgDistanceText" transform="matrix(0.872134 0 0 0.872134 31.0773 -43.2765)">XXX</text>
 <rect x="-41.25201045987413" y="885.3109741210938" style="stroke: black; stroke-width: 4px; stroke-linecap: round; stroke-linejoin: round;fill:none;filter:url(#dropshadow);" id="e2_display" width="415.079" height="233.141" rx="20" ry="20" transform="matrix(0.633809 0 0 0.357541 58.7762 85.9603)"/>
 </svg>
