@@ -16,20 +16,27 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import cav_msgs.RoadwayObstacle;
-import gov.dot.fhwa.saxton.carma.rosutils.*;
-
 /**
- * Generic interface for providing a remote service.
+ * Generic class for sharing underlying resources between multiple {@link IServerService} instances
  *
- * @param <T> Type parameter for service request message
- * @param <S> Type parameter for service response message
+ * @param <T> Type parameter for the request type of the service
+ * @param <S> Type parameter for the response type of the service
  */
-public interface IServiceServer<T, S> {
+public interface IServiceServerChannel<T, S> {
+    /**
+     * Gets a new {@link IServerService} instance that can utilize the underlying resource
+     *
+     * @return Initialized IServiceServer instance
+     */
+    IServiceServer<T, S> getServiceServer();
 
     /**
-     * Notify this IService instance's parent of this instance's closure. This will not necessarily close the underlying
-     * resources associated with this IService.
+     * Check whether the underlying resource is still available
+     */
+    boolean isOpen();
+
+    /**
+     * Close the underlying resource
      */
     void close();
 }

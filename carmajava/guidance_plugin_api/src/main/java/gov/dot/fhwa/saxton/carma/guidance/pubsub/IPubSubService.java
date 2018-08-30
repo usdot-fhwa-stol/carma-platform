@@ -37,13 +37,13 @@ public interface IPubSubService {
     /**
      * Get access to a new {@link IServiceServer} instance for the specified service and type
      *
-     * @param serviceUrl The URL of the service topic to access
+     * @param topicUrl The URL of the service topic to access
      * @param type     The String identifier of the service dialog type
      * @param <T>      Type parameter for the request type of the service dialog
      * @param <S>      Type parameter for the response type of the service dialog
      * @return A new {@link IServiceServer} instance capable of calling the service
      */
-    @SuppressWarnings("unchecked") <T, S> IServiceServer<T, S> getServiceServer(String serviceUrl,
+    @SuppressWarnings("unchecked") <T, S> IServiceServer<T, S> getServiceServerForTopic(String topicUrl,
         String type, OnServiceRequestCallback<T,S> callback);
 
     /**

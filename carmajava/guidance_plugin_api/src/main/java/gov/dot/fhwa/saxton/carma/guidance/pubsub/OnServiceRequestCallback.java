@@ -28,7 +28,7 @@ public interface OnServiceRequestCallback<T,S> {
      * Returns the result of this request
      * 
      * @param request The request of type T
-     * @return The response of type S
+     * @param The response of type S which will be sent. This should be modified to the desired result.
      */
-    S onRequest(T request);
+    void onRequest(T request, S response);
 }

@@ -82,7 +82,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
 
-  ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
+  IServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
@@ -151,8 +151,9 @@ public class GuidanceMain extends SaxtonBaseNode {
         guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
     IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node, this);
+    IServiceServerChannelFactory serviceServerChannelFactory = new RosServiceServerChannelFactory(node, guidanceExceptionHandler);
 
-    pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory);
+    pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory, serviceServerChannelFactory);
   }
 
   /**
@@ -231,6 +232,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     final GuidanceStateMachine stateMachine = new GuidanceStateMachine();
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(stateMachine);
+    exceptionHandler = guidanceExceptionHandler;
     log.info("Guidance exception handler initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
@@ -258,15 +260,12 @@ public class GuidanceMain extends SaxtonBaseNode {
     initExecutor(stateMachine, connectedNode);
     log.info("Guidance main executor initialized");
 
-    systemVersionServer = connectedNode.newServiceServer("get_system_version", GetSystemVersion._TYPE,
-        new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
-          @Override
-          public void build(GetSystemVersionRequest request, GetSystemVersionResponse response)
-              throws ServiceException {
-            response.setSystemName(version.componentName());
-            response.setRevision(version.revisionString());
-          }
-        });
+    systemVersionServer = pubSubService.getServiceServerForTopic("get_system_version", GetSystemVersion._TYPE, 
+      (GetSystemVersionRequest request, GetSystemVersionResponse response) -> {
+        response.setSystemName(version.componentName());
+        response.setRevision(version.revisionString());
+      }
+    );
   }//onStart
 
   /**
