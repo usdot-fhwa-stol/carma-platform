@@ -138,7 +138,6 @@ public class Trajectory implements ITrajectory {
 		}
 		
 		//initialize other members
-		state_ = TrajectoryState.EAD_IN_MOTION;
 		intersections_ = new ArrayList<>();
 		completedIntersections_ = new HashSet<>();
 		intersectionsChanged_ = false;
@@ -156,7 +155,6 @@ public class Trajectory implements ITrajectory {
 		inMotion_ = false;
 		timeSinceFirstMotion_ = 0.0;
 		timeOfFirstMotion_ = 0;
-		stoppedCount_ = 0;
 		stopConfirmed_ = false;
 		intersectionGeom_ = null;
 		phase_ = NONE;
@@ -166,7 +164,6 @@ public class Trajectory implements ITrajectory {
 		map_ = null;
 		failSafeMode_ = false;
 		numStepsAtZero_ = 0;
-		motionAuthorized_ = false;
 		accelMgr_ = AccelerationManager.getManager();
 	}
 
@@ -181,7 +178,7 @@ public class Trajectory implements ITrajectory {
 	 * Indicates that this software is now authorized to control the vehicle's speed
 	 */
 	public void engage() {
-		motionAuthorized_ = true;
+	//	motionAuthorized_ = true;
 		log_.info("TRAJ", "///// Driver engaged automatic control.");
 	}
 
@@ -283,9 +280,6 @@ public class Trajectory implements ITrajectory {
 			}
 			curSpeed_ = curSpeedElement.value(); //this is the smoothed value
 			curAccel_ = curAccelElement.value(); //smoothed
-			if (curSpeed_ > SPEED_NOISE) {
-				stoppedCount_ = 0;
-			}
 		}catch (Exception e) {
 			log_.error("TRAJ", "Unknown exception trapped in input processing: " + e.toString());
 			throw e;
@@ -319,7 +313,7 @@ public class Trajectory implements ITrajectory {
 		}
 
 
-		////////// STATE MODEL FOR GETTING THE NEW RAW SPEED COMMAND
+		////////// RUN EAD TO GET NEW SPEED COMMAND
 
 
 		//if speed is significantly positive for the first time then
@@ -333,61 +327,26 @@ public class Trajectory implements ITrajectory {
 		//take necessary actions based on the current state
 		double cmd = 0.0;  //the speed command we are to return;
 		updateState(dtsb);
-		log_.debug("TRAJ", "getSpeedCommand state = " + state_.toString());
 
-		switch(state_) {
-
-			//case EadInMotion - we are on an intersection's map
-			case EAD_IN_MOTION:
-				//get speed command from EAD (assume it will handle position in stop box w/red light)
-				try {
-					cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
-				}catch (Exception e) {
-					if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
-						cmd = prevCmd_;
-						log_.warnf("TRAJ", "Exception trapped from EAD algo: " + e.toString() +
-										"\n    Continuing to use previous command. " +
-										"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-								curSpeed_, operSpeed, dtsb, timeRemaining_);
-					}else {
-						log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
-										"\n    Too many errors...rethrowing. " +
-										"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-								curSpeed_, operSpeed, dtsb, timeRemaining_);
-						throw e;
-					}
-				}
-				break;
-
-			//case EadStopped - we are on an intersection's map and stopped at a red light
-			case EAD_STOPPED:
-				//invoke the EAD algo anyway, to make sure it stays apprised of the current situation
-				try {
-					cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
-					if (cmd > 0.0) {
-						log_.infof("TRAJ", "EAD returned non-zero command (%.2f) despite being in EAD_STOPPED state.",
-								cmd);
-					}
-				}catch (Exception e) {
-					if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
-						log_.warnf("TRAJ", "Exception trapped from EAD algo. Continuing to use previous command. " +
-										"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-								curSpeed_, operSpeed, dtsb, timeRemaining_);
-					}else {
-						log_.errorf("TRAJ", "Exception trapped by EAD algo. Too many errors...rethrowing. " +
-										"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-								curSpeed_, operSpeed, dtsb, timeRemaining_);
-						throw e;
-					}
-				}
-				//set speed command = 0 (even if EAD says something else)
-				cmd = 0.0;
-				break;
-
-			default:
-				log_.error("TRAJ", "getSpeedCommand found an unknown state.");
-				throw new Exception("Unknown state detected in Trajectory.getSpeedCommand.");
+		//get speed command from EAD (assume it will handle position in stop box w/red light)
+		try {
+			cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
+		}catch (Exception e) {
+			if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
+				cmd = prevCmd_;
+				log_.warnf("TRAJ", "Exception trapped from EAD algo: " + e.toString() +
+								"\n    Continuing to use previous command. " +
+								"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+						curSpeed_, operSpeed, dtsb, timeRemaining_);
+			}else {
+				log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
+								"\n    Too many errors...rethrowing. " +
+								"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+						curSpeed_, operSpeed, dtsb, timeRemaining_);
+				throw e;
+			}
 		}
+
 		log_.debug("TRAJ", "getSpeedCommand completed executing current state.");
 
 
@@ -448,46 +407,7 @@ public class Trajectory implements ITrajectory {
 	 * @param dtsb - distance to stop bar of the nearest intersections (a very large number if unknown)
 	 */
 	private void updateState(double dtsb) {
-		TrajectoryState prevState = state_;
 
-		//depending on the current state, check for transition
-		switch(prevState) {
-
-			//case EAD in motion
-			case EAD_IN_MOTION:
-				//if speed has been zero for N consecutive time steps then
-				int allowableTimeSteps = restarting_ ? START_MOTION_TIMESTEPS : STOP_DAMPING_TIMESTEPS;
-				if (curSpeed_ < SPEED_NOISE  &&  ++stoppedCount_ > allowableTimeSteps) {
-					//set state to EAD stopped
-					state_ = TrajectoryState.EAD_STOPPED;
-					stopConfirmed_ = true;
-					motionAuthorized_ = false;
-					restarting_ = false;
-				}
-				break;
-
-			//case EAD stopped (this state only occurs while waiting at a red light)
-			// this is the one state where motionAuthorized_ and stopConfirmed_ may not have opposite values.
-			case EAD_STOPPED:
-				//if DVI has re-engaged automation and the current intersection's signal is green then
-				if (motionAuthorized_  &&  phase_ == GREEN) {
-					//set state to EAD in motion
-					state_ = TrajectoryState.EAD_IN_MOTION;
-					stopConfirmed_ = false;
-					stoppedCount_ = 0;
-					restarting_ = true;
-				}
-
-			//default (which will never transition to anything else)
-			default:
-				//no state change
-
-		}
-
-		if (state_ != prevState) {
-			log_.infof("TRAJ", "Trajectory state changed from %s to %s",
-					prevState.toString(), state_.toString());
-		}
 	}
 
 	/**
@@ -1081,7 +1001,6 @@ public class Trajectory implements ITrajectory {
 	}
 	
 
-	private TrajectoryState		state_;				//the current state of the Trajectory object
 	private ArrayList<IntersectionData> intersections_; //all of the viable intersections currently in view
 	private HashSet<Integer>	completedIntersections_; //IDs of intersections we have already passed through
 	private boolean				intersectionsChanged_; //have the geometry of known intersections changed since prev time step?
@@ -1094,13 +1013,13 @@ public class Trajectory implements ITrajectory {
 	private int					spatsReceivedOnNewIntersection_; //number of spat msgs received since new intersection has been entered
 	private double				osOverride_;		//FOR DEBUGGING ONLY - allows the config file to override the driver selected operating speed, m/s
 	private long				timeStepSize_;		//duration of a single time step, ms
-	private boolean				motionAuthorized_;	//has the driver turned over control to the computer?
+	//private boolean				motionAuthorized_;	//has the driver turned over control to the computer?
 	private boolean				inMotion_;			//have we detected first motion?
 	private double				timeSinceFirstMotion_; //elapsed time (sec) since we detected the first motion
 	private long				timeOfFirstMotion_;	//timestamp when first motion is detected (ms)
-	private int					stoppedCount_;		//number of consecutive time steps that we have been stopped since first motion after being re-authorized
+	//private int					stoppedCount_;		//number of consecutive time steps that we have been stopped since first motion after being re-authorized
 	private boolean				stopConfirmed_;		//are we at a complete stop?
-	private boolean				restarting_ = false;//are we restarting from being stopped at a red light?
+	//private boolean				restarting_ = false;//are we restarting from being stopped at a red light?
 	private boolean				respectTimeouts_;	//should we honor the established timeouts?
 	private double				prevCmd_;			//speed command from the previous time step, m/s
 	private SignalPhase			prevPhase_;			//signal phase in the previous time step
