@@ -153,8 +153,6 @@ public class Trajectory implements ITrajectory {
 		eadErrorCount_ = 0;
 		spatErrorCounter_ = 0;
 		inMotion_ = false;
-		timeSinceFirstMotion_ = 0.0;
-		timeOfFirstMotion_ = 0;
 		stopConfirmed_ = false;
 		intersectionGeom_ = null;
 		phase_ = NONE;
@@ -191,6 +189,9 @@ public class Trajectory implements ITrajectory {
 	}
 	
 	/**
+	 * 
+	 * NOTE: In this plugin this function does not return meaningful commands. Instead whole plans are ingested from the EadAStar object at a higher level
+	 * 
 	 * Computes the speed command, ID of nearest intersections in view and DTSB relative to that intersections
 	 * for the current time step based on various combinations of config parameters and
 	 * previous handling of intersections description data.
@@ -219,7 +220,6 @@ public class Trajectory implements ITrajectory {
 	 */
 	public DataElementHolder getSpeedCommand(DataElementHolder stateData) throws Exception {
 		long entryTime = System.currentTimeMillis();
-		DataElementHolder rtn = new DataElementHolder();
 
 
 		////////// EXTRACT & VALIDATE INPUT STATE (except SPAT)
@@ -313,20 +313,18 @@ public class Trajectory implements ITrajectory {
 		}
 
 
-		////////// RUN EAD TO GET NEW SPEED COMMAND
+		////////// RUN EAD TO GENERATE NEW PLAN
 
 
 		//if speed is significantly positive for the first time then
 		if (!inMotion_  &&  curSpeed_ > 2.0*SPEED_NOISE) { //avoid some weird noise whilst sitting on starting line
 			//indicate that we have begun moving
 			inMotion_ = true;
-			timeOfFirstMotion_ = System.currentTimeMillis();
 			log_.info("TRAJ", "///// FIRST MOTION DETECTED /////");
 		}
 
 		//take necessary actions based on the current state
 		double cmd = 0.0;  //the speed command we are to return;
-		updateState(dtsb);
 
 		//get speed command from EAD (assume it will handle position in stop box w/red light)
 		try {
@@ -349,49 +347,19 @@ public class Trajectory implements ITrajectory {
 
 		log_.debug("TRAJ", "getSpeedCommand completed executing current state.");
 
-
-
 		////////// FAILSAFE & HOUSEKEEPING
 
-
-		//apply accel & jerk limits to the raw command
-		cmd = limitSpeedCommand(cmd);
-
 		//run the failsafe check on it, which may override the current command to make sure we stop at a red light
-		cmd = applyFailSafeCheck(cmd, dtsb, curSpeed_);
+		cmd = applyFailSafeCheck(cmd, dtsb, curSpeed_); // TODO take this out but we should have this somewhere. Maybe a continues check to see if we violate the light
 
 		//preserve history for the next time step
 		prevCmd_ = cmd;
-		if (inMotion_) {
-			timeSinceFirstMotion_ = 0.001*(double)(System.currentTimeMillis() - timeOfFirstMotion_);
-		}
-		prevPhase_ = phase_;
-		prevTime1_ = timeRemaining_;
-		prevApproachLaneId_ = approachLaneId_;
-
-		//finalize output state vector
-        if (intersections_.size() > 0  &&  phase_ != NONE) {
-            IntDataElement iid = new IntDataElement(intersections_.get(0).intersectionId);
-            rtn.put(DataElementKey.INTERSECTION_ID, iid);
-			IntDataElement lid = new IntDataElement(approachLaneId_);
-			rtn.put(DataElementKey.LANE_ID, lid);
-			rtn.put(DataElementKey.SIGNAL_PHASE, new PhaseDataElement(phase_));
-			rtn.put(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE, new DoubleDataElement(timeRemaining_));
-			rtn.put(DataElementKey.SPEED_COMMAND, new DoubleDataElement(cmd));
-			rtn.put(DataElementKey.DIST_TO_STOP_BAR, new DoubleDataElement(dtsb));
-        }
-        DoubleDataElement sc = new DoubleDataElement(cmd);
-        rtn.put(DataElementKey.SPEED_COMMAND, sc);
-		DoubleDataElement tfm = new DoubleDataElement(timeSinceFirstMotion_);
-		rtn.put(DataElementKey.TIME_SINCE_FIRST_MOTION, tfm);
-        Duration duration = new Duration(new DateTime(entryTime), new DateTime());
-        rtn.put(DataElementKey.CYCLE_EAD, new IntDataElement((int) duration.getMillis()));
 
 		log_.debugf("TRAJ",
 				"getSpeedCommand exiting. Commanded speed is %.3f m/s. curSpeed = %.3f m/s, method time = %d ms.",
 				cmd, curSpeed_, System.currentTimeMillis( )- entryTime);
 
-		return rtn;
+		return null;
 	} //getSpeedCommand()
 
 
@@ -399,16 +367,6 @@ public class Trajectory implements ITrajectory {
 	// member elements
 	//////////////////
 
-
-	/**
-	 * Manages the state machine that dictates the behavior of this class, updating the state based on
-	 * current information.
-	 *
-	 * @param dtsb - distance to stop bar of the nearest intersections (a very large number if unknown)
-	 */
-	private void updateState(double dtsb) {
-
-	}
 
 	/**
 	 * if element is null, then write a log warning.
@@ -819,56 +777,7 @@ public class Trajectory implements ITrajectory {
 	}
 
 	/**
-	 * desiredSpeed > growth allowed by max accel or max jerk : limited to max allowed growth
-	 * desiredSpeed < decay allowed by max decel or max jerk : limited to max allowed decay
-	 * desiredSpeed within limits : desiredSpeed
-	 */
-	private double limitSpeedCommand(double desiredSpeed) {
-		double command = desiredSpeed;
-		double timeStep = 0.001*(double)timeStepSize_; //units of sec
-		
-		//apply accel/decel limits with instantaneous (smoothed) speed data
-		if (accelLimiter_) {
-			double desiredSpeedDiff = desiredSpeed - curSpeed_;
-			double highAccelLimit = accelMgr_.getAccelLimit()*timeStep;
-			double lowAccelLimit = -highAccelLimit;
-			if (desiredSpeedDiff > highAccelLimit) {
-				command = curSpeed_ + highAccelLimit;
-				log_.infof("TRAJ", "Target limited by positive acceleration. desiredSpeedDiff = %.3f. New cmd = %.3f",
-							desiredSpeedDiff, command);
-			}else if (desiredSpeedDiff < lowAccelLimit) {
-				command = curSpeed_ + lowAccelLimit;
-				log_.infof("TRAJ", "Target limited by negative acceleration. desiredSpeedDiff = %.3f. New cmd = %.3f",
-							desiredSpeedDiff, command);
-			}
-		}			
-		
-		//apply jerk limits
-		if (jerkLimiter_) {
-			double desiredAccelDiff = (command - curSpeed_)/timeStep - curAccel_;
-			double jerkLimit = maxJerk_*timeStep;
-			if (desiredAccelDiff > jerkLimit) {
-				command = curSpeed_ + (curAccel_ + maxJerk_*timeStep)*timeStep;
-				log_.infof("TRAJ", "Target limited by positive jerk. curAccel = %.3f, desiredAccelDiff = %.3f. New cmd = %.3f",
-							curAccel_, desiredAccelDiff, command);
-			}else if (desiredAccelDiff < -jerkLimit) {
-				command = curSpeed_ + (curAccel_ - maxJerk_*timeStep)*timeStep;
-				log_.infof("TRAJ", "Target limited by negative jerk. curAccel = %.3f, desiredAccelDiff = %.3f. New cmd = %.3f",
-							curAccel_, desiredAccelDiff, command);
-			}
-		}
-			
-		//final sanity check for legal commands
-		if (command < 0.0) {
-			command = 0.0;
-		}else if (command >= speedLimit_) {
-			command = speedLimit_ - 0.1;
-		}
-		
-		return command;
-	}
-
-	/**
+	 * // TODO this is good logic to have but maybe not the place for it
 	 * current speed/distance state is beyond the safe limit for approaching red or yellow signal : command maximum deceleration
 	 * current speed/distance state is in the safe zone for the signal state : cmdIn
 	 * 
@@ -1013,13 +922,8 @@ public class Trajectory implements ITrajectory {
 	private int					spatsReceivedOnNewIntersection_; //number of spat msgs received since new intersection has been entered
 	private double				osOverride_;		//FOR DEBUGGING ONLY - allows the config file to override the driver selected operating speed, m/s
 	private long				timeStepSize_;		//duration of a single time step, ms
-	//private boolean				motionAuthorized_;	//has the driver turned over control to the computer?
 	private boolean				inMotion_;			//have we detected first motion?
-	private double				timeSinceFirstMotion_; //elapsed time (sec) since we detected the first motion
-	private long				timeOfFirstMotion_;	//timestamp when first motion is detected (ms)
-	//private int					stoppedCount_;		//number of consecutive time steps that we have been stopped since first motion after being re-authorized
 	private boolean				stopConfirmed_;		//are we at a complete stop?
-	//private boolean				restarting_ = false;//are we restarting from being stopped at a red light?
 	private boolean				respectTimeouts_;	//should we honor the established timeouts?
 	private double				prevCmd_;			//speed command from the previous time step, m/s
 	private SignalPhase			prevPhase_;			//signal phase in the previous time step
