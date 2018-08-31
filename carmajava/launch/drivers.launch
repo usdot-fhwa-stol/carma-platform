@@ -20,7 +20,7 @@
 This file is used for vehicle configurations. The arguments from saxton_cav.launch should pass on to saxton_cav_src.launch, which should then pass those arguments to this file. The arguments in the saxton_cav.launch file will override all of the default values of the arguments being passed, so you should be making changes to the saxton_cav.launch to configure it to your vehicle. 
 
 If not using simulated drivers they are activated if the respective mock arguments being passed in are false. These lines below activate the respective actual driver if the respective mock argument being passed is false.
-  
+
 -->
 
 <launch>
@@ -39,7 +39,7 @@ If not using simulated drivers they are activated if the respective mock argumen
 
   <!-- DSRC OBU Driver Node -->
   <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
-    
+      
   <!-- PinPoint Driver Node -->
   <include unless="$(arg mock_pinpoint)" file="$(find pinpoint)/launch/pinpoint.launch"/>
 

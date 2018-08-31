@@ -28,6 +28,9 @@ import cav_msgs.MobilityResponse;
 import cav_msgs.PlatooningInfo;
 import cav_msgs.RoadwayEnvironment;
 import cav_msgs.SpeedAccel;
+import cav_srvs.GetDriversWithCapabilities;
+import cav_srvs.GetDriversWithCapabilitiesRequest;
+import cav_srvs.GetDriversWithCapabilitiesResponse;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.lightbar.ILightBarManager;
@@ -42,14 +45,16 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 
 public class PlatooningPlugin extends AbstractPlugin
         implements IStrategicPlugin, MobilityOperationHandler, MobilityRequestHandler, MobilityResponseHandler {
     
-    // TODO the plugin should use interface manager once rosjava multiple thread service call is fixed
-    protected static final String SPEED_CMD_CAPABILITY    = "/saxton_cav/drivers/srx_controller/control/cmd_speed";
+    protected static final String SPEED_CMD_CAPABILITY    = "control/cmd_speed";
     protected static final String PLATOONING_FLAG         = "PLATOONING";
     protected static final String MOBILITY_STRATEGY       = "Carma/Platooning";
     protected static final String JOIN_AT_REAR_PARAMS     = "SIZE:%d,SPEED:%.2f,DTD:%.2f";
@@ -70,6 +75,9 @@ public class PlatooningPlugin extends AbstractPlugin
     protected IPublisher<PlatooningInfo>      platooningInfoPublisher;
     protected ISubscriber<SpeedAccel>         cmdSpeedSub;
     protected ISubscriber<RoadwayEnvironment> roadwaySub;
+    
+    // initialize service
+    protected IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getCapabilitiesService; 
 
     // following parameters are for general platooning plugin
     protected double maxAccel              = 2.5;  // m/s/s
@@ -137,6 +145,9 @@ public class PlatooningPlugin extends AbstractPlugin
     
     // Control on MobilityRouter
     protected AtomicBoolean handleMobilityPath = new AtomicBoolean(true);
+    
+    // Indicator for successful initialization
+    protected boolean pubSubInitialized = false;
 
     public PlatooningPlugin(PluginServiceLocator pluginServiceLocator) {
         super(pluginServiceLocator);
@@ -214,12 +225,53 @@ public class PlatooningPlugin extends AbstractPlugin
         log.info("Load param desiredTimeGap = " + desiredTimeGap);
         log.info("Load param platooningMinGap = " + platooningMinGap);
         
+        // get get_drivers_with_capabilities service
+        String cmdSpeedTopic = null;
+        try {
+            getCapabilitiesService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
+        } catch (TopicNotFoundException e) {
+            log.fatal("Cannot initilize get_drivers_with_capabilities service.");
+        }
+        if(getCapabilitiesService != null) {
+            // Make service call
+            GetDriversWithCapabilitiesRequest req = getCapabilitiesService.newMessage();
+            req.getCapabilities().add(SPEED_CMD_CAPABILITY);
+            final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
+            getCapabilitiesService.call(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
+                @Override
+                public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
+                    log.debug("Received GetDriversWithCapabilitiesResponse");
+                    for (String driverName : msg.getDriverData()) {
+                        log.debug("GuidanceCommands discovered driver: " + driverName);
+                    }
+                    drivers[0] = msg;
+                }
+                @Override
+                public void onFailure(Exception e) {
+                    log.fatal("Fail to make get_drivers_with_capabilities call on InterfaceManager!", e);
+                }
+            });
+            if(drivers[0] != null) {
+                for (String topicName : drivers[0].getDriverData()) {
+                    if (topicName.endsWith(SPEED_CMD_CAPABILITY)) {
+                        cmdSpeedTopic = topicName;
+                        break;
+                    }
+                }
+            }
+            if(cmdSpeedTopic != null) {
+                cmdSpeedSub = pubSubService.getSubscriberForTopic(cmdSpeedTopic, SpeedAccel._TYPE);
+            } else {
+                log.fatal("Fail to get driver with capability: " + SPEED_CMD_CAPABILITY);
+            }
+        }
+        
         // initialize necessary pubs/subs
         mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
         mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
         platooningInfoPublisher    = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
-        cmdSpeedSub                = pubSubService.getSubscriberForTopic(SPEED_CMD_CAPABILITY, SpeedAccel._TYPE);
         roadwaySub                 = pubSubService.getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
+        
         
         // get light bar manager
         lightBarManager = pluginServiceLocator.getLightBarManager();
@@ -233,36 +285,46 @@ public class PlatooningPlugin extends AbstractPlugin
             log.warn("Try to acquire control on mobility router for handling mobility path but failed");
         }
         
-        log.info("Platooning plugin is initialized.");
+        if(mobilityRequestPublisher != null && mobilityOperationPublisher != null && platooningInfoPublisher != null
+                && roadwaySub != null && cmdSpeedSub != null) {
+            pubSubInitialized = true;
+            log.info("Platooning plugin is initialized.");
+        } else {
+            log.info("Platooning plugin's sub/pub initialization failed");
+        }
     }
 
     @Override
     public void onResume() {
-        // register with MobilityRouter
-        pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
-        pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
-        pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
-        // reset plug-in's sub-components
-        this.setState(new StandbyState(this, log, pluginServiceLocator));
-        if(platoonManagerThread == null) {
-            platoonManager       = new PlatoonManager(this, log, pluginServiceLocator);
-            platoonManagerThread = new Thread(platoonManager);
-            platoonManagerThread.setName("Platooning List Manager");
-            platoonManagerThread.start();
-            log.debug("Started platoonManagerThread");
+        if(pubSubInitialized) {
+         // register with MobilityRouter
+            pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);
+            pluginServiceLocator.getMobilityRouter().registerMobilityResponseHandler(this);
+            pluginServiceLocator.getMobilityRouter().registerMobilityOperationHandler(MOBILITY_STRATEGY, this);
+            // reset plug-in's sub-components
+            this.setState(new StandbyState(this, log, pluginServiceLocator));
+            if(platoonManagerThread == null) {
+                platoonManager       = new PlatoonManager(this, log, pluginServiceLocator);
+                platoonManagerThread = new Thread(platoonManager);
+                platoonManagerThread.setName("Platooning List Manager");
+                platoonManagerThread.start();
+                log.debug("Started platoonManagerThread");
+            }
+            if(commandGeneratorThread == null) {
+                commandGenerator       = new CommandGenerator(this, log, pluginServiceLocator);
+                commandGeneratorThread = new Thread(commandGenerator);
+                commandGeneratorThread.setName("Platooning Command Generator");
+                commandGeneratorThread.start();
+                log.debug("Started commandGeneratorThread");
+            }
+            // Take control of light bar indicator
+            takeControlOfLightBar();
+            log.info("Platooning plugin resume to operate.");
+            log.info("The current platooning plugin state is " + this.state.toString());
+            this.setAvailability(true);
+        } else {
+            this.setAvailability(false);
         }
-        if(commandGeneratorThread == null) {
-            commandGenerator       = new CommandGenerator(this, log, pluginServiceLocator);
-            commandGeneratorThread = new Thread(commandGenerator);
-            commandGeneratorThread.setName("Platooning Command Generator");
-            commandGeneratorThread.start();
-            log.debug("Started commandGeneratorThread");
-        }
-        // Take control of light bar indicator
-        takeControlOfLightBar();
-        log.info("Platooning plugin resume to operate.");
-        log.info("The current platooning plugin state is " + this.state.toString());
-        this.setAvailability(true);
     }
 
     @Override

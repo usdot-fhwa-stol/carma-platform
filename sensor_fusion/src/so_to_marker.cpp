@@ -31,6 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <functional>
@@ -49,52 +50,50 @@ void populateColors()
     std_msgs::ColorRGBA c;
     c.a = .8;
 
-    c.r=.75; c.g=.75; c.b=.75;
+    c.r = .75; c.g = .75; c.b = .75;
     colors.push_back(c);
 
-    c.r=1; c.g=1; c.b=1;
+    c.r = 1; c.g = 1; c.b = 1;
     colors.push_back(c);
 
-    c.r=.5; c.g=0; c.b=0;
+    c.r = .5; c.g = 0; c.b = 0;
     colors.push_back(c);
 
-    c.r=1; c.g=0; c.b=0;
+    c.r = 1; c.g = 0; c.b = 0;
     colors.push_back(c);
 
-    c.r=.5; c.g=.5; c.b=0;
+    c.r = .5; c.g = .5; c.b = 0;
     colors.push_back(c);
 
-    c.r=1; c.g=1; c.b=0;
+    c.r = 1; c.g = 1; c.b = 0;
     colors.push_back(c);
 
-    c.r=0; c.g=.5; c.b=.0;
+    c.r = 0; c.g = .5; c.b = .0;
     colors.push_back(c);
 
-    c.r=0; c.g=1; c.b=0;
+    c.r = 0; c.g = 1; c.b = 0;
     colors.push_back(c);
 
-    c.r=0; c.g=.5; c.b=.5;
+    c.r = 0; c.g = .5; c.b = .5;
     colors.push_back(c);
 
-    c.r=0, c.g=1; c.b=1;
+    c.r = 0, c.g = 1; c.b = 1;
     colors.push_back(c);
 
-    c.r=0; c.g=0; c.b=.5;
+    c.r = 0; c.g = 0; c.b = .5;
     colors.push_back(c);
 
-    c.r=0; c.g=0; c.b=1;
+    c.r = 0; c.g = 0; c.b = 1;
     colors.push_back(c);
 
-    c.r=.5; c.g=0; c.b=.5;
+    c.r = .5; c.g = 0; c.b = .5;
     colors.push_back(c);
 
-    c.r=1; c.g=0; c.b=1;
+    c.r = 1; c.g = 0; c.b = 1;
     colors.push_back(c);
 }
 
-
-
-void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
+void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg, int color)
 {
     visualization_msgs::MarkerArray ma;
     visualization_msgs::Marker m;
@@ -109,8 +108,7 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
     m.lifetime = ros::Duration(0);
     m.id = 1;
 
-
-    for( auto it = sol_msg->objects.begin(); it != sol_msg->objects.end(); ++it )
+    for(auto it = sol_msg->objects.begin(); it != sol_msg->objects.end(); ++it)
     {
         m.type = visualization_msgs::Marker::CUBE;
         m.ns = "bounding_boxes";
@@ -123,14 +121,15 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
 
         m.id = it->id;
 
-        if(color<0){
-            m.color = colors[m.id%(colors.size()-1)];
-        } else {
-            m.color = colors[color%(colors.size()-1)];
-
+        if(color < 0)
+        {
+            m.color = colors[m.id % (colors.size() - 1)];
+        } 
+        else 
+        {
+            m.color = colors[color % (colors.size() - 1)];
         }
         m.points.resize(0);
-
 
         m.pose.position.x = it->pose.pose.position.x;
         m.pose.position.y = it->pose.pose.position.y;
@@ -140,7 +139,6 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
         m.pose.orientation.x = it->pose.pose.orientation.x;
         m.pose.orientation.y = it->pose.pose.orientation.y;
         m.pose.orientation.z = it->pose.pose.orientation.z;
-
 
         ma.markers.push_back(m);
 
@@ -161,17 +159,15 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
         m.pose.orientation.y = 0;
         m.pose.orientation.z = 0;
 
-
-        geometry_msgs::Point s,e;
+        geometry_msgs::Point s, e;
         s.x = it->pose.pose.position.x;
         s.y = it->pose.pose.position.y;
         s.z = it->pose.pose.position.z;
 
-        e.x = it->pose.pose.position.x + it->velocity.twist.linear.x/3;
-        e.y = it->pose.pose.position.y + it->velocity.twist.linear.y/3;
+        e.x = it->pose.pose.position.x + it->velocity.twist.linear.x / 3;
+        e.y = it->pose.pose.position.y + it->velocity.twist.linear.y / 3;
         e.z = it->pose.pose.position.z;
         //e.z = it->pose.position.z + it->velocity.linear.z;
-
 
         m.points.push_back(s);
         m.points.push_back(e);
@@ -182,23 +178,23 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
         m.type=visualization_msgs::Marker::TEXT_VIEW_FACING;
         m.ns = "velocity_text";
 
-        m.pose.position.x = it->pose.pose.position.x-.5;
+        m.pose.position.x = it->pose.pose.position.x - 0.5;
         m.pose.position.y = it->pose.pose.position.y;
         m.pose.position.z = it->pose.pose.position.z;
         m.scale.x = 1;
-        m.scale.y= 1;
+        m.scale.y = 1;
         m.scale.z = 1;
 
-        double velocity = sqrt((it->velocity.twist.linear.x*it->velocity.twist.linear.x)+(it->velocity.twist.linear.y*it->velocity.twist.linear.y));
+        double velocity = sqrt((it->velocity.twist.linear.x * it->velocity.twist.linear.x) + (it->velocity.twist.linear.y * it->velocity.twist.linear.y));
 
         m.text = std::to_string(velocity);
 
         ma.markers.push_back(m);
 
-        m.type=visualization_msgs::Marker::TEXT_VIEW_FACING;
+        m.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         m.ns = "object_id";
 
-        m.pose.position.x = it->pose.pose.position.x-1.5;
+        m.pose.position.x = it->pose.pose.position.x - 1.5;
         m.pose.position.y = it->pose.pose.position.y;
         m.pose.position.z = it->pose.pose.position.z;
         m.scale.x = 1;
@@ -210,8 +206,7 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
 
         ma.markers.push_back(m);
 
-
-        //Make header
+        // Make header
         m.type=visualization_msgs::Marker::TRIANGLE_LIST;
         m.ns = "heading";
         m.colors.clear();
@@ -226,30 +221,32 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
 
         m.pose = it->pose.pose;
 
-        double distance_to_corner = sqrt(2.0*2.0/4.0 + 1.0*1.0/4.0);
+        double distance_to_corner = sqrt(2.0 * 2.0 / 4.0 + 1.0 * 1.0 / 4.0);
         double angle_to_corner = std::acos(2.0 / 2.0 / distance_to_corner);
+
         geometry_msgs::Point p, tip;
         tip.x = 1.5 * distance_to_corner;
         tip.y = 0;
         tip.z = 0.0;
         m.points.push_back(tip);
+
         p.x = distance_to_corner * std::cos(angle_to_corner);
         p.y = 0.0 - distance_to_corner * std::sin(angle_to_corner);
         p.z = 0.0 - 1.0 / 2.0;
         m.points.push_back(p);
         p.y *= (-1.0);
         m.points.push_back(p);
-        //
+        
         m.points.push_back(p);
         p.z *= (-1.0);
         m.points.push_back(p);
         m.points.push_back(tip);
-        //
+        
         m.points.push_back(p);
         p.y *= (-1.0);
         m.points.push_back(p);
         m.points.push_back(tip);
-        //
+        
         m.points.push_back(p);
         p.z *= (-1.0);
         m.points.push_back(p);
@@ -260,6 +257,7 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
         c.g = 1.0;
         c.b = 1.0;
         c.a = 1.0;
+
         for (unsigned int i = 0; i < 12; i++)
         {
             m.colors.push_back(c);
@@ -268,16 +266,12 @@ void solCb (const cav_msgs::ExternalObjectList::ConstPtr& sol_msg,int color)
         ma.markers.push_back(m);
     }
 
-
     m.action = visualization_msgs::Marker::DELETEALL;
 
-    ma.markers.insert(ma.markers.begin(), m );
-
+    ma.markers.insert(ma.markers.begin(), m);
 
     pub_box.publish(ma);
 }
-
-
 
 int main (int argc, char** argv)
 {
@@ -288,16 +282,19 @@ int main (int argc, char** argv)
 
     pub_box = nh.advertise<visualization_msgs::MarkerArray> ("/objects_markers", 1);
 
-    //default to set marker by object_id
+    // Default to set marker by object_id
     int test;
-    if(argc<2){
+    if(argc < 2)
+    {
         test = -1;
-    } else {
-        test=std::atol(argv[1]);
+    } 
+    else 
+    {
+        test = std::atol(argv[1]);
     }
 
     // Create a ROS subscriber for the input point cloud
-    ros::Subscriber sub = nh.subscribe<cav_msgs::ExternalObjectList>("/objects", 1, std::bind(solCb,std::placeholders::_1,test));
+    ros::Subscriber sub = nh.subscribe<cav_msgs::ExternalObjectList>("/objects", 1, std::bind(solCb, std::placeholders::_1, test));
 
     // Spin
     ros::spin ();
