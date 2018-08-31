@@ -109,7 +109,7 @@ public class SpeedUp extends LongitudinalManeuver {
     
     @Override
     public double generateSpeedCommand() throws IllegalStateException {
-        // The target speed will always be out ending speed but the working acceleration will be adjusted for smooth approach. 
+        // The target speed will always be our ending speed but the working acceleration will be adjusted for smooth approach. 
         // TODO make api clearer for workingAccel_ It is not intuitive we are doing this
 
         double currentSpeed = inputs_.getCurrentSpeed();
