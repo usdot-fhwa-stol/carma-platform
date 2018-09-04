@@ -65,7 +65,7 @@ public class EadNeighborCalculator implements INeighborCalculator {
         //get config parameters
         IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
         maxAccel_ = config.getDoubleDefaultValue("defaultAccel", 2.0);
-        speedLimit_ = config.getDoubleDefaultValue("maximumSpeed", 30.0) / MPS_TO_MPH;
+        speedLimit_ = config.getMaximumSpeed(0.0) / MPS_TO_MPH;
         crawlingSpeed_ = config.getDoubleDefaultValue("crawlingSpeed", 5.0) / MPS_TO_MPH;
         acceptableStopDist_ = config.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
         stoppingLookAhead_ = 5.0; //default

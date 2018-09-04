@@ -468,6 +468,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private boolean stoppedAtLight() {
         double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
         LongitudinalManeuver currentLongitudinalManeuver = (LongitudinalManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.LONGITUDINAL);
+        if (currentLongitudinalManeuver == null) {
+            return false; // Can't be stopped at a light if we are not under automated control or in a complex maneuver which we would not have planned
+        }
         currentLongitudinalManeuver.getPlanner().equals(this);
         
         return currentLongitudinalManeuver.getPlanner().equals(this) 
