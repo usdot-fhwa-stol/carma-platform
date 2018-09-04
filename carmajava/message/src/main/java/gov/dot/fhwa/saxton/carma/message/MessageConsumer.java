@@ -283,8 +283,10 @@ public class MessageConsumer extends SaxtonBaseNode {
 	                    MapData map = (MapData) decodedMessage.getMessage();
 	                    map.getHeader().setStamp(connectedNode_.getCurrentTime());
 	                    mapPub_.publish(map);
+                            break;
 	                case "SPAT":
 	                    spatPub_.publish((SPAT) decodedMessage.getMessage());
+                            break;
 	                default:
 	                    log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	                }
