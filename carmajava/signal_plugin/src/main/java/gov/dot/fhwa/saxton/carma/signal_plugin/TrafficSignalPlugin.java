@@ -42,6 +42,7 @@ import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
@@ -146,19 +147,24 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         goButtonService = pubSubService.getServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
             (SetBoolRequest request, SetBoolResponse response) -> {
                 if (!awaitingUserInput.compareAndSet(true, false)) {
+                    response.setMessage(this.getVersionInfo().componentName() + " did not expect UI input and is ignoring the input.");
+                    response.setSuccess(false);
                     return; // If we are not expecting user acknowledgement then don't continue
                 }
                 if (request.getData()) { // If user acknowledged it is safe to continue
-                    if (true) { // TODO check if the light is infact green this logic needs to be rethought
+                    if (checkCurrentPhase(SignalPhase.GREEN)) { // If we are still in the green phase
                         // Notify the arbitrator we need to replan to continue through the intersection
                         triggerNewPlan();
+                    } else {
+                        response.setMessage("The light is no longer green. Waiting till next green light.");
+                        response.setSuccess(false);
+                        return;
                     }
                 } else { // User indicated it is not safe to continue
-                    // TODO handle the go button rejected
                     prevUIRequestTime.set(System.currentTimeMillis()); // TODO should this be ROS time
                 }
 
-                response.setSuccess(true); // Regardless of the user response this service ran successfully
+                response.setSuccess(true); // If we reach this point the service request has been handled
             }
         );
 
@@ -412,29 +418,26 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void loop() throws InterruptedException {
         long tsStart = System.currentTimeMillis();
-
-
-        LongitudinalManeuver currentLongitudinalManeuver = (LongitudinalManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManueverType.LONGITUDINAL);
-        currentLongitudinalManeuver.getPlanner().equals(this);
         
-        // We were stopped at a red light and now the light is green and we are not currently waiting for user acknowledgement
-        // Then send a request
-        if (stoppedAtLight() && checkCurrentPhase(SignalPhase.GREEN)) {
+        // We were stopped at a red light and now the light is green
+        boolean stoppedForLight = stoppedAtLight();
+        boolean phaseIsGreen = checkCurrentPhase(SignalPhase.GREEN);
+        if (stoppedForLight && phaseIsGreen) {
+            // If we have not requested acknowledgement from the user do it now
             if (awaitingUserConfirmation.compareAndSet(false, true)) {
-                // Send user input request to get confirmation to continue
+                // Update state variables
                 prevUIRequestTime.set(System.currentTimeMillis());
                 awaitingUserInput.set(true);
-                UIInstructions uiMsg = uiInstructionsPub.newMessage();
-                uiMsg.setMsg("Is it safe to continue through intersection?");
-                uiMsg.setResponseService(GO_BUTTON_SRVS);
-                uiMsg.setStamp(Time.fromMillis(System.currentTimeMillis()));
-                uiInstructionsPub.publish(uiMsg);
-            } else { // We are already awaiting confirmation
-                //
-                if (System.currentTimeMillis() - UI_REQUEST_INTERVAL > prevUIRequestTime.get()) {
-                    awaitingUserInput.set(true);
-                }
+                // Send user input request to get confirmation to continue
+                askUserIfIntersectionIsClear();
+
+            } else if (System.currentTimeMillis() - UI_REQUEST_INTERVAL > prevUIRequestTime.get() // Already awaiting confirmation and enough time has elapsed
+                && awaitingUserInput.compareAndSet(false, true)) { // AND we are not currently waiting for user input
+                // Then we want to request input from the user again
+                askUserIfIntersectionIsClear();
             }
+        } else if (!stoppedForLight && awaitingUserConfirmation.compareAndSet(true, false)) {
+            // We are no longer waiting at the intersection
         }
 
         long tsEnd = System.currentTimeMillis();
@@ -442,10 +445,26 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         Thread.sleep(sleepDuration);
     }
 
-    //TODO comment
+    /**
+     * Helper function which sends a acknowledgement request to the UI which will request input from the user
+     */
+    private void askUserIfIntersectionIsClear() {
+        UIInstructions uiMsg = uiInstructionsPub.newMessage();
+        uiMsg.setType(UIInstructions.ACK_REQUIRED);
+        uiMsg.setMsg("Is it safe to continue through intersection?");
+        uiMsg.setResponseService(GO_BUTTON_SRVS);
+        uiMsg.setStamp(Time.fromMillis(System.currentTimeMillis()));
+        uiInstructionsPub.publish(uiMsg);
+    }
+
+    /**
+     * Helper function returns true if the vehicle is currently stopped at a light based on an plan from this plugin
+     * 
+     * @return True if the current maneuver is a steady speed stop maneuver planned by this plugin
+     */
     private boolean stoppedAtLight() {
         double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
-        LongitudinalManeuver currentLongitudinalManeuver = (LongitudinalManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManueverType.LONGITUDINAL);
+        LongitudinalManeuver currentLongitudinalManeuver = (LongitudinalManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.LONGITUDINAL);
         currentLongitudinalManeuver.getPlanner().equals(this);
         
         return currentLongitudinalManeuver.getPlanner().equals(this) 
@@ -454,7 +473,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             && Math.abs(currentSpeed) < ZERO_SPEED_NOISE;
     }
 
-    // TODO comment
+    /**
+     * Helper function returns true if the current phase of the nearest intersection is equal to the requested phase
+     * 
+     * @param phase The phase to check against
+     * 
+     * @return True if nearest intersection phase is equal to current phase
+     */
     private boolean checkCurrentPhase(SignalPhase phase) {
         List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> sortedIntersections = glidepathTrajectory.getSortedIntersections();
         return !sortedIntersections.isEmpty() && sortedIntersections.get(0).currentPhase == phase;

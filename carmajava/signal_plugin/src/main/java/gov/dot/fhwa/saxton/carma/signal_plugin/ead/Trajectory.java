@@ -26,13 +26,10 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 
 import java.io.IOException;
 import java.util.*;
 
-import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.GREEN;
 import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE;
 
 /**
@@ -152,7 +149,6 @@ public class Trajectory implements ITrajectory {
 		curAccel_ = 0.0;
 		eadErrorCount_ = 0;
 		spatErrorCounter_ = 0;
-		inMotion_ = false;
 		stopConfirmed_ = false;
 		intersectionGeom_ = null;
 		phase_ = NONE;
@@ -189,7 +185,6 @@ public class Trajectory implements ITrajectory {
 	}
 
 	/**
-	 * TODO
 	 * Returns a list of known intersections sorted from nearest to farthest
 	 * 
 	 * @return A list of IntersectionData sorted from nearest to farthest
@@ -924,7 +919,6 @@ public class Trajectory implements ITrajectory {
 	private int					spatsReceivedOnNewIntersection_; //number of spat msgs received since new intersection has been entered
 	private double				osOverride_;		//FOR DEBUGGING ONLY - allows the config file to override the driver selected operating speed, m/s
 	private long				timeStepSize_;		//duration of a single time step, ms
-	private boolean				inMotion_;			//have we detected first motion?
 	private boolean				stopConfirmed_;		//are we at a complete stop?
 	private boolean				respectTimeouts_;	//should we honor the established timeouts?
 	private double				prevCmd_;			//speed command from the previous time step, m/s
@@ -959,6 +953,5 @@ public class Trajectory implements ITrajectory {
 
 	private static final int	MAX_EAD_ERROR_COUNT = 3;//max allowed number of EAD exceptions
 	private static final int 	STOP_DAMPING_TIMESTEPS = 6; //num timesteps before stopping vibrations disappear
-	private static final int	START_MOTION_TIMESTEPS = 19; //num timesteps to allow for motion detection on startup
 	private static ILogger		log_ = LoggerManager.getLogger(Trajectory.class);
 }
