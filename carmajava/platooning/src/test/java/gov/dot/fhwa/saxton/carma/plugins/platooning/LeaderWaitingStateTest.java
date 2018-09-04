@@ -66,7 +66,7 @@ public class LeaderWaitingStateTest {
         when(request.getPlanType()).thenReturn(type);
         when(request.getStrategyParams()).thenReturn("");
         when(mockManager.getPlatoonRearDowntrackDistance()).thenReturn(60.0);
-        when(plugin.desiredJoinTimeGap).thenReturn(4.0);
+        when(plugin.getDesiredJoinTimeGap()).thenReturn(4.0);
         when(mockInputs.getCurrentSpeed()).thenReturn(3.25);
         assertEquals(MobilityRequestResponse.ACK, leaderWaitingState.onMobilityRequestMessgae(request));
     }

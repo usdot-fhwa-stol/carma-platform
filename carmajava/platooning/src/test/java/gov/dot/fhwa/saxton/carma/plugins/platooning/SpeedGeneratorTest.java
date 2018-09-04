@@ -80,6 +80,8 @@ public class SpeedGeneratorTest {
         PlatoonMember leader = new PlatoonMember("", "", 10.0, 10.0, 50, Long.MAX_VALUE);
         when(mockManager.getLeader()).thenReturn(leader);
         when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(40.0);
+        when(mockPlugin.getManeuverInputs()).thenReturn(mockManeuverInputs);
+        when(mockManeuverInputs.getDistanceToFrontVehicle()).thenReturn(20.0);
         when(mockManeuverInputs.getCurrentSpeed()).thenReturn(10.0);
         when(mockManager.getNumberOfVehicleInFront()).thenReturn(1);
         speedGenerator = new CommandGenerator(mockPlugin, mockLogger, psl);
@@ -99,6 +101,8 @@ public class SpeedGeneratorTest {
         PlatoonMember leader = new PlatoonMember("", "", 10.0, 10.0, 50.0, Long.MAX_VALUE);
         when(mockManager.getLeader()).thenReturn(leader);
         when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(30.0);
+        when(mockPlugin.getManeuverInputs()).thenReturn(mockManeuverInputs);
+        when(mockManeuverInputs.getDistanceToFrontVehicle()).thenReturn(40.0);
         when(mockManeuverInputs.getCurrentSpeed()).thenReturn(10.0);
         when(mockManager.getNumberOfVehicleInFront()).thenReturn(2);
         speedGenerator = new CommandGenerator(mockPlugin, mockLogger, psl);
