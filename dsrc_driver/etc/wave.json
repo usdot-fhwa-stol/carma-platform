@@ -17,14 +17,14 @@
     "name" : "MAP",
     "psid" : "0082",
     "dsrc_id" : "18",
-    "channel" : "CCH",
+    "channel" : "172",
     "priority" : "3"
   },
   {
     "name" : "SPAT",
     "psid" : "0082",
     "dsrc_id" : "19",
-    "channel" : "CCH",
+    "channel" : "172",
     "priority" : "3"
   },
   {

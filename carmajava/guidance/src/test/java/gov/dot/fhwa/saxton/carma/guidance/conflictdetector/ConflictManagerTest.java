@@ -90,7 +90,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.05;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     // Build path
     List<RoutePointStamped> path = new ArrayList<>();
@@ -113,7 +113,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     // Build path
     List<RoutePointStamped> path = new ArrayList<>();
@@ -170,7 +170,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     // Build path
     List<RoutePointStamped> path = new ArrayList<>();
@@ -229,7 +229,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     //// Test conflict with same path
     // Build path
@@ -528,7 +528,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     //// Test conflict with same path
     // Build path
@@ -734,7 +734,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, timeProvider);
+    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     //// Test conflict with same path
     // Build path

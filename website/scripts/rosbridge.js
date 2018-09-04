@@ -1185,6 +1185,8 @@ function checkLateralControlDriver() {
 
 /*
     Show UI instructions
+    NOTE: Currently UI instructions are handled at the carma level.
+    TODO: Future this topic indicator to handle at carma and plugin level to allow plugin specific actions/icons. For now, will remain here.
 */
 function showUIInstructions() {
 
@@ -1194,7 +1196,7 @@ function showUIInstructions() {
         NO_ACK_REQUIRED: { value: 2, text: 'NO_ACK_REQUIRED' }, //A command that does not require driver acknowledgement
     };
 
-    // List out the expected commands to handle.
+    // List out the expected commands to handle that applies at the carma level or generic enough.
     var UIExpectedCommands = {
         LEFT_LANE_CHANGE: { value: 0, text: 'LEFT_LANE_CHANGE' }, //From lateral controller driver
         RIGHT_LANE_CHANGE: { value: 1, text: 'RIGHT_LANE_CHANGE' }, //From lateral controller driver
@@ -1213,46 +1215,32 @@ function showUIInstructions() {
             divCapabilitiesMessage.innerHTML = message.msg;
         }
         else {
-            var icon = '';
+            var msg = '';
 
+            //NOTE: Currently handling lane change for it's icons
             switch (message.msg) {
                 case UIExpectedCommands.LEFT_LANE_CHANGE.text:
-                    icon = '<i class="fa fa-angle-left faa-flash animated faa-slow" aria-hidden="true" ></i>';
+                    msg = '<i class="fa fa-angle-left faa-flash animated faa-slow" aria-hidden="true" ></i>';
                     break;
                 case UIExpectedCommands.RIGHT_LANE_CHANGE.text:
-                    icon = '<i class="fa fa-angle-right faa-flash animated faa-slow" aria-hidden="true" ></i>';
+                    msg = '<i class="fa fa-angle-right faa-flash animated faa-slow" aria-hidden="true" ></i>';
                     break;
                 default:
-                    modalUIInstructionsContent.innerHTML = '';
+                    msg = message.msg; //text display only.
                     break;
             }
 
             if (message.type == UIInstructionsType.NO_ACK_REQUIRED.value)
-                showModalNoAck(icon); // Show the icon for 3 seconds.
+                showModalNoAck(msg); // Show the icon or text  for 3 seconds.
 
-            //TODO: Implement ACK_REQUIRED logic to call specific service.
-            // var response_service = message.response_service;
+            //Implement ACK_REQUIRED logic to call specific service.
+            //For now, no custom icons for acknowledgement, simply YES/NO button. Later may have other options.
+            if (message.type == UIInstructionsType.ACK_REQUIRED.value)
+            {
+                //Show popup to user for acknowledgement and send the response over to the specific plugin.
+                showModalAck(msg, message.response_service);
+            }
         }
-    });
-
-}
-
-/*
-    Subscribe to future topics below:
-    TODO: For future iterations.
-*/
-function getFutureTopics() {
-
-    //TODO: Not yet published by Guidance.
-    var listenerUiPlatoonInfo = new ROSLIB.Topic({
-        ros: ros,
-        name: t_ui_platoon_vehicle_info,
-        messageType: 'std_msgs/String'
-    });
-
-    listenerUiPlatoonInfo.subscribe(function (message) {
-        document.getElementById('divLog').innerHTML += '<br/> System received message from ' + listenerUiPlatoonInfo.name + ': ' + message.data;
-        //listenerUiPlatoonInfo.unsubscribe();
     });
 
 }
