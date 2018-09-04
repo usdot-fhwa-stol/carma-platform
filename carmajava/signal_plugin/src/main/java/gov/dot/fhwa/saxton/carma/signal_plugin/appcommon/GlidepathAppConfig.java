@@ -25,6 +25,8 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  * Provide a mechanism for external configuration via a dvi.properties outside the jar in the current directory.
  *
  * Using a dvi.properties file in the same directory as the jar overrides the default properties set inside the jar.
+ * 
+ * NOTE: This implementation will replace all occurrences of "." with "/" to make them valid ROS param names
  */
 public class GlidepathAppConfig implements IGlidepathAppConfig {
     
@@ -37,11 +39,11 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
     }
 
     public int getIntValue(String property)   {
-        return params.getInteger("~/" + property);
+        return params.getInteger(toROSString(property));
     }
     
     public String getProperty(String name) {
-    	return params.getString("~/" + name);
+    	return params.getString(toROSString(name));
     }
 
     /**
@@ -52,7 +54,11 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
      * @return int
      */
     public int getDefaultIntValue(String property, int defaultValue)   {
-        return params.getInteger("~/" + property, defaultValue);
+        return params.getInteger(toROSString(property), defaultValue);
+    }
+
+    private String toROSString(String name) {
+        return "~" + name.replace(".", "/");
     }
 
 
@@ -153,17 +159,17 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
     }
 
     public boolean getBooleanValue(String property)   {
-        return params.getBoolean("~/" + property);
+        return params.getBoolean(toROSString(property));
     }
 
     @Override
     public double getDoubleValue(String property) {
-        return params.getDouble("~/" + property);
+        return params.getDouble(toROSString(property));
     }
 
     @Override
     public double getDoubleDefaultValue(String property, double defaultValue) {
-        return params.getDouble("~/" + property, defaultValue);
+        return params.getDouble(toROSString(property), defaultValue);
     }
 
     @Override

@@ -55,6 +55,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IServiceServer;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
@@ -123,6 +124,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // Pass params into GlidepathAppConfig
         GlidepathAppConfig appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
         GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
+
+        // Initialize Speed Filter
+        velFilter.initialize(appConfig.getPeriodicDelay() * Constants.MS_TO_SEC); // TODO determine what the best value should be given we no longer use the periodic executor
         
         log.info("STARTUP", "TrafficSignalPlugin has been initialized.");
         // log the key params here
@@ -167,14 +171,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 response.setSuccess(true); // If we reach this point the service request has been handled
             }
         );
-
-        ead = new EadAStar();
-        try {
-            glidepathTrajectory = new gov.dot.fhwa.saxton.carma.signal_plugin.ead.Trajectory(ead);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -412,6 +408,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onResume() {
         log.info("SignalPlugin has resumed.");
+        ead = new EadAStar();
+        try {
+            glidepathTrajectory = new gov.dot.fhwa.saxton.carma.signal_plugin.ead.Trajectory(ead);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            log.error("Exception when building trajectory object", e);
+        }
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
     }
 
