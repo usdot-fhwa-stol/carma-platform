@@ -24,22 +24,22 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 /**
  * A MotionInterpolator is responsible for interpolating the position of the host vehicle between two or more nodes in a plan
  * The returned list of RoutePointStamped objects can be used to check conflicts with the CARMA conflict detection system
- * 
  */
-public interface IMotionInterpolator {
+public interface IMotionPredictor {
 
   /**
-   * Interpolates the vehicle position between each pair of nodes in a vehicle's path.
-   * The returned list is in the RoutePointStamped format for use with conflict detection systems provided by CARMA
-   * NOTE: The lane, crosstrack, and route segment values in this list will not be set
-   * NOTE: Duplicate nodes are not allowed to be present
-   * TODO: Should the crosstrack be set or always 0?
-   * The returned list will always include all points in the provided trajectory
+   * Predicts the continued motion of a vehicle based on the historical trajectory
+   * The result is a set of points describing the anticipated motion of the vehicle along the route
    * 
-   * @param path A time sorted list of nodes which define the host vehicle's desired trajectory
-   * @param distanceStep The max distance gap between each point in the output list
+   * NOTE: Currently it is assumed position the input and output data are described in the same frame
    * 
-   * @return A list of route point stamped. The lanes and route segment values will not be set.
+   * @param objId A unique id which corresponds to the specific object the provided historical trajectory describes. 
+   *           The id can be used for multi-object and or state-full implementations.
+   * @param objTrajectory A time sorted list of nodes describing the historical behavior of the vehicle
+   * @param distanceStep The max distance gap by which points in the output list will be separated
+   * @param timeDuration The amount of time to project motion forward for
+   * 
+   * @return A list of RoutePointStamped which can be plugged into the conflict detection system provided by CARMA. The returned list is exclusive of the history data.
    */
-  public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double distanceStep);
+  public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double distanceStep, double timeDuration);
 }

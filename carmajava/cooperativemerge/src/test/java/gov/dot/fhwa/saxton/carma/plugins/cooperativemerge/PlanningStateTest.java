@@ -133,8 +133,8 @@ public class PlanningStateTest {
         when(mockPlugin.getCommsTimeoutMS()).thenReturn(500L);
 
         when(mockPlugin.getVehicleId()).thenReturn(VEHICLE_ID);
-
-
+        final StandbyState standbyState = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
+        mockPlugin.setState(null, standbyState);
         route = (new FileStrategy("../route/src/test/resources/routes/colonial_farm_rd_outbound.yaml", mockSimpleLog)).load();
         route = Route.fromMessage(route.toMessage(messageFactory)); // Assign waypoint ids
 
@@ -198,6 +198,6 @@ public class PlanningStateTest {
         verify(mockPlugin, times(2)).setState(oldState.capture(), newState.capture());
 
         // Check we are now in the planning state
-        assertEquals("ExecutionState", newState.getValue().toString());
+        assertEquals("PlanningState", newState.getValue().toString());
     }
 }
