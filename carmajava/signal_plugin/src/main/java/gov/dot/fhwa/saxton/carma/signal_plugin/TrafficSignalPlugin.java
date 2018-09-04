@@ -21,10 +21,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.joda.time.DateTime;
+import org.ros.message.Time;
 
 import cav_msgs.Connection;
 import cav_msgs.GenericLane;
@@ -35,18 +38,19 @@ import cav_msgs.NodeOffsetPointXY;
 import cav_msgs.NodeXY;
 import cav_msgs.Position3D;
 import cav_msgs.UIInstructions;
-import cav_srvs.AbortActiveRoute;
-import cav_srvs.AbortActiveRouteRequest;
-import cav_srvs.AbortActiveRouteResponse;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SpeedUp;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.IServiceServer;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.IntersectionData;
@@ -55,6 +59,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntersectionCollectionDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionCollection;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Lane;
@@ -68,6 +73,9 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import sensor_msgs.NavSatFix;
 import std_msgs.Bool;
+import std_srvs.SetBool;
+import std_srvs.SetBoolRequest;
+import std_srvs.SetBoolResponse;
 
 /**
  * Top level class in the Traffic Signal Plugin that does trajectory planning through
@@ -78,7 +86,17 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     private ISubscriber<NavSatFix> gpsSub;
     private ISubscriber<TwistStamped> velocitySub;
-    private IService<AbortActiveRouteRequest, AbortActiveRouteResponse> goButtonService; 
+
+    private IServiceServer<SetBoolRequest, SetBoolResponse> goButtonService; 
+    private IPublisher<UIInstructions> uiInstructionsPub;
+    private AtomicBoolean awaitingUserInput = new AtomicBoolean(false);
+    private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false);
+    private AtomicLong prevUIRequestTime = new AtomicLong();
+    private final long UI_REQUEST_INTERVAL = 100;
+    private final String GO_BUTTON_SRVS = "traffic_signal_plugin/go_button";
+    private static final double ZERO_SPEED_NOISE = 0.04;	//speed threshold below which we consider the vehicle stopped, m/s
+
+
     private Map<Integer, IntersectionData> intersections = Collections
             .synchronizedMap(new HashMap<Integer, IntersectionData>());
     private AtomicReference<NavSatFix> curPos = new AtomicReference<>();
@@ -123,8 +141,26 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
         });
 
-        // goButtonService = pluginServiceLocator.getPubSubService().getServiceForTopic("ead_go", AbortActiveRoute._TYPE);
-        // goButtonService. // TODO make service server
+        uiInstructionsPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("ui_instructions", UIInstructions._TYPE);
+
+        goButtonService = pubSubService.getServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
+            (SetBoolRequest request, SetBoolResponse response) -> {
+                if (!awaitingUserInput.compareAndSet(true, false)) {
+                    return; // If we are not expecting user acknowledgement then don't continue
+                }
+                if (request.getData()) { // If user acknowledged it is safe to continue
+                    if (true) { // TODO check if the light is infact green this logic needs to be rethought
+                        // Notify the arbitrator we need to replan to continue through the intersection
+                        triggerNewPlan();
+                    }
+                } else { // User indicated it is not safe to continue
+                    // TODO handle the go button rejected
+                    prevUIRequestTime.set(System.currentTimeMillis()); // TODO should this be ROS time
+                }
+
+                response.setSuccess(true); // Regardless of the user response this service ran successfully
+            }
+        );
 
         ead = new EadAStar();
         try {
@@ -333,6 +369,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 }
             }
 
+            // Trigger new plan on phase change
             if ((phaseChanged || newIntersection || deletedIntersection) && checkIntersectionMaps()) {
                 triggerNewPlan();
             }
@@ -376,9 +413,51 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     public void loop() throws InterruptedException {
         long tsStart = System.currentTimeMillis();
 
+
+        LongitudinalManeuver currentLongitudinalManeuver = (LongitudinalManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManueverType.LONGITUDINAL);
+        currentLongitudinalManeuver.getPlanner().equals(this);
+        
+        // We were stopped at a red light and now the light is green and we are not currently waiting for user acknowledgement
+        // Then send a request
+        if (stoppedAtLight() && checkCurrentPhase(SignalPhase.GREEN)) {
+            if (awaitingUserConfirmation.compareAndSet(false, true)) {
+                // Send user input request to get confirmation to continue
+                prevUIRequestTime.set(System.currentTimeMillis());
+                awaitingUserInput.set(true);
+                UIInstructions uiMsg = uiInstructionsPub.newMessage();
+                uiMsg.setMsg("Is it safe to continue through intersection?");
+                uiMsg.setResponseService(GO_BUTTON_SRVS);
+                uiMsg.setStamp(Time.fromMillis(System.currentTimeMillis()));
+                uiInstructionsPub.publish(uiMsg);
+            } else { // We are already awaiting confirmation
+                //
+                if (System.currentTimeMillis() - UI_REQUEST_INTERVAL > prevUIRequestTime.get()) {
+                    awaitingUserInput.set(true);
+                }
+            }
+        }
+
         long tsEnd = System.currentTimeMillis();
         long sleepDuration = Math.max(100 - (tsEnd - tsStart), 0);
         Thread.sleep(sleepDuration);
+    }
+
+    //TODO comment
+    private boolean stoppedAtLight() {
+        double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
+        LongitudinalManeuver currentLongitudinalManeuver = (LongitudinalManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManueverType.LONGITUDINAL);
+        currentLongitudinalManeuver.getPlanner().equals(this);
+        
+        return currentLongitudinalManeuver.getPlanner().equals(this) 
+            && currentLongitudinalManeuver instanceof SteadySpeed
+            && Math.abs(currentLongitudinalManeuver.getTargetSpeed()) < ZERO_SPEED_NOISE
+            && Math.abs(currentSpeed) < ZERO_SPEED_NOISE;
+    }
+
+    // TODO comment
+    private boolean checkCurrentPhase(SignalPhase phase) {
+        List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> sortedIntersections = glidepathTrajectory.getSortedIntersections();
+        return !sortedIntersections.isEmpty() && sortedIntersections.get(0).currentPhase == phase;
     }
 
     @Override

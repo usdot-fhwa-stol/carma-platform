@@ -187,6 +187,16 @@ public class Trajectory implements ITrajectory {
 	public boolean isStopConfirmed() {
 		return stopConfirmed_;
 	}
+
+	/**
+	 * TODO
+	 * Returns a list of known intersections sorted from nearest to farthest
+	 * 
+	 * @return A list of IntersectionData sorted from nearest to farthest
+	 */
+	public List<IntersectionData> getSortedIntersections() {
+		return intersections_;
+	}
 	
 	/**
 	 * 
@@ -314,14 +324,6 @@ public class Trajectory implements ITrajectory {
 
 
 		////////// RUN EAD TO GENERATE NEW PLAN
-
-
-		//if speed is significantly positive for the first time then
-		if (!inMotion_  &&  curSpeed_ > 2.0*SPEED_NOISE) { //avoid some weird noise whilst sitting on starting line
-			//indicate that we have begun moving
-			inMotion_ = true;
-			log_.info("TRAJ", "///// FIRST MOTION DETECTED /////");
-		}
 
 		//take necessary actions based on the current state
 		double cmd = 0.0;  //the speed command we are to return;
@@ -958,6 +960,5 @@ public class Trajectory implements ITrajectory {
 	private static final int	MAX_EAD_ERROR_COUNT = 3;//max allowed number of EAD exceptions
 	private static final int 	STOP_DAMPING_TIMESTEPS = 6; //num timesteps before stopping vibrations disappear
 	private static final int	START_MOTION_TIMESTEPS = 19; //num timesteps to allow for motion detection on startup
-	private static final double SPEED_NOISE = 0.04;	//speed threshold below which we consider the vehicle stopped, m/s
 	private static ILogger		log_ = LoggerManager.getLogger(Trajectory.class);
 }
