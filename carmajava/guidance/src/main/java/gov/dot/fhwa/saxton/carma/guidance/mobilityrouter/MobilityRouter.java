@@ -362,7 +362,10 @@ public class MobilityRouter extends GuidanceComponent implements IMobilityRouter
         if (trajectoryExecutor != null && trajectoryExecutor.getTotalTrajectory() != null) {
             double currentTrajEnd = trajectoryExecutor.getTotalTrajectory().getEndLocation();
             double requestEnd = otherPath.get(otherPath.size() - 1).getDowntrack();
-            if (requestEnd > currentTrajEnd) {
+            // TODO
+            // Check for otherPath.size() > 1 is a quick fix to prevent replans when request messages are used to convey non-path data
+            // This quick fix was used for cooperative merge without breaking yield
+            if (requestEnd > currentTrajEnd && otherPath.size() > 1) {
                 log.warn("Using experimental replan method to extend plan to " + requestEnd);
 
                 // Initialize the response message

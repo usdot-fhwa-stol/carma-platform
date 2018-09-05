@@ -12,7 +12,17 @@ bool robot_enabled
 
 # The value of Torque being commanded to the vehicle Nm
 float64 torque
+bool torque_validity
 
 # Braking deceleration - The commanded braking deceleration m/s^2
 float64 brake_decel
+bool brake_decel_validity
+
+# Throttle effort as reported by vehicle [-100,100]
+float64 throttle_effort
+bool throttle_effort_validity
+
+# Braking effort as reported by vehicle [-100,100]
+float64 braking_effort
+bool braking_effort_validity
 

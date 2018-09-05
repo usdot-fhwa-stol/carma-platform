@@ -42,7 +42,7 @@ public class PlatoonManager implements Runnable {
     // This field is only used by Follower State
     protected int                  platoonSize      = 2;   
     
-    // The first two variables are used for APF leader selection algorithm
+    // The first two variables are used for APF and LPF leader selection algorithm
     // The last one is used internally for removing expired entries 
     private String               previousFunctionalLeaderID    = "";
     private int                  previousFunctionalLeaderIndex = -1;
@@ -238,7 +238,7 @@ public class PlatoonManager implements Runnable {
         if(isFollower && platoon.size() != 0) {
             // return the first vehicle in the platoon as default if no valid algorithm applied
             leader = platoon.get(0);
-            if(plugin.algorithmType == 1) {
+            if(plugin.algorithmType == PlatooningPlugin.APF_ALGORITHM) {
                 // TODO The following method needs to move into a single strategy class
                 try {
                     int newLeaderIndex = allPredecessorFollowing();
@@ -258,14 +258,55 @@ public class PlatoonManager implements Runnable {
                     log.error("Platooning is unstable. Follow the current predecessor");
                     leader = platoon.get(platoon.size() - 1);
                 }
-            } else if(plugin.algorithmType == 2) {
+            } else if(plugin.algorithmType == PlatooningPlugin.PF_ALGORITHM) {
                 // Number 2 indicates PF algorithm and it will always return the vehicle in its immediate front
                 leader = platoon.get(platoon.size() - 1);
                 log.info("PF algorithm require us to follow our current predecessor");
+            } else if(plugin.algorithmType == PlatooningPlugin.LPF_ALGORITHM) {
+                leader = leaderPredecessorFollowing();
             }
             return leader;
         }
         return null;
+    }
+    
+    /**
+     * This is the implementation of leader predecessor following algorithm for truck platooning.
+     * In most case, the algorithm uses the first vehicle as functional leader but try to maintain
+     * a desired gap with the immediate front vehicle. If the gap to the front vehicle is smaller then
+     * gap lower boundary, the algorithm will choose the immediate front vehicle as the functional leader.
+     * The gap upper boundary is a hysteresis to prevent the host vehicle from continually switching back 
+     * and forth between two leaders.
+     * @return the functional leader from platoon list
+     */
+    private PlatoonMember leaderPredecessorFollowing() {
+        double currentGap = plugin.getManeuverInputs().getDistanceToFrontVehicle();
+        if(!Double.isFinite(currentGap)) {
+            previousFunctionalLeaderIndex = 0;
+            return platoon.get(0);
+        }
+        double currentTimeGap =  currentGap / plugin.getManeuverInputs().getCurrentSpeed(); 
+        // if we are not following the front vehicle in the last time step
+        if(previousFunctionalLeaderIndex == -1 || previousFunctionalLeaderIndex == 0) {
+            // if the current time gap is smaller then the lower gap boundary, we follow the immediate front vehicle
+            if(currentTimeGap < plugin.lowerBoundary) {
+                previousFunctionalLeaderIndex = platoon.size() - 1;
+                return platoon.get(platoon.size() - 1);
+            } else {
+                previousFunctionalLeaderIndex = 0;
+                return platoon.get(0);
+            }
+        } else {
+            // if the current time gap becomes higher then upper gap boundary, we start follow the first vehicle
+            if(currentTimeGap > plugin.upperBoundary) {
+                previousFunctionalLeaderIndex = 0;
+                return platoon.get(0);
+            } else {
+                // if the current time gap is still not large enough, we continue follow the immediate front vehicle
+                previousFunctionalLeaderIndex = platoon.size() - 1;
+                return platoon.get(platoon.size() - 1);
+            }
+        }
     }
     
     /**

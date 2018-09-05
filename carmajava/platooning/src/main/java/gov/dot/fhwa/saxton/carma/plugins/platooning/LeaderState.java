@@ -35,6 +35,7 @@ public class LeaderState implements IPlatooningState {
     private   long                 lastHeartBeatTime     = 0;
     private   String               potentialNewPlatoonId = "";
     private   Object               currentPlanMutex = new Object();
+    private   double               trajectoryEndLocation = 0.0;
 
     public LeaderState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator) {
         this.plugin = plugin;
@@ -44,9 +45,20 @@ public class LeaderState implements IPlatooningState {
         // Update the light bar
         updateLightBar();
     }
+    
+    public LeaderState(PlatooningPlugin plugin, ILogger log, PluginServiceLocator pluginServiceLocator, double trajectoryEnd) {
+        this.plugin = plugin;
+        this.log = log;
+        this.pluginServiceLocator = pluginServiceLocator;
+        this.plugin.handleMobilityPath.set(false);
+        this.trajectoryEndLocation = trajectoryEnd;
+        // Update the light bar
+        updateLightBar();
+    }
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedEntrySpeed) {
+        this.trajectoryEndLocation = traj.getEndLocation();
         RouteService rs = pluginServiceLocator.getRouteService();
         TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
         // If there is a platooning window
@@ -184,8 +196,8 @@ public class LeaderState implements IPlatooningState {
                         log.debug("Received positive response for plan id = " + this.currentPlan.planId);
                         log.debug("Change to CandidateFollower state and notify trajectory failure in order to replan");
                         // Change to candidate follower state and request a new plan to catch up with the front platoon
-                        plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId));
-                        pluginServiceLocator.getArbitratorService().notifyTrajectoryFailure();
+                        plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId, this.trajectoryEndLocation));
+                        pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                     } else {
                         log.debug("Received negative response for plan id = " + this.currentPlan.planId);
                         // Forget about the previous plan totally

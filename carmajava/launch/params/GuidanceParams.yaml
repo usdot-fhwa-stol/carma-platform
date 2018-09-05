@@ -86,7 +86,7 @@ cruising_target_multiplier: 1.0
 
 # Double: Time headway to control to with ACC
 # Units: seconds
-desired_acc_timegap: 0.3
+desired_acc_timegap: 0.5
 
 # Double: Minimum distance between vehicle and front vehicle at any point
 # Units: m
@@ -194,7 +194,7 @@ conflict_map_collision_downtrack_margin: 5.0
 # Double: The margin around a MobilityPath point
 # in the crosstrack dimension in which a collision will be considered to have occured
 # Units: meters
-conflict_map_collision_crosstrack_margin: 3.0
+conflict_map_collision_crosstrack_margin: 1.2
 
 # Double: The margin around a MobilityPath point
 # in the time dimension in which a collision will be considered to have occured
@@ -237,3 +237,19 @@ min_conflict_avoidance_timegap: 4.0
 # Double: The percentage of the vehicle's maximum acceleration capability to allow the yield plugin to use
 # for conflict avoidance
 max_yield_accel_authority: 0.8
+
+# Double: The percentage of the lateral conflict margin by which to bias the host vehicle's position to the right
+# Units: percent
+conflict_detection_lateral_bias: 0.0
+
+# Double: The percentage of the longitudinal conflict margin by which to bias the host vehicle's position to the front
+# Units: percent
+conflict_detection_longitudinal_bias: -0.25
+
+# Double: The percentage of the time conflict margin by which to bias the host vehicle's position forward in time
+# Units: percent
+conflict_detection_temporal_bias: 0.0
+
+# Boolean: If true the controller will switch to wrench effort control when commanded 0 m/s speed with 2.5m/s/s max accel and the vehicle is going less then 6 mph
+# This was implemented to address a controller bug in the Cadillac SRX where the vehicle was unable to stay still when commanded 0 speed
+use_wrench_effort_stopping_override: false
