@@ -63,13 +63,13 @@ public class Trajectory implements ITrajectory {
 		timeStepSize_ = (long)config.getPeriodicDelay();
 		
 		//determine if we will be using the timeouts or allowed to run slow (for testing)
-		respectTimeouts_ = Boolean.valueOf(config.getProperty("performancechecks"));
+		respectTimeouts_ = config.getBooleanValue("performancechecks");
 		log_.infof("TRAJ", "time step = %d ms, respecting timeouts = %b", timeStepSize_, respectTimeouts_);
 
 		//get constraint parameters from the config file
 		// TODO use a dynamic speed limit rather than the first speed limit on the route
 		speedLimit_ = config.getMaximumSpeed(0.0)/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
-		maxJerk_ = Double.valueOf(config.getProperty("maximumJerk"));
+		maxJerk_ = config.getDoubleValue("maximumJerk");
 		accelLimiter_ = config.getBooleanValue("ead.accelLimiter");
 		jerkLimiter_ = config.getBooleanValue("ead.jerkLimiter");
 		log_.infof("TRAJ", "speedLimit = %.2f, maxJerk = %.2f", speedLimit_, maxJerk_);
@@ -90,22 +90,22 @@ public class Trajectory implements ITrajectory {
 		}
 
 		//get the max allowable spat error count
-		maxSpatErrors_ = Integer.valueOf(config.getProperty("ead.max.spat.errors"));
+		maxSpatErrors_ = config.getIntValue("ead.max.spat.errors");
 		log_.infof("TRAJ", "Max spat errors = %d", maxSpatErrors_);
 
 		//get the min number of time steps allowed before we bother to compute spat reliability
 		minStepsNewIntersection_ = config.getDefaultIntValue("asd.minSamplesForReliability", 4);
 
 		//get failsafe parameters
-		allowFailSafe_			= config.getProperty("ead.failsafe.on").equals("true");
-		failSafeDistBuf_		= Double.valueOf(config.getProperty("ead.failsafe.distance.buffer"));
-		failSafeResponseLag_	= Double.valueOf(config.getProperty("ead.response.lag"));
-		failSafeDecelFactor_	= Double.valueOf(config.getProperty("ead.failsafe.decel.factor"));
+		allowFailSafe_			= config.getBooleanValue("ead.failsafe.on");
+		failSafeDistBuf_		= config.getDoubleValue("ead.failsafe.distance.buffer");
+		failSafeResponseLag_	= config.getDoubleValue("ead.response.lag");
+		failSafeDecelFactor_	= config.getDoubleValue("ead.failsafe.decel.factor");
 		log_.infof("TRAJ", "allowFailSafe = %b, failSafeDistBuf = %.2f, failSafeResponseLag = %.2f", allowFailSafe_, failSafeDistBuf_, failSafeResponseLag_);
-		maxCmdAdj_		= Double.valueOf(config.getProperty("ead.maxcmdadj"));
-		cmdAccelGain_	= Double.valueOf(config.getProperty("ead.cmdaccelgain"));
-		cmdSpeedGain_	= Double.valueOf(config.getProperty("ead.cmdspeedgain"));
-		cmdBias_		= Double.valueOf(config.getProperty("ead.cmdbias"));
+		maxCmdAdj_		= config.getDoubleValue("ead.maxcmdadj");
+		cmdAccelGain_	= config.getDoubleValue("ead.cmdaccelgain");
+		cmdSpeedGain_	= config.getDoubleValue("ead.cmdspeedgain");
+		cmdBias_		= config.getDoubleValue("ead.cmdbias");
 		log_.infof("TRAJ", "maxCmdAdj = %.2f, cmdAccelGain = %.4f, cmdSpeedGain = %.4f, cmdBias = %.4f",
 					maxCmdAdj_, cmdAccelGain_, cmdSpeedGain_, cmdBias_);
 		

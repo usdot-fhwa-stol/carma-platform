@@ -91,7 +91,7 @@ debug: true
 #----- Pinpoint
 #-----
 
-gps/host: 192.168.0.5
+gps/host: "192.168.0.5"
 gps/port: 9501
 gps/udpport: 8123
 # turner lab glidepath 192.168.0.5 LOCAL
@@ -116,26 +116,6 @@ asd/intersections: 1901
 
 # number of time steps after first seeing data from a new intersection before we start calculating spat reliability
 asd/minSamplesForReliability: 4
-
-#-----
-#----- XGV
-#-----
-
-xgv/udpport: 3794
-xgv/inittimeout: 3000
-xgv/timeout: 20
-xgv/softwarejausid: 125941519
-xgv/retrylimit: 5
-xgv/ipaddress: 192.168.0.100
-xgv/mpdjausid: 10
-xgv/vssjausid: 42
-xgv/motionprofileack: true
-xgv/pdjausid: 33
-xgv/numframes: 1
-xgv/framedelay: 200
-xgv/instanceid: 1
-xgv/subsystemid: 2
-xgv/nodeid: 1
 
 #-----
 #----- EAD

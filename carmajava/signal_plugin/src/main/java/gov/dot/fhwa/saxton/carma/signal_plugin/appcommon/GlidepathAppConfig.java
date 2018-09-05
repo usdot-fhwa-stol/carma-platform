@@ -66,10 +66,6 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
         return getIntValue("periodicDelay");
     }
 
-    public int getUiRefresh() {
-        return getIntValue("uiRefresh");
-    }
-
     public String getGpsHost() {
         return getProperty("gps.host");
     }
@@ -78,84 +74,9 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
         return getIntValue("gps.port");
     }
 
-    public int getJausUdpPort() {
-        return getIntValue("xgv.udpport");
-    }
-
-    public int getSoftwareJausId() {
-        return getIntValue("xgv.softwarejausid");
-    }
-
-    public int getJausRetryLimit() {
-        return getIntValue("xgv.retrylimit");
-    }
-
-    public String getXgvIpAddress() {
-        return getProperty("xgv.ipaddress");
-    }
-
-    public int getXgvNodeId() { return getIntValue("xgv.nodeid"); }
-
-    public int getXgvSubsystemId() { return getIntValue("xgv.subsystemid"); }
-
-    public int getXgvInstanceId() { return getIntValue("xgv.instanceid"); }
-
-    public boolean getXgvMPAck() { return getBooleanValue("xgv.motionprofileack"); }
-
-    public boolean getLogRealTimeOutput() { return getBooleanValue("log.stdout"); }
-
-    public int getMpdJausId() {
-        return getIntValue("xgv.mpdjausid");
-    }
-
-    public int getVssJausId() {
-        return getIntValue("xgv.vssjausid");
-    }
-
-    public int getPdJausId() {
-        return getIntValue("xgv.pdjausid");
-    }
-
-    public int getGpsUdpPort() {
-        return getIntValue("gps.udpport");
-    }
-
     public int getMaximumSpeed(double downtrack) {
         // In legacy ead this was provided by getIntValue("maximumSpeed")
         return (int) (routeService.getSpeedLimitAtLocation(downtrack).getLimit() * Constants.MPS_TO_MPH);
-    }
-
-    public int getXgvSocketTimeout() { return getIntValue("xgv.timeout"); };
-
-    public boolean getAutoStartConsumption() {
-        return getBooleanValue("autoStartConsumption");
-    }
-
-    public int getUcrPort() {
-        return getIntValue("ucr.port");
-    }
-
-    public String getUcrIpAddress() {
-        return getProperty("ucr.ipaddress");
-    }
-
-    public int getXgvInitTimeout() {
-        return getIntValue("xgv.inittimeout");
-    }
-
-    public boolean getUcrEnabled() {
-        return Boolean.parseBoolean(getProperty("ucr.enabled"));
-    }
-
-    public double getMaxAccel() {
-        return Double.parseDouble(getProperty("maximumAccel")); }
-
-    public String getCanDeviceName() { return getProperty("can.candevice"); }
-
-    public String getNativeLib() { return getProperty("can.lib"); }
-
-    public double getDefaultSpeed() {
-        return Double.parseDouble(getProperty("defaultspeed"));
     }
 
     public boolean getBooleanValue(String property)   {

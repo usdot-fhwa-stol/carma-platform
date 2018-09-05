@@ -100,13 +100,13 @@ public class AccelerationManager {
 	private AccelerationManager() {	
 		//get the various limits defined in the config file
 		IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
-		defaultAccel_		= Double.valueOf(config.getProperty("defaultAccel"));
-		rampUp_				= Double.valueOf(config.getProperty("rampUpAccel"));
-		speedupInitiate_	= Double.valueOf(config.getProperty("scenario2InitiateAccel"));
-		stoppingInitiate_	= Double.valueOf(config.getProperty("scenario3InitiateAccel"));
-		slowdownInitiate_	= Double.valueOf(config.getProperty("scenario4InitiateAccel"));
-		speedupDeparture_	= Double.valueOf(config.getProperty("scenario2DepartureAccel"));
-		slowDownDeparture_	= Double.valueOf(config.getProperty("scenario3DepartureAccel"));
+		defaultAccel_		= config.getDoubleValue("defaultAccel");
+		rampUp_				= config.getDoubleValue("rampUpAccel");
+		speedupInitiate_	= config.getDoubleValue("scenario2InitiateAccel");
+		stoppingInitiate_	= config.getDoubleValue("scenario3InitiateAccel");
+		slowdownInitiate_	= config.getDoubleValue("scenario4InitiateAccel");
+		speedupDeparture_	= config.getDoubleValue("scenario2DepartureAccel");
+		slowDownDeparture_	= config.getDoubleValue("scenario3DepartureAccel");
 		
 		//initialize the default acceleration in case nobody ever specifies the scenario
 		curLimit_ = defaultAccel_;
