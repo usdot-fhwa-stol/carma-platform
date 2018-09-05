@@ -112,7 +112,7 @@ asd/mapport: 7789
 asd/maxpacketsize: 1472
 
 #comma-separated list of (decimal) intersections IDs that will be used; other intersections ignored
-asd/intersections: 1901
+asd/intersections: "1901"
 
 # number of time steps after first seeing data from a new intersection before we start calculating spat reliability
 asd/minSamplesForReliability: 4
@@ -166,7 +166,8 @@ ead/cmdspeedgain: 0.0
 ead/cmdbias: 0.0
 
 # if > 0 then overrides the operating speed (mph), regardless of what is entered on the tablet
-ead/osOverride: 15
+# TODO remove this
+ead/osOverride: "15"
 
 # Max distance in front of the stop bar that it is acceptable to stop, m
 ead/acceptableStopDistance: 6.0
