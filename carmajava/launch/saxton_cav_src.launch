@@ -398,6 +398,12 @@
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_operation"/>
         <remap from="incoming_mobility_path"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_path"/>
+
+        <!-- V2I -->
+        <remap from="incoming_map"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_map"/>
+        <remap from="incoming_spat"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_spat"/>
                
       </node>
     </group>
