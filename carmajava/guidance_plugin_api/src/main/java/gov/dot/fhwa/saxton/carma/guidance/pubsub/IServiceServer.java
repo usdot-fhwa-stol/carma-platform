@@ -16,9 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import cav_msgs.RoadwayObstacle;
-import gov.dot.fhwa.saxton.carma.rosutils.*;
-
 /**
  * Generic interface for providing a remote service.
  *

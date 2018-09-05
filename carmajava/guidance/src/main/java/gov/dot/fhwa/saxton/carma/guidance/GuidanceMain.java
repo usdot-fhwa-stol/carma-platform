@@ -82,7 +82,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
 
-  IServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
+  protected IServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
