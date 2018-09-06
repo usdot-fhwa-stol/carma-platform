@@ -64,7 +64,7 @@ public class GuidanceV2IService implements V2IService {
 
         mapSub.registerOnMessageCallback((map) -> {
             for (IntersectionGeometry geometry : map.getIntersections()) {
-                LocalDateTime msgTs = LocalDateTime.ofInstant(Instant.ofEpochMilli((long) map.getHeader().getStamp().toSeconds() * 1000L), TimeZone.getDefault().toZoneId());
+                LocalDateTime msgTs = LocalDateTime.ofInstant(Instant.ofEpochMilli((long) (map.getHeader().getStamp().toSeconds() * 1000.0)), TimeZone.getDefault().toZoneId());
                 int id = geometry.getId().getId();
                 reportIntersectionComms(id, msgTs);
 

@@ -39,7 +39,7 @@ public interface IGlidepathAppConfig extends IAppConfig {
     int getVssJausId();
     int getPdJausId();
     int getGpsUdpPort();
-    int getMaximumSpeed();
+    int getMaximumSpeed(double downtrack);
     int getXgvSocketTimeout();
     boolean getAutoStartConsumption();
     int getUcrPort();

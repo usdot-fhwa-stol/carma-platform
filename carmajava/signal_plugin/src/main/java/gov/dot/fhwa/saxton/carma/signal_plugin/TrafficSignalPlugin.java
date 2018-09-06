@@ -47,7 +47,9 @@ import gov.dot.fhwa.saxton.carma.guidance.util.IntersectionData;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntersectionCollectionDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionCollection;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Lane;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Location;
@@ -90,7 +92,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onInitialize() {
         // load params
-
+        // Pass params into GlidepathAppConfig
+        GlidepathAppConfig appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
+        GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
+        
         log.info("STARTUP", "TrafficSignalPlugin has been initialized.");
         // log the key params here
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);

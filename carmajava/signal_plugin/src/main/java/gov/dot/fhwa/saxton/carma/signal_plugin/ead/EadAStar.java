@@ -84,7 +84,7 @@ public class EadAStar implements IEad {
         useIdleMin_ = config.getBooleanValue("ead.useIdleMin");
 
         //set the max distance error to be half the typical distance between nodes a nominal speed
-        double speedLimit = (double)config.getMaximumSpeed() / Constants.MPS_TO_MPH;
+        double speedLimit = (double)config.getMaximumSpeed(0.0) / Constants.MPS_TO_MPH;
         maxDistanceError_ = 0.5*speedLimit*fineTimeInc_;
 
         costModel_ = new FuelCostModel(vehicleMass_, rollingRes_, dragCoef_, frontalArea_, airDensity_,

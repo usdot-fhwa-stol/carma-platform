@@ -183,7 +183,7 @@ public class TrajectoryConverterTest {
     when(timeProvider.getCurrentTimeMillis()).thenReturn(0L);
     when(timeProvider.getCurrentTimeSeconds()).thenReturn(0.0);
     double[] cellSize = {5.0,2.5,0.15};
-    ConflictManager cm = new ConflictManager(cellSize, 2.5, 1.0, 0.05, timeProvider);
+    ConflictManager cm = new ConflictManager(cellSize, 2.5, 1.0, 0.05, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     // Call function
     List<RoutePointStamped> tempPoints = tc.convertToPath(traj, 0, 0, 0, 0, 0, 0);

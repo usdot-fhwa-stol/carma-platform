@@ -276,8 +276,10 @@ function clearTable(tableName) {
     }
 }
 
-/* Open the modal UIInstructions when there's no acknowledgement needed. */
-function showModalNoAck(icon) {
+/* Open the modal UIInstructions when there's no acknowledgement needed.
+   Currently only handling lane change.
+*/
+function showModalNoAck(msg) {
 
     //IF modal is already open, skip;
     if (isModalPopupShowing == true)
@@ -290,7 +292,7 @@ function showModalNoAck(icon) {
     modalUIInstructions.style.display = 'block';
     isModalPopupShowing = true;
     
-    playSound('audioAlert4', false); 
+    playSound('audioAlert4', false);
 
     //hide after 3 seconds.
    setTimeout(function(){
@@ -298,6 +300,112 @@ function showModalNoAck(icon) {
         modalUIInstructionsContent.innerHTML = '';
         isModalPopupShowing = false;
    }, 3000);
+}
+
+/* Open the modal UIInstructions when there is an acknowledgement needed. */
+function showModalAck(msg, response_service) {
+
+    //IF modal is already open, do not show another alert.
+    if (isModalPopupShowing == true)
+        return;
+
+    var modal = document.getElementById('modalMessageBox');
+    var span_modal = document.getElementsByClassName('close')[0];
+    var btnModalButton1 = document.getElementById('btnModalButton1');
+    var btnModalButton2 = document.getElementById('btnModalButton2');
+
+    btnModalButton1.title = 'YES';
+    btnModalButton1.innerHTML = 'YES';
+    btnModalButton1.onclick = function () {
+        sendModalResponse(true, response_service);
+        return;
+    }
+
+    btnModalButton2.title = 'NO';
+    btnModalButton2.innerHTML = 'NO';
+    btnModalButton2.onclick = function () {
+        sendModalResponse(false, response_service);
+        return;
+    }
+
+    // When the user clicks on <span> (x), close the modal
+    span_modal.onclick = function () {
+        sendModalResponse(false, response_service);
+        return;
+    }
+
+    //display the modal
+    modal.style.display = 'block';
+
+    var modalBody = document.getElementsByClassName('modal-body')[0];
+    var modalHeader = document.getElementsByClassName('modal-header')[0];
+    var modalFooter = document.getElementsByClassName('modal-footer')[0];
+
+
+    modalHeader.innerHTML = '<span class="close">&times;</span><h2>ACTION REQUIRED &nbsp; <i class="fa fa-exclamation-triangle" style="font-size:40px; color:red;"></i></h2>';
+    modalHeader.style.backgroundColor = '#ffcc00'; // yellow
+    modalFooter.style.backgroundColor = '#ffcc00';
+    playSound('audioAlert1', true);
+
+    modalBody.innerHTML = '<p>' + msg + '</p>';
+
+    isModalPopupShowing = true; //flag that modal popup for an alert is currently being shown to the user.
+
+}
+
+
+/*
+    Send the modal popup response back to the plugin.
+*/
+function sendModalResponse(operatorResponse, serviceName) {
+
+    //send the service response
+    //alert('sendModalResponse: ' + operatorResponse + 'serviceName: ' + serviceName);
+
+    // Calling a service
+    // -----------------
+    // First, we create a Service client with details of the service's name and service type.
+    var serviceClient = new ROSLIB.Service({
+    ros : ros,
+    name : serviceName,
+    serviceType : 'std_srvs/SetBool'
+    });
+
+    // Then we create a Service Request. The object we pass in to ROSLIB.ServiceRequest matches the
+    // fields defined in the .srv file.
+    var serviceRequest = new ROSLIB.ServiceRequest({
+    data : operatorResponse
+    });
+
+    // Finally, we call the service and get back the results in the callback. The result
+    // is a ROSLIB.ServiceResponse object.
+    serviceClient.callService(serviceRequest, function(result) {
+
+        console.log('Result for service call on ' + serviceClient.name + ': ' + result.success + '; message: ' + result.message);
+        console.log('Boolean(result.success): ' + Boolean(result.success));
+
+        //UI expects service to return true, if no errors occured during processing.
+        //If there was, then service should return false with a brief message explanation.
+        if (Boolean(result.success) == true)
+        {
+            var modal = document.getElementById('modalMessageBox');
+            modal.style.display = 'none';
+
+            isModalPopupShowing = false; //flag that modal popup has been closed.
+
+            //pause any sounds.
+            document.getElementById('audioAlert1').pause();
+            document.getElementById('audioAlert2').pause();
+            document.getElementById('audioAlert3').pause();
+            document.getElementById('audioAlert4').pause();
+        }
+        else
+        {
+            var modalFooter = document.getElementsByClassName('modal-footer')[0];
+            modalFooter.innerHTML = modalFooter.innerHTML + '<p>Response not processed: ' + result.message + '</p>';
+        }
+    });
+
 }
 
 /*
@@ -315,22 +423,28 @@ function showModal(showWarning, modalMessage, restart) {
 
     var modal = document.getElementById('modalMessageBox');
     var span_modal = document.getElementsByClassName('close')[0];
-    var btnModalOK = document.getElementById('btnModalOK');
-    var btnModalLogout = document.getElementById('btnModalLogout');
+    var btnModalButton1 = document.getElementById('btnModalButton1');
+    var btnModalButton2 = document.getElementById('btnModalButton2');
 
-    btnModalOK.onclick = function () {
+    btnModalButton1.title = 'Continue to Restart';
+    btnModalButton2.title = 'Logout and Shutdown';
+
+    btnModalButton1.innerHTML = 'Continue';
+    btnModalButton2.innerHTML = 'Logout';
+
+    btnModalButton1.onclick = function () {
         closeModal('RESTART');
         return;
     }
 
-    btnModalLogout.onclick = function () {
+    btnModalButton2.onclick = function () {
         closeModal('LOGOUT');
         return;
     }
 
     if (restart == true) {
-        btnModalOK.style.display = ''; 
-        btnModalLogout.style.display = ''; 
+        btnModalButton1.style.display = '';
+        btnModalButton2.style.display = '';
 
         // When the user clicks on <span> (x), close the modal
         span_modal.onclick = function () {
@@ -339,8 +453,8 @@ function showModal(showWarning, modalMessage, restart) {
         }
     }
     else {
-        btnModalOK.style.display = 'none';
-        btnModalLogout.style.display = '';
+        btnModalButton1.style.display = 'none';
+        btnModalButton2.style.display = '';
 
         // When the user clicks on <span> (x), close the modal
         span_modal.onclick = function () {
