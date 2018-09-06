@@ -95,8 +95,16 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // Pass params into GlidepathAppConfig
         GlidepathAppConfig appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
         GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
+
+        ead = new EadAStar();
+        try {
+            glidepathTrajectory = new gov.dot.fhwa.saxton.carma.signal_plugin.ead.Trajectory(ead);
+        } catch (Exception e) {
+            log.error("Glidepath unable to initialize EAD algorithm!!!", e);
+            setAvailability(false);
+            return;
+        }
         
-        log.info("STARTUP", "TrafficSignalPlugin has been initialized.");
         // log the key params here
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
         setAvailability(false);
@@ -114,13 +122,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
         });
 
-        ead = new EadAStar();
-        try {
-            glidepathTrajectory = new gov.dot.fhwa.saxton.carma.signal_plugin.ead.Trajectory(ead);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        log.info("STARTUP", "TrafficSignalPlugin has been initialized.");
     }
 
     /**
