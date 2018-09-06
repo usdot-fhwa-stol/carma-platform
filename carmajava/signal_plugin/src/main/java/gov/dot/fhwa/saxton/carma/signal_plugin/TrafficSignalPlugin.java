@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -311,13 +312,16 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         synchronized (intersections) {
             boolean phaseChanged = false;
             boolean newIntersection = false;
+            List<Integer> foundIds = new LinkedList<>();
             for (IntersectionData datum : data) {
+                foundIds.add(datum.getIntersectionId()); // Track the visible intersection ids
                 if (!intersections.containsKey(datum.getIntersectionId())) {
                     intersections.put(datum.getIntersectionId(), datum);
                     newIntersection = true;
                 } else {
                     // If it is in the list, check to see if this has changed the phase
                     IntersectionData old = intersections.get(datum.getIntersectionId());
+                    intersections.put(datum.getIntersectionId(), datum);
 
                     /**
                      * This code is looking like it's O(bad) asymptotic complexity in the worst
@@ -329,7 +333,12 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                      */
 
                     // Walk through all the movements to compare
-                    phaseChangeCheckLoop: for (MovementState oldMov : old.getIntersectionState().getStates()
+                    IntersectionState oldIntersectionState = old.getIntersectionState();
+                    if (oldIntersectionState == null) {
+                        log.warn("Intersection could not be processed because it has not state" + old);
+                        continue;
+                    }
+                    phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getStates()
                             .getMovementList()) {
                         for (MovementState newMov : datum.getIntersectionState().getStates().getMovementList()) {
                             if (oldMov.getSignalGroup() == newMov.getSignalGroup()) {
@@ -355,21 +364,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 }
             }
 
-            boolean deletedIntersection = false;
-            for (Integer id : intersections.keySet()) {
-                boolean found = false;
-                for (IntersectionData datum : data) {
-                    if (datum.getIntersectionId() == id) {
-                        intersections.put(datum.getIntersectionId(), datum);
-                        found = true;
-                    }
-                }
-
-                if (!found) {
-                    intersections.remove(id);
-                    deletedIntersection = true;
-                }
-            }
+            // Remove expired intersections
+            int prevNumIntersections = intersections.entrySet().size();
+            intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
+            boolean deletedIntersection = intersections.entrySet().size() != prevNumIntersections;
 
             // Trigger new plan on phase change
             if ((phaseChanged || newIntersection || deletedIntersection) && checkIntersectionMaps()) {
@@ -384,9 +382,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @return -1 if DTSB check fails for any reason, Double.MAX_VALUE if we're not on a MAP message
      */
     private double computeDtsb() {
-        Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
-
         try {
+            Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
             return glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
         } catch (Exception e) {
             log.warn("DTSB computation failed!");
