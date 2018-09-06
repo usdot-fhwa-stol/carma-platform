@@ -452,7 +452,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             glidepathTrajectory.getSpeedCommand(state);
         } catch (Exception e) {
             log.error("Glidepath trajectory planning threw exception!", e);
-            return;
+            TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+            tpr.requestHigherPriority(); // indicate generic failure
+            return tpr;
         }
 
         // GET NODES OUT OF EADASTAR
