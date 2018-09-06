@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin.asd.map;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IAsdMessage;
@@ -6,6 +22,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Location;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -520,7 +537,32 @@ public class MapMessage implements IAsdMessage {
 
 		return true;
 	}
-	
+
+	// CARMA required setters, used for conversion from 2016 MAP to 2009 MAP
+
+	public void setElevationsPresent(boolean present) {
+		this.elevationsPresent_ = present;
+	}
+
+	public void setOffsetsInDm(boolean value) {
+		this.offsetsInDm_ = value;
+	}
+
+	public void setIntersectionId(int intersectionId) {
+		this.intersectionId_ = intersectionId;
+	}
+
+	public void setRefPoint(Location refPoint) {
+		this.refPoint_ = refPoint;
+	}
+
+	public void setLanes(List<Lane> lanes) {
+		lane_ = new Vector<>(lanes);
+	}
+
+	public void setContentVersion(int version) {
+		contentVersion_ = version;
+	}
 	
 	private boolean				elevationsPresent_;		//will elevation data be present in reference point and node definitions?
 	private boolean				offsetsInDm_;			//are lane node offsets stored in decimeters? (false indicates centimeters)

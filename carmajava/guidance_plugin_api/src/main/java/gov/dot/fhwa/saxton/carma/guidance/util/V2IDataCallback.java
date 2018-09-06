@@ -14,12 +14,18 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat;
+package gov.dot.fhwa.saxton.carma.guidance.util;
 
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IAsdMessage;
+import java.util.List;
 
-public interface ISpatMessage extends IAsdMessage {
-
-	DataElementHolder getSpatForLane(int lane);
+/**
+ * Functional interface for callbacks to receive new V2I data from DSRC
+ */
+public interface V2IDataCallback {
+    /**
+     * Callback to be invoked when Guidance's V2I dataset is changed
+     * 
+     * @param data The new V2I data that has been updated
+     */
+    void onV2IDataChanged(List<IntersectionData> data);
 }

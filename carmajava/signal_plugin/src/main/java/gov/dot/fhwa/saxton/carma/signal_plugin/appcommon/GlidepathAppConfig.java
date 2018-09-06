@@ -1,6 +1,23 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
+import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 
 /**
  * AppConfig using dvi.properties instead of application.properties
@@ -12,9 +29,11 @@ import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 public class GlidepathAppConfig implements IGlidepathAppConfig {
     
     private ParameterSource params;
+    private RouteService    routeService;
 
-    public GlidepathAppConfig(ParameterSource params) {
+    public GlidepathAppConfig(ParameterSource params, RouteService routeService) {
         this.params = params;
+        this.routeService = routeService;
     }
 
     public int getIntValue(String property)   {
@@ -95,8 +114,9 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
         return getIntValue("gps.udpport");
     }
 
-    public int getMaximumSpeed() {
-        return getIntValue("maximumSpeed");
+    public int getMaximumSpeed(double downtrack) {
+        // In legacy ead this was provided by getIntValue("maximumSpeed")
+        return (int) (routeService.getSpeedLimitAtLocation(downtrack).getLimit() * Constants.MPS_TO_MPH);
     }
 
     public int getXgvSocketTimeout() { return getIntValue("xgv.timeout"); };

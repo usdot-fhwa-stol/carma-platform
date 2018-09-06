@@ -14,12 +14,17 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat;
+package gov.dot.fhwa.saxton.carma.guidance.util;
 
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IAsdMessage;
+import java.util.List;
 
-public interface ISpatMessage extends IAsdMessage {
-
-	DataElementHolder getSpatForLane(int lane);
+/**
+ * Functional interface for receiving notifications only when the list
+ * of known intersections changes.
+ */
+public interface IntersectionListChangeCallback {
+    /**
+     * Callback to be invoked when the list of intersections known by Guidance changes.
+     */
+    void onIntersectionListChanged(List<IntersectionData> data);
 }
