@@ -43,7 +43,7 @@ public class PubSubManager implements IPubSubService {
     protected ISubscriptionChannelFactory subFactory;
     protected IPublicationChannelFactory pubFactory;
     protected IServiceChannelFactory srvFactory;
-    IServiceServerManager srvServerManager;
+    protected IServiceServerManager srvServerManager;
     protected Map<String, IPublicationChannel<?>> pubChannelManagers;
     protected Map<String, ISubscriptionChannel<?>> subChannelManagers;
     protected Map<String, IServiceChannel<?, ?>> serviceChannelManagers;
