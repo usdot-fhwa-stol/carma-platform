@@ -77,7 +77,7 @@ public class GuidanceV2IService implements V2IService {
                         createNewIntersectionData(id, geometry, msgTs);
                     }
                     fireCallbacks();
-                } else if (!reliableComms && intersections.containsKey(id)) {
+                } else if (intersections.containsKey(id)) {
                     intersections.remove(id);
                     fireCallbacks();
                 } // if neither is true, do nothing
