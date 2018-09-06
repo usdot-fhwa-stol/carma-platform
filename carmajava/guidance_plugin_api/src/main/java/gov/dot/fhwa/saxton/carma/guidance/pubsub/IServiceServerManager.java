@@ -19,16 +19,15 @@ package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 /**
  * Generic means to create new {@link IServiceServerChannel} instances for new services
  */
-public interface IServiceServerChannelFactory {
+public interface IServiceServerManager {
     /**
-     * Get a new {@link IServiceServerChannel} instance for the specified topic and type
+     * Create an {@link IServiceServer} instance for the specified service and type
      *
-     * @param topic The URL for the service topic
-     * @param type  The String identifier for the service dialogue type
-     * @param <T>   Type parameter for the service request message
-     * @param <S>   Type parameter for the service response message
-     * 
-     * @return Initialized {@link IServiceServerChannel} instance
+     * @param topicUrl The URL of the service topic to access
+     * @param type     The String identifier of the service dialog type
+     * @param <T>      Type parameter for the request type of the service dialog
+     * @param <S>      Type parameter for the response type of the service dialog
      */
-    <T, S> IServiceServerChannel<T, S> newServiceServerChannel(String topic, String type, OnServiceRequestCallback<T,S> callback);
+    @SuppressWarnings("unchecked") <T, S> void createServiceServerForTopic(String topicUrl,
+        String type, OnServiceRequestCallback<T,S> callback);
 }

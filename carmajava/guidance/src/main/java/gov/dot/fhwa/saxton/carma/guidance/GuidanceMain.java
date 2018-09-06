@@ -151,9 +151,8 @@ public class GuidanceMain extends SaxtonBaseNode {
         guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
     IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node, this);
-    IServiceServerChannelFactory serviceServerChannelFactory = new RosServiceServerChannelFactory(node, guidanceExceptionHandler);
-
-    pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory, serviceServerChannelFactory);
+    IServiceServerManager serviceServerManager = new RosServiceServerManager(node, exceptionHandler);
+    pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory, serviceServerManager);
   }
 
   /**
@@ -260,7 +259,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     initExecutor(stateMachine, connectedNode);
     log.info("Guidance main executor initialized");
 
-    systemVersionServer = pubSubService.getServiceServerForTopic("get_system_version", GetSystemVersion._TYPE, 
+    pubSubService.createServiceServerForTopic("get_system_version", GetSystemVersion._TYPE, 
       (GetSystemVersionRequest request, GetSystemVersionResponse response) -> {
         response.setSystemName(version.componentName());
         response.setRevision(version.revisionString());
