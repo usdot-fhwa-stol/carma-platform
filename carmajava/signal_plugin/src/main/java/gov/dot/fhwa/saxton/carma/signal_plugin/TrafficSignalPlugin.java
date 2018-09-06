@@ -90,7 +90,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private ISubscriber<NavSatFix> gpsSub;
     private ISubscriber<TwistStamped> velocitySub;
 
-    private IServiceServer<SetBoolRequest, SetBoolResponse> goButtonService; 
     private IPublisher<UIInstructions> uiInstructionsPub;
     private AtomicBoolean awaitingUserInput = new AtomicBoolean(false);
     private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false);
@@ -149,7 +148,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         uiInstructionsPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("ui_instructions", UIInstructions._TYPE);
 
-        goButtonService = pubSubService.getServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
+        pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
             (SetBoolRequest request, SetBoolResponse response) -> {
                 if (!awaitingUserInput.compareAndSet(true, false)) {
                     response.setMessage(this.getVersionInfo().componentName() + " did not expect UI input and is ignoring the input.");
