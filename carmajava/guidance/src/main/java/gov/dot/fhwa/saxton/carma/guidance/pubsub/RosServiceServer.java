@@ -21,28 +21,29 @@ import org.ros.node.service.ServiceClient;
 
 /**
  * Concrete ROS implementation of the logic outlined in {@link IServiceServer}
- *
- * Shares a {@link ServiceServer} between its coworkers (other RosServiceServer instances for the same
- * topic) and its parent {@link RosServiceServerChannel}.
  * 
  * @param <T> Type parameter for the request message type for the service
  * @param <S> Type parameter for the response message type for the service
  */
 public class RosServiceServer<T, S> implements IServiceServer<T, S> {
-    protected RosServiceServerChannel<T, S> parent;
-    protected boolean open = true;
+    protected OnServiceRequestCallback<T, S> callback;
 
     /**
      * Constructor
      * 
-     * @param parent The ros service channel which provides connection to the ros network
+     * @param callback The callback which will be triggered on a service request
      */
-    RosServiceServer(RosServiceServerChannel<T, S> parent) {
-        this.parent = parent;
+    protected RosServiceServer(OnServiceRequestCallback<T, S> callback) {
+        this.callback = callback;
     }
 
     @Override
-    public void close() {
-        parent.close();
+    public void setCallback(OnServiceRequestCallback<T, S> callback) {
+        this.callback = callback;
+    }
+
+    @Override
+    public OnServiceRequestCallback<T, S> getCallback() {
+        return callback;
     }
 }

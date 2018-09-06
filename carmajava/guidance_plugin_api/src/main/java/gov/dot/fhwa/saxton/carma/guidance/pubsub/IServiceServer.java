@@ -16,9 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
-import cav_msgs.RoadwayObstacle;
-import gov.dot.fhwa.saxton.carma.rosutils.*;
-
 /**
  * Generic interface for providing a remote service.
  *
@@ -28,8 +25,14 @@ import gov.dot.fhwa.saxton.carma.rosutils.*;
 public interface IServiceServer<T, S> {
 
     /**
-     * Notify this IService instance's parent of this instance's closure. This will not necessarily close the underlying
-     * resources associated with this IService.
+     * Set the callback which this service will call when requested
+     * @param callback Which is triggered on a service request
      */
-    void close();
+    void setCallback(OnServiceRequestCallback<T,S> callback);
+
+    /**
+     * Get the callback which this service will call when requested
+     * @return Callback which is triggered on a service request
+     */
+    OnServiceRequestCallback<T,S>  getCallback();
 }

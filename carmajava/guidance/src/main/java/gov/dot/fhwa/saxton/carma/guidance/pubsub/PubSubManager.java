@@ -20,6 +20,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.ros.node.ConnectedNode;
+import org.ros.node.service.ServiceServer;
+
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceExceptionHandler;
 import java.lang.IllegalArgumentException;
 
@@ -39,24 +43,22 @@ public class PubSubManager implements IPubSubService {
     protected ISubscriptionChannelFactory subFactory;
     protected IPublicationChannelFactory pubFactory;
     protected IServiceChannelFactory srvFactory;
-    protected IServiceServerChannelFactory srvServerFactory;
+    protected IServiceServerManager srvServerManager;
     protected Map<String, IPublicationChannel<?>> pubChannelManagers;
     protected Map<String, ISubscriptionChannel<?>> subChannelManagers;
     protected Map<String, IServiceChannel<?, ?>> serviceChannelManagers;
-    protected Map<String, IServiceServerChannel<?, ?>> serviceServerChannelManagers;
 
     public PubSubManager(ISubscriptionChannelFactory subFactory, IPublicationChannelFactory pubFactory,
-            IServiceChannelFactory srvFactory, IServiceServerChannelFactory srvServerFactory) {
+            IServiceChannelFactory srvFactory, IServiceServerManager srvServerManager) {
 
         this.subFactory = subFactory;
         this.pubFactory = pubFactory;
         this.srvFactory = srvFactory;
-        this.srvServerFactory = srvServerFactory;
+        this.srvServerManager = srvServerManager;
 
         pubChannelManagers = Collections.synchronizedMap(new HashMap<String, IPublicationChannel<?>>());
         subChannelManagers = Collections.synchronizedMap(new HashMap<String, ISubscriptionChannel<?>>());
         serviceChannelManagers = Collections.synchronizedMap(new HashMap<String, IServiceChannel<?, ?>>());
-        serviceServerChannelManagers = Collections.synchronizedMap(new HashMap<String, IServiceServerChannel<?, ?>>());
     }
 
     /**
@@ -125,28 +127,20 @@ public class PubSubManager implements IPubSubService {
             }
         }
     }
-
+    
     /**
-     * Get access to an IServiceServer instance
+     * Create an IServiceServer instance
      *
      * @param topicUrl A URL identifying the ROS service name
      * @param type     The string identifier of the message type
      * @param <T>      Type parameter of the service request message
      * @param <S>      Type parameter of the service response message
-     * @return An IServiceServer 
      */
     @Override
     @SuppressWarnings("unchecked")
-	public <T, S> IServiceServer<T, S> getServiceServerForTopic(String topicUrl, String type,
-			OnServiceRequestCallback<T, S> callback) {
-            synchronized (serviceServerChannelManagers) {
-                if (serviceServerChannelManagers.containsKey(topicUrl) && serviceServerChannelManagers.get(topicUrl).isOpen()) {
-                    throw new IllegalArgumentException("Requested server for service: " + topicUrl + " is already allocated");
-                } else {
-                    IServiceServerChannel<T, S> channel = srvServerFactory.newServiceServerChannel(topicUrl, type, callback);
-                    serviceServerChannelManagers.put(topicUrl, channel);
-                    return channel.getServiceServer();
-                }
-            }
+	public <T, S> void createServiceServerForTopic(String topicUrl, String type,
+        OnServiceRequestCallback<T, S> callback) {
+        // Create the service
+        srvServerManager.createServiceServerForTopic(topicUrl, type, callback);
 	}
 }

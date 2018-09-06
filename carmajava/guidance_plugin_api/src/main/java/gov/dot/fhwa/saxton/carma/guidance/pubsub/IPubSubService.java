@@ -43,7 +43,7 @@ public interface IPubSubService {
      * @param <S>      Type parameter for the response type of the service dialog
      * @return A new {@link IServiceServer} instance capable of calling the service
      */
-    @SuppressWarnings("unchecked") <T, S> IServiceServer<T, S> getServiceServerForTopic(String topicUrl,
+    @SuppressWarnings("unchecked") <T, S> void createServiceServerForTopic(String topicUrl,
         String type, OnServiceRequestCallback<T,S> callback);
 
     /**
