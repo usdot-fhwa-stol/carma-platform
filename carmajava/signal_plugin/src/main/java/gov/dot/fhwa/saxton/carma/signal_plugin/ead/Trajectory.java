@@ -762,16 +762,17 @@ public class Trajectory implements ITrajectory {
 	
 	
 	private boolean wantThisIntersection(int thisId) {
-		boolean wanted = false;
+		return true;//TODO remove this and uncomment below
+		// boolean wanted = false;
 		
-		for (int id : intersectionIds_) {
-			if (thisId == id) {
-				wanted = true;
-				break;
-			}
-		}
+		// for (int id : intersectionIds_) {
+		// 	if (thisId == id) {
+		// 		wanted = true;
+		// 		break;
+		// 	}
+		// }
 
-		return wanted;
+		// return wanted;
 	}
 
 	/**
