@@ -152,7 +152,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         uiInstructionsPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("ui_instructions", UIInstructions._TYPE);
 
-        trafficSignalInfoPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("intersection_info", TrafficSignalInfoList._TYPE);
+        trafficSignalInfoPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("traffic_signal_info", TrafficSignalInfoList._TYPE);
 
         pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
             (SetBoolRequest request, SetBoolResponse response) -> {
