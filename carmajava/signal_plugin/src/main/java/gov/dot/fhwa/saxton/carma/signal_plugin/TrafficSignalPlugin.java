@@ -113,7 +113,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private EadAStar ead;
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
-    private AtomicBoolean motionAuthorized = new AtomicBoolean(false);
+    private AtomicBoolean involvedInControl = new AtomicBoolean(false);
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -140,7 +140,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         gpsSub.registerOnMessageCallback((msg) -> {
             curPos.set(msg);
             if (checkIntersectionMaps()) {
-                triggerNewPlan();
+                if (involvedInControl.compareAndSet(false, true)) {
+                    triggerNewPlan(true);
+                    log.info("On map and replanning");
+                }
+            } else if (involvedInControl.compareAndSet(true, false)) {
+                log.info("Off map requesting replan");
+                triggerNewPlan(false);
             }
         });
 
@@ -164,7 +170,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 if (request.getData()) { // If user acknowledged it is safe to continue
                     if (checkCurrentPhase(SignalPhase.GREEN)) { // If we are still in the green phase
                         // Notify the arbitrator we need to replan to continue through the intersection
-                        triggerNewPlan();
+                        triggerNewPlan(true);
                     } else {
                         response.setMessage("The light is no longer green. Waiting till next green light.");
                         response.setSuccess(false);
@@ -305,10 +311,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     }
 
     /**
-     * Trigger a new plan from arbitrator to accommodate for Glidepath planning
+     * Helper function to trigger a new plan from arbitrator to accommodate for Glidepath planning
+     * 
+     * @param availability The availability to set when calling this replan
      */
-    private void triggerNewPlan() {
-        setAvailability(true);
+    private void triggerNewPlan(boolean availability) {
+        log.info("Requesting replan with availability: " + availability);
+        setAvailability(availability);
         pluginServiceLocator.getArbitratorService().requestNewPlan();
     }
 
@@ -342,7 +351,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     // Walk through all the movements to compare
                     IntersectionState oldIntersectionState = old.getIntersectionState();
                     if (oldIntersectionState == null) {
-                        log.warn("Intersection could not be processed because it has not state" + old);
+                        log.warn("Intersection could not be processed because it has no state: " + old);
                         continue;
                     }
                     phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getStates()
@@ -378,7 +387,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
             // Trigger new plan on phase change
             if ((phaseChanged || newIntersection || deletedIntersection) && checkIntersectionMaps()) {
-                triggerNewPlan();
+                triggerNewPlan(true);
             }
         }
     }
@@ -389,13 +398,22 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @return -1 if DTSB check fails for any reason, Double.MAX_VALUE if we're not on a MAP message
      */
     private double computeDtsb() {
+        NavSatFix posMsg = curPos.get();
+        if (posMsg == null) {
+            log.warn("NavSatFix was null");
+            return -1;
+        }
+        if (glidepathTrajectory == null) {
+            log.warn("Traj was null");
+            return -1;
+        }
         try {
             Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
             double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
             updateUISignals();
             return dtsb;
         } catch (Exception e) {
-            log.warn("DTSB computation failed!");
+            log.warn("DTSB computation failed!", e);
         }
 
         return -1;
@@ -407,7 +425,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private void updateUISignals() {
         TrafficSignalInfoList msg = trafficSignalInfoPub.newMessage();
-        int displayCount = Math.max(NUM_SIGNALS_ON_UI, glidepathTrajectory.getSortedIntersections().size());
+        int displayCount = Math.min(NUM_SIGNALS_ON_UI, glidepathTrajectory.getSortedIntersections().size());
         for(int i = 0; i < displayCount; i++) {
             final TrafficSignalInfo signalMsg = intersectionDataToMsg(glidepathTrajectory.getSortedIntersections().get(i));
             msg.getTrafficSignalInfoList().add(signalMsg);
@@ -450,21 +468,23 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private boolean checkIntersectionMaps() {
         double dtsb = computeDtsb();
+        log.info("Computed DTSB: " + dtsb);
         return dtsb > 0 && dtsb < Double.MAX_VALUE;
     }
 
     @Override
     public void onResume() {
-        log.info("SignalPlugin has resumed.");
+        log.info("TrafficSignalPlugin trying to resume.");
         ead = new EadAStar();
         try {
             glidepathTrajectory = new gov.dot.fhwa.saxton.carma.signal_plugin.ead.Trajectory(ead);
         } catch (Exception e) {
-            log.error("Glidepath unable to initialize EAD algorithm!!!", e);
+            log.error("Unable to initialize EAD algorithm!!!", e);
             setAvailability(false);
             return;
         }
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
+        log.info("TrafficSignalPlugin has resumed.");
     }
 
     @Override
@@ -566,6 +586,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
+        log.info("Entered planTrajectory");
         // CHECK TRAJECTORY LENGTH
         double dtsb = computeDtsb();
 
@@ -579,12 +600,16 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             }
         }
 
+        log.info("DTSB within traj");
+
         // CHECK PLANNING PRIORITY
         if (!traj.getLongitudinalManeuvers().isEmpty()) {
                 TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
                 tpr.requestHigherPriority();
                 return tpr;
         }
+
+        log.info("Granted highest planning priority");
 
         // CONVERT DATA ELEMENTS
         DataElementHolder state = new DataElementHolder();
@@ -619,6 +644,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         icde = new IntersectionCollectionDataElement(ic);
         state.put(DataElementKey.INTERSECTION_COLLECTION, icde);
 
+        log.info("Requesting AStar plan with intersections: " + intersections.toString());
+
         try {
             glidepathTrajectory.getSpeedCommand(state);
         } catch (Exception e) {
@@ -630,6 +657,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // GET NODES OUT OF EADASTAR
         List<Node> eadResult = ead.getCurrentPath();
+
+        if (eadResult == null) {
+            log.warn("Ead result is null");
+            return new TrajectoryPlanningResponse();
+        } else {
+            log.info("Ead result is path of size: " + eadResult.size());
+        }
 
         /*
          * Optimization has been decided against due to complexities in trajectory behavior.
@@ -697,6 +731,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             }
         }
 
+        log.info("Planning complete");
         setAvailability(false);
         return new TrajectoryPlanningResponse();
     }

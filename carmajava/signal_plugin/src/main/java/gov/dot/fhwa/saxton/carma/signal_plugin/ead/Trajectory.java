@@ -325,6 +325,7 @@ public class Trajectory implements ITrajectory {
 
 		//get speed command from EAD (assume it will handle position in stop box w/red light)
 		try {
+			log_.info("TrafficSignalPlugin", intersections_.toString());
 			cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
 		}catch (Exception e) {
 			if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
