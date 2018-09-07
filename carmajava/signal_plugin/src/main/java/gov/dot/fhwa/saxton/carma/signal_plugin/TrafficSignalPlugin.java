@@ -28,7 +28,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.joda.time.DateTime;
+import org.ros.message.MessageFactory;
 import org.ros.message.Time;
+import org.ros.node.NodeConfiguration;
 
 import cav_msgs.Connection;
 import cav_msgs.GenericLane;
@@ -38,6 +40,8 @@ import cav_msgs.NodeListXY;
 import cav_msgs.NodeOffsetPointXY;
 import cav_msgs.NodeXY;
 import cav_msgs.Position3D;
+import cav_msgs.TrafficSignalInfo;
+import cav_msgs.TrafficSignalInfoList;
 import cav_msgs.UIInstructions;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
@@ -89,7 +93,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     private ISubscriber<NavSatFix> gpsSub;
     private ISubscriber<TwistStamped> velocitySub;
-
+    private IPublisher<TrafficSignalInfoList> trafficSignalInfoPub;
     private IPublisher<UIInstructions> uiInstructionsPub;
     private AtomicBoolean awaitingUserInput = new AtomicBoolean(false);
     private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false);
@@ -97,7 +101,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private final long UI_REQUEST_INTERVAL = 100;
     private final String GO_BUTTON_SRVS = "traffic_signal_plugin/go_button";
     private static final double ZERO_SPEED_NOISE = 0.04;	//speed threshold below which we consider the vehicle stopped, m/s
-
+    private MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
+    private final int NUM_SIGNALS_ON_UI = 3;
 
     private Map<Integer, IntersectionData> intersections = Collections
             .synchronizedMap(new HashMap<Integer, IntersectionData>());
@@ -146,6 +151,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         });
 
         uiInstructionsPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("ui_instructions", UIInstructions._TYPE);
+
+        trafficSignalInfoPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("intersection_info", TrafficSignalInfoList._TYPE);
 
         pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
             (SetBoolRequest request, SetBoolResponse response) -> {
@@ -384,12 +391,56 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double computeDtsb() {
         try {
             Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
-            return glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
+            double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
+            updateUISignals();
+            return dtsb;
         } catch (Exception e) {
             log.warn("DTSB computation failed!");
         }
 
         return -1;
+    }
+
+    /**
+     * Helper function to update the Traffic Signal Plugin UI with new intersection data.
+     * This function is meant to be called after a call to Trajectory.updateIntersections
+     */
+    private void updateUISignals() {
+        TrafficSignalInfoList msg = trafficSignalInfoPub.newMessage();
+        int displayCount = Math.max(NUM_SIGNALS_ON_UI, glidepathTrajectory.getSortedIntersections().size());
+        for(int i = 0; i < displayCount; i++) {
+            final TrafficSignalInfo signalMsg = intersectionDataToMsg(glidepathTrajectory.getSortedIntersections().get(i));
+            msg.getTrafficSignalInfoList().add(signalMsg);
+        }
+        trafficSignalInfoPub.publish(msg);
+    }
+
+    /**
+     * Helper function builds a TrafficSignalInfo message from IntersectionData
+     * 
+     * @param intersection The intersection to convert to a message
+     * @return The fully defined message
+     */
+    private TrafficSignalInfo intersectionDataToMsg(gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData intersection) {
+        TrafficSignalInfo signalMsg = messageFactory.newFromType(TrafficSignalInfo._TYPE);
+        signalMsg.setIntersectionId((short)intersection.intersectionId);
+        signalMsg.setLaneId((short)intersection.laneId);
+        signalMsg.setRemainingDistance((float)intersection.dtsb);
+        signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
+        switch(intersection.currentPhase) {
+            case GREEN:
+                signalMsg.setState(TrafficSignalInfo.GREEN);
+                break;
+            case YELLOW:
+                signalMsg.setState(TrafficSignalInfo.YELLOW);
+                break;
+            case RED:
+                signalMsg.setState(TrafficSignalInfo.RED);
+                break;
+            default: // Leave light off
+                break;
+        }
+        return signalMsg;
     }
 
     /**
