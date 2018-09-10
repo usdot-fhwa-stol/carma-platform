@@ -40,8 +40,8 @@ public class IntersectionGeometry {
 	public IntersectionGeometry() {
 		IGlidepathAppConfig config = (GlidepathApplicationContext.getInstance().getAppConfig());
 		assert(config != null);
-		cteThreshold_ = Integer.valueOf(config.getProperty("ead.cte.threshold"));
-		timeStep_ = 0.001*(double)Integer.valueOf(config.getProperty("periodicDelay"));
+		cteThreshold_ = config.getIntValue("ead.cte.threshold");
+		timeStep_ = 0.001*(double)config.getIntValue("periodicDelay");
 		largeMovement_ = (int)(70.0/Constants.MPS_TO_MPH * 100.0 * timeStep_ * 2.5); //70 MPH, 100 cm/m, time step, safety factor
 		laneIndex_ = -1;
 		laneDtsb_ = Integer.MAX_VALUE;

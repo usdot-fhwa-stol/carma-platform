@@ -164,7 +164,7 @@ public class GuidanceV2IService implements V2IService {
                 return false;
             }
 
-            double messagesPerSec = stamps.size() / (Duration.between(stamps.get(0), LocalDateTime.now()).toMillis() / 1000);
+            double messagesPerSec = stamps.size() / ((double)Duration.between(stamps.get(0), LocalDateTime.now()).toMillis() / 1000.0);
 
             if ((messagesPerSec / commsReliabilityExpectedV2IMsgsPerSec) < commsReliabilityPct) {
                 return false;
