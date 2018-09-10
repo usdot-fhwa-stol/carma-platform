@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2018 LEIDOS.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.*;
@@ -49,6 +33,31 @@ import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE
  * a red light.
  */
 public class Trajectory implements ITrajectory {
+
+	/**
+	 * Default constructor that will generate its own EAD model to be used if the @param trajectoryfile
+	 * is not specified.
+	 * @throws Exception
+	 */
+	public Trajectory() throws Exception {
+		IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
+		assert(config != null);
+
+		//get the desired EAD variant from the config file and instantiate it
+		String eadClass = config.getProperty("ead.modelclass");
+		if (eadClass == null) {
+			eadClass = "default";
+		}
+		IEad ead = EadFactory.newInstance(eadClass);
+		if (ead == null) {
+			log_.errorf("TRAJ", "Could not instantiate the EAD model %s", eadClass);
+			throw new Exception("Could not instantiate an EAD model.");
+		}
+		log_.debug("TRAJ", "Ready to construct EAD object.");
+
+		constructObject(ead);
+	}
+
 	/**
 	 * Constructor that allows the parent to inject a particular EAD model (which could be overridden
 	 * if the @param trajectoryfile is specified.
@@ -79,8 +88,7 @@ public class Trajectory implements ITrajectory {
 		log_.infof("TRAJ", "time step = %d ms, respecting timeouts = %b", timeStepSize_, respectTimeouts_);
 
 		//get constraint parameters from the config file
-		// TODO use a dynamic speed limit rather than the first speed limit on the route
-		speedLimit_ = config.getMaximumSpeed(0.0)/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
+		speedLimit_ = config.getMaximumSpeed()/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
 		maxJerk_ = Double.valueOf(config.getProperty("maximumJerk"));
 		accelLimiter_ = config.getBooleanValue("ead.accelLimiter");
 		jerkLimiter_ = config.getBooleanValue("ead.jerkLimiter");
@@ -540,8 +548,8 @@ public class Trajectory implements ITrajectory {
 			//case EAD stopped (this state only occurs while waiting at a red light)
 			// this is the one state where motionAuthorized_ and stopConfirmed_ may not have opposite values.
 			case EAD_STOPPED:
-				//if DVI has re-engaged automation and the current intersections's signal is green then
-				if (motionAuthorized_  &&  phase_ == GREEN) {
+				//if DVI has re-engaged automation
+				if (motionAuthorized_) {
 					//set state to EAD in motion
 					state_ = TrajectoryState.EAD_IN_MOTION;
 					stopConfirmed_ = false;
@@ -585,7 +593,7 @@ public class Trajectory implements ITrajectory {
 	 * @param vehicleLoc - current location of the vehicle
 	 * @return distance to stop bar of the nearest intersection
 	 */
-	public double updateIntersections(List<IntersectionData> inputIntersections, Location vehicleLoc) throws Exception {
+	private double updateIntersections(List<IntersectionData> inputIntersections, Location vehicleLoc) throws Exception {
 		double dtsb = Double.MAX_VALUE;
 		//if (intersections_ == null) {
 		//	log_.debug("TRAJ", "Entering updateIntersections. intersections_ object is null.");
@@ -852,22 +860,32 @@ public class Trajectory implements ITrajectory {
 					spatsReceivedOnNewIntersection_ = 0;
 					spatReliableOnNearest_ = false;
 					intersectionsChanged_ = true;
-					log_.debug("TRAJ", "Approach lane ID changed from " + prevApproachLaneId_ + " to " + approachLaneId_);
+					log_.debug("TRAJ", "updateSpatData: approach lane ID changed from " + prevApproachLaneId_ + " to " + approachLaneId_);
 				}else if (approachLaneId_ >= 0){
 					++timeStepsNewIntersection_;
 				}
 
 				//get its spat info
-				//log_.debug("TRAJ", "updateSpatData getting spat for approach lane " + laneId);
+				log_.debug("TRAJ", "updateSpatData getting spat for approach lane " + laneId + ". intersections_ size = " + intersections_.size());
 				ISpatMessage sm = intersections_.get(0).spat;
 				spat = null;
 				if (sm != null) {
 					spat = sm.getSpatForLane(approachLaneId_);
-					phase_ = ((PhaseDataElement) spat.get(DataElementKey.SIGNAL_PHASE)).value();
-					timeRemaining_ = ((DoubleDataElement) spat.get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE)).value();
+					log_.debug("TRAJ", "updateSpatData: spat = " + (spat == null ? "null" : "not null"));
+					log_.debug("TRAJ", " spat = " + spat.toString());
+					PhaseDataElement pde = ((PhaseDataElement) spat.get(DataElementKey.SIGNAL_PHASE));
+					if (pde != null) {
+						phase_ = pde.value();
+					}
+					DoubleDataElement dde = ((DoubleDataElement) spat.get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE));
+					if (dde != null) {
+						timeRemaining_ = dde.value();
+					}
 					spatErrorCounter_ = 0;
 					++spatsReceivedOnNewIntersection_;
 				}
+				log_.debug("TRAJ", "updateSpatData: spat defined, spatsReceivedOnNewIntersection = " +
+							spatsReceivedOnNewIntersection_);
 
 				//determine if the spat signal on this intersection is reliable (if the intersection is just
 				// now coming into view the messages may be spotty, so we don't want to deal with them yet)
@@ -923,6 +941,7 @@ public class Trajectory implements ITrajectory {
 				}
 			} //endif intersection but no spat message
 		} //endif have intersection geometry
+		log_.debug("TRAJ", "updateSpatData: end of geometry block.");
 
 		//populate the simpler elements of the intersection data
 		if (intersections_ != null  &&  intersections_.size() > 0) {

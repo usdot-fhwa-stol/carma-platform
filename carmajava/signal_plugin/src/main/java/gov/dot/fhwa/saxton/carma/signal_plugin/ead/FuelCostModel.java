@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2018 LEIDOS.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ICostModel;
@@ -41,7 +25,7 @@ public class FuelCostModel implements ICostModel {
     private double          airDensity_;
     private double          idleCost_;
     private boolean         useIdleMin_;
-    private int numCosts_ = 0;
+    private int             numCosts_ = 0;
     protected static ILogger log_ = LoggerManager.getLogger(FuelCostModel.class);
 
 
@@ -151,9 +135,9 @@ public class FuelCostModel implements ICostModel {
 
     @Override
     public double heuristic(Node currentNode) {
-        //no cost if we are already beyond the location of the goal (we are as close as our grid spacing will allow)
-        if (currentNode.getDistance() >= goal_.getDistance()) {
-            return 0.0;
+        //infinite cost if we pass the location and the time of the goal
+        if (currentNode.getDistance() > (goal_.getDistance() + tolerances_.getDistance())  ||  (currentNode.getTime() > goal_.getTime() + tolerances_.getTime()) ) {
+            return Double.POSITIVE_INFINITY;
         }
         //smooth acceleration from current location to ending location & speed, ignoring the signal
         return cost(currentNode, goal_);
@@ -170,30 +154,25 @@ public class FuelCostModel implements ICostModel {
         numCosts_ = 0;
     }
 
-    /**
-     * Note that time comparisons are currently disabled because we don't have a good way to anticipate how much
-     * time might be spent waiting at a red light, or not.
-     */
     @Override
     public boolean isGoal(Node n) {
         boolean result;
 
         //if tolerances have been specified then use them
         if (tolerances_ != null) {
-            result = n.getDistance() >= goal_.getDistance()  &&
-                   //Math.abs(n.getTime()     - goal_.getTime())     <= tolerances_.getTime()     &&
+            result = Math.abs(n.getDistance() - goal_.getDistance()) <= tolerances_.getDistance()  &&
+                     Math.abs(n.getTime()     - goal_.getTime())     <= tolerances_.getTime()      &&
                      Math.abs(n.getSpeed()    - goal_.getSpeed())    <= tolerances_.getSpeed();
         }else {
-            result = n.getDistance() == goal_.getDistance()  &&
-                   //n.getTime()     == goal_.getTime()      &&
-                     n.getSpeed()    == goal_.getSpeed();
+            result = n.getDistance() >= goal_.getDistance()  &&
+                     n.getTime()     <= goal_.getTime()      &&
+                     n.getSpeed()    >= goal_.getSpeed();
         }
 
         if (result) {
             log_.debug("EAD", "///// isGoal has found a node that matches our goal.");
             log_.debug("EAD", "    goal = " + goal_.toString());
             log_.debug("EAD", "    node = " + n.toString());
-            log_.debug("EAD", "    tol  = " + tolerances_.toString());
         }
 
         return result;
@@ -201,26 +180,6 @@ public class FuelCostModel implements ICostModel {
 
     @Override
     public boolean isUnusable(Node n) {
-        //if this node is more than one time increment beyond the goal distance and not near the goal speed
-        // then there is no point in considering it or its children
-        long excessDistance = n.getSpeed() * n.getTime();
-        if (n.getDistance() > goal_.getDistance() + excessDistance) {
-            if (tolerances_ != null) {
-                if (Math.abs(n.getSpeed() - goal_.getSpeed()) > tolerances_.getSpeed()) {
-                    return true;
-                }
-            }else {
-                if (n.getSpeed() != goal_.getSpeed()) {
-                    return true;
-                }
-            }
-        }
-
-        //if the node's time is significantly larger than the goal node's time, reject it
-        if (n.getTimeAsDouble() > goal_.getTimeAsDouble() + 5.0) {
-            return true;
-        }
-
-        return false;
+        return (n.getDistance() > (goal_.getDistance() + tolerances_.getDistance()))  ||  ((n.getTime() > goal_.getTime() + tolerances_.getTime()));    
     }
 }

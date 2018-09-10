@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2018 LEIDOS.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
 import java.util.Objects;
@@ -30,8 +14,12 @@ public class Node {
   private long time;      //in internal units
   private long speed;     //in internal units
 
+  private double distDouble; //m
+  private double timeDouble; //sec
+  private double speedDouble; //m/s
+
   private static final int DISTANCE_UNITS = -2; // distance is in units of 10^DISTANCE_UNITS meters
-  private static final int TIME_UNITS = 0; //time in units of 10^TIME_UNITS sec
+  private static final int TIME_UNITS = -1; //time in units of 10^TIME_UNITS sec
   private static final int SPEED_UNITS = DISTANCE_UNITS - TIME_UNITS; // speed is in units of 10^SPEED_UNITS (m/s)
 
   /**
@@ -45,7 +33,13 @@ public class Node {
     this.distance = (long)(distance*Math.pow(10.0, -(double)DISTANCE_UNITS) + 0.5);
     this.time     = (long)(time    *Math.pow(10.0, -(double)TIME_UNITS)     + 0.5);
     this.speed    = (long)(speed   *Math.pow(10.0, -(double)SPEED_UNITS)    + 0.5);
+    //store the rounded values as doubles for faster future access
+    distDouble = (double)(this.distance) * Math.pow(10.0, (double)DISTANCE_UNITS);
+    timeDouble = (double)(this.time)     * Math.pow(10.0, (double)TIME_UNITS);
+    speedDouble = (double)(this.speed)   * Math.pow(10.0, (double)SPEED_UNITS);
+
   }
+
   /**
    * Constructor for node that takes in internal units
    * @param distance The distance in units of distanceUnits
@@ -53,6 +47,9 @@ public class Node {
    * @param speed The speed in units of speedUnits
    */
   public Node(long distance, long time, long speed) {
+    distDouble = (double)distance * Math.pow(10.0, (double)DISTANCE_UNITS);
+    timeDouble = (double)time     * Math.pow(10.0, (double)TIME_UNITS);
+    speedDouble = (double)speed   * Math.pow(10.0, (double)SPEED_UNITS);
     this.distance = distance;
     this.time = time;
     this.speed = speed;
@@ -83,21 +80,21 @@ public class Node {
    * @return Distance in units of m
    */
   public double getDistanceAsDouble() {
-    return (double)distance * Math.pow(10.0, (double)DISTANCE_UNITS);
+    return distDouble;
   }
 
   /**
    * @return Time in units of sec
    */
   public double getTimeAsDouble() {
-    return (double)time * Math.pow(10.0, (double)TIME_UNITS);
+    return timeDouble;
   }
 
   /**
    * @return Speed in units of m/s
    */
   public double getSpeedAsDouble() {
-    return (double)speed * Math.pow(10.0, (double)SPEED_UNITS);
+    return speedDouble;
   }
 
   public static int getDistanceUnits() {
