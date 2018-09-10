@@ -647,7 +647,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         log.info("Requesting AStar plan with intersections: " + intersections.toString());
 
         try {
-            glidepathTrajectory.getSpeedCommand(state);
+            glidepathTrajectory.getSpeedCommand(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
         } catch (Exception e) {
             log.error("Glidepath trajectory planning threw exception!", e);
             TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();

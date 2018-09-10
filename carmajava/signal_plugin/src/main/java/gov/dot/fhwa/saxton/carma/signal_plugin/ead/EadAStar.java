@@ -33,13 +33,13 @@ public class EadAStar implements IEad {
 
     protected double                    maxAccel_;                  //maximum allowed acceleration, m/s^2
     protected List<Node>                currentPath_;               //path through the current intersection
-    protected double                    ddt_ = 0.0;                 //distance downtrack of the current plan start, m
-    protected double                    timeOnPath_ = 0.0;          //time since beginning the current path, sec
-    protected boolean                   intListChanged_ = true;     //has the list of known intersections changed?
+    protected double                    ddt_ = 0.0;                 //distance downtrack of the current plan start, m // TODO remove
+    protected double                    timeOnPath_ = 0.0;          //time since beginning the current path, sec // TODO remove
+    protected boolean                   intListChanged_ = true;     //has the list of known intersections changed? // TODO remove
     protected List<IntersectionData>    intList_;                   //list of all known intersections
-    protected int                       currentNodeIndex_ = 1;      //index to the next node downtrack in currentPath_
-    protected double                    speedCmd_ = 0.0;            //speed command from the current node, m/s
-    protected boolean                   firstCall_ = true;          //is this the first call to getTargetSpeed()?
+    protected int                       currentNodeIndex_ = 1;      //index to the next node downtrack in currentPath_ currentNodeIndex_
+    protected double                    speedCmd_ = 0.0;            //speed command from the current node, m/s // TODO maybe remove. Need to think about
+    protected boolean                   firstCall_ = true;          //is this the first call to getTargetSpeed()? // TODO remove
     protected double				    timeStep_;			        //duration of one time step, sec
     protected long                      prevMethodStartTime_;       //time of the previous call to getTargetSpeed(), ms
     protected double				    stopBoxWidth_;			    //distance from one side of stop box to the other, meters
@@ -55,8 +55,8 @@ public class EadAStar implements IEad {
     protected double                    idlePower_;                 //brake power wasted at idle under no load, J/s
     protected boolean                   useIdleMin_;                //should we use idle power as min for all situations?
                                                                     // if not then it will only be used when speed = 0
-    protected double                    maxDistanceError_;          //max allowable deviation from plan, m
-    protected boolean                   replanNeeded_ = true;       //do we need to replan the trajectory?
+    protected double                    maxDistanceError_;          //max allowable deviation from plan, m // TODO remove
+    protected boolean                   replanNeeded_ = true;       //do we need to replan the trajectory? // TODO remove
 
     protected ICostModel                costModel_;                 //model of cost to travel between nodes in the tree
     protected INeighborCalculator       neighborCalc_;              //calculates neighboring nodes to build the tree
@@ -414,5 +414,86 @@ public class EadAStar implements IEad {
             log_.debug("EAD", "    " + n.toString());
         }
         log_.debug("EAD", "Detailed path attempted to reach goal: " + goal.toString());
+    }
+
+
+    // TODO this implementation is not done
+    public List<Node> plan(double speed, double operSpeed, double accel,
+                                 List<IntersectionData> intersections) throws Exception {
+
+        // Ensure we have intersections to evaluate
+        if (intersections == null  ||  intersections.size() == 0) {
+            String msg = "getTargetSpeed invoked with a empty intersection list.";
+            log_.error("EAD", msg);
+            throw new Exception(msg);
+        }
+
+        intList_ = intersections;
+        long methodStartTime = System.currentTimeMillis();
+        double dtsb = intersections.get(0).dtsb; //if we are close to the stop bar this will be a positive value
+
+
+        ////////// BUILD & SOLVE THE DIJKSTRA TREE TO DEFINE THE BEST PATH
+
+
+        //TODO: monitor the execution time of this block; if it is big we may need to put it in a separate thread
+
+        //TODO: may be able to avoid replanning every time the intersection data is updated; should do so only when
+        //      it is an advantage (e.g. no point if there is only 1 intersection and we are 3 sec from passing its bar)
+
+        //if the intersection picture has changed since previous time step or we otherwise need to replan then
+        Node goal;
+
+        //define starting node and reset DDT since we are beginning execution of a new path
+        // (starting the plan at commanded speed rather than actual speed will allow for smoother transitions
+        // from one plan to another, since actual speed may be nowhere near commanded speed, but acceleration
+        // is already trying to get us to the command quickly)
+        if (Math.abs(speed - speedCmd_) > 2.0) {
+            log_.warn("EAD", "New plan being generated when actual speed differs greatly from command."
+                        + " prev command = " +  speedCmd_ + ", actual = " + speed);
+        }
+        Node startNode = new Node(0.0, 0.0, speedCmd_);
+        currentNodeIndex_ = 0;
+        ddt_ = 0.0;
+        timeOnPath_ = 0.0;
+        currentPath_ = null;
+
+        //if there is more than one intersection in sight then
+        if (intersections.size() > 1) {
+
+            //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
+            goal = planCoarsePath(operSpeed, startNode);
+
+        //else (only one intersection is known)
+        }else {
+
+            //define a goal node downtrack of the intersection where we can recover operating speed)
+            double dist = intersections.get(0).dtsb;
+            if (dist < 0.0) {
+                dist = (double)intersections.get(0).roughDist / 100.0;
+                log_.debug("EAD", "    overriding with dist = " + dist);
+            }
+            dist += 0.5*operSpeed*operSpeed/maxAccel_; //worst case going from stop at red back to full speed
+            goal = new Node(dist, 999.0, operSpeed); //large time allows heuristic calc to work
+        }
+
+        //build a detailed plan to get to the near-term goal node downtrack of first intersection [planDetailedPath]
+        try {
+            currentPath_ = planDetailedPath(startNode, goal);
+        }catch (Exception e) {
+            log_.warn("EAD", "getTargetSpeed trapped exception from planDetailedPath: " + e.toString());
+        }
+
+        if (currentPath_ == null  ||  currentPath_.size() == 0) {
+            String msg = "getTargetSpeed produced an unusable detailed path.";
+            log_.error("EAD", msg);
+            throw new Exception(msg);
+        }
+
+        prevMethodStartTime_ = methodStartTime;
+        long totalTime = System.currentTimeMillis() - methodStartTime;
+        log_.debug("EAD", "getTargetSpeed completed in " + totalTime + " ms.");
+        
+        return currentPath_; // TODO
     }
 }
