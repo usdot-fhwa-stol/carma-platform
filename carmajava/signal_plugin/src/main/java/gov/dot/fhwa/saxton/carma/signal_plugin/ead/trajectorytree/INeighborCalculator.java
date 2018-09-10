@@ -41,4 +41,11 @@ public interface INeighborCalculator {
    * @return List of node's neighbors
    */
   List<Node> neighbors(Node node);
+
+
+  /**
+   * Stores the vehicle's desired speed if traffic signals posed no constraint
+   * @param os - operating speed, m/s
+   */
+  void setOperatingSpeed(double os);
 }

@@ -41,6 +41,31 @@ import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE
  * a red light.
  */
 public class Trajectory implements ITrajectory {
+
+	/**
+	 * Default constructor that will generate its own EAD model to be used if the @param trajectoryfile
+	 * is not specified.
+	 * @throws Exception
+	 */
+	public Trajectory() throws Exception {
+		IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
+		assert(config != null);
+
+		//get the desired EAD variant from the config file and instantiate it
+		String eadClass = config.getProperty("ead.modelclass");
+		if (eadClass == null) {
+			eadClass = "default";
+		}
+		IEad ead = EadFactory.newInstance(eadClass);
+		if (ead == null) {
+			log_.errorf("TRAJ", "Could not instantiate the EAD model %s", eadClass);
+			throw new Exception("Could not instantiate an EAD model.");
+		}
+		log_.debug("TRAJ", "Ready to construct EAD object.");
+
+		constructObject(ead);
+	}
+
 	/**
 	 * Constructor that allows the parent to inject a particular EAD model
 	 * @param eadModel
@@ -67,7 +92,6 @@ public class Trajectory implements ITrajectory {
 		log_.infof("TRAJ", "time step = %d ms, respecting timeouts = %b", timeStepSize_, respectTimeouts_);
 
 		//get constraint parameters from the config file
-		// TODO use a dynamic speed limit rather than the first speed limit on the route
 		speedLimit_ = config.getMaximumSpeed(0.0)/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
 		maxJerk_ = config.getDoubleValue("maximumJerk");
 		accelLimiter_ = config.getBooleanValue("ead.accelLimiter");
@@ -656,22 +680,32 @@ public class Trajectory implements ITrajectory {
 					spatsReceivedOnNewIntersection_ = 0;
 					spatReliableOnNearest_ = false;
 					intersectionsChanged_ = true;
-					log_.debug("TRAJ", "Approach lane ID changed from " + prevApproachLaneId_ + " to " + approachLaneId_);
+					log_.debug("TRAJ", "updateSpatData: approach lane ID changed from " + prevApproachLaneId_ + " to " + approachLaneId_);
 				}else if (approachLaneId_ >= 0){
 					++timeStepsNewIntersection_;
 				}
 
 				//get its spat info
-				//log_.debug("TRAJ", "updateSpatData getting spat for approach lane " + laneId);
+				log_.debug("TRAJ", "updateSpatData getting spat for approach lane " + laneId + ". intersections_ size = " + intersections_.size());
 				ISpatMessage sm = intersections_.get(0).spat;
 				spat = null;
 				if (sm != null) {
 					spat = sm.getSpatForLane(approachLaneId_);
-					phase_ = ((PhaseDataElement) spat.get(DataElementKey.SIGNAL_PHASE)).value();
-					timeRemaining_ = ((DoubleDataElement) spat.get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE)).value();
+					log_.debug("TRAJ", "updateSpatData: spat = " + (spat == null ? "null" : "not null"));
+					log_.debug("TRAJ", " spat = " + spat.toString());
+					PhaseDataElement pde = ((PhaseDataElement) spat.get(DataElementKey.SIGNAL_PHASE));
+					if (pde != null) {
+						phase_ = pde.value();
+					}
+					DoubleDataElement dde = ((DoubleDataElement) spat.get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE));
+					if (dde != null) {
+						timeRemaining_ = dde.value();
+					}
 					spatErrorCounter_ = 0;
 					++spatsReceivedOnNewIntersection_;
 				}
+				log_.debug("TRAJ", "updateSpatData: spat defined, spatsReceivedOnNewIntersection = " +
+							spatsReceivedOnNewIntersection_);
 
 				//determine if the spat signal on this intersection is reliable (if the intersection is just
 				// now coming into view the messages may be spotty, so we don't want to deal with them yet)
@@ -727,6 +761,7 @@ public class Trajectory implements ITrajectory {
 				}
 			} //endif intersection but no spat message
 		} //endif have intersection geometry
+		log_.debug("TRAJ", "updateSpatData: end of geometry block.");
 
 		//populate the simpler elements of the intersection data
 		if (intersections_ != null  &&  intersections_.size() > 0) {
