@@ -25,6 +25,8 @@ import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
  * Provide a mechanism for external configuration via a dvi.properties outside the jar in the current directory.
  *
  * Using a dvi.properties file in the same directory as the jar overrides the default properties set inside the jar.
+ * 
+ * NOTE: This implementation will replace all occurrences of "." with "/" to make them valid ROS param names
  */
 public class GlidepathAppConfig implements IGlidepathAppConfig {
     
@@ -37,11 +39,11 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
     }
 
     public int getIntValue(String property)   {
-        return params.getInteger("~/" + property);
+        return params.getInteger(toROSString(property));
     }
     
     public String getProperty(String name) {
-    	return params.getString("~/" + name);
+    	return params.getString(toROSString(name));
     }
 
     /**
@@ -52,16 +54,16 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
      * @return int
      */
     public int getDefaultIntValue(String property, int defaultValue)   {
-        return params.getInteger("~/" + property, defaultValue);
+        return params.getInteger(toROSString(property), defaultValue);
+    }
+
+    private String toROSString(String name) {
+        return "~" + name.replace(".", "/");
     }
 
 
     public int getPeriodicDelay() {
         return getIntValue("periodicDelay");
-    }
-
-    public int getUiRefresh() {
-        return getIntValue("uiRefresh");
     }
 
     public String getGpsHost() {
@@ -72,98 +74,23 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
         return getIntValue("gps.port");
     }
 
-    public int getJausUdpPort() {
-        return getIntValue("xgv.udpport");
-    }
-
-    public int getSoftwareJausId() {
-        return getIntValue("xgv.softwarejausid");
-    }
-
-    public int getJausRetryLimit() {
-        return getIntValue("xgv.retrylimit");
-    }
-
-    public String getXgvIpAddress() {
-        return getProperty("xgv.ipaddress");
-    }
-
-    public int getXgvNodeId() { return getIntValue("xgv.nodeid"); }
-
-    public int getXgvSubsystemId() { return getIntValue("xgv.subsystemid"); }
-
-    public int getXgvInstanceId() { return getIntValue("xgv.instanceid"); }
-
-    public boolean getXgvMPAck() { return getBooleanValue("xgv.motionprofileack"); }
-
-    public boolean getLogRealTimeOutput() { return getBooleanValue("log.stdout"); }
-
-    public int getMpdJausId() {
-        return getIntValue("xgv.mpdjausid");
-    }
-
-    public int getVssJausId() {
-        return getIntValue("xgv.vssjausid");
-    }
-
-    public int getPdJausId() {
-        return getIntValue("xgv.pdjausid");
-    }
-
-    public int getGpsUdpPort() {
-        return getIntValue("gps.udpport");
-    }
-
     public int getMaximumSpeed(double downtrack) {
         // In legacy ead this was provided by getIntValue("maximumSpeed")
         return (int) (routeService.getSpeedLimitAtLocation(downtrack).getLimit() * Constants.MPS_TO_MPH);
     }
 
-    public int getXgvSocketTimeout() { return getIntValue("xgv.timeout"); };
-
-    public boolean getAutoStartConsumption() {
-        return getBooleanValue("autoStartConsumption");
-    }
-
-    public int getUcrPort() {
-        return getIntValue("ucr.port");
-    }
-
-    public String getUcrIpAddress() {
-        return getProperty("ucr.ipaddress");
-    }
-
-    public int getXgvInitTimeout() {
-        return getIntValue("xgv.inittimeout");
-    }
-
-    public boolean getUcrEnabled() {
-        return Boolean.parseBoolean(getProperty("ucr.enabled"));
-    }
-
-    public double getMaxAccel() {
-        return Double.parseDouble(getProperty("maximumAccel")); }
-
-    public String getCanDeviceName() { return getProperty("can.candevice"); }
-
-    public String getNativeLib() { return getProperty("can.lib"); }
-
-    public double getDefaultSpeed() {
-        return Double.parseDouble(getProperty("defaultspeed"));
-    }
-
     public boolean getBooleanValue(String property)   {
-        return params.getBoolean("~/" + property);
+        return params.getBoolean(toROSString(property));
     }
 
     @Override
     public double getDoubleValue(String property) {
-        return params.getDouble("~/" + property);
+        return params.getDouble(toROSString(property));
     }
 
     @Override
     public double getDoubleDefaultValue(String property, double defaultValue) {
-        return params.getDouble("~/" + property, defaultValue);
+        return params.getDouble(toROSString(property), defaultValue);
     }
 
     @Override

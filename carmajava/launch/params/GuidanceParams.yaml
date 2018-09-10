@@ -64,6 +64,7 @@ required_plugins:
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins:
+  - Traffic Signal Plugin
   - Cooperative Merge Plugin
   - Platooning Plugin
   - Yield Plugin
@@ -213,6 +214,7 @@ light_bar_priorities:
   - Light Bar State Machine
   - Lane Change Plugin
   - Platooning Plugin
+  - Traffic Signal Plugin
   - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin

@@ -26,32 +26,23 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.*;
 
-import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.GREEN;
 import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE;
 
 /**
  * This class describes the speed trajectory for the Glidepath vehicle in any given situation.
  * Its primary purpose is to invoke the EAD algorithm, but also manages alternative methods of
- * determining speed commands (which may replace or override the EAD in any given time step),
- * such as using commands from a pre-determined data file, ensuring that the vehicle is stopped
+ * determining speed commands (which may replace or override the EAD in any given time step), 
+ * ensuring that the vehicle is stopped
  * at a red light, and providing emergency override (failsafe) commands to prevent running of
  * a red light.
  */
 public class Trajectory implements ITrajectory {
 	/**
-	 * Constructor that allows the parent to inject a particular EAD model (which could be overridden
-	 * if the @param trajectoryfile is specified.
+	 * Constructor that allows the parent to inject a particular EAD model
 	 * @param eadModel
 	 * @throws Exception
 	 */
@@ -61,27 +52,24 @@ public class Trajectory implements ITrajectory {
 
 	/** Creates all of the persistent attributes of the new Trajectory object.
 	 * Connects to the EAD algorithm library and initializes it for first use.
-	 * config param ead.trajectoryfile not empty : initialize file for reading
-	 * config param ead.trajectoryfile is empty  : pass max accel, max jerk, speed limit & time step duration into the EAD library for future reference
 	 * @param eadModel - the EAD object that will be used to compute the trajectory
 	 * @throws IOException if any of the needed config parameters cannot be read
 	 * @throws Exception if there is an error initializing or executing the EAD model
 	 */
 	protected void constructObject(IEad eadModel) throws Exception {
-		//determine if we are going to use the EAD library or read a trajectory from a data file
+		//Get application context
 		IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
 		assert(config != null);
-		csvFilename_ = config.getProperty("ead.trajectoryfile");
 		timeStepSize_ = (long)config.getPeriodicDelay();
 		
 		//determine if we will be using the timeouts or allowed to run slow (for testing)
-		respectTimeouts_ = Boolean.valueOf(config.getProperty("performancechecks"));
+		respectTimeouts_ = config.getBooleanValue("performancechecks");
 		log_.infof("TRAJ", "time step = %d ms, respecting timeouts = %b", timeStepSize_, respectTimeouts_);
 
 		//get constraint parameters from the config file
 		// TODO use a dynamic speed limit rather than the first speed limit on the route
 		speedLimit_ = config.getMaximumSpeed(0.0)/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
-		maxJerk_ = Double.valueOf(config.getProperty("maximumJerk"));
+		maxJerk_ = config.getDoubleValue("maximumJerk");
 		accelLimiter_ = config.getBooleanValue("ead.accelLimiter");
 		jerkLimiter_ = config.getBooleanValue("ead.jerkLimiter");
 		log_.infof("TRAJ", "speedLimit = %.2f, maxJerk = %.2f", speedLimit_, maxJerk_);
@@ -102,48 +90,38 @@ public class Trajectory implements ITrajectory {
 		}
 
 		//get the max allowable spat error count
-		maxSpatErrors_ = Integer.valueOf(config.getProperty("ead.max.spat.errors"));
+		maxSpatErrors_ = config.getIntValue("ead.max.spat.errors");
 		log_.infof("TRAJ", "Max spat errors = %d", maxSpatErrors_);
 
 		//get the min number of time steps allowed before we bother to compute spat reliability
 		minStepsNewIntersection_ = config.getDefaultIntValue("asd.minSamplesForReliability", 4);
 
 		//get failsafe parameters
-		allowFailSafe_			= config.getProperty("ead.failsafe.on").equals("true");
-		failSafeDistBuf_		= Double.valueOf(config.getProperty("ead.failsafe.distance.buffer"));
-		failSafeResponseLag_	= Double.valueOf(config.getProperty("ead.response.lag"));
-		failSafeDecelFactor_	= Double.valueOf(config.getProperty("ead.failsafe.decel.factor"));
+		allowFailSafe_			= config.getBooleanValue("ead.failsafe.on");
+		failSafeDistBuf_		= config.getDoubleValue("ead.failsafe.distance.buffer");
+		failSafeResponseLag_	= config.getDoubleValue("ead.response.lag");
+		failSafeDecelFactor_	= config.getDoubleValue("ead.failsafe.decel.factor");
 		log_.infof("TRAJ", "allowFailSafe = %b, failSafeDistBuf = %.2f, failSafeResponseLag = %.2f", allowFailSafe_, failSafeDistBuf_, failSafeResponseLag_);
-		maxCmdAdj_		= Double.valueOf(config.getProperty("ead.maxcmdadj"));
-		cmdAccelGain_	= Double.valueOf(config.getProperty("ead.cmdaccelgain"));
-		cmdSpeedGain_	= Double.valueOf(config.getProperty("ead.cmdspeedgain"));
-		cmdBias_		= Double.valueOf(config.getProperty("ead.cmdbias"));
+		maxCmdAdj_		= config.getDoubleValue("ead.maxcmdadj");
+		cmdAccelGain_	= config.getDoubleValue("ead.cmdaccelgain");
+		cmdSpeedGain_	= config.getDoubleValue("ead.cmdspeedgain");
+		cmdBias_		= config.getDoubleValue("ead.cmdbias");
 		log_.infof("TRAJ", "maxCmdAdj = %.2f, cmdAccelGain = %.4f, cmdSpeedGain = %.4f, cmdBias = %.4f",
 					maxCmdAdj_, cmdAccelGain_, cmdSpeedGain_, cmdBias_);
 		
-		//if a trajectory filename is specified then use the file
-		if (csvFilename_ != null  &&  csvFilename_.length() > 0) {
-			log_.debugf("TRAJ", "Attempting to use trajectory file %s", csvFilename_);
-	        startCsvFile();
-	        ead_ = null;
+		ead_ = eadModel;
 
-	    //else prepare to use an EAD object
-		}else {
-			ead_ = eadModel;
-
-			//pass config parameters to the EAD library
-			try {
-				ead_.initialize(timeStepSize_, new AStarSolver());
-			} catch (Exception e) {
-				log_.errorf("TRAJ", "Exception thrown by EAD library initialize(). maxJerk = %f, speedLimit = %f",
-						maxJerk_, speedLimit_);
-				throw e;
-			}
-			
-			csvParser_ = null;
-			log_.infof("TRAJ", "2. EADlib initialized. speedLimit = %.2f, maxJerk = %.2f",
-					speedLimit_, maxJerk_);
+		//pass config parameters to the EAD library
+		try {
+			ead_.initialize(timeStepSize_, new AStarSolver());
+		} catch (Exception e) {
+			log_.errorf("TRAJ", "Exception thrown by EAD library initialize(). maxJerk = %f, speedLimit = %f",
+					maxJerk_, speedLimit_);
+			throw e;
 		}
+		
+		log_.infof("TRAJ", "2. EADlib initialized. speedLimit = %.2f, maxJerk = %.2f",
+				speedLimit_, maxJerk_);
 		
 		// Get operating speed override - if this is non-zero it will be used for OS regardless of user input! Intended for testing only!
 		osOverride_ = 0.0;
@@ -157,7 +135,6 @@ public class Trajectory implements ITrajectory {
 		}
 		
 		//initialize other members
-		state_ = TrajectoryState.DISENGAGED;
 		intersections_ = new ArrayList<>();
 		completedIntersections_ = new HashSet<>();
 		intersectionsChanged_ = false;
@@ -172,10 +149,6 @@ public class Trajectory implements ITrajectory {
 		curAccel_ = 0.0;
 		eadErrorCount_ = 0;
 		spatErrorCounter_ = 0;
-		inMotion_ = false;
-		timeSinceFirstMotion_ = 0.0;
-		timeOfFirstMotion_ = 0;
-		stoppedCount_ = 0;
 		stopConfirmed_ = false;
 		intersectionGeom_ = null;
 		phase_ = NONE;
@@ -185,8 +158,6 @@ public class Trajectory implements ITrajectory {
 		map_ = null;
 		failSafeMode_ = false;
 		numStepsAtZero_ = 0;
-		motionAuthorized_ = false;
-		accelMgr_ = AccelerationManager.getManager();
 	}
 
 	/**
@@ -200,7 +171,7 @@ public class Trajectory implements ITrajectory {
 	 * Indicates that this software is now authorized to control the vehicle's speed
 	 */
 	public void engage() {
-		motionAuthorized_ = true;
+	//	motionAuthorized_ = true;
 		log_.info("TRAJ", "///// Driver engaged automatic control.");
 	}
 
@@ -211,26 +182,37 @@ public class Trajectory implements ITrajectory {
 	public boolean isStopConfirmed() {
 		return stopConfirmed_;
 	}
+
+	/**
+	 * Returns a list of known intersections sorted from nearest to farthest
+	 * 
+	 * @return A list of IntersectionData sorted from nearest to farthest
+	 */
+	public List<IntersectionData> getSortedIntersections() {
+		return intersections_;
+	}
 	
 	/**
+	 * 
+	 * NOTE: In this plugin this function does not return meaningful commands. Instead whole plans are ingested from the EadAStar object at a higher level
+	 * 
 	 * Computes the speed command, ID of nearest intersections in view and DTSB relative to that intersections
 	 * for the current time step based on various combinations of config parameters and
 	 * previous handling of intersections description data.
 	 *
-	 * config param ead.trajectoryfile not empty : return speed commands from specified file,
-	 * config param ead.trajectoryfile is empty && (state contains valid MAP message || valid MAP previously received) &&
+	 * (state contains valid MAP message || valid MAP previously received) &&
 	 * 		intersections geometry fully decomposed  &&  vehicle position is associated with a lane  &&
 	 * 			signal is red/yellow && (-W < DTSB < 0) : command = 0, computed DTSB
 	 * 			signal is green || (DTSB > 0) : speed command from EAD library, computed DTSB
 	 * 		intersections not fully decomposed  ||  vehicle cannot be associated with a single lane :
 	 * 			command = operating speed, DTSB = very large
-	 * 	config param ead.trajectoryfile is empty  &&  no valid MAP has ever been received :
+	 * 	    &&  no valid MAP has ever been received :
 	 * 			command = operating speed, DTSB = very large
 	 * 
 	 * Note: DTSB = distance to stop bar; in situations when vehicle can't associate an intersections and lane
 	 * 		(e.g. out of DSRC radio range of any intersections) then we still want the vehicle to operate under
 	 * 		automated control, so will set the speed command to the operating speed.
-	 * 		W = width of the intersections's stop box.
+	 * 		W = width of the intersection's stop box.
 	 * 
 	 * @param stateData contains current SPEED, OPERATING_SPEED, ACCELERATION, LATITUDE (vehicle), LONGITUDE (vehicle),
 	 *        list of known intersections (including MAP & SPAT data for each). It may
@@ -242,7 +224,6 @@ public class Trajectory implements ITrajectory {
 	 */
 	public DataElementHolder getSpeedCommand(DataElementHolder stateData) throws Exception {
 		long entryTime = System.currentTimeMillis();
-		DataElementHolder rtn = new DataElementHolder();
 
 
 		////////// EXTRACT & VALIDATE INPUT STATE (except SPAT)
@@ -303,9 +284,6 @@ public class Trajectory implements ITrajectory {
 			}
 			curSpeed_ = curSpeedElement.value(); //this is the smoothed value
 			curAccel_ = curAccelElement.value(); //smoothed
-			if (curSpeed_ > SPEED_NOISE) {
-				stoppedCount_ = 0;
-			}
 		}catch (Exception e) {
 			log_.error("TRAJ", "Unknown exception trapped in input processing: " + e.toString());
 			throw e;
@@ -339,136 +317,46 @@ public class Trajectory implements ITrajectory {
 		}
 
 
-		////////// STATE MODEL FOR GETTING THE NEW RAW SPEED COMMAND
-
-
-		//if speed is significantly positive for the first time then
-		if (!inMotion_  &&  curSpeed_ > 2.0*SPEED_NOISE) { //avoid some weird noise whilst sitting on starting line
-			//indicate that we have begun moving
-			inMotion_ = true;
-			timeOfFirstMotion_ = System.currentTimeMillis();
-			log_.info("TRAJ", "///// FIRST MOTION DETECTED /////");
-		}
+		////////// RUN EAD TO GENERATE NEW PLAN
 
 		//take necessary actions based on the current state
 		double cmd = 0.0;  //the speed command we are to return;
-		updateState(dtsb);
-		log_.debug("TRAJ", "getSpeedCommand state = " + state_.toString());
 
-		switch(state_) {
-
-			//case Disengaged - return command = 0
-			case DISENGAGED:
-				cmd = 0.0;
-				break;
-
-			//case Speed File
-			case SPEED_FILE:
-				//read the next command from the file
-				cmd = getCommandFromCsv();
-				break;
-
-			//case Cruising - set command = operating speed
-			case CRUISING:
-				cmd = operSpeed;
-				break;
-
-			//case EadInMotion - we are on an intersection's map
-			case EAD_IN_MOTION:
-				//get speed command from EAD (assume it will handle position in stop box w/red light)
-				try {
-					cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
-				}catch (Exception e) {
-					if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
-						cmd = prevCmd_;
-						log_.warnf("TRAJ", "Exception trapped from EAD algo: " + e.toString() +
-										"\n    Continuing to use previous command. " +
-										"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-								curSpeed_, operSpeed, dtsb, timeRemaining_);
-					}else {
-						log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
-										"\n    Too many errors...rethrowing. " +
-										"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-								curSpeed_, operSpeed, dtsb, timeRemaining_);
-						throw e;
-					}
-				}
-				break;
-
-			//case EadStopped - we are on an intersection's map and stopped at a red light
-			case EAD_STOPPED:
-				//invoke the EAD algo anyway, to make sure it stays apprised of the current situation
-				try {
-					cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
-					if (cmd > 0.0) {
-						log_.infof("TRAJ", "EAD returned non-zero command (%.2f) despite being in EAD_STOPPED state.",
-								cmd);
-					}
-				}catch (Exception e) {
-					if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
-						log_.warnf("TRAJ", "Exception trapped from EAD algo. Continuing to use previous command. " +
-										"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-								curSpeed_, operSpeed, dtsb, timeRemaining_);
-					}else {
-						log_.errorf("TRAJ", "Exception trapped by EAD algo. Too many errors...rethrowing. " +
-										"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-								curSpeed_, operSpeed, dtsb, timeRemaining_);
-						throw e;
-					}
-				}
-				//set speed command = 0 (even if EAD says something else)
-				cmd = 0.0;
-				break;
-
-			default:
-				log_.error("TRAJ", "getSpeedCommand found an unknown state.");
-				throw new Exception("Unknown state detected in Trajectory.getSpeedCommand.");
+		//get speed command from EAD (assume it will handle position in stop box w/red light)
+		try {
+			log_.info("TrafficSignalPlugin", intersections_.toString());
+			cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
+		}catch (Exception e) {
+			if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
+				cmd = prevCmd_;
+				log_.warnf("TRAJ", "Exception trapped from EAD algo: " + e.toString() +
+								"\n    Continuing to use previous command. " +
+								"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+						curSpeed_, operSpeed, dtsb, timeRemaining_);
+			}else {
+				log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
+								"\n    Too many errors...rethrowing. " +
+								"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+						curSpeed_, operSpeed, dtsb, timeRemaining_);
+				throw e;
+			}
 		}
+
 		log_.debug("TRAJ", "getSpeedCommand completed executing current state.");
-
-
 
 		////////// FAILSAFE & HOUSEKEEPING
 
-
-		//apply accel & jerk limits to the raw command
-		cmd = limitSpeedCommand(cmd);
-
 		//run the failsafe check on it, which may override the current command to make sure we stop at a red light
-		cmd = applyFailSafeCheck(cmd, dtsb, curSpeed_);
+		cmd = applyFailSafeCheck(cmd, dtsb, curSpeed_); // TODO take this out but we should have this somewhere. Maybe a continues check to see if we violate the light
 
 		//preserve history for the next time step
 		prevCmd_ = cmd;
-		if (inMotion_) {
-			timeSinceFirstMotion_ = 0.001*(double)(System.currentTimeMillis() - timeOfFirstMotion_);
-		}
-		prevPhase_ = phase_;
-		prevTime1_ = timeRemaining_;
-		prevApproachLaneId_ = approachLaneId_;
-
-		//finalize output state vector
-        if (intersections_.size() > 0  &&  phase_ != NONE) {
-            IntDataElement iid = new IntDataElement(intersections_.get(0).intersectionId);
-            rtn.put(DataElementKey.INTERSECTION_ID, iid);
-			IntDataElement lid = new IntDataElement(approachLaneId_);
-			rtn.put(DataElementKey.LANE_ID, lid);
-			rtn.put(DataElementKey.SIGNAL_PHASE, new PhaseDataElement(phase_));
-			rtn.put(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE, new DoubleDataElement(timeRemaining_));
-			rtn.put(DataElementKey.SPEED_COMMAND, new DoubleDataElement(cmd));
-			rtn.put(DataElementKey.DIST_TO_STOP_BAR, new DoubleDataElement(dtsb));
-        }
-        DoubleDataElement sc = new DoubleDataElement(cmd);
-        rtn.put(DataElementKey.SPEED_COMMAND, sc);
-		DoubleDataElement tfm = new DoubleDataElement(timeSinceFirstMotion_);
-		rtn.put(DataElementKey.TIME_SINCE_FIRST_MOTION, tfm);
-        Duration duration = new Duration(new DateTime(entryTime), new DateTime());
-        rtn.put(DataElementKey.CYCLE_EAD, new IntDataElement((int) duration.getMillis()));
 
 		log_.debugf("TRAJ",
 				"getSpeedCommand exiting. Commanded speed is %.3f m/s. curSpeed = %.3f m/s, method time = %d ms.",
 				cmd, curSpeed_, System.currentTimeMillis( )- entryTime);
 
-		return rtn;
+		return null;
 	} //getSpeedCommand()
 
 
@@ -476,90 +364,6 @@ public class Trajectory implements ITrajectory {
 	// member elements
 	//////////////////
 
-
-	/**
-	 * Manages the state machine that dictates the behavior of this class, updating the state based on
-	 * current information.
-	 *
-	 * @param dtsb - distance to stop bar of the nearest intersections (a very large number if unknown)
-	 */
-	private void updateState(double dtsb) {
-		TrajectoryState prevState = state_;
-
-		//depending on the current state, check for transition
-		switch(prevState) {
-
-			//case disengaged
-			case DISENGAGED:
-				//if DVI engage command was received then
-				if (motionAuthorized_) {
-					//if speed file has been defined then
-					if (csvFilename_ != null  &&  csvFilename_.length() > 0) {
-						//switch to speed file state
-						state_ = TrajectoryState.SPEED_FILE;
-					}else {
-						//switch to cruising
-						state_ = TrajectoryState.CRUISING;
-					}
-				}
-				break;
-
-			//case cruising
-			case CRUISING:
-				//if there is at least one intersection known then
-				if (intersections_.size() > 0) {
-					//if our position is on one of the approach lanes of the nearest intersections
-					// and we have reliable spat data for that intersection then
-					if (approachLaneId_ >= 0  &&  spatReliableOnNearest_  &&  curSpeed_ > SPEED_NOISE) {
-						//set state to EAD in motion
-						state_ = TrajectoryState.EAD_IN_MOTION;
-					}
-				}
-				break;
-
-			//case EAD in motion
-			case EAD_IN_MOTION:
-				//if speed has been zero for N consecutive time steps then
-				int allowableTimeSteps = restarting_ ? START_MOTION_TIMESTEPS : STOP_DAMPING_TIMESTEPS;
-				if (curSpeed_ < SPEED_NOISE  &&  ++stoppedCount_ > allowableTimeSteps) {
-					//set state to EAD stopped
-					state_ = TrajectoryState.EAD_STOPPED;
-					stopConfirmed_ = true;
-					motionAuthorized_ = false;
-					restarting_ = false;
-
-				//else we are no longer approaching or passing through an intersections then
-				// (updateIntersection may have removed our current intersections because we passed through it)
-				// (if we are passing through a stop box approachLaneId_ will be < 0 and dtsb will be < 0)
-				}else if (approachLaneId_ < 0  &&  dtsb >= 0.0) {
-					//set state back to cruising
-					state_ = TrajectoryState.CRUISING;
-				}
-				break;
-
-			//case EAD stopped (this state only occurs while waiting at a red light)
-			// this is the one state where motionAuthorized_ and stopConfirmed_ may not have opposite values.
-			case EAD_STOPPED:
-				//if DVI has re-engaged automation and the current intersections's signal is green then
-				if (motionAuthorized_  &&  phase_ == GREEN) {
-					//set state to EAD in motion
-					state_ = TrajectoryState.EAD_IN_MOTION;
-					stopConfirmed_ = false;
-					stoppedCount_ = 0;
-					restarting_ = true;
-				}
-
-			//default (including speed file, which will never transition to anything else)
-			default:
-				//no state change
-
-		}
-
-		if (state_ != prevState) {
-			log_.infof("TRAJ", "Trajectory state changed from %s to %s",
-					prevState.toString(), state_.toString());
-		}
-	}
 
 	/**
 	 * if element is null, then write a log warning.
@@ -579,7 +383,7 @@ public class Trajectory implements ITrajectory {
 	 * NOTE that, for failsafe and state transition purposes, we are not considered in EAD mode (in an intersection)
 	 * unless we are on an approach lane to the nearest intersections. It is possible that a more distant
 	 * intersections has a farther reaching map and we are on an approach lane to that one already but not on the
-	 * map for the nearest intersection yet. In that case, we act as if we are still CRUISING (not in an intersection).
+	 * map for the nearest intersection yet. In that case we should still consider ourselves not on an intersection
 	 *
 	 * @param inputIntersections - list of intersections sensed by the vehicle in this time step
 	 * @param vehicleLoc - current location of the vehicle
@@ -957,114 +761,21 @@ public class Trajectory implements ITrajectory {
 	
 	
 	private boolean wantThisIntersection(int thisId) {
-		boolean wanted = false;
+		return true;//TODO remove this and uncomment below
+		// boolean wanted = false;
 		
-		for (int id : intersectionIds_) {
-			if (thisId == id) {
-				wanted = true;
-				break;
-			}
-		}
+		// for (int id : intersectionIds_) {
+		// 	if (thisId == id) {
+		// 		wanted = true;
+		// 		break;
+		// 	}
+		// }
 
-		return wanted;
+		// return wanted;
 	}
 
 	/**
-	 * Opens file specified by csvFilename_ and set up an iterator on it
-	 */
-	private void startCsvFile() throws IOException {
-		try  {
-		    File csv = new File(csvFilename_);
-		    csvParser_ = CSVParser.parse(csv, Charset.forName("UTF-8"), CSVFormat.RFC4180);
-		    csvIter_ = csvParser_.iterator();
-		    log_.warnf("TRAJ", "Opened trajectory file %s", csvFilename_);
-		} catch (IOException e) {
-			log_.errorf("TRAJ", "Cannot open CSV test file %s", csvFilename_);
-			throw e;
-		}
-	}
-
-	/**
-	 * csv file has records remaining : get speed command from next record
-	 * csv file is on last record : rewind the file and get speed command from its first record
-	 */
-	private double getCommandFromCsv() {
-		double cmd;
-		try  {
-			//read the next record from the file for our command
-			CSVRecord rec = csvIter_.next();
-			//double time = Double.parseDouble(rec.get(0).trim()); //don't need this now, but it's in the data file
-			cmd = Double.parseDouble(rec.get(1).trim());
-			//dist = Double.parseDouble(rec.get(2).trim());
-			//laneId = Integer.parseInt(rec.get(3).trim());
-		} catch (Exception e) {
-			//use the last command on the file for one more time step while we rewind the file
-			cmd = prevCmd_;
-			log_.info("TRAJ", "No more commands in trajectory file. Preparing to rewind.");
-
-			//close the file, open it again, and start all over
-			try {
-				csvParser_.close();
-				startCsvFile();
-			} catch (IOException e1) {
-				log_.error("TRAJ", "Failed to re-open the trajectory file: " + e1.toString());
-				e1.printStackTrace();
-			}
-		}
-		return cmd;
-	}
-
-	/**
-	 * desiredSpeed > growth allowed by max accel or max jerk : limited to max allowed growth
-	 * desiredSpeed < decay allowed by max decel or max jerk : limited to max allowed decay
-	 * desiredSpeed within limits : desiredSpeed
-	 */
-	private double limitSpeedCommand(double desiredSpeed) {
-		double command = desiredSpeed;
-		double timeStep = 0.001*(double)timeStepSize_; //units of sec
-		
-		//apply accel/decel limits with instantaneous (smoothed) speed data
-		if (accelLimiter_) {
-			double desiredSpeedDiff = desiredSpeed - curSpeed_;
-			double highAccelLimit = accelMgr_.getAccelLimit()*timeStep;
-			double lowAccelLimit = -highAccelLimit;
-			if (desiredSpeedDiff > highAccelLimit) {
-				command = curSpeed_ + highAccelLimit;
-				log_.infof("TRAJ", "Target limited by positive acceleration. desiredSpeedDiff = %.3f. New cmd = %.3f",
-							desiredSpeedDiff, command);
-			}else if (desiredSpeedDiff < lowAccelLimit) {
-				command = curSpeed_ + lowAccelLimit;
-				log_.infof("TRAJ", "Target limited by negative acceleration. desiredSpeedDiff = %.3f. New cmd = %.3f",
-							desiredSpeedDiff, command);
-			}
-		}			
-		
-		//apply jerk limits
-		if (jerkLimiter_) {
-			double desiredAccelDiff = (command - curSpeed_)/timeStep - curAccel_;
-			double jerkLimit = maxJerk_*timeStep;
-			if (desiredAccelDiff > jerkLimit) {
-				command = curSpeed_ + (curAccel_ + maxJerk_*timeStep)*timeStep;
-				log_.infof("TRAJ", "Target limited by positive jerk. curAccel = %.3f, desiredAccelDiff = %.3f. New cmd = %.3f",
-							curAccel_, desiredAccelDiff, command);
-			}else if (desiredAccelDiff < -jerkLimit) {
-				command = curSpeed_ + (curAccel_ - maxJerk_*timeStep)*timeStep;
-				log_.infof("TRAJ", "Target limited by negative jerk. curAccel = %.3f, desiredAccelDiff = %.3f. New cmd = %.3f",
-							curAccel_, desiredAccelDiff, command);
-			}
-		}
-			
-		//final sanity check for legal commands
-		if (command < 0.0) {
-			command = 0.0;
-		}else if (command >= speedLimit_) {
-			command = speedLimit_ - 0.1;
-		}
-		
-		return command;
-	}
-
-	/**
+	 * // TODO this is good logic to have but maybe not the place for it
 	 * current speed/distance state is beyond the safe limit for approaching red or yellow signal : command maximum deceleration
 	 * current speed/distance state is in the safe zone for the signal state : cmdIn
 	 * 
@@ -1079,62 +790,63 @@ public class Trajectory implements ITrajectory {
 	 * accelerate the vehicle in the desired way, even with an instantaneous 1 m/s command premium over actual speed.
 	 */
 	private double applyFailSafeCheck(double cmdIn, double distance, double speed) {
-		double cmd = cmdIn;
+		return cmdIn;
+		// double cmd = cmdIn;
 		
-		//if the failsafe toggle has been turned off or if we are not approaching an intersections then return
-		if (!allowFailSafe_  ||  phase_ == NONE) {
-			return cmd;
-		}
+		// //if the failsafe toggle has been turned off or if we are not approaching an intersections then return
+		// if (!allowFailSafe_  ||  phase_ == NONE) {
+		// 	return cmd;
+		// }
 		
-		//set the acceleration limit higher than in normal ops since this is for handling emergency situations (this will be a positive number)
-		double decel = failSafeDecelFactor_*accelMgr_.getAccelLimit();
+		// //set the acceleration limit higher than in normal ops since this is for handling emergency situations (this will be a positive number)
+		// double decel = failSafeDecelFactor_*accelMgr_.getAccelLimit();
 		
-		//compute the distance that will be covered during vehicle response lag
-		double lagDistance = failSafeResponseLag_ * speed;
+		// //compute the distance that will be covered during vehicle response lag
+		// double lagDistance = failSafeResponseLag_ * speed;
 		
-		//determine emergency stop distance for our current speed (limited to be non-negative)
-		double emerDistance = Math.max((0.5*speed*speed / decel + lagDistance + failSafeDistBuf_), 0.0);
+		// //determine emergency stop distance for our current speed (limited to be non-negative)
+		// double emerDistance = Math.max((0.5*speed*speed / decel + lagDistance + failSafeDistBuf_), 0.0);
 		
-		//are we in fail-safe mode?
-		if (failSafe(emerDistance, distance, speed)) {
+		// //are we in fail-safe mode?
+		// if (failSafe(emerDistance, distance, speed)) {
 
-			//if we haven't yet reached the bar, we have time to slow more gradually
-			double failsafeCmd;
-			if (distance > 0.0) {
-				//determine where we will be one time step in the future, going at the current speed (may be negative!)
-				// plan to stop failSafeDistBuf_ short of the stop bar, and account for the response lag time
-				double futureDistance = distance - 0.001*timeStepSize_*speed - lagDistance - failSafeDistBuf_;
-				//determine the speed we want to have at that point in time to achieve a smooth slow-down
-				double desiredSpeed = Math.sqrt(Math.max(2.0*decel*futureDistance, 0.0));
+		// 	//if we haven't yet reached the bar, we have time to slow more gradually
+		// 	double failsafeCmd;
+		// 	if (distance > 0.0) {
+		// 		//determine where we will be one time step in the future, going at the current speed (may be negative!)
+		// 		// plan to stop failSafeDistBuf_ short of the stop bar, and account for the response lag time
+		// 		double futureDistance = distance - 0.001*timeStepSize_*speed - lagDistance - failSafeDistBuf_;
+		// 		//determine the speed we want to have at that point in time to achieve a smooth slow-down
+		// 		double desiredSpeed = Math.sqrt(Math.max(2.0*decel*futureDistance, 0.0));
 
-				//determine control adjustment that provides a command sufficiently below the actual speed that the controller will take it seriously
-				double adj = calcControlAdjustment(speed, desiredSpeed, -decel);
-				double rawCmd = desiredSpeed + adj;
+		// 		//determine control adjustment that provides a command sufficiently below the actual speed that the controller will take it seriously
+		// 		double adj = calcControlAdjustment(speed, desiredSpeed, -decel);
+		// 		double rawCmd = desiredSpeed + adj;
 
-				//compute the new fail-safe command
-				failsafeCmd = Math.max(Math.min(rawCmd, speed), 0.0);
+		// 		//compute the new fail-safe command
+		// 		failsafeCmd = Math.max(Math.min(rawCmd, speed), 0.0);
 
-				//under no circumstances do we want the resultant command to be larger than the previous one!
-				if (failsafeCmd > prevCmd_) {
-					failsafeCmd = 0.99*prevCmd_;
-				}
-				log_.debugf("TRAJ", "Fail-safe futureDistance = %.2f, speed = %.2f, desiredSpeed = %.2f, rawCmd = %.2f, adj = %.2f, failsafeCmd = %.2f",
-						futureDistance, speed, desiredSpeed, rawCmd, adj, failsafeCmd);
-			}else {
-				//need immediate stop!
-				failsafeCmd = 0.0;
-				log_.debugf("TRAJ", "Fail-safe commanding 0 since we are past the stop bar!");
-			}
+		// 		//under no circumstances do we want the resultant command to be larger than the previous one!
+		// 		if (failsafeCmd > prevCmd_) {
+		// 			failsafeCmd = 0.99*prevCmd_;
+		// 		}
+		// 		log_.debugf("TRAJ", "Fail-safe futureDistance = %.2f, speed = %.2f, desiredSpeed = %.2f, rawCmd = %.2f, adj = %.2f, failsafeCmd = %.2f",
+		// 				futureDistance, speed, desiredSpeed, rawCmd, adj, failsafeCmd);
+		// 	}else {
+		// 		//need immediate stop!
+		// 		failsafeCmd = 0.0;
+		// 		log_.debugf("TRAJ", "Fail-safe commanding 0 since we are past the stop bar!");
+		// 	}
 
-			//if it is less than the input command then use it
-			if (failsafeCmd < cmdIn) {
-				cmd = failsafeCmd;
-				log_.warn("TRAJ", "FAIL-SAFE has overridden the calculated command");
-			}
+		// 	//if it is less than the input command then use it
+		// 	if (failsafeCmd < cmdIn) {
+		// 		cmd = failsafeCmd;
+		// 		log_.warn("TRAJ", "FAIL-SAFE has overridden the calculated command");
+		// 	}
 
-		}
+		// }
 		
-		return cmd;
+		// return cmd;
 	}
 
 	/**
@@ -1197,7 +909,6 @@ public class Trajectory implements ITrajectory {
 	}
 	
 
-	private TrajectoryState		state_;				//the current state of the Trajectory object
 	private ArrayList<IntersectionData> intersections_; //all of the viable intersections currently in view
 	private HashSet<Integer>	completedIntersections_; //IDs of intersections we have already passed through
 	private boolean				intersectionsChanged_; //have the geometry of known intersections changed since prev time step?
@@ -1210,13 +921,7 @@ public class Trajectory implements ITrajectory {
 	private int					spatsReceivedOnNewIntersection_; //number of spat msgs received since new intersection has been entered
 	private double				osOverride_;		//FOR DEBUGGING ONLY - allows the config file to override the driver selected operating speed, m/s
 	private long				timeStepSize_;		//duration of a single time step, ms
-	private boolean				motionAuthorized_;	//has the driver turned over control to the computer?
-	private boolean				inMotion_;			//have we detected first motion?
-	private double				timeSinceFirstMotion_; //elapsed time (sec) since we detected the first motion
-	private long				timeOfFirstMotion_;	//timestamp when first motion is detected (ms)
-	private int					stoppedCount_;		//number of consecutive time steps that we have been stopped since first motion after being re-authorized
 	private boolean				stopConfirmed_;		//are we at a complete stop?
-	private boolean				restarting_ = false;//are we restarting from being stopped at a red light?
 	private boolean				respectTimeouts_;	//should we honor the established timeouts?
 	private double				prevCmd_;			//speed command from the previous time step, m/s
 	private SignalPhase			prevPhase_;			//signal phase in the previous time step
@@ -1230,9 +935,6 @@ public class Trajectory implements ITrajectory {
 	private double				curAccel_;			//current acceleration (smoothed), m/s^2
 	private SignalPhase			phase_;				//the signal's current phase
 	private double				timeRemaining_;		//time remaining in the current signal phase, sec
-	private String				csvFilename_;		//name of the CSV file used for dummy trajectory data
-	private CSVParser			csvParser_;			//parser to read the CSV trajectory file
-	private Iterator<CSVRecord> csvIter_;			//iterator to be used on a CSV trajectory file
 	private IntersectionGeometry intersectionGeom_;	//vehicle's relationship to the nearest intersection, if on its map
 	private MapMessage			map_;				//the MAP message that describes the nearest intersection (we may not be on it)
 	private IEad				ead_;				//the EAD model that computes the speed commands
@@ -1249,11 +951,8 @@ public class Trajectory implements ITrajectory {
 	private double				cmdSpeedGain_;		//gain applied to speed difference for fail-safe calculations
 	private double				cmdAccelGain_;		//gain applied to acceleration for fail-safe calculations
 	private double				cmdBias_;			//bias applied to command premium for fail-safe calculations
-	private AccelerationManager	accelMgr_;			//manages acceleration limits
 
 	private static final int	MAX_EAD_ERROR_COUNT = 3;//max allowed number of EAD exceptions
 	private static final int 	STOP_DAMPING_TIMESTEPS = 6; //num timesteps before stopping vibrations disappear
-	private static final int	START_MOTION_TIMESTEPS = 19; //num timesteps to allow for motion detection on startup
-	private static final double SPEED_NOISE = 0.04;	//speed threshold below which we consider the vehicle stopped, m/s
 	private static ILogger		log_ = LoggerManager.getLogger(Trajectory.class);
 }
