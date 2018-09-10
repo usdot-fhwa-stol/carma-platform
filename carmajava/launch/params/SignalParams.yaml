@@ -68,9 +68,6 @@ cycleThreshold: 10
 #  beyond the stop bar
 dtsb/auto/stop: -400.0
 
-# location of state file used by the apache web start to render glidepath state
-dvi/statefile: '/var/www/html/data/state.dat'
-
 #-----
 #----- Consumers
 #-----

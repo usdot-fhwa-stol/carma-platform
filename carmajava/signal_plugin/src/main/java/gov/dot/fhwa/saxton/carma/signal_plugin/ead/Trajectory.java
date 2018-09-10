@@ -41,6 +41,31 @@ import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE
  * a red light.
  */
 public class Trajectory implements ITrajectory {
+
+	/**
+	 * Default constructor that will generate its own EAD model to be used if the @param trajectoryfile
+	 * is not specified.
+	 * @throws Exception
+	 */
+	public Trajectory() throws Exception {
+		IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
+		assert(config != null);
+
+		//get the desired EAD variant from the config file and instantiate it
+		String eadClass = config.getProperty("ead.modelclass");
+		if (eadClass == null) {
+			eadClass = "default";
+		}
+		IEad ead = EadFactory.newInstance(eadClass);
+		if (ead == null) {
+			log_.errorf("TRAJ", "Could not instantiate the EAD model %s", eadClass);
+			throw new Exception("Could not instantiate an EAD model.");
+		}
+		log_.debug("TRAJ", "Ready to construct EAD object.");
+
+		constructObject(ead);
+	}
+
 	/**
 	 * Constructor that allows the parent to inject a particular EAD model
 	 * @param eadModel
@@ -67,7 +92,6 @@ public class Trajectory implements ITrajectory {
 		log_.infof("TRAJ", "time step = %d ms, respecting timeouts = %b", timeStepSize_, respectTimeouts_);
 
 		//get constraint parameters from the config file
-		// TODO use a dynamic speed limit rather than the first speed limit on the route
 		speedLimit_ = config.getMaximumSpeed(0.0)/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
 		maxJerk_ = config.getDoubleValue("maximumJerk");
 		accelLimiter_ = config.getBooleanValue("ead.accelLimiter");
@@ -158,7 +182,6 @@ public class Trajectory implements ITrajectory {
 		map_ = null;
 		failSafeMode_ = false;
 		numStepsAtZero_ = 0;
-		accelMgr_ = AccelerationManager.getManager();
 	}
 
 	/**
@@ -657,22 +680,32 @@ public class Trajectory implements ITrajectory {
 					spatsReceivedOnNewIntersection_ = 0;
 					spatReliableOnNearest_ = false;
 					intersectionsChanged_ = true;
-					log_.debug("TRAJ", "Approach lane ID changed from " + prevApproachLaneId_ + " to " + approachLaneId_);
+					log_.debug("TRAJ", "updateSpatData: approach lane ID changed from " + prevApproachLaneId_ + " to " + approachLaneId_);
 				}else if (approachLaneId_ >= 0){
 					++timeStepsNewIntersection_;
 				}
 
 				//get its spat info
-				//log_.debug("TRAJ", "updateSpatData getting spat for approach lane " + laneId);
+				log_.debug("TRAJ", "updateSpatData getting spat for approach lane " + laneId + ". intersections_ size = " + intersections_.size());
 				ISpatMessage sm = intersections_.get(0).spat;
 				spat = null;
 				if (sm != null) {
 					spat = sm.getSpatForLane(approachLaneId_);
-					phase_ = ((PhaseDataElement) spat.get(DataElementKey.SIGNAL_PHASE)).value();
-					timeRemaining_ = ((DoubleDataElement) spat.get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE)).value();
+					log_.debug("TRAJ", "updateSpatData: spat = " + (spat == null ? "null" : "not null"));
+					log_.debug("TRAJ", " spat = " + spat.toString());
+					PhaseDataElement pde = ((PhaseDataElement) spat.get(DataElementKey.SIGNAL_PHASE));
+					if (pde != null) {
+						phase_ = pde.value();
+					}
+					DoubleDataElement dde = ((DoubleDataElement) spat.get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE));
+					if (dde != null) {
+						timeRemaining_ = dde.value();
+					}
 					spatErrorCounter_ = 0;
 					++spatsReceivedOnNewIntersection_;
 				}
+				log_.debug("TRAJ", "updateSpatData: spat defined, spatsReceivedOnNewIntersection = " +
+							spatsReceivedOnNewIntersection_);
 
 				//determine if the spat signal on this intersection is reliable (if the intersection is just
 				// now coming into view the messages may be spotty, so we don't want to deal with them yet)
@@ -728,6 +761,7 @@ public class Trajectory implements ITrajectory {
 				}
 			} //endif intersection but no spat message
 		} //endif have intersection geometry
+		log_.debug("TRAJ", "updateSpatData: end of geometry block.");
 
 		//populate the simpler elements of the intersection data
 		if (intersections_ != null  &&  intersections_.size() > 0) {
@@ -790,62 +824,63 @@ public class Trajectory implements ITrajectory {
 	 * accelerate the vehicle in the desired way, even with an instantaneous 1 m/s command premium over actual speed.
 	 */
 	private double applyFailSafeCheck(double cmdIn, double distance, double speed) {
-		double cmd = cmdIn;
+		return cmdIn;
+		// double cmd = cmdIn;
 		
-		//if the failsafe toggle has been turned off or if we are not approaching an intersections then return
-		if (!allowFailSafe_  ||  phase_ == NONE) {
-			return cmd;
-		}
+		// //if the failsafe toggle has been turned off or if we are not approaching an intersections then return
+		// if (!allowFailSafe_  ||  phase_ == NONE) {
+		// 	return cmd;
+		// }
 		
-		//set the acceleration limit higher than in normal ops since this is for handling emergency situations (this will be a positive number)
-		double decel = failSafeDecelFactor_*accelMgr_.getAccelLimit();
+		// //set the acceleration limit higher than in normal ops since this is for handling emergency situations (this will be a positive number)
+		// double decel = failSafeDecelFactor_*accelMgr_.getAccelLimit();
 		
-		//compute the distance that will be covered during vehicle response lag
-		double lagDistance = failSafeResponseLag_ * speed;
+		// //compute the distance that will be covered during vehicle response lag
+		// double lagDistance = failSafeResponseLag_ * speed;
 		
-		//determine emergency stop distance for our current speed (limited to be non-negative)
-		double emerDistance = Math.max((0.5*speed*speed / decel + lagDistance + failSafeDistBuf_), 0.0);
+		// //determine emergency stop distance for our current speed (limited to be non-negative)
+		// double emerDistance = Math.max((0.5*speed*speed / decel + lagDistance + failSafeDistBuf_), 0.0);
 		
-		//are we in fail-safe mode?
-		if (failSafe(emerDistance, distance, speed)) {
+		// //are we in fail-safe mode?
+		// if (failSafe(emerDistance, distance, speed)) {
 
-			//if we haven't yet reached the bar, we have time to slow more gradually
-			double failsafeCmd;
-			if (distance > 0.0) {
-				//determine where we will be one time step in the future, going at the current speed (may be negative!)
-				// plan to stop failSafeDistBuf_ short of the stop bar, and account for the response lag time
-				double futureDistance = distance - 0.001*timeStepSize_*speed - lagDistance - failSafeDistBuf_;
-				//determine the speed we want to have at that point in time to achieve a smooth slow-down
-				double desiredSpeed = Math.sqrt(Math.max(2.0*decel*futureDistance, 0.0));
+		// 	//if we haven't yet reached the bar, we have time to slow more gradually
+		// 	double failsafeCmd;
+		// 	if (distance > 0.0) {
+		// 		//determine where we will be one time step in the future, going at the current speed (may be negative!)
+		// 		// plan to stop failSafeDistBuf_ short of the stop bar, and account for the response lag time
+		// 		double futureDistance = distance - 0.001*timeStepSize_*speed - lagDistance - failSafeDistBuf_;
+		// 		//determine the speed we want to have at that point in time to achieve a smooth slow-down
+		// 		double desiredSpeed = Math.sqrt(Math.max(2.0*decel*futureDistance, 0.0));
 
-				//determine control adjustment that provides a command sufficiently below the actual speed that the controller will take it seriously
-				double adj = calcControlAdjustment(speed, desiredSpeed, -decel);
-				double rawCmd = desiredSpeed + adj;
+		// 		//determine control adjustment that provides a command sufficiently below the actual speed that the controller will take it seriously
+		// 		double adj = calcControlAdjustment(speed, desiredSpeed, -decel);
+		// 		double rawCmd = desiredSpeed + adj;
 
-				//compute the new fail-safe command
-				failsafeCmd = Math.max(Math.min(rawCmd, speed), 0.0);
+		// 		//compute the new fail-safe command
+		// 		failsafeCmd = Math.max(Math.min(rawCmd, speed), 0.0);
 
-				//under no circumstances do we want the resultant command to be larger than the previous one!
-				if (failsafeCmd > prevCmd_) {
-					failsafeCmd = 0.99*prevCmd_;
-				}
-				log_.debugf("TRAJ", "Fail-safe futureDistance = %.2f, speed = %.2f, desiredSpeed = %.2f, rawCmd = %.2f, adj = %.2f, failsafeCmd = %.2f",
-						futureDistance, speed, desiredSpeed, rawCmd, adj, failsafeCmd);
-			}else {
-				//need immediate stop!
-				failsafeCmd = 0.0;
-				log_.debugf("TRAJ", "Fail-safe commanding 0 since we are past the stop bar!");
-			}
+		// 		//under no circumstances do we want the resultant command to be larger than the previous one!
+		// 		if (failsafeCmd > prevCmd_) {
+		// 			failsafeCmd = 0.99*prevCmd_;
+		// 		}
+		// 		log_.debugf("TRAJ", "Fail-safe futureDistance = %.2f, speed = %.2f, desiredSpeed = %.2f, rawCmd = %.2f, adj = %.2f, failsafeCmd = %.2f",
+		// 				futureDistance, speed, desiredSpeed, rawCmd, adj, failsafeCmd);
+		// 	}else {
+		// 		//need immediate stop!
+		// 		failsafeCmd = 0.0;
+		// 		log_.debugf("TRAJ", "Fail-safe commanding 0 since we are past the stop bar!");
+		// 	}
 
-			//if it is less than the input command then use it
-			if (failsafeCmd < cmdIn) {
-				cmd = failsafeCmd;
-				log_.warn("TRAJ", "FAIL-SAFE has overridden the calculated command");
-			}
+		// 	//if it is less than the input command then use it
+		// 	if (failsafeCmd < cmdIn) {
+		// 		cmd = failsafeCmd;
+		// 		log_.warn("TRAJ", "FAIL-SAFE has overridden the calculated command");
+		// 	}
 
-		}
+		// }
 		
-		return cmd;
+		// return cmd;
 	}
 
 	/**
@@ -950,7 +985,6 @@ public class Trajectory implements ITrajectory {
 	private double				cmdSpeedGain_;		//gain applied to speed difference for fail-safe calculations
 	private double				cmdAccelGain_;		//gain applied to acceleration for fail-safe calculations
 	private double				cmdBias_;			//bias applied to command premium for fail-safe calculations
-	private AccelerationManager	accelMgr_;			//manages acceleration limits
 
 	private static final int	MAX_EAD_ERROR_COUNT = 3;//max allowed number of EAD exceptions
 	private static final int 	STOP_DAMPING_TIMESTEPS = 6; //num timesteps before stopping vibrations disappear
