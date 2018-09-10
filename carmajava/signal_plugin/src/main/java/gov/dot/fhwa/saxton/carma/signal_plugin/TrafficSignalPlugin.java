@@ -273,6 +273,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private SpatMessage convertSpatMessage(IntersectionData data) {
         IntersectionState state = data.getIntersectionState();
+        if (state == null) {
+            throw new IllegalArgumentException("convertSpatMessage called with null spat");
+        }
         SpatMessage cnvSpat = new SpatMessage();
 
         cnvSpat.setContentVersion(state.getRevision());
@@ -351,7 +354,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     // Walk through all the movements to compare
                     IntersectionState oldIntersectionState = old.getIntersectionState();
                     if (oldIntersectionState == null) {
-                        log.warn("Intersection could not be processed because it has no state: " + old);
+                        log.warn("Intersection could not be processed because it has no state. Id: " + old.getIntersectionId());
                         continue;
                     }
                     phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getStates()
@@ -576,8 +579,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         for (IntersectionData datum : data.values()) {
             gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData converted = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
             converted.map = convertMapMessage(datum);
-            converted.spat = convertSpatMessage(datum);
-
+            if (datum.getIntersectionState() != null) {
+                converted.spat = convertSpatMessage(datum);
+                log.debug("Converted map message with no spat");
+            }
+        
             out.add(converted);
         }
 

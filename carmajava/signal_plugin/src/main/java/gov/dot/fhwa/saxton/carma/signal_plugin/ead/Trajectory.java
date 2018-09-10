@@ -213,7 +213,7 @@ public class Trajectory implements ITrajectory {
 	 * @return A list of IntersectionData sorted from nearest to farthest
 	 */
 	public List<IntersectionData> getSortedIntersections() {
-		return intersections_;
+		return new ArrayList<>(intersectionManager_.getSortedIntersections());
 	}
 	
 	/**
@@ -324,16 +324,9 @@ public class Trajectory implements ITrajectory {
 			//update internal record of intersections in view, sorted by distance from the vehicle (nearest first)
 			// ASSUMES all intersections within view are ones on our route (we will be traversing them)
 			Location vehicleLoc = new Location(lat, lon);
-			dtsb = updateIntersections(inputIntersections, vehicleLoc);
+			dtsb = intersectionManager_.updateIntersections(inputIntersections, vehicleLoc);
 
-			updateSpatData(); //determines if we are on an intersection approach lane
-			log_.debug("TRAJ", "getspeedCommand returned from call to updateSpatData");
-
-			//if list of intersections has changed or the signal has changed color then
-			if (intersectionsChanged_  ||  phase_ != prevPhase_) {
-				//let EAD know
-				ead_.intersectionListHasChanged();
-			}
+			log_.debug("TRAJ", "getspeedCommand returned from call to updateIntersections");
 
 		}catch (Exception e) {
 			log_.error("TRAJ", "getSpeedCommand detected exception in intersection or spat calcs: " + e.toString());
@@ -367,18 +360,6 @@ public class Trajectory implements ITrajectory {
 		}
 
 		log_.debug("TRAJ", "getSpeedCommand completed executing current state.");
-
-		////////// FAILSAFE & HOUSEKEEPING
-
-		//run the failsafe check on it, which may override the current command to make sure we stop at a red light
-		cmd = applyFailSafeCheck(cmd, dtsb, curSpeed_); // TODO take this out but we should have this somewhere. Maybe a continues check to see if we violate the light
-
-		//preserve history for the next time step
-		prevCmd_ = cmd;
-
-		log_.debugf("TRAJ",
-				"getSpeedCommand exiting. Commanded speed is %.3f m/s. curSpeed = %.3f m/s, method time = %d ms.",
-				cmd, curSpeed_, System.currentTimeMillis( )- entryTime);
 
 		return null;
 	} //getSpeedCommand()
@@ -414,190 +395,193 @@ public class Trajectory implements ITrajectory {
 	 * @return distance to stop bar of the nearest intersection
 	 */
 	public double updateIntersections(List<IntersectionData> inputIntersections, Location vehicleLoc) throws Exception {
-		double dtsb = Double.MAX_VALUE;
-		//if (intersections_ == null) {
-		//	log_.debug("TRAJ", "Entering updateIntersections. intersections_ object is null.");
-		//}else {
-		//	log_.debug("TRAJ", "Entering updateIntersections. intersections_ object is defined with size " + intersections_.size());
-		//}
 
-		// //loop through each previously known intersection
-		// if (intersections_.size() > 0) {
-		// 	for (IntersectionData i : intersections_) {
-		// 		//update the staleness counter
-		// 		++i.missingTimesteps;
+		return intersectionManager_.updateIntersections(inputIntersections, vehicleLoc);
+		
+		// double dtsb = Double.MAX_VALUE;
+		// //if (intersections_ == null) {
+		// //	log_.debug("TRAJ", "Entering updateIntersections. intersections_ object is null.");
+		// //}else {
+		// //	log_.debug("TRAJ", "Entering updateIntersections. intersections_ object is defined with size " + intersections_.size());
+		// //}
 
-		// 		//clear out the old spat data (need to do this so none shows in case we missed one this time step)
-		// 		i.spat = null;
-		// 		i.currentPhase = NONE;
-		// 		i.timeToNextPhase = -1.0;
+		// // //loop through each previously known intersection
+		// // if (intersections_.size() > 0) {
+		// // 	for (IntersectionData i : intersections_) {
+		// // 		//update the staleness counter
+		// // 		++i.missingTimesteps;
 
-		// 		//update the rough distance to it from the new vehicle position
-		// 		if (i.map != null) {
-		// 			Location loc = i.map.getRefPoint();
-		// 			i.roughDist = loc.distanceFrom(vehicleLoc);
+		// // 		//clear out the old spat data (need to do this so none shows in case we missed one this time step)
+		// // 		i.spat = null;
+		// // 		i.currentPhase = NONE;
+		// // 		i.timeToNextPhase = -1.0;
+
+		// // 		//update the rough distance to it from the new vehicle position
+		// // 		if (i.map != null) {
+		// // 			Location loc = i.map.getRefPoint();
+		// // 			i.roughDist = loc.distanceFrom(vehicleLoc);
+		// // 		}
+		// // 	}
+		// // }
+		// // intersectionsChanged_ = false;
+
+		// if (inputIntersections != null  &&  inputIntersections.size() > 0) {
+		// 	log_.debug("TRAJ", "updateIntersections has inputIntersections size = " + inputIntersections.size());
+
+		// 	//loop through all input intersections
+		// 	for (IntersectionData input : inputIntersections) {
+		// 		int mapId = 0;
+		// 		int spatId = 0;
+		// 		int dist = Integer.MAX_VALUE; //cm
+
+		// 		if (input.map != null) {
+		// 			mapId = input.map.getIntersectionId();
+		// 		}
+		// 		if (input.spat != null) {
+		// 			spatId = input.spat.getIntersectionId();
+		// 		}
+		// 		if (mapId > 0  &&  spatId > 0  &&  mapId != spatId) {
+		// 			log_.warnf("TRAJ", "Input intersections with MAP ID = %d and SPAT ID = %d", mapId, spatId);
+		// 			throw new Exception("Invalid intersections input with mismatched MAP/SPAT IDs.");
+		// 		}
+		// 		if (mapId == 0  &&  spatId == 0) {
+		// 			log_.warn("TRAJ", "Input intersections with neither MAP nor SPAT attached.");
+		// 			throw new Exception("Invalid intersections input with neither MAP nor SPAT attached.");
+		// 		}
+		// 		int id = Math.max(mapId, spatId); //since one of these might be zero
+
+		// 		//if we don't want to deal with this intersection, then skip it
+		// 		if (!wantThisIntersection(id)) {
+		// 			continue;
+		// 		}
+
+		// 		//if we've already driven through this intersection, skip it
+		// 		if (completedIntersections_.contains(id)) {
+		// 			log_.debug("TRAJ", "updateIntersections - ignoring new data from id = " + id);
+		// 			continue;
+		// 		}
+
+		// 		//calculate distance to this intersection's reference point
+		// 		if (mapId > 0) {
+		// 			Location loc = input.map.getRefPoint();
+		// 			dist = loc.distanceFrom(vehicleLoc); //returns cm
+		// 		}
+		// 		log_.debug("TRAJ", "updateIntersections - preparing to look at known intersections for id = " + id);
+
+		// 		//if the intersection is already known to us then update its info
+		// 		int existingIndex = intersectionIndex(id);
+		// 		if (existingIndex >= 0) {
+		// 			IntersectionData known = intersections_.get(existingIndex);
+		// 			known.missingTimesteps = 0;
+		// 			if (mapId > 0) {
+		// 				boolean firstMap = known.map == null;
+		// 				if (firstMap  ||  known.map.getContentVersion() != input.map.getContentVersion()) {
+		// 					known.map = input.map;
+		// 					known.roughDist = dist;
+		// 					intersectionsChanged_ = true;
+		// 					log_.infof("TRAJ", "Added MAP data for intersection ID %d. Rough dist = %d cm",
+		// 							input.map.getIntersectionId(), dist);
+		// 				}
+
+		// 				//if the previously known intersection has not yet had a MAP defined (it only had spats) then
+		// 				// we need to re-sort the list by distance, since the rough distance to this was was
+		// 				// previously unknown
+		// 				if (firstMap  &&  intersections_.size() > 1) {
+		// 					for (int k1 = 0;  k1 < intersections_.size() - 1;  ++k1) {
+		// 						for (int k2 = k1 + 1;  k2 < intersections_.size();  ++k2) {
+		// 							if (intersections_.get(k1).roughDist > intersections_.get(k2).roughDist) {
+		// 								IntersectionData temp = intersections_.get(k1);
+		// 								intersections_.set(k1, intersections_.get(k2));
+		// 								intersections_.set(k2, temp);
+		// 								intersectionsChanged_ = true;
+		// 							}
+		// 						}
+		// 					}
+		// 				}
+		// 			}
+
+		// 			//load the new spat data always, as the previous time step's data is now obsolete
+		// 			// only load the raw spat message here, don't need to look at lane signal info
+		// 			known.spat = input.spat;
+		// 			known.currentPhase = input.currentPhase;
+		// 			known.timeToNextPhase = input.timeToNextPhase;
+		// 			known.timeToThirdPhase = input.timeToThirdPhase;
+
+		// 		//else this is the first we've seen the intersection - add it to our list
+		// 		}else {
+		// 			intersectionsChanged_ = true;
+		// 			input.roughDist = dist;
+		// 			input.intersectionId = id;
+		// 			input.missingTimesteps = 0;
+		// 			log_.infof("TRAJ", "Adding new intersection ID %d to list, with rough distance = %d cm",
+		// 					id, dist);
+
+		// 			//insert it into the list in distance order, nearest to farthest
+		// 			if (intersections_.size() > 0) {
+		// 				boolean found = false;
+		// 				for (int j = 0;  j < intersections_.size();  ++j) {
+		// 					if (intersections_.get(j).roughDist > dist) {
+		// 						intersections_.add(j, input);
+		// 						found = true;
+		// 						break;
+		// 					}
+		// 				}
+		// 				if (!found) {
+		// 					intersections_.add(input);
+		// 				}
+		// 			}else { //create first element in our known list
+		// 				intersections_.add(input);
+		// 			}
+		// 		}
+		// 	}
+
+		// 	//at this point we are guaranteed to have at least one member of intersections_
+		// 	//drop any intersections that we haven't seen in a long time
+		// 	for (int i = intersections_.size() - 1;  i >= 0;  --i) { //count backwards to avoid index error when one is removed
+		// 		IntersectionData inter = intersections_.get(i);
+		// 		if (inter.missingTimesteps > maxSpatErrors_) {
+		// 			log_.infof("TRAJ", "Removing intersection ID %d due to lack of signal for %d consecutive time steps.",
+		// 					inter.intersectionId, maxSpatErrors_);
+		// 			intersections_.remove(i);
+		// 			intersectionsChanged_ = true;
 		// 		}
 		// 	}
 		// }
-		// intersectionsChanged_ = false;
 
-		if (inputIntersections != null  &&  inputIntersections.size() > 0) {
-			log_.debug("TRAJ", "updateIntersections has inputIntersections size = " + inputIntersections.size());
+		// //update the geometry for the nearest intersection and check our DTSB there
+		// dtsb = updateNearestGeometry(vehicleLoc);
+		// if (intersections_.size() > 0) {
+		// 	intersections_.get(0).dtsb = dtsb;
+		// }
+		// double stopBoxWidth = intersectionGeom_ == null ? 0.0 : intersectionGeom_.stopBoxWidth();
+		// ead_.setStopBoxWidth(stopBoxWidth);
 
-			//loop through all input intersections
-			for (IntersectionData input : inputIntersections) {
-				int mapId = 0;
-				int spatId = 0;
-				int dist = Integer.MAX_VALUE; //cm
+		// //if we have transitioned to an egress lane or are no longer associated with a lane
+		// // (should be somewhere near the center of the stop box) then
+		// if (intersectionGeom_ != null  &&  spatReliableOnNearest_) {
+		// 	int laneId = intersectionGeom_.laneId();
+		// 	if ((laneId == -1 && prevApproachLaneId_ >= 0) ||
+		// 			!intersectionGeom_.isApproach(laneId) || dtsb < -0.5 * stopBoxWidth) {
+		// 		//remove the nearest intersection from the list, along with its associated map
+		// 		// don't want to do this any sooner, cuz we may be stopped for red a little past the stop bar
+		// 		log_.info("TRAJ", "updateIntersections removing current intersection. laneID = "
+		// 					+ laneId + ", prevApproachLaneId = " + prevApproachLaneId_ + ", approach="
+		// 					+ (intersectionGeom_.isApproach(laneId) ? "true" : "false") + ", dtsb = "
+		// 					+ dtsb + ", stopBoxWidth = " + stopBoxWidth);
+		// 		completedIntersections_.add(intersections_.get(0).intersectionId);
+		// 		intersectionGeom_ = null;
+		// 		map_ = null;
+		// 		intersections_.remove(0);
 
-				if (input.map != null) {
-					mapId = input.map.getIntersectionId();
-				}
-				if (input.spat != null) {
-					spatId = input.spat.getIntersectionId();
-				}
-				if (mapId > 0  &&  spatId > 0  &&  mapId != spatId) {
-					log_.warnf("TRAJ", "Input intersections with MAP ID = %d and SPAT ID = %d", mapId, spatId);
-					throw new Exception("Invalid intersections input with mismatched MAP/SPAT IDs.");
-				}
-				if (mapId == 0  &&  spatId == 0) {
-					log_.warn("TRAJ", "Input intersections with neither MAP nor SPAT attached.");
-					throw new Exception("Invalid intersections input with neither MAP nor SPAT attached.");
-				}
-				int id = Math.max(mapId, spatId); //since one of these might be zero
+		// 		//generate the geometry for the next current intersection
+		// 		dtsb = updateNearestGeometry(vehicleLoc);
+		// 		if (intersections_.size() > 0) {
+		// 			intersections_.get(0).dtsb = dtsb;
+		// 		}
+		// 	}
+		// }
 
-				//if we don't want to deal with this intersection, then skip it
-				if (!wantThisIntersection(id)) {
-					continue;
-				}
-
-				//if we've already driven through this intersection, skip it
-				if (completedIntersections_.contains(id)) {
-					log_.debug("TRAJ", "updateIntersections - ignoring new data from id = " + id);
-					continue;
-				}
-
-				//calculate distance to this intersection's reference point
-				if (mapId > 0) {
-					Location loc = input.map.getRefPoint();
-					dist = loc.distanceFrom(vehicleLoc); //returns cm
-				}
-				log_.debug("TRAJ", "updateIntersections - preparing to look at known intersections for id = " + id);
-
-				//if the intersection is already known to us then update its info
-				int existingIndex = intersectionIndex(id);
-				if (existingIndex >= 0) {
-					IntersectionData known = intersections_.get(existingIndex);
-					known.missingTimesteps = 0;
-					if (mapId > 0) {
-						boolean firstMap = known.map == null;
-						if (firstMap  ||  known.map.getContentVersion() != input.map.getContentVersion()) {
-							known.map = input.map;
-							known.roughDist = dist;
-							intersectionsChanged_ = true;
-							log_.infof("TRAJ", "Added MAP data for intersection ID %d. Rough dist = %d cm",
-									input.map.getIntersectionId(), dist);
-						}
-
-						//if the previously known intersection has not yet had a MAP defined (it only had spats) then
-						// we need to re-sort the list by distance, since the rough distance to this was was
-						// previously unknown
-						if (firstMap  &&  intersections_.size() > 1) {
-							for (int k1 = 0;  k1 < intersections_.size() - 1;  ++k1) {
-								for (int k2 = k1 + 1;  k2 < intersections_.size();  ++k2) {
-									if (intersections_.get(k1).roughDist > intersections_.get(k2).roughDist) {
-										IntersectionData temp = intersections_.get(k1);
-										intersections_.set(k1, intersections_.get(k2));
-										intersections_.set(k2, temp);
-										intersectionsChanged_ = true;
-									}
-								}
-							}
-						}
-					}
-
-					//load the new spat data always, as the previous time step's data is now obsolete
-					// only load the raw spat message here, don't need to look at lane signal info
-					known.spat = input.spat;
-					known.currentPhase = input.currentPhase;
-					known.timeToNextPhase = input.timeToNextPhase;
-					known.timeToThirdPhase = input.timeToThirdPhase;
-
-				//else this is the first we've seen the intersection - add it to our list
-				}else {
-					intersectionsChanged_ = true;
-					input.roughDist = dist;
-					input.intersectionId = id;
-					input.missingTimesteps = 0;
-					log_.infof("TRAJ", "Adding new intersection ID %d to list, with rough distance = %d cm",
-							id, dist);
-
-					//insert it into the list in distance order, nearest to farthest
-					if (intersections_.size() > 0) {
-						boolean found = false;
-						for (int j = 0;  j < intersections_.size();  ++j) {
-							if (intersections_.get(j).roughDist > dist) {
-								intersections_.add(j, input);
-								found = true;
-								break;
-							}
-						}
-						if (!found) {
-							intersections_.add(input);
-						}
-					}else { //create first element in our known list
-						intersections_.add(input);
-					}
-				}
-			}
-
-			//at this point we are guaranteed to have at least one member of intersections_
-			//drop any intersections that we haven't seen in a long time
-			for (int i = intersections_.size() - 1;  i >= 0;  --i) { //count backwards to avoid index error when one is removed
-				IntersectionData inter = intersections_.get(i);
-				if (inter.missingTimesteps > maxSpatErrors_) {
-					log_.infof("TRAJ", "Removing intersection ID %d due to lack of signal for %d consecutive time steps.",
-							inter.intersectionId, maxSpatErrors_);
-					intersections_.remove(i);
-					intersectionsChanged_ = true;
-				}
-			}
-		}
-
-		//update the geometry for the nearest intersection and check our DTSB there
-		dtsb = updateNearestGeometry(vehicleLoc);
-		if (intersections_.size() > 0) {
-			intersections_.get(0).dtsb = dtsb;
-		}
-		double stopBoxWidth = intersectionGeom_ == null ? 0.0 : intersectionGeom_.stopBoxWidth();
-		ead_.setStopBoxWidth(stopBoxWidth);
-
-		//if we have transitioned to an egress lane or are no longer associated with a lane
-		// (should be somewhere near the center of the stop box) then
-		if (intersectionGeom_ != null  &&  spatReliableOnNearest_) {
-			int laneId = intersectionGeom_.laneId();
-			if ((laneId == -1 && prevApproachLaneId_ >= 0) ||
-					!intersectionGeom_.isApproach(laneId) || dtsb < -0.5 * stopBoxWidth) {
-				//remove the nearest intersection from the list, along with its associated map
-				// don't want to do this any sooner, cuz we may be stopped for red a little past the stop bar
-				log_.info("TRAJ", "updateIntersections removing current intersection. laneID = "
-							+ laneId + ", prevApproachLaneId = " + prevApproachLaneId_ + ", approach="
-							+ (intersectionGeom_.isApproach(laneId) ? "true" : "false") + ", dtsb = "
-							+ dtsb + ", stopBoxWidth = " + stopBoxWidth);
-				completedIntersections_.add(intersections_.get(0).intersectionId);
-				intersectionGeom_ = null;
-				map_ = null;
-				intersections_.remove(0);
-
-				//generate the geometry for the next current intersection
-				dtsb = updateNearestGeometry(vehicleLoc);
-				if (intersections_.size() > 0) {
-					intersections_.get(0).dtsb = dtsb;
-				}
-			}
-		}
-
-		return dtsb;
+		// return dtsb;
 	}
 
 	/**
@@ -989,4 +973,6 @@ public class Trajectory implements ITrajectory {
 	private static final int	MAX_EAD_ERROR_COUNT = 3;//max allowed number of EAD exceptions
 	private static final int 	STOP_DAMPING_TIMESTEPS = 6; //num timesteps before stopping vibrations disappear
 	private static ILogger		log_ = LoggerManager.getLogger(Trajectory.class);
+
+	private EadIntersectionManager intersectionManager_ = new EadIntersectionManager();
 }

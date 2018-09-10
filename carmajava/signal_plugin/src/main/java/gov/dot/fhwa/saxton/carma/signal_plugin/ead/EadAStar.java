@@ -429,24 +429,21 @@ public class EadAStar implements IEad {
     protected void injectSpeedCmd(double cmd) {
         speedCmd_ = cmd;
         firstCall_ = false;
-        glidepath-integration
     }
 
     // TODO this implementation is not done
     public List<Node> plan(double speed, double operSpeed, double accel,
                                  List<IntersectionData> intersections) throws Exception {
 
-        // Ensure we have intersections to evaluate
         if (intersections == null  ||  intersections.size() == 0) {
             String msg = "getTargetSpeed invoked with a empty intersection list.";
             log_.error("EAD", msg);
             throw new Exception(msg);
         }
 
-        intList_ = intersections;
         long methodStartTime = System.currentTimeMillis();
         double dtsb = intersections.get(0).dtsb; //if we are close to the stop bar this will be a positive value
-
+        double replanThreshold = 5.0*Math.max(speed, 2.0); //no need to replan if within 5 sec of stop bar
 
         ////////// BUILD & SOLVE THE DIJKSTRA TREE TO DEFINE THE BEST PATH
 
@@ -457,53 +454,49 @@ public class EadAStar implements IEad {
         //      it is an advantage (e.g. no point if there is only 1 intersection and we are 3 sec from passing its bar)
 
         //if the intersection picture has changed since previous time step or we otherwise need to replan then
-        Node goal;
+        replanNeeded_ = true; // TODO remove 
+        // TODO In the getTargetSpeed function everything in this block is needed
+        if (replanNeeded_  ||  (intListChanged_  &&  dtsb > replanThreshold)) {
+            Node goal;
 
-        //define starting node and reset DDT since we are beginning execution of a new path
-        // (starting the plan at commanded speed rather than actual speed will allow for smoother transitions
-        // from one plan to another, since actual speed may be nowhere near commanded speed, but acceleration
-        // is already trying to get us to the command quickly)
-        if (Math.abs(speed - speedCmd_) > 2.0) {
-            log_.warn("EAD", "New plan being generated when actual speed differs greatly from command."
-                        + " prev command = " +  speedCmd_ + ", actual = " + speed);
-        }
-        Node startNode = new Node(0.0, 0.0, speedCmd_);
-        currentNodeIndex_ = 0;
-        ddt_ = 0.0;
-        timeOnPath_ = 0.0;
-        currentPath_ = null;
-
-        //if there is more than one intersection in sight then
-        if (intersections.size() > 1) {
+            //define starting node and reset DDT since we are beginning execution of a new path
+            // (starting the plan at commanded speed rather than actual speed will allow for smoother transitions
+            // from one plan to another, since actual speed may be nowhere near commanded speed, but acceleration
+            // is already trying to get us to the command quickly)
+            // if (Math.abs(speed - speedCmd_) > 2.0) {
+            //     log_.warn("EAD", "New plan being generated when actual speed differs greatly from command."
+            //                 + " prev command = " +  speedCmd_ + ", actual = " + speed);
+            // }
+            Node startNode = new Node(0.0, 0.0, speedCmd_);
+            currentNodeIndex_ = 0;
+            ddt_ = 0.0;
+            timeOnPath_ = 0.0;
+            currentPath_ = null;
 
             //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
             goal = planCoarsePath(operSpeed, startNode);
 
-        //else (only one intersection is known)
-        }else {
-
-            //define a goal node downtrack of the intersection where we can recover operating speed)
-            double dist = intersections.get(0).dtsb;
-            if (dist < 0.0) {
-                dist = (double)intersections.get(0).roughDist / 100.0;
-                log_.debug("EAD", "    overriding with dist = " + dist);
+            //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
+            try {
+                currentPath_ = planDetailedPath(startNode, goal);
+            }catch (Exception e) {
+                log_.warn("EAD", "plan trapped exception from planDetailedPath: " + e.toString());
             }
-            dist += 0.5*operSpeed*operSpeed/maxAccel_; //worst case going from stop at red back to full speed
-            goal = new Node(dist, 999.0, operSpeed); //large time allows heuristic calc to work
+
+            if (currentPath_ == null  ||  currentPath_.size() == 0) {
+                String msg = "plan produced an unusable detailed path.";
+                log_.error("EAD", msg);
+                throw new Exception(msg);
+            }
+
+        //else (no need to create a new plan)
+        }else {
+            //compute the current distance downtrack from the beginning of the current plan
+            double deltaTime = 0.001*((double)(methodStartTime - prevMethodStartTime_));
+            timeOnPath_ += deltaTime;
+            ddt_ += deltaTime*speed;
         }
 
-        //build a detailed plan to get to the near-term goal node downtrack of first intersection [planDetailedPath]
-        try {
-            currentPath_ = planDetailedPath(startNode, goal);
-        }catch (Exception e) {
-            log_.warn("EAD", "getTargetSpeed trapped exception from planDetailedPath: " + e.toString());
-        }
-
-        if (currentPath_ == null  ||  currentPath_.size() == 0) {
-            String msg = "getTargetSpeed produced an unusable detailed path.";
-            log_.error("EAD", msg);
-            throw new Exception(msg);
-        }
 
         prevMethodStartTime_ = methodStartTime;
         long totalTime = System.currentTimeMillis() - methodStartTime;

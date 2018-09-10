@@ -6,7 +6,7 @@
 #-----
 
 # maximumSpeed and crawlingSpeed are in mph
-maximumSpeed: 35
+maximumSpeed: 35.0
 crawlingSpeed: 5.0
 
 # all accel limits are in m/s^2 (accel & decel limits must always be the same due to XGV implementation)

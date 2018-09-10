@@ -416,4 +416,9 @@ public class EadNeighborCalculator implements INeighborCalculator {
             log_.debug("PLAN", msg);
         }
     }
+
+    @Override
+    public void setOperatingSpeed(double os) {
+        // TODO where is this implemented
+    }
 }
