@@ -398,25 +398,25 @@ public class Trajectory implements ITrajectory {
 		//	log_.debug("TRAJ", "Entering updateIntersections. intersections_ object is defined with size " + intersections_.size());
 		//}
 
-		//loop through each previously known intersection
-		if (intersections_.size() > 0) {
-			for (IntersectionData i : intersections_) {
-				//update the staleness counter
-				++i.missingTimesteps;
+		// //loop through each previously known intersection
+		// if (intersections_.size() > 0) {
+		// 	for (IntersectionData i : intersections_) {
+		// 		//update the staleness counter
+		// 		++i.missingTimesteps;
 
-				//clear out the old spat data (need to do this so none shows in case we missed one this time step)
-				i.spat = null;
-				i.currentPhase = NONE;
-				i.timeToNextPhase = -1.0;
+		// 		//clear out the old spat data (need to do this so none shows in case we missed one this time step)
+		// 		i.spat = null;
+		// 		i.currentPhase = NONE;
+		// 		i.timeToNextPhase = -1.0;
 
-				//update the rough distance to it from the new vehicle position
-				if (i.map != null) {
-					Location loc = i.map.getRefPoint();
-					i.roughDist = loc.distanceFrom(vehicleLoc);
-				}
-			}
-		}
-		intersectionsChanged_ = false;
+		// 		//update the rough distance to it from the new vehicle position
+		// 		if (i.map != null) {
+		// 			Location loc = i.map.getRefPoint();
+		// 			i.roughDist = loc.distanceFrom(vehicleLoc);
+		// 		}
+		// 	}
+		// }
+		// intersectionsChanged_ = false;
 
 		if (inputIntersections != null  &&  inputIntersections.size() > 0) {
 			log_.debug("TRAJ", "updateIntersections has inputIntersections size = " + inputIntersections.size());
@@ -762,17 +762,16 @@ public class Trajectory implements ITrajectory {
 	
 	
 	private boolean wantThisIntersection(int thisId) {
-		return true;//TODO remove this and uncomment below
-		// boolean wanted = false;
-		
-		// for (int id : intersectionIds_) {
-		// 	if (thisId == id) {
-		// 		wanted = true;
-		// 		break;
-		// 	}
-		// }
+		boolean wanted = false;
+		log_.info("TRAJ", "Checking if intersection is needed id: " + thisId);
+		for (int id : intersectionIds_) {
+			if (thisId == id) {
+				wanted = true;
+				break;
+			}
+		}
 
-		// return wanted;
+		return wanted;
 	}
 
 	/**
