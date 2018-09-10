@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.*;
@@ -21,7 +37,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.GREEN;
 import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE;
 
 /**
@@ -88,7 +103,7 @@ public class Trajectory implements ITrajectory {
 		log_.infof("TRAJ", "time step = %d ms, respecting timeouts = %b", timeStepSize_, respectTimeouts_);
 
 		//get constraint parameters from the config file
-		speedLimit_ = config.getMaximumSpeed()/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
+		speedLimit_ = config.getMaximumSpeed(0.0)/ Constants.MPS_TO_MPH; //max speed is the only parameter in the config file that is in English units!
 		maxJerk_ = Double.valueOf(config.getProperty("maximumJerk"));
 		accelLimiter_ = config.getBooleanValue("ead.accelLimiter");
 		jerkLimiter_ = config.getBooleanValue("ead.jerkLimiter");
