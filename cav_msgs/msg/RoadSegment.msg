@@ -58,7 +58,8 @@ cav_msgs/Position3D ref_point
 float32 lane_width
 bool lane_width_exists
 
-cav_msgs/SpeedLimitList speed_limits
+# SpeedLimitList ::= SEQUENCE (SIZE(1..9)) OF RegulatorySpeedLimit
+cav_msgs/RegulatorySpeedLimit[] speed_limits
 bool speed_limits_exists
 
 # The DF_RoadLaneSetList data frame consists of a list of GenericLane entries used to describe a segment of
