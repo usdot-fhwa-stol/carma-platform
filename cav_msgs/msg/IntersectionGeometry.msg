@@ -46,7 +46,8 @@ bool lane_width_exists
 # -- translating speed expressed in mph
 # -- into units of m/s
 # -- Complete details regarding each lane type in this intersection
-cav_msgs/SpeedLimitList speed_limits
+# SpeedLimitList ::= SEQUENCE (SIZE(1..9)) OF RegulatorySpeedLimit
+cav_msgs/RegulatorySpeedLimit[] speed_limits
 bool speed_limits_exists
 
 # laneSet LaneList,
@@ -54,14 +55,20 @@ bool speed_limits_exists
 # -- (all lane data is found here)
 # -- Data describing how to use and request preemption and
 # -- priority services from this intersection (if supported)
-cav_msgs/LaneList lane_set
+# The LaneList data frame consists of a list of GenericLane entries.
+# LaneList ::= SEQUENCE (SIZE(1..255)) OF GenericLane
+cav_msgs/GenericLane[] lane_list
+
 
 # -- NOTE Additonal data may be added in the next release of the
 # -- standard at this point to handle this concept
 # preemptPriorityData PreemptPriorityList OPTIONAL,
 # -- data about one or more regional
 # -- preempt or priority zones
-cav_msgs/PreemptPriorityList preempt_priority_data
+# The DF_PreemptPriorityList data frame consists of a list of RegionalSignalControlZone entries.
+#
+# PreemptPriorityList ::= SEQUENCE (SIZE(1..32)) OF SignalControlZone
+cav_msgs/SignalControlZone[] preempt_priority_list
 bool preempt_priority_data_exists
 
 #TODO: RegionalExtensions are not yet implemented in asn1c

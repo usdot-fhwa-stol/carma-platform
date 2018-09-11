@@ -35,17 +35,23 @@ bool layer_id_exists
 cav_msgs/IntersectionGeometry[] intersections
 bool intersections_exists
 
-# road_segments RoadSegmentList OPTIONAL,
-# -- All roadway descriptions
-cav_msgs/RoadSegmentList road_segments
+# Used By: This entry is used directly by one other data structure in this standard, a MSG called MSG_MapData (MAP)
+# <ASN>. In addition, this item may be used by data structures in other ITS standards.
+# RoadSegmentList ::= SEQUENCE (SIZE(1..32)) OF RoadSegment
+cav_msgs/RoadSegment[] road_segment_list
 bool road_segments_exists
 
 #DataParameters OPTIONAL,
 cav_msgs/DataParameters data_parameters
 bool data_parameters_exists
 
-#RestrictionClassList OPTIONAL,
-cav_msgs/RestrictionClassList restriction_list
+# OPTIONAL
+# The DF_RestrictionClassList data frame is used to enumerate a list of user classes which belong to a given
+# assigned index. The resulting collection is treated as a group by the signal controller when it issues movement data
+# (signal phase information) with the GroupID for this group. This data frame is typically static for long periods of time
+# (months) and conveyed to the user by means of the MAP message.
+# RestrictionClassList ::= SEQUENCE (SIZE(1..254)) OF RestrictionClassAssignment
+cav_msgs/RestrictionClassAssignment[] restriction_class_list
 bool restriction_list_exists
 
 #RegionalExtension { SEQUENCE (SIZE(1..4)) OF {REGION.Reg-MapData}} OPTIONAL} OPTIONAL

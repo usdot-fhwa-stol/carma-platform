@@ -22,4 +22,9 @@
 # RestrictionClassID ::= INTEGER (0..255)
 uint8 id
 
+# The DF_RestrictionUserTypeList data frame consists of a list of RestrictionUserType entries.
+#
+# RestrictionUserTypeList ::= SEQUENCE (SIZE(1..16)) OF RestrictionUserType
+cav_msgs/RestrictionUserType[] restriction_user_type_list
+
 
