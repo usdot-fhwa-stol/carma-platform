@@ -10,4 +10,4 @@
 # LaneList ::= SEQUENCE (SIZE(1..255)) OF GenericLane
 #
 
-cav_msgs/GenericLane[] lane_list
+j2735_msgs/GenericLane[] lane_list

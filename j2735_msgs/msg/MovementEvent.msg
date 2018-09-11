@@ -28,12 +28,12 @@
 # ...
 # }
 
-cav_msgs/MovementPhaseState event_state
+j2735_msgs/MovementPhaseState event_state
 
-cav_msgs/TimeChangeDetails timing
+j2735_msgs/TimeChangeDetails timing
 bool timing_exists
 
-cav_msgs/AdvisorySpeedList speeds
+j2735_msgs/AdvisorySpeedList speeds
 bool speeds_exists
 
 #regional #TODO: RegionalExtensions are not yet implemented in asn1c

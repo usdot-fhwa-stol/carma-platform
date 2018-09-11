@@ -33,11 +33,11 @@ uint8 NODE_XY5=4
 uint8 NODE_XY6=5
 uint8 NODE_LATLON=6
 
-cav_msgs/NodeXY20b node_xy1
-cav_msgs/NodeXY22b node_xy2
-cav_msgs/NodeXY24b node_xy3
-cav_msgs/NodeXY26b node_xy4
-cav_msgs/NodeXY28b node_xy5
-cav_msgs/NodeXY32b node_xy6
-cav_msgs/NodeLLmD64b node_latlon
+j2735_msgs/NodeXY20b node_xy1
+j2735_msgs/NodeXY22b node_xy2
+j2735_msgs/NodeXY24b node_xy3
+j2735_msgs/NodeXY26b node_xy4
+j2735_msgs/NodeXY28b node_xy5
+j2735_msgs/NodeXY32b node_xy6
+j2735_msgs/NodeLLmD64b node_latlon
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

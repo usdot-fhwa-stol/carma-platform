@@ -72,6 +72,6 @@ int8 lane_crown_point_left
 int16 lane_angle
 
 # SpeedLimitList ::= SEQUENCE (SIZE(1..9)) OF RegulatorySpeedLimit
-cav_msgs/SpeedLimitList speed_limits
+j2735_msgs/SpeedLimitList speed_limits
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

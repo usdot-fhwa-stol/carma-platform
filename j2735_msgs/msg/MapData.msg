@@ -21,27 +21,27 @@ bool time_stamp_exists
 uint8 msg_issue_revision
 
 #LayerType OPTIONAL :: = ENUMERATED
-cav_msgs/LayerType layer_type
+j2735_msgs/LayerType layer_type
 
 #LayerID OPTIONAL ::= INTEGER (0..100)
 uint8 layer_id
 bool layer_id_exists
 
 #IntersectionGeometryList OPTIONAL ::= SEQUENCE (SIZE(1..32)) OF IntersectionGeometry
-cav_msgs/IntersectionGeometry[] intersections
+j2735_msgs/IntersectionGeometry[] intersections
 bool intersections_exists
 
 # road_segments RoadSegmentList OPTIONAL,
 # -- All roadway descriptions
-cav_msgs/RoadSegmentList road_segments
+j2735_msgs/RoadSegmentList road_segments
 bool road_segments_exists
 
 #DataParameters OPTIONAL,
-cav_msgs/DataParameters data_parameters
+j2735_msgs/DataParameters data_parameters
 bool data_parameters_exists
 
 #RestrictionClassList OPTIONAL,
-cav_msgs/RestrictionClassList restriction_list
+j2735_msgs/RestrictionClassList restriction_list
 bool restriction_list_exists
 
 #RegionalExtension { SEQUENCE (SIZE(1..4)) OF {REGION.Reg-MapData}} OPTIONAL} OPTIONAL

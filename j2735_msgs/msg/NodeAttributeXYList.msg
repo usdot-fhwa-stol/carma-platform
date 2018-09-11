@@ -10,4 +10,4 @@
 #
 # NodeAttributeXYList ::= SEQUENCE (SIZE(1..8)) OF NodeAttributeXY
 
-cav_msgs/NodeAttributeXY[] node_attribute_xy_List
+j2735_msgs/NodeAttributeXY[] node_attribute_xy_List

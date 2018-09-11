@@ -37,16 +37,16 @@
 # ...
 # }
 
-cav_msgs/NodeAttributeXYList local_node
+j2735_msgs/NodeAttributeXYList local_node
 bool local_node_exists
 
-cav_msgs/SegmentAttributeXYList disabled
+j2735_msgs/SegmentAttributeXYList disabled
 bool disabled_exists
 
-cav_msgs/SegmentAttributeXYList enabled
+j2735_msgs/SegmentAttributeXYList enabled
 bool enabled_exists
 
-cav_msgs/LaneDataAttributeList data
+j2735_msgs/LaneDataAttributeList data
 bool data_exists
 
 # Offset-B10 ::= INTEGER (-512..511)

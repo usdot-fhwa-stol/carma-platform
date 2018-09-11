@@ -33,7 +33,7 @@
 # ...
 # }
 
-cav_msgs/AdvisorySpeedType type
+j2735_msgs/AdvisorySpeedType type
 
 # SpeedAdvice ::= INTEGER (0..500) OPTIONAL
 # This data element represents the recommended velocity of an object, typically a vehicle speed along a roadway,
@@ -46,7 +46,7 @@ float32 SPEED_UNAVAILABLE = 500
 bool speed_exists
 
 # SpeedConfidence is an enum already with 0 as unavailable.
-cav_msgs/SpeedConfidence confidence
+j2735_msgs/SpeedConfidence confidence
 
 # ZoneLength ::= INTEGER (0..10000)
 # -- Unit = 1 meter, 0 = unknown,

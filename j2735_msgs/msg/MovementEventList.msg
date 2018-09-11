@@ -11,4 +11,4 @@
 # MovementEventList ::= SEQUENCE (SIZE(1..16)) OF MovementEvent
 #
 
-cav_msgs/MovementEvent[] movement_event_list
+j2735_msgs/MovementEvent[] movement_event_list

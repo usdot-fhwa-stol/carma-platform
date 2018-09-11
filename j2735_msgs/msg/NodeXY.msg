@@ -20,7 +20,7 @@
 # ...
 # }
 
-cav_msgs/NodeOffsetPointXY delta
+j2735_msgs/NodeOffsetPointXY delta
 
-cav_msgs/NodeAttributeSetXY attributes
+j2735_msgs/NodeAttributeSetXY attributes
 bool attributes_exists

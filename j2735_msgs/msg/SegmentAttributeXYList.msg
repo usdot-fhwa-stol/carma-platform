@@ -10,5 +10,5 @@
 
 #SegmentAttributeXYList ::= SEQUENCE (SIZE(1..8)) OF SegmentAttributeXY
 
-cav_msgs/SegmentAttributeXY segment_attribute_xy
+j2735_msgs/SegmentAttributeXY segment_attribute_xy
 

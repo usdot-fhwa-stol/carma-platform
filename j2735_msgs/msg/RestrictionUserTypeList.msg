@@ -10,4 +10,4 @@
 #
 # RestrictionUserTypeList ::= SEQUENCE (SIZE(1..16)) OF RestrictionUserType
 
-cav_msgs/RestrictionUserType[] restriction_user_type_list
+j2735_msgs/RestrictionUserType[] restriction_user_type_list

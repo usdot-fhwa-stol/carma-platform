@@ -11,4 +11,4 @@
 #
 # RoadLaneSetList ::= SEQUENCE (SIZE(1..255)) OF GenericLane
 
-cav_msgs/GenericLane[] road_lane_set_list
+j2735_msgs/GenericLane[] road_lane_set_list
