@@ -49,11 +49,15 @@ bool enabled_exists
 cav_msgs/LaneDataAttributeList data
 bool data_exists
 
-# Offset-B10 ::= INTEGER (-512..511)
+# Deviates from J2735 standard:
+# dWidth in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
+# FLOAT (-5.12-5.11)
 # -- a range of +- 5.11 meters
 float32 dWitdh
 bool dWitdh_exists
 
+# Deviates from J2735 standard:
+# dElevation in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
 float32 dElevation
 bool dElevation_exists
 

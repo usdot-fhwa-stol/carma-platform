@@ -52,8 +52,10 @@ uint8 revision
 
 cav_msgs/Position3D ref_point
 
-# LaneWidth OPTIONAL ::= INTEGER (0..32767) -- units of 1 cm
-uint16 lane_width
+# Deviates from J2735 standard:
+# dWidth in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
+# LaneWidth OPTIONAL ::= FLOAT (0..327.67) -- units of m
+float32 lane_width
 bool lane_width_exists
 
 cav_msgs/SpeedLimitList speed_limits

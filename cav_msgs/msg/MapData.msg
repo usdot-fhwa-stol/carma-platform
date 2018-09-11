@@ -9,6 +9,10 @@
 # Contains critical core elements deemed to be needed with every MapData Message
 # The MapData message is used to convey many types of geographic road information.
 # At the current time its primary use is to convey one or more intersection lane geometry maps within a single message.
+#
+# NOTE: All contents conveyed in base SI units (sec, meter, m/s, etc.) 
+#       The exception being angles which are always conveyed in degrees and units with less precission then the base units (minutes, etc.).
+#
 
 std_msgs/Header header
 

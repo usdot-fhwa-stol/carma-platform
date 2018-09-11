@@ -7,7 +7,7 @@
 # @version 0.1
 #
 # The DF_NodeOffsetPointXY data frame presents a structure to hold different sized data frames for a single node
-# point in a lane. Nodes are described in terms of X and Y offsets in units of 1 centimeter (when zoom is 1:1).
+# point in a lane. 
 #
 # NodeOffsetPointXY ::= CHOICE {
 # -- Nodes with X,Y content
@@ -33,11 +33,38 @@ uint8 NODE_XY5=4
 uint8 NODE_XY6=5
 uint8 NODE_LATLON=6
 
-cav_msgs/NodeXY20b node_xy1
-cav_msgs/NodeXY22b node_xy2
-cav_msgs/NodeXY24b node_xy3
-cav_msgs/NodeXY26b node_xy4
-cav_msgs/NodeXY28b node_xy5
-cav_msgs/NodeXY32b node_xy6
-cav_msgs/NodeLLmD64b node_latlon
+# Only set if choice != NODE_LATLON
+# Deviates from J2735 standard:
+# Latitude in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
+# Offset ::= FLOAT (-512..511)
+# -- a range of +- 5.11 meters
+# A delta offset in X, Y direction from some known point. For non-vehicle centric coordinate frames of
+# reference, offset is positive to the East (X) and to the North (Y) directions. The most negative value shall be used to
+# indicate an unknown value.
+
+float32 x
+float32 y
+
+# Only set if choice == NODE_LATLON
+# Deviates from J2735 standard:
+# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unessasry conversion by subscribers
+#Longitude ::= INTEGER (-179.9999999..180.0000001)
+#  -- Providing a range of plus-minus 180 degrees
+float64 longitude
+
+float64 LONGITUDE_UNAVAILABLE = 180.0000001
+float64 LONGITUDE_MAX = 180.0
+float64 LONGITUDE_MIN = -179.9999999
+
+# Only set if choice == NODE_LATLON
+# Deviates from J2735 standard:
+# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unessasry conversion by subscribers
+#Latitude ::= INTEGER (-90.0000000-90.0000001)
+#  -- Providing a range of plus-minus 90 degrees
+float64 latitude
+
+float64 LATITUDE_UNAVAILABLE = 90.0000001
+float64 LATITUDE_MAX = 90.0
+float64 LATITUDE_MIN = -90.0
+
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

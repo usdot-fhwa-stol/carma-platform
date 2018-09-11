@@ -12,5 +12,5 @@
 #
 #
 
-cav_msgs/SignalControlZone preempt_priority_list
+cav_msgs/SignalControlZone[] preempt_priority_list
 
