@@ -65,14 +65,16 @@ uint32 moy
 uint32 MOY_INVALID=527040
 bool moy_exists
 
-#DSecond ::= INTEGER (0..65535)
-#  -- Integer values from 0 to 59999 represent the milliseconds within a minute
-#  -- A leap second is represented by the value range 60000 to 60999
-#  -- The values from 61000 to 65534 are reserved
-#  -- The value of 65535 shall represent an unavailable value in the range of the minute
-#  -- Unit is milliseconds
-uint32 time_stamp
-uint32 TIME_STAMP_UNAVAILABLE=65535
+# Deviates from J2735 standard:
+# DSecond in this message are conveyed as seconds rather than milliseconds to avoid redundant unessasry conversion by subscribers
+# DSecond ::= FLOAT (0..65.535)
+#  -- Float values from 0 to 59.999 represent the seconds within a minute
+#  -- A leap second is represented by the value range 60.000 to 60.999
+#  -- The values from 61.000 to 65.534 are reserved
+#  -- The value of 65.535 shall represent an unavailable value in the range of the minute
+#  -- Unit is seconds
+float32 time_stamp
+float32 TIME_STAMP_UNAVAILABLE=65.535
 bool time_stamp_exists
 
 # enabledLanes EnabledLaneList
