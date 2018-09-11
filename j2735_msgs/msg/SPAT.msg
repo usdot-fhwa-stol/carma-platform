@@ -41,6 +41,6 @@ bool time_stamp_exists
 string name
 bool name_exists
 
-cav_msgs/IntersectionStateList intersections
+j2735_msgs/IntersectionStateList intersections
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

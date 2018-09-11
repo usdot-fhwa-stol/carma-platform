@@ -10,4 +10,4 @@
 
 # IntersectionStateList ::= SEQUENCE (SIZE(1..32)) OF IntersectionState
 
-cav_msgs/IntersectionState[] intersection_state_list
+j2735_msgs/IntersectionState[] intersection_state_list

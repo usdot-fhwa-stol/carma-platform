@@ -7,13 +7,13 @@
 # @version 0.1
 #
 # directionalUse LaneDirection, -- directions of lane use
-cav_msgs/LaneDirection directional_use
+j2735_msgs/LaneDirection directional_use
 
 # sharedWith LaneSharing  -- co-users of the lane path
-cav_msgs/LaneSharing shared_with
+j2735_msgs/LaneSharing shared_with
 
 # laneType LaneTypeAttributes, -- specific lane type data
-cav_msgs/LaneTypeAttributes laneType
+j2735_msgs/LaneTypeAttributes laneType
 
 # regional RegionalExtension {{REGION.Reg-LaneAttributes}} OPTIONAL
 #TODO: RegionalExtensions are not yet implemented in asn1c

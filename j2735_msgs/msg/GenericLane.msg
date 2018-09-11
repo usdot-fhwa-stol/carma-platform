@@ -36,11 +36,11 @@ bool egress_approach_exists
 # -- and Type Specific Attributes
 # -- These Attributes are 'lane - global' that is,
 # -- they are true for the entire length of the lane
-cav_msgs/LaneAttributes lane_attributes
+j2735_msgs/LaneAttributes lane_attributes
 
 # maneuvers AllowedManeuvers OPTIONAL,
 # -- the permitted maneuvers for this lane
-cav_msgs/AllowedManeuvers maneuvers
+j2735_msgs/AllowedManeuvers maneuvers
 bool maneuvers_exists
 
 # nodeList NodeListXY,
@@ -48,7 +48,7 @@ bool maneuvers_exists
 # -- various Attribute information along the node path
 # -- Attributes found here are more general and may
 # -- come and go over the length of the lane.
-cav_msgs/NodeListXY node_list
+j2735_msgs/NodeListXY node_list
 
 # connectsTo ConnectsToList OPTIONAL,
 # -- a list of other lanes and their signal group IDs
@@ -56,14 +56,14 @@ cav_msgs/NodeListXY node_list
 # -- is given, therefore this element provides the
 # -- information formerly in "signalGroups" in prior
 # -- editions.
-cav_msgs/ConnectsToList connects_to
+j2735_msgs/ConnectsToList connects_to
 bool connects_to_exists
 
 # overlays OverlayLaneList OPTIONAL,
 # -- A list of any lanes which have spatial paths that
 # -- overlay (run on top of, and not simply cross)
 # -- the path of this lane when used
-cav_msgs/OverlayLaneList overlay_lane_list
+j2735_msgs/OverlayLaneList overlay_lane_list
 bool overlay_lane_list_exists
 
 # regional SEQUENCE (SIZE(1..4)) OF RegionalExtension {{REGION.Reg-GenericLane} OPTIONAL,

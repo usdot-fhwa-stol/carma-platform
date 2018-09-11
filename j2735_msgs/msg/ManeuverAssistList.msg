@@ -2,4 +2,4 @@
 #  In addition, this item may be used by data structures in other ITS standards.
 # ManeuverAssistList ::= SEQUENCE (SIZE(1..16)) OF ConnectionManeuverAssist
 
-cav_msgs/ConnectionManeuverAssist[] connection_maneuver_assist_list
+j2735_msgs/ConnectionManeuverAssist[] connection_maneuver_assist_list

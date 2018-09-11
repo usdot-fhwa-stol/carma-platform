@@ -64,10 +64,10 @@ float32 ELEVATION_MAX = 6143.9
 float32 ELEVATION_MIN = -409.5
 
 # Used to model the accuracy of the positional determination with respect to each given axis.
-cav_msgs/PositionalAccuracy accuracy
+j2735_msgs/PositionalAccuracy accuracy
 
 # Provide the current state of the vehicle transmission
-cav_msgs/TransmissionState transmission
+j2735_msgs/TransmissionState transmission
 
 #Speed ::= INTEGER (0..8191) -- Units of 0.02 m/s
 #  -- The value 8191 indicates that speed is unavailable
@@ -100,10 +100,10 @@ float32 STEER_WHEEL_ANGLE_MAX = 189.0
 float32 STEER_WHEEL_ANGLE_MIN = -189.0
 
 # Set of acceleration values in 3 orthogonal directions of the vehicle and with yaw rotation rates expressed as a structure.
-cav_msgs/AccelerationSet4Way accelSet
+j2735_msgs/AccelerationSet4Way accelSet
 
 # Conveys a variety of information about the current brake and system control activity of the vehicle.
-cav_msgs/BrakeSystemStatus brakes
+j2735_msgs/BrakeSystemStatus brakes
 
 # The vehicle length and width
-cav_msgs/VehicleSize size
+j2735_msgs/VehicleSize size

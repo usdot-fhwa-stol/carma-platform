@@ -10,4 +10,4 @@
 #
 # LaneDataAttributeList ::= SEQUENCE (SIZE(1..8)) OF LaneDataAttribute
 
-cav_msgs/LaneDataAttribute[] lane_attribute_list
+j2735_msgs/LaneDataAttribute[] lane_attribute_list

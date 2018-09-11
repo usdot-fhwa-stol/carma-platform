@@ -12,5 +12,5 @@
 #
 #
 
-cav_msgs/SignalControlZone preempt_priority_list
+j2735_msgs/SignalControlZone preempt_priority_list
 

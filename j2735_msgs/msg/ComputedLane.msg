@@ -61,9 +61,9 @@ uint16 reference_lane_id
 # DrivenLineOffsetLg ::= INTEGER (-32767..32767)
 # -- LSB units are 1 cm.
 
-cav_msgs/OffsetXaxis offset_x_axis
+j2735_msgs/OffsetXaxis offset_x_axis
 
-cav_msgs/OffsetYaxis offset_y_axis
+j2735_msgs/OffsetYaxis offset_y_axis
 
 # Angle ::= INTEGER (0..239)
 #  -- Unsigned units of 1.5 degree, in 1 octet

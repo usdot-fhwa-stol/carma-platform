@@ -12,7 +12,7 @@
 
 std_msgs/Header header
 
-cav_msgs/BSMCoreData core_data
+j2735_msgs/BSMCoreData core_data
 
 # -- Part II Content is for future use. 
 

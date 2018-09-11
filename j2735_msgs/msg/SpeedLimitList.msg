@@ -9,4 +9,4 @@
 # SpeedLimitList ::= SEQUENCE (SIZE(1..9)) OF RegulatorySpeedLimit
 
 #A list of RegulatorySpeedLimit
-cav_msgs/RegulatorySpeedLimit[] speed_limits
+j2735_msgs/RegulatorySpeedLimit[] speed_limits

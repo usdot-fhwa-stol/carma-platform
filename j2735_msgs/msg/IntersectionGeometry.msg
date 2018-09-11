@@ -19,7 +19,7 @@ bool name_exists
 # -- A globally unique value set,
 # -- consisting of a regionID and
 # -- intersection ID assignment
-cav_msgs/IntersectionReferenceID id
+j2735_msgs/IntersectionReferenceID id
 
 # revision MsgCount  ::= INTEGER (0..127)
 # -- Required default values about lane descriptions follow
@@ -28,7 +28,7 @@ uint8 revision
 # refPoint Position3D, -- The reference from which subsequent
 # -- data points are offset until a new
 # -- point is used.
-cav_msgs/Position3D ref_point
+j2735_msgs/Position3D ref_point
 
 # laneWidth LaneWidth OPTIONAL ::= INTEGER (0..32767) -- units of 1 cm
 # -- Reference width used by all subsequent
@@ -44,7 +44,7 @@ bool lane_width_exists
 # -- translating speed expressed in mph
 # -- into units of m/s
 # -- Complete details regarding each lane type in this intersection
-cav_msgs/SpeedLimitList speed_limits
+j2735_msgs/SpeedLimitList speed_limits
 bool speed_limits_exists
 
 # laneSet LaneList,
@@ -52,14 +52,14 @@ bool speed_limits_exists
 # -- (all lane data is found here)
 # -- Data describing how to use and request preemption and
 # -- priority services from this intersection (if supported)
-cav_msgs/LaneList lane_set
+j2735_msgs/LaneList lane_set
 
 # -- NOTE Additonal data may be added in the next release of the
 # -- standard at this point to handle this concept
 # preemptPriorityData PreemptPriorityList OPTIONAL,
 # -- data about one or more regional
 # -- preempt or priority zones
-cav_msgs/PreemptPriorityList preempt_priority_data
+j2735_msgs/PreemptPriorityList preempt_priority_data
 bool preempt_priority_data_exists
 
 #TODO: RegionalExtensions are not yet implemented in asn1c

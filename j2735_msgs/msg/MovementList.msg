@@ -10,4 +10,4 @@
 #
 # MovementList ::= SEQUENCE (SIZE(1..255)) OF MovementState
 
-cav_msgs/MovementState[] movement_list
+j2735_msgs/MovementState[] movement_list

@@ -57,9 +57,9 @@ bool movement_name_exists
 uint8 signal_group
 
 # state-time-speed MovementEventList
-cav_msgs/MovementEventList state_time_speed
+j2735_msgs/MovementEventList state_time_speed
 
-cav_msgs/ManeuverAssistList maneuver_assist_list
+j2735_msgs/ManeuverAssistList maneuver_assist_list
 bool maneuver_assist_list_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c
