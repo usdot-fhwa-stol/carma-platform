@@ -33,13 +33,38 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-//TODO top comment
-namespace units {
-  static const double DECA_MPS_PER_MPS = 10.0;
-  static const double DECA_S_PER_S = 10.0;
-  static const double MS_PER_S = 1000.0;
-  static const double CM_PER_M = 100.0;
-  static const double TENTH_MICRO_DEG_PER_DEG = 10000000.0;
-  static const double DECA_M_PER_M = 10.0;
-  static const double FIFTIETH_M_PER_M = 50.0;
-}
+#include <ros/ros.h>
+#include <ros/callback_queue.h>
+#include <j2735_msgs/BSM.h>
+#include <j2735_msgs/SPAT.h>
+#include <j2735_msgs/MapData.h>
+#include <cav_msgs/SystemAlert.h>
+#include <cav_msgs/BSM.h>
+#include <cav_msgs/SPAT.h>
+#include <cav_msgs/MapData.h>
+#include "units.h"
+
+/**
+ * @class SPATConvertor
+ * @brief Is the class responsible for converting J2735 BSMs to CARMA usable BSMs
+ */
+class MapConvertor 
+{
+  public:
+    /**
+     * @brief constructor
+     * @param argc - command line argument count
+     * @param argv - command line arguments
+     */
+    MapConvertor() {};
+
+    ~MapConvertor() 
+    {
+      //TODO
+    }
+
+    void convert(j2735_msgs::MapData& in_msg, cav_msgs::MapData& out_msg);
+
+  private:
+
+};  
