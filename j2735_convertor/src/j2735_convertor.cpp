@@ -93,7 +93,7 @@ void J2735Convertor::initialize() {
 }
 
 void J2735Convertor::j2735BsmHandler(const j2735_msgs::BSMConstPtr& message) {
-
+  
 }
 
 void J2735Convertor::j2735SpatHandler(const j2735_msgs::SPATConstPtr& message) {
