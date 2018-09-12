@@ -57,7 +57,7 @@ public:
    * @param argc - command line argument count
    * @param argv - command line arguments
    */
-  J2735Convertor(int argc, char** argv);
+  J2735Convertor(int argc, char** argv) {};
 
   ~J2735Convertor() 
   {
