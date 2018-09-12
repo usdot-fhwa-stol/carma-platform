@@ -68,7 +68,7 @@ cav_msgs/GenericLane[] lane_list
 # The DF_PreemptPriorityList data frame consists of a list of RegionalSignalControlZone entries.
 #
 # PreemptPriorityList ::= SEQUENCE (SIZE(1..32)) OF SignalControlZone
-cav_msgs/SignalControlZone[] preempt_priority_list
+j2735_msgs/SignalControlZone[] preempt_priority_list
 bool preempt_priority_data_exists
 
 #TODO: RegionalExtensions are not yet implemented in asn1c

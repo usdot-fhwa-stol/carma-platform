@@ -36,11 +36,11 @@ bool egress_approach_exists
 # -- and Type Specific Attributes
 # -- These Attributes are 'lane - global' that is,
 # -- they are true for the entire length of the lane
-cav_msgs/LaneAttributes lane_attributes
+j2735_msgs/LaneAttributes lane_attributes
 
 # maneuvers AllowedManeuvers OPTIONAL,
 # -- the permitted maneuvers for this lane
-cav_msgs/AllowedManeuvers maneuvers
+j2735_msgs/AllowedManeuvers maneuvers
 bool maneuvers_exists
 
 # nodeList NodeListXY,
@@ -60,7 +60,7 @@ cav_msgs/NodeListXY node_list
 # lanes to which each lane connects beyond its stop point. See the Connection data frame entry for details. Note that this
 # data frame is not used in some lane object types.
 # ConnectsToList ::= SEQUENCE (SIZE(1..16)) OF Connection
-cav_msgs/Connection[] connect_to_list
+j2735_msgs/Connection[] connect_to_list
 bool connects_to_exists
 
 # overlays OverlayLaneList OPTIONAL,
