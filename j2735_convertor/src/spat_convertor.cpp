@@ -33,61 +33,106 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bsm_convertor.h"
+#include "spat_convertor.h"
 
-void BSMConvertor::convertVehicleSize(j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg) {
-  out_msg.vehicle_length = in_msg.vehicle_length;
-  out_msg.vehicle_width = in_msg.vehicle_width;
+void SPATConvertor::convertTimeChangeDetails(j2735_msgs::TimeChangeDetails& in_msg, cav_msgs::TimeChangeDetails& out_msg) {
+  out_msg.confidence = in_msg.confidence;
+  out_msg.confidence_exists = in_msg.confidence_exists;
+  out_msg.start_time_exists = in_msg.start_time_exists;
+  out_msg.max_end_time_exists = in_msg.max_end_time_exists;
+  out_msg.likely_time_exists = in_msg.likely_time_exists;
+  out_msg.next_time_exists = in_msg.next_time_exists;
+  // Convert Time Marks
+  out_msg.start_time = (double)in_msg.start_time / units::DECA_S_PER_S;
+  out_msg.min_end_time = (double)in_msg.min_end_time / units::DECA_S_PER_S;
+  out_msg.max_end_time = (double)in_msg.max_end_time / units::DECA_S_PER_S;
+  out_msg.likely_time_exists = (double)in_msg.likely_time_exists / units::DECA_S_PER_S;
+  out_msg.next_time = (double)in_msg.next_time / units::DECA_S_PER_S;
+  // Done Conversion
 }
 
-void BSMConvertor::convertBrakeSystemStatus(j2735_msgs::BrakeSystemStatus& in_msg, cav_msgs::BrakeSystemStatus& out_msg) {
-  out_msg.abs.anti_lock_brake_status = in_msg.abs.anti_lock_brake_status;
-  out_msg.auxBrakes.auxiliary_brake_status = in_msg.auxBrakes.auxiliary_brake_status;
-  out_msg.brakeBoost.brake_boost_applied = in_msg.brakeBoost.brake_boost_applied;
-  out_msg.scs.stability_control_status = in_msg.scs.stability_control_status;
-  out_msg.traction.traction_control_status = in_msg.traction.traction_control_status;
-  out_msg.wheelBrakes.brake_applied_status = in_msg.wheelBrakes.brake_applied_status;
+void SPATConvertor::convertAdvisorySpeed(j2735_msgs::AdvisorySpeed& in_msg, cav_msgs::AdvisorySpeed& out_msg) {
+  out_msg.type = in_msg.type;
+  out_msg.speed_exists = in_msg.speed_exists;
+  // Convert Speed
+  out_msg.speed = (double)in_msg.speed / units::DECA_MPS_PER_MPS;
+  // Done Conversion
+  out_msg.confidence = in_msg.confidence;
+  out_msg.distance = in_msg.distance;
+  out_msg.distance_exists = in_msg.distance_exists;
+  out_msg.restriction_class_id = in_msg.restriction_class_id;
+  out_msg.restriction_class_id_exists = in_msg.restriction_class_id_exists;
 }
 
-void BSMConvertor::convertAccelerationSet4Way(j2735_msgs::AccelerationSet4Way& in_msg, cav_msgs::AccelerationSet4Way& out_msg) {
-  out_msg.lateral = in_msg.lateral;
-  out_msg.longitudinal = in_msg.longitudinal;
-  out_msg.vert = in_msg.vert;
-  out_msg.yaw_rate = in_msg.yaw_rate;
+void SPATConvertor::convertMovementEvent(j2735_msgs::MovementEvent& in_msg, cav_msgs::MovementEvent& out_msg) {
+  out_msg.event_state = in_msg.event_state;
+  out_msg.timing_exists = in_msg.timing_exists;
+  // Convert TimeChangeDetails
+  convertTimeChangeDetails(in_msg.timing, out_msg.timing);
+  // Done Conversion
+
+  out_msg.speeds_exists = in_msg.speeds_exists;
+  // Convert AdvisorySpeedList
+    for (j2735_msgs::AdvisorySpeed speed : in_msg.speeds.advisory_speed_list) {
+    cav_msgs::AdvisorySpeed cav_speed;
+    convertAdvisorySpeed(speed, cav_speed);
+    out_msg.advisory_speed_list.push_back(cav_speed);
+  }
 }
 
-void BSMConvertor::convertTransmissionState(j2735_msgs::TransmissionState& in_msg, cav_msgs::TransmissionState& out_msg) {
-  out_msg.transmission_state = in_msg.transmission_state;
+void SPATConvertor::convertMovementState(j2735_msgs::MovementState& in_msg, cav_msgs::MovementState& out_msg) {
+  out_msg.movement_name = in_msg.movement_name;
+  out_msg.movement_name_exists = in_msg.movement_name_exists;
+  out_msg.signal_group = in_msg.signal_group;
+  // Convert MovementEvent
+  for (j2735_msgs::MovementEvent event : in_msg.state_time_speed.movement_event_list) {
+    cav_msgs::MovementEvent cav_event;
+    convertMovementEvent(event, cav_event);
+    out_msg.movement_event_list.push_back(cav_event);
+  }
+  // Done Conversion
+  out_msg.connection_maneuver_assist_list = in_msg.maneuver_assist_list.connection_maneuver_assist_list;
+  out_msg.maneuver_assist_list_exists = in_msg.maneuver_assist_list_exists;
 }
 
-void BSMConvertor::convertPositionalAccuracy(j2735_msgs::PositionalAccuracy& in_msg, cav_msgs::PositionalAccuracy& out_msg) {
-  out_msg.orientation = in_msg.orientation;
-  out_msg.semiMajor = in_msg.semiMajor;
-  out_msg.semiMinor = in_msg.semiMinor;
-}
-
-void BSMConvertor::convertCoreData(j2735_msgs::BSMCoreData& in_msg, cav_msgs::BSMCoreData& out_msg) {
-  // Convert basic data
-  out_msg.msg_count = in_msg.msg_count;
+void SPATConvertor::convertIntersectionState(j2735_msgs::IntersectionState& in_msg, cav_msgs::IntersectionState& out_msg) {
+  out_msg.name = in_msg.name;
+  out_msg.name_exists = in_msg.name_exists;
   out_msg.id = in_msg.id;
-  out_msg.sec_mark = in_msg.sec_mark;
-  out_msg.latitude = in_msg.latitude;
-  out_msg.longitude = in_msg.longitude;
-  out_msg.elev = in_msg.elev;
-  out_msg.speed = in_msg.speed;
-  out_msg.heading = in_msg.heading;
-  out_msg.angle = in_msg.angle;
-  // Convert nested messages
-  convertPositionalAccuracy(in_msg.accuracy, out_msg.accuracy);
-  convertTransmissionState(in_msg.transmission, out_msg.transmission);
-  convertAccelerationSet4Way(in_msg.accelSet, out_msg.accelSet);
-  convertBrakeSystemStatus(in_msg.brakes, out_msg.brakes);
-  convertVehicleSize(in_msg.size, out_msg.size);
+  out_msg.revision = in_msg.revision;
+  out_msg.status = in_msg.status;
+  out_msg.moy = in_msg.moy;
+  out_msg.moy_exists = in_msg.moy_exists;
+  // Convert units of timestamp from ms to s
+  out_msg.time_stamp = (double)in_msg.time_stamp / units::MS_PER_S;
+  out_msg.time_stamp_exists = in_msg.time_stamp_exists;
+  // Done conversion
+  out_msg.lane_id_list = in_msg.enabled_lanes.lane_id_list;
+  out_msg.enabled_lanes_exists = in_msg.enabled_lanes_exists;
+
+  // Convert MovementState
+  for (j2735_msgs::MovementState state : in_msg.states.movement_list) {
+    cav_msgs::MovementState cav_state;
+    convertMovementState(state, cav_state);
+    out_msg.movement_list.push_back(cav_state);
+  }
+  // Done Conversion
+
+  out_msg.connection_maneuver_assist_list = in_msg.maneuever_assist_list.connection_maneuver_assist_list;
+  out_msg.maneuever_assist_list_exists = in_msg.maneuever_assist_list_exists;
 }
 
+void SPATConvertor::convert(j2735_msgs::SPAT& in_msg, cav_msgs::SPAT& out_msg) {
+  out_msg.time_stamp = in_msg.time_stamp;
+  out_msg.time_stamp_exists = in_msg.time_stamp_exists;
+  out_msg.name = in_msg.name;
+  out_msg.name_exists = in_msg.name_exists;
 
-void BSMConvertor::convert(j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg) {
-  out_msg.header = in_msg.header;
-  convertCoreData(in_msg.core_data, out_msg.core_data);
+  // Convert Intersection State List
+  for (j2735_msgs::IntersectionState state : in_msg.intersections.intersection_state_list) {
+    cav_msgs::IntersectionState cav_state;
+    convertIntersectionState(state, cav_state);
+    out_msg.intersection_state_list.push_back(cav_state);
+  }
 }
 

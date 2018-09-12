@@ -33,46 +33,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ros/ros.h>
-#include <ros/callback_queue.h>
-#include <j2735_msgs/BSM.h>
-#include <j2735_msgs/SPAT.h>
-#include <j2735_msgs/MapData.h>
-#include <cav_msgs/SystemAlert.h>
-#include <cav_msgs/BSM.h>
-#include <cav_msgs/SPAT.h>
-#include <cav_msgs/MapData.h>
-#include "unit_conversion.h"
-
-/**
- * @class SPATConvertor
- * @brief Is the class responsible for converting J2735 BSMs to CARMA usable BSMs
- */
-class SPATConvertor 
-{
-  public:
-    /**
-     * @brief constructor
-     * @param argc - command line argument count
-     * @param argv - command line arguments
-     */
-    SPATConvertor() {};
-
-    ~SPATConvertor() 
-    {
-      //TODO
-    }
-
-    void convert(j2735_msgs::SPAT& in_msg, cav_msgs::SPAT& out_msg);
-
-  private:
-    void convertTimeChangeDetails(j2735_msgs::TimeChangeDetails& in_msg, cav_msgs::TimeChangeDetails& out_msg);
-
-    void convertAdvisorySpeed(j2735_msgs::AdvisorySpeed& in_msg, cav_msgs::AdvisorySpeed& out_msg);
-
-    void convertMovementEvent(j2735_msgs::MovementEvent& in_msg, cav_msgs::MovementEvent& out_msg);
-
-    void convertMovementState(j2735_msgs::MovementState& in_msg, cav_msgs::MovementState& out_msg);
-
-    void convertIntersectionState(j2735_msgs::IntersectionState& in_msg, cav_msgs::IntersectionState& out_msg);
-};  
+//TODO top comment
+namespace units {
+  static const double DECA_MPS_PER_MPS = 10.0;
+  static const double DECA_S_PER_S = 10.0;
+  static const double MS_PER_S = 1000.0;
+}
