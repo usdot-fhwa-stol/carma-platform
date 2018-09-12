@@ -44,7 +44,7 @@
 
 cav_msgs/ConnectingLane connecting_lane
 
-cav_msgs/IntersectionReferenceID remote_intersection
+j2735_msgs/IntersectionReferenceID remote_intersection
 bool remote_intersection_exists
 
 # SignalGroupID ::= INTEGER (0..255)

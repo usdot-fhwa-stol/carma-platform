@@ -19,7 +19,7 @@ bool name_exists
 # -- A globally unique value set,
 # -- consisting of a regionID and
 # -- intersection ID assignment
-cav_msgs/IntersectionReferenceID id
+j2735_msgs/IntersectionReferenceID id
 
 # revision MsgCount  ::= INTEGER (0..127)
 # -- Required default values about lane descriptions follow

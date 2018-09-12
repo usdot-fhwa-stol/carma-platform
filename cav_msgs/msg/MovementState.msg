@@ -64,7 +64,7 @@ cav_msgs/MovementEvent[] movement_event_list
 # This entry is used directly by one other data structure in this standard, a DF called DF_LaneAttributes <ASN>.
 #  In addition, this item may be used by data structures in other ITS standards.
 # ManeuverAssistList ::= SEQUENCE (SIZE(1..16)) OF ConnectionManeuverAssist
-cav_msgs/ConnectionManeuverAssist[] connection_maneuver_assist_list
+j2735_msgs/ConnectionManeuverAssist[] connection_maneuver_assist_list
 bool maneuver_assist_list_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

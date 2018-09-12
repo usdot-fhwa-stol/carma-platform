@@ -33,7 +33,7 @@
 # ...
 # }
 
-cav_msgs/AdvisorySpeedType type
+j2735_msgs/AdvisorySpeedType type
 
 # Deviates from J2735 standard:
 # SpeedAdvice in this message are conveyed as m/s rather than 1/10th m/s to avoid redundant unessasry conversion by subscribers
@@ -46,7 +46,7 @@ float32 SPEED_UNAVAILABLE = 50.0
 bool speed_exists
 
 # SpeedConfidence is an enum already with 0 as unavailable.
-cav_msgs/SpeedConfidence confidence
+j2735_msgs/SpeedConfidence confidence
 
 # ZoneLength ::= INTEGER (0..10000)
 # -- Unit = 1 meter, 0 = unknown,
