@@ -13,4 +13,4 @@
 
 # RestrictionClassList ::= SEQUENCE (SIZE(1..254)) OF RestrictionClassAssignment
 
-j2735_msgs/RestrictionClassAssignment restriction_class_list
+j2735_msgs/RestrictionClassAssignment[] restriction_class_list
