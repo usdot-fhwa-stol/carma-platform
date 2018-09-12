@@ -37,9 +37,26 @@
 
 // TODO top comment
 
+// TODO 
+
 int J2735Convertor::run() {
-    initialize();
-    return 0;
+  // Initialize Node
+  initialize();
+
+  // Attach bsm, spat, map to processing to unique threads
+  ros::AsyncSpinner bsm_spinner(1, &bsm_queue_);
+  bsm_spinner.start();
+
+  ros::AsyncSpinner spat_spinner(1, &spat_queue_);
+  spat_spinner.start();
+
+  ros::AsyncSpinner map_spinner(1, &map_queue_);
+  map_spinner.start();
+
+  // Continuosly process callbacks for default_nh_ using the GlobalCallbackQueue
+  ros::spin();
+
+  return 0; 
 }
 
 void J2735Convertor::initialize() {
