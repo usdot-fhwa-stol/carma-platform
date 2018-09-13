@@ -71,36 +71,39 @@ int J2735Convertor::run() {
 }
 
 void J2735Convertor::initialize() {
-  // TODO Setup node handles here if needed
-
+  // Setup node handles here if needed
+  default_nh_.reset(new ros::NodeHandle());
+  bsm_nh_.reset(new ros::NodeHandle());
+  spat_nh_.reset(new ros::NodeHandle());
+  map_nh_.reset(new ros::NodeHandle());
   // Set Callback Queues for Node Handles
-  bsm_nh_.setCallbackQueue(&bsm_queue_);
-  spat_nh_.setCallbackQueue(&spat_queue_);
-  map_nh_.setCallbackQueue(&map_queue_);
+  bsm_nh_->setCallbackQueue(&bsm_queue_);
+  spat_nh_->setCallbackQueue(&spat_queue_);
+  map_nh_->setCallbackQueue(&map_queue_);
 
   // J2735 BSM Subscriber TODO figure out topic names
-  j2735_bsm_sub_ = bsm_nh_.subscribe("incoming_j2735_bsm", 1000, &J2735Convertor::j2735BsmHandler, this);
+  j2735_bsm_sub_ = bsm_nh_->subscribe("incoming_j2735_bsm", 1000, &J2735Convertor::j2735BsmHandler, this);
 
   // BSM Publisher TODO think about queue sizes
-  converted_bsm_pub_ = bsm_nh_.advertise<cav_msgs::BSM>("incoming_bsm", 1000);
+  converted_bsm_pub_ = bsm_nh_->advertise<cav_msgs::BSM>("incoming_bsm", 1000);
 
   // J2735 SPAT Subscriber TODO figure out topic names
-  j2735_spat_sub_ = spat_nh_.subscribe("incoming_j2735_spat", 1000, &J2735Convertor::j2735SpatHandler, this);
+  j2735_spat_sub_ = spat_nh_->subscribe("incoming_j2735_spat", 1000, &J2735Convertor::j2735SpatHandler, this);
 
   // SPAT Publisher TODO think about queue sizes
-  converted_spat_pub_ = spat_nh_.advertise<cav_msgs::SPAT>("incoming_spat", 1000);
+  converted_spat_pub_ = spat_nh_->advertise<cav_msgs::SPAT>("incoming_spat", 1000);
 
   // J2735 MAP Subscriber TODO figure out topic names
-  j2735_map_sub_ = map_nh_.subscribe("incoming_j2735_map", 1000, &J2735Convertor::j2735BsmHandler, this);
+  j2735_map_sub_ = map_nh_->subscribe("incoming_j2735_map", 1000, &J2735Convertor::j2735BsmHandler, this);
 
   // MAP Publisher TODO think about queue sizes
-  converted_map_pub_ = map_nh_.advertise<cav_msgs::BSM>("incoming_map", 1000);
+  converted_map_pub_ = map_nh_->advertise<cav_msgs::BSM>("incoming_map", 1000);
 
   // SystemAlert Subscriber
-  system_alert_sub_ = default_nh_.subscribe("system_alert", 10, &J2735Convertor::systemAlertHandler, this);
+  system_alert_sub_ = default_nh_->subscribe("system_alert", 10, &J2735Convertor::systemAlertHandler, this);
 
   // SystemAlert Publisher
-  system_alert_pub_ = default_nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
+  system_alert_pub_ = default_nh_->advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
 }
 
 void J2735Convertor::j2735BsmHandler(const j2735_msgs::BSMConstPtr& message) {

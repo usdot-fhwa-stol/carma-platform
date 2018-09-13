@@ -79,10 +79,10 @@ private:
   //ROS
   ros::Publisher converted_bsm_pub_, converted_spat_pub_, converted_map_pub_, system_alert_pub_;
   ros::Subscriber j2735_bsm_sub_, j2735_spat_sub_, j2735_map_sub_, system_alert_sub_;
-  ros::NodeHandle default_nh_;
-  ros::NodeHandle bsm_nh_;
-  ros::NodeHandle spat_nh_;
-  ros::NodeHandle map_nh_;
+  std::shared_ptr<ros::NodeHandle> default_nh_;
+  std::shared_ptr<ros::NodeHandle> bsm_nh_;
+  std::shared_ptr<ros::NodeHandle> spat_nh_;
+  std::shared_ptr<ros::NodeHandle> map_nh_;
   ros::CallbackQueue bsm_queue_;
   ros::CallbackQueue spat_queue_;
   ros::CallbackQueue map_queue_;
