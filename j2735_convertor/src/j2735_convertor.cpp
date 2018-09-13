@@ -107,7 +107,7 @@ void J2735Convertor::initialize() {
 void J2735Convertor::j2735BsmHandler(const j2735_msgs::BSMConstPtr& message) {
   try {
     cav_msgs::BSM converted_msg;
-    BSMConvertor::convert(*message.get, converted_msg);
+    BSMConvertor::convert(*message, converted_msg);
     converted_bsm_pub_.publish(converted_msg);
   }
   catch(const std::exception& e) {
@@ -159,7 +159,7 @@ void J2735Convertor::handleException(const std::exception& e) {
   ROS_ERROR_STREAM(alert_msg.description); // Log exception
 
   system_alert_pub_.publish(alert_msg); // Notify the rest of the system
-  
+
   ros::Duration(0.05).sleep(); // Leave a small amount of time for the alert to be published
   shutdown(); // Shutdown this node
 }
