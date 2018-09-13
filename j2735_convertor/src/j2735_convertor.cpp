@@ -79,19 +79,19 @@ void J2735Convertor::initialize() {
   map_nh_.setCallbackQueue(&map_queue_);
 
   // J2735 BSM Subscriber TODO figure out topic names
-  j2735_bsm_sub_ = bsm_nh_.subscribe("j2735_incoming_bsm", 1000, &J2735Convertor::j2735BsmHandler, this);
+  j2735_bsm_sub_ = bsm_nh_.subscribe("incoming_j2735_bsm", 1000, &J2735Convertor::j2735BsmHandler, this);
 
   // BSM Publisher TODO think about queue sizes
   converted_bsm_pub_ = bsm_nh_.advertise<cav_msgs::BSM>("incoming_bsm", 1000);
 
   // J2735 SPAT Subscriber TODO figure out topic names
-  j2735_spat_sub_ = spat_nh_.subscribe("j2735_incoming_spat", 1000, &J2735Convertor::j2735SpatHandler, this);
+  j2735_spat_sub_ = spat_nh_.subscribe("incoming_j2735_spat", 1000, &J2735Convertor::j2735SpatHandler, this);
 
   // SPAT Publisher TODO think about queue sizes
   converted_spat_pub_ = spat_nh_.advertise<cav_msgs::SPAT>("incoming_spat", 1000);
 
   // J2735 MAP Subscriber TODO figure out topic names
-  j2735_map_sub_ = map_nh_.subscribe("j2735_incoming_map", 1000, &J2735Convertor::j2735BsmHandler, this);
+  j2735_map_sub_ = map_nh_.subscribe("incoming_j2735_map", 1000, &J2735Convertor::j2735BsmHandler, this);
 
   // MAP Publisher TODO think about queue sizes
   converted_map_pub_ = map_nh_.advertise<cav_msgs::BSM>("incoming_map", 1000);

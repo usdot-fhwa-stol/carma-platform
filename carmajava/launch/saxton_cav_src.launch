@@ -297,6 +297,11 @@
     <!-- Message Package -->
     <group ns="$(arg MSG_NS)">
 
+      <!-- j2735 Convertor Node -->
+      <node pkg="j2735_convertor" type="j2735_convertor_node" name="j2735_convertor">
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+      </node>
       <!-- Message Consumer Node -->
       <node pkg="carma" type="message" name="message_consumer"
             args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
