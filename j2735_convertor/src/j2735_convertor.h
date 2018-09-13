@@ -63,7 +63,9 @@ public:
    * @param argc - command line argument count
    * @param argv - command line arguments
    */
-  J2735Convertor(int argc, char** argv) {};
+  J2735Convertor(int argc, char** argv) {
+    ros::init(argc,argv,"j2735_convertor_node"); // Initialize ROS connection
+  };
 
   ~J2735Convertor() 
   {
