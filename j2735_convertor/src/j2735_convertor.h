@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <mutex>
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <j2735_msgs/BSM.h>
@@ -53,7 +54,9 @@
 class J2735Convertor 
 {
 private:
-
+    std::mutex shutdown_mutex_;
+    bool shutting_down_ = false;
+    int default_spin_rate_ = 10;
 public:
   /**
    * @brief constructor
@@ -127,6 +130,8 @@ private:
    * and sends it to the client program
    */
   void systemAlertHandler(const cav_msgs::SystemAlertConstPtr& message);
+
+  void handleException(const std::exception& e);
 
   void shutdown();
 };

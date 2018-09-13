@@ -41,7 +41,12 @@
 
 int J2735Convertor::run() {
   // Initialize Node
-  initialize();
+  try {
+    initialize();
+  }
+  catch(const std::exception& e) {
+    ROS_ERROR_STREAM("Failed to initialize node with exception: " << e.what());
+  }
 
   // Attach bsm, spat, map to processing to unique threads
   ros::AsyncSpinner bsm_spinner(1, &bsm_queue_);
@@ -54,7 +59,14 @@ int J2735Convertor::run() {
   map_spinner.start();
 
   // Continuosly process callbacks for default_nh_ using the GlobalCallbackQueue
-  ros::spin();
+  ros::Rate r(default_spin_rate_);
+  while (ros::ok() && !shutting_down_)
+  {
+    ros::spinOnce();
+    r.sleep();
+  }
+  // Request ros node shutdown before exit
+  ros::shutdown();
 
   return 0; 
 }
@@ -89,37 +101,71 @@ void J2735Convertor::initialize() {
   system_alert_sub_ = default_nh_.subscribe("system_alert", 10, &J2735Convertor::systemAlertHandler, this);
 
   // SystemAlert Publisher
-  system_alert_pub_ = default_nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10);
+  system_alert_pub_ = default_nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
 }
 
 void J2735Convertor::j2735BsmHandler(const j2735_msgs::BSMConstPtr& message) {
-  cav_msgs::BSM converted_msg;
-  BSMConvertor::convert(*message.get, converted_msg);
-  converted_bsm_pub_.publish(converted_msg);
-}
-
-void J2735Convertor::j2735SpatHandler(const j2735_msgs::SPATConstPtr& message) {
-  cav_msgs::SPAT converted_msg;
-  SPATConvertor::convert(*message, converted_msg);
-  converted_spat_pub_.publish(converted_msg);
-}
-
-void J2735Convertor::j2735MapHandler(const j2735_msgs::MapDataConstPtr& message) {
-  cav_msgs::MapData converted_msg;
-  MapConvertor::convert(*message, converted_msg);
-  converted_map_pub_.publish(converted_msg);
-}
-
-void J2735Convertor::systemAlertHandler(const cav_msgs::SystemAlertConstPtr& message) {
-  ROS_INFO_STREAM("Received SystemAlert message of type: " << message->type);
-  switch(message->type) {
-    case cav_msgs::SystemAlert::SHUTDOWN:
-      shutdown();
-      break;
+  try {
+    cav_msgs::BSM converted_msg;
+    BSMConvertor::convert(*message.get, converted_msg);
+    converted_bsm_pub_.publish(converted_msg);
+  }
+  catch(const std::exception& e) {
+    handleException(e);
   }
 }
 
+void J2735Convertor::j2735SpatHandler(const j2735_msgs::SPATConstPtr& message) {
+  try {
+    cav_msgs::SPAT converted_msg;
+    SPATConvertor::convert(*message, converted_msg);
+    converted_spat_pub_.publish(converted_msg);
+  }
+  catch(const std::exception& e) {
+    handleException(e);
+  }
+}
+
+void J2735Convertor::j2735MapHandler(const j2735_msgs::MapDataConstPtr& message) {
+  try {
+    cav_msgs::MapData converted_msg;
+    MapConvertor::convert(*message, converted_msg);
+    converted_map_pub_.publish(converted_msg);
+  }
+  catch(const std::exception& e) {
+    handleException(e);
+  }
+}
+
+void J2735Convertor::systemAlertHandler(const cav_msgs::SystemAlertConstPtr& message) {
+  try {
+    ROS_INFO_STREAM("Received SystemAlert message of type: " << message->type);
+    switch(message->type) {
+      case cav_msgs::SystemAlert::SHUTDOWN:
+        shutdown();
+        break;
+    }
+  }
+  catch(const std::exception& e) {
+    handleException(e);
+  }
+}
+
+void J2735Convertor::handleException(const std::exception& e) {
+  cav_msgs::SystemAlert alert_msg;
+  alert_msg.type = cav_msgs::SystemAlert::FATAL;
+  alert_msg.description = "Uncaught Exception in " + ros::this_node::getName() + " exception: " + e.what();
+ 
+  ROS_ERROR_STREAM(alert_msg.description); // Log exception
+
+  system_alert_pub_.publish(alert_msg); // Notify the rest of the system
+  
+  ros::Duration(0.05).sleep(); // Leave a small amount of time for the alert to be published
+  shutdown(); // Shutdown this node
+}
+
 void J2735Convertor::shutdown() {
+  std::lock_guard<std::mutex> lock(shutdown_mutex_);
   ROS_WARN_STREAM("Node shutting down");
-  ros::shutdown();
+  shutting_down_ = true;
 }
