@@ -31,8 +31,8 @@ uint8 revision
 cav_msgs/Position3D ref_point
 
 # Deviates from J2735 standard:
-# LaneWidth in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
-# laneWidth LaneWidth OPTIONAL ::= FLOAT32 (0..32767) -- units of m
+# LaneWidth in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
+# laneWidth LaneWidth OPTIONAL ::= FLOAT32 (0..327.67) -- units of m
 # -- Reference width used by all subsequent
 # -- lanes unless a new width is given
 float32 lane_width

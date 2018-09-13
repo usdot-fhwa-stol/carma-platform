@@ -13,7 +13,7 @@
 cav_msgs/SpeedLimitType type
 
 # Deviates from J2735 standard:
-# Velocity in this message are conveyed as m/s rather than 0.02 m/s  to avoid redundant unessasry conversion by subscribers
+# Velocity in this message are conveyed as m/s rather than 0.02 m/s  to avoid redundant unnecessary conversion by subscribers
 # Velocity ::= DOUBLE (0..1638.2) -- Units of m/s
 #-- The value 1638.2 indicates that velocity is unavailable
 float64 speed

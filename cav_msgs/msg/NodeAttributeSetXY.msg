@@ -55,14 +55,14 @@ cav_msgs/LaneDataAttribute[] lane_attribute_list
 bool data_exists
 
 # Deviates from J2735 standard:
-# dWidth in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
+# dWidth in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
 # FLOAT (-5.12-5.11)
 # -- a range of +- 5.11 meters
 float32 dWitdh
 bool dWitdh_exists
 
 # Deviates from J2735 standard:
-# dElevation in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
+# dElevation in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
 float32 dElevation
 bool dElevation_exists
 

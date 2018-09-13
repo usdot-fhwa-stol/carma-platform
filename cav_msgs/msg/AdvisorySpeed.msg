@@ -36,7 +36,7 @@
 cav_msgs/AdvisorySpeedType type
 
 # Deviates from J2735 standard:
-# SpeedAdvice in this message are conveyed as m/s rather than 1/10th m/s to avoid redundant unessasry conversion by subscribers
+# SpeedAdvice in this message are conveyed as m/s rather than 1/10th m/s to avoid redundant unnecessary conversion by subscribers
 # SpeedAdvice ::= FLOAT (0..50.0) OPTIONAL
 # This data element represents the recommended velocity of an object, typically a vehicle speed along a roadway.
 #-- the value 49.9 shall be used for values at or greater than 49.9 m/s

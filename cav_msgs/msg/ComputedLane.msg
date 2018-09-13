@@ -55,10 +55,10 @@ uint16 reference_lane_id
 # The offset axis for the computed lane
 cav_msgs/OffsetAxis offset_x_axis
 
-cav_msgs/OffsetAxis offset_yv_axis
+cav_msgs/OffsetAxis offset_y_axis
 
 # Deviates from J2735 standard:
-# DrivenLineOffsetSm in this message are conveyed as deg rather than 1.5 deg units to avoid redundant unessasry conversion by subscribers
+# DrivenLineOffsetSm in this message are conveyed as deg rather than 1.5 deg units to avoid redundant unnecessary conversion by subscribers
 # Angle ::= FLOAT (0..359)
 #  -- Unsigned units of 1 degree, in 1 octet
 #  -- the true north is 0, positive is clockwise
