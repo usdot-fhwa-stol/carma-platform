@@ -37,23 +37,32 @@
 # ...
 # }
 
-cav_msgs/NodeAttributeXYList local_node
+# The NodeAttributeXYList data frame consists of a list of NodeAttributeXY entries.
+# NodeAttributeXYList ::= SEQUENCE (SIZE(1..8)) OF NodeAttributeXY
+cav_msgs/NodeAttributeXY[] local_node
 bool local_node_exists
-
-cav_msgs/SegmentAttributeXYList disabled
+# The DF_SegmentAttributeXYList data frame consists of a list of SegmentAttributeXY entries.
+# SegmentAttributeXYList ::= SEQUENCE (SIZE(1..8)) OF SegmentAttributeXY
+cav_msgs/SegmentAttributeXY[] disabled
 bool disabled_exists
 
-cav_msgs/SegmentAttributeXYList enabled
+cav_msgs/SegmentAttributeXY[] enabled
 bool enabled_exists
 
-cav_msgs/LaneDataAttributeList data
+# The LaneDataAttributeList data frame consists of a list of LaneDataAttribute entries.
+# LaneDataAttributeList ::= SEQUENCE (SIZE(1..8)) OF LaneDataAttribute
+cav_msgs/LaneDataAttribute[] lane_attribute_list
 bool data_exists
 
-# Offset-B10 ::= INTEGER (-512..511)
+# Deviates from J2735 standard:
+# dWidth in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
+# FLOAT (-5.12-5.11)
 # -- a range of +- 5.11 meters
 float32 dWitdh
 bool dWitdh_exists
 
+# Deviates from J2735 standard:
+# dElevation in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
 float32 dElevation
 bool dElevation_exists
 

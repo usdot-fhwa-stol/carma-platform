@@ -65,26 +65,43 @@ uint32 moy
 uint32 MOY_INVALID=527040
 bool moy_exists
 
-#DSecond ::= INTEGER (0..65535)
-#  -- Integer values from 0 to 59999 represent the milliseconds within a minute
-#  -- A leap second is represented by the value range 60000 to 60999
-#  -- The values from 61000 to 65534 are reserved
-#  -- The value of 65535 shall represent an unavailable value in the range of the minute
-#  -- Unit is milliseconds
-uint32 time_stamp
-uint32 TIME_STAMP_UNAVAILABLE=65535
+# Deviates from J2735 standard:
+# DSecond in this message are conveyed as seconds rather than milliseconds to avoid redundant unnecessary conversion by subscribers
+# DSecond ::= FLOAT (0..65.535)
+#  -- Float values from 0 to 59.999 represent the seconds within a minute
+#  -- A leap second is represented by the value range 60.000 to 60.999
+#  -- The values from 61.000 to 65.534 are reserved
+#  -- The value of 65.535 shall represent an unavailable value in the range of the minute
+#  -- Unit is seconds
+float32 time_stamp
+float32 TIME_STAMP_UNAVAILABLE=65.535
 bool time_stamp_exists
 
-# enabledLanes EnabledLaneList
-# This is a list therefore can be empty list in ROS.
-cav_msgs/EnabledLaneList enabled_lanes
+# The Enabled Lane List data frame is a sequence of lane IDs for lane objects that are activated in the current map
+# configuration. These lanes, unlike most lanes, have their RevocableLane bit set to one (asserted). Such lanes are not
+# considered to be part of the current map unless they are in the Enabled Lane List. This concept is used to describe all the
+# possible regulatory states for a given physical lane.
+#
+# EnabledLaneList ::= SEQUENCE (SIZE(1..16)) OF LaneID
+#-- The unique ID numbers for each
+#-- lane object which is 'active'
+#-- as part of the dynamic map contents.
+
+# LaneID ::= INTEGER (0..255)
+# -- the value 0 shall be used when the lane ID is not available or not known
+# -- the value 255 is reserved for future use
+uint16[] lane_id_list
 bool enabled_lanes_exists
 
-# 	states MovementList
-cav_msgs/MovementList states
+# The MovementList data frame consists of a list of MovementState entries.
+#
+# MovementList ::= SEQUENCE (SIZE(1..255)) OF MovementState
+cav_msgs/MovementState[] movement_list
 
-# 	maneuverAssistList ManeuverAssistList
-cav_msgs/ManeuverAssistList maneuever_assist_list
+# This entry is used directly by one other data structure in this standard, a DF called DF_LaneAttributes <ASN>.
+#  In addition, this item may be used by data structures in other ITS standards.
+# ManeuverAssistList ::= SEQUENCE (SIZE(1..16)) OF ConnectionManeuverAssist
+cav_msgs/ConnectionManeuverAssist[] connection_maneuver_assist_list
 bool maneuever_assist_list_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

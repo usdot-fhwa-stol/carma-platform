@@ -52,14 +52,21 @@ uint8 revision
 
 cav_msgs/Position3D ref_point
 
-# LaneWidth OPTIONAL ::= INTEGER (0..32767) -- units of 1 cm
-uint16 lane_width
+# Deviates from J2735 standard:
+# dWidth in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
+# LaneWidth OPTIONAL ::= FLOAT (0..327.67) -- units of m
+float32 lane_width
 bool lane_width_exists
 
-cav_msgs/SpeedLimitList speed_limits
+# SpeedLimitList ::= SEQUENCE (SIZE(1..9)) OF RegulatorySpeedLimit
+cav_msgs/RegulatorySpeedLimit[] speed_limits
 bool speed_limits_exists
 
-cav_msgs/RoadLaneSetList road_lane_set
+# The DF_RoadLaneSetList data frame consists of a list of GenericLane entries used to describe a segment of
+#  roadway.
+#
+# RoadLaneSetList ::= SEQUENCE (SIZE(1..255)) OF GenericLane
+cav_msgs/GenericLane[] road_lane_set_list
 
 #regional #TODO: RegionalExtensions are not yet implemented in asn1c
 
