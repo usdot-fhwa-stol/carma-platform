@@ -10,7 +10,7 @@
 # RegulatorySpeedLimit ::= SEQUENCE {
 # type SpeedLimitType,
 # -- The type of regulatory speed which follows
-cav_msgs/SpeedLimitType type
+j2735_msgs/SpeedLimitType type
 
 # Deviates from J2735 standard:
 # Velocity in this message are conveyed as m/s rather than 0.02 m/s  to avoid redundant unessasry conversion by subscribers

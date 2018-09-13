@@ -42,4 +42,6 @@ namespace units {
   static const double TENTH_MICRO_DEG_PER_DEG = 10000000.0;
   static const double DECA_M_PER_M = 10.0;
   static const double FIFTIETH_M_PER_M = 50.0;
+  static const double ONE_AND_A_HALF_DEG = 1.5;
+  static const double THREE_TENTHS_DEG = 0.3;
 }

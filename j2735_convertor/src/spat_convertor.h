@@ -42,7 +42,7 @@
 #include <cav_msgs/BSM.h>
 #include <cav_msgs/SPAT.h>
 #include <cav_msgs/MapData.h>
-#include "unit_conversion.h"
+#include "units.h"
 
 /**
  * @class SPATConvertor
@@ -63,16 +63,16 @@ class SPATConvertor
       //TODO
     }
 
-    void convert(j2735_msgs::SPAT& in_msg, cav_msgs::SPAT& out_msg);
+    static void convert(const j2735_msgs::SPAT& in_msg, cav_msgs::SPAT& out_msg);
 
   private:
-    void convertTimeChangeDetails(j2735_msgs::TimeChangeDetails& in_msg, cav_msgs::TimeChangeDetails& out_msg);
+    static void convertTimeChangeDetails(const j2735_msgs::TimeChangeDetails& in_msg, cav_msgs::TimeChangeDetails& out_msg);
 
-    void convertAdvisorySpeed(j2735_msgs::AdvisorySpeed& in_msg, cav_msgs::AdvisorySpeed& out_msg);
+    static void convertAdvisorySpeed(const j2735_msgs::AdvisorySpeed& in_msg, cav_msgs::AdvisorySpeed& out_msg);
 
-    void convertMovementEvent(j2735_msgs::MovementEvent& in_msg, cav_msgs::MovementEvent& out_msg);
+    static void convertMovementEvent(const j2735_msgs::MovementEvent& in_msg, cav_msgs::MovementEvent& out_msg);
 
-    void convertMovementState(j2735_msgs::MovementState& in_msg, cav_msgs::MovementState& out_msg);
+    static void convertMovementState(const j2735_msgs::MovementState& in_msg, cav_msgs::MovementState& out_msg);
 
-    void convertIntersectionState(j2735_msgs::IntersectionState& in_msg, cav_msgs::IntersectionState& out_msg);
+    static void convertIntersectionState(const j2735_msgs::IntersectionState& in_msg, cav_msgs::IntersectionState& out_msg);
 };  

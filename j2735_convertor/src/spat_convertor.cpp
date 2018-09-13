@@ -35,7 +35,7 @@
 
 #include "spat_convertor.h"
 
-void SPATConvertor::convertTimeChangeDetails(j2735_msgs::TimeChangeDetails& in_msg, cav_msgs::TimeChangeDetails& out_msg) {
+void SPATConvertor::convertTimeChangeDetails(const j2735_msgs::TimeChangeDetails& in_msg, cav_msgs::TimeChangeDetails& out_msg) {
   out_msg.confidence = in_msg.confidence;
   out_msg.confidence_exists = in_msg.confidence_exists;
   out_msg.start_time_exists = in_msg.start_time_exists;
@@ -51,7 +51,7 @@ void SPATConvertor::convertTimeChangeDetails(j2735_msgs::TimeChangeDetails& in_m
   // Done Conversion
 }
 
-void SPATConvertor::convertAdvisorySpeed(j2735_msgs::AdvisorySpeed& in_msg, cav_msgs::AdvisorySpeed& out_msg) {
+void SPATConvertor::convertAdvisorySpeed(const j2735_msgs::AdvisorySpeed& in_msg, cav_msgs::AdvisorySpeed& out_msg) {
   out_msg.type = in_msg.type;
   out_msg.speed_exists = in_msg.speed_exists;
   // Convert Speed
@@ -64,7 +64,7 @@ void SPATConvertor::convertAdvisorySpeed(j2735_msgs::AdvisorySpeed& in_msg, cav_
   out_msg.restriction_class_id_exists = in_msg.restriction_class_id_exists;
 }
 
-void SPATConvertor::convertMovementEvent(j2735_msgs::MovementEvent& in_msg, cav_msgs::MovementEvent& out_msg) {
+void SPATConvertor::convertMovementEvent(const j2735_msgs::MovementEvent& in_msg, cav_msgs::MovementEvent& out_msg) {
   out_msg.event_state = in_msg.event_state;
   out_msg.timing_exists = in_msg.timing_exists;
   // Convert TimeChangeDetails
@@ -80,7 +80,7 @@ void SPATConvertor::convertMovementEvent(j2735_msgs::MovementEvent& in_msg, cav_
   }
 }
 
-void SPATConvertor::convertMovementState(j2735_msgs::MovementState& in_msg, cav_msgs::MovementState& out_msg) {
+void SPATConvertor::convertMovementState(const j2735_msgs::MovementState& in_msg, cav_msgs::MovementState& out_msg) {
   out_msg.movement_name = in_msg.movement_name;
   out_msg.movement_name_exists = in_msg.movement_name_exists;
   out_msg.signal_group = in_msg.signal_group;
@@ -95,7 +95,7 @@ void SPATConvertor::convertMovementState(j2735_msgs::MovementState& in_msg, cav_
   out_msg.maneuver_assist_list_exists = in_msg.maneuver_assist_list_exists;
 }
 
-void SPATConvertor::convertIntersectionState(j2735_msgs::IntersectionState& in_msg, cav_msgs::IntersectionState& out_msg) {
+void SPATConvertor::convertIntersectionState(const j2735_msgs::IntersectionState& in_msg, cav_msgs::IntersectionState& out_msg) {
   out_msg.name = in_msg.name;
   out_msg.name_exists = in_msg.name_exists;
   out_msg.id = in_msg.id;
@@ -122,7 +122,7 @@ void SPATConvertor::convertIntersectionState(j2735_msgs::IntersectionState& in_m
   out_msg.maneuever_assist_list_exists = in_msg.maneuever_assist_list_exists;
 }
 
-void SPATConvertor::convert(j2735_msgs::SPAT& in_msg, cav_msgs::SPAT& out_msg) {
+void SPATConvertor::convert(const j2735_msgs::SPAT& in_msg, cav_msgs::SPAT& out_msg) {
   out_msg.time_stamp = in_msg.time_stamp;
   out_msg.time_stamp_exists = in_msg.time_stamp_exists;
   out_msg.name = in_msg.name;

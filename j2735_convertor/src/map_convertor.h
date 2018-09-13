@@ -63,8 +63,35 @@ class MapConvertor
       //TODO
     }
 
-    void convert(j2735_msgs::MapData& in_msg, cav_msgs::MapData& out_msg);
+    static void convert(const j2735_msgs::MapData& in_msg, cav_msgs::MapData& out_msg);
 
   private:
 
+    static void convertOffsetXaxis(const j2735_msgs::OffsetXaxis& in_msg, cav_msgs::OffsetAxis& out_msg);
+
+    static void convertOffsetYaxis(const j2735_msgs::OffsetYaxis& in_msg, cav_msgs::OffsetAxis& out_msg);
+
+    static void convertComputedLane(const j2735_msgs::ComputedLane& in_msg, cav_msgs::ComputedLane& out_msg);
+
+    static void convertNodeOffsetPointXY(const j2735_msgs::NodeOffsetPointXY& in_msg, cav_msgs::NodeOffsetPointXY& out_msg);
+
+    static void convertLaneDataAttribute(const j2735_msgs::LaneDataAttribute& in_msg, cav_msgs::LaneDataAttribute& out_msg);
+
+    static void convertNodeAttributeSetXY(const j2735_msgs::NodeAttributeSetXY& in_msg, cav_msgs::NodeAttributeSetXY& out_msg);
+
+    static void convertNodeXY(const j2735_msgs::NodeXY& in_msg, cav_msgs::NodeXY& out_msg);
+
+    static void convertNodeSetXY(const j2735_msgs::NodeSetXY& in_msg, cav_msgs::NodeSetXY& out_msg);
+
+    static void convertNodeListXY(const j2735_msgs::NodeListXY& in_msg, cav_msgs::NodeListXY& out_msg);
+
+    static void convertGenericLane(const j2735_msgs::GenericLane& in_msg, cav_msgs::GenericLane& out_msg);
+
+    static void convertRegulatorySpeedLimit(const j2735_msgs::RegulatorySpeedLimit& in_msg, cav_msgs::RegulatorySpeedLimit& out_msg);
+
+    static void convertPosition3D(const j2735_msgs::Position3D& in_msg, cav_msgs::Position3D& out_msg);
+
+    static void convertIntersectionGeometry(const j2735_msgs::IntersectionGeometry& in_msg, cav_msgs::IntersectionGeometry& out_msg);
+
+    static void convertRoadSegment(const j2735_msgs::RoadSegment& in_msg, cav_msgs::RoadSegment& out_msg);
 };  

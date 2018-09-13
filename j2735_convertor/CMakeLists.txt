@@ -133,7 +133,10 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable(j2735_convertor_node
         ${headers}
          src/main.cpp
-         src/j2735_convertor.cpp)
+         src/j2735_convertor.cpp
+         src/bsm_convertor.cpp
+         src/spat_convertor.cpp
+         src/map_convertor.cpp)
 
 target_link_libraries(j2735_convertor_node ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 

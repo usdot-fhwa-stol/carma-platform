@@ -42,6 +42,9 @@
 #include <cav_msgs/BSM.h>
 #include <cav_msgs/SPAT.h>
 #include <cav_msgs/MapData.h>
+#include "bsm_convertor.h"
+#include "map_convertor.h"
+#include "spat_convertor.h"
 
 /**
  * @class J2735Convertor
@@ -113,7 +116,7 @@ private:
    * This method packs the message according to the J2375 2016 standard,
    * and sends it to the client program
    */
-  void j2735MapHandler(const j2735_msgs::BSMConstPtr& message);
+  void j2735MapHandler(const j2735_msgs::MapDataConstPtr& message);
 
   /**
    * TODO

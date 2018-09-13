@@ -62,18 +62,18 @@ class BSMConvertor
       //TODO
     }
 
-    void convert(j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg);
+    static void convert(const j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg);
 
   private:
-    void convertVehicleSize(j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg);
+    static void convertVehicleSize(const j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg);
 
-    void convertBrakeSystemStatus(j2735_msgs::BrakeSystemStatus& in_msg, cav_msgs::BrakeSystemStatus& out_msg);
+    static void convertBrakeSystemStatus(const j2735_msgs::BrakeSystemStatus& in_msg, cav_msgs::BrakeSystemStatus& out_msg);
 
-    void convertAccelerationSet4Way(j2735_msgs::AccelerationSet4Way& in_msg, cav_msgs::AccelerationSet4Way& out_msg);
+    static void convertAccelerationSet4Way(const j2735_msgs::AccelerationSet4Way& in_msg, cav_msgs::AccelerationSet4Way& out_msg);
 
-    void convertTransmissionState(j2735_msgs::TransmissionState& in_msg, cav_msgs::TransmissionState& out_msg);
+    static void convertTransmissionState(const j2735_msgs::TransmissionState& in_msg, cav_msgs::TransmissionState& out_msg);
 
-    void convertPositionalAccuracy(j2735_msgs::PositionalAccuracy& in_msg, cav_msgs::PositionalAccuracy& out_msg);
+    static void convertPositionalAccuracy(const j2735_msgs::PositionalAccuracy& in_msg, cav_msgs::PositionalAccuracy& out_msg);
 
-    void convertCoreData(j2735_msgs::BSMCoreData& in_msg, cav_msgs::BSMCoreData& out_msg);
+    static void convertCoreData(const j2735_msgs::BSMCoreData& in_msg, cav_msgs::BSMCoreData& out_msg);
 };

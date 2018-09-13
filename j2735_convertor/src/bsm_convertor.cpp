@@ -35,12 +35,12 @@
 
 #include "bsm_convertor.h"
 
-void BSMConvertor::convertVehicleSize(j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg) {
+void BSMConvertor::convertVehicleSize(const j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg) {
   out_msg.vehicle_length = in_msg.vehicle_length;
   out_msg.vehicle_width = in_msg.vehicle_width;
 }
 
-void BSMConvertor::convertBrakeSystemStatus(j2735_msgs::BrakeSystemStatus& in_msg, cav_msgs::BrakeSystemStatus& out_msg) {
+void BSMConvertor::convertBrakeSystemStatus(const j2735_msgs::BrakeSystemStatus& in_msg, cav_msgs::BrakeSystemStatus& out_msg) {
   out_msg.abs.anti_lock_brake_status = in_msg.abs.anti_lock_brake_status;
   out_msg.auxBrakes.auxiliary_brake_status = in_msg.auxBrakes.auxiliary_brake_status;
   out_msg.brakeBoost.brake_boost_applied = in_msg.brakeBoost.brake_boost_applied;
@@ -49,24 +49,24 @@ void BSMConvertor::convertBrakeSystemStatus(j2735_msgs::BrakeSystemStatus& in_ms
   out_msg.wheelBrakes.brake_applied_status = in_msg.wheelBrakes.brake_applied_status;
 }
 
-void BSMConvertor::convertAccelerationSet4Way(j2735_msgs::AccelerationSet4Way& in_msg, cav_msgs::AccelerationSet4Way& out_msg) {
+void BSMConvertor::convertAccelerationSet4Way(const j2735_msgs::AccelerationSet4Way& in_msg, cav_msgs::AccelerationSet4Way& out_msg) {
   out_msg.lateral = in_msg.lateral;
   out_msg.longitudinal = in_msg.longitudinal;
   out_msg.vert = in_msg.vert;
   out_msg.yaw_rate = in_msg.yaw_rate;
 }
 
-void BSMConvertor::convertTransmissionState(j2735_msgs::TransmissionState& in_msg, cav_msgs::TransmissionState& out_msg) {
+void BSMConvertor::convertTransmissionState(const j2735_msgs::TransmissionState& in_msg, cav_msgs::TransmissionState& out_msg) {
   out_msg.transmission_state = in_msg.transmission_state;
 }
 
-void BSMConvertor::convertPositionalAccuracy(j2735_msgs::PositionalAccuracy& in_msg, cav_msgs::PositionalAccuracy& out_msg) {
+void BSMConvertor::convertPositionalAccuracy(const j2735_msgs::PositionalAccuracy& in_msg, cav_msgs::PositionalAccuracy& out_msg) {
   out_msg.orientation = in_msg.orientation;
   out_msg.semiMajor = in_msg.semiMajor;
   out_msg.semiMinor = in_msg.semiMinor;
 }
 
-void BSMConvertor::convertCoreData(j2735_msgs::BSMCoreData& in_msg, cav_msgs::BSMCoreData& out_msg) {
+void BSMConvertor::convertCoreData(const j2735_msgs::BSMCoreData& in_msg, cav_msgs::BSMCoreData& out_msg) {
   // Convert basic data
   out_msg.msg_count = in_msg.msg_count;
   out_msg.id = in_msg.id;
@@ -86,7 +86,7 @@ void BSMConvertor::convertCoreData(j2735_msgs::BSMCoreData& in_msg, cav_msgs::BS
 }
 
 
-void BSMConvertor::convert(j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg) {
+void BSMConvertor::convert(const j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg) {
   out_msg.header = in_msg.header;
   convertCoreData(in_msg.core_data, out_msg.core_data);
 }
