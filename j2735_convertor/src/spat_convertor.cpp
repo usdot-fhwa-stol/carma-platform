@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Software License Agreement (BSD License)
  *
