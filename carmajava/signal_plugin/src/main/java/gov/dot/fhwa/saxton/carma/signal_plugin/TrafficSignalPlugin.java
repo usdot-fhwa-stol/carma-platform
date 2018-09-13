@@ -32,7 +32,6 @@ import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
 
-import cav_msgs.Connection;
 import cav_msgs.GenericLane;
 import cav_msgs.IntersectionState;
 import cav_msgs.MovementState;
@@ -114,6 +113,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
+    private final double CM_PER_M = 100.0;
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -217,7 +217,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // Convert lanes
         List<Lane> laneList = new ArrayList<>();
-        for (GenericLane laneData : data.getIntersectionGeometry().getLaneSet().getLaneList()) {
+        for (GenericLane laneData : data.getIntersectionGeometry().getLaneList()) {
             Lane cnvLane = new Lane();
             cnvLane.setId(laneData.getLaneId());
 
@@ -225,7 +225,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             cnvLane.setAttributes(0);
 
             if (data.getIntersectionGeometry().getLaneWidthExists()) {
-                cnvLane.setWidth(data.getIntersectionGeometry().getLaneWidth());
+                cnvLane.setWidth((int)(data.getIntersectionGeometry().getLaneWidth() * CM_PER_M));
             }
 
             if (laneData.getNodeList().getChoice() == NodeListXY.NODE_SET_XY) {
@@ -233,26 +233,26 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     NodeOffsetPointXY delta = nodeBase.getDelta();
                     switch (delta.getChoice()) {
                     case NodeOffsetPointXY.NODE_XY1:
-                        addNodeOffset(cnvLane, refPoint, delta.getNodeXy1().getX(), delta.getNodeXy1().getY());
+                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
                         break;
                     case NodeOffsetPointXY.NODE_XY2:
-                        addNodeOffset(cnvLane, refPoint, delta.getNodeXy2().getX(), delta.getNodeXy2().getY());
+                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
                         break;
                     case NodeOffsetPointXY.NODE_XY3:
-                        addNodeOffset(cnvLane, refPoint, delta.getNodeXy3().getX(), delta.getNodeXy3().getY());
+                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
                         break;
                     case NodeOffsetPointXY.NODE_XY4:
-                        addNodeOffset(cnvLane, refPoint, delta.getNodeXy4().getX(), delta.getNodeXy4().getY());
+                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
                         break;
                     case NodeOffsetPointXY.NODE_XY5:
-                        addNodeOffset(cnvLane, refPoint, delta.getNodeXy5().getX(), delta.getNodeXy5().getY());
+                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
                         break;
                     case NodeOffsetPointXY.NODE_XY6:
-                        addNodeOffset(cnvLane, refPoint, delta.getNodeXy6().getX(), delta.getNodeXy6().getY());
+                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
                         break;
                     case NodeOffsetPointXY.NODE_LATLON:
-                        Location node = new Location(delta.getNodeLatlon().getLatitude(),
-                                delta.getNodeLatlon().getLongitude());
+                        Location node = new Location(delta.getLatitude(),
+                                delta.getLongitude());
                         cnvLane.addNodeLatLon(node);
                         break;
                     default:
@@ -282,13 +282,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         cnvSpat.setTimeStamp(DateTime.now()); // TODO: Improve estimation of data age
 
         List<Movement> movements = new ArrayList<>();
-        for (MovementState movementData : state.getStates().getMovementList()) {
+        for (MovementState movementData : state.getMovementList()) {
             Movement m = new Movement();
 
-            for (GenericLane lane : data.getIntersectionGeometry().getLaneSet().getLaneList()) {
+            for (GenericLane lane : data.getIntersectionGeometry().getLaneList()) {
                 // Detect based on connectsTo
                 if (lane.getConnectsToExists()) {
-                    for (Connection connectsTo : lane.getConnectsTo().getConnectToList()) {
+                    for (j2735_msgs.Connection connectsTo : lane.getConnectToList()) {
                         if (connectsTo.getSignalGroupExists()) {
                             if (connectsTo.getSignalGroup() == movementData.getSignalGroup()
                                     && connectsTo.getConnectingLane().getManeuverExists()
@@ -354,20 +354,19 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         log.warn("Intersection could not be processed because it has no state: " + old);
                         continue;
                     }
-                    phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getStates()
-                            .getMovementList()) {
-                        for (MovementState newMov : datum.getIntersectionState().getStates().getMovementList()) {
+                    phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getMovementList()) {
+                        for (MovementState newMov : datum.getIntersectionState().getMovementList()) {
                             if (oldMov.getSignalGroup() == newMov.getSignalGroup()) {
                                 // If we find a shared movement, check the movement events for sameness
 
                                 // ASSUMPTION: Phase states within a movement will always be reported in the same order
                                 // There is no ID for an individual movement event within a movement, so I can only 
                                 // compare different messages based on positional similarity.
-                                for (int i = 0; i < oldMov.getStateTimeSpeed().getMovementEventList().size(); i++) {
-                                    if (i >= newMov.getStateTimeSpeed().getMovementEventList().size()
-                                            || (oldMov.getStateTimeSpeed().getMovementEventList().get(i)
-                                                    .getEventState() != newMov.getStateTimeSpeed()
-                                                            .getMovementEventList().get(i).getEventState())) {
+                                for (int i = 0; i < oldMov.getMovementEventList().size(); i++) {
+                                    if (i >= newMov.getMovementEventList().size()
+                                            || (oldMov.getMovementEventList().get(i)
+                                                    .getEventState().getMovementPhaseState() != newMov.getMovementEventList().get(i)
+                                                    .getEventState().getMovementPhaseState())) {
                                         // Phase change detected, a replan will be needed
                                         phaseChanged = true;
                                         break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop

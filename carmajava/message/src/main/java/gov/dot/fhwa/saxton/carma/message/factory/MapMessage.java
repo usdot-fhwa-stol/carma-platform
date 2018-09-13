@@ -5,13 +5,13 @@ import org.ros.internal.message.Message;
 import org.ros.message.MessageFactory;
 
 import cav_msgs.ByteArray;
-import cav_msgs.Connection;
-import cav_msgs.GenericLane;
-import cav_msgs.IntersectionGeometry;
-import cav_msgs.MapData;
-import cav_msgs.NodeListXY;
-import cav_msgs.NodeOffsetPointXY;
-import cav_msgs.NodeXY;
+import j2735_msgs.Connection;
+import j2735_msgs.GenericLane;
+import j2735_msgs.IntersectionGeometry;
+import j2735_msgs.MapData;
+import j2735_msgs.NodeListXY;
+import j2735_msgs.NodeOffsetPointXY;
+import j2735_msgs.NodeXY;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 public class MapMessage implements IMessage<MapData>{
