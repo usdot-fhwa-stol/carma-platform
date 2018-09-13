@@ -127,4 +127,6 @@ private:
    * and sends it to the client program
    */
   void systemAlertHandler(const cav_msgs::SystemAlertConstPtr& message);
+
+  void shutdown();
 };

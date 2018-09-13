@@ -94,22 +94,32 @@ void J2735Convertor::initialize() {
 
 void J2735Convertor::j2735BsmHandler(const j2735_msgs::BSMConstPtr& message) {
   cav_msgs::BSM converted_msg;
-  BSMConvertor::convert(*(message.get()), converted_msg);
+  BSMConvertor::convert(*message.get, converted_msg);
   converted_bsm_pub_.publish(converted_msg);
 }
 
 void J2735Convertor::j2735SpatHandler(const j2735_msgs::SPATConstPtr& message) {
   cav_msgs::SPAT converted_msg;
-  SPATConvertor::convert(*(message.get()), converted_msg);
+  SPATConvertor::convert(*message, converted_msg);
   converted_spat_pub_.publish(converted_msg);
 }
 
 void J2735Convertor::j2735MapHandler(const j2735_msgs::MapDataConstPtr& message) {
   cav_msgs::MapData converted_msg;
-  MapConvertor::convert(*(message.get()), converted_msg);
+  MapConvertor::convert(*message, converted_msg);
   converted_map_pub_.publish(converted_msg);
 }
 
 void J2735Convertor::systemAlertHandler(const cav_msgs::SystemAlertConstPtr& message) {
+  ROS_INFO_STREAM("Received SystemAlert message of type: " << message->type);
+  switch(message->type) {
+    case cav_msgs::SystemAlert::SHUTDOWN:
+      shutdown();
+      break;
+  }
+}
 
+void J2735Convertor::shutdown() {
+  ROS_WARN_STREAM("Node shutting down");
+  ros::shutdown();
 }
