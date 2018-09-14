@@ -10,6 +10,7 @@
 # 
 # NOTE: Initial version only considers Part I. Part II will be defined for later use. 
 
+#TODO presence vectors would be a good idea
 #MsgCount ::= INTEGER (0..127)
 uint8 msg_count
 
@@ -21,6 +22,19 @@ uint8[] id
 #TemporaryID will change every 3000 seconds.
 uint16 ID_TIME_MAX = 3000
 
+# The presence vector is used to determine what optional items are set
+# Existance can be quickly checked using bit operators
+# Example msg.presence_vector & Msg.FLAG != 0
+uint16 presence_vector
+
+uint16 SEC_MARK_AVAILABLE = 1
+uint16 LATITUDE_AVAILABLE = 2
+uint16 LONGITUDE_AVAILABLE = 4
+uint16 ELEVATION_AVAILABLE = 8
+uint16 SPEED_AVAILABLE = 16
+uint16 HEADING_AVAILABLE = 32
+uint16 STEER_WHEEL_ANGLE_AVAILABLE = 64
+
 #DSecond ::= INTEGER (0..65535)
 #  -- Integer values from 0 to 59999 represent the milliseconds within a minute
 #  -- A leap second is represented by the value range 60000 to 60999
@@ -30,7 +44,6 @@ uint16 ID_TIME_MAX = 3000
 uint32 sec_mark
 
 uint32 SEC_MARK_MOD = 60000
-uint32 SEC_MARK_UNAVAILABLE = 65535
 
 #Latitude ::= INTEGER (-900000000..900000001)
 #  -- LSB = 1/10 micro degree
@@ -38,7 +51,6 @@ uint32 SEC_MARK_UNAVAILABLE = 65535
 #  -- Convert to degree with factor 0.0000001 when field is used
 float64 latitude
 
-float64 LATITUDE_UNAVAILABLE = 90.0000001
 float64 LATITUDE_MAX = 90.0
 float64 LATITUDE_MIN = -90.0
 
@@ -48,7 +60,6 @@ float64 LATITUDE_MIN = -90.0
 #  -- Convert to degree with factor 0.0000001 when field is used
 float64 longitude
 
-float64 LONGITUDE_UNAVAILABLE = 180.0000001
 float64 LONGITUDE_MAX = 180.0
 float64 LONGITUDE_MIN = -179.9999999
 
@@ -59,7 +70,6 @@ float64 LONGITUDE_MIN = -179.9999999
 #  -- Convert to meter with factor 0.1 when field is used
 float32 elev
 
-float32 ELEVATION_UNAVAILABLE = -409.6
 float32 ELEVATION_MAX = 6143.9
 float32 ELEVATION_MIN = -409.5
 
@@ -67,14 +77,13 @@ float32 ELEVATION_MIN = -409.5
 cav_msgs/PositionalAccuracy accuracy
 
 # Provide the current state of the vehicle transmission
-cav_msgs/TransmissionState transmission
+j2735_msgs/TransmissionState transmission
 
 #Speed ::= INTEGER (0..8191) -- Units of 0.02 m/s
 #  -- The value 8191 indicates that speed is unavailable
 #  -- Convert to m/s with factor 0.02 when field is used
 float32 speed
 
-float32 SPEED_UNAVAILABLE = 163.82
 float32 SPEED_MAX = 163.8
 float32 SPEED_MIN = 0
 
@@ -83,7 +92,6 @@ float32 SPEED_MIN = 0
 #  -- A range of 0 to 359.9875 degrees
 #  -- Convert to degree with factor 0.0125 when field is used
 float32 heading
-float32 HEADING_UNAVAILABLE = 360.0
 float32 HEADING_MAX = 359.9875
 float32 HEADING_MIN = 0
 
@@ -95,7 +103,6 @@ float32 HEADING_MIN = 0
 #  -- +127 to be used for unavailable
 #  -- Convert to degree with factor 1.5 when this field is used
 float32 angle
-float32 STEER_WHEEL_ANGLE_UNAVAILABLE = 190.5
 float32 STEER_WHEEL_ANGLE_MAX = 189.0
 float32 STEER_WHEEL_ANGLE_MIN = -189.0
 
@@ -103,7 +110,7 @@ float32 STEER_WHEEL_ANGLE_MIN = -189.0
 cav_msgs/AccelerationSet4Way accelSet
 
 # Conveys a variety of information about the current brake and system control activity of the vehicle.
-cav_msgs/BrakeSystemStatus brakes
+j2735_msgs/BrakeSystemStatus brakes
 
 # The vehicle length and width
 cav_msgs/VehicleSize size
