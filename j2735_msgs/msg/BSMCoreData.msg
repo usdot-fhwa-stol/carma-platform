@@ -64,10 +64,10 @@ int32 ELEVATION_MAX = 61439
 int32 ELEVATION_MIN = -4095
 
 # Used to model the accuracy of the positional determination with respect to each given axis.
-j2735_msgs/PositionalAccuracy accuracy # TODO
+j2735_msgs/PositionalAccuracy accuracy
 
 # Provide the current state of the vehicle transmission
-j2735_msgs/TransmissionState transmission # TODO
+j2735_msgs/TransmissionState transmission
 
 #Speed ::= INTEGER (0..8191) -- Units of 0.02 m/s
 #  -- The value 8191 indicates that speed is unavailable
