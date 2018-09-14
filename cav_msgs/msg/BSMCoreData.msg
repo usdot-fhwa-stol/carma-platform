@@ -10,7 +10,6 @@
 # 
 # NOTE: Initial version only considers Part I. Part II will be defined for later use. 
 
-#TODO presence vectors would be a good idea
 #MsgCount ::= INTEGER (0..127)
 uint8 msg_count
 
@@ -41,9 +40,9 @@ uint16 STEER_WHEEL_ANGLE_AVAILABLE = 64
 #  -- The values from 61000 to 65534 are reserved
 #  -- The value of 65535 shall represent an unavailable value in the range of the minute
 #  -- Unit is milliseconds
-uint32 sec_mark
+uint16 sec_mark
 
-uint32 SEC_MARK_MOD = 60000
+uint16 SEC_MARK_MOD = 60000
 
 #Latitude ::= INTEGER (-900000000..900000001)
 #  -- LSB = 1/10 micro degree

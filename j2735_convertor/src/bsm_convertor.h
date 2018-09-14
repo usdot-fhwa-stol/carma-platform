@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstdint>
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <j2735_msgs/BSM.h>
@@ -42,6 +43,7 @@
 #include <cav_msgs/BSM.h>
 #include <cav_msgs/SPAT.h>
 #include <cav_msgs/MapData.h>
+#include "units.h"
 
 /**
  * @class BSMConvertor
@@ -62,18 +64,29 @@ class BSMConvertor
       //TODO
     }
 
-    static void convert(const j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg);
+    static void j2735ToCav(const j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg);
+    static void cavToJ2735(const cav_msgs::BSM& in_msg, j2735_msgs::BSM& out_msg);
 
   private:
-    static void convertVehicleSize(const j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg);
+    // Convert j2735_msgs to cav_msgs
+    static void j2735ToCav(const j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg);
 
-    static void convertBrakeSystemStatus(const j2735_msgs::BrakeSystemStatus& in_msg, cav_msgs::BrakeSystemStatus& out_msg);
+    static void j2735ToCav(const j2735_msgs::AccelerationSet4Way& in_msg, cav_msgs::AccelerationSet4Way& out_msg);
 
-    static void convertAccelerationSet4Way(const j2735_msgs::AccelerationSet4Way& in_msg, cav_msgs::AccelerationSet4Way& out_msg);
+    static void j2735ToCav(const j2735_msgs::PositionalAccuracy& in_msg, cav_msgs::PositionalAccuracy& out_msg);
 
-    static void convertTransmissionState(const j2735_msgs::TransmissionState& in_msg, cav_msgs::TransmissionState& out_msg);
+    static void j2735ToCav(const j2735_msgs::BSMCoreData& in_msg, cav_msgs::BSMCoreData& out_msg);
 
-    static void convertPositionalAccuracy(const j2735_msgs::PositionalAccuracy& in_msg, cav_msgs::PositionalAccuracy& out_msg);
+    // Convert cav_msgs to j2735_msgs
+    static void cavToJ2735(const cav_msgs::VehicleSize& in_msg, j2735_msgs::VehicleSize& out_msg);
 
-    static void convertCoreData(const j2735_msgs::BSMCoreData& in_msg, cav_msgs::BSMCoreData& out_msg);
+    static void cavToJ2735(const cav_msgs::AccelerationSet4Way& in_msg, j2735_msgs::AccelerationSet4Way& out_msg);
+
+    static void cavToJ2735(const cav_msgs::PositionalAccuracy& in_msg, j2735_msgs::PositionalAccuracy& out_msg);
+
+    static void cavToJ2735(const cav_msgs::BSMCoreData& in_msg, j2735_msgs::BSMCoreData& out_msg);
+
+    template<typename T, typename U, typename V>
+    static U valueCavToJ2735(const T in, const double conversion_factor,
+      const V presence_vector, const V presence_flag, const U unavailability_value);
 };

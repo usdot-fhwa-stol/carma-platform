@@ -94,10 +94,10 @@ void J2735Convertor::initialize() {
   converted_spat_pub_ = spat_nh_->advertise<cav_msgs::SPAT>("incoming_spat", 1000);
 
   // J2735 MAP Subscriber TODO figure out topic names
-  j2735_map_sub_ = map_nh_->subscribe("incoming_j2735_map", 1000, &J2735Convertor::j2735BsmHandler, this);
+  j2735_map_sub_ = map_nh_->subscribe("incoming_j2735_map", 1000, &J2735Convertor::j2735MapHandler, this);
 
   // MAP Publisher TODO think about queue sizes
-  converted_map_pub_ = map_nh_->advertise<cav_msgs::BSM>("incoming_map", 1000);
+  converted_map_pub_ = map_nh_->advertise<cav_msgs::MapData>("incoming_map", 1000);
 
   // SystemAlert Subscriber
   system_alert_sub_ = default_nh_->subscribe("system_alert", 10, &J2735Convertor::systemAlertHandler, this);

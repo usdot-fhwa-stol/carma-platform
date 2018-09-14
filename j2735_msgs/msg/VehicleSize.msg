@@ -18,7 +18,7 @@
 #  -- Convert to meter with factor 0.01 when this field is used
 uint16 vehicle_width
 
-uint16 VEHICLE_WIDTH_UNAVAILABLE = 0.0
+uint16 VEHICLE_WIDTH_UNAVAILABLE = 0
 uint16 VEHICLE_WIDTH_MAX = 1023
 uint16 VEHICLE_WIDTH_MIN = 1
 
@@ -26,6 +26,6 @@ uint16 VEHICLE_WIDTH_MIN = 1
 #  -- Convert to meter with factor 0.01 when this field is used
 uint16 vehicle_length
 
-uint16 VEHICLE_LENGTH_UNAVAILABLE = 0.0
+uint16 VEHICLE_LENGTH_UNAVAILABLE = 0
 uint16 VEHICLE_LENGTH_MAX = 4095
 uint16 VEHICLE_LENGTH_MIN = 1
