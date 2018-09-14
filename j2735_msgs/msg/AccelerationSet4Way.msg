@@ -25,12 +25,12 @@
 #   -- the value -2000 shall be used for values less than -2000  
 #   -- a value of 2001 shall be used for Unavailable
 #   -- Convert to m/s^2 with factor 0.01 when this field is used
-int32 longitudinal
-int32 lateral
+int16 longitudinal
+int16 lateral
 
-int32 ACCELERATION_UNAVAILABLE = 2001
-int32 ACCELERATION_MAX = 2000
-int32 ACCELERATION_MIN = -2000
+int16 ACCELERATION_UNAVAILABLE = 2001
+int16 ACCELERATION_MAX = 2000
+int16 ACCELERATION_MIN = -2000
 
 #VerticalAcceleration ::= INTEGER (-127..127) 
 #   -- LSB units of 0.02 G steps over -2.52 to +2.54 G
@@ -38,17 +38,17 @@ int32 ACCELERATION_MIN = -2000
 #   -- The value -126 shall be used for ranges <= 2.52 G
 #   -- The value -127 shall be used for unavailable
 #   -- Convert to m/s^2 with factor 0.196 when this field is used
-int32 vert
+int8 vert
 
-int32 ACCELERATION_VERTICAL_UNAVAILABLE = -127
-int32 ACCELERATION_VERTICAL_MAX = 127
-int32 ACCELERATION_VERTICAL_MIN = -126
+int8 ACCELERATION_VERTICAL_UNAVAILABLE = -127
+int8 ACCELERATION_VERTICAL_MAX = 127
+int8 ACCELERATION_VERTICAL_MIN = -126
 
 #YawRate ::= INTEGER (-32767..32767)
 #   -- LSB units of 0.01 degrees per second (signed)
 #   -- Convert to degree with factor 0.01 when this field is used
-int32 yaw_rate
+int16 yaw_rate
 
-int32 YAWRATE_UNAVAILABLE = 0
-int32 YAWRATE_MAX = 32767
-int32 YAWRATE_MIN = -32767
+int16 YAWRATE_UNAVAILABLE = 0
+int16 YAWRATE_MAX = 32767
+int16 YAWRATE_MIN = -32767

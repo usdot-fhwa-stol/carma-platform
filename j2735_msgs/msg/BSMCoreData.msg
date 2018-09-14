@@ -13,7 +13,7 @@
 #MsgCount ::= INTEGER (0..127)
 uint8 msg_count
 
-uint16 MSG_COUNT_MAX = 127
+uint8 MSG_COUNT_MAX = 127
 
 #TemporaryID ::= OCTET STRING (SIZE(4))
 uint8[] id
@@ -27,10 +27,10 @@ uint16 ID_TIME_MAX = 3000
 #  -- The values from 61000 to 65534 are reserved
 #  -- The value of 65535 shall represent an unavailable value in the range of the minute
 #  -- Unit is milliseconds
-uint32 sec_mark
+uint16 sec_mark
 
-uint32 SEC_MARK_MOD = 60000
-uint32 SEC_MARK_UNAVAILABLE = 65535
+uint16 SEC_MARK_MOD = 60000
+uint16 SEC_MARK_UNAVAILABLE = 65535
 
 #Longitude ::= INTEGER (-1799999999..1800000001)
 #  -- LSB = 1/10 micro degree
@@ -82,10 +82,10 @@ uint16 SPEED_MIN = 0
 #  -- LSB of 0.0125 degrees
 #  -- A range of 0 to 359.9875 degrees
 #  -- Convert to degree with factor 0.0125 when field is used
-int32 heading
-int32 HEADING_UNAVAILABLE = 28800
-int32 HEADING_MAX = 28798
-int32 HEADING_MIN = 0
+uint16 heading
+uint16 HEADING_UNAVAILABLE = 28800
+uint16 HEADING_MAX = 28798
+uint16 HEADING_MIN = 0
 
 #SteeringWheelAngle ::= INTEGER (-126..127)
 #  -- LSB units of 1.5 degrees, a range of -189 to +189 degrees
@@ -94,10 +94,10 @@ int32 HEADING_MIN = 0
 #  -- +126 = +189 deg and beyond
 #  -- +127 to be used for unavailable
 #  -- Convert to degree with factor 1.5 when this field is used
-int32 angle
-int32 STEER_WHEEL_ANGLE_UNAVAILABLE = 127
-int32 STEER_WHEEL_ANGLE_MAX = 126
-int32 STEER_WHEEL_ANGLE_MIN = -126
+int8 angle
+int8 STEER_WHEEL_ANGLE_UNAVAILABLE = 127
+int8 STEER_WHEEL_ANGLE_MAX = 126
+int8 STEER_WHEEL_ANGLE_MIN = -126
 
 # Set of acceleration values in 3 orthogonal directions of the vehicle and with yaw rotation rates expressed as a structure.
 j2735_msgs/AccelerationSet4Way accelSet
