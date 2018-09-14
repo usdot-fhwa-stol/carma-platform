@@ -42,7 +42,6 @@
 #include <cav_msgs/SPAT.h>
 #include <cav_msgs/MapData.h>
 #include "units.h"
-#include "value_convertor.h"
 
 
 
@@ -50,40 +49,48 @@
  * @class BSMConvertor
  * @brief Is the class responsible for converting J2735 BSMs to CARMA usable BSMs
  */
-class BSMConvertor 
+class ValueConvertor 
 {
   public:
-    /**
-     * @brief constructor
-     * @param argc - command line argument count
-     * @param argv - command line arguments
-     */
-    BSMConvertor() {};
 
-    ~BSMConvertor() 
-    {
-      //TODO
+  template <typename Condition, typename T = void>
+  using EnableIf = typename std::enable_if<Condition::value, T>::type;
+
+    template<typename T, typename U, typename V>
+    struct condition {
+      bool value = std::is_arithmetic<T>::value && std::is_arithmetic<U>::value && std::is_arithmetic<V>::value;
+    };
+
+    template<typename T, typename U, typename V,
+      typename = EnableIf<condition<T,U,V>>
+    >
+    static T valueJ2735ToCav(const U in, const double conversion_factor,
+      V& presence_vector, const V presence_flag, const U unavailability_value) {
+      
+      if (in != (U)unavailability_value) { // If the value is available
+        presence_vector |= (V)presence_flag; // Mark the field as available
+        return (T)(in / conversion_factor); // Do unit conversion
+      } else {
+        presence_vector &= ~presence_flag; // Mark the field as unavailable
+        return 0; // Return ROS default of 0 for all fields
+      }
     }
 
-    static void convert(const j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg);
-    static void convert(const cav_msgs::BSM& in_msg, j2735_msgs::BSM& out_msg);
+    template<typename T, typename U, typename V
+      //typename = EnableIf<condition<T,U,V>>
+     // typename = typename std::enable_if<std::is_arithmetic<V>::value, V>::type
+    >
+    static T valueCavToJ2735(const U in, const double conversion_factor,
+      const V presence_vector, const V presence_flag, const T unavailability_value) {
+      
+      if (presence_vector & (V)presence_flag) { // Check if the field is available
+        return (T)(in * conversion_factor); // Do the conversion
+      } else {
+        return (T)unavailability_value; // If field is unavailble return the unavailable flag
+      }
+    }
+  
+  private: 
+  
 
-  private:
-    // Convert j2735_msgs to cav_msgs
-    static void convert(const j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg);
-
-    static void convert(const j2735_msgs::AccelerationSet4Way& in_msg, cav_msgs::AccelerationSet4Way& out_msg);
-
-    static void convert(const j2735_msgs::PositionalAccuracy& in_msg, cav_msgs::PositionalAccuracy& out_msg);
-
-    static void convert(const j2735_msgs::BSMCoreData& in_msg, cav_msgs::BSMCoreData& out_msg);
-
-    // Convert cav_msgs to j2735_msgs
-    static void convert(const cav_msgs::VehicleSize& in_msg, j2735_msgs::VehicleSize& out_msg);
-
-    static void convert(const cav_msgs::AccelerationSet4Way& in_msg, j2735_msgs::AccelerationSet4Way& out_msg);
-
-    static void convert(const cav_msgs::PositionalAccuracy& in_msg, j2735_msgs::PositionalAccuracy& out_msg);
-
-    static void convert(const cav_msgs::BSMCoreData& in_msg, j2735_msgs::BSMCoreData& out_msg);
 };
