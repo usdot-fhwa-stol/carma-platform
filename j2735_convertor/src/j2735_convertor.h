@@ -77,8 +77,8 @@ public:
 private:
 
   //ROS
-  ros::Publisher converted_bsm_pub_, converted_spat_pub_, converted_map_pub_, system_alert_pub_;
-  ros::Subscriber j2735_bsm_sub_, j2735_spat_sub_, j2735_map_sub_, system_alert_sub_;
+  ros::Publisher converted_bsm_pub_, converted_spat_pub_, converted_map_pub_, system_alert_pub_, outbound_j2735_bsm_pub_;
+  ros::Subscriber j2735_bsm_sub_, j2735_spat_sub_, j2735_map_sub_, system_alert_sub_, outbound_bsm_sub_;
   std::shared_ptr<ros::NodeHandle> default_nh_;
   std::shared_ptr<ros::NodeHandle> bsm_nh_;
   std::shared_ptr<ros::NodeHandle> spat_nh_;
@@ -87,11 +87,20 @@ private:
   ros::CallbackQueue spat_queue_;
   ros::CallbackQueue map_queue_;
 
-
   /**
    * TODO
    */
   void initialize();
+
+  /**
+   * TODO
+   * @brief Handles outbound messages from the ROS network
+   * @param message
+   *
+   * This method packs the message according to the J2375 2016 standard,
+   * and sends it to the client program
+   */
+  void BsmHandler(const cav_msgs::BSMConstPtr& message);
 
   /**
    * TODO

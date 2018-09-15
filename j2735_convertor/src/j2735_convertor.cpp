@@ -87,6 +87,12 @@ void J2735Convertor::initialize() {
   // BSM Publisher TODO think about queue sizes
   converted_bsm_pub_ = bsm_nh_->advertise<cav_msgs::BSM>("incoming_bsm", 1000);
 
+  // Outgoing J2735 BSM Subscriber TODO figure out topic names
+  outbound_bsm_sub_ = bsm_nh_->subscribe("outgoing_bsm", 1000, &J2735Convertor::BsmHandler, this);
+
+  // BSM Publisher TODO think about queue sizes
+  outbound_j2735_bsm_pub_ = bsm_nh_->advertise<j2735_msgs::BSM>("outgoing_j2735_bsm", 1000);
+
   // J2735 SPAT Subscriber TODO figure out topic names
   j2735_spat_sub_ = spat_nh_->subscribe("incoming_j2735_spat", 1000, &J2735Convertor::j2735SpatHandler, this);
 
@@ -104,6 +110,17 @@ void J2735Convertor::initialize() {
 
   // SystemAlert Publisher
   system_alert_pub_ = default_nh_->advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
+}
+
+void J2735Convertor::BsmHandler(const cav_msgs::BSMConstPtr& message) {
+  try {
+    j2735_msgs::BSM j2735_msg;
+    BSMConvertor::convert(*message, j2735_msg);
+    outbound_j2735_bsm_pub_.publish(j2735_msg);
+  }
+  catch(const std::exception& e) {
+    handleException(e);
+  }
 }
 
 void J2735Convertor::j2735BsmHandler(const j2735_msgs::BSMConstPtr& message) {
