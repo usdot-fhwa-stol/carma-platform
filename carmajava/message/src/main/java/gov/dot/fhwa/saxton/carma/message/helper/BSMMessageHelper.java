@@ -177,7 +177,7 @@ public class BSMMessageHelper {
 		if(elev_input == BSMCoreData.ELEVATION_UNAVAILABLE) {
 			return;
 		}
-		int integer_elev_input = elev_input
+		int integer_elev_input = elev_input;
 		if(integer_elev_input >= ELEVATION_MIN && integer_elev_input <= ELEVATION_MAX) {
 			this.elev = integer_elev_input;
 		}
