@@ -74,6 +74,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 	
 	// TODO: brake information on each individual wheel is not available
 	// When brake is applied at any angle, we set brake status to be 0xF
+	// TODO MIKE figure out brakes
 	protected final byte BRAKES_STATUS_UNAVAILABLE = 0x10;
 	protected final byte BRAKES_NOT_APPLIED = 0x0;
 	protected final byte BRAKES_APPLIED = 0xF;
@@ -94,7 +95,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 	protected ISubscriber<TwistStamped> velocitySubscriber;
 	protected ISubscriber<Float64> steeringWheelSubscriber;
 	protected ISubscriber<Float64> brakeSubscriber;
-	protected ISubscriber<TransmissionState> transmissionSubscriber;
+	protected ISubscriber<j2735_msgs.TransmissionState> transmissionSubscriber;
 	protected ISubscriber<RouteState> routeSubscriber;
 	protected ISubscriber<std_msgs.Bool> tractionActiveSubscriber;
 	protected ISubscriber<std_msgs.Bool> tractionEnabledSubscriber;
@@ -174,7 +175,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 
         steeringWheelSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STEERING_WHEEL_CAPABILITY, Float64._TYPE);
         brakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + BRAKE_POSITION_CAPABILITY, Float64._TYPE);
-        transmissionSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRANSMISSION_STATE_CAPABILITY, TransmissionState._TYPE);
+        transmissionSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRANSMISSION_STATE_CAPABILITY, j2735_msgs.TransmissionState._TYPE);
         tractionActiveSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
         tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
         antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + ANTILOCK_BRAKES_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
@@ -385,12 +386,6 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 		coreData.setId(ChannelBuffers.copiedBuffer(ByteOrder.LITTLE_ENDIAN, random_id));
 
 		// Set GPS data
-		coreData.setLatitude(BSMCoreData.LATITUDE_UNAVAILABLE); // Default value when unknown
-		coreData.setLongitude(BSMCoreData.LONGITUDE_UNAVAILABLE);
-		coreData.setElev(BSMCoreData.ELEVATION_UNAVAILABLE);
-		coreData.getAccuracy().setSemiMajor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
-		coreData.getAccuracy().setSemiMinor(PositionalAccuracy.ACCURACY_UNAVAILABLE);
-		coreData.getAccuracy().setOrientation(PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE);
 		if(navSatFixSubscriber != null && navSatFixSubscriber.getLastMessage() != null) {
 			NavSatFix gps_msg = navSatFixSubscriber.getLastMessage();
 			Transform earthToHostVehicle = getTransform("earth", "host_vehicle", gps_msg.getHeader().getStamp());
@@ -406,12 +401,15 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 				float elev = (float) loc.getAltitude();
 				if(lat >= BSMCoreData.LATITUDE_MIN && lat <= BSMCoreData.LATITUDE_MAX) {
 					coreData.setLatitude(lat);
+					coreData.setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.LATITUDE_AVAILABLE));
 				}
 				if(Lon >= BSMCoreData.LONGITUDE_MIN && Lon <= BSMCoreData.LONGITUDE_MAX) {
 					coreData.setLongitude(Lon);
+					coreData.setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.LONGITUDE_AVAILABLE));
 				}
 				if(elev >= BSMCoreData.ELEVATION_MIN && elev <= BSMCoreData.ELEVATION_MAX) {
 					coreData.setElev(elev);
+					coreData.setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.ELEVATION_AVAILABLE));
 				}
 			}
 			
@@ -436,6 +434,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 				} else {
 					coreData.getAccuracy().setSemiMajor(semi_major);
 				}
+				coreData.getAccuracy().setPresenceVector((short)(coreData.getAccuracy().getPresenceVector() | PositionalAccuracy.ACCURACY_AVAILABLE));
 			}
 			if(semi_minor != -1) {
 				if(semi_minor >= PositionalAccuracy.ACCURACY_MAX) {
@@ -443,45 +442,46 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 				} else {
 					coreData.getAccuracy().setSemiMinor(semi_minor);
 				}
+				coreData.getAccuracy().setPresenceVector((short)(coreData.getAccuracy().getPresenceVector() | PositionalAccuracy.ACCURACY_AVAILABLE));
 			}
 			
 			if(orientation >= PositionalAccuracy.ACCURACY_ORIENTATION_MIN && orientation <= PositionalAccuracy.ACCURACY_ORIENTATION_MAX) {
 				coreData.getAccuracy().setOrientation(orientation);
+				coreData.getAccuracy().setPresenceVector((short)(coreData.getAccuracy().getPresenceVector() | PositionalAccuracy.ACCURACY_ORIENTATION_AVAILABLE));
 			}
 		}
 		
 		// Set transmission state
 		// Reserved values are illegal values at this time
-		coreData.getTransmission().setTransmissionState(TransmissionState.UNAVAILABLE);
+		coreData.getTransmission().setTransmissionState(j2735_msgs.TransmissionState.UNAVAILABLE);
 		if(transmissionSubscriber != null && transmissionSubscriber.getLastMessage() != null) {
 			byte transmission_state = transmissionSubscriber.getLastMessage().getTransmissionState();
-			if(transmission_state == TransmissionState.NEUTRAL
-					|| transmission_state == TransmissionState.FORWARDGEARS
-					|| transmission_state == TransmissionState.PARK
-					|| transmission_state == TransmissionState.REVERSEGEARS) {
+			if(transmission_state == j2735_msgs.TransmissionState.NEUTRAL
+					|| transmission_state == j2735_msgs.TransmissionState.FORWARDGEARS
+					|| transmission_state == j2735_msgs.TransmissionState.PARK
+					|| transmission_state == j2735_msgs.TransmissionState.REVERSEGEARS) {
 				coreData.getTransmission().setTransmissionState(transmission_state);
 			}
 		}
 
-		coreData.setSpeed(BSMCoreData.SPEED_UNAVAILABLE);
 		if(velocity_ready.get()) {
 			float speed = (float) current_speed.get();
                         if(speed < BSMCoreData.SPEED_MIN) {
                             coreData.setSpeed(0);
                         } else if(speed >= BSMCoreData.SPEED_MIN && speed <= BSMCoreData.SPEED_MAX) {
-			    coreData.setSpeed(speed);
+				coreData.setSpeed(speed);
+				coreData.setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.SPEED_AVAILABLE));
 			}
 		}
 		
-		coreData.setHeading(BSMCoreData.HEADING_UNAVAILABLE);
 		if(headingStampedSubscriber != null && headingStampedSubscriber.getLastMessage() != null) {
 			float heading = (float) headingStampedSubscriber.getLastMessage().getHeading();
 			if(heading >= BSMCoreData.HEADING_MIN && heading <= BSMCoreData.HEADING_MAX) {
 				coreData.setHeading(heading);
+				coreData.setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.HEADING_AVAILABLE));
 			}
 		}
 		
-		coreData.setAngle(BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE);
 		if(steeringWheelSubscriber != null && steeringWheelSubscriber.getLastMessage() != null) {
 			float angle = (float) steeringWheelSubscriber.getLastMessage().getData();	
 			if(angle <= BSMCoreData.STEER_WHEEL_ANGLE_MIN) {
@@ -491,13 +491,10 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 			} else {
 				coreData.setAngle(angle);
 			}
+			coreData.setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.STEER_WHEEL_ANGLE_AVAILABLE));
 		}
 
-		coreData.getAccelSet().setLongitudinal(AccelerationSet4Way.ACCELERATION_UNAVAILABLE);
-		coreData.getAccelSet().setLateral(AccelerationSet4Way.ACCELERATION_UNAVAILABLE);
-		coreData.getAccelSet().setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_UNAVAILABLE);
 		// TODO: It is not well defined in J2735
-		coreData.getAccelSet().setYawRate(AccelerationSet4Way.YAWRATE_UNAVAILABLE);
 		if(accelerationSubscriber != null && accelerationSubscriber.getLastMessage() != null) {
 			Vector3 accel_set_linear = Vector3.fromVector3Message(accelerationSubscriber.getLastMessage().getAccel().getLinear());
 			AccelerationSet4Way acceleration = coreData.getAccelSet();
@@ -508,6 +505,8 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 			} else {
 				acceleration.setLongitudinal((float) accel_set_linear.getX());
 			}
+
+			coreData.getAccuracy().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_AVAILABLE));
 			
 			if(accel_set_linear.getY() <= AccelerationSet4Way.ACCELERATION_MIN) {
 				acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MIN);
@@ -517,6 +516,8 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 				acceleration.setLateral((float) accel_set_linear.getY());
 			}
 
+			coreData.getAccuracy().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_AVAILABLE));
+
 			if(accel_set_linear.getZ() <= AccelerationSet4Way.ACCELERATION_VERTICAL_MIN) {
 				acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MIN);
 			} else if(accel_set_linear.getZ() >= AccelerationSet4Way.ACCELERATION_VERTICAL_MAX) {
@@ -524,11 +525,15 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 			} else {
 				acceleration.setVert((float) accel_set_linear.getZ());
 			}
+
+			coreData.getAccuracy().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_VERTICAL_AVAILABLE));
 			
 			double yaw_rate = accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ();
 			if(yaw_rate >= AccelerationSet4Way.YAWRATE_MIN && yaw_rate <= AccelerationSet4Way.YAWRATE_MAX) {
 				coreData.getAccelSet().setYawRate((float) yaw_rate);
 			}
+
+			coreData.getAccuracy().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.YAWRATE_AVAILABLE));
 		}
 		
 		coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_STATUS_UNAVAILABLE);
@@ -541,50 +546,51 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 		}
 		
 		
-		coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.UNAVAILABLE);
-		coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.UNAVAILABLE);
-		coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.UNAVAILABLE);
-		coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(AuxiliaryBrakeStatus.UNAVAILABLE);
+		coreData.getBrakes().getTraction().setTractionControlStatus(j2735_msgs.TractionControlStatus.UNAVAILABLE);
+		coreData.getBrakes().getAbs().setAntiLockBrakeStatus(j2735_msgs.AntiLockBrakeStatus.UNAVAILABLE);
+		coreData.getBrakes().getScs().setStabilityControlStatus(j2735_msgs.StabilityControlStatus.UNAVAILABLE);
+		coreData.getBrakes().getAuxBrakes().setAuxiliaryBrakeStatus(j2735_msgs.AuxiliaryBrakeStatus.UNAVAILABLE);
 		// TODO: N/A for now
-		coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.UNAVAILABLE);
+		coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(j2735_msgs.BrakeBoostApplied.UNAVAILABLE);
 		
 		if(tractionActiveSubscriber != null && tractionActiveSubscriber != null && tractionActiveSubscriber.getLastMessage() != null && tractionActiveSubscriber.getLastMessage().getData()) {
 			if(tractionEnabledSubscriber != null && tractionEnabledSubscriber != null && tractionEnabledSubscriber.getLastMessage() != null && tractionEnabledSubscriber.getLastMessage().getData()) {
-				coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.ENGAGED);
+				coreData.getBrakes().getTraction().setTractionControlStatus(j2735_msgs.TractionControlStatus.ENGAGED);
 			} else {
-				coreData.getBrakes().getTraction().setTractionControlStatus(TractionControlStatus.ON);
+				coreData.getBrakes().getTraction().setTractionControlStatus(j2735_msgs.TractionControlStatus.ON);
 			}
 		}
 		if(antilockBrakeSubscriber != null && antilockBrakeSubscriber != null && antilockBrakeSubscriber.getLastMessage() != null && antilockBrakeSubscriber.getLastMessage().getData()) {
-			coreData.getBrakes().getAbs().setAntiLockBrakeStatus(AntiLockBrakeStatus.ON);
+			coreData.getBrakes().getAbs().setAntiLockBrakeStatus(j2735_msgs.AntiLockBrakeStatus.ON);
 		}
 		if(stabilityActiveSubscriber != null && stabilityActiveSubscriber.getLastMessage() != null && stabilityActiveSubscriber.getLastMessage().getData()) {
 			if(stabilityEnabledSubscriber != null && stabilityEnabledSubscriber.getLastMessage() != null && stabilityEnabledSubscriber.getLastMessage().getData()) {
-				coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.ENGAGED);
+				coreData.getBrakes().getScs().setStabilityControlStatus(j2735_msgs.StabilityControlStatus.ENGAGED);
 			} else {
-				coreData.getBrakes().getScs().setStabilityControlStatus(StabilityControlStatus.ON);
+				coreData.getBrakes().getScs().setStabilityControlStatus(j2735_msgs.StabilityControlStatus.ON);
 			}
 		}
 		if(parkingBrakeSubscriber != null && parkingBrakeSubscriber.getLastMessage() != null) {
 			if(parkingBrakeSubscriber.getLastMessage().getData()) {
-				coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.ON);
+				coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(j2735_msgs.BrakeBoostApplied.ON);
 			} else {
-				coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(BrakeBoostApplied.OFF);
+				coreData.getBrakes().getBrakeBoost().setBrakeBoostApplied(j2735_msgs.BrakeBoostApplied.OFF);
 			}
 		}
 		
 		// Set length and width only for the first time
-		coreData.getSize().setVehicleLength(VehicleSize.VEHICLE_LENGTH_UNAVAILABLE);
-		coreData.getSize().setVehicleWidth(VehicleSize.VEHICLE_WIDTH_UNAVAILABLE);
 		if(vehicleLength >= VehicleSize.VEHICLE_LENGTH_MIN && vehicleLength <= VehicleSize.VEHICLE_LENGTH_MAX) {
 			coreData.getSize().setVehicleLength(vehicleLength);
+			coreData.getAccuracy().setPresenceVector((short)(coreData.getSize().getPresenceVector() | VehicleSize.VEHICLE_LENGTH_AVAILABLE));
 		}
 		if(vehicleWidth >= VehicleSize.VEHICLE_WIDTH_MIN && vehicleWidth <= VehicleSize.VEHICLE_WIDTH_MAX) {
 			coreData.getSize().setVehicleWidth(vehicleWidth);
+			coreData.getAccuracy().setPresenceVector((short)(coreData.getSize().getPresenceVector() | VehicleSize.VEHICLE_WIDTH_AVAILABLE));
 		}
 		
 		// Use ros node time and ignore leap second for now since it is not announced
-		coreData.setSecMark((int) (System.currentTimeMillis() % BSMCoreData.SEC_MARK_MOD));
+		coreData.setSecMark((short) (System.currentTimeMillis() % BSMCoreData.SEC_MARK_MOD));
+		coreData.getAccuracy().setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.SEC_MARK_AVAILABLE));
 
 		return bsmFrame;
 	}
