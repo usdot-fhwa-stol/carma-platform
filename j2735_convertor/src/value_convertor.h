@@ -51,21 +51,11 @@
  */
 class ValueConvertor 
 {
+    // TODO discuss need for extra parameters
   public:
-
-  template <typename Condition, typename T = void>
-  using EnableIf = typename std::enable_if<Condition::value, T>::type;
-
-    template<typename T, typename U, typename V>
-    struct condition {
-      bool value = std::is_arithmetic<T>::value && std::is_arithmetic<U>::value && std::is_arithmetic<V>::value;
-    };
-
-    template<typename T, typename U, typename V,
-      typename = EnableIf<condition<T,U,V>>
-    >
+    template<typename T, typename U, typename V, typename W, typename X>
     static T valueJ2735ToCav(const U in, const double conversion_factor,
-      V& presence_vector, const V presence_flag, const U unavailability_value) {
+      V& presence_vector, const W presence_flag, const X unavailability_value) {
       
       if (in != (U)unavailability_value) { // If the value is available
         presence_vector |= (V)presence_flag; // Mark the field as available
@@ -76,12 +66,9 @@ class ValueConvertor
       }
     }
 
-    template<typename T, typename U, typename V
-      //typename = EnableIf<condition<T,U,V>>
-     // typename = typename std::enable_if<std::is_arithmetic<V>::value, V>::type
-    >
+    template<typename T, typename U, typename V, typename W, typename X>
     static T valueCavToJ2735(const U in, const double conversion_factor,
-      const V presence_vector, const V presence_flag, const T unavailability_value) {
+      const V presence_vector, const W presence_flag, const X unavailability_value) {
       
       if (presence_vector & (V)presence_flag) { // Check if the field is available
         return (T)(in * conversion_factor); // Do the conversion
@@ -89,8 +76,5 @@ class ValueConvertor
         return (T)unavailability_value; // If field is unavailble return the unavailable flag
       }
     }
-  
-  private: 
-  
 
 };
