@@ -152,40 +152,40 @@ public class BSMMessageHelper {
 		}
 	}
 
-	public void setLat(double lat_input) {
+	public void setLat(int lat_input) {
 		if(lat_input == BSMCoreData.LATITUDE_UNAVAILABLE) {
 			return;
 		}
-		int integer_lat_input = (int) (lat_input * 10000000);
+		int integer_lat_input = lat_input;
 		if(integer_lat_input >= LATITUDE_MIN && integer_lat_input <= LATITUDE_MAX) {
 			this.lat = integer_lat_input;
 		}
 	}
 
-	public void setLon(double lon_input) {
+	public void setLon(int lon_input) {
 		if(lon_input == BSMCoreData.LONGITUDE_UNAVAILABLE) {
 			return;
 		}
-		int integer_lon_input = (int) (lon_input * 10000000);
+		int integer_lon_input = lon_input;
 		if(integer_lon_input >= LONGITUDE_MIN && integer_lon_input <= LONGITUDE_MAX) {
 			this.lon = integer_lon_input;
 		}
 		
 	}
 
-	public void setElev(float elev_input) {
+	public void setElev(int elev_input) {
 		if(elev_input == BSMCoreData.ELEVATION_UNAVAILABLE) {
 			return;
 		}
-		int integer_elev_input = (int) (elev_input * 10);
+		int integer_elev_input = elev_input
 		if(integer_elev_input >= ELEVATION_MIN && integer_elev_input <= ELEVATION_MAX) {
 			this.elev = integer_elev_input;
 		}
 	}
 
-	public void setAccuracy(float semimajor_input, float semiminor_input, double orientation_input) {
+	public void setAccuracy(int semimajor_input, int semiminor_input, int orientation_input) {
 		if(semimajor_input != PositionalAccuracy.ACCURACY_UNAVAILABLE) {
-			int integer_semimajor_input = (int) (semimajor_input * 20);
+			int integer_semimajor_input = semimajor_input;
 			if(integer_semimajor_input >= ACCURACY_MAX) {
 				this.accuracy[0] = ACCURACY_MAX;
 			} else if(integer_semimajor_input >= ACCURACY_MIN) {
@@ -193,7 +193,7 @@ public class BSMMessageHelper {
 			}
 		}
 		if(semiminor_input != PositionalAccuracy.ACCURACY_UNAVAILABLE) {
-			int integer_semiminor_input = (int) (semiminor_input * 20);
+			int integer_semiminor_input = semiminor_input;
 			if(integer_semiminor_input >= ACCURACY_MAX) {
 				this.accuracy[1] = ACCURACY_MAX;
 			} else if(integer_semiminor_input >= ACCURACY_MIN) {
@@ -201,7 +201,7 @@ public class BSMMessageHelper {
 			}
 		}
 		if(orientation_input != PositionalAccuracy.ACCURACY_ORIENTATION_UNAVAILABLE) {
-			int integer_orientation_input = (int) (orientation_input / 0.0054932479);
+			int integer_orientation_input = orientation_input;
 			if(integer_orientation_input >= ACCURACY_ORIENTATION_MIN && integer_orientation_input <= ACCURACY_ORIENTATION_MAX) {
 				this.accuracy[2] = integer_orientation_input;
 			}
@@ -212,31 +212,31 @@ public class BSMMessageHelper {
 		this.transmission = transmission_input;
 	}
 
-	public void setSpeed(float speed_input) {
+	public void setSpeed(int speed_input) {
 		if(speed_input == BSMCoreData.SPEED_UNAVAILABLE) {
 			return;
 		}
-		int integer_speed_input = (int) (speed_input * 50);
+		int integer_speed_input = speed_input;
 		if(integer_speed_input >= SPEED_MIN && integer_speed_input <= SPEED_MAX) {
 			this.speed = integer_speed_input;
 		}
 	}
 
-	public void setHeading(float heading_input) {
+	public void setHeading(int heading_input) {
 		if(heading_input == BSMCoreData.HEADING_UNAVAILABLE) {
 			return;
 		}
-		int integer_heading_input = (int) (heading_input * 80);
+		int integer_heading_input = heading_input;
 		if(integer_heading_input >= HEADING_MIN && integer_heading_input <= HEADING_MAX) {
 			this.heading = integer_heading_input;
 		}
 	}
 
-	public void setAngle(float angle_input) {
+	public void setAngle(int angle_input) {
 		if(angle_input == BSMCoreData.STEER_WHEEL_ANGLE_UNAVAILABLE) {
 			return;
 		}
-		int integer_angle_input = (int) (angle_input / 1.5);
+		int integer_angle_input = angle_input;
 		if(integer_angle_input >= STEER_WHEEL_ANGLE_MAX) {
 			this.angle = STEER_WHEEL_ANGLE_MAX; 
 		} else if(integer_angle_input <= STEER_WHEEL_ANGLE_MIN) {
@@ -246,9 +246,9 @@ public class BSMMessageHelper {
 		}
 	}
 
-	public void setAcceleration(float acceleration_lat_input, float acceleration_lon_input, float acceleration_vert_input, float yaw_rate_input) {
+	public void setAcceleration(int acceleration_lat_input, int acceleration_lon_input, int acceleration_vert_input, int yaw_rate_input) {
 		if(acceleration_lat_input != AccelerationSet4Way.ACCELERATION_UNAVAILABLE) {
-			int integer_acceleration_lat_input = (int) (acceleration_lat_input * 100);
+			int integer_acceleration_lat_input = acceleration_lat_input;
 			if(integer_acceleration_lat_input >= ACCELERATION_MAX) {
 				this.acceleration[0] = ACCELERATION_MAX;
 			} else if(integer_acceleration_lat_input <= ACCELERATION_MIN) {
@@ -258,7 +258,7 @@ public class BSMMessageHelper {
 			}
 		}
 		if(acceleration_lon_input != AccelerationSet4Way.ACCELERATION_UNAVAILABLE) {
-			int integer_acceleration_lon_input = (int) (acceleration_lon_input * 100);
+			int integer_acceleration_lon_input = acceleration_lon_input;
 			if(integer_acceleration_lon_input >= ACCELERATION_MAX) {
 				this.acceleration[1] = ACCELERATION_MAX;
 			} else if(integer_acceleration_lon_input <= ACCELERATION_MIN) {
@@ -268,7 +268,7 @@ public class BSMMessageHelper {
 			}
 		}
 		if(acceleration_vert_input != AccelerationSet4Way.ACCELERATION_VERTICAL_UNAVAILABLE) {
-			int integer_acceleration_vert_input = (int) (acceleration_vert_input / (0.02 * 9.807));
+			int integer_acceleration_vert_input = acceleration_vert_input;
 			if(integer_acceleration_vert_input >= ACCELERATION_VERTICAL_MAX) {
 				this.acceleration[2] = ACCELERATION_VERTICAL_MAX;
 			} else if(integer_acceleration_vert_input <= ACCELERATION_VERTICAL_MIN) {
@@ -278,7 +278,7 @@ public class BSMMessageHelper {
 			}
 		}
 		if(yaw_rate_input != AccelerationSet4Way.YAWRATE_UNAVAILABLE) {
-			int integer_yaw_rate_input = (int) (yaw_rate_input * 100);
+			int integer_yaw_rate_input = yaw_rate_input;
 			if(integer_yaw_rate_input >= YAWRATE_MIN && integer_yaw_rate_input <= YAWRATE_MAX) {
 				this.acceleration[3] = integer_yaw_rate_input; 
 			}
@@ -313,15 +313,15 @@ public class BSMMessageHelper {
 		this.aux = aux_input;
 	}
 
-	public void setVehicle_size(float vehicle_width_input, float vehicle_length_input) {
+	public void setVehicle_size(int vehicle_width_input, int vehicle_length_input) {
 		if(vehicle_width_input != VehicleSize.VEHICLE_WIDTH_UNAVAILABLE) {
-			int integer_vehicle_width_input = (int) (vehicle_width_input * 100);
+			int integer_vehicle_width_input = vehicle_width_input;
 			if(integer_vehicle_width_input >= VEHICLE_SIZE_MIN && integer_vehicle_width_input <= VEHICLE_WIDTH_MAX) {
 				this.vehicle_size[0] = integer_vehicle_width_input;
 			}
 		}
 		if(vehicle_length_input != VehicleSize.VEHICLE_WIDTH_UNAVAILABLE) {
-			int integer_vehicle_length_input = (int) (vehicle_length_input * 100);
+			int integer_vehicle_length_input = vehicle_length_input;
 			if(integer_vehicle_length_input >= VEHICLE_SIZE_MIN && integer_vehicle_length_input <= VEHICLE_LENGTH_MAX) {
 				this.vehicle_size[1] = integer_vehicle_length_input;
 			}
