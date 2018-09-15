@@ -16,7 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.message;
 
-import cav_msgs.*;
+
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.message.factory.DSRCMessageFactory;
 import gov.dot.fhwa.saxton.carma.message.factory.IMessage;
@@ -36,6 +36,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.ros.message.MessageListener;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.topic.Subscriber;
+
+import cav_msgs.ByteArray;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityPath;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
+import cav_msgs.SystemAlert;
+
+import j2735_msgs.BSM;
+import j2735_msgs.SPAT;
+import j2735_msgs.MapData;
+
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -56,7 +68,7 @@ import org.ros.exception.ServiceNotFoundException;
  * rosparam set /interface_mgr/driver_wait_time 10
  * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  * rostopic pub /saxton_cav/drivers/arada_application/comms/recv cav_msgs/ByteArray '{messageType: "BSM"}'
- * rostopic pub /host_bsm cav_msgs/BSM '{}'
+ * rostopic pub /host_bsm j2735_msgs/BSM '{}'
  */
 
 public class MessageConsumer extends SaxtonBaseNode {

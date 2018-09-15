@@ -18,7 +18,7 @@ package gov.dot.fhwa.saxton.carma.message.helper;
 
 import java.util.Arrays;
 
-import cav_msgs.*;
+import j2735_msgs.*;
 
 /**
  * This is the helper class for encoding BSM.
