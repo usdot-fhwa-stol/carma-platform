@@ -32,6 +32,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * CPP File containing BSMConvertor method definitions
+ */
+
 #include "bsm_convertor.h"
 
 void BSMConvertor::convert(const j2735_msgs::VehicleSize& in_msg, cav_msgs::VehicleSize& out_msg) {
@@ -120,21 +124,9 @@ void BSMConvertor::convert(const j2735_msgs::BSM& in_msg, cav_msgs::BSM& out_msg
   convert(in_msg.core_data, out_msg.core_data);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+////
 // Convert cav_msgs to j2735_msgs
+////
 
 void BSMConvertor::convert(const cav_msgs::VehicleSize& in_msg, j2735_msgs::VehicleSize& out_msg) {
   // Convert Vehicle Width
