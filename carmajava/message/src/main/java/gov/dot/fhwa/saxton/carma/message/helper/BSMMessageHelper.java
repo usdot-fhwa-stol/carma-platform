@@ -131,7 +131,7 @@ public class BSMMessageHelper {
 			this.msgCnt = msgCnt_input;
 		}
 	}
-
+	// TODO handle signed bytes in j2735_convertor node
 	public void setId(byte[] id_input) {
 		for(int i = 0; i < this.id.length; i++) {
 			int temp_id;
