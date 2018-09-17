@@ -1,6 +1,5 @@
 package gov.dot.fhwa.saxton.carma.message;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -19,7 +18,6 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
 
 import gov.dot.fhwa.saxton.carma.message.factory.BSMMessage;
-import gov.dot.fhwa.saxton.carma.message.factory.SPATMessage;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 public class BSMDecodeTest {
@@ -37,6 +35,10 @@ public class BSMDecodeTest {
         message = new BSMMessage(mockNode, mockLogger, messageFactory);
     }
     
+    /**
+     * Test the decode bsm function
+     * This test makes no assertions as to the results it only checks if the BSM could be decoded
+     */
     @Test
     public void decodeBSM() {
         cav_msgs.ByteArray msg = messageFactory.newFromType(cav_msgs.ByteArray._TYPE);
@@ -48,6 +50,13 @@ public class BSMDecodeTest {
         message.decode(msg);
     }
 
+    /**
+     * Helper function converts a Hex string to a ChannelBuffer for use in ROS messages
+     * 
+     * @param currentByteString The hex string to convert. Format "00 14 25"
+     * 
+     * @return A ChannelBuffer containing the matching binary data
+     */
     ChannelBuffer getBufferFromHex(String currentByteString) {
         // All non hex characters are removed. This does not support use of x such as 0x00
         currentByteString = currentByteString.replaceAll("[^A-Fa-f0-9]", "");
