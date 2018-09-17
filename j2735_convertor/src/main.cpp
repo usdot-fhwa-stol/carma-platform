@@ -34,6 +34,9 @@
 
 #include "j2735_convertor.h"
 
+/**
+ * Entry Function for Execution
+ */
 int main(int argc, char**argv)
 {
     J2735Convertor node(argc,argv);
