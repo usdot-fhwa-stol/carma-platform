@@ -1208,6 +1208,10 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityOp
 	}
 }
 
+/**
+ * Decode Map
+ * 
+ */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage_decodeMap
   (JNIEnv *env, jobject obj, jbyteArray encodedArray, jobject plain_map, jintArray intersectionGeometry,
    jintArray laneId, jintArray ingressApproach, jintArray egressApproach, jintArray laneDirection, jintArray laneType, jobjectArray nodeXY, jobjectArray connectsTo) {
@@ -1357,6 +1361,10 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage
 	}
 }
 
+/**
+ * Decode Spat
+ * 
+ */
 JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_SPATMessage_decodeSPAT
     (JNIEnv *env, jobject obj, jbyteArray encodedArray, jintArray intersection, jobjectArray movementState) {
 	asn_dec_rval_t rval; /* Decoder return value */
