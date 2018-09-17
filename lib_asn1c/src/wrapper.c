@@ -177,24 +177,24 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage
 		jint secMark = message -> value.choice.BasicSafetyMessage.coreData.secMark;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setSecMark, secMark);
 
-		jmethodID mid_setLatitude = (*env) -> GetMethodID(env, bsm_core_class, "setLatitude", "(D)V");
-		jdouble lat = message -> value.choice.BasicSafetyMessage.coreData.lat / 10000000.0;
+		jmethodID mid_setLatitude = (*env) -> GetMethodID(env, bsm_core_class, "setLatitude", "(I)V");
+		jdouble lat = message -> value.choice.BasicSafetyMessage.coreData.lat;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setLatitude, lat);
 
-		jmethodID mid_setLongitude = (*env) -> GetMethodID(env, bsm_core_class, "setLongitude", "(D)V");
-		jdouble lon = message -> value.choice.BasicSafetyMessage.coreData.Long / 10000000.0;
+		jmethodID mid_setLongitude = (*env) -> GetMethodID(env, bsm_core_class, "setLongitude", "(I)V");
+		jdouble lon = message -> value.choice.BasicSafetyMessage.coreData.Long;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setLongitude, lon);
 
-		jmethodID mid_setElev = (*env) -> GetMethodID(env, bsm_core_class, "setElev", "(F)V");
-		jfloat elev = message -> value.choice.BasicSafetyMessage.coreData.elev / 10.0;
+		jmethodID mid_setElev = (*env) -> GetMethodID(env, bsm_core_class, "setElev", "(I)V");
+		jfloat elev = message -> value.choice.BasicSafetyMessage.coreData.elev;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setElev, elev);
 
-		jmethodID mid_setSemiMajor = (*env) -> GetMethodID(env, accuracy_class, "setSemiMajor", "(F)V");
-		jmethodID mid_setSemiMinor = (*env) -> GetMethodID(env, accuracy_class, "setSemiMinor", "(F)V");
-		jmethodID mid_setOrientation = (*env) -> GetMethodID(env, accuracy_class, "setOrientation", "(D)V");
-		jfloat major = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor * 0.05;
-		jfloat minor = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor * 0.05;
-		jdouble orientation = message -> value.choice.BasicSafetyMessage.coreData.accuracy.orientation * 0.0054932479;
+		jmethodID mid_setSemiMajor = (*env) -> GetMethodID(env, accuracy_class, "setSemiMajor", "(I)V");
+		jmethodID mid_setSemiMinor = (*env) -> GetMethodID(env, accuracy_class, "setSemiMinor", "(I)V");
+		jmethodID mid_setOrientation = (*env) -> GetMethodID(env, accuracy_class, "setOrientation", "(I)V");
+		jfloat major = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor;
+		jfloat minor = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor;
+		jdouble orientation = message -> value.choice.BasicSafetyMessage.coreData.accuracy.orientation;
 		(*env) -> CallVoidMethod(env, accuracy, mid_setSemiMajor, major);
 		(*env) -> CallVoidMethod(env, accuracy, mid_setSemiMinor, minor);
 		(*env) -> CallVoidMethod(env, accuracy, mid_setOrientation, orientation);
@@ -203,26 +203,26 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage
 		jbyte transmissionstate = message -> value.choice.BasicSafetyMessage.coreData.transmission;
 		(*env) -> CallVoidMethod(env, transmission, mid_setTransmissionState, transmissionstate);
 
-		jmethodID mid_setSpeed = (*env) -> GetMethodID(env, bsm_core_class, "setSpeed", "(F)V");
-		jfloat speed = message -> value.choice.BasicSafetyMessage.coreData.speed * 0.02;
+		jmethodID mid_setSpeed = (*env) -> GetMethodID(env, bsm_core_class, "setSpeed", "(I)V");
+		jfloat speed = message -> value.choice.BasicSafetyMessage.coreData.speed;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setSpeed, speed);
 
-		jmethodID mid_setHeading = (*env) -> GetMethodID(env, bsm_core_class, "setHeading", "(F)V");
-		jfloat heading = message -> value.choice.BasicSafetyMessage.coreData.heading * 0.0125;
+		jmethodID mid_setHeading = (*env) -> GetMethodID(env, bsm_core_class, "setHeading", "(I)V");
+		jfloat heading = message -> value.choice.BasicSafetyMessage.coreData.heading;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setHeading, heading);
 
-		jmethodID mid_setAngle = (*env) -> GetMethodID(env, bsm_core_class, "setAngle", "(F)V");
-		jfloat angle = message -> value.choice.BasicSafetyMessage.coreData.angle * 1.5;
+		jmethodID mid_setAngle = (*env) -> GetMethodID(env, bsm_core_class, "setAngle", "(I)V");
+		jfloat angle = message -> value.choice.BasicSafetyMessage.coreData.angle;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setAngle, angle);
 
-		jmethodID mid_accelset_setLongitude = (*env) -> GetMethodID(env, accelset_class, "setLongitudinal", "(F)V");
-		jmethodID mid_accelset_setLatitude = (*env) -> GetMethodID(env, accelset_class, "setLateral", "(F)V");
-		jmethodID mid_accelset_setVert = (*env) -> GetMethodID(env, accelset_class, "setVert", "(F)V");
-		jmethodID mid_accelset_setYaw = (*env) -> GetMethodID(env, accelset_class, "setYawRate", "(F)V");
-		jfloat accel_long = message -> value.choice.BasicSafetyMessage.coreData.accelSet.Long * 0.01;
-		jfloat accel_lat = message -> value.choice.BasicSafetyMessage.coreData.accelSet.lat * 0.01;
-		jfloat accel_vert = message -> value.choice.BasicSafetyMessage.coreData.accelSet.vert * 0.02 * 9.8;
-		jfloat accel_yaw = message -> value.choice.BasicSafetyMessage.coreData.accelSet.yaw * 0.01;
+		jmethodID mid_accelset_setLongitude = (*env) -> GetMethodID(env, accelset_class, "setLongitudinal", "(I)V");
+		jmethodID mid_accelset_setLatitude = (*env) -> GetMethodID(env, accelset_class, "setLateral", "(I)V");
+		jmethodID mid_accelset_setVert = (*env) -> GetMethodID(env, accelset_class, "setVert", "(I)V");
+		jmethodID mid_accelset_setYaw = (*env) -> GetMethodID(env, accelset_class, "setYawRate", "(I)V");
+		jfloat accel_long = message -> value.choice.BasicSafetyMessage.coreData.accelSet.Long;
+		jfloat accel_lat = message -> value.choice.BasicSafetyMessage.coreData.accelSet.lat;
+		jfloat accel_vert = message -> value.choice.BasicSafetyMessage.coreData.accelSet.vert;
+		jfloat accel_yaw = message -> value.choice.BasicSafetyMessage.coreData.accelSet.yaw;
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setLongitude, accel_long);
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setLatitude, accel_lat);
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setVert, accel_vert);
@@ -238,10 +238,10 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage
 		brake_content[5] = message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes;
 		(*env) -> SetByteArrayRegion(env, brakeStatus, 0, 6, brake_content);
 
-		jmethodID mid_setVehicleWidth = (*env) -> GetMethodID(env, size_class, "setVehicleWidth", "(F)V");
-		jmethodID mid_setVehicleLength = (*env) -> GetMethodID(env, size_class, "setVehicleLength", "(F)V");
-		jfloat v_width = message->value.choice.BasicSafetyMessage.coreData.size.width / 100.0;
-		jfloat v_length = message->value.choice.BasicSafetyMessage.coreData.size.length / 100.0;
+		jmethodID mid_setVehicleWidth = (*env) -> GetMethodID(env, size_class, "setVehicleWidth", "(I)V");
+		jmethodID mid_setVehicleLength = (*env) -> GetMethodID(env, size_class, "setVehicleLength", "(I)V");
+		jfloat v_width = message->value.choice.BasicSafetyMessage.coreData.size.width;
+		jfloat v_length = message->value.choice.BasicSafetyMessage.coreData.size.length;
 		(*env) -> CallVoidMethod(env, size, mid_setVehicleWidth, v_width);
 		(*env) -> CallVoidMethod(env, size, mid_setVehicleLength, v_length);
 	}
