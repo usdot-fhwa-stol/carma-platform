@@ -34,7 +34,7 @@
 # }
 
 # Deviates from J2735 standard:
-# TimeMarks in this message are conveyed as seconds rather than 1/10th seconds to avoid redundant unessasry conversion by subscribers
+# TimeMarks in this message are conveyed as seconds rather than 1/10th seconds to avoid redundant unnecessary conversion by subscribers
 # TimeMark ::= FLOAT (0-3600.1)
 # -- Tenths of a second in the current or next hour
 # -- In units of 1/10th second from UTC time

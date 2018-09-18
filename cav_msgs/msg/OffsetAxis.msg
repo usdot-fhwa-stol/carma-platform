@@ -23,7 +23,7 @@ uint8 SMALL=0
 uint8 LARGE=1
 
 # Deviates from J2735 standard:
-# DrivenLineOffsetSm in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
+# DrivenLineOffsetSm in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
 # The DrivenLineOffsetSmall data element is a value expressing the offset in a defined axis from a reference
 # lane number from which a computed lane is offset.
 # DrivenLineOffsetSm ::= INTEGER (-20.47-20.47)
@@ -31,7 +31,7 @@ uint8 LARGE=1
 float32 small
 
 # Deviates from J2735 standard:
-# DrivenLineOffsetLg in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
+# DrivenLineOffsetLg in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
 # The DrivenLineOffsetLg data element is a value expressing the offset in a defined axis from a
 # reference lane number from which a computed lane is offset.
 # DrivenLineOffsetLg ::= INTEGER (-327.67-327.67)

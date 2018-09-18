@@ -11,7 +11,7 @@
 # Position3D ::= SEQUENCE {
 
 # Deviates from J2735 standard:
-# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unessasry conversion by subscribers
+# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unnecessary conversion by subscribers
 # lat Latitude, -- in degrees
 # Latitude ::= DOUBLE (-90.0000000-90.0000001)
 #  -- Providing a range of plus-minus 90 degrees
@@ -22,7 +22,7 @@ float64 LATITUDE_MAX = 90.0
 float64 LATITUDE_MIN = -90.0
 
 # Deviates from J2735 standard:
-# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unessasry conversion by subscribers
+# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unnecessary conversion by subscribers
 # long Longitude, -- in degrees
 # Longitude ::= INTEGER (-179.9999999-180.0000001)
 #  -- Providing a range of plus-minus 180 degrees
@@ -33,7 +33,7 @@ float64 LONGITUDE_MAX = 180.0
 float64 LONGITUDE_MIN = -179.9999999
 
 # Deviates from J2735 standard:
-# Elevation in this message are conveyed as m rather than 10 cm to avoid redundant unessasry conversion by subscribers
+# Elevation in this message are conveyed as m rather than 10 cm to avoid redundant unnecessary conversion by subscribers
 # elevation Elevation OPTIONAL, -- in 1 m units
 # Elevation ::= INTEGER (-409.6-6143.9)
 #  -- In units of m steps above or below the reference ellipsoid

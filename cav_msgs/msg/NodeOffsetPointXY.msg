@@ -35,7 +35,7 @@ uint8 NODE_LATLON=6
 
 # Only set if choice != NODE_LATLON
 # Deviates from J2735 standard:
-# Latitude in this message are conveyed as m rather than cm to avoid redundant unessasry conversion by subscribers
+# Latitude in this message are conveyed as m rather than cm to avoid redundant unnecessary conversion by subscribers
 # Offset ::= FLOAT (-512..511)
 # -- a range of +- 5.11 meters
 # A delta offset in X, Y direction from some known point. For non-vehicle centric coordinate frames of
@@ -47,7 +47,7 @@ float32 y
 
 # Only set if choice == NODE_LATLON
 # Deviates from J2735 standard:
-# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unessasry conversion by subscribers
+# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unnecessary conversion by subscribers
 #Longitude ::= INTEGER (-179.9999999..180.0000001)
 #  -- Providing a range of plus-minus 180 degrees
 float64 longitude
@@ -58,7 +58,7 @@ float64 LONGITUDE_MIN = -179.9999999
 
 # Only set if choice == NODE_LATLON
 # Deviates from J2735 standard:
-# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unessasry conversion by subscribers
+# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unnecessary conversion by subscribers
 #Latitude ::= INTEGER (-90.0000000-90.0000001)
 #  -- Providing a range of plus-minus 90 degrees
 float64 latitude

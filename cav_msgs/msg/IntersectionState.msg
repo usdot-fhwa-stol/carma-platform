@@ -66,7 +66,7 @@ uint32 MOY_INVALID=527040
 bool moy_exists
 
 # Deviates from J2735 standard:
-# DSecond in this message are conveyed as seconds rather than milliseconds to avoid redundant unessasry conversion by subscribers
+# DSecond in this message are conveyed as seconds rather than milliseconds to avoid redundant unnecessary conversion by subscribers
 # DSecond ::= FLOAT (0..65.535)
 #  -- Float values from 0 to 59.999 represent the seconds within a minute
 #  -- A leap second is represented by the value range 60.000 to 60.999

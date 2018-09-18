@@ -52,7 +52,7 @@ uint8 SPEED_LIMITS=5
 int16 path_end_point_angle
 
 # Deviates from J2735 standard:
-# RoadwayCrownAngle in this message are conveyed as deg rather than 0.3 deg to avoid redundant unessasry conversion by subscribers
+# RoadwayCrownAngle in this message are conveyed as deg rather than 0.3 deg to avoid redundant unnecessary conversion by subscribers
 # RoadwayCrownAngle ::= FLOAT (-38.4..38.1)
 # -- In LSB units of 0.3 degrees of angle
 # -- over a range of -38.1 to + 38.1 degrees
@@ -68,7 +68,7 @@ float32 lane_crown_point_right
 float32 lane_crown_point_left
 
 # Deviates from J2735 standard:
-# MergeDivergeNodeAngle in this message are conveyed as deg rather than 1.5 deg to avoid redundant unessasry conversion by subscribers
+# MergeDivergeNodeAngle in this message are conveyed as deg rather than 1.5 deg to avoid redundant unnecessary conversion by subscribers
 # MergeDivergeNodeAngle ::= FLOAT (-180..180)
 # -- In units of 1 degree from north
 # -- the value -180 shall be used to represent
