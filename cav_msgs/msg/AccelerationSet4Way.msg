@@ -19,6 +19,15 @@
 #   yaw  YawRate
 #}
 
+# The presence vector is used to determine what optional items are set
+# Existance can be quickly checked using bit operators
+# Example msg.presence_vector & Msg.FLAG != 0
+uint16 presence_vector
+
+uint16 ACCELERATION_AVAILABLE = 1
+uint16 ACCELERATION_VERTICAL_AVAILABLE = 2
+uint16 YAWRATE_AVAILABLE = 4
+
 #Acceleration ::= INTEGER (-2000..2001) 
 #   -- LSB units are 0.01 m/s^2
 #   -- the value 2000 shall be used for values greater than 2000     
@@ -28,7 +37,6 @@
 float32 longitudinal
 float32 lateral
 
-float32 ACCELERATION_UNAVAILABLE = 20.01
 float32 ACCELERATION_MAX = 20.0
 float32 ACCELERATION_MIN = -20.0
 
@@ -40,7 +48,6 @@ float32 ACCELERATION_MIN = -20.0
 #   -- Convert to m/s^2 with factor 0.196 when this field is used
 float32 vert
 
-float32 ACCELERATION_VERTICAL_UNAVAILABLE = -24.892
 float32 ACCELERATION_VERTICAL_MAX = 24.892
 float32 ACCELERATION_VERTICAL_MIN = -24.696
 
@@ -49,6 +56,5 @@ float32 ACCELERATION_VERTICAL_MIN = -24.696
 #   -- Convert to degree with factor 0.01 when this field is used
 float32 yaw_rate
 
-float32 YAWRATE_UNAVAILABLE = 0
 float32 YAWRATE_MAX = 327.67
 float32 YAWRATE_MIN = -327.67

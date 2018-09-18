@@ -86,7 +86,7 @@ public class GuidanceV2IService implements V2IService {
 
         spatSub = pubSub.getSubscriberForTopic("incoming_spat", SPAT._TYPE);
         spatSub.registerOnMessageCallback((spat) -> {
-            for (IntersectionState state : spat.getIntersections().getIntersectionStateList()) {
+            for (IntersectionState state : spat.getIntersectionStateList()) {
                 LocalDateTime msgTs = LocalDateTime.now(); // TODO: Improve methodology for determining data age
                 int id = state.getId().getId();
                 reportIntersectionComms(id, msgTs);

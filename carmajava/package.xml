@@ -61,6 +61,7 @@
   <build_depend>rosjava_messages</build_depend>
   <build_depend>cav_msgs</build_depend>
   <build_depend>cav_srvs</build_depend>
+  <build_depend>j2735_msgs</build_depend>
   <build_depend>rosjava_messages</build_depend>
   <build_depend>rostest</build_depend>
   <build_depend>rospy</build_depend>

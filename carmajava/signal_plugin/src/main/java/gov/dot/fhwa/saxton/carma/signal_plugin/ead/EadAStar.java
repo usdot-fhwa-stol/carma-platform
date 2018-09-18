@@ -217,10 +217,12 @@ public class EadAStar implements IEad {
                         + timeOnPath_ + " sec, dist = " + ddt_ + " m, dist error = " + error);
 
             //if we are sufficiently far off plan then indicate it's time to replan
-            if (Math.abs(error) > maxDistanceError_) {
-                replanNeeded_ = true;
-                log_.info("EAD", "Performance has deviated too far from plan. Replan needed.");
-            }
+            // TODO replan will trigger abrupt stopping in some case, where the vehicle cannot plan
+            // Tracking dtd error is not needed inside CARMA plugin 
+//            if (Math.abs(error) > maxDistanceError_) {
+//                replanNeeded_ = true;
+//                log_.info("EAD", "Performance has deviated too far from plan. Replan needed.");
+//            }
 
             //we should never reach the end of a plan, but check just in case
             if (currentNodeIndex_ < currentPath_.size() - 1) {
@@ -296,10 +298,12 @@ public class EadAStar implements IEad {
         }
 
         //define params for a goal node downtrack of the farthest known intersection (where we can recover operating speed)
-        double exitDist = 0.01 * (double)intList_.get(numInt - 1).roughDist; //converting from cm to m
-        //use 0.75 * maxAccel as recovery acceleration
-        //worst case going from stop at red back to full speed
-        double recoveryDist = 0.5*operSpeed*operSpeed/fractionalMaxAccel_; 
+        //adding an extra distance to make sure the goal passes the fine distance to the second intersection
+        //this is the rough location for the second intersection
+        //rough distance need to convert from cm to m
+        double exitDist = (0.01 * (double)intList_.get(numInt - 1).roughDist) + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH * 2;
+        //plan to one more intersection width after the last intersection
+        double recoveryDist = CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; 
         exitDist += recoveryDist;
 
         //At this point we may be dealing with a single intersection that is nearby, or a string of several
@@ -310,10 +314,8 @@ public class EadAStar implements IEad {
         // operating speed throughout) and let A* try to solve it. There are only a few nodes (one per intersection
         // +1 at the end) so it will be quick.  If it fails, we increment the time of the goal node and try again.
 
-        //calculate recovery time - add it to the goal time
-        double exitTime = (exitDist - recoveryDist) / operSpeed;
-        double recoveryTime = operSpeed/fractionalMaxAccel_;
-        exitTime += recoveryTime;
+        //this is the fastest case, which is not be able to acheieve
+        double exitTime = exitDist / operSpeed;
 
         //create a neighbor calculator for this tree using a coarse scale grid
         coarseNeighborCalc_.initialize(intList_, numInt, coarseTimeInc_, coarseSpeedInc_);
@@ -331,7 +333,7 @@ public class EadAStar implements IEad {
 
             //find the best path through this tree
             timeCostModel_.setGoal(coarseGoal);
-            timeCostModel_.setTolerances(new Node(0.0, 0.5 * coarseTimeInc_, 0.5 * coarseSpeedInc_));
+            timeCostModel_.setTolerances(new Node(1.0, 0.51 * coarseTimeInc_, 0.51 * coarseSpeedInc_));
             path = solver_.solve(start, timeCostModel_, coarseNeighborCalc_);
 
             //increment goal time
@@ -401,9 +403,9 @@ public class EadAStar implements IEad {
         for (int i = 1;  i < intList_.size();  ++i) {
             log_.debugf("EAD", "    %.0f m", 0.01 * (double)intList_.get(i).roughDist);
         }
-        log_.debug("EAD", "Coarse path plan:");
+        log_.info("EAD", "Coarse path plan:");
         for (Node n : path) {
-            log_.debug("EAD", "    " + n.toString());
+            log_.info("EAD", "    " + n.toString());
         }
         log_.debug("EAD", "Coarse path attempted to reach goal: " + coarseGoal.toString());
         log_.debug("EAD", "Coarse path yielded goal for detailed planning of: " + fineGoal.toString());
@@ -415,9 +417,9 @@ public class EadAStar implements IEad {
      */
     protected void summarizeDetailedPath(List<Node> path, Node goal) {
 
-        log_.debug("EAD", "///// Detailed path plan:");
+        log_.info("EAD", "///// Detailed path plan:");
         for (Node n : path) {
-            log_.debug("EAD", "    " + n.toString());
+            log_.info("EAD", "    " + n.toString());
         }
         log_.debug("EAD", "Detailed path attempted to reach goal: " + goal.toString());
     }
