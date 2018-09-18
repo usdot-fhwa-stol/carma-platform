@@ -245,7 +245,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		messageCounters.registerEntry("SPAT");
 		
 		//initialize Subs
-		bsmSub_ = connectedNode_.newSubscriber("outgoing_j2735_bsm_f", BSM._TYPE);
+		bsmSub_ = connectedNode_.newSubscriber("outgoing_j2735_bsm", BSM._TYPE);
 		inboundSub_ = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
 		mobilityReqSub_ = connectedNode_.newSubscriber("outgoing_mobility_request", MobilityRequest._TYPE);
 		mobilityPathSub_ = connectedNode_.newSubscriber("outgoing_mobility_path", MobilityPath._TYPE);
