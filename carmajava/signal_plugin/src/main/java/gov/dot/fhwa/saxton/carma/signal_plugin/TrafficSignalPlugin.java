@@ -232,31 +232,14 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 for (NodeXY nodeBase : laneData.getNodeList().getNodes().getNodeSetXy()) {
                     NodeOffsetPointXY delta = nodeBase.getDelta();
                     switch (delta.getChoice()) {
-                    case NodeOffsetPointXY.NODE_XY1:
-                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
-                        break;
-                    case NodeOffsetPointXY.NODE_XY2:
-                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
-                        break;
-                    case NodeOffsetPointXY.NODE_XY3:
-                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
-                        break;
-                    case NodeOffsetPointXY.NODE_XY4:
-                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
-                        break;
-                    case NodeOffsetPointXY.NODE_XY5:
-                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
-                        break;
-                    case NodeOffsetPointXY.NODE_XY6:
-                        addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
-                        break;
-                    case NodeOffsetPointXY.NODE_LATLON:
-                        Location node = new Location(delta.getLatitude(),
-                                delta.getLongitude());
-                        cnvLane.addNodeLatLon(node);
-                        break;
-                    default:
-                        break;
+                        case NodeOffsetPointXY.NODE_LATLON: // If the node is a lat/lon value
+                            Location node = new Location(delta.getLatitude(),
+                                    delta.getLongitude());
+                            cnvLane.addNodeLatLon(node);
+                            break;
+                        default: // All other choices result in the same response
+                            addNodeOffset(cnvLane, refPoint, delta.getX(), delta.getY());
+                            break;
                     }
                 }
             }
